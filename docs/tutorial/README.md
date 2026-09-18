@@ -196,7 +196,7 @@ To match a literal dollar sign: `/\$/`
 2. **Visualize it**: `bin/regex diagram '/your-pattern/'`
 3. **Check for errors**: `bin/regex validate '/your-pattern/'`
 4. **Read the FAQ**: [docs/reference/faq-glossary.md](reference/faq-glossary.md)
-5. **Ask questions**: [GitHub Issues](https://github.com/yoeunes/regex-parser/issues)
+5. **Ask questions**: [GitHub Issues](https://github.com/php-regex/regex-parser/issues)
 
 ---
 

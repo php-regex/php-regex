@@ -57,7 +57,7 @@ class SelfUpdater
 
     protected function getUpdateUrl(): string
     {
-        return 'https://github.com/yoeunes/regex-parser/releases/latest/download/regex.phar';
+        return 'https://github.com/php-regex/regex-parser/releases/latest/download/regex.phar';
     }
 
     protected function getChecksumUrl(): string

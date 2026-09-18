@@ -131,7 +131,7 @@ final class ConsoleFormatterTest extends TestCase
         $output = $this->formatter->formatFooter();
 
         $this->assertStringContainsString('If RegexParser helps, a GitHub star is appreciated:', $output);
-        $this->assertStringContainsString('github.com/yoeunes/regex-parser', $output);
+        $this->assertStringContainsString('github.com/php-regex/regex-parser', $output);
     }
 
     public function test_format_with_error_issue(): void

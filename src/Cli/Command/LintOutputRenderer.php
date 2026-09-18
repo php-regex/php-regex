@@ -92,7 +92,7 @@ final readonly class LintOutputRenderer
     {
         $output->write("\n");
         $message = 'If RegexParser helps, a GitHub star is appreciated: ';
-        $output->write('  '.$output->dim($message.'https://github.com/yoeunes/regex-parser')."\n");
+        $output->write('  '.$output->dim($message.'https://github.com/php-regex/regex-parser')."\n");
         $output->write('  '.$output->dim('Cache: 0 hits, 0 misses')."\n\n");
     }
 

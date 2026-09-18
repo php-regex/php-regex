@@ -631,7 +631,7 @@ final class CommandTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('RegexParser', $buffer);
-        $this->assertStringContainsString('github.com/yoeunes/regex-parser', $buffer);
+        $this->assertStringContainsString('github.com/php-regex/regex-parser', $buffer);
     }
 
     public function test_self_update_command_help_and_error_paths(): void

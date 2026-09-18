@@ -40,14 +40,14 @@ final readonly class VersionCommand implements CommandInterface
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         if ($style->visualsEnabled()) {
             $style->renderBanner('version');
-            $output->write('  '.$output->dim('Repository: https://github.com/yoeunes/regex-parser')."\n");
+            $output->write('  '.$output->dim('Repository: https://github.com/php-regex/regex-parser')."\n");
 
             return 0;
         }
 
         $version = Regex::VERSION;
         $output->write('RegexParser '.$output->color($version, Output::GREEN)." by Younes ENNAJI\n");
-        $output->write("https://github.com/yoeunes/regex-parser\n");
+        $output->write("https://github.com/php-regex/regex-parser\n");
 
         return 0;
     }

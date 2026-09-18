@@ -60,7 +60,7 @@ Every example in these docs uses RegexParser as the reference implementation.
 
 ## Getting help
 
-- Issues and bug reports: <https://github.com/yoeunes/regex-parser/issues>
+- Issues and bug reports: <https://github.com/php-regex/regex-parser/issues>
 - Real-world examples: see `tests/Integration/`
 - Interactive playground: <https://regex101.com> (PCRE2 mode)
 

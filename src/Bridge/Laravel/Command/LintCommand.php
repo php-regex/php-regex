@@ -280,7 +280,7 @@ final class LintCommand extends Command
     {
         $this->newLine();
         $message = 'If RegexParser helps, a GitHub star is appreciated: ';
-        $this->line('  <fg=gray>'.$message.'https://github.com/yoeunes/regex-parser</>');
+        $this->line('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $this->newLine();
     }
 

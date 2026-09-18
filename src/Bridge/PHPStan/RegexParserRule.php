@@ -62,7 +62,7 @@ final class RegexParserRule implements Rule
         'preg_replace_callback_array' => 0,
     ];
 
-    private const DOC_BASE_URL = 'https://github.com/yoeunes/regex-parser/blob/main/docs/reference.md';
+    private const DOC_BASE_URL = 'https://github.com/php-regex/regex-parser/blob/main/docs/reference.md';
 
     private const DOC_LINKS = [
         // Flags - Use PHP.net where possible, or precise concept pages

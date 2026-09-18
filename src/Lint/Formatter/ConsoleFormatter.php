@@ -98,7 +98,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
     {
         $message = 'If RegexParser helps, a GitHub star is appreciated: ';
 
-        return '  '.$this->dim($message.'https://github.com/yoeunes/regex-parser').\PHP_EOL.\PHP_EOL;
+        return '  '.$this->dim($message.'https://github.com/php-regex/regex-parser').\PHP_EOL.\PHP_EOL;
     }
 
     private function formatQuiet(RegexLintReport $report): string

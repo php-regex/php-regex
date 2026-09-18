@@ -337,7 +337,7 @@ for ($i = 0; $i < 3; $i++) {
 1. **Use the CLI** - `bin/regex explain <pattern>`
 2. **Try diagram** - `bin/regex diagram <pattern>`
 3. **Check documentation** - `docs/guides/regex-in-php.md`
-4. **Ask for help** - [GitHub Issues](https://github.com/yoeunes/regex-parser/issues)
+4. **Ask for help** - [GitHub Issues](https://github.com/php-regex/regex-parser/issues)
 
 ---
 

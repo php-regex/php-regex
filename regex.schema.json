@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/yoeunes/regex-parser/main/regex.schema.json",
+  "$id": "https://raw.githubusercontent.com/php-regex/regex-parser/main/regex.schema.json",
   "title": "RegexParser Lint Configuration",
   "description": "Configuration schema for RegexParser CLI lint defaults (regex.json or regex.dist.json).",
   "type": "object",

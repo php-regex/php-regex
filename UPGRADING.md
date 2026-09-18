@@ -472,5 +472,5 @@ If you encounter issues during upgrade:
 
 1. Check [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
 2. Review [CHANGELOG.md](CHANGELOG.md) for detailed changes
-3. Search [GitHub Issues](https://github.com/yoeunes/regex-parser/issues)
+3. Search [GitHub Issues](https://github.com/php-regex/regex-parser/issues)
 4. Create new issue with your specific upgrade problem

@@ -19,7 +19,7 @@ vendor/bin/regex --help
 
 ```bash
 # Download the PHAR
-curl -Ls https://github.com/yoeunes/regex-parser/releases/latest/download/regex.phar \
+curl -Ls https://github.com/php-regex/regex-parser/releases/latest/download/regex.phar \
   -o ~/.local/bin/regex
 chmod +x ~/.local/bin/regex
 
@@ -344,7 +344,7 @@ Configuration : regex.dist.json
   [PASS] No issues found, 0 optimizations available.
   Time: 0.08s | Memory: 10 MB | Cache: 0 hits, 0 misses | Processes: 10
 
-  Found it useful? Consider starring: https://github.com/yoeunes/regex-parser
+  Found it useful? Consider starring: https://github.com/php-regex/regex-parser
 ```
 
 **With Issues:**
