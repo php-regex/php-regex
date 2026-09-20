@@ -161,7 +161,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $this->assertStringContainsString('test.php:10', $output);
         $this->assertStringContainsString('/test/', $output);
-        $this->assertStringContainsString('[FAIL]', $output);
+        $this->assertStringContainsString('FAIL', $output);
         $this->assertStringContainsString('Invalid regex pattern', $output);
     }
 
@@ -191,7 +191,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[WARN]', $output);
+        $this->assertStringContainsString('WARN', $output);
         $this->assertStringContainsString('Complex pattern detected', $output);
         $this->assertStringContainsString('Consider simplifying', $output);
     }
@@ -258,7 +258,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
         $this->assertStringContainsString('- /a+/', $output);
         $this->assertStringContainsString('+ /a++/', $output);
     }
@@ -291,7 +291,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
         $this->assertStringContainsString('- /(a+)+/', $output);
         $this->assertStringContainsString('+ /(?>(a+))+/', $output);
     }
@@ -356,7 +356,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $this->assertStringContainsString('test.php:10', $output);
         $this->assertStringContainsString('/test/', $output);
-        $this->assertStringContainsString('[FAIL]', $output);
+        $this->assertStringContainsString('FAIL', $output);
     }
 
     public function test_format_with_location(): void
@@ -415,7 +415,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
         $this->assertStringContainsString('- /(?x)', $output);
         $this->assertStringContainsString('+ /(?x)[a-z]++/', $output);
     }
@@ -451,7 +451,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
         $this->assertStringContainsString('foo', $output);
     }
 
@@ -486,7 +486,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
     }
 
     public function test_extract_pattern_from_issues(): void
@@ -840,7 +840,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[INFO]', $output);
+        $this->assertStringContainsString('INFO', $output);
     }
 
     public function test_format_pattern_with_paired_delimiters(): void
@@ -930,7 +930,7 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('[TIP]', $output);
+        $this->assertStringContainsString('TIP', $output);
     }
 
     public function test_format_multiline_diff_returns_empty_when_no_ops(): void

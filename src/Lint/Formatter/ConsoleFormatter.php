@@ -887,7 +887,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
     private function badge(string $text, string $fg, string $bg): string
     {
         if (!$this->config->ansi) {
-            return '['.$text.']';
+            return \sprintf('%-4s', $text);
         }
 
         return $this->color(' '.$text.' ', $bg.$fg.self::BOLD);

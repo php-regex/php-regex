@@ -443,7 +443,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['[unclosed']), $output), $exitCode);
 
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('[FAIL] Error:', $buffer);
+        $this->assertStringContainsString('FAIL Error:', $buffer);
     }
 
     public function test_highlight_command_supports_format_option_with_separate_value(): void
@@ -467,7 +467,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode);
 
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('[FAIL] Error: Invalid format: invalid', $buffer);
+        $this->assertStringContainsString('FAIL Error: Invalid format: invalid', $buffer);
     }
 
     public function test_highlight_command_handles_invalid_regex_options(): void
