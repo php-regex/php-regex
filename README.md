@@ -58,7 +58,8 @@ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 
 RegexParser separates what it can guarantee from what is heuristic:
 
-- Guaranteed: parsing, AST structure, error offsets, and syntax validation for the targeted PHP/PCRE version.
+- Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
+- Measured: syntax validation follows PHP's engine closely but not exactly, and error offsets often differ from PHP's; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes both, with the known gaps.
 - Heuristic: ReDoS analysis is structural and conservative; treat it as potential risk unless confirmed.
 - Context matters: PCRE version, JIT, and backtrack/recursion limits change practical impact.
 
@@ -73,6 +74,11 @@ PHP's native `preg_match()`:
 - Additional behavioral tests cover named groups, lookarounds, conditionals,
   atomic groups, and other features (`BehavioralComplianceTest`,
   `AdvancedFeaturesComplianceTest`).
+- PCRE2's own official test suite (10.48, pinned) is replayed at compile level
+  under PHP's compile options: the compile verdict agrees on more than 4,100
+  of the roughly 4,400 extractable cases, and fewer than 100 patterns that PHP
+  refuses to compile are accepted. The exact counts, the skipped cases and the
+  fix plan are on the [PCRE2 conformance page](docs/reference/pcre2-conformance.md).
 
 These tests compare against a limited set of subjects, so they catch clear
 regressions but are **not** a formal proof of full PCRE equivalence. There may

@@ -4,6 +4,10 @@
 # Normalize line endings to LF for all text files
 * text=auto eol=lf
 
+# Vendored PCRE2 testdata: byte-exact copies of the upstream files (stray CR
+# bytes are pattern data), never normalized
+/tests/Fixtures/Pcre2/testdata/** -text
+
 # Export-ignore patterns (for composer archive)
 # Development and CI/CD files
 /.github                export-ignore

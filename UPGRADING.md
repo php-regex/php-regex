@@ -75,6 +75,17 @@ be dropped in the next major version.
 ignored and the patterns are parsed once more. Nothing to do; a warm cache
 directory rebuilds itself.
 
+### Planned
+
+#### `ValidationResult::$offset` will become body-relative everywhere
+
+Today a syntax error inside the pattern body reports an offset into the body,
+while a flag error reports an offset into the whole pattern string, delimiters
+included; a delimiter error reports none. A future release will report every
+offset relative to the body, the coordinate PCRE2 uses. Code that places a
+caret under flag errors will need to shift it by the length of the opening
+delimiter. Nothing changes in this release.
+
 ## [Unreleased] → 1.3.0
 
 ### Breaking Changes

@@ -1,0 +1,2247 @@
+{
+    "testinput1:1626": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput1:3280": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput1:3486": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput1:3491": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput1:3700": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput1:3984": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput1:4006": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput1:4010": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput1:4016": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput1:4458": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 27
+    },
+    "testinput1:4646": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput1:4651": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput1:4656": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 12
+    },
+    "testinput1:4673": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 99
+    },
+    "testinput1:5664": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput1:5667": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput1:5670": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput1:5673": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput1:5715": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 32
+    },
+    "testinput1:5872": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput1:5921": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 42
+    },
+    "testinput1:5928": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 42
+    },
+    "testinput1:6309": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput1:6528": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 19
+    },
+    "testinput2:58": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:60": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:62": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:64": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:68": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:70": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:72": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:74": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:82": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:106": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:108": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:136": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 15
+    },
+    "testinput2:147": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:192": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:194": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:216": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:218": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:285": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:287": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:337": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:355": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:357": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:359": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:361": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:381": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:383": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:385": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:387": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:389": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:391": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:397": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:399": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:698": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:700": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:702": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:719": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:721": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:909": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:911": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:913": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:915": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:917": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:919": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:921": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:923": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:925": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:927": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:930": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:932": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:934": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:936": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:938": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:1064": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:1066": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:1068": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:1171": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:1259": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 12
+    },
+    "testinput2:1261": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 25
+    },
+    "testinput2:1435": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:1437": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:1439": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:1482": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 14
+    },
+    "testinput2:1520": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 34
+    },
+    "testinput2:1801": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:1805": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:1814": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:1852": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:1894": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:1896": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:1901": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 26
+    },
+    "testinput2:1904": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 26
+    },
+    "testinput2:1906": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2086": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2088": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2090": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2092": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2094": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2155": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2157": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:2159": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2161": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:2163": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:2169": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:2175": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:2177": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2179": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2181": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2190": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2250": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2252": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2254": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2256": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2258": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2260": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2288": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2290": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2294": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2309": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2437": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:2439": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 6
+    },
+    "testinput2:2441": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2443": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2445": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:2447": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:2451": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:2455": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2457": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2459": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2461": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2463": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2469": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:2471": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2473": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2475": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2477": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2479": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2481": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2483": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2485": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2487": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 6
+    },
+    "testinput2:2511": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2514": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2530": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2533": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:2565": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:2607": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:2889": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:2893": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:2895": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:2897": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:2899": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:2901": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:2903": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:2947": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:2951": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:2953": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 108
+    },
+    "testinput2:2969": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 33
+    },
+    "testinput2:2976": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 28
+    },
+    "testinput2:3047": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3049": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3212": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:3216": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:3224": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:3265": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:3553": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3556": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:3558": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3819": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:3979": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3982": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3984": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3986": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3988": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3990": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:3992": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4002": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4004": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4006": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4008": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4012": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4019": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4021": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4023": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:4025": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4027": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4029": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:4031": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4033": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4035": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4039": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4041": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:4043": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:4045": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4047": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4049": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4051": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4055": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4076": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4099": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4101": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4103": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4111": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4113": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4115": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4117": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4176": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4178": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4180": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4184": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4548": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4550": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4552": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4554": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4556": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4571": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 6
+    },
+    "testinput2:4574": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4576": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4578": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4582": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4586": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:4589": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4613": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:4615": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:4617": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:4619": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:4621": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:4626": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4629": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4633": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput2:4637": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput2:4675": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 17
+    },
+    "testinput2:4681": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4683": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4701": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4703": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 6
+    },
+    "testinput2:4713": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:4715": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:4719": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:4723": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:4727": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4729": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4746": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4748": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4750": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4752": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:4762": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput2:4799": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:4805": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:4807": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4809": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:4838": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:5056": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:5061": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:5064": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:5088": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:5099": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 18
+    },
+    "testinput2:5116": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:5118": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:5276": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput2:5282": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 17
+    },
+    "testinput2:5284": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 17
+    },
+    "testinput2:5287": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 14
+    },
+    "testinput2:5289": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 17
+    },
+    "testinput2:5295": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 17
+    },
+    "testinput2:5310": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:5313": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:5316": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:5325": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 6
+    },
+    "testinput2:5335": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:5343": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:5347": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:5384": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:5387": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:5389": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5391": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5396": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:5398": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:5445": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:5738": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:5742": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 7
+    },
+    "testinput2:5840": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5842": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5844": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5846": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5848": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:5866": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:5913": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:5915": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:5917": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6048": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:6050": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:6052": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:6083": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 10
+    },
+    "testinput2:6087": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 13
+    },
+    "testinput2:6113": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 11
+    },
+    "testinput2:6136": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 19
+    },
+    "testinput2:6139": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 14
+    },
+    "testinput2:6143": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6145": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6147": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6149": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6151": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6154": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:6159": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:6162": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:6169": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6173": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:6177": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6179": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6183": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6185": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6187": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6189": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6191": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6193": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6196": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6199": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6204": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6214": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 12
+    },
+    "testinput2:6281": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:6284": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 8
+    },
+    "testinput2:6356": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 16
+    },
+    "testinput2:6404": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6406": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6409": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6411": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6426": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 31
+    },
+    "testinput2:6429": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 31
+    },
+    "testinput2:6433": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 33
+    },
+    "testinput2:6673": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6675": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6677": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6679": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6681": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6683": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6685": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6687": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:6689": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:6691": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 2
+    },
+    "testinput2:6693": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput2:6721": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 9
+    },
+    "testinput2:6953": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:6987": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7441": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:7445": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7466": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 5
+    },
+    "testinput2:7474": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7476": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7478": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7486": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7488": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7490": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7492": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7494": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7496": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7498": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7500": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7502": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7504": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7506": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7508": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7510": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7512": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7514": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7516": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7518": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7520": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7522": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7524": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7526": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7528": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7538": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7540": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7542": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:7561": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:7563": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput2:7565": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:7567": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:7569": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput2:7634": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:7636": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:7638": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:7640": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:7642": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput2:8123": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8125": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8127": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8129": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8131": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8133": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8135": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8137": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput2:8234": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 34
+    },
+    "testinput2:8240": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 23
+    },
+    "testinput4:2543": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput4:2546": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput4:2549": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput4:2552": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput4:2555": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput4:2558": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput4:2561": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput5:80": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:82": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:84": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:86": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:88": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:90": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:92": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:94": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:96": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:98": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:100": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:102": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:147": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:340": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:342": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput5:700": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:702": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:1646": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput5:1649": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 4
+    },
+    "testinput5:1652": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 968
+    },
+    "testinput5:1654": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 272
+    },
+    "testinput5:1658": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:1660": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:1733": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:2067": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:2069": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:2071": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2073": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:2075": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2077": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    },
+    "testinput5:2147": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2152": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2154": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2156": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2183": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2805": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2816": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput5:2824": {
+        "category": "false-reject",
+        "libraryVerdict": "reject",
+        "libraryOffset": 0
+    },
+    "testinput5:2885": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 51
+    },
+    "testinput5:3588": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput5:3590": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 3
+    },
+    "testinput5:3592": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput5:3594": {
+        "category": "offset-defect",
+        "libraryVerdict": "reject",
+        "libraryOffset": 1
+    },
+    "testinput5:3622": {
+        "category": "false-accept",
+        "libraryVerdict": "accept",
+        "libraryOffset": null
+    }
+}

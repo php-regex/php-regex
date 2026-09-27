@@ -1,6 +1,8 @@
 # Feature Support Matrix
 
 This matrix summarizes which PCRE constructs are parsed and which are supported by each analysis layer.
+For how closely validation matches PHP's engine on PCRE2's official test suite, see
+[PCRE2 Conformance](pcre2-conformance.md).
 
 Legend:
 - **Yes**: Fully supported for the listed layer.

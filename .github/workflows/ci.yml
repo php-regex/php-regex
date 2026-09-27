@@ -178,3 +178,49 @@ jobs:
 
       - name: Run ReDoS Detection Tests
         run: tools/phpunit/vendor/bin/phpunit tests/Unit/ReDoS/ReDoSEdgeCasesTest.php --testdox
+
+  pcre2-fixture:
+    # The PCRE2 conformance fixture records what PCRE2 10.40 (the engine of the
+    # oldest supported PHP) and PCRE2 10.48 (the pinned suite) do with every
+    # case. Rebuild both engines from their release tarballs and re-observe the
+    # committed records, so the published counts rest on real engine runs.
+    name: PCRE2 Conformance Fixture
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Cache PCRE2 Builds
+        id: pcre2-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/pcre2
+          key: pcre2test-10.40-10.48-v1
+
+      - name: Build pcre2test 10.40 and 10.48
+        if: steps.pcre2-cache.outputs.cache-hit != 'true'
+        run: |
+          for version in 10.40 10.48; do
+            (
+              mkdir -p "$RUNNER_TEMP/pcre2" && cd "$RUNNER_TEMP/pcre2"
+              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              tar xzf "pcre2-$version.tar.gz"
+              cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
+            )
+          done
+
+      - name: Verify the Fixture Against Both Engines
+        run: >
+          php tests/Tools/verify_pcre2_fixture.php
+          --floor-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.40/pcre2test"
+          --pin-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.48/pcre2test"
