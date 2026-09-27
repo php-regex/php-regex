@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `$phpVersionId` argument of `Lexer::__construct()`: tokenizing does not depend on the PHP version, and keying the compiled token patterns on it compiled the same two regexes once per version. See [UPGRADING.md](UPGRADING.md).
 
 ### Fixed
+- Validation refused `\K` inside a lookbehind (`regex.lookbehind.keep_not_allowed`), though PHP compiles it: PHP enables `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` by default, and PCRE2 allowed it there before 10.38. `/(?<=a\K)b/` validates now.
 - Installing `nikic/php-parser` changed what `regex lint` reported: the AST extractor missed the patterns held in an array — `preg_replace(['/a/', '/b/'], ...)` and every `preg_replace_callback_array()` key — that the tokenizer already read. Both extractors now recognise the same calls, and the AST one also reads a pattern passed as a named argument.
 - A single generated file of a couple of megabytes aborted a whole lint run: reading it into tokens exhausted the memory limit, and that fatal error cannot be caught, so every result collected so far was lost. Such a file is now skipped; raise `memory_limit` to have it analyzed.
 - Validation refused every version condition, `(?(VERSION>=10.4)...)` included, though PCRE compiles it. It now accepts the two comparisons PCRE makes — `=` and `>=` — and reports the others as `regex.condition.version_operator` rather than as an unrecognised condition.

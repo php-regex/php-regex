@@ -122,11 +122,27 @@ final class ValidatorNodeVisitorTest extends TestCase
         $this->validate('/(?<=a*b)/');
     }
 
-    public function test_throws_on_invalid_keep_in_lookbehind(): void
+    /**
+     * PHP compiles every pattern with PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK (php-src
+     * default since 8.1.0), and PCRE2 never banned \K in lookarounds before
+     * 10.38: preg_match returns 0, without a warning, for each of these.
+     */
+    #[DataProvider('provideKeepInsideLookarounds')]
+    public function test_accepts_keep_inside_lookarounds(string $pattern): void
     {
-        $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('\K (keep) is not allowed in lookbehinds');
-        $this->validate('/(?<=a\K)/');
+        $this->assertTrue(Regex::create()->validate($pattern)->isValid);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideKeepInsideLookarounds(): iterable
+    {
+        yield 'positive lookbehind' => ['pattern' => '/(?<=a\K)/'];
+        yield 'keep first in a lookbehind' => ['pattern' => '/(?<=\Ka)/'];
+        yield 'negative lookbehind' => ['pattern' => '/(?<!\Ka)b/'];
+        yield 'positive lookahead' => ['pattern' => '/(?=a\K)a/'];
+        yield 'lookahead inside a lookbehind' => ['pattern' => '/(?<=a(?=b\K))/'];
     }
 
     public function test_throws_on_backref_to_non_existent_named_group(): void

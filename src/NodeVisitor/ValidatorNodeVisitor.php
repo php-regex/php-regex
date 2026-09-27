@@ -111,8 +111,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     // Optimized state management with minimal memory footprint
 
-    private bool $inLookbehind = false;
-
     private bool $unicodeMode = false;
 
     private GroupNumbering $groupNumbering;
@@ -158,7 +156,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): void
     {
-        $this->inLookbehind = false;
         $this->unicodeMode = str_contains($node->flags, 'u');
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->captureSequence = $this->groupNumbering->captureSequence;
@@ -210,7 +207,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $this->ensureGroupNumberingInitialized();
 
-        $wasInLookbehind = $this->inLookbehind;
         $previous = $this->previousNode;
         $next = $this->nextNode;
 
@@ -219,7 +215,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             [GroupType::T_GROUP_LOOKBEHIND_POSITIVE, GroupType::T_GROUP_LOOKBEHIND_NEGATIVE],
             true,
         )) {
-            $this->inLookbehind = true;
             $this->validateLookbehindLength($node);
         }
 
@@ -232,8 +227,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $node->child->accept($this);
         $this->previousNode = $previous;
         $this->nextNode = $next;
-
-        $this->inLookbehind = $wasInLookbehind; // Restore state
     }
 
     #[\Override]
@@ -301,19 +294,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * @throws SemanticErrorException if `\K` is found within a lookbehind
+     * `\K` is valid anywhere, lookarounds included: PHP compiles every pattern
+     * with PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK, and PCRE2 allowed it there by
+     * default before 10.38.
      */
     #[\Override]
-    public function visitKeep(KeepNode $node): void
-    {
-        if ($this->inLookbehind) {
-            $this->raiseSemanticError(
-                '\K (keep) is not allowed in lookbehinds.',
-                $node->startPosition,
-                'regex.lookbehind.keep_not_allowed',
-            );
-        }
-    }
+    public function visitKeep(KeepNode $node): void {}
 
     #[\Override]
     public function visitCharClass(CharClassNode $node): void
