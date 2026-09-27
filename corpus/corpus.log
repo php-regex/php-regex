@@ -870,6 +870,116 @@
          - /^(?:['"])(.*?)(?:['"])?$/
          + /^['"](.*?)['"]?$/
 
+  corpus/matomo-org/matomo/core/Segment/SegmentExpression.php:374:24
+      → /[^@a-zA-Z0-9_]?`?([@a-zA-Z_][@a-zA-Z0-9_]*`?\.`?[a-zA-Z0-9_`]+)`?\b/
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/matomo-org/matomo/core/Plugin/Manager.php:1336:34
+      → /^[a-zA-Z]([a-zA-Z0-9_]){0,59}$/D
+     WARN  Quantified capturing group "(...)" with "{0,59}": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/core/Http.php:576:37
+      → ~^HTTP/(\d\.\d)\s+(\d+)(\s*.*)?~
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/matomo-org/matomo/core/Http.php:742:65
+      → ~^HTTP/(\d\.\d)\s+(\d+)(\s*.*)?~
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/matomo-org/matomo/core/Http/EgressHostValidator.php:112:25
+      → /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i
+         + /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(?>(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?))*$/i
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/core/Twig.php:692:31
+      → /\w+\.\w+/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/matomo-org/matomo/core/Period.php:98:28
+      → /^(last|previous){1}([0-9]*)$/D
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     TIP 
+         - /^(last|previous){1}([0-9]*)$/D
+         + /^(last|previous)([0-9]*)$/D
+
+  corpus/matomo-org/matomo/plugins/LanguagesManager/Commands/Update.php:165:24
+      → /plugins\/([a-zA-z]+) /
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: range 'A'-'z' (overlaps 'a'-'z')
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+
+  corpus/matomo-org/matomo/plugins/LanguagesManager/Commands/Update.php:170:24
+      → /plugins\/([a-zA-z]+)\/\n/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: range 'A'-'z' (overlaps 'a'-'z')
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+
+  corpus/matomo-org/matomo/plugins/CoreConsole/Commands/GeneratePluginBase.php:251:29
+      → /[^(\x00-\x7F)]*/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: '(' (covered by range '\x00'-'\x7F'), ')' (covered by range '\x00'-'\x7F')
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/matomo-org/matomo/plugins/Goals/Recommendations/DeterministicRecommender.php:545:38
+      → #^(/[a-z]{2}([-_][a-z]{2})?(?=/))+#i
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/plugins/CoreVue/Commands/Build.php:300:13
+      → /in\s+([^\n]+)\(\d+,\d+\)\s*\n\s*TS2307:\s+Cannot find module '([^']+)' or its corresponding type declarations\./m
+     WARN  Flag 'm' is useless: pattern '/in\s+([^\n]+)\(\d+,\d+\)\s*\n\s*TS2307:\s+Cannot find module '([^']+)' or its corresponding type declarations\./m' contains no anchors.
+     TIP 
+         - /in\s+([^\n]+)\(\d+,\d+\)\s*\n\s*TS2307:\s+Cannot find module '([^']+)' or its corresponding type declarations\./m
+         + /in\s+([^\n]+)\(\d+,\d+\)\s*\n\s*TS2307:\s+Cannot find module '([^']+)' or its corresponding type declarations\./
+
+  corpus/matomo-org/matomo/plugins/AIProviders/Provider/Google.php:303:13
+      → ~^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$~i
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - ~^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$~i
+         + ~^[a-z0-9]([a-z0-9-]*[a-z0-9])?(?>(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?))*\.[a-z]{2,}$~i
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/plugins/Diagnostics/Commands/Run.php:90:26
+      → %</?[a-z][a-z0-9]*[^<>]*>%sim
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     WARN  Flag 'm' is useless: pattern '%<\/?[a-z][a-z0-9]*[^<>]*>%sim' contains no anchors.
+     TIP 
+         - %</?[a-z][a-z0-9]*[^<>]*>%sim
+         + %</?[a-z][a-z0-9]*[^<>]*>%i
+
+  corpus/matomo-org/matomo/libs/Zend/Session/Namespace.php:120:24
+      → #(^[0-9])#i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/matomo-org/matomo/libs/HTML/Common2.php:149:17
+      → /(([A-Za-z_:]|[^\x00-\x7F])([A-Za-z0-9_:.-]|[^\x00-\x7F])*)([ \n\t\r]+)?(=([ \n\t\r]+)?("[^"]*"|'[^']*'|[^ \n\t\r]*))?/
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/libs/HTML/QuickForm2/Renderer/Smarty.php:266:33
+      → /\[?([\w_]+)\]?$/i
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
   corpus/snipe-it/app/Providers/ValidationServiceProvider.php:428:31
       → /\pL/
      WARN  Unicode property "\p{L}" requires /u flag.
@@ -3037,12 +3147,38 @@
      WARN  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:1799:36
+  corpus/phpstan-src/.claude/skills/rebase-branch/rebase-plan.php:285:18
+      → ~^[-+]\s*(?:(?:public|protected|private|readonly|static)(?:\(set\))?\s+)+[^=;(]*?\$(\w+)~
+     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+  corpus/phpstan-src/turbo-ext/bin/side-by-side.php:514:19
+      → /^\t(?:static\s+)?(?:[\w:<>]+(?:\s*[&*])?\s+)+(\w+?)(_?)\(/
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /^\t(?:static\s+)?(?:[\w:<>]+(?:\s*[&*])?\s+)+(\w+?)(_?)\(/
+         + /^\t(?:static\s+)?(?>(?:[\w:<>]+(?:\s*[&*])?\s+))+(\w+?)(_?)\(/
+
+  corpus/phpstan-src/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php:50:22
+      → /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     TIP 
+         - /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
+         + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
+
+  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:3595:36
       → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
          + ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~i
+
+  corpus/phpstan-src/src/Command/BisectCommand.php:445:22
+      → #https://github\.com/phpstan/phpstan-src/commit/[a-f0-9]+(?:\s+.*)?#
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/phpstan-src/src/Command/ErrorFormatter/BaselineNeonErrorFormatter.php:124:95
       → ~(\n)+$~
@@ -7610,6 +7746,813 @@
          - /([ ,-:;\x{2013}\x{2014}]+$)/us
          + /([ ,-:;\x{2013}\x{2014}]+$)/u
 
+  corpus/salesagility/SuiteCRM/install/checkDBSettings.php:118:32
+      → ![/\.]+!i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/install/checkDBSettings.php:127:32
+      → !["'*/\?:<>-]+!i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/install/install_utils.php:341:29
+      → #.*\.zip\$
+     FAIL  No closing delimiter "#" found. You opened with "#"; expected closing "#". Tip: escape "#" inside the pattern (\#) or use a different delimiter, e.g. ~.*\.zip\$~.
+
+  corpus/salesagility/SuiteCRM/include/SugarHtml/SugarHtml.php:353:24
+      → /[\{\}]/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/MssqlManager.php:522:36
+      → /\bfrom\b/simU
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     WARN  Flag 'm' is useless: pattern '/\bfrom\b/simU' contains no anchors.
+     TIP 
+         - /\bfrom\b/simU
+         + /\bfrom\b/iU
+
+  corpus/salesagility/SuiteCRM/include/database/MssqlManager.php:524:36
+      → /\where\b/simU
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     WARN  Flag 'm' is useless: pattern '/\where\b/simU' contains no anchors.
+     TIP 
+         - /\where\b/simU
+         + /\where\b/iU
+
+  corpus/salesagility/SuiteCRM/include/database/MssqlManager.php:1464:32
+      → /\([\(|'](.*)[\)|']\)/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/MysqlManager.php:347:28
+      → /(\w+)(?:\(([0-9]+,?[0-9]*)\)|)( unsigned)?/i
+     WARN  Alternation contains an empty alternative.
+         ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+
+  corpus/salesagility/SuiteCRM/include/database/MysqlManager.php:610:24
+      → !/\*.*?\*/!is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/MysqlManager.php:612:29
+      → !/\*.*?\*/!is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/DBManager.php:2304:24
+      → /(\w+)(?:\(([0-9]+,?[0-9]*|\w+)\)|)/i
+     WARN  Alternation contains an empty alternative.
+         ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/DBManager.php:2580:24
+      → #(?P<type>\w+)\s*(?P<arg>\((?P<len>\w+)\s*(,\s*(?P<scale>\d+))*\))*#
+     WARN  Quantified named group "(?<arg>...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/database/DBManager.php:2910:30
+      → /[^\w]+/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/database/DBManager.php:3481:33
+      → /("([^"]*?)"|[^"\s,]+)((,\s)+)?/
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/database/SqlsrvManager.php:423:32
+      → /\([\(|'](.*)[\)|']\)/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/EditView/QuickCreate.php:76:24
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/include/EditView/EditView2.php:894:24
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:438:36
+      → /_name$|_c$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /_name$|_c$/si
+         + /_name$|_c$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:441:36
+      → /^(Campaigns|Teams|Users|Contacts|Accounts)$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^(Campaigns|Teams|Users|Contacts|Accounts)$/si
+         + /^(Campaigns|Teams|Users|Contacts|Accounts)$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:556:21
+      → /_name$|_c$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /_name$|_c$/si
+         + /_name$|_c$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:560:37
+      → /_c$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /_c$/si
+         + /_c$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:561:70
+      → /_c$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /_c$/si
+         + /_c$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:562:39
+      → /^(Campaigns|Teams|Users|Contacts|Accounts)$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^(Campaigns|Teams|Users|Contacts|Accounts)$/si
+         + /^(Campaigns|Teams|Users|Contacts|Accounts)$/i
+
+  corpus/salesagility/SuiteCRM/include/TemplateHandler/TemplateHandler.php:614:60
+      → /_c$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /_c$/si
+         + /_c$/i
+
+  corpus/salesagility/SuiteCRM/include/SearchForm/SugarSpot.php:261:35
+      → /^([^%]|%)*@([^%]|%)*$/
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/SearchForm/SearchForm2.php:216:24
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/include/SugarEmailAddress/SugarEmailAddress.php:985:36
+      → /emailAddress([0-9])+$/
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/utils/file_utils.php:526:25
+      → /[^\w\-._]+/i
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/InlineEditing/InlineEditing.php:196:20
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/include/InlineEditing/InlineEditing.php:159:34
+      → /<script language="javascript">if\(typeof sqs_objects == \'undefined\'\){var sqs_objects = new Array;}sqs_objects\[\'EditView_parent_name\'\].*?<\/script>/
+     TIP 
+         - /<script language="javascript">if\(typeof sqs_objects == \'undefined\'\){var sqs_objects = new Array;}sqs_objects\[\'EditView_parent_name\'\].*?<\/script>/
+         + /<script language="javascript">if\(typeof sqs_objects == 'undefined'\)\{var sqs_objects = new Array;\}sqs_objects\['EditView_parent_name'\].*?<\/script>/
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/function.sugar_evalcolumn.php:92:54
+      → '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+         + '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'i
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/function.sugar_evalcolumn.php:101:58
+      → '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+         + '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'i
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/outputfilter.trimwhitespace.php:59:33
+      → /((?<!\?>)\n)[\s]+/m
+     WARN  Flag 'm' is useless: pattern '/((?<!\?>)\n)[\s]+/m' contains no anchors.
+     TIP 
+         - /((?<!\?>)\n)[\s]+/m
+         + /((?<!\?>)\n)[\s]+/
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/block.minify.php:11:40
+      → #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s
+         + #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/block.minify.php:99:13
+      → #:(0\s+){0,3}0(?=[!,;\)\}]|$)#
+     WARN  Quantified capturing group "(...)" with "{0,3}": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/function.fetch.php:98:49
+      → ![\w\d-]+: .+!
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/modifier.capitalize.php:24:34
+      → !'?\b\w(\w|')*\b!
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/modifier.regex_replace.php:39:20
+      → !([a-zA-Z\s]+)$!s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - !([a-zA-Z\s]+)$!s
+         + !([a-zA-Z\s]+)$!
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/function.sugar_include.php:81:32
+      → /[\.]js$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /[\.]js$/si
+         + /[\.]js$/i
+
+  corpus/salesagility/SuiteCRM/include/Smarty/plugins/function.sugar_include.php:83:39
+      → /[\.]php$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /[\.]php$/si
+         + /[\.]php$/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/MetaParser.php:95:24
+      → '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'si
+         + '(<[ ]*?)(textarea|input|select)([^>]*?)(>)'i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/MetaParser.php:112:24
+      → '(<[ ]*?)(textarea|input|select)[^>]*?name=[\'"]([^\'"]*?)(\[\])?(_basic)?[\'"]([^>]*?>)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '(<[ ]*?)(textarea|input|select)[^>]*?name=[\'"]([^\'"]*?)(\[\])?(_basic)?[\'"]([^>]*?>)'si
+         + '(<[ ]*?)(textarea|input|select)[^>]*?name=[\'"]([^\'"]*?)(\[\])?(_basic)?[\'"]([^>]*?>)'i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/MetaParser.php:237:29
+      → '(<!--.*?-->)'si
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/MetaParser.php:344:24
+      → '([\{])([a-zA-Z0-9_]*?)([\}])'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '([\{])([a-zA-Z0-9_]*?)([\}])'si
+         + '([\{])([a-zA-Z0-9_]*?)([\}])'i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/MetaParser.php:742:27
+      → /\<(div|span) class=(\")?required(\")?\s?>\*<\/(div|span)>/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\<(div|span) class=(\")?required(\")?\s?>\*<\/(div|span)>/si
+         + /\<(div|span) class=(\")?required(\")?\s?>\*<\/(div|span)>/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:128:72
+      → /[\{]([^\}]*?)[\}]/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /[\{]([^\}]*?)[\}]/s
+         + /[\{]([^\}]*?)[\}]/
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:193:36
+      → /<textarea/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /<textarea/si
+         + /<textarea/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:246:24
+      → /(<input[^>]*?)>/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /(<input[^>]*?)>/si
+         + /(<input[^>]*?)>/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:257:28
+      → /hidden/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /hidden/si
+         + /hidden/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/SearchFormMetaParser.php:213:32
+      → /<textarea/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /<textarea/si
+         + /<textarea/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:67:32
+      → /lbl_email_addresses/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /lbl_email_addresses/si
+         + /lbl_email_addresses/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:76:92
+      → /^email(s|2)$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:86:60
+      → /^email(s|2)$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:87:34
+      → /^invalid_email$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^invalid_email$/si
+         + /^invalid_email$/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:88:34
+      → /^email_opt_out$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^email_opt_out$/si
+         + /^email_opt_out$/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:89:34
+      → /^primary_email$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^primary_email$/si
+         + /^primary_email$/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:103:36
+      → /lbl_email_addresses/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /lbl_email_addresses/si
+         + /lbl_email_addresses/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:91:28
+      → /hidden/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /hidden/si
+         + /hidden/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:193:71
+      → /[\{]([^\}]*?)[\}]/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /[\{]([^\}]*?)[\}]/s
+         + /[\{]([^\}]*?)[\}]/
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:264:35
+      → /<textarea/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /<textarea/si
+         + /<textarea/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Fields/Collection/ViewSugarFieldCollection.php:389:61
+      → /(Campaigns|Teams|Users|Accounts)/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /(Campaigns|Teams|Users|Accounts)/si
+         + /(Campaigns|Teams|Users|Accounts)/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Fields/Relate/SugarFieldRelate.php:101:52
+      → /Accounts/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /Accounts/si
+         + /Accounts/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Fields/Relate/SugarFieldRelate.php:229:52
+      → /Accounts/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /Accounts/si
+         + /Accounts/i
+
+  corpus/salesagility/SuiteCRM/include/vCard.php:203:28
+      → /CHARSET=([A-Z]+([A-Z0-9]-?)*):/
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/include/export_utils.php:296:47
+      → /([pm|PM|am|AM]+)/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: '|' (duplicate), 'm' (duplicate), 'M' (duplicate)
+     WARN  Character class contains "|" which is literal inside []. It looks like an alternation typo.
+         ↳ Did you mean an alternation like "(error|failure)" instead of a character class?
+
+  corpus/salesagility/SuiteCRM/include/export_utils.php:730:44
+      → /([pm|PM|am|AM]+)/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: '|' (duplicate), 'm' (duplicate), 'M' (duplicate)
+     WARN  Character class contains "|" which is literal inside []. It looks like an alternation typo.
+         ↳ Did you mean an alternation like "(error|failure)" instead of a character class?
+
+  corpus/salesagility/SuiteCRM/include/parsecsv.lib.php:629:71
+      → /<\?.*?\?>(.*)/ims
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 'm' is useless: pattern '/<\?.*?\?>(.*)/ims' contains no anchors.
+     TIP 
+         - /<\?.*?\?>(.*)/ims
+         + /<\?.*?\?>(.*)/is
+
+  corpus/salesagility/SuiteCRM/include/parsecsv.lib.php:707:28
+      → /^(['\"]{1})(.*)(['\"]{1})$/i
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     TIP 
+         - /^(['\"]{1})(.*)(['\"]{1})$/i
+         + /^(['"])(.*)(['"])$/i
+
+  corpus/salesagility/SuiteCRM/include/utils.php:1637:20
+      → /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/utils.php:2092:16
+      → /\(?([^-]{1})[^-]*-([^-]{1})[^-]*-([^-]{1})[^-]*\)/
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     TIP 
+         - /\(?([^-]{1})[^-]*-([^-]{1})[^-]*-([^-]{1})[^-]*\)/
+         + /\(?([^\-])[^\-]*-([^\-])[^\-]*-([^\-])[^\-]*\)/
+
+  corpus/salesagility/SuiteCRM/include/utils.php:2203:21
+      → @://@i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/utils.php:4995:76
+      → /^[A-z]:/i
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+
+  corpus/salesagility/SuiteCRM/include/utils.php:5316:20
+      → /^[\d\.]+?([a-zA-Z]+?)[\d]*?$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /^[\d\.]+?([a-zA-Z]+?)[\d]*?$/si
+         + /^[\d\.]+?([a-zA-Z]+?)[\d]*?$/i
+
+  corpus/salesagility/SuiteCRM/include/utils.php:5334:20
+      → /^([\d\.]+).*$/si
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/include/utils.php:5857:16
+      → /[oc]:[^:]*\d+:/i
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the second quantifier to its minimum.
+
+  corpus/salesagility/SuiteCRM/include/utils.php:6199:26
+      → /^[\w\-\_\.]+$/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/include/SugarPHPMailer.php:351:36
+      → #<img[^>]+src[^=]*=\"\/([^>]*?[^>]*)>#sim
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     WARN  Flag 'm' is useless: pattern '#<img[^>]+src[^=]*="\/([^>]*?[^>]*)>#sim' contains no anchors.
+     TIP 
+         - #<img[^>]+src[^=]*=\"\/([^>]*?[^>]*)>#sim
+         + #<img[^>]+src[^=]*=\"\/([^>]*?[^>]*)>#i
+
+  corpus/salesagility/SuiteCRM/include/Localization/Localization.php:805:29
+      → /[^sfl[:punct:][:^alnum:]\s]/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/SugarSecurity.php:106:24
+      → 'require\([^\)]*\$[^\)]*\)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'require\([^\)]*\$[^\)]*\)'si
+         + 'require\([^\)]*\$[^\)]*\)'i
+
+  corpus/salesagility/SuiteCRM/SugarSecurity.php:111:24
+      → 'include\([^\)]*\$[^\)]*\)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'include\([^\)]*\$[^\)]*\)'si
+         + 'include\([^\)]*\$[^\)]*\)'i
+
+  corpus/salesagility/SuiteCRM/SugarSecurity.php:116:24
+      → 'require_once\([^\)]*\$[^\)]*\)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'require_once\([^\)]*\$[^\)]*\)'si
+         + 'require_once\([^\)]*\$[^\)]*\)'i
+
+  corpus/salesagility/SuiteCRM/SugarSecurity.php:121:24
+      → 'fopen\([^\)]*\$[^\)]*\)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'fopen\([^\)]*\$[^\)]*\)'si
+         + 'fopen\([^\)]*\$[^\)]*\)'i
+
+  corpus/salesagility/SuiteCRM/SugarSecurity.php:126:24
+      → 'file_get_contents\([^\)]*\$[^\)]*\)'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'file_get_contents\([^\)]*\$[^\)]*\)'si
+         + 'file_get_contents\([^\)]*\$[^\)]*\)'i
+
+  corpus/salesagility/SuiteCRM/service/JsonRPCServer/JsonRPCServerCalls.php:129:47
+      → /[^\w_.-]+/i
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/modules/Calls/CallFormBase.php:248:24
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/modules/Calls/Reschedule.php:21:16
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/modules/Home/QuickSearch.php:495:43
+      → /reports_to_id$/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /reports_to_id$/s
+         + /reports_to_id$/
+
+  corpus/salesagility/SuiteCRM/modules/Home/QuickSearch.php:496:46
+      → /contact_id$/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /contact_id$/s
+         + /contact_id$/
+
+  corpus/salesagility/SuiteCRM/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php:624:30
+      → /[^\w]+/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php:627:40
+      → /[^\w]+/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/modules/ModuleBuilder/views/view.labels.php:136:67
+      → /lbl_city|lbl_country|lbl_billing_address|lbl_alt_address|lbl_shipping_address|lbl_postal_code|lbl_state$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /lbl_city|lbl_country|lbl_billing_address|lbl_alt_address|lbl_shipping_address|lbl_postal_code|lbl_state$/si
+         + /lbl_city|lbl_country|lbl_billing_address|lbl_alt_address|lbl_shipping_address|lbl_postal_code|lbl_state$/i
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:102:24
+      → 'name[ ]*=[ ]*[\'"]+([a-zA-Z0-9\_]+)[\'"]+'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'name[ ]*=[ ]*[\'"]+([a-zA-Z0-9\_]+)[\'"]+'si
+         + 'name[ ]*=[ ]*[\'"]+([a-zA-Z0-9\_]+)[\'"]+'i
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:110:24
+      → '\{MOD\.([a-zA-Z0-9\_]+)\}'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '\{MOD\.([a-zA-Z0-9\_]+)\}'si
+         + '\{MOD\.([a-zA-Z0-9\_]+)\}'i
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:111:24
+      → '\{APP\.([a-zA-Z0-9\_]+)\}'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - '\{APP\.([a-zA-Z0-9\_]+)\}'si
+         + '\{APP\.([a-zA-Z0-9\_]+)\}'i
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:129:24
+      → '<span[^>]*sugar=[\'"]+([a-zA-Z\_]*)([0-9]+)([b]*)[\'"]+[^>]*>(.*?)</span[ ]*sugar=[\'"]+[a-zA-Z0-9\_]*[\'"]+>'si
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:146:31
+      → '<span[^>]*sugar=[\'"]+([a-zA-Z\_]*)([0-9]+)([b]*)[\'"]+[^>]*>(.*?)</span[ ]*sugar=[\'"]+[a-zA-Z0-9\_]*[\'"]+>'si
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:371:21
+      → /name\s*=\s*["']([^"']*)["']/Us
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /name\s*=\s*["']([^"']*)["']/Us
+         + /name\s*=\s*["']([^"']*)["']/U
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:449:24
+      → 'name[\ ]*=[\ ]*[\']([^\']*)\''si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'name[\ ]*=[\ ]*[\']([^\']*)\''si
+         + 'name[\ ]*=[\ ]*[\']([^\']*)\''i
+
+  corpus/salesagility/SuiteCRM/modules/Studio/parsers/StudioParser.php:454:24
+      → 'name[\ ]*=[\ ]*["]([^"]*)"'si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - 'name[\ ]*=[\ ]*["]([^"]*)"'si
+         + 'name[\ ]*=[\ ]*["]([^"]*)"'i
+
+  corpus/salesagility/SuiteCRM/modules/AOD_Index/LuceneUtils.php:110:29
+      → /[^a-zA-Z0-9\s\,\.\-\n\r\t@\/\_\(\)]/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/AOD_Index/PdfParser.php:113:41
+      → /\s*-[\r\n]+\s*/
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/salesagility/SuiteCRM/modules/InboundEmail/InboundEmail.php:4943:52
+      → /\([\w]+\)/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/modules/InboundEmail/InboundEmail.php:8420:32
+      → /(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     WARN  Flag 'm' is useless: pattern '/(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im' contains no anchors.
+     TIP 
+         - /(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im
+         + /(delivered-to:|x-real-to:)\s*(\S+)\s*\n/i
+
+  corpus/salesagility/SuiteCRM/modules/Tasks/Save.php:63:16
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/modules/jjwg_Maps/jjwg_Maps.php:1227:37
+      → /[\t\s]+/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/jjwg_Areas/jjwg_Areas.php:89:40
+      → /[\n\r\s]+/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/AOR_Scheduled_Reports/lib/Cron/DayOfMonthField.php:101:34
+      → /^[\*,\/\-\?LW0-9A-Za-z]+$/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: 'L' (covered by range 'A'-'Z'), 'W' (covered by range 'A'-'Z')
+
+  corpus/salesagility/SuiteCRM/modules/AOR_Scheduled_Reports/lib/Cron/DayOfWeekField.php:118:29
+      → /^(\*|[0-7](L?|#[1-5]))([\/\,\-][0-7]+)*$/
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/modules/Emails/Email.php:4526:17
+      → /([a-zA-z0-9\!\#\$\%\&'\*\+\-\/\ =\?\^\`\{\|\}\~\.\[\]\"\(\)\s]+)((<[a-zA-z0-9\!\#\$\%\&'\*\+\-\/\=\?\^\_\`\{\|\}\~\.\[\]\"\(\)]+)(@)([a-zA-z0-9\-\.]+\>))$/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: range 'A'-'z' (overlaps 'a'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/Emails/Email.php:4571:17
+      → /([a-zA-z0-9\!\#\$\%\&'\*\+\-\/\ =\?\^\`\{\|\}\~\.\[\]\"\(\)\s]+)((<[a-zA-z0-9\!\#\$\%\&'\*\+\-\/\=\?\^\_\`\{\|\}\~\.\[\]\"\(\)]+)(@)([a-zA-z0-9\-\.]+\>))$/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: range 'A'-'z' (overlaps 'a'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/Emails/Email.php:4615:17
+      → /([a-zA-z0-9\!\#\$\%\&'\*\+\-\/\ =\?\^\`\{\|\}\~\.\[\]\"\(\)\s]+)((<[a-zA-z0-9\!\#\$\%\&'\*\+\-\/\=\?\^\_\`\{\|\}\~\.\[\]\"\(\)]+)(@)([a-zA-z0-9\-\.]+\>))$/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: range 'A'-'z' (overlaps 'a'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).
+     WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+         ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/Emails/EmailUI.php:2481:33
+      → /^(re:)+/i
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/modules/Emails/EmailUI.php:2499:33
+      → /^(fw:)+/i
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/modules/EmailTemplates/EmailTemplateFormBase.php:188:28
+      → #<img[^>]*[\s]+src[^=]*=[\s]*["']cache/images/(.+?)["']#si
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the second quantifier to its minimum.
+
+  corpus/salesagility/SuiteCRM/modules/DynamicFields/templates/Fields/TemplateEnum.php:179:28
+      → /&amp;/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /&amp;/s
+         + /&amp;/
+
+  corpus/salesagility/SuiteCRM/modules/AOW_WorkFlow/aow_utils.php:497:20
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/modules/UpgradeWizard/uw_utils.php:65:16
+      → /^\d+(\.\d+)*/
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/salesagility/SuiteCRM/modules/UpgradeWizard/uw_utils.php:4542:30
+      → /[^\w-]+/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/salesagility/SuiteCRM/modules/UpgradeWizard/SugarMerge/SugarMerge.php:110:25
+      → /[\/]modules$/si
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /[\/]modules$/si
+         + /[\/]modules$/i
+
+  corpus/salesagility/SuiteCRM/modules/UpgradeWizard/upgradeMetaHelper.php:316:28
+      → /(EditView|DetailView|SearchForm|QuickCreate)(\.html|\.tpl)$/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /(EditView|DetailView|SearchForm|QuickCreate)(\.html|\.tpl)$/s
+         + /(EditView|DetailView|SearchForm|QuickCreate)(\.html|\.tpl)$/
+
+  corpus/salesagility/SuiteCRM/modules/Administration/SyncInboundEmailAccounts/SyncInboundEmailAccountsSubActionHandler.php:458:20
+      → /(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     WARN  Flag 'm' is useless: pattern '/(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im' contains no anchors.
+     TIP 
+         - /(delivered-to:|x-real-to:){1}\s*(\S+)\s*\n{1}/im
+         + /(delivered-to:|x-real-to:)\s*(\S+)\s*\n/i
+
+  corpus/salesagility/SuiteCRM/modules/Meetings/MeetingFormBase.php:213:24
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/modules/EmailMan/EmailImage.php:45:43
+      → /^[\w\d\-]+$/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php:599:34
+      → /\[(\w+)\:([\w\-\d]*)\:([^\]]*)\]\[HIDELINK\]/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+     TIP 
+         - /\[(\w+)\:([\w\-\d]*)\:([^\]]*)\]\[HIDELINK\]/
+         + /\[(\w+):([\w\-\d]*):([^\]]*)\]\[HIDELINK\]/
+
+  corpus/salesagility/SuiteCRM/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php:601:34
+      → /\[(\w+)\:([\w\-\d]*)\:([^\]]*)\]/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/AOP_Case_Updates/CaseUpdatesHook.php:323:30
+      → /(\r\n|\r|\n)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /(\r\n|\r|\n)/s
+         + /(\r\n|\r|\n)/
+
+  corpus/salesagility/SuiteCRM/modules/Import/views/view.error.php:108:30
+      → /^[\w\-\_\.\:]+$/
+     WARN  Character class contains duplicate elements that do not add new matches.
+         ↳ Remove the redundant character class element.
+
+  corpus/salesagility/SuiteCRM/modules/Import/Forms.php:138:20
+      → /\d+([^\d])\d+([^\d]*)/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /\d+([^\d])\d+([^\d]*)/s
+         + /\d+([^\d])\d+([^\d]*)/
+
+  corpus/salesagility/SuiteCRM/data/SugarBean.php:1001:25
+      → /\s+ORDER\s+BY\b(?:[^()]|\((?:[^()]*|\([^()]*\))*\))*$/i
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /\s+ORDER\s+BY\b(?:[^()]|\((?:[^()]*|\([^()]*\))*\))*$/i
+         + /\s+ORDER\s+BY\b(?>(?:[^()]|\((?:[^()]*|\([^()]*\))*\)))*$/i
+
   corpus/nette/tracy/src/Tracy/Logger/Logger.php:164:17
       → #\s*\r?\n\s*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -8230,6 +9173,60 @@
       → ~(</?)(\w*)((/(?!>)|[^/>])*)(/?>)~
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/livewire/blaze/src/Directive/BlazeDirective.php:18:26
+      → /^\s*(?:\/\*.*?\*\/\s*)*@blaze(?:\s*\(([^)]+)\))?/s
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /^\s*(?:\/\*.*?\*\/\s*)*@blaze(?:\s*\(([^)]+)\))?/s
+         + /^\s*(?>(?:\/\*.*?\*\/\s*))*@blaze(?:\s*\(([^)]+)\))?/s
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
+
+  corpus/livewire/livewire/.github/scripts/get-browser-test-shard.php:21:24
+      → /function\s+test_/m
+     WARN  Flag 'm' is useless: pattern '/function\s+test_/m' contains no anchors.
+     TIP 
+         - /function\s+test_/m
+         + /function\s+test_/
+
+  corpus/livewire/livewire/src/Mechanisms/ExtendBlade/UnitTest.php:75:42
+      → /@foo/sm
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     WARN  Flag 'm' is useless: pattern '/@foo/sm' contains no anchors.
+     TIP 
+         - /@foo/sm
+         + /@foo/
+
+  corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:301:29
+      → ~(\v|\t|\s{2,})~m
+     WARN  Flag 'm' is useless: pattern '~(\v|\t|\s{2,})~m' contains no anchors.
+     TIP 
+         - ~(\v|\t|\s{2,})~m
+         + ~(\v|\t|\s{2,})~
+
+  corpus/livewire/livewire/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php:50:41
+      → /<livewire:[^>]+?\/>/is
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /<livewire:[^>]+?\/>/is
+         + /<livewire:[^>]+?\/>/i
+
+  corpus/livewire/livewire/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php:53:24
+      → /(?<=\s)wire:key\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)')/
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /(?<=\s)wire:key\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)')/
+         + /(?<=\s)wire:key\s*=\s*(?:"([^"\\]*(?>(?:\\.[^"\\]*))*)"|'([^'\\]*(?:\\.[^'\\]*)*)')/
+
+  corpus/livewire/livewire/src/Compiler/Parser/MultiFileParser.php:156:39
+      → /return\s+new\s+class\s*\(/s
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /return\s+new\s+class\s*\(/s
+         + /return\s+new\s+class\s*\(/
 
   corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:538:17
       → #\n                    (?:CONSTRAINT\s+(\S+)\s+)?\n                    (?:FOREIGN\s+KEY[^)]+\)\s*)?\n                    REFERENCES\s+\S+\s*(?:\([^)]+\))?\n                    (?:\n                        [^,]*?\n                        (NOT\s+DEFERRABLE|DEFERRABLE)\n                        (?:\s+INITIALLY\s+(DEFERRED|IMMEDIATE))?\n                    )?#isx
@@ -13629,6 +14626,18 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
+  corpus/laravel/valet/cli/Valet/Server.php:78:27
+      → /^([0-9]+\.){3}[0-9]+$/
+     WARN  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/laravel/valet/cli/Valet/PhpFpm.php:275:29
+      → /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
+     WARN  Redundant non-capturing group; it can be removed without changing behavior.
+     TIP 
+         - /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
+         + /(?:php@?)?([0-9+]).?([0-9+])/i
+
   corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
       → /(<(style|script)\b(?:"[^"]*"|'[^']*'|[^>])*>)(.*?)(<\/\2>)/is
      WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -13965,6 +14974,12 @@
          - /(\(|\))/
          + /([()])/
 
+  corpus/matomo-org/matomo/core/Common.php:859:41
+      → /(,)(?:en-securid,)|(?:(^|,)en-securid(,|$))/
+     TIP 
+         - /(,)(?:en-securid,)|(?:(^|,)en-securid(,|$))/
+         + /(,)en-securid,|(?:(^|,)en-securid(,|$))/
+
   corpus/snipe-it/app/Models/Labels/Label.php:708:36
       → /\/*(.+?)(?:\/|\.)/
      TIP 
@@ -14030,6 +15045,12 @@
      TIP 
          - /^[^%]*%(?:postname)%/
          + /^[^%]*%postname%/
+
+  corpus/phpstan-src/build/PHPStan/Build/TurboDeclarationGenerator.php:370:18
+      → ~^\t+use ([\w\\,\s]+?)\s*(?:;|\{)~m
+     TIP 
+         - ~^\t+use ([\w\\,\s]+?)\s*(?:;|\{)~m
+         + ~^\t+use ([\w\\,\s]+?)\s*[;{]~m
 
   corpus/phpstan-src/e2e/bug13425/plugins/oepnvMobilePlugin/lib/mobileService/MobileServiceApi.php:889:24
       → /\n      \s*((?:\w+-)*\w+)     # key                               \1\n      \s*=\s*               # =\n      ('|")?               # values may be included in ' or " \2\n      (.*?)                 # value                             \3\n      (?(2) \2)            # matching ' or " if needed        \4\n      \s*(?:\n        (?=\w+\s*=) | \s*$  # followed by another key= or the end of the string\n      )\n    /x
@@ -14243,6 +15264,24 @@
          - #&([A-Za-z]{2})(?:lig);#
          + #&([A-Za-z]{2})lig;#
 
+  corpus/salesagility/SuiteCRM/include/SugarTheme/cssmin.php:65:29
+      → /\s*({|}|\[|=|~|\+|>|\||;|:|,)\s*/
+     TIP 
+         - /\s*({|}|\[|=|~|\+|>|\||;|:|,)\s*/
+         + /\s*([{}\[=~+>|;:,])\s*/
+
+  corpus/salesagility/SuiteCRM/include/SugarLogger/SugarLogger.php:324:24
+      → /^\s*([0-9]+\.[0-9]+|\.?[0-9]+)\s*(k|m|g|b)(b?ytes)?/i
+     TIP 
+         - /^\s*([0-9]+\.[0-9]+|\.?[0-9]+)\s*(k|m|g|b)(b?ytes)?/i
+         + /^\s*([0-9]+\.[0-9]+|\.?[0-9]+)\s*([kmgb])(b?ytes)?/i
+
+  corpus/salesagility/SuiteCRM/include/Services/NormalizeRecords/NormalizeRecords.php:242:25
+      → /^\d\d\d\d-\d\d-\d\d$/
+     TIP 
+         - /^\d\d\d\d-\d\d-\d\d$/
+         + /^\d{4}-\d\d-\d\d$/
+
   corpus/laminas/laminas-code/src/Reflection/DocBlockReflection.php:232:36
       → #[ ]{0,1}\*/$#
      TIP 
@@ -14272,6 +15311,12 @@
      TIP 
          - /\s{1,}/
          + /\s+/
+
+  corpus/livewire/blaze/src/Unblaze.php:61:41
+      → /(\[STARTUNBLAZE:([0-9a-zA-Z]+)\])(.*?)(\[ENDUNBLAZE\])/s
+     TIP 
+         - /(\[STARTUNBLAZE:([0-9a-zA-Z]+)\])(.*?)(\[ENDUNBLAZE\])/s
+         + /(\[STARTUNBLAZE:([0-9a-zA-Z]+)])(.*?)(\[ENDUNBLAZE\])/s
 
   corpus/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:256:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
