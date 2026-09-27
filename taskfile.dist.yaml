@@ -116,11 +116,14 @@ tasks:
       - cmd: mkdir -p .cache/infection-tmp
       # Reports live outside the ".cache" tmpDir: infection wipes that at the
       # end of a run and would take them with it.
-      - cmd: tools/infection/vendor/bin/infection --logger-text=infection-mutations.log --logger-html=infection-mutations.html {{.CLI_ARGS}}
+      # "-d auto_prepend_file=" neutralizes any ambient prepend shim set in the
+      # system php.ini — infection refuses to run with one active.
+      - cmd: php -d auto_prepend_file= tools/infection/vendor/bin/infection --logger-text=infection-mutations.log --logger-html=infection-mutations.html {{.CLI_ARGS}}
       - cmd: touch .task/infection.success
     sources:
       - infection.json.dist
       - phpunit.xml.dist
+      - tools/infection/composer.lock
       - src/**/*.php
       - tests/**/*.php
     generates:
