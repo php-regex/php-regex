@@ -114,7 +114,7 @@
         "phpDocumentor/ReflectionDocBlock": { "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git", "branch": "6.x" },
         "phpdox": { "url": "https://github.com/theseer/phpdox.git", "branch": "master" },
         "PHPMailer": { "url": "https://github.com/PHPMailer/PHPMailer.git", "branch": "master" },
-        "phpmd": { "url": "https://github.com/phpmd/phpmd.git", "branch": "master" },
+        "phpmd": { "url": "https://github.com/phpmd/phpmd.git", "branch": "3.x" },
         "phpmyadmin": { "url": "https://github.com/phpmyadmin/phpmyadmin.git", "branch": "master" },
         "phpqa": { "url": "https://github.com/EdgedesignCZ/phpqa.git", "branch": "master" },
         "phpseclib": { "url": "https://github.com/phpseclib/phpseclib.git", "branch": "master" },
