@@ -43,7 +43,7 @@ final class OutputTest extends TestCase
     {
         $output = new Output(false, false);
 
-        $this->assertSame('[PASS]', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
+        $this->assertSame('PASS', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
 
         $output->setAnsi(true);
 

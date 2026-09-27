@@ -29,10 +29,11 @@ final class OutputTest extends TestCase
         $this->assertSame(Output::RED.'text'.Output::RESET, $output->color('text', Output::RED));
     }
 
-    public function test_badge_uses_brackets_without_ansi(): void
+    public function test_badge_pads_plain_text_without_ansi(): void
     {
         $output = new Output(false, false);
 
-        $this->assertSame('[PASS]', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
+        $this->assertSame('PASS', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
+        $this->assertSame('OK  ', $output->badge('OK', Output::WHITE, Output::BG_GREEN));
     }
 }
