@@ -1529,6 +1529,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
+        // As for "\x{...}", PCRE reads every digit before it refuses a value
+        // above U+10FFFF, and reports it at the closing brace.
+        if (1 === preg_match('/^[ \t]*+U\+0*+([0-9A-Fa-f]++)[ \t]*+$/', $name, $digits)
+            && (\strlen($digits[1]) > 6 || hexdec($digits[1]) > 0x10FFFF)) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
+                $node->getEndPosition() - 1,
+                'regex.unicode.out_of_range',
+            );
+        }
+
         // If the codePoint is -1, the name could not be resolved. PCRE refuses
         // a name it does not take once it has read "\N{".
         if (-1 === $node->codePoint) {

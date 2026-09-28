@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- `\N{U+...}` above U+10FFFF, as in `\N{U+110000}`, was accepted; PHP refuses it as it refuses `\x{110000}`, with `regex.unicode.out_of_range` at the closing brace.
 - `\g-` or `\g+` with no digit after the sign was reported as a relative reference to zero, one character too far; it is now reported as PCRE reports it, a `\g` followed by no reference, on the sign.
 - An escaped letter inside a group name, as in `(?<a\y>...)`, was read as the letter and the name accepted as `ay`; PHP refuses any escape in a name, and so does the parser now.
 - A pattern with an escape PHP refuses and a structural error further on (`\y(`, `\L\c`, `[a\y`, `[\R(`, `\Pf(`) was reported at the structural error, a missing `)` or `]`; PCRE reads the pattern in one pass and stops on the escape first. Likewise a class left open or a lone `\c` at the end hid a syntax error before it (`+[^`, `)[`). `validate()` now reports the error PCRE meets first; `parse()` is unchanged.
