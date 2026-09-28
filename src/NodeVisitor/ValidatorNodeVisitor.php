@@ -3024,16 +3024,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * A counted group, conditional or call is compiled once per repetition:
-     * every mandatory copy as it is, every optional one inside brackets
-     * that nest the next (the innermost only behind its "may skip" marker),
-     * and an open maximum as one more copy that loops. Any other item is
-     * compiled once, with its count.
+     * A counted group, conditional, call or "(*ACCEPT)" is compiled once per
+     * repetition: every mandatory copy as it is, every optional one inside
+     * brackets that nest the next (the innermost only behind its "may skip"
+     * marker), and an open maximum as one more copy that loops. Any other
+     * item is compiled once, with its count.
      */
     private function repeatedSizeFloor(QuantifierNode $node): int
     {
         $copy = $this->compiledSizeFloor($node->node);
-        if (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode) {
+
+        // "(*ACCEPT)" is wrapped in a group to be repeated; a name adds its
+        // length and three units.
+        if ($node->node instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::(.*))?$/s', $node->node->verb, $accept)) {
+            $copy = self::COMPILED_GROUP_SIZE + 1 + (isset($accept[1]) && '' !== $accept[1] ? 3 + \strlen($accept[1]) : 0);
+        } elseif (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode) {
             return $copy;
         }
 

@@ -77,6 +77,8 @@ final class CompiledSizeTest extends TestCase
         yield 'named group' => ['pattern' => '/(?<n>a){6553}/'];
         yield 'group made non-capturing by n' => ['pattern' => '/(a){8192}/n'];
         yield 'recursion' => ['pattern' => '/(?R){21844}/'];
+        yield 'accept, which PCRE wraps in a group to repeat it' => ['pattern' => '/(*ACCEPT){9362}/'];
+        yield 'accept with a name' => ['pattern' => '/(*ACCEPT:xyz){5041}/'];
         yield 'lookahead' => ['pattern' => '/(?=a){8192}/'];
         yield 'two branches' => ['pattern' => '/(?:a|b){5041}/'];
         yield 'open maximum' => ['pattern' => '/(?:a){8192,}/'];
@@ -99,6 +101,8 @@ final class CompiledSizeTest extends TestCase
         yield 'group made non-capturing by n' => ['pattern' => '/(a){8191}/n'];
         yield 'modifiers that scope nothing' => ['pattern' => '/(?i)(?:a){8191}/'];
         yield 'recursion' => ['pattern' => '/(?R){21843}/'];
+        yield 'accept' => ['pattern' => '/(*ACCEPT){9361}/'];
+        yield 'accept with a name' => ['pattern' => '/(*ACCEPT:xyz){5040}/'];
         yield 'open maximum' => ['pattern' => '/(?:a){8191,}/'];
         yield 'optional copies' => ['pattern' => '/(?:a){0,4369}/'];
         yield 'mandatory then optional copies' => ['pattern' => '/(?:a){2,4369}/'];
