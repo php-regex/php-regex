@@ -122,6 +122,16 @@ final class PatternParser
 
                     // Validate flags (only allow standard PCRE flags)
                     // n = NO_AUTO_CAPTURE, r = PCRE2_EXTRA_CASELESS_RESTRICT (if supported)
+                    // When the closing delimiter shows up again among the
+                    // "flags", an unescaped one cut the pattern off early.
+                    if (str_contains($flags, $closingDelimiter)) {
+                        throw new ParserException(\sprintf(
+                            'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
+                            $closingDelimiter,
+                            $i,
+                        ), $i, $regex);
+                    }
+
                     $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
                     if (!preg_match($allowedPattern, $flags)) {
                         // Find the invalid flag for a better error message

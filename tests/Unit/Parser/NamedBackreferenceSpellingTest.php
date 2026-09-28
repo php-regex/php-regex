@@ -49,6 +49,18 @@ final class NamedBackreferenceSpellingTest extends TestCase
         }
     }
 
+    #[Test]
+    public function test_quoted_g_with_a_number_is_a_call(): void
+    {
+        // preg_match("/^(a|b)\\g'1'$/", 'ab') === 1: a call, not a back reference.
+        foreach (["/(a|b)\\g'1'/", "/(a|b)\\g'-1'/"] as $regex) {
+            $pattern = Regex::create()->parse($regex)->pattern;
+
+            $this->assertInstanceOf(SequenceNode::class, $pattern);
+            $this->assertInstanceOf(SubroutineNode::class, $pattern->children[1], $regex);
+        }
+    }
+
     /**
      * @param list<string> $subjects
      */
@@ -76,6 +88,8 @@ final class NamedBackreferenceSpellingTest extends TestCase
         yield 'braced g back reference' => ['regex' => '/(?<n>a|b)\g{n}/', 'subjects' => ['aa', 'ab', 'ba', 'bb']];
         yield 'braced g back reference to a repeat' => ['regex' => '/(?<n>a+)x\g{n}/', 'subjects' => ['aaxaa', 'aaxa', 'axaa']];
         yield 'angle g call' => ['regex' => '/(?<n>a|b)\g<n>/', 'subjects' => ['aa', 'ab', 'ba', 'bb']];
+        yield 'quoted g call by number' => ['regex' => "/^(a|b)\\g'1'$/", 'subjects' => ['aa', 'ab', 'ba']];
+        yield 'quoted g call by relative number' => ['regex' => "/^(a|b)\\g'-1'$/", 'subjects' => ['aa', 'ab', 'ba']];
         yield 'braced k back reference' => ['regex' => '/(?<n>a|b)\k{n}/', 'subjects' => ['aa', 'ab']];
     }
 }

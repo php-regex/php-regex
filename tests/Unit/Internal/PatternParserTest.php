@@ -54,7 +54,7 @@ final class PatternParserTest extends TestCase
     public function test_pattern_ends_at_the_first_unescaped_delimiter(string $regex): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag');
+        $this->expectExceptionMessage('Unescaped delimiter');
 
         PatternParser::extractPatternAndFlags($regex);
     }
@@ -69,6 +69,41 @@ final class PatternParserTest extends TestCase
         yield 'hash delimiter in a class' => ['regex' => '#[#]#'];
         yield 'slash in a comment' => ['regex' => '/(?#/)a/'];
         yield 'slash in a quoted run' => ['regex' => '/\\Q/\\E/'];
+    }
+
+    /**
+     * When what follows the first unescaped delimiter is pattern text rather
+     * than flag letters, the error names the delimiter that ended the
+     * pattern early, at its position, instead of listing "flags".
+     */
+    #[DataProvider('provideDelimiterEndingThePatternEarly')]
+    public function test_names_the_delimiter_that_ends_the_pattern_early(string $regex, int $position): void
+    {
+        try {
+            PatternParser::extractPatternAndFlags($regex);
+            $this->fail('No exception for '.$regex);
+        } catch (ParserException $e) {
+            $this->assertStringContainsString('Unescaped delimiter', $e->getMessage());
+            $this->assertSame($position, $e->getPosition());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{regex: string, position: int}>
+     */
+    public static function provideDelimiterEndingThePatternEarly(): iterable
+    {
+        yield 'slash in a class' => ['regex' => '/[/]/', 'position' => 2];
+        yield 'scheme separator whose tail holds an e' => ['regex' => '/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)/i', 'position' => 31];
+        yield 'hash in a class' => ['regex' => '#[#]#', 'position' => 2];
+    }
+
+    public function test_unknown_flag_letters_keep_the_flag_message(): void
+    {
+        $this->expectException(ParserException::class);
+        $this->expectExceptionMessage('Unknown regex flag(s) found: "q"');
+
+        PatternParser::extractPatternAndFlags('/abc/q');
     }
 
     public function test_escaped_delimiter_does_not_end_the_pattern(): void

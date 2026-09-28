@@ -766,8 +766,9 @@ final class Parser
         $value = $token->value;
         $endPosition = $startPosition + \strlen($value);
 
-        // \g{N}, \gN or \g'N' (numeric, incl. relative) -> Backreference
-        if (preg_match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $value, $m)) {
+        // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
+        // like \g<N>, calls the group instead.
+        if (preg_match('/^\\\\g(?:\{([0-9+-]++)\}|([0-9+-]++))$/', $value, $m)) {
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
