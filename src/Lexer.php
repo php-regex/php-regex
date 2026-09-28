@@ -719,7 +719,9 @@ final class Lexer
 
     private function consumeQuoteMode(): ?Token
     {
-        if (!preg_match($this->anchored('(.*?)((\\\\E|$))', 's'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
+        // "\z", not "$": "$" stops before a final newline, which the quoted
+        // run holds, and would drop it.
+        if (!preg_match($this->anchored('(.*?)((\\\\E|\z))', 's'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
             // Nothing here can fail to match, so a failure means PCRE itself
             // gave up. Leaving quote mode and skipping to the end would drop
             // the rest of the pattern without a word.
