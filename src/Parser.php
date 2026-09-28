@@ -718,8 +718,9 @@ final class Parser
 
     /**
      * "\k" names a group, and the lexer leaves it a plain escaped letter when
-     * no name follows: PCRE refuses "\k" alone and an empty "\k<>". Other
-     * shapes it could not read are left as they are read today.
+     * no well-formed name follows. PCRE refuses every such shape, and says
+     * where it stopped reading: on the opener's absence, where a name should
+     * start, past a leading digit, or where the closer should be.
      *
      * @throws ParserException
      */
@@ -740,10 +741,28 @@ final class Parser
             );
         }
 
-        if ($closer === ($this->pattern[$token->position + 3] ?? '')) {
+        $nameStart = $token->position + 3;
+        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
+        $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
+
+        if (1 === preg_match($digit, $this->pattern, $matches, 0, $nameStart)) {
             throw $this->parserException(
-                \sprintf('Group name expected after \k%s at position %d.', $opener, $token->position + 3),
-                $token->position + 3,
+                \sprintf('Group name after \k%s must not start with a digit at position %d.', $opener, $nameEnd),
+                $nameEnd,
+            );
+        }
+
+        if ($nameEnd === $nameStart) {
+            throw $this->parserException(
+                \sprintf('Group name expected after \k%s at position %d.', $opener, $nameStart),
+                $nameStart,
+            );
+        }
+
+        if ($closer !== ($this->pattern[$nameEnd] ?? '')) {
+            throw $this->parserException(
+                \sprintf('Missing "%s" to close the group name after \k%s at position %d.', $closer, $opener, $nameEnd),
+                $nameEnd,
             );
         }
     }
