@@ -119,20 +119,20 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "\p1(": error 146 at offset 3 on both 10.40 and 10.48 (PHP:
-        // "malformed \P or \p sequence at offset 3"), met before the group
-        // left open; the library reports the missing ")" at offset 4, so
-        // this is an offset defect.
+        // "\p{Foo}(": error 147 at offset 7 on both 10.40 and 10.48 (PHP:
+        // "unknown property after \P or \p at offset 7"), met before the
+        // group left open; the library reports the missing ")" at offset 8,
+        // so this is an offset defect.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '\\p1(',
+            '\\p{Foo}(',
             'reject',
-            3,
-            'malformed \\P or \\p sequence',
-            pcre2Code: 146,
-            floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 146],
+            7,
+            'unknown property after \\P or \\p',
+            pcre2Code: 147,
+            floor: ['verdict' => 'reject', 'offset' => 7, 'pcre2Code' => 147],
         ));
 
-        $this->assertSame(4, $result['offset']);
+        $this->assertSame(8, $result['offset']);
         $this->assertSame('offset-defect', $result['outcome']);
 
         // Same agreement on "[abc" (106 at 4 on both): the library agrees too.
@@ -258,12 +258,12 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // PCRE2 meets the malformed "\p" before the group left open
-        // (preg_match('/\p1(/', '') warns "malformed \P or \p sequence at
-        // offset 3"); the library reports the missing ")", offset 4.
+        // PCRE2 meets the unknown property before the group left open
+        // (preg_match('/\p{Foo}(/', '') warns "unknown property after \P or
+        // \p at offset 7"); the library reports the missing ")", offset 8.
         yield 'real suite error reported at a different position' => [
-            'case' => self::case('\\p1(', 'reject', 3, 'malformed \\P or \\p sequence', pcre2Code: 146),
-            'libraryOffset' => 4,
+            'case' => self::case('\\p{Foo}(', 'reject', 7, 'unknown property after \\P or \\p', pcre2Code: 147),
+            'libraryOffset' => 8,
         ];
 
         // Same pattern, same PCRE2 error text, a recorded offset the library

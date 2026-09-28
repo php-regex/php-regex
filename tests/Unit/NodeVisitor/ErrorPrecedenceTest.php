@@ -69,6 +69,48 @@ final class ErrorPrecedenceTest extends TestCase
     }
 
     /**
+     * @param list<int> $offsets
+     */
+    #[Test]
+    #[DataProvider('provideEscapesBeforeASyntaxError')]
+    public function test_validate_reports_an_escape_error_met_before_a_syntax_error(string $pattern, array $offsets): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid);
+        $this->assertStringStartsWith('regex.', (string) $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        $this->assertContains(
+            $result->offset,
+            $offsets,
+            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), (string) $result->errorCode, implode(' or ', $offsets)),
+        );
+    }
+
+    /**
+     * PCRE reads the pattern once, left to right: an escape it refuses stops
+     * it before a group left open, a class left open or a quantifier with
+     * nothing to repeat further on.
+     *
+     * @return iterable<string, array{pattern: string, offsets: list<int>}>
+     */
+    public static function provideEscapesBeforeASyntaxError(): iterable
+    {
+        yield 'unknown escape before a group left open' => ['pattern' => '/\\y(/', 'offsets' => [2, 1]];
+        yield 'malformed property before a group left open' => ['pattern' => '/\\p1(/', 'offsets' => [3]];
+        yield 'unsupported escape before a lone \\c' => ['pattern' => '/\\L\\c/', 'offsets' => [2]];
+        yield 'unknown escape before a class left open' => ['pattern' => '/\\y[/', 'offsets' => [2, 1]];
+        yield 'escape without its brace before a group left open' => ['pattern' => '/\\o(/', 'offsets' => [2]];
+        yield 'unsupported escape before an unmatched parenthesis' => ['pattern' => '/a\\U)/', 'offsets' => [3]];
+        yield 'unknown escape inside a class left open' => ['pattern' => '/[a\\y/', 'offsets' => [4, 3]];
+        yield 'single byte under UTF before a group left open' => ['pattern' => '/\\C(/u', 'offsets' => [2]];
+        yield 'unknown escape after quoted text' => ['pattern' => '/\\Qa\\E\\y(/', 'offsets' => [7, 6]];
+        yield 'unknown escape after a comment' => ['pattern' => '/(?#c)\\y(/', 'offsets' => [7, 6]];
+        yield 'code point outside UTF mode before a group left open' => ['pattern' => '/\\N{U+41}(/', 'offsets' => [8, 2]];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, offsets: list<int>}>
      */
     public static function providePatternsWithTwoErrors(): iterable

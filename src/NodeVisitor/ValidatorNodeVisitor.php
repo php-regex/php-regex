@@ -52,6 +52,8 @@ use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
 use RegexParser\Regex;
+use RegexParser\Token;
+use RegexParser\TokenType;
 
 /**
  * Validator for regex Abstract Syntax Trees with caching and optimization.
@@ -338,6 +340,39 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         self::$unicodePropCache = [];
         self::$quantifierBoundsCache = [];
+    }
+
+    /**
+     * The first escape PCRE refuses among the tokens that start before
+     * $limit, in a pattern whose structure could not be read: PCRE reads
+     * escapes and structure in one pass, so it stops on such an escape
+     * before it reaches the error at $limit.
+     *
+     * @internal
+     *
+     * @param array<Token> $tokens the tokens read from $source
+     */
+    public function firstEscapeErrorBefore(array $tokens, string $source, string $flags, int $limit): ?SemanticErrorException
+    {
+        $this->source = $source;
+        $this->positionOffset = 0;
+        $this->charClassDepth = 0;
+        $this->unicodeFlag = str_contains($flags, 'u');
+        $this->unicodeMode = $this->unicodeFlag || 1 === preg_match(self::LEADING_UTF_VERB, $source);
+
+        try {
+            foreach ($tokens as $token) {
+                if ($token->position >= $limit) {
+                    break;
+                }
+
+                $this->validateEscapeToken($token, $source);
+            }
+        } catch (SemanticErrorException $error) {
+            return $error;
+        }
+
+        return null;
     }
 
     #[\Override]
@@ -2334,6 +2369,35 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         $this->assertRelativeReferenceExists($num, $position, $code, $context);
+    }
+
+    /**
+     * Judge one token the way the node it would become is judged, for the
+     * checks that need no other node: escaped letters, "\N{...}" and "\C".
+     */
+    private function validateEscapeToken(Token $token, string $source): void
+    {
+        match ($token->type) {
+            TokenType::T_CHAR_CLASS_OPEN => $this->charClassDepth = 1,
+            TokenType::T_CHAR_CLASS_CLOSE => $this->charClassDepth = 0,
+            TokenType::T_UNICODE_NAMED => $this->validateNamedCharacterBraces($source, $token->position + 2),
+            default => null,
+        };
+
+        if (TokenType::T_CHAR_TYPE === $token->type && 'C' === $token->value && $this->unicodeFlag) {
+            $this->raiseSemanticError(
+                '\C is not allowed in Unicode mode: it matches a single byte.',
+                $token->end(),
+                'regex.escape.single_byte_in_utf',
+                'Use "." or drop the "u" flag.',
+            );
+        }
+
+        $letter = $token->value;
+        if (TokenType::T_LITERAL_ESCAPED === $token->type && 1 === \strlen($letter) && ctype_alpha($letter)
+            && '\\'.$letter === substr($source, $token->position, 2)) {
+            $this->validateEscapedLetter($source, $letter, $token->position);
+        }
     }
 
     /**

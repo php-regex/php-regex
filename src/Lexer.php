@@ -236,6 +236,11 @@ final class Lexer
      */
     private array $charClassStartPositions = [];
 
+    /**
+     * @var array<Token>
+     */
+    private array $tokensRead = [];
+
     public function __construct(
         /**
          * Whether the pattern is read by PCRE2 10.43 or newer, where "{,2}"
@@ -256,6 +261,19 @@ final class Lexer
         }
 
         return \PHP_VERSION_ID >= 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+    }
+
+    /**
+     * The tokens the last tokenize() call read, up to where it failed if it
+     * did: what the pattern holds before an error the lexer stops on.
+     *
+     * @internal
+     *
+     * @return array<Token>
+     */
+    public function tokensRead(): array
+    {
+        return $this->tokensRead;
     }
 
     public function tokenize(string $pattern, string $flags = ''): TokenStream
@@ -279,17 +297,22 @@ final class Lexer
         /** @var array<Token> $tokens */
         $tokens = [];
 
-        while ($this->position < $this->length) {
-            if ($this->handleTunnelModes($tokens)) {
-                continue;
+        try {
+            while ($this->position < $this->length) {
+                if ($this->handleTunnelModes($tokens)) {
+                    continue;
+                }
+
+                [$regex, $tokenMap] = $this->getCurrentContext();
+                [$matchedValue, $startPos, $matches] = $this->matchAtPosition($regex);
+                $tokens[] = $this->createToken($tokenMap, $matches, $matchedValue, $startPos, $tokens);
             }
 
-            [$regex, $tokenMap] = $this->getCurrentContext();
-            [$matchedValue, $startPos, $matches] = $this->matchAtPosition($regex);
-            $tokens[] = $this->createToken($tokenMap, $matches, $matchedValue, $startPos, $tokens);
+            $this->validateFinalState();
+        } finally {
+            $this->tokensRead = $tokens;
         }
 
-        $this->validateFinalState();
         $tokens[] = new Token(TokenType::T_EOF, '', $this->position);
 
         return new TokenStream($tokens, $pattern);

@@ -95,7 +95,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-6ee51a391265fb0a0c5dd4420a859e05';
+    public const CACHE_VERSION = 'ast-ef3c7c867ccf4b8e96b19423c63dc2eb';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -296,6 +296,8 @@ final readonly class Regex
             }
 
             return new ValidationResult(true, null, $complexityScore);
+        } catch (LexerException|ParserException $e) {
+            return $this->buildValidationFailure($this->escapeErrorBefore($regex, $e) ?? $e);
         } catch (\Throwable $e) {
             return $this->buildValidationFailure($e);
         }
@@ -578,6 +580,34 @@ final readonly class Regex
             ."\n".self::CACHE_VERSION_PREFIX.self::CACHE_VERSION
             ."\n".self::PHP_VERSION_PREFIX.$phpVersionId
             ."\n#depth=".$maxRecursionDepth;
+    }
+
+    /**
+     * PCRE reads escapes and structure in one pass, left to right; this
+     * library reads the structure first and judges escapes afterwards. When
+     * the structure fails, an escape PCRE refuses before that point is the
+     * error PCRE reports.
+     */
+    private function escapeErrorBefore(string $regex, LexerException|ParserException $error): ?SemanticErrorException
+    {
+        $position = $error->getPosition() ?? 0;
+
+        try {
+            [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+        } catch (ParserException) {
+            return null;
+        }
+
+        $lexer = new Lexer(Lexer::readsWideRepeatCounts($this->getParserPhpVersionId()));
+
+        try {
+            $lexer->tokenize($pattern, $flags);
+        } catch (LexerException) {
+            // The tokens read before the error are what is judged.
+        }
+
+        return (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
+            ->firstEscapeErrorBefore($lexer->tokensRead(), $pattern, $flags, $position);
     }
 
     /**
