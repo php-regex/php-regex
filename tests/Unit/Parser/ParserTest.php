@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
+use RegexParser\Internal\InlineFlags;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -473,12 +474,17 @@ final class ParserTest extends TestCase
     }
 
     #[Test]
-    public function test_parse_inline_flags_conflicting(): void
+    public function test_parse_inline_flags_turning_a_flag_on_and_off(): void
     {
-        $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Conflicting flags: i cannot be both set and unset');
+        // PCRE reads the letters in order, so the "-i" wins: every release
+        // compiles it, and preg_match('/(?i-i:foo)/', 'FOO') === 0.
+        $ast = $this->parse('/(?i-i:foo)/');
+        $pattern = $ast->pattern;
 
-        $this->parse('/(?i-i:foo)/');
+        $this->assertInstanceOf(GroupNode::class, $pattern);
+        $this->assertSame('i-i', $pattern->flags);
+        $this->assertTrue(Regex::create()->validate('/(?i-i:foo)/')->isValid);
+        $this->assertFalse(InlineFlags::read('i-i')?->inForce('i', true));
     }
 
     #[Test]

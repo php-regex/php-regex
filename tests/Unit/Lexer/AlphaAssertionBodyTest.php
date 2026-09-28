@@ -101,6 +101,11 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'hash in a class under x' => ['pattern' => '/^(*pla:[#)])./x', 'subjects' => ['#', ')', 'a']];
         yield 'control character of an opening parenthesis' => ['pattern' => '/^(*pla:\\c()./', 'subjects' => ['h', 'a']];
         yield 'control character of a closing bracket in a class' => ['pattern' => '/^(*pla:[\\c]])./', 'subjects' => ["\x1d", ']']];
+        yield 'callout string holding a closing parenthesis' => ['pattern' => '/^(*pla:(?C"a)b"))a/', 'subjects' => ['a', 'b']];
+        yield 'callout string in backquotes' => ['pattern' => '/^(*pla:(?C`a)`))a/', 'subjects' => ['a', 'b']];
+        yield 'callout string holding an opening parenthesis' => ['pattern' => '/^(*pla:(?C"a(b"))a/', 'subjects' => ['a', 'b']];
+        yield 'mark name holding an opening parenthesis' => ['pattern' => '/^(*pla:(*MARK:a(b))a/', 'subjects' => ['a', 'b']];
+        yield 'short mark name holding an opening parenthesis' => ['pattern' => '/^(*pla:(*:a(b))a/', 'subjects' => ['a', 'b']];
         yield 'atomic group' => ['pattern' => '/^(*atomic:\\))/', 'subjects' => [')', 'a']];
         yield 'script run' => ['pattern' => '/^(*script_run:[)])/', 'subjects' => [')', 'a']];
     }

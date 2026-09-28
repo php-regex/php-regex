@@ -325,8 +325,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     /**
      * The first error of each late pass, kept until the walk ends: [0] the
      * pass that measures lookbehinds, [1] the one that resolves references
-     * to groups by number or name. PCRE runs both only once it has read the
-     * whole pattern, so any other error comes first.
+     * to groups by number, by name or forward, [2] the count of branches
+     * of conditionals. PCRE runs them only once it has read the whole
+     * pattern, so any other error comes first.
      *
      * @var array<int, SemanticErrorException>
      */
@@ -1108,7 +1109,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // The parser keeps every branch after the first in "no"; PCRE takes
         // two at most.
         if ($node->no instanceof AlternationNode) {
-            $this->raiseSemanticError(
+            $this->raiseBranchCountError(
                 'A conditional group holds more than two branches.',
                 $node->startPosition,
                 'regex.conditional.too_many_branches',
@@ -1240,7 +1241,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         // PCRE reports it at the "DEFINE" word, past "(?(".
         if ($node->content instanceof AlternationNode) {
-            $this->raiseSemanticError(
+            $this->raiseBranchCountError(
                 'A (DEFINE) group holds more than one branch.',
                 $node->startPosition + 3,
                 'regex.define.too_many_branches',
@@ -2409,6 +2410,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         $index = $offset > 0 ? $this->captureIndex + $offset - 1 : $this->captureIndex + $offset;
+
+        // A reference forward names a group PCRE has not read yet: it is
+        // resolved with the references by number, once the pattern is read.
+        if ($offset > 0 && $index >= \count($this->captureSequence)) {
+            $this->raiseMissingReference(
+                \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
+                $position,
+                $code,
+            );
+
+            return;
+        }
+
         if ($index < 0 || $index >= \count($this->captureSequence)) {
             $this->raiseSemanticError(
                 \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
@@ -3000,7 +3014,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node instanceof ConditionalNode => $this->conditionalSizeFloor($node),
             $node instanceof QuantifierNode => $this->repeatedSizeFloor($node),
             $node instanceof LiteralNode => 2 * mb_strlen($node->value, 'UTF-8'),
-            $node instanceof SubroutineNode, $node instanceof BackrefNode => 3,
+            // A reference by number may be an octal character, "\101".
+            $node instanceof BackrefNode => 2,
+            $node instanceof SubroutineNode => 3,
             $node instanceof CharClassNode, $node instanceof CharTypeNode, $node instanceof DotNode,
             $node instanceof CharLiteralNode, $node instanceof UnicodePropNode => 1,
             default => 0,
@@ -3022,11 +3038,15 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     /**
      * The brackets of a compiled group: those of a capturing group also hold
-     * its number. A "(?i)" that scopes nothing compiles to no group at all.
+     * its number. A "(?i)" that scopes nothing compiles to no group at all,
+     * and a lookaround that holds nothing to one unit at most.
      */
     private function compiledGroupSize(GroupNode $node): int
     {
         return match (true) {
+            // A lookaround that holds nothing compiles to at most one unit:
+            // "(?!)" is a plain failure.
+            $this->isLookaround($node) && 0 === $this->compiledSizeFloor($node->child) => 0,
             GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
             GroupType::T_GROUP_CAPTURING === $node->type, GroupType::T_GROUP_NAMED === $node->type => self::COMPILED_GROUP_SIZE + 2,
             default => self::COMPILED_GROUP_SIZE,
@@ -3060,6 +3080,22 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $optional = $max - $min;
 
         return $min * $copy + ($optional > 0 ? ($optional - 1) * ($copy + self::COMPILED_OPTIONAL_COPY_SIZE) + $copy + 1 : 0);
+    }
+
+    /**
+     * A conditional with more than two branches, or a (DEFINE) with more
+     * than one: PCRE counts them once it has resolved the references, so on
+     * a walk from the pattern root the error waits for the walk to end.
+     */
+    private function raiseBranchCountError(string $message, int $position, string $code, string $hint): void
+    {
+        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code, $hint);
+
+        if (!$this->walkingPattern) {
+            throw $error;
+        }
+
+        $this->lateErrors[2] ??= $error;
     }
 
     /**

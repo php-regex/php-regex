@@ -688,6 +688,11 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     {
         $nodes = $pattern instanceof SequenceNode ? $pattern->children : [$pattern];
         foreach ($nodes as $node) {
+            // "(*LIMIT_MATCH=n)" is a start-of-pattern setting of its own node.
+            if ($node instanceof LimitMatchNode) {
+                continue;
+            }
+
             if (!$node instanceof PcreVerbNode) {
                 return false;
             }

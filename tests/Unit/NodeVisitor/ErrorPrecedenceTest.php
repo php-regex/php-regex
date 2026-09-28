@@ -64,6 +64,18 @@ final class ErrorPrecedenceTest extends TestCase
     }
 
     #[Test]
+    public function test_validating_a_define_on_its_own_reports_at_once(): void
+    {
+        // Only a walk from the pattern root waits for the late passes.
+        $define = Regex::create()->parse('/(?(DEFINE)a|b)/')->pattern;
+
+        $this->expectException(SemanticErrorException::class);
+        $this->expectExceptionMessage('more than one branch');
+
+        $define->accept(new ValidatorNodeVisitor());
+    }
+
+    #[Test]
     public function test_validating_a_lookbehind_on_its_own_reports_at_once(): void
     {
         // Only a walk from the pattern root waits for the late passes: a
@@ -185,6 +197,13 @@ final class ErrorPrecedenceTest extends TestCase
         yield 'first of two missing groups, numbered first' => ['pattern' => '/\\2\\k<zz>/', 'offsets' => [2, 1]];
         yield 'first of two missing groups, named first' => ['pattern' => '/\\k<zz>\\2/', 'offsets' => [3]];
         yield 'first of two missing groups, braced \\g' => ['pattern' => '/\\3a\\g{2}/', 'offsets' => [2, 1]];
+        yield 'reversed count after a conditional with three branches' => ['pattern' => '/(x)(?(1)a|b|c)ba{2,1}/', 'offsets' => [20]];
+        yield 'unbounded lookbehind before a conditional with three branches' => ['pattern' => '/(?<=a+)(?(1)a|b|c)/', 'offsets' => [0]];
+        yield 'missing group before a conditional with three branches' => ['pattern' => '/(a)(?&x)(?(1)a|b|c)/', 'offsets' => [6]];
+        yield 'unknown escape after a define with two branches' => ['pattern' => '/(?(DEFINE)a|b)\\y/', 'offsets' => [16, 15]];
+        yield 'missing group before a forward relative reference' => ['pattern' => '/(x)\\5b(?+3)/', 'offsets' => [5, 4]];
+        yield 'unbounded lookbehind before a forward relative reference' => ['pattern' => '/(x)(?<=a+)b(?+3)/', 'offsets' => [3]];
+        yield 'unknown escape after a forward relative reference' => ['pattern' => '/(x)\\g{+2}\\y/', 'offsets' => [11, 10]];
         yield 'relative reference is read before a missing group' => ['pattern' => '/\\5\\g{-3}/', 'offsets' => [4]];
     }
 }

@@ -116,6 +116,14 @@ final class CompiledSizeTest extends TestCase
         yield 'open maximum' => ['pattern' => '/(?:a){8191,}/'];
         yield 'optional copies' => ['pattern' => '/(?:a){0,4369}/'];
         yield 'mandatory then optional copies' => ['pattern' => '/(?:a){2,4369}/'];
+        yield 'empty negative lookahead, compiled to a fail' => ['pattern' => '/(?:(?!)){6000}/'];
+        yield 'empty negative lookahead, alphabetic' => ['pattern' => '/(?:(*nla:)){6000}/'];
+        yield 'lookahead holding a fail' => ['pattern' => '/(?:(?=(?!))){5000}/'];
+        yield 'branch that fails' => ['pattern' => '/(?:a|(?!)){5400}/'];
+        yield 'octal escape written like a reference' => ['pattern' => '/(?:\\101){7500}/'];
+        yield 'two-digit octal after a group' => ['pattern' => '/(a)(?:\\12){7500}/'];
+        yield 'x-mode line separator' => ['pattern' => "/(?:a\u{2028}){7000}/xu"];
+        yield 'x-mode next-line bytes' => ['pattern' => '/(?:a'.str_repeat("\x85", 30).'){2000}/x'];
         yield 'counted letter' => ['pattern' => '/a{65535}/'];
         yield 'counted character type' => ['pattern' => '/\\d{65535}/'];
     }

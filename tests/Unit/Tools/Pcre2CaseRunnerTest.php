@@ -86,11 +86,11 @@ final class Pcre2CaseRunnerTest extends TestCase
             'outcome' => $readsAsciiOptions ? 'pass-either-offset' : 'offset-defect',
         ];
 
-        // testinput2:347. PCRE2 10.45 moved this offset past the ")", and
+        // testinput2:347. PCRE2 after 10.45 moved this offset past the ")", and
         // the library reports it where the running release does.
         yield 'unmatched closing parenthesis — 10.48 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('abc)', 'reject', 4, 'unmatched closing parenthesis', pcre2Code: 122, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 122]),
-            'libraryOffset' => version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=') ? 4 : 3,
+            'libraryOffset' => version_compare(explode(' ', \PCRE_VERSION)[0], '10.46', '>=') ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 

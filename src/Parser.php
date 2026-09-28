@@ -196,10 +196,11 @@ final class Parser
 
         $patternNode = $this->parseAlternation();
 
-        // A ")" no group opened. PCRE2 10.45 reports it past the ")", the
-        // releases before on it.
+        // A ")" no group opened. pcre2test 10.45 still reports it on the
+        // ")", PCRE2 10.48 past it; the releases between are taken as the
+        // newer one.
         if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
-            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.45') ? 1 : 0);
+            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.46') ? 1 : 0);
 
             throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), $position);
         }
@@ -326,7 +327,7 @@ final class Parser
             }
 
             // Skip pure whitespace silently; comments will be explicit nodes.
-            if (ctype_space($token->value)) {
+            if ($this->isExtendedWhitespace($token->value)) {
                 $this->stream->advance();
                 $skipped = true;
 
@@ -397,7 +398,7 @@ final class Parser
                 break;
             }
 
-            if (ctype_space($token->value)) {
+            if ($this->isExtendedWhitespace($token->value)) {
                 $this->stream->advance();
                 $skipped++;
 
@@ -1545,14 +1546,6 @@ final class Parser
             );
         }
 
-        $conflicts = $modifiers?->conflicts() ?? '';
-        if ('' !== $conflicts) {
-            throw $this->parserException(
-                \sprintf('Conflicting flags: %s cannot be both set and unset at position %d', $conflicts, $startPosition),
-                $startPosition,
-            );
-        }
-
         $wasExtended = $this->extendedMode;
         $wasNoAutoCapture = $this->noAutoCapture;
         $wasAllowingDuplicates = $this->groupNames->duplicatesAllowed();
@@ -1643,6 +1636,22 @@ final class Parser
     {
         return $this->useRuntimePcreDetection
             && version_compare(explode(' ', \PCRE_VERSION)[0], $release, '>=');
+    }
+
+    /**
+     * Whether "x" skips the character: PCRE skips Pattern_White_Space, which
+     * in UTF mode also holds U+0085, U+200E, U+200F, U+2028 and U+2029, and
+     * without it the byte 0x85.
+     */
+    private function isExtendedWhitespace(string $character): bool
+    {
+        if (ctype_space($character)) {
+            return true;
+        }
+
+        return $this->unicodeMode
+            ? \in_array($character, ["\u{85}", "\u{200e}", "\u{200f}", "\u{2028}", "\u{2029}"], true)
+            : "\x85" === $character;
     }
 
     /**

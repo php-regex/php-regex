@@ -68,6 +68,9 @@ final readonly class InlineFlags
             return null;
         }
 
+        // PCRE reads the letters in order: "(?i-i)" turns "i" on, then off.
+        $set = implode('', array_diff(str_split($set), str_split($unset)));
+
         if ($resetsOthers) {
             // "(?^im)" turns on what it lists and turns off everything else.
             $unset = implode('', array_diff(str_split($letters), str_split($set))).$unset;
@@ -85,14 +88,6 @@ final readonly class InlineFlags
     public static function withoutAsciiOptions(string $text): string
     {
         return preg_replace('/a[DSWPT]?/', '', $text) ?? $text;
-    }
-
-    /**
-     * Modifiers this group both turns on and off, which PCRE refuses.
-     */
-    public function conflicts(): string
-    {
-        return implode('', array_intersect(str_split($this->set), str_split($this->unset)));
     }
 
     public function turnsOn(string $flag): bool

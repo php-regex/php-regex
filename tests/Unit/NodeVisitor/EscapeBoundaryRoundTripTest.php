@@ -187,6 +187,11 @@ final class EscapeBoundaryRoundTripTest extends TestCase
         yield 'octal \\0 then digit' => ['pattern' => '/^\\0(?:)1$/', 'subjects' => ["\x001", "\x01"]];
         yield 'two-digit octal then digit' => ['pattern' => '/^\\01(?:)7$/', 'subjects' => ["\x017", "\x0f"]];
         yield 'one-digit hex then hex digit' => ['pattern' => '/^\\xa(?:)b$/', 'subjects' => ["\nb", "\xab"]];
+        yield 'repeated empty group before a quantified hyphen' => ['pattern' => '/^(?:)?-+$/', 'subjects' => ['-', '--', 'a']];
+        yield 'counted empty group after \\N' => ['pattern' => '/^\\N(?:){2}$/', 'subjects' => ['a', 'aa', '']];
+        yield 'repeated empty group after a letter' => ['pattern' => '/^a(?:)*$/', 'subjects' => ['a', 'aa', '']];
+        yield 'repeated anchor in a group' => ['pattern' => '/(?:^)*a/', 'subjects' => ['a', 'b']];
+        yield 'repeated word boundary in a group' => ['pattern' => '/(?:\\b)+a/', 'subjects' => ['a', 'ba']];
         yield 'escaped backslash then digit stays as written' => ['pattern' => '/^\\\\1(?:)0$/', 'subjects' => ['\\10', '1']];
     }
 

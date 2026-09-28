@@ -319,6 +319,9 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
         if (
             GroupType::T_GROUP_NON_CAPTURING === $node->type
             && !($this->isInsideQuantifier && ($node->child instanceof SequenceNode || $node->child instanceof AlternationNode))
+            // A quantifier repeats one character only: "(?:)*", "(?:^)*" or
+            // "(?:\b)+" keep their group.
+            && !($this->isInsideQuantifier && !$this->isSingleCharacter($optimizedChild))
             && (
                 $optimizedChild instanceof LiteralNode
                 || $optimizedChild instanceof CharLiteralNode
@@ -554,6 +557,20 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
     public function visitCallout(CalloutNode $node): NodeInterface
     {
         return $node;
+    }
+
+    /**
+     * Whether the node matches exactly one character, so that a quantifier
+     * written right after it repeats the same thing it repeated on the group.
+     */
+    private function isSingleCharacter(NodeInterface $node): bool
+    {
+        return match (true) {
+            $node instanceof LiteralNode => 1 === mb_strlen($node->value, 'UTF-8'),
+            $node instanceof CharLiteralNode, $node instanceof CharTypeNode, $node instanceof DotNode,
+            $node instanceof CharClassNode, $node instanceof UnicodePropNode => true,
+            default => false,
+        };
     }
 
     /**

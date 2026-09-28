@@ -83,14 +83,16 @@ final class Lexer
     /**
      * One item of a group body in which a ")" does not close the group: a
      * quoted run, an escape ("\c" with the character it takes, whatever it
-     * is), a class, a "(?#...)" comment, or text without parentheses. Nested
-     * groups are matched by the caller. Every item starts its own way, so a
-     * body is read in one pass.
+     * is), a class, a "(?#...)" comment, a string callout, a verb that ends
+     * at its first ")" as "(*MARK:a(b)" does, or text without parentheses.
+     * Nested groups are matched by the caller, after these.
      */
     private const GROUP_BODY_ITEM = self::QUOTED_RUN
         .' | \\\\ c [\\s\\S] | \\\\ (?!Q) [\\s\\S]'
         .' | \\[ \\^? \\]? (?: \\[: [^\\]]*? :\\] | '.self::QUOTED_RUN.' | \\\\ c [\\s\\S] | \\\\ [\\s\\S] | [^\\]\\\\] )*+ \\]'
         .' | \\( \\? \\# [^)]*+ \\)'
+        .' | \\( \\? C (?: '.self::CALLOUT_STRING.' ) \\)'
+        .' | \\( \\* (?! [a-z_]++ : ) [^)]*+ \\)'
         .self::GROUP_BODY_TEXT;
 
     /**

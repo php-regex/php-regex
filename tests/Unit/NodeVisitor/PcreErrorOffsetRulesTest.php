@@ -54,10 +54,10 @@ final class PcreErrorOffsetRulesTest extends TestCase
     #[Test]
     public function test_unmatched_closing_parenthesis_is_reported_where_the_running_pcre_reports_it(): void
     {
-        // PCRE2 10.45 moved the offset past the ")": preg_match('/a)/', '')
+        // PCRE2 after 10.45 moved the offset past the ")": preg_match('/a)/', '')
         // warns "unmatched closing parenthesis at offset 2" on 10.48, and at
         // offset 1 on the 10.44 that PHP 8.4 bundles.
-        $expected = version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=') ? 2 : 1;
+        $expected = version_compare(explode(' ', \PCRE_VERSION)[0], '10.46', '>=') ? 2 : 1;
 
         $result = Regex::create(['cache' => null])->validate('/a)/');
 

@@ -77,16 +77,17 @@ final class InlineFlagsTest extends TestCase
     }
 
     #[Test]
-    public function test_a_modifier_cannot_be_turned_on_and_off_at_once(): void
+    public function test_a_modifier_turned_on_and_off_ends_off(): void
     {
+        // PCRE reads the letters in order: preg_match('/(?i-i)a/', 'A') === 0.
         $flags = InlineFlags::read('is-si');
 
         $this->assertInstanceOf(InlineFlags::class, $flags);
-        $this->assertSame('is', $flags->conflicts());
+        $this->assertFalse($flags->inForce('i', true));
 
-        $harmless = InlineFlags::read('im-sx');
-        $this->assertInstanceOf(InlineFlags::class, $harmless);
-        $this->assertSame('', $harmless->conflicts());
+        $other = InlineFlags::read('im-sx');
+        $this->assertInstanceOf(InlineFlags::class, $other);
+        $this->assertTrue($other->inForce('i', false));
     }
 
     #[Test]
