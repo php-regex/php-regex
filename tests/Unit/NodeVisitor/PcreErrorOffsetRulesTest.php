@@ -51,6 +51,31 @@ final class PcreErrorOffsetRulesTest extends TestCase
         }
     }
 
+    #[Test]
+    public function test_unmatched_closing_parenthesis_is_reported_where_the_running_pcre_reports_it(): void
+    {
+        // PCRE2 10.45 moved the offset past the ")": preg_match('/a)/', '')
+        // warns "unmatched closing parenthesis at offset 2" on 10.48, and at
+        // offset 1 on the 10.44 that PHP 8.4 bundles.
+        $expected = version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=') ? 2 : 1;
+
+        $result = Regex::create(['cache' => null])->validate('/a)/');
+
+        $this->assertFalse($result->isValid);
+        $this->assertSame($expected, $result->offset);
+        $this->assertStringContainsString(\sprintf('at position %d', $expected), (string) $result->error);
+    }
+
+    #[Test]
+    public function test_unmatched_closing_parenthesis_follows_the_bundled_pcre_of_a_target_php_version(): void
+    {
+        // PHP 8.4 bundles PCRE2 10.44, which stops on the ")".
+        $result = Regex::create(['cache' => null, 'php_version' => 80400])->validate('/a)/');
+
+        $this->assertFalse($result->isValid);
+        $this->assertSame(1, $result->offset);
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: int, 2: int}>
      */

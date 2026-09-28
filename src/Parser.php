@@ -194,6 +194,15 @@ final class Parser
         $this->captureCount = 0;
 
         $patternNode = $this->parseAlternation();
+
+        // A ")" no group opened. PCRE2 10.45 reports it past the ")", the
+        // releases before on it.
+        if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.45') ? 1 : 0);
+
+            throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), $position);
+        }
+
         $this->stream->consume(TokenType::T_EOF, 'Unexpected content at end of pattern');
 
         return new RegexNode($patternNode, $flags, $delimiter, 0, $patternLength, $this->pattern);
