@@ -2164,6 +2164,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return [0, 0];
             }
 
+            // Before PCRE2 10.43, a group of variable length stays variable
+            // even repeated zero times.
+            if (0 === $qMax && $childMin !== $childMax && !$this->supportsVariableLengthLookbehind()) {
+                return [0, $childMax];
+            }
+
             return [$childMin * $qMin, null === $childMax || -1 === $qMax ? null : $childMax * $qMax];
         }
 
