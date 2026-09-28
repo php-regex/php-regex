@@ -4927,6 +4927,18 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/moodle/public/lib/adodb/drivers/adodb-sybase.inc.php:406:20
+      → /([A-Za-z]{3})[-/\. ]+([0-9]{1,2})[-/\. ]+([0-9]{4})/
+     FAIL  Unescaped delimiter "/" at position 16 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([A-Za-z]{3})[-/\. ]+([0-9]{1,2})[-/\. ]+([0-9]{4})/
+                                   ^
+
+  corpus/moodle/public/lib/adodb/drivers/adodb-sybase.inc.php:423:20
+      → /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *([apAP]{0,1})/
+     FAIL  Unescaped delimiter "/" at position 16 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *...
+                                   ^
+
   corpus/moodle/public/lib/adodb/drivers/adodb-informix72.inc.php:355:40
       → /^\s*select/is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -5351,11 +5363,27 @@
 
   corpus/moodle/public/lib/wiki_to_markdown.php:268:26
       → /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
-     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     FAIL  Unescaped delimiter "/" at position 31 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
+                                                  ^
+
+  corpus/moodle/public/lib/wiki_to_markdown.php:270:26
+      → /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
+     FAIL  Unescaped delimiter "/" at position 47 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
+                                                                  ^
 
   corpus/moodle/public/lib/wiki_to_markdown.php:274:26
       → /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i
-     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     FAIL  Unescaped delimiter "/" at position 31 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i
+                                                  ^
+
+  corpus/moodle/public/lib/wiki_to_markdown.php:276:26
+      → /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])/i
+     FAIL  Unescaped delimiter "/" at position 47 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+         ↳         /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])/i
+                                                                  ^
 
   corpus/moodle/public/lib/wiki_to_markdown.php:281:26
       → /([[:space:]]|^)([[:alnum:]._-]+@[[:alnum:]._-]+)\(([^)]+)\)/i
@@ -15115,12 +15143,6 @@
      TIP 
          - /(?<=(\}|;))[^\{\};]+\{\s*\}/
          + /(?<=([};]))[^{};]+\{\s*\}/
-
-  corpus/moodle/public/lib/adodb/drivers/adodb-sybase.inc.php:423:20
-      → /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *([apAP]{0,1})/
-     TIP 
-         - /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *([apAP]{0,1})/
-         + /([A-Za-z]{3})[\-\/. ]([0-9 ]{1,2})[\-\/. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *([apAP]?)/
 
   corpus/moodle/public/lib/adodb/drivers/adodb-text.inc.php:104:23
       → /^[+-]{0,1}[0-9\.]+$/
