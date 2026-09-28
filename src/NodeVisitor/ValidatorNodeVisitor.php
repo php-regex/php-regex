@@ -69,6 +69,24 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private const MAX_CACHE_SIZE = 1000;
 
     /**
+     * Script and property names newer than PCRE2 10.40, loosely spelled, with
+     * the release that brought them ("pcre2test -LS" and "-LP" of each).
+     * Those after 10.45 are listed under it: no PHP bundles 10.45 or later.
+     */
+    private const UNICODE_NAMES_SINCE = [
+        'kawi' => '10.43', 'nagmundari' => '10.43', 'nagm' => '10.43',
+        'garay' => '10.45', 'gara' => '10.45', 'gurungkhema' => '10.45', 'gukh' => '10.45',
+        'kiratrai' => '10.45', 'krai' => '10.45', 'olonal' => '10.45', 'onao' => '10.45',
+        'sunuwar' => '10.45', 'sunu' => '10.45', 'todhri' => '10.45', 'todr' => '10.45',
+        'tulutigalari' => '10.45', 'tutg' => '10.45',
+        'beriaerfe' => '10.45', 'berf' => '10.45', 'sidetic' => '10.45', 'sidt' => '10.45',
+        'taiyo' => '10.45', 'tayo' => '10.45', 'tolongsiki' => '10.45', 'tols' => '10.45',
+        'idcompatmathcontinue' => '10.45', 'idcompatmathstart' => '10.45',
+        'idsunaryoperator' => '10.45', 'idsu' => '10.45', 'incb' => '10.45',
+        'modifiercombiningmark' => '10.45', 'mcm' => '10.45',
+    ];
+
+    /**
      * The longest (*MARK), (*PRUNE), (*SKIP) or (*THEN) name, in code units.
      */
     private const MAX_VERB_NAME_LENGTH = 255;
@@ -1066,6 +1084,22 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             self::$unicodePropCache[$key] = $this->validateUnicodeProperty($key);
         }
 
+        // A PHP version targeted instead of the running one knows what the
+        // PCRE2 it bundles does, which may be more or less than what runs.
+        $targetRelease = $this->propertyRelease($node);
+        if (null !== $targetRelease) {
+            [$needs, $bundled] = $targetRelease;
+            if (version_compare($bundled, $needs, '<')) {
+                $this->raiseSemanticError(
+                    \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and PHP %d.%d bundles %s.', ltrim($key, '\\'), $needs, intdiv($this->phpVersionId, 10000), intdiv($this->phpVersionId, 100) % 100, $bundled),
+                    $node->getEndPosition(),
+                    'regex.unicode.property_invalid',
+                );
+            }
+
+            return;
+        }
+
         if (false === self::$unicodePropCache[$key]) {
             $propertyKey = $this->extractUnicodePropertyKey($key);
             $suggestion = $this->suggestUnicodeProperty($propertyKey);
@@ -1446,6 +1480,37 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'regex.callout.invalid_type',
             );
         }
+    }
+
+    /**
+     * For a PHP version targeted instead of the running one, and a property
+     * whose support moved between PCRE2 releases: the release it needs and
+     * the one the target bundles (10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4
+     * and 8.5). Null when the running PCRE2 is the judge: no target, or a
+     * property every release knows or refuses alike.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    private function propertyRelease(UnicodePropNode $node): ?array
+    {
+        $written = substr($this->source ?? '', $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        if (\PHP_VERSION_ID === $this->phpVersionId || 1 !== preg_match('/^\\\\[pP]\{([ \t]*+)(\^?)(.*)\}$/s', $written, $matches)) {
+            return null;
+        }
+
+        $bundled = match (true) {
+            $this->phpVersionId >= 80400 => '10.44',
+            $this->phpVersionId >= 80300 => '10.42',
+            default => '10.40',
+        };
+
+        // Loose matching: case, spaces, hyphens and underscores are ignored,
+        // and "sc=", "scx:" and their long forms only name the table.
+        $name = strtolower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
+        $name = preg_replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
+        $needs = '' !== $matches[1] && '' !== $matches[2] ? '10.45' : (self::UNICODE_NAMES_SINCE[$name] ?? null);
+
+        return null === $needs ? null : [$needs, $bundled];
     }
 
     /**
