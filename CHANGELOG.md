@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- `\c` followed by a tab, a newline, another control character or DEL was reported valid; PCRE takes only printable ASCII after `\c`, and refuses these.
 - A malformed `\k` name was reported valid when it had an opener: `\k<`, `\k{ab`, `\k'a`, `\k<a-b>`, `\k{1,}`. PHP refuses them all; they now fail where PCRE stops reading, as `(?<`, `(?&` and `\g` already did.
 - Compiling or optimizing a pattern could fuse two items into one longer escape: `(a)\1\E0` compiled to `(a)\10` (the octal `\010`), `\xa\Eb` to `\xab`, `a{\E2}` to the repeat `a{2}`, and optimizing `(a)\1(?:)0` gave `(a)\10`. A `\E` or `\Q\E` is still dropped where it separates nothing, and kept as written where dropping it would join two items; where no source says how two items were separated, an empty group (`\E` in a class) keeps a digit escape apart from the next digit.
 - `\p` and `\P` with no property after them (`\p`, `\p1`, `\p\E{L}`, an unclosed `\p{L`, the empty `\p{}`) were read as the letters `p` and `P` and reported valid; PHP refuses them. They now fail with `regex.unicode.property_malformed` (or `regex.unicode.property_invalid` for `\p{}`) at PCRE's offset.

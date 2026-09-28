@@ -105,7 +105,7 @@ final class Lexer
         'T_UNICODE' => self::UNICODE_ESCAPE,
         'T_UNICODE_PROP' => '\\\\ [pP] (?: \\{ [^}]+ \\} | [a-zA-Z] )',
         'T_UNICODE_NAMED' => self::UNICODE_NAMED,
-        'T_CONTROL_CHAR' => '\\\\ c [\\x00-\\x7F]',
+        'T_CONTROL_CHAR' => '\\\\ c [\\x20-\\x7E]',
         'T_QUOTE_MODE_START' => '\\\\ Q',
         'T_QUOTE_MODE_END' => '\\\\ E',
         'T_LITERAL_ESCAPED' => '\\\\ .',
@@ -122,7 +122,7 @@ final class Lexer
         'T_OCTAL' => self::OCTAL_BRACED,
         'T_UNICODE' => self::UNICODE_ESCAPE,
         'T_UNICODE_PROP' => '\\\\ [pP] (?: \\{ [^}]+ \\} | [a-zA-Z] )',
-        'T_CONTROL_CHAR' => '\\\\ c [\\x00-\\x7F]',
+        'T_CONTROL_CHAR' => '\\\\ c [\\x20-\\x7E]',
         'T_QUOTE_MODE_START' => '\\\\ Q',
         'T_QUOTE_MODE_END' => '\\\\ E',
         'T_LITERAL_ESCAPED' => '\\\\ .',
@@ -457,8 +457,8 @@ final class Lexer
             }
 
             if (TokenType::T_LITERAL_ESCAPED === $type) {
-                // "\c" only falls through to an escaped literal when no ASCII
-                // character follows it; PCRE rejects that.
+                // "\c" only falls through to an escaped literal when no
+                // printable ASCII character follows it; PCRE rejects that.
                 if ('\\c' === $matchedValue) {
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',

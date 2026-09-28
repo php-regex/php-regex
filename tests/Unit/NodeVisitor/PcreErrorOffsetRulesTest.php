@@ -144,6 +144,10 @@ final class PcreErrorOffsetRulesTest extends TestCase
         yield '\\c at the end' => ['/^\\c/', 3, 3];
         yield '\\c before a two-byte character' => ['/^\\cģ/', 4, 3];
         yield '\\c before a character in UTF mode' => ['/^\\cģ/u', 5, 3];
+        yield '\\c before a tab' => ["/^\\c\t/", 4, 3];
+        yield '\\c before a newline' => ["/^\\c\n/", 4, 3];
+        yield '\\c before a control character' => ["/^\\c\x1f/", 4, 3];
+        yield '\\c before DEL' => ["/^\\c\x7f/", 4, 3];
         yield 'unknown property' => ['/\\p{Foo}/', 7, 7];
         yield 'unknown one-letter property' => ['/\\pQ/', 3, 3];
         yield 'unknown Unicode name' => ['/\\N{name}/', 3, 2];
