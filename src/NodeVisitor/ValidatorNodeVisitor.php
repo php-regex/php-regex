@@ -2383,7 +2383,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     /**
      * Judge one token the way the node it would become is judged, for the
-     * checks that need no other node: escaped letters, "\N{...}" and "\C".
+     * checks that need no other node: escaped letters, "\N{...}", character
+     * types and properties.
      */
     private function validateEscapeToken(Token $token, string $source): void
     {
@@ -2394,13 +2395,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             default => null,
         };
 
-        if (TokenType::T_CHAR_TYPE === $token->type && 'C' === $token->value && $this->unicodeFlag) {
-            $this->raiseSemanticError(
-                '\C is not allowed in Unicode mode: it matches a single byte.',
+        if (TokenType::T_CHAR_TYPE === $token->type) {
+            $this->visitCharType(new CharTypeNode($token->value, $token->position, $token->end()));
+        }
+
+        if (TokenType::T_UNICODE_PROP === $token->type) {
+            $this->visitUnicodeProp(new UnicodePropNode(
+                $token->value,
+                str_starts_with($token->value, '{'),
+                $token->position,
                 $token->end(),
-                'regex.escape.single_byte_in_utf',
-                'Use "." or drop the "u" flag.',
-            );
+                'P' === ($source[$token->position + 1] ?? ''),
+            ));
         }
 
         $letter = $token->value;

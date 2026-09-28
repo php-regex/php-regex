@@ -144,6 +144,10 @@ final class ErrorPrecedenceTest extends TestCase
         yield 'single byte under UTF before a group left open' => ['pattern' => '/\\C(/u', 'offsets' => [2]];
         yield 'unknown escape after quoted text' => ['pattern' => '/\\Qa\\E\\y(/', 'offsets' => [7, 6]];
         yield 'unknown escape after a comment' => ['pattern' => '/(?#c)\\y(/', 'offsets' => [7, 6]];
+        yield 'character type invalid in a class before a group left open' => ['pattern' => '/[\\R(/', 'offsets' => [3, 2]];
+        yield 'character type invalid in a class before a class left open' => ['pattern' => '/a[\\X[/', 'offsets' => [4, 3]];
+        yield 'unknown one-letter property before a group left open' => ['pattern' => '/\\Pf(/', 'offsets' => [3]];
+        yield 'unknown braced property before a group left open' => ['pattern' => '/\\p{Foo}(/', 'offsets' => [7]];
         yield 'code point outside UTF mode before a group left open' => ['pattern' => '/\\N{U+41}(/', 'offsets' => [8, 2]];
     }
 
