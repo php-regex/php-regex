@@ -138,25 +138,6 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         $this->quotedSpans = null;
     }
 
-    /**
-     * Whether the pattern opens with a (*UTF) or (*UTF8) setting, possibly
-     * after other start-of-pattern settings.
-     */
-    private static function startsWithUtfVerb(NodeInterface $pattern): bool
-    {
-        $nodes = $pattern instanceof SequenceNode ? $pattern->children : [$pattern];
-        foreach ($nodes as $node) {
-            if (!$node instanceof PcreVerbNode) {
-                return false;
-            }
-            if ('UTF' === $node->verb || 'UTF8' === $node->verb) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
@@ -703,6 +684,25 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         }
 
         return '(?C"'.$node->identifier.'")';
+    }
+
+    /**
+     * Whether the pattern opens with a (*UTF) or (*UTF8) setting, possibly
+     * after other start-of-pattern settings.
+     */
+    private static function startsWithUtfVerb(NodeInterface $pattern): bool
+    {
+        $nodes = $pattern instanceof SequenceNode ? $pattern->children : [$pattern];
+        foreach ($nodes as $node) {
+            if (!$node instanceof PcreVerbNode) {
+                return false;
+            }
+            if ('UTF' === $node->verb || 'UTF8' === $node->verb) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

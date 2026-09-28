@@ -50,12 +50,14 @@ final class QuotedWhitespaceRoundTripTest extends TestCase
         // non-ASCII character must not come back as separate bytes.
         yield "/(*UTF)\\Q\u{e9}\\E/" => ['pattern' => "/(*UTF)\\Q\u{e9}\\E/", 'subjects' => ["\u{e9}", 'e']];
         yield "/^(*UTF)[\\Q\u{e9}\\E]$/" => ['pattern' => "/(*UTF)^[\\Q\u{e9}\\E]$/", 'subjects' => ["\u{e9}", 'e']];
-        yield "/^a\\Q\n/" => ['pattern' => "/^a\\Q\n/", 'subjects' => ["a\n", "a", ""]];
-        yield "/^\\Q\n/x" => ['pattern' => "/^\\Q\n/x", 'subjects' => ["\n", "", " "]];
-        yield "/^a\\Q \\E\$/x" => ['pattern' => "/^a\\Q \\E\$/x", 'subjects' => ["a ", "a"]];
-        yield "/^\\Q#\\E\$/x" => ['pattern' => "/^\\Q#\\E\$/x", 'subjects' => ["#", ""]];
-        yield "/^\\Q\t\\Ea\$/x" => ['pattern' => "/^\\Q\t\\Ea\$/x", 'subjects' => ["\ta", "a"]];
-        yield "/^\\K\\Q-\n/x" => ['pattern' => "/^\\K\\Q-\n/x", 'subjects' => ["-\n", "-"]];
-        yield "/^\\Q#x\n\\E\$/x" => ['pattern' => "/^\\Q#x\n\\E\$/x", 'subjects' => ["#x\n", "x"]];
+        yield "/(*CR)(*UTF8)\\Q\u{e9}\\E/" => ['pattern' => "/(*CR)(*UTF8)\\Q\u{e9}\\E/", 'subjects' => ["\u{e9}", 'e']];
+        yield '/(*CR)/' => ['pattern' => '/(*CR)/', 'subjects' => ['', 'a']];
+        yield "/^a\\Q\n/" => ['pattern' => "/^a\\Q\n/", 'subjects' => ["a\n", 'a', '']];
+        yield "/^\\Q\n/x" => ['pattern' => "/^\\Q\n/x", 'subjects' => ["\n", '', ' ']];
+        yield '/^a\\Q \\E$/x' => ['pattern' => '/^a\\Q \\E$/x', 'subjects' => ['a ', 'a']];
+        yield '/^\\Q#\\E$/x' => ['pattern' => '/^\\Q#\\E$/x', 'subjects' => ['#', '']];
+        yield "/^\\Q\t\\Ea\$/x" => ['pattern' => "/^\\Q\t\\Ea\$/x", 'subjects' => ["\ta", 'a']];
+        yield "/^\\K\\Q-\n/x" => ['pattern' => "/^\\K\\Q-\n/x", 'subjects' => ["-\n", '-']];
+        yield "/^\\Q#x\n\\E\$/x" => ['pattern' => "/^\\Q#x\n\\E\$/x", 'subjects' => ["#x\n", 'x']];
     }
 }
