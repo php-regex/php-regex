@@ -702,6 +702,15 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
      */
     private function openingAsWritten(GroupNode $node, string $opening): string
     {
+        // Under "n", "(...)" does not capture: it is read as "(?:...)" and
+        // written back with the "(" the pattern used.
+        if (GroupType::T_GROUP_NON_CAPTURING === $node->type && null !== $this->source
+            && str_contains($this->flags, 'n')
+            && '(' === ($this->source[$node->getStartPosition()] ?? '')
+            && !\in_array($this->source[$node->getStartPosition() + 1] ?? '', ['?', '*'], true)) {
+            return '(';
+        }
+
         if (null === $this->source || GroupType::T_GROUP_NAMED !== $node->type || null === $node->name) {
             return $opening;
         }

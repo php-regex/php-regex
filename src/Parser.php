@@ -138,6 +138,12 @@ final class Parser
 
     private bool $extendedMode = false;
 
+    /**
+     * Whether "n" (NO_AUTO_CAPTURE) is in force: a plain "(...)" group then
+     * captures nothing and takes no number; named groups still capture.
+     */
+    private bool $noAutoCapture = false;
+
     private bool $inQuoteMode = false;
 
     private int $recursionDepth = 0;
@@ -179,6 +185,7 @@ final class Parser
             str_contains($flags, 'u') || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern),
         );
         $this->extendedMode = str_contains($flags, 'x');
+        $this->noAutoCapture = str_contains($flags, 'n');
         $this->inQuoteMode = false;
         $this->recursionDepth = 0;
         $this->captureCount = 0;
@@ -197,12 +204,14 @@ final class Parser
     private function parseScopedAlternation(): NodeInterface
     {
         $extendedMode = $this->extendedMode;
+        $noAutoCapture = $this->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
 
         try {
             return $this->parseAlternation();
         } finally {
             $this->extendedMode = $extendedMode;
+            $this->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
     }
@@ -682,13 +691,20 @@ final class Parser
     {
         if ($this->stream->match(TokenType::T_GROUP_OPEN)) {
             $startToken = $this->stream->previous();
-            $this->captureCount++;
+
+            // Under "n" a plain group groups and nothing more, as "(?:...)"
+            // does; the compiler gives back the "(" it was written with.
+            $captures = !$this->noAutoCapture;
+            if ($captures) {
+                $this->captureCount++;
+            }
+
             $expr = $this->parseScopedAlternation();
             $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
 
             return $this->createGroupNode(
                 $expr,
-                GroupType::T_GROUP_CAPTURING,
+                $captures ? GroupType::T_GROUP_CAPTURING : GroupType::T_GROUP_NON_CAPTURING,
                 $startToken->position,
                 $endToken,
             );
@@ -1040,9 +1056,11 @@ final class Parser
             return $this->createEmptyLiteralNodeAt($absoluteOffset);
         }
 
-        $stream = (new Lexer())->tokenize($payload, $this->flags);
+        // An inline "(?n)" before the payload still holds inside it.
+        $flags = $this->noAutoCapture && !str_contains($this->flags, 'n') ? $this->flags.'n' : $this->flags;
+        $stream = (new Lexer())->tokenize($payload, $flags);
         $parser = new Parser($this->maxRecursionDepth, $this->phpVersionId);
-        $pattern = $parser->parse($stream, $this->flags, '/', \strlen($payload));
+        $pattern = $parser->parse($stream, $flags, '/', \strlen($payload));
 
         // The groups it holds take numbers in the enclosing pattern.
         $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;
@@ -1257,6 +1275,7 @@ final class Parser
     private function parseBranchReset(int $startPosition): GroupNode
     {
         $extendedMode = $this->extendedMode;
+        $noAutoCapture = $this->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
         $base = $this->captureCount;
         $highest = $base;
@@ -1276,6 +1295,7 @@ final class Parser
         } finally {
             $this->recursionDepth--;
             $this->extendedMode = $extendedMode;
+            $this->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
 
@@ -1332,6 +1352,7 @@ final class Parser
         }
 
         $wasExtended = $this->extendedMode;
+        $wasNoAutoCapture = $this->noAutoCapture;
         $wasAllowingDuplicates = $this->groupNames->duplicatesAllowed();
 
         if ($modifiers?->turnsOn('J')) {
@@ -1342,12 +1363,14 @@ final class Parser
         }
 
         $this->extendedMode = $modifiers?->inForce('x', $this->extendedMode) ?? $this->extendedMode;
+        $this->noAutoCapture = $modifiers?->inForce('n', $this->noAutoCapture) ?? $this->noAutoCapture;
 
         $expr = null;
         if ($this->stream->matchLiteral(':')) {
             $expr = $this->parseScopedAlternation();
             // "(?x:...)" only covers its own group; "(?x)" keeps going.
             $this->extendedMode = $wasExtended;
+            $this->noAutoCapture = $wasNoAutoCapture;
             $this->groupNames->allowDuplicates($wasAllowingDuplicates);
         }
 
