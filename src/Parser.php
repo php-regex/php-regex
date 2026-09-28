@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser;
 
+use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
 use RegexParser\Exception\SyntaxErrorException;
@@ -1238,9 +1239,22 @@ final class Parser
         // The payload is read for the same PHP version, or the same running
         // PCRE2, as the pattern around it.
         $target = $this->useRuntimePcreDetection ? null : $this->phpVersionId;
-        $stream = (new Lexer(Lexer::readsWideRepeatCounts($target)))->tokenize($payload, $flags);
-        $parser = new Parser($this->maxRecursionDepth, $target);
-        $pattern = $parser->parse($stream, $flags, '/', \strlen($payload));
+
+        try {
+            $stream = (new Lexer(Lexer::readsWideRepeatCounts($target)))->tokenize($payload, $flags);
+            $pattern = (new Parser($this->maxRecursionDepth, $target))->parse($stream, $flags, '/', \strlen($payload));
+        } catch (LexerException|ParserException $error) {
+            // Read apart, the payload counts positions from its own start:
+            // the error is reported where it stands in the whole pattern.
+            $position = (int) $error->getPosition() + $absoluteOffset;
+            $message = preg_replace_callback(
+                '/at position (\d++)/',
+                static fn (array $matches): string => 'at position '.((int) $matches[1] + $absoluteOffset),
+                $error->getMessage(),
+            ) ?? $error->getMessage();
+
+            throw $error::withContext($message, $position, $this->pattern, $error);
+        }
 
         // The groups it holds take numbers in the enclosing pattern.
         $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;
@@ -1276,7 +1290,7 @@ final class Parser
                 $payload,
                 $startPosition,
                 $endPosition,
-                $this->parseSubPattern($payload, $startPosition),
+                $this->parseSubPattern($payload, $startPosition + 2 + $read->payloadOffset),
             );
         }
 

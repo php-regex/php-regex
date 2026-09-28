@@ -46,6 +46,7 @@ use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
+use RegexParser\Node\ScriptRunNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
@@ -268,6 +269,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private int $lookbehindBranchMeasures = 0;
 
     /**
+     * Where the text the visited nodes count their positions from starts in
+     * the whole pattern: 0, or the start of the payload of the "(*pla:...)"
+     * or "(*sr:...)" being visited, which is parsed apart.
+     */
+    private int $positionOffset = 0;
+
+    /**
      * How many lookbehinds the node being visited sits in.
      */
     private int $lookbehindDepth = 0;
@@ -358,6 +366,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
+        $this->positionOffset = 0;
         $this->lateErrors = [];
         $this->walkingPattern = true;
 
@@ -429,11 +438,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
 
-        // "(*pla:...)" and its kin are parsed apart, with positions counted
-        // from their own payload, so the source cannot be read under them.
         $source = $this->source;
+        $positionOffset = $this->positionOffset;
         if ($node->child->getStartPosition() <= $node->startPosition) {
-            $this->source = null;
+            $this->enterPayload($node->startPosition, $node->endPosition);
         }
 
         $enclosingGroups = $this->enclosingGroups;
@@ -449,6 +457,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node->child->accept($this);
         } finally {
             $this->source = $source;
+            $this->positionOffset = $positionOffset;
             $this->enclosingGroups = $enclosingGroups;
             if ($isLookbehind) {
                 $this->lookbehindDepth--;
@@ -457,6 +466,25 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->previousNode = $previous;
         $this->nextNode = $next;
+    }
+
+    #[\Override]
+    public function visitScriptRun(ScriptRunNode $node): void
+    {
+        if (null === $node->content) {
+            return;
+        }
+
+        $source = $this->source;
+        $positionOffset = $this->positionOffset;
+        $this->enterPayload($node->startPosition, $node->endPosition);
+
+        try {
+            $node->content->accept($this);
+        } finally {
+            $this->source = $source;
+            $this->positionOffset = $positionOffset;
+        }
     }
 
     #[\Override]
@@ -2791,6 +2819,31 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * Step into the payload of "(*pla:...)", "(?*...)" or "(*sr:...)", which
+     * spans $start to $end in the text read so far: its nodes count positions
+     * from the payload's start, so the source read becomes the payload's and
+     * errors are moved back by where it starts. Without a source, nothing
+     * says where that is, and the source stays unread.
+     */
+    private function enterPayload(int $start, int $end): void
+    {
+        $source = $this->source;
+        $this->source = null;
+        if (null === $source) {
+            return;
+        }
+
+        $colon = strpos($source, ':', $start);
+        $payloadStart = '?' === ($source[$start + 1] ?? '') ? $start + 3 : (false === $colon ? null : $colon + 1);
+        if (null === $payloadStart || $payloadStart > $end) {
+            return;
+        }
+
+        $this->source = substr($source, $payloadStart, max(0, $end - 1 - $payloadStart));
+        $this->positionOffset += $payloadStart;
+    }
+
+    /**
      * The error of the earliest late pass, once nothing else went wrong.
      */
     private function raiseFirstLateError(): void
@@ -2831,7 +2884,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function raiseMissingReference(string $message, int $position, string $code): void
     {
-        $error = new SemanticErrorException($message, $position, $this->pattern, null, $code);
+        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code);
 
         if (!$this->walkingPattern || $this->measuringLookbehind) {
             throw $error;
@@ -2844,7 +2897,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         throw new SemanticErrorException(
             $message,
-            $position,
+            $position + $this->positionOffset,
             $this->pattern,
             null,
             $code,

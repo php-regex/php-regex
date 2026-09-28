@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- The body of `(*pla:...)`, `(?*...)` and the other alphabetic assertions was never checked for escapes PHP refuses (`(*pla:\y)`, `(*pla:\U)`, `(*pla:[\B])`), and the body of `(*sr:...)` was not checked at all (`(*sr:a{2,1})`); both are now checked like the rest of the pattern. An error found inside such a body is reported at its offset in the whole pattern, not in the body.
 - `\b{g}` and `\B{g}` were read as grapheme-boundary assertions, which PCRE2 does not have: it reads a word boundary followed by the text `{g}`. They now parse that way, so `\B{g}+` (which repeats the `}`) is no longer refused.
 - A quantifier after `(*LIMIT_MATCH=n)`, as in `(*LIMIT_MATCH=10)+`, was accepted; PHP refuses to repeat it, as it refuses to repeat the other start-of-pattern settings.
 - The body of `(*pla:...)`, `(*atomic:...)`, `(*script_run:...)` and the other alphabetic assertions ended at the first `)` outside a nested group, even one that was escaped, in a class, quoted by `\Q...\E` or in a `(?#...)` comment: `(*pla:\))` and `(*pla:[)])` were refused, `(*pla:\Qa)` accepted. It is now read as any group body is.
