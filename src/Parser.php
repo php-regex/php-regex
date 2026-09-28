@@ -1934,9 +1934,24 @@ final class Parser
 
         [$startNode] = $this->parseCharClassAtom($startPosition);
 
+        // PCRE also skips "\E" and an empty "\Q\E" before the "-": "[z\E-a]"
+        // is the range z-a. Without a "-" after them, they are left to the
+        // class loop as they were. A quoted run of several characters starts
+        // its range at its last one, which one node cannot say, so that case
+        // keeps its members apart.
+        $beforeQuotes = $this->stream->getPosition();
+        $wasInQuoteMode = $this->inQuoteMode;
+        $singleCharacterStart = !($startNode instanceof LiteralNode && mb_strlen($startNode->value) > 1);
+        if ($singleCharacterStart) {
+            $this->skipEmptyQuotes();
+        }
+
         // Check for Range
         $rangePosition = $this->stream->getPosition();
         if (!$this->stream->match(TokenType::T_RANGE)) {
+            $this->stream->setPosition($beforeQuotes);
+            $this->inQuoteMode = $wasInQuoteMode;
+
             return $startNode;
         }
 
@@ -1956,6 +1971,25 @@ final class Parser
             $this->stream->rewind(1);
 
             return $startNode;
+        }
+
+        // A quoted end, "[a-\Qz\E]", ends the range at the quoted character.
+        // A quoted run of several characters would end it at its first one
+        // and leave the rest as members, which one node cannot say: keep the
+        // members apart as before.
+        if ($this->stream->check(TokenType::T_QUOTE_MODE_START)) {
+            $quoted = $this->stream->peek();
+            if (TokenType::T_LITERAL !== $quoted->type
+                || 1 !== mb_strlen($quoted->value)
+                || TokenType::T_QUOTE_MODE_END !== $this->stream->peek(2)->type) {
+                $this->stream->setPosition($beforeQuotes);
+                $this->inQuoteMode = $wasInQuoteMode;
+
+                return $startNode;
+            }
+
+            $this->stream->advance();
+            $this->inQuoteMode = true;
         }
 
         $endToken = $this->stream->current();
