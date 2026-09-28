@@ -6461,6 +6461,11 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
+  corpus/composer/composer/src/Composer/Util/Platform.php:382:42
+      → {-?v?\d+(\.\d+)*$}
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
   corpus/composer/composer/src/Composer/Downloader/SvnDownloader.php:147:24
       → {\s*\r?\n\s*}
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -10587,9 +10592,9 @@
 
   corpus/jetpack/projects/packages/waf/src/class-waf-transforms.php:257:24
       → ~/*|*/|--|#|//~
-     FAIL  Quantifier without target at position 3
+     FAIL  Quantifier without target at position 4
          ↳         /*|*/|--|#|//
-                      ^
+                       ^
 
   corpus/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:439:30
       → /([-_].*)$/i
@@ -11385,12 +11390,12 @@
          - /\n \*\s+/um
          + /\n \*\s+/u
 
-  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:350:21
+  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:363:21
       → /array\(([0-9a-zA-Z_'\" ]+,)*([0-9a-zA-Z_'\" ]+)\)/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:366:21
+  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:379:21
       → /\[([0-9a-zA-Z_'\" ]+,)*([0-9a-zA-Z_'\" ]+)\]/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -11412,7 +11417,7 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/psalm/src/Psalm/Internal/Analyzer/Statements/Expression/CallAnalyzer.php:513:28
+  corpus/psalm/src/Psalm/Internal/Analyzer/Statements/Expression/CallAnalyzer.php:517:28
       → /^[A-Za-z0-9_]+(\\[A-Za-z0-9_]+)*(::[A-Za-z0-9_]+)?$/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -12839,7 +12844,7 @@
          - #<esi\:comment[^>]+>#s
          + #<esi\:comment[^>]+>#
 
-  corpus/symfony/symfony/src/Symfony/Component/HttpClient/HttpClientTrait.php:376:28
+  corpus/symfony/symfony/src/Symfony/Component/HttpClient/HttpClientTrait.php:381:28
       → {multipart/form-data; boundary=(?|"([^"\r\n]++)"|([-!#$%&'*+.^_`|~_A-Za-z0-9]++))}
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '_' (duplicate)
