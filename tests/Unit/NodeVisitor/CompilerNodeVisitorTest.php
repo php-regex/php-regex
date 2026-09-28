@@ -204,6 +204,16 @@ final class CompilerNodeVisitorTest extends TestCase
         $this->assertStringContainsString('# comment', $compiled);
     }
 
+    public function test_compile_pretty_mode_keeps_an_unscoped_modifier_group_unscoped(): void
+    {
+        // "(?i)" turns "i" on for what follows it; "(?i:)" would turn it on
+        // for nothing.
+        $compiled = $this->compilePretty('/(?i)abc/');
+
+        $this->assertStringContainsString('(?i)', $compiled);
+        $this->assertStringNotContainsString('(?i:', $compiled);
+    }
+
     public function test_compile_escaped_literal_metacharacters(): void
     {
         // Test that escaped metacharacters used as literals are preserved

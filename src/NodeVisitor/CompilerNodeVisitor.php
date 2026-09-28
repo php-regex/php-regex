@@ -250,6 +250,11 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             $this->indentLevel--;
             $indent = str_repeat(' ', $this->indentLevel * 4);
 
+            // "(?i)" covers what follows it, not a group of its own.
+            if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && '' === $child) {
+                return $indent.'(?'.$flags.')';
+            }
+
             return $indent.$opening."\n".$child."\n".$indent.$closing;
         }
 
