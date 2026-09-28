@@ -1820,7 +1820,7 @@
      WARN  Suspicious \2 inside character class: this is octal (\x02), not a backreference to group 2.
          ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 2, move the check outside the class.
 
-  corpus/grav/system/src/Grav/Installer/Install.php:547:20
+  corpus/grav/system/src/Grav/Installer/Install.php:620:20
       → /define\(\s*['"]GRAV_VERSION['"]\s*,\s*['"]([^'"]+)['"]\s*\);/mu
      WARN  Flag 'm' is useless: pattern '/define\(\s*['"]GRAV_VERSION['"]\s*,\s*['"]([^'"]+)['"]\s*\);/mu' contains no anchors.
      TIP 
@@ -9842,6 +9842,14 @@
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '%' (duplicate), '5' (duplicate)
 
+  corpus/prestashop/src/Core/ExtraProperty/Validation/ExtraPropertyValidator.php:102:33
+      → /^[A-Z][A-Za-z0-9_]*(?:\.[A-Z][A-Za-z0-9_]*){1,2}$/
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     TIP 
+         - /^[A-Z][A-Za-z0-9_]*(?:\.[A-Z][A-Za-z0-9_]*){1,2}$/
+         + /^[A-Z][A-Za-z0-9_]*(?>(?:\.[A-Z][A-Za-z0-9_]*)){1,2}$/
+
   corpus/prestashop/src/Core/Image/Parser/ImageTagSourceParser.php:23:34
       → /src="(\.\.\/|\.\/)+/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -12817,7 +12825,7 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/symfony/symfony/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php:66:49
+  corpus/symfony/symfony/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php:78:49
       → /(^|_|\.)++(.)/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -12859,7 +12867,7 @@
          - /(^[^,\\]*(?:\\.[^,\\]*)*),/
          + /(^[^,\\]*(?>(?:\\.[^,\\]*))*),/
 
-  corpus/symfony/symfony/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php:265:47
+  corpus/symfony/symfony/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php:267:47
       → /^#@[+-]{1}/m
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
@@ -13843,27 +13851,27 @@
       → /^[[:alpha:]]{1,3}\s*:(.*)/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4355:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4361:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4371:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4377:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4605:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4611:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5114:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5137:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5139:41
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5162:41
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
@@ -13952,7 +13960,7 @@
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/mediawiki/includes/Parser/Parser.php:5772:28
+  corpus/mediawiki/includes/Parser/Parser.php:5782:28
       → /\n\t\t\t&\t\t\t# 1. entity prefix\n\t\t\t(?=\t\t\t# 2. followed by:\n\t\t\t(?:\t\t\t#  a. one of the legacy semicolon-less named entities\n\t\t\t\tA(?:Elig|MP|acute|circ|grave|ring|tilde|uml)|\n\t\t\t\tC(?:OPY|cedil)|E(?:TH|acute|circ|grave|uml)|\n\t\t\t\tGT|I(?:acute|circ|grave|uml)|LT|Ntilde|\n\t\t\t\tO(?:acute|circ|grave|slash|tilde|uml)|QUOT|REG|THORN|\n\t\t\t\tU(?:acute|circ|grave|uml)|Yacute|\n\t\t\t\ta(?:acute|c(?:irc|ute)|elig|grave|mp|ring|tilde|uml)|brvbar|\n\t\t\t\tc(?:cedil|edil|urren)|cent(?!erdot;)|copy(?!sr;)|deg|\n\t\t\t\tdivide(?!ontimes;)|e(?:acute|circ|grave|th|uml)|\n\t\t\t\tfrac(?:1(?:2|4)|34)|\n\t\t\t\tgt(?!c(?:c|ir)|dot|lPar|quest|r(?:a(?:pprox|rr)|dot|eq(?:less|qless)|less|sim);)|\n\t\t\t\ti(?:acute|circ|excl|grave|quest|uml)|laquo|\n\t\t\t\tlt(?!c(?:c|ir)|dot|hree|imes|larr|quest|r(?:Par|i(?:e|f|));)|\n\t\t\t\tm(?:acr|i(?:cro|ddot))|n(?:bsp|tilde)|\n\t\t\t\tnot(?!in(?:E|dot|v(?:a|b|c)|)|ni(?:v(?:a|b|c)|);)|\n\t\t\t\to(?:acute|circ|grave|rd(?:f|m)|slash|tilde|uml)|\n\t\t\t\tp(?:lusmn|ound)|para(?!llel;)|quot|r(?:aquo|eg)|\n\t\t\t\ts(?:ect|hy|up(?:1|2|3)|zlig)|thorn|times(?!b(?:ar|)|d;)|\n\t\t\t\tu(?:acute|circ|grave|ml|uml)|y(?:acute|en|uml)\n\t\t\t)\n\t\t\t(?:[^;]|$))\t#  b. and not followed by a semicolon\n\t\t\t# S = study, for efficiency\n\t\t\t/Sx
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -14702,7 +14710,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/laravel/framework/src/Illuminate/Support/Str.php:1663:29
+  corpus/laravel/framework/src/Illuminate/Support/Str.php:1669:29
       → ~(\s|\x{3164}|\x{1160})+~u
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
