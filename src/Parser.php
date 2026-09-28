@@ -265,6 +265,10 @@ final class Parser
                 continue;
             }
 
+            if ($this->quantifyAcrossComments($nodes)) {
+                continue;
+            }
+
             $nodes[] = $this->parseQuantifiedAtom();
         }
 
@@ -423,9 +427,97 @@ final class Parser
         $nodes[] = new QuantifierNode($last, $quantifier, $type, $last->getStartPosition(), $token->end());
     }
 
+    /**
+     * A comment is transparent to a quantifier: in "a(?#c)*" the star repeats
+     * the "a", and "a*(?#c)+" is "a*+". With nothing repeatable before the
+     * comments PCRE refuses the quantifier. The quantifier goes on the item
+     * itself, which every consumer of the tree expects to find right under
+     * it, and the comments follow it.
+     *
+     * @param array<NodeInterface> $nodes
+     */
+    private function quantifyAcrossComments(array &$nodes): bool
+    {
+        if (!end($nodes) instanceof CommentNode || !$this->stream->match(TokenType::T_QUANTIFIER)) {
+            return false;
+        }
+
+        $token = $this->stream->previous();
+
+        $comments = [];
+        while (($last = end($nodes)) instanceof CommentNode) {
+            array_pop($nodes);
+            array_unshift($comments, $last);
+        }
+
+        $target = array_pop($nodes);
+
+        if (null === $target) {
+            $position = $this->quantifierErrorOffset($token);
+
+            throw $this->parserException(
+                \sprintf('Quantifier without target at position %d', $position),
+                $position,
+            );
+        }
+
+        if ($target instanceof QuantifierNode) {
+            $nodes[] = $this->modifyQuantifierAcrossComments($target, $token);
+        } else {
+            $this->assertQuantifierCanApply($target, $token);
+            $nodes[] = $this->quantify($target, $token);
+        }
+
+        array_push($nodes, ...$comments);
+
+        return true;
+    }
+
+    /**
+     * After a quantified item, a lone "+" or "?" beyond the comments makes a
+     * greedy quantifier possessive or lazy, as it would written right after
+     * it. Anything else is a second quantifier on the same item.
+     */
+    private function modifyQuantifierAcrossComments(QuantifierNode $target, Token $token): QuantifierNode
+    {
+        $modifier = $token->value[0];
+
+        if (QuantifierType::T_GREEDY !== $target->type || !\in_array($modifier, ['+', '?'], true)) {
+            $position = $this->quantifierErrorOffset($token);
+
+            throw $this->parserException(
+                \sprintf('Quantifier without target at position %d', $position),
+                $position,
+            );
+        }
+
+        // "a*(?#c)++": the first "+" is the modifier, the second repeats nothing.
+        if (\strlen($token->value) > 1) {
+            $position = $token->position + \strlen($token->value);
+
+            throw $this->parserException(
+                \sprintf('Quantifier without target at position %d', $position),
+                $position,
+            );
+        }
+
+        return new QuantifierNode(
+            $target->node,
+            $target->quantifier,
+            '+' === $modifier ? QuantifierType::T_POSSESSIVE : QuantifierType::T_LAZY,
+            $target->getStartPosition(),
+            $token->position + 1,
+        );
+    }
+
     private function parseQuantifiedAtom(): NodeInterface
     {
         $node = $this->parseAtom();
+
+        // A quantifier after a comment repeats the item before the comment.
+        if ($node instanceof CommentNode) {
+            return $node;
+        }
 
         $skipped = $this->skipExtendedModeContent();
 
@@ -434,26 +526,7 @@ final class Parser
 
             $this->assertQuantifierCanApply($node, $token);
 
-            [$quantifier, $type] = $this->parseQuantifierValue($token->value);
-
-            $startPosition = $node->getStartPosition();
-            $endPosition = $token->position + \strlen($token->value);
-
-            // In extended (/x) mode, whitespace may separate a quantifier from
-            // its lazy/possessive modifier: "a* +" means "a*+" to PCRE.
-            if (QuantifierType::T_GREEDY === $type && $this->extendedMode && !$this->inQuoteMode) {
-                $skippedModifier = $this->skipExtendedModeContent();
-                if ($this->stream->check(TokenType::T_QUANTIFIER) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
-                    $modifier = $this->stream->current()->value;
-                    $type = '+' === $modifier ? QuantifierType::T_POSSESSIVE : QuantifierType::T_LAZY;
-                    $endPosition = $this->stream->current()->position + 1;
-                    $this->stream->advance();
-                } elseif ($skippedModifier > 0) {
-                    $this->stream->rewind($skippedModifier);
-                }
-            }
-
-            return new QuantifierNode($node, $quantifier, $type, $startPosition, $endPosition);
+            return $this->quantify($node, $token);
         }
 
         if ($skipped > 0) {
@@ -461,6 +534,30 @@ final class Parser
         }
 
         return $node;
+    }
+
+    private function quantify(NodeInterface $node, Token $token): QuantifierNode
+    {
+        [$quantifier, $type] = $this->parseQuantifierValue($token->value);
+
+        $startPosition = $node->getStartPosition();
+        $endPosition = $token->position + \strlen($token->value);
+
+        // In extended (/x) mode, whitespace may separate a quantifier from
+        // its lazy/possessive modifier: "a* +" means "a*+" to PCRE.
+        if (QuantifierType::T_GREEDY === $type && $this->extendedMode && !$this->inQuoteMode) {
+            $skippedModifier = $this->skipExtendedModeContent();
+            if ($this->stream->check(TokenType::T_QUANTIFIER) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
+                $modifier = $this->stream->current()->value;
+                $type = '+' === $modifier ? QuantifierType::T_POSSESSIVE : QuantifierType::T_LAZY;
+                $endPosition = $this->stream->current()->position + 1;
+                $this->stream->advance();
+            } elseif ($skippedModifier > 0) {
+                $this->stream->rewind($skippedModifier);
+            }
+        }
+
+        return new QuantifierNode($node, $quantifier, $type, $startPosition, $endPosition);
     }
 
     /**

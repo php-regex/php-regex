@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace RegexParser\Tests\Unit\Parser;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use RegexParser\Node\CommentNode;
+use RegexParser\Node\LiteralNode;
+use RegexParser\Node\QuantifierNode;
+use RegexParser\Node\QuantifierType;
+use RegexParser\Node\SequenceNode;
+use RegexParser\NodeVisitor\CompilerNodeVisitor;
+use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
+use RegexParser\Regex;
+
+/**
+ * PCRE skips a (?#...) comment, and a /x line comment, before it reads a
+ * quantifier: "a*(?#c)+" is the possessive "a*+", "a*(?#c)*" is two
+ * quantifiers in a row. Every verdict and offset below is the one
+ * preg_match() gives on PCRE2 10.48.
+ */
+final class QuantifierModifierAfterCommentTest extends TestCase
+{
+    #[Test]
+    #[DataProvider('provideQuantifiedItems')]
+    public function test_the_quantifier_goes_on_the_item_before_the_comments(string $pattern, string $quantifier, QuantifierType $type): void
+    {
+        $ast = Regex::create()->parse($pattern);
+
+        $sequence = $ast->pattern;
+        $this->assertInstanceOf(SequenceNode::class, $sequence);
+
+        $quantified = $sequence->children[0];
+        $this->assertInstanceOf(QuantifierNode::class, $quantified);
+        $this->assertInstanceOf(LiteralNode::class, $quantified->node);
+        $this->assertSame('a', $quantified->node->value);
+        $this->assertSame($quantifier, $quantified->quantifier);
+        $this->assertSame($type, $quantified->type);
+
+        $this->assertContainsOnlyInstancesOf(CommentNode::class, \array_slice($sequence->children, 1));
+    }
+
+    /**
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideMatchingPatterns')]
+    public function test_the_recompiled_pattern_matches_like_the_original(string $pattern, array $subjects): void
+    {
+        $ast = Regex::create()->parse($pattern);
+        $compiled = $ast->accept(new CompilerNodeVisitor());
+
+        foreach ($subjects as $subject) {
+            $this->assertSame(preg_match($pattern, $subject, $expected), preg_match($compiled, $subject, $actual), \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
+            $this->assertSame($expected, $actual, \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
+        }
+
+        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGeneratorNodeVisitor())));
+    }
+
+    #[Test]
+    #[DataProvider('provideRejectedPatterns')]
+    public function test_validate_rejects_at_the_offset_php_reports(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s must be refused by PHP.', $pattern));
+
+        $result = Regex::create()->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s is refused by PHP but was reported valid.', $pattern));
+        $this->assertSame($offset, $result->offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, quantifier: string, type: QuantifierType}>
+     */
+    public static function provideQuantifiedItems(): iterable
+    {
+        yield 'star after a comment' => ['pattern' => '/a(?#c)*/', 'quantifier' => '*', 'type' => QuantifierType::T_GREEDY];
+        yield 'plus after a quantifier and a comment is possessive' => ['pattern' => '/a*(?#c)+/', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
+        yield 'question mark after a quantifier and a comment is lazy' => ['pattern' => '/a*(?#c)?/', 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
+        yield 'plus after a braced quantifier and a comment' => ['pattern' => '/a{2}(?#c)+/', 'quantifier' => '{2}', 'type' => QuantifierType::T_POSSESSIVE];
+        yield 'modifier after two comments' => ['pattern' => '/a*(?#c)(?#d)?/', 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
+        yield 'modifier after a quantifier that followed a comment' => ['pattern' => '/a(?#c)*(?#d)+/', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
+        yield 'extended: modifier after spaces' => ['pattern' => '/a(?#c) * +/x', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
+        yield 'extended: line comments before a lazy star' => ['pattern' => "/a (?#c)\n #d\n *?/x", 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
+        yield 'extended: modifier after a comment and a space' => ['pattern' => '/a*(?#c) +/x', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideMatchingPatterns(): iterable
+    {
+        yield '/^a*(?#c)+b$/' => ['pattern' => '/^a*(?#c)+b$/', 'subjects' => ['b', 'ab', 'aab', 'aa']];
+        yield '/a*(?#c)?/' => ['pattern' => '/a*(?#c)?/', 'subjects' => ['', 'a', 'aaa']];
+        yield '/^a{1,3}(?#c)?/' => ['pattern' => '/^a{1,3}(?#c)?/', 'subjects' => ['a', 'aaa', 'b']];
+        yield '/^a(?#c)*(?#d)+b$/' => ['pattern' => '/^a(?#c)*(?#d)+b$/', 'subjects' => ['b', 'aab', 'a']];
+        yield '/^(a)(?#c)+\\1$/' => ['pattern' => '/^(a)(?#c)+\\1$/', 'subjects' => ['aa', 'aaa', 'a']];
+        yield '/^\\d(?#c){2,}$/' => ['pattern' => '/^\\d(?#c){2,}$/', 'subjects' => ['1', '12', '123']];
+        yield 'extended: /^a #c\\n*$/x' => ['pattern' => "/^a #c\n*$/x", 'subjects' => ['', 'a', 'aaa', 'b']];
+        yield 'extended: /^a(?#c)#d\\n*$/x' => ['pattern' => "/^a(?#c)#d\n*$/x", 'subjects' => ['', 'a', 'aaa']];
+        yield 'extended: /^a(?#c)* b$/x' => ['pattern' => '/^a(?#c)* b$/x', 'subjects' => ['b', 'ab', 'aab', 'a']];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideRejectedPatterns(): iterable
+    {
+        yield '/(?#c)*/' => ['pattern' => '/(?#c)*/', 'offset' => 6];
+        yield '/(?#c)*+/' => ['pattern' => '/(?#c)*+/', 'offset' => 6];
+        yield '/(?#c){2}?/' => ['pattern' => '/(?#c){2}?/', 'offset' => 8];
+        yield '/(?i)(?#c)*/' => ['pattern' => '/(?i)(?#c)*/', 'offset' => 10];
+        yield '/^(?#c)*/' => ['pattern' => '/^(?#c)*/', 'offset' => 7];
+        yield '/$(?#c){2}/' => ['pattern' => '/$(?#c){2}/', 'offset' => 9];
+        yield '/\\b(?#c)?/' => ['pattern' => '/\\b(?#c)?/', 'offset' => 8];
+        yield '/(?#c)(?#d)+/' => ['pattern' => '/(?#c)(?#d)+/', 'offset' => 11];
+        yield '/a|(?#c)*/' => ['pattern' => '/a|(?#c)*/', 'offset' => 8];
+        yield '/((?#c)*)/' => ['pattern' => '/((?#c)*)/', 'offset' => 7];
+        yield '/a*(?#c)*/' => ['pattern' => '/a*(?#c)*/', 'offset' => 8];
+        yield '/a*(?#c){2}/' => ['pattern' => '/a*(?#c){2}/', 'offset' => 10];
+        yield '/a{2}(?#c){3}/' => ['pattern' => '/a{2}(?#c){3}/', 'offset' => 12];
+        yield '/a*?(?#c)+/' => ['pattern' => '/a*?(?#c)+/', 'offset' => 9];
+        yield '/a*+(?#c)?/' => ['pattern' => '/a*+(?#c)?/', 'offset' => 9];
+        yield '/a*(?#c)++/' => ['pattern' => '/a*(?#c)++/', 'offset' => 9];
+        yield '/a*(?#c)??/' => ['pattern' => '/a*(?#c)??/', 'offset' => 9];
+        yield '/a(?#c)*(?#d)*/' => ['pattern' => '/a(?#c)*(?#d)*/', 'offset' => 13];
+        yield 'extended: /#c\\n*/x' => ['pattern' => "/#c\n*/x", 'offset' => 4];
+        yield 'extended: /^#c\\n*/x' => ['pattern' => "/^#c\n*/x", 'offset' => 5];
+        yield 'extended: /(?x)#c\\n*/' => ['pattern' => "/(?x)#c\n*/", 'offset' => 8];
+        yield 'extended: /a*(?#c)+ +/x' => ['pattern' => '/a*(?#c)+ +/x', 'offset' => 10];
+    }
+}
