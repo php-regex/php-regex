@@ -1505,12 +1505,16 @@ final class Parser
         }
 
         $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
-        $modifiers = InlineFlags::read($flags, $letters);
+        // The ASCII options were only read where PCRE2 takes them.
+        $tracked = InlineFlags::withoutAsciiOptions($flags);
+        $modifiers = InlineFlags::read($tracked, $letters);
 
         // "(?)", "(?-)" and "(?-:...)" set nothing, and PCRE takes them as
-        // such; "(?A:" or "(?{" is no option setting at all.
+        // such, as "(?a)" or "(?-aD)" set nothing this library tracks; "(?A:"
+        // or "(?{" is no option setting at all.
         $setsNothing = ('' === $flags && $this->stream->check(TokenType::T_GROUP_CLOSE))
-            || ('-' === $flags && ($this->stream->check(TokenType::T_GROUP_CLOSE) || $this->stream->checkLiteral(':')));
+            || ('-' === $flags && ($this->stream->check(TokenType::T_GROUP_CLOSE) || $this->stream->checkLiteral(':')))
+            || ($tracked !== $flags && \in_array($tracked, ['', '-'], true));
 
         if (null === $modifiers && !$setsNothing) {
             $position = $this->unreadableGroupOffset($startPosition);
@@ -1592,8 +1596,22 @@ final class Parser
 
         $accepted = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
 
+        // From PCRE2 10.43, "a" may take one of "D", "S", "W", "P", "T".
+        $ascii = $this->supportsInlineModifierR();
+        $afterA = false;
+
         return $letters.$this->consumeWhile(
-            static fn (string $c): bool => '-' === $c || str_contains($accepted, $c),
+            static function (string $c) use ($accepted, $ascii, &$afterA): bool {
+                if ($afterA && str_contains('DSWPT', $c)) {
+                    $afterA = false;
+
+                    return true;
+                }
+
+                $afterA = $ascii && 'a' === $c;
+
+                return $afterA || '-' === $c || str_contains($accepted, $c);
+            },
         );
     }
 
@@ -2408,6 +2426,13 @@ final class Parser
                 }
 
                 $hyphenAllowed = false;
+
+                continue;
+            }
+
+            // An ASCII option, "a", takes at most one class letter along.
+            if ('a' === $char && $this->supportsInlineModifierR()) {
+                $position += (int) ($position < $length && str_contains('DSWPT', $pattern[$position]));
 
                 continue;
             }

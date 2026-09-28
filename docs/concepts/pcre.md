@@ -30,6 +30,19 @@ preg_match_all('/pattern/', $subject, $matches); // Find all matches
 echo PCRE_VERSION; // e.g., "10.42 2022-12-11"
 ```
 
+Some syntax depends on that release. PHP 8.2 and 8.3 bundle PCRE2 10.40
+and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
+
+| Syntax | Example | Needs |
+|---|---|---|
+| Variable-length lookbehind | `(?<=ab?)` | PCRE2 10.43, PHP 8.4 |
+| Caseless restrict option | `(?r)` | PCRE2 10.43, PHP 8.4 |
+| ASCII options: `a` alone, or with one of `D`, `S`, `W`, `P`, `T` | `(?aD)` | PCRE2 10.43, PHP 8.4 |
+| Spaces inside braced escapes | `\x{ 41 }` | PCRE2 10.43, PHP 8.4 |
+
+The validator judges a pattern for the PHP version it targets (`php_version`),
+or, without one, for the PCRE2 the running PHP links.
+
 ## PCRE vs other regex engines
 
 | Feature               | PCRE (PHP) | JavaScript | Python | .NET |

@@ -577,7 +577,7 @@ final class Lexer
             return null;
         }
 
-        $flags = InlineFlags::read($matches[1], self::INLINE_FLAG_LETTERS);
+        $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($matches[1]), self::INLINE_FLAG_LETTERS);
 
         return null === $flags ? null : [$flags, ':' === $matches[2]];
     }

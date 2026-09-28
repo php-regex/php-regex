@@ -77,6 +77,17 @@ final readonly class InlineFlags
     }
 
     /**
+     * A modifier string without the ASCII options PCRE2 10.43 added: "a"
+     * alone, or followed by one of "D", "S", "W", "P", "T". They narrow what
+     * "\d", "\s", "\w", POSIX classes and "\p" match, and nothing read here
+     * depends on them.
+     */
+    public static function withoutAsciiOptions(string $text): string
+    {
+        return preg_replace('/a[DSWPT]?/', '', $text) ?? $text;
+    }
+
+    /**
      * Modifiers this group both turns on and off, which PCRE refuses.
      */
     public function conflicts(): string

@@ -1072,7 +1072,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
      */
     private function withInlineFlags(string $current, string $inline): string
     {
-        $flags = InlineFlags::read($inline, InlineFlags::LETTERS.'r');
+        $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($inline), InlineFlags::LETTERS.'r');
 
         return null === $flags ? $current : $flags->applyTo($current);
     }
