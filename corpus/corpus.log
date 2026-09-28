@@ -1687,21 +1687,21 @@
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:866:18
+  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:867:18
       → /({#.*?#})/mu
      WARN  Flag 'm' is useless: pattern '/(\{#.*?#\})/mu' contains no anchors.
      TIP 
          - /({#.*?#})/mu
          + /({#.*?#})/u
 
-  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:866:35
+  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:867:35
       → /({{.*?}})/mu
      WARN  Flag 'm' is useless: pattern '/(\{\{.*?\}\})/mu' contains no anchors.
      TIP 
          - /({{.*?}})/mu
          + /({{.*?}})/u
 
-  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:866:52
+  corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:867:52
       → /({%.*?%})/mu
      WARN  Flag 'm' is useless: pattern '/(\{%.*?%\})/mu' contains no anchors.
      TIP 
@@ -12691,7 +12691,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
-  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:1789:20
+  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2149:20
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider using atomic groups (?>...) or possessive quantifiers.
@@ -13005,14 +13005,14 @@
       → /\W/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1730:34
+  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1732:34
       → /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m
      WARN  Flag 'm' is useless: pattern '/\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m' contains no anchors.
      TIP 
          - /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m
          + /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/
 
-  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1737:34
+  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1739:34
       → /\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/m
      WARN  Flag 'm' is useless: pattern '/\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/m' contains no anchors.
      TIP 
@@ -13513,7 +13513,7 @@
          - /\s+/m
          + /\s+/
 
-  corpus/silverstripe-framework/src/ORM/DataObjectSchema.php:324:24
+  corpus/silverstripe-framework/src/ORM/DataObjectSchema.php:325:27
       → /^(?<class>.+)(_[^_]+)$/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
