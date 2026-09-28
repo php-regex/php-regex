@@ -2296,8 +2296,38 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             'o' => $this->validateOctalBraces($source, $end),
             'x' => $this->validateHexBraces($source, $end),
             'N' => $this->validateNamedCharacterBraces($source, $end),
+            'p', 'P' => $this->raiseMalformedProperty($source, $letter, $end),
             default => null,
         };
+    }
+
+    /**
+     * "\p" or "\P" the lexer read as a letter: no property letter and no
+     * closed braced name follows it. PCRE reads one more character, or an
+     * unclosed brace up to the end of the pattern, before it gives up.
+     */
+    private function raiseMalformedProperty(string $source, string $letter, int $position): never
+    {
+        if ('{}' === substr($source, $position, 2)) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid or unsupported Unicode property: \\%s{}.', $letter),
+                $position + 2,
+                'regex.unicode.property_invalid',
+            );
+        }
+
+        $offset = match (true) {
+            $position >= \strlen($source) => $position,
+            '{' === $source[$position] => \strlen($source),
+            default => $position + $this->characterLengthAt($source, $position),
+        };
+
+        $this->raiseSemanticError(
+            \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
+            $offset,
+            'regex.unicode.property_malformed',
+            \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),
+        );
     }
 
     /**
