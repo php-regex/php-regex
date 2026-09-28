@@ -83,13 +83,25 @@ final class Lexer
     /**
      * One item of a group body in which a ")" does not close the group: a
      * quoted run, an escape, a class, a "(?#...)" comment, or text without
-     * parentheses. Nested groups are matched by the caller.
+     * parentheses. Nested groups are matched by the caller. Every item
+     * starts its own way, so a body is read in one pass.
      */
     private const GROUP_BODY_ITEM = self::QUOTED_RUN
         .' | \\\\ (?!Q) [\\s\\S]'
         .' | \\[ \\^? \\]? (?: \\[: [^\\]]*? :\\] | '.self::QUOTED_RUN.' | \\\\ [\\s\\S] | [^\\]\\\\] )*+ \\]'
         .' | \\( \\? \\# [^)]*+ \\)'
-        .' | [^()\\\\\\[]++';
+        .self::GROUP_BODY_TEXT;
+
+    /**
+     * Text without parentheses, the last item of a group body.
+     */
+    private const GROUP_BODY_TEXT = ' | [^()\\\\\\[]++';
+
+    /**
+     * The same text under "x", where "#" starts a comment that runs to the
+     * end of the line.
+     */
+    private const GROUP_BODY_TEXT_EXTENDED = ' | \\# [^\\n]*+ | [^()\\\\\\[\\#]++';
 
     // Optimized regex patterns broken into focused components
     private const PATTERNS_OUTSIDE = [
@@ -101,7 +113,7 @@ final class Lexer
         // body is read: a ")" escaped, quoted by \Q...\E, inside a class or
         // inside a "(?#...)" comment does not close it. Any other verb ends
         // at the first ")", as PCRE reads it: "(*:a(b)" is a mark named "a(b".
-        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: '.self::GROUP_BODY_ITEM.' | \\( (?P>verbBody) \\) )* )'
+        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: '.self::GROUP_BODY_ITEM.' | \\( (?! \\?\\# ) (?P>verbBody) \\) )*+ )'
             .' | \\* [a-z_]++ : (?P>verbBody) | \\* (?! [a-z_]++ : ) [^)]* ) \\)',
         'T_GROUP_MODIFIER_OPEN' => '\\(\\?',
         'T_GROUP_OPEN' => '\\(',
@@ -253,6 +265,8 @@ final class Lexer
     /**
      * Whether PCRE2 10.43's repeat counts are read for this PHP version: an
      * explicit target from PHP 8.4, or, with none, the PCRE2 this PHP links.
+     *
+     * @internal
      */
     public static function readsWideRepeatCounts(?int $phpVersionId): bool
     {
@@ -321,11 +335,22 @@ final class Lexer
     private function getRegexOutside(): string
     {
         // The token patterns are constants and the compiled regex only varies
-        // with the byte mode, so that is the whole key: keying it on the PHP
-        // version as well compiled the same two regexes once per version.
-        $key = $this->byteMode ? 1 : 0;
+        // with the byte mode and with "x", so those are the whole key: keying
+        // it on the PHP version as well compiled the same regexes once per
+        // version.
+        $key = ($this->byteMode ? 1 : 0) + ($this->extendedMode ? 2 : 0);
 
-        return self::$regexOutside[$key] ??= $this->compilePattern(self::PATTERNS_OUTSIDE);
+        if (!isset(self::$regexOutside[$key])) {
+            $patterns = self::PATTERNS_OUTSIDE;
+            // Under "x", "#" starts a comment in the body of "(*pla:...)" too.
+            if ($this->extendedMode) {
+                $patterns['T_PCRE_VERB'] = str_replace(self::GROUP_BODY_TEXT, self::GROUP_BODY_TEXT_EXTENDED, $patterns['T_PCRE_VERB']);
+            }
+
+            self::$regexOutside[$key] = $this->compilePattern($patterns);
+        }
+
+        return self::$regexOutside[$key];
     }
 
     private function getRegexInside(): string
@@ -567,6 +592,16 @@ final class Lexer
     ): ?Token {
         if (!$this->inCharClass) {
             $this->trackExtendedModeScope($type);
+        }
+
+        // "(*pla:" read as a plain "(": its body never closes, and PCRE runs
+        // to the end of the pattern looking for the ")".
+        if (TokenType::T_GROUP_OPEN === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+            throw LexerException::withContext(
+                \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1]),
+                $this->length,
+                $this->pattern,
+            );
         }
 
         // Before PCRE2 10.43, "{,2}" and "{ 2 }" are text: only the "{" is

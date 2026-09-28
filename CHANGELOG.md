@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- Under `x`, a `#` comment holding `(` or `[` inside the body of `(*pla:...)` broke that body; it is now read as a comment, and a body that never closes is reported as a missing `)` instead of exhausting PHP's backtracking limit. The pretty-printed and compiled forms keep an empty scoped group `(?i:)` apart from the setting `(?i)`.
 - A pattern PCRE refuses as too large to compile was reported valid: a group repeated with a count is compiled once per repetition, so `(?:a){8192}` or `((?:a){100}){100}` passes the 64 KiB PCRE takes. The validator now reports `regex.pattern.too_large` when the smallest size PCRE could compile the pattern to already passes that limit; below it, the pattern is left to PCRE.
 - `\N{U+...}` above U+10FFFF, as in `\N{U+110000}`, was accepted; PHP refuses it as it refuses `\x{110000}`, with `regex.unicode.out_of_range` at the closing brace.
 - `\g-` or `\g+` with no digit after the sign was reported as a relative reference to zero, one character too far; it is now reported as PCRE reports it, a `\g` followed by no reference, on the sign.

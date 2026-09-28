@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
@@ -204,6 +205,16 @@ final class CompilerNodeVisitorTest extends TestCase
         $this->assertStringContainsString('# comment', $compiled);
     }
 
+    #[Test]
+    public function test_compile_keeps_an_empty_scoped_modifier_group_scoped(): void
+    {
+        // "(?i:)" turns "i" on for nothing, "(?i)" for what follows:
+        // preg_match('/(?i:)a/', 'A') === 0, preg_match('/(?i)a/', 'A') === 1.
+        $this->assertSame('/(?i:)a/', $this->compile('/(?i:)a/'));
+        $this->assertStringContainsString('(?i:', $this->compilePretty('/(?i:)a/'));
+    }
+
+    #[Test]
     public function test_compile_pretty_mode_keeps_an_unscoped_modifier_group_unscoped(): void
     {
         // "(?i)" turns "i" on for what follows it; "(?i:)" would turn it on

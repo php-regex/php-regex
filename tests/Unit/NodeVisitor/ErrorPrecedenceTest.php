@@ -53,6 +53,17 @@ final class ErrorPrecedenceTest extends TestCase
     }
 
     #[Test]
+    public function test_a_pattern_over_the_length_limit_is_refused_for_its_length(): void
+    {
+        // The length limit is the library's own guard: it is checked first,
+        // and the pattern is not read further for an earlier error.
+        $result = Regex::create(['cache' => null, 'max_pattern_length' => 10])->validate('/\\y'.str_repeat('a', 30).'/');
+
+        $this->assertFalse($result->isValid);
+        $this->assertStringContainsString('exceeds maximum length', (string) $result->error);
+    }
+
+    #[Test]
     public function test_validating_a_lookbehind_on_its_own_reports_at_once(): void
     {
         // Only a walk from the pattern root waits for the late passes: a

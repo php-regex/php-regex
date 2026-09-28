@@ -35,6 +35,7 @@ final class GroupNameEscapeTest extends TestCase
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
         $this->assertSame($offset, $result->offset, $pattern);
+        $this->assertStringContainsString('"\\y"', (string) strtok((string) $result->error, "\n"), 'The message quotes the escape as written.');
     }
 
     /**

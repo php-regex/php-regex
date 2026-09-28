@@ -161,7 +161,7 @@ final class Parser
     /**
      * @var array<int|string, bool>
      */
-    private static array $supportsInlineModifierR = [];
+    private static array $supportsPcre1043Modifiers = [];
 
     private readonly int $maxRecursionDepth;
 
@@ -1234,8 +1234,10 @@ final class Parser
             return $this->createEmptyLiteralNodeAt($absoluteOffset);
         }
 
-        // An inline "(?n)" before the payload still holds inside it.
-        $flags = $this->noAutoCapture && !str_contains($this->flags, 'n') ? $this->flags.'n' : $this->flags;
+        // An inline "(?n)" or "(?x)" before the payload still holds inside
+        // it, and a "(?-x)" still turns "x" off there.
+        $flags = str_replace('x', '', $this->flags).($this->extendedMode ? 'x' : '');
+        $flags = $this->noAutoCapture && !str_contains($flags, 'n') ? $flags.'n' : $flags;
         // The payload is read for the same PHP version, or the same running
         // PCRE2, as the pattern around it.
         $target = $this->useRuntimePcreDetection ? null : $this->phpVersionId;
@@ -1522,7 +1524,7 @@ final class Parser
             );
         }
 
-        $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
         // The ASCII options were only read where PCRE2 takes them.
         $tracked = InlineFlags::withoutAsciiOptions($flags);
         $modifiers = InlineFlags::read($tracked, $letters);
@@ -1612,10 +1614,10 @@ final class Parser
             $this->stream->advance();
         }
 
-        $accepted = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
+        $accepted = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
 
         // From PCRE2 10.43, "a" may take one of "D", "S", "W", "P", "T".
-        $ascii = $this->supportsInlineModifierR();
+        $ascii = $this->supportsPcre1043Modifiers();
         $afterA = false;
 
         return $letters.$this->consumeWhile(
@@ -1643,13 +1645,16 @@ final class Parser
             && version_compare(explode(' ', \PCRE_VERSION)[0], $release, '>=');
     }
 
-    // Checks if the 'r' inline modifier is supported by the current PCRE/PHP version
-    // The 'r' modifier was added in PCRE2 10.43 and PHP 8.4
-    private function supportsInlineModifierR(): bool
+    /**
+     * Whether the modifiers PCRE2 10.43 added to "(?...)" are read: "r", and
+     * the ASCII options "a", "aD", "aS", "aW", "aP", "aT". PHP bundles that
+     * release from 8.4; without a target, the PCRE2 this PHP links decides.
+     */
+    private function supportsPcre1043Modifiers(): bool
     {
         $cacheKey = $this->useRuntimePcreDetection ? 'runtime' : $this->phpVersionId;
-        if (\array_key_exists($cacheKey, self::$supportsInlineModifierR)) {
-            return self::$supportsInlineModifierR[$cacheKey];
+        if (\array_key_exists($cacheKey, self::$supportsPcre1043Modifiers)) {
+            return self::$supportsPcre1043Modifiers[$cacheKey];
         }
 
         $supports = $this->phpVersionId >= 80400;
@@ -1660,7 +1665,7 @@ final class Parser
             $supports = version_compare($pcreVersion, '10.43', '>=');
         }
 
-        self::$supportsInlineModifierR[$cacheKey] = $supports;
+        self::$supportsPcre1043Modifiers[$cacheKey] = $supports;
 
         return $supports;
     }
@@ -2429,7 +2434,7 @@ final class Parser
 
         // Option letters: PCRE stops past the first one it does not know,
         // past a "-" it cannot take, or at the end of the pattern.
-        $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
         $hyphenAllowed = true;
         if ('^' === $char) {
             $hyphenAllowed = false;
@@ -2450,7 +2455,7 @@ final class Parser
             }
 
             // An ASCII option, "a", takes at most one class letter along.
-            if ('a' === $char && $this->supportsInlineModifierR()) {
+            if ('a' === $char && $this->supportsPcre1043Modifiers()) {
                 $position += (int) ($position < $length && str_contains('DSWPT', $pattern[$position]));
 
                 continue;

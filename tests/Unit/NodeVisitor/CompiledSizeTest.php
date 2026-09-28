@@ -57,6 +57,16 @@ final class CompiledSizeTest extends TestCase
     }
 
     #[Test]
+    public function test_nested_conditionals_are_measured_in_linear_time(): void
+    {
+        // Each conditional nests the next in its "no" branch; measuring that
+        // branch twice made the time double with every level.
+        $pattern = '/(a)'.str_repeat('(?(1)a|', 40).'b'.str_repeat(')', 40).'/';
+
+        $this->assertTrue(Regex::create(['cache' => null])->validate($pattern)->isValid);
+    }
+
+    #[Test]
     public function test_other_errors_come_before_the_size(): void
     {
         // PCRE refuses the missing group and the escape before it measures

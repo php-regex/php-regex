@@ -49,7 +49,7 @@ final class QuotedWhitespaceRoundTripTest extends TestCase
         // A leading (*UTF) makes the pattern UTF-8 like the u flag: a quoted
         // non-ASCII character must not come back as separate bytes.
         yield "/(*UTF)\\Q\u{e9}\\E/" => ['pattern' => "/(*UTF)\\Q\u{e9}\\E/", 'subjects' => ["\u{e9}", 'e']];
-        yield "/^(*UTF)[\\Q\u{e9}\\E]$/" => ['pattern' => "/(*UTF)^[\\Q\u{e9}\\E]$/", 'subjects' => ["\u{e9}", 'e']];
+        yield "/(*UTF)^[\\Q\u{e9}\\E]$/" => ['pattern' => "/(*UTF)^[\\Q\u{e9}\\E]$/", 'subjects' => ["\u{e9}", 'e']];
         yield "/(*CR)(*UTF8)\\Q\u{e9}\\E/" => ['pattern' => "/(*CR)(*UTF8)\\Q\u{e9}\\E/", 'subjects' => ["\u{e9}", 'e']];
         yield '/(*CR)/' => ['pattern' => '/(*CR)/', 'subjects' => ['', 'a']];
         yield "/^a\\Q\n/" => ['pattern' => "/^a\\Q\n/", 'subjects' => ["a\n", 'a', '']];

@@ -20,6 +20,7 @@ use RegexParser\Cache\NullCache;
 use RegexParser\Cache\RemovableCacheInterface;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
+use RegexParser\Exception\RecursionLimitException;
 use RegexParser\Exception\RegexException;
 use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\ResourceLimitException;
@@ -95,7 +96,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-037a6eff1932d2f2bc39131ea32543ab';
+    public const CACHE_VERSION = 'ast-05e22ef2e029aa4645755c49a833a734';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -296,6 +297,9 @@ final readonly class Regex
             }
 
             return new ValidationResult(true, null, $complexityScore);
+        } catch (ResourceLimitException|RecursionLimitException $e) {
+            // The library's own limits: the pattern is not read further.
+            return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
             return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $e);
         } catch (\Throwable $e) {

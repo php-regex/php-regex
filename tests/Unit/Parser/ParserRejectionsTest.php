@@ -68,7 +68,7 @@ final class ParserRejectionsTest extends TestCase
     {
         $this->expectException(ParserException::class);
         // Same message as every other way of spelling a group name.
-        $this->expectExceptionMessage('Unexpected token "d" in group name');
+        $this->expectExceptionMessage('Unexpected token "\\d" in group name');
 
         // "(?P'name'...)" is refused before its name is read (preg_match() on
         // PCRE2 10.48: "unrecognized character after (?P at offset 4"), so

@@ -2997,8 +2997,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node instanceof AlternationNode => array_sum(array_map($this->compiledSizeFloor(...), $node->alternatives))
                 + 3 * (\count($node->alternatives) - 1),
             $node instanceof GroupNode => $this->compiledSizeFloor($node->child) + $this->compiledGroupSize($node),
-            $node instanceof ConditionalNode => $this->compiledSizeFloor($node->yes) + $this->compiledSizeFloor($node->no)
-                + self::COMPILED_GROUP_SIZE + ($this->compiledSizeFloor($node->no) > 0 ? 3 : 0),
+            $node instanceof ConditionalNode => $this->conditionalSizeFloor($node),
             $node instanceof QuantifierNode => $this->repeatedSizeFloor($node),
             $node instanceof LiteralNode => 2 * mb_strlen($node->value, 'UTF-8'),
             $node instanceof SubroutineNode, $node instanceof BackrefNode => 3,
@@ -3008,6 +3007,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         };
 
         return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * A conditional is a group holding its branches, the second one behind
+     * a branch marker.
+     */
+    private function conditionalSizeFloor(ConditionalNode $node): int
+    {
+        $no = $this->compiledSizeFloor($node->no);
+
+        return $this->compiledSizeFloor($node->yes) + $no + self::COMPILED_GROUP_SIZE + ($no > 0 ? 3 : 0);
     }
 
     /**

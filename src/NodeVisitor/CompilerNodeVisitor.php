@@ -251,7 +251,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             $indent = str_repeat(' ', $this->indentLevel * 4);
 
             // "(?i)" covers what follows it, not a group of its own.
-            if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && '' === $child) {
+            if ($this->isUnscopedSetting($node, $flags, $child)) {
                 return $indent.'(?'.$flags.')';
             }
 
@@ -260,7 +260,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
 
         $child = $this->compileGroupChild($node, $flags);
 
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && '' === $child) {
+        if ($this->isUnscopedSetting($node, $flags, $child)) {
             return '(?'.$flags.')';
         }
 
@@ -935,12 +935,6 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * Whitespace that /x makes ignorable is not represented in the AST, so it
-     * is read back from the source to keep a recompiled pattern identical to
-     * the one that was parsed. Anything else than whitespace is ignored: the
-     * nodes themselves are the only source of truth for what a pattern matches.
-     */
-    /**
      * Two neighbouring items. A "\E" or an empty "\Q\E" between them is
      * dropped like any other no-op, unless the two items would then read as
      * one: "(a)\1\E0" is not "(a)\10", nor "a{\E2}" the repeat "a{2}". There
@@ -1024,6 +1018,12 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         return str_contains($text, '\\') ? $text : null;
     }
 
+    /**
+     * Whitespace that /x makes ignorable is not represented in the AST, so it
+     * is read back from the source to keep a recompiled pattern identical to
+     * the one that was parsed. Anything else than whitespace is ignored: the
+     * nodes themselves are the only source of truth for what a pattern matches.
+     */
     private function ignorableTextBetween(NodeInterface $left, NodeInterface $right): string
     {
         return $this->ignorableText($left->getEndPosition(), $right->getStartPosition());
@@ -1047,6 +1047,18 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         $text = substr($this->source, $start, $length);
 
         return ctype_space($text) ? $text : '';
+    }
+
+    /**
+     * Whether a modifier group is a setting, "(?i)", rather than a scope that
+     * holds nothing, "(?i:)": both have no body, and only the setting ends
+     * right after its letters.
+     */
+    private function isUnscopedSetting(GroupNode $node, string $flags, string $child): bool
+    {
+        return GroupType::T_GROUP_INLINE_FLAGS === $node->type
+            && '' === $child
+            && $node->getEndPosition() - $node->getStartPosition() === \strlen($flags) + 3;
     }
 
     /**

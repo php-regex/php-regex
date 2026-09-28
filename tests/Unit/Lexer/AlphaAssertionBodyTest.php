@@ -56,6 +56,29 @@ final class AlphaAssertionBodyTest extends TestCase
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
         $this->assertSame($offset, $result->offset, $pattern);
+        $this->assertStringContainsStringIgnoringCase('missing closing parenthesis', (string) $result->error, $pattern);
+    }
+
+    #[Test]
+    #[DataProvider('provideUnclosedBodiesFullOfComments')]
+    public function test_an_unclosed_body_full_of_comments_is_read_in_linear_time(string $pattern): void
+    {
+        // A comment could be read two ways, as a comment or as a nested
+        // group: a body that never closes backtracked through every choice.
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid);
+        $this->assertStringNotContainsString('Backtrack limit', (string) $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideUnclosedBodiesFullOfComments(): iterable
+    {
+        yield 'twenty comments' => ['pattern' => '/(*pla:'.str_repeat('(?#)', 20).'a\\)/'];
     }
 
     /**
@@ -71,6 +94,11 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'quoted closing parenthesis' => ['pattern' => '/^(*pla:\\Q)\\E)./', 'subjects' => [')', 'a']];
         yield 'quoted bracket in a class' => ['pattern' => '/^(*pla:[\\Q]\\E)])./', 'subjects' => [']', ')', 'a']];
         yield 'comment holding a parenthesis' => ['pattern' => '/^(*pla:(?#()a)./', 'subjects' => ['a', 'b']];
+        yield 'parenthesis in an x-mode comment' => ['pattern' => "/^(*pla:a#(\n)./x", 'subjects' => ['ab', 'b']];
+        yield 'bracket in an x-mode comment' => ['pattern' => "/^(*pla:a # [\n)./x", 'subjects' => ['ab', 'b']];
+        yield 'parenthesis in a comment under an inline x' => ['pattern' => "/(?x)^(*pla:a#(\n)./", 'subjects' => ['ab', 'b']];
+        yield 'x turned off before the body' => ['pattern' => '/(?-x)^(*pla:a # b)./x', 'subjects' => ['a # b', 'ab']];
+        yield 'hash in a class under x' => ['pattern' => '/^(*pla:[#)])./x', 'subjects' => ['#', ')', 'a']];
         yield 'atomic group' => ['pattern' => '/^(*atomic:\\))/', 'subjects' => [')', 'a']];
         yield 'script run' => ['pattern' => '/^(*script_run:[)])/', 'subjects' => [')', 'a']];
     }

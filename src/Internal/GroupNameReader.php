@@ -230,10 +230,10 @@ final class GroupNameReader
 
             // A name holds no escape: PCRE stops on the backslash.
             if (!$this->stream->check(TokenType::T_LITERAL)) {
-                throw $this->error(
-                    \sprintf('Unexpected token "%s" in group name', $this->stream->current()->value),
-                    $this->stream->current()->position,
-                );
+                $token = $this->stream->current();
+                $written = substr($this->stream->getPattern(), $token->position, max(1, $token->end() - $token->position));
+
+                throw $this->error(\sprintf('Unexpected token "%s" in group name', $written), $token->position);
             }
 
             $name .= $this->stream->current()->value;
