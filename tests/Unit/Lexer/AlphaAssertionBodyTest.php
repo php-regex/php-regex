@@ -99,6 +99,8 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'parenthesis in a comment under an inline x' => ['pattern' => "/(?x)^(*pla:a#(\n)./", 'subjects' => ['ab', 'b']];
         yield 'x turned off before the body' => ['pattern' => '/(?-x)^(*pla:a # b)./x', 'subjects' => ['a # b', 'ab']];
         yield 'hash in a class under x' => ['pattern' => '/^(*pla:[#)])./x', 'subjects' => ['#', ')', 'a']];
+        yield 'control character of an opening parenthesis' => ['pattern' => '/^(*pla:\\c()./', 'subjects' => ['h', 'a']];
+        yield 'control character of a closing bracket in a class' => ['pattern' => '/^(*pla:[\\c]])./', 'subjects' => ["\x1d", ']']];
         yield 'atomic group' => ['pattern' => '/^(*atomic:\\))/', 'subjects' => [')', 'a']];
         yield 'script run' => ['pattern' => '/^(*script_run:[)])/', 'subjects' => [')', 'a']];
     }
