@@ -47,7 +47,9 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create();
 
-        $result = $regex->validate('/\N{LATIN SMALL LETTER A}/u');
+        // "[[:<:]]" compiles to a word boundary and a lookahead, repeated
+        // here past what PCRE compiles; the static checks do not measure it.
+        $result = $regex->validate('/[[:<:]]{65535}/');
 
         $this->assertTrue($result->isValid);
     }
@@ -56,13 +58,15 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-        $result = $regex->validate('/\N{LATIN SMALL LETTER A}/u');
+        $result = $regex->validate('/[[:<:]]{65535}/');
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PCRE_RUNTIME, $result->category);
         $this->assertSame('regex.pcre.runtime', $result->errorCode);
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
-        $this->assertSame(3, $result->offset);
+        // PCRE2 10.48 reports "regular expression is too large" at offset 0,
+        // the releases before at the end of the pattern.
+        $this->assertContains($result->offset, [0, 14]);
     }
 
     public function test_optimize(): void

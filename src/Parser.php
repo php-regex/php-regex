@@ -1666,13 +1666,12 @@ final class Parser
             return self::$supportsPcre1043Modifiers[$cacheKey];
         }
 
-        $supports = $this->phpVersionId >= 80400;
-
-        if (!$supports && $this->useRuntimePcreDetection) {
-            // For runtime detection, check the PCRE library version directly
-            $pcreVersion = \defined('PCRE_VERSION') ? explode(' ', \PCRE_VERSION)[0] : '0';
-            $supports = version_compare($pcreVersion, '10.43', '>=');
-        }
+        // Without a target, the PCRE2 this PHP links decides, whatever PHP
+        // bundles: the PHP 8.4 packages of a distribution may link an older
+        // one.
+        $supports = $this->useRuntimePcreDetection
+            ? $this->runningPcreAtLeast('10.43')
+            : $this->phpVersionId >= 80400;
 
         self::$supportsPcre1043Modifiers[$cacheKey] = $supports;
 

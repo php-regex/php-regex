@@ -32,11 +32,13 @@ final class AsciiRestrictionOptionsTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideAsciiOptions')]
-    public function test_validate_accepts_ascii_options_from_php_8_4(string $pattern): void
+    public function test_validate_accepts_ascii_options_from_pcre2_10_43(string $pattern): void
     {
-        $this->assertNotFalse(@preg_match($pattern, ''), \sprintf('%s should compile.', $pattern));
+        if (self::runningPcre1043()) {
+            $this->assertNotFalse(@preg_match($pattern, ''), \sprintf('%s should compile.', $pattern));
+        }
 
-        foreach ([Regex::create(['cache' => null]), Regex::create(['cache' => null, 'php_version' => 80400])] as $regex) {
+        foreach (self::readersOfPcre1043() as $regex) {
             $result = $regex->validate($pattern);
 
             $this->assertTrue($result->isValid, \sprintf('%s compiles but was reported invalid: %s', $pattern, (string) $result->error));
@@ -63,7 +65,7 @@ final class AsciiRestrictionOptionsTest extends TestCase
     {
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
 
-        foreach ([Regex::create(['cache' => null]), Regex::create(['cache' => null, 'php_version' => 80400])] as $regex) {
+        foreach (self::readersOfPcre1043() as $regex) {
             $result = $regex->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
@@ -72,15 +74,26 @@ final class AsciiRestrictionOptionsTest extends TestCase
     }
 
     #[Test]
-    public function test_compiling_keeps_the_modifiers_next_to_ascii_options(): void
+    #[DataProvider('provideAsciiOptionsWithX')]
+    public function test_compiling_keeps_the_modifiers_next_to_ascii_options(string $pattern): void
     {
         // "(?aDx)" still turns x on: the space and the comment go.
-        $pattern = "/^(?aDx)a b # c\n$/";
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create(['php_version' => 80400])->parse($pattern)->accept(new CompilerNodeVisitor());
 
-        foreach (['ab', 'a b'] as $subject) {
-            $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), $compiled);
+        $this->assertSame($pattern, $compiled);
+        if (self::runningPcre1043()) {
+            foreach (['ab', 'a b'] as $subject) {
+                $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), $compiled);
+            }
         }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideAsciiOptionsWithX(): iterable
+    {
+        yield 'x after an ASCII option' => ['pattern' => "/^(?aDx)a b # c\n$/"];
     }
 
     /**
@@ -114,5 +127,26 @@ final class AsciiRestrictionOptionsTest extends TestCase
         yield 'D without a' => ['pattern' => '/(?D)/', 'offsets' => [3, 2]];
         yield 'two class letters' => ['pattern' => '/(?aDS)/', 'offsets' => [5, 4]];
         yield 'two class letters turned off' => ['pattern' => '/(?-aDS)/', 'offsets' => [6, 5]];
+    }
+
+    private static function runningPcre1043(): bool
+    {
+        return version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+    }
+
+    /**
+     * PHP 8.4 as a target, which bundles PCRE2 10.44, and the running PHP
+     * when the PCRE2 it links is 10.43 or newer.
+     *
+     * @return list<Regex>
+     */
+    private static function readersOfPcre1043(): array
+    {
+        $readers = [Regex::create(['cache' => null, 'php_version' => 80400])];
+        if (self::runningPcre1043()) {
+            $readers[] = Regex::create(['cache' => null]);
+        }
+
+        return $readers;
     }
 }

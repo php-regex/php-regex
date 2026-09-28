@@ -96,7 +96,9 @@ final class PcreRejectedEscapesTest extends TestCase
     #[DataProvider('providePaddedBracedEscapes')]
     public function test_validate_accepts_padded_braced_escape_as_pcre2_10_48_does(string $pattern): void
     {
-        $result = Regex::create()->validate($pattern);
+        // Padding arrived in PCRE2 10.43; PHP 8.4 bundles 10.44, which reads
+        // these as 10.48 does, whatever PCRE2 the PHP running links.
+        $result = Regex::create(['php_version' => '8.4'])->validate($pattern);
 
         $this->assertTrue($result->isValid, \sprintf('%s compiles in PCRE2 10.48 but was reported invalid: %s', $pattern, (string) $result->error));
         $this->assertNull($result->error);
@@ -139,6 +141,7 @@ final class PcreRejectedEscapesTest extends TestCase
      */
     public static function providePaddedBracedEscapes(): iterable
     {
+        yield '171 family, empty padded code point in a class: /[\\N{U+ }]/u' => ['pattern' => '/[\\N{U+ }]/u'];
         yield 'padded \\x{}: /\\x{ 41 }/' => ['pattern' => '/\\x{ 41 }/'];
         yield 'padded \\o{}: /\\o{ 101 }/' => ['pattern' => '/\\o{ 101 }/'];
         yield 'trailing padding in \\N{U+} under UTF: /\\N{U+41 }/u' => ['pattern' => '/\\N{U+41 }/u'];
@@ -211,7 +214,6 @@ final class PcreRejectedEscapesTest extends TestCase
      */
     public static function provideAcceptedControls(): iterable
     {
-        yield '171 family, empty padded code point in a class: /[\\N{U+ }]/u' => ['pattern' => '/[\\N{U+ }]/u'];
         yield '103 family, known escape: /ab\\ddef/' => ['pattern' => '/ab\\ddef/'];
         yield '103 family, known escape in class: /[ \\d ]/' => ['pattern' => '/[ \\d ]/'];
         yield '106 family, \\E then literal ] closes: /[\\E]]AAA/' => ['pattern' => '/[\\E]]AAA/'];

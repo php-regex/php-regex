@@ -166,6 +166,7 @@ final class PcreErrorOffsetRulesTest extends TestCase
         yield 'octal code point too large' => ['/\\o{4200000}/u', 10, 10];
         yield 'octal code point too large without u' => ['/\\o{400}/', 6, 6];
         yield 'empty hex braces' => ['/\\x{}/', 3, 3];
+        yield 'character name in \\N{}, which PCRE2 does not support' => ['/\\N{LATIN SMALL LETTER A}/u', 3, 2];
         yield 'code point above U+10FFFF in \\N{U+}' => ['/\\N{U+110000}/u', 11, 11];
         yield 'code point above U+10FFFF in \\N{U+} in a class' => ['/[\\N{U+110000}]/u', 12, 12];
         yield 'code point far above U+10FFFF in \\N{U+}' => ['/\\N{U+FFFFFFFFF}/u', 14, 14];

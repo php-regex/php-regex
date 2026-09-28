@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- Without a `php_version`, a pattern was judged as if PHP 8.4 always ran PCRE2 10.43 or newer. The PHP 8.4 packages of Ubuntu 24.04, among others, link its PCRE2 10.42: there `(?aD)`, `(?r)`, `\x{ 41 }`, `\N{U+ }` and variable-length lookbehinds were accepted though PHP refuses them, and `{,2}` refused though PHP reads it as text. The linked PCRE2 now decides, whatever the PHP version.
+- PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`, so `\K` inside a lookaround is refused there; it was accepted for every version. It is now reported as `regex.keep.in_lookaround` for PHP 8.5 and newer, at the end of the pattern as PHP reports it.
+- `\N{name}` with a character name, as in `\N{LATIN SMALL LETTER A}`, was accepted when the name was known; PCRE2 supports no character names. It is now refused with `regex.escape.unsupported`, as unknown names already were.
+- `\N{U+...}` outside UTF mode is refused for the missing UTF mode before its padding is judged, as every PCRE2 release does.
+- PHP 8.5 deprecation notices from `ord()` in the explanation and sample generation of patterns are gone.
 - `(?i-i)` and other settings that turn a modifier on and off at once were refused as conflicting; PHP compiles them, the turn-off winning, and so does the parser now.
 - Under `x`, U+0085, U+200E, U+200F, U+2028 and U+2029 (byte 0x85 without `u`) were read as literal characters; PCRE skips them as whitespace, and so does the parser now.
 - A string callout or a verb name holding a parenthesis inside `(*pla:...)`, as in `(*pla:(?C"a)b"))` or `(*pla:(*MARK:a(b))`, broke the body of the assertion.

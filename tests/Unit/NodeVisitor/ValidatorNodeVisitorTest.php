@@ -53,8 +53,10 @@ final class ValidatorNodeVisitorTest extends TestCase
 
     public function test_throws_on_invalid_unicode_named_character(): void
     {
-        $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid Unicode character name: INVALID');
+        // PCRE2 supports no "\N{name}", a known name or not: preg_match()
+        // warns "PCRE2 does not support ... \N{name} ... at offset 3".
+        $this->expectException(SemanticErrorException::class);
+        $this->expectExceptionMessage('PCRE does not support the escape "\N{"');
         $this->validate('/\N{INVALID}/');
     }
 
@@ -124,14 +126,15 @@ final class ValidatorNodeVisitorTest extends TestCase
     }
 
     /**
-     * PHP compiles every pattern with PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK (php-src
-     * default since 8.1.0), and PCRE2 never banned \K in lookarounds before
-     * 10.38: preg_match returns 0, without a warning, for each of these.
+     * PHP 8.1 to 8.4 compile every pattern with
+     * PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK, and PCRE2 never banned \K in
+     * lookarounds before 10.38: preg_match returns 0, without a warning, for
+     * each of these. PHP 8.5 dropped the option.
      */
     #[DataProvider('provideKeepInsideLookarounds')]
     public function test_accepts_keep_inside_lookarounds(string $pattern): void
     {
-        $this->assertTrue(Regex::create()->validate($pattern)->isValid);
+        $this->assertTrue(Regex::create(['php_version' => '8.4'])->validate($pattern)->isValid);
     }
 
     /**

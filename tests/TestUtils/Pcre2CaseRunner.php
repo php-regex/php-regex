@@ -74,7 +74,7 @@ final readonly class Pcre2CaseRunner
             $offset = $this->normalizeOffset($result->offset, $phpPattern);
         }
 
-        $outcome = $this->outcome($case, $verdict, $offset, $errorClass);
+        $outcome = $this->outcome(self::withKeepRefusalFromPhp85($case, $phpPattern), $verdict, $offset, $errorClass);
 
         return [
             'id' => self::rowString($case, 'id'),
@@ -260,6 +260,31 @@ final readonly class Pcre2CaseRunner
         }
 
         return $expectedOffset === $offset ? 'pass' : 'offset-defect';
+    }
+
+    /**
+     * PHP 8.5 compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK, which the
+     * suite relies on for some cases, set by a pattern modifier PHP cannot
+     * express or recorded as PHP's default in a phpOverride. Where the live
+     * PHP refuses "\K" in a lookaround, that refusal is the expectation.
+     *
+     * @param array<string, mixed> $case
+     *
+     * @return array<string, mixed>
+     */
+    private static function withKeepRefusalFromPhp85(array $case, string $phpPattern): array
+    {
+        if (\PHP_VERSION_ID < 80500) {
+            return $case;
+        }
+
+        error_clear_last();
+        if (false !== @preg_match($phpPattern, '')
+            || 1 !== preg_match('/not allowed in lookarounds.* at offset (\d++)/', error_get_last()['message'] ?? '', $matches)) {
+            return $case;
+        }
+
+        return ['phpOverride' => null, 'verdict' => 'reject', 'offset' => (int) $matches[1], 'floor' => null] + $case;
     }
 
     /**

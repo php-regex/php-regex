@@ -735,6 +735,7 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 | `regex.unicode.invalid_digit`       | Invalid character in {escape}, or closing brace missing | A non-hex digit in `\x{}` or `\N{U+}`, or no `}` | Change `\x{zz}` to `\x{2a}` |
 | `regex.unicode.surrogate`           | Code point "{escape}" is a surrogate, which is not allowed in Unicode mode | `\x{d800}` to `\x{dfff}` under `u` or `(*UTF)` | Use a code point outside that range |
 | `regex.unicode.property_malformed` | Malformed \{letter} sequence: a property letter or a braced name must follow it | `\p` or `\P` with no letter after it, or `\p{` never closed | Change `\p{L` to `\p{L}` |
+| `regex.keep.in_lookaround`         | \K is not allowed in a lookaround from PHP 8.5     | PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` | Move `\K` out of `(?=a\K)` |
 | `regex.pattern.too_large`          | Regular expression is too large: PCRE would compile it to more than 64 KiB | A group repeated with a count is compiled once per repetition | Change `(?:ab){10000}` to `(?:ab){1000}` |
 | `regex.charclass.invalid_escape`    | Escape sequence \{letter} is invalid in a character class | `\A`, `\B`, `\C`, `\G`, `\K`, `\N`, `\R`, `\X`, `\Z`, `\z` inside `[...]` | Move `\B` out of the class |
 | `regex.posix.outside_class`         | POSIX named classes are supported only within a class | `[:alpha:]` written as a class of its own | Change `[:alpha:]` to `[[:alpha:]]` |

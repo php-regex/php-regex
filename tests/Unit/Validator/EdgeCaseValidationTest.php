@@ -58,8 +58,8 @@ final class EdgeCaseValidationTest extends TestCase
 
     public function test_variable_length_lookbehind_with_range(): void
     {
-        // PCRE2 (PHP 7.3+) supports variable-length lookbehinds
-        $result = $this->regexService->validate('/(?<=a{1,3})/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=a{1,3})/');
         $this->assertTrue($result->isValid, 'Variable-length lookbehind with range should be valid in PCRE2');
     }
 

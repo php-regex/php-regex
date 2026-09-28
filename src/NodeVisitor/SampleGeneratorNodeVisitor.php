@@ -307,8 +307,10 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         // Generate a random character within the ASCII range
         try {
-            $ord1 = \ord($node->start->value);
-            $ord2 = \ord($node->end->value);
+            // The first byte of each end, as ord() read it before PHP 8.5
+            // deprecated passing it anything but one byte.
+            $ord1 = '' === $node->start->value ? 0 : \ord($node->start->value[0]);
+            $ord2 = '' === $node->end->value ? 0 : \ord($node->end->value[0]);
 
             return \chr($this->randomInt($ord1, $ord2) & 0xFF);
         } catch (\Throwable) {

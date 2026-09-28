@@ -173,7 +173,8 @@ final class RailroadSvgVisitorTest extends TestCase
 
     public function test_svg_renders_at_most_quantifier(): void
     {
-        $ast = Regex::create()->parse('/a{,3}/');
+        // "{,3}" repeats from PCRE2 10.43, which PHP bundles from 8.4.
+        $ast = Regex::create(['php_version' => '8.4'])->parse('/a{,3}/');
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgVisitor());
 

@@ -41,9 +41,12 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | Spaces inside braced escapes | `\x{ 41 }` | PCRE2 10.43, PHP 8.4 |
 | Open minimum and spaces in a repeat count (literal text before) | `a{,2}`, `a{ 2 }` | PCRE2 10.43, PHP 8.4 |
 | `\k` read as the letter inside a class | `[\k]` | PCRE2 10.45, bundled by no PHP release yet |
+| `\K` inside a lookaround | `(?=a\K)` | allowed up to PHP 8.4; PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` and refuses it |
 
 The validator judges a pattern for the PHP version it targets (`php_version`),
-or, without one, for the PCRE2 the running PHP links.
+or, without one, for the PCRE2 the running PHP links. That PCRE2 is not always
+the one PHP bundles: the PHP 8.4 packages of Ubuntu 24.04, for one, link its
+PCRE2 10.42, and refuse what 10.43 added. `PCRE_VERSION` says which one runs.
 
 ## PCRE vs other regex engines
 

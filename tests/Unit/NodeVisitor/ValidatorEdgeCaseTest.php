@@ -75,8 +75,9 @@ final class ValidatorEdgeCaseTest extends TestCase
 
     public function test_keep_in_lookbehind(): void
     {
-        // PHP compiles it: php-src sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
-        $this->assertTrue($this->regex->validate('/(?<=a\K)/')->isValid);
+        // PHP 8.4 compiles it: php-src sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK
+        // up to 8.4.
+        $this->assertTrue(Regex::create(['php_version' => '8.4'])->validate('/(?<=a\K)/')->isValid);
     }
 
     public function test_invalid_posix_class(): void

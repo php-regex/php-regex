@@ -36,8 +36,8 @@ final class SymfonyCompatibilityTest extends TestCase
 
     public function test_variable_length_lookbehind_is_valid(): void
     {
-        // PHP 7.3+ (PCRE2) supports variable-length lookbehinds
-        $result = $this->regexService->validate('/(?<=a{1,5})b/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=a{1,5})b/');
 
         $this->assertTrue(
             $result->isValid,
@@ -83,7 +83,7 @@ final class SymfonyCompatibilityTest extends TestCase
     public function test_optional_quantifier_in_lookbehind_is_valid(): void
     {
         // Optional quantifier in lookbehind
-        $result = $this->regexService->validate('/(?<=a?)b/');
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=a?)b/');
 
         $this->assertTrue(
             $result->isValid,

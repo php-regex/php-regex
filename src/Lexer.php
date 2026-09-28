@@ -277,7 +277,9 @@ final class Lexer
             return $phpVersionId >= 80400;
         }
 
-        return \PHP_VERSION_ID >= 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+        // The PCRE2 this PHP links decides, whatever PHP bundles: the PHP 8.4
+        // packages of a distribution may link an older one.
+        return version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
     }
 
     /**

@@ -70,10 +70,10 @@ final class Pcre2LiveCrossCheckTest extends TestCase
     #[Test]
     public function test_observe_reports_accept(): void
     {
-        // PHP compiles \K inside a lookbehind: preg_match returns 0.
+        // Every supported PHP compiles it: preg_match returns 0.
         $this->assertSame(
             ['verdict' => 'accept', 'offset' => null, 'message' => null],
-            Pcre2LiveCrossCheck::observe('/(?<=b\Kc)d/'),
+            Pcre2LiveCrossCheck::observe('/b\Kc(?=d)/'),
         );
     }
 
@@ -198,16 +198,20 @@ final class Pcre2LiveCrossCheckTest extends TestCase
     public function test_check_turns_allow_lookaround_bsk_disagreement_into_override(): void
     {
         // testinput2:6404 — testoutput2 rejects with error 199 at offset 14;
-        // preg_match('/^abc(?<=b\Kc)d/', '') returns 0. The override records
-        // the live observation, not a blind flip.
+        // up to PHP 8.4, preg_match('/^abc(?<=b\Kc)d/', '') returns 0. The
+        // override records the live observation, not a blind flip.
         $result = Pcre2LiveCrossCheck::check([
             self::row('testinput2:6404', '^abc(?<=b\Kc)d', 'reject', 14, self::LOOKAROUND_BSK_MESSAGE, 199),
         ]);
 
         $this->assertSame([], $result['disagreements']);
-        $this->assertSame([
+
+        // PHP 8.5 compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK: it
+        // refuses the pattern as the suite does, and nothing is overridden.
+        $expected = \PHP_VERSION_ID >= 80500 ? [] : [
             'testinput2:6404' => ['reason' => 'allow-lookaround-bsk', 'verdict' => 'accept', 'offset' => null, 'pcre2Code' => null],
-        ], $result['overrides']);
+        ];
+        $this->assertSame($expected, $result['overrides']);
     }
 
     /**

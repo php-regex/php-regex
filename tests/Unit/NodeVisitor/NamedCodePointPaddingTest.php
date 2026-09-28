@@ -39,7 +39,7 @@ final class NamedCodePointPaddingTest extends TestCase
     {
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
 
-        foreach ([Regex::create(['cache' => null]), Regex::create(['cache' => null, 'php_version' => 80400])] as $regex) {
+        foreach (self::readersOfPcre1043() as $regex) {
             $result = $regex->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
@@ -62,14 +62,26 @@ final class NamedCodePointPaddingTest extends TestCase
     }
 
     #[Test]
-    public function test_validate_accepts_padding_closed_by_a_brace_from_php_8_4(): void
+    #[DataProvider('providePaddingClosedByABrace')]
+    public function test_validate_accepts_padding_closed_by_a_brace_from_pcre2_10_43(string $pattern): void
     {
-        $this->assertSame(0, preg_match('/\\N{U+ }/u', ''));
-
-        foreach (['/\\N{U+ }/u', "/\\N{U+ \t }/u", '/[\\N{U+ }]/u'] as $pattern) {
-            $this->assertTrue(Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);
-            $this->assertTrue(Regex::create(['cache' => null, 'php_version' => 80400])->validate($pattern)->isValid, $pattern);
+        if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=')) {
+            $this->assertSame(0, @preg_match($pattern, ''), \sprintf('%s compiles from PCRE2 10.43.', $pattern));
         }
+
+        foreach (self::readersOfPcre1043() as $regex) {
+            $this->assertTrue($regex->validate($pattern)->isValid, $pattern);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePaddingClosedByABrace(): iterable
+    {
+        yield 'space' => ['pattern' => '/\\N{U+ }/u'];
+        yield 'space, tab and space' => ['pattern' => "/\\N{U+ \t }/u"];
+        yield 'in a class' => ['pattern' => '/[\\N{U+ }]/u'];
     }
 
     #[Test]
@@ -85,5 +97,21 @@ final class NamedCodePointPaddingTest extends TestCase
                 $this->assertSame($offset, $result->offset, $pattern);
             }
         }
+    }
+
+    /**
+     * PHP 8.4 as a target, which bundles PCRE2 10.44, and the running PHP
+     * when the PCRE2 it links is 10.43 or newer.
+     *
+     * @return list<Regex>
+     */
+    private static function readersOfPcre1043(): array
+    {
+        $readers = [Regex::create(['cache' => null, 'php_version' => 80400])];
+        if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=')) {
+            $readers[] = Regex::create(['cache' => null]);
+        }
+
+        return $readers;
     }
 }

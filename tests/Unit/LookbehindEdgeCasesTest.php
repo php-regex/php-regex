@@ -97,8 +97,8 @@ final class LookbehindEdgeCasesTest extends TestCase
 
     public function test_variable_length_optional_quantifier_is_valid(): void
     {
-        // PCRE2 (PHP 7.3+) supports variable-length lookbehinds
-        $result = $this->regexService->validate('/(?<=a?)b/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=a?)b/');
 
         $this->assertTrue($result->isValid, 'Variable-length optional quantifier should be valid in PCRE2');
     }
@@ -126,8 +126,8 @@ final class LookbehindEdgeCasesTest extends TestCase
 
     public function test_variable_length_alternation_is_valid(): void
     {
-        // PCRE2 (PHP 7.3+) supports variable-length lookbehinds with different branch lengths
-        $result = $this->regexService->validate('/(?<=(a|ab))c/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=(a|ab))c/');
 
         $this->assertTrue($result->isValid, 'Alternation with different lengths should be valid in PCRE2');
     }
@@ -155,16 +155,16 @@ final class LookbehindEdgeCasesTest extends TestCase
 
     public function test_optional_group_is_valid(): void
     {
-        // PCRE2 (PHP 7.3+) supports variable-length lookbehinds
-        $result = $this->regexService->validate('/(?<=(?:test)?)/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=(?:test)?)/');
 
         $this->assertTrue($result->isValid, 'Optional group should be valid in PCRE2');
     }
 
     public function test_variable_range_bound_is_valid(): void
     {
-        // PCRE2 (PHP 7.3+) supports variable-length lookbehinds
-        $result = $this->regexService->validate('/(?<=\w{0,5})/');
+        // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
+        $result = Regex::create(['php_version' => '8.4'])->validate('/(?<=\w{0,5})/');
 
         $this->assertTrue($result->isValid, 'Variable range bound should be valid in PCRE2');
     }

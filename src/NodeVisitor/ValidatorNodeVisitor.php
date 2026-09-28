@@ -306,6 +306,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private int $positionOffset = 0;
 
     /**
+     * For each lookaround the node being visited sits in, innermost last,
+     * whether a `\K` stands in it.
+     *
+     * @var list<bool>
+     */
+    private array $keepsInLookarounds = [];
+
+    /**
      * How many lookbehinds the node being visited sits in.
      */
     private int $lookbehindDepth = 0;
@@ -315,6 +323,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * errors PCRE finds late can be reported.
      */
     private bool $walkingPattern = false;
+
+    /**
+     * The length of the pattern body being walked.
+     */
+    private int $patternLength = 0;
 
     /**
      * Whether a lookbehind is being measured: a missing group ends the
@@ -430,6 +443,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
+        $this->keepsInLookarounds = [];
+        $this->patternLength = \strlen($node->source ?? '');
         $this->positionOffset = 0;
         $this->lateErrors = [];
         $this->walkingPattern = true;
@@ -527,6 +542,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->lookbehindDepth++;
         }
 
+        $isLookaround = $this->isLookaround($node);
+        if ($isLookaround) {
+            $this->keepsInLookarounds[] = false;
+        }
+
         try {
             $node->child->accept($this);
         } finally {
@@ -536,6 +556,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($isLookbehind) {
                 $this->lookbehindDepth--;
             }
+            $holdsKeep = $isLookaround && array_pop($this->keepsInLookarounds);
+        }
+
+        // PCRE refuses the "\K" as it compiles the lookaround, once the whole
+        // pattern is read, and reports it at the end of the pattern.
+        if ($holdsKeep && $this->phpVersionId >= 80500) {
+            $this->raiseLateCompileError(
+                '\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.',
+                $this->patternLength - $this->positionOffset,
+                'regex.keep.in_lookaround',
+                'Move the \K out of the lookaround.',
+            );
         }
 
         $this->previousNode = $previous;
@@ -698,12 +730,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * `\K` is valid anywhere, lookarounds included: PHP compiles every pattern
-     * with PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK, and PCRE2 allowed it there by
-     * default before 10.38.
+     * `\K` stands anywhere up to PHP 8.4, which compiles every pattern with
+     * PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK. PHP 8.5 dropped that option, and a
+     * `\K` in a lookaround is refused where the lookaround ends.
      */
     #[\Override]
-    public function visitKeep(KeepNode $node): void {}
+    public function visitKeep(KeepNode $node): void
+    {
+        if ([] !== $this->keepsInLookarounds) {
+            array_pop($this->keepsInLookarounds);
+            $this->keepsInLookarounds[] = true;
+        }
+    }
 
     #[\Override]
     public function visitCharClass(CharClassNode $node): void
@@ -941,6 +979,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): void
     {
+        // "\N{name}": PCRE2 refuses a character name, whatever it names, past
+        // the "\N{"; only "\N{U+...}" is a code point.
+        if (CharLiteralType::UNICODE_NAMED === $node->type
+            && 1 !== preg_match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
+            $this->raiseUnsupportedEscape('N{', $node->startPosition + 3);
+        }
+
+        // "\N{U+...}" outside UTF mode is refused before its braces are read:
+        // "\N{U+1 }" fails on the mode on every release, padding or not.
+        if (CharLiteralType::UNICODE_NAMED === $node->type) {
+            $this->validateUnicodeNamed($node);
+        }
+
         $this->validatePaddedBraces($node);
 
         // The Lexer/Parser combination already ensures these are
@@ -949,7 +1000,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             CharLiteralType::UNICODE => $this->validateUnicode($node),
             CharLiteralType::OCTAL => $this->validateOctal($node),
             CharLiteralType::OCTAL_LEGACY => $this->validateOctalLegacy($node),
-            CharLiteralType::UNICODE_NAMED => $this->validateUnicodeNamed($node),
+            CharLiteralType::UNICODE_NAMED => null,
         };
 
         // UTF-8 cannot encode the UTF-16 surrogates. PCRE reports it at the
@@ -2209,12 +2260,25 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private function supportsPaddedBraces(): bool
     {
-        return $this->phpVersionId >= 80400 || $this->runningPcreAtLeast('10.43');
+        return $this->readsPcre1043Syntax();
     }
 
     private function supportsVariableLengthLookbehind(): bool
     {
-        return $this->phpVersionId >= 80400 || $this->runningPcreAtLeast('10.43');
+        return $this->readsPcre1043Syntax();
+    }
+
+    /**
+     * Whether what PCRE2 10.43 added is read: for the running PHP, when the
+     * PCRE2 it links is that recent, whatever PHP bundles (the PHP 8.4
+     * packages of a distribution may link an older one); for a targeted PHP
+     * version, from 8.4, which bundles 10.44.
+     */
+    private function readsPcre1043Syntax(): bool
+    {
+        return \PHP_VERSION_ID === $this->phpVersionId
+            ? $this->runningPcreAtLeast('10.43')
+            : $this->phpVersionId >= 80400;
     }
 
     /**
@@ -3137,6 +3201,22 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * once the whole pattern is read, or while measuring the lookbehind it
      * sits in: on a walk from the pattern root, it waits for the walk to end.
      */
+    /**
+     * An error PCRE finds as it compiles the pattern, in the same pass as the
+     * references to missing groups: on a walk from the pattern root, it waits
+     * for the walk to end.
+     */
+    private function raiseLateCompileError(string $message, int $position, string $code, string $hint): void
+    {
+        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code, $hint);
+
+        if (!$this->walkingPattern) {
+            throw $error;
+        }
+
+        $this->lateErrors[1] ??= $error;
+    }
+
     private function raiseMissingReference(string $message, int $position, string $code): void
     {
         $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code);

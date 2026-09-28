@@ -79,7 +79,8 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     #[DataProvider('provideQuantifierPatterns')]
     public function test_php84_quantifier_missing_min_syntax(string $pattern, string $expectedCompiled): void
     {
-        $regex = Regex::create()->parse($pattern);
+        // These counts repeat from PCRE2 10.43, which PHP bundles from 8.4.
+        $regex = Regex::create(['php_version' => '8.4'])->parse($pattern);
         $compiler = new CompilerNodeVisitor();
         $compiled = $regex->accept($compiler);
 

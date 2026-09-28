@@ -89,7 +89,7 @@ final class RepeatCountVersionTest extends TestCase
     #[Test]
     public function test_the_running_php_reads_the_count_as_its_pcre2_does(): void
     {
-        $wide = \PHP_VERSION_ID >= 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+        $wide = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
 
         $this->assertSame($wide, self::hasBraceRepeat(Regex::create(['cache' => null])->parse('/a{,2}/')->pattern));
     }

@@ -77,9 +77,9 @@ final class Pcre2CaseRunnerTest extends TestCase
 
         // PHP: "unrecognized character after (? or (?- at offset 4": 10.48
         // takes "a" as an option and stops past the "Z", 10.40 stops on the
-        // "a". The library reads "a" where the running release does (PCRE2
-        // 10.43, PHP 8.4), and stops past the "Z"; before, past the "a".
-        $readsAsciiOptions = \PHP_VERSION_ID >= 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+        // "a". The library reads "a" where the running PCRE2 does (from 10.43)
+        // and stops past the "Z"; before, past the "a".
+        $readsAsciiOptions = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
         yield 'option letter — 10.48 at 4, 10.40 at 2, library as the running release' => [
             'case' => self::case('(?aZ)', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 111]),
             'libraryOffset' => $readsAsciiOptions ? 4 : 3,

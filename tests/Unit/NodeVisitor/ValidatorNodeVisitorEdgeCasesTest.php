@@ -467,8 +467,9 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
     {
         // The limit only bounds a variable-length lookbehind, so the one
         // here has to vary: "ab?". It is set through max_lookbehind_length;
-        // PHP refuses the (*LIMIT_LOOKBEHIND=n) verb.
-        $regex = Regex::create(['max_lookbehind_length' => 1]);
+        // PHP refuses the (*LIMIT_LOOKBEHIND=n) verb. Variable-length
+        // lookbehinds need PCRE2 10.43, which PHP bundles from 8.4.
+        $regex = Regex::create(['max_lookbehind_length' => 1, 'php_version' => '8.4']);
         $result = $regex->validate('/(?<=ab?)c/');
 
         $this->assertFalse($result->isValid);

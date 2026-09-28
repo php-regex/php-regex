@@ -470,7 +470,9 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
 
     private function formatCharLiteral(string $value): string
     {
-        $ord = \ord($value);
+        // The first byte, as ord() read it before PHP 8.5 deprecated
+        // passing it anything but one byte.
+        $ord = '' === $value ? 0 : \ord($value[0]);
 
         // Handle control characters and extended ASCII as hex codes
         if ($ord < 32 || 127 === $ord || $ord >= 128) {
