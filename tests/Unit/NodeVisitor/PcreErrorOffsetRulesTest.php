@@ -166,6 +166,8 @@ final class PcreErrorOffsetRulesTest extends TestCase
         yield 'octal code point too large' => ['/\\o{4200000}/u', 10, 10];
         yield 'octal code point too large without u' => ['/\\o{400}/', 6, 6];
         yield 'empty hex braces' => ['/\\x{}/', 3, 3];
+        yield 'sign without digits after \\g' => ['/\\g-/', 2, 2];
+        yield 'plus without digits after \\g' => ['/a\\g+b/', 3, 3];
         yield 'quantified match limit' => ['/(*LIMIT_MATCH=10)+/', 18, 17];
         yield 'counted match limit' => ['/(*LIMIT_MATCH=10){2}/', 20, 19];
         yield '\\c at the end' => ['/^\\c/', 3, 3];

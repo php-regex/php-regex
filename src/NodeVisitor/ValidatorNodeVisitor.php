@@ -854,6 +854,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // \g backreference with optimized validation (\g1, \g{1}, \g'1')
         if (preg_match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $ref, $matches)) {
             $numStr = ('' !== $matches[1]) ? $matches[1] : (('' !== ($matches[2] ?? '')) ? $matches[2] : ($matches[3] ?? ''));
+
+            // "\g-" or "\g+" with no digit is no reference at all: PCRE stops
+            // on the sign.
+            if ('' !== ($matches[3] ?? '') && '' === ltrim($numStr, '+-')) {
+                $this->raiseSemanticError(
+                    '\g is not followed by a braced, angle-bracketed or quoted name or number, or by a plain number.',
+                    $node->startPosition + 2,
+                    'regex.backref.invalid_syntax',
+                );
+            }
             if ('0' === $numStr || '+0' === $numStr || '-0' === $numStr) {
                 $this->raiseSemanticError(
                     'Backreference \\g{0} is not valid.',
