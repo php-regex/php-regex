@@ -48,6 +48,11 @@ final class PcreVerbTest extends TestCase
         // "(*:name)" and "(*=name)" are shorthands for a mark.
         yield 'a mark written short' => ['text' => ':here', 'name' => 'MARK:here'];
         yield 'a mark written with an equals sign' => ['text' => '=here', 'name' => 'MARK=here'];
+
+        // PCRE knows assertions and script runs in lowercase only: any other
+        // spelling is a verb it does not know.
+        yield 'a lookahead not in lowercase' => ['text' => 'PLA:foo', 'name' => 'PLA:foo'];
+        yield 'a script run not in lowercase' => ['text' => 'SR:foo', 'name' => 'SR:foo'];
     }
 
     #[Test]
@@ -84,11 +89,6 @@ final class PcreVerbTest extends TestCase
             'text' => 'atomic:a+',
             'group' => GroupType::T_GROUP_ATOMIC,
             'payload' => 'a+',
-        ];
-        yield 'the case does not matter' => [
-            'text' => 'PLA:foo',
-            'group' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            'payload' => 'foo',
         ];
     }
 

@@ -101,14 +101,14 @@ final readonly class PcreVerb
 
         $colon = strpos($verb, ':');
         if (false !== $colon) {
-            $name = strtolower(substr($verb, 0, $colon));
+            // PCRE only knows the lowercase spelling of these.
+            $name = substr($verb, 0, $colon);
             $assertion = self::ASSERTIONS[$name] ?? null;
             if (null !== $assertion) {
                 return new self($verb, $assertion, substr($verb, $colon + 1), null, $colon + 1);
             }
 
-            // PCRE only knows the lowercase spelling of these.
-            $nonAtomic = self::NON_ATOMIC_ASSERTIONS[substr($verb, 0, $colon)] ?? null;
+            $nonAtomic = self::NON_ATOMIC_ASSERTIONS[$name] ?? null;
             if (null !== $nonAtomic) {
                 return new self($verb, $nonAtomic, substr($verb, $colon + 1), null, $colon + 1, true);
             }
@@ -119,9 +119,8 @@ final readonly class PcreVerb
             return new self($verb, null, null, (int) $matches[1]);
         }
 
-        $lower = strtolower($verb);
         foreach (self::SCRIPT_RUN_PREFIXES as $prefix) {
-            if (!str_starts_with($lower, $prefix)) {
+            if (!str_starts_with($verb, $prefix)) {
                 continue;
             }
 
