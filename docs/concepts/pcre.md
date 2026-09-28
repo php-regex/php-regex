@@ -40,6 +40,7 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | ASCII options: `a` alone, or with one of `D`, `S`, `W`, `P`, `T` | `(?aD)` | PCRE2 10.43, PHP 8.4 |
 | Spaces inside braced escapes | `\x{ 41 }` | PCRE2 10.43, PHP 8.4 |
 | Open minimum and spaces in a repeat count (literal text before) | `a{,2}`, `a{ 2 }` | PCRE2 10.43, PHP 8.4 |
+| `\k` read as the letter inside a class | `[\k]` | PCRE2 10.45, bundled by no PHP release yet |
 
 The validator judges a pattern for the PHP version it targets (`php_version`),
 or, without one, for the PCRE2 the running PHP links.

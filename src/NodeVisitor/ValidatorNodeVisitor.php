@@ -2364,6 +2364,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
+        // "\k" in a class is the letter from PCRE2 10.45, which no PHP release
+        // bundles yet; the releases before refuse it, on the "k".
+        if ($this->charClassDepth > 0 && 'k' === $letter && !$this->runningPcreAtLeast('10.45')) {
+            $this->raiseSemanticError(
+                'Escape sequence \k is invalid in a character class before PCRE2 10.45.',
+                $start + 1,
+                'regex.charclass.invalid_escape',
+            );
+        }
+
         match ($letter) {
             'o' => $this->validateOctalBraces($source, $end),
             'x' => $this->validateHexBraces($source, $end),
