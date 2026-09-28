@@ -218,6 +218,28 @@ final class Lexer
      */
     private array $charClassStartPositions = [];
 
+    public function __construct(
+        /**
+         * Whether the pattern is read by PCRE2 10.43 or newer, where "{,2}"
+         * and counts padded with spaces, "{ 2 }", repeat. Before, those
+         * braces are literal text.
+         */
+        private readonly bool $wideRepeatCounts = true,
+    ) {}
+
+    /**
+     * Whether PCRE2 10.43's repeat counts are read for this PHP version: an
+     * explicit target from PHP 8.4, or, with none, the PCRE2 this PHP links.
+     */
+    public static function readsWideRepeatCounts(?int $phpVersionId): bool
+    {
+        if (null !== $phpVersionId) {
+            return $phpVersionId >= 80400;
+        }
+
+        return \PHP_VERSION_ID >= 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+    }
+
     public function tokenize(string $pattern, string $flags = ''): TokenStream
     {
         // Patterns that are not valid UTF-8 are tokenized byte by byte, the
@@ -506,6 +528,17 @@ final class Lexer
             $this->trackExtendedModeScope($type);
         }
 
+        // Before PCRE2 10.43, "{,2}" and "{ 2 }" are text: only the "{" is
+        // read here, and what follows it is read again as text. A "\N" right
+        // before keeps its count, which the validator refuses there.
+        if (TokenType::T_QUANTIFIER === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
+            && 1 !== preg_match('/^\{\d++(?:,\d*+)?\}/', $matchedValue)
+            && !$this->followsNamedCharacterEscape($currentTokens, $startPos)) {
+            $this->position = $startPos + 1;
+
+            return new Token(TokenType::T_LITERAL, '{', $startPos);
+        }
+
         return match ($type) {
             TokenType::T_CHAR_CLASS_OPEN => $this->handleCharClassOpen($startPos),
             TokenType::T_CHAR_CLASS_CLOSE => $this->closeCharClass($startPos, $currentTokens),
@@ -513,6 +546,19 @@ final class Lexer
             TokenType::T_QUOTE_MODE_START => $this->openQuoteMode($startPos),
             default => $this->handleContextualLiteral($type, $matchedValue, $startPos, $currentTokens),
         };
+    }
+
+    /**
+     * @param array<Token> $currentTokens
+     */
+    private function followsNamedCharacterEscape(array $currentTokens, int $position): bool
+    {
+        $previous = end($currentTokens);
+
+        return false !== $previous
+            && TokenType::T_CHAR_TYPE === $previous->type
+            && 'N' === $previous->value
+            && $previous->end() === $position;
     }
 
     /**

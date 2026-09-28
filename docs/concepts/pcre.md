@@ -39,6 +39,7 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | Caseless restrict option | `(?r)` | PCRE2 10.43, PHP 8.4 |
 | ASCII options: `a` alone, or with one of `D`, `S`, `W`, `P`, `T` | `(?aD)` | PCRE2 10.43, PHP 8.4 |
 | Spaces inside braced escapes | `\x{ 41 }` | PCRE2 10.43, PHP 8.4 |
+| Open minimum and spaces in a repeat count (literal text before) | `a{,2}`, `a{ 2 }` | PCRE2 10.43, PHP 8.4 |
 
 The validator judges a pattern for the PHP version it targets (`php_version`),
 or, without one, for the PCRE2 the running PHP links.

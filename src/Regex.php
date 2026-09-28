@@ -95,7 +95,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-c16f09eee9b21bc3acb06bd046f34e83';
+    public const CACHE_VERSION = 'ast-fc87c440ae834d6141f70d6cd1a330da';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -511,7 +511,7 @@ final readonly class Regex
         $versionId = $phpVersionId ?? \PHP_VERSION_ID;
         [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $phpVersionId);
 
-        return (new Lexer())->tokenize($pattern, $flags);
+        return (new Lexer(Lexer::readsWideRepeatCounts($phpVersionId)))->tokenize($pattern, $flags);
     }
 
     /**
@@ -1157,7 +1157,7 @@ final readonly class Regex
     private function parseFromScratch(string $regex): RegexNode
     {
         [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
-        $tokenStream = (new Lexer())->tokenize($pattern, $flags);
+        $tokenStream = (new Lexer(Lexer::readsWideRepeatCounts($this->getParserPhpVersionId())))->tokenize($pattern, $flags);
         $parser = new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId());
 
         return $parser->parse($tokenStream, $flags, $delimiter, \strlen($pattern));

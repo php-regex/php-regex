@@ -1234,8 +1234,11 @@ final class Parser
 
         // An inline "(?n)" before the payload still holds inside it.
         $flags = $this->noAutoCapture && !str_contains($this->flags, 'n') ? $this->flags.'n' : $this->flags;
-        $stream = (new Lexer())->tokenize($payload, $flags);
-        $parser = new Parser($this->maxRecursionDepth, $this->phpVersionId);
+        // The payload is read for the same PHP version, or the same running
+        // PCRE2, as the pattern around it.
+        $target = $this->useRuntimePcreDetection ? null : $this->phpVersionId;
+        $stream = (new Lexer(Lexer::readsWideRepeatCounts($target)))->tokenize($payload, $flags);
+        $parser = new Parser($this->maxRecursionDepth, $target);
         $pattern = $parser->parse($stream, $flags, '/', \strlen($payload));
 
         // The groups it holds take numbers in the enclosing pattern.

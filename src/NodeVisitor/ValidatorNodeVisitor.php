@@ -463,18 +463,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): void
     {
-        // "\N{4 }": before PCRE2 10.43 a padded count does not repeat "\N",
-        // and "\N{" that is no repeat is refused. "a{ 4 }" is only literal
-        // text there, which compiles either way.
+        // "\N{4 }", "\N{,2}": before PCRE2 10.43 such a count does not repeat
+        // "\N", and "\N{" that is no repeat is refused where the "\N" ends.
+        // "a{ 4 }" and "a{,2}" are literal text there, which the lexer reads
+        // as such.
         if ($node->node instanceof CharTypeNode && 'N' === $node->node->value && 0 === $this->charClassDepth
             && str_starts_with($node->quantifier, '{')
-            && \strlen($node->quantifier) !== strcspn($node->quantifier, " \t")
+            && 1 !== preg_match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
             && !$this->supportsPaddedBraces()) {
             $this->raiseSemanticError(
-                \sprintf('Spaces inside "\N%s" need PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
-                $node->node->getEndPosition() + strcspn($node->quantifier, " \t"),
+                \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
+                $node->node->getEndPosition(),
                 'regex.escape.unsupported',
-                'Write the count without spaces, or target PHP 8.4+.',
+                'Write the count as {n}, {n,} or {n,m} without spaces, or target PHP 8.4+.',
             );
         }
 
