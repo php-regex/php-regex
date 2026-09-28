@@ -89,6 +89,43 @@ final class ErrorPrecedenceTest extends TestCase
     }
 
     /**
+     * @param list<int> $offsets
+     */
+    #[Test]
+    #[DataProvider('provideSyntaxErrorsBeforeALexicalOne')]
+    public function test_validate_reports_a_syntax_error_met_before_one_found_while_tokenizing(string $pattern, array $offsets): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid);
+        $this->assertNotSame('lexer.error', $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        $this->assertContains(
+            $result->offset,
+            $offsets,
+            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), (string) $result->errorCode, implode(' or ', $offsets)),
+        );
+    }
+
+    /**
+     * The whole pattern is tokenized before it is parsed, so a class left
+     * open or a lone "\c" at the end used to hide a syntax error before it,
+     * one PCRE meets first.
+     *
+     * @return iterable<string, array{pattern: string, offsets: list<int>}>
+     */
+    public static function provideSyntaxErrorsBeforeALexicalOne(): iterable
+    {
+        yield 'nothing to repeat before a class left open' => ['pattern' => '/+[^/', 'offsets' => [1, 0]];
+        yield 'unmatched parenthesis before a class left open' => ['pattern' => '/)^U[/', 'offsets' => [1, 0]];
+        yield 'k without a name before a class left open' => ['pattern' => '/\\k[9/', 'offsets' => [2]];
+        yield 'k without a name before a lone c' => ['pattern' => '/\\k<\\f\\c/', 'offsets' => [3]];
+        yield 'duplicate name before a class left open' => ['pattern' => '/a(?<n>x)(?<n>y)[/', 'offsets' => [13]];
+        yield 'nothing to repeat before a lone c' => ['pattern' => '/+\\c/', 'offsets' => [1, 0]];
+    }
+
+    /**
      * PCRE reads the pattern once, left to right: an escape it refuses stops
      * it before a group left open, a class left open or a quantifier with
      * nothing to repeat further on.

@@ -297,7 +297,7 @@ final readonly class Regex
 
             return new ValidationResult(true, null, $complexityScore);
         } catch (LexerException|ParserException $e) {
-            return $this->buildValidationFailure($this->escapeErrorBefore($regex, $e) ?? $e);
+            return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $e);
         } catch (\Throwable $e) {
             return $this->buildValidationFailure($e);
         }
@@ -583,17 +583,18 @@ final readonly class Regex
     }
 
     /**
-     * PCRE reads escapes and structure in one pass, left to right; this
-     * library reads the structure first and judges escapes afterwards. When
-     * the structure fails, an escape PCRE refuses before that point is the
-     * error PCRE reports.
+     * PCRE reads the pattern in one pass, left to right. This library
+     * tokenizes it whole, then parses it, then judges its escapes, so the
+     * error it stops on may lie after one PCRE meets first: an escape PCRE
+     * refuses, or, when tokenizing failed, a syntax error in what was read
+     * before. The earliest of those before the error found is PCRE's.
      */
-    private function escapeErrorBefore(string $regex, LexerException|ParserException $error): ?SemanticErrorException
+    private function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
     {
         $position = $error->getPosition() ?? 0;
 
         try {
-            [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
         } catch (ParserException) {
             return null;
         }
@@ -606,8 +607,26 @@ final readonly class Regex
             // The tokens read before the error are what is judged.
         }
 
-        return (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
-            ->firstEscapeErrorBefore($lexer->tokensRead(), $pattern, $flags, $position);
+        $tokens = $lexer->tokensRead();
+        $earlier = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
+            ->firstEscapeErrorBefore($tokens, $pattern, $flags, $position);
+
+        if ($error instanceof LexerException) {
+            // The pattern read as if it ended where tokenizing stopped: an
+            // error that ending causes lies there, and is not taken.
+            $stream = new TokenStream([...$tokens, new Token(TokenType::T_EOF, '', $position)], $pattern);
+
+            try {
+                (new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId()))->parse($stream, $flags, $delimiter, $position);
+            } catch (LexerException|ParserException $syntaxError) {
+                $at = $syntaxError->getPosition() ?? $position;
+                if ($at < $position && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
+                    return $syntaxError;
+                }
+            }
+        }
+
+        return $earlier;
     }
 
     /**

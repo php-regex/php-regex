@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - An escaped letter inside a group name, as in `(?<a\y>...)`, was read as the letter and the name accepted as `ay`; PHP refuses any escape in a name, and so does the parser now.
-- A pattern with an escape PHP refuses and a structural error further on (`\y(`, `\L\c`, `[a\y`) was reported at the structural error, a missing `)` or `]`; PCRE reads the pattern in one pass and stops on the escape first. `validate()` now reports the escape; `parse()` is unchanged.
+- A pattern with an escape PHP refuses and a structural error further on (`\y(`, `\L\c`, `[a\y`) was reported at the structural error, a missing `)` or `]`; PCRE reads the pattern in one pass and stops on the escape first. Likewise a class left open or a lone `\c` at the end hid a syntax error before it (`+[^`, `)[`). `validate()` now reports the error PCRE meets first; `parse()` is unchanged.
 - The pretty-printed form of a pattern showed a modifier setting such as `(?i)` as an empty scoped group, `(?i:)`, which applies to nothing; it now shows `(?i)`.
 - `\k` inside a class (`[\k]`, `[a\k<n>]`) was accepted for every target; PCRE2 reads it as the letter only from 10.45, which no PHP release bundles yet, and refuses it before. It is now refused unless the running PHP links PCRE2 10.45 or newer.
 - The body of `(*pla:...)`, `(?*...)` and the other alphabetic assertions was never checked for escapes PHP refuses (`(*pla:\y)`, `(*pla:\U)`, `(*pla:[\B])`), and the body of `(*sr:...)` was not checked at all (`(*sr:a{2,1})`); both are now checked like the rest of the pattern. An error found inside such a body is reported at its offset in the whole pattern, not in the body.
