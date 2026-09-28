@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- Spaces or tabs right after the `U+` of `\N{U+...}` were left unjudged. From PCRE2 10.43 they may only run up to the closing brace (`\N{U+ }`), so `\N{U+ 41}` and an unclosed `\N{U+ ` are now refused; for PHP 8.2 and 8.3, whose PCRE2 refuses any padding there, `\N{U+ }` is refused too.
 - An unmatched `)` is reported past the `)` when the running PCRE2 is 10.45 or newer, where PHP reports it, and on it for older releases and for an explicit `php_version` target (PHP bundles 10.44); the message now says "Unmatched closing parenthesis".
 - A pattern with two errors, one of them a reference to a missing group, was reported at the reference. PCRE resolves references to groups by number or name only once it has read the whole pattern, and measures lookbehinds before that, so `\2\y` fails on the `\y` and `\2x(?<=a+)` on the lookbehind; the validator now reports the same error. Relative references are still judged where they stand, as PCRE does.
 - `\c` followed by a tab, a newline, another control character or DEL was reported valid; PCRE takes only printable ASCII after `\c`, and refuses these.

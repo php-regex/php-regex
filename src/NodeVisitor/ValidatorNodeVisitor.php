@@ -2475,10 +2475,29 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($leadingPadding) {
             $position += strspn($source, self::BRACE_PADDING, $position);
         } elseif ($position < $length && 1 === strspn($source, self::BRACE_PADDING, $position, 1)) {
-            // "\N{U+ 41}": 10.48 refuses it but accepts "\N{U+ }", and how it
-            // reads padding right after "U+" is not settled, so this is left
-            // unjudged, a known false accept.
-            return;
+            // Padding right after "U+": before PCRE2 10.43 it is refused on
+            // its first character; from 10.43 it may only run up to the
+            // closing brace, "\N{U+ }", and anything else is refused past
+            // the first character that is not padding.
+            if (!$this->supportsPaddedBraces()) {
+                $this->raiseSemanticError(
+                    \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape),
+                    $position,
+                    $invalidDigitCode,
+                    'Write the escape without spaces, or target PHP 8.4+.',
+                );
+            }
+
+            $position += strspn($source, self::BRACE_PADDING, $position);
+            if ('}' === ($source[$position] ?? '')) {
+                return;
+            }
+
+            $this->raiseSemanticError(
+                \sprintf('Invalid character in %s, or closing brace missing.', $escape),
+                $position >= $length ? $length : $position + $this->characterLengthAt($source, $position),
+                $invalidDigitCode,
+            );
         }
 
         if ($position >= $length || '}' === $source[$position]) {
