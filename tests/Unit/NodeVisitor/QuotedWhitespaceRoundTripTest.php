@@ -46,6 +46,10 @@ final class QuotedWhitespaceRoundTripTest extends TestCase
      */
     public static function providePatterns(): iterable
     {
+        // A leading (*UTF) makes the pattern UTF-8 like the u flag: a quoted
+        // non-ASCII character must not come back as separate bytes.
+        yield "/(*UTF)\\Q\u{e9}\\E/" => ['pattern' => "/(*UTF)\\Q\u{e9}\\E/", 'subjects' => ["\u{e9}", 'e']];
+        yield "/^(*UTF)[\\Q\u{e9}\\E]$/" => ['pattern' => "/(*UTF)^[\\Q\u{e9}\\E]$/", 'subjects' => ["\u{e9}", 'e']];
         yield "/^a\\Q\n/" => ['pattern' => "/^a\\Q\n/", 'subjects' => ["a\n", "a", ""]];
         yield "/^\\Q\n/x" => ['pattern' => "/^\\Q\n/x", 'subjects' => ["\n", "", " "]];
         yield "/^a\\Q \\E\$/x" => ['pattern' => "/^a\\Q \\E\$/x", 'subjects' => ["a ", "a"]];

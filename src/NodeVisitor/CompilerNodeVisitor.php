@@ -90,6 +90,11 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     private string $flags = '';
 
     /**
+     * Whether a leading (*UTF) makes the pattern UTF-8, as the u flag does.
+     */
+    private bool $utfVerb = false;
+
+    /**
      * Pattern body the AST was parsed from, when it is known.
      */
     private ?string $source = null;
@@ -127,9 +132,29 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         $this->delimiter = '/';
         $this->closingDelimiter = '/';
         $this->flags = '';
+        $this->utfVerb = false;
         $this->indentLevel = 0;
         $this->source = null;
         $this->quotedSpans = null;
+    }
+
+    /**
+     * Whether the pattern opens with a (*UTF) or (*UTF8) setting, possibly
+     * after other start-of-pattern settings.
+     */
+    private static function startsWithUtfVerb(NodeInterface $pattern): bool
+    {
+        $nodes = $pattern instanceof SequenceNode ? $pattern->children : [$pattern];
+        foreach ($nodes as $node) {
+            if (!$node instanceof PcreVerbNode) {
+                return false;
+            }
+            if ('UTF' === $node->verb || 'UTF8' === $node->verb) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #[\Override]
@@ -137,6 +162,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     {
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
+        $this->utfVerb = self::startsWithUtfVerb($node->pattern);
         $this->closingDelimiter = $this->getClosingDelimiter($node->delimiter);
         $this->source = $this->pretty || $this->collapseExtendedComments || !$this->preserveSpelling
             ? null
@@ -405,7 +431,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $rep = $node->originalRepresentation;
-        $unicodeMode = str_contains($this->flags, 'u');
+        $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
 
         // A code point can be spelled in many ways — "\a", "\x07", the raw
         // character — and they are all valid where the pattern already used
@@ -1006,7 +1032,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     {
         $meta = $this->inCharClass ? self::CHAR_CLASS_META : self::META_CHARACTERS;
         $escapeExtended = str_contains($this->flags, 'x') && !$this->inCharClass;
-        $unicodeMode = str_contains($this->flags, 'u');
+        $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
         $needsEscape = false;
 
         // Fast pre-scan to check if escaping is needed
