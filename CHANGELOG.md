@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- An escaped letter inside a group name, as in `(?<a\y>...)`, was read as the letter and the name accepted as `ay`; PHP refuses any escape in a name, and so does the parser now.
 - A pattern with an escape PHP refuses and a structural error further on (`\y(`, `\L\c`, `[a\y`) was reported at the structural error, a missing `)` or `]`; PCRE reads the pattern in one pass and stops on the escape first. `validate()` now reports the escape; `parse()` is unchanged.
 - The pretty-printed form of a pattern showed a modifier setting such as `(?i)` as an empty scoped group, `(?i:)`, which applies to nothing; it now shows `(?i)`.
 - `\k` inside a class (`[\k]`, `[a\k<n>]`) was accepted for every target; PCRE2 reads it as the letter only from 10.45, which no PHP release bundles yet, and refuses it before. It is now refused unless the running PHP links PCRE2 10.45 or newer.
