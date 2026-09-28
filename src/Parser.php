@@ -30,8 +30,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
@@ -1747,7 +1745,7 @@ final class Parser
         $startToken = $this->stream->previous();
         $startPosition = $startToken->position;
         $isNegated = $this->parseCharClassPrefix();
-        $parts = $this->parseClassExpression();
+        $parts = $this->parseCharClassAlternation();
 
         $endToken = $this->stream->consume(TokenType::T_CHAR_CLASS_CLOSE, 'Expected "]" to close character class');
 
@@ -1779,24 +1777,7 @@ final class Parser
     }
 
     /**
-     * Parses a character class expression with intersection (&&) and subtraction (--) operations.
-     */
-    private function parseClassExpression(): NodeInterface
-    {
-        $left = $this->parseCharClassAlternation();
-
-        while ($this->stream->check(TokenType::T_CLASS_INTERSECTION) || $this->stream->check(TokenType::T_CLASS_SUBTRACTION)) {
-            $type = TokenType::T_CLASS_INTERSECTION === $this->stream->current()->type ? ClassOperationType::INTERSECTION : ClassOperationType::SUBTRACTION;
-            $this->stream->advance();
-            $right = $this->parseCharClassAlternation();
-            $left = new ClassOperationNode($type, $left, $right, $left->getStartPosition(), $right->getEndPosition());
-        }
-
-        return $left;
-    }
-
-    /**
-     * Parses the alternation of character class parts (without operations).
+     * Parses the members of a character class.
      */
     private function parseCharClassAlternation(): NodeInterface
     {
@@ -1804,8 +1785,6 @@ final class Parser
 
         while (
             !$this->stream->check(TokenType::T_CHAR_CLASS_CLOSE)
-            && !$this->stream->check(TokenType::T_CLASS_INTERSECTION)
-            && !$this->stream->check(TokenType::T_CLASS_SUBTRACTION)
             && !$this->stream->isAtEnd()
         ) {
             // Silent tokens inside char class

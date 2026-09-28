@@ -348,6 +348,9 @@ final class HtmlExplainNodeVisitor extends AbstractNodeVisitor
         return \sprintf('<li>POSIX Class: [[:%s:]]</li>', $this->e($node->class));
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {

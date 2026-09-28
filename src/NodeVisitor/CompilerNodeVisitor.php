@@ -441,6 +441,9 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         return $rep;
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {

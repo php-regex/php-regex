@@ -249,6 +249,9 @@ final class ComplexityScoreNodeVisitor extends AbstractNodeVisitor
         return self::BASE_SCORE;
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): int
     {

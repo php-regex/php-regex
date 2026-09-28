@@ -267,6 +267,9 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
         return $this->line(\sprintf('Backreference: whatever the capturing group "%s" matched', $node->ref));
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {

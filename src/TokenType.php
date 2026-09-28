@@ -172,11 +172,17 @@ enum TokenType: string
 
     /**
      * Character class intersection operator (&&).
+     *
+     * @deprecated the lexer no longer produces this token: PHP reads "&&" in
+     *             a class as plain characters. It goes in the next major version.
      */
     case T_CLASS_INTERSECTION = 'class_intersection';
 
     /**
      * Character class subtraction operator (--).
+     *
+     * @deprecated the lexer no longer produces this token: PHP reads "--" in
+     *             a class as plain characters. It goes in the next major version.
      */
     case T_CLASS_SUBTRACTION = 'class_subtraction';
 }

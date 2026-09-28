@@ -457,14 +457,14 @@ preg_match('/[a-z]/', 'word', $matches);  // Match: yes ('w')
 
 ### CharClassNode
 
-**Purpose:** Character classes `[...]` including negated classes `[^...]`. Supports nested classes and operations like `&&` (intersection) and `--` (subtraction).
+**Purpose:** Character classes `[...]` including negated classes `[^...]`. PHP has no class intersection or subtraction: inside a class, `&&` is two `&` members and `--` a range through `-`, so `[a&&b]` matches `&` and `[a--b]` is refused as a range out of order.
 
 
 **Fields:**
 
 | Field        | Type          | Description                                        |
 |--------------|---------------|----------------------------------------------------|
-| `expression` | NodeInterface | The class content (ranges, characters, operations) |
+| `expression` | NodeInterface | The class content (ranges, characters, escapes)    |
 | `isNegated`  | bool          | True for `[^...]`, false for `[...]`               |
 
 **Example:**

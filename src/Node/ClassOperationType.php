@@ -15,6 +15,9 @@ namespace RegexParser\Node;
 
 /**
  * Defines the type of character class operation.
+ *
+ * @deprecated the parser no longer builds a ClassOperationNode; this enum goes
+ *             in the next major version
  */
 enum ClassOperationType: string
 {

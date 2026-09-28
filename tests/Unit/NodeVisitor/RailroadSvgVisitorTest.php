@@ -14,6 +14,13 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Node\CharClassNode;
+use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\LiteralNode;
+use RegexParser\Node\PosixClassNode;
+use RegexParser\Node\RangeNode;
+use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\RailroadSvgVisitor;
 use RegexParser\Regex;
 
@@ -456,9 +463,29 @@ final class RailroadSvgVisitorTest extends TestCase
         $this->assertStringContainsString('Conditional', $svg);
     }
 
+    public function test_svg_reads_ampersands_as_class_members(): void
+    {
+        // PHP has no class intersection: "[[:alpha:]&&[a-z]" is one class
+        // holding "&" and "[", and preg_match() finds "&]".
+        $ast = Regex::create()->parse('/[[:alpha:]&&[a-z]]/');
+        /** @var string $svg */
+        $svg = $ast->accept(new RailroadSvgVisitor());
+
+        $this->assertStringNotContainsString('ClassOperation', $svg);
+        $this->assertStringNotContainsString('(intersection)', $svg);
+    }
+
     public function test_svg_renders_class_operation_intersection(): void
     {
-        $ast = Regex::create()->parse('/[[:alpha:]&&[a-z]]/');
+        // The parser no longer builds this node; a tree built by hand still renders.
+        $operation = new ClassOperationNode(
+            ClassOperationType::INTERSECTION,
+            new PosixClassNode('alpha', 1, 10),
+            new RangeNode(new LiteralNode('a', 13, 14), new LiteralNode('z', 15, 16), 13, 16),
+            1,
+            16,
+        );
+        $ast = new RegexNode(new CharClassNode($operation, false, 0, 17), '', '/', 0, 17);
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgVisitor());
 

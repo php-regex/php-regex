@@ -75,6 +75,25 @@ be dropped in the next major version.
 ignored and the patterns are parsed once more. Nothing to do; a warm cache
 directory rebuilds itself.
 
+### Deprecated
+
+#### `ClassOperationNode` and the class operation tokens
+
+PHP compiles patterns without PCRE2's extended class syntax, so inside a
+character class `&&` is two `&` members and `--` a range through `-`:
+`[a&&b]` matches `&`, and `[a--b]` is refused as a range out of order. The
+parser now reads them that way and never builds a `ClassOperationNode`.
+
+These stay for compatibility and go in the next major version:
+
+  - `RegexParser\Node\ClassOperationNode` and `RegexParser\Node\ClassOperationType`
+  - `TokenType::T_CLASS_INTERSECTION` and `TokenType::T_CLASS_SUBTRACTION`, which the lexer no longer produces
+  - `NodeVisitorInterface::visitClassOperation()` and its implementations
+
+A custom visitor keeps its `visitClassOperation()` method for now; it is no
+longer called for a parsed pattern. Code that looked for a `ClassOperationNode`
+in a parsed tree finds the members and ranges instead.
+
 ### Planned
 
 #### `ValidationResult::$offset` will become body-relative everywhere

@@ -126,6 +126,9 @@ abstract class AbstractNodeVisitor implements NodeVisitorInterface
         return $this->defaultReturn();
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     public function visitClassOperation(ClassOperationNode $node)
     {
         return $this->defaultReturn();

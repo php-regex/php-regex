@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- `[a&&b]` and `[a--b]` read as PCRE reads them. PHP compiles without PCRE2's extended class syntax, so `&&` and `--` inside a class are not an intersection and a subtraction: `[a&&b]` holds `a`, `&` and `b`, and `[a--b]` is a range from `a` down to `-`, which PHP refuses. Validation accepted `[a--b]`, `[a--]`, `[^^--]` and `[\w--\d]`, and refused `[--[]` and `[]-\E]`; a `[` after `&&` opened a nested class, so `[a-z&&[^aeiou]]` was read as one class where PHP reads a class followed by a literal `]`.
 - Spaces inside `\x{ 41 }`, `\o{ 101 }`, `\N{ U+41 }` and a `\N{4 }` repeat arrived in PCRE2 10.43, which PHP bundles from 8.4; they validated for any target. Targeting PHP 8.2 or 8.3, they are now refused, as those releases' PCRE2 refuses them, unless the running PHP links a newer PCRE2. The unpadded forms are valid everywhere, and `a{ 4 }` is unchanged.
 - Under the `n` modifier or `(?n)`, a plain `(...)` group was counted as a capture, so `/(?n)(a)\1/` and `/(a)\1/n` validated though PHP refuses them. Such a group now captures nothing and takes no number — named groups still do — through `(?n:...)`, `(?-n)` and `(?^)` as PCRE scopes them. It is read as a non-capturing group and written back with the `(` it was spelled with.
 - `\g'1'` and `\g'-1'` call the group, as `\g<1>` does; they were read as back references.
@@ -58,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 - `Regex::new()` (identical to `Regex::create()`); `ValidationResult::isValid()` and `getErrorMessage()` methods in favor of the public `$isValid` / `$error` properties.
+- `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()`: the parser no longer builds the node, and they go in the next major version. See [UPGRADING.md](UPGRADING.md).
 
 ### Added
 - **Laravel bridge** (`RegexParser\Bridge\Laravel`) with package auto-discovery:

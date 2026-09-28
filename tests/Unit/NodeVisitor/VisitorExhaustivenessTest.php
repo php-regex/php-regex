@@ -201,9 +201,19 @@ final class VisitorExhaustivenessTest extends TestCase
         }
 
         $missing = [];
+        $deprecatedSeen = [];
         foreach (glob(__DIR__.'/../../../src/Node/*Node.php') ?: [] as $file) {
             $class = 'RegexParser\Node\\'.basename($file, '.php');
             if (!is_subclass_of($class, NodeInterface::class) || (new \ReflectionClass($class))->isAbstract()) {
+                continue;
+            }
+            // A deprecated node is kept for compatibility and the parser no
+            // longer builds it: it must not show up at all.
+            if (str_contains((string) (new \ReflectionClass($class))->getDocComment(), '@deprecated')) {
+                if (isset($seen[$class])) {
+                    $deprecatedSeen[] = $class;
+                }
+
                 continue;
             }
             if (!isset($seen[$class])) {
@@ -212,6 +222,7 @@ final class VisitorExhaustivenessTest extends TestCase
         }
 
         $this->assertSame([], $missing, 'Corpus does not cover these node types; extend the pattern list.');
+        $this->assertSame([], $deprecatedSeen, 'The parser built a deprecated node type.');
     }
 
     /**

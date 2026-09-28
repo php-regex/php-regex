@@ -36,10 +36,10 @@ final class ParserPatternSweepTest extends TestCase
             '/(?>a+)b/',  // atomic
             '/a\R/',  // generic newline
             '/\p{L}/u',  // unicode prop
-            '/[\w--\d]/',  // char class subtraction
-            '/[a-z&&\d]/',  // char class intersection
+            '/[\w--\d]/',  // "\w" as a range start: invalid in PHP
+            '/[a-z&&\d]/',  // "&" is a plain class member
             '/[a-d[m-p]]/',  // char class with literal "[" then trailing "]"
-            '/[a-z&&[def]]/',  // nested char class intersection
+            '/[a-z&&[def]]/',  // "&" and "[" are members, the last "]" a literal
             '/\K/',  // keep
             '/a(*THEN)b/',  // verb
             '/(*LIMIT_DEPTH=10)a/',  // verb

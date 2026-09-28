@@ -206,6 +206,9 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
         return $this->wrap($this->escape($reference), 'backref');
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {

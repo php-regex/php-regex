@@ -27,8 +27,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DotNode;
@@ -127,20 +125,28 @@ final class ParserTest extends TestCase
     }
 
     #[Test]
-    public function test_parse_nested_char_class_intersection(): void
+    public function test_parse_reads_ampersands_and_a_bracket_as_class_members(): void
     {
+        // PHP has no class intersection: "[a-z&&[def]" is one class and the
+        // last "]" a literal, so preg_match() finds "&]" and not "d".
         $ast = $this->parse('/[a-z&&[def]]/');
         $pattern = $ast->pattern;
 
-        $this->assertInstanceOf(CharClassNode::class, $pattern);
-        $this->assertInstanceOf(ClassOperationNode::class, $pattern->expression);
-        $this->assertSame(ClassOperationType::INTERSECTION, $pattern->expression->type);
-        $this->assertInstanceOf(RangeNode::class, $pattern->expression->left);
-        $this->assertInstanceOf(CharClassNode::class, $pattern->expression->right);
+        $this->assertInstanceOf(SequenceNode::class, $pattern);
+        $this->assertCount(2, $pattern->children);
+        $this->assertInstanceOf(CharClassNode::class, $pattern->children[0]);
+        $this->assertInstanceOf(LiteralNode::class, $pattern->children[1]);
+        $this->assertSame(']', $pattern->children[1]->value);
 
-        $right = $pattern->expression->right;
-        $this->assertInstanceOf(AlternationNode::class, $right->expression);
-        $this->assertCount(3, $right->expression->alternatives);
+        $class = $pattern->children[0];
+        $this->assertInstanceOf(AlternationNode::class, $class->expression);
+        $this->assertCount(7, $class->expression->alternatives);
+        $this->assertInstanceOf(RangeNode::class, $class->expression->alternatives[0]);
+        $members = array_map(
+            static fn (NodeInterface $node): string => $node instanceof LiteralNode ? $node->value : '',
+            \array_slice($class->expression->alternatives, 1),
+        );
+        $this->assertSame(['&', '&', '[', 'd', 'e', 'f'], $members);
     }
 
     #[Test]

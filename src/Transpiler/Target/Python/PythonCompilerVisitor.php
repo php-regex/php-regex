@@ -260,6 +260,9 @@ final class PythonCompilerVisitor extends AbstractCompilerVisitor
         return $this->normalizeBackreference($node->ref, $node->getStartPosition());
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {

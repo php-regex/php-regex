@@ -481,6 +481,9 @@ final class ReDoSProfileNodeVisitor extends AbstractNodeVisitor
         return ReDoSSeverity::SAFE;
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): ReDoSSeverity
     {

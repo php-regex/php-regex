@@ -38,8 +38,7 @@ final class Lexer
     private const TOKENS_INSIDE = [
         'T_CHAR_CLASS_CLOSE', 'T_POSIX_CLASS', 'T_CHAR_CLASS_OPEN', 'T_UNICODE_NAMED', 'T_CHAR_TYPE', 'T_OCTAL_LEGACY',
         'T_OCTAL', 'T_UNICODE', 'T_UNICODE_PROP',
-        'T_CONTROL_CHAR', 'T_QUOTE_MODE_START', 'T_QUOTE_MODE_END', 'T_LITERAL_ESCAPED',
-        'T_CLASS_INTERSECTION', 'T_CLASS_SUBTRACTION', 'T_LITERAL',
+        'T_CONTROL_CHAR', 'T_QUOTE_MODE_START', 'T_QUOTE_MODE_END', 'T_LITERAL_ESCAPED', 'T_LITERAL',
     ];
 
     /*
@@ -127,8 +126,6 @@ final class Lexer
         'T_QUOTE_MODE_START' => '\\\\ Q',
         'T_QUOTE_MODE_END' => '\\\\ E',
         'T_LITERAL_ESCAPED' => '\\\\ .',
-        'T_CLASS_INTERSECTION' => '&&',
-        'T_CLASS_SUBTRACTION' => '--',
         'T_LITERAL' => '[^\\\\]',
     ];
 
@@ -294,15 +291,6 @@ final class Lexer
         }
 
         return '/(?:'.implode('|', $regexParts).')/xsA'.($this->byteMode ? '' : 'u');
-    }
-
-    /**
-     * Checks if a token type is a character class operation type.
-     */
-    private function isClassOperationType(TokenType $type): bool
-    {
-        return TokenType::T_CLASS_INTERSECTION === $type
-            || TokenType::T_CLASS_SUBTRACTION === $type;
     }
 
     private function resetState(): void
@@ -510,7 +498,7 @@ final class Lexer
         }
 
         return match ($type) {
-            TokenType::T_CHAR_CLASS_OPEN => $this->handleCharClassOpen($startPos, $currentTokens),
+            TokenType::T_CHAR_CLASS_OPEN => $this->handleCharClassOpen($startPos),
             TokenType::T_CHAR_CLASS_CLOSE => $this->closeCharClass($startPos, $currentTokens),
             TokenType::T_COMMENT_OPEN => $this->openComment($startPos),
             TokenType::T_QUOTE_MODE_START => $this->openQuoteMode($startPos),
@@ -585,21 +573,11 @@ final class Lexer
         return null === $flags ? null : [$flags, ':' === $matches[2]];
     }
 
-    /**
-     * @param array<Token> $currentTokens
-     */
-    private function handleCharClassOpen(int $startPos, array $currentTokens): Token
+    private function handleCharClassOpen(int $startPos): Token
     {
+        // PHP compiles without PCRE2's extended class syntax, so a "[" inside
+        // a class is a member: nothing nests.
         if ($this->inCharClass) {
-            if ($this->isAtCharClassStart($currentTokens)) {
-                return new Token(TokenType::T_LITERAL, '[', $startPos);
-            }
-
-            $lastToken = end($currentTokens);
-            if ($lastToken instanceof Token && $this->isClassOperationType($lastToken->type)) {
-                return $this->openCharClass($startPos);
-            }
-
             return new Token(TokenType::T_LITERAL, '[', $startPos);
         }
 
@@ -846,8 +824,6 @@ final class Lexer
             TokenType::T_UNICODE_PROP => $this->normalizeUnicodeProp($matchedValue),
             TokenType::T_UNICODE_NAMED => substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END),
             TokenType::T_CONTROL_CHAR => substr($matchedValue, self::OFFSET_CONTROL_CHAR),
-            TokenType::T_CLASS_INTERSECTION => '&&',
-            TokenType::T_CLASS_SUBTRACTION => '--',
             default => $matchedValue,
         };
     }

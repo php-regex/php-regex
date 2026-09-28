@@ -18,8 +18,10 @@ use RegexParser\NodeVisitor\NodeVisitorInterface;
 /**
  * Represents a character class operation (intersection && or subtraction --).
  *
- * This node handles extended character class operations in PCRE2,
- * allowing complex class combinations like [a&&b] or [a--b].
+ * @deprecated PHP compiles patterns without PCRE2's extended class syntax, so
+ *             "&&" and "--" inside a class are plain members and ranges, and
+ *             the parser no longer builds this node. It goes in the next major
+ *             version.
  */
 final readonly class ClassOperationNode extends AbstractNode
 {

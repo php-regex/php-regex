@@ -139,8 +139,8 @@ final class HighlighterTest extends TestCase
 
     public function test_highlight_with_class_operations(): void
     {
-        // Test class operations (intersection/subtraction)
-        $pattern = '/[a&&b] [a--b]/';
+        // PHP has no class operations: "&&" is two members and "!--" a range.
+        $pattern = '/[a&&b] [!--]/';
         $highlightedCli = $this->highlight($pattern, 'cli');
         $highlightedHtml = $this->highlight($pattern, 'html');
 

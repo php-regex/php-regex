@@ -127,6 +127,8 @@ interface NodeVisitorInterface
 
     /**
      * @return TReturn
+     *
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
      */
     public function visitClassOperation(ClassOperationNode $node);
 

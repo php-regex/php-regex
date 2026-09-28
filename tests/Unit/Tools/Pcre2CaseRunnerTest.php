@@ -135,8 +135,25 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_still_reports_a_false_accept_when_the_offset_depends_on_the_version(): void
     {
-        // "[^^--]": 10.48 error 108 at 5, 10.40 at 4; the library accepts it,
-        // reading "--" as a class subtraction.
+        // A runner-level fake: the case says both engines reject "abc", at
+        // different offsets, and the library accepts it. No real pattern is
+        // needed to exercise the runner, so the sample cannot go stale when
+        // the library stops wrongly accepting one.
+        $result = (new Pcre2CaseRunner())->run(self::case(
+            'abc',
+            'reject',
+            5,
+            'range out of order in character class',
+            pcre2Code: 108,
+            floor: ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 108],
+        ));
+
+        $this->assertSame('accept', $result['verdict']);
+        $this->assertSame('false-accept', $result['outcome']);
+
+        // "[^^--]": 10.48 error 108 at 5, 10.40 at 4. This was the sample false
+        // accept until the library stopped reading "--" as a class
+        // subtraction; it now rejects it, at the range start like "[z-a]".
         $result = (new Pcre2CaseRunner())->run(self::case(
             '[^^--]',
             'reject',
@@ -146,7 +163,8 @@ final class Pcre2CaseRunnerTest extends TestCase
             floor: ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 108],
         ));
 
-        $this->assertSame('false-accept', $result['outcome']);
+        $this->assertSame('reject', $result['verdict']);
+        $this->assertSame('offset-defect', $result['outcome']);
 
         // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3. This
         // was the sample false accept until the library refused it; it now

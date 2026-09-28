@@ -684,38 +684,29 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('A', $tokens[0]->value);
     }
 
-    public function test_char_class_intersection(): void
+    public function test_char_class_ampersands_are_literals(): void
     {
+        // PHP has no class intersection: "[a&&b]" matches "&".
         $tokens = (new Lexer())->tokenize('[a&&b]')->getTokens();
 
-        $intersectionToken = null;
-        foreach ($tokens as $token) {
-            if (TokenType::T_CLASS_INTERSECTION === $token->type) {
-                $intersectionToken = $token;
+        $ampersands = array_values(array_filter($tokens, static fn (Token $token): bool => '&' === $token->value));
 
-                break;
-            }
-        }
-
-        $this->assertInstanceOf(Token::class, $intersectionToken);
-        $this->assertSame('&&', $intersectionToken->value);
+        $this->assertCount(2, $ampersands);
+        $this->assertSame(TokenType::T_LITERAL, $ampersands[0]->type);
+        $this->assertSame(TokenType::T_LITERAL, $ampersands[1]->type);
     }
 
-    public function test_char_class_subtraction(): void
+    public function test_char_class_double_hyphen_is_two_range_tokens(): void
     {
+        // PHP has no class subtraction: "[a--b]" is a range from "a" down to
+        // "-", which preg_match() refuses as out of order.
         $tokens = (new Lexer())->tokenize('[a--b]')->getTokens();
 
-        $subtractionToken = null;
-        foreach ($tokens as $token) {
-            if (TokenType::T_CLASS_SUBTRACTION === $token->type) {
-                $subtractionToken = $token;
+        $hyphens = array_values(array_filter($tokens, static fn (Token $token): bool => '-' === $token->value));
 
-                break;
-            }
-        }
-
-        $this->assertInstanceOf(Token::class, $subtractionToken);
-        $this->assertSame('--', $subtractionToken->value);
+        $this->assertCount(2, $hyphens);
+        $this->assertSame(TokenType::T_RANGE, $hyphens[0]->type);
+        $this->assertSame(TokenType::T_RANGE, $hyphens[1]->type);
     }
 
     public function test_nested_char_class_tokens(): void

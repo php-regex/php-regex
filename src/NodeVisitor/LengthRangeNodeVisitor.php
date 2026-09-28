@@ -235,6 +235,9 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
         return [1, 1];
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): array
     {

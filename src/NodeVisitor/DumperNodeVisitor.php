@@ -189,6 +189,9 @@ final class DumperNodeVisitor extends AbstractNodeVisitor
         return "{$type}({$node->originalRepresentation})";
     }
 
+    /**
+     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
+     */
     #[\Override]
     public function visitClassOperation(ClassOperationNode $node): string
     {
