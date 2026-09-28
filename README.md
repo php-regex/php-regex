@@ -93,16 +93,24 @@ a snapshot used to validate that the lint and ReDoS rules produce sensible
 output on real code.
 
 The corpus checkouts themselves are not committed. `corpus/corpus.json` lists
-every repository with its URL and branch, and `php corpus/update` clones the
-missing ones before pulling the rest (switching each checkout to the branch
-recorded in the manifest):
+every repository with its URL, branch and the commit it was last updated to,
+much like a lock file. `php corpus/update` removes the checkouts whose entry
+was deleted from the manifest, clones the missing ones, then pulls the rest
+(switching each checkout to the branch recorded in the manifest) and writes the
+new commits back. Its output shows which repositories moved, and by how many
+commits, since the manifest was last written:
 
 ```bash
-php corpus/update                      # clone what is missing, then pull everything
+php corpus/update                      # prune, clone what is missing, then pull everything
 php corpus/update --clone-only         # first run on a fresh machine
+php corpus/update --no-prune           # keep checkouts that are no longer listed
 php corpus/update --add https://github.com/vendor/repo.git [--as path] [--branch main]
 php corpus/update --write-manifest     # rewrite corpus.json from what is on disk
 ```
+
+A checkout with local changes is never removed unless `--force` is given, and
+a repository cloned by hand is removed on the next run unless it is added with
+`--add` or listed with `--write-manifest` first.
 
 Regenerate `corpus/corpus.log` after updating the corpus, from a terminal:
 
