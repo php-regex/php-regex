@@ -75,16 +75,34 @@ final class Lexer
      */
     private const NAME_CHARS = '\\p{L}\\p{Nd}_';
 
+    /**
+     * Text quoted by \Q...\E, possibly up to the end of the pattern.
+     */
+    private const QUOTED_RUN = '\\\\Q (?: (?!\\\\E) [\\s\\S] )*+ (?: \\\\E | \\z )';
+
+    /**
+     * One item of a group body in which a ")" does not close the group: a
+     * quoted run, an escape, a class, a "(?#...)" comment, or text without
+     * parentheses. Nested groups are matched by the caller.
+     */
+    private const GROUP_BODY_ITEM = self::QUOTED_RUN
+        .' | \\\\ (?!Q) [\\s\\S]'
+        .' | \\[ \\^? \\]? (?: \\[: [^\\]]*? :\\] | '.self::QUOTED_RUN.' | \\\\ [\\s\\S] | [^\\]\\\\] )*+ \\]'
+        .' | \\( \\? \\# [^)]*+ \\)'
+        .' | [^()\\\\\\[]++';
+
     // Optimized regex patterns broken into focused components
     private const PATTERNS_OUTSIDE = [
         'T_COMMENT_OPEN' => '\\(\\?\\#',
         'T_CALLOUT' => '\\(\\?C (?: (?:'.self::CALLOUT_STRING.') (?=\\)) | [^)]* ) \\)',
         // "(*atomic:(a(b)c))" nests as deep as it likes, so the body of an
         // alphabetic assertion or a script run — a lowercase name and a
-        // colon, or "(?*" — is matched by recursion. Any other verb ends at
-        // the first ")", as PCRE reads it: "(*:a(b)" is a mark named "a(b".
-        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: [^()]++ | \\( (?P>verbBody) \\) )* )'
-            .' | \\* [a-z_]++ : (?P>verbBody) | \\* [^)]* ) \\)',
+        // colon, or "(?*" — is matched by recursion, reading it as any group
+        // body is read: a ")" escaped, quoted by \Q...\E, inside a class or
+        // inside a "(?#...)" comment does not close it. Any other verb ends
+        // at the first ")", as PCRE reads it: "(*:a(b)" is a mark named "a(b".
+        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: '.self::GROUP_BODY_ITEM.' | \\( (?P>verbBody) \\) )* )'
+            .' | \\* [a-z_]++ : (?P>verbBody) | \\* (?! [a-z_]++ : ) [^)]* ) \\)',
         'T_GROUP_MODIFIER_OPEN' => '\\(\\?',
         'T_GROUP_OPEN' => '\\(',
         'T_GROUP_CLOSE' => '\\)',
