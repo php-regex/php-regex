@@ -116,20 +116,20 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "(?<=a+)(?-1)": error 115 at offset 11 on both 10.40 and 10.48
-        // (PHP: "reference to non-existent subpattern at offset 11"), read
-        // before the lookbehind is measured; the library reports the
-        // lookbehind at offset 0, so this is an offset defect.
+        // "\p1(": error 146 at offset 3 on both 10.40 and 10.48 (PHP:
+        // "malformed \P or \p sequence at offset 3"), met before the group
+        // left open; the library reports the missing ")" at offset 4, so
+        // this is an offset defect.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '(?<=a+)(?-1)',
+            '\\p1(',
             'reject',
-            11,
-            'reference to non-existent subpattern',
-            pcre2Code: 115,
-            floor: ['verdict' => 'reject', 'offset' => 11, 'pcre2Code' => 115],
+            3,
+            'malformed \\P or \\p sequence',
+            pcre2Code: 146,
+            floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 146],
         ));
 
-        $this->assertSame(0, $result['offset']);
+        $this->assertSame(4, $result['offset']);
         $this->assertSame('offset-defect', $result['outcome']);
 
         // Same agreement on "[abc" (106 at 4 on both): the library agrees too.
@@ -255,13 +255,12 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // PCRE2 reads the call before it measures the lookbehind
-        // (preg_match('/(?<=a+)(?-1)/', '') warns "reference to non-existent
-        // subpattern at offset 11"); the library reports the lookbehind,
-        // offset 0.
+        // PCRE2 meets the malformed "\p" before the group left open
+        // (preg_match('/\p1(/', '') warns "malformed \P or \p sequence at
+        // offset 3"); the library reports the missing ")", offset 4.
         yield 'real suite error reported at a different position' => [
-            'case' => self::case('(?<=a+)(?-1)', 'reject', 11, 'reference to non-existent subpattern', pcre2Code: 115),
-            'libraryOffset' => 0,
+            'case' => self::case('\\p1(', 'reject', 3, 'malformed \\P or \\p sequence', pcre2Code: 146),
+            'libraryOffset' => 4,
         ];
 
         // Same pattern, same PCRE2 error text, a recorded offset the library

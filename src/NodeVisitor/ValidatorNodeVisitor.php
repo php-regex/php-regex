@@ -268,6 +268,33 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private int $lookbehindBranchMeasures = 0;
 
+    /**
+     * How many lookbehinds the node being visited sits in.
+     */
+    private int $lookbehindDepth = 0;
+
+    /**
+     * Whether the walk started from the pattern root, and so ends where the
+     * errors PCRE finds late can be reported.
+     */
+    private bool $walkingPattern = false;
+
+    /**
+     * Whether a lookbehind is being measured: a missing group ends the
+     * measure there, as it ends PCRE's.
+     */
+    private bool $measuringLookbehind = false;
+
+    /**
+     * The first error of each late pass, kept until the walk ends: [0] the
+     * pass that measures lookbehinds, [1] the one that resolves references
+     * to groups by number or name. PCRE runs both only once it has read the
+     * whole pattern, so any other error comes first.
+     *
+     * @var array<int, SemanticErrorException>
+     */
+    private array $lateErrors = [];
+
     private GroupNumbering $groupNumbering;
 
     /**
@@ -331,8 +358,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->lookbehindDepth = 0;
+        $this->lateErrors = [];
+        $this->walkingPattern = true;
 
-        $node->pattern->accept($this);
+        try {
+            $node->pattern->accept($this);
+        } finally {
+            $this->walkingPattern = false;
+        }
+
+        $this->raiseFirstLateError();
     }
 
     #[\Override]
@@ -378,12 +414,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $previous = $this->previousNode;
         $next = $this->nextNode;
 
-        if (\in_array(
+        $isLookbehind = \in_array(
             $node->type,
             [GroupType::T_GROUP_LOOKBEHIND_POSITIVE, GroupType::T_GROUP_LOOKBEHIND_NEGATIVE],
             true,
-        )) {
-            $this->validateLookbehindLength($node);
+        );
+        if ($isLookbehind) {
+            $this->measureLookbehind($node);
         }
 
         if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
@@ -405,11 +442,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->enclosingGroups[spl_object_id($node)] = true;
         }
 
+        if ($isLookbehind) {
+            $this->lookbehindDepth++;
+        }
+
         try {
             $node->child->accept($this);
         } finally {
             $this->source = $source;
             $this->enclosingGroups = $enclosingGroups;
+            if ($isLookbehind) {
+                $this->lookbehindDepth--;
+            }
         }
 
         $this->previousNode = $previous;
@@ -675,7 +719,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     return;
                 }
 
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
@@ -705,7 +749,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 );
             }
             if ($num > $this->groupNumbering->maxGroupNumber) {
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: %d.', $num),
                     $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
@@ -720,7 +764,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $name = $matches['name'];
             if (!$this->groupNumbering->hasNamedGroup($name)) {
                 $suggestions = $this->getNameSuggestions($name);
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $name).$suggestions,
                     $this->missingReferenceOffset($node),
                     'regex.backref.missing_named_group',
@@ -734,7 +778,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($this->isBareNamedBackref($ref)) {
             if (!$this->groupNumbering->hasNamedGroup($ref)) {
                 $suggestions = $this->getNameSuggestions($ref);
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $ref).$suggestions,
                     $node->startPosition,
                     'regex.backref.missing_named_group',
@@ -765,7 +809,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             $num = (int) $numStr;
             if ($num > $this->groupNumbering->maxGroupNumber) {
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
                     $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
@@ -889,7 +933,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $ref = $node->condition->ref;
             if ($this->isBareNamedBackref($ref) && !$this->groupNumbering->hasNamedGroup($ref)) {
                 // Bare name that doesn't exist - this is an invalid conditional
-                $this->raiseSemanticError(
+                $this->raiseMissingReference(
                     'Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).',
                     $this->missingReferenceOffset($node->condition),
                     'regex.conditional.invalid',
@@ -913,7 +957,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             } elseif (str_starts_with($ref, 'R&')) {
                 // "(?(R&name)...)": the group has to exist.
                 if (!$this->groupNumbering->hasNamedGroup(substr($ref, 2))) {
-                    $this->raiseSemanticError(
+                    $this->raiseMissingReference(
                         \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
                         $this->missingReferenceOffset($node->condition),
                         'regex.subroutine.missing_named_group',
@@ -1024,7 +1068,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // Named reference: (?&name), (?P>name), \g<name>
         if (!$this->groupNumbering->hasNamedGroup($ref)) {
-            $this->raiseSemanticError(
+            $this->raiseMissingReference(
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
                 $this->missingReferenceOffset($node),
                 'regex.subroutine.missing_named_group',
@@ -2224,7 +2268,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private function assertAbsoluteReferenceExists(int $num, int $position, string $code, string $context): void
     {
         if ($num <= 0 || $num > $this->groupNumbering->maxGroupNumber) {
-            $this->raiseSemanticError(
+            $this->raiseMissingReference(
                 \sprintf('%s to non-existent group: %d.', $context, $num),
                 $position,
                 $code,
@@ -2725,6 +2769,56 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             'regex.verb.misplaced',
             'Move it before anything else in the pattern.',
         );
+    }
+
+    /**
+     * The error of the earliest late pass, once nothing else went wrong.
+     */
+    private function raiseFirstLateError(): void
+    {
+        if ([] !== $this->lateErrors) {
+            throw $this->lateErrors[min(array_keys($this->lateErrors))];
+        }
+    }
+
+    /**
+     * Measure a lookbehind in the pass PCRE runs once the whole pattern is
+     * read: on a walk from the pattern root, an error found here waits for
+     * the walk to end.
+     */
+    private function measureLookbehind(GroupNode $node): void
+    {
+        if (!$this->walkingPattern) {
+            $this->validateLookbehindLength($node);
+
+            return;
+        }
+
+        $this->measuringLookbehind = true;
+
+        try {
+            $this->validateLookbehindLength($node);
+        } catch (SemanticErrorException $error) {
+            $this->lateErrors[0] ??= $error;
+        } finally {
+            $this->measuringLookbehind = false;
+        }
+    }
+
+    /**
+     * A reference to a group the pattern does not have. PCRE resolves it
+     * once the whole pattern is read, or while measuring the lookbehind it
+     * sits in: on a walk from the pattern root, it waits for the walk to end.
+     */
+    private function raiseMissingReference(string $message, int $position, string $code): void
+    {
+        $error = new SemanticErrorException($message, $position, $this->pattern, null, $code);
+
+        if (!$this->walkingPattern || $this->measuringLookbehind) {
+            throw $error;
+        }
+
+        $this->lateErrors[$this->lookbehindDepth > 0 ? 0 : 1] ??= $error;
     }
 
     private function raiseSemanticError(string $message, int $position, string $code, ?string $hint = null): never
