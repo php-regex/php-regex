@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use RegexParser\Exception\SyntaxErrorException;
+use RegexParser\Exception\ParserException;
 use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\Regex;
 
@@ -46,7 +46,7 @@ $unreadable = 0;
 foreach ($patterns as $pattern) {
     try {
         $ast = $regex->parse($pattern);
-    } catch (SyntaxErrorException $e) {
+    } catch (ParserException $e) {
         set_error_handler(static fn (): bool => true);
         $pcreAccepts = false !== @preg_match($pattern, '');
         restore_error_handler();

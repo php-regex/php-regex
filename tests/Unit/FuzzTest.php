@@ -53,7 +53,8 @@ class FuzzTest extends TestCase
             $recompiled = $ast->accept($compiler);
 
             // Parse the recompiled
-            $ast2 = $this->regex->parse('/'.$recompiled.'/');
+            // The compiled pattern carries its own delimiters and flags.
+            $ast2 = $this->regex->parse($recompiled);
 
             // For now, just ensure no exceptions
             $this->assertInstanceOf(RegexNode::class, $ast);

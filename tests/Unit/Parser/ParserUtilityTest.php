@@ -137,12 +137,13 @@ final class ParserUtilityTest extends TestCase
 
     public function test_extract_pattern_handles_lots_of_backslashes_before_delimiter(): void
     {
-        // Edge case: Lots of backslashes before delimiter: "/foo\\\\//" (even number, not escaped)
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/foo\\\\//');
+        // An even run of backslashes does not escape the delimiter after it:
+        // "/foo\\\\/" is the pattern "foo\\\\" (preg_match('/foo\\\\/', 'foo\\') === 1).
+        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/foo\\\\/');
 
         $this->assertSame('/', $delimiter);
         $this->assertSame('', $flags);
-        $this->assertSame('foo\\\\/', $pattern);
+        $this->assertSame('foo\\\\', $pattern);
     }
 
     public function test_extract_pattern_handles_very_long_patterns(): void

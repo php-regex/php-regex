@@ -3328,18 +3328,6 @@
         ]
     },
     {
-        "pattern": "/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\\(([^)]+)\\)/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
         "pattern": "/([[:space:]]|^)([[:alnum:]._-]+@[[:alnum:]._-]+)\\(([^)]+)\\)/i",
         "issues": [
             "regex.lint.flag.useless.i"

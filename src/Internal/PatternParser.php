@@ -80,12 +80,20 @@ final class PatternParser
 
             $candidates = null === $endIndex ? [] : [$endIndex];
         } else {
-            // Find the last occurrence of the closing delimiter that is NOT
-            // escaped; scan from the end to optimize for flags.
+            // PHP ends the pattern at the first delimiter a backslash does not
+            // escape, whatever construct it sits in: a class, a comment or a
+            // \Q...\E run does not hide it, so "/[/]/" has the flags "]/".
             $candidates = [];
-            for ($k = $len - 1; $k > 0; $k--) {
+            for ($k = 1; $k < $len; $k++) {
+                if ('\\' === $regex[$k]) {
+                    $k++;
+
+                    continue;
+                }
                 if ($regex[$k] === $closingDelimiter) {
-                    $candidates[] = $k;
+                    $candidates = [$k];
+
+                    break;
                 }
             }
         }

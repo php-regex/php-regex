@@ -34,7 +34,7 @@ final class OptimizerSpecificsTest extends TestCase
 
     public function test_range_avoids_hyphen_start_for_literal_sets(): void
     {
-        $regex = Regex::create()->optimize('/[\\-./]/')->optimized;
+        $regex = Regex::create()->optimize('/[\\-.\\/]/')->optimized;
         $this->assertStringNotContainsString('\\--', $regex);
     }
 

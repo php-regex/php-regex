@@ -309,6 +309,24 @@ preg_match('#^pattern$#', $input);
 
 ---
 
+## Delimiter inside a class or comment
+
+**Problem:** PHP ends the pattern at the first delimiter that is not escaped, even inside `[...]`, `(?#...)` or `\Q...\E`.
+What follows becomes modifiers, so the call fails with a warning and returns `null` or `false`.
+
+```php
+// ERROR: the "/" in "://" and in the class ends the pattern ("Unknown modifier")
+preg_replace('/([[:alnum:]]+):\/\/([[:alnum:]#?/&=]+)/i', '<$0>', $text);
+
+// FIX 1: Escape every delimiter, classes included
+preg_replace('/([[:alnum:]]+):\/\/([[:alnum:]#?\/&=]+)/i', '<$0>', $text);
+
+// FIX 2: Use a delimiter the pattern does not contain
+preg_replace('#([[:alnum:]]+)://([[:alnum:]\#?/&=]+)#i', '<$0>', $text);
+```
+
+---
+
 ## Pattern Too Long
 
 **Problem:** Pattern exceeds configured maximum length.

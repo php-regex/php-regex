@@ -54,7 +54,7 @@ final class ParserReconstructionTest extends TestCase
             \o{123}         # T_OCTAL
             \x00 \u{FFFF}   # T_UNICODE
             \p{L} \P{L}     # T_UNICODE_PROP
-            \Q \E           # T_QUOTE_MODE_START/END
+            \Q \E           # T_QUOTE_MODE_START, END
             \a              # T_LITERAL_ESCAPED inconnu
             text            # T_LITERAL
             [[:alnum:]]     # T_POSIX_CLASS

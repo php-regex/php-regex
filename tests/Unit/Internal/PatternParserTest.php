@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Internal;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\PatternParser;
@@ -42,6 +43,40 @@ final class PatternParserTest extends TestCase
         $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
 
         PatternParser::extractPatternAndFlags('/a/e');
+    }
+
+    /**
+     * PHP ends the pattern at the FIRST delimiter not escaped by a backslash,
+     * whatever it sits in: a class, a comment or a \Q...\E run. Every row is
+     * refused by preg_match() ("Unknown modifier ...") on PCRE2 10.40 and 10.48.
+     */
+    #[DataProvider('provideDelimiterInsideAConstruct')]
+    public function test_pattern_ends_at_the_first_unescaped_delimiter(string $regex): void
+    {
+        $this->expectException(ParserException::class);
+        $this->expectExceptionMessage('Unknown regex flag');
+
+        PatternParser::extractPatternAndFlags($regex);
+    }
+
+    /**
+     * @return iterable<string, array{regex: string}>
+     */
+    public static function provideDelimiterInsideAConstruct(): iterable
+    {
+        yield 'slash in a class' => ['regex' => '/[/]/'];
+        yield 'slash inside a longer class' => ['regex' => '/[a/b]/'];
+        yield 'hash delimiter in a class' => ['regex' => '#[#]#'];
+        yield 'slash in a comment' => ['regex' => '/(?#/)a/'];
+        yield 'slash in a quoted run' => ['regex' => '/\\Q/\\E/'];
+    }
+
+    public function test_escaped_delimiter_does_not_end_the_pattern(): void
+    {
+        // preg_match('/[\/]/', '/') === 1 and preg_match('/a\/b/', 'a/b') === 1.
+        $this->assertSame(['[\\/]', '', '/'], PatternParser::extractPatternAndFlags('/[\\/]/'));
+        $this->assertSame(['a\\/b', 'i', '/'], PatternParser::extractPatternAndFlags('/a\\/b/i'));
+        $this->assertSame(['a\\\\', '', '/'], PatternParser::extractPatternAndFlags('/a\\\\/'));
     }
 
     public function test_throws_for_missing_closing_delimiter(): void
