@@ -144,6 +144,11 @@ final class Parser
 
     private bool $inQuoteMode = false;
 
+    /**
+     * Whether the pattern is read as UTF-8: "u", or "(*UTF)" at the start.
+     */
+    private bool $unicodeMode = false;
+
     private int $recursionDepth = 0;
 
     /**
@@ -179,9 +184,9 @@ final class Parser
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
         // Group names take any letter in Unicode mode: "u", or "(*UTF)" at
         // the start.
-        $this->groupNames->readUnicodeNames(
-            str_contains($flags, 'u') || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern),
-        );
+        $this->unicodeMode = str_contains($flags, 'u')
+            || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
+        $this->groupNames->readUnicodeNames($this->unicodeMode);
         $this->extendedMode = str_contains($flags, 'x');
         $this->noAutoCapture = str_contains($flags, 'n');
         $this->inQuoteMode = false;
@@ -242,6 +247,7 @@ final class Parser
     private function parseSequence(): NodeInterface
     {
         $nodes = [];
+        $quotedRun = null;
         $startPosition = $this->stream->current()->position;
 
         while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::T_GROUP_CLOSE) && !$this->stream->check(TokenType::T_ALTERNATION)) {
@@ -253,8 +259,6 @@ final class Parser
             if ($this->stream->match(TokenType::T_QUOTE_MODE_END)) {
                 $this->inQuoteMode = false;
 
-                $this->quantifyLastQuotedCharacter($nodes);
-
                 continue;
             }
 
@@ -265,11 +269,16 @@ final class Parser
                 continue;
             }
 
-            if ($this->quantifyAcrossComments($nodes)) {
+            if ($this->quantifyPreviousItem($nodes, $quotedRun)) {
                 continue;
             }
 
-            $nodes[] = $this->parseQuantifiedAtom();
+            $inQuoteMode = $this->inQuoteMode;
+            $nodes[] = $node = $this->parseQuantifiedAtom();
+
+            if ($inQuoteMode && $node instanceof LiteralNode) {
+                $quotedRun = $node;
+            }
         }
 
         if (empty($nodes)) {
@@ -407,63 +416,50 @@ final class Parser
     }
 
     /**
-     * A quantifier written right after the end of a quoted run repeats the
-     * last quoted character, the way PCRE repeats the "+" of a pattern that
-     * quotes one and then stars it.
+     * A quantifier the sequence meets on its own was not taken by the atom
+     * before it: PCRE skipped something on the way, a comment, a "\E", an
+     * empty "\Q\E" or /x whitespace. It repeats the last item before them
+     * all: "a(?#c)*" and "a\E*" are "a*", and "a*\E+" is "a*+". The
+     * quantifier goes on the item itself, which every consumer of the tree
+     * expects to find right under it, and the comments follow it. With no
+     * item before it, the atom parser reports the quantifier.
      *
      * @param array<NodeInterface> $nodes
+     * @param LiteralNode|null     $quotedRun the last run of text read between \Q and \E
      */
-    private function quantifyLastQuotedCharacter(array &$nodes): void
+    private function quantifyPreviousItem(array &$nodes, ?LiteralNode $quotedRun): bool
     {
-        if ([] === $nodes || !$this->stream->match(TokenType::T_QUANTIFIER)) {
-            return;
-        }
-
-        $token = $this->stream->previous();
-        $last = array_pop($nodes);
-        $this->assertQuantifierCanApply($last, $token);
-        [$quantifier, $type] = $this->parseQuantifierValue($token->value);
-
-        $nodes[] = new QuantifierNode($last, $quantifier, $type, $last->getStartPosition(), $token->end());
-    }
-
-    /**
-     * A comment is transparent to a quantifier: in "a(?#c)*" the star repeats
-     * the "a", and "a*(?#c)+" is "a*+". With nothing repeatable before the
-     * comments PCRE refuses the quantifier. The quantifier goes on the item
-     * itself, which every consumer of the tree expects to find right under
-     * it, and the comments follow it.
-     *
-     * @param array<NodeInterface> $nodes
-     */
-    private function quantifyAcrossComments(array &$nodes): bool
-    {
-        if (!end($nodes) instanceof CommentNode || !$this->stream->match(TokenType::T_QUANTIFIER)) {
+        if (!$this->stream->check(TokenType::T_QUANTIFIER)) {
             return false;
         }
 
-        $token = $this->stream->previous();
-
         $comments = [];
-        while (($last = end($nodes)) instanceof CommentNode) {
-            array_pop($nodes);
-            array_unshift($comments, $last);
+        $index = \count($nodes) - 1;
+        while ($index >= 0 && $nodes[$index] instanceof CommentNode) {
+            array_unshift($comments, $nodes[$index]);
+            $index--;
         }
 
-        $target = array_pop($nodes);
-
-        if (null === $target) {
-            $position = $this->quantifierErrorOffset($token);
-
-            throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $position),
-                $position,
-            );
+        if ($index < 0) {
+            return false;
         }
+
+        $token = $this->stream->current();
+        $this->stream->advance();
+
+        $target = $nodes[$index];
+        array_splice($nodes, $index);
 
         if ($target instanceof QuantifierNode) {
-            $nodes[] = $this->modifyQuantifierAcrossComments($target, $token);
+            $nodes[] = $this->modifyRepeatedQuantifier($target, $token);
         } else {
+            // "\Qab\E*" is "ab*": only the last quoted character repeats.
+            if ($target === $quotedRun && '' !== $prefix = $this->withoutLastCharacter($quotedRun->value)) {
+                $split = $quotedRun->getStartPosition() + \strlen($prefix);
+                $nodes[] = new LiteralNode($prefix, $quotedRun->getStartPosition(), $split, $quotedRun->isRaw);
+                $target = new LiteralNode(substr($quotedRun->value, \strlen($prefix)), $split, $quotedRun->getEndPosition(), $quotedRun->isRaw);
+            }
+
             $this->assertQuantifierCanApply($target, $token);
             $nodes[] = $this->quantify($target, $token);
         }
@@ -474,11 +470,24 @@ final class Parser
     }
 
     /**
-     * After a quantified item, a lone "+" or "?" beyond the comments makes a
+     * The text up to its last character: a code point in UTF-8 mode, a byte
+     * otherwise, as PCRE counts them.
+     */
+    private function withoutLastCharacter(string $text): string
+    {
+        if ($this->unicodeMode && 1 === preg_match('/.\z/su', $text, $matches)) {
+            return substr($text, 0, -\strlen($matches[0]));
+        }
+
+        return substr($text, 0, -1);
+    }
+
+    /**
+     * After a quantified item, a lone "+" or "?" past what PCRE skips makes a
      * greedy quantifier possessive or lazy, as it would written right after
      * it. Anything else is a second quantifier on the same item.
      */
-    private function modifyQuantifierAcrossComments(QuantifierNode $target, Token $token): QuantifierNode
+    private function modifyRepeatedQuantifier(QuantifierNode $target, Token $token): QuantifierNode
     {
         $modifier = $token->value[0];
 
