@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- Spaces inside `\x{ 41 }`, `\o{ 101 }`, `\N{ U+41 }` and a `\N{4 }` repeat arrived in PCRE2 10.43, which PHP bundles from 8.4; they validated for any target. Targeting PHP 8.2 or 8.3, they are now refused, as those releases' PCRE2 refuses them, unless the running PHP links a newer PCRE2. The unpadded forms are valid everywhere, and `a{ 4 }` is unchanged.
 - Under the `n` modifier or `(?n)`, a plain `(...)` group was counted as a capture, so `/(?n)(a)\1/` and `/(a)\1/n` validated though PHP refuses them. Such a group now captures nothing and takes no number — named groups still do — through `(?n:...)`, `(?-n)` and `(?^)` as PCRE scopes them. It is read as a non-capturing group and written back with the `(` it was spelled with.
 - `\g'1'` and `\g'-1'` call the group, as `\g<1>` does; they were read as back references.
 - A pattern cut short by an unescaped delimiter is reported as such, at that delimiter: `/a/b/` gives "Unescaped delimiter \"/\" at position 2 ends the pattern early" rather than a list of unknown modifiers, or a misleading note about the removed `e` modifier when the cut-off text holds an `e`.

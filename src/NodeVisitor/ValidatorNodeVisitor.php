@@ -405,6 +405,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): void
     {
+        // "\N{4 }": before PCRE2 10.43 a padded count does not repeat "\N",
+        // and "\N{" that is no repeat is refused. "a{ 4 }" is only literal
+        // text there, which compiles either way.
+        if ($node->node instanceof CharTypeNode && 'N' === $node->node->value && 0 === $this->charClassDepth
+            && str_starts_with($node->quantifier, '{')
+            && \strlen($node->quantifier) !== strcspn($node->quantifier, " \t")
+            && !$this->supportsPaddedBraces()) {
+            $this->raiseSemanticError(
+                \sprintf('Spaces inside "\N%s" need PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
+                $node->node->getEndPosition() + strcspn($node->quantifier, " \t"),
+                'regex.escape.unsupported',
+                'Write the count without spaces, or target PHP 8.4+.',
+            );
+        }
+
         // Fast cached quantifier bounds parsing
         [$min, $max] = $this->getQuantifierBounds($node->quantifier);
 
@@ -755,6 +770,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): void
     {
+        $this->validatePaddedBraces($node);
+
         // The Lexer/Parser combination already ensures these are
         // syntactically valid. We validate the *value*.
         match ($node->type) {
@@ -1842,6 +1859,41 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * 10.40 in PHP 8.2 and 10.42 in 8.3, so an explicit target below 8.4
      * lacks them; for the running PHP, the PCRE2 it links decides.
      */
+    /**
+     * Spaces inside "\x{ 41 }", "\o{ 101 }" and "\N{ U+41 }" arrived in
+     * PCRE2 10.43; PHP 8.2 and 8.3 bundle 10.40 and 10.42, which refuse
+     * them. PCRE reports the first space.
+     */
+    private function validatePaddedBraces(CharLiteralNode $node): void
+    {
+        $representation = $node->originalRepresentation;
+        $space = strcspn($representation, " \t");
+        if ($space === \strlen($representation) || $this->supportsPaddedBraces()) {
+            return;
+        }
+
+        [$code, $escape] = match ($node->type) {
+            CharLiteralType::OCTAL => ['regex.octal.invalid_digit', '\o{}'],
+            // A space before "U+" makes "\N{" a name, which PCRE2 refuses.
+            CharLiteralType::UNICODE_NAMED => 1 === preg_match('/^\\\\N\{[ \t]/', $representation)
+                ? ['regex.escape.unsupported', '\N{U+}']
+                : ['regex.unicode.invalid_digit', '\N{U+}'],
+            default => ['regex.unicode.invalid_digit', '\x{}'],
+        };
+
+        $this->raiseSemanticError(
+            \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape),
+            $node->startPosition + $space,
+            $code,
+            'Write the escape without spaces, or target PHP 8.4+.',
+        );
+    }
+
+    private function supportsPaddedBraces(): bool
+    {
+        return $this->phpVersionId >= 80400 || $this->runningPcreAtLeast('10.43');
+    }
+
     private function supportsVariableLengthLookbehind(): bool
     {
         return $this->phpVersionId >= 80400 || $this->runningPcreAtLeast('10.43');
