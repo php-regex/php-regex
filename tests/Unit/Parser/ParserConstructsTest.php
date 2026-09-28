@@ -416,9 +416,12 @@ final class ParserConstructsTest extends TestCase
             'recompiled' => '/(?<name>test)\\g<name>/',
         ];
 
+        // "\g{name}" is a back reference, "\g<name>" a call: preg_match() on
+        // PCRE2 10.48 matches "ab" with /^(?<n>a|b)\g<n>$/ but not with
+        // /^(?<n>a|b)\g{n}$/. The braced spelling is written back as is.
         yield 'g reference brace: /(?<name>test)\\g{name}/' => [
             'pattern' => '/(?<name>test)\\g{name}/',
-            'recompiled' => '/(?<name>test)\\g<name>/',
+            'recompiled' => '/(?<name>test)\\g{name}/',
         ];
 
         yield 'dot: /./' => [
@@ -646,9 +649,10 @@ final class ParserConstructsTest extends TestCase
             'recompiled' => '/(?<name>a)\\g<name>/',
         ];
 
+        // A back reference, not a call; see "g reference brace" above.
         yield 'g reference variations: /(?<name>a)\\g{name}/' => [
             'pattern' => '/(?<name>a)\\g{name}/',
-            'recompiled' => '/(?<name>a)\\g<name>/',
+            'recompiled' => '/(?<name>a)\\g{name}/',
         ];
 
         yield 'g reference variations: /(a)\\g1/' => [

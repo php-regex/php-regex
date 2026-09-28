@@ -771,16 +771,18 @@ final class Parser
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
-        // \g<name>, \g'name' or \g{name} (non-numeric) -> Subroutine
+        // \g{name} is a back reference, like \k{name}; it is recorded that
+        // way, and the compiler gives back the spelling the pattern used.
+        if (preg_match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
+            return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
+        }
+
+        // \g<name> and \g'name' (non-numeric) call the group -> Subroutine
         if (preg_match('/^\\\\g<([+-]?[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
         if (preg_match('/^\\\\g\'([+-]?[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
-            return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
-        }
-
-        if (preg_match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
