@@ -867,7 +867,8 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     private function referenceName(string $reference): ?string
     {
         $matches = [];
-        $syntax = '/^(?:\\(\\?P=|\\\\k[<{\']?|\\\\g[<{\']?|\\\\)([A-Za-z_][A-Za-z0-9_]*|[0-9]+)/';
+        // "\k{ name }" and "\g{ 1 }" may pad the braces.
+        $syntax = '/^(?:\\(\\?P=|\\\\k[<{\']?|\\\\g[<{\']?|\\\\)[ \t]*([A-Za-z_][A-Za-z0-9_]*|[0-9]+)/';
 
         return 1 === preg_match($syntax, $reference, $matches) ? $matches[1] : null;
     }

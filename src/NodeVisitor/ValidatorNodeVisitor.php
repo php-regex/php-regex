@@ -867,6 +867,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitBackref(BackrefNode $node): void
     {
         $this->ensureGroupNumberingInitialized();
+        $this->validateReferenceBracePadding($node);
 
         $ref = $node->ref;
 
@@ -2381,6 +2382,37 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node->startPosition + $space,
             $code,
             'Write the escape without spaces, or target PHP 8.4+.',
+        );
+    }
+
+    /**
+     * "\g{ 1 }" and "\k{ name }" need PCRE2 10.43. Before, PCRE stops on the
+     * space after the "{", or, with no space there, where "\g" wants a
+     * reference and "\k{" the end of the name.
+     */
+    private function validateReferenceBracePadding(BackrefNode $node): void
+    {
+        if (null === $this->source || $this->supportsPaddedBraces()) {
+            return;
+        }
+
+        $written = substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        if (1 !== preg_match('/^\\\\([gk])\{([ \t]*+)([^ \t}]*+)([ \t]?)/', $written, $matches)
+            || '' === $matches[2].$matches[4]) {
+            return;
+        }
+
+        $offset = match (true) {
+            '' !== $matches[2] => 3,
+            'g' === $matches[1] => 2,
+            default => 3 + \strlen($matches[3]),
+        };
+
+        $this->raiseSemanticError(
+            \sprintf('Spaces inside \%s{} need PCRE2 10.43, which PHP bundles from 8.4.', $matches[1]),
+            $node->startPosition + $offset,
+            'regex.backref.invalid_syntax',
+            'Remove the spaces inside the braces, or target PHP 8.4+.',
         );
     }
 

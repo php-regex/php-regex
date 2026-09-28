@@ -809,7 +809,7 @@ final class Parser
             TokenType::T_CHAR_TYPE => new CharTypeNode($token->value, $startPosition, $token->end()),
             TokenType::T_ANCHOR => new AnchorNode($token->value, $startPosition, $token->end()),
             TokenType::T_ASSERTION => new AssertionNode($token->value, $startPosition, $token->end()),
-            TokenType::T_BACKREF => new BackrefNode($token->value, $startPosition, $token->end()),
+            TokenType::T_BACKREF => new BackrefNode(self::withoutBracePadding($token->value), $startPosition, $token->end()),
             TokenType::T_CONTROL_CHAR => new ControlCharNode(
                 $token->value,
                 CodePointReader::fromControlChar($token->value),
@@ -926,8 +926,8 @@ final class Parser
     private function parseGReference(int $startPosition): NodeInterface
     {
         $token = $this->stream->previous();
-        $value = $token->value;
-        $endPosition = $startPosition + \strlen($value);
+        $endPosition = $startPosition + \strlen($token->value);
+        $value = self::withoutBracePadding($token->value);
 
         // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
         // like \g<N>, calls the group instead.
@@ -956,6 +956,16 @@ final class Parser
             \sprintf('Invalid \\g reference syntax: %s at position %d', $value, $position),
             $position,
         );
+    }
+
+    /**
+     * "\g{ 1 }" and "\k{ name }" refer to what "\g{1}" and "\k{name}" do:
+     * PCRE2 10.43 lets spaces and tabs follow the "{" and precede the "}".
+     * Whether the target PCRE2 takes them is the validator's to say.
+     */
+    private static function withoutBracePadding(string $reference): string
+    {
+        return preg_replace('/^(\\\\[gk]\{)[ \t]*+(.*?)[ \t]*+\}$/', '$1$2}', $reference) ?? $reference;
     }
 
     /**
