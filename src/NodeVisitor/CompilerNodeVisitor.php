@@ -679,7 +679,18 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             return '(?C'.$node->identifier.')';
         }
 
-        return '(?C"'.$node->identifier.'")';
+        // A string callout doubles its delimiter to hold it. The spelling the
+        // pattern used is kept when it still carries this text.
+        $written = $this->writtenText($node);
+        if (null !== $written && 1 === preg_match('/^\(\?C([`\'"^%#$]|\{)(.*)\)$/s', $written, $matches)) {
+            $closing = '{' === $matches[1] ? '}' : $matches[1];
+            if (str_ends_with($matches[2], $closing)
+                && str_replace($closing.$closing, $closing, substr($matches[2], 0, -1)) === $node->identifier) {
+                return $written;
+            }
+        }
+
+        return '(?C"'.str_replace('"', '""', $node->identifier).'")';
     }
 
     /**
