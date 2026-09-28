@@ -546,19 +546,19 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_parse_named_group_with_single_quote(): void
     {
-        $ast = $this->parse("/(?P'name'a)/");
-        $this->assertInstanceOf(GroupNode::class, $ast->pattern);
-        $this->assertSame(GroupType::T_GROUP_NAMED, $ast->pattern->type);
-        $this->assertSame('name', $ast->pattern->name);
+        // preg_match() on PCRE2 10.48: "unrecognized character after (?P at offset 4".
+        $this->expectException(ParserException::class);
+
+        $this->parse("/(?P'name'a)/");
     }
 
     #[Test]
     public function test_parse_named_group_with_double_quote(): void
     {
-        $ast = $this->parse('/(?P"name"a)/');
-        $this->assertInstanceOf(GroupNode::class, $ast->pattern);
-        $this->assertSame(GroupType::T_GROUP_NAMED, $ast->pattern->type);
-        $this->assertSame('name', $ast->pattern->name);
+        // preg_match() on PCRE2 10.48: "unrecognized character after (?P at offset 4".
+        $this->expectException(ParserException::class);
+
+        $this->parse('/(?P"name"a)/');
     }
 
     #[Test]
@@ -708,15 +708,16 @@ final class ParserTest extends TestCase
         $this->assertInstanceOf(GroupNode::class, $ast->pattern);
         $this->assertSame('foo', $ast->pattern->name);
 
-        // (?P'name'...)
-        $ast = $this->parse("/(?P'bar'a)/");
-        $this->assertInstanceOf(GroupNode::class, $ast->pattern);
-        $this->assertSame('bar', $ast->pattern->name);
-
-        // (?P"name"...)
-        $ast = $this->parse('/(?P"baz"a)/');
-        $this->assertInstanceOf(GroupNode::class, $ast->pattern);
-        $this->assertSame('baz', $ast->pattern->name);
+        // (?P'name'...) and (?P"name"...): preg_match() on PCRE2 10.48 gives
+        // "unrecognized character after (?P at offset 4" for both.
+        foreach (["/(?P'bar'a)/", '/(?P"baz"a)/'] as $pattern) {
+            try {
+                $this->parse($pattern);
+                $this->fail(\sprintf('%s is refused by PHP but was parsed.', $pattern));
+            } catch (ParserException $e) {
+                $this->assertStringContainsString('(?P', $e->getMessage());
+            }
+        }
     }
 
     #[Test]

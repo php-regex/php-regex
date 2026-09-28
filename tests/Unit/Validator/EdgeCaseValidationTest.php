@@ -119,10 +119,12 @@ final class EdgeCaseValidationTest extends TestCase
         $this->assertTrue($result->isValid, 'MARK shorthand verbs should be accepted.');
     }
 
-    public function test_mark_verb_equals_shorthand_is_valid(): void
+    public function test_mark_verb_equals_shorthand_is_refused(): void
     {
+        // preg_match() on PCRE2 10.48: "(*VERB) not recognized or malformed at offset 5".
+        // PCRE writes a mark "(*MARK:name)" or "(*:name)"; "(*=name)" is not one.
         $result = $this->regexService->validate('/foo(*=first)|bar(*=second)([x])/');
-        $this->assertTrue($result->isValid, 'MARK "=" shorthand verbs should be accepted.');
+        $this->assertFalse($result->isValid, 'MARK "=" shorthand verbs are refused by PHP.');
     }
 
     public function test_unconsumed_tokens(): void

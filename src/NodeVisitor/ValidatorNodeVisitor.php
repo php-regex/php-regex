@@ -101,6 +101,28 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         'NO_JIT' => true,
     ];
 
+    /**
+     * Settings PCRE2 only reads in the run of "(*...)" items that opens the
+     * pattern; anywhere else they are not verbs at all.
+     */
+    private const START_OF_PATTERN_VERBS = [
+        'UTF8' => true, 'UTF' => true, 'UCP' => true,
+        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
+        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
+        'NO_AUTO_POSSESS' => true, 'NO_START_OPT' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true,
+        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
+        'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
+        'LIMIT_LOOKBEHIND' => true,
+    ];
+
+    /**
+     * The start-of-pattern settings that take a number: "(*LIMIT_MATCH=10)".
+     */
+    private const LIMIT_VERBS = [
+        'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
+        'LIMIT_LOOKBEHIND' => true,
+    ];
+
     private const VALID_POSIX_CLASSES = [
         'alnum' => true, 'alpha' => true, 'ascii' => true,
         'blank' => true, 'cntrl' => true, 'digit' => true,
@@ -167,6 +189,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private int $charClassDepth = 0;
 
+    /**
+     * Where the run of start-of-pattern settings ends in the source, or null
+     * when there is no source to read it from.
+     */
+    private ?int $startOfPatternEnd = null;
+
     private GroupNumbering $groupNumbering;
 
     /**
@@ -212,6 +240,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $this->source = $node->source;
         $this->charClassDepth = 0;
+        $this->startOfPatternEnd = null === $node->source ? null : $this->readStartOfPatternEnd($node->source);
         $this->unicodeMode = str_contains($node->flags, 'u')
             || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
@@ -777,6 +806,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
+        // The parser keeps every branch after the first in "no"; PCRE takes
+        // two at most.
+        if ($node->no instanceof AlternationNode) {
+            $this->raiseSemanticError(
+                'A conditional group holds more than two branches.',
+                $node->startPosition,
+                'regex.conditional.too_many_branches',
+                'Group the extra branches: (?(1)a|(?:b|c)).',
+            );
+        }
+
         $node->yes->accept($this);
         $node->no->accept($this);
     }
@@ -811,6 +851,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
                 return;
             }
+        }
+
+        // "(?-0)" and "(?+0)" point nowhere: PCRE refuses a relative zero,
+        // at the ")" of "(?-0)" and at the "<" of "\g<-0>".
+        if ('-0' === $ref || '+0' === $ref) {
+            $this->raiseSemanticError(
+                \sprintf('Subroutine call relative reference cannot be zero: "%s".', $ref),
+                'g' === $node->syntax ? $node->startPosition + 2 : max($node->startPosition, $node->getEndPosition() - 1),
+                'regex.subroutine.relative_zero',
+            );
         }
 
         // Numeric reference: (?1), (?-1), (?+1), \g<-1>, \g<+1>
@@ -853,17 +903,60 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'regex.verb.invalid',
             );
         }
+
+        // PCRE reports these at the closing parenthesis.
+        $closing = $node->getEndPosition() - 1;
+
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++$/', $node->verb)) {
+            $this->raiseSemanticError(
+                \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
+                $closing,
+                'regex.verb.invalid',
+            );
+        }
+
+        if (isset(self::START_OF_PATTERN_VERBS[$verbName])) {
+            $this->validateStartOfPatternPlacement($verbName, $node->startPosition, $closing);
+        }
+
+        // "(*=name)" is read as a mark shorthand, but PCRE only knows "(*:".
+        if (str_starts_with($node->verb, 'MARK=')) {
+            $this->raiseSemanticError(
+                '(*=...) is not a PCRE verb; a mark is written (*MARK:name) or (*:name).',
+                $node->startPosition + 2,
+                'regex.verb.invalid',
+            );
+        }
+
+        if ('MARK' === $verbName && 1 !== preg_match('/^MARK:./s', $node->verb)) {
+            $this->raiseSemanticError(
+                '(*MARK) must have a name: (*MARK:name) or (*:name).',
+                $closing,
+                'regex.verb.mark_name_missing',
+            );
+        }
     }
 
     #[\Override]
     public function visitDefine(DefineNode $node): void
     {
+        // PCRE reports it at the "DEFINE" word, past "(?(".
+        if ($node->content instanceof AlternationNode) {
+            $this->raiseSemanticError(
+                'A (DEFINE) group holds more than one branch.',
+                $node->startPosition + 3,
+                'regex.define.too_many_branches',
+                'Group the branches: (?(DEFINE)(?:a|b)).',
+            );
+        }
+
         $node->content->accept($this);
     }
 
     #[\Override]
     public function visitLimitMatch(LimitMatchNode $node): void
     {
+        $this->validateStartOfPatternPlacement('LIMIT_MATCH', $node->startPosition, $node->getEndPosition() - 1);
         // No specific validation needed for this node.
     }
 
@@ -876,14 +969,33 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): void
     {
-        if (\in_array($node->operator, ['=', '>='], true)) {
+        if (!\in_array($node->operator, ['=', '>='], true)) {
+            $this->raiseSemanticError(
+                \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
+                $node->startPosition,
+                'regex.condition.version_operator',
+            );
+        }
+
+        // PCRE reads a major number and at most one ".minor".
+        if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
             return;
         }
 
+        // The pattern matches every string, the empty prefix included: the
+        // '' branch is unreachable and only there for the type.
+        $valid = 1 === preg_match('/^\d*+(?:\.\d*+)?/', $node->version, $matches) ? $matches[0] : '';
+        $afterNumber = '' !== $valid && !str_ends_with($valid, '.');
+        $versionStart = null === $this->source
+            ? $node->startPosition
+            : (int) strpos($this->source, $node->version, $node->startPosition);
+
         $this->raiseSemanticError(
-            \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
-            $node->startPosition,
-            'regex.condition.version_operator',
+            \sprintf('Invalid version "%s" in a version condition: PCRE takes a major number and an optional ".minor".', $node->version),
+            // PCRE steps past a character it reads where ")" belongs, and
+            // stops on one it reads where a digit belongs.
+            $versionStart + \strlen($valid) + ($afterNumber ? 1 : 0),
+            'regex.condition.version_syntax',
         );
     }
 
@@ -905,14 +1017,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 );
             }
         } elseif (\is_string($node->identifier)) {
-            // PCRE2 allows any string as an argument, but it's good to ensure it's not empty.
-            if ('' === $node->identifier) {
-                $this->raiseSemanticError(
-                    'Callout string identifier cannot be empty.',
-                    $position,
-                    'regex.callout.empty_identifier',
-                );
-            }
+            // Any string is a valid argument, the empty one included: PCRE2
+            // compiles (?C""), (?C'') and (?C{}).
         } else {
             // This case should ideally be caught by the Lexer/Parser, but as a safeguard.
             $this->raiseSemanticError(
@@ -1322,6 +1428,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private function validateLookbehindLength(GroupNode $node): void
     {
+        // "\X" matches a whole grapheme cluster, of no bounded length.
+        if ($this->containsGraphemeCluster($node->child)) {
+            $this->raiseSemanticError(
+                'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
+                $node->startPosition,
+                'regex.lookbehind.unbounded',
+                'Match the characters the cluster may hold instead of \X.',
+            );
+        }
+
         $lengthRange = $node->child->accept(new LengthRangeNodeVisitor());
         [$min, $max] = $lengthRange;
 
@@ -1831,6 +1947,71 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $byte >= 0xC0 => 2,
             default => 1,
         };
+    }
+
+    private function containsGraphemeCluster(NodeInterface $node): bool
+    {
+        return match (true) {
+            $node instanceof CharTypeNode => 'X' === $node->value,
+            $node instanceof SequenceNode => $this->anyContainsGraphemeCluster($node->children),
+            $node instanceof AlternationNode => $this->anyContainsGraphemeCluster($node->alternatives),
+            // A lookaround adds no length to the lookbehind around it, and a
+            // nested lookbehind is checked on its own.
+            $node instanceof GroupNode => !$this->isLookaround($node) && $this->containsGraphemeCluster($node->child),
+            $node instanceof QuantifierNode => $this->containsGraphemeCluster($node->node),
+            $node instanceof ConditionalNode => $this->anyContainsGraphemeCluster([$node->condition, $node->yes, $node->no]),
+            default => false,
+        };
+    }
+
+    private function isLookaround(GroupNode $node): bool
+    {
+        return \in_array($node->type, [
+            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+        ], true);
+    }
+
+    /**
+     * @param array<NodeInterface> $nodes
+     */
+    private function anyContainsGraphemeCluster(array $nodes): bool
+    {
+        foreach ($nodes as $node) {
+            if ($this->containsGraphemeCluster($node)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Where the opening run of start-of-pattern settings ends.
+     */
+    private function readStartOfPatternEnd(string $source): int
+    {
+        $names = implode('|', array_keys(self::START_OF_PATTERN_VERBS));
+
+        // The run may be empty, so the pattern always matches: the 0 branch
+        // is unreachable and only there for the type.
+        return 1 === preg_match('/\A(?:\(\*(?:'.$names.')(?:=\d*+)?\))*+/', $source, $matches) ? \strlen($matches[0]) : 0;
+    }
+
+    private function validateStartOfPatternPlacement(string $verbName, int $start, int $closing): void
+    {
+        if (null === $this->startOfPatternEnd || $start < $this->startOfPatternEnd) {
+            return;
+        }
+
+        $this->raiseSemanticError(
+            \sprintf('(*%s) is only recognized at the very start of the pattern.', $verbName),
+            $closing,
+            'regex.verb.misplaced',
+            'Move it before anything else in the pattern.',
+        );
     }
 
     private function raiseSemanticError(string $message, int $position, string $code, ?string $hint = null): never

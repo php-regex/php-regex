@@ -155,6 +155,20 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'bare callout' => ['/(?C)foo/'];
         yield 'numeric callout' => ['/(?C42)bar/'];
         yield 'string callout' => ['/(?C"handler")baz/'];
+    }
+
+    /**
+     * Rows that once sat in provideCallouts(), on a pattern PHP refuses.
+     */
+    #[DataProvider('provideCalloutsPhpRefuses')]
+    public function test_callout_php_refuses_is_reported_invalid(string $pattern): void
+    {
+        $this->assertFalse($this->regex->validate($pattern)->isValid);
+    }
+
+    public static function provideCalloutsPhpRefuses(): iterable
+    {
+        // preg_match() on PCRE2 10.48: "unrecognized string delimiter follows (?C at offset 4".
         yield 'named callout' => ['/(?CmyHandler)qux/'];
     }
 }

@@ -294,9 +294,11 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_negative_zero_reference_returns(): void
     {
+        // preg_match() on PCRE2 10.48: "a relative value of zero is not allowed at offset 5" for "x(?-0)y".
+        $this->expectException(SemanticErrorException::class);
+
         $validator = new ValidatorNodeVisitor();
         (new SubroutineNode('-0', '-0', 0, 0))->accept($validator);
-        $this->expectNotToPerformAssertions();
     }
 
     public function test_pcre_verb_updates_lookbehind_limit(): void

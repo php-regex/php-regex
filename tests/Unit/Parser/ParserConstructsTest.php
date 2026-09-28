@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\LexerException;
+use RegexParser\Exception\ParserException;
 use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\Regex;
@@ -85,20 +86,36 @@ final class ParserConstructsTest extends TestCase
     }
 
     /**
+     * Rows that once sat in provideConstructs(), on a pattern PHP refuses
+     * while reading its groups.
+     */
+    #[Test]
+    #[DataProvider('provideConstructsParserRefuses')]
+    public function test_a_construct_php_refuses_is_refused_by_the_parser(string $pattern): void
+    {
+        $this->expectException(ParserException::class);
+
+        Regex::create()->parse($pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideConstructsParserRefuses(): iterable
+    {
+        // preg_match() on PCRE2 10.48: "unrecognized character after (?P at offset 4"; 10.40 at 3.
+        // "(?P" takes "<", ">" or "=": the quoted name is "(?'name'...)", without the "P".
+        yield 'python named group single quotes: /(?P\'name\'test)/' => ['pattern' => '/(?P\'name\'test)/'];
+        yield 'python named group double quotes: /(?P"name"test)/' => ['pattern' => '/(?P"name"test)/'];
+        yield 'python style named groups with quotes: /(?P\'name\'a)/' => ['pattern' => '/(?P\'name\'a)/'];
+        yield 'python style named groups with quotes: /(?P"name"a)/' => ['pattern' => '/(?P"name"a)/'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, recompiled: string}>
      */
     public static function provideConstructs(): iterable
     {
-        yield 'python named group single quotes: /(?P\'name\'test)/' => [
-            'pattern' => '/(?P\'name\'test)/',
-            'recompiled' => '/(?P\'name\'test)/',
-        ];
-
-        yield 'python named group double quotes: /(?P"name"test)/' => [
-            'pattern' => '/(?P"name"test)/',
-            'recompiled' => '/(?P"name"test)/',
-        ];
-
         yield 'python named group angle brackets: /(?P<name>test)/' => [
             'pattern' => '/(?P<name>test)/',
             'recompiled' => '/(?P<name>test)/',
@@ -657,16 +674,6 @@ final class ParserConstructsTest extends TestCase
         yield 'subroutine call p syntax: /(?<foo>a)(?P>foo)/' => [
             'pattern' => '/(?<foo>a)(?P>foo)/',
             'recompiled' => '/(?<foo>a)(?P>foo)/',
-        ];
-
-        yield 'python style named groups with quotes: /(?P\'name\'a)/' => [
-            'pattern' => '/(?P\'name\'a)/',
-            'recompiled' => '/(?P\'name\'a)/',
-        ];
-
-        yield 'python style named groups with quotes: /(?P"name"a)/' => [
-            'pattern' => '/(?P"name"a)/',
-            'recompiled' => '/(?P"name"a)/',
         ];
 
         yield 'char class negation: /[^abc]/' => [

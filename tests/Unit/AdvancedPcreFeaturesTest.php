@@ -61,7 +61,22 @@ final class AdvancedPcreFeaturesTest extends TestCase
         yield 'callout with special chars' => ['/(?C"func_123-abc")xyz/', 'func_123-abc'];
         yield 'callout with zero' => ['/(?C0)test/', '0'];
         yield 'callout with max int' => ['/(?C255)foo/', '255'];
-        yield 'named callout' => ['/(?Cfoo)abc/', 'foo'];
+    }
+
+    /**
+     * Rows that once sat in provideCalloutPatterns(), on a pattern PHP refuses.
+     */
+    #[DataProvider('provideCalloutPatternsPhpRefuses')]
+    public function test_it_refuses_callouts_php_refuses(string $pattern): void
+    {
+        $this->assertFalse(Regex::create()->validate($pattern)->isValid);
+    }
+
+    public static function provideCalloutPatternsPhpRefuses(): \Iterator
+    {
+        // preg_match() on PCRE2 10.48: "unrecognized string delimiter follows (?C at offset 4".
+        // A callout takes a number or a delimited string, not a bare name.
+        yield 'named callout' => ['/(?Cfoo)abc/'];
     }
 
     public function test_it_validates_callout_arguments(): void
@@ -84,14 +99,12 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $ast->accept($validator);
     }
 
-    public function test_it_throws_exception_for_empty_string_callout_identifier(): void
+    public function test_it_accepts_an_empty_string_callout_identifier(): void
     {
-        $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Callout string identifier cannot be empty.');
-        $regexService = Regex::create();
-        $ast = $regexService->parse('/(?C"")abc/');
-        $validator = new ValidatorNodeVisitor();
-        $ast->accept($validator);
+        // preg_match() compiles (?C""), (?C'') and (?C{}) on PCRE2 10.40 and 10.48.
+        foreach (['/(?C"")abc/', "/(?C'')abc/", '/(?C{})abc/'] as $pattern) {
+            $this->assertTrue(Regex::create()->validate($pattern)->isValid, $pattern);
+        }
     }
 
     public function test_it_explains_callouts_correctly(): void

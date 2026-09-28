@@ -53,7 +53,7 @@ without notice; do not build on it.
 
 <!-- pcre2-conformance: generated below - do not edit -->
 
-Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4302 of 4426** extractable cases, error offset agrees on **159 of 399** shared rejections (**78** of them match one of two version-dependent offsets); **28** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
+Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4343 of 4426** extractable cases, error offset agrees on **187 of 427** shared rejections (**83** of them match one of two version-dependent offsets); **0** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
 
 ## Source
 
@@ -68,11 +68,11 @@ Against PCRE2 10.48's official test suite, under PHP's compile options: compile 
 
 | file | cases | skipped | extractable | verdict agrees | shared rejections | offset agrees | of which one of two version-dependent offsets | false accepts |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `testinput1` | 1379 | 82 | 1297 | 1273 | 0 | 0 | 0 | 0 |
-| `testinput2` | 2325 | 441 | 1884 | 1795 | 362 | 143 | 72 | 27 |
+| `testinput1` | 1379 | 82 | 1297 | 1278 | 0 | 0 | 0 | 0 |
+| `testinput2` | 2325 | 441 | 1884 | 1830 | 389 | 170 | 77 | 0 |
 | `testinput4` | 650 | 33 | 617 | 610 | 0 | 0 | 0 | 0 |
-| `testinput5` | 817 | 189 | 628 | 624 | 37 | 16 | 6 | 1 |
-| **total** | **5171** | **745** | **4426** | **4302** | **399** | **159** | **78** | **28** |
+| `testinput5` | 817 | 189 | 628 | 625 | 38 | 17 | 6 | 0 |
+| **total** | **5171** | **745** | **4426** | **4343** | **427** | **187** | **83** | **0** |
 
 ## PHP compile context
 
@@ -105,8 +105,7 @@ Adjusted cases (4): `testinput2:6394`, `testinput2:6399`, `testinput2:6404`, `te
 | defect class | cases |
 |---|---:|
 | `offset-defect` | 240 |
-| `false-reject` | 96 |
-| `false-accept` | 28 |
+| `false-reject` | 83 |
 
 ## Fix plan
 
@@ -114,26 +113,7 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 
 ### False accepts
 
-28 patterns PHP rejects are accepted by `validate()`. Add the missing compile-time check for each PCRE2 error below.
-
-| PCRE2 error | first recorded message | cases |
-|---:|---|---:|
-| 128 | atomic assertion expected after (?( or (?(?C) | 3 |
-| 160 | (*VERB) not recognized or malformed | 3 |
-| 162 | subpattern name expected | 3 |
-| 166 | (*MARK) must have an argument | 3 |
-| 126 | a relative value of zero is not allowed | 2 |
-| 127 | conditional subpattern contains more than two branches | 2 |
-| 169 | \\k is not followed by a braced, angle-bracketed, or quoted name | 2 |
-| 194 | invalid hyphen in option setting | 2 |
-| 122 | unmatched closing parenthesis | 1 |
-| 125 | length of lookbehind assertion is not limited | 1 |
-| 141 | unrecognized character after (?P | 1 |
-| 148 | subpattern name is too long (maximum 128 code units) | 1 |
-| 154 | DEFINE subpattern contains more than one branch | 1 |
-| 165 | different names for subpatterns of the same number are not allowed | 1 |
-| 179 | syntax error or number too big in (?(VERSION condition | 1 |
-| 182 | unrecognized string delimiter follows (?C | 1 |
+_None._
 
 ### Offset defects
 
@@ -149,14 +129,15 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 | 111 | unrecognized character after (? or (?- | 9 |
 | 114 | missing closing parenthesis | 8 |
 | 162 | subpattern name expected | 8 |
-| 128 | atomic assertion expected after (?( or (?(?C) | 7 |
 | 219 | syntax error in subpattern number (missing terminator?) | 7 |
 | 134 | character code point value in \\x{} or \\o{} is too large | 6 |
 | 142 | syntax error in subpattern name (missing terminator?) | 6 |
 | 161 | subpattern number is too big | 6 |
+| 128 | atomic assertion expected after (?( or (?(?C) | 5 |
 | 216 | unexpected character in (?[...]) extended character class | 5 |
 | 105 | number too big in {} quantifier | 4 |
 | 108 | range out of order in character class | 4 |
+| 109 | quantifier does not follow a repeatable item | 4 |
 | 137 | PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u | 4 |
 | 143 | two named subpatterns have the same name (PCRE2_DUPNAMES not set) | 4 |
 | 217 | expected capture group number or name | 4 |
@@ -167,7 +148,6 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 | 207 | extended character class nesting is too deep | 3 |
 | 215 | terminating ] with no following closing parenthesis in (?[...] | 3 |
 | 104 | numbers out of order in {} quantifier | 2 |
-| 109 | quantifier does not follow a repeatable item | 2 |
 | 122 | unmatched closing parenthesis | 2 |
 | 181 | missing terminating delimiter for callout with string argument | 2 |
 | 187 | lookbehind assertion is too long | 2 |
@@ -189,7 +169,7 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 
 ### False rejects
 
-96 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
+83 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
 
 ## Regenerating this table
 

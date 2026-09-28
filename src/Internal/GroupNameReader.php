@@ -30,9 +30,24 @@ use RegexParser\TokenType;
 final class GroupNameReader
 {
     /**
-     * @var array<string, true>
+     * The longest name PCRE2 10.48 takes, in code units. 10.40 stopped at
+     * 32; names are judged as the newer release reads them.
+     */
+    public const MAX_NAME_LENGTH = 128;
+
+    /**
+     * The group numbers each name was given so far.
+     *
+     * @var array<string, list<int>>
      */
     private array $used = [];
+
+    /**
+     * The name each numbered group was given, when it has one.
+     *
+     * @var array<int, string>
+     */
+    private array $namesByNumber = [];
 
     private bool $duplicatesAllowed = false;
 
@@ -55,6 +70,9 @@ final class GroupNameReader
     public function forget(): void
     {
         $this->used = [];
+        // Unreachable today: nothing calls forget(). Kept in step with $used
+        // so a future caller does not keep stale group numbers.
+        $this->namesByNumber = [];
     }
 
     /**
@@ -63,14 +81,17 @@ final class GroupNameReader
      *                                token under the cursor
      * @param bool     $register      false for a name that refers to a group
      *                                rather than declaring one
+     * @param int|null $number        the number of the group the name
+     *                                declares, when the caller counts them
      *
      * @throws SyntaxErrorException
      */
-    public function read(?int $errorPosition = null, bool $register = true): string
+    public function read(?int $errorPosition = null, bool $register = true, ?int $number = null): string
     {
         $nameStart = $errorPosition ?? $this->stream->current()->position;
         $quote = $this->openingQuote();
         $name = $this->readName($quote);
+        $nameEnd = $this->stream->current()->position;
 
         if (null !== $quote) {
             $this->closeQuote($quote);
@@ -91,23 +112,52 @@ final class GroupNameReader
             );
         }
 
+        if (\strlen($name) > self::MAX_NAME_LENGTH) {
+            throw $this->error(
+                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), self::MAX_NAME_LENGTH),
+                $nameEnd,
+            );
+        }
+
         if ($register) {
-            $this->register($name, $nameStart);
+            if (null !== $number && $name !== ($this->namesByNumber[$number] ?? $name)) {
+                // Only a branch reset gives two groups the same number.
+                throw $this->error(
+                    \sprintf(
+                        'Different names for groups of the same number are not allowed: group %d is already named "%s", not "%s".',
+                        $number,
+                        $this->namesByNumber[$number],
+                        $name,
+                    ),
+                    $nameEnd + 1,
+                );
+            }
+
+            $this->register($name, $nameStart, $number);
         }
 
         return $name;
     }
 
     /**
+     * @param int|null $number the number of the group being named: a branch
+     *                         reset may give the same name to groups that
+     *                         share a number, which is not a duplicate
+     *
      * @throws SyntaxErrorException
      */
-    public function register(string $name, int $position): void
+    public function register(string $name, int $position, ?int $number = null): void
     {
-        if (isset($this->used[$name]) && !$this->duplicatesAllowed) {
+        $sameGroup = null !== $number && \in_array($number, $this->used[$name] ?? [], true);
+
+        if (isset($this->used[$name]) && !$sameGroup && !$this->duplicatesAllowed) {
             throw $this->error(\sprintf('Duplicate group name "%s" at position %d.', $name, $position), $position);
         }
 
-        $this->used[$name] = true;
+        $this->used[$name][] = $number ?? 0;
+        if (null !== $number) {
+            $this->namesByNumber[$number] = $name;
+        }
     }
 
     private function openingQuote(): ?string

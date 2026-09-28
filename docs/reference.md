@@ -737,6 +737,12 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 | `regex.charclass.invalid_escape`    | Escape sequence \{letter} is invalid in a character class | `\A`, `\B`, `\C`, `\G`, `\K`, `\N`, `\R`, `\X`, `\Z`, `\z` inside `[...]` | Move `\B` out of the class |
 | `regex.posix.outside_class`         | POSIX named classes are supported only within a class | `[:alpha:]` written as a class of its own | Change `[:alpha:]` to `[[:alpha:]]` |
 | `regex.posix.collating_element`     | POSIX collating elements are not supported          | `[.ch.]` and `[=ch=]` are refused     | Change `[[.ch.]]` to `(?:ch)` |
+| `regex.conditional.too_many_branches` | A conditional group holds more than two branches  | `(?(1)a\|b\|c)` has three             | Change to `(?(1)a\|(?:b\|c))` |
+| `regex.define.too_many_branches`    | A (DEFINE) group holds more than one branch         | `(?(DEFINE)a\|b)` has two             | Change to `(?(DEFINE)(?:a\|b))` |
+| `regex.verb.misplaced`              | (*{verb}) is only recognized at the very start of the pattern | `(*CR)`, `(*UTF)`, `(*LIMIT_MATCH=n)` and the other start-of-pattern settings after anything else | Move `(*CR)` to the start |
+| `regex.verb.mark_name_missing`      | (*MARK) must have a name                            | `(*MARK)`, `(*MARK:)` and `(*:)` name nothing | Change `(*MARK)` to `(*MARK:here)` |
+| `regex.subroutine.relative_zero`    | Subroutine call relative reference cannot be zero   | `(?-0)`, `(?+0)` and `\g<-0>` point nowhere | Use `(?R)` or a non-zero offset |
+| `regex.condition.version_syntax`    | Invalid version "{version}" in a version condition  | A version is a major number and an optional `.minor` | Change `(?(VERSION>=10.0.0)` to `(?(VERSION>=10.0)` |
 | `regex.semantic`                    | Various semantic errors                             | Pattern violates PCRE rules           | Add bounds to lookbehind |
 
 ---

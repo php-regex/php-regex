@@ -204,31 +204,20 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'newline_cr' => ['/(*CR)a/', '(*CR) newline convention verb'];
         yield 'newline_lf' => ['/(*LF)b/', '(*LF) newline convention verb'];
         yield 'newline_crlf' => ['/(*CRLF)c/', '(*CRLF) newline convention verb'];
-        yield 'newline_cr_group' => ['/(?(*CR)a)/', '(*CR) newline verb inside modifier group'];
-        yield 'newline_lf_group' => ['/(?(*LF)b)/', '(*LF) newline verb inside modifier group'];
-        yield 'newline_crlf_group' => ['/(?(*CRLF)c)/', '(*CRLF) newline verb inside modifier group'];
 
         // 4. Control verbs
         yield 'control_mark' => ['/(*MARK:label)a/', '(*MARK) control verb'];
         yield 'control_prune' => ['/(*PRUNE)b/', '(*PRUNE) control verb'];
         yield 'control_skip' => ['/(*SKIP)c/', '(*SKIP) control verb'];
         yield 'control_then' => ['/(*THEN)d/', '(*THEN) control verb'];
-        yield 'control_mark_group' => ['/(?(*MARK:label)a)/', '(*MARK) control verb inside modifier group'];
-        yield 'control_prune_group' => ['/(?(*PRUNE)b)/', '(*PRUNE) control verb inside modifier group'];
-        yield 'control_skip_group' => ['/(?(*SKIP)c)/', '(*SKIP) control verb inside modifier group'];
-        yield 'control_then_group' => ['/(?(*THEN)d)/', '(*THEN) control verb inside modifier group'];
 
         // 5. Encoding control verbs
         yield 'encoding_utf8' => ['/(*UTF8)pattern/', '(*UTF8) encoding control verb'];
         yield 'encoding_ucp' => ['/(*UCP)test/', '(*UCP) encoding control verb'];
-        yield 'encoding_utf8_group' => ['/(?(*UTF8)a)/', '(*UTF8) encoding verb inside modifier group'];
-        yield 'encoding_ucp_group' => ['/(?(*UCP)b)/', '(*UCP) encoding verb inside modifier group'];
 
         // 6. Match control verbs
         yield 'match_notempty' => ['/(*NOTEMPTY)a+/', '(*NOTEMPTY) match control verb'];
         yield 'match_notempty_atstart' => ['/(*NOTEMPTY_ATSTART)^a+/', '(*NOTEMPTY_ATSTART) match control verb'];
-        yield 'match_notempty_group' => ['/(?(*NOTEMPTY)a)/', '(*NOTEMPTY) match control verb inside modifier group'];
-        yield 'match_notempty_atstart_group' => ['/(?(*NOTEMPTY_ATSTART)b)/', '(*NOTEMPTY_ATSTART) match control verb inside modifier group'];
 
         // 7. \R backreference (as char type, not backreference)
         yield 'r_char_type' => ['/\R/', '\\R as char type (line ending)'];
@@ -251,11 +240,9 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'callout_bare' => ['/(?C)abc/', 'bare callout'];
         yield 'callout_numeric' => ['/(?C1)abc/', 'numeric callout'];
         yield 'callout_string' => ['/(?C"debug")def/', 'string callout'];
-        yield 'callout_named' => ['/(?Cmyfunc)xyz/', 'named callout'];
 
         // Additional combinations
         yield 'complex_quantifiers_and_verbs' => ['/(?C1)a{,3}(*MARK:pos)b{ 2 , 5 }(*PRUNE)/', 'complex combination of features'];
-        yield 'unicode_with_newlines' => ['/(*CRLF)\p{L}+(*NOTEMPTY_ATSTART)/', 'Unicode properties with newline verbs'];
     }
 
     #[DataProvider('providePcre84InvalidPatterns')]
@@ -293,9 +280,6 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'newline_cr_standalone' => ['/(*CR)abc/', '(*CR) standalone'];
         yield 'newline_lf_standalone' => ['/(*LF)def/', '(*LF) standalone'];
         yield 'newline_crlf_standalone' => ['/(*CRLF)ghi/', '(*CRLF) standalone'];
-        yield 'newline_cr_group' => ['/(?(*CR)abc)/', '(*CR) in group'];
-        yield 'newline_lf_group' => ['/(?(*LF)def)/', '(*LF) in group'];
-        yield 'newline_crlf_group' => ['/(?(*CRLF)ghi)/', '(*CRLF) in group'];
 
         // Control verbs
         yield 'control_mark_no_arg' => ['/(*MARK)abc/', '(*MARK) no arg'];
@@ -303,20 +287,14 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'control_prune' => ['/(*PRUNE)ghi/', '(*PRUNE)'];
         yield 'control_skip' => ['/(*SKIP)jkl/', '(*SKIP)'];
         yield 'control_then' => ['/(*THEN)mno/', '(*THEN)'];
-        yield 'control_mark_group' => ['/(?(*MARK)abc)/', '(*MARK) in group'];
-        yield 'control_prune_group' => ['/(?(*PRUNE)def)/', '(*PRUNE) in group'];
 
         // Encoding verbs
         yield 'encoding_utf8' => ['/(*UTF8)abc/', '(*UTF8)'];
         yield 'encoding_ucp' => ['/(*UCP)def/', '(*UCP)'];
-        yield 'encoding_utf8_group' => ['/(?(*UTF8)abc)/', '(*UTF8) in group'];
-        yield 'encoding_ucp_group' => ['/(?(*UCP)def)/', '(*UCP) in group'];
 
         // Match control verbs
         yield 'match_notempty' => ['/(*NOTEMPTY)abc+/', '(*NOTEMPTY)'];
         yield 'match_notempty_atstart' => ['/(*NOTEMPTY_ATSTART)^abc+/', '(*NOTEMPTY_ATSTART)'];
-        yield 'match_notempty_group' => ['/(?(*NOTEMPTY)abc)/', '(*NOTEMPTY) in group'];
-        yield 'match_notempty_atstart_group' => ['/(?(*NOTEMPTY_ATSTART)def)/', '(*NOTEMPTY_ATSTART) in group'];
 
         // \R char type
         yield 'r_char_type' => ['/\Ra/', '\R char type'];
@@ -338,11 +316,11 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'callout_zero' => ['/(?C0)def/', 'callout 0'];
         yield 'callout_large' => ['/(?C255)ghi/', 'callout 255'];
         yield 'callout_string' => ['/(?C"callback")jkl/', 'string callout'];
-        yield 'callout_named' => ['/(?Ccallback)mno/', 'named callout'];
+        // An empty string argument is allowed: preg_match() compiles it on PCRE2 10.40 and 10.48.
+        yield 'callout_empty_string' => ['/(?C"")abc/', 'empty callout string'];
 
         // Complex combinations
         yield 'complex_1' => ['/(?C1)(*CR)a{,3}\p{L}+/', 'complex 1'];
-        yield 'complex_2' => ['/(?(*UTF8)(*MARK:pos)b{ 2 , 5 }(*PRUNE))/', 'complex 2'];
         yield 'complex_3' => ['/(*NOTEMPTY_ATSTART)^[a\Rb]{1,10}(*THEN)/', 'complex 3'];
     }
 
@@ -350,8 +328,41 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     {
         yield 'invalid_quantifier_range' => ['/a{5,2}/', 'min > max'];
         yield 'invalid_callout_range' => ['/(?C256)abc/', 'callout identifier out of range'];
-        yield 'invalid_callout_empty_string' => ['/(?C"")abc/', 'empty callout string'];
         yield 'invalid_pcre_verb' => ['/(*INVALID)a/', 'unsupported PCRE verb'];
         yield 'invalid_group_verb' => ['/(?(*INVALID)a)/', 'unsupported verb in modifier group'];
+
+        // Rows that once sat in the accepting providers above, on patterns PHP refuses.
+        // "(?(" takes a condition, and a verb is not one: preg_match() on PCRE2 10.48 gives
+        // "atomic assertion expected after (?( or (?(?C) at offset 3" for each of these.
+        yield 'newline_cr_group' => ['/(?(*CR)a)/', '(*CR) newline verb inside modifier group'];
+        yield 'newline_lf_group' => ['/(?(*LF)b)/', '(*LF) newline verb inside modifier group'];
+        yield 'newline_crlf_group' => ['/(?(*CRLF)c)/', '(*CRLF) newline verb inside modifier group'];
+        yield 'control_mark_group' => ['/(?(*MARK:label)a)/', '(*MARK) control verb inside modifier group'];
+        yield 'control_prune_group' => ['/(?(*PRUNE)b)/', '(*PRUNE) control verb inside modifier group'];
+        yield 'control_skip_group' => ['/(?(*SKIP)c)/', '(*SKIP) control verb inside modifier group'];
+        yield 'control_then_group' => ['/(?(*THEN)d)/', '(*THEN) control verb inside modifier group'];
+        yield 'encoding_utf8_group' => ['/(?(*UTF8)a)/', '(*UTF8) encoding verb inside modifier group'];
+        yield 'encoding_ucp_group' => ['/(?(*UCP)b)/', '(*UCP) encoding verb inside modifier group'];
+        yield 'match_notempty_group' => ['/(?(*NOTEMPTY)a)/', '(*NOTEMPTY) match control verb inside modifier group'];
+        yield 'match_notempty_atstart_group' => ['/(?(*NOTEMPTY_ATSTART)b)/', '(*NOTEMPTY_ATSTART) match control verb inside modifier group'];
+        yield 'comprehensive_newline_cr_group' => ['/(?(*CR)abc)/', '(*CR) in group'];
+        yield 'comprehensive_newline_lf_group' => ['/(?(*LF)def)/', '(*LF) in group'];
+        yield 'comprehensive_newline_crlf_group' => ['/(?(*CRLF)ghi)/', '(*CRLF) in group'];
+        yield 'comprehensive_control_mark_group' => ['/(?(*MARK)abc)/', '(*MARK) in group'];
+        yield 'comprehensive_control_prune_group' => ['/(?(*PRUNE)def)/', '(*PRUNE) in group'];
+        yield 'comprehensive_encoding_utf8_group' => ['/(?(*UTF8)abc)/', '(*UTF8) in group'];
+        yield 'comprehensive_encoding_ucp_group' => ['/(?(*UCP)def)/', '(*UCP) in group'];
+        yield 'comprehensive_match_notempty_group' => ['/(?(*NOTEMPTY)abc)/', '(*NOTEMPTY) in group'];
+        yield 'comprehensive_match_notempty_atstart_group' => ['/(?(*NOTEMPTY_ATSTART)def)/', '(*NOTEMPTY_ATSTART) in group'];
+        yield 'comprehensive_complex_2' => ['/(?(*UTF8)(*MARK:pos)b{ 2 , 5 }(*PRUNE))/', 'complex 2'];
+
+        // A callout takes a number or a delimited string: preg_match() on PCRE2 10.48 gives
+        // "unrecognized string delimiter follows (?C at offset 4".
+        yield 'callout_named' => ['/(?Cmyfunc)xyz/', 'named callout'];
+        yield 'comprehensive_callout_named' => ['/(?Ccallback)mno/', 'named callout'];
+
+        // A start-of-pattern setting is only one at the start: preg_match() on PCRE2 10.48 gives
+        // "(*VERB) not recognized or malformed at offset 31".
+        yield 'unicode_with_newlines' => ['/(*CRLF)\p{L}+(*NOTEMPTY_ATSTART)/', 'Unicode properties with newline verbs'];
     }
 }

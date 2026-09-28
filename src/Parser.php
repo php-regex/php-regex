@@ -107,6 +107,14 @@ final class Parser
      * or a negation, and "\1" is an octal escape, so a class that receives
      * one of these has been built by hand rather than by the lexer.
      */
+    /**
+     * The delimiters PCRE2 takes around the string of a callout, each with
+     * the one that closes it.
+     */
+    private const CALLOUT_STRING_DELIMITERS = [
+        '`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}',
+    ];
+
     private const OUTSIDE_ATOM_TYPES = [
         TokenType::T_ANCHOR,
         TokenType::T_ASSERTION,
@@ -126,6 +134,12 @@ final class Parser
     private bool $inQuoteMode = false;
 
     private int $recursionDepth = 0;
+
+    /**
+     * The number the last capturing group was given, counted the way PCRE
+     * counts them, branch resets included: a name is tied to a number.
+     */
+    private int $captureCount = 0;
 
     /**
      * @var array<int|string, bool>
@@ -155,6 +169,7 @@ final class Parser
         $this->extendedMode = str_contains($flags, 'x');
         $this->inQuoteMode = false;
         $this->recursionDepth = 0;
+        $this->captureCount = 0;
 
         $patternNode = $this->parseAlternation();
         $this->stream->consume(TokenType::T_EOF, 'Unexpected content at end of pattern');
@@ -542,6 +557,8 @@ final class Parser
 
     private function parseSimpleAtom(int $startPosition): ?NodeInterface
     {
+        $this->guardNamedReferenceEscape();
+
         if (null !== $atom = $this->matchAtom($startPosition, self::OUTSIDE_ATOM_TYPES)) {
             return $atom;
         }
@@ -559,6 +576,38 @@ final class Parser
         }
 
         return null;
+    }
+
+    /**
+     * "\k" names a group, and the lexer leaves it a plain escaped letter when
+     * no name follows: PCRE refuses "\k" alone and an empty "\k<>". Other
+     * shapes it could not read are left as they are read today.
+     *
+     * @throws ParserException
+     */
+    private function guardNamedReferenceEscape(): void
+    {
+        $token = $this->stream->current();
+        if (TokenType::T_LITERAL_ESCAPED !== $token->type || 'k' !== $token->value || $this->inQuoteMode) {
+            return;
+        }
+
+        $opener = $this->pattern[$token->position + 2] ?? '';
+        $closer = ['<' => '>', '{' => '}', "'" => "'"][$opener] ?? null;
+
+        if (null === $closer) {
+            throw $this->parserException(
+                \sprintf('\k is not followed by a braced, angle-bracketed or quoted name at position %d.', $token->position),
+                $token->position + 2,
+            );
+        }
+
+        if ($closer === ($this->pattern[$token->position + 3] ?? '')) {
+            throw $this->parserException(
+                \sprintf('Group name expected after \k%s at position %d.', $opener, $token->position),
+                $token->position + 3,
+            );
+        }
     }
 
     /**
@@ -617,6 +666,7 @@ final class Parser
     {
         if ($this->stream->match(TokenType::T_GROUP_OPEN)) {
             $startToken = $this->stream->previous();
+            $this->captureCount++;
             $expr = $this->parseScopedAlternation();
             $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
 
@@ -665,23 +715,30 @@ final class Parser
             return new CalloutNode(null, false, $startPosition, $endPosition);
         }
 
-        $isStringIdentifier = false;
-        $identifier = null;
-        if (preg_match('/^"([^"]*+)"$/', $value, $matches)) {
-            $identifier = $matches[1];
-            $isStringIdentifier = true;
-        } elseif (ctype_digit($value)) {
-            $identifier = (int) $value;
-        } elseif (preg_match('/^[A-Z_a-z]\w*+$/', $value)) {
-            $identifier = $value;
-        } else {
+        if (ctype_digit($value)) {
+            return new CalloutNode((int) $value, false, $startPosition, $endPosition);
+        }
+
+        $closing = self::CALLOUT_STRING_DELIMITERS[$value[0]] ?? null;
+        if (null === $closing) {
+            // "(?Cab)": a callout takes a number or a delimited string, and
+            // PCRE reports it past the character it could not read.
+            throw $this->parserException(
+                \sprintf('Invalid callout argument: %s at position %d', $value, $startPosition),
+                $startPosition + 4,
+            );
+        }
+
+        // A doubled closing delimiter stands for itself: "(?C{a}}b})".
+        $quoted = preg_quote($closing, '/');
+        if (1 !== preg_match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
             throw $this->parserException(
                 \sprintf('Invalid callout argument: %s at position %d', $value, $startPosition),
                 $startPosition,
             );
         }
 
-        return new CalloutNode($identifier, $isStringIdentifier, $startPosition, $endPosition);
+        return new CalloutNode(str_replace($closing.$closing, $closing, $matches[1]), true, $startPosition, $endPosition);
     }
 
     /**
@@ -804,9 +861,10 @@ final class Parser
             return $this->parsePcreVerbInGroup($startPosition);
         }
 
-        // 2.1 PCRE verbs already tokenized inside modifier groups: (?(*VERB)...)
+        // 2.1 "(?(" followed by "(*...)" is a conditional whose condition is
+        // spelled as a verb: "(?(*pla:a)yes|no)".
         if ($this->stream->match(TokenType::T_PCRE_VERB)) {
-            return $this->parsePcreVerbTokenInGroup($startPosition, $this->stream->previous());
+            return $this->parseVerbConditional($startPosition, $this->stream->previous());
         }
 
         // 3. PCRE-style quoted named groups (?'name'...)
@@ -893,22 +951,31 @@ final class Parser
     }
 
     /**
-     * Parses a PCRE verb token inside a modifier group: (?(*VERB)...)
+     * Parses a conditional whose condition is written as a verb:
+     * "(?(*pla:a)yes|no)". PCRE only takes a lookaround there; a verb, an
+     * atomic group or a script run is refused.
      */
-    private function parsePcreVerbTokenInGroup(int $startPosition, Token $verbToken): NodeInterface
+    private function parseVerbConditional(int $startPosition, Token $verbToken): NodeInterface
     {
         $verbStartPosition = $verbToken->position;
         $verbEndPosition = $verbStartPosition + \strlen($verbToken->value) + 3; // +3 for "(*)"
 
-        $verbNode = $this->createPcreVerbNode($verbToken->value, $verbStartPosition, $verbEndPosition);
+        $read = PcreVerb::read($verbToken->value);
+        if (null === $read->assertion || GroupType::T_GROUP_ATOMIC === $read->assertion) {
+            // PCRE stops at the colon of a named group, or at the "*".
+            $position = 1 === preg_match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
+                ? $verbStartPosition + 2 + \strlen($name[0])
+                : $verbStartPosition + 1;
 
-        $expr = $this->parseScopedAlternation();
-        $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected ) to close PCRE verb group');
+            throw $this->parserException(
+                \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
+                $position,
+            );
+        }
 
-        return new SequenceNode(
-            [$verbNode, $expr],
+        return $this->parseConditionalBranches(
             $startPosition,
-            $expr->getEndPosition(),
+            $this->createPcreVerbNode($verbToken->value, $verbStartPosition, $verbEndPosition),
         );
     }
 
@@ -925,8 +992,12 @@ final class Parser
 
         $stream = (new Lexer())->tokenize($payload, $this->flags);
         $parser = new Parser($this->maxRecursionDepth, $this->phpVersionId);
+        $pattern = $parser->parse($stream, $this->flags, '/', \strlen($payload));
 
-        return $parser->parse($stream, $this->flags, '/', \strlen($payload))->pattern;
+        // The groups it holds take numbers in the enclosing pattern.
+        $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;
+
+        return $pattern->pattern;
     }
 
     private function createPcreVerbNode(string $verb, int $startPosition, int $endPosition): NodeInterface
@@ -965,17 +1036,12 @@ final class Parser
     }
 
     /**
-     * Parses Python-style named groups and subroutines like
-     * (?P'name'...), (?P"name"...), (?P<name>...), (?P>name), and (?P=name).
+     * Parses Python-style named groups and subroutines like (?P<name>...),
+     * (?P>name), and (?P=name). PCRE takes nothing else after "(?P": not
+     * "(?P'name'...)", which is "(?'name'...)" without the "P".
      */
     private function parsePythonGroup(int $startPos, int $pPos): NodeInterface
     {
-        // "(?P'name'...)" and "(?P\"name\"...)" name a group the way
-        // "(?'name'...)" does, quotes included.
-        if ($this->stream->checkLiteral("'") || $this->stream->checkLiteral('"')) {
-            return $this->parseNamedGroup($startPos, $pPos, false, true);
-        }
-
         if ($this->stream->matchLiteral('<')) { // (?P<name>...)
             return $this->parseNamedGroup($startPos, $pPos, true, true);
         }
@@ -994,9 +1060,10 @@ final class Parser
             return new BackrefNode('\\k<'.$name.'>', $startPos, $endToken->position + 1);
         }
 
+        // PCRE reports it past the character it could not read.
         throw $this->parserException(
-            \sprintf('Invalid syntax after (?P at position %d', $pPos),
-            $pPos,
+            \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $pPos),
+            $pPos + 2,
         );
     }
 
@@ -1117,10 +1184,50 @@ final class Parser
         }
 
         if ($this->stream->match(TokenType::T_ALTERNATION)) {
-            return $this->parseSimpleGroup($startPosition, GroupType::T_GROUP_BRANCH_RESET);
+            return $this->parseBranchReset($startPosition);
         }
 
         return null;
+    }
+
+    /**
+     * Parses "(?|...)", where every branch numbers its groups from the same
+     * start, and the group count after it is that of the longest branch.
+     */
+    private function parseBranchReset(int $startPosition): GroupNode
+    {
+        $extendedMode = $this->extendedMode;
+        $duplicateNames = $this->groupNames->duplicatesAllowed();
+        $base = $this->captureCount;
+        $highest = $base;
+
+        $this->guardRecursionDepth($this->stream->current()->position);
+        $this->recursionDepth++;
+
+        try {
+            $branchStart = $this->stream->current()->position;
+            $branches = [];
+
+            do {
+                $this->captureCount = $base;
+                $branches[] = $this->parseSequence();
+                $highest = max($highest, $this->captureCount);
+            } while ($this->stream->match(TokenType::T_ALTERNATION));
+        } finally {
+            $this->recursionDepth--;
+            $this->extendedMode = $extendedMode;
+            $this->groupNames->allowDuplicates($duplicateNames);
+        }
+
+        $this->captureCount = $highest;
+
+        $expr = 1 === \count($branches)
+            ? $branches[0]
+            : new AlternationNode($branches, $branchStart, end($branches)->getEndPosition());
+
+        $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
+
+        return $this->createGroupNode($expr, GroupType::T_GROUP_BRANCH_RESET, $startPosition, $endToken);
     }
 
     /**
@@ -1129,6 +1236,18 @@ final class Parser
     private function parseInlineFlags(int $startPosition): NodeInterface
     {
         $flags = $this->readModifierLetters();
+
+        // "(?^" turns every other modifier off already, so PCRE refuses a
+        // "-" after it, and reports it past the hyphen.
+        if (str_starts_with($flags, '^') && str_contains($flags, '-')) {
+            $position = $startPosition + 2 + (int) strpos($flags, '-') + 1;
+
+            throw $this->parserException(
+                \sprintf('Invalid hyphen in option setting at position %d: "(?^" cannot turn modifiers off.', $position),
+                $position,
+            );
+        }
+
         $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
         $modifiers = InlineFlags::read($flags, $letters);
 
@@ -1238,6 +1357,15 @@ final class Parser
             $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected ) after condition');
         }
 
+        return $this->parseConditionalBranches($startPosition, $condition);
+    }
+
+    /**
+     * Parses what follows the condition of a conditional: the branches, and
+     * the closing parenthesis.
+     */
+    private function parseConditionalBranches(int $startPosition, NodeInterface $condition): ConditionalNode|DefineNode
+    {
         $yes = $this->parseScopedAlternation();
 
         // Special case: (?(DEFINE)...) creates a DefineNode instead of ConditionalNode
@@ -1847,7 +1975,7 @@ final class Parser
      */
     private function parseNamedGroup(int $startPosition, int $namePosition, bool $expectAngle, bool $pythonSyntax = false): GroupNode
     {
-        $name = $this->groupNames->read($namePosition);
+        $name = $this->groupNames->read($namePosition, true, ++$this->captureCount);
 
         if ($expectAngle) {
             $this->stream->consumeLiteral('>', 'Expected > after group name');

@@ -59,9 +59,12 @@ final class Lexer
     private const PATTERNS_OUTSIDE = [
         'T_COMMENT_OPEN' => '\\(\\?\\#',
         'T_CALLOUT' => '\\(\\?C [^)]* \\)',
-        // "(*atomic:(a(b)c))" nests as deep as it likes, so the body of a
-        // verb is matched by recursion rather than by one level of brackets.
-        'T_PCRE_VERB' => '\\( \\??\\* (?<verbBody> (?: [^()]++ | \\( (?P>verbBody) \\) )+ ) \\)',
+        // "(*atomic:(a(b)c))" nests as deep as it likes, so the body of an
+        // alphabetic assertion or a script run — a lowercase name and a
+        // colon, or "(?*" — is matched by recursion. Any other verb ends at
+        // the first ")", as PCRE reads it: "(*:a(b)" is a mark named "a(b".
+        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: [^()]++ | \\( (?P>verbBody) \\) )+ )'
+            .' | \\* [a-z_]++ : (?P>verbBody) | \\* [^)]* ) \\)',
         'T_GROUP_MODIFIER_OPEN' => '\\(\\?',
         'T_GROUP_OPEN' => '\\(',
         'T_GROUP_CLOSE' => '\\)',

@@ -135,8 +135,22 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_still_reports_a_false_accept_when_the_offset_depends_on_the_version(): void
     {
-        // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3; the
-        // library accepts it.
+        // "[^^--]": 10.48 error 108 at 5, 10.40 at 4; the library accepts it,
+        // reading "--" as a class subtraction.
+        $result = (new Pcre2CaseRunner())->run(self::case(
+            '[^^--]',
+            'reject',
+            5,
+            'range out of order in character class',
+            pcre2Code: 108,
+            floor: ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 108],
+        ));
+
+        $this->assertSame('false-accept', $result['outcome']);
+
+        // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3. This
+        // was the sample false accept until the library refused it; it now
+        // reports 10.48's offset.
         $result = (new Pcre2CaseRunner())->run(self::case(
             '(?Cab)xx',
             'reject',
@@ -146,7 +160,7 @@ final class Pcre2CaseRunnerTest extends TestCase
             floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 182],
         ));
 
-        $this->assertSame('false-accept', $result['outcome']);
+        $this->assertSame('pass-either-offset', $result['outcome']);
 
         // "[\B]": 10.48 error 107 at 3, 10.40 at 2. This was the sample false
         // accept until the library rejected it; it now reports 10.48's offset.

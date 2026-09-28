@@ -70,7 +70,10 @@ final class ParserRejectionsTest extends TestCase
         // Same message as every other way of spelling a group name.
         $this->expectExceptionMessage('Unexpected token "d" in group name');
 
-        $this->regexService->parse("/(?P'foo\\d'test)/");
+        // "(?P'name'...)" is refused before its name is read (preg_match() on
+        // PCRE2 10.48: "unrecognized character after (?P at offset 4"), so
+        // the Python spelling that PHP takes carries the name here.
+        $this->regexService->parse('/(?P<foo\\d>test)/');
     }
 
     public function test_conditional_version_with_invalid_number_resets_state(): void
