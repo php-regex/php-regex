@@ -69,7 +69,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private const VALID_ASSERTIONS = [
         'A' => true, 'z' => true, 'Z' => true,
         'G' => true, 'b' => true, 'B' => true,
-        'b{g}' => true, 'B{g}' => true, // Grapheme boundary assertions (PCRE2)
     ];
 
     private const VALID_PCRE_VERBS = [

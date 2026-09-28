@@ -113,7 +113,7 @@ final class Lexer
         'T_ALTERNATION' => '\\|',
         'T_DOT' => '\\.',
         'T_ANCHOR' => '\\^|\\$',
-        'T_ASSERTION' => '\\\\ (?: b\\{g\\} | B\\{g\\} | [AzZGbB] )',
+        'T_ASSERTION' => '\\\\ [AzZGbB]',
         'T_KEEP' => '\\\\ K',
         'T_CHAR_TYPE' => '\\\\ (?: N (?: (?!\\{) | (?='.self::REPEAT_COUNT.') ) | [dswDSWhvRCXHV] )',
         'T_G_REFERENCE' => '\\\\ g (?: \\{['.self::NAME_CHARS.'+-]+\\} | <['.self::NAME_CHARS.'+-]+> | \'['.self::NAME_CHARS.'+-]+\' | [0-9+-]+ )?',

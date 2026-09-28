@@ -345,19 +345,30 @@ final class ParserTest extends TestCase
     }
 
     #[Test]
-    public function test_parse_grapheme_assertions(): void
+    public function test_parse_word_boundary_before_brace_text(): void
     {
+        // PCRE2 has no "\b{g}": it reads a word boundary, then the text "{g}"
+        // (preg_match('/^a\b{g}$/', 'a{g}') === 1).
         $ast = $this->parse('/\b{g}foo\B{g}/');
         $pattern = $ast->pattern;
 
         $this->assertInstanceOf(SequenceNode::class, $pattern);
-        $this->assertCount(5, $pattern->children); // \b{g}, f, o, o, \B{g}
+        $this->assertCount(11, $pattern->children); // \b, {, g, }, f, o, o, \B, {, g, }
 
         $this->assertInstanceOf(AssertionNode::class, $pattern->children[0]);
-        $this->assertSame('b{g}', $pattern->children[0]->value);
+        $this->assertSame('b', $pattern->children[0]->value);
 
-        $this->assertInstanceOf(AssertionNode::class, $pattern->children[4]);
-        $this->assertSame('B{g}', $pattern->children[4]->value);
+        $this->assertInstanceOf(AssertionNode::class, $pattern->children[7]);
+        $this->assertSame('B', $pattern->children[7]->value);
+    }
+
+    #[Test]
+    public function test_brace_text_after_a_word_boundary_can_be_repeated(): void
+    {
+        // The "+" repeats the "}" (preg_match('/^\B{g}+$/', '{g}}}') === 1).
+        $result = Regex::create()->validate('/^\B{g}+$/');
+
+        $this->assertTrue($result->isValid, (string) $result->error);
     }
 
     #[Test]
