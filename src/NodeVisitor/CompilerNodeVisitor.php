@@ -170,12 +170,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         }
 
         if ($this->inCharClass) {
-            $result = $this->compileCharClassNode($alternatives[0], $alternatives[1] ?? null);
-            for ($i = 1, $count = \count($alternatives); $i < $count; $i++) {
-                $result .= $this->compileCharClassNode($alternatives[$i], $alternatives[$i + 1] ?? null);
-            }
-
-            return $result;
+            return $this->compileCharClassMembers($alternatives);
         }
 
         if ($this->pretty) {
@@ -214,20 +209,14 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         }
 
         if ($this->inCharClass) {
-            $result = $this->compileCharClassNode($children[0], $children[1] ?? null);
-            for ($i = 1, $count = \count($children); $i < $count; $i++) {
-                $result .= $this->compileCharClassNode($children[$i], $children[$i + 1] ?? null);
-            }
-
-            return $result;
+            return $this->compileCharClassMembers($children);
         }
 
         $result = $this->ignorableText($node->getStartPosition(), $children[0]->getStartPosition());
         $result .= $children[0]->accept($this);
 
         for ($i = 1, $count = \count($children); $i < $count; $i++) {
-            $result .= $this->ignorableTextBetween($children[$i - 1], $children[$i]);
-            $result .= $children[$i]->accept($this);
+            $result = $this->joinItems($result, $children[$i - 1], $children[$i], $children[$i]->accept($this));
         }
 
         $last = $children[\count($children) - 1];
@@ -946,6 +935,90 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
      * the one that was parsed. Anything else than whitespace is ignored: the
      * nodes themselves are the only source of truth for what a pattern matches.
      */
+    /**
+     * Two neighbouring items. A "\E" or an empty "\Q\E" between them is
+     * dropped like any other no-op, unless the two items would then read as
+     * one: "(a)\1\E0" is not "(a)\10", nor "a{\E2}" the repeat "a{2}". There
+     * it stays as written. When no source says how two items were separated,
+     * a digit escape still needs something after it, and an empty group ("\E"
+     * in a class) takes that place; a literal "{" or "[" comes back escaped
+     * and needs nothing.
+     */
+    private function joinItems(string $compiled, NodeInterface $left, NodeInterface $right, string $next): string
+    {
+        $between = $this->ignorableTextBetween($left, $right);
+        if ('' !== $between || '' === $next) {
+            return $compiled.$between.$next;
+        }
+
+        if (self::takesMoreDigits($compiled, $next[0])) {
+            $between = $this->writtenSeparator($left->getEndPosition(), $right->getStartPosition())
+                ?? ($this->inCharClass ? '\\E' : '(?:)');
+        } elseif ($this->opensConstruct($compiled, $next[0])) {
+            $between = $this->writtenSeparator($left->getEndPosition(), $right->getStartPosition()) ?? '';
+        }
+
+        return $compiled.$between.$next;
+    }
+
+    /**
+     * Whether the text ends with an escape the next character would make
+     * longer: a reference or octal escape ("\1", "\g-1", "\0") before a
+     * digit, or a "\x" with fewer than two digits before a hex digit.
+     */
+    private static function takesMoreDigits(string $compiled, string $next): bool
+    {
+        if (1 !== preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\(?<escape>[0-9]+|g[+-]?[0-9]+|x[0-9A-Fa-f]?)\z/', $compiled, $matches)) {
+            return false;
+        }
+
+        return str_starts_with($matches['escape'], 'x') ? ctype_xdigit($next) : ctype_digit($next);
+    }
+
+    /**
+     * Whether the text ends with something the next character would turn
+     * into another construct: "\N" before braces, a literal "{" before a
+     * repeat count, a literal "[" in a class before ":", "." or "=".
+     */
+    private function opensConstruct(string $compiled, string $next): bool
+    {
+        if ($this->inCharClass) {
+            return \in_array($next, [':', '.', '='], true) && 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\[\z/', $compiled);
+        }
+
+        if ('{' === $next) {
+            return 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\N\z/', $compiled);
+        }
+
+        return str_contains("0123456789, \t}", $next) && 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\{[0-9, \t]*+\z/', $compiled);
+    }
+
+    /**
+     * The "\E" and empty "\Q\E" written between two items, with the
+     * whitespace "x" ignores around them; null when there are none. The "\E"
+     * that closes quoted text is not among them: that text comes back
+     * escaped, with no "\Q" to close.
+     */
+    private function writtenSeparator(int $start, int $end): ?string
+    {
+        if (null === $this->source || $end <= $start) {
+            return null;
+        }
+
+        $text = substr($this->source, $start, $end - $start);
+        if (1 !== preg_match('/\A(?:[ \t\n\r\v\f]|\\\\E|\\\\Q\\\\E)++\z/', $text)) {
+            return null;
+        }
+
+        foreach (array_reverse($this->quotedSpans()) as [$from, $to]) {
+            if ($to - $from > 4 && $to - 2 >= $start && $to <= $end) {
+                $text = substr_replace($text, '', $to - 2 - $start, 2);
+            }
+        }
+
+        return str_contains($text, '\\') ? $text : null;
+    }
+
     private function ignorableTextBetween(NodeInterface $left, NodeInterface $right): string
     {
         return $this->ignorableText($left->getEndPosition(), $right->getStartPosition());
@@ -1085,6 +1158,21 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             } else {
                 $result .= $char;
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param non-empty-array<NodeInterface> $members
+     */
+    private function compileCharClassMembers(array $members): string
+    {
+        $members = array_values($members);
+        $result = $this->compileCharClassNode($members[0], $members[1] ?? null);
+        for ($i = 1, $count = \count($members); $i < $count; $i++) {
+            $next = $this->compileCharClassNode($members[$i], $members[$i + 1] ?? null);
+            $result = $this->joinItems($result, $members[$i - 1], $members[$i], $next);
         }
 
         return $result;
