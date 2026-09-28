@@ -1407,6 +1407,16 @@ final class Parser
         );
     }
 
+    /**
+     * Whether no PHP version was targeted and the PCRE2 this PHP links is at
+     * least the given release.
+     */
+    private function runningPcreAtLeast(string $release): bool
+    {
+        return $this->useRuntimePcreDetection
+            && version_compare(explode(' ', \PCRE_VERSION)[0], $release, '>=');
+    }
+
     // Checks if the 'r' inline modifier is supported by the current PCRE/PHP version
     // The 'r' modifier was added in PCRE2 10.43 and PHP 8.4
     private function supportsInlineModifierR(): bool
@@ -1942,7 +1952,13 @@ final class Parser
         $beforeQuotes = $this->stream->getPosition();
         $wasInQuoteMode = $this->inQuoteMode;
         $singleCharacterStart = !($startNode instanceof LiteralNode && mb_strlen($startNode->value) > 1);
-        if ($singleCharacterStart) {
+        // A class escape before them, "[\w\E-a]", keeps a member "-" up to
+        // PCRE2 10.44, the newest any PHP release bundles; from 10.45 the
+        // range forms and fails, so only a newer linked PCRE2 refuses it.
+        $classEscapeStart = $startNode instanceof CharTypeNode
+            || $startNode instanceof PosixClassNode
+            || $startNode instanceof UnicodePropNode;
+        if ($singleCharacterStart && (!$classEscapeStart || $this->runningPcreAtLeast('10.45'))) {
             $this->skipEmptyQuotes();
         }
 
