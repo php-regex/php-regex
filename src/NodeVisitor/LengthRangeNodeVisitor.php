@@ -32,6 +32,7 @@ use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
 use RegexParser\Node\LiteralNode;
+use RegexParser\Node\NodeInterface;
 use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\PosixClassNode;
 use RegexParser\Node\QuantifierBounds;
@@ -45,15 +46,34 @@ use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
 
 /**
- * Calculates min/max string lengths that match the regex.
+ * Calculates the min/max length of the text a match consumes, from where
+ * matching starts to where it ends: "\K", which only moves the start of the
+ * reported match, does not shorten it; "(*ACCEPT)", which ends the match,
+ * does. Lengths count bytes, or UTF-8 characters in UTF mode.
  *
  * @extends AbstractNodeVisitor<array{0: int, 1: int|null}>
  */
 final class LengthRangeNodeVisitor extends AbstractNodeVisitor
 {
+    private const LOOKAROUNDS = [
+        GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+        GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+        GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+        GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+    ];
+
+    /**
+     * @param bool $unicode whether lengths count UTF-8 characters rather than
+     *                      bytes; a whole pattern sets it from its flags
+     */
+    public function __construct(private bool $unicode = false) {}
+
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
+        $this->unicode = str_contains($node->flags, 'u')
+            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF\)/', $node->source ?? '');
+
         return $node->pattern->accept($this);
     }
 
@@ -84,9 +104,17 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
         $totalMax = 0;
         $hasInfinite = false;
 
+        $accepted = false;
+
         foreach ($node->children as $child) {
             [$childMin, $childMax] = $child->accept($this);
-            $totalMin += $childMin;
+
+            // Past a "(*ACCEPT)" the match may already be over.
+            if (!$accepted) {
+                $totalMin += $childMin;
+            }
+            $accepted = $accepted || $this->mayAccept($child);
+
             if (null === $childMax) {
                 $hasInfinite = true;
             } else {
@@ -101,12 +129,7 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): array
     {
         // Lookarounds are zero-width assertions
-        if (\in_array($node->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-        ], true)) {
+        if (\in_array($node->type, self::LOOKAROUNDS, true)) {
             return [0, 0];
         }
 
@@ -138,7 +161,13 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): array
     {
-        return [1, 1];
+        // A literal holds a run of characters, or none at all for an empty
+        // group, branch or option setting.
+        $length = $this->unicode && 1 === preg_match('//u', $node->value)
+            ? mb_strlen($node->value, 'UTF-8')
+            : \strlen($node->value);
+
+        return [$length, $length];
     }
 
     #[\Override]
@@ -150,7 +179,12 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharType(CharTypeNode $node): array
     {
-        return [1, 1];
+        return match ($node->value) {
+            // "\R" matches "\r\n" as well, "\X" a whole grapheme cluster.
+            'R' => [1, 2],
+            'X' => [1, null],
+            default => [1, 1],
+        };
     }
 
     #[\Override]
@@ -284,6 +318,40 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
     public function visitKeep(KeepNode $node): array
     {
         return [0, 0];
+    }
+
+    /**
+     * Whether a "(*ACCEPT)" inside the node may end the match there: not one
+     * in a lookaround, which only ends the assertion, nor in a (DEFINE),
+     * which is never run in place.
+     */
+    private function mayAccept(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return str_starts_with($node->verb, 'ACCEPT');
+        }
+
+        if ($node instanceof GroupNode && \in_array($node->type, self::LOOKAROUNDS, true)) {
+            return false;
+        }
+
+        $children = match (true) {
+            $node instanceof GroupNode => [$node->child],
+            $node instanceof SequenceNode => $node->children,
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof QuantifierNode => [$node->node],
+            $node instanceof ConditionalNode => [$node->yes, $node->no],
+            $node instanceof ScriptRunNode => null === $node->content ? [] : [$node->content],
+            default => [],
+        };
+
+        foreach ($children as $child) {
+            if ($this->mayAccept($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

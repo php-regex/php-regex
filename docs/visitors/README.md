@@ -271,17 +271,19 @@ echo $metrics->getCaptureGroupCount();
 
 ### LengthRangeNodeVisitor
 
-**Purpose:** Estimates minimum and maximum possible match length.
+**Purpose:** Computes the minimum and maximum length of the text a match consumes, as `[min, max]`, with `null` for
+no upper bound. Lengths count bytes, or UTF-8 characters when the pattern is in UTF mode. `(*ACCEPT)` ends the match
+early and lowers the minimum; `\K` only moves the start of the reported match and does not change the range.
 
 ```php
 use RegexParser\Regex;
 use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
 
 $ast = Regex::create()->parse('/a{2,4}b*/');
-$range = $ast->accept(new LengthRangeNodeVisitor());
+[$min, $max] = $ast->accept(new LengthRangeNodeVisitor());
 
-echo $range->getMinLength();   // 2 (aa)
-echo $range->getMaxLength();   // PHP_INT_MAX (unbounded)
+echo $min;        // 2 (aa)
+var_dump($max);   // NULL (unbounded)
 ```
 
 ---

@@ -2116,7 +2116,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return $this->referencedGroupLength($node, $expanding);
         }
 
-        return $node->accept(new LengthRangeNodeVisitor());
+        return $node->accept(new LengthRangeNodeVisitor($this->unicodeMode));
     }
 
     /**
