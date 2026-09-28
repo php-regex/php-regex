@@ -744,6 +744,9 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 | `regex.define.too_many_branches`    | A (DEFINE) group holds more than one branch         | `(?(DEFINE)a\|b)` has two             | Change to `(?(DEFINE)(?:a\|b))` |
 | `regex.verb.misplaced`              | (*{verb}) is only recognized at the very start of the pattern | `(*CR)`, `(*UTF)`, `(*LIMIT_MATCH=n)` and the other start-of-pattern settings after anything else | Move `(*CR)` to the start |
 | `regex.verb.mark_name_missing`      | (*MARK) must have a name                            | `(*MARK)`, `(*MARK:)` and `(*:)` name nothing | Change `(*MARK)` to `(*MARK:here)` |
+| `regex.verb.name_too_long`          | The name of (*{verb}) is too long: PCRE takes at most 255 code units | A `(*MARK)`, `(*PRUNE)`, `(*SKIP)` or `(*THEN)` name longer than 255 | Shorten the name |
+| `regex.verb.limit_too_large`        | The value {n} is too large for a (*LIMIT_...) setting | `(*LIMIT_MATCH=n)`, `(*LIMIT_HEAP=n)` or `(*LIMIT_DEPTH=n)` above 4294967289 | Change `(*LIMIT_MATCH=5000000000)` to `(*LIMIT_MATCH=100000)` |
+| `regex.group.nested_too_deep`       | Parentheses are nested too deeply: PCRE allows at most 250 levels | Groups, conditionals and script runs nested more than 250 deep; `(?i)` alone does not count | Drop groups that wrap a single item |
 | `regex.subroutine.relative_zero`    | Subroutine call relative reference cannot be zero   | `(?-0)`, `(?+0)` and `\g<-0>` point nowhere | Use `(?R)` or a non-zero offset |
 | `regex.condition.version_syntax`    | Invalid version "{version}" in a version condition  | A version is a major number and an optional `.minor` | Change `(?(VERSION>=10.0.0)` to `(?(VERSION>=10.0)` |
 | `regex.semantic`                    | Various semantic errors                             | Pattern violates PCRE rules           | Add bounds to lookbehind |

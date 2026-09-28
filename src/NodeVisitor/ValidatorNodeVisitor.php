@@ -69,6 +69,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private const MAX_CACHE_SIZE = 1000;
 
     /**
+     * The longest (*MARK), (*PRUNE), (*SKIP) or (*THEN) name, in code units.
+     */
+    private const MAX_VERB_NAME_LENGTH = 255;
+
+    /**
+     * The largest (*LIMIT_...=n) value PCRE still multiplies by ten.
+     */
+    private const MAX_LIMIT_VALUE_BEFORE_DIGIT = 429496728;
+
+    /**
+     * How deep PCRE2 lets parentheses nest by default, which PHP keeps.
+     */
+    private const MAX_GROUP_NESTING = 250;
+
+    /**
      * The largest compiled pattern PCRE2 takes with the two-byte links PHP
      * builds it with, in code units.
      */
@@ -319,6 +334,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private int $lookbehindDepth = 0;
 
     /**
+     * How many groups, conditionals and script runs enclose the node.
+     */
+    private int $nestingDepth = 0;
+
+    /**
      * Whether the walk started from the pattern root, and so ends where the
      * errors PCRE finds late can be reported.
      */
@@ -443,6 +463,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
+        $this->nestingDepth = 0;
         $this->keepsInLookarounds = [];
         $this->patternLength = \strlen($node->source ?? '');
         $this->positionOffset = 0;
@@ -547,12 +568,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->keepsInLookarounds[] = false;
         }
 
+        // "(?i)" sets options for what follows and opens nothing.
+        $nests = !$this->setsOptionsOnly($node);
+        if ($nests) {
+            $this->enterNesting($node->child->getStartPosition());
+        }
+
         try {
             $node->child->accept($this);
         } finally {
             $this->source = $source;
             $this->positionOffset = $positionOffset;
             $this->enclosingGroups = $enclosingGroups;
+            if ($nests) {
+                $this->nestingDepth--;
+            }
             if ($isLookbehind) {
                 $this->lookbehindDepth--;
             }
@@ -584,12 +614,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $source = $this->source;
         $positionOffset = $this->positionOffset;
         $this->enterPayload($node->startPosition, $node->endPosition);
+        $this->enterNesting($node->content->getStartPosition());
 
         try {
             $node->content->accept($this);
         } finally {
             $this->source = $source;
             $this->positionOffset = $positionOffset;
+            $this->nestingDepth--;
         }
     }
 
@@ -1088,6 +1120,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $this->ensureGroupNumberingInitialized();
 
+        // PCRE counts the conditional as it opens it: past a reference, or
+        // on the assertion that decides it.
+        $this->enterNesting($node->condition instanceof GroupNode || $this->isCalloutThenAssertion($node->condition)
+            ? $node->condition->getStartPosition()
+            : $node->yes->getStartPosition());
+
         // Check if the condition is a valid *type* of condition first
         // (e.g., a backreference, a subroutine call, or a lookaround)
         if ($node->condition instanceof BackrefNode) {
@@ -1170,6 +1208,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $node->yes->accept($this);
         $node->no->accept($this);
+
+        // When an error stops the walk, visitRegex() resets the count.
+        $this->nestingDepth--;
     }
 
     #[\Override]
@@ -1269,6 +1310,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->validateStartOfPatternPlacement($verbName, $node->startPosition, $closing);
         }
 
+        // A verb name holds at most 255 code units.
+        if (1 === preg_match('/^[A-Z]*+:(.*)$/s', $node->verb, $name) && \strlen($name[1]) > self::MAX_VERB_NAME_LENGTH) {
+            $this->raiseSemanticError(
+                \sprintf('The name of (*%s) is too long: PCRE takes at most %d code units.', $verbName, self::MAX_VERB_NAME_LENGTH),
+                $closing,
+                'regex.verb.name_too_long',
+            );
+        }
+
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 === preg_match('/=(\d++)$/', $node->verb, $digits, \PREG_OFFSET_CAPTURE)) {
+            $this->validateLimitValue($digits[1][0], $node->startPosition + 2 + $digits[1][1]);
+        }
+
         // "(*=name)" is read as a mark shorthand, but PCRE only knows "(*:".
         if (str_starts_with($node->verb, 'MARK=')) {
             $this->raiseSemanticError(
@@ -1300,14 +1354,25 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        $node->content->accept($this);
+        $this->enterNesting($node->content->getStartPosition());
+
+        try {
+            $node->content->accept($this);
+        } finally {
+            $this->nestingDepth--;
+        }
     }
 
     #[\Override]
     public function visitLimitMatch(LimitMatchNode $node): void
     {
         $this->validateStartOfPatternPlacement('LIMIT_MATCH', $node->startPosition, $node->getEndPosition() - 1);
-        // No specific validation needed for this node.
+
+        // The digits as written, leading zeros included.
+        $written = null === $this->source ? '' : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        if (1 === preg_match('/=(\d++)\)$/', $written, $digits, \PREG_OFFSET_CAPTURE)) {
+            $this->validateLimitValue($digits[1][0], $node->startPosition + $digits[1][1]);
+        }
     }
 
     /**
@@ -1379,6 +1444,66 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $position,
                 'regex.callout.invalid_type',
             );
+        }
+    }
+
+    /**
+     * One more level of parentheses, whose body starts at $bodyStart. PCRE
+     * refuses the level past its limit once it has read the opener, before
+     * any space that "x" skips.
+     */
+    private function enterNesting(int $bodyStart): void
+    {
+        if (++$this->nestingDepth <= self::MAX_GROUP_NESTING) {
+            return;
+        }
+
+        $this->nestingDepth--;
+        $source = $this->source ?? '';
+        while ($bodyStart > 0 && isset($source[$bodyStart - 1]) && ctype_space($source[$bodyStart - 1])) {
+            $bodyStart--;
+        }
+
+        $this->raiseSemanticError(
+            \sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', self::MAX_GROUP_NESTING),
+            $bodyStart,
+            'regex.group.nested_too_deep',
+            'Flatten the pattern: drop groups that only wrap one item.',
+        );
+    }
+
+    /**
+     * Whether the group is "(?i)", options for the rest of the enclosing
+     * group, rather than "(?i:...)".
+     */
+    private function setsOptionsOnly(GroupNode $node): bool
+    {
+        if (GroupType::T_GROUP_INLINE_FLAGS !== $node->type || null === $this->source) {
+            return false;
+        }
+
+        $flagsEnd = $node->startPosition + 2 + strspn($this->source, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ^-', $node->startPosition + 2);
+
+        return ')' === ($this->source[$flagsEnd] ?? '');
+    }
+
+    /**
+     * PCRE reads a (*LIMIT_...=n) value digit by digit and refuses the digit
+     * that would take it past 4294967289, where it stops.
+     */
+    private function validateLimitValue(string $digits, int $start): void
+    {
+        $value = 0;
+        foreach (str_split($digits) as $index => $digit) {
+            if ($value > self::MAX_LIMIT_VALUE_BEFORE_DIGIT) {
+                $this->raiseSemanticError(
+                    \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
+                    $start + $index,
+                    'regex.verb.limit_too_large',
+                );
+            }
+
+            $value = $value * 10 + (int) $digit;
         }
     }
 
@@ -3074,7 +3199,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node instanceof SequenceNode => array_sum(array_map($this->compiledSizeFloor(...), $node->children)),
             $node instanceof AlternationNode => array_sum(array_map($this->compiledSizeFloor(...), $node->alternatives))
                 + 3 * (\count($node->alternatives) - 1),
-            $node instanceof GroupNode => $this->compiledSizeFloor($node->child) + $this->compiledGroupSize($node),
+            $node instanceof GroupNode => $this->groupSizeFloor($node),
             $node instanceof ConditionalNode => $this->conditionalSizeFloor($node),
             $node instanceof QuantifierNode => $this->repeatedSizeFloor($node),
             $node instanceof LiteralNode => 2 * mb_strlen($node->value, 'UTF-8'),
@@ -3105,12 +3230,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * its number. A "(?i)" that scopes nothing compiles to no group at all,
      * and a lookaround that holds nothing to one unit at most.
      */
-    private function compiledGroupSize(GroupNode $node): int
+    private function groupSizeFloor(GroupNode $node): int
+    {
+        // The body is measured once: measuring it again at every level
+        // would double the work with each group nested in another.
+        $body = $this->compiledSizeFloor($node->child);
+
+        return $body + $this->compiledGroupSize($node, $body);
+    }
+
+    private function compiledGroupSize(GroupNode $node, int $body): int
     {
         return match (true) {
             // A lookaround that holds nothing compiles to at most one unit:
             // "(?!)" is a plain failure.
-            $this->isLookaround($node) && 0 === $this->compiledSizeFloor($node->child) => 0,
+            $this->isLookaround($node) && 0 === $body => 0,
             GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
             GroupType::T_GROUP_CAPTURING === $node->type, GroupType::T_GROUP_NAMED === $node->type => self::COMPILED_GROUP_SIZE + 2,
             default => self::COMPILED_GROUP_SIZE,

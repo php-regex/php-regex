@@ -67,6 +67,17 @@ final class CompiledSizeTest extends TestCase
     }
 
     #[Test]
+    public function test_nested_lookarounds_are_measured_in_linear_time(): void
+    {
+        // Each lookaround nests the next: measuring its body twice, once for
+        // its size and once to see whether it is empty, made the time double
+        // with every level (testinput6 of the PCRE2 suite nests 34).
+        $pattern = '/'.str_repeat('(?!', 40).'a'.str_repeat(')', 40).'/';
+
+        $this->assertTrue(Regex::create(['cache' => null])->validate($pattern)->isValid);
+    }
+
+    #[Test]
     public function test_other_errors_come_before_the_size(): void
     {
         // PCRE refuses the missing group and the escape before it measures
