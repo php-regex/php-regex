@@ -68,9 +68,11 @@ final class LiteralSetTest extends TestCase
 
         $set = new LiteralSet($largePrefixes, $largeSuffixes, true);
 
-        $this->assertCount(self::TEST_MAX_SET_SIZE, $set->prefixes);
-        $this->assertCount(self::TEST_MAX_SET_SIZE, $set->suffixes);
-        $this->assertTrue($set->complete);
+        // A cut list would leave out strings a match can start with: the
+        // lists are dropped, and the set no longer claims to be complete.
+        $this->assertSame([], $set->prefixes);
+        $this->assertSame([], $set->suffixes);
+        $this->assertFalse($set->complete);
     }
 
     public function test_unite_with_identical_sets_returns_same_instance(): void
@@ -126,9 +128,10 @@ final class LiteralSetTest extends TestCase
 
         $result = $set1->concat($set2);
 
-        $this->assertCount(0, $result->prefixes);
+        // The product does not fit, but every match still starts with "a".
+        $this->assertSame(['a'], $result->prefixes);
         $this->assertSame(['xyz'], $result->suffixes);
-        $this->assertTrue($result->complete);
+        $this->assertFalse($result->complete);
     }
 
     public function test_cross_product_stops_at_max_set_size(): void
@@ -138,19 +141,21 @@ final class LiteralSetTest extends TestCase
 
         $result = $set1->concat($set2);
 
-        $this->assertCount(self::TEST_MAX_SET_SIZE, $result->prefixes);
+        // 2600 combinations do not fit: the letters alone still hold.
+        $this->assertCount(26, $result->prefixes);
     }
 
     public function test_unite_limits_size_and_deduplicates(): void
     {
         $set1 = new LiteralSet(array_map(strval(...), range(0, 99)), [], true);
-        $set2 = new LiteralSet(array_map(strval(...), range(100, 219)), [], true); // truncated to first 100 in constructor
+        $set2 = new LiteralSet(array_map(strval(...), range(100, 219)), [], true); // past the limit: dropped in the constructor
 
         $result = $set1->unite($set2);
 
-        $this->assertCount(self::TEST_MAX_SET_SIZE, $result->prefixes);
-        $this->assertSame('0', $result->prefixes[0]);
-        $this->assertSame('99', $result->prefixes[99]);
+        // The second list was dropped: nothing is known of the union.
+        $this->assertSame([], $result->prefixes);
+        $this->assertFalse($result->complete);
+        $this->assertTrue($result->isVoid());
     }
 
     public function test_get_longest_prefix(): void

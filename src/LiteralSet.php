@@ -16,8 +16,11 @@ namespace RegexParser;
 /**
  * Immutable set of literal strings extracted from regex patterns.
  *
- * Provides literal extraction with size limits, lazy evaluation,
- * and memory-efficient operations for regex optimization.
+ * Every match starts with one of the prefixes and ends with one of the
+ * suffixes; an empty list says nothing about that end. When the set is
+ * complete, the prefixes list every string the pattern matches. A list that
+ * would pass the size limits is dropped rather than cut: a cut list would
+ * leave out strings a match can start or end with.
  */
 final readonly class LiteralSet
 {
@@ -34,6 +37,8 @@ final readonly class LiteralSet
      */
     public array $suffixes;
 
+    public bool $complete;
+
     /**
      * @param array<string> $prefixes
      * @param array<string> $suffixes
@@ -41,16 +46,14 @@ final readonly class LiteralSet
     public function __construct(
         array $prefixes = [],
         array $suffixes = [],
-        public bool $complete = false,
+        bool $complete = false,
     ) {
         // Enforce size limits to prevent performance degradation
-        $this->prefixes = \count($prefixes) > self::MAX_SET_SIZE
-            ? \array_slice($prefixes, 0, self::MAX_SET_SIZE)
-            : $prefixes;
+        $this->prefixes = \count($prefixes) > self::MAX_SET_SIZE ? [] : $prefixes;
+        $this->suffixes = \count($suffixes) > self::MAX_SET_SIZE ? [] : $suffixes;
 
-        $this->suffixes = \count($suffixes) > self::MAX_SET_SIZE
-            ? \array_slice($suffixes, 0, self::MAX_SET_SIZE)
-            : $suffixes;
+        // A complete set lists every string the pattern matches.
+        $this->complete = $complete && [] !== $this->prefixes;
     }
 
     public static function empty(): self
@@ -74,20 +77,29 @@ final readonly class LiteralSet
         $newSuffixes = $other->suffixes;
         $newComplete = $this->complete && $other->complete;
 
-        // Only compute cross products when necessary and possible
+        // Only compute cross products when necessary and possible. When one
+        // does not fit, the shorter side is still true of every match.
         if ($this->complete && !empty($other->prefixes)) {
-            $newPrefixes = $this->crossProduct($this->prefixes, $other->prefixes);
+            $product = $this->crossProduct($this->prefixes, $other->prefixes);
+            if (null === $product) {
+                $newComplete = false;
+            } else {
+                $newPrefixes = $product;
+            }
         }
 
         if ($other->complete && !empty($this->suffixes)) {
-            $newSuffixes = $this->crossProduct($this->suffixes, $other->suffixes);
+            $product = $this->crossProduct($this->suffixes, $other->suffixes);
+            if (null === $product) {
+                $newComplete = false;
+            } else {
+                $newSuffixes = $product;
+            }
         }
 
-        return new self(
-            $this->deduplicate($newPrefixes),
-            $this->deduplicate($newSuffixes),
-            $newComplete,
-        );
+        $newPrefixes = $this->deduplicate($newPrefixes);
+
+        return new self($newPrefixes, $this->deduplicate($newSuffixes), $newComplete && [] !== $newPrefixes);
     }
 
     public function unite(self $other): self
@@ -97,15 +109,12 @@ final readonly class LiteralSet
             return $this;
         }
 
-        $newPrefixes = array_merge($this->prefixes, $other->prefixes);
-        $newSuffixes = array_merge($this->suffixes, $other->suffixes);
-        $newComplete = $this->complete && $other->complete;
+        // A side about which nothing is known makes the union unknown too.
+        $newPrefixes = [] === $this->prefixes || [] === $other->prefixes ? [] : array_merge($this->prefixes, $other->prefixes);
+        $newSuffixes = [] === $this->suffixes || [] === $other->suffixes ? [] : array_merge($this->suffixes, $other->suffixes);
+        $newPrefixes = $this->deduplicate($newPrefixes);
 
-        return new self(
-            $this->deduplicate($newPrefixes),
-            $this->deduplicate($newSuffixes),
-            $newComplete,
-        );
+        return new self($newPrefixes, $this->deduplicate($newSuffixes), $this->complete && $other->complete && [] !== $newPrefixes);
     }
 
     public function getLongestPrefix(): ?string
@@ -124,33 +133,29 @@ final readonly class LiteralSet
     }
 
     /**
-     * Optimized cross product with size limits and early termination.
+     * Cross product within the size limits, or null when it does not fit:
+     * too many combinations, or one too long.
      *
      * @param array<string> $left
      * @param array<string> $right
      *
-     * @return array<string>
+     * @return array<string>|null
      */
-    private function crossProduct(array $left, array $right): array
+    private function crossProduct(array $left, array $right): ?array
     {
-        $result = [];
-        $maxResults = self::MAX_SET_SIZE;
+        if (\count($left) * \count($right) > self::MAX_SET_SIZE) {
+            return null;
+        }
 
+        $result = [];
         foreach ($left as $l) {
             foreach ($right as $r) {
                 $combined = $l.$r;
-
-                // Skip if result would be too long
                 if (\strlen($combined) > self::MAX_STRING_LENGTH) {
-                    continue;
+                    return null;
                 }
 
                 $result[] = $combined;
-
-                // Early termination if we hit the limit
-                if (\count($result) >= $maxResults) {
-                    return $result;
-                }
             }
         }
 
@@ -170,14 +175,10 @@ final readonly class LiteralSet
             return [];
         }
 
-        $unique = array_unique($items);
+        // A list past the size limit is dropped, not cut.
+        $unique = array_values(array_unique($items));
 
-        // Enforce size limit after deduplication
-        if (\count($unique) > self::MAX_SET_SIZE) {
-            $unique = \array_slice($unique, 0, self::MAX_SET_SIZE, true);
-        }
-
-        return array_values($unique);
+        return \count($unique) > self::MAX_SET_SIZE ? [] : $unique;
     }
 
     /**

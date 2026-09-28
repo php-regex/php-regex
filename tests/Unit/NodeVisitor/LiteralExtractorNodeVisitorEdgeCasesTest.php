@@ -102,8 +102,9 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
         $sequence = new SequenceNode([$node], 0, 0);
         $result = $visitor->visitSequence($sequence);
 
+        // 200 prefixes do not fit: only the empty start of the sequence holds.
         $this->assertFalse($result->isVoid());
-        $this->assertCount(100, $result->prefixes);
+        $this->assertSame([''], $result->prefixes);
     }
 
     public function test_visit_quantifier_caps_large_literal_sets(): void
@@ -132,8 +133,9 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
         $quantifier = new QuantifierNode($node, '{2}', QuantifierType::T_GREEDY, 0, 0);
         $result = $visitor->visitQuantifier($quantifier);
 
-        $this->assertFalse($result->isVoid());
-        $this->assertCount(100, $result->prefixes);
+        // 200 prefixes, repeated, fit nowhere: nothing is claimed.
+        $this->assertTrue($result->isVoid());
+        $this->assertSame([], $result->prefixes);
     }
 
     public function test_visit_alternation_exits_on_large_literal_sets(): void

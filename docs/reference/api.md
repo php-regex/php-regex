@@ -295,25 +295,28 @@ Notes:
 
 ### literals(string $regex): LiteralExtractionResult
 
-Extracts fixed literals and prefix/suffix data for fast prefilters or indexing.
+Extracts fixed literals and prefix/suffix data for fast prefilters or indexing. The literal set describes the text a
+match consumes: every match starts with one of `literalSet->prefixes` and ends with one of `literalSet->suffixes`, and
+an empty list says nothing about that end. Lookarounds add nothing, `(*ACCEPT)` drops the suffixes, and a set too large
+to keep is dropped rather than cut.
 
 ```php
 use RegexParser\Regex;
 
 $result = Regex::create()->literals('/user-\d{4}/');
 
-print_r($result->literals);      // ['user-']
-echo $result->patterns[0];       // '/user-\d{4}/'
-echo $result->prefix;            // 'user-'
-echo $result->suffix;            // ''
-echo $result->literalSet;        // LiteralSet object
+print_r($result->literals);                     // ['user-']
+echo $result->patterns[0];                      // '^user\-'
+echo $result->literalSet->getLongestPrefix();   // 'user-'
+print_r($result->literalSet->suffixes);         // [] (the digits vary)
+echo $result->confidence;                       // 'medium'
 ```
 
 ---
 
 ### generate(string $regex): string
 
-Gener that matches the patternates a sample string. Useful for testing or documentation.
+Generates a sample string that matches the pattern. Useful for testing or documentation.
 
 ```php
 use RegexParser\Regex;
@@ -472,9 +475,9 @@ Returned by `literals()`. Extracts fixed content.
 ```php
 $result = Regex::create()->literals('/user-\d{4}/');
 
-echo $result->prefix;              // 'user-'
-echo $result->suffix;              // ''
-echo $result->confidence->value;   // 'high'
+echo $result->literalSet->getLongestPrefix();   // 'user-'
+var_dump($result->literalSet->complete);        // bool(false)
+echo $result->confidence;                       // 'medium'
 
 foreach ($result->literals as $literal) {
     echo "Found literal: $literal\n";

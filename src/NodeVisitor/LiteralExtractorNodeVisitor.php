@@ -29,9 +29,11 @@ use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
 use RegexParser\Node\GroupNode;
+use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
 use RegexParser\Node\LiteralNode;
+use RegexParser\Node\NodeInterface;
 use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\PosixClassNode;
 use RegexParser\Node\QuantifierBounds;
@@ -55,6 +57,13 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
      * Maximum number of literals generated to prevent explosion (e.g. [a-z]{10}).
      */
     private const MAX_LITERALS_COUNT = 128;
+
+    private const LOOKAROUNDS = [
+        GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+        GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+        GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+        GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+    ];
 
     private bool $caseInsensitive = false;
 
@@ -94,11 +103,13 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
     public function visitSequence(SequenceNode $node): LiteralSet
     {
         $result = LiteralSet::fromString(''); // Start with empty complete string
+        $accepted = false;
 
         foreach ($node->children as $child) {
             /** @var LiteralSet $childSet */
             $childSet = $child->accept($this);
             $result = $result->concat($childSet);
+            $accepted = $accepted || $this->mayAccept($child);
 
             // Safety valve
             if (\count($result->prefixes) > self::MAX_LITERALS_COUNT) {
@@ -106,21 +117,31 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
             }
         }
 
-        return $result;
+        // A "(*ACCEPT)" may end the match before the end of the sequence.
+        return $accepted ? new LiteralSet($result->prefixes, [], false) : $result;
     }
 
     #[\Override]
     public function visitGroup(GroupNode $node): LiteralSet
     {
-        // Handle inline flags if present
-        $previousState = $this->caseInsensitive;
-        if ($node->flags) {
-            if (str_contains($node->flags, '-i')) {
-                $this->caseInsensitive = false;
-            } elseif (str_contains($node->flags, 'i')) {
-                $this->caseInsensitive = true;
-            }
+        // A lookaround looks at the subject without consuming it.
+        if (\in_array($node->type, self::LOOKAROUNDS, true)) {
+            return LiteralSet::fromString('');
         }
+
+        $previousState = $this->caseInsensitive;
+        $caseInsensitive = $this->caseInsensitiveAfter($node->flags ?? '');
+
+        // "(?i)" holds to the end of the group it stands in, so it is not
+        // undone here; "(?i:...)" holds for its own body. Reading an empty
+        // "(?i:)" as the first is only ever more cautious.
+        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
+            $this->caseInsensitive = $caseInsensitive;
+
+            return LiteralSet::fromString('');
+        }
+
+        $this->caseInsensitive = $caseInsensitive;
 
         /** @var LiteralSet $result */
         $result = $node->child->accept($this);
@@ -327,14 +348,19 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): LiteralSet
     {
+        // "(*ACCEPT)" ends the match: what follows it may not be matched.
+        if (str_starts_with($node->verb, 'ACCEPT')) {
+            return new LiteralSet([''], [], false);
+        }
+
         return LiteralSet::fromString('');
     }
 
     #[\Override]
     public function visitDefine(DefineNode $node): LiteralSet
     {
-        // DEFINE blocks don't produce any literal matches
-        return LiteralSet::empty();
+        // A (DEFINE) group is never run in place: it matches nothing.
+        return LiteralSet::fromString('');
     }
 
     #[\Override]
@@ -350,11 +376,60 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
         return LiteralSet::fromString('');
     }
 
+    /**
+     * Whether a "(*ACCEPT)" inside the node may end the match there: not one
+     * in a lookaround, which only ends the assertion.
+     */
+    private function mayAccept(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return str_starts_with($node->verb, 'ACCEPT');
+        }
+
+        $children = match (true) {
+            $node instanceof GroupNode => \in_array($node->type, self::LOOKAROUNDS, true) ? [] : [$node->child],
+            $node instanceof SequenceNode => $node->children,
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof QuantifierNode => [$node->node],
+            $node instanceof ConditionalNode => [$node->yes, $node->no],
+            default => [],
+        };
+
+        foreach ($children as $child) {
+            if ($this->mayAccept($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether matching is caseless once an option setting such as "i",
+     * "-i", "s-mi" or "^i" applies.
+     */
+    private function caseInsensitiveAfter(string $flags): bool
+    {
+        if ('' === $flags) {
+            return $this->caseInsensitive;
+        }
+
+        $caseInsensitive = str_starts_with($flags, '^') ? false : $this->caseInsensitive;
+        [$on, $off] = array_pad(explode('-', ltrim($flags, '^'), 2), 2, '');
+
+        if (str_contains($off, 'i')) {
+            return false;
+        }
+
+        return $caseInsensitive || str_contains($on, 'i');
+    }
+
     private function expandCaseInsensitive(string $value): LiteralSet
     {
-        // Limit expansion length
-        if (\strlen($value) > 8) {
-            return LiteralSet::empty(); // Too expensive to compute permutations
+        // Limit expansion length. Beyond ASCII, caseless matching folds
+        // characters strtolower() does not know ("ⱥ" and "Ⱥ").
+        if (\strlen($value) > 8 || 1 === preg_match('/[\x80-\xff]/', $value)) {
+            return LiteralSet::empty();
         }
 
         $results = [''];
