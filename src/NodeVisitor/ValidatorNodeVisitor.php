@@ -68,6 +68,34 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     // Maximum cache size to prevent memory leaks in long-running processes
     private const MAX_CACHE_SIZE = 1000;
 
+    /**
+     * The largest compiled pattern PCRE2 takes with the two-byte links PHP
+     * builds it with, in code units.
+     */
+    private const MAX_COMPILED_SIZE = 65536;
+
+    /**
+     * What every compiled pattern holds around its body: the opening and
+     * closing brackets, and the end marker.
+     */
+    private const COMPILED_FRAME_SIZE = 7;
+
+    /**
+     * The opening and closing brackets of a compiled group.
+     */
+    private const COMPILED_GROUP_SIZE = 6;
+
+    /**
+     * What an optional copy of a counted group adds around the group: the
+     * "may skip" marker and the brackets that nest the next copy.
+     */
+    private const COMPILED_OPTIONAL_COPY_SIZE = 7;
+
+    /**
+     * A size no pattern reaches: the floor stops growing there.
+     */
+    private const COMPILED_SIZE_CAP = 1 << 24;
+
     // Precomputed validation sets for maximum performance
     private const VALID_ASSERTIONS = [
         'A' => true, 'z' => true, 'Z' => true,
@@ -412,6 +440,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         $this->raiseFirstLateError();
+
+        // PCRE measures the compiled pattern last, once it has read it all.
+        if ($this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
+            $this->raiseSemanticError(
+                'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
+                \strlen($node->source ?? ''),
+                'regex.pattern.too_large',
+                'A group repeated with a count is compiled once per repetition: lower the count, or repeat a single item.',
+            );
+        }
     }
 
     #[\Override]
@@ -2942,6 +2980,71 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->source = substr($source, $payloadStart, max(0, $end - 1 - $payloadStart));
         $this->positionOffset += $payloadStart;
+    }
+
+    /**
+     * The smallest size PCRE could compile the node to, in code units. Every
+     * item counts at most what PCRE spends on it, so a pattern whose floor
+     * passes the limit is one PCRE refuses: a literal character is two units,
+     * a group its brackets and its body, a branch three, a call or a
+     * reference three, anything else one or nothing. A counted group is
+     * compiled once per repetition, a counted single item once.
+     */
+    private function compiledSizeFloor(NodeInterface $node): int
+    {
+        $size = match (true) {
+            $node instanceof SequenceNode => array_sum(array_map($this->compiledSizeFloor(...), $node->children)),
+            $node instanceof AlternationNode => array_sum(array_map($this->compiledSizeFloor(...), $node->alternatives))
+                + 3 * (\count($node->alternatives) - 1),
+            $node instanceof GroupNode => $this->compiledSizeFloor($node->child) + $this->compiledGroupSize($node),
+            $node instanceof ConditionalNode => $this->compiledSizeFloor($node->yes) + $this->compiledSizeFloor($node->no)
+                + self::COMPILED_GROUP_SIZE + ($this->compiledSizeFloor($node->no) > 0 ? 3 : 0),
+            $node instanceof QuantifierNode => $this->repeatedSizeFloor($node),
+            $node instanceof LiteralNode => 2 * mb_strlen($node->value, 'UTF-8'),
+            $node instanceof SubroutineNode, $node instanceof BackrefNode => 3,
+            $node instanceof CharClassNode, $node instanceof CharTypeNode, $node instanceof DotNode,
+            $node instanceof CharLiteralNode, $node instanceof UnicodePropNode => 1,
+            default => 0,
+        };
+
+        return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * The brackets of a compiled group: those of a capturing group also hold
+     * its number. A "(?i)" that scopes nothing compiles to no group at all.
+     */
+    private function compiledGroupSize(GroupNode $node): int
+    {
+        return match (true) {
+            GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
+            GroupType::T_GROUP_CAPTURING === $node->type, GroupType::T_GROUP_NAMED === $node->type => self::COMPILED_GROUP_SIZE + 2,
+            default => self::COMPILED_GROUP_SIZE,
+        };
+    }
+
+    /**
+     * A counted group, conditional or call is compiled once per repetition:
+     * every mandatory copy as it is, every optional one inside brackets
+     * that nest the next (the innermost only behind its "may skip" marker),
+     * and an open maximum as one more copy that loops. Any other item is
+     * compiled once, with its count.
+     */
+    private function repeatedSizeFloor(QuantifierNode $node): int
+    {
+        $copy = $this->compiledSizeFloor($node->node);
+        if (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode) {
+            return $copy;
+        }
+
+        [$min, $max] = $this->getQuantifierBounds($node->quantifier);
+        if (-1 === $max) {
+            return max($min, 1) * $copy;
+        }
+
+        $optional = $max - $min;
+
+        return $min * $copy + ($optional > 0 ? ($optional - 1) * ($copy + self::COMPILED_OPTIONAL_COPY_SIZE) + $copy + 1 : 0);
     }
 
     /**
