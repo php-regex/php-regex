@@ -3762,7 +3762,7 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/customfield/classes/handler.php:80:25
+  corpus/moodle/public/customfield/classes/handler.php:83:25
       → |^(\w+_[\w_]+)\\customfield\\([\w_]+)_handler$|
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
@@ -3843,12 +3843,12 @@
          - #\/\.\/(.*?)>#ims
          + #\/\.\/(.*?)>#is
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_charset.php:233:29
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_charset.php:230:28
       → /U[A-Z][A-Z](7|8|16|32)(BE|LE)*/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_charset.php:558:24
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_charset.php:583:24
       → /\A(\n            [\x09\x0A\x0D\x20-\x7E]\n            | [\xC2-\xDF][\x80-\xBF]\n            | \xE0[\xA0-\xBF][\x80-\xBF]\n            | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}\n            | \xED[\x80-\x9F][\x80-\xBF]\n            | \xF0[\x90-\xBF][\x80-\xBF]{2}\n            | [\xF1-\xF3][\x80-\xBF]{3}\n            | \xF4[\x80-\x8F][\x80-\xBF]{2}\n            )*\z/xs
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -3861,63 +3861,63 @@
          ---
          + )*\z/x
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_mime.php:300:33
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_mime.php:295:33
       → /\r?\n(\t| )+/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_mime.php:507:36
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_mime.php:508:36
       → /^>+ {0,1}$/
      TIP 
          - /^>+ {0,1}$/
          + /^>+ ?$/
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:147:33
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:141:33
       → /(\{[0-9]+\}\r\n)/m
      WARN  Flag 'm' is useless: pattern '/(\{[0-9]+\}\r\n)/m' contains no anchors.
      TIP 
          - /(\{[0-9]+\}\r\n)/m
          + /(\{[0-9]+\}\r\n)/
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:1288:37
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:1290:36
       → /^\* VANISHED [()EARLIER]*/i
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 'E' (duplicate), 'R' (duplicate)
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2209:65
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2192:65
       → /\s+$/sm
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - /\s+$/sm
          + /\s+$/m
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2625:48
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2591:48
       → /\n[\t\s]*/
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2686:33
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php:2654:32
       → /^\* VANISHED [()EARLIER]*/i
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 'E' (duplicate), 'R' (duplicate)
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:301:50
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:296:55
       → /^[\w.-]+$/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:738:29
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:769:29
       → #/\*.*\*/#Ums
      WARN  Flag 'm' is useless: pattern '#\/\*.*\*\/#Ums' contains no anchors.
      TIP 
          - #/\*.*\*/#Ums
          + #/\*.*\*/#Us
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:1185:36
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:1223:36
       → /[.-\/\\]/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '.' and '/' explicitly instead of a range.
 
-  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:1186:36
+  corpus/moodle/public/admin/tool/messageinbound/roundcube/rcube_utils.php:1224:34
       → /[.-\/\\]/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '.' and '/' explicitly instead of a range.
@@ -5015,56 +5015,56 @@
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '(' and ')' explicitly instead of a range.
 
-  corpus/moodle/public/lib/simplepie/src/SimplePie.php:2781:102
+  corpus/moodle/public/lib/simplepie/src/SimplePie.php:2987:102
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/SimplePie.php:2806:102
+  corpus/moodle/public/lib/simplepie/src/SimplePie.php:3012:102
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/Sanitize.php:478:30
+  corpus/moodle/public/lib/simplepie/src/Sanitize.php:577:30
       → %</?(?:html|body)[^>]*?>%is
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - %</?(?:html|body)[^>]*?>%is
          + %</?(?:html|body)[^>]*?>%i
 
-  corpus/moodle/public/lib/simplepie/src/Item.php:2311:115
+  corpus/moodle/public/lib/simplepie/src/Item.php:2304:115
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/Item.php:2336:115
+  corpus/moodle/public/lib/simplepie/src/Item.php:2329:115
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/Source.php:429:117
+  corpus/moodle/public/lib/simplepie/src/Source.php:472:117
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/Source.php:442:117
+  corpus/moodle/public/lib/simplepie/src/Source.php:488:117
       → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
          + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-  corpus/moodle/public/lib/simplepie/src/Misc.php:1878:34
+  corpus/moodle/public/lib/simplepie/src/Misc.php:1918:34
       → /^([A-Za-z0-9\-._~\x{A0}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}!$&'()*+,;=@]|(%[0-9ABCDEF]{2}))+$/u
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5441,21 +5441,21 @@
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/moodle/public/lib/moodlelib.php:7952:32
+  corpus/moodle/public/lib/moodlelib.php:7961:32
       → /^<\s*\/([^\s]+?)\s*>$/s
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - /^<\s*\/([^\s]+?)\s*>$/s
          + /^<\s*\/([^\s]+?)\s*>$/
 
-  corpus/moodle/public/lib/moodlelib.php:7973:39
+  corpus/moodle/public/lib/moodlelib.php:7982:39
       → /^<!--<!\[endif\]-->$/s
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - /^<!--<!\[endif\]-->$/s
          + /^<!--<!\[endif\]-->$/
 
-  corpus/moodle/public/lib/moodlelib.php:8686:25
+  corpus/moodle/public/lib/moodlelib.php:8695:25
       → /(\/|\\){1,}/
      WARN  Quantified capturing group "(...)" with "{1,}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5463,22 +5463,22 @@
          - /(\/|\\){1,}/
          + /(\/|\\)+/
 
-  corpus/moodle/public/lib/moodlelib.php:8815:25
+  corpus/moodle/public/lib/moodlelib.php:8824:25
       → /^([0-9a-f]{1,4})(:[0-9a-f]{1,4})*$/i
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/lib/moodlelib.php:8833:36
+  corpus/moodle/public/lib/moodlelib.php:8842:36
       → /(:0)+:0$/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/lib/moodlelib.php:8838:36
+  corpus/moodle/public/lib/moodlelib.php:8847:36
       → /^(0:){2,7}/
      WARN  Quantified capturing group "(...)" with "{2,7}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/moodle/public/lib/moodlelib.php:8843:36
+  corpus/moodle/public/lib/moodlelib.php:8852:36
       → /(:0){2,6}:/
      WARN  Quantified capturing group "(...)" with "{2,6}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5531,41 +5531,41 @@
          - /\s/isSu
          + /\s/iSu
 
-  corpus/moodle/public/lib/weblib.php:821:25
+  corpus/moodle/public/lib/weblib.php:823:25
       → ~(<a [^<]*href=["|']?([^ "']*)["|']?[^>]*>([^<]*)</a>)~i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/moodle/public/lib/weblib.php:1033:29
+  corpus/moodle/public/lib/weblib.php:1035:29
       → |&lt;p&gt;(.*?)&lt;/p&gt;|m
      WARN  Flag 'm' is useless: pattern '|&lt;p&gt;(.*?)&lt;\/p&gt;|m' contains no anchors.
      TIP 
          - |&lt;p&gt;(.*?)&lt;/p&gt;|m
          + |&lt;p&gt;(.*?)&lt;/p&gt;|
 
-  corpus/moodle/public/lib/weblib.php:1037:29
+  corpus/moodle/public/lib/weblib.php:1039:29
       → |&lt;em&gt;([^<>]+?)&lt;/em&gt;|m
      WARN  Flag 'm' is useless: pattern '|&lt;em&gt;([^<>]+?)&lt;\/em&gt;|m' contains no anchors.
      TIP 
          - |&lt;em&gt;([^<>]+?)&lt;/em&gt;|m
          + |&lt;em&gt;([^<>]+?)&lt;/em&gt;|
 
-  corpus/moodle/public/lib/weblib.php:1041:29
+  corpus/moodle/public/lib/weblib.php:1043:29
       → |&lt;strong&gt;([^<>]+?)&lt;/strong&gt;|m
      WARN  Flag 'm' is useless: pattern '|&lt;strong&gt;([^<>]+?)&lt;\/strong&gt;|m' contains no anchors.
      TIP 
          - |&lt;strong&gt;([^<>]+?)&lt;/strong&gt;|m
          + |&lt;strong&gt;([^<>]+?)&lt;/strong&gt;|
 
-  corpus/moodle/public/lib/weblib.php:1274:26
+  corpus/moodle/public/lib/weblib.php:1276:26
       → ~>([[:space:]]+)<~i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/moodle/public/lib/weblib.php:1277:26
+  corpus/moodle/public/lib/weblib.php:1279:26
       → ~([\n\r])<~i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/moodle/public/lib/weblib.php:1278:26
+  corpus/moodle/public/lib/weblib.php:1280:26
       → ~>([\n\r])~i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -5728,7 +5728,7 @@
          - /(&|\||\(|\)|\~)/
          + /([&|()~])/
 
-  corpus/moodle/public/mod/assign/gradingtable.php:1868:28
+  corpus/moodle/public/mod/assign/gradingtable.php:1879:28
       → /^plugin\d+_\w+\d+$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
