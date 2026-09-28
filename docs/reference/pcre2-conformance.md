@@ -53,7 +53,7 @@ without notice; do not build on it.
 
 <!-- pcre2-conformance: generated below - do not edit -->
 
-Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4222 of 4426** extractable cases, error offset agrees on **88 of 333** shared rejections (**33** of them match one of two version-dependent offsets); **94** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
+Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4233 of 4426** extractable cases, error offset agrees on **88 of 333** shared rejections (**33** of them match one of two version-dependent offsets); **94** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
 
 ## Source
 
@@ -69,10 +69,10 @@ Against PCRE2 10.48's official test suite, under PHP's compile options: compile 
 | file | cases | skipped | extractable | verdict agrees | shared rejections | offset agrees | of which one of two version-dependent offsets | false accepts |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `testinput1` | 1379 | 82 | 1297 | 1273 | 0 | 0 | 0 | 0 |
-| `testinput2` | 2325 | 441 | 1884 | 1733 | 309 | 86 | 33 | 80 |
+| `testinput2` | 2325 | 441 | 1884 | 1742 | 309 | 86 | 33 | 80 |
 | `testinput4` | 650 | 33 | 617 | 610 | 0 | 0 | 0 | 0 |
-| `testinput5` | 817 | 189 | 628 | 606 | 24 | 2 | 0 | 14 |
-| **total** | **5171** | **745** | **4426** | **4222** | **333** | **88** | **33** | **94** |
+| `testinput5` | 817 | 189 | 628 | 608 | 24 | 2 | 0 | 14 |
+| **total** | **5171** | **745** | **4426** | **4233** | **333** | **88** | **33** | **94** |
 
 ## PHP compile context
 
@@ -105,7 +105,7 @@ Adjusted cases (4): `testinput2:6394`, `testinput2:6399`, `testinput2:6404`, `te
 | defect class | cases |
 |---|---:|
 | `offset-defect` | 245 |
-| `false-reject` | 110 |
+| `false-reject` | 99 |
 | `false-accept` | 94 |
 
 ## Fix plan
@@ -206,7 +206,7 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 
 ### False rejects
 
-110 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
+99 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
 
 ## Regenerating this table
 

@@ -75,9 +75,8 @@ final class ValidatorEdgeCaseTest extends TestCase
 
     public function test_keep_in_lookbehind(): void
     {
-        $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('\K (keep) is not allowed in lookbehinds');
-        $this->validate('/(?<=a\K)/');
+        // PHP compiles it: php-src sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
+        $this->assertTrue($this->regex->validate('/(?<=a\K)/')->isValid);
     }
 
     public function test_invalid_posix_class(): void

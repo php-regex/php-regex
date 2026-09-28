@@ -1149,26 +1149,6 @@
         "libraryVerdict": "reject",
         "libraryOffset": 8
     },
-    "testinput2:4626": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 4
-    },
-    "testinput2:4629": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 4
-    },
-    "testinput2:4633": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 13
-    },
-    "testinput2:4637": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 13
-    },
     "testinput2:4675": {
         "category": "offset-defect",
         "libraryVerdict": "reject",
@@ -1278,11 +1258,6 @@
         "category": "false-reject",
         "libraryVerdict": "reject",
         "libraryOffset": 0
-    },
-    "testinput2:5061": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 4
     },
     "testinput2:5064": {
         "category": "false-accept",
@@ -1628,26 +1603,6 @@
         "category": "offset-defect",
         "libraryVerdict": "reject",
         "libraryOffset": 16
-    },
-    "testinput2:6404": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 9
-    },
-    "testinput2:6406": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 9
-    },
-    "testinput2:6409": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 9
-    },
-    "testinput2:6411": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 9
     },
     "testinput2:6426": {
         "category": "false-reject",
@@ -2108,16 +2063,6 @@
         "category": "false-accept",
         "libraryVerdict": "accept",
         "libraryOffset": null
-    },
-    "testinput5:1646": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 4
-    },
-    "testinput5:1649": {
-        "category": "false-reject",
-        "libraryVerdict": "reject",
-        "libraryOffset": 4
     },
     "testinput5:1652": {
         "category": "offset-defect",

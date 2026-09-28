@@ -275,11 +275,11 @@ final class Pcre2CaseRunnerTest extends TestCase
         $this->assertSame('accept', $accepted['verdict']);
         $this->assertSame('pass', $accepted['outcome']);
 
-        // Library rejects the real suite pattern ("\K (keep) is not allowed
-        // in lookbehinds."): PHP accepts it, so that is a false-reject, not a
-        // pass on a shared rejection.
+        // When the library rejects a pattern the override says PHP accepts,
+        // that is a false-reject, not a pass on a shared rejection. The body
+        // only has to be one the library rejects ("[abc" is unclosed).
         $rejected = $runner->run(self::case(
-            '^abc(?<=b\Kc)d',
+            '[abc',
             'reject',
             14,
             '\K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK)',
