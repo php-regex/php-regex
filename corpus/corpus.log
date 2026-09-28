@@ -13884,27 +13884,27 @@
       → /^[[:alpha:]]{1,3}\s*:(.*)/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4361:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4358:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4377:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4374:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4611:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4620:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5137:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5159:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5162:41
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5184:41
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
