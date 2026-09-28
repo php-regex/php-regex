@@ -1989,15 +1989,11 @@ final class Parser
             return $startNode;
         }
 
-        // A quoted end, "[a-\Qz\E]", ends the range at the quoted character.
-        // A quoted run of several characters would end it at its first one
-        // and leave the rest as members, which one node cannot say: keep the
-        // members apart as before.
+        // A quoted end, "[a-\Qcz\E]", ends the range at the first quoted
+        // character; the lexer gives a class one quoted character at a time,
+        // so the rest stay members.
         if ($this->stream->check(TokenType::T_QUOTE_MODE_START)) {
-            $quoted = $this->stream->peek();
-            if (TokenType::T_LITERAL !== $quoted->type
-                || 1 !== mb_strlen($quoted->value)
-                || TokenType::T_QUOTE_MODE_END !== $this->stream->peek(2)->type) {
+            if (TokenType::T_LITERAL !== $this->stream->peek()->type) {
                 $this->stream->setPosition($beforeQuotes);
                 $this->inQuoteMode = $wasInQuoteMode;
 

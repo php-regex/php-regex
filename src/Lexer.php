@@ -728,6 +728,12 @@ final class Lexer
         $startPos = $this->position;
 
         if ('' !== $literalText) {
+            // Inside a class a quoted run stands for its characters one by
+            // one: "[\Qabc\E-z]" is a, b and the range c-z.
+            if ($this->inCharClass) {
+                $literalText = $this->byteMode ? $literalText[0] : mb_substr($literalText, 0, 1, 'UTF-8');
+            }
+
             $this->position += \strlen($literalText);
 
             return new Token(TokenType::T_LITERAL, $literalText, $startPos);
