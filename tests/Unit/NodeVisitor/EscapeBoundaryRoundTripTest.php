@@ -172,6 +172,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
         yield 'octal then quoted digit in a class' => ['pattern' => '/^[\\0\\Q1\\E]$/', 'expected' => '/^[\\0\\E1]$/', 'subjects' => ["\x00", '1', "\x01"]];
         yield 'quoted run then letter' => ['pattern' => '/^\\Qab\\Ec$/', 'expected' => '/^abc$/', 'subjects' => ['abc', 'ab']];
         yield 'quoted brace then count' => ['pattern' => '/^a\\Q{\\E2}$/', 'expected' => '/^a\\{2}$/', 'subjects' => ['a{2}', 'aa']];
+        yield 'quote end before a colon that follows no bracket in a class' => ['pattern' => '/^[a\\E:]$/', 'expected' => '/^[a:]$/', 'subjects' => ['a', ':', 'b']];
         yield 'quote ends that separate nothing are dropped' => ['pattern' => '/^a\\E\\Q\\Eb$/', 'expected' => '/^ab$/', 'subjects' => ['ab', 'a']];
         yield 'stray quote end after a quoted run' => ['pattern' => '/^\\Qa\\E\\E0$/', 'expected' => '/^a0$/', 'subjects' => ['a0', 'a']];
     }

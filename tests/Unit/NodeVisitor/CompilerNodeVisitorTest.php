@@ -223,6 +223,8 @@ final class CompilerNodeVisitorTest extends TestCase
 
         $this->assertStringContainsString('(?i)', $compiled);
         $this->assertStringNotContainsString('(?i:', $compiled);
+        // Nested, it keeps the indentation of its level.
+        $this->assertSame("/(?:\n    (?i)a\n)/", $this->compilePretty('/(?:(?i)a)/'));
     }
 
     public function test_compile_escaped_literal_metacharacters(): void

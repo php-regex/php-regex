@@ -999,9 +999,10 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
 
     /**
      * The "\E" and empty "\Q\E" written between two items, with the
-     * whitespace "x" ignores around them; null when there are none. The "\E"
-     * that closes quoted text is not among them: that text comes back
-     * escaped, with no "\Q" to close.
+     * whitespace "x" ignores around them; null when there are none. Only a
+     * digit escape or an unescaped brace or bracket asks for it, and quoted
+     * text comes back fully escaped, so the "\E" that closes it never
+     * stands between two such items.
      */
     private function writtenSeparator(int $start, int $end): ?string
     {
@@ -1012,12 +1013,6 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         $text = substr($this->source, $start, $end - $start);
         if (1 !== preg_match('/\A(?:[ \t\n\r\v\f]|\\\\E|\\\\Q\\\\E)++\z/', $text)) {
             return null;
-        }
-
-        foreach (array_reverse($this->quotedSpans()) as [$from, $to]) {
-            if ($to - $from > 4 && $to - 2 >= $start && $to <= $end) {
-                $text = substr_replace($text, '', $to - 2 - $start, 2);
-            }
         }
 
         return str_contains($text, '\\') ? $text : null;

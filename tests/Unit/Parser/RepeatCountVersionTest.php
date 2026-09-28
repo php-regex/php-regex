@@ -16,6 +16,8 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Node\GroupNode;
+use RegexParser\Node\LiteralNode;
 use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\SequenceNode;
@@ -33,7 +35,7 @@ final class RepeatCountVersionTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideNewRepeatCounts')]
-    public function test_new_repeat_count_is_text_before_php_8_4(string $pattern, bool $repeats): void
+    public function test_new_repeat_count_is_text_before_php_8_4(string $pattern, bool $repeats, string $text): void
     {
         // Whether PHP 8.4 repeats it does not matter here: before, it is text.
         unset($repeats);
@@ -44,13 +46,17 @@ final class RepeatCountVersionTest extends TestCase
             $result = $regex->validate($pattern);
             $this->assertTrue($result->isValid, \sprintf('%s compiles on PHP %d: %s', $pattern, $phpVersion, (string) $result->error));
             $this->assertFalse(self::hasBraceRepeat($regex->parse($pattern)->pattern), \sprintf('%s repeats nothing on PHP %d.', $pattern, $phpVersion));
+            // Read as text, the braces keep every character they hold.
+            $this->assertSame($text, self::literalText($regex->parse($pattern)->pattern), \sprintf('%s on PHP %d.', $pattern, $phpVersion));
         }
     }
 
     #[Test]
     #[DataProvider('provideNewRepeatCounts')]
-    public function test_new_repeat_count_repeats_from_php_8_4(string $pattern, bool $repeats): void
+    public function test_new_repeat_count_repeats_from_php_8_4(string $pattern, bool $repeats, string $text): void
     {
+        unset($text);
+
         $regex = Regex::create(['cache' => null, 'php_version' => 80400]);
 
         if (!$repeats) {
@@ -111,18 +117,18 @@ final class RepeatCountVersionTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, repeats: bool}>
+     * @return iterable<string, array{pattern: string, repeats: bool, text: string}>
      */
     public static function provideNewRepeatCounts(): iterable
     {
-        yield 'open minimum' => ['pattern' => '/a{,2}/', 'repeats' => true];
-        yield 'open minimum first' => ['pattern' => '/{,2}/', 'repeats' => false];
-        yield 'padded count' => ['pattern' => '/a{ 2 }/', 'repeats' => true];
-        yield 'padded count first' => ['pattern' => '/{ 2 }\\h/', 'repeats' => false];
-        yield 'space after the comma' => ['pattern' => '/a{2, 3}/', 'repeats' => true];
-        yield 'space before the closing brace' => ['pattern' => '/a{2 }/', 'repeats' => true];
-        yield 'padded count under x' => ['pattern' => '/(?x)a{ 2 }/', 'repeats' => true];
-        yield 'possessive open minimum' => ['pattern' => '/a{,2}+/', 'repeats' => true];
+        yield 'open minimum' => ['pattern' => '/a{,2}/', 'repeats' => true, 'text' => 'a{,2}'];
+        yield 'open minimum first' => ['pattern' => '/{,2}/', 'repeats' => false, 'text' => '{,2}'];
+        yield 'padded count' => ['pattern' => '/a{ 2 }/', 'repeats' => true, 'text' => 'a{ 2 }'];
+        yield 'padded count first' => ['pattern' => '/{ 2 }\\h/', 'repeats' => false, 'text' => '{ 2 }'];
+        yield 'space after the comma' => ['pattern' => '/a{2, 3}/', 'repeats' => true, 'text' => 'a{2, 3}'];
+        yield 'space before the closing brace' => ['pattern' => '/a{2 }/', 'repeats' => true, 'text' => 'a{2 }'];
+        yield 'padded count under x' => ['pattern' => '/(?x)a{ 2 }/', 'repeats' => true, 'text' => 'a{2}'];
+        yield 'possessive open minimum' => ['pattern' => '/a{,2}+/', 'repeats' => true, 'text' => 'a{,2}'];
     }
 
     /**
@@ -133,6 +139,20 @@ final class RepeatCountVersionTest extends TestCase
         yield 'open minimum' => ['pattern' => '/\\N{,2}/', 'offset' => 2];
         yield 'padded count' => ['pattern' => '/\\N{4 }/', 'offset' => 2];
         yield 'padded count after a letter' => ['pattern' => '/a\\N{ 4}/', 'offset' => 3];
+    }
+
+    /**
+     * The literal text the tree holds, repeated items counted once.
+     */
+    private static function literalText(NodeInterface $node): string
+    {
+        return match (true) {
+            $node instanceof LiteralNode => $node->value,
+            $node instanceof QuantifierNode => self::literalText($node->node),
+            $node instanceof SequenceNode => implode('', array_map(self::literalText(...), $node->children)),
+            $node instanceof GroupNode => self::literalText($node->child),
+            default => '',
+        };
     }
 
     private static function hasBraceRepeat(NodeInterface $node): bool
