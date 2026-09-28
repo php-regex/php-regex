@@ -428,6 +428,8 @@ echo $endAnchor->value;    // '$'
 | `(?!...)`  | Negative lookahead (GroupNode)               |
 | `(?<=...)` | Positive lookbehind (GroupNode)              |
 | `(?<!...)` | Negative lookbehind (GroupNode)              |
+| `(?*...)`, `(*napla:...)` | Non-atomic positive lookahead: a `T_GROUP_LOOKAHEAD_POSITIVE` GroupNode whose `flags` is `*` |
+| `(?<*...)`, `(*naplb:...)` | Non-atomic positive lookbehind: a `T_GROUP_LOOKBEHIND_POSITIVE` GroupNode whose `flags` is `*` |
 
 **Example:**
 ```php

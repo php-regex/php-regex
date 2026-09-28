@@ -30,8 +30,9 @@ return [
     | Maximum Lookbehind Length
     |--------------------------------------------------------------------------
     |
-    | The maximum allowed lookbehind length. Can be overridden per-pattern
-    | via (*LIMIT_LOOKBEHIND=...).
+    | The maximum length of a variable-length lookbehind, such as
+    | (?<=a{1,300}). A fixed-length lookbehind is only limited by PCRE's own
+    | ceiling of 65535 characters.
     |
     */
     'max_lookbehind_length' => Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH,

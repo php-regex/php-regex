@@ -36,7 +36,7 @@ echo PCRE_VERSION; // e.g., "10.42 2022-12-11"
 |-----------------------|------------|------------|--------|------|
 | Lookaheads            | Yes        | Yes        | Yes    | Yes  |
 | Lookbehinds           | Yes        | No         | Yes    | Yes  |
-| Variable-length lookbehind | No   | No         | No     | Yes  |
+| Variable-length lookbehind | PCRE2 10.43+, up to 255 per branch | No | No | Yes |
 | Recursion             | Yes        | No         | No     | Yes  |
 | Atomic groups         | Yes        | No         | Yes    | Yes  |
 | Possessive quantifiers| Yes        | No         | No     | Yes  |

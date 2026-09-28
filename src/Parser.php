@@ -115,6 +115,13 @@ final class Parser
         '`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}',
     ];
 
+    /**
+     * The marker a lookaround carries in its flags when it is non-atomic,
+     * "(?*...)" or "(*napla:...)": PCRE may backtrack into it. It is the
+     * character that spells it in the short form.
+     */
+    private const NON_ATOMIC_FLAG = '*';
+
     private const OUTSIDE_ATOM_TYPES = [
         TokenType::T_ANCHOR,
         TokenType::T_ASSERTION,
@@ -166,6 +173,11 @@ final class Parser
         $this->flags = $flags;
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
+        // Group names take any letter in Unicode mode: "u", or "(*UTF)" at
+        // the start.
+        $this->groupNames->readUnicodeNames(
+            str_contains($flags, 'u') || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern),
+        );
         $this->extendedMode = str_contains($flags, 'x');
         $this->inQuoteMode = false;
         $this->recursionDepth = 0;
@@ -472,7 +484,11 @@ final class Parser
             );
         }
 
-        if ($this->isAssertionNode($node)) {
+        // PCRE lets "(*ACCEPT)" be repeated, "(*ACCEPT)??" included: it wraps
+        // it in a group. No other verb takes a quantifier.
+        $isAccept = $node instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::|$)/', $node->verb);
+
+        if (!$isAccept && $this->isAssertionNode($node)) {
             $nodeName = $this->getAssertionNodeName($node);
 
             throw $this->parserException(
@@ -493,14 +509,6 @@ final class Parser
             $node instanceof PcreVerbNode => '(*'.$node->verb.')',
             default => $backslash.'K',
         };
-    }
-
-    private function isEmptyGroup(GroupNode $node): bool
-    {
-        $child = $node->child;
-
-        return ($child instanceof LiteralNode && '' === $child->value)
-            || ($child instanceof SequenceNode && empty($child->children));
     }
 
     private function parseAtom(): NodeInterface
@@ -756,15 +764,15 @@ final class Parser
         }
 
         // \g<name>, \g'name' or \g{name} (non-numeric) -> Subroutine
-        if (preg_match('/^\\\\g<([+-]?\w++)>$/', $value, $m)) {
+        if (preg_match('/^\\\\g<([+-]?[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        if (preg_match('/^\\\\g\'([+-]?\w++)\'$/', $value, $m)) {
+        if (preg_match('/^\\\\g\'([+-]?[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        if (preg_match('/^\\\\g\{(\w++)\}$/', $value, $m)) {
+        if (preg_match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
@@ -861,6 +869,12 @@ final class Parser
             return $this->parsePcreVerbInGroup($startPosition);
         }
 
+        // 2.0 "(?(?C1)(?=a)yes|no)": a callout may run before the assertion
+        // that is the condition.
+        if ($this->stream->match(TokenType::T_CALLOUT)) {
+            return $this->parseCalloutConditional($startPosition);
+        }
+
         // 2.1 "(?(" followed by "(*...)" is a conditional whose condition is
         // spelled as a verb: "(?(*pla:a)yes|no)".
         if ($this->stream->match(TokenType::T_PCRE_VERB)) {
@@ -951,6 +965,31 @@ final class Parser
     }
 
     /**
+     * Parses "(?(?C1)(?=a)yes|no)": the condition is the callout followed by
+     * the assertion, which PCRE requires there. Both are kept, in order, as
+     * the condition.
+     */
+    private function parseCalloutConditional(int $startPosition): NodeInterface
+    {
+        $callout = $this->parseCallout();
+        $this->skipEmptyQuotes();
+
+        if (!$this->stream->match(TokenType::T_GROUP_MODIFIER_OPEN)) {
+            $position = $this->stream->current()->position;
+
+            throw $this->parserException(
+                \sprintf('Invalid conditional condition at position %d: a callout in a condition must be followed by an assertion.', $position),
+                $position,
+            );
+        }
+
+        $assertion = $this->parseLookaroundCondition($this->stream->previous()->position);
+        $condition = new SequenceNode([$callout, $assertion], $callout->getStartPosition(), $assertion->getEndPosition());
+
+        return $this->parseConditionalBranches($startPosition, $condition);
+    }
+
+    /**
      * Parses a conditional whose condition is written as a verb:
      * "(?(*pla:a)yes|no)". PCRE only takes a lookaround there; a verb, an
      * atomic group or a script run is refused.
@@ -961,7 +1000,7 @@ final class Parser
         $verbEndPosition = $verbStartPosition + \strlen($verbToken->value) + 3; // +3 for "(*)"
 
         $read = PcreVerb::read($verbToken->value);
-        if (null === $read->assertion || GroupType::T_GROUP_ATOMIC === $read->assertion) {
+        if (null === $read->assertion || GroupType::T_GROUP_ATOMIC === $read->assertion || $read->nonAtomic) {
             // PCRE stops at the colon of a named group, or at the "*".
             $position = 1 === preg_match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
                 ? $verbStartPosition + 2 + \strlen($name[0])
@@ -1011,7 +1050,7 @@ final class Parser
                 $this->parseSubPattern((string) $read->payload, $startPosition + 2 + $read->payloadOffset),
                 $read->assertion,
                 null,
-                null,
+                $read->nonAtomic ? self::NON_ATOMIC_FLAG : null,
                 $startPosition,
                 $endPosition,
             );
@@ -1072,6 +1111,16 @@ final class Parser
      */
     private function parseStandardGroup(int $startPos): NodeInterface
     {
+        // "(?<*...)" is the non-atomic lookbehind; the "*" arrives as a
+        // quantifier token.
+        if ($this->stream->check(TokenType::T_QUANTIFIER) && '*' === $this->stream->current()->value) {
+            $this->stream->advance();
+            $expr = $this->parseScopedAlternation();
+            $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
+
+            return $this->createGroupNode($expr, GroupType::T_GROUP_LOOKBEHIND_POSITIVE, $startPos, $endToken, null, self::NON_ATOMIC_FLAG);
+        }
+
         // "(?<=...)" and "(?<!...)" are lookbehinds; anything else after the
         // "<" is the name of a group.
         return $this->matchLookaround($startPos, self::LOOKBEHINDS)
@@ -1251,14 +1300,19 @@ final class Parser
         $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
         $modifiers = InlineFlags::read($flags, $letters);
 
-        if (null === $modifiers) {
+        // "(?)", "(?-)" and "(?-:...)" set nothing, and PCRE takes them as
+        // such; "(?A:" or "(?{" is no option setting at all.
+        $setsNothing = ('' === $flags && $this->stream->check(TokenType::T_GROUP_CLOSE))
+            || ('-' === $flags && ($this->stream->check(TokenType::T_GROUP_CLOSE) || $this->stream->checkLiteral(':')));
+
+        if (null === $modifiers && !$setsNothing) {
             throw $this->parserException(
                 \sprintf('Invalid group modifier syntax at position %d', $startPosition),
                 $startPosition,
             );
         }
 
-        $conflicts = $modifiers->conflicts();
+        $conflicts = $modifiers?->conflicts() ?? '';
         if ('' !== $conflicts) {
             throw $this->parserException(
                 \sprintf('Conflicting flags: %s cannot be both set and unset at position %d', $conflicts, $startPosition),
@@ -1269,14 +1323,14 @@ final class Parser
         $wasExtended = $this->extendedMode;
         $wasAllowingDuplicates = $this->groupNames->duplicatesAllowed();
 
-        if ($modifiers->turnsOn('J')) {
+        if ($modifiers?->turnsOn('J')) {
             $this->groupNames->allowDuplicates(true);
         }
-        if ($modifiers->turnsOff('J')) {
+        if ($modifiers?->turnsOff('J')) {
             $this->groupNames->allowDuplicates(false);
         }
 
-        $this->extendedMode = $modifiers->inForce('x', $this->extendedMode);
+        $this->extendedMode = $modifiers?->inForce('x', $this->extendedMode) ?? $this->extendedMode;
 
         $expr = null;
         if ($this->stream->matchLiteral(':')) {
@@ -1482,6 +1536,21 @@ final class Parser
      */
     private function parseNumericCondition(int $startPosition): ?BackrefNode
     {
+        // "(?(-1)...)" and "(?(+1)...)" count groups from here; the "+"
+        // arrives as a quantifier token.
+        $sign = '';
+        if ($this->stream->checkLiteral('-')
+            || ($this->stream->check(TokenType::T_QUANTIFIER) && '+' === $this->stream->current()->value)) {
+            $sign = $this->stream->current()->value;
+            $this->stream->advance();
+
+            if (!$this->isLiteralDigitToken()) {
+                $this->stream->rewind(1);
+
+                return null;
+            }
+        }
+
         if (!$this->isLiteralDigitToken()) {
             return null;
         }
@@ -1491,7 +1560,7 @@ final class Parser
             static fn (string $c): bool => ctype_digit($c),
         ));
 
-        return new BackrefNode($num, $startPosition, $this->stream->current()->position);
+        return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
     }
 
     /**
@@ -1499,6 +1568,13 @@ final class Parser
      */
     private function parseNamedCondition(int $startPosition): ?BackrefNode
     {
+        // "(?('name')...)": the reader takes the quotes along with the name.
+        if ($this->stream->checkLiteral("'")) {
+            $name = $this->groupNames->read($startPosition, false);
+
+            return new BackrefNode($name, $startPosition, $this->stream->current()->position);
+        }
+
         if (!$this->stream->matchLiteral('<') && !$this->stream->matchLiteral('{')) {
             return null;
         }
@@ -1521,6 +1597,15 @@ final class Parser
         }
 
         $endPosition = $this->stream->previous()->position;
+
+        // "(?(R&name)...)" asks whether the most recent recursion is into the
+        // named group.
+        if ($this->stream->matchLiteral('&')) {
+            $name = $this->groupNames->read($this->stream->current()->position, false);
+
+            return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
+        }
+
         $numericPart = '';
         $sawMinus = false;
 
@@ -1757,8 +1842,19 @@ final class Parser
     private function isEmptyNode(NodeInterface $node): bool
     {
         return ($node instanceof LiteralNode && '' === $node->value)
-            || ($node instanceof GroupNode && $this->isEmptyGroup($node))
+            || ($node instanceof GroupNode && $this->isOptionSetting($node))
             || ($node instanceof SequenceNode && empty($node->children));
+    }
+
+    /**
+     * "(?i)" changes options and matches nothing, so it cannot be repeated.
+     * Any other group can, even an empty one: "(){3}" and "(?i:)*" are
+     * valid PCRE.
+     */
+    private function isOptionSetting(GroupNode $node): bool
+    {
+        return GroupType::T_GROUP_INLINE_FLAGS === $node->type
+            && ')' === ($this->pattern[$node->getStartPosition() + 2 + \strlen((string) $node->flags)] ?? ')');
     }
 
     /**
@@ -1826,12 +1922,17 @@ final class Parser
         [$startNode] = $this->parseCharClassAtom($startPosition);
 
         // Check for Range
+        $rangePosition = $this->stream->getPosition();
         if (!$this->stream->match(TokenType::T_RANGE)) {
             return $startNode;
         }
 
+        // PCRE skips "\E" and an empty "\Q\E" after the "-": "[a-\Ec]" is
+        // the range a-c, and in "[a-\Q\E]" the "-" is a plain member.
+        $this->skipEmptyQuotes();
+
         if ($this->stream->check(TokenType::T_CHAR_CLASS_CLOSE)) {
-            $this->stream->rewind(1);
+            $this->stream->setPosition($rangePosition);
 
             return $startNode;
         }
@@ -1866,6 +1967,30 @@ final class Parser
     }
 
     /**
+     * Skip the "\E" and empty "\Q\E" that PCRE reads as nothing.
+     */
+    private function skipEmptyQuotes(): void
+    {
+        while (true) {
+            if ($this->stream->match(TokenType::T_QUOTE_MODE_END)) {
+                $this->inQuoteMode = false;
+
+                continue;
+            }
+
+            if ($this->stream->check(TokenType::T_QUOTE_MODE_START)
+                && TokenType::T_QUOTE_MODE_END === $this->stream->peek()->type) {
+                $this->stream->advance();
+                $this->stream->advance();
+
+                continue;
+            }
+
+            return;
+        }
+    }
+
+    /**
      * parses a subroutine name consisting of alphanumeric characters and underscores
      */
     private function parseSubroutineName(): string
@@ -1877,7 +2002,7 @@ final class Parser
         ) {
             if ($this->stream->check(TokenType::T_LITERAL) || $this->stream->check(TokenType::T_LITERAL_ESCAPED)) {
                 $char = $this->stream->current()->value;
-                if (!preg_match('/^\w$/', $char)) {
+                if (1 !== preg_match('/^[\p{L}\p{Nd}_]$/u', $char)) {
                     throw $this->parserException(
                         'Unexpected token in subroutine name: '.$char,
                         $this->stream->current()->position,

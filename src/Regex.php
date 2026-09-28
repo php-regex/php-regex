@@ -95,7 +95,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-cab9a698175ca8e3bbc6aaeb0f22d80a';
+    public const CACHE_VERSION = 'ast-865ed1ebee2bfad5b1a7224708510295';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -103,7 +103,9 @@ final readonly class Regex
     public const DEFAULT_MAX_PATTERN_LENGTH = 100_000;
 
     /**
-     * Default maximum allowed lookbehind length.
+     * Default maximum length of a variable-length lookbehind, PCRE2's own
+     * default for max_varlookbehind. A fixed-length lookbehind is only
+     * limited by PCRE's ceiling of 65535 characters.
      */
     public const DEFAULT_MAX_LOOKBEHIND_LENGTH = 255;
 
@@ -119,7 +121,7 @@ final readonly class Regex
      * Create a new Regex instance with specified configuration.
      *
      * @param int            $maxPatternLength      Maximum allowed pattern length
-     * @param int            $maxLookbehindLength   Maximum allowed lookbehind length
+     * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind
      * @param CacheInterface $cache                 Cache implementation for parsed patterns
      * @param array<string>  $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
      * @param bool           $runtimePcreValidation Whether to validate against PCRE runtime

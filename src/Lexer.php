@@ -53,17 +53,38 @@ final class Lexer
     private const UNICODE_ESCAPE = '\\\\ x [0-9a-fA-F]{1,2} | \\\\ u [0-9a-fA-F]{4} | \\\\ u\\{[0-9a-fA-F]+\\}'
         .' | \\\\ x\\{ [\\x20\\t]* [0-9a-fA-F]+ [\\x20\\t]* \\}';
 
-    private const UNICODE_NAMED = '\\\\ N\\{ (?: [\\x20\\t]* U\\+[0-9a-fA-F]+ [\\x20\\t]* | [a-zA-Z0-9_ -]+ ) \\}';
+    /*
+     * "\N{4}" is "\N" repeated four times, not a character name: PCRE2 10.48
+     * reads a repeat count first, spaces and "{,n}" included.
+     */
+    private const REPEAT_COUNT = '\\{ [\\x20\\t]* (?: \\d+ [\\x20\\t]* (?: , [\\x20\\t]* \\d* [\\x20\\t]* )? | , [\\x20\\t]* \\d+ [\\x20\\t]* ) \\}';
+
+    private const UNICODE_NAMED = '\\\\ N (?!'.self::REPEAT_COUNT.') \\{ (?: [\\x20\\t]* U\\+[0-9a-fA-F]+ [\\x20\\t]* | [a-zA-Z0-9_ -]+ ) \\}';
+
+    /*
+     * A callout string, between any of the delimiters PCRE2 takes; doubling
+     * the closing one puts it in the string, ")" included: (?C"a)b""c").
+     */
+    private const CALLOUT_STRING = '" (?: [^"] | "" )*+ " | \' (?: [^\'] | \'\' )*+ \' | ` (?: [^`] | `` )*+ `'
+        .' | \\^ (?: [^^] | \\^\\^ )*+ \\^ | % (?: [^%] | %% )*+ % | \\# (?: [^#] | \\#\\# )*+ \\#'
+        .' | \\$ (?: [^$] | \\$\\$ )*+ \\$ | \\{ (?: [^}] | \\}\\} )*+ \\}';
+
+    /*
+     * The characters of a group name: letters, decimal digits and "_". In a
+     * pattern read as UTF-8 that covers every script, as PCRE2 10.43+ does
+     * under "u"; whether the pattern is in Unicode mode is the parser's call.
+     */
+    private const NAME_CHARS = '\\p{L}\\p{Nd}_';
 
     // Optimized regex patterns broken into focused components
     private const PATTERNS_OUTSIDE = [
         'T_COMMENT_OPEN' => '\\(\\?\\#',
-        'T_CALLOUT' => '\\(\\?C [^)]* \\)',
+        'T_CALLOUT' => '\\(\\?C (?: (?:'.self::CALLOUT_STRING.') (?=\\)) | [^)]* ) \\)',
         // "(*atomic:(a(b)c))" nests as deep as it likes, so the body of an
         // alphabetic assertion or a script run — a lowercase name and a
         // colon, or "(?*" — is matched by recursion. Any other verb ends at
         // the first ")", as PCRE reads it: "(*:a(b)" is a mark named "a(b".
-        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: [^()]++ | \\( (?P>verbBody) \\) )+ )'
+        'T_PCRE_VERB' => '\\( (?: \\?\\* (?<verbBody> (?: [^()]++ | \\( (?P>verbBody) \\) )* )'
             .' | \\* [a-z_]++ : (?P>verbBody) | \\* [^)]* ) \\)',
         'T_GROUP_MODIFIER_OPEN' => '\\(\\?',
         'T_GROUP_OPEN' => '\\(',
@@ -75,9 +96,9 @@ final class Lexer
         'T_ANCHOR' => '\\^|\\$',
         'T_ASSERTION' => '\\\\ (?: b\\{g\\} | B\\{g\\} | [AzZGbB] )',
         'T_KEEP' => '\\\\ K',
-        'T_CHAR_TYPE' => '\\\\ (?: N(?!\\{) | [dswDSWhvRCXHV] )',
-        'T_G_REFERENCE' => '\\\\ g (?: \\{[a-zA-Z0-9_+-]+\\} | <[a-zA-Z0-9_+-]+> | \'[a-zA-Z0-9_+-]+\' | [0-9+-]+ )?',
-        'T_BACKREF' => '\\\\ (?: k(?:<[a-zA-Z0-9_]+> | \\{[a-zA-Z0-9_]+\\} | \'[a-zA-Z0-9_]+\') | (?<v_backref_num> [1-9]\\d*) )',
+        'T_CHAR_TYPE' => '\\\\ (?: N (?: (?!\\{) | (?='.self::REPEAT_COUNT.') ) | [dswDSWhvRCXHV] )',
+        'T_G_REFERENCE' => '\\\\ g (?: \\{['.self::NAME_CHARS.'+-]+\\} | <['.self::NAME_CHARS.'+-]+> | \'['.self::NAME_CHARS.'+-]+\' | [0-9+-]+ )?',
+        'T_BACKREF' => '\\\\ (?: k(?:<['.self::NAME_CHARS.']+> | \\{['.self::NAME_CHARS.']+\\} | \'['.self::NAME_CHARS.']+\') | (?<v_backref_num> [1-9]\\d*) )',
         'T_OCTAL_LEGACY' => '\\\\ (?: [0-7]{3} | [0-7]{2} | [0-7] )',
         'T_OCTAL' => self::OCTAL_BRACED,
         'T_UNICODE' => self::UNICODE_ESCAPE,

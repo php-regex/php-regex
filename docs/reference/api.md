@@ -90,7 +90,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 |---------------------------|----------------------------------------|-------------------|--------------------------------|---------------------------------|
 | `cache`                   | `null` \| `string` \| `CacheInterface` | `FilesystemCache` | Cache for parsed ASTs          | High - speeds repeated patterns |
 | `max_pattern_length`      | `int`                                  | `100_000`         | Maximum pattern length         | Low - prevents abuse            |
-| `max_lookbehind_length`   | `int`                                  | `255`             | Maximum lookbehind length      | Low - PCRE compliance           |
+| `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
 | `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
 | `max_recursion_depth`     | `int`                                  | `1024`            | Parser recursion guard         | Low - prevents stack overflow   |

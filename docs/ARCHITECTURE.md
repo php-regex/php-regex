@@ -187,7 +187,7 @@ RegexParser can cache ASTs via `CacheInterface`. By default it uses a filesystem
 Limits are enforced in `RegexOptions`:
 
 - `max_pattern_length`
-- `max_lookbehind_length`
+- `max_lookbehind_length` (variable-length lookbehinds; a fixed-length one is only limited by PCRE's 65535)
 - `max_recursion_depth`
 - `php_version` (feature validation)
 

@@ -43,6 +43,17 @@ final readonly class PcreVerb
     ];
 
     /**
+     * The non-atomic assertions: a lookaround PCRE may backtrack into. Only
+     * the positive ones exist.
+     */
+    private const NON_ATOMIC_ASSERTIONS = [
+        'non_atomic_positive_lookahead' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+        'napla' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+        'non_atomic_positive_lookbehind' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+        'naplb' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+    ];
+
+    /**
      * The two spellings of a script run.
      */
     private const SCRIPT_RUN_PREFIXES = ['script_run:', 'sr:'];
@@ -69,10 +80,20 @@ final readonly class PcreVerb
          * Where the payload starts, relative to the verb text.
          */
         public int $payloadOffset = 0,
+        /**
+         * Whether the assertion is non-atomic: "(*napla:...)", "(?*...)".
+         */
+        public bool $nonAtomic = false,
     ) {}
 
     public static function read(string $verb): self
     {
+        // "(?*...)" is the short spelling of "(*napla:...)"; the lexer hands
+        // it over as the text after "(?".
+        if (str_starts_with($verb, '*')) {
+            return new self($verb, GroupType::T_GROUP_LOOKAHEAD_POSITIVE, substr($verb, 1), null, 1, true);
+        }
+
         // "(*:name)" and "(*=name)" are shorthands for a mark.
         if ('' !== $verb && (str_starts_with($verb, ':') || str_starts_with($verb, '='))) {
             $verb = 'MARK'.$verb;
@@ -80,9 +101,16 @@ final readonly class PcreVerb
 
         $colon = strpos($verb, ':');
         if (false !== $colon) {
-            $assertion = self::ASSERTIONS[strtolower(substr($verb, 0, $colon))] ?? null;
+            $name = strtolower(substr($verb, 0, $colon));
+            $assertion = self::ASSERTIONS[$name] ?? null;
             if (null !== $assertion) {
                 return new self($verb, $assertion, substr($verb, $colon + 1), null, $colon + 1);
+            }
+
+            // PCRE only knows the lowercase spelling of these.
+            $nonAtomic = self::NON_ATOMIC_ASSERTIONS[substr($verb, 0, $colon)] ?? null;
+            if (null !== $nonAtomic) {
+                return new self($verb, $nonAtomic, substr($verb, $colon + 1), null, $colon + 1, true);
             }
         }
 

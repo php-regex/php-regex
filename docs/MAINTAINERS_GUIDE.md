@@ -48,7 +48,7 @@ Your app -> RegexParser -> AST + visitors -> results
 |---------------------------|-------------------------------------------|
 | `cache`                   | Configure caching behavior                |
 | `max_pattern_length`      | Set maximum pattern length                |
-| `max_lookbehind_length`   | Configure lookbehind limits               |
+| `max_lookbehind_length`   | Limit variable-length lookbehinds         |
 | `runtime_pcre_validation` | Enable runtime PCRE checks                |
 | `redos_ignored_patterns`  | Skip ReDoS analysis for specific patterns |
 | `max_recursion_depth`     | Set parser recursion limit                |

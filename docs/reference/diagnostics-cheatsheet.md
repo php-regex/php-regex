@@ -33,14 +33,14 @@ Fast fixes for the most common RegexParser diagnostics. Use this as a quick refe
 // ERROR
 preg_match('/(?<=a+)b/', $input);
 
-// FIX 1: Use bounded quantifier
+// FIX 1: Use a fixed length
+preg_match('/(?<=a{100})b/', $input);
+
+// FIX 2: Use a bounded quantifier (variable length needs PCRE2 10.43+, PHP 8.4)
 preg_match('/(?<=a{1,100})b/', $input);
 
-// FIX 2: Use lookahead instead
+// FIX 3: Use lookahead instead
 preg_match('/(?=(a+))b\1/', $input);
-
-// FIX 3: Use (*LIMIT_LOOKBEHIND) for controlled patterns
-preg_match('/(*LIMIT_LOOKBEHIND=1000)(?<=a+)b/', $input);
 ```
 
 ---

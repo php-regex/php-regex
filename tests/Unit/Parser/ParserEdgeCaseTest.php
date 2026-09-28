@@ -15,6 +15,7 @@ namespace RegexParser\Tests\Unit\Parser;
 
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
+use RegexParser\Node\QuantifierNode;
 use RegexParser\Regex;
 
 final class ParserEdgeCaseTest extends TestCase
@@ -28,11 +29,11 @@ final class ParserEdgeCaseTest extends TestCase
 
     public function test_quantifier_on_empty_sequence(): void
     {
-        // Case: /(?:)+/ -> Empty group (empty sequence) quantified
-        // This triggers the condition "if ($node instanceof LiteralNode && '' === $node->value)" in parseQuantifiedAtom
-        $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier without target');
-        $this->regex->parse('/(?:)+/');
+        // Case: /(?:)+/ -> Empty group (empty sequence) quantified.
+        // preg_match() on PCRE2 10.48 and 10.40 compiles it: a group, even an
+        // empty one, can be repeated.
+        $ast = $this->regex->parse('/(?:)+/');
+        $this->assertInstanceOf(QuantifierNode::class, $ast->pattern);
     }
 
     public function test_subroutine_empty_name(): void

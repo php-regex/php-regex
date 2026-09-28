@@ -123,6 +123,24 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         'LIMIT_LOOKBEHIND' => true,
     ];
 
+    /**
+     * PCRE's own ceiling on a fixed-length lookbehind, the same on every
+     * PCRE2 release; max_lookbehind_length only bounds variable ones.
+     */
+    private const MAX_FIXED_LOOKBEHIND_LENGTH = 65535;
+
+    /**
+     * How many branches PCRE measures for one lookbehind before it gives up,
+     * which it only reaches in a pattern with a branch reset: there it cannot
+     * keep the length of a group once measured.
+     */
+    private const MAX_LOOKBEHIND_BRANCH_MEASURES = 1000;
+
+    /**
+     * A group name in Unicode mode, and in any mode once read by the lexer.
+     */
+    private const GROUP_NAME = '[_\p{L}][_\p{L}\p{Nd}]*+';
+
     private const VALID_POSIX_CLASSES = [
         'alnum' => true, 'alpha' => true, 'ascii' => true,
         'blank' => true, 'cntrl' => true, 'digit' => true,
@@ -195,6 +213,47 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private ?int $startOfPatternEnd = null;
 
+    /**
+     * The groups each number and each name points to, for the length of a
+     * call or a reference inside a lookbehind.
+     *
+     * @var array<int, list<GroupNode>>
+     */
+    private array $groupsByNumber = [];
+
+    /**
+     * @var array<string, list<GroupNode>>
+     */
+    private array $groupsByName = [];
+
+    /**
+     * The number the next group would take where each call or reference
+     * sits, keyed by node, so "(?-1)" can be resolved.
+     *
+     * @var array<int, int>
+     */
+    private array $nextGroupNumberAt = [];
+
+    /**
+     * The groups a branch reset holds, by node: a back reference to one of
+     * them has no length PCRE can know in a lookbehind.
+     *
+     * @var array<int, true>
+     */
+    private array $groupsInBranchReset = [];
+
+    private bool $hasBranchReset = false;
+
+    /**
+     * The capturing groups around the node being visited, by node: calling
+     * one of them from a lookbehind inside it is a recursion.
+     *
+     * @var array<int, true>
+     */
+    private array $enclosingGroups = [];
+
+    private int $lookbehindBranchMeasures = 0;
+
     private GroupNumbering $groupNumbering;
 
     /**
@@ -244,6 +303,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->unicodeMode = str_contains($node->flags, 'u')
             || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
+        $this->groupsByNumber = [];
+        $this->groupsByName = [];
+        $this->nextGroupNumberAt = [];
+        $this->groupsInBranchReset = [];
+        $this->hasBranchReset = false;
+        $this->enclosingGroups = [];
+        $nextGroupNumber = 1;
+        $this->indexGroups($node->pattern, $nextGroupNumber);
         $this->captureSequence = $this->groupNumbering->captureSequence;
         $this->captureIndex = 0;
         $this->lookbehindLimit = $this->extractLookbehindLimit($node->pattern) ?? $this->maxLookbehindLength;
@@ -318,10 +385,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->source = null;
         }
 
+        $enclosingGroups = $this->enclosingGroups;
+        if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+            $this->enclosingGroups[spl_object_id($node)] = true;
+        }
+
         try {
             $node->child->accept($this);
         } finally {
             $this->source = $source;
+            $this->enclosingGroups = $enclosingGroups;
         }
 
         $this->previousNode = $previous;
@@ -570,6 +643,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return;
         }
 
+        // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
+        // from where they stand.
+        if (preg_match('/^[+-]\d++$/', $ref)) {
+            $this->assertRelativeReferenceExists((int) $ref, $node->startPosition, 'regex.backref.relative', 'Condition');
+
+            return;
+        }
+
         // Numeric conditionals without a leading backslash (e.g., (?(2)...))
         if (preg_match('/^(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
@@ -593,7 +674,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         // Optimized named backreference validation
-        if (preg_match('/^\\\\k[<{\'](?<name>\w++)[>}\']$/', $ref, $matches)) {
+        if (preg_match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             $name = $matches['name'];
             if (!$this->groupNumbering->hasNamedGroup($name)) {
                 $suggestions = $this->getNameSuggestions($name);
@@ -778,6 +859,15 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             } elseif (preg_match('/^R-?\d++$/', $ref)) {
                 $num = (int) substr($ref, 1);
                 $this->assertSubroutineReferenceExists($num, $node->condition->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
+            } elseif (str_starts_with($ref, 'R&')) {
+                // "(?(R&name)...)": the group has to exist.
+                if (!$this->groupNumbering->hasNamedGroup(substr($ref, 2))) {
+                    $this->raiseSemanticError(
+                        \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
+                        $node->condition->startPosition,
+                        'regex.subroutine.missing_named_group',
+                    );
+                }
             } else {
                 $node->condition->accept($this);
             }
@@ -788,6 +878,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
         ], true)) {
             // This is (?(?=...)...) etc. This is valid.
+            $node->condition->accept($this);
+        } elseif ($this->isCalloutThenAssertion($node->condition)) {
+            // "(?(?C1)(?=a)...)": a callout, then the assertion that decides.
             $node->condition->accept($this);
         } elseif ($node->condition instanceof AssertionNode && 'DEFINE' === $node->condition->value) {
             // (?(DEFINE)...) This is valid.
@@ -1119,7 +1212,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private function isBareNamedBackref(string $ref): bool
     {
-        return 1 === preg_match('/^[A-Za-z_]\w*+$/', $ref);
+        return 1 === preg_match('/^'.self::GROUP_NAME.'$/u', $ref);
     }
 
     private function validateUnicode(CharLiteralNode $node): void
@@ -1438,7 +1531,42 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        $lengthRange = $node->child->accept(new LengthRangeNodeVisitor());
+        // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
+        // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
+        $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
+        $this->lookbehindBranchMeasures = 0;
+        $lengths = [];
+        foreach ($branches as $branch) {
+            // A group the lookbehind sits in is being measured already.
+            $lengths[] = $this->lookbehindLength($branch, $this->enclosingGroups);
+
+            if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES) {
+                $this->raiseSemanticError(
+                    'Lookbehind is too complicated: in a pattern with a branch reset, PCRE gives up measuring it.',
+                    $node->startPosition,
+                    'regex.lookbehind.too_complex',
+                    'Call fewer groups from the lookbehind, or drop the branch reset.',
+                );
+            }
+        }
+
+        // One branch of variable length makes the whole lookbehind variable,
+        // and then every branch answers to the variable-length limit.
+        $variable = false;
+        foreach ($lengths as [$min, $max]) {
+            $variable = $variable || $min !== $max;
+        }
+
+        foreach ($lengths as $length) {
+            $this->validateLookbehindBranchLength($node, $length, $variable);
+        }
+    }
+
+    /**
+     * @param array{0: int, 1: int|null} $lengthRange
+     */
+    private function validateLookbehindBranchLength(GroupNode $node, array $lengthRange, bool $variable): void
+    {
         [$min, $max] = $lengthRange;
 
         if (null === $max) {
@@ -1466,7 +1594,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        if ($max > $this->lookbehindLimit) {
+        // A fixed length is only capped by PCRE itself; a variable one by
+        // max_lookbehind_length, which stands for PCRE2's max_varlookbehind.
+        if (!$variable && $max > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
+            $this->raiseSemanticError(
+                \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (length=%d).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $max),
+                $node->startPosition,
+                'regex.lookbehind.too_long',
+                'Shorten the lookbehind.',
+            );
+        }
+
+        if ($variable && $max > $this->lookbehindLimit) {
             $this->raiseSemanticError(
                 \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->lookbehindLimit, $max),
                 $node->startPosition,
@@ -1474,6 +1613,265 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 \sprintf('Reduce lookbehind length or use (*LIMIT_LOOKBEHIND=%d).', $max),
             );
         }
+    }
+
+    /**
+     * The length range of a lookbehind branch, the way PCRE measures it: a
+     * call or a reference is as long as the group it names, a lookaround is
+     * zero-width however often it is repeated, and a call back into a group
+     * being measured has no bound.
+     *
+     * It counts the branches it measures as it goes, hence impure.
+     *
+     * @param array<int, true> $expanding the groups being measured, by node
+     *
+     * @return array{0: int, 1: int|null}
+     *
+     * @phpstan-impure
+     */
+    private function lookbehindLength(NodeInterface $node, array $expanding): array
+    {
+        if ($node instanceof SequenceNode) {
+            [$min, $max] = [0, 0];
+            foreach ($node->children as $child) {
+                [$childMin, $childMax] = $this->lookbehindLength($child, $expanding);
+                $min += $childMin;
+                $max = null === $max || null === $childMax ? null : $max + $childMax;
+            }
+
+            return [$min, $max];
+        }
+
+        if ($node instanceof AlternationNode || $node instanceof ConditionalNode) {
+            $alternatives = $node instanceof AlternationNode ? $node->alternatives : [$node->yes, $node->no];
+            [$min, $max] = [\PHP_INT_MAX, 0];
+            foreach ($alternatives as $alternative) {
+                [$altMin, $altMax] = $this->lookbehindLength($alternative, $expanding);
+                $min = min($min, $altMin);
+                $max = null === $max || null === $altMax ? null : max($max, $altMax);
+            }
+
+            return [$min, $max];
+        }
+
+        if ($node instanceof GroupNode) {
+            if ($this->isLookaround($node)) {
+                return [0, 0];
+            }
+
+            $this->countLookbehindBranches($node->child);
+
+            return $this->lookbehindLength($node->child, $expanding);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$childMin, $childMax] = $this->lookbehindLength($node->node, $expanding);
+            [$qMin, $qMax] = $this->getQuantifierBounds($node->quantifier);
+
+            // A repeated lookahead, "(?=.)*" or "(*pla:.)+", adds nothing.
+            // Only a lookahead read directly under the quantifier does: a
+            // repeated lookbehind, a lookahead inside another group, or a
+            // repeated "(*ACCEPT)" has no bound, as PCRE measures them.
+            if ($node->node instanceof GroupNode && \in_array($node->node->type, [
+                GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+            ], true)) {
+                return [0, 0];
+            }
+
+            return [$childMin * $qMin, null === $childMax || -1 === $qMax ? null : $childMax * $qMax];
+        }
+
+        if ($node instanceof DefineNode) {
+            return [0, 0];
+        }
+
+        // "\X" is a grapheme cluster of any length, here or in a group a call
+        // or a reference reaches.
+        if ($node instanceof CharTypeNode && 'X' === $node->value) {
+            return [0, null];
+        }
+
+        if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
+            return $this->referencedGroupLength($node, $expanding);
+        }
+
+        return $node->accept(new LengthRangeNodeVisitor());
+    }
+
+    /**
+     * @param array<int, true> $expanding
+     *
+     * @return array{0: int, 1: int|null}
+     */
+    private function referencedGroupLength(SubroutineNode|BackrefNode $node, array $expanding): array
+    {
+        $groups = $node instanceof SubroutineNode ? $this->groupsCalledBy($node) : $this->groupsReferencedBy($node);
+
+        // No group, a whole-pattern recursion, or a reference to a name that
+        // several groups share: PCRE finds no bound.
+        if (1 !== \count($groups)) {
+            return [0, null];
+        }
+
+        $group = $groups[0];
+        $id = spl_object_id($group);
+        if (isset($expanding[$id])) {
+            return [0, null];
+        }
+
+        // A back reference into a branch reset: PCRE cannot tell which of
+        // the groups sharing the number it points to.
+        if ($node instanceof BackrefNode && isset($this->groupsInBranchReset[$id])) {
+            return [0, null];
+        }
+
+        $this->countLookbehindBranches($group->child);
+
+        return $this->lookbehindLength($group->child, $expanding + [$id => true]);
+    }
+
+    /**
+     * Count the branches of a group PCRE measures for a lookbehind; it only
+     * gives up once a branch reset stops it from reusing a measure.
+     */
+    private function countLookbehindBranches(NodeInterface $groupBody): void
+    {
+        if ($this->hasBranchReset) {
+            $this->lookbehindBranchMeasures += $groupBody instanceof AlternationNode ? \count($groupBody->alternatives) : 1;
+        }
+    }
+
+    /**
+     * @return list<GroupNode>
+     */
+    private function groupsCalledBy(SubroutineNode $node): array
+    {
+        $reference = $node->reference;
+
+        if (1 === preg_match('/^[+-]\d++$/', $reference)) {
+            $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
+            if (null === $next) {
+                // Unreachable from a parsed pattern: every call in the tree
+                // was indexed when the regex was visited. It guards a tree
+                // visited without its root.
+                return [];
+            }
+
+            $offset = (int) $reference;
+
+            // A call measures the first group bearing the number, as PCRE
+            // does in a branch reset.
+            return \array_slice($this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [], 0, 1);
+        }
+
+        if (1 === preg_match('/^\d++$/', $reference)) {
+            return \array_slice($this->groupsByNumber[(int) $reference] ?? [], 0, 1);
+        }
+
+        // A name, called once whichever group bears it first.
+        return \array_slice($this->groupsByName[$reference] ?? [], 0, 1);
+    }
+
+    /**
+     * @return list<GroupNode>
+     */
+    private function groupsReferencedBy(BackrefNode $node): array
+    {
+        $ref = $node->ref;
+
+        if (1 === preg_match('/^\\\\g(?:\{([+-]\d++)\}|\'([+-]\d++)\'|([+-]\d++))$/', $ref, $matches)) {
+            $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
+            $offset = (int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''));
+
+            if (null === $next || 0 === $offset) {
+                return [];
+            }
+
+            // "-1" is the group before the reference, "+1" the one after it.
+            return $this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [];
+        }
+
+        if (1 === preg_match('/^\\\\(?:g\{(\d++)\}|g\'(\d++)\'|g?(\d++))$/', $ref, $matches)) {
+            return $this->groupsByNumber[(int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''))] ?? [];
+        }
+
+        if (1 === preg_match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+            return $this->groupsByName[$matches[1]] ?? [];
+        }
+
+        // Unreachable from a parsed pattern: the parser spells a reference
+        // one of the ways above. It guards a hand-built one.
+        return [];
+    }
+
+    /**
+     * Number the capturing groups as PCRE does, branch resets included, and
+     * note where each call or reference sits in that count.
+     */
+    private function indexGroups(NodeInterface $node, int &$nextGroupNumber, bool $inBranchReset = false): void
+    {
+        if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
+            $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
+
+            return;
+        }
+
+        if ($node instanceof GroupNode && GroupType::T_GROUP_BRANCH_RESET === $node->type) {
+            $this->hasBranchReset = true;
+            $base = $nextGroupNumber;
+            $highest = $base;
+            $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
+            foreach ($branches as $branch) {
+                $nextGroupNumber = $base;
+                $this->indexGroups($branch, $nextGroupNumber, true);
+                $highest = max($highest, $nextGroupNumber);
+            }
+            $nextGroupNumber = $highest;
+
+            return;
+        }
+
+        if ($node instanceof GroupNode) {
+            if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+                $this->groupsByNumber[$nextGroupNumber++][] = $node;
+                if (null !== $node->name) {
+                    $this->groupsByName[$node->name][] = $node;
+                }
+                if ($inBranchReset) {
+                    $this->groupsInBranchReset[spl_object_id($node)] = true;
+                }
+            }
+
+            $this->indexGroups($node->child, $nextGroupNumber, $inBranchReset);
+
+            return;
+        }
+
+        $children = match (true) {
+            $node instanceof SequenceNode => $node->children,
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof QuantifierNode => [$node->node],
+            $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
+            $node instanceof DefineNode => [$node->content],
+            default => [],
+        };
+
+        foreach ($children as $child) {
+            $this->indexGroups($child, $nextGroupNumber, $inBranchReset);
+        }
+    }
+
+    /**
+     * "(?C1)(?=a)" as the condition of a conditional.
+     */
+    private function isCalloutThenAssertion(NodeInterface $condition): bool
+    {
+        return $condition instanceof SequenceNode
+            && 2 === \count($condition->children)
+            && $condition->children[0] instanceof CalloutNode
+            && $condition->children[1] instanceof GroupNode
+            && $this->isLookaround($condition->children[1]);
     }
 
     private function supportsVariableLengthLookbehind(): bool

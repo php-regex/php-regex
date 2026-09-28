@@ -495,7 +495,12 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
     public function test_unbounded_lookbehind_with_backref_has_generic_hint(): void
     {
         $regex = Regex::create();
-        $result = $regex->validate('/(a)(?<=\\1)b/');
+
+        // preg_match() on PCRE2 10.48 and 10.40 compiles "(a)(?<=\1)b": the
+        // reference is as long as its group, one character.
+        $this->assertTrue($regex->validate('/(a)(?<=\\1)b/')->isValid);
+
+        $result = $regex->validate('/(a+)(?<=\\1)b/');
 
         $this->assertFalse($result->isValid);
         $this->assertStringContainsString('bounded maximum length', (string) $result->error);
@@ -504,7 +509,10 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
     public function test_lookbehind_limit_exceeded(): void
     {
         $regex = Regex::create();
-        $result = $regex->validate('/(*LIMIT_LOOKBEHIND=1)(?<=ab)c/');
+        // The limit only bounds a variable-length lookbehind, so the one
+        // here has to vary: "ab?". (preg_match() on PCRE2 10.48 refuses
+        // this pattern too, at the verb.)
+        $result = $regex->validate('/(*LIMIT_LOOKBEHIND=1)(?<=ab?)c/');
 
         $this->assertFalse($result->isValid);
         $this->assertStringContainsString('Lookbehind exceeds the maximum length', (string) $result->error);

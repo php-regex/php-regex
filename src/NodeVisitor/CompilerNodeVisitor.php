@@ -58,6 +58,11 @@ use RegexParser\Node\VersionConditionNode;
  */
 final class CompilerNodeVisitor extends AbstractNodeVisitor
 {
+    /**
+     * The flags a non-atomic lookaround carries: "(?*...)" and "(?<*...)".
+     */
+    private const NON_ATOMIC_FLAG = '*';
+
     // Optimized meta-character sets for fast lookups
     private const META_CHARACTERS = [
         '\\' => true, '.' => true, '^' => true, '$' => true,
@@ -235,9 +240,9 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
                 GroupType::T_GROUP_NAMED => $node->usePythonSyntax
                     ? '(?P<'.$node->name.'>'
                     : '(?<'.$node->name.'>',
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE => '(?=',
+                GroupType::T_GROUP_LOOKAHEAD_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
                 GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!',
-                GroupType::T_GROUP_LOOKBEHIND_POSITIVE => '(?<=',
+                GroupType::T_GROUP_LOOKBEHIND_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
                 GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => '(?<!',
                 GroupType::T_GROUP_ATOMIC => '(?>',
                 GroupType::T_GROUP_BRANCH_RESET => '(?|',
@@ -264,9 +269,9 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_NAMED => $node->usePythonSyntax
                 ? '(?P<'.$node->name.'>'
                 : '(?<'.$node->name.'>',
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => '(?=',
+            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
             GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => '(?<=',
+            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => '(?<!',
             GroupType::T_GROUP_ATOMIC => '(?>',
             GroupType::T_GROUP_BRANCH_RESET => '(?|',
@@ -859,6 +864,13 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
 
     private function isAssertionCondition(NodeInterface $condition): bool
     {
+        // "(?(?C1)(?=a)yes|no)": a callout that runs before the assertion is
+        // written in front of it, inside the same parentheses.
+        if ($condition instanceof SequenceNode && 2 === \count($condition->children)
+            && $condition->children[0] instanceof CalloutNode) {
+            return $this->isAssertionCondition($condition->children[1]);
+        }
+
         return $condition instanceof GroupNode && \in_array($condition->type, [
             GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
             GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,

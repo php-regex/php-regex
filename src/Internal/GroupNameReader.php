@@ -51,6 +51,8 @@ final class GroupNameReader
 
     private bool $duplicatesAllowed = false;
 
+    private bool $unicodeNames = false;
+
     public function __construct(private readonly TokenStream $stream) {}
 
     /**
@@ -60,6 +62,16 @@ final class GroupNameReader
     public function allowDuplicates(bool $allowed): void
     {
         $this->duplicatesAllowed = $allowed;
+    }
+
+    /**
+     * Whether the pattern is in Unicode mode, where PCRE2 10.43+ takes a name
+     * made of letters of any script, decimal digits and "_", not starting
+     * with a digit: "(?<nämed>b)".
+     */
+    public function readUnicodeNames(bool $unicode): void
+    {
+        $this->unicodeNames = $unicode;
     }
 
     public function duplicatesAllowed(): bool
@@ -102,7 +114,8 @@ final class GroupNameReader
         }
 
         // PCRE group names are word characters only and must not start with a digit.
-        if (1 !== preg_match('/^[A-Za-z_]\w*+$/', $name)) {
+        $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+$/u' : '/^[A-Za-z_]\w*+$/';
+        if (1 !== preg_match($namePattern, $name)) {
             throw $this->error(
                 \sprintf(
                     'Invalid group name "%s": names must contain only word characters and must not start with a digit.',

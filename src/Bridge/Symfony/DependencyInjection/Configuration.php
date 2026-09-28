@@ -38,7 +38,7 @@ final readonly class Configuration implements ConfigurationInterface
                 ->integerNode('max_lookbehind_length')
                     ->defaultValue(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH)
                     ->min(0)
-                    ->info('The maximum allowed lookbehind length. Can be overridden per-pattern via (*LIMIT_LOOKBEHIND=...).')
+                    ->info('The maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE\'s 65535.')
                 ->end()
                 ->booleanNode('runtime_pcre_validation')
                     ->defaultValue('%kernel.debug%')

@@ -43,7 +43,8 @@ final readonly class RegexOptions
      * Create new configuration options.
      *
      * @param int            $maxPatternLength      Maximum allowed regex pattern length
-     * @param int            $maxLookbehindLength   Maximum allowed lookbehind length
+     * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
+     *                                              fixed-length one is only limited by PCRE's 65535
      * @param CacheInterface $cache                 Cache implementation to use
      * @param array<string>  $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
      * @param bool           $runtimePcreValidation Whether to validate against the PCRE runtime

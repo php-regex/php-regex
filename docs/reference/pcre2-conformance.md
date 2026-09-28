@@ -53,7 +53,7 @@ without notice; do not build on it.
 
 <!-- pcre2-conformance: generated below - do not edit -->
 
-Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4343 of 4426** extractable cases, error offset agrees on **187 of 427** shared rejections (**83** of them match one of two version-dependent offsets); **0** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
+Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4426 of 4426** extractable cases, error offset agrees on **199 of 427** shared rejections (**89** of them match one of two version-dependent offsets); **0** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
 
 ## Source
 
@@ -68,11 +68,11 @@ Against PCRE2 10.48's official test suite, under PHP's compile options: compile 
 
 | file | cases | skipped | extractable | verdict agrees | shared rejections | offset agrees | of which one of two version-dependent offsets | false accepts |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `testinput1` | 1379 | 82 | 1297 | 1278 | 0 | 0 | 0 | 0 |
-| `testinput2` | 2325 | 441 | 1884 | 1830 | 389 | 170 | 77 | 0 |
-| `testinput4` | 650 | 33 | 617 | 610 | 0 | 0 | 0 | 0 |
-| `testinput5` | 817 | 189 | 628 | 625 | 38 | 17 | 6 | 0 |
-| **total** | **5171** | **745** | **4426** | **4343** | **427** | **187** | **83** | **0** |
+| `testinput1` | 1379 | 82 | 1297 | 1297 | 0 | 0 | 0 | 0 |
+| `testinput2` | 2325 | 441 | 1884 | 1884 | 389 | 179 | 80 | 0 |
+| `testinput4` | 650 | 33 | 617 | 617 | 0 | 0 | 0 | 0 |
+| `testinput5` | 817 | 189 | 628 | 628 | 38 | 20 | 9 | 0 |
+| **total** | **5171** | **745** | **4426** | **4426** | **427** | **199** | **89** | **0** |
 
 ## PHP compile context
 
@@ -104,8 +104,7 @@ Adjusted cases (4): `testinput2:6394`, `testinput2:6399`, `testinput2:6404`, `te
 
 | defect class | cases |
 |---|---:|
-| `offset-defect` | 240 |
-| `false-reject` | 83 |
+| `offset-defect` | 228 |
 
 ## Fix plan
 
@@ -117,30 +116,29 @@ _None._
 
 ### Offset defects
 
-240 cases: both reject, at a body offset neither supported PCRE2 release reports. The library may be off by a few bytes, or it may have rejected the pattern for a different reason than PCRE2 did; the PCRE2 error below says which check PCRE2 hit first.
+228 cases: both reject, at a body offset neither supported PCRE2 release reports. The library may be off by a few bytes, or it may have rejected the pattern for a different reason than PCRE2 did; the PCRE2 error below says which check PCRE2 hit first.
 
 | PCRE2 error | first recorded message | cases |
 |---:|---|---:|
 | 115 | reference to non-existent subpattern | 51 |
 | 150 | invalid range in character class | 21 |
 | 125 | length of lookbehind assertion is not limited | 17 |
-| 144 | subpattern name must start with a non-digit | 12 |
 | 213 | unexpected expression in extended character class (no preceding operator) | 12 |
+| 144 | subpattern name must start with a non-digit | 11 |
 | 111 | unrecognized character after (? or (?- | 9 |
 | 114 | missing closing parenthesis | 8 |
-| 162 | subpattern name expected | 8 |
+| 162 | subpattern name expected | 7 |
 | 219 | syntax error in subpattern number (missing terminator?) | 7 |
 | 134 | character code point value in \\x{} or \\o{} is too large | 6 |
 | 142 | syntax error in subpattern name (missing terminator?) | 6 |
 | 161 | subpattern number is too big | 6 |
-| 128 | atomic assertion expected after (?( or (?(?C) | 5 |
 | 216 | unexpected character in (?[...]) extended character class | 5 |
 | 105 | number too big in {} quantifier | 4 |
 | 108 | range out of order in character class | 4 |
 | 109 | quantifier does not follow a repeatable item | 4 |
-| 137 | PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u | 4 |
 | 143 | two named subpatterns have the same name (PCRE2_DUPNAMES not set) | 4 |
 | 217 | expected capture group number or name | 4 |
+| 137 | PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u | 3 |
 | 139 | closing parenthesis for (?C expected | 3 |
 | 147 | unknown property after \\P or \\p | 3 |
 | 158 | (?R (recursive pattern call) must be followed by a closing parenthesis | 3 |
@@ -148,16 +146,14 @@ _None._
 | 207 | extended character class nesting is too deep | 3 |
 | 215 | terminating ] with no following closing parenthesis in (?[...] | 3 |
 | 104 | numbers out of order in {} quantifier | 2 |
-| 122 | unmatched closing parenthesis | 2 |
 | 181 | missing terminating delimiter for callout with string argument | 2 |
-| 187 | lookbehind assertion is too long | 2 |
 | 195 | (*alpha_assertion) not recognized | 2 |
 | 214 | empty expression in extended character class | 2 |
 | 102 | \\c at end of pattern | 1 |
 | 103 | unrecognized character follows \\ | 1 |
 | 107 | escape sequence is invalid in character class | 1 |
+| 122 | unmatched closing parenthesis | 1 |
 | 129 | digit expected after (?+ | 1 |
-| 135 | lookbehind is too complicated | 1 |
 | 138 | number after (?C is greater than 255 | 1 |
 | 157 | \\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number | 1 |
 | 168 | \\c must be followed by a printable ASCII character | 1 |
@@ -166,10 +162,6 @@ _None._
 | 194 | invalid hyphen in option setting | 1 |
 | 209 | unexpected operator in extended character class (no preceding operand) | 1 |
 | 218 | missing opening parenthesis | 1 |
-
-### False rejects
-
-83 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
 
 ## Regenerating this table
 
