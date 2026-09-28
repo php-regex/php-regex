@@ -22,6 +22,7 @@ use RegexParser\Lint\Command\LintArguments;
 use RegexParser\Lint\Command\LintConfigLoader;
 use RegexParser\Lint\Command\LintDefaultsBuilder;
 use RegexParser\Lint\Command\LintExtractorFactory;
+use RegexParser\Lint\Extraction\PatternFunctionRegistry;
 use RegexParser\Lint\Extraction\PhpParserExtractionStrategy;
 use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 use RegexParser\Lint\Formatter\OutputConfiguration;
@@ -281,6 +282,8 @@ final class LintCommandComponentsTest extends TestCase
         class_exists(LintExtractorFactory::class);
         class_exists(RegexPatternExtractor::class);
         class_exists(TokenBasedExtractionStrategy::class);
+        // The factory builds the default pattern functions: load what they need.
+        PatternFunctionRegistry::defaults();
 
         $autoloaders = spl_autoload_functions() ?: [];
         foreach ($autoloaders as $loader) {
