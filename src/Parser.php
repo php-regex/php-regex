@@ -477,6 +477,14 @@ final class Parser
 
     private function assertQuantifierCanApply(NodeInterface $node, Token $token): void
     {
+        // A callout matches nothing, and PCRE does not let it be repeated.
+        if ($node instanceof CalloutNode) {
+            throw $this->parserException(
+                \sprintf('Quantifier does not follow a repeatable item at position %d: a callout cannot be repeated.', $token->position),
+                $token->position,
+            );
+        }
+
         if ($this->isEmptyNode($node)) {
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d', $token->position),

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADING.md](UPGRADING.md).
 - `RegexParser\ReDoS\ReDoSAnalyzerInterface`: implemented by nothing, `ReDoSAnalyzer` included.
 - The `$phpVersionId` argument of `Lexer::__construct()`: tokenizing does not depend on the PHP version, and keying the compiled token patterns on it compiled the same two regexes once per version. See [UPGRADING.md](UPGRADING.md).
+- `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
 - Validation accepted variable-length lookbehinds such as `(?<=a?)b` when targeting PHP 8.2 or 8.3, whose bundled PCRE2 (10.40, 10.42) refuses them: they need PCRE2 10.43, bundled from PHP 8.4 (`regex.lookbehind.variable_length_not_supported`). Branches of different fixed lengths, `(?<=a|bc)b`, stay valid everywhere. Without an explicit `php_version`, the PCRE2 the running PHP links decides, and one from 10.45 on also refuses a `\x` with no digit.

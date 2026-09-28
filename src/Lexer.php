@@ -90,7 +90,9 @@ final class Lexer
         'T_GROUP_OPEN' => '\\(',
         'T_GROUP_CLOSE' => '\\)',
         'T_CHAR_CLASS_OPEN' => '\\[',
-        'T_QUANTIFIER' => '(?: [\*\+\?] | \{ \s* \d* \s* (?: , \s* \d* \s* )? \} ) [\?\+]?',
+        // Braces are a quantifier only with a number in them: "{}" and "{,}"
+        // are literal text, as PCRE reads them.
+        'T_QUANTIFIER' => '(?: [\*\+\?] | \{ \s* (?: \d+ \s* (?: , \s* \d* \s* )? | , \s* \d+ \s* ) \} ) [\?\+]?',
         'T_ALTERNATION' => '\\|',
         'T_DOT' => '\\.',
         'T_ANCHOR' => '\\^|\\$',

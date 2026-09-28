@@ -33,7 +33,6 @@ use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\LimitMatchNode;
 use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
 use RegexParser\Node\RangeNode;
@@ -301,17 +300,6 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         (new SubroutineNode('-0', '-0', 0, 0))->accept($validator);
     }
 
-    public function test_pcre_verb_updates_lookbehind_limit(): void
-    {
-        $validator = new ValidatorNodeVisitor();
-        $verb = new PcreVerbNode('LIMIT_LOOKBEHIND=12', 0, 0);
-
-        $verb->accept($validator);
-
-        $property = (new \ReflectionClass($validator))->getProperty('lookbehindLimit');
-        $this->assertSame(12, $property->getValue($validator));
-    }
-
     public function test_define_and_limit_match_nodes_are_noops(): void
     {
         $validator = new ValidatorNodeVisitor();
@@ -422,37 +410,6 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame([2, 3], $bounds);
     }
 
-    public function test_extract_lookbehind_limit_from_verb(): void
-    {
-        $validator = new ValidatorNodeVisitor();
-        $method = (new \ReflectionClass($validator))->getMethod('extractLookbehindLimit');
-
-        $limit = $method->invoke($validator, new PcreVerbNode('LIMIT_LOOKBEHIND=5', 0, 0));
-        $this->assertSame(5, $limit);
-    }
-
-    public function test_extract_lookbehind_limit_from_nested_nodes(): void
-    {
-        $validator = new ValidatorNodeVisitor();
-        $method = (new \ReflectionClass($validator))->getMethod('extractLookbehindLimit');
-
-        $verb = new PcreVerbNode('LIMIT_LOOKBEHIND=4', 0, 0);
-        $alt = new AlternationNode([new LiteralNode('a', 0, 0), $verb], 0, 0);
-        $this->assertSame(4, $method->invoke($validator, $alt));
-
-        $define = new DefineNode(new PcreVerbNode('LIMIT_LOOKBEHIND=3', 0, 0), 0, 0);
-        $this->assertSame(3, $method->invoke($validator, $define));
-
-        $classOperation = new ClassOperationNode(
-            ClassOperationType::INTERSECTION,
-            new PcreVerbNode('LIMIT_LOOKBEHIND=2', 0, 0),
-            new LiteralNode('a', 0, 0),
-            0,
-            0,
-        );
-        $this->assertSame(2, $method->invoke($validator, $classOperation));
-    }
-
     public function test_find_unbounded_lookbehind_node_traverses_branches(): void
     {
         $validator = new ValidatorNodeVisitor();
@@ -508,11 +465,11 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_lookbehind_limit_exceeded(): void
     {
-        $regex = Regex::create();
         // The limit only bounds a variable-length lookbehind, so the one
-        // here has to vary: "ab?". (preg_match() on PCRE2 10.48 refuses
-        // this pattern too, at the verb.)
-        $result = $regex->validate('/(*LIMIT_LOOKBEHIND=1)(?<=ab?)c/');
+        // here has to vary: "ab?". It is set through max_lookbehind_length;
+        // PHP refuses the (*LIMIT_LOOKBEHIND=n) verb.
+        $regex = Regex::create(['max_lookbehind_length' => 1]);
+        $result = $regex->validate('/(?<=ab?)c/');
 
         $this->assertFalse($result->isValid);
         $this->assertStringContainsString('Lookbehind exceeds the maximum length', (string) $result->error);

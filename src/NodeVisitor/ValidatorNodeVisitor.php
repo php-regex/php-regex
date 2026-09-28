@@ -89,14 +89,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // Limit verbs
         'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true,
         'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
-        'LIMIT_LOOKBEHIND' => true,
         // Script run verbs (also as lowercase aliases)
         'script_run' => true, 'sr' => true,
         'atomic_script_run' => true, 'asr' => true,
         // Empty match control
         'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        // First line anchor
-        'FIRSTLINE' => true,
         // JIT control (PCRE2)
         'NO_JIT' => true,
     ];
@@ -112,7 +109,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         'NO_AUTO_POSSESS' => true, 'NO_START_OPT' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true,
         'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
         'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
-        'LIMIT_LOOKBEHIND' => true,
     ];
 
     /**
@@ -120,7 +116,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private const LIMIT_VERBS = [
         'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
-        'LIMIT_LOOKBEHIND' => true,
     ];
 
     /**
@@ -199,6 +194,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private bool $unicodeMode = false;
 
     /**
+     * Whether the "u" flag itself is set: some refusals come from PHP's
+     * handling of the flag, not from Unicode mode, so "(*UTF)" does not
+     * trigger them.
+     */
+    private bool $unicodeFlag = false;
+
+    /**
      * The pattern body the tree was parsed from, for what no node records:
      * whether a letter was escaped, and what follows an escape the lexer did
      * not recognize. Null where positions do not point into it.
@@ -263,8 +265,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private int $captureIndex = 0;
 
-    private int $lookbehindLimit = 0;
-
     private ?NodeInterface $previousNode = null;
 
     private ?NodeInterface $nextNode = null;
@@ -300,7 +300,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->source = $node->source;
         $this->charClassDepth = 0;
         $this->startOfPatternEnd = null === $node->source ? null : $this->readStartOfPatternEnd($node->source);
-        $this->unicodeMode = str_contains($node->flags, 'u')
+        $this->unicodeFlag = str_contains($node->flags, 'u');
+        $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->groupsByNumber = [];
@@ -313,7 +314,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->indexGroups($node->pattern, $nextGroupNumber);
         $this->captureSequence = $this->groupNumbering->captureSequence;
         $this->captureIndex = 0;
-        $this->lookbehindLimit = $this->extractLookbehindLimit($node->pattern) ?? $this->maxLookbehindLength;
+
         $this->previousNode = null;
         $this->nextNode = null;
 
@@ -454,6 +455,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharType(CharTypeNode $node): void
     {
+        // "\C" matches one code unit, which would split a UTF-8 character:
+        // PHP refuses it with the "u" flag. "(*UTF)\C" compiles.
+        if ('C' === $node->value && $this->unicodeFlag) {
+            $this->raiseSemanticError(
+                '\C is not allowed in Unicode mode: it matches a single byte.',
+                $node->getEndPosition(),
+                'regex.escape.single_byte_in_utf',
+                'Use "." or drop the "u" flag.',
+            );
+        }
+
         if (0 === $this->charClassDepth) {
             return;
         }
@@ -985,9 +997,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitPcreVerb(PcreVerbNode $node): void
     {
         $verbName = preg_split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
-        if ('LIMIT_LOOKBEHIND' === $verbName && preg_match('/^LIMIT_LOOKBEHIND=(\d++)$/', $node->verb, $matches)) {
-            $this->lookbehindLimit = (int) $matches[1];
-        }
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])) {
             $this->raiseSemanticError(
@@ -1238,6 +1247,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
+        // Without Unicode mode a character is one byte, as for "\o{400}".
+        // PCRE reports it at the closing brace.
+        if (!$this->unicodeMode && $codePoint > 0xFF) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid code point "%s": without the "u" flag, a character is at most \xFF.', $node->originalRepresentation),
+                $node->getEndPosition() - 1,
+                'regex.octal.out_of_range',
+                'Add the "u" flag, or use a code point up to \xFF.',
+            );
+        }
+
         // "\u0041" and "\u{41}" are JavaScript: PCRE2 refuses "\u" outright.
         // What was written is read from the source, so a node built by hand
         // is not judged on its spelling.
@@ -1462,63 +1482,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         return $min * $childLength;
     }
 
-    private function extractLookbehindLimit(NodeInterface $node): ?int
-    {
-        if ($node instanceof PcreVerbNode && preg_match('/^LIMIT_LOOKBEHIND=(\d++)$/', $node->verb, $matches)) {
-            return (int) $matches[1];
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->extractLookbehindLimit($node->child);
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                $limit = $this->extractLookbehindLimit($alt);
-                if (null !== $limit) {
-                    return $limit;
-                }
-            }
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $limit = $this->extractLookbehindLimit($child);
-                if (null !== $limit) {
-                    return $limit;
-                }
-            }
-        }
-
-        if ($node instanceof QuantifierNode) {
-            return $this->extractLookbehindLimit($node->node);
-        }
-
-        if ($node instanceof ConditionalNode) {
-            return $this->extractLookbehindLimit($node->condition)
-                ?? $this->extractLookbehindLimit($node->yes)
-                ?? $this->extractLookbehindLimit($node->no);
-        }
-
-        if ($node instanceof DefineNode) {
-            return $this->extractLookbehindLimit($node->content);
-        }
-
-        if ($node instanceof CharClassNode) {
-            return $this->extractLookbehindLimit($node->expression);
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            return $this->extractLookbehindLimit($node->left) ?? $this->extractLookbehindLimit($node->right);
-        }
-
-        if ($node instanceof RangeNode) {
-            return $this->extractLookbehindLimit($node->start) ?? $this->extractLookbehindLimit($node->end);
-        }
-
-        return null;
-    }
-
     private function validateLookbehindLength(GroupNode $node): void
     {
         // "\X" matches a whole grapheme cluster, of no bounded length.
@@ -1605,12 +1568,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        if ($variable && $max > $this->lookbehindLimit) {
+        if ($variable && $max > $this->maxLookbehindLength) {
             $this->raiseSemanticError(
-                \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->lookbehindLimit, $max),
+                \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLookbehindLength, $max),
                 $node->startPosition,
                 'regex.lookbehind.too_long',
-                \sprintf('Reduce lookbehind length or use (*LIMIT_LOOKBEHIND=%d).', $max),
+                'Reduce the lookbehind length, or raise max_lookbehind_length.',
             );
         }
     }
@@ -2451,7 +2414,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->groupNumbering = new GroupNumbering(0, [], []);
             $this->captureSequence = [];
             $this->captureIndex = 0;
-            $this->lookbehindLimit = $this->maxLookbehindLength;
+
         }
     }
 
