@@ -44,7 +44,8 @@ final class CodePointReader
     }
 
     /**
-     * "\x41", "A", "\x{1F600}", "\u{1F600}".
+     * "\x41", "A", "\x{1F600}", "\u{1F600}"; spaces and tabs may pad the
+     * braced digits, "\x{ 41 }", as PCRE2 10.48 allows.
      */
     public static function fromHexEscape(string $representation): int
     {
@@ -58,7 +59,7 @@ final class CodePointReader
             return (int) hexdec($matches[1]);
         }
 
-        if (preg_match('/^\\\\[xu]\\{([0-9a-fA-F]++)\\}$/', $representation, $matches)) {
+        if (preg_match('/^\\\\[xu]\\{[ \t]*+([0-9a-fA-F]++)[ \t]*+\\}$/', $representation, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
@@ -78,7 +79,7 @@ final class CodePointReader
         $name = $matches[1];
 
         $hex = [];
-        if (1 === preg_match('/^U\+([0-9a-fA-F]+)$/', $name, $hex)) {
+        if (1 === preg_match('/^[ \t]*+U\+([0-9a-fA-F]++)[ \t]*+$/', $name, $hex)) {
             return (int) hexdec($hex[1]);
         }
 
@@ -99,7 +100,7 @@ final class CodePointReader
     {
         $matches = [];
 
-        if (preg_match('/^\\\\o\\{([0-7]++)\\}$/', $representation, $matches)) {
+        if (preg_match('/^\\\\o\\{[ \t]*+([0-7]++)[ \t]*+\\}$/', $representation, $matches)) {
             return (int) octdec($matches[1]);
         }
 

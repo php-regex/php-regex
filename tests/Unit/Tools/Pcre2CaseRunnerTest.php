@@ -135,7 +135,21 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_still_reports_a_false_accept_when_the_offset_depends_on_the_version(): void
     {
-        // "[\B]": 10.48 error 107 at 3, 10.40 at 2; the library accepts it.
+        // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3; the
+        // library accepts it.
+        $result = (new Pcre2CaseRunner())->run(self::case(
+            '(?Cab)xx',
+            'reject',
+            4,
+            'unrecognized string delimiter follows (?C',
+            pcre2Code: 182,
+            floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 182],
+        ));
+
+        $this->assertSame('false-accept', $result['outcome']);
+
+        // "[\B]": 10.48 error 107 at 3, 10.40 at 2. This was the sample false
+        // accept until the library rejected it; it now reports 10.48's offset.
         $result = (new Pcre2CaseRunner())->run(self::case(
             '[\B]',
             'reject',
@@ -145,7 +159,7 @@ final class Pcre2CaseRunnerTest extends TestCase
             floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 107],
         ));
 
-        $this->assertSame('false-accept', $result['outcome']);
+        $this->assertSame('pass-either-offset', $result['outcome']);
     }
 
     #[Test]

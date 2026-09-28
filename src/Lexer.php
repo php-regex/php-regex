@@ -42,6 +42,19 @@ final class Lexer
         'T_CLASS_INTERSECTION', 'T_CLASS_SUBTRACTION', 'T_LITERAL',
     ];
 
+    /*
+     * PCRE2 10.48 lets spaces and tabs pad the digits of "\x{...}", "\o{...}"
+     * and "\N{U+...}", and the space before "U+": "\x{ 41 }" is "A". The
+     * token patterns are compiled with /x, so the padding is spelled as a
+     * class.
+     */
+    private const OCTAL_BRACED = '\\\\ o\\{ [\\x20\\t]* [0-7]+ [\\x20\\t]* \\}';
+
+    private const UNICODE_ESCAPE = '\\\\ x [0-9a-fA-F]{1,2} | \\\\ u [0-9a-fA-F]{4} | \\\\ u\\{[0-9a-fA-F]+\\}'
+        .' | \\\\ x\\{ [\\x20\\t]* [0-9a-fA-F]+ [\\x20\\t]* \\}';
+
+    private const UNICODE_NAMED = '\\\\ N\\{ (?: [\\x20\\t]* U\\+[0-9a-fA-F]+ [\\x20\\t]* | [a-zA-Z0-9_ -]+ ) \\}';
+
     // Optimized regex patterns broken into focused components
     private const PATTERNS_OUTSIDE = [
         'T_COMMENT_OPEN' => '\\(\\?\\#',
@@ -63,10 +76,10 @@ final class Lexer
         'T_G_REFERENCE' => '\\\\ g (?: \\{[a-zA-Z0-9_+-]+\\} | <[a-zA-Z0-9_+-]+> | \'[a-zA-Z0-9_+-]+\' | [0-9+-]+ )?',
         'T_BACKREF' => '\\\\ (?: k(?:<[a-zA-Z0-9_]+> | \\{[a-zA-Z0-9_]+\\} | \'[a-zA-Z0-9_]+\') | (?<v_backref_num> [1-9]\\d*) )',
         'T_OCTAL_LEGACY' => '\\\\ (?: [0-7]{3} | [0-7]{2} | [0-7] )',
-        'T_OCTAL' => '\\\\ o\\{[0-7]+\\}',
-        'T_UNICODE' => '\\\\ x [0-9a-fA-F]{1,2} | \\\\ u [0-9a-fA-F]{4} | \\\\ u\\{[0-9a-fA-F]+\\} | \\\\ x\\{[0-9a-fA-F]+\\}',
+        'T_OCTAL' => self::OCTAL_BRACED,
+        'T_UNICODE' => self::UNICODE_ESCAPE,
         'T_UNICODE_PROP' => '\\\\ [pP] (?: \\{ [^}]+ \\} | [a-zA-Z] )',
-        'T_UNICODE_NAMED' => '\\\\ N\\{ (?: U\\+[0-9a-fA-F]+ | [a-zA-Z0-9_ -]+ ) \\}',
+        'T_UNICODE_NAMED' => self::UNICODE_NAMED,
         'T_CONTROL_CHAR' => '\\\\ c [\\x00-\\x7F]',
         'T_QUOTE_MODE_START' => '\\\\ Q',
         'T_QUOTE_MODE_END' => '\\\\ E',
@@ -78,11 +91,11 @@ final class Lexer
         'T_CHAR_CLASS_CLOSE' => '\\]',
         'T_POSIX_CLASS' => '\\[ \\: (?<v_posix> \\^? [a-zA-Z]+) \\: \\]',
         'T_CHAR_CLASS_OPEN' => '\\[',
-        'T_UNICODE_NAMED' => '\\\\ N\\{ (?: U\\+[0-9a-fA-F]+ | [a-zA-Z0-9_ -]+ ) \\}',
+        'T_UNICODE_NAMED' => self::UNICODE_NAMED,
         'T_CHAR_TYPE' => '\\\\ [dswDSWhvRNHV]',
         'T_OCTAL_LEGACY' => '\\\\ (?: [0-7]{3} | [0-7]{2} | [0-7] )',
-        'T_OCTAL' => '\\\\ o\\{[0-7]+\\}',
-        'T_UNICODE' => '\\\\ x [0-9a-fA-F]{1,2} | \\\\ u [0-9a-fA-F]{4} | \\\\ u\\{[0-9a-fA-F]+\\} | \\\\ x\\{[0-9a-fA-F]+\\}',
+        'T_OCTAL' => self::OCTAL_BRACED,
+        'T_UNICODE' => self::UNICODE_ESCAPE,
         'T_UNICODE_PROP' => '\\\\ [pP] (?: \\{ [^}]+ \\} | [a-zA-Z] )',
         'T_CONTROL_CHAR' => '\\\\ c [\\x00-\\x7F]',
         'T_QUOTE_MODE_START' => '\\\\ Q',
@@ -157,9 +170,17 @@ final class Lexer
     private bool $extendedMode = false;
 
     /**
-     * Values of $extendedMode saved by each open group, restored when it closes.
+     * Whether "(?xx)" is in force, under which PCRE also skips the spaces and
+     * tabs of a class. PHP has no "xx" pattern modifier: only the inline
+     * setting turns it on.
+     */
+    private bool $extendedMoreMode = false;
+
+    /**
+     * Values of $extendedMode and $extendedMoreMode saved by each open group,
+     * restored when it closes.
      *
-     * @var array<bool>
+     * @var array<array{0: bool, 1: bool}>
      */
     private array $extendedModeStack = [];
 
@@ -181,6 +202,7 @@ final class Lexer
         $this->pattern = $pattern;
         $this->length = \strlen($this->pattern);
         $this->extendedMode = str_contains($flags, 'x');
+        $this->extendedMoreMode = false;
         $this->resetState();
 
         /** @var array<Token> $tokens */
@@ -290,6 +312,17 @@ final class Lexer
 
         if ($this->extendedMode && !$this->inCharClass && '#' === ($this->pattern[$this->position] ?? '')) {
             $this->consumeExtendedComment($tokens);
+
+            return true;
+        }
+
+        // Under "(?xx)" PCRE skips spaces and tabs before the first member of
+        // a class, so "(?xx)[ ]]" holds "]". They carry no meaning there and
+        // are not given a token.
+        if ($this->extendedMoreMode && $this->inCharClass
+            && \in_array($this->pattern[$this->position], [' ', "\t"], true)
+            && null !== $this->readCharClassPrefix($tokens)) {
+            $this->position++;
 
             return true;
         }
@@ -467,13 +500,14 @@ final class Lexer
     private function trackExtendedModeScope(TokenType $type): void
     {
         if (TokenType::T_GROUP_CLOSE === $type) {
-            $this->extendedMode = array_pop($this->extendedModeStack) ?? $this->extendedMode;
+            [$this->extendedMode, $this->extendedMoreMode] = array_pop($this->extendedModeStack)
+                ?? [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
 
         if (TokenType::T_GROUP_OPEN === $type) {
-            $this->extendedModeStack[] = $this->extendedMode;
+            $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
@@ -484,7 +518,7 @@ final class Lexer
 
         $inlineFlags = $this->readInlineFlags();
         if (null === $inlineFlags) {
-            $this->extendedModeStack[] = $this->extendedMode;
+            $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
@@ -492,11 +526,19 @@ final class Lexer
         [$flags, $scoped] = $inlineFlags;
         $updated = $flags->inForce('x', $this->extendedMode);
 
+        // "(?xx)" turns both on; a single "x" set or any "x" unset turns the
+        // second one off, as PCRE2 does.
+        $updatedMore = substr_count($flags->set, 'x') >= 2
+            || (!$flags->turnsOn('x') && !$flags->turnsOff('x') && $this->extendedMoreMode);
+
         // "(?x)" survives its own closing parenthesis: push the new value so
         // the pop performed by ")" leaves it in place. "(?x:...)" pushes the
         // previous value instead, which the pop restores.
-        $this->extendedModeStack[] = $scoped ? $this->extendedMode : $updated;
+        $this->extendedModeStack[] = $scoped
+            ? [$this->extendedMode, $this->extendedMoreMode]
+            : [$updated, $updatedMore];
         $this->extendedMode = $updated;
+        $this->extendedMoreMode = $updatedMore;
     }
 
     /**
@@ -523,7 +565,7 @@ final class Lexer
     private function handleCharClassOpen(int $startPos, array $currentTokens): Token
     {
         if ($this->inCharClass) {
-            if ($this->isAtCharClassStart($startPos, $currentTokens)) {
+            if ($this->isAtCharClassStart($currentTokens)) {
                 return new Token(TokenType::T_LITERAL, '[', $startPos);
             }
 
@@ -551,7 +593,7 @@ final class Lexer
      */
     private function closeCharClass(int $startPos, array $currentTokens): Token
     {
-        if ($this->isAtCharClassStart($startPos, $currentTokens)) {
+        if ($this->isAtCharClassStart($currentTokens)) {
             return new Token(TokenType::T_LITERAL, ']', $startPos);
         }
 
@@ -590,11 +632,14 @@ final class Lexer
             return null;
         }
 
-        if ($this->isAtCharClassStart($startPos, $currentTokens) && '^' === $matchedValue) {
+        $prefix = $this->readCharClassPrefix($currentTokens);
+
+        // Only the first "^" negates: in "[^^]" the second one is a member.
+        if (false === $prefix && '^' === $matchedValue) {
             return new Token(TokenType::T_NEGATION, '^', $startPos);
         }
 
-        if (!$this->isAtCharClassStart($startPos, $currentTokens) && '-' === $matchedValue) {
+        if (null === $prefix && '-' === $matchedValue) {
             return new Token(TokenType::T_RANGE, '-', $startPos);
         }
 
@@ -604,19 +649,59 @@ final class Lexer
     /**
      * @param array<Token> $currentTokens
      */
-    private function isAtCharClassStart(int $startPos, array $currentTokens): bool
+    private function isAtCharClassStart(array $currentTokens): bool
     {
+        return null !== $this->readCharClassPrefix($currentTokens);
+    }
+
+    /**
+     * Whether the cursor is still at the start of the innermost class.
+     *
+     * PCRE skips "\E", an empty "\Q\E" and one "^", in any order, before it
+     * reads the first member of a class, so a "]" that follows only those is
+     * a member and does not close the class: "[\E]a]" holds "]" and "a".
+     *
+     * @param array<Token> $currentTokens
+     *
+     * @return bool|null null when a member has already been read; otherwise
+     *                   whether the prefix holds the negating "^"
+     */
+    private function readCharClassPrefix(array $currentTokens): ?bool
+    {
+        // Unreachable: every caller is inside a class, which has an opening
+        // position. It guards a call made outside one.
         if ([] === $this->charClassStartPositions) {
-            return false;
+            return null;
         }
 
-        $currentStart = $this->charClassStartPositions[\count($this->charClassStartPositions) - 1];
-        $lastToken = end($currentTokens);
+        $classStart = $this->charClassStartPositions[\count($this->charClassStartPositions) - 1];
+        $negated = false;
 
-        return ($startPos === $currentStart + 1)
-            || ($startPos === $currentStart + 2
-                && $lastToken instanceof Token
-                && TokenType::T_NEGATION === $lastToken->type);
+        for ($index = \count($currentTokens) - 1; $index >= 0; $index--) {
+            $token = $currentTokens[$index];
+
+            if (TokenType::T_CHAR_CLASS_OPEN === $token->type && $classStart === $token->position) {
+                return $negated;
+            }
+
+            if (TokenType::T_NEGATION === $token->type) {
+                $negated = true;
+
+                continue;
+            }
+
+            // Quote mode is closed by the time a member is read here, so a
+            // "\Q" in the prefix is the start of an empty "\Q\E": anything it
+            // quoted would be a literal token, which ends the prefix.
+            if (TokenType::T_QUOTE_MODE_END !== $token->type && TokenType::T_QUOTE_MODE_START !== $token->type) {
+                return null;
+            }
+        }
+
+        // Unreachable: the opening token of the innermost class is always in
+        // the list, so the loop returns before running out. It guards a token
+        // list that lost it.
+        return null;
     }
 
     private function consumeQuoteMode(): ?Token

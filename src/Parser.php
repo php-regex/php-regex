@@ -1499,12 +1499,36 @@ final class Parser
     {
         $startToken = $this->stream->previous();
         $startPosition = $startToken->position;
-        $isNegated = $this->stream->match(TokenType::T_NEGATION);
+        $isNegated = $this->parseCharClassPrefix();
         $parts = $this->parseClassExpression();
 
         $endToken = $this->stream->consume(TokenType::T_CHAR_CLASS_CLOSE, 'Expected "]" to close character class');
 
         return new CharClassNode($parts, $isNegated, $startPosition, $endToken->position + 1);
+    }
+
+    /**
+     * Read what PCRE skips before the first member of a class: "\E", an
+     * empty "\Q\E" and the negating "^", in any order, so "[\E^a]" is
+     * negated. The lexer only gives a negation token in that prefix.
+     *
+     * @return bool whether the class is negated
+     */
+    private function parseCharClassPrefix(): bool
+    {
+        $isNegated = false;
+
+        while (true) {
+            if ($this->stream->match(TokenType::T_NEGATION)) {
+                $isNegated = true;
+            } elseif ($this->stream->match(TokenType::T_QUOTE_MODE_START)) {
+                $this->inQuoteMode = true;
+            } elseif ($this->stream->match(TokenType::T_QUOTE_MODE_END)) {
+                $this->inQuoteMode = false;
+            } else {
+                return $isNegated;
+            }
+        }
     }
 
     /**

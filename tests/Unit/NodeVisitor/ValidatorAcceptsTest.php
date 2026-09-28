@@ -39,6 +39,28 @@ final class ValidatorAcceptsTest extends TestCase
     }
 
     /**
+     * Rows that once sat in the provider above, on a pattern PHP refuses.
+     */
+    #[Test]
+    #[DataProvider('provideFormerlyAcceptedPatternsPhpRefuses')]
+    public function test_a_pattern_php_refuses_is_reported_as_invalid(string $pattern): void
+    {
+        $result = Regex::create()->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s compiles in no PCRE2 release but was reported valid.', $pattern));
+        $this->assertNotNull($result->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideFormerlyAcceptedPatternsPhpRefuses(): iterable
+    {
+        // preg_match() on PCRE2 10.48 and 10.40: "PCRE2 does not support \F, \L, \l, \N{name}, \U, or \u at offset 2".
+        yield 'unicode four digit escape: /\\u0041/' => ['pattern' => '/\\u0041/'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string}>
      */
     public static function provideValidPatterns(): iterable
@@ -51,7 +73,6 @@ final class ValidatorAcceptsTest extends TestCase
         yield 'valid java unicode properties: /\\p{javaWhitespace}/u' => ['pattern' => '/\\p{javaWhitespace}/u'];
         yield 'valid java unicode properties: /\\p{javaMirrored}/u' => ['pattern' => '/\\p{javaMirrored}/u'];
         yield 'valid unicode named character: /\\N{U+0041}/u' => ['pattern' => '/\\N{U+0041}/u'];
-        yield 'valid unicode four digit escape: /\\u0041/' => ['pattern' => '/\\u0041/'];
         yield 'allows non nested quantifiers: /(a*)(b*)/' => ['pattern' => '/(a*)(b*)/'];
         yield 'allows nested possessive quantifiers: /(a++)*+b/' => ['pattern' => '/(a++)*+b/'];
         yield 'allows nested possessive quantifiers: /([a-z]*+)++/' => ['pattern' => '/([a-z]*+)++/'];

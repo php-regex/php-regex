@@ -163,11 +163,12 @@ final class ValidatorSweepTest extends TestCase
 
     public function test_validator_unicode_variations(): void
     {
-        $this->expectNotToPerformAssertions();
         $ast = $this->regexService->parse('/\x41/');
         $ast->accept($this->validatorVisitor);
 
+        // preg_match() on PCRE2 10.48: "PCRE2 does not support \F, \L, \l, \N{name}, \U, or \u at offset 2".
         $ast = $this->regexService->parse('/\u{1F600}/');
+        $this->expectException(SemanticErrorException::class);
         $ast->accept($this->validatorVisitor);
     }
 

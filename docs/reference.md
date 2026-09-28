@@ -727,6 +727,16 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 | `regex.group.duplicate_name`        | Duplicate group name "{name}"                       | Named groups must be unique           | Use different names      |
 | `regex.quantifier.invalid_range`    | Invalid quantifier range "{quant}": min > max       | `{3,2}` is invalid                    | Swap to `{2,3}`          |
 | `regex.syntax.delimiter`            | Invalid delimiter "{delim}"                         | Delimiter not allowed                 | Use `/pattern/`          |
+| `regex.escape.unrecognized`         | Unrecognized escape sequence "\{letter}"            | The letter after `\` means nothing to PCRE | Change `\i` to `i`  |
+| `regex.escape.unsupported`          | PCRE does not support the escape "\{escape}"        | `\F`, `\L`, `\l`, `\U`, `\u` and `\N{name}` are refused | Change `\u0041` to `\x{41}` |
+| `regex.escape.digits_missing`       | Digits missing in {escape}                          | `\x{}`, `\o{}` or `\N{U+}` holds no digit | Change `\o{}` to `\o{101}` |
+| `regex.octal.missing_brace`         | Missing opening brace after \o                      | `\o` takes its digits in braces       | Change `\o101` to `\o{101}` |
+| `regex.octal.invalid_digit`         | Invalid character in \o{}, or closing brace missing | A non-octal digit, or no `}`          | Change `\o{19}` to `\o{17}` |
+| `regex.unicode.invalid_digit`       | Invalid character in {escape}, or closing brace missing | A non-hex digit in `\x{}` or `\N{U+}`, or no `}` | Change `\x{zz}` to `\x{2a}` |
+| `regex.unicode.surrogate`           | Code point "{escape}" is a surrogate, which is not allowed in Unicode mode | `\x{d800}` to `\x{dfff}` under `u` or `(*UTF)` | Use a code point outside that range |
+| `regex.charclass.invalid_escape`    | Escape sequence \{letter} is invalid in a character class | `\A`, `\B`, `\C`, `\G`, `\K`, `\N`, `\R`, `\X`, `\Z`, `\z` inside `[...]` | Move `\B` out of the class |
+| `regex.posix.outside_class`         | POSIX named classes are supported only within a class | `[:alpha:]` written as a class of its own | Change `[:alpha:]` to `[[:alpha:]]` |
+| `regex.posix.collating_element`     | POSIX collating elements are not supported          | `[.ch.]` and `[=ch=]` are refused     | Change `[[.ch.]]` to `(?:ch)` |
 | `regex.semantic`                    | Various semantic errors                             | Pattern violates PCRE rules           | Add bounds to lookbehind |
 
 ---

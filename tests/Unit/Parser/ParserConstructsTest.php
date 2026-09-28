@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\LexerException;
 use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\Regex;
@@ -59,6 +60,28 @@ final class ParserConstructsTest extends TestCase
         $recompiled = Regex::create()->parse('/(?(R)yes|no)/')->accept(new CompilerNodeVisitor());
 
         $this->assertSame('/(?(R)yes|no)/', $recompiled);
+    }
+
+    /**
+     * Rows that once sat in provideConstructs(), on a pattern PHP refuses.
+     */
+    #[Test]
+    #[DataProvider('provideConstructsPhpRefuses')]
+    public function test_a_construct_php_refuses_is_not_read(string $pattern): void
+    {
+        $this->expectException(LexerException::class);
+
+        Regex::create()->parse($pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideConstructsPhpRefuses(): iterable
+    {
+        // preg_match() on PCRE2 10.48: "missing terminating ] for character class at offset 6".
+        // A "]" right after an empty "\Q\E" is a member of the class, not its end.
+        yield 'char class quote mode empty: /[\\Q\\E]/' => ['pattern' => '/[\\Q\\E]/'];
     }
 
     /**
@@ -554,11 +577,6 @@ final class ParserConstructsTest extends TestCase
         yield 'extract pattern and flags: /test/imsxuDUAJ' => [
             'pattern' => '/test/imsxuDUAJ',
             'recompiled' => '/test/imsxuDUAJ',
-        ];
-
-        yield 'char class quote mode empty returns literal: /[\\Q\\E]/' => [
-            'pattern' => '/[\\Q\\E]/',
-            'recompiled' => '/[]/',
         ];
 
         yield 'conditional with curly brace name: /(?<foo>x)(?({foo})yes|no)/' => [

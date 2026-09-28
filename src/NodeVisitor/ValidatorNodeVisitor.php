@@ -109,9 +109,63 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         'word' => true, 'xdigit' => true,
     ];
 
+    /**
+     * Escaped letters PCRE2 gives no meaning to.
+     */
+    private const UNRECOGNIZED_ESCAPES = [
+        'I' => true, 'J' => true, 'M' => true, 'O' => true, 'T' => true, 'Y' => true,
+        'i' => true, 'j' => true, 'm' => true, 'q' => true, 'y' => true,
+    ];
+
+    /**
+     * Perl case-changing escapes, which PCRE2 refuses rather than ignores.
+     */
+    private const UNSUPPORTED_ESCAPES = [
+        'F' => true, 'L' => true, 'U' => true, 'l' => true, 'u' => true,
+    ];
+
+    /**
+     * Escapes that match a position or more than one character: a class,
+     * which matches one character, cannot hold them.
+     */
+    private const CLASS_INVALID_ESCAPES = [
+        'A' => true, 'B' => true, 'C' => true, 'G' => true, 'K' => true,
+        'R' => true, 'X' => true, 'Z' => true, 'z' => true,
+    ];
+
+    private const HEX_DIGITS = '0123456789abcdefABCDEF';
+
+    private const OCTAL_DIGITS = '01234567';
+
+    /**
+     * What PCRE2 skips around the digits of "\x{...}" and "\o{...}".
+     */
+    private const BRACE_PADDING = " \t";
+
+    /**
+     * A repeat count after "\N", which makes it "\N" repeated rather than a
+     * "\N{...}" name.
+     */
+    private const REPEAT_COUNT = '/\G\{[ \t]*+(?:\d++[ \t]*+(?:,[ \t]*+\d*+[ \t]*+)?|,[ \t]*+\d++[ \t]*+)\}/';
+
+    /**
+     * The start-of-pattern settings, "(*UTF)" among them, that PCRE2 reads
+     * before the pattern itself.
+     */
+    private const LEADING_UTF_VERB = '/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/';
+
     // Optimized state management with minimal memory footprint
 
     private bool $unicodeMode = false;
+
+    /**
+     * The pattern body the tree was parsed from, for what no node records:
+     * whether a letter was escaped, and what follows an escape the lexer did
+     * not recognize. Null where positions do not point into it.
+     */
+    private ?string $source = null;
+
+    private int $charClassDepth = 0;
 
     private GroupNumbering $groupNumbering;
 
@@ -156,7 +210,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): void
     {
-        $this->unicodeMode = str_contains($node->flags, 'u');
+        $this->source = $node->source;
+        $this->charClassDepth = 0;
+        $this->unicodeMode = str_contains($node->flags, 'u')
+            || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->captureSequence = $this->groupNumbering->captureSequence;
         $this->captureIndex = 0;
@@ -224,7 +281,20 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->previousNode = null;
         $this->nextNode = null;
-        $node->child->accept($this);
+
+        // "(*pla:...)" and its kin are parsed apart, with positions counted
+        // from their own payload, so the source cannot be read under them.
+        $source = $this->source;
+        if ($node->child->getStartPosition() <= $node->startPosition) {
+            $this->source = null;
+        }
+
+        try {
+            $node->child->accept($this);
+        } finally {
+            $this->source = $source;
+        }
+
         $this->previousNode = $previous;
         $this->nextNode = $next;
     }
@@ -259,13 +329,57 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): void
     {
-        // No semantic validation needed for literals
+        if (null === $this->source) {
+            return;
+        }
+
+        if ($this->charClassDepth > 0 && '[' === $node->value && $this->isUnquotedClassBracket($this->source, $node)) {
+            $this->validateBracketInClass($this->source, $node->startPosition);
+
+            return;
+        }
+
+        $letter = $node->value;
+        $start = $node->startPosition;
+        if (1 !== \strlen($letter) || !ctype_alpha($letter)
+            || '\\'.$letter !== substr($this->source, $start, $node->endPosition - $start)) {
+            return;
+        }
+
+        $this->validateEscapedLetter($this->source, $letter, $start);
     }
 
     #[\Override]
     public function visitCharType(CharTypeNode $node): void
     {
-        // No semantic validation needed for char types
+        if (0 === $this->charClassDepth) {
+            return;
+        }
+
+        if ('N' === $node->value) {
+            // "[\N{U+41 }]" with padding the lexer does not read, or a
+            // malformed "\N{U+...}", reaches here as "\N": judge the braces
+            // as outside a class.
+            if (null !== $this->source && $this->startsNamedCodePoint($this->source, $node->getEndPosition())) {
+                $this->validateNamedCharacterBraces($this->source, $node->getEndPosition());
+
+                return;
+            }
+
+            $this->raiseSemanticError(
+                '\N is not supported in a character class.',
+                $node->getEndPosition(),
+                'regex.charclass.invalid_escape',
+            );
+        }
+
+        if (isset(self::CLASS_INVALID_ESCAPES[$node->value])) {
+            $this->raiseSemanticError(
+                \sprintf('Escape sequence \%s is invalid in a character class.', $node->value),
+                $node->getEndPosition(),
+                'regex.charclass.invalid_escape',
+            );
+        }
     }
 
     #[\Override]
@@ -304,9 +418,28 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharClass(CharClassNode $node): void
     {
+        if (0 === $this->charClassDepth && null !== $this->source) {
+            $start = $node->startPosition;
+
+            // "[[:<:]]" and "[[:>:]]" are the old POSIX word boundaries,
+            // which PCRE reads as such outside a class.
+            if (\in_array(substr($this->source, $start, 7), ['[[:<:]]', '[[:>:]]'], true)) {
+                return;
+            }
+
+            $this->validatePosixOutsideClass($this->source, $start);
+        }
+
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
-        foreach ($parts as $part) {
-            $part->accept($this);
+
+        $this->charClassDepth++;
+
+        try {
+            foreach ($parts as $part) {
+                $part->accept($this);
+            }
+        } finally {
+            $this->charClassDepth--;
         }
     }
 
@@ -351,16 +484,22 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        // 3. Validation: ASCII/Unicode order check.
-        // Note: We only strictly compare two LiteralNodes here to avoid complex cross-type decoding logic.
-        if ($node->start instanceof LiteralNode && $node->end instanceof LiteralNode) {
-            if (mb_ord($node->start->value) > mb_ord($node->end->value)) {
-                $this->raiseSemanticError(
-                    \sprintf('Invalid range "%s-%s": start character comes after end character.', $node->start->value, $node->end->value),
-                    $node->startPosition,
-                    'regex.range.reversed',
-                );
-            }
+        $node->start->accept($this);
+        $node->end->accept($this);
+
+        // 3. Validation: order check, on the code points of both endpoints.
+        // PCRE reports it where the range ends; a range between two plain
+        // characters keeps the offset it has always been reported at.
+        $startCodePoint = $this->rangeEndpointCodePoint($node->start, true);
+        $endCodePoint = $this->rangeEndpointCodePoint($node->end, false);
+        if (null !== $startCodePoint && null !== $endCodePoint && $startCodePoint > $endCodePoint) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
+                $node->start instanceof LiteralNode && $node->end instanceof LiteralNode
+                    ? $node->startPosition
+                    : $node->getEndPosition(),
+                'regex.range.reversed',
+            );
         }
     }
 
@@ -502,6 +641,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             CharLiteralType::OCTAL_LEGACY => $this->validateOctalLegacy($node),
             CharLiteralType::UNICODE_NAMED => $this->validateUnicodeNamed($node),
         };
+
+        // UTF-8 cannot encode the UTF-16 surrogates. PCRE reports it at the
+        // closing brace.
+        if ($this->unicodeMode && $node->codePoint >= 0xD800 && $node->codePoint <= 0xDFFF) {
+            $this->raiseSemanticError(
+                \sprintf('Code point "%s" is a surrogate, which is not allowed in Unicode mode.', $node->originalRepresentation),
+                $node->getEndPosition() - 1,
+                'regex.unicode.surrogate',
+            );
+        }
     }
 
     #[\Override]
@@ -553,22 +702,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitPosixClass(PosixClassNode $node): void
     {
-        $class = strtolower($node->class);
-        $isNegated = str_starts_with($class, '^');
-
-        if ($isNegated) {
-            $class = substr($class, 1);
-        }
-
-        // Fast validation with clear error messages
-        if (!isset(self::VALID_POSIX_CLASSES[$class])) {
+        // PCRE matches the name case-sensitively: "[[:ALPHA:]]" is unknown.
+        if (!$this->isPosixClassName($node->class)) {
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $node->class),
-                $node->startPosition,
+                $node->getEndPosition(),
                 'regex.posix.invalid',
             );
         }
-
     }
 
     /**
@@ -879,11 +1020,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         // Parse codePoint from the escape string
         $rep = $node->originalRepresentation;
+
         if (preg_match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
         } elseif (preg_match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
-        } elseif (preg_match('/^\\\\(x|u)\\{([0-9a-fA-F]+)\\}$/', $rep, $m)) {
+        } elseif (preg_match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[2]);
         } else {
             return; // Invalid format, skip
@@ -895,6 +1037,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $node->startPosition,
                 'regex.unicode.out_of_range',
             );
+        }
+
+        // "\u0041" and "\u{41}" are JavaScript: PCRE2 refuses "\u" outright.
+        // What was written is read from the source, so a node built by hand
+        // is not judged on its spelling.
+        if (null !== $this->source && '\\u' === substr($this->source, $node->startPosition, 2)) {
+            $this->raiseUnsupportedEscape('u', $node->startPosition + 2);
         }
     }
 
@@ -925,8 +1074,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private function validateOctalLegacy(CharLiteralNode $node): void
     {
-        // Legacy octal is limited to 0-255 in practice (including \0 for null byte)
-        if ($node->codePoint > 0xFF) {
+        // Without Unicode mode PCRE limits legacy octal to one byte, \377;
+        // in Unicode mode "\400" to "\777" are code points like any other.
+        if (!$this->unicodeMode && $node->codePoint > 0xFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid legacy octal codepoint "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition,
@@ -945,10 +1095,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $name = $matches[1];
 
         // PCRE only supports \N{U+hhhh} in Unicode (/u) mode.
-        if (!$this->unicodeMode && 1 === preg_match('/^U\+[0-9A-Fa-f]+$/', $name)) {
+        if (!$this->unicodeMode && 1 === preg_match('/^[ \t]*+U\+[0-9A-Fa-f]+[ \t]*+$/', $name)) {
             $this->raiseSemanticError(
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
-                $node->getStartPosition(),
+                // PCRE reads the escape to its closing brace before it looks
+                // at the mode.
+                $node->getEndPosition(),
                 'regex.unicode_named.requires_utf',
             );
         }
@@ -1318,6 +1470,369 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->assertRelativeReferenceExists($num, $position, $code, $context);
     }
 
+    /**
+     * A letter written after a backslash that the lexer read as the letter
+     * itself, because it names no escape it knows.
+     */
+    private function validateEscapedLetter(string $source, string $letter, int $start): void
+    {
+        $end = $start + 2;
+
+        if (isset(self::UNRECOGNIZED_ESCAPES[$letter])) {
+            $this->raiseSemanticError(
+                \sprintf('Unrecognized escape sequence "\%s".', $letter),
+                $end,
+                'regex.escape.unrecognized',
+            );
+        }
+
+        if (isset(self::UNSUPPORTED_ESCAPES[$letter])) {
+            $this->raiseUnsupportedEscape($letter, $end);
+        }
+
+        if ($this->charClassDepth > 0 && isset(self::CLASS_INVALID_ESCAPES[$letter])) {
+            $this->raiseSemanticError(
+                \sprintf('Escape sequence \%s is invalid in a character class.', $letter),
+                $end,
+                'regex.charclass.invalid_escape',
+            );
+        }
+
+        match ($letter) {
+            'o' => $this->validateOctalBraces($source, $end),
+            'x' => $this->validateHexBraces($source, $end),
+            'N' => $this->validateNamedCharacterBraces($source, $end),
+            default => null,
+        };
+    }
+
+    /**
+     * "\o" takes its digits in braces, always.
+     */
+    private function validateOctalBraces(string $source, int $position): void
+    {
+        if ('{' !== ($source[$position] ?? '')) {
+            $this->raiseSemanticError(
+                'Missing opening brace after \o.',
+                $position,
+                'regex.octal.missing_brace',
+            );
+        }
+
+        $this->validateBracedDigits($source, $position + 1, self::OCTAL_DIGITS, true, 'regex.octal.invalid_digit', '\o{}');
+    }
+
+    /**
+     * A bare "\x" is left alone: PCRE2 releases disagree on it.
+     */
+    private function validateHexBraces(string $source, int $position): void
+    {
+        if ('{' === ($source[$position] ?? '')) {
+            $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, 'regex.unicode.invalid_digit', '\x{}');
+        }
+    }
+
+    /**
+     * "\N{" outside a class that the lexer did not read as a named character:
+     * a repeat count, a malformed "\N{U+...}", or a name PCRE2 refuses.
+     */
+    private function validateNamedCharacterBraces(string $source, int $position): void
+    {
+        // Unreachable: the lexer only leaves "\N" as an escaped letter when
+        // a brace follows it, and inside a class "{U+" is checked first. It
+        // guards a caller that did not check.
+        if ('{' !== ($source[$position] ?? '')) {
+            return;
+        }
+
+        if ($this->startsNamedCodePoint($source, $position)) {
+            $digits = $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1) + 2;
+
+            if (!$this->unicodeMode) {
+                // PCRE reads to the closing brace before it looks at the mode.
+                $end = $digits + strspn($source, self::HEX_DIGITS.self::BRACE_PADDING, $digits);
+                $this->raiseSemanticError(
+                    '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
+                    '}' === ($source[$end] ?? '') ? $end + 1 : $end,
+                    'regex.unicode_named.requires_utf',
+                );
+            }
+
+            $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, 'regex.unicode.invalid_digit', '\N{U+}');
+
+            // Reached only when the digits are left unjudged, "\N{U+ }": a
+            // well-formed "\N{U+...}" is a token of its own.
+            return;
+        }
+
+        if (1 !== preg_match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {
+            $this->raiseUnsupportedEscape('N{', $position + 1);
+        }
+    }
+
+    /**
+     * Whether "{U+" follows, which PCRE2 10.48 also reads with spaces or tabs
+     * after the brace: "\N{ U+41}".
+     */
+    private function startsNamedCodePoint(string $source, int $position): bool
+    {
+        return '{' === ($source[$position] ?? '')
+            && 'U+' === substr($source, $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1), 2);
+    }
+
+    /**
+     * Read the digits of a braced escape the way PCRE2 10.48 does: spaces and
+     * tabs may pad them, at least one digit is needed, and the first other
+     * character must be the closing brace.
+     *
+     * @param bool $leadingPadding whether padding may precede the digits;
+     *                             where PCRE2's reading of it is unsettled,
+     *                             the escape is not judged
+     */
+    private function validateBracedDigits(
+        string $source,
+        int $position,
+        string $digits,
+        bool $leadingPadding,
+        string $invalidDigitCode,
+        string $escape,
+    ): void {
+        $length = \strlen($source);
+
+        if ($leadingPadding) {
+            $position += strspn($source, self::BRACE_PADDING, $position);
+        } elseif ($position < $length && 1 === strspn($source, self::BRACE_PADDING, $position, 1)) {
+            // "\N{U+ 41}": 10.48 refuses it but accepts "\N{U+ }", and how it
+            // reads padding right after "U+" is not settled, so this is left
+            // unjudged, a known false accept.
+            return;
+        }
+
+        if ($position >= $length || '}' === $source[$position]) {
+            $this->raiseSemanticError(
+                \sprintf('Digits missing in %s.', $escape),
+                $position,
+                'regex.escape.digits_missing',
+            );
+        }
+
+        $position += strspn($source, $digits, $position);
+        $position += strspn($source, self::BRACE_PADDING, $position);
+
+        // Unreachable from a parsed pattern: the lexer reads every braced
+        // escape of this shape as a token of its own, so only a malformed one
+        // gets here. It guards a caller that passes a well-formed one.
+        if ($position < $length && '}' === $source[$position]) {
+            return;
+        }
+
+        $this->raiseSemanticError(
+            \sprintf('Invalid character in %s, or closing brace missing.', $escape),
+            $position >= $length ? $length : $position + $this->characterLengthAt($source, $position),
+            $invalidDigitCode,
+        );
+    }
+
+    private function raiseUnsupportedEscape(string $escape, int $position): never
+    {
+        $this->raiseSemanticError(
+            \sprintf('PCRE does not support the escape "\%s" (\F, \L, \l, \N{name}, \U and \u are not supported).', $escape),
+            $position,
+            'regex.escape.unsupported',
+        );
+    }
+
+    /**
+     * Whether a "[" read inside a class was written as is, rather than
+     * quoted by a "\Q" that holds nothing else, or escaped.
+     */
+    private function isUnquotedClassBracket(string $source, LiteralNode $node): bool
+    {
+        $start = $node->startPosition;
+        if (1 !== $node->endPosition - $start || '[' !== ($source[$start] ?? '')) {
+            return false;
+        }
+
+        if ($start < 2 || '\Q' !== substr($source, $start - 2, 2)) {
+            return true;
+        }
+
+        // "\\Q[" is an escaped backslash, a "Q" and a bracket.
+        $backslashes = \strlen(substr($source, 0, $start - 1)) - \strlen(rtrim(substr($source, 0, $start - 1), '\\'));
+
+        return 0 === $backslashes % 2;
+    }
+
+    /**
+     * A "[" inside a class starts a POSIX item when one closes after it:
+     * "[[:alpha:]]" is known, "[[:foo:]]" and "[[.ch.]]" are errors.
+     */
+    private function validateBracketInClass(string $source, int $start): void
+    {
+        $terminator = $this->findPosixTerminator($source, $start + 1);
+        if (null === $terminator) {
+            return;
+        }
+
+        if (':' !== $source[$start + 1]) {
+            $this->raiseSemanticError(
+                'POSIX collating elements are not supported.',
+                $terminator + 2,
+                'regex.posix.collating_element',
+            );
+        }
+
+        $name = substr($source, $start + 2, $terminator - $start - 2);
+        if (!$this->isPosixClassName($name)) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid POSIX class: "%s".', $name),
+                $terminator + 2,
+                'regex.posix.invalid',
+            );
+        }
+    }
+
+    /**
+     * "[:alpha:]" written as a class of its own is a POSIX item outside a
+     * class, which PCRE refuses rather than reading as a set of characters.
+     */
+    private function validatePosixOutsideClass(string $source, int $start): void
+    {
+        $terminator = $this->findPosixTerminator($source, $start + 1);
+        if (null === $terminator) {
+            return;
+        }
+
+        if (':' === $source[$start + 1]) {
+            $this->raiseSemanticError(
+                'POSIX named classes are supported only within a class.',
+                $terminator + 2,
+                'regex.posix.outside_class',
+            );
+        }
+
+        $this->raiseSemanticError(
+            'POSIX collating elements are not supported.',
+            $terminator + 2,
+            'regex.posix.collating_element',
+        );
+    }
+
+    /**
+     * PCRE2's check_posix_syntax(): after "[:", "[." or "[=", find the
+     * matching ":]", ".]" or "=]" before any "]" or a new "[:"-like opener.
+     *
+     * @return int|null the offset of the closing ":", "." or "="
+     */
+    private function findPosixTerminator(string $source, int $offset): ?int
+    {
+        $terminator = $source[$offset] ?? '';
+        if (':' !== $terminator && '.' !== $terminator && '=' !== $terminator) {
+            return null;
+        }
+
+        $length = \strlen($source);
+        for ($position = $offset + 1; $length - $position >= 2; $position++) {
+            $char = $source[$position];
+            $next = $source[$position + 1];
+
+            if ('\\' === $char && (']' === $next || '\\' === $next)) {
+                $position++;
+
+                continue;
+            }
+
+            if (('[' === $char && $terminator === $next) || ']' === $char) {
+                return null;
+            }
+
+            if ($terminator === $char && ']' === $next) {
+                return $position;
+            }
+        }
+
+        return null;
+    }
+
+    private function isPosixClassName(string $name): bool
+    {
+        return isset(self::VALID_POSIX_CLASSES[str_starts_with($name, '^') ? substr($name, 1) : $name]);
+    }
+
+    /**
+     * The value an endpoint gives the range. Without Unicode mode PCRE reads
+     * the pattern byte by byte, so a multibyte character written as is ends
+     * a range start with its last byte and begins a range end with its first:
+     * "[\u{e9}-\xe0]" is the range from 0xA9 to 0xE0.
+     *
+     * @param bool $isStart whether the node is the start of the range
+     */
+    private function rangeEndpointCodePoint(NodeInterface $node, bool $isStart): ?int
+    {
+        if ($node instanceof LiteralNode) {
+            // Unreachable from a parsed pattern: the parser never gives a
+            // range an empty endpoint. It guards a tree built by hand.
+            if ('' === $node->value) {
+                return null;
+            }
+
+            if (!$this->unicodeMode) {
+                return \ord($isStart ? $node->value[\strlen($node->value) - 1] : $node->value[0]);
+            }
+
+            $codePoint = mb_ord($node->value, 'UTF-8');
+
+            return false === $codePoint ? \ord($node->value) : $codePoint;
+        }
+
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return $node->codePoint >= 0 ? $node->codePoint : null;
+        }
+
+        // Unreachable from a parsed pattern: guardRangeEndpoint() and
+        // isSingleCharNode() leave only the node types above as endpoints.
+        return null;
+    }
+
+    private function describeRange(RangeNode $node): string
+    {
+        if (null !== $this->source) {
+            return substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        }
+
+        return $this->describeRangeEndpoint($node->start).'-'.$this->describeRangeEndpoint($node->end);
+    }
+
+    private function describeRangeEndpoint(NodeInterface $node): string
+    {
+        return match (true) {
+            $node instanceof LiteralNode => $node->value,
+            $node instanceof CharLiteralNode => $node->originalRepresentation,
+            $node instanceof ControlCharNode => '\c'.$node->char,
+            default => '?',
+        };
+    }
+
+    /**
+     * The width of the character at an offset, which is how far PCRE steps
+     * past it: one byte, or a whole UTF-8 sequence in Unicode mode.
+     */
+    private function characterLengthAt(string $source, int $position): int
+    {
+        if (!$this->unicodeMode) {
+            return 1;
+        }
+
+        $byte = \ord($source[$position]);
+
+        return match (true) {
+            $byte >= 0xF0 => 4,
+            $byte >= 0xE0 => 3,
+            $byte >= 0xC0 => 2,
+            default => 1,
+        };
+    }
+
     private function raiseSemanticError(string $message, int $position, string $code, ?string $hint = null): never
     {
         throw new SemanticErrorException(
@@ -1343,7 +1858,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     /**
      * Whether a digit string that does not resolve to a capture group is a
      * valid octal escape under PCRE rules: it must start with an octal digit,
-     * and the leading run of up to three octal digits must encode <= \377.
+     * and the leading run of up to three octal digits must encode <= \377
+     * unless the pattern is in Unicode mode, where "\400" is U+0100.
      */
     private function isValidOctalFallback(string $digits): bool
     {
@@ -1351,6 +1867,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return false;
         }
 
-        return octdec($octal[1]) <= 0xFF;
+        return $this->unicodeMode || octdec($octal[1]) <= 0xFF;
     }
 }

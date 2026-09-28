@@ -53,7 +53,7 @@ without notice; do not build on it.
 
 <!-- pcre2-conformance: generated below - do not edit -->
 
-Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4233 of 4426** extractable cases, error offset agrees on **88 of 333** shared rejections (**33** of them match one of two version-dependent offsets); **94** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
+Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4302 of 4426** extractable cases, error offset agrees on **159 of 399** shared rejections (**78** of them match one of two version-dependent offsets); **28** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
 
 ## Source
 
@@ -69,10 +69,10 @@ Against PCRE2 10.48's official test suite, under PHP's compile options: compile 
 | file | cases | skipped | extractable | verdict agrees | shared rejections | offset agrees | of which one of two version-dependent offsets | false accepts |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `testinput1` | 1379 | 82 | 1297 | 1273 | 0 | 0 | 0 | 0 |
-| `testinput2` | 2325 | 441 | 1884 | 1742 | 309 | 86 | 33 | 80 |
+| `testinput2` | 2325 | 441 | 1884 | 1795 | 362 | 143 | 72 | 27 |
 | `testinput4` | 650 | 33 | 617 | 610 | 0 | 0 | 0 | 0 |
-| `testinput5` | 817 | 189 | 628 | 608 | 24 | 2 | 0 | 14 |
-| **total** | **5171** | **745** | **4426** | **4233** | **333** | **88** | **33** | **94** |
+| `testinput5` | 817 | 189 | 628 | 624 | 37 | 16 | 6 | 1 |
+| **total** | **5171** | **745** | **4426** | **4302** | **399** | **159** | **78** | **28** |
 
 ## PHP compile context
 
@@ -104,9 +104,9 @@ Adjusted cases (4): `testinput2:6394`, `testinput2:6399`, `testinput2:6404`, `te
 
 | defect class | cases |
 |---|---:|
-| `offset-defect` | 245 |
-| `false-reject` | 99 |
-| `false-accept` | 94 |
+| `offset-defect` | 240 |
+| `false-reject` | 96 |
+| `false-accept` | 28 |
 
 ## Fix plan
 
@@ -114,33 +114,18 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 
 ### False accepts
 
-94 patterns PHP rejects are accepted by `validate()`. Add the missing compile-time check for each PCRE2 error below.
+28 patterns PHP rejects are accepted by `validate()`. Add the missing compile-time check for each PCRE2 error below.
 
 | PCRE2 error | first recorded message | cases |
 |---:|---|---:|
-| 130 | unknown POSIX class name | 10 |
-| 107 | escape sequence is invalid in character class | 9 |
-| 137 | PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u | 7 |
-| 106 | missing terminating ] for character class | 6 |
-| 173 | disallowed Unicode code point (>= 0xd800 && <= 0xdfff) | 6 |
-| 167 | non-hex character in \\x{} (closing brace missing?) | 5 |
-| 113 | POSIX collating elements are not supported | 4 |
-| 178 | digits missing after \\x or in \\x{} or \\o{} or \\N{U+} | 4 |
 | 128 | atomic assertion expected after (?( or (?(?C) | 3 |
 | 160 | (*VERB) not recognized or malformed | 3 |
 | 162 | subpattern name expected | 3 |
-| 164 | non-octal character in \\o{} (closing brace missing?) | 3 |
 | 166 | (*MARK) must have an argument | 3 |
-| 171 | \\N is not supported in a class | 3 |
-| 103 | unrecognized character follows \\ | 2 |
-| 108 | range out of order in character class | 2 |
 | 126 | a relative value of zero is not allowed | 2 |
 | 127 | conditional subpattern contains more than two branches | 2 |
-| 155 | missing opening brace after \\o | 2 |
 | 169 | \\k is not followed by a braced, angle-bracketed, or quoted name | 2 |
-| 193 | \\N{U+dddd} is supported only in Unicode (UTF) mode | 2 |
 | 194 | invalid hyphen in option setting | 2 |
-| 112 | POSIX named classes are supported only within a class | 1 |
 | 122 | unmatched closing parenthesis | 1 |
 | 125 | length of lookbehind assertion is not limited | 1 |
 | 141 | unrecognized character after (?P | 1 |
@@ -152,12 +137,12 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 
 ### Offset defects
 
-245 cases: both reject, at a body offset neither supported PCRE2 release reports. The library may be off by a few bytes, or it may have rejected the pattern for a different reason than PCRE2 did; the PCRE2 error below says which check PCRE2 hit first.
+240 cases: both reject, at a body offset neither supported PCRE2 release reports. The library may be off by a few bytes, or it may have rejected the pattern for a different reason than PCRE2 did; the PCRE2 error below says which check PCRE2 hit first.
 
 | PCRE2 error | first recorded message | cases |
 |---:|---|---:|
 | 115 | reference to non-existent subpattern | 51 |
-| 150 | invalid range in character class | 23 |
+| 150 | invalid range in character class | 21 |
 | 125 | length of lookbehind assertion is not limited | 17 |
 | 144 | subpattern name must start with a non-digit | 12 |
 | 213 | unexpected expression in extended character class (no preceding operator) | 12 |
@@ -184,7 +169,6 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 | 104 | numbers out of order in {} quantifier | 2 |
 | 109 | quantifier does not follow a repeatable item | 2 |
 | 122 | unmatched closing parenthesis | 2 |
-| 130 | unknown POSIX class name | 2 |
 | 181 | missing terminating delimiter for callout with string argument | 2 |
 | 187 | lookbehind assertion is too long | 2 |
 | 195 | (*alpha_assertion) not recognized | 2 |
@@ -199,14 +183,13 @@ False accepts come first: a static analyser that blesses a pattern PHP refuses t
 | 168 | \\c must be followed by a printable ASCII character | 1 |
 | 171 | \\N is not supported in a class | 1 |
 | 178 | digits missing after \\x or in \\x{} or \\o{} or \\N{U+} | 1 |
-| 193 | \\N{U+dddd} is supported only in Unicode (UTF) mode | 1 |
 | 194 | invalid hyphen in option setting | 1 |
 | 209 | unexpected operator in extended character class (no preceding operand) | 1 |
 | 218 | missing opening parenthesis | 1 |
 
 ### False rejects
 
-99 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
+96 cases: PHP compiles what validate() rejects; teach the lexer or parser the construct.
 
 ## Regenerating this table
 
