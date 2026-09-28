@@ -30,10 +30,13 @@ use RegexParser\TokenType;
 final class GroupNameReader
 {
     /**
-     * The longest name PCRE2 10.48 takes, in code units. 10.40 stopped at
-     * 32; names are judged as the newer release reads them.
+     * The longest name PCRE2 takes from 10.44, in code units; before, 32.
      */
     public const MAX_NAME_LENGTH = 128;
+
+    public const MAX_NAME_LENGTH_BEFORE_PCRE_1044 = 32;
+
+    private int $maxNameLength = self::MAX_NAME_LENGTH;
 
     /**
      * The group numbers each name was given so far.
@@ -54,6 +57,19 @@ final class GroupNameReader
     private bool $unicodeNames = false;
 
     public function __construct(private readonly TokenStream $stream) {}
+
+    /**
+     * The longest name the PCRE2 release read takes, in code units.
+     */
+    public function limitNameLength(int $maxNameLength): void
+    {
+        $this->maxNameLength = $maxNameLength;
+    }
+
+    public function maxNameLength(): int
+    {
+        return $this->maxNameLength;
+    }
 
     /**
      * Whether the pattern currently allows two groups to share a name, which
@@ -124,9 +140,9 @@ final class GroupNameReader
             );
         }
 
-        if (\strlen($name) > self::MAX_NAME_LENGTH) {
+        if (\strlen($name) > $this->maxNameLength) {
             throw $this->error(
-                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), self::MAX_NAME_LENGTH),
+                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->maxNameLength),
                 $nameEnd,
             );
         }

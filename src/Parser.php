@@ -183,6 +183,13 @@ final class Parser
         $this->flags = $flags;
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
+        // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
+        // from 8.4.
+        $this->groupNames->limitNameLength(
+            ($this->useRuntimePcreDetection ? $this->runningPcreAtLeast('10.44') : $this->phpVersionId >= 80400)
+                ? GroupNameReader::MAX_NAME_LENGTH
+                : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044,
+        );
         // Group names take any letter in Unicode mode: "u", or "(*UTF)" at
         // the start.
         $this->unicodeMode = str_contains($flags, 'u')
@@ -803,6 +810,10 @@ final class Parser
 
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
     {
+        if (TokenType::T_BACKREF === $type) {
+            $this->guardReferenceNameLength($token->value, $token->position);
+        }
+
         return match ($type) {
             TokenType::T_LITERAL,
             TokenType::T_LITERAL_ESCAPED => new LiteralNode($token->value, $startPosition, $token->end()),
@@ -928,6 +939,7 @@ final class Parser
         $token = $this->stream->previous();
         $endPosition = $startPosition + \strlen($token->value);
         $value = self::withoutBracePadding($token->value);
+        $this->guardReferenceNameLength($token->value, $token->position);
 
         // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
         // like \g<N>, calls the group instead.
@@ -956,6 +968,32 @@ final class Parser
             \sprintf('Invalid \\g reference syntax: %s at position %d', $value, $position),
             $position,
         );
+    }
+
+    /**
+     * PCRE reads the name of "\k<name>", "\g{name}" and the like before it
+     * looks the group up, and stops where a name past the limit ends.
+     *
+     * @param int $start the offset of the backslash
+     */
+    private function guardReferenceNameLength(string $reference, int $start): void
+    {
+        if (1 === preg_match('/^\\\\[gk][<{\'][ \t]*+([^\d+\- \t>}\'][^ \t>}\']*+)/', $reference, $matches, \PREG_OFFSET_CAPTURE)) {
+            $this->guardNameLength($matches[1][0], $start + $matches[1][1]);
+        }
+    }
+
+    /**
+     * @param int $nameStart the offset of the name's first character
+     */
+    private function guardNameLength(string $name, int $nameStart): void
+    {
+        if (\strlen($name) > $this->groupNames->maxNameLength()) {
+            throw $this->parserException(
+                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->groupNames->maxNameLength()),
+                $nameStart + \strlen($name),
+            );
+        }
     }
 
     /**
@@ -1929,6 +1967,7 @@ final class Parser
         }
 
         $savedPos = $this->stream->getPosition();
+        $nameStart = $this->stream->current()->position;
         $name = '';
         while (
             $this->stream->check(TokenType::T_LITERAL)
@@ -1940,6 +1979,8 @@ final class Parser
         }
 
         if ('' !== $name && $this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            $this->guardNameLength($name, $nameStart);
+
             return new BackrefNode($name, $startPosition, $this->stream->current()->position);
         }
 
@@ -2409,6 +2450,8 @@ final class Parser
                 $this->groupNames->invalidNameOffset($nameStart),
             );
         }
+
+        $this->guardNameLength($name, $nameStart);
 
         return $name;
     }

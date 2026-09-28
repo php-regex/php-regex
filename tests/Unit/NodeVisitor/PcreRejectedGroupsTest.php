@@ -104,17 +104,19 @@ final class PcreRejectedGroupsTest extends TestCase
     }
 
     /**
-     * PCRE2 10.48 takes a group name of up to 128 code units; 10.40 stops at
-     * 32 and refuses this one with error 148 at offset 131. The limit is
-     * judged as the newer release reads it, so the longest legal name still
-     * compiles once a name one unit longer is refused.
+     * PCRE2 10.44 and later take a group name of up to 128 code units; 10.40
+     * stops at 32 and refuses this one with error 148 at offset 131. The
+     * limit follows the release the target reads, so on PHP 8.4 the longest
+     * legal name still compiles once a name one unit longer is refused.
      */
     #[Test]
     public function test_validate_accepts_name_of_128_code_units_as_pcre2_10_48_does(): void
     {
         $pattern = "/(?'abcdefghijklmnopqrstuvwxyzABCDEFGabcdefghijklmnopqrstuvwxyzABCDEabcdefghijklmnopqrstuvwxyzABCDEabcdefghijklmnopqrstuvwxyzABCDEFG'justright)/";
 
-        $result = Regex::create()->validate($pattern);
+        // PHP 8.4 bundles PCRE2 10.44, which took the limit to 128; a PHP
+        // linked to an older PCRE2 refuses the name.
+        $result = Regex::create(['php_version' => 80400])->validate($pattern);
 
         $this->assertTrue($result->isValid, \sprintf('A 128-unit name compiles in PCRE2 10.48 but was reported invalid: %s', (string) $result->error));
         $this->assertNull($result->error);
