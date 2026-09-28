@@ -639,6 +639,7 @@ final class Parser
             $node instanceof AnchorNode => $node->value,
             $node instanceof AssertionNode => $backslash.$node->value,
             $node instanceof PcreVerbNode => '(*'.$node->verb.')',
+            $node instanceof LimitMatchNode => '(*LIMIT_MATCH='.$node->limit.')',
             default => $backslash.'K',
         };
     }
@@ -2145,6 +2146,7 @@ final class Parser
         return $node instanceof AnchorNode
             || $node instanceof AssertionNode
             || $node instanceof PcreVerbNode
+            || $node instanceof LimitMatchNode
             || $node instanceof KeepNode;
     }
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- A quantifier after `(*LIMIT_MATCH=n)`, as in `(*LIMIT_MATCH=10)+`, was accepted; PHP refuses to repeat it, as it refuses to repeat the other start-of-pattern settings.
 - The body of `(*pla:...)`, `(*atomic:...)`, `(*script_run:...)` and the other alphabetic assertions ended at the first `)` outside a nested group, even one that was escaped, in a class, quoted by `\Q...\E` or in a `(?#...)` comment: `(*pla:\))` and `(*pla:[)])` were refused, `(*pla:\Qa)` accepted. It is now read as any group body is.
 - For PHP 8.2 and 8.3, `{,2}` and a count padded with spaces (`{ 2 }`, `{2, 3}`) were read as repeats; the PCRE2 those versions bundle reads them as literal text, so `/{,2}/` was refused and `/a{,2}/` misread. They are now text there, and repeats from PHP 8.4. `\N{,2}` is refused before PHP 8.4, and `\N` followed by such a count is reported where the `\N` ends, as PCRE2 10.40 and 10.42 report it.
 - The ASCII options PCRE2 10.43 added to `(?...)` — `a` alone, or with one of `D`, `S`, `W`, `P`, `T`, as in `(?aD)` or `(?i-aW:...)` — were refused; PHP 8.4 takes them. They are now read for PHP 8.4 and for a running PHP that links PCRE2 10.43 or newer, and still refused for PHP 8.2 and 8.3.
