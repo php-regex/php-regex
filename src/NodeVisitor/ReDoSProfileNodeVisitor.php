@@ -493,7 +493,21 @@ final class ReDoSProfileNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): ReDoSSeverity
     {
-        return $node->content?->accept($this) ?? ReDoSSeverity::SAFE;
+        if (null === $node->content) {
+            return ReDoSSeverity::SAFE;
+        }
+
+        if (!$node->atomic) {
+            return $node->content->accept($this);
+        }
+
+        // The body of "(*asr:...)" is atomic, as in an atomic group.
+        $wasAtomic = $this->inAtomicGroup;
+        $this->inAtomicGroup = true;
+        $severity = $node->content->accept($this);
+        $this->inAtomicGroup = $wasAtomic;
+
+        return $this->reduceSeverity($severity, ReDoSSeverity::LOW);
     }
 
     #[\Override]

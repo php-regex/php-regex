@@ -757,6 +757,32 @@ echo $limit->limit;  // 1000
 
 ---
 
+### ScriptRunNode
+
+**Purpose:** `(*script_run:...)`, short `(*sr:...)`, which matches its body only when every character it matches belongs to one script. `(*atomic_script_run:...)`, short `(*asr:...)`, is the same with an atomic body: `(*sr:(?>...))`.
+
+
+**Fields:**
+
+| Field     | Type                | Description                                        |
+|-----------|---------------------|----------------------------------------------------|
+| `script`  | string              | The body as written                                |
+| `content` | NodeInterface\|null | The parsed body; its positions count from its start |
+| `atomic`  | bool                | Whether the body is atomic (`(*asr:...)`)          |
+
+**Example:**
+```php
+use RegexParser\Regex;
+
+$ast = Regex::create()->parse('/(*asr:\d+)/');
+$run = $ast->pattern;
+
+echo $run->script;          // '\d+'
+var_dump($run->atomic);     // bool(true)
+```
+
+---
+
 ## Supporting Types
 
 ### NodeInterface

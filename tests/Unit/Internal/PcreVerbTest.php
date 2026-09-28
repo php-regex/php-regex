@@ -121,6 +121,31 @@ final class PcreVerbTest extends TestCase
     }
 
     #[Test]
+    public function test_an_atomic_script_run_carries_an_atomic_sub_pattern(): void
+    {
+        foreach (['asr:\\d+', 'atomic_script_run:\\d+'] as $text) {
+            $verb = PcreVerb::read($text);
+
+            $this->assertTrue($verb->isScriptRun(), $text);
+            $this->assertTrue($verb->atomicScriptRun, $text);
+            $this->assertSame('\\d+', $verb->payload, $text);
+        }
+
+        $this->assertFalse(PcreVerb::read('sr:\\d+')->atomicScriptRun);
+    }
+
+    #[Test]
+    public function test_a_script_run_takes_an_argument_in_lowercase_only(): void
+    {
+        foreach (['sr', 'script_run', 'asr', 'atomic_script_run'] as $name) {
+            $this->assertTrue(PcreVerb::takesArgument($name), $name);
+        }
+
+        $this->assertFalse(PcreVerb::takesArgument('SR'));
+        $this->assertFalse(PcreVerb::takesArgument('ASR'));
+    }
+
+    #[Test]
     public function test_a_script_run_with_nothing_in_it_is_a_plain_verb(): void
     {
         $verb = PcreVerb::read('sr:');

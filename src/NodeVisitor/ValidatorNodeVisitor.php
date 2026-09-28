@@ -2328,6 +2328,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $node instanceof QuantifierNode => [$node->node],
             $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
             $node instanceof DefineNode => [$node->content],
+            $node instanceof ScriptRunNode && null !== $node->content => [$node->content],
             default => [],
         };
 

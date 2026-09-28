@@ -229,7 +229,7 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
     public function visitScriptRun(ScriptRunNode $node): string
     {
         return $this->wrap('(*', 'group')
-            .$this->wrap('script_run', 'keyword')
+            .$this->wrap($node->atomic ? 'atomic_script_run' : 'script_run', 'keyword')
             .$this->wrap(':', 'meta')
             .$this->wrapReference($node->script)
             .$this->wrap(')', 'group');

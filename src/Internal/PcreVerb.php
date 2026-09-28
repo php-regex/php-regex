@@ -54,9 +54,14 @@ final readonly class PcreVerb
     ];
 
     /**
-     * The two spellings of a script run.
+     * The spellings of a script run, and whether its body is atomic.
      */
-    private const SCRIPT_RUN_PREFIXES = ['script_run:', 'sr:'];
+    private const SCRIPT_RUN_PREFIXES = [
+        'script_run:' => false,
+        'sr:' => false,
+        'atomic_script_run:' => true,
+        'asr:' => true,
+    ];
 
     private function __construct(
         /**
@@ -84,6 +89,10 @@ final readonly class PcreVerb
          * Whether the assertion is non-atomic: "(*napla:...)", "(?*...)".
          */
         public bool $nonAtomic = false,
+        /**
+         * Whether the script run's body is atomic: "(*asr:...)".
+         */
+        public bool $atomicScriptRun = false,
     ) {}
 
     public static function read(string $verb): self
@@ -119,14 +128,14 @@ final readonly class PcreVerb
             return new self($verb, null, null, (int) $matches[1]);
         }
 
-        foreach (self::SCRIPT_RUN_PREFIXES as $prefix) {
+        foreach (self::SCRIPT_RUN_PREFIXES as $prefix => $atomic) {
             if (!str_starts_with($verb, $prefix)) {
                 continue;
             }
 
             $payload = substr($verb, \strlen($prefix));
             if ('' !== $payload) {
-                return new self($verb, null, $payload, null, \strlen($prefix));
+                return new self($verb, null, $payload, null, \strlen($prefix), atomicScriptRun: $atomic);
             }
         }
 
@@ -141,7 +150,7 @@ final readonly class PcreVerb
     {
         return isset(self::ASSERTIONS[$name])
             || isset(self::NON_ATOMIC_ASSERTIONS[$name])
-            || \in_array($name.':', self::SCRIPT_RUN_PREFIXES, true)
+            || isset(self::SCRIPT_RUN_PREFIXES[$name.':'])
             || \in_array($name, ['', 'MARK', 'PRUNE', 'SKIP', 'THEN', 'COMMIT', 'ACCEPT', 'FAIL', 'F'], true);
     }
 

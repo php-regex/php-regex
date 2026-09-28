@@ -24,6 +24,7 @@ use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
+use RegexParser\Node\ScriptRunNode;
 use RegexParser\Node\SequenceNode;
 
 /**
@@ -111,6 +112,14 @@ final class GroupNumberingCollector
 
         if ($node instanceof DefineNode) {
             $this->collectNode($node->content);
+
+            return;
+        }
+
+        if ($node instanceof ScriptRunNode) {
+            if (null !== $node->content) {
+                $this->collectNode($node->content);
+            }
 
             return;
         }

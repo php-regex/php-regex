@@ -16,7 +16,8 @@ namespace RegexParser\Node;
 use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 /**
- * Represents a script run verb (e.g., (*script_run:Latin), (*sr:Latin)).
+ * Represents a script run verb (e.g., (*script_run:Latin), (*sr:Latin)),
+ * or its atomic form (*atomic_script_run:Latin), (*asr:Latin).
  *
  * This node represents PCRE2 script run assertions that ensure
  * all characters in the subject string belong to the same script.
@@ -32,6 +33,11 @@ final readonly class ScriptRunNode extends AbstractNode
          * are relative to the payload text.
          */
         public ?NodeInterface $content = null,
+        /**
+         * Whether the body is atomic: "(*atomic_script_run:...)", short
+         * "(*asr:...)", the same as "(*sr:(?>...))".
+         */
+        public bool $atomic = false,
     ) {
         parent::__construct($startPosition, $endPosition);
     }

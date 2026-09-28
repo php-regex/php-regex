@@ -1294,6 +1294,7 @@ final class Parser
                 $startPosition,
                 $endPosition,
                 $this->parseSubPattern($payload, $startPosition + 2 + $read->payloadOffset),
+                $read->atomicScriptRun,
             );
         }
 

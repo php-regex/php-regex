@@ -460,13 +460,15 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): string
     {
-        // "(*sr:...)" is the same verb written short.
+        // "(*sr:...)" is the same verb written short, "(*asr:...)" its
+        // atomic form.
+        $spellings = $node->atomic ? ['asr', 'atomic_script_run'] : ['sr', 'script_run'];
         $written = $this->writtenText($node);
-        if (null !== $written && \in_array($written, ['(*sr:'.$node->script.')', '(*script_run:'.$node->script.')'], true)) {
+        if (null !== $written && \in_array($written, ['(*'.$spellings[0].':'.$node->script.')', '(*'.$spellings[1].':'.$node->script.')'], true)) {
             return $written;
         }
 
-        return '(*script_run:'.$node->script.')';
+        return '(*'.$spellings[1].':'.$node->script.')';
     }
 
     #[\Override]
