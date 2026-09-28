@@ -1587,10 +1587,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if (!$this->supportsVariableLengthLookbehind() && $min !== $max) {
             $this->raiseSemanticError(
-                'Variable-length lookbehind is not supported before PHP 7.3.',
+                'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
                 $node->startPosition,
                 'regex.lookbehind.variable_length_not_supported',
-                'Use a fixed-length lookbehind or target PHP 7.3+.',
+                'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
             );
         }
 
@@ -1874,9 +1874,25 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             && $this->isLookaround($condition->children[1]);
     }
 
+    /**
+     * Variable-length lookbehinds arrived in PCRE2 10.43. php-src bundles
+     * 10.40 in PHP 8.2 and 10.42 in 8.3, so an explicit target below 8.4
+     * lacks them; for the running PHP, the PCRE2 it links decides.
+     */
     private function supportsVariableLengthLookbehind(): bool
     {
-        return $this->phpVersionId >= 70300;
+        return $this->phpVersionId >= 80400 || $this->runningPcreAtLeast('10.43');
+    }
+
+    /**
+     * Whether validation targets the running PHP, whose linked PCRE2 may be
+     * newer than the one its version bundles, and that PCRE2 is at least
+     * the given release.
+     */
+    private function runningPcreAtLeast(string $release): bool
+    {
+        return \PHP_VERSION_ID === $this->phpVersionId
+            && version_compare(explode(' ', \PCRE_VERSION)[0], $release, '>=');
     }
 
     private function findUnboundedLookbehindNode(NodeInterface $node): ?NodeInterface
@@ -2043,6 +2059,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         if ('{' === ($source[$position] ?? '')) {
             $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, 'regex.unicode.invalid_digit', '\x{}');
+        } elseif ($this->runningPcreAtLeast('10.45')) {
+            // A "\x" with no digit is "\x00" up to PCRE2 10.44 and an error
+            // from 10.45, which no PHP release bundles yet: only a newer
+            // linked PCRE2 refuses it.
+            $this->raiseSemanticError('Digits missing after \x.', $position, 'regex.escape.digits_missing');
         }
     }
 

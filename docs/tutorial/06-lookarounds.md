@@ -148,6 +148,9 @@ preg_match('/(?<=a+)b/', 'aaab');  // Error: unbounded lookbehind
 preg_match('/(?<=a{1,3})b/', 'aaab');  // Match: yes
 ```
 
+A bounded but variable length such as `{1,3}` needs PCRE2 10.43, which PHP bundles from 8.4. On PHP 8.2 and 8.3,
+give each top-level branch a fixed length instead: `(?<=a|bc)` works everywhere, `(?<=(?:a|bc))` does not.
+
 ### Variable-Length Lookbehind Detection
 
 ```php
@@ -158,7 +161,7 @@ $result = $regex->validate('/(?<=a+)b/');
 
 if (!$result->isValid()) {
     echo $result->getErrorMessage();
-    // Output: "Variable-length lookbehind is not supported in PCRE"
+    // Output: "Lookbehind is unbounded. PCRE requires a bounded maximum length."
 }
 ```
 
@@ -182,7 +185,7 @@ if (!$result->isValid()) {
 ### Bad: Invalid or Confusing
 
 ```php
-// Variable-length lookbehind (invalid in PCRE)
+// Unbounded lookbehind (invalid in PCRE)
 /(?<=a+)b/
 
 // Using lookbehind when lookahead is clearer
@@ -267,8 +270,11 @@ echo $pattern . ": " . ($result->isValid() ? "Valid" : "Invalid") . "\n";
 // Invalid in PCRE
 preg_match('/(?<=a+)b/', 'aaab');  // Error: unbounded lookbehind
 
-// Valid: Specify bounds
+// Valid: Specify bounds (a variable length needs PCRE2 10.43, bundled from PHP 8.4)
 preg_match('/(?<=a{1,10})b/', 'aaab');  // Match: yes
+
+// Valid on every PHP version: a fixed length
+preg_match('/(?<=a{3})b/', 'aaab');  // Match: yes
 ```
 
 ### Error: Forgetting Lookaround is Zero-Width

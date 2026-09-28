@@ -66,8 +66,8 @@ if (!$result->isValid()) {
 
 **Output:**
 ```
-Error: Variable-length lookbehind is not supported in PCRE.
-Hint: Use a bounded lookbehind like (?<=a{1,10}) instead.
+Error: Lookbehind is unbounded. PCRE requires a bounded maximum length.
+Hint: Use a bounded quantifier instead of "+".
 Snippet:
 Line 1: (?<=a+)b
             ^
@@ -261,8 +261,8 @@ echo $result->getHint() . "\n";
 
 **Output:**
 ```
-Variable-length lookbehind is not supported.
-Use (?<=a{1,10}) instead for bounded lookbehind.
+Lookbehind is unbounded. PCRE requires a bounded maximum length.
+Use a bounded quantifier instead of "+".
 ```
 
 ---
