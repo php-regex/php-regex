@@ -1114,8 +1114,9 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
             if ($child instanceof QuantifierNode) {
                 $baseNode = $child->node;
                 $parsedCount = $this->parseQuantifierCount($child->quantifier);
-                if (null === $parsedCount) {
-                    // Variable quantifier, don't merge
+                // A variable quantifier is not merged, nor a possessive one,
+                // which is atomic.
+                if (null === $parsedCount || QuantifierType::T_POSSESSIVE === $child->type) {
                     $this->flushCompactedSequence($compacted, $currentNode, $currentCount, $currentFromQuantifier);
                     $compacted[] = $child;
 
@@ -1275,11 +1276,14 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
             return new QuantifierNode($node->node, '?', $node->type, $node->startPosition, $node->endPosition);
         }
 
-        if ('{1}' === $quantifier || '{1,1}' === $quantifier) {
+        // "X{1}+" is possessive, as an atomic group is: it never gives back.
+        if (('{1}' === $quantifier || '{1,1}' === $quantifier) && QuantifierType::T_POSSESSIVE !== $node->type) {
             return $node->node;
         }
 
-        if ('{0}' === $quantifier || '{0,0}' === $quantifier) {
+        // A group repeated zero times still takes its number, and can still
+        // be called or referred to.
+        if (('{0}' === $quantifier || '{0,0}' === $quantifier) && !$this->isCaptureSensitive($node->node)) {
             return new LiteralNode('', $node->startPosition, $node->endPosition);
         }
 
