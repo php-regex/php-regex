@@ -16,7 +16,6 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RangeNode;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\NodeVisitor\DumperNodeVisitor;
 use RegexParser\Regex;

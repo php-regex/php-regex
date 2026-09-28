@@ -68,7 +68,8 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_anchor(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "*" cannot be applied to assertion or verb "^" at position 0');
+        // PHP: "quantifier does not follow a repeatable item at offset 2".
+        $this->expectExceptionMessage('Quantifier "*" cannot be applied to assertion or verb "^" at position 2');
 
         $regex = $this->createRegex();
         $regex->parse('/^*a/');
@@ -77,7 +78,8 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_assertion(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion or verb "\A" at position 0');
+        // PHP: "quantifier does not follow a repeatable item at offset 3".
+        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion or verb "\A" at position 3');
 
         $regex = $this->createRegex();
         $regex->parse('/\A+a/');
@@ -86,7 +88,8 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_keep_node(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "?" cannot be applied to assertion or verb "\K" at position 1');
+        // PHP: "quantifier does not follow a repeatable item at offset 4".
+        $this->expectExceptionMessage('Quantifier "?" cannot be applied to assertion or verb "\K" at position 4');
 
         $regex = $this->createRegex();
         $regex->parse('/a\K?/');
@@ -95,7 +98,8 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_incomplete_python_group(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid syntax after (?P at position 2');
+        // PHP: "unrecognized character after (?P at offset 4", past the ")".
+        $this->expectExceptionMessage('Invalid syntax after (?P at position 4');
 
         $regex = $this->createRegex();
         $regex->parse('/(?P)/');

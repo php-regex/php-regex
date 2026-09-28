@@ -170,7 +170,9 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier without target at position 0');
+        // PHP reports "/*/" past the "*": "quantifier does not follow a
+        // repeatable item at offset 1".
+        $this->expectExceptionMessage('Quantifier without target at position 1');
 
         $this->accessor->callPrivateMethod('parseQuantifiedAtom');
     }
@@ -228,8 +230,9 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0); // Start at 'P'
 
         $this->expectException(ParserException::class);
-        // Le message d'erreur est "Invalid syntax after (?P at position 2" (position de P)
-        $this->expectExceptionMessage('Invalid syntax after (?P at position 2');
+        // PHP reports "(?P[)" past the "[": "unrecognized character after
+        // (?P at offset 4", the number the message carries.
+        $this->expectExceptionMessage('Invalid syntax after (?P at position 4');
 
         $this->accessor->callPrivateMethod('parseGroupModifier');
     }

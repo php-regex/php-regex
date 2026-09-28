@@ -134,6 +134,18 @@ final readonly class PcreVerb
         return new self($verb);
     }
 
+    /**
+     * Whether PCRE knows "(*name:": an assertion, a script run, or a verb
+     * that takes a name, the mark's "(*:" included.
+     */
+    public static function takesArgument(string $name): bool
+    {
+        return isset(self::ASSERTIONS[$name])
+            || isset(self::NON_ATOMIC_ASSERTIONS[$name])
+            || \in_array($name.':', self::SCRIPT_RUN_PREFIXES, true)
+            || \in_array($name, ['', 'MARK', 'PRUNE', 'SKIP', 'THEN', 'COMMIT', 'ACCEPT', 'FAIL', 'F'], true);
+    }
+
     public function isScriptRun(): bool
     {
         return null === $this->assertion && null !== $this->payload;

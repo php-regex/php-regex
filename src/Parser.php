@@ -484,18 +484,20 @@ final class Parser
 
     private function assertQuantifierCanApply(NodeInterface $node, Token $token): void
     {
+        $position = $this->quantifierErrorOffset($token);
+
         // A callout matches nothing, and PCRE does not let it be repeated.
         if ($node instanceof CalloutNode) {
             throw $this->parserException(
-                \sprintf('Quantifier does not follow a repeatable item at position %d: a callout cannot be repeated.', $token->position),
-                $token->position,
+                \sprintf('Quantifier does not follow a repeatable item at position %d: a callout cannot be repeated.', $position),
+                $position,
             );
         }
 
         if ($this->isEmptyNode($node)) {
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $token->position),
-                $token->position,
+                \sprintf('Quantifier without target at position %d', $position),
+                $position,
             );
         }
 
@@ -508,8 +510,8 @@ final class Parser
 
             throw $this->parserException(
                 \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d',
-                    $token->value, $nodeName, $node->getStartPosition()),
-                $token->position,
+                    $token->value, $nodeName, $position),
+                $position,
             );
         }
     }
@@ -563,9 +565,16 @@ final class Parser
         }
 
         if ($this->stream->check(TokenType::T_QUANTIFIER)) {
+            $position = $this->stream->current()->position;
+
+            // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
+            $position = $this->startsUnclosedVerb($position)
+                ? $this->unclosedVerbOffset($position - 1)
+                : $this->quantifierErrorOffset($this->stream->current());
+
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $this->stream->current()->position),
-                $this->stream->current()->position,
+                \sprintf('Quantifier without target at position %d', $position),
+                $position,
             );
         }
 
@@ -620,14 +629,14 @@ final class Parser
 
         if (null === $closer) {
             throw $this->parserException(
-                \sprintf('\k is not followed by a braced, angle-bracketed or quoted name at position %d.', $token->position),
+                \sprintf('\k is not followed by a braced, angle-bracketed or quoted name at position %d.', $token->position + 2),
                 $token->position + 2,
             );
         }
 
         if ($closer === ($this->pattern[$token->position + 3] ?? '')) {
             throw $this->parserException(
-                \sprintf('Group name expected after \k%s at position %d.', $opener, $token->position),
+                \sprintf('Group name expected after \k%s at position %d.', $opener, $token->position + 3),
                 $token->position + 3,
             );
         }
@@ -751,20 +760,23 @@ final class Parser
 
         $closing = self::CALLOUT_STRING_DELIMITERS[$value[0]] ?? null;
         if (null === $closing) {
-            // "(?Cab)": a callout takes a number or a delimited string, and
-            // PCRE reports it past the character it could not read.
+            // "(?Cab)": a callout takes a number or a delimited string.
+            $position = $this->calloutErrorOffset($startPosition) ?? $startPosition + 4;
+
             throw $this->parserException(
-                \sprintf('Invalid callout argument: %s at position %d', $value, $startPosition),
-                $startPosition + 4,
+                \sprintf('Invalid callout argument: %s at position %d', $value, $position),
+                $position,
             );
         }
 
         // A doubled closing delimiter stands for itself: "(?C{a}}b})".
         $quoted = preg_quote($closing, '/');
         if (1 !== preg_match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
+            $position = $this->calloutErrorOffset($startPosition) ?? $startPosition;
+
             throw $this->parserException(
-                \sprintf('Invalid callout argument: %s at position %d', $value, $startPosition),
-                $startPosition,
+                \sprintf('Invalid callout argument: %s at position %d', $value, $position),
+                $position,
             );
         }
 
@@ -801,10 +813,42 @@ final class Parser
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
+        $position = $this->gReferenceErrorOffset($token->position);
+
         throw $this->parserException(
-            \sprintf('Invalid \\g reference syntax: %s at position %d', $value, $token->position),
-            $token->position,
+            \sprintf('Invalid \\g reference syntax: %s at position %d', $value, $position),
+            $position,
         );
+    }
+
+    /**
+     * Where PCRE stops reading a "\g" it cannot make sense of: right after
+     * the "\g" when nothing it knows follows, after a number that nothing
+     * closes, or where the characters of a name end.
+     *
+     * @param int $start the offset of the backslash
+     */
+    private function gReferenceErrorOffset(int $start): int
+    {
+        $position = $start + 2;
+        $closing = ['<' => '>', "'" => "'", '{' => '}'][$this->pattern[$position] ?? ''] ?? null;
+
+        if (null === $closing) {
+            return $position;
+        }
+
+        // Only "\g{...}" takes spaces around what it holds.
+        $blanks = '}' === $closing ? " \t" : '';
+        $position++;
+        $position += strspn($this->pattern, $blanks, $position);
+
+        if (1 === preg_match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
+            $position += \strlen($matches[0]);
+        } else {
+            $position = $this->groupNames->invalidNameOffset($position);
+        }
+
+        return $position + strspn($this->pattern, $blanks, $position);
     }
 
     /**
@@ -908,7 +952,7 @@ final class Parser
 
         // 3. PCRE-style quoted named groups (?'name'...)
         if ($this->stream->checkLiteral("'")) {
-            return $this->parseNamedGroup($startPosition, $startPosition, false);
+            return $this->parseNamedGroup($startPosition, false);
         }
 
         // 4. Check for standard lookarounds and named groups
@@ -1109,7 +1153,7 @@ final class Parser
     private function parsePythonGroup(int $startPos, int $pPos): NodeInterface
     {
         if ($this->stream->matchLiteral('<')) { // (?P<name>...)
-            return $this->parseNamedGroup($startPos, $pPos, true, true);
+            return $this->parseNamedGroup($startPos, true, true);
         }
 
         if ($this->stream->matchLiteral('>')) { // (?P>name) subroutine
@@ -1120,7 +1164,7 @@ final class Parser
         }
 
         if ($this->stream->matchLiteral('=')) {
-            $name = $this->groupNames->read($this->stream->current()->position, false);
+            $name = $this->groupNames->read(false);
             $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
 
             return new BackrefNode('\\k<'.$name.'>', $startPos, $endToken->position + 1);
@@ -1128,7 +1172,7 @@ final class Parser
 
         // PCRE reports it past the character it could not read.
         throw $this->parserException(
-            \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $pPos),
+            \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $pPos + 2),
             $pPos + 2,
         );
     }
@@ -1151,7 +1195,7 @@ final class Parser
         // "(?<=...)" and "(?<!...)" are lookbehinds; anything else after the
         // "<" is the name of a group.
         return $this->matchLookaround($startPos, self::LOOKBEHINDS)
-            ?? $this->parseNamedGroup($startPos, $startPos, true);
+            ?? $this->parseNamedGroup($startPos, true);
     }
 
     /**
@@ -1335,9 +1379,11 @@ final class Parser
             || ('-' === $flags && ($this->stream->check(TokenType::T_GROUP_CLOSE) || $this->stream->checkLiteral(':')));
 
         if (null === $modifiers && !$setsNothing) {
+            $position = $this->unreadableGroupOffset($startPosition);
+
             throw $this->parserException(
-                \sprintf('Invalid group modifier syntax at position %d', $startPosition),
-                $startPosition,
+                \sprintf('Invalid group modifier syntax at position %d', $position),
+                $position,
             );
         }
 
@@ -1362,6 +1408,16 @@ final class Parser
 
         $this->extendedMode = $modifiers?->inForce('x', $this->extendedMode) ?? $this->extendedMode;
         $this->noAutoCapture = $modifiers?->inForce('n', $this->noAutoCapture) ?? $this->noAutoCapture;
+
+        // "(?iz)": the letters are read as far as PCRE knows them.
+        if (!$this->stream->check(TokenType::T_GROUP_CLOSE) && !$this->stream->checkLiteral(':')) {
+            $position = $this->unreadableGroupOffset($startPosition);
+
+            throw $this->parserException(
+                \sprintf('Invalid group modifier syntax at position %d', $position),
+                $position,
+            );
+        }
 
         $expr = null;
         if ($this->stream->matchLiteral(':')) {
@@ -1612,7 +1668,7 @@ final class Parser
     {
         // "(?('name')...)": the reader takes the quotes along with the name.
         if ($this->stream->checkLiteral("'")) {
-            $name = $this->groupNames->read($startPosition, false);
+            $name = $this->groupNames->read(false);
 
             return new BackrefNode($name, $startPosition, $this->stream->current()->position);
         }
@@ -1622,7 +1678,7 @@ final class Parser
         }
 
         $open = $this->stream->previous()->value;
-        $name = $this->groupNames->read($startPosition, false);
+        $name = $this->groupNames->read(false);
         $close = '<' === $open ? '>' : '}';
         $this->stream->consumeLiteral($close, "Expected $close after condition name");
 
@@ -1643,7 +1699,7 @@ final class Parser
         // "(?(R&name)...)" asks whether the most recent recursion is into the
         // named group.
         if ($this->stream->matchLiteral('&')) {
-            $name = $this->groupNames->read($this->stream->current()->position, false);
+            $name = $this->groupNames->read(false);
 
             return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
         }
@@ -1724,8 +1780,21 @@ final class Parser
             return $bareName;
         }
 
-        // Anything else has to be an atom that refers to a group.
-        $condition = $this->parseAtom();
+        // "(?(+a)": a sign with no number after it, where PCRE then wants a
+        // name.
+        if ($this->stream->check(TokenType::T_QUANTIFIER)) {
+            $position = $this->conditionErrorOffset($startPosition);
+
+            throw $this->parserException(\sprintf('Quantifier without target at position %d', $position), $position);
+        }
+
+        // Anything else has to be an atom that refers to a group. PCRE wants
+        // a name there, and refuses what cannot be one before reading it.
+        try {
+            $condition = $this->parseAtom();
+        } catch (SyntaxErrorException) {
+            $condition = null;
+        }
 
         if (
             !(
@@ -1735,16 +1804,29 @@ final class Parser
                 || $condition instanceof SubroutineNode
             )
         ) {
+            $position = $this->conditionErrorOffset($startPosition);
+
             throw $this->parserException(
                 \sprintf(
                     'Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).',
-                    $startPosition,
+                    $position,
                 ),
-                $startPosition,
+                $position,
             );
         }
 
         return $condition;
+    }
+
+    /**
+     * Where PCRE stops reading a condition it cannot take, when it is no
+     * number: where a version condition goes wrong, or where the characters
+     * of a name end.
+     */
+    private function conditionErrorOffset(int $start): int
+    {
+        return VersionCondition::errorOffset($this->pattern, $start)
+            ?? $this->groupNames->invalidNameOffset($start);
     }
 
     /**
@@ -1851,6 +1933,26 @@ final class Parser
         );
     }
 
+    /**
+     * Whether an escape PCRE refuses inside a class starts at $position:
+     * an assertion such as "\B", "\R", "\X", or "\N" that names no code
+     * point.
+     */
+    private function isClassInvalidEscapeAt(int $position): bool
+    {
+        if ('\\' !== ($this->pattern[$position] ?? '')) {
+            return false;
+        }
+
+        $letter = $this->pattern[$position + 1] ?? '';
+
+        if ('N' === $letter) {
+            return '{' !== ($this->pattern[$position + 2] ?? '');
+        }
+
+        return '' !== $letter && str_contains('ABCGKRXZz', $letter);
+    }
+
     private function isNonRangeEndpointType(NodeInterface $node): bool
     {
         return $node instanceof CharTypeNode
@@ -1944,6 +2046,12 @@ final class Parser
 
         [$startNode] = $this->parseCharClassAtom($startPosition);
 
+        // PCRE refuses such an escape as soon as it reads it, before any "-"
+        // after it could make a range.
+        if ($this->isClassInvalidEscapeAt($startPosition)) {
+            return $startNode;
+        }
+
         // PCRE also skips "\E" and an empty "\Q\E" before the "-": "[z\E-a]"
         // is the range z-a. Without a "-" after them, they are left to the
         // class loop as they were. A quoted run of several characters starts
@@ -1971,6 +2079,9 @@ final class Parser
             return $startNode;
         }
 
+        // PCRE refuses a class escape before the "-" once it has read the "-".
+        $afterHyphen = $this->stream->previous()->end();
+
         // PCRE skips "\E" and an empty "\Q\E" after the "-": "[a-\Ec]" is
         // the range a-c, and in "[a-\Q\E]" the "-" is a plain member.
         $this->skipEmptyQuotes();
@@ -1981,7 +2092,14 @@ final class Parser
             return $startNode;
         }
 
-        $this->guardRangeEndpoint($startNode, $startPosition);
+        // An escape PCRE refuses in a class is reported before the range.
+        if ($this->isClassInvalidEscapeAt($this->stream->current()->position)) {
+            $this->stream->setPosition($rangePosition);
+
+            return $startNode;
+        }
+
+        $this->guardRangeEndpoint($startNode, $afterHyphen);
 
         if ($this->stream->check(TokenType::T_CHAR_CLASS_OPEN)) {
             $this->stream->rewind(1);
@@ -2020,7 +2138,8 @@ final class Parser
             );
         }
 
-        $this->guardRangeEndpoint($endNode, $endPosition);
+        // A class escape after it, once it has read the escape.
+        $this->guardRangeEndpoint($endNode, $endNode->getEndPosition());
 
         return new RangeNode($startNode, $endNode, $startPosition, $endNode->getEndPosition());
     }
@@ -2054,6 +2173,7 @@ final class Parser
      */
     private function parseSubroutineName(): string
     {
+        $nameStart = $this->stream->current()->position;
         $name = '';
         while (
             !$this->stream->check(TokenType::T_GROUP_CLOSE)
@@ -2083,7 +2203,178 @@ final class Parser
             );
         }
 
+        // A name that starts with a digit names no group: PCRE stops past the
+        // digit.
+        if (1 === preg_match('/^\p{Nd}/u', $name)) {
+            throw $this->parserException(
+                \sprintf(
+                    'Invalid group name "%s": names must contain only word characters and must not start with a digit.',
+                    $name,
+                ),
+                $this->groupNames->invalidNameOffset($nameStart),
+            );
+        }
+
         return $name;
+    }
+
+    /**
+     * Where PCRE reports a "(?" group it cannot read, by what follows the
+     * "(?": it reads as far as the construct makes sense and stops there.
+     *
+     * @param int $start the offset of the "("
+     */
+    private function unreadableGroupOffset(int $start): int
+    {
+        $pattern = $this->pattern;
+        $length = \strlen($pattern);
+        $position = $start + 2;
+        $char = $pattern[$position] ?? '';
+
+        // "(?[" is a Perl extended class, which PCRE2 reads from 10.45 only;
+        // before, it refuses the "[".
+        if ('[' === $char) {
+            return $position;
+        }
+
+        // "(?R" calls the whole pattern, and a ")" has to follow.
+        if ('R' === $char) {
+            return $position + 1;
+        }
+
+        // "(?1", "(?-1", "(?+1": a call, which ends after its number.
+        if (1 === preg_match('/\G[+-]?\d++/', $pattern, $matches, 0, $position)) {
+            return $position + \strlen($matches[0]);
+        }
+
+        // "(?+" without a number: past the character after the "+".
+        if ('+' === $char) {
+            return min($position + 2, $length);
+        }
+
+        if ('C' === $char) {
+            return $this->calloutErrorOffset($start) ?? $start;
+        }
+
+        // Option letters: PCRE stops past the first one it does not know,
+        // past a "-" it cannot take, or at the end of the pattern.
+        $letters = self::INLINE_FLAG_LETTERS.($this->supportsInlineModifierR() ? 'r' : '');
+        $hyphenAllowed = true;
+        if ('^' === $char) {
+            $hyphenAllowed = false;
+            $position++;
+        }
+
+        while ($position < $length && ')' !== $pattern[$position] && ':' !== $pattern[$position]) {
+            $char = $pattern[$position++];
+
+            if ('-' === $char) {
+                if (!$hyphenAllowed) {
+                    return $position;
+                }
+
+                $hyphenAllowed = false;
+
+                continue;
+            }
+
+            if (!str_contains($letters, $char)) {
+                return $position;
+            }
+        }
+
+        return $position < $length ? $start : $length;
+    }
+
+    /**
+     * Where PCRE reports a callout it cannot read, or null when it reads it:
+     * past a digit that takes the number over 255, at a string delimiter
+     * never closed, past a character that opens no string, or where the
+     * ")" should follow the argument.
+     *
+     * @param int $start the offset of the "(" of "(?C"
+     */
+    private function calloutErrorOffset(int $start): ?int
+    {
+        $pattern = $this->pattern;
+        $length = \strlen($pattern);
+        $position = $start + 3;
+
+        if ($position >= $length) {
+            return $length;
+        }
+
+        if (ctype_digit($pattern[$position])) {
+            $number = 0;
+            while ($position < $length && ctype_digit($pattern[$position])) {
+                $number = $number * 10 + (int) $pattern[$position++];
+                if ($number > 255) {
+                    return $position;
+                }
+            }
+        } elseif (')' !== $pattern[$position]) {
+            $closing = self::CALLOUT_STRING_DELIMITERS[$pattern[$position]] ?? null;
+            if (null === $closing) {
+                return $position + 1;
+            }
+
+            $opening = $position;
+            while (true) {
+                if (++$position >= $length) {
+                    return $opening;
+                }
+
+                // A doubled closing delimiter stands for itself.
+                if ($closing === $pattern[$position] && (++$position >= $length || $closing !== $pattern[$position])) {
+                    break;
+                }
+            }
+        }
+
+        return ')' === ($pattern[$position] ?? '') ? null : $position;
+    }
+
+    /**
+     * PCRE refuses a quantifier with nothing to repeat once it has read it,
+     * before any "?" or "+" that would make it lazy or possessive.
+     */
+    private function quantifierErrorOffset(Token $token): int
+    {
+        $suffixed = \strlen($token->value) > 1 && \in_array(substr($token->value, -1), ['?', '+'], true);
+
+        return $token->end() - ($suffixed ? 1 : 0);
+    }
+
+    /**
+     * Whether the "*" at $position follows the "(" that opens the group it
+     * is in, as in "(*MARK:a" the lexer read as no verb for want of ")".
+     */
+    private function startsUnclosedVerb(int $position): bool
+    {
+        $previous = $this->stream->previous();
+
+        return '*' === ($this->pattern[$position] ?? '')
+            && TokenType::T_GROUP_OPEN === $previous->type
+            && $previous->end() === $position;
+    }
+
+    /**
+     * Where PCRE reports a "(*" the pattern never closes: where its name
+     * ends, or at the end of the pattern once a name it knows takes ":".
+     *
+     * @param int $start the offset of the "("
+     */
+    private function unclosedVerbOffset(int $start): int
+    {
+        preg_match('/\G[A-Za-z_]*+/', $this->pattern, $matches, 0, $start + 2);
+        $name = $matches[0] ?? '';
+        $nameEnd = $start + 2 + \strlen($name);
+
+        if (':' === ($this->pattern[$nameEnd] ?? '') && PcreVerb::takesArgument($name)) {
+            return \strlen($this->pattern);
+        }
+
+        return $nameEnd;
     }
 
     /**
@@ -2157,9 +2448,9 @@ final class Parser
      * @param bool $pythonSyntax true for the "(?P...)" spellings, which are
      *                           written back out as they were read
      */
-    private function parseNamedGroup(int $startPosition, int $namePosition, bool $expectAngle, bool $pythonSyntax = false): GroupNode
+    private function parseNamedGroup(int $startPosition, bool $expectAngle, bool $pythonSyntax = false): GroupNode
     {
-        $name = $this->groupNames->read($namePosition, true, ++$this->captureCount);
+        $name = $this->groupNames->read(true, ++$this->captureCount);
 
         if ($expectAngle) {
             $this->stream->consumeLiteral('>', 'Expected > after group name');

@@ -59,7 +59,7 @@ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 RegexParser separates what it can guarantee from what is heuristic:
 
 - Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
-- Measured: syntax validation follows PHP's engine closely but not exactly, and error offsets often differ from PHP's; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes both, with the known gaps.
+- Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes how closely, case by case.
 - Heuristic: ReDoS analysis is structural and conservative; treat it as potential risk unless confirmed.
 - Context matters: PCRE version, JIT, and backtrack/recursion limits change practical impact.
 

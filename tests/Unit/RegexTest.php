@@ -185,7 +185,8 @@ final class RegexTest extends TestCase
     public static function provideInvalidRegexForParsing(): \Generator
     {
         yield 'unclosed group' => ['/(a/', 'Expected ) at end of input (found eof)'];
-        yield 'quantifier on nothing' => ['/*/', 'Quantifier without target at position 0'];
+        // PHP: "quantifier does not follow a repeatable item at offset 1".
+        yield 'quantifier on nothing' => ['/*/', 'Quantifier without target at position 1'];
         yield 'invalid flag' => ['/a/invalid', 'Unknown regex flag(s) found: "v", "a", "l", "d"'];
     }
 

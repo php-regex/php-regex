@@ -887,7 +887,8 @@ final class ParserTest extends TestCase
     public function test_exception_with_visual_context(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Duplicate group name "a" at position 8.');
+        // PHP: "two named subpatterns have the same name ... at offset 13".
+        $this->expectExceptionMessage('Duplicate group name "a" at position 13.');
 
         $this->regex->parse('/(?<a>.) (?<a>.)/');
     }

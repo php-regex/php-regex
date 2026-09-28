@@ -17,6 +17,7 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\GroupNumbering;
 use RegexParser\GroupNumberingCollector;
+use RegexParser\Internal\VersionCondition;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -42,6 +43,7 @@ use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\PosixClassNode;
 use RegexParser\Node\QuantifierBounds;
 use RegexParser\Node\QuantifierNode;
+use RegexParser\Node\QuantifierType;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
@@ -237,6 +239,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private array $nextGroupNumberAt = [];
 
     /**
+     * How many capturing groups open before each call or reference, keyed
+     * by node, for a relative one checked out of the walk's order.
+     *
+     * @var array<int, int>
+     */
+    private array $captureIndexAt = [];
+
+    private int $capturesIndexed = 0;
+
+    /**
      * The groups a branch reset holds, by node: a back reference to one of
      * them has no length PCRE can know in a lookbehind.
      *
@@ -307,6 +319,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->groupsByNumber = [];
         $this->groupsByName = [];
         $this->nextGroupNumberAt = [];
+        $this->captureIndexAt = [];
+        $this->capturesIndexed = 0;
         $this->groupsInBranchReset = [];
         $this->hasBranchReset = false;
         $this->enclosingGroups = [];
@@ -423,21 +437,22 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // Fast cached quantifier bounds parsing
         [$min, $max] = $this->getQuantifierBounds($node->quantifier);
 
-        // Early validation with clear error messages
-        if (-1 !== $max && $min > $max) {
-            $this->raiseSemanticError(
-                \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
-                $node->startPosition,
-                'regex.quantifier.invalid_range',
-            );
-        }
-
-        // PCRE caps repetition counts at 65535.
+        // PCRE caps repetition counts at 65535, and checks each number as
+        // it reads it, before it compares the two.
+        [$minEnd, $maxEnd] = $this->quantifierNumberEnds($node);
         if ($min > 65535 || $max > 65535) {
             $this->raiseSemanticError(
                 \sprintf('Number too big in "%s" quantifier: PCRE allows at most 65535 repetitions.', $node->quantifier),
-                $node->startPosition,
+                $min > 65535 ? $minEnd : $maxEnd,
                 'regex.quantifier.too_big',
+            );
+        }
+
+        if (-1 !== $max && $min > $max) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
+                $maxEnd,
+                'regex.quantifier.invalid_range',
             );
         }
 
@@ -620,16 +635,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $node->end->accept($this);
 
         // 3. Validation: order check, on the code points of both endpoints.
-        // PCRE reports it where the range ends; a range between two plain
-        // characters keeps the offset it has always been reported at.
+        // PCRE reports it where the range ends.
         $startCodePoint = $this->rangeEndpointCodePoint($node->start, true);
         $endCodePoint = $this->rangeEndpointCodePoint($node->end, false);
         if (null !== $startCodePoint && null !== $endCodePoint && $startCodePoint > $endCodePoint) {
             $this->raiseSemanticError(
                 \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
-                $node->start instanceof LiteralNode && $node->end instanceof LiteralNode
-                    ? $node->startPosition
-                    : $node->getEndPosition(),
+                $node->getEndPosition(),
                 'regex.range.reversed',
             );
         }
@@ -665,7 +677,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
                 $this->raiseSemanticError(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
                 );
             }
@@ -676,7 +688,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
         if (preg_match('/^[+-]\d++$/', $ref)) {
-            $this->assertRelativeReferenceExists((int) $ref, $node->startPosition, 'regex.backref.relative', 'Condition');
+            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), 'regex.backref.relative', 'Condition');
 
             return;
         }
@@ -687,7 +699,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if (0 === $num) {
                 $this->raiseSemanticError(
                     'Backreference 0 is not valid.',
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.zero',
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
@@ -695,7 +707,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($num > $this->groupNumbering->maxGroupNumber) {
                 $this->raiseSemanticError(
                     \sprintf('Backreference to non-existent group: %d.', $num),
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
                 );
             }
@@ -710,7 +722,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $suggestions = $this->getNameSuggestions($name);
                 $this->raiseSemanticError(
                     \sprintf('Backreference to non-existent named group: "%s".', $name).$suggestions,
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.missing_named_group',
                 );
             }
@@ -738,7 +750,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ('0' === $numStr || '+0' === $numStr || '-0' === $numStr) {
                 $this->raiseSemanticError(
                     'Backreference \\g{0} is not valid.',
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.zero',
                     'Use \\g<0> for recursion to the whole pattern.',
                 );
@@ -746,7 +758,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             if (str_starts_with($numStr, '+') || str_starts_with($numStr, '-')) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $node->startPosition, 'regex.backref.relative', 'Backreference');
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), 'regex.backref.relative', 'Backreference');
 
                 return;
             }
@@ -755,7 +767,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($num > $this->groupNumbering->maxGroupNumber) {
                 $this->raiseSemanticError(
                     \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
-                    $node->startPosition,
+                    $this->missingReferenceOffset($node),
                     'regex.backref.missing_group',
                 );
             }
@@ -765,7 +777,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->raiseSemanticError(
             \sprintf('Invalid backreference syntax: "%s".', $ref),
-            $node->startPosition,
+            $this->missingReferenceOffset($node),
             'regex.backref.invalid_syntax',
         );
     }
@@ -821,9 +833,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if (null !== $suggestion) {
                 $message .= " Did you mean \\{$suggestion}?";
             }
+            // PCRE reads the whole escape before it looks the name up.
             $this->raiseSemanticError(
                 $message,
-                $node->startPosition,
+                $node->getEndPosition(),
                 'regex.unicode.property_invalid',
             );
         }
@@ -878,7 +891,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 // Bare name that doesn't exist - this is an invalid conditional
                 $this->raiseSemanticError(
                     'Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).',
-                    $node->condition->getStartPosition(),
+                    $this->missingReferenceOffset($node->condition),
                     'regex.conditional.invalid',
                 );
             }
@@ -890,13 +903,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 // Always valid recursion condition to entire pattern.
             } elseif (preg_match('/^R-?\d++$/', $ref)) {
                 $num = (int) substr($ref, 1);
-                $this->assertSubroutineReferenceExists($num, $node->condition->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
+                // PCRE reads "R2" as a name, then as a group number digit by
+                // digit, and stops on the digit that takes it over 65535.
+                $overflow = strspn($ref, 'R') + $this->digitsWithinGroupLimit(ltrim($ref, 'R'));
+                $position = $overflow < \strlen($ref)
+                    ? $node->condition->startPosition + $overflow
+                    : $this->missingReferenceOffset($node->condition);
+                $this->assertSubroutineReferenceExists($num, $position, 'regex.subroutine.recursion', 'Recursion condition');
             } elseif (str_starts_with($ref, 'R&')) {
                 // "(?(R&name)...)": the group has to exist.
                 if (!$this->groupNumbering->hasNamedGroup(substr($ref, 2))) {
                     $this->raiseSemanticError(
                         \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
-                        $node->condition->startPosition,
+                        $this->missingReferenceOffset($node->condition),
                         'regex.subroutine.missing_named_group',
                     );
                 }
@@ -965,7 +984,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             if (ctype_digit($numPart)) {
                 $num = (int) $numPart;
-                $this->assertAbsoluteReferenceExists($num, $node->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.recursion', 'Recursion condition');
 
                 return;
             }
@@ -995,9 +1014,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return; // (?0) is an alias for (?R)
             }
             if (str_starts_with($ref, '+') || str_starts_with($ref, '-')) {
-                $this->assertRelativeReferenceExists($num, $node->startPosition, 'regex.subroutine.relative_missing', 'Subroutine call');
+                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.relative_missing', 'Subroutine call');
             } else {
-                $this->assertAbsoluteReferenceExists($num, $node->startPosition, 'regex.subroutine.missing_group', 'Subroutine call');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.missing_group', 'Subroutine call');
             }
 
             return;
@@ -1007,7 +1026,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$this->groupNumbering->hasNamedGroup($ref)) {
             $this->raiseSemanticError(
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
-                $node->startPosition,
+                $this->missingReferenceOffset($node),
                 'regex.subroutine.missing_named_group',
             );
         }
@@ -1019,9 +1038,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $verbName = preg_split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])) {
+            // PCRE reports an unknown verb where its name ends.
+            $nameLength = 1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0;
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
-                $node->startPosition,
+                $node->startPosition + 2 + $nameLength,
                 'regex.verb.invalid',
             );
         }
@@ -1091,10 +1112,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): void
     {
+        $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt);
+
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
                 \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
-                $node->startPosition,
+                $pcreOffset ?? $node->startPosition,
                 'regex.condition.version_operator',
             );
         }
@@ -1134,7 +1158,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($node->identifier < 0 || $node->identifier > 255) {
                 $this->raiseSemanticError(
                     \sprintf('Callout identifier must be between 0 and 255, got %d.', $node->identifier),
-                    $position,
+                    $this->calloutOverflowOffset($node),
                     'regex.callout.out_of_range',
                 );
             }
@@ -1149,6 +1173,49 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'regex.callout.invalid_type',
             );
         }
+    }
+
+    /**
+     * PCRE reads the number of a callout digit by digit, and stops past the
+     * one that takes it over 255.
+     */
+    private function calloutOverflowOffset(CalloutNode $node): int
+    {
+        $digits = null !== $this->source && 1 === preg_match('/\G\d++/', $this->source, $matches, 0, $node->startPosition + 3)
+            ? $matches[0]
+            : (string) $node->identifier; // Unreachable from a parsed pattern: only a hand-built callout has no source.
+
+        $number = 0;
+        foreach (str_split($digits) as $index => $digit) {
+            $number = $number * 10 + (int) $digit;
+            if ($number > 255) {
+                return $node->startPosition + 4 + $index;
+            }
+        }
+
+        return $node->startPosition + 4; // Unreachable from a parsed pattern, whose number is over 255 here.
+    }
+
+    /**
+     * Where the two numbers of a "{n,m}" quantifier end in the pattern, the
+     * places PCRE reports a number it refuses.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function quantifierNumberEnds(QuantifierNode $node): array
+    {
+        // A lazy or possessive quantifier ends with one more character.
+        $suffix = QuantifierType::T_GREEDY === $node->type ? 0 : 1;
+        $braceStart = $node->getEndPosition() - $suffix - \strlen($node->quantifier);
+
+        if (1 !== preg_match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
+            return [$node->startPosition, $node->startPosition];
+        }
+
+        $minEnd = $braceStart + $matches[1][1] + \strlen($matches[1][0]);
+        $maxEnd = isset($matches[2]) ? $braceStart + $matches[2][1] + \strlen($matches[2][0]) : $minEnd;
+
+        return [$minEnd, $maxEnd];
     }
 
     private function extractUnicodePropertyKey(string $key): string
@@ -1259,16 +1326,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return; // Invalid format, skip
         }
 
+        // PCRE reads every digit before it refuses the value, and reports it
+        // at the closing brace.
         if ($codePoint > 0x10FFFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
-                $node->startPosition,
+                $node->getEndPosition() - 1,
                 'regex.unicode.out_of_range',
             );
         }
 
         // Without Unicode mode a character is one byte, as for "\o{400}".
-        // PCRE reports it at the closing brace.
         if (!$this->unicodeMode && $codePoint > 0xFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid code point "%s": without the "u" flag, a character is at most \xFF.', $node->originalRepresentation),
@@ -1294,7 +1362,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($node->codePoint > 0x10FFFF) {
                 $this->raiseSemanticError(
                     \sprintf('Invalid octal codepoint "%s" (out of Unicode range).', $node->originalRepresentation),
-                    $node->startPosition,
+                    $node->getEndPosition() - 1,
                     'regex.octal.out_of_range',
                 );
             }
@@ -1305,7 +1373,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($node->codePoint > 0xFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid octal codepoint "%s".', $node->originalRepresentation),
-                $node->startPosition,
+                $node->getEndPosition() - 1,
                 'regex.octal.out_of_range',
             );
         }
@@ -1344,9 +1412,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
-        // If the codePoint is -1, the name could not be resolved
+        // If the codePoint is -1, the name could not be resolved. PCRE refuses
+        // a name it does not take once it has read "\N{".
         if (-1 === $node->codePoint) {
-            throw new ParserException("Invalid Unicode character name: {$name}", $node->getStartPosition(), $this->pattern);
+            throw new ParserException("Invalid Unicode character name: {$name}", $node->getStartPosition() + 3, $this->pattern);
         }
     }
 
@@ -1502,7 +1571,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         return $min * $childLength;
     }
 
-    private function validateLookbehindLength(GroupNode $node): void
+    /**
+     * @param array<int, true>|null $expanding the groups being measured, by
+     *                                         node, when the lookbehind sits
+     *                                         in one being measured
+     */
+    private function validateLookbehindLength(GroupNode $node, ?array $expanding = null): void
     {
         // "\X" matches a whole grapheme cluster, of no bounded length.
         if ($this->containsGraphemeCluster($node->child)) {
@@ -1517,11 +1591,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
         // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
         $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-        $this->lookbehindBranchMeasures = 0;
+        if (null === $expanding) {
+            $this->lookbehindBranchMeasures = 0;
+        }
         $lengths = [];
         foreach ($branches as $branch) {
             // A group the lookbehind sits in is being measured already.
-            $lengths[] = $this->lookbehindLength($branch, $this->enclosingGroups);
+            $length = $this->lookbehindLength($branch, $expanding ?? $this->enclosingGroups);
+            $lengths[] = $length;
+
+            // PCRE stops at the first branch it cannot bound.
+            if (null === $length[1]) {
+                $this->validateLookbehindBranchLength($node, $length, true);
+            }
 
             if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES) {
                 $this->raiseSemanticError(
@@ -1554,15 +1636,15 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if (null === $max) {
             $culprit = $this->findUnboundedLookbehindNode($node->child);
-            $position = $culprit?->getStartPosition() ?? $node->startPosition;
             $detail = $culprit instanceof QuantifierNode ? $culprit->quantifier : null;
             $hint = null !== $detail
                 ? \sprintf('Use a bounded quantifier instead of "%s".', $detail)
                 : 'Ensure the lookbehind has a bounded maximum length.';
 
+            // PCRE reports the lookbehind itself, not what makes it unbounded.
             $this->raiseSemanticError(
                 'Lookbehind is unbounded. PCRE requires a bounded maximum length.',
-                $position,
+                $node->startPosition,
                 'regex.lookbehind.unbounded',
                 $hint,
             );
@@ -1619,7 +1701,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             foreach ($node->children as $child) {
                 [$childMin, $childMax] = $this->lookbehindLength($child, $expanding);
                 $min += $childMin;
-                $max = null === $max || null === $childMax ? null : $max + $childMax;
+                $max = null === $childMax ? null : $max + $childMax;
+
+                // PCRE stops measuring at the first item it cannot bound.
+                if (null === $max) {
+                    break;
+                }
             }
 
             return [$min, $max];
@@ -1631,7 +1718,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             foreach ($alternatives as $alternative) {
                 [$altMin, $altMax] = $this->lookbehindLength($alternative, $expanding);
                 $min = min($min, $altMin);
-                $max = null === $max || null === $altMax ? null : max($max, $altMax);
+                $max = null === $altMax ? null : max($max, $altMax);
+
+                if (null === $max) {
+                    break;
+                }
             }
 
             return [$min, $max];
@@ -1639,6 +1730,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if ($node instanceof GroupNode) {
             if ($this->isLookaround($node)) {
+                $this->validateNestedLookbehinds($node, $expanding);
+
                 return [0, 0];
             }
 
@@ -1683,6 +1776,39 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * PCRE measures a lookbehind it meets inside the one it is measuring, and
+     * those a lookahead there holds, before it goes on: the innermost one
+     * that has no bound is the one reported.
+     *
+     * @param array<int, true> $expanding
+     */
+    private function validateNestedLookbehinds(NodeInterface $node, array $expanding): void
+    {
+        if ($node instanceof GroupNode && \in_array($node->type, [
+            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+        ], true)) {
+            $this->validateLookbehindLength($node, $expanding);
+
+            return;
+        }
+
+        $children = match (true) {
+            $node instanceof GroupNode => [$node->child],
+            $node instanceof SequenceNode => $node->children,
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof QuantifierNode => [$node->node],
+            $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
+            $node instanceof DefineNode => [$node->content],
+            default => [],
+        };
+
+        foreach ($children as $child) {
+            $this->validateNestedLookbehinds($child, $expanding);
+        }
+    }
+
+    /**
      * @param array<int, true> $expanding
      *
      * @return array{0: int, 1: int|null}
@@ -1690,6 +1816,26 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private function referencedGroupLength(SubroutineNode|BackrefNode $node, array $expanding): array
     {
         $groups = $node instanceof SubroutineNode ? $this->groupsCalledBy($node) : $this->groupsReferencedBy($node);
+
+        // PCRE checks that the group exists as it measures the lookbehind,
+        // counting relative references from where they stand. A numbered
+        // back reference in a pattern with a branch reset it does not
+        // measure at all, unless it failed already while being read: one
+        // back past the first group, or to group zero.
+        $unmeasured = $node instanceof BackrefNode
+            && $this->hasBranchReset
+            && !str_starts_with($node->ref, '\\k')
+            && 1 !== preg_match('/^\\\\g[{<\']?\s*+(?:-|[+-]?0++(?!\d))/', $node->ref);
+        if ([] === $groups && !$unmeasured) {
+            $captureIndex = $this->captureIndex;
+            $this->captureIndex = $this->captureIndexAt[spl_object_id($node)] ?? $captureIndex;
+
+            try {
+                $node->accept($this);
+            } finally {
+                $this->captureIndex = $captureIndex;
+            }
+        }
 
         // No group, a whole-pattern recursion, or a reference to a name that
         // several groups share: PCRE finds no bound.
@@ -1796,6 +1942,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
+            $this->captureIndexAt[spl_object_id($node)] = $this->capturesIndexed;
 
             return;
         }
@@ -1817,6 +1964,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if ($node instanceof GroupNode) {
             if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+                $this->capturesIndexed++;
                 $this->groupsByNumber[$nextGroupNumber++][] = $node;
                 if (null !== $node->name) {
                     $this->groupsByName[$node->name][] = $node;
@@ -1973,6 +2121,104 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         return null;
+    }
+
+    /**
+     * Where PCRE reports a reference to a group that does not exist.
+     *
+     * A name is looked up where it starts. A number is checked once the
+     * whole reference is read, except when it fails while being read: a
+     * relative reference back past the first group, or a relative zero,
+     * stops right after "\g" when bracketed and after its digits when not.
+     * "(?1)" is reported at its ")", and a condition "(?(2)" two characters
+     * before the end of its number, where PCRE records it.
+     */
+    private function missingReferenceOffset(BackrefNode|SubroutineNode $node): int
+    {
+        $start = $node->startPosition;
+        $end = $node->getEndPosition();
+
+        if (null === $this->source || $end <= $start) {
+            return $start; // Unreachable from a parsed pattern: only "(?(R)" is empty, and it always exists.
+        }
+
+        $text = substr($this->source, $start, $end - $start);
+
+        // "\g{2}", "\g-1", "\k<name>", "\g<name>", "\g'1'", ...
+        if (1 === preg_match('/^\\\\([gk])([{<\'])?\s*+([+-]?)(\d*)/', $text, $matches)) {
+            if ('' === $matches[4]) {
+                return $start + 3;
+            }
+
+            // "\k<5ghj>" names no group: a name cannot start with a digit.
+            if ('k' === $matches[1]) {
+                return $start + 4;
+            }
+
+            // "\g'3gh'": the number read, what should close it is missing.
+            $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
+            $rest = ltrim(substr($text, \strlen($matches[0])));
+            if ('' !== $closing && !str_starts_with($rest, $closing)) {
+                return $start + \strlen($matches[0]);
+            }
+
+            $failsWhileRead = '-' === $matches[3] || ('' !== $matches[3] && 0 === (int) $matches[4]);
+
+            return $failsWhileRead && '' !== $matches[2] ? $start + 2 : $end;
+        }
+
+        // "\1", "\81"
+        if ('\\' === $text[0]) {
+            return $end;
+        }
+
+        // "(?P=name)", "(?P>name)", "(?&name)", "(?1)", "(?-1)"
+        if (str_starts_with($text, '(?')) {
+            if (str_starts_with($text, '(?P')) {
+                return $start + 4;
+            }
+
+            return '&' === ($text[2] ?? '') ? $start + 3 : $end - 1;
+        }
+
+        // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
+        $versionError = VersionCondition::errorOffset($this->source, $start);
+        if (null !== $versionError) {
+            return $versionError;
+        }
+
+        // What follows "(?(": "<name>", "'name'", "R&name", "-1", "2", a bare name.
+        if ('<' === $text[0] || '\'' === $text[0]) {
+            return $start + 1;
+        }
+
+        if (str_starts_with($text, 'R&')) {
+            return $start + 2;
+        }
+
+        if (1 === preg_match('/^([+-]?)(\d++)$/', $text, $matches)) {
+            return '-' === $matches[1] || 0 === (int) $matches[2] ? $end : $end - 2;
+        }
+
+        return $start;
+    }
+
+    /**
+     * How many leading digits of $digits PCRE reads before the number goes
+     * over 65535, the highest group number; all of them when it does not.
+     */
+    private function digitsWithinGroupLimit(string $digits): int
+    {
+        $number = 0;
+        $length = \strlen($digits);
+        for ($index = 0; $index < $length && ctype_digit($digits[$index]); $index++) {
+            $number = $number * 10 + (int) $digits[$index];
+            if ($number > 65535) {
+                return $index;
+            }
+        }
+
+        return $length;
     }
 
     private function assertAbsoluteReferenceExists(int $num, int $position, string $code, string $context): void

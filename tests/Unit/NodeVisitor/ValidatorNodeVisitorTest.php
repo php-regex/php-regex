@@ -111,7 +111,8 @@ final class ValidatorNodeVisitorTest extends TestCase
     public function test_throws_on_duplicate_group_name(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Duplicate group name "name" at position 10.');
+        // PHP: "two named subpatterns have the same name ... at offset 18".
+        $this->expectExceptionMessage('Duplicate group name "name" at position 18.');
         $this->validate('/(?<name>a)(?<name>b)/');
     }
 

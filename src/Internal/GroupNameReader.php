@@ -88,20 +88,19 @@ final class GroupNameReader
     }
 
     /**
-     * @param int|null $errorPosition where to point when the name is wrong,
-     *                                for a caller that knows better than the
-     *                                token under the cursor
-     * @param bool     $register      false for a name that refers to a group
-     *                                rather than declaring one
-     * @param int|null $number        the number of the group the name
-     *                                declares, when the caller counts them
+     * A name PCRE refuses is reported where PCRE stops reading it.
+     *
+     * @param bool     $register false for a name that refers to a group
+     *                           rather than declaring one
+     * @param int|null $number   the number of the group the name declares,
+     *                           when the caller counts them
      *
      * @throws SyntaxErrorException
      */
-    public function read(?int $errorPosition = null, bool $register = true, ?int $number = null): string
+    public function read(bool $register = true, ?int $number = null): string
     {
-        $nameStart = $errorPosition ?? $this->stream->current()->position;
         $quote = $this->openingQuote();
+        $nameStart = $this->stream->current()->position;
         $name = $this->readName($quote);
         $nameEnd = $this->stream->current()->position;
 
@@ -121,7 +120,7 @@ final class GroupNameReader
                     'Invalid group name "%s": names must contain only word characters and must not start with a digit.',
                     $name,
                 ),
-                $nameStart,
+                $this->invalidNameOffset($nameStart),
             );
         }
 
@@ -146,10 +145,38 @@ final class GroupNameReader
                 );
             }
 
-            $this->register($name, $nameStart, $number);
+            // PCRE finds a duplicate once it has read the name and what
+            // closes it.
+            $this->register($name, $nameEnd + 1, $number);
         }
 
         return $name;
+    }
+
+    /**
+     * Where PCRE stops reading a name it refuses, which starts at $position:
+     * past a leading digit, or where the characters a name may hold end —
+     * at $position itself when there is none.
+     */
+    public function invalidNameOffset(int $position): int
+    {
+        $pattern = $this->stream->getPattern();
+
+        if ($this->unicodeNames) {
+            if (1 === preg_match('/\G\p{Nd}/u', $pattern, $matches, 0, $position)) {
+                return $position + \strlen($matches[0]);
+            }
+
+            preg_match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
+        } else {
+            if (ctype_digit($pattern[$position] ?? '')) {
+                return $position + 1;
+            }
+
+            preg_match('/\G\w*+/', $pattern, $matches, 0, $position);
+        }
+
+        return $position + \strlen($matches[0] ?? '');
     }
 
     /**

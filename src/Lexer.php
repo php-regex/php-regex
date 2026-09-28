@@ -190,6 +190,12 @@ final class Lexer
 
     private bool $byteMode = false;
 
+    /**
+     * Whether PCRE reads the pattern as UTF-8, one character being several
+     * bytes: under "u", or "(*UTF)" at its start.
+     */
+    private bool $utf = false;
+
     private bool $extendedMode = false;
 
     /**
@@ -224,6 +230,8 @@ final class Lexer
 
         $this->pattern = $pattern;
         $this->length = \strlen($this->pattern);
+        $this->utf = str_contains($flags, 'u')
+            || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $pattern);
         $this->extendedMode = str_contains($flags, 'x');
         $this->extendedMoreMode = false;
         $this->resetState();
@@ -454,16 +462,17 @@ final class Lexer
                 if ('\\c' === $matchedValue) {
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
-                        $startPos,
+                        $this->afterCharacter($startPos + 2),
                         $this->pattern,
                     );
                 }
 
-                // "\x{}" (empty braces) is a PCRE compile error.
+                // "\x{}" (empty braces) is a PCRE compile error, where the
+                // digits should be.
                 if ('\\x' === $matchedValue && '{}' === substr($this->pattern, $startPos + 2, 2)) {
                     throw LexerException::withContext(
                         'Invalid hex escape "\\x{}": at least one hexadecimal digit is required.',
-                        $startPos,
+                        $startPos + 3,
                         $this->pattern,
                     );
                 }
@@ -872,12 +881,49 @@ final class Lexer
         return $hasBraces ? '{'.$normalized.'}' : $normalized;
     }
 
+    /**
+     * The offset past the character at $position, as PCRE reads it: one byte,
+     * or a whole UTF-8 character in UTF mode; the end of the pattern stays
+     * where it is.
+     */
+    private function afterCharacter(int $position): int
+    {
+        if ($position >= $this->length) {
+            return $this->length;
+        }
+
+        if ($this->utf && 1 === preg_match('/\G./su', $this->pattern, $matches, 0, $position)) {
+            return $position + \strlen($matches[0]);
+        }
+
+        return $position + 1;
+    }
+
+    /**
+     * Whether the class at $position is the "[" of "(?[", a Perl extended
+     * class PCRE2 only reads from 10.45; before, PCRE2 refuses that "[",
+     * whatever follows it.
+     */
+    private function opensExtendedClass(int $position): bool
+    {
+        if ($position < 2 || '(?' !== substr($this->pattern, $position - 2, 2)) {
+            return false;
+        }
+
+        // An escaped "(" opens nothing: "\(?[a" is an unclosed class.
+        $before = substr($this->pattern, 0, $position - 2);
+
+        return 0 === (\strlen($before) - \strlen(rtrim($before, '\\'))) % 2;
+    }
+
     private function validateFinalState(): void
     {
         if ([] !== $this->charClassStartPositions) {
+            $classStart = $this->charClassStartPositions[0];
+
             throw LexerException::withContext(
                 'Unclosed character class "]" at end of input.',
-                $this->position,
+                $this->opensExtendedClass($classStart) ? $classStart : $this->position,
                 $this->pattern,
             );
         }

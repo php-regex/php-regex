@@ -61,15 +61,26 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideVersionDependentOffsets(): iterable
     {
-        yield 'range out of order — 10.48 at 4, 10.40 at 3, library 1' => [
+        // PHP: "range out of order in character class at offset 4".
+        yield 'range out of order — 10.48 at 4, 10.40 at 3, library 4 (pin)' => [
             'case' => self::case('[z-a]', 'reject', 4, 'range out of order in character class', pcre2Code: 108, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 108]),
-            'libraryOffset' => 1,
-            'outcome' => 'offset-defect',
+            'libraryOffset' => 4,
+            'outcome' => 'pass-either-offset',
         ];
 
-        yield 'unknown (? construct — 10.48 at 4, 10.40 at 3, library 1' => [
+        // PHP: "unrecognized character after (? or (?- at offset 4".
+        yield 'unknown (? construct — 10.48 at 4, 10.40 at 3, library 4 (pin)' => [
             'case' => self::case('a(?{)b', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 111]),
-            'libraryOffset' => 1,
+            'libraryOffset' => 4,
+            'outcome' => 'pass-either-offset',
+        ];
+
+        // PHP: "unrecognized character after (? or (?- at offset 4": 10.48
+        // takes "a" as an option and stops past the "Z", 10.40 stops on the
+        // "a"; the library knows no "a" option and stops past it, at 3.
+        yield 'option letter — 10.48 at 4, 10.40 at 2, library 3' => [
+            'case' => self::case('(?aZ)', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 111]),
+            'libraryOffset' => 3,
             'outcome' => 'offset-defect',
         ];
 
@@ -105,18 +116,20 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "(?<=a+)b": error 125 at offset 0 on both 10.40 and 10.48; the
-        // library reports offset 4, so this is an offset defect.
+        // "(?<=a+)(?-1)": error 115 at offset 11 on both 10.40 and 10.48
+        // (PHP: "reference to non-existent subpattern at offset 11"), read
+        // before the lookbehind is measured; the library reports the
+        // lookbehind at offset 0, so this is an offset defect.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '(?<=a+)b',
+            '(?<=a+)(?-1)',
             'reject',
-            0,
-            'length of lookbehind assertion is not limited',
-            pcre2Code: 125,
-            floor: ['verdict' => 'reject', 'offset' => 0, 'pcre2Code' => 125],
+            11,
+            'reference to non-existent subpattern',
+            pcre2Code: 115,
+            floor: ['verdict' => 'reject', 'offset' => 11, 'pcre2Code' => 115],
         ));
 
-        $this->assertSame(4, $result['offset']);
+        $this->assertSame(0, $result['offset']);
         $this->assertSame('offset-defect', $result['outcome']);
 
         // Same agreement on "[abc" (106 at 4 on both): the library agrees too.
@@ -153,7 +166,8 @@ final class Pcre2CaseRunnerTest extends TestCase
 
         // "[^^--]": 10.48 error 108 at 5, 10.40 at 4. This was the sample false
         // accept until the library stopped reading "--" as a class
-        // subtraction; it now rejects it, at the range start like "[z-a]".
+        // subtraction; it now rejects it where the range ends, at 10.48's
+        // offset (PHP: "range out of order in character class at offset 5").
         $result = (new Pcre2CaseRunner())->run(self::case(
             '[^^--]',
             'reject',
@@ -164,7 +178,7 @@ final class Pcre2CaseRunnerTest extends TestCase
         ));
 
         $this->assertSame('reject', $result['verdict']);
-        $this->assertSame('offset-defect', $result['outcome']);
+        $this->assertSame('pass-either-offset', $result['outcome']);
 
         // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3. This
         // was the sample false accept until the library refused it; it now
@@ -241,11 +255,12 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // testinput2 "/x{5,4}/" shape: PCRE2 reports error 104 at the closing
-        // brace (preg_match('/a{2,1}/', '') warns "numbers out of order in {}
-        // quantifier at offset 5"); the library points at the atom, offset 0.
+        // PCRE2 reads the call before it measures the lookbehind
+        // (preg_match('/(?<=a+)(?-1)/', '') warns "reference to non-existent
+        // subpattern at offset 11"); the library reports the lookbehind,
+        // offset 0.
         yield 'real suite error reported at a different position' => [
-            'case' => self::case('a{2,1}', 'reject', 5, 'numbers out of order in {} quantifier', pcre2Code: 104),
+            'case' => self::case('(?<=a+)(?-1)', 'reject', 11, 'reference to non-existent subpattern', pcre2Code: 115),
             'libraryOffset' => 0,
         ];
 

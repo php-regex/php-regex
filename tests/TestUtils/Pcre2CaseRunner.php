@@ -114,6 +114,27 @@ final readonly class Pcre2CaseRunner
     }
 
     /**
+     * Shifts a full-string-relative offset to the body-relative coordinate
+     * the pinned PCRE2 offsets use. Only the delimiter and flag layer of
+     * the library reports full-string offsets, and it is the only failure
+     * the pattern header can produce, so a throw there marks the coordinate.
+     */
+    public function normalizeOffset(?int $offset, string $phpPattern): ?int
+    {
+        if (null === $offset) {
+            return null;
+        }
+
+        try {
+            PatternParser::extractPatternAndFlags($phpPattern);
+        } catch (ParserException) {
+            return max(0, $offset - 1);
+        }
+
+        return $offset;
+    }
+
+    /**
      * Reads a string field of a canonical case row.
      *
      * @param array<array-key, mixed> $case
@@ -259,27 +280,6 @@ final readonly class Pcre2CaseRunner
         }
 
         return [self::rowString($case, 'verdict'), self::rowNullableInt($case, 'offset')];
-    }
-
-    /**
-     * Shifts a full-string-relative offset to the body-relative coordinate
-     * the pinned PCRE2 offsets use. Only the delimiter and flag layer of
-     * the library reports full-string offsets, and it is the only failure
-     * the pattern header can produce, so a throw there marks the coordinate.
-     */
-    private function normalizeOffset(?int $offset, string $phpPattern): ?int
-    {
-        if (null === $offset) {
-            return null;
-        }
-
-        try {
-            PatternParser::extractPatternAndFlags($phpPattern);
-        } catch (ParserException) {
-            return max(0, $offset - 1);
-        }
-
-        return $offset;
     }
 
     /**
