@@ -2653,10 +2653,16 @@ final class Parser
 
     /**
      * PCRE refuses a quantifier with nothing to repeat once it has read it,
-     * before any "?" or "+" that would make it lazy or possessive.
+     * before any "?" or "+" that would make it lazy or possessive; numbers
+     * it cannot take are refused while it reads them.
      */
     private function quantifierErrorOffset(Token $token): int
     {
+        $countError = $this->countErrorOffset($token);
+        if (null !== $countError) {
+            return $countError;
+        }
+
         $suffixed = \strlen($token->value) > 1 && \in_array(substr($token->value, -1), ['?', '+'], true);
 
         return $this->pastTheFault($token->end() - ($suffixed ? 1 : 0));

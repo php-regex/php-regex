@@ -96,7 +96,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-423ff11efccf136e8a33d441942241c1';
+    public const CACHE_VERSION = 'ast-1c1404ff88aa095449420a8c9ae64b66';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -590,8 +590,9 @@ final readonly class Regex
      * PCRE reads the pattern in one pass, left to right. This library
      * tokenizes it whole, then parses it, then judges its escapes, so the
      * error it stops on may lie after one PCRE meets first: an escape PCRE
-     * refuses, or, when tokenizing failed, a syntax error in what was read
-     * before. The earliest of those before the error found is PCRE's.
+     * refuses, a class holding an unknown POSIX name or a reversed range,
+     * or, when tokenizing failed, a syntax error in what was read before.
+     * The earliest of those before the error found is PCRE's.
      */
     private function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
     {
@@ -615,6 +616,11 @@ final readonly class Regex
         $earlier = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
             ->firstEscapeErrorBefore($tokens, $pattern, $flags, $position);
 
+        $classError = $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position);
+        if (null !== $classError && (null === $earlier || ($classError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
+            $earlier = $classError;
+        }
+
         if ($error instanceof LexerException) {
             // The pattern read as if it ended where tokenizing stopped: an
             // error that ending causes lies there, and is not taken.
@@ -631,6 +637,45 @@ final readonly class Regex
         }
 
         return $earlier;
+    }
+
+    /**
+     * The first error in a character class the tokens close before $position,
+     * where parsing failed: each such class is parsed alone and judged.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
+    {
+        $depth = 0;
+        $opening = 0;
+
+        foreach ($tokens as $index => $token) {
+            if (TokenType::T_CHAR_CLASS_OPEN === $token->type && 0 === $depth++) {
+                $opening = $index;
+            }
+
+            if (TokenType::T_CHAR_CLASS_CLOSE !== $token->type || 0 !== --$depth) {
+                continue;
+            }
+
+            $class = \array_slice($tokens, $opening, $index - $opening + 1);
+
+            try {
+                $ast = (new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId()))
+                    ->parse(new TokenStream([...$class, new Token(TokenType::T_EOF, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
+            } catch (LexerException|ParserException) {
+                continue;
+            }
+
+            $error = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
+                ->firstErrorInClassBefore($ast, $token->position, $position);
+            if (null !== $error) {
+                return $error;
+            }
+        }
+
+        return null;
     }
 
     /**

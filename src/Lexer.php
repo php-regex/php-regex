@@ -253,7 +253,7 @@ final class Lexer
     private array $charClassStartPositions = [];
 
     /**
-     * @var array<Token>
+     * @var list<Token>
      */
     private array $tokensRead = [];
 
@@ -289,7 +289,7 @@ final class Lexer
      *
      * @internal
      *
-     * @return array<Token>
+     * @return list<Token>
      */
     public function tokensRead(): array
     {
@@ -314,7 +314,7 @@ final class Lexer
         $this->extendedMoreMode = false;
         $this->resetState();
 
-        /** @var array<Token> $tokens */
+        /** @var list<Token> $tokens */
         $tokens = [];
 
         try {
@@ -406,7 +406,7 @@ final class Lexer
     }
 
     /**
-     * @param array<Token> $tokens
+     * @param list<Token> $tokens
      */
     private function handleTunnelModes(array &$tokens): bool
     {
@@ -452,7 +452,7 @@ final class Lexer
      * syntax. The comment is emitted as literals — '#', the body and the
      * closing newline — which is what the parser turns into a CommentNode.
      *
-     * @param array<Token> $tokens
+     * @param list<Token> $tokens
      */
     private function consumeExtendedComment(array &$tokens): void
     {

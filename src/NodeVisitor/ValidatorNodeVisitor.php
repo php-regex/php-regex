@@ -93,6 +93,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private const MAX_VERB_NAME_LENGTH = 255;
 
     /**
+     * The most characters PCRE reads of a braced property name.
+     */
+    private const MAX_PROPERTY_NAME_LENGTH = 49;
+
+    /**
      * The largest (*LIMIT_...=n) value PCRE still multiplies by ten.
      */
     private const MAX_LIMIT_VALUE_BEFORE_DIGIT = 429496728;
@@ -451,12 +456,34 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         try {
             foreach ($tokens as $token) {
-                if ($token->position >= $limit) {
+                // An escape that starts on the character at fault is not
+                // read: PCRE2 10.47 reports past that character.
+                if ($this->pastTheFault($token->position + 1) >= $limit) {
                     break;
                 }
 
                 $this->validateEscapeToken($token, $source);
             }
+        } catch (SemanticErrorException $error) {
+            return $error;
+        }
+
+        return null;
+    }
+
+    /**
+     * The error PCRE finds in a character class, parsed alone, that closes
+     * at $closingAt: none unless PCRE reads the whole class before $limit,
+     * the offset where parsing failed.
+     */
+    public function firstErrorInClassBefore(RegexNode $class, int $closingAt, int $limit): ?SemanticErrorException
+    {
+        if ($this->pastTheFault($closingAt + 1) >= $limit) {
+            return null;
+        }
+
+        try {
+            $class->accept($this);
         } catch (SemanticErrorException $error) {
             return $error;
         }
@@ -672,6 +699,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             );
         }
 
+        // PCRE reads the item before its count: what it refuses there comes
+        // first, and what it checks once the pattern is read waits.
+        $node->node->accept($this);
+
         // Fast cached quantifier bounds parsing
         [$min, $max] = $this->getQuantifierBounds($node->quantifier);
 
@@ -693,8 +724,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'regex.quantifier.invalid_range',
             );
         }
-
-        $node->node->accept($this);
     }
 
     #[\Override]
@@ -1096,6 +1125,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): void
     {
+        if ($node->hasBraces && null !== $this->source) {
+            $malformedAt = $this->malformedPropertyNameEnd($this->source, $node->startPosition + 2);
+            if (null !== $malformedAt) {
+                $this->raiseMalformedPropertyAt($this->source[$node->startPosition + 1], $malformedAt);
+            }
+        }
+
         $prop = $node->prop;
         $key = $node->hasBraces
             ? 'p'.$prop
@@ -2932,16 +2968,70 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $offset = match (true) {
             $position >= \strlen($source) => $position,
-            '{' === $source[$position] => \strlen($source),
+            '{' === $source[$position] => $this->malformedPropertyNameEnd($source, $position) ?? \strlen($source),
             default => $position + $this->characterLengthAt($source, $position),
         };
 
+        $this->raiseMalformedPropertyAt($letter, $offset);
+    }
+
+    private function raiseMalformedPropertyAt(string $letter, int $offset): never
+    {
         $this->raiseSemanticError(
             \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
             $offset,
             'regex.unicode.property_malformed',
             \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),
         );
+    }
+
+    /**
+     * Where PCRE gives up on the property name its brace at $brace opens:
+     * past the most characters it reads of one, at the end of the pattern,
+     * or, from PCRE2 10.45, past the first character no name holds. Spaces,
+     * "_" and "-" are skipped, and so is one leading "^". Null for a name
+     * closed in time.
+     */
+    private function malformedPropertyNameEnd(string $source, int $brace): ?int
+    {
+        $length = \strlen($source);
+        $position = $brace + 1;
+        $negated = false;
+        $read = 0;
+
+        while ($read < self::MAX_PROPERTY_NAME_LENGTH) {
+            if ($position >= $length) {
+                return $length;
+            }
+
+            $char = $source[$position];
+            $step = $this->characterLengthAt($source, $position);
+            $position += $step;
+
+            if (str_contains(" _-\t\n\v\f\r", $char)) {
+                continue;
+            }
+
+            if (0 === $read && !$negated && '^' === $char) {
+                $negated = true;
+
+                continue;
+            }
+
+            if ('}' === $char) {
+                return null;
+            }
+
+            // Names hold "&" to "z" only; 10.45 and 10.46 stopped past the
+            // first byte of a longer UTF-8 character, 10.47 past all of it.
+            if (($char < '&' || $char > 'z') && $this->runningPcreAtLeast('10.45')) {
+                return $this->runningPcreAtLeast('10.47') ? $position : $position - $step + 1;
+            }
+
+            $read++;
+        }
+
+        return $position;
     }
 
     /**

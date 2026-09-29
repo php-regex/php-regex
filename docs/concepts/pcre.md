@@ -55,9 +55,12 @@ PCRE2 10.42, and refuse what 10.43 added. `PCRE_VERSION` says which one runs.
 Error offsets follow the same rule. PCRE2 10.47 reports most syntax errors past
 the character at fault rather than on it (`/+/` at offset 1 rather than 0,
 `\y` at 2 rather than 1), and 10.45 moved a few (an unknown POSIX class is
-reported past its end). `ValidationResult::$offset` is the offset the PCRE2 of
-the targeted PHP version reports, or, without a target, the one the running
-PHP links.
+reported past its end, a property name such as `\p{L!}` past its first
+character no name can hold). `ValidationResult::$offset` is the offset the
+PCRE2 of the targeted PHP version reports, or, without a target, the one the
+running PHP links. When a pattern holds several errors, it is the offset of the
+one PCRE meets first, reading left to right: `[z-a](?#` is refused on its
+range, not on the comment left open.
 
 ## PCRE vs other regex engines
 

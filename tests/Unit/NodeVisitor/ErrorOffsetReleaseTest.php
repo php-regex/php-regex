@@ -96,6 +96,9 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'alphabetic name at the end' => ['pattern' => '/(*pla/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'known alphabetic assertion never closed' => ['pattern' => '/(*pla:a/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
         yield 'unknown alphabetic name with a colon' => ['pattern' => '/(*plaa:/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        yield 'escape where an option letter is due' => ['pattern' => '/(?i\\y/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'property escape right after (?' => ['pattern' => '/(?\\p{L/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
+        yield 'hexadecimal escape after (?-' => ['pattern' => '/a(?-\\x{zz}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
         yield 'unmatched closing parenthesis' => ['pattern' => '/a)/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
 
         yield 'group name starting with a Unicode digit' => ['pattern' => '/(?<٣a>x)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
@@ -111,9 +114,73 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'POSIX class starting a range' => ['pattern' => '/[[:digit:]-z]/', 'bundled' => 10, 'newer' => 11, 'movedIn' => '10.45'];
         yield 'unknown negated POSIX class' => ['pattern' => '/a[[:^foo:]]b/', 'bundled' => 5, 'newer' => 10, 'movedIn' => '10.45'];
 
+        // PCRE2 10.45 refuses a property name past its first character that
+        // no name can hold, rather than at its end.
+        yield 'property name never closed' => ['pattern' => '/\\p{L{./', 'bundled' => 6, 'newer' => 5, 'movedIn' => '10.45'];
+        yield 'property name with a sign' => ['pattern' => '/\\p{L!}/', 'bundled' => 6, 'newer' => 5, 'movedIn' => '10.45'];
+        yield 'property name with a brace in a class' => ['pattern' => '/[\\p{L{}]/', 'bundled' => 7, 'newer' => 6, 'movedIn' => '10.45'];
+        yield 'negated property name with a tilde' => ['pattern' => '/\\P{^ L~x}/', 'bundled' => 9, 'newer' => 7, 'movedIn' => '10.45'];
+        yield 'property name never closed in a class' => ['pattern' => '/[\\P{L!]/', 'bundled' => 7, 'newer' => 6, 'movedIn' => '10.45'];
+        yield 'property name past its last character' => ['pattern' => '/\\p{ ^ L|/', 'bundled' => 8, 'newer' => 8, 'movedIn' => '10.40'];
+        // Every release: a property name is read for 49 characters at most.
+        yield 'property name too long' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40'];
+        yield 'property name too long and never closed' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40'];
+
+        // PCRE refuses what a class holds as it reads the class, before any
+        // error in what follows it.
+        yield 'reversed range before an unclosed comment' => ['pattern' => '/[z-a](?#/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'reversed range before a class range on a type' => ['pattern' => '/[z-a][a-\\d]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'reversed range before a quantifier with nothing to repeat' => ['pattern' => '/a[b-a]+++/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'reversed range before counts out of order' => ['pattern' => '/[z-a]{2,1}/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'unknown escape before counts out of order' => ['pattern' => '/\\y{2,1}/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
+        yield 'unknown property before a count too big' => ['pattern' => '/\\pX{65536}/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
+        yield 'reversed range in a group before counts out of order' => ['pattern' => '/([z-a]){2,1}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        // What PCRE checks once the pattern is read comes after the counts.
+        yield 'counts out of order after an unbounded lookbehind' => ['pattern' => '/(?<=a+){2,1}/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
+        yield 'counts out of order after a reference to a missing group' => ['pattern' => '/\\9{2,1}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        yield 'counts out of order after a call to a missing group' => ['pattern' => '/(?1){2,1}/', 'bundled' => 8, 'newer' => 8, 'movedIn' => '10.40'];
+        yield 'valid class before an unclosed comment' => ['pattern' => '/[a-z](?#/', 'bundled' => 8, 'newer' => 8, 'movedIn' => '10.40'];
+        yield 'unknown POSIX class before an unreadable condition' => ['pattern' => '/[[:foo:]](?(?(/', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.45'];
+        yield 'unknown POSIX class before an unclosed comment' => ['pattern' => '/x[[:foo:]]}(?#/', 'bundled' => 4, 'newer' => 9, 'movedIn' => '10.45'];
+        yield 'unknown POSIX class before a count too big' => ['pattern' => '/[[:foo:]]{65536}/', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.45'];
+
         // Every release: a count with nothing to repeat is read as a count.
         yield 'counts out of order at the start' => ['pattern' => '/{2,1}/', 'bundled' => 4, 'newer' => 4, 'movedIn' => '10.40'];
+        yield 'count too big after an anchor' => ['pattern' => '/^{65536}/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
+        yield 'count past 65535 after an anchor' => ['pattern' => '/^{655360}/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.47'];
+        yield 'counts out of order after an anchor' => ['pattern' => '/^{2,1}/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
+        yield 'counts out of order made possessive after a boundary' => ['pattern' => '/\\b{2,1}+/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        yield 'count too big after a possessive quantifier' => ['pattern' => '/a++{65536}/', 'bundled' => 9, 'newer' => 9, 'movedIn' => '10.40'];
+        yield 'count too big after a callout' => ['pattern' => '/(?C){70000}/', 'bundled' => 10, 'newer' => 10, 'movedIn' => '10.40'];
         yield 'count too big at the start' => ['pattern' => '/{65536}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+    }
+
+    #[Test]
+    public function test_a_class_read_past_the_fault_does_not_come_first(): void
+    {
+        // Before PCRE2 10.45 "(?[" is refused on the "[": the class it opens
+        // is never read, and its reversed range is never met.
+        foreach ([80200, 80500] as $phpVersion) {
+            $this->assertSame(2, Regex::create(['cache' => null, 'php_version' => $phpVersion])->validate('/(?[z-a])/')->offset);
+        }
+    }
+
+    #[Test]
+    public function test_a_property_name_with_a_character_no_name_holds_is_malformed_from_pcre2_10_45(): void
+    {
+        foreach ([80200, 80500] as $phpVersion) {
+            $regex = Regex::create(['cache' => null, 'php_version' => $phpVersion]);
+
+            $this->assertSame('regex.unicode.property_invalid', $regex->validate('/\\p{L!}/')->errorCode);
+            $this->assertSame(5, $regex->validate('/\\p{é/u')->offset);
+        }
+
+        // 10.45 and 10.46 stopped past the first byte of a UTF-8 character,
+        // 10.47 past the whole character.
+        $running = explode(' ', \PCRE_VERSION)[0];
+        $regex = Regex::create(['cache' => null]);
+        $this->assertSame(version_compare($running, '10.45', '>=') ? 'regex.unicode.property_malformed' : 'regex.unicode.property_invalid', $regex->validate('/\\p{L!}/')->errorCode);
+        $this->assertSame(version_compare($running, '10.45', '>=') && version_compare($running, '10.47', '<') ? 4 : 5, $regex->validate('/\\p{é/u')->offset);
     }
 
     #[Test]
