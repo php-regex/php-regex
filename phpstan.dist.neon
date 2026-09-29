@@ -18,6 +18,11 @@ parameters:
         min: 80200
         max: 80599
 
+    # The tests probe the running engine behind version guards: judge their
+    # patterns for the PHP running the analysis, not for the 8.2 floor.
+    regexParser:
+        phpVersion: runtime
+
     paths:
         - bin
         - src

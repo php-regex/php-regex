@@ -29,7 +29,6 @@ use RegexParser\ReDoS\ReDoSHotspot;
 use RegexParser\ReDoS\ReDoSInputGenerator;
 use RegexParser\ReDoS\ReDoSMode;
 use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\RegexOptions;
 use RegexParser\RegexPattern;
 use RegexParser\Runtime\PcreRuntimeInfo;
 
@@ -85,9 +84,7 @@ final class DebugCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
         $runtime = PcreRuntimeInfo::fromIni();
         $meta['PCRE'] = $output->warning($runtime->version);
         $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
@@ -98,13 +95,10 @@ final class DebugCommand extends AbstractCommand
             $style->renderBanner('Debug', $meta);
         }
 
-        $phpVersionId = null;
-        if ([] !== $input->regexOptions) {
-            $phpVersionId = RegexOptions::fromArray($input->regexOptions)->phpVersionId;
-        }
+        $target = $regex->target();
 
         try {
-            $patternInfo = RegexPattern::fromDelimited($pattern, $phpVersionId);
+            $patternInfo = RegexPattern::fromDelimited($pattern, $target);
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
             $steps = [] !== $analysis->findings ? 2 : 1;
             $heatmap = new ReDoSHeatmap();

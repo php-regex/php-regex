@@ -186,7 +186,7 @@ final class ReDoSAnalyzer
     private function normalizePattern(string $regex): string
     {
         try {
-            [$pattern] = PatternParser::extractPatternAndFlags($regex);
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->regex?->target());
 
             return $pattern;
         } catch (\Throwable) {

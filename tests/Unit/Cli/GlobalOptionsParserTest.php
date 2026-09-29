@@ -53,6 +53,16 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertTrue($parsed->options->help);
     }
 
+    public function test_parse_collects_the_pcre_version(): void
+    {
+        $parser = new GlobalOptionsParser();
+
+        $this->assertSame('10.42', $parser->parse(['--pcre-version', '10.42', 'lint'])->options->pcreVersion);
+        $this->assertSame('10.44', $parser->parse(['--pcre-version=10.44'])->options->pcreVersion);
+        $this->assertNull($parser->parse(['lint'])->options->pcreVersion);
+        $this->assertSame('Missing value for --pcre-version.', $parser->parse(['--pcre-version'])->options->error);
+    }
+
     public function test_parse_disables_visuals(): void
     {
         $parser = new GlobalOptionsParser();

@@ -357,7 +357,7 @@ final readonly class RegexAnalysisService
         $end = $target->getEndPosition();
 
         try {
-            [$body, $flags, $delimiter] = PatternParser::extractPatternAndFlags($pattern);
+            [$body, $flags, $delimiter] = PatternParser::extractPatternAndFlags($pattern, $this->regex->target());
         } catch (\Throwable) {
             return null;
         }
@@ -946,7 +946,7 @@ final readonly class RegexAnalysisService
 
         try {
             /** @var array{0: string, 1: string, 2: string} $parts */
-            $parts = PatternParser::extractPatternAndFlags($pattern);
+            $parts = PatternParser::extractPatternAndFlags($pattern, $this->regex->target());
         } catch (\Throwable) {
             // If we cannot reliably extract flags, fall back to not treating it
             // as extended mode to avoid false positives.

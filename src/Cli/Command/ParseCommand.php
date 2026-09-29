@@ -84,9 +84,7 @@ final class ParseCommand extends AbstractCommand
     {
         $meta = [];
 
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
 
         if ($validate) {
             $meta['Validation'] = $output->warning('on');

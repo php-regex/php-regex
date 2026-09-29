@@ -25,6 +25,7 @@ $regex = Regex::create([
     'redos_ignored_patterns' => [],
     'max_recursion_depth' => 1024,
     'php_version' => '8.2',
+    'pcre_version' => '10.40',
 ]);
 
 $result = $regex->validate('/foo|bar/');
@@ -45,7 +46,7 @@ $regex = Regex::new();
 
 ---
 
-### Regex::tokenize(string $regex, ?int $phpVersionId = null): TokenStream
+### Regex::tokenize(string $regex, ?PcreTarget $target = null): TokenStream
 
 Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging.
 
@@ -94,7 +95,21 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
 | `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
 | `max_recursion_depth`     | `int`                                  | `1024`            | Parser recursion guard         | Low - prevents stack overflow   |
-| `php_version`             | `string` \| `int`                      | `PHP_VERSION_ID`  | Target PHP version             | Low - feature validation        |
+| `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
+| `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
+
+Without `php_version` nor `pcre_version`, patterns are judged for the running PHP
+and the PCRE2 it links. `runtime_pcre_validation` compiles with the running PHP,
+so it is refused with a target that is not that engine. See
+[Which PHP and which PCRE2 judge a pattern](../concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern).
+
+### Regex::target(): PcreTarget
+
+The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
+instance judges for. `PcreTarget::runtime()` is the running engine,
+`PcreTarget::bundledWith(80400)` a PHP version with its bundled PCRE2, and
+`new PcreTarget(80400, '10.42')` any pair; `Lexer`, `Parser`,
+`ValidatorNodeVisitor` and `Regex::cacheSeed()` take one.
 
 ---
 

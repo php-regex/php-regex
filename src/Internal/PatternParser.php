@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Internal;
 
 use RegexParser\Exception\ParserException;
+use RegexParser\PcreTarget;
 
 /**
  * @internal
@@ -21,20 +22,13 @@ use RegexParser\Exception\ParserException;
 final class PatternParser
 {
     /**
-     * @var array<int|string, bool>
-     */
-    private static array $supportsModifierR = [];
-
-    /**
-     * @var array<int|string, bool>
-     */
-    private static array $supportsModifierE = [];
-
-    /**
      * @return array{0: string, 1: string, 2: string}
      */
-    public static function extractPatternAndFlags(string $regex, ?int $phpVersionId = null): array
+    public static function extractPatternAndFlags(string $regex, ?PcreTarget $target = null): array
     {
+        $target ??= PcreTarget::runtime();
+        $phpVersionId = $target->phpVersionId;
+
         // Trim leading whitespace to match PHP's PCRE behavior
         $regex = ltrim($regex);
 
@@ -112,11 +106,14 @@ final class PatternParser
                     $flagsWithWhitespace = substr($regex, $i + 1);
                     $flags = preg_replace('/\s+/', '', $flagsWithWhitespace) ?? '';
 
-                    $allowedFlags = 'imsxADSUXJun';
-                    if (self::supportsModifierR($phpVersionId)) {
+                    // "n" arrived in PHP 8.2; "r" in PHP 8.4, which reads it
+                    // only when built against PCRE2 10.43 or later; "e" left
+                    // in PHP 7.0.
+                    $allowedFlags = 'imsxADSUXJu'.($phpVersionId >= 80200 ? 'n' : '');
+                    if ($phpVersionId >= 80400 && $target->pcreAtLeast('10.43')) {
                         $allowedFlags .= 'r';
                     }
-                    if (self::supportsModifierE($phpVersionId)) {
+                    if ($phpVersionId < 70000) {
                         $allowedFlags .= 'e';
                     }
 
@@ -177,51 +174,6 @@ final class PatternParser
             '<' => '>',
             default => $delimiter,
         };
-    }
-
-    private static function supportsModifierR(?int $phpVersionId = null): bool
-    {
-        $key = $phpVersionId ?? 'runtime';
-        if (\array_key_exists($key, self::$supportsModifierR)) {
-            return self::$supportsModifierR[$key];
-        }
-
-        if (null === $phpVersionId) {
-            $modifier = \chr(114);
-            $pattern = '/a/'.$modifier;
-            $result = @preg_match($pattern, '');
-            self::$supportsModifierR[$key] = false !== $result;
-
-            return self::$supportsModifierR[$key];
-        }
-
-        self::$supportsModifierR[$key] = $phpVersionId >= 80400;
-
-        return self::$supportsModifierR[$key];
-    }
-
-    /**
-     * Check if the 'e' modifier (PREG_REPLACE_EVAL) is supported.
-     * The 'e' modifier was removed in PHP 7.0, so it's only valid for PHP < 7.0.
-     */
-    private static function supportsModifierE(?int $phpVersionId = null): bool
-    {
-        $key = $phpVersionId ?? 'runtime';
-        if (\array_key_exists($key, self::$supportsModifierE)) {
-            return self::$supportsModifierE[$key];
-        }
-
-        if (null === $phpVersionId) {
-            // At runtime, we're always on PHP 7.0+, so 'e' is never supported
-            // @phpstan-ignore-next-line smaller.alwaysFalse
-            self::$supportsModifierE[$key] = \PHP_VERSION_ID < 70000;
-
-            return self::$supportsModifierE[$key];
-        }
-
-        self::$supportsModifierE[$key] = $phpVersionId < 70000;
-
-        return self::$supportsModifierE[$key];
     }
 
     private static function isValidDelimiter(string $delimiter): bool

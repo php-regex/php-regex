@@ -21,9 +21,9 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Internal\PatternParser;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
+use RegexParser\PcreTarget;
 use RegexParser\ReDoS\ReDoSInputGenerator;
 use RegexParser\Regex;
-use RegexParser\RegexOptions;
 use RegexParser\RegexPattern;
 use RegexParser\Runtime\PcreRuntimeInfo;
 
@@ -77,10 +77,7 @@ final class RedosCommand extends AbstractCommand
             return 1;
         }
 
-        $phpVersionId = null;
-        if ([] !== $input->regexOptions) {
-            $phpVersionId = RegexOptions::fromArray($input->regexOptions)->phpVersionId;
-        }
+        $target = $regex->target();
 
         if (null !== $jit) {
             ini_set('pcre.jit', $jit);
@@ -115,7 +112,7 @@ final class RedosCommand extends AbstractCommand
         }
 
         if (null === $inputValue) {
-            [$inputValue, $inputSource, $inputNote] = $this->generateInput($regex, $pattern, $phpVersionId);
+            [$inputValue, $inputSource, $inputNote] = $this->generateInput($regex, $pattern, $target);
         }
 
         $baseLength = \strlen($inputValue);
@@ -124,18 +121,16 @@ final class RedosCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
         $meta['PCRE'] = $output->warning($runtime->version);
         $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
         $meta['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
         $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
 
-        $highlightedVuln = $this->highlightPattern($regex, $output, $pattern, $phpVersionId);
+        $highlightedVuln = $this->highlightPattern($regex, $output, $pattern, $target);
         $highlightedSafe = null;
         if (null !== $safePattern && '' !== $safePattern) {
-            $highlightedSafe = $this->highlightPattern($regex, $output, $safePattern, $phpVersionId);
+            $highlightedSafe = $this->highlightPattern($regex, $output, $safePattern, $target);
         }
 
         if ('json' !== $format) {
@@ -608,13 +603,13 @@ final class RedosCommand extends AbstractCommand
     /**
      * @return array{0: string, 1: string, 2: ?string}
      */
-    private function generateInput(Regex $regex, string $pattern, ?int $phpVersionId): array
+    private function generateInput(Regex $regex, string $pattern, PcreTarget $target): array
     {
         try {
             $analysis = $regex->redos($pattern);
             $culprit = $analysis->getCulpritNode();
             if (null !== $culprit) {
-                $patternInfo = RegexPattern::fromDelimited($pattern, $phpVersionId);
+                $patternInfo = RegexPattern::fromDelimited($pattern, $target);
                 $generated = (new ReDoSInputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);
                 if ('' !== $generated) {
                     return [$generated, 'auto', null];
@@ -627,7 +622,7 @@ final class RedosCommand extends AbstractCommand
         return ['a!', 'default', 'Auto input unavailable; using default.'];
     }
 
-    private function highlightPattern(Regex $regex, Output $output, string $pattern, ?int $phpVersionId): string
+    private function highlightPattern(Regex $regex, Output $output, string $pattern, PcreTarget $target): string
     {
         if (!$output->isAnsi()) {
             return $pattern;
@@ -635,7 +630,7 @@ final class RedosCommand extends AbstractCommand
 
         try {
             $ast = $regex->parse($pattern);
-            $patternInfo = RegexPattern::fromDelimited($pattern, $phpVersionId);
+            $patternInfo = RegexPattern::fromDelimited($pattern, $target);
             $highlightedBody = $ast->accept(new ConsoleHighlighterVisitor());
             $closingDelimiter = PatternParser::closingDelimiter($patternInfo->delimiter);
 

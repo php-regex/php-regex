@@ -89,9 +89,7 @@ final class DiagramCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
         $showConsoleOutput = 'svg' !== $format && null === $outputPath;
         if ($showConsoleOutput && $style->visualsEnabled()) {
             $meta['Format'] = $output->warning('text');

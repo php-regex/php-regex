@@ -156,6 +156,22 @@ final class ApplicationTest extends TestCase
         $this->assertSame(['php_version' => '8.1'], $command->lastInput->regexOptions);
     }
 
+    public function test_run_with_pcre_version_option_sets_regex_options(): void
+    {
+        $output = new Output(false, false);
+        $help = new DummyCommand('help');
+        $command = new DummyCommand('test');
+        $app = new Application(new GlobalOptionsParser(), $output, $help);
+        $app->register($command);
+
+        $buffer = '';
+        $exitCode = $this->runApp($app, ['regex', '--php-version=8.4', '--pcre-version', '10.42', 'test'], $buffer);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertInstanceOf(Input::class, $command->lastInput);
+        $this->assertSame(['php_version' => '8.4', 'pcre_version' => '10.42'], $command->lastInput->regexOptions);
+    }
+
     /**
      * @param array<int, string> $argv
      */

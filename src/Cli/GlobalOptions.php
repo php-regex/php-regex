@@ -22,5 +22,6 @@ final readonly class GlobalOptions
         public bool $visuals,
         public ?string $phpVersion,
         public ?string $error,
+        public ?string $pcreVersion = null,
     ) {}
 }

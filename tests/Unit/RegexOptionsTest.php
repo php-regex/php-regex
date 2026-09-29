@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
 use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\PcreTarget;
 use RegexParser\Regex;
 use RegexParser\RegexOptions;
 
@@ -35,15 +36,15 @@ final class RegexOptionsTest extends TestCase
             'max_lookbehind_length' => 512,
             'cache' => new NullCache(),
             'redos_ignored_patterns' => ['/safe/'],
-            'runtime_pcre_validation' => true,
+            'runtime_pcre_validation' => false,
             'max_recursion_depth' => 2048,
             'php_version' => '8.3',
         ]);
         $this->assertSame(50_000, (new \ReflectionProperty($regex, 'maxPatternLength'))->getValue($regex));
         $this->assertSame(512, (new \ReflectionProperty($regex, 'maxLookbehindLength'))->getValue($regex));
-        $this->assertTrue((new \ReflectionProperty($regex, 'runtimePcreValidation'))->getValue($regex));
+        $this->assertFalse((new \ReflectionProperty($regex, 'runtimePcreValidation'))->getValue($regex));
         $this->assertSame(2048, (new \ReflectionProperty($regex, 'maxRecursionDepth'))->getValue($regex));
-        $this->assertSame(80300, (new \ReflectionProperty($regex, 'phpVersionId'))->getValue($regex));
+        $this->assertSame(80300, $regex->target()->phpVersionId);
     }
 
     public function test_from_array_with_empty_array(): void
@@ -54,7 +55,7 @@ final class RegexOptionsTest extends TestCase
         $this->assertInstanceOf(FilesystemCache::class, $options->cache);
         $this->assertFalse($options->runtimePcreValidation);
         $this->assertSame(1024, $options->maxRecursionDepth);
-        $this->assertSame(\PHP_VERSION_ID, $options->phpVersionId);
+        $this->assertSame(\PHP_VERSION_ID, $options->target->phpVersionId);
     }
 
     public function test_from_array_with_null_cache_disables_cache(): void
@@ -68,14 +69,14 @@ final class RegexOptionsTest extends TestCase
     {
         $options = RegexOptions::fromArray(['php_version' => '8.1']);
 
-        $this->assertSame(80100, $options->phpVersionId);
+        $this->assertSame(80100, $options->target->phpVersionId);
     }
 
     public function test_from_array_parses_php_version_id(): void
     {
         $options = RegexOptions::fromArray(['php_version' => 80401]);
 
-        $this->assertSame(80401, $options->phpVersionId);
+        $this->assertSame(80401, $options->target->phpVersionId);
     }
 
     public function test_from_array_invalid_php_version(): void
@@ -110,14 +111,66 @@ final class RegexOptionsTest extends TestCase
     {
         $options = RegexOptions::fromArray(['php_version' => '80100']);
 
-        $this->assertSame(80100, $options->phpVersionId);
+        $this->assertSame(80100, $options->target->phpVersionId);
     }
 
     public function test_from_array_parses_php_version_patch(): void
     {
         $options = RegexOptions::fromArray(['php_version' => '8.1.2']);
 
-        $this->assertSame(80102, $options->phpVersionId);
+        $this->assertSame(80102, $options->target->phpVersionId);
+    }
+
+    public function test_a_php_version_alone_gets_the_pcre2_it_bundles(): void
+    {
+        $options = RegexOptions::fromArray(['php_version' => '8.3']);
+
+        $this->assertSame('10.42', $options->target->pcreVersion);
+    }
+
+    public function test_the_running_php_named_as_a_target_still_gets_its_bundled_pcre2(): void
+    {
+        $options = RegexOptions::fromArray(['php_version' => \PHP_VERSION_ID]);
+
+        $this->assertEquals(PcreTarget::bundledWith(\PHP_VERSION_ID), $options->target);
+    }
+
+    public function test_a_pcre_version_alone_keeps_the_running_php(): void
+    {
+        $options = RegexOptions::fromArray(['pcre_version' => '10.42']);
+
+        $this->assertSame(\PHP_VERSION_ID, $options->target->phpVersionId);
+        $this->assertSame('10.42', $options->target->pcreVersion);
+    }
+
+    public function test_a_php_and_a_pcre_version_name_the_target(): void
+    {
+        $options = RegexOptions::fromArray(['php_version' => '8.4', 'pcre_version' => '10.42']);
+
+        $this->assertSame(80400, $options->target->phpVersionId);
+        $this->assertSame('10.42', $options->target->pcreVersion);
+    }
+
+    public function test_no_version_targets_the_running_engine(): void
+    {
+        $this->assertEquals(PcreTarget::runtime(), RegexOptions::fromArray(['cache' => null])->target);
+        $this->assertEquals(PcreTarget::runtime(), RegexOptions::fromArray([])->target);
+    }
+
+    public function test_the_pcre_version_must_name_a_release(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('"pcre_version" must be a PCRE2 release like "10.44", not a float.');
+        RegexOptions::fromArray(['pcre_version' => 10.42]);
+    }
+
+    public function test_runtime_validation_needs_the_running_engine_as_target(): void
+    {
+        $this->assertTrue(RegexOptions::fromArray(['runtime_pcre_validation' => true])->runtimePcreValidation);
+
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (PHP 8.4, PCRE2 10.100)');
+        RegexOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => '8.4', 'pcre_version' => '10.100']);
     }
 
     public function test_from_array_invalid_max_pattern_length(): void

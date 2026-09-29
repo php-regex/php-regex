@@ -59,7 +59,7 @@ final class RegexEdgeCasesTest extends TestCase
         $this->assertSame([], $report->errors);
     }
 
-    public function test_cache_seed_includes_php_version_when_explicit(): void
+    public function test_cache_seed_includes_the_target(): void
     {
         $regex = Regex::create(['php_version' => 80000]);
         $ref = new \ReflectionClass($regex);
@@ -68,7 +68,7 @@ final class RegexEdgeCasesTest extends TestCase
         $seed = $method->invoke($regex, '/abc/');
 
         $this->assertIsString($seed);
-        $this->assertStringContainsString('#php_version=80000', (string) $seed);
+        $this->assertStringContainsString('#target=php80000/pcre10.40', (string) $seed);
     }
 
     public function test_store_in_cache_swallows_write_errors(): void

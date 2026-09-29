@@ -37,20 +37,25 @@ final readonly class RegexOptions
         'runtime_pcre_validation',
         'max_recursion_depth',
         'php_version',
+        'pcre_version',
     ];
+
+    /**
+     * The PHP version and the PCRE2 release patterns are judged for.
+     */
+    public PcreTarget $target;
 
     /**
      * Create new configuration options.
      *
-     * @param int            $maxPatternLength      Maximum allowed regex pattern length
-     * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
-     *                                              fixed-length one is only limited by PCRE's 65535
-     * @param CacheInterface $cache                 Cache implementation to use
-     * @param array<string>  $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
-     * @param bool           $runtimePcreValidation Whether to validate against the PCRE runtime
-     * @param int            $maxRecursionDepth     Maximum recursion depth during parsing
-     * @param int            $phpVersionId          Target PHP_VERSION_ID for feature validation
-     * @param bool           $phpVersionExplicit    Whether php_version was explicitly provided
+     * @param int             $maxPatternLength      Maximum allowed regex pattern length
+     * @param int             $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
+     *                                               fixed-length one is only limited by PCRE's 65535
+     * @param CacheInterface  $cache                 Cache implementation to use
+     * @param array<string>   $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
+     * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
+     * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
+     * @param PcreTarget|null $target                The PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(
         public int $maxPatternLength,
@@ -59,9 +64,21 @@ final readonly class RegexOptions
         public array $redosIgnoredPatterns = [],
         public bool $runtimePcreValidation = false,
         public int $maxRecursionDepth = 1024,
-        public int $phpVersionId = \PHP_VERSION_ID,
-        public bool $phpVersionExplicit = false,
-    ) {}
+        ?PcreTarget $target = null,
+    ) {
+        $this->target = $target ?? PcreTarget::runtime();
+
+        // PHP compiles with the engine that runs: it judges the target only
+        // when the target is that engine.
+        if ($this->runtimePcreValidation && !$this->target->isRunningEngine()) {
+            throw new InvalidRegexOptionException(\sprintf(
+                '"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (PHP %d.%d, PCRE2 %s); drop one of them.',
+                intdiv($this->target->phpVersionId, 10000),
+                intdiv($this->target->phpVersionId, 100) % 100,
+                $this->target->pcreVersion,
+            ));
+        }
+    }
 
     /**
      * Create configuration from array of options.
@@ -78,16 +95,15 @@ final readonly class RegexOptions
 
         self::validateOptionKeys($options);
 
-        $phpVersionExplicit = \array_key_exists('php_version', $options);
         $maxLength = self::getPatternLength($options);
         $lookbehindLength = self::getLookbehindLength($options);
         $cache = self::createCache($options);
         $patterns = self::getIgnoredPatterns($options);
         $runtimeValidation = self::getRuntimePcreValidation($options);
         $recursionDepth = self::getRecursionDepth($options);
-        $phpVersionId = self::getPhpVersionId($options);
+        $target = self::getTarget($options);
 
-        return new self($maxLength, $lookbehindLength, $cache, $patterns, $runtimeValidation, $recursionDepth, $phpVersionId, $phpVersionExplicit);
+        return new self($maxLength, $lookbehindLength, $cache, $patterns, $runtimeValidation, $recursionDepth, $target);
     }
 
     /**
@@ -206,16 +222,39 @@ final readonly class RegexOptions
     }
 
     /**
+     * The PHP and the PCRE2 judged: the running ones by default, a PHP
+     * version alone with the PCRE2 it bundles, a PCRE2 release alone with
+     * the running PHP.
+     *
+     * @param array<string, mixed> $options Configuration options
+     */
+    private static function getTarget(array $options): PcreTarget
+    {
+        $phpVersionId = self::getPhpVersionId($options);
+        $pcreVersion = $options['pcre_version'] ?? null;
+
+        if (null !== $pcreVersion && !\is_string($pcreVersion)) {
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not a %s.', get_debug_type($pcreVersion)));
+        }
+
+        return match (true) {
+            null === $phpVersionId && null === $pcreVersion => PcreTarget::runtime(),
+            null === $pcreVersion => PcreTarget::bundledWith((int) $phpVersionId),
+            default => new PcreTarget($phpVersionId ?? PcreTarget::runtime()->phpVersionId, $pcreVersion),
+        };
+    }
+
+    /**
      * Get target PHP version ID from options.
      *
      * @param array<string, mixed> $options Configuration options
      */
-    private static function getPhpVersionId(array $options): int
+    private static function getPhpVersionId(array $options): ?int
     {
         $version = $options['php_version'] ?? null;
 
         if (null === $version) {
-            return \PHP_VERSION_ID;
+            return null;
         }
 
         if (\is_int($version)) {

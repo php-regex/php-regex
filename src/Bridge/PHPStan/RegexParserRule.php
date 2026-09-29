@@ -20,6 +20,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
+use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -126,6 +127,13 @@ final class RegexParserRule implements Rule
 
     private readonly int $optimizationMinSavings;
 
+    /**
+     * The "php_version" and "pcre_version" patterns are judged for.
+     *
+     * @var array{php_version?: int|string, pcre_version?: string}
+     */
+    private readonly array $targetOptions;
+
     private ?RegexAnalysisService $analysis = null;
 
     /**
@@ -144,6 +152,9 @@ final class RegexParserRule implements Rule
      *     verifyWithAutomata?: bool
      * } $optimizationConfig
      * @param array<string, mixed> $config
+     * @param PhpVersion|null      $phpVersion the PHP version PHPStan analyses the project for: patterns are
+     *                                         judged for it, with the PCRE2 it bundles, unless the "phpVersion"
+     *                                         parameter is "runtime" or names a version, and "pcreVersion" a release
      */
     public function __construct(
         bool $ignoreParseErrors = true,
@@ -158,8 +169,10 @@ final class RegexParserRule implements Rule
             'canonicalizeCharClasses' => true,
         ],
         array $config = [],
+        ?PhpVersion $phpVersion = null,
     ) {
         $overrides = $this->normalizeConfigOverrides($config);
+        $this->targetOptions = $this->targetOptions($config, $phpVersion);
 
         $ignoreParseErrorsOverride = $overrides['ignoreParseErrors'] ?? null;
         if (\is_bool($ignoreParseErrorsOverride)) {
@@ -493,6 +506,32 @@ final class RegexParserRule implements Rule
     }
 
     /**
+     * PHPStan's PHP version by default; "runtime" for the PHP running the
+     * analysis and the PCRE2 it links; a version string for that PHP.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @return array{php_version?: int|string, pcre_version?: string}
+     */
+    private function targetOptions(array $config, ?PhpVersion $phpVersion): array
+    {
+        $options = [];
+        $setting = $config['phpVersion'] ?? null;
+        if (\is_string($setting) && '' !== $setting && 'runtime' !== $setting) {
+            $options['php_version'] = $setting;
+        } elseif (null === $setting && null !== $phpVersion) {
+            $options['php_version'] = $phpVersion->getVersionId();
+        }
+
+        $pcreVersion = $config['pcreVersion'] ?? null;
+        if (\is_string($pcreVersion) && '' !== $pcreVersion) {
+            $options['pcre_version'] = $pcreVersion;
+        }
+
+        return $options;
+    }
+
+    /**
      * @param array<string, mixed> $config
      *
      * @return array<string, mixed>
@@ -723,7 +762,7 @@ final class RegexParserRule implements Rule
     private function getAnalysisService(): RegexAnalysisService
     {
         return $this->analysis ??= new RegexAnalysisService(
-            Regex::create(),
+            Regex::create($this->targetOptions),
             null,
             redosThreshold: $this->redosThreshold,
             redosMode: $this->redosMode,

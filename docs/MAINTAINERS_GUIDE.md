@@ -53,6 +53,7 @@ Your app -> RegexParser -> AST + visitors -> results
 | `redos_ignored_patterns`  | Skip ReDoS analysis for specific patterns |
 | `max_recursion_depth`     | Set parser recursion limit                |
 | `php_version`             | Target PHP version for validation         |
+| `pcre_version`            | Target PCRE2 release for validation       |
 
 For a full list of options, types, and default values, see the [API Reference](reference/api.md#configuration-options).
 

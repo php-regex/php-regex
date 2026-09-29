@@ -34,9 +34,9 @@ final readonly class RegexPattern implements \Stringable
     /**
      * Create from a delimited regex string like '/foo/i'.
      */
-    public static function fromDelimited(string $regex, ?int $phpVersionId = null): self
+    public static function fromDelimited(string $regex, ?PcreTarget $target = null): self
     {
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $phpVersionId);
+        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $target);
 
         return new self($pattern, $flags, $delimiter);
     }

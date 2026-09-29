@@ -28,11 +28,14 @@ use RegexParser\Regex;
  */
 final class ErrorOffsetReleaseTest extends TestCase
 {
+    /**
+     * @param array<string, int> $quirks
+     */
     #[Test]
     #[DataProvider('provideErrors')]
-    public function test_a_targeted_php_gets_the_offset_of_the_pcre2_it_bundles(string $pattern, int $bundled, int $newer, string $movedIn): void
+    public function test_a_targeted_php_gets_the_offset_of_the_pcre2_it_bundles(string $pattern, int $bundled, int $newer, string $movedIn, array $quirks = []): void
     {
-        unset($newer, $movedIn);
+        unset($newer, $movedIn, $quirks);
 
         foreach ([80200, 80300, 80400, 80500] as $phpVersion) {
             $result = Regex::create(['cache' => null, 'php_version' => $phpVersion])->validate($pattern);
@@ -42,19 +45,42 @@ final class ErrorOffsetReleaseTest extends TestCase
         }
     }
 
+    /**
+     * @param array<string, int> $quirks
+     */
     #[Test]
     #[DataProvider('provideErrors')]
-    public function test_without_a_target_the_running_pcre2_decides(string $pattern, int $bundled, int $newer, string $movedIn): void
+    public function test_without_a_target_the_running_pcre2_decides(string $pattern, int $bundled, int $newer, string $movedIn, array $quirks = []): void
     {
         $running = explode(' ', \PCRE_VERSION)[0];
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, $pattern);
-        $this->assertSame(version_compare($running, $movedIn, '>=') ? $newer : $bundled, $result->offset, $pattern);
+        $this->assertSame($quirks[$running] ?? (version_compare($running, $movedIn, '>=') ? $newer : $bundled), $result->offset, $pattern);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, bundled: int, newer: int, movedIn: string}>
+     * @param array<string, int> $quirks offsets of a release that fits
+     *                                   neither the older nor the newer one
+     */
+    #[Test]
+    #[DataProvider('provideErrors')]
+    public function test_each_pcre2_release_gets_its_offset(string $pattern, int $bundled, int $newer, string $movedIn, array $quirks = []): void
+    {
+        foreach (['10.40', '10.42', '10.44', '10.45', '10.46', '10.47', '10.48'] as $release) {
+            $result = Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release])->validate($pattern);
+
+            $this->assertFalse($result->isValid, \sprintf('%s on PCRE2 %s', $pattern, $release));
+            $this->assertSame(
+                $quirks[$release] ?? (version_compare($release, $movedIn, '>=') ? $newer : $bundled),
+                $result->offset,
+                \sprintf('%s on PCRE2 %s', $pattern, $release),
+            );
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, bundled: int, newer: int, movedIn: string, quirks?: array<string, int>}>
      */
     public static function provideErrors(): iterable
     {
@@ -88,9 +114,9 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'relative reference to a missing group' => ['pattern' => '/\\g{2}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
         yield 'number that nothing closes after g' => ['pattern' => '/\\g{9/', 'bundled' => 2, 'newer' => 4, 'movedIn' => '10.47'];
         // 10.47 reported one past the end of the pattern, 10.48 at its end.
-        yield 'hexadecimal digits never closed' => ['pattern' => '/\\x{12/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.48'];
-        yield 'count past 65535' => ['pattern' => '/a{655360}/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.47'];
-        yield 'count past 65535 with nothing to repeat' => ['pattern' => '/{655360}/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'hexadecimal digits never closed' => ['pattern' => '/\\x{12/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.48', 'quirks' => ['10.47' => 6]];
+        yield 'count past 65535' => ['pattern' => '/a{655360}/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.45'];
+        yield 'count past 65535 with nothing to repeat' => ['pattern' => '/{655360}/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.45'];
         yield 'alphabetic name followed by no colon' => ['pattern' => '/(*pla}abc/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.47'];
         yield 'verb opener alone' => ['pattern' => '/(*/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
         yield 'verb opener closed at once' => ['pattern' => '/(*)/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
@@ -126,6 +152,8 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'text after an empty quote after a callout in a condition' => ['pattern' => '/(?(?C1)\\Q\\EX)/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
         yield 'escape after a callout in a condition' => ['pattern' => '/(?(?C1)\\x41)/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
         yield 'two-byte character after a callout in a condition' => ['pattern' => '/(?(?C1)é)/u', 'bundled' => 8, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'control escape before a byte past ASCII' => ['pattern' => '/^\\cģ/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'control escape before a character past ASCII' => ['pattern' => '/^\\cģ/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
         yield 'unmatched closing parenthesis' => ['pattern' => '/a)/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
 
         yield 'group name starting with a Unicode digit' => ['pattern' => '/(?<٣a>x)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
@@ -217,7 +245,7 @@ final class ErrorOffsetReleaseTest extends TestCase
         // Every release: a count with nothing to repeat is read as a count.
         yield 'counts out of order at the start' => ['pattern' => '/{2,1}/', 'bundled' => 4, 'newer' => 4, 'movedIn' => '10.40'];
         yield 'count too big after an anchor' => ['pattern' => '/^{65536}/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
-        yield 'count past 65535 after an anchor' => ['pattern' => '/^{655360}/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.47'];
+        yield 'count past 65535 after an anchor' => ['pattern' => '/^{655360}/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.45'];
         yield 'counts out of order after an anchor' => ['pattern' => '/^{2,1}/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'counts out of order made possessive after a boundary' => ['pattern' => '/\\b{2,1}+/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
         yield 'count too big after a possessive quantifier' => ['pattern' => '/a++{65536}/', 'bundled' => 9, 'newer' => 9, 'movedIn' => '10.40'];

@@ -21,15 +21,49 @@ your class is simply never called, and you can delete it. Code that names
 
 Nothing implemented it, `ReDoSAnalyzer` included. Type against `ReDoSAnalyzer`.
 
-#### `Lexer::__construct()` takes no argument
+#### One target: `PcreTarget` replaces the PHP version id
 
-Tokenizing never depended on the PHP version: what a version decides is which
-modifiers a pattern may carry, and the parser settles that. The constructor
-took a version id, stored it, and used it only to key the cache of compiled
-token patterns, which compiled the same two regexes once per version.
+A pattern is judged for one PHP version and one PCRE2 release, now a value,
+`RegexParser\PcreTarget`, resolved once by `Regex::create()` and passed to
+everything that reads it.
 
-`new Lexer($versionId)` becomes `new Lexer()`. `Regex` still honours an
-explicit PHP version everywhere it matters.
+| before | after |
+|---|---|
+| `new Lexer($versionId)` or `new Lexer(bool)` | `new Lexer(?PcreTarget $target = null)` |
+| `new Parser($depth, ?int $phpVersionId)` | `new Parser($depth, ?PcreTarget $target)` |
+| `new ValidatorNodeVisitor($max, $pattern, int $phpVersionId)` | `new ValidatorNodeVisitor($max, $pattern, ?PcreTarget $target)` |
+| `Regex::tokenize($regex, ?int $phpVersionId)` | `Regex::tokenize($regex, ?PcreTarget $target)` |
+| `Regex::cacheSeed($regex, int $phpVersionId, $depth)` | `Regex::cacheSeed($regex, PcreTarget $target, $depth)` |
+| `RegexPattern::fromDelimited($regex, ?int)`, `PatternParser::extractPatternAndFlags($regex, ?int)` | take `?PcreTarget` |
+| `RegexOptions::$phpVersionId`, `$phpVersionExplicit` | `RegexOptions::$target` |
+| `new RegexOptions(..., $maxRecursionDepth, int $phpVersionId, bool $phpVersionExplicit)` | `new RegexOptions(..., $maxRecursionDepth, ?PcreTarget $target)` |
+| `Lexer::readsWideRepeatCounts()` | gone: `PcreTarget::pcreAtLeast('10.43')` |
+
+`null` means `PcreTarget::runtime()`, the running PHP and the PCRE2 it links.
+`PcreTarget::bundledWith(80200)` is a PHP version with the PCRE2 it bundles.
+
+#### `php_version` alone always means the PCRE2 that PHP bundles
+
+`php_version` naming the running PHP used to mix two engines: the parser read
+the bundled PCRE2, the validator the linked one. It now judges with the bundled
+one throughout, as for any other version. Judging for the running engine is the
+default, with no option; add `pcre_version` to name the linked release.
+
+#### `runtime_pcre_validation` needs the running engine as target
+
+It compiles with the running PHP, so combining it with a target that is another
+engine now throws `InvalidRegexOptionException` instead of judging with the
+wrong one. Drop one of the two options.
+
+#### The PHPStan extension judges for PHPStan's `phpVersion`
+
+The rule used to judge for the PHP running PHPStan and the PCRE2 it links; it
+now judges for the `phpVersion` PHPStan analyses the project for, with the
+PCRE2 that PHP bundles. Without a `phpVersion` in your PHPStan configuration,
+PHPStan takes the PHP running it, so only the PCRE2 moves, from the linked
+release to the bundled one. Set PHPStan's `phpVersion` to the PHP your project
+runs on, `regexParser.pcreVersion` for a PHP that links another PCRE2, or
+`regexParser.phpVersion: runtime` to keep the old behaviour.
 
 #### The pattern extractors moved, and one is renamed
 

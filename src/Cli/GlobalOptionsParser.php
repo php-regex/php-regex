@@ -25,6 +25,7 @@ final class GlobalOptionsParser
         $help = false;
         $visuals = true;
         $phpVersion = null;
+        $pcreVersion = null;
         $error = null;
         $remaining = [];
 
@@ -55,7 +56,8 @@ final class GlobalOptionsParser
                 continue;
             }
 
-            if ($this->isPhpVersionOption($arg, $args, $i, $phpVersion, $error)) {
+            if ($this->isValuedOption('--pcre-version', $arg, $args, $i, $pcreVersion, $error)
+                || $this->isValuedOption('--php-version', $arg, $args, $i, $phpVersion, $error)) {
                 if (null !== $error) {
                     break;
                 }
@@ -66,7 +68,7 @@ final class GlobalOptionsParser
             $remaining[] = $arg;
         }
 
-        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $phpVersion, $error);
+        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $phpVersion, $error, $pcreVersion);
 
         return new ParsedGlobalOptions($options, $remaining);
     }
@@ -94,27 +96,27 @@ final class GlobalOptionsParser
     /**
      * @param array<int, string> $args
      */
-    private function isPhpVersionOption(string $arg, array $args, int &$i, ?string &$phpVersion, ?string &$error): bool
+    private function isValuedOption(string $name, string $arg, array $args, int &$i, ?string &$value, ?string &$error): bool
     {
-        if (str_starts_with($arg, '--php-version=')) {
-            $phpVersion = substr($arg, \strlen('--php-version='));
+        if (str_starts_with($arg, $name.'=')) {
+            $value = substr($arg, \strlen($name) + 1);
 
             return true;
         }
 
-        if ('--php-version' !== $arg) {
+        if ($name !== $arg) {
             return false;
         }
 
-        $value = $args[$i + 1] ?? '';
+        $next = $args[$i + 1] ?? '';
 
-        if ('' === $value || str_starts_with($value, '-')) {
-            $error = 'Missing value for --php-version.';
+        if ('' === $next || str_starts_with($next, '-')) {
+            $error = \sprintf('Missing value for %s.', $name);
 
             return true;
         }
 
-        $phpVersion = $value;
+        $value = $next;
         $i++;
 
         return true;

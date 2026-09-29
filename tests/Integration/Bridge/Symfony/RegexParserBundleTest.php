@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
 use RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension;
 use RegexParser\Cache\FilesystemCache;
+use RegexParser\PcreTarget;
 use RegexParser\Regex;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RequestContext;
@@ -41,7 +42,7 @@ final class RegexParserBundleTest extends TestCase
         $regex->parse('/abc/');
 
         $cache = new FilesystemCache($cacheDir);
-        $cacheFile = $cache->generateKey(Regex::cacheSeed('/abc/', \PHP_VERSION_ID, 1024));
+        $cacheFile = $cache->generateKey(Regex::cacheSeed('/abc/', PcreTarget::runtime(), 1024));
 
         $this->assertFileExists($cacheFile);
 

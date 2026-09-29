@@ -254,9 +254,7 @@ final class AnalyzeCommand extends AbstractCommand
     {
         $meta = [];
 
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
 
         $meta['PCRE'] = $output->warning($runtime->version);
         $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');

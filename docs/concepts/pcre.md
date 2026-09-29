@@ -47,18 +47,61 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | `\k` read as the letter inside a class | `[\k]` | PCRE2 10.45, bundled by no PHP release yet |
 | `\K` inside a lookaround | `(?=a\K)` | allowed up to PHP 8.4; PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` and refuses it |
 
-The validator judges a pattern for the PHP version it targets (`php_version`),
-or, without one, for the PCRE2 the running PHP links. That PCRE2 is not always
-the one PHP bundles: the PHP 8.4 packages of Ubuntu 24.04, for one, link its
-PCRE2 10.42, and refuse what 10.43 added. `PCRE_VERSION` says which one runs.
+### Which PHP and which PCRE2 judge a pattern
+
+A pattern is judged for one PHP version and one PCRE2 release, the *target*,
+which need not be the engine that runs the analysis: PHPStan under PHP 8.4 may
+analyse a project that runs on 8.2. The target is named once, when the `Regex`
+instance is created, and every step reads it: tokenizing, parsing, validation,
+error offsets and the cache key.
+
+| options | target |
+|---|---|
+| none | the running PHP and the PCRE2 it links (`PCRE_VERSION`) |
+| `php_version` | that PHP with the PCRE2 its sources bundle: 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5 |
+| `pcre_version` | the running PHP with that PCRE2 release |
+| both | that PHP with that PCRE2 release |
+
+The PCRE2 PHP links is not always the one it bundles: the PHP 8.4 packages of
+Ubuntu 24.04, for one, link PCRE2 10.42 and refuse what 10.43 added. Name both
+to judge for such a PHP:
+
+```php
+$regex = Regex::create(['php_version' => '8.4', 'pcre_version' => '10.42']);
+$regex->validate('/(?aD)x/')->isValid; // false: "(?aD)" is PCRE2 10.43 syntax
+$regex->target();                       // PcreTarget: PHP 80400, PCRE2 10.42
+```
+
+A release older than 10.40 is judged with the 10.40 rules, a release newer than
+the library knows with the newest rules it has. The command line takes the same
+pair as `--php-version` and `--pcre-version` (see [the CLI guide](../guides/cli.md)).
+
+The PHPStan extension judges for PHPStan's own `phpVersion`, with the PCRE2
+that PHP bundles. PHPStan takes the PHP running it unless `phpVersion` is
+configured; when it is a range, the lowest version, the one least likely to
+know recent syntax.
+Its parameters name another target:
+
+```neon
+parameters:
+    regexParser:
+        phpVersion: runtime   # the PHP running PHPStan and the PCRE2 it links
+        pcreVersion: '10.42'  # or: PHPStan's PHP version with this PCRE2 release
+```
+
+A few answers still come from the running engine, because PCRE2 exposes no
+other way to get them: whether a Unicode property or script name exists (the
+running engine is asked, then a table of the names each release added corrects
+the answer for another target), the samples `generate()` checks, the ReDoS
+confirmation run, and `runtime_pcre_validation`, which compiles with the
+running PHP and is refused with a target that is not that engine.
 
 Error offsets follow the same rule. PCRE2 10.47 reports most syntax errors past
 the character at fault rather than on it (`/+/` at offset 1 rather than 0,
 `\y` at 2 rather than 1), and 10.45 moved a few (an unknown POSIX class is
 reported past its end, a property name such as `\p{L!}` past its first
 character no name can hold). `ValidationResult::$offset` is the offset the
-PCRE2 of the targeted PHP version reports, or, without a target, the one the
-running PHP links. When a pattern holds several errors, it is the offset of the
+target's PCRE2 reports. When a pattern holds several errors, it is the offset of the
 one PCRE meets first, reading left to right: `[z-a](?#` is refused on its
 range, not on the comment left open.
 

@@ -7,13 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `pcre_version`, next to `php_version`: patterns are judged for one PHP version and one PCRE2 release, `RegexParser\PcreTarget`, resolved once and read by the lexer, the parser, the validator and the cache key. With neither option, the running PHP and the PCRE2 it links; `php_version` alone, that PHP with the PCRE2 it bundles; `php_version: 8.4, pcre_version: 10.42` judges for the PHP 8.4 packages of Ubuntu 24.04. `Regex::target()` says which. The command line takes `--pcre-version`.
+- The PHPStan extension judges patterns for PHPStan's `phpVersion`, with new `regexParser.phpVersion` (`runtime` for the PHP running PHPStan) and `regexParser.pcreVersion` parameters.
+
 ### Removed
 - `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADING.md](UPGRADING.md).
 - `RegexParser\ReDoS\ReDoSAnalyzerInterface`: implemented by nothing, `ReDoSAnalyzer` included.
-- The `$phpVersionId` argument of `Lexer::__construct()`: tokenizing does not depend on the PHP version, and keying the compiled token patterns on it compiled the same two regexes once per version. See [UPGRADING.md](UPGRADING.md).
+- The PHP version id taken by `Lexer`, `Parser`, `ValidatorNodeVisitor`, `Regex::tokenize()`, `Regex::cacheSeed()`, `RegexPattern::fromDelimited()` and `PatternParser::extractPatternAndFlags()`, and `RegexOptions::$phpVersionId`/`$phpVersionExplicit`: each takes or holds a `PcreTarget` instead. `Lexer::readsWideRepeatCounts()` is gone. See [UPGRADING.md](UPGRADING.md).
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- `php_version` naming the running PHP mixed two engines: the parser judged with the PCRE2 that PHP bundles, the validator with the one it links, so `/+/` was reported at 0 and `/[[:foo:]]/` at 8. One target now judges both.
+- The cache key did not name the PCRE2 release, though the tree depends on it (`{,2}` repeats from 10.43): a cache shared across engines, or kept across a PCRE2 upgrade, could serve a tree read for another one.
+- The `r` modifier was accepted for PHP 8.4 whatever PCRE2 it links; PHP reads it only when built against PCRE2 10.43 or later.
+- The `n` modifier was accepted for PHP 8.1 and older, which refuse it ("Unknown modifier 'n'").
+- The automata solver's DFA cache did not name the target: two solvers sharing it for different PCRE2 releases could read `{,2}` as the other one does.
+- A count past 65535, as in `a{655360}`, is refused past the whole number from PCRE2 10.45, not 10.47; the version condition reads `10.100` whole from 10.47; and the Beria Erfe, Sidetic, Tai Yo and Tolong Siki scripts arrived in 10.48, not 10.45.
 - Without a `php_version`, a pattern was judged as if PHP 8.4 always ran PCRE2 10.43 or newer. The PHP 8.4 packages of Ubuntu 24.04, among others, link its PCRE2 10.42: there `(?aD)`, `(?r)`, `\x{ 41 }`, `\N{U+ }` and variable-length lookbehinds were accepted though PHP refuses them, and `{,2}` refused though PHP reads it as text. The linked PCRE2 now decides, whatever the PHP version.
 - PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`, so `\K` inside a lookaround is refused there; it was accepted for every version. It is now reported as `regex.keep.in_lookaround` for PHP 8.5 and newer, at the end of the pattern as PHP reports it.
 - `\N{name}` with a character name, as in `\N{LATIN SMALL LETTER A}`, was accepted when the name was known; PCRE2 supports no character names. It is now refused with `regex.escape.unsupported`, as unknown names already were.

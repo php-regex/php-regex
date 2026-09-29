@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\NodeVisitor\ValidatorNodeVisitor;
+use RegexParser\PcreTarget;
 use RegexParser\Regex;
 
 /**
@@ -105,7 +106,7 @@ final class KeepInLookaroundTest extends TestCase
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('not allowed in a lookaround');
 
-        $lookahead->accept(new ValidatorNodeVisitor(phpVersionId: 80500));
+        $lookahead->accept(new ValidatorNodeVisitor(target: PcreTarget::bundledWith(80500)));
     }
 
     /**

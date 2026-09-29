@@ -17,12 +17,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\PatternParser;
+use RegexParser\PcreTarget;
 
 final class PatternParserTest extends TestCase
 {
     public function test_extracts_flags_including_modifier_r_when_supported(): void
     {
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/r', 80400);
+        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80400));
 
         $this->assertSame('a', $pattern);
         $this->assertSame('r', $flags);
@@ -34,7 +35,7 @@ final class PatternParserTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
 
-        PatternParser::extractPatternAndFlags('/a/r', 80300);
+        PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
     public function test_rejects_modifier_e_with_improved_message(): void
@@ -123,7 +124,7 @@ final class PatternParserTest extends TestCase
     public function test_supports_modifier_e_for_old_php_versions(): void
     {
         // Test that modifier 'e' is allowed when targeting PHP < 7.0
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/e', 50600); // PHP 5.6
+        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(50600)); // PHP 5.6
 
         $this->assertSame('a', $pattern);
         $this->assertSame('e', $flags);
@@ -204,47 +205,65 @@ final class PatternParserTest extends TestCase
 
     public function test_supports_modifier_r_with_specific_versions(): void
     {
-        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', 80400));
-        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', 80500));
-        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', 90000));
+        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80400)));
+        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80500)));
+        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(90000)));
 
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
-        PatternParser::extractPatternAndFlags('/a/r', 80300);
+        PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
     public function test_supports_modifier_e_with_specific_versions(): void
     {
-        $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', 50600));
-        $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', 50500));
+        $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(50600)));
+        $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(50500)));
 
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
-        PatternParser::extractPatternAndFlags('/a/e', 70000);
+        PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(70000));
     }
 
-    public function test_supports_modifier_r_with_null_version_clears_cache_first(): void
+    public function test_without_a_target_the_running_php_decides_on_r(): void
     {
-        $reflectionMethod = new \ReflectionMethod(PatternParser::class, 'supportsModifierR');
+        // "r" arrived in PHP 8.4, built against PCRE2 10.43 or later: the
+        // running PHP compiles it only then.
+        $accepted = \PHP_VERSION_ID >= 80400 && PcreTarget::runtime()->pcreAtLeast('10.43');
+        $this->assertSame(self::runtimeSupportsModifierR(), $accepted);
 
-        $supportsModifierRProperty = new \ReflectionProperty(PatternParser::class, 'supportsModifierR');
-        $supportsModifierRProperty->setValue(null, []);
-
-        $result = $reflectionMethod->invoke(null, null);
-
-        $this->assertSame(self::runtimeSupportsModifierR(), $result);
+        if ($accepted) {
+            $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', null));
+        }
     }
 
-    public function test_supports_modifier_e_with_null_version_clears_cache_first(): void
+    public function test_r_needs_php_8_4_linking_pcre2_10_43(): void
     {
-        $reflectionMethod = new \ReflectionMethod(PatternParser::class, 'supportsModifierE');
+        $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.43')));
 
-        $supportsModifierEProperty = new \ReflectionProperty(PatternParser::class, 'supportsModifierE');
-        $supportsModifierEProperty->setValue(null, []);
+        // PHP 8.4 on Ubuntu 24.04 links PCRE2 10.42, and refuses "r".
+        $this->expectException(ParserException::class);
+        $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
 
-        $result = $reflectionMethod->invoke(null, null);
+        PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.42'));
+    }
 
-        $this->assertFalse($result);
+    public function test_n_needs_php_8_2(): void
+    {
+        $this->assertSame(['(a)', 'n', '/'], PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80200)));
+
+        // PHP 8.1: "Unknown modifier 'n'".
+        $this->expectException(ParserException::class);
+        $this->expectExceptionMessage('Unknown regex flag(s) found: "n"');
+
+        PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80100));
+    }
+
+    public function test_without_a_target_e_is_refused(): void
+    {
+        // "e" left in PHP 7.0.
+        $this->expectException(ParserException::class);
+
+        PatternParser::extractPatternAndFlags('/a/e', null);
     }
 
     private static function runtimeSupportsModifierR(): bool

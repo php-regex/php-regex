@@ -189,7 +189,8 @@ Limits are enforced in `RegexOptions`:
 - `max_pattern_length`
 - `max_lookbehind_length` (variable-length lookbehinds; a fixed-length one is only limited by PCRE's 65535)
 - `max_recursion_depth`
-- `php_version` (feature validation)
+- `php_version` and `pcre_version`, resolved once into a `PcreTarget` that the
+  lexer, the parser, the validator and the cache key read
 
 ## Extension Points
 

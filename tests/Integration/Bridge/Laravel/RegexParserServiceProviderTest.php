@@ -32,6 +32,7 @@ use RegexParser\Lint\RegexLintService;
 use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
+use RegexParser\PcreTarget;
 
 /**
  * Integration tests for the Laravel bridge.
@@ -90,7 +91,7 @@ final class RegexParserServiceProviderTest extends TestCase
         $regex->parse('/abc/');
 
         $cache = new FilesystemCache($cacheDir);
-        $cacheFile = $cache->generateKey(Regex::cacheSeed('/abc/', \PHP_VERSION_ID, 1024));
+        $cacheFile = $cache->generateKey(Regex::cacheSeed('/abc/', PcreTarget::runtime(), 1024));
 
         $this->assertFileExists($cacheFile);
 

@@ -158,22 +158,17 @@ final class Parser
      */
     private int $captureCount = 0;
 
-    /**
-     * @var array<int|string, bool>
-     */
-    private static array $supportsPcre1043Modifiers = [];
-
     private readonly int $maxRecursionDepth;
 
-    private readonly int $phpVersionId;
+    private readonly PcreTarget $target;
 
-    private readonly bool $useRuntimePcreDetection;
-
-    public function __construct(?int $maxRecursionDepth = null, ?int $phpVersionId = null)
+    /**
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     */
+    public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
     {
         $this->maxRecursionDepth = $maxRecursionDepth ?? self::MAX_RECURSION_DEPTH;
-        $this->phpVersionId = $phpVersionId ?? \PHP_VERSION_ID;
-        $this->useRuntimePcreDetection = null === $phpVersionId;
+        $this->target = $target ?? PcreTarget::runtime();
     }
 
     public function parse(TokenStream $stream, string $flags = '', string $delimiter = '/', int $patternLength = 0): RegexNode
@@ -183,11 +178,11 @@ final class Parser
         $this->flags = $flags;
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
-        $this->groupNames->reportPastTheFault($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47'));
+        $this->groupNames->reportPastTheFault($this->pcreAtLeast('10.47'));
         // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
         // from 8.4.
         $this->groupNames->limitNameLength(
-            ($this->useRuntimePcreDetection ? $this->runningPcreAtLeast('10.44') : $this->phpVersionId >= 80400)
+            $this->pcreAtLeast('10.44')
                 ? GroupNameReader::MAX_NAME_LENGTH
                 : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044,
         );
@@ -207,7 +202,7 @@ final class Parser
         // A ")" no group opened: PCRE2 10.47 reports it past the ")", the
         // releases before on it.
         if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
-            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.47') ? 1 : 0);
+            $position = $this->stream->current()->position + ($this->pcreAtLeast('10.47') ? 1 : 0);
 
             throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), $position);
         }
@@ -1084,7 +1079,7 @@ final class Parser
         if (1 === preg_match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
             // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
             // or, before 10.43, the space after "{" that pads it.
-            if (!$this->useRuntimePcreDetection || !$this->runningPcreAtLeast('10.47')) {
+            if (!$this->pcreAtLeast('10.47')) {
                 $padded = str_contains(" \t", $this->pattern[$start + 3] ?? 'x');
 
                 return $start + ($padded && !$this->supportsPcre1043Modifiers() ? 3 : 2);
@@ -1288,11 +1283,11 @@ final class Parser
     private function calloutConditionErrorOffset(): int
     {
         $token = $this->stream->current();
-        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->runningPcreAtLeast('10.47')) {
+        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->pcreAtLeast('10.47')) {
             $token = $this->stream->peek();
         }
 
-        if (TokenType::T_LITERAL !== $token->type || $this->runningPcreAtLeast('10.47')) {
+        if (TokenType::T_LITERAL !== $token->type || $this->pcreAtLeast('10.47')) {
             return $token->position;
         }
 
@@ -1380,13 +1375,11 @@ final class Parser
         // it, and a "(?-x)" still turns "x" off there.
         $flags = str_replace('x', '', $this->flags).($this->extendedMode ? 'x' : '');
         $flags = $this->noAutoCapture && !str_contains($flags, 'n') ? $flags.'n' : $flags;
-        // The payload is read for the same PHP version, or the same running
-        // PCRE2, as the pattern around it.
-        $target = $this->useRuntimePcreDetection ? null : $this->phpVersionId;
 
+        // The payload is read for the same target as the pattern around it.
         try {
-            $stream = (new Lexer(Lexer::readsWideRepeatCounts($target)))->tokenize($payload, $flags);
-            $pattern = (new Parser($this->maxRecursionDepth, $target))->parse($stream, $flags, '/', \strlen($payload));
+            $stream = (new Lexer($this->target))->tokenize($payload, $flags);
+            $pattern = (new Parser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, '/', \strlen($payload));
         } catch (LexerException|ParserException $error) {
             // Read apart, the payload counts positions from its own start:
             // the error is reported where it stands in the whole pattern.
@@ -1774,13 +1767,11 @@ final class Parser
     }
 
     /**
-     * Whether no PHP version was targeted and the PCRE2 this PHP links is at
-     * least the given release.
+     * Whether the PCRE2 judged is at least the given release.
      */
-    private function runningPcreAtLeast(string $release): bool
+    private function pcreAtLeast(string $release): bool
     {
-        return $this->useRuntimePcreDetection
-            && version_compare(explode(' ', \PCRE_VERSION)[0], $release, '>=');
+        return $this->target->pcreAtLeast($release);
     }
 
     /**
@@ -1801,26 +1792,11 @@ final class Parser
 
     /**
      * Whether the modifiers PCRE2 10.43 added to "(?...)" are read: "r", and
-     * the ASCII options "a", "aD", "aS", "aW", "aP", "aT". PHP bundles that
-     * release from 8.4; without a target, the PCRE2 this PHP links decides.
+     * the ASCII options "a", "aD", "aS", "aW", "aP", "aT".
      */
     private function supportsPcre1043Modifiers(): bool
     {
-        $cacheKey = $this->useRuntimePcreDetection ? 'runtime' : $this->phpVersionId;
-        if (\array_key_exists($cacheKey, self::$supportsPcre1043Modifiers)) {
-            return self::$supportsPcre1043Modifiers[$cacheKey];
-        }
-
-        // Without a target, the PCRE2 this PHP links decides, whatever PHP
-        // bundles: the PHP 8.4 packages of a distribution may link an older
-        // one.
-        $supports = $this->useRuntimePcreDetection
-            ? $this->runningPcreAtLeast('10.43')
-            : $this->phpVersionId >= 80400;
-
-        self::$supportsPcre1043Modifiers[$cacheKey] = $supports;
-
-        return $supports;
+        return $this->pcreAtLeast('10.43');
     }
 
     /**
@@ -1996,7 +1972,7 @@ final class Parser
         foreach (str_split($num) as $read => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > 65535) {
-                $position = $startPosition + \strlen($sign) + ($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45') ? \strlen($num) : $read + 1);
+                $position = $startPosition + \strlen($sign) + ($this->pcreAtLeast('10.45') ? \strlen($num) : $read + 1);
 
                 throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), $position);
             }
@@ -2156,7 +2132,7 @@ final class Parser
      */
     private function conditionErrorOffset(int $start): int
     {
-        return VersionCondition::errorOffset($this->pattern, $start, pastTheFault: $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47'))
+        return VersionCondition::errorOffset($this->pattern, $start, pastTheFault: $this->pcreAtLeast('10.47'))
             ?? $this->groupNames->invalidNameOffset($start);
     }
 
@@ -2258,7 +2234,7 @@ final class Parser
         // Before PCRE2 10.45, a range start is refused on the hyphen, a POSIX
         // class ending a range just inside its "[", and a type or a property
         // ending one past its letter.
-        if (!($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'))) {
+        if (!($this->pcreAtLeast('10.45'))) {
             $position = match (true) {
                 !$isEnd => $position - 1,
                 $node instanceof PosixClassNode => $node->getStartPosition() + 1,
@@ -2410,7 +2386,7 @@ final class Parser
         $classEscapeStart = $startNode instanceof CharTypeNode
             || $startNode instanceof PosixClassNode
             || $startNode instanceof UnicodePropNode;
-        if ($singleCharacterStart && (!$classEscapeStart || $this->runningPcreAtLeast('10.45'))) {
+        if ($singleCharacterStart && (!$classEscapeStart || $this->pcreAtLeast('10.45'))) {
             $this->skipEmptyQuotes();
         }
 
@@ -2721,10 +2697,10 @@ final class Parser
             $value = 0;
             foreach (str_split($digits) as $offset => $digit) {
                 $value = $value * 10 + (int) $digit;
-                // Past the digit that takes it over 65535; from PCRE2 10.47,
+                // Past the digit that takes it over 65535; from PCRE2 10.45,
                 // past the whole number.
                 if ($value > 65535) {
-                    return $at + ($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47') ? \strlen($digits) : $offset + 1);
+                    return $at + ($this->pcreAtLeast('10.45') ? \strlen($digits) : $offset + 1);
                 }
             }
             $at += \strlen($digits) + (0 === $index ? \strlen($matches[2] ?? '') : 0);
@@ -2742,7 +2718,7 @@ final class Parser
      */
     private function pastTheFault(int $offset, int $shift = 1): int
     {
-        return $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47') ? $offset : $offset - $shift;
+        return $this->pcreAtLeast('10.47') ? $offset : $offset - $shift;
     }
 
     /**
@@ -2772,7 +2748,7 @@ final class Parser
         $limit = $start > \strlen($settings[0] ?? '') ? null : PcreVerb::limitValueErrorOffset(
             $this->pattern,
             $start,
-            $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'),
+            $this->pcreAtLeast('10.45'),
         );
         if (null !== $limit) {
             return $limit;
@@ -2789,7 +2765,7 @@ final class Parser
         // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
         // 10.47 an alphabetic name, one that starts with a lowercase letter,
         // followed by no colon is refused past the character after it.
-        $pastTheFault = $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47');
+        $pastTheFault = $this->pcreAtLeast('10.47');
         if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
             return $this->pastTheFault($nameEnd);
         }

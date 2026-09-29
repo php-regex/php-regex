@@ -257,30 +257,27 @@ final class Lexer
      */
     private array $tokensRead = [];
 
-    public function __construct(
-        /**
-         * Whether the pattern is read by PCRE2 10.43 or newer, where "{,2}"
-         * and counts padded with spaces, "{ 2 }", repeat. Before, those
-         * braces are literal text.
-         */
-        private readonly bool $wideRepeatCounts = true,
-    ) {}
+    /**
+     * Whether the pattern is read by PCRE2 10.43 or newer, where "{,2}" and
+     * counts padded with spaces, "{ 2 }", repeat. Before, those braces are
+     * literal text.
+     */
+    private readonly bool $wideRepeatCounts;
 
     /**
-     * Whether PCRE2 10.43's repeat counts are read for this PHP version: an
-     * explicit target from PHP 8.4, or, with none, the PCRE2 this PHP links.
-     *
-     * @internal
+     * Whether errors are reported past the character at fault, as PCRE2
+     * 10.47 does, rather than on it.
      */
-    public static function readsWideRepeatCounts(?int $phpVersionId): bool
-    {
-        if (null !== $phpVersionId) {
-            return $phpVersionId >= 80400;
-        }
+    private readonly bool $reportsPastTheFault;
 
-        // The PCRE2 this PHP links decides, whatever PHP bundles: the PHP 8.4
-        // packages of a distribution may link an older one.
-        return version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+    /**
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     */
+    public function __construct(?PcreTarget $target = null)
+    {
+        $target ??= PcreTarget::runtime();
+        $this->wideRepeatCounts = $target->pcreAtLeast('10.43');
+        $this->reportsPastTheFault = $target->pcreAtLeast('10.47');
     }
 
     /**
@@ -556,7 +553,7 @@ final class Lexer
                 if ('\\c' === $matchedValue) {
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
-                        $this->afterCharacter($startPos + 2),
+                        $this->reportsPastTheFault ? $this->afterCharacter($startPos + 2) : $startPos + 2,
                         $this->pattern,
                     );
                 }

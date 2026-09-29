@@ -213,9 +213,10 @@ final class Application
         array $commandArgs,
         GlobalOptions $options,
     ): Input {
-        $regexOptions = null !== $options->phpVersion
-            ? ['php_version' => $options->phpVersion]
-            : [];
+        $regexOptions = array_filter(
+            ['php_version' => $options->phpVersion, 'pcre_version' => $options->pcreVersion],
+            static fn (?string $version): bool => null !== $version,
+        );
 
         return new Input($commandName, $commandArgs, $options, $regexOptions);
     }

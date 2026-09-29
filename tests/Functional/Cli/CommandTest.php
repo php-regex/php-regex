@@ -15,11 +15,14 @@ namespace RegexParser\Tests\Functional\Cli;
 
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cli\Command\AnalyzeCommand;
+use RegexParser\Cli\Command\CompareCommand;
 use RegexParser\Cli\Command\DebugCommand;
 use RegexParser\Cli\Command\DiagramCommand;
+use RegexParser\Cli\Command\ExplainCommand;
 use RegexParser\Cli\Command\HelpCommand;
 use RegexParser\Cli\Command\HighlightCommand;
 use RegexParser\Cli\Command\ParseCommand;
+use RegexParser\Cli\Command\RedosCommand;
 use RegexParser\Cli\Command\SelfUpdateCommand;
 use RegexParser\Cli\Command\ValidateCommand;
 use RegexParser\Cli\Command\VersionCommand;
@@ -125,6 +128,42 @@ final class CommandTest extends TestCase
         $this->assertSame(0, $exitCode);
         // Check if validation error is shown
         // This covers the if (!$validation->isValid && $validation->error) branch
+    }
+
+    public function test_redos_command_reads_the_pattern_for_the_target(): void
+    {
+        $command = new RedosCommand();
+        $output = new Output(true, false);
+        $input = new Input(
+            'redos',
+            ['/(a+)+$/', '--safe', '/a+$/', '--iterations', '1', '--warmup', '0', '--repeat', '2'],
+            new GlobalOptions(false, true, false, false, '8.2', null, '10.40'),
+            ['php_version' => '8.2', 'pcre_version' => '10.40'],
+        );
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Vulnerable:', $buffer);
+        $this->assertStringContainsString('Safe:', $buffer);
+    }
+
+    public function test_banners_name_the_target_asked_for(): void
+    {
+        $options = new GlobalOptions(false, false, false, true, '8.4', null, '10.42');
+        $regexOptions = ['php_version' => '8.4', 'pcre_version' => '10.42'];
+
+        foreach ([
+            [new ExplainCommand(), new Input('explain', ['/a+/'], $options, $regexOptions)],
+            [new CompareCommand(), new Input('compare', ['/a+/', '/a*/'], $options, $regexOptions)],
+            [new HelpCommand(), new Input('help', [], $options, $regexOptions)],
+        ] as [$command, $input]) {
+            $exitCode = 0;
+            $buffer = $this->captureOutput(static fn (): int => $command->run($input, new Output(false, false)), $exitCode);
+
+            $this->assertStringContainsString('PCRE2 10.42', $buffer, $command->getName());
+        }
     }
 
     public function test_debug_command_reports_missing_pattern(): void

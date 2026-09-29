@@ -159,8 +159,11 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
 
     private function cacheKey(string $pattern, SolverOptions $options): string
     {
+        // The PHP and PCRE2 judged decide what the pattern means: "{,2}"
+        // repeats from PCRE2 10.43 and is text before.
         $parts = [
             $pattern,
+            $this->parser()->target()->cacheKey(),
             $options->matchMode->value,
             $options->maxNfaStates,
             $options->maxDfaStates,

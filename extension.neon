@@ -2,6 +2,13 @@ parametersSchema:
     regexParser: structure([
         # Whether to ignore regex parsing errors (e.g., missing delimiters)
         ignoreParseErrors: bool(),
+        # PHP version patterns are judged for: null for PHPStan's phpVersion
+        # (the PHP running PHPStan unless configured),
+        # 'runtime' for the PHP running PHPStan, or a version like '8.2'
+        phpVersion: schema(string(), nullable()),
+        # PCRE2 release patterns are judged for, like '10.42'; null for the
+        # one the PHP version bundles
+        pcreVersion: schema(string(), nullable()),
         # Preferred: configure checks in one place
         checks: structure([
             redos: structure([
@@ -49,6 +56,10 @@ parameters:
     regexParser:
         # Ignore parsing errors like missing delimiters (common in dynamic regex)
         ignoreParseErrors: true
+
+        # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles
+        phpVersion: null
+        pcreVersion: null
 
         # Deprecated: use checks.* instead
         # Enable comprehensive ReDoS risk detection

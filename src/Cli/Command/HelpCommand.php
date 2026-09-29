@@ -70,6 +70,9 @@ final readonly class HelpCommand implements CommandInterface
         if (null !== $input->globalOptions->phpVersion) {
             $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
         }
+        if (null !== $input->globalOptions->pcreVersion) {
+            $meta['Target PCRE2'] = $output->warning('PCRE2 '.$input->globalOptions->pcreVersion);
+        }
         $this->renderHeader($style, $meta);
 
         $specificCommand = $input->args[0] ?? null;
@@ -94,6 +97,7 @@ final readonly class HelpCommand implements CommandInterface
             ['--silent', 'Same as --quiet'],
             ['--no-visuals', 'Disable banner and section visuals'],
             ['--php-version <ver>', 'Target PHP version for validation'],
+            ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
             ['--help', 'Display this help message'],
         ];
         $this->renderTableSection($output, 'Global Options', $globalOptions, fn (string $value): string => $this->formatOption($output, $value));
@@ -281,6 +285,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--validate', 'Validate the pattern after parsing'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -294,6 +299,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--format <format>', 'Output format (console, json)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                     ['--redos-no-jit', 'Disable JIT during confirmation runs'],
@@ -310,6 +316,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--method <method>', 'intersection (default), subset, or equivalence'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => ['Supports the regular subset only (no lookarounds or backreferences).'],
                 'examples' => [
@@ -338,6 +345,7 @@ final readonly class HelpCommand implements CommandInterface
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                     ['--redos-no-jit', 'Disable JIT during confirmation runs'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => ['Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.'],
                 'examples' => [
@@ -363,6 +371,7 @@ final readonly class HelpCommand implements CommandInterface
                     ['--format <format>', 'Output format (console, json)'],
                     ['--show-input', 'Print full input string'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => ['Use the same input for both patterns to compare timing and resource usage.'],
                 'examples' => [
@@ -376,6 +385,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--format <format>', 'Output format (ascii)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -388,6 +398,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--format <format>', 'Output format (console, html)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -399,6 +410,7 @@ final readonly class HelpCommand implements CommandInterface
                 'description' => 'Validate a regex pattern',
                 'options' => [
                     ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
                 'notes' => [],
                 'examples' => [

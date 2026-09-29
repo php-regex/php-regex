@@ -74,9 +74,7 @@ final class ExplainCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
         if ('text' === $format && $style->visualsEnabled()) {
             $meta['Format'] = $output->warning('text');
         }

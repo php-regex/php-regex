@@ -97,6 +97,7 @@ final class HelpCommandTest extends TestCase
 
         $this->assertStringContainsString('Options:', $text);
         $this->assertStringContainsString('--php-version', $text);
+        $this->assertStringContainsString('--pcre-version', $text);
         $this->assertStringContainsString('--redos-mode', $text);
     }
 
@@ -185,6 +186,7 @@ final class HelpCommandTest extends TestCase
         $this->assertSame(0, $result);
         $this->assertStringContainsString('Validate a regex pattern', $text);
         $this->assertStringContainsString('--php-version <ver>', $text);
+        $this->assertStringContainsString('--pcre-version <ver>', $text);
         $this->assertStringContainsString('Validate a pattern', $text);
         $this->assertStringContainsString('Validate for PHP 8.0', $text);
     }

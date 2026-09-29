@@ -21,6 +21,7 @@ use RegexParser\Node\LiteralNode;
 use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\SequenceNode;
+use RegexParser\PcreTarget;
 use RegexParser\Regex;
 use RegexParser\TokenType;
 
@@ -108,8 +109,8 @@ final class RepeatCountVersionTest extends TestCase
     #[Test]
     public function test_tokenizing_for_a_version_reads_the_count_as_it_does(): void
     {
-        $old = Regex::tokenize('/a{,2}/', 80300)->getTokens();
-        $new = Regex::tokenize('/a{,2}/', 80400)->getTokens();
+        $old = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80300))->getTokens();
+        $new = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80400))->getTokens();
 
         $this->assertSame(TokenType::T_LITERAL, $old[1]->type);
         $this->assertSame('{', $old[1]->value);

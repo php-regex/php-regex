@@ -73,9 +73,7 @@ final class CompareCommand extends AbstractCommand
             'Minimizer' => $output->warning($parsed['minimizer']),
             'Determinizer' => $output->warning($parsed['determinizer']),
         ];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
 
         $style->renderBanner('compare', $meta, 'Automata-based regex comparison.');
         $style->renderPattern($parsed['pattern1'], 'Pattern 1');

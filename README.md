@@ -209,7 +209,11 @@ echo $regex->explain('/\d{4}-\d{2}-\d{2}/');
 RegexParser integrates with common PHP tooling:
 
 - **Symfony bundle**: [docs/guides/cli.md](docs/guides/cli.md)
-- **PHPStan**: `vendor/yoeunes/regex-parser/extension.neon`
+- **PHPStan**: `vendor/yoeunes/regex-parser/extension.neon`. Patterns are judged
+  for PHPStan's `phpVersion` (the PHP running PHPStan unless configured),
+  with the PCRE2 that PHP bundles; set
+  `regexParser.pcreVersion: '10.42'` for a PHP that links another release, or
+  `regexParser.phpVersion: runtime` to judge for the PHP running PHPStan
 - **GitHub Actions**: `vendor/bin/regex lint` in your CI pipeline
 
 ## Performance

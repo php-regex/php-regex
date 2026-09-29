@@ -56,6 +56,7 @@ RegexParser CLI provides these commands:
 | `-q, --quiet`         | Suppress output                   |
 | `--silent`            | Same as `--quiet`                 |
 | `--php-version <ver>` | Target PHP version for validation |
+| `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
 | `--help`              | Show help                         |
 
 ---

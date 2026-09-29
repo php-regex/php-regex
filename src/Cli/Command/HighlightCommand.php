@@ -69,9 +69,7 @@ final class HighlightCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
+        $meta += $this->targetMeta($input, $output);
 
         try {
             if ('auto' === $format) {

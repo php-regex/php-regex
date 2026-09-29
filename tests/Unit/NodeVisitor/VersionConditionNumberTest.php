@@ -19,9 +19,9 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Regex;
 
 /**
- * The numbers of "(?(VERSION>=n.m)...)". Up to PCRE2 10.45, the minor takes
+ * The numbers of "(?(VERSION>=n.m)...)". Up to PCRE2 10.46, the minor takes
  * two digits at most, refused on the third, and the major stops at 1000,
- * refused past the digit that goes over. PCRE2 10.48 reads both numbers
+ * refused past the digit that goes over. PCRE2 10.47 reads both numbers
  * whole and refuses one over 1000 past its last digit. PHP 8.2 to 8.5
  * bundle 10.40 to 10.44 (every offset below is pcre2test's).
  */
@@ -71,17 +71,14 @@ final class VersionConditionNumberTest extends TestCase
     }
 
     #[Test]
-    public function test_pcre2_10_48_reads_the_numbers_whole(): void
+    public function test_pcre2_10_47_reads_the_numbers_whole(): void
     {
-        if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.48', '<')) {
-            $this->assertFalse(@preg_match('/(?(VERSION=10.101)yes|no)/', ''), 'Before 10.48, the minor takes two digits.');
-
-            return;
-        }
+        // Before 10.47, the minor takes two digits.
+        $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.46'])->validate('/(?(VERSION=10.101)yes|no)/')->isValid);
 
         // Past the last digit of a number over 1000; a three-digit minor
         // compiles.
-        $regex = Regex::create(['cache' => null]);
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.47']);
         $this->assertTrue($regex->validate('/(?(VERSION=10.101)yes|no)/')->isValid);
         $this->assertSame(18, $regex->validate('/(?(VERSION=10.1001)yes|no)/')->offset);
         $this->assertSame(16, $regex->validate('/(?(VERSION=99999.1)yes|no)/')->offset);

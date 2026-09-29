@@ -96,7 +96,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-1fc694bd00de2f8e245ddb2463705358';
+    public const CACHE_VERSION = 'ast-92180b10e357294dc5b2e60567186207';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -116,7 +116,7 @@ final readonly class Regex
 
     // Cache seed patterns
     private const CACHE_VERSION_PREFIX = '#cache=';
-    private const PHP_VERSION_PREFIX = '#php_version=';
+    private const TARGET_PREFIX = '#target=';
 
     /**
      * Create a new Regex instance with specified configuration.
@@ -127,7 +127,7 @@ final readonly class Regex
      * @param array<string>  $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
      * @param bool           $runtimePcreValidation Whether to validate against PCRE runtime
      * @param int            $maxRecursionDepth     Maximum recursion depth during parsing
-     * @param int            $phpVersionId          Target PHP_VERSION_ID for feature validation
+     * @param PcreTarget     $target                The PHP and PCRE2 judged
      */
     private function __construct(
         private int $maxPatternLength,
@@ -136,8 +136,7 @@ final readonly class Regex
         private array $redosIgnoredPatterns,
         private bool $runtimePcreValidation,
         private int $maxRecursionDepth,
-        private int $phpVersionId,
-        private bool $phpVersionExplicit,
+        private PcreTarget $target,
     ) {}
 
     /**
@@ -160,8 +159,7 @@ final readonly class Regex
             $configuration->redosIgnoredPatterns,
             $configuration->runtimePcreValidation,
             $configuration->maxRecursionDepth,
-            $configuration->phpVersionId,
-            $configuration->phpVersionExplicit,
+            $configuration->target,
         );
     }
 
@@ -365,11 +363,11 @@ final readonly class Regex
         $originalCompiled = $ast->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
         $optimizedCompiled = $optimizedAst->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
 
-        [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->getParserPhpVersionId());
-        [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->getParserPhpVersionId());
+        [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->target);
+        [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->target);
 
         if ($originalPattern === $optimizedPatternPart) {
-            [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+            [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
             $closingDelimiter = PatternParser::closingDelimiter($delimiter);
             $optimizedPattern = $delimiter.$pattern.$closingDelimiter.$optimizedAst->flags;
         } else {
@@ -525,14 +523,22 @@ final readonly class Regex
      * flags extracted via PatternParser, this allows reconstructing the
      * original pattern and mapping nodes back to their exact locations.
      *
-     * @param int|null $phpVersionId Target PHP_VERSION_ID for feature validation
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
-    public static function tokenize(string $regex, ?int $phpVersionId = null): TokenStream
+    public static function tokenize(string $regex, ?PcreTarget $target = null): TokenStream
     {
-        $versionId = $phpVersionId ?? \PHP_VERSION_ID;
-        [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $phpVersionId);
+        [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $target);
 
-        return (new Lexer(Lexer::readsWideRepeatCounts($phpVersionId)))->tokenize($pattern, $flags);
+        return (new Lexer($target))->tokenize($pattern, $flags);
+    }
+
+    /**
+     * The PHP version and the PCRE2 release this instance judges patterns
+     * for.
+     */
+    public function target(): PcreTarget
+    {
+        return $this->target;
     }
 
     /**
@@ -584,20 +590,20 @@ final readonly class Regex
      * that need to predict where an entry lands share one implementation
      * with the cache itself.
      *
-     * @param string $regex             The regex as written, delimiters included
-     * @param int    $phpVersionId      The effective PHP_VERSION_ID
-     * @param int    $maxRecursionDepth The parse recursion limit in force
+     * @param string     $regex             The regex as written, delimiters included
+     * @param PcreTarget $target            The PHP and PCRE2 judged
+     * @param int        $maxRecursionDepth The parse recursion limit in force
      */
-    public static function cacheSeed(string $regex, int $phpVersionId, int $maxRecursionDepth): string
+    public static function cacheSeed(string $regex, PcreTarget $target, int $maxRecursionDepth): string
     {
-        // The effective PHP version always influences parsing, so it must
-        // always be part of the key — a shared cache directory must not serve
-        // ASTs parsed under a different PHP version. The recursion limit does
-        // too: a pattern cached under a high limit may be one a lower limit
-        // refuses to parse at all, and the exception must still be thrown.
+        // The PHP and the PCRE2 judged shape the tree, so they are part of
+        // the key: a shared cache directory must not serve a tree read for
+        // another engine. The recursion limit does too: a pattern cached
+        // under a high limit may be one a lower limit refuses to parse at
+        // all, and the exception must still be thrown.
         return $regex
             ."\n".self::CACHE_VERSION_PREFIX.self::CACHE_VERSION
-            ."\n".self::PHP_VERSION_PREFIX.$phpVersionId
+            ."\n".self::TARGET_PREFIX.$target->cacheKey()
             ."\n#depth=".$maxRecursionDepth;
     }
 
@@ -614,12 +620,12 @@ final readonly class Regex
         $position = $error->getPosition() ?? 0;
 
         try {
-            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
         } catch (ParserException) {
             return null;
         }
 
-        $lexer = new Lexer(Lexer::readsWideRepeatCounts($this->getParserPhpVersionId()));
+        $lexer = new Lexer($this->target);
 
         try {
             $lexer->tokenize($pattern, $flags);
@@ -628,7 +634,7 @@ final readonly class Regex
         }
 
         $tokens = $lexer->tokensRead();
-        $earlier = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
+        $earlier = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target))
             ->firstEscapeErrorBefore($tokens, $pattern, $flags, $position);
 
         $classError = $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position);
@@ -642,7 +648,7 @@ final readonly class Regex
             $stream = new TokenStream([...$tokens, new Token(TokenType::T_EOF, '', $position)], $pattern);
 
             try {
-                (new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId()))->parse($stream, $flags, $delimiter, $position);
+                (new Parser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, $position);
             } catch (LexerException|ParserException $syntaxError) {
                 $at = $syntaxError->getPosition() ?? $position;
                 if ($at < $position && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
@@ -677,13 +683,13 @@ final readonly class Regex
             $class = \array_slice($tokens, $opening, $index - $opening + 1);
 
             try {
-                $ast = (new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId()))
+                $ast = (new Parser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$class, new Token(TokenType::T_EOF, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|ParserException) {
                 continue;
             }
 
-            $error = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId))
+            $error = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target))
                 ->firstErrorInClassBefore($ast, $token->position, $position);
             if (null !== $error) {
                 return $error;
@@ -900,12 +906,7 @@ final readonly class Regex
 
     private function getCacheSeed(string $regex): string
     {
-        return self::cacheSeed($regex, $this->phpVersionId, $this->maxRecursionDepth);
-    }
-
-    private function getParserPhpVersionId(): ?int
-    {
-        return $this->phpVersionExplicit ? $this->phpVersionId : null;
+        return self::cacheSeed($regex, $this->target, $this->maxRecursionDepth);
     }
 
     /**
@@ -966,7 +967,7 @@ final readonly class Regex
     private function extractPatternSafely(string $regex): ?string
     {
         try {
-            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->target);
 
             return (string) $pattern;
         } catch (ParserException) {
@@ -982,7 +983,7 @@ final readonly class Regex
      */
     private function validateAst(RegexNode $ast, ?string $pattern): void
     {
-        $validator = new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->phpVersionId);
+        $validator = new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target);
         $ast->accept($validator);
     }
 
@@ -1189,7 +1190,7 @@ final readonly class Regex
     private function safeExtractPattern(string $regex): array
     {
         try {
-            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
+            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
             $pattern = (string) $pattern;
             $flags = (string) $flags;
             $delimiter = (string) $delimiter;
@@ -1269,9 +1270,9 @@ final readonly class Regex
      */
     private function parseFromScratch(string $regex): RegexNode
     {
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->getParserPhpVersionId());
-        $tokenStream = (new Lexer(Lexer::readsWideRepeatCounts($this->getParserPhpVersionId())))->tokenize($pattern, $flags);
-        $parser = new Parser($this->maxRecursionDepth, $this->getParserPhpVersionId());
+        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
+        $tokenStream = (new Lexer($this->target))->tokenize($pattern, $flags);
+        $parser = new Parser($this->maxRecursionDepth, $this->target);
 
         return $parser->parse($tokenStream, $flags, $delimiter, \strlen($pattern));
     }
