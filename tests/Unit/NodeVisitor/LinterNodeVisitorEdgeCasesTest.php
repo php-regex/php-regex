@@ -49,6 +49,7 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\ReDoS\CharSetAnalyzer;
+use RegexParser\Regex;
 
 final class LinterNodeVisitorEdgeCasesTest extends TestCase
 {
@@ -62,6 +63,20 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $warnings = $linter->getWarnings();
         $this->assertNotEmpty($warnings);
         $this->assertStringContainsString('Suspicious octal escape', $warnings[0]);
+    }
+
+    public function test_octal_escape_past_377_is_a_code_point_in_utf_mode(): void
+    {
+        // "\666" is U+01B6 with "u"; without it PHP refuses it.
+        $octalWarnings = static function (string $pattern): array {
+            $linter = new LinterNodeVisitor();
+            Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+
+            return array_values(array_filter($linter->getWarnings(), static fn (string $warning): bool => str_contains($warning, 'Suspicious octal escape')));
+        };
+
+        $this->assertSame([], $octalWarnings('/\\666/u'));
+        $this->assertCount(1, $octalWarnings('/\\666/'));
     }
 
     public function test_count_capturing_groups_handles_conditionals(): void

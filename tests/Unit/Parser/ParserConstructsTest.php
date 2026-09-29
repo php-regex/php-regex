@@ -1605,7 +1605,8 @@ final class ParserConstructsTest extends TestCase
 
         yield 'multi digit backref falls back to octal: /\\19/' => [
             'pattern' => '/\\19/',
-            'recompiled' => '/\\19/',
+            // "\1" alone would name group 1: the octal escape is spelled "\o{1}".
+            'recompiled' => '/\\o{1}9/',
         ];
 
         yield 'validate valid subroutine: /(?<name>a)(?&name)/' => [

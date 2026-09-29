@@ -212,7 +212,6 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $generator = new SampleGeneratorNodeVisitor();
         $root = new LiteralNode('root', 0, 4);
         $this->setPrivate($generator, 'rootPattern', $root);
-        $this->setPrivate($generator, 'totalGroupCount', 3);
 
         // "(x)(a)(b)(?-1)": a relative call counts the groups opened before it.
         $groupFirst = new GroupNode(new LiteralNode('x', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
@@ -226,7 +225,6 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $negative = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('-1', '-1', 9, 13)]);
         $this->assertSame($groupThree, $negative);
 
-        $this->setPrivate($generator, 'totalGroupCount', 0);
         $nullNegative = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('-1', '-1', 0, 0)]);
         $this->assertNull($nullNegative);
 

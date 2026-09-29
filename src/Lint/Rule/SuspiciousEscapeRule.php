@@ -48,7 +48,8 @@ final class SuspiciousEscapeRule extends AbstractLintRule
             )];
         }
 
-        if (\in_array($node->type, [CharLiteralType::OCTAL, CharLiteralType::OCTAL_LEGACY], true) && $node->codePoint > 0xFF) {
+        // Past "\377", an octal escape is a code point in UTF mode only.
+        if (\in_array($node->type, [CharLiteralType::OCTAL, CharLiteralType::OCTAL_LEGACY], true) && $node->codePoint > 0xFF && !$context->pattern->unicodeMode) {
             return [new LintIssue(
                 'regex.lint.escape.suspicious',
                 \sprintf('Suspicious octal escape "%s" (out of range).', $node->originalRepresentation),

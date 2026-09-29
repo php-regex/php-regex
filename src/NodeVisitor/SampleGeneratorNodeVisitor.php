@@ -97,8 +97,6 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
     private int $groupDefinitionCounter = 1;
 
-    private int $totalGroupCount = 0;
-
     private bool $unicode = false;
 
     /**
@@ -158,7 +156,6 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->requiredPrefixes = [];
         $this->requiredSuffixes = [];
         $this->collectGroups($node->pattern);
-        $this->totalGroupCount = $this->groupDefinitionCounter - 1;
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
@@ -356,13 +353,6 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             $key = (int) $matches[1];
             if (isset($this->captures[$key])) {
                 return $this->captures[$key];
-            }
-
-            // "\NN" that names no group is an octal escape, then digits.
-            if ($key >= 10 && $key > $this->totalGroupCount && 1 === preg_match('/^([0-7]{1,3})(\d*)$/', $matches[1], $octal)) {
-                $value = (int) octdec($octal[1]);
-
-                return ($this->unicode ? (string) mb_chr($value, 'UTF-8') : \chr($value & 0xFF)).$octal[2];
             }
         }
 

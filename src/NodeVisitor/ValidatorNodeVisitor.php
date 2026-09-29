@@ -948,25 +948,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
             }
+            // "\NN" that PCRE reads as an octal escape is parsed as one: a
+            // reference by number here names a group or none.
             if ($num > $this->groupNumbering->maxGroupNumber) {
-                // PCRE disambiguation: \NN with NN >= 10 and no such group is
-                // read as an octal escape (up to three octal digits, value
-                // <= \377) followed by literal digits, e.g. (a)\11 == (a)\x09.
-                if ($num >= 10 && $this->isValidOctalFallback($matches[1])) {
-                    return;
-                }
-
-                // Without UTF mode, one byte at most: PCRE stops where the
-                // octal digits end.
-                if ($num >= 10 && 1 === preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
-                    $this->raiseSemanticError(
-                        \sprintf('Octal value \\%s is greater than \\377 without UTF mode.', $octal[0]),
-                        $node->startPosition + 1 + \strlen($octal[0]),
-                        'regex.octal.out_of_range',
-                        'Use the "u" modifier, or \\x{...} for a code point.',
-                    );
-                }
-
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
@@ -1884,7 +1868,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$this->unicodeMode && $node->codePoint > 0xFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid legacy octal codepoint "%s" (out of range).', $node->originalRepresentation),
-                $node->startPosition,
+                // PCRE reads the whole escape first, in every release.
+                $node->getEndPosition(),
                 'regex.octal.out_of_range',
             );
         }
@@ -2283,11 +2268,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return [0, null];
         }
 
-        $octal = $node instanceof BackrefNode ? $this->octalEscapeLength($node) : null;
-        if (null !== $octal) {
-            return [$octal, $octal];
-        }
-
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             return $this->referencedGroupLength($node, $expanding);
         }
@@ -2326,24 +2306,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         foreach ($children as $child) {
             $this->validateNestedLookbehinds($child, $expanding);
         }
-    }
-
-    /**
-     * The characters a reference by number matches when PCRE reads it as an
-     * octal escape: "\101" with no group 101 is "A", "\1000" is "@" then "0".
-     * Null for a reference.
-     */
-    private function octalEscapeLength(BackrefNode $node): ?int
-    {
-        if (1 !== preg_match('/^\\\\(\d++)$/', $node->ref, $matches)
-            || (int) $matches[1] < 10
-            || (int) $matches[1] <= $this->groupNumbering->maxGroupNumber
-            || !$this->isValidOctalFallback($matches[1])
-            || 1 !== preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
-            return null;
-        }
-
-        return 1 + \strlen($matches[1]) - \strlen($octal[0]);
     }
 
     /**
@@ -3855,22 +3817,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->groupNumbering = new GroupNumbering(0, [], []);
             $this->captureSequence = [];
             $this->captureIndex = 0;
-
         }
-    }
-
-    /**
-     * Whether a digit string that does not resolve to a capture group is a
-     * valid octal escape under PCRE rules: it must start with an octal digit,
-     * and the leading run of up to three octal digits must encode <= \377
-     * unless the pattern is in Unicode mode, where "\400" is U+0100.
-     */
-    private function isValidOctalFallback(string $digits): bool
-    {
-        if (1 !== preg_match('/^([0-7]{1,3})/', $digits, $octal)) {
-            return false;
-        }
-
-        return $this->unicodeMode || octdec($octal[1]) <= 0xFF;
     }
 }

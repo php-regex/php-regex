@@ -298,7 +298,7 @@ echo count($ast->pattern->children);  // 1 (one literal for "hello")
 | `UNICODE`       | `\x{1F600}`                | Unicode code point escape (`\x{...}`, `\u{...}`, `\uFFFF`, `\xFF`) |
 | `UNICODE_NAMED` | `\N{LATIN SMALL LETTER A}` | Named Unicode character      |
 | `OCTAL`         | `\o{141}`                  | Octal representation         |
-| `OCTAL_LEGACY`  | `\141`                     | Legacy octal (3 digits)      |
+| `OCTAL_LEGACY`  | `\141`, `\012`             | Legacy octal: up to 3 octal digits, `\0` first or a number past the groups opened before it (`\101` before group 101 exists is `A`, `\1000` is `@` then `0`) |
 
 **Example:**
 ```php

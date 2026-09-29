@@ -163,6 +163,18 @@ final class Parser
     private readonly PcreTarget $target;
 
     /**
+     * An octal escape and the digits left as text after it, as the atom just
+     * read: a quantifier after it repeats only the last digit.
+     */
+    private ?SequenceNode $splitEscape = null;
+
+    /**
+     * The groups opened before the text this parser reads: a body read apart,
+     * as "(*pla:...)", counts those of the pattern around it.
+     */
+    private int $capturesBefore = 0;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
@@ -195,7 +207,8 @@ final class Parser
         $this->noAutoCapture = str_contains($flags, 'n');
         $this->inQuoteMode = false;
         $this->recursionDepth = 0;
-        $this->captureCount = 0;
+        $this->captureCount = $this->capturesBefore;
+        $this->splitEscape = null;
 
         $patternNode = $this->parseAlternation();
 
@@ -536,6 +549,15 @@ final class Parser
     {
         $node = $this->parseAtom();
 
+        // "\1000*": the octal escape, then the text "0" the quantifier repeats.
+        if (null !== $this->splitEscape && $node === $this->splitEscape) {
+            $this->splitEscape = null;
+            [$escape, $text] = $node->children;
+            $last = $this->parseQuantifiedText($text);
+
+            return $last === $text ? $node : new SequenceNode([$escape, $last], $node->startPosition, $last->getEndPosition());
+        }
+
         // A quantifier after a comment repeats the item before the comment.
         if ($node instanceof CommentNode) {
             return $node;
@@ -556,6 +578,29 @@ final class Parser
         }
 
         return $node;
+    }
+
+    /**
+     * Digits left as text after an octal escape: a quantifier after them
+     * repeats the last one.
+     */
+    private function parseQuantifiedText(NodeInterface $text): NodeInterface
+    {
+        if (!$text instanceof LiteralNode || !$this->stream->check(TokenType::T_QUANTIFIER)) {
+            return $text;
+        }
+
+        $token = $this->stream->current();
+        $this->stream->advance();
+        $lastStart = $text->endPosition - 1;
+        $last = $this->quantify(new LiteralNode(substr($text->value, -1), $lastStart, $text->endPosition), $token);
+        if (1 === \strlen($text->value)) {
+            return $last;
+        }
+
+        $head = new LiteralNode(substr($text->value, 0, -1), $text->startPosition, $lastStart);
+
+        return new SequenceNode([$head, $last], $text->startPosition, $last->getEndPosition());
     }
 
     private function quantify(NodeInterface $node, Token $token): QuantifierNode
@@ -819,6 +864,11 @@ final class Parser
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
     {
         if (TokenType::T_BACKREF === $type) {
+            $octal = $this->octalEscapeFromReference($token, $startPosition);
+            if (null !== $octal) {
+                return $octal;
+            }
+
             $this->guardReferenceNameLength($token->value, $token->position);
         }
 
@@ -1141,6 +1191,39 @@ final class Parser
         return substr($this->pattern, $token->position, $token->sourceLength);
     }
 
+    /**
+     * "\NN" of 10 or more that starts with 1 to 7, past the groups opened so
+     * far, is no reference: PCRE reads an octal escape of up to three octal
+     * digits, and the digits left as text, "\1000" being "@" then "0".
+     */
+    private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
+    {
+        if (1 !== preg_match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
+            || (\strlen($matches[1]) < 6 && (int) $matches[1] <= $this->captureCount)
+            || 1 !== preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
+            return null;
+        }
+
+        $representation = '\\'.$octal[0];
+        $escapeEnd = $startPosition + \strlen($representation);
+        $escape = new CharLiteralNode(
+            $representation,
+            CodePointReader::fromLiteral($representation, CharLiteralType::OCTAL_LEGACY),
+            CharLiteralType::OCTAL_LEGACY,
+            $startPosition,
+            $escapeEnd,
+        );
+
+        $text = substr($matches[1], \strlen($octal[0]));
+        if ('' === $text) {
+            return $escape;
+        }
+
+        $this->splitEscape = new SequenceNode([$escape, new LiteralNode($text, $escapeEnd, $token->end())], $startPosition, $token->end());
+
+        return $this->splitEscape;
+    }
+
     private function createCharLiteralNodeFromToken(Token $token, TokenType $type, int $startPosition): CharLiteralNode
     {
         [$representation, $charType] = match ($type) {
@@ -1379,7 +1462,9 @@ final class Parser
         // The payload is read for the same target as the pattern around it.
         try {
             $stream = (new Lexer($this->target))->tokenize($payload, $flags);
-            $pattern = (new Parser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, '/', \strlen($payload));
+            $inner = new Parser($this->maxRecursionDepth, $this->target);
+            $inner->capturesBefore = $this->captureCount;
+            $pattern = $inner->parse($stream, $flags, '/', \strlen($payload));
         } catch (LexerException|ParserException $error) {
             // Read apart, the payload counts positions from its own start:
             // the error is reported where it stands in the whole pattern.

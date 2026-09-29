@@ -21,6 +21,7 @@ use RegexParser\Node\BackrefNode;
 use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
+use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
@@ -108,6 +109,12 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
 
     private int $indentLevel;
 
+    /**
+     * Capturing groups written so far: whether "\NN" is read as a reference
+     * where it is written depends on them.
+     */
+    private int $capturesOpened = 0;
+
     public function __construct(
         private readonly bool $pretty = false,
         /**
@@ -141,6 +148,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
+        $this->capturesOpened = 0;
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
         $this->utfVerb = self::startsWithUtfVerb($node->pattern);
@@ -236,6 +244,10 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         $written = $this->writtenText($node);
         if ('[[:<:]]' === $written || '[[:>:]]' === $written) {
             return $written;
+        }
+
+        if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+            $this->capturesOpened++;
         }
 
         $flags = $node->flags ?? '';
@@ -418,6 +430,15 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     {
         $rep = $node->originalRepresentation;
         $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
+
+        // "\101" is an octal escape only while fewer than 101 groups open
+        // before it; where more have, "\o{101}" still is one. In a class,
+        // "\101" is always octal.
+        if (!$this->inCharClass && CharLiteralType::OCTAL_LEGACY === $node->type
+            && 1 === preg_match('/^\\\\([1-7][0-7]*+)$/', $rep, $digits)
+            && (\strlen($digits[1]) < 2 || (int) $digits[1] <= $this->capturesOpened)) {
+            return '\\o{'.$digits[1].'}';
+        }
 
         // A code point can be spelled in many ways — "\a", "\x07", the raw
         // character — and they are all valid where the pattern already used
