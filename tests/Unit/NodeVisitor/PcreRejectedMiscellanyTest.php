@@ -43,6 +43,22 @@ final class PcreRejectedMiscellanyTest extends TestCase
     }
 
     #[Test]
+    public function test_backslash_c_under_utf_is_refused_for_every_php(): void
+    {
+        // PHP 8.4.25 and 8.5.10 refuse it (GH-21134); earlier releases compile
+        // it and can crash matching it, so it is reported for them too.
+        foreach ([['php_version' => '8.2'], ['php_version' => '8.3'], ['php_version' => '8.4', 'pcre_version' => '10.42'], ['php_version' => '8.5']] as $target) {
+            $result = Regex::create(['cache' => null] + $target)->validate('/ab\\Cde/u');
+
+            $this->assertFalse($result->isValid, (string) json_encode($target));
+            $this->assertSame('regex.escape.single_byte_in_utf', $result->errorCode);
+            $this->assertSame(4, $result->offset);
+        }
+
+        $this->assertTrue(Regex::create(['cache' => null])->validate('/ab\\Cde/')->isValid);
+    }
+
+    #[Test]
     #[DataProvider('provideBraceTexts')]
     public function test_empty_braces_are_text_not_a_quantifier(string $pattern, string $subject): void
     {

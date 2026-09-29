@@ -109,6 +109,12 @@ target's PCRE2 reports. When a pattern holds several errors, it is the offset of
 one PCRE meets first, reading left to right: `[z-a](?#` is refused on its
 range, not on the comment left open.
 
+One judgement is stricter than some PHP releases on purpose: `\C` with the `u`
+flag. PHP 8.4.25 and 8.5.10 refuse it ("using \C is incompatible with the 'u'
+modifier"); earlier releases compile it, but matching it can crash PHP
+([GH-21134](https://github.com/php/php-src/issues/21134)). It is reported for
+every target.
+
 ## PCRE vs other regex engines
 
 | Feature               | PCRE (PHP) | JavaScript | Python | .NET |

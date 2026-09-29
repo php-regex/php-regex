@@ -759,7 +759,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitCharType(CharTypeNode $node): void
     {
         // "\C" matches one code unit, which would split a UTF-8 character:
-        // PHP refuses it with the "u" flag. "(*UTF)\C" compiles.
+        // PHP 8.4.25 and 8.5.10 refuse it with the "u" flag (GH-21134), and
+        // earlier releases, which compile it, can crash matching it, so it is
+        // refused for every PHP. "(*UTF)\C" compiles.
         if ('C' === $node->value && $this->unicodeFlag) {
             $this->raiseSemanticError(
                 '\C is not allowed in Unicode mode: it matches a single byte.',
