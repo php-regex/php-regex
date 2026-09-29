@@ -25,6 +25,7 @@ use RegexParser\Exception\RecursionLimitException;
 use RegexParser\Exception\RegexException;
 use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\ResourceLimitException;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\LiteralNode;
@@ -437,6 +438,8 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to generate a sample for
      *
+     * @throws SampleGenerationException when no sample the running engine matches was found
+     *
      * @return string Generated sample string
      */
     public function generate(string $regex): string
@@ -474,7 +477,7 @@ final readonly class Regex
             }
         }
 
-        return $sample;
+        throw new SampleGenerationException(\sprintf('No sample matching %s was found: the pattern may match nothing, or its assertions ask for more than the samples give.', $regex));
     }
 
     /**

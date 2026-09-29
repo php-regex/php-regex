@@ -335,9 +335,10 @@ Generates a sample string that matches the pattern. Useful for testing or docume
 
 Each sample is checked against the running PHP, and generation is retried
 until one matches: lookaheads, lookbehinds and assertions such as `\b` are
-held where they stand. A pattern no string can match, as `a(*FAIL)` or `$b`,
-gets its last attempt, which does not match; so may a pattern whose
-constraints are too tangled to guess, or one the running PHP cannot compile.
+held where they stand. When none matches, `SampleGenerationException` is
+thrown (error code `regex.generate.no_match`): the pattern matches nothing, as
+`a(*FAIL)` or `a^b`, or its constraints are too tangled to guess. A pattern
+the running PHP cannot compile gets a sample nothing checked.
 
 ```php
 use RegexParser\Regex;
@@ -523,6 +524,7 @@ Exception hierarchy (simplified):
   - `ResourceLimitException` (resource limits)
   - `RegexException` (base exception with position and error code)
   - `TranspileException` (unsupported target or feature during transpile)
+  - `SampleGenerationException` (no sample the pattern matches was found)
 
 **Usage Examples:**
 

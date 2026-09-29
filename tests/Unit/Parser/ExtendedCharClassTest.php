@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Exception\TranspileException;
 use RegexParser\Node\AssertionNode;
 use RegexParser\Node\BackrefNode;
@@ -358,8 +359,15 @@ final class ExtendedCharClassTest extends TestCase
     public function test_a_class_with_no_member_yields_a_guess(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
+        $pattern = '/(?[ \\d & [a] ])/';
 
-        $this->assertSame(1, preg_match('/^\\d$/', $regex->generate('/(?[ \\d & [a] ])/')));
+        // The visitor guesses from the left operand; generate() finds no
+        // sample the engine matches, and says so.
+        $this->assertSame(1, preg_match('/^\\d$/', $regex->parse($pattern)->accept(new SampleGeneratorNodeVisitor())));
+        if (false !== @preg_match($pattern, '')) {
+            $this->expectException(SampleGenerationException::class);
+            $regex->generate($pattern);
+        }
     }
 
     #[Test]

@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
@@ -45,9 +46,18 @@ final class SampleGeneratorPropertyTest extends TestCase
     #[Test]
     public function test_a_property_no_character_can_have_still_gives_a_sample(): void
     {
-        // The surrogates have no UTF-8 form; a name PCRE does not know,
-        // built by hand, makes it refuse the probe.
-        $this->assertNotSame('', Regex::create(['cache' => null])->generate('/\\p{Cs}/u'));
+        // The surrogates have no UTF-8 form, so no subject matches: the
+        // visitor guesses, and generate() says it found no sample. A name
+        // PCRE does not know, built by hand, makes it refuse the probe.
+        $surrogates = Regex::create(['cache' => null])->parse('/\\p{Cs}/u');
+        $this->assertNotSame('', $surrogates->accept(new SampleGeneratorNodeVisitor()));
+
+        try {
+            Regex::create(['cache' => null])->generate('/\\p{Cs}/u');
+            self::fail('A sample was given for a property no character has.');
+        } catch (SampleGenerationException $e) {
+            $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+        }
 
         $tree = new RegexNode(new UnicodePropNode('{NoSuchProperty}', true, 0, 17), 'u', '/', 0, 17);
         $this->assertNotSame('', $tree->accept(new SampleGeneratorNodeVisitor()));

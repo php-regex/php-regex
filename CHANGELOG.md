@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pcre_version`, next to `php_version`: patterns are judged for one PHP version and one PCRE2 release, `RegexParser\PcreTarget`, resolved once and read by the lexer, the parser, the validator and the cache key. With neither option, the running PHP and the PCRE2 it links; `php_version` alone, that PHP with the PCRE2 it bundles; `php_version: 8.4, pcre_version: 10.42` judges for the PHP 8.4 packages of Ubuntu 24.04. `Regex::target()` says which. The command line takes `--pcre-version`.
 - The PHPStan extension judges patterns for PHPStan's `phpVersion`, with new `regexParser.phpVersion` (`runtime` for the PHP running PHPStan) and `regexParser.pcreVersion` parameters.
 
+### Changed
+- `Regex::generate()` throws `SampleGenerationException` when no sample the running engine matches was found, where it returned its last attempt, a string that does not match. See [UPGRADING.md](UPGRADING.md).
+
 ### Removed
 - `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADING.md](UPGRADING.md).
 - `RegexParser\ReDoS\ReDoSAnalyzerInterface`: implemented by nothing, `ReDoSAnalyzer` included.

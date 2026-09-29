@@ -60,6 +60,13 @@ A Perl extended class, `(?[ \p{L} - [aeiou] ])` (PCRE2 10.45), is an
 `AbstractNodeVisitor` inherits both, one implementing the interface directly
 needs them.
 
+#### `generate()` throws when it finds no matching sample
+
+`Regex::generate()` used to return its last attempt when no sample matched,
+as for `a(*FAIL)`: a string the pattern does not match. It now throws
+`RegexParser\Exception\SampleGenerationException`. Catch it where a pattern
+may match nothing.
+
 #### `php_version` alone always means the PCRE2 that PHP bundles
 
 `php_version` naming the running PHP used to mix two engines: the parser read
