@@ -366,6 +366,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private int $lookbehindDepth = 0;
 
     /**
+     * @var list<GroupNode> the lookbehinds around the node visited, innermost last
+     */
+    private array $lookbehinds = [];
+
+    /**
      * How many groups, conditionals and script runs enclose the node.
      */
     private int $nestingDepth = 0;
@@ -525,6 +530,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
+        $this->lookbehinds = [];
         $this->nestingDepth = 0;
         $this->keepsInLookarounds = [];
         $this->patternLength = \strlen($node->source ?? '');
@@ -627,6 +633,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if ($isLookbehind) {
             $this->lookbehindDepth++;
+            $this->lookbehinds[] = $node;
         }
 
         $isLookaround = $this->isLookaround($node);
@@ -651,6 +658,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             }
             if ($isLookbehind) {
                 $this->lookbehindDepth--;
+                array_pop($this->lookbehinds);
             }
             $holdsKeep = $isLookaround && array_pop($this->keepsInLookarounds);
         }
@@ -763,9 +771,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // earlier releases, which compile it, can crash matching it, so it is
         // refused for every PHP. "(*UTF)\C" compiles.
         if ('C' === $node->value && $this->unicodeFlag) {
+            // A PHP that compiles it refuses it in a lookbehind, which PCRE
+            // reports where it measures that lookbehind.
+            $lookbehind = $this->refusesBackslashCUnderUtf() ? null : ($this->lookbehinds[\count($this->lookbehinds) - 1] ?? null);
             $this->raiseSemanticError(
                 '\C is not allowed in Unicode mode: it matches a single byte.',
-                $node->getEndPosition(),
+                null === $lookbehind ? $node->getEndPosition() : $this->lookbehindErrorPosition($lookbehind),
                 'regex.escape.single_byte_in_utf',
                 'Use "." or drop the "u" flag.',
             );
@@ -2149,7 +2160,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($this->containsGraphemeCluster($node->child)) {
             $this->raiseSemanticError(
                 'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
-                $node->startPosition,
+                $this->lookbehindErrorPosition($node),
                 'regex.lookbehind.unbounded',
                 'Match the characters the cluster may hold instead of \X.',
             );
@@ -2175,7 +2186,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES) {
                 $this->raiseSemanticError(
                     'Lookbehind is too complicated: in a pattern with a branch reset, PCRE gives up measuring it.',
-                    $node->startPosition,
+                    $this->lookbehindErrorPosition($node),
                     'regex.lookbehind.too_complex',
                     'Call fewer groups from the lookbehind, or drop the branch reset.',
                 );
@@ -2195,6 +2206,31 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * PHP 8.4.25 and 8.5.10 compile "u" patterns with PCRE2_NEVER_BACKSLASH_C
+     * (GH-21134); earlier releases compile "\C" but in a lookbehind.
+     */
+    private function refusesBackslashCUnderUtf(): bool
+    {
+        $php = $this->target->phpVersionId;
+
+        return $php >= 80510 || ($php >= 80425 && $php < 80500);
+    }
+
+    /**
+     * Where PCRE reports a lookbehind it cannot take: its "(", or the last
+     * letter of the name of "(*plb:...)" and its kin.
+     */
+    private function lookbehindErrorPosition(GroupNode $node): int
+    {
+        $start = $node->startPosition;
+        if (null !== $this->pattern && 1 === preg_match('/\G\(\*(\w++):/', $this->pattern, $name, 0, $start)) {
+            return $start + \strlen($name[1]) - 1;
+        }
+
+        return $start;
+    }
+
+    /**
      * @param array{0: int, 1: int|null} $lengthRange
      */
     private function validateLookbehindBranchLength(GroupNode $node, array $lengthRange, bool $variable): void
@@ -2211,7 +2247,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // PCRE reports the lookbehind itself, not what makes it unbounded.
             $this->raiseSemanticError(
                 'Lookbehind is unbounded. PCRE requires a bounded maximum length.',
-                $node->startPosition,
+                $this->lookbehindErrorPosition($node),
                 'regex.lookbehind.unbounded',
                 $hint,
             );
@@ -2220,7 +2256,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$this->supportsVariableLengthLookbehind() && $min !== $max) {
             $this->raiseSemanticError(
                 'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
-                $node->startPosition,
+                $this->lookbehindErrorPosition($node),
                 'regex.lookbehind.variable_length_not_supported',
                 'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
             );
@@ -2231,7 +2267,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$variable && $max > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
             $this->raiseSemanticError(
                 \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (length=%d).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $max),
-                $node->startPosition,
+                $this->lookbehindErrorPosition($node),
                 'regex.lookbehind.too_long',
                 'Shorten the lookbehind.',
             );
@@ -2240,7 +2276,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($variable && $max > $this->maxLookbehindLength) {
             $this->raiseSemanticError(
                 \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLookbehindLength, $max),
-                $node->startPosition,
+                $this->lookbehindErrorPosition($node),
                 'regex.lookbehind.too_long',
                 'Reduce the lookbehind length, or raise max_lookbehind_length.',
             );
@@ -2602,18 +2638,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return;
         }
 
-        [$code, $escape] = match ($node->type) {
-            CharLiteralType::OCTAL => ['regex.octal.invalid_digit', '\o{}'],
-            // A space before "U+" makes "\N{" a name, which PCRE2 refuses.
-            CharLiteralType::UNICODE_NAMED => 1 === preg_match('/^\\\\N\{[ \t]/', $representation)
-                ? ['regex.escape.unsupported', '\N{U+}']
-                : ['regex.unicode.invalid_digit', '\N{U+}'],
+        // A space before "U+" makes "\N{" a name, which PCRE2 refuses past
+        // the "\N", as "\N{foo}".
+        $name = CharLiteralType::UNICODE_NAMED === $node->type && 1 === preg_match('/^\\\\N\{[ \t]/', $representation);
+        [$code, $escape] = match (true) {
+            CharLiteralType::OCTAL === $node->type => ['regex.octal.invalid_digit', '\o{}'],
+            $name => ['regex.escape.unsupported', '\N{U+}'],
+            CharLiteralType::UNICODE_NAMED === $node->type => ['regex.unicode.invalid_digit', '\N{U+}'],
             default => ['regex.unicode.invalid_digit', '\x{}'],
         };
 
         $this->raiseSemanticError(
             \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape),
-            $node->startPosition + $space,
+            $node->startPosition + ($name ? 2 : $space),
             $code,
             'Write the escape without spaces, or target PHP 8.4+.',
         );

@@ -59,6 +59,22 @@ final class PcreRejectedMiscellanyTest extends TestCase
     }
 
     #[Test]
+    public function test_backslash_c_under_utf_in_a_lookbehind_is_reported_where_pcre_measures_it(): void
+    {
+        // A PHP that compiles "\C" refuses it in a lookbehind, at the
+        // lookbehind (pcre2test 10.40 and 10.44, error 136); one that refuses
+        // it anywhere, at the "\C".
+        $old = Regex::create(['cache' => null, 'php_version' => '8.2']);
+        $this->assertSame(0, $old->validate('/(?<=ab\\Cde)X/u')->offset);
+        $this->assertSame(3, $old->validate('/x(*plb:a\\C)/u')->offset);
+        $this->assertSame(6, $old->validate('/x(?<=a(?<=b\\C))/u')->offset);
+        $this->assertSame(3, $old->validate('/a\\C/u')->offset);
+
+        $refusedAnywhere = \PHP_VERSION_ID >= 80510 || (\PHP_VERSION_ID >= 80425 && \PHP_VERSION_ID < 80500);
+        $this->assertSame($refusedAnywhere ? 8 : 0, Regex::create(['cache' => null])->validate('/(?<=ab\\Cde)X/u')->offset);
+    }
+
+    #[Test]
     #[DataProvider('provideBraceTexts')]
     public function test_empty_braces_are_text_not_a_quantifier(string $pattern, string $subject): void
     {

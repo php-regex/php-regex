@@ -55,6 +55,18 @@ final class AssertionPayloadValidationTest extends TestCase
     }
 
     #[Test]
+    public function test_a_variable_alphabetic_lookbehind_before_pcre2_10_43_is_reported_at_its_name(): void
+    {
+        // pcre2test 10.40 and 10.42: the last letter of the name.
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.42']);
+
+        $this->assertSame(3, $regex->validate('/x(*plb:ab?c)/')->offset);
+        $this->assertSame(5, $regex->validate('/x(*naplb:ab?c|PQ)/')->offset);
+        $this->assertSame(30, $regex->validate('/x(*non_atomic_positive_lookbehind:ab?c)/')->offset);
+        $this->assertSame(1, $regex->validate('/x(?<=ab?c)/')->offset);
+    }
+
+    #[Test]
     #[DataProvider('provideAcceptedPayloads')]
     public function test_validate_accepts_a_valid_payload(string $pattern): void
     {
@@ -94,6 +106,13 @@ final class AssertionPayloadValidationTest extends TestCase
      */
     public static function provideRefusedPayloads(): iterable
     {
+        // An alphabetic lookbehind PCRE cannot bound is reported at the last
+        // letter of its name, on every release.
+        yield 'unbounded short lookbehind' => ['pattern' => '/x(*plb:a+)/', 'offsets' => [3]];
+        yield 'unbounded short negative lookbehind' => ['pattern' => '/x(*nlb:a+)/', 'offsets' => [3]];
+        yield 'unbounded lookbehind, spelled out' => ['pattern' => '/x(*positive_lookbehind:a+)/', 'offsets' => [19]];
+        yield 'unbounded non-atomic lookbehind' => ['pattern' => '/x(*naplb:a+)/', 'offsets' => [5]];
+        yield 'grapheme cluster in a lookbehind, spelled out' => ['pattern' => '/x(*non_atomic_positive_lookbehind:\\X)(a)/', 'offsets' => [30]];
         yield 'unsupported escape in a lookahead' => ['pattern' => '/(*pla:\\U)/', 'offsets' => [8]];
         yield 'unknown escape in a lookahead' => ['pattern' => '/(*pla:\\y)/', 'offsets' => [8, 7]];
         yield 'escape invalid in a class, in a lookahead' => ['pattern' => '/(*pla:[\\B])/', 'offsets' => [9, 8]];

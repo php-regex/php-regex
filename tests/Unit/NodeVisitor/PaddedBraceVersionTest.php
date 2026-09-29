@@ -47,6 +47,19 @@ final class PaddedBraceVersionTest extends TestCase
     }
 
     #[Test]
+    public function test_a_space_before_u_plus_is_refused_as_a_name(): void
+    {
+        // pcre2test 10.40 and 10.42: "\N{" then a space is a name, error 137
+        // past the "\N", as for "\N{foo}".
+        $regex = Regex::create(['cache' => null, 'php_version' => '8.2']);
+
+        $this->assertSame(2, $regex->validate('/\\N{ U+1234 }/u')->offset);
+        $this->assertSame(4, $regex->validate('/ab\\N{ U+41}/u')->offset);
+        $this->assertSame('regex.escape.unsupported', $regex->validate('/ab\\N{ U+41}/u')->errorCode);
+        $this->assertSame(6, $regex->validate('/a\\N{U+ 41}/u')->offset);
+    }
+
+    #[Test]
     #[DataProvider('providePlainEscapes')]
     public function test_unpadded_escape_is_accepted_everywhere(string $pattern): void
     {

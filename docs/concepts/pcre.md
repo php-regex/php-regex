@@ -113,7 +113,8 @@ One judgement is stricter than some PHP releases on purpose: `\C` with the `u`
 flag. PHP 8.4.25 and 8.5.10 refuse it ("using \C is incompatible with the 'u'
 modifier"); earlier releases compile it, but matching it can crash PHP
 ([GH-21134](https://github.com/php/php-src/issues/21134)). It is reported for
-every target.
+every target: at the `\C` for a PHP that refuses it, at the enclosing
+lookbehind for one that compiles it, as that PHP refuses it only there.
 
 ## PCRE vs other regex engines
 
