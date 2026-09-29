@@ -146,6 +146,8 @@ final class ModernizerNodeVisitor extends AbstractNodeVisitor
             $node->flags,
             $node->getStartPosition(),
             $node->getEndPosition(),
+            false,
+            $node->scannedGroups,
         );
     }
 

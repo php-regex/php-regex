@@ -339,7 +339,7 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
         }
 
         if ($optimizedChild !== $node->child) {
-            return new GroupNode($optimizedChild, $node->type, $node->name, $node->flags, $node->startPosition, $node->endPosition, $node->usePythonSyntax);
+            return new GroupNode($optimizedChild, $node->type, $node->name, $node->flags, $node->startPosition, $node->endPosition, $node->usePythonSyntax, $node->scannedGroups);
         }
 
         return $node;

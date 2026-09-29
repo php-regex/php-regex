@@ -23,10 +23,12 @@ use RegexParser\Exception\TranspileException;
 use RegexParser\Internal\PcreVerb;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
+use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\NodeVisitor\AsciiTreeVisitor;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
+use RegexParser\NodeVisitor\ModernizerNodeVisitor;
 use RegexParser\NodeVisitor\RailroadSvgVisitor;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\Regex;
@@ -85,6 +87,12 @@ final class ScanSubstringTest extends TestCase
 
         $this->assertStringContainsString("(*scs:(1,'n')", $ast->accept(new CompilerNodeVisitor(true)));
         $this->assertSame("(a)(*scs:(1,'n')b)(?<n>c)", preg_replace('/\e\[[\d;]*+m/', '', $regex->highlight("/(a)(*scs:(1,'n')b)(?<n>c)/")));
+
+        // Rebuilt trees keep the list.
+        $this->assertStringContainsString("(*scs:(1,'n')", $regex->optimize("/(a)(*scs:(1,'n')b)(?<n>c)/")->optimized);
+        $modernized = $ast->accept(new ModernizerNodeVisitor());
+        $this->assertInstanceOf(RegexNode::class, $modernized);
+        $this->assertStringContainsString("(*scs:(1,'n')", $modernized->accept(new CompilerNodeVisitor()));
     }
 
     #[Test]
