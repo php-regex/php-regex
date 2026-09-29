@@ -67,10 +67,14 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
 
     private bool $caseInsensitive = false;
 
+    private bool $unicode = false;
+
     #[\Override]
     public function visitRegex(RegexNode $node): LiteralSet
     {
         $this->caseInsensitive = str_contains($node->flags, 'i');
+        $this->unicode = str_contains($node->flags, 'u')
+            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*(?:UTF|UCP)\)/', $node->source ?? '');
 
         return $node->pattern->accept($this);
     }
@@ -427,8 +431,9 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
     private function expandCaseInsensitive(string $value): LiteralSet
     {
         // Limit expansion length. Beyond ASCII, caseless matching folds
-        // characters strtolower() does not know ("ⱥ" and "Ⱥ").
-        if (\strlen($value) > 8 || 1 === preg_match('/[\x80-\xff]/', $value)) {
+        // characters strtolower() does not know ("ⱥ" and "Ⱥ"); in UTF mode
+        // it also folds "k" with the Kelvin sign and "s" with the long s.
+        if (\strlen($value) > 8 || 1 === preg_match($this->unicode ? '/[\x80-\xffkKsS]/' : '/[\x80-\xff]/', $value)) {
             return LiteralSet::empty();
         }
 

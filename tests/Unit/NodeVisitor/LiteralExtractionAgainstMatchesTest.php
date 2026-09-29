@@ -72,6 +72,10 @@ final class LiteralExtractionAgainstMatchesTest extends TestCase
         // Caseless matching folds what the ASCII table does not know.
         yield 'caseless non-ASCII letter' => ['pattern' => '/ⱥ/iu', 'subject' => 'Ⱥ'];
 
+        // In UTF mode, "k" also matches the Kelvin sign and "s" the long s.
+        yield 'caseless k in UTF mode' => ['pattern' => '/AskZ/iu', 'subject' => "As\u{212A}Z"];
+        yield 'caseless s in UTF mode' => ['pattern' => '/sss/iu', 'subject' => "s\u{17F}S"];
+
         // An option setting holds to the end of the group it stands in.
         yield 'caseless from the middle' => ['pattern' => '/a(?i)b/', 'subject' => 'aB'];
         yield 'caseless reset by a caret' => ['pattern' => '/(?i)a(?^)b/', 'subject' => 'Ab'];
