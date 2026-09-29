@@ -2288,6 +2288,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return [0, null];
         }
 
+        $octal = $node instanceof BackrefNode ? $this->octalEscapeLength($node) : null;
+        if (null !== $octal) {
+            return [$octal, $octal];
+        }
+
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             return $this->referencedGroupLength($node, $expanding);
         }
@@ -2326,6 +2331,24 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         foreach ($children as $child) {
             $this->validateNestedLookbehinds($child, $expanding);
         }
+    }
+
+    /**
+     * The characters a reference by number matches when PCRE reads it as an
+     * octal escape: "\101" with no group 101 is "A", "\1000" is "@" then "0".
+     * Null for a reference.
+     */
+    private function octalEscapeLength(BackrefNode $node): ?int
+    {
+        if (1 !== preg_match('/^\\\\(\d++)$/', $node->ref, $matches)
+            || (int) $matches[1] < 10
+            || (int) $matches[1] <= $this->groupNumbering->maxGroupNumber
+            || !$this->isValidOctalFallback($matches[1])
+            || 1 !== preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
+            return null;
+        }
+
+        return 1 + \strlen($matches[1]) - \strlen($octal[0]);
     }
 
     /**
@@ -3514,8 +3537,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private function validateStartOfPatternPlacement(string $verbName, int $start): void
     {
         // One that starts where the run of well-formed settings ends is still
-        // read there, and judged on its value.
-        if (null === $this->startOfPatternEnd || $start <= $this->startOfPatternEnd) {
+        // read there, and judged on its value; one in the body of "(*pla:...)"
+        // stands where that body does.
+        if (null === $this->startOfPatternEnd || $start + $this->positionOffset <= $this->startOfPatternEnd) {
             return;
         }
 

@@ -93,6 +93,10 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'setting after text' => ['pattern' => '/a(*UTF)/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
         yield 'limit after text' => ['pattern' => '/a(*LIMIT_MATCH=5)/', 'bundled' => 14, 'newer' => 14, 'movedIn' => '10.40'];
         yield 'unclosed limit after text' => ['pattern' => '/1(*LIMIT_MATCH=/', 'bundled' => 14, 'newer' => 14, 'movedIn' => '10.40'];
+        yield 'setting in the body of an assertion' => ['pattern' => '/(*atomic:(*CR))/', 'bundled' => 13, 'newer' => 13, 'movedIn' => '10.40'];
+        yield 'UTF setting in the body of an assertion' => ['pattern' => '/(*pla:(*UTF))/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
+        yield 'limit in the body of an assertion' => ['pattern' => '/(*pla:(*LIMIT_MATCH=5))/', 'bundled' => 19, 'newer' => 19, 'movedIn' => '10.40'];
+        yield 'setting in the body of a script run' => ['pattern' => '/(*sr:(*CR)a)/', 'bundled' => 9, 'newer' => 9, 'movedIn' => '10.40'];
         yield 'alphabetic name at the end' => ['pattern' => '/(*pla/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'known alphabetic assertion never closed' => ['pattern' => '/(*pla:a/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
         yield 'unknown alphabetic name with a colon' => ['pattern' => '/(*plaa:/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
