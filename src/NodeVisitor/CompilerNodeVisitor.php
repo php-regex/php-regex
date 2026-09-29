@@ -150,14 +150,19 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             : $node->source;
         $this->quotedSpans = null;
 
-        $body = $node->pattern->accept($this);
-
-        return $node->delimiter
+        $body = $node->delimiter
             .$this->ignorableText(0, $node->pattern->getStartPosition())
-            .$body
-            .$this->ignorableText($node->pattern->getEndPosition(), null)
-            .$this->closingDelimiter
-            .$node->flags;
+            .$node->pattern->accept($this)
+            .$this->ignorableText($node->pattern->getEndPosition(), null);
+
+        // A body ending in an odd run of backslashes, "\c\" for one, would
+        // escape the closing delimiter: PHP pairs backslashes as it looks for
+        // it. An empty "\E", which PCRE ignores, closes the run.
+        if (1 === (\strlen($body) - \strlen(rtrim($body, '\\'))) % 2) {
+            $body .= '\\E';
+        }
+
+        return $body.$this->closingDelimiter.$node->flags;
     }
 
     #[\Override]
