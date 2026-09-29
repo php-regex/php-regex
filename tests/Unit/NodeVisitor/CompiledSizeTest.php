@@ -109,6 +109,22 @@ final class CompiledSizeTest extends TestCase
         yield 'scoped modifiers' => ['pattern' => '/(?i:a){8192}/'];
         yield 'nested counts' => ['pattern' => '/((?:a){100}){100}/'];
         yield 'conditional' => ['pattern' => '/(?(1)a|b){5041}(a)/'];
+        // A class compiles to a 32-byte map, a case pair to one caseless
+        // letter; in UTF mode what is past 255, and the types and properties
+        // UCP reads, go in an extended class (pcre2test "memory", 10.40 and
+        // 10.48 alike).
+        yield 'class of two letters' => ['pattern' => '/(?:[ab]c){1599}/'];
+        yield 'case pair' => ['pattern' => '/(?:[aA]c){6553}/'];
+        // PHP refuses it from 3641 copies: its range may merge with others
+        // or fold under "i", so only one smallest item is counted.
+        yield 'class past 255 in UTF mode' => ['pattern' => '/(?:[\\x{100}-\\x{200}]a){4096}/u'];
+        yield 'class holding a type under UCP' => ['pattern' => '/(?:[\\w]a){4096}/u'];
+        yield 'property' => ['pattern' => '/(?:\\p{L}a){5958}/u'];
+        yield 'types under UCP' => ['pattern' => '/(?:\\w\\s){5461}/u'];
+        yield 'class of one letter' => ['pattern' => '/(?:[a]b){7282}/'];
+        yield 'numbered callout' => ['pattern' => '/(?:(?C1)a){4681}/'];
+        yield 'string callout' => ['pattern' => '/(?:(?C"abcdefghij")a){2260}/'];
+        yield 'named mark' => ['pattern' => '/(?:(*MARK:abcdefghij)a){3121}/'];
     }
 
     /**
@@ -131,6 +147,17 @@ final class CompiledSizeTest extends TestCase
         yield 'empty negative lookahead, alphabetic' => ['pattern' => '/(?:(*nla:)){6000}/'];
         yield 'lookahead holding a fail' => ['pattern' => '/(?:(?=(?!))){5000}/'];
         yield 'branch that fails' => ['pattern' => '/(?:a|(?!)){5400}/'];
+        yield 'class of two letters' => ['pattern' => '/(?:[ab]c){1598}/'];
+        yield 'case pair' => ['pattern' => '/(?:[aA]c){6552}/'];
+        yield 'class past 255 in UTF mode' => ['pattern' => '/(?:[\\x{100}-\\x{200}]a){3640}/u'];
+        yield 'class holding a type under UCP' => ['pattern' => '/(?:[\\w]a){4095}/u'];
+        yield 'property' => ['pattern' => '/(?:\\p{L}a){5957}/u'];
+        yield 'types under UCP' => ['pattern' => '/(?:\\w\\s){5460}/u'];
+        yield 'numbered callout' => ['pattern' => '/(?:(?C1)a){4680}/'];
+        yield 'string callout' => ['pattern' => '/(?:(?C"abcdefghij")a){2259}/'];
+        yield 'named mark' => ['pattern' => '/(?:(*MARK:abcdefghij)a){3120}/'];
+        yield 'types without UCP' => ['pattern' => '/(?:\\w\\s){8191}/'];
+        yield 'class holding types without UCP' => ['pattern' => '/(?:[\\d\\s]a){1598}/'];
         yield 'octal escape written like a reference' => ['pattern' => '/(?:\\101){7500}/'];
         yield 'two-digit octal after a group' => ['pattern' => '/(a)(?:\\12){7500}/'];
         yield 'x-mode line separator' => ['pattern' => "/(?:a\u{2028}){7000}/xu"];

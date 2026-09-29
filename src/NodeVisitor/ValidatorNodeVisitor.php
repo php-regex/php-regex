@@ -3336,12 +3336,88 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // A reference by number may be an octal character, "\101".
             $node instanceof BackrefNode => 2,
             $node instanceof SubroutineNode => 3,
-            $node instanceof CharClassNode, $node instanceof CharTypeNode, $node instanceof DotNode,
-            $node instanceof CharLiteralNode, $node instanceof UnicodePropNode => 1,
+            $node instanceof CharClassNode => $this->classSizeFloor($node),
+            // Under UCP, "\d", "\s" and "\w" are Unicode properties.
+            $node instanceof CharTypeNode => $this->unicodeFlag && str_contains('dDsSwW', $node->value) ? 3 : 1,
+            $node instanceof UnicodePropNode => 3,
+            $node instanceof DotNode, $node instanceof CharLiteralNode => 1,
+            // A callout carries its number or its string; a verb its name.
+            $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? 11 + \strlen($node->identifier) : 6,
+            $node instanceof PcreVerbNode => 1 === preg_match('/^(?:MARK|PRUNE|SKIP|THEN|COMMIT):(.+)$/s', $node->verb, $name) ? 3 + \strlen($name[1]) : 0,
             default => 0,
         };
 
         return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * A class is a 32-byte map. In UTF mode, what the map cannot hold,
+     * characters past 255, goes in an extended class: its header, then its
+     * items; so do properties, and the types and POSIX classes UCP reads.
+     * PCRE compiles smaller a class of one member, a pair of case variants
+     * such as "[aA]" or "[ǅǆ]", and one that may match every character: those
+     * count one unit, and so does a type or a POSIX class the map would hold.
+     * Characters PCRE may merge into one range, or fold under a caseless
+     * option set anywhere, count as a single item. All to stay a lower bound.
+     */
+    private function classSizeFloor(CharClassNode $node): int
+    {
+        $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+        $extended = 0;
+        $codePoints = [];
+        $covered = 0;
+        $pastMap = false;
+        foreach ($members as $member) {
+            if ($member instanceof UnicodePropNode
+                || ($this->unicodeFlag && ($member instanceof CharTypeNode || $member instanceof PosixClassNode))) {
+                $extended += 3;
+
+                continue;
+            }
+
+            $ends = array_map($this->classCodePoint(...), $member instanceof RangeNode ? [$member->start, $member->end] : [$member]);
+            if (\in_array(null, $ends, true)) {
+                return 1;
+            }
+
+            $codePoints[] = min($ends);
+            $codePoints[] = max($ends);
+            $covered += max($ends) - min($ends) + 1;
+            $pastMap = $pastMap || ($this->unicodeMode && max($ends) > 255);
+        }
+
+        // One item at least: a character past 255 is its tag and two bytes.
+        $extended += $pastMap ? 3 : 0;
+
+        $distinct = array_values(array_unique($codePoints));
+        if ([] === $distinct) {
+            // Only properties and UCP types: an extended class of those.
+            return 5 + $extended;
+        }
+
+        if (\count($distinct) < 2 || $covered >= ($this->unicodeMode ? 0x110000 : 256)) {
+            return 1;
+        }
+
+        // A pair of case variants is one caseless character: two units.
+        if (2 === \count($distinct) && mb_strtolower((string) mb_chr($distinct[0], 'UTF-8'), 'UTF-8') === mb_strtolower((string) mb_chr($distinct[1], 'UTF-8'), 'UTF-8')) {
+            return 2;
+        }
+
+        return 0 < $extended ? 5 + $extended : 33;
+    }
+
+    /**
+     * The code point a class member stands for, or null when it stands for
+     * more than one character.
+     */
+    private function classCodePoint(NodeInterface $member): ?int
+    {
+        return match (true) {
+            $member instanceof LiteralNode && 1 === mb_strlen($member->value, 'UTF-8') => $this->unicodeMode ? (int) mb_ord($member->value, 'UTF-8') : \ord($member->value),
+            $member instanceof CharLiteralNode => $member->codePoint,
+            default => null,
+        };
     }
 
     /**

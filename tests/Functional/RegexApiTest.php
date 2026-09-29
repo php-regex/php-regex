@@ -47,10 +47,10 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create();
 
-        // Under "u", "\d" is a Unicode property; repeated here past the
-        // 64 KiB PCRE compiles, yet below the smallest size the static checks
-        // can prove: only PCRE itself refuses it.
-        $result = $regex->validate('/(?:\da){6000}/u');
+        // Repeated past the 64 KiB PCRE compiles, yet below the smallest size
+        // the static checks can prove, which counts no unit for "\b": only
+        // PCRE itself refuses it.
+        $result = $regex->validate('/(?:\ba){8000}/');
 
         $this->assertTrue($result->isValid);
     }
@@ -59,7 +59,7 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-        $result = $regex->validate('/(?:\da){6000}/u');
+        $result = $regex->validate('/(?:\ba){8000}/');
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PCRE_RUNTIME, $result->category);
