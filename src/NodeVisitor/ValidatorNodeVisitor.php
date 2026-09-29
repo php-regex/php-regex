@@ -174,7 +174,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         'NO_AUTO_POSSESS' => true, 'NO_START_OPT' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true,
         'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
         'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
+        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
     ];
+
+    /**
+     * Start-of-pattern settings PCRE2 10.45 added, which no PHP bundles yet.
+     */
+    private const PCRE_1045_SETTINGS = ['CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true];
 
     /**
      * The start-of-pattern settings that take a number: "(*LIMIT_MATCH=10)".
@@ -463,6 +469,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->source = $node->source;
         $this->charClassDepth = 0;
         $this->startOfPatternEnd = null === $node->source ? null : $this->readStartOfPatternEnd($node->source);
+        $this->validateCasingSettings($node);
         $this->unicodeFlag = str_contains($node->flags, 'u');
         $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
@@ -1322,7 +1329,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $verbName = preg_split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
-        if (!isset(self::VALID_PCRE_VERBS[$verbName])) {
+        if (!isset(self::VALID_PCRE_VERBS[$verbName])
+            && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->runsPcre1045())) {
             // PCRE reports an unknown verb where its name ends.
             $nameLength = 1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0;
             $this->raiseSemanticError(
@@ -3274,6 +3282,50 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // The run may be empty, so the pattern always matches: the 0 branch
         // is unreachable and only there for the type.
         return 1 === preg_match('/\A(?:\(\*(?:'.$names.')(?:=\d*+)?\))*+/', $source, $matches) ? \strlen($matches[0]) : 0;
+    }
+
+    /**
+     * "(*TURKISH_CASING)" needs UTF mode, and does not go with
+     * "(*CASELESS_RESTRICT)": PCRE2 refuses both where the opening run of
+     * settings ends, before it reads the rest.
+     */
+    private function validateCasingSettings(RegexNode $node): void
+    {
+        if (null === $node->source || null === $this->startOfPatternEnd || !$this->runsPcre1045()) {
+            return;
+        }
+
+        $settings = substr($node->source, 0, $this->startOfPatternEnd);
+        if (!str_contains($settings, '(*TURKISH_CASING)')) {
+            return;
+        }
+
+        if (str_contains($settings, '(*CASELESS_RESTRICT)')) {
+            $this->raiseSemanticError(
+                '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
+                $this->startOfPatternEnd,
+                'regex.verb.conflicting_casings',
+            );
+        }
+
+        if (!str_contains($node->flags, 'u') && 1 !== preg_match('/\(\*UTF8?\)/', $settings)) {
+            $this->raiseSemanticError(
+                str_contains($settings, '(*UCP)')
+                    ? '(*TURKISH_CASING) needs UTF mode: UCP alone is not enough.'
+                    : '(*TURKISH_CASING) needs UTF mode.',
+                $this->startOfPatternEnd,
+                'regex.verb.turkish_casing_without_utf',
+                'Add the "u" modifier.',
+            );
+        }
+    }
+
+    /**
+     * Whether the running PHP is judged, and links PCRE2 10.45 or later.
+     */
+    private function runsPcre1045(): bool
+    {
+        return \PHP_VERSION_ID === $this->phpVersionId && version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=');
     }
 
     private function validateStartOfPatternPlacement(string $verbName, int $start, int $closing): void
