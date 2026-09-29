@@ -225,7 +225,11 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
             foreach ($parts as $part) {
                 if ($part instanceof LiteralNode) {
                     if ($this->caseInsensitive) {
+                        // A member whose variants are unknown makes the class unknown.
                         $expanded = $this->expandCaseInsensitive($part->value);
+                        if ([] === $expanded->prefixes) {
+                            return LiteralSet::empty();
+                        }
                         array_push($literals, ...$expanded->prefixes);
                     } else {
                         $literals[] = $part->value;
