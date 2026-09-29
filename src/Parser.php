@@ -2723,7 +2723,10 @@ final class Parser
      */
     private function unclosedVerbOffset(int $start): int
     {
-        $limit = PcreVerb::limitValueErrorOffset(
+        // A limit is only read in the run of settings that opens the
+        // pattern; elsewhere it is a verb PCRE does not know.
+        preg_match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $this->pattern, $settings);
+        $limit = $start > \strlen($settings[0] ?? '') ? null : PcreVerb::limitValueErrorOffset(
             $this->pattern,
             $start,
             $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'),
@@ -2740,10 +2743,11 @@ final class Parser
             return \strlen($this->pattern);
         }
 
-        // "(*" alone, and from PCRE2 10.47 an alphabetic name followed by no
-        // colon, are refused past the character after them.
+        // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
+        // 10.47 an alphabetic name followed by no colon is refused past the
+        // character after it.
         $pastTheFault = $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47');
-        if ('' === $name) {
+        if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
             return $this->pastTheFault($nameEnd);
         }
 

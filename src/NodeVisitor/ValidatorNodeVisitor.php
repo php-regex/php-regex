@@ -1351,11 +1351,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
             && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->runsPcre1045())) {
-            // PCRE reports an unknown verb where its name ends.
+            // PCRE reports an unknown verb where its name ends; "(*)" is a
+            // "*" with nothing to repeat, refused past it from PCRE2 10.47.
             $nameLength = 1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0;
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
-                $node->startPosition + 2 + $nameLength,
+                '' === $node->verb ? $this->pastTheFault($node->startPosition + 2) : $node->startPosition + 2 + $nameLength,
                 'regex.verb.invalid',
             );
         }
@@ -1363,16 +1364,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // PCRE reports these at the closing parenthesis.
         $closing = $node->getEndPosition() - 1;
 
+        if (isset(self::START_OF_PATTERN_VERBS[$verbName])) {
+            $this->validateStartOfPatternPlacement($verbName, $node->startPosition);
+        }
+
         if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++$/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
                 PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->runsPcre1045()) ?? $closing,
                 'regex.verb.invalid',
             );
-        }
-
-        if (isset(self::START_OF_PATTERN_VERBS[$verbName])) {
-            $this->validateStartOfPatternPlacement($verbName, $node->startPosition, $closing);
         }
 
         // A verb name holds at most 255 code units.
@@ -1431,7 +1432,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitLimitMatch(LimitMatchNode $node): void
     {
-        $this->validateStartOfPatternPlacement('LIMIT_MATCH', $node->startPosition, $node->getEndPosition() - 1);
+        $this->validateStartOfPatternPlacement('LIMIT_MATCH', $node->startPosition);
 
         // The digits as written, leading zeros included.
         $written = null === $this->source ? '' : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
@@ -3414,15 +3415,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         return \PHP_VERSION_ID === $this->phpVersionId && version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=');
     }
 
-    private function validateStartOfPatternPlacement(string $verbName, int $start, int $closing): void
+    private function validateStartOfPatternPlacement(string $verbName, int $start): void
     {
-        if (null === $this->startOfPatternEnd || $start < $this->startOfPatternEnd) {
+        // One that starts where the run of well-formed settings ends is still
+        // read there, and judged on its value.
+        if (null === $this->startOfPatternEnd || $start <= $this->startOfPatternEnd) {
             return;
         }
 
+        // Anywhere else PCRE does not know the name, and stops where it ends.
         $this->raiseSemanticError(
             \sprintf('(*%s) is only recognized at the very start of the pattern.', $verbName),
-            $closing,
+            $start + 2 + \strlen($verbName),
             'regex.verb.misplaced',
             'Move it before anything else in the pattern.',
         );
