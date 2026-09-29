@@ -1082,11 +1082,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): void
     {
-        // "\N{name}": PCRE2 refuses a character name, whatever it names, past
-        // the "\N{"; only "\N{U+...}" is a code point.
+        // "\N{name}": PCRE2 refuses a character name, whatever it names, on
+        // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point.
         if (CharLiteralType::UNICODE_NAMED === $node->type
             && 1 !== preg_match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
-            $this->raiseUnsupportedEscape('N{', $node->startPosition + 3);
+            $this->raiseUnsupportedEscape('N{', $this->pastTheFault($node->startPosition + 3));
         }
 
         // "\N{U+...}" outside UTF mode is refused before its braces are read:
@@ -1493,7 +1493,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitVersionCondition(VersionConditionNode $node): void
     {
         $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt);
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, pastTheFault: $this->runningPcreAtLeast('10.47'));
 
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
@@ -1505,7 +1505,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // PCRE reads a major number and at most one ".minor".
         if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
-            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers());
+            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->runningPcreAtLeast('10.47'));
             if (null !== $tooBig) {
                 $this->raiseSemanticError(
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
@@ -1528,9 +1528,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->raiseSemanticError(
             \sprintf('Invalid version "%s" in a version condition: PCRE takes a major number and an optional ".minor".', $node->version),
-            // PCRE steps past a character it reads where ")" belongs, and
-            // stops on one it reads where a digit belongs.
-            $versionStart + \strlen($valid) + ($afterNumber ? 1 : 0),
+            // From PCRE2 10.47, PCRE steps past a character it reads where
+            // ")" belongs; it stops on one it reads where a digit belongs.
+            $versionStart + \strlen($valid) + ($afterNumber && $this->runningPcreAtLeast('10.47') ? 1 : 0),
             'regex.condition.version_syntax',
         );
     }
@@ -1647,7 +1647,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($value > self::MAX_LIMIT_VALUE_BEFORE_DIGIT) {
                 $this->raiseSemanticError(
                     \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
-                    $start + $index,
+                    // Before PCRE2 10.45, past the digit it refuses.
+                    $start + $index + ($this->runsPcre1045() ? 0 : 1),
                     'regex.verb.limit_too_large',
                 );
             }
@@ -2767,6 +2768,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return $this->pastTheFault($start + 4);
             }
 
+            // A number past 65535 is refused on the brace that opens it.
+            $tooBig = $this->groupNumberTooBigOffset($start + \strlen($matches[0]) - \strlen($matches[4]));
+            if (null !== $tooBig) {
+                return '' === $matches[2] ? $tooBig : $start + 2;
+            }
+
             // "\g'3gh'": the number read, what should close it is missing;
             // before PCRE2 10.47, "\g" itself is refused, past the "g".
             $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
@@ -2799,11 +2806,15 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return $start + 4;
             }
 
-            return '&' === ($text[2] ?? '') ? $start + 3 : $end - 1;
+            if ('&' === ($text[2] ?? '')) {
+                return $start + 3;
+            }
+
+            return $this->groupNumberTooBigOffset($start + 2 + strspn($text, '+-', 2)) ?? $end - 1;
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
-        $versionError = VersionCondition::errorOffset($this->source, $start);
+        $versionError = VersionCondition::errorOffset($this->source, $start, pastTheFault: $this->runningPcreAtLeast('10.47'));
         if (null !== $versionError) {
             return $versionError;
         }
@@ -2818,10 +2829,28 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         if (1 === preg_match('/^([+-]?)(\d++)$/', $text, $matches)) {
-            return '-' === $matches[1] || 0 === (int) $matches[2] ? $end : $end - 2;
+            return $this->groupNumberTooBigOffset($start + \strlen($matches[1]))
+                ?? ('-' === $matches[1] || 0 === (int) $matches[2] ? $end : $end - 2);
         }
 
         return $start;
+    }
+
+    /**
+     * Where PCRE refuses a group number past 65535 whose digits start at
+     * $digitsStart: past the whole number from PCRE2 10.45, past the digit
+     * that takes it over before. Null for a number within the limit.
+     */
+    private function groupNumberTooBigOffset(int $digitsStart): ?int
+    {
+        $source = (string) $this->source;
+        $digits = substr($source, $digitsStart, strspn($source, '0123456789', $digitsStart));
+        $read = $this->digitsWithinGroupLimit($digits);
+        if ($read === \strlen($digits)) {
+            return null;
+        }
+
+        return $digitsStart + ($this->runningPcreAtLeast('10.45') ? \strlen($digits) : $read + 1);
     }
 
     /**
@@ -3129,7 +3158,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         if (1 !== preg_match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {
-            $this->raiseUnsupportedEscape('N{', $position + 1);
+            $this->raiseUnsupportedEscape('N{', $this->pastTheFault($position + 1));
         }
     }
 
@@ -3309,17 +3338,20 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return;
         }
 
+        // Past its end from PCRE2 10.47, on its "[" before.
+        $offset = $this->runningPcreAtLeast('10.47') ? $terminator + 2 : $start;
+
         if (':' === $source[$start + 1]) {
             $this->raiseSemanticError(
                 'POSIX named classes are supported only within a class.',
-                $terminator + 2,
+                $offset,
                 'regex.posix.outside_class',
             );
         }
 
         $this->raiseSemanticError(
             'POSIX collating elements are not supported.',
-            $terminator + 2,
+            $offset,
             'regex.posix.collating_element',
         );
     }

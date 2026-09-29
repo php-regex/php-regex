@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * Unit coverage for the per-case conformance runner.
@@ -98,10 +99,11 @@ final class Pcre2CaseRunnerTest extends TestCase
             'outcome' => 'pass-either-offset',
         ];
 
-        // testinput2:4797.
-        yield 'subpattern number too big — 10.48 at 13, 10.40 at 8, library 13 (pin)' => [
+        // testinput2:4797. The library reports the offset of the PCRE2 PHP
+        // runs: 13 from 10.45, 8 before.
+        yield 'subpattern number too big — 10.48 at 13, 10.40 at 8, library as the running PCRE2' => [
             'case' => self::case('(?(8000000000', 'reject', 13, 'subpattern number is too big', pcre2Code: 161, floor: ['verdict' => 'reject', 'offset' => 8, 'pcre2Code' => 161]),
-            'libraryOffset' => 13,
+            'libraryOffset' => PhpErrorOffset::of('/(?(8000000000/') ?? 13,
             'outcome' => 'pass-either-offset',
         ];
     }

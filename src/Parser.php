@@ -626,10 +626,13 @@ final class Parser
         }
 
         // PCRE lets "(*ACCEPT)" be repeated, "(*ACCEPT)??" included: it wraps
-        // it in a group. No other verb takes a quantifier.
+        // it in a group. No other verb takes a quantifier. An alphabetic name
+        // PCRE does not know, as "(*scs:" before PCRE2 10.45, is refused where
+        // it ends, before its quantifier is read: the validator reports it.
         $isAccept = $node instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::|$)/', $node->verb);
+        $isUnknownName = $node instanceof PcreVerbNode && 1 === preg_match('/^[a-z]/', $node->verb);
 
-        if (!$isAccept && $this->isAssertionNode($node)) {
+        if (!$isAccept && !$isUnknownName && $this->isAssertionNode($node)) {
             $nodeName = $this->getAssertionNodeName($node);
 
             throw $this->parserException(
@@ -1314,10 +1317,11 @@ final class Parser
 
         $read = PcreVerb::read($verbToken->value);
         if (null === $read->assertion || GroupType::T_GROUP_ATOMIC === $read->assertion || $read->nonAtomic) {
-            // PCRE stops at the colon of a named group, or at the "*".
+            // PCRE stops at the colon of a named group, or at the "*", past
+            // it from PCRE2 10.47.
             $position = 1 === preg_match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
                 ? $verbStartPosition + 2 + \strlen($name[0])
-                : $verbStartPosition + 1;
+                : $this->pastTheFault($verbStartPosition + 1);
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
@@ -1955,6 +1959,19 @@ final class Parser
             static fn (string $c): bool => ctype_digit($c),
         ));
 
+        // PCRE refuses a number past 65535 as it reads it, before the ")":
+        // past the digit that takes it over, past the whole number from
+        // PCRE2 10.45.
+        $value = 0;
+        foreach (str_split($num) as $read => $digit) {
+            $value = $value * 10 + (int) $digit;
+            if ($value > 65535) {
+                $position = $startPosition + \strlen($sign) + ($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45') ? \strlen($num) : $read + 1);
+
+                throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), $position);
+            }
+        }
+
         return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
     }
 
@@ -2109,7 +2126,7 @@ final class Parser
      */
     private function conditionErrorOffset(int $start): int
     {
-        return VersionCondition::errorOffset($this->pattern, $start)
+        return VersionCondition::errorOffset($this->pattern, $start, pastTheFault: $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47'))
             ?? $this->groupNames->invalidNameOffset($start);
     }
 
@@ -2208,10 +2225,16 @@ final class Parser
             return;
         }
 
-        // Before PCRE2 10.45, a POSIX class is refused as a range end just
-        // inside its "[", and as a range start on the hyphen.
-        if ($node instanceof PosixClassNode && !($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'))) {
-            $position = $isEnd ? $node->getStartPosition() + 1 : $position - 1;
+        // Before PCRE2 10.45, a range start is refused on the hyphen, a POSIX
+        // class ending a range just inside its "[", and a type or a property
+        // ending one past its letter.
+        if (!($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'))) {
+            $position = match (true) {
+                !$isEnd => $position - 1,
+                $node instanceof PosixClassNode => $node->getStartPosition() + 1,
+                // A type or a property.
+                default => $node->getStartPosition() + 2,
+            };
         }
 
         throw $this->parserException(

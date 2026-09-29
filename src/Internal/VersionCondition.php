@@ -67,11 +67,13 @@ final readonly class VersionCondition
      *
      * PCRE reads one when "VERSION" is not followed by ")" and the pattern
      * holds at least ten more characters. It stops on a character it cannot
-     * take where it expects a digit, a "." or the ")"; past it, unless the
-     * comparison began with ">".
+     * take where it expects a digit, a "." or the ")"; from PCRE2 10.47,
+     * which $pastTheFault stands for, past it, unless the comparison began
+     * with ">".
      */
-    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false): ?int
+    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false, bool $pastTheFault = true): ?int
     {
+        $shift = (int) $pastTheFault;
         $length = \strlen($pattern);
         if ($length - $position < 10 || 'VERSION' !== substr($pattern, $position, 7)) {
             return null;
@@ -88,12 +90,12 @@ final readonly class VersionCondition
         }
 
         if ('=' !== ($pattern[$at] ?? '')) {
-            return $atLeast ? $at : $at + 1;
+            return $atLeast ? $at : $at + $shift;
         }
 
         $at++;
         if (!ctype_digit($pattern[$at] ?? '')) {
-            return $atLeast ? $at : $at + 1;
+            return $atLeast ? $at : $at + $shift;
         }
 
         [$at, $tooBig] = $twoDigitMinor ? self::readVersionPartDigitByDigit($pattern, $at) : self::readVersionPart($pattern, $at);
@@ -104,7 +106,7 @@ final readonly class VersionCondition
         if ('.' === ($pattern[$at] ?? '')) {
             $at++;
             if (!ctype_digit($pattern[$at] ?? '')) {
-                return $at < $length ? $at + 1 : $at;
+                return $at < $length ? $at + $shift : $at;
             }
 
             // Up to PCRE2 10.45 the minor is two digits, and a third one is
@@ -123,7 +125,7 @@ final readonly class VersionCondition
         }
 
         if (')' !== ($pattern[$at] ?? '')) {
-            return $at < $length ? $at + 1 : $at;
+            return $at < $length ? $at + $shift : $at;
         }
 
         return null;

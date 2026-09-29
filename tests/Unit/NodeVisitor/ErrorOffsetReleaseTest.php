@@ -74,6 +74,11 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'condition that is no assertion' => ['pattern' => '/(?(?i))/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
         yield 'relative call without a number' => ['pattern' => '/(?+)/', 'bundled' => 2, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'code point without UTF mode' => ['pattern' => '/\\N{U+41}/', 'bundled' => 2, 'newer' => 8, 'movedIn' => '10.47'];
+        yield 'character name' => ['pattern' => '/\\N{name}/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
+        yield 'character name after text' => ['pattern' => '/a\\N{A B}/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'character name that is no count' => ['pattern' => '/\\N{25,ab}/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
+        yield 'character name in a class' => ['pattern' => '/[\\N{name}]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'uppercase conversion escape' => ['pattern' => '/\\U/', 'bundled' => 2, 'newer' => 2, 'movedIn' => '10.40'];
         yield 'name escape in a class' => ['pattern' => '/[\\N{4}]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'option setting with an unknown letter' => ['pattern' => '/(?iz)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'hyphen after a caret' => ['pattern' => '/(?^-)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
@@ -118,13 +123,56 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'second hyphen in an option setting' => ['pattern' => '/(?i-x-)/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.47'];
         yield 'reference name after g starting with a digit' => ['pattern' => '/\\g{9a}/', 'bundled' => 2, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'relative reference back past the start' => ['pattern' => '/\\g{-2}/', 'bundled' => 2, 'newer' => 2, 'movedIn' => '10.40'];
+        yield 'version with no number' => ['pattern' => '/(?(VERSION=x)yes|no)/', 'bundled' => 11, 'newer' => 12, 'movedIn' => '10.47'];
+        yield 'version with no minor after its dot' => ['pattern' => '/(?(VERSION=10.x)yes|no)/', 'bundled' => 14, 'newer' => 15, 'movedIn' => '10.47'];
+        yield 'version compared with less than' => ['pattern' => '/(?(VERSION<10)yes|no)/', 'bundled' => 10, 'newer' => 11, 'movedIn' => '10.47'];
+        yield 'version with a third number' => ['pattern' => '/(?(VERSION>=10.0.0)yes|no)/', 'bundled' => 16, 'newer' => 17, 'movedIn' => '10.47'];
+        yield 'version followed by a letter' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'bundled' => 13, 'newer' => 14, 'movedIn' => '10.47'];
         yield 'version number past 1000' => ['pattern' => '/(?(VERSION=1001.1)yes|no)/', 'bundled' => 15, 'newer' => 15, 'movedIn' => '10.40'];
+
+        // PCRE2 10.45 reads a group number past 65535 whole before it
+        // refuses it; before, it stops past the digit that takes it over.
+        yield 'reference number too big' => ['pattern' => '/\\g66666666/', 'bundled' => 7, 'newer' => 10, 'movedIn' => '10.45'];
+        yield 'relative reference number too big' => ['pattern' => '/\\g+66666666/', 'bundled' => 8, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'backward reference number too big' => ['pattern' => '/a\\g-66666666/', 'bundled' => 9, 'newer' => 12, 'movedIn' => '10.45'];
+        yield 'call number too big' => ['pattern' => '/(?66666666)/', 'bundled' => 7, 'newer' => 10, 'movedIn' => '10.45'];
+        yield 'relative call number too big' => ['pattern' => '/(?-66666666)/', 'bundled' => 8, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'forward call number too big' => ['pattern' => '/(?+66666666)/', 'bundled' => 8, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'condition number too big' => ['pattern' => '/(?(66666666)a)/', 'bundled' => 8, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'condition number too big never closed' => ['pattern' => '/(?(8000000000/', 'bundled' => 8, 'newer' => 13, 'movedIn' => '10.45'];
+        // Every release: a reference or a call to a group that does not exist.
+        yield 'call by P to a missing name' => ['pattern' => '/(?P>nope)/', 'bundled' => 4, 'newer' => 4, 'movedIn' => '10.40'];
+        yield 'call to a missing name' => ['pattern' => '/(?&nope)/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
+        yield 'call to a missing number' => ['pattern' => '/(?2)/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
+        yield 'condition on a missing name' => ['pattern' => '/(?(<nope>)a)/', 'bundled' => 4, 'newer' => 4, 'movedIn' => '10.40'];
+        yield 'condition on recursion into a missing name' => ['pattern' => '/(?(R&nope)a)/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
+        yield 'condition on a group before the first' => ['pattern' => '/(?(-1)a)/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
+        yield 'condition on a missing number' => ['pattern' => '/(?(2)a)/', 'bundled' => 2, 'newer' => 2, 'movedIn' => '10.40'];
+        // Every release: a braced number past 65535 is refused on its brace.
+        yield 'braced reference number too big' => ['pattern' => '/\\g{66666666}/', 'bundled' => 2, 'newer' => 2, 'movedIn' => '10.40'];
+        yield 'angled reference number too big' => ['pattern' => '/\\g<66666666>/', 'bundled' => 2, 'newer' => 2, 'movedIn' => '10.40'];
+        yield 'backslash number too big' => ['pattern' => '/\\800000/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
+
+        yield 'limit value too large' => ['pattern' => '/(*LIMIT_MATCH=4294967290)abc/', 'bundled' => 24, 'newer' => 23, 'movedIn' => '10.45'];
+        yield 'limit value far too large' => ['pattern' => '/(*LIMIT_MATCH=99999999999)abc/', 'bundled' => 24, 'newer' => 23, 'movedIn' => '10.45'];
+        yield 'verb as a condition' => ['pattern' => '/(?(*ACCEPT)xxx)/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
+        yield 'mark as a condition' => ['pattern' => '/(?(*MARK:a)b)/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
+        yield 'collating element outside a class' => ['pattern' => '/[.x.]/', 'bundled' => 0, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'equivalence class outside a class' => ['pattern' => '/[=x=]/', 'bundled' => 0, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'POSIX class outside a class' => ['pattern' => '/[:x:]/', 'bundled' => 0, 'newer' => 5, 'movedIn' => '10.47'];
 
         // PCRE2 10.45 reports an unknown POSIX class past its end.
         yield 'unknown POSIX class' => ['pattern' => '/[[:foo:]]/', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.45'];
         yield 'collating element' => ['pattern' => '/x[[=a=]]/', 'bundled' => 2, 'newer' => 7, 'movedIn' => '10.45'];
         yield 'POSIX class ending a range' => ['pattern' => '/[a-[:digit:]]/', 'bundled' => 4, 'newer' => 12, 'movedIn' => '10.45'];
         yield 'POSIX class starting a range' => ['pattern' => '/[[:digit:]-z]/', 'bundled' => 10, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'character type starting a range' => ['pattern' => '/[\\d-a]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.45'];
+        yield 'character types on both ends' => ['pattern' => '/[\\d-\\w]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.45'];
+        yield 'property letter starting a range' => ['pattern' => '/[\\pL-z]/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.45'];
+        yield 'braced property starting a range' => ['pattern' => '/[\\p{Lu}-z]/', 'bundled' => 7, 'newer' => 8, 'movedIn' => '10.45'];
+        yield 'property letter ending a range' => ['pattern' => '/[z-\\pL]/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.45'];
+        yield 'braced property ending a range' => ['pattern' => '/[z-\\p{Lu}]/', 'bundled' => 5, 'newer' => 9, 'movedIn' => '10.45'];
+        yield 'character type ending a range' => ['pattern' => '/[a-\\d]/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'unknown negated POSIX class' => ['pattern' => '/a[[:^foo:]]b/', 'bundled' => 5, 'newer' => 10, 'movedIn' => '10.45'];
 
         // PCRE2 10.45 refuses a property name past its first character that
@@ -166,6 +214,20 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'count too big after a possessive quantifier' => ['pattern' => '/a++{65536}/', 'bundled' => 9, 'newer' => 9, 'movedIn' => '10.40'];
         yield 'count too big after a callout' => ['pattern' => '/(?C){70000}/', 'bundled' => 10, 'newer' => 10, 'movedIn' => '10.40'];
         yield 'count too big at the start' => ['pattern' => '/{65536}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+    }
+
+    #[Test]
+    public function test_an_alphabetic_name_the_bundled_pcre2_does_not_know_is_refused_before_its_quantifier(): void
+    {
+        // "(*scs:" arrived in PCRE2 10.45: 10.40 to 10.44 refuse the name
+        // where it ends, before they read what repeats it (pcre2test on each).
+        foreach ([80200, 80500] as $phpVersion) {
+            $regex = Regex::create(['cache' => null, 'php_version' => $phpVersion]);
+
+            $this->assertSame(8, $regex->validate('/(a)(*scs:(1)b)*c/')->offset);
+            $this->assertSame(5, $regex->validate('/(*scs:(1)a)??(a)/')->offset);
+            $this->assertSame(8, $regex->validate('/(a)(*scs:(1)b){3,}+c/')->offset);
+        }
     }
 
     #[Test]
