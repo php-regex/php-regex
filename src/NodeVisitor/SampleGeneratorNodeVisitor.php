@@ -15,6 +15,7 @@ namespace RegexParser\NodeVisitor;
 
 use Random\Engine\Mt19937;
 use Random\Randomizer;
+use RegexParser\GroupNumberingCollector;
 use RegexParser\Node;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -97,6 +98,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      */
     private array $groupNumbers = [];
 
+    /**
+     * @var array<string, array<int>> the numbers of the groups each name is given, as they open
+     */
+    private array $groupNumbersByName = [];
+
     private int $groupDefinitionCounter = 1;
 
     private bool $unicode = false;
@@ -158,6 +164,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->requiredPrefixes = [];
         $this->requiredSuffixes = [];
         $this->collectGroups($node->pattern);
+        $this->numberGroupsAsPcre($node);
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
@@ -375,10 +382,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return $this->captures[$ref];
         }
 
-        // Handle named \k<name> or \k{name} backrefs
-        // $ref is guaranteed to be a string here.
-        if (preg_match('/^\\\\k<(\w++)>$/', $ref, $m) || preg_match('/^\\\\k\{(\w++)\}$/', $ref, $m)) {
-            return $this->captures[$m[1]] ?? '';
+        // "\k<name>", "\k{name}", "\k'name'": several groups may share the
+        // name, and the reference matches the first of them that captured.
+        if (1 === preg_match('/^\\\\k[<{\'](\w++)[>}\']$/', $ref, $m)) {
+            foreach ($this->groupNumbersByName[$m[1]] ?? [] as $number) {
+                if (isset($this->captures[$number])) {
+                    return $this->captures[$number];
+                }
+            }
+
+            return '';
         }
 
         // Backreference to a group that hasn't matched yet
@@ -979,6 +992,30 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         if ($node instanceof DefineNode) {
             $this->collectGroups($node->content);
+        }
+
+        if ($node instanceof ScriptRunNode && null !== $node->content) {
+            $this->collectGroups($node->content);
+        }
+    }
+
+    /**
+     * The groups take the numbers PCRE gives them: in "(?|(b)|(q))" both
+     * are group 2, and a call to 2 runs the first.
+     */
+    private function numberGroupsAsPcre(RegexNode $node): void
+    {
+        // Both walk the tree in the same order, a group before what it holds.
+        $numbering = (new GroupNumberingCollector())->collect($node);
+        $numbers = $numbering->captureSequence;
+        $this->groupNumbersByName = $numbering->namedGroups;
+        $groups = array_values($this->groupIndexMap);
+
+        $this->groupIndexMap = [];
+        foreach ($groups as $order => $group) {
+            $number = $numbers[$order] ?? $order + 1;
+            $this->groupNumbers[spl_object_id($group)] = $number;
+            $this->groupIndexMap[$number] ??= $group;
         }
     }
 

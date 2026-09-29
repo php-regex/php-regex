@@ -92,6 +92,14 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'word character past ASCII' => ['/^[^[:ascii:]\\W]$/u'];
         yield 'ascii' => ['/^[[:ascii:]]$/'];
         yield 'negated digit' => ['/^[[:^digit:]]$/'];
+        // Groups are numbered as PCRE numbers them, branch resets included.
+        yield 'call past a branch reset' => ['/^X(?5)(a)(?|(b)|(q))(c)(d)(Y)$/'];
+        yield 'call into a nested branch reset' => ['/^X(?7)(a)(?|(b|(r)(s))|(q))(c)(d)(Y)$/'];
+        yield 'reference past a branch reset' => ['/^(?|(a)|(b))(c)\\2$/'];
+        // A name several groups share refers to the first of them that captured.
+        yield 'duplicate names' => ['/^(?<n>A)(?:(?<n>foo)|(?<n>bar))\\k<n>$/J'];
+        yield 'duplicate names, Python spelling' => ['/^(?P<same>a)(?P<same>b)(?P=same)$/J'];
+        yield 'names in a branch reset' => ['/^(?|(?\'a\'aaa)|(?\'a\'b))\\k\'a\'$/'];
         // A lookahead in a plain group holds the text after the group.
         yield 'word start and end' => ['/[[:<:]]red[[:>:]]/'];
         yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];
@@ -200,6 +208,27 @@ final class SampleGeneratorVisitorTest extends TestCase
             $this->assertMatchesRegularExpression('/^[ab]b$/', $ahead->accept($generator));
             $this->assertMatchesRegularExpression('/^b[bx]d$/', $behind->accept($generator));
         }
+    }
+
+    public function test_groups_are_numbered_through_script_runs_and_shared_names(): void
+    {
+        $generator = new SampleGeneratorNodeVisitor();
+        $shared = '/^(?:(?<n>a)|(?<n>b))\\k<n>$/J';
+        $inRun = '/^(*sr:(a))(b)(?2)$/';
+        // In a branch reset, a call to a shared number runs the first group.
+        $reset = '/^(?|(a)|(b))(?1)$/';
+
+        for ($seed = 0; $seed < 8; $seed++) {
+            $generator->setSeed($seed);
+            $this->assertSame(1, preg_match($shared, $this->regex->parse($shared)->accept($generator)), (string) $seed);
+            $this->assertSame('abb', $this->regex->parse($inRun)->accept($generator));
+            $this->assertSame(1, preg_match($reset, $this->regex->parse($reset)->accept($generator)), (string) $seed);
+        }
+    }
+
+    public function test_a_name_that_captured_nothing_yet_gives_nothing(): void
+    {
+        $this->assertSame('a', $this->regex->parse('/\\k<n>(?<n>a)/')->accept(new SampleGeneratorNodeVisitor()));
     }
 
     public function test_generate_special_types(): void
