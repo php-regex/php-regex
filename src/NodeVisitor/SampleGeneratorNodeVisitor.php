@@ -614,8 +614,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return self::$propertySamples[$key];
         }
 
-        $delimiter = str_contains($escape, '/') ? "\x01" : '/';
-        $pattern = $delimiter.$escape.$delimiter.($this->unicode ? 'u' : '');
+        // A written class escapes its "/", so "/" delimits it.
+        $pattern = '/'.$escape.'/'.($this->unicode ? 'u' : '');
         $found = [];
         foreach ($this->unicode ? self::codePointChunks() : [implode('', array_map(\chr(...), range(0, 255)))] as $chunk) {
             if (false === @preg_match_all($pattern, $chunk, $matches)) {

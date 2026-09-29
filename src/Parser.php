@@ -1575,13 +1575,7 @@ final class Parser
      */
     private function movedError(LexerException|ParserException $error, int $offset): LexerException|ParserException
     {
-        $message = preg_replace_callback(
-            '/at position (\d++)/',
-            static fn (array $matches): string => 'at position '.((int) $matches[1] + $offset),
-            $error->getMessage(),
-        ) ?? $error->getMessage();
-
-        return $error::withContext($message, (int) $error->getPosition() + $offset, $this->pattern, $error);
+        return $error::withContext($error->getMessage(), (int) $error->getPosition() + $offset, $this->pattern, $error);
     }
 
     /**

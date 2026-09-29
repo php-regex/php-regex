@@ -32,6 +32,23 @@ final class CharSetTest extends TestCase
         $this->assertFalse($full->isEmpty());
     }
 
+    public function test_intersect_keeps_what_both_sets_hold(): void
+    {
+        // Ranges that touch on one character share it.
+        $shared = CharSet::fromRange(97, 99)->intersect(CharSet::fromRange(99, 101));
+        $this->assertSame('c', $shared->sampleChar());
+        $this->assertTrue($shared->intersects(CharSet::fromChar('c')));
+        $this->assertFalse($shared->intersects(CharSet::fromChar('b')));
+        $this->assertFalse($shared->intersects(CharSet::fromChar('d')));
+        $this->assertSame('c', CharSet::fromRange(99, 101)->intersect(CharSet::fromRange(97, 99))->sampleChar());
+
+        // Ranges apart share nothing, in either order.
+        $this->assertTrue(CharSet::fromRange(0, 5)->intersect(CharSet::fromRange(10, 20))->isEmpty());
+        $this->assertTrue(CharSet::fromRange(10, 20)->intersect(CharSet::fromRange(0, 5))->isEmpty());
+
+        $this->assertTrue(CharSet::fromRange(0, 5)->intersect(CharSet::unknown())->isUnknown());
+    }
+
     public function test_union_merges_ranges_and_handles_unknown(): void
     {
         $rangeA = CharSet::fromRange(0, 2);

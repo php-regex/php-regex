@@ -34,7 +34,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
 
-        foreach (['/(?[ [aa] ])/', '/(?[ \\d - [bb] ])/', '/(?[ ![cc] ])/'] as $pattern) {
+        foreach (['/(?[ [aa] ])/', '/(?[ \\d - [bb] ])/', '/(?[ [dd] - \\d ])/', '/(?[ ![cc] ])/'] as $pattern) {
             $visitor = new LinterNodeVisitor();
             $regex->parse($pattern)->accept($visitor);
 

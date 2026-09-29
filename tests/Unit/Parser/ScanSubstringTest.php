@@ -90,6 +90,9 @@ final class ScanSubstringTest extends TestCase
 
         // Rebuilt trees keep the list.
         $this->assertStringContainsString("(*scs:(1,'n')", $regex->optimize("/(a)(*scs:(1,'n')b)(?<n>c)/")->optimized);
+        $python = $regex->parse('/(?P<n>a)(*scs:(1)b)/')->accept(new ModernizerNodeVisitor());
+        $this->assertInstanceOf(RegexNode::class, $python);
+        $this->assertSame('/(?<n>a)(*scs:(1)b)/', $python->accept(new CompilerNodeVisitor()));
         $modernized = $ast->accept(new ModernizerNodeVisitor());
         $this->assertInstanceOf(RegexNode::class, $modernized);
         $this->assertStringContainsString("(*scs:(1,'n')", $modernized->accept(new CompilerNodeVisitor()));

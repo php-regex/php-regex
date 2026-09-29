@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Exception\TranspileException;
+use RegexParser\Internal\ExtendedClassReader;
 use RegexParser\Node\AssertionNode;
 use RegexParser\Node\BackrefNode;
 use RegexParser\Node\CharClassNode;
@@ -196,6 +197,55 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertSame(ReDoSSeverity::SAFE, $operation->accept(new ReDoSProfileNodeVisitor()));
         $this->assertNull($operation->accept(new class extends AbstractNodeVisitor {}));
         $this->assertNull($quantified->node->accept(new class extends AbstractNodeVisitor {}));
+    }
+
+    #[Test]
+    public function test_a_class_or_posix_form_that_never_closes_ends_with_the_pattern(): void
+    {
+        $this->assertSame(4, ExtendedClassReader::endOfClass('[:ab', 0));
+        $this->assertSame(6, ExtendedClassReader::endOfClass('[a\\Qb]', 0));
+        $this->assertSame(5, ExtendedClassReader::endOfClass('[:a:]', 0));
+    }
+
+    #[Test]
+    public function test_the_messages_name_what_is_wrong(): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
+
+        $this->assertStringStartsWith('Malformed \\p sequence', (string) $regex->validate('/(?[ \\p{L ])/')->error);
+        $this->assertStringStartsWith('Malformed \\P sequence', (string) $regex->validate('/(?[ \\P{L ])/')->error);
+        $this->assertStringStartsWith('Unknown POSIX class "<" at position 10.', (string) $regex->validate('/(?[ [[:<:]] ])/')->error);
+        $this->assertStringStartsWith('Unknown POSIX class ">" at position 10.', (string) $regex->validate('/(?[ [[:>:]] ])/')->error);
+    }
+
+    #[Test]
+    public function test_the_length_of_the_class_is_one_character(): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
+
+        $this->assertSame([1, 1], $regex->parse('/(?[ \\d - [3] ])/')->accept(new LengthRangeNodeVisitor()));
+    }
+
+    #[Test]
+    public function test_a_character_is_written_back_as_a_byte_escape_without_utf(): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
+
+        $this->assertSame('/(?[\\x38])/', $regex->parse('/(?[ \\8 ])/')->accept(new CompilerNodeVisitor(true)));
+        $this->assertSame('/[a b]/', $regex->parse('/[a b]/')->accept(new CompilerNodeVisitor(true)));
+    }
+
+    #[Test]
+    public function test_overlaps_follow_each_set_operation(): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
+
+        // Each set leaves out [5-9], so the branches never overlap.
+        foreach (['(?[ [0-4] & [0-9] ])', '(?[ [0-9] ^ [5-9] ])', '(?[ [0-9] - [5-9] ])'] as $set) {
+            $this->assertNotSame(ReDoSSeverity::CRITICAL, $regex->redos('/^('.$set.'|[5-9])+$/')->severity, $set);
+        }
+
+        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ [0-4] + [5-6] ])|[5-9])+$/')->severity);
     }
 
     #[Test]
@@ -482,6 +532,9 @@ final class ExtendedCharClassTest extends TestCase
         // A nested class is read under "xx": blanks before a first "]" leave it a member.
         yield 'blank before a first "]"' => ['pattern' => '/(?[[ ]a]])/', 'offsetBefore' => 2];
         yield 'blanks around "^" before a first "]"' => ['pattern' => '/(?[[ ^ ]a]])/', 'offsetBefore' => 2];
+        yield 'class that looks like a POSIX form, then a class ending in ":"' => ['pattern' => '/(?[ [:a] + \\d - [b:] ])/', 'offsetBefore' => 2];
+        yield 'quote after a lone end of quote' => ['pattern' => '/(?[[a\\E\\Qb]c\\E]])/', 'offsetBefore' => 2];
+        yield 'empty quote after a member' => ['pattern' => '/(?[[a\\Q\\E]])/', 'offsetBefore' => 2];
         yield 'empty quote before a first "]"' => ['pattern' => '/(?[[\\Q\\E]a]])/', 'offsetBefore' => 2];
         yield 'lone end of quote before a first "]"' => ['pattern' => '/(?[[^\\E]a]])/', 'offsetBefore' => 2];
         yield 'quoted "]" in a nested class' => ['pattern' => '/(?[[\\Qa]\\E]])/', 'offsetBefore' => 2];
@@ -526,6 +579,9 @@ final class ExtendedCharClassTest extends TestCase
         yield 'non-hex character in braces' => ['pattern' => '/abcdefgh(?[ \\x{41 ])/', 'offsetBefore' => 10, 'offset1045' => 18, 'offset1049' => 19];
         yield 'multibyte character under UTF' => ['pattern' => '/(?[ é ])/u', 'offsetBefore' => 2, 'offset1045' => 6, 'offset1049' => 6];
         yield 'multibyte character as a second operand under UTF' => ['pattern' => '/(?[ \\d é ])/u', 'offsetBefore' => 2, 'offset1045' => 9, 'offset1049' => 9];
+        yield 'unknown escape, then a control escape of a non-ASCII character' => ['pattern' => '/(?[\\j\\cé])/', 'offsetBefore' => 2, 'offset1045' => 4, 'offset1049' => 5];
+        yield 'quoted text after an operand' => ['pattern' => '/(?[\\t\\Qab])/', 'offsetBefore' => 2, 'offset1045' => 8, 'offset1049' => 8];
+        yield 'quote at the end after an operand' => ['pattern' => '/(?[\\d\\Q/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
         yield 'control escape at the end' => ['pattern' => '/(?[\\c/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 5];
         yield 'control escape at the end, after an operand' => ['pattern' => '/(?[\\d\\c/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
         yield 'control "]" leaves a nested class open' => ['pattern' => '/(?[[\\c])/', 'offsetBefore' => 2, 'offset1045' => 8, 'offset1049' => 8];

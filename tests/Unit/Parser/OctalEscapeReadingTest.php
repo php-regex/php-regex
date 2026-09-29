@@ -91,6 +91,12 @@ final class OctalEscapeReadingTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.44']);
         $this->assertSame([11, 11], $regex->parse('/^a\\800000000b$/')->accept(new LengthRangeNodeVisitor()));
         $this->assertSame([12, 12], $regex->parse('/^(a)\\9147483640{2}$/')->accept(new LengthRangeNodeVisitor()));
+        $digits = $regex->parse('/a\\800000000b/')->pattern;
+        $this->assertInstanceOf(SequenceNode::class, $digits);
+        $split = $digits->children[1];
+        $this->assertInstanceOf(SequenceNode::class, $split);
+        $this->assertSame([1, 3, 3, 11], [$split->children[0]->getStartPosition(), $split->children[0]->getEndPosition(), $split->children[1]->getStartPosition(), $split->children[1]->getEndPosition()]);
+
         // Written back as the digits it matches, which every release reads alike.
         $this->assertSame('/^a800000000b$/', $regex->parse('/^a\\800000000b$/')->accept(new CompilerNodeVisitor()));
     }

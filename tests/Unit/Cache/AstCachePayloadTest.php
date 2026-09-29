@@ -106,6 +106,18 @@ final class AstCachePayloadTest extends TestCase
     }
 
     #[Test]
+    public function test_a_payload_is_decoded_into_the_tree(): void
+    {
+        $cache = new FilesystemCache($this->cacheDir);
+        Regex::create(['cache' => $cache, 'pcre_version' => '10.45'])->parse('/(?[ \\d - [3] ])/');
+
+        $tree = CachePayloadDecoder::decode((string) file_get_contents($this->onlyCacheFile()));
+
+        $this->assertInstanceOf(RegexNode::class, $tree);
+        $this->assertInstanceOf(ExtendedCharClassNode::class, $tree->pattern);
+    }
+
+    #[Test]
     public function test_every_node_class_may_be_read_back(): void
     {
         foreach ((array) glob(\dirname(__DIR__, 3).'/src/Node/*.php') as $file) {
