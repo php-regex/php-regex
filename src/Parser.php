@@ -1469,15 +1469,23 @@ final class Parser
         $flags = str_replace('x', '', $this->flags).($this->extendedMode ? 'x' : '');
         $flags = $this->noAutoCapture && !str_contains($flags, 'n') ? $flags.'n' : $flags;
 
-        // The payload is read for the same target as the pattern around it.
+        // The payload is read for the same target as the pattern around it,
+        // its tokens moved to where they stand in the whole pattern.
         try {
             $stream = (new Lexer($this->target))->tokenize($payload, $flags);
-            $inner = new Parser($this->maxRecursionDepth, $this->target);
-            $inner->capturesBefore = $this->captureCount;
-            $pattern = $inner->parse($stream, $flags, '/', \strlen($payload));
-        } catch (LexerException|ParserException $error) {
+        } catch (LexerException $error) {
+            // Not reached from a parsed pattern: the lexer read this text around it first.
             throw $this->movedError($error, $absoluteOffset);
         }
+
+        $tokens = [];
+        foreach ($stream->getTokens() as $token) {
+            $tokens[] = new Token($token->type, $token->value, $token->position + $absoluteOffset, $token->sourceLength);
+        }
+
+        $inner = new Parser($this->maxRecursionDepth, $this->target);
+        $inner->capturesBefore = $this->captureCount;
+        $pattern = $inner->parse(new TokenStream($tokens, $this->pattern), $flags, '/', \strlen($this->pattern));
 
         // The groups it holds take numbers in the enclosing pattern.
         $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;

@@ -232,6 +232,11 @@ final class ScanSubstringTest extends TestCase
      */
     public static function provideRefused(): iterable
     {
+        // The body is judged as any part of the pattern, where it stands.
+        yield 'unknown escape in the body' => ['pattern' => '/(a)(*scs:(1)\\q)/', 'offsetBefore' => 8, 'offset1045' => 13, 'offset1049' => 14];
+        yield 'escape no class takes in the body' => ['pattern' => '/(a)(*scs:(1)[\\B])/', 'offsetBefore' => 8, 'offset1045' => 14, 'offset1049' => 15];
+        yield 'range out of order in the body' => ['pattern' => '/(a)(*scs:(1)[z-a])/', 'offsetBefore' => 8, 'offset1045' => 15, 'offset1049' => 16];
+        yield 'unknown escape in an extended class in the body' => ['pattern' => '/(a)(*scs:(1)(?[ \\q ]))/', 'offsetBefore' => 8, 'offset1045' => 17, 'offset1049' => 18];
         yield 'refused case 1' => ['pattern' => '/(*scs:/', 'offsetBefore' => 5, 'offset1045' => 6, 'offset1049' => 6];
         yield 'refused case 2' => ['pattern' => '/(*scan_substring:(/', 'offsetBefore' => 16, 'offset1045' => 18, 'offset1049' => 18];
         yield 'refused case 3' => ['pattern' => '/(*scs:(\'name\'/', 'offsetBefore' => 5, 'offset1045' => 13, 'offset1049' => 13];

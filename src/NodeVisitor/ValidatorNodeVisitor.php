@@ -677,16 +677,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return;
         }
 
-        $source = $this->source;
-        $positionOffset = $this->positionOffset;
-        $this->enterPayload($node->startPosition, $node->endPosition);
         $this->enterNesting($node->content->getStartPosition());
 
         try {
             $node->content->accept($this);
         } finally {
-            $this->source = $source;
-            $this->positionOffset = $positionOffset;
             $this->nestingDepth--;
         }
     }
