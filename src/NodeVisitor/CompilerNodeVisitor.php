@@ -648,11 +648,13 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): string
     {
+        $returned = [] === $node->returnedGroups ? '' : '('.implode(',', $node->returnedGroups).')';
+
         return match ($node->syntax) {
-            '&' => '(?&'.$node->reference.')',
-            'P>' => '(?P>'.$node->reference.')',
+            '&' => '(?&'.$node->reference.$returned.')',
+            'P>' => '(?P>'.$node->reference.$returned.')',
             'g' => '\g<'.$node->reference.'>',
-            default => '(?'.$node->reference.')',
+            default => '(?'.$node->reference.$returned.')',
         };
     }
 

@@ -1305,68 +1305,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): void
     {
-        $this->ensureGroupNumberingInitialized();
-
-        $ref = $node->reference;
-
-        if ('R' === $ref || '0' === $ref) {
-            return; // (?R) or (?0) is always valid.
-        }
-
-        if (str_starts_with($ref, 'R')) {
-            $numPart = substr($ref, 1);
-            if ('' === $numPart) {
-                return;
-            }
-
-            if (ctype_digit($numPart)) {
-                $num = (int) $numPart;
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.recursion', 'Recursion condition');
-
-                return;
-            }
-
-            if (str_starts_with($numPart, '-') && ctype_digit(substr($numPart, 1))) {
-                $num = (int) $numPart;
-                $this->assertRelativeReferenceExists($num, $node->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
-
-                return;
-            }
-        }
-
-        // "(?-0)" and "(?+0)" point nowhere: PCRE refuses a relative zero,
-        // at the ")" of "(?-0)" and at the "<" of "\g<-0>".
-        if ('-0' === $ref || '+0' === $ref) {
-            $this->raiseSemanticError(
-                \sprintf('Subroutine call relative reference cannot be zero: "%s".', $ref),
-                'g' === $node->syntax ? $node->startPosition + 2 : max($node->startPosition, $node->getEndPosition() - 1),
-                'regex.subroutine.relative_zero',
-            );
-        }
-
-        // Numeric reference: (?1), (?-1), (?+1), \g<-1>, \g<+1>
-        if (1 === preg_match('/^[+-]?\d+$/', $ref)) {
-            $num = (int) $ref;
-            if (0 === $num) {
-                return; // (?0) is an alias for (?R)
-            }
-            if (str_starts_with($ref, '+') || str_starts_with($ref, '-')) {
-                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.relative_missing', 'Subroutine call');
-            } else {
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.missing_group', 'Subroutine call');
-            }
-
-            return;
-        }
-
-        // Named reference: (?&name), (?P>name), \g<name>
-        if (!$this->groupNumbering->hasNamedGroup($ref)) {
-            $this->raiseMissingReference(
-                \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
-                $this->missingReferenceOffset($node),
-                'regex.subroutine.missing_named_group',
-            );
-        }
+        $this->validateSubroutineReference($node);
+        $this->validateReturnedGroups($node);
     }
 
     #[\Override]
@@ -1550,6 +1490,101 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'Invalid callout identifier type.',
                 $position,
                 'regex.callout.invalid_type',
+            );
+        }
+    }
+
+    /**
+     * "(?1(2,<name>))": each group the call returns must exist. PCRE reports
+     * a missing one where it is named, a name past its "<" or quote.
+     */
+    private function validateReturnedGroups(SubroutineNode $node): void
+    {
+        if ([] === $node->returnedGroups || null === $this->source) {
+            return;
+        }
+
+        $at = (int) strpos($this->source, '(', $node->startPosition + 1) + 1;
+        foreach ($node->returnedGroups as $group) {
+            $exists = match (true) {
+                ctype_digit($group) => (int) $group <= $this->groupNumbering->maxGroupNumber,
+                str_starts_with($group, '+') => ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 + (int) $group <= $this->groupNumbering->maxGroupNumber,
+                str_starts_with($group, '<'), str_starts_with($group, "'") => $this->groupNumbering->hasNamedGroup(substr($group, 1, -1)),
+                // A relative number back is refused as it is read.
+                default => true,
+            };
+
+            if (!$exists) {
+                $this->raiseMissingReference(
+                    \sprintf('The call returns group %s, which does not exist.', $group),
+                    ctype_digit($group) || str_starts_with($group, '+') ? $at : $at + 1,
+                    'regex.subroutine.missing_group',
+                );
+            }
+
+            $at += \strlen($group) + 1;
+        }
+    }
+
+    private function validateSubroutineReference(SubroutineNode $node): void
+    {
+        $this->ensureGroupNumberingInitialized();
+
+        $ref = $node->reference;
+
+        if ('R' === $ref || '0' === $ref) {
+            return; // (?R) or (?0) is always valid.
+        }
+
+        if (str_starts_with($ref, 'R')) {
+            $numPart = substr($ref, 1);
+
+            if (ctype_digit($numPart)) {
+                $num = (int) $numPart;
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.recursion', 'Recursion condition');
+
+                return;
+            }
+
+            if (str_starts_with($numPart, '-') && ctype_digit(substr($numPart, 1))) {
+                $num = (int) $numPart;
+                $this->assertRelativeReferenceExists($num, $node->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
+
+                return;
+            }
+        }
+
+        // "(?-0)" and "(?+0)" point nowhere: PCRE refuses a relative zero,
+        // at the ")" of "(?-0)" and at the "<" of "\g<-0>".
+        if ('-0' === $ref || '+0' === $ref) {
+            $this->raiseSemanticError(
+                \sprintf('Subroutine call relative reference cannot be zero: "%s".', $ref),
+                'g' === $node->syntax ? $node->startPosition + 2 : max($node->startPosition, $node->getEndPosition() - 1),
+                'regex.subroutine.relative_zero',
+            );
+        }
+
+        // Numeric reference: (?1), (?-1), (?+1), \g<-1>, \g<+1>
+        if (1 === preg_match('/^[+-]?\d+$/', $ref)) {
+            $num = (int) $ref;
+            if (0 === $num) {
+                return; // (?0) is an alias for (?R)
+            }
+            if (str_starts_with($ref, '+') || str_starts_with($ref, '-')) {
+                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.relative_missing', 'Subroutine call');
+            } else {
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.missing_group', 'Subroutine call');
+            }
+
+            return;
+        }
+
+        // Named reference: (?&name), (?P>name), \g<name>
+        if (!$this->groupNumbering->hasNamedGroup($ref)) {
+            $this->raiseMissingReference(
+                \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
+                $this->missingReferenceOffset($node),
+                'regex.subroutine.missing_named_group',
             );
         }
     }
@@ -2745,7 +2780,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return $start + 3;
             }
 
-            return $this->groupNumberTooBigOffset($start + 2 + strspn($text, '+-', 2)) ?? $end - 1;
+            // Past the number, before the groups "(?1(2))" returns.
+            return $this->groupNumberTooBigOffset($start + 2 + strspn($text, '+-', 2)) ?? $start + 2 + \strlen($node instanceof SubroutineNode ? $node->reference : $node->ref);
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.

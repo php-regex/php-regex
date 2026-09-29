@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Calls that return capture groups, PCRE2 10.47: `(?1(2,<name>))`, `(?R(1))`, `(?&name('id'))` and `(?P>name(-1))` are read for a target on 10.47 or later, with the list in `SubroutineNode::$returnedGroups`, written back by the compiler and the highlighters, and each group checked, where PCRE refuses a missing one. Before 10.47 they are refused as before.
 - `pcre_version`, next to `php_version`: patterns are judged for one PHP version and one PCRE2 release, `RegexParser\PcreTarget`, resolved once and read by the lexer, the parser, the validator and the cache key. With neither option, the running PHP and the PCRE2 it links; `php_version` alone, that PHP with the PCRE2 it bundles; `php_version: 8.4, pcre_version: 10.42` judges for the PHP 8.4 packages of Ubuntu 24.04. `Regex::target()` says which. The command line takes `--pcre-version`.
 - The PHPStan extension judges patterns for PHPStan's `phpVersion`, with new `regexParser.phpVersion` (`runtime` for the PHP running PHPStan) and `regexParser.pcreVersion` parameters.
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 
 ### Fixed
+- The HTML highlighter wrote `(?<`, `(?<=`, `(?<!`, `(?>`, `(?&` and `(?P>` without escaping `<`, `>` and `&`, so a browser read `(?<name>` as a tag.
 - `\NN` of 10 or more, starting with 1 to 7, was read as a back reference in the tree and judged against the pattern's total group count. PCRE reads it as an octal escape unless that many groups opened *before* it: `\11` followed by eleven groups is a tab, `\1000*` is `@` then `0*`. The parser now builds a `CharLiteralNode` (`OCTAL_LEGACY`) for it, so lengths, literal prefixes, samples and ReDoS analysis see a character; the compiled form spells it `\o{101}` where groups written before it would turn `\101` into a reference. The suspicious-escape lint no longer reports an octal escape past `\377` in UTF mode, where it is a code point.
 - `php_version` naming the running PHP mixed two engines: the parser judged with the PCRE2 that PHP bundles, the validator with the one it links, so `/+/` was reported at 0 and `/[[:foo:]]/` at 8. One target now judges both.
 - The cache key did not name the PCRE2 release, though the tree depends on it (`{,2}` repeats from 10.43): a cache shared across engines, or kept across a PCRE2 upgrade, could serve a tree read for another one. It now names the PHP minor version and the PCRE2 release, so PHP 8.4.1 and 8.4.26 share their trees.

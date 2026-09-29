@@ -1533,9 +1533,10 @@ final class Parser
 
         if ($this->stream->matchLiteral('>')) { // (?P>name) subroutine
             $name = $this->parseSubroutineName();
+            $returned = $this->readReturnedGroups() ?? [];
             $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected ) to close subroutine call');
 
-            return new SubroutineNode($name, 'P>', $startPos, $endToken->position + 1);
+            return new SubroutineNode($name, 'P>', $startPos, $endToken->position + 1, $returned);
         }
 
         if ($this->stream->matchLiteral('=')) {
@@ -1607,10 +1608,11 @@ final class Parser
                 $tokensConsumed++;
             }
 
-            if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            $returned = $this->readReturnedGroups();
+            if (null !== $returned || $this->stream->check(TokenType::T_GROUP_CLOSE)) {
                 $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
 
-                return new SubroutineNode($num, '', $startPos, $endToken->position + 1);
+                return new SubroutineNode($num, '', $startPos, $endToken->position + 1, $returned ?? []);
             }
 
             // Not a valid subroutine, rewind all consumed tokens
@@ -1624,6 +1626,66 @@ final class Parser
     }
 
     /**
+     * "(?1(2,<name>))": the groups a call returns, read from PCRE2 10.47 when
+     * a "(" follows the reference. PCRE reads the list from the text, and
+     * refuses what it cannot take as it reads it: an item that is no number
+     * or name, group zero, a relative zero, a group before the first, or a
+     * number past 65535. Null when no list follows.
+     *
+     * @return list<string>|null
+     */
+    private function readReturnedGroups(): ?array
+    {
+        if (!$this->pcreAtLeast('10.47') || !$this->stream->check(TokenType::T_GROUP_OPEN)) {
+            return null;
+        }
+
+        $at = $this->stream->current()->position + 1;
+        $groups = [];
+        while (true) {
+            if (1 !== preg_match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
+                throw $this->parserException(\sprintf('Expected a capture group number or name at position %d.', $at), $at);
+            }
+
+            $itemEnd = $at + \strlen($matches[0]);
+            $sign = $matches[1] ?? '';
+            $digits = $matches[2] ?? '';
+            if ('' !== $digits) {
+                $refused = match (true) {
+                    \strlen(ltrim($digits, '0')) > 5 || (int) $digits > 65535 => 'is too big',
+                    0 === (int) $digits => '' === $sign ? 'names no group' : 'is a relative zero',
+                    '-' === $sign && (int) $digits > $this->captureCount => 'names no group',
+                    default => null,
+                };
+                if (null !== $refused) {
+                    throw $this->parserException(\sprintf('Group "%s" returned at position %d %s.', $matches[0], $itemEnd, $refused), $itemEnd);
+                }
+            }
+
+            $groups[] = $matches[0];
+            $at = $itemEnd;
+            $next = $this->pattern[$at] ?? '';
+            if (',' === $next || ')' === $next) {
+                $at++;
+                if (')' === $next) {
+                    break;
+                }
+
+                continue;
+            }
+
+            // A list the pattern never closes is refused by the lexer first.
+            throw $this->parserException(\sprintf('Expected a capture group number or name at position %d.', $at), $at);
+        }
+
+        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
+            $this->stream->advance();
+        }
+
+        return $groups;
+    }
+
+    /**
      * Parses a subroutine group modifier like (?&name).
      */
     private function parseSubroutineModifier(int $startPosition): ?SubroutineNode
@@ -1633,9 +1695,10 @@ final class Parser
         }
 
         $name = $this->parseSubroutineName();
+        $returned = $this->readReturnedGroups() ?? [];
         $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected ) to close subroutine call');
 
-        return new SubroutineNode($name, '&', $startPosition, $endToken->position + 1);
+        return new SubroutineNode($name, '&', $startPosition, $endToken->position + 1, $returned);
     }
 
     /**
@@ -1644,10 +1707,11 @@ final class Parser
     private function parseNumericSubroutineModifier(int $startPosition): ?SubroutineNode
     {
         if ($this->stream->matchLiteral('R')) {
-            if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            $returned = $this->readReturnedGroups();
+            if (null !== $returned || $this->stream->check(TokenType::T_GROUP_CLOSE)) {
                 $endToken = $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected )');
 
-                return new SubroutineNode('R', '', $startPosition, $endToken->position + 1);
+                return new SubroutineNode('R', '', $startPosition, $endToken->position + 1, $returned ?? []);
             }
             $this->stream->rewind(1);
         }
@@ -2583,6 +2647,8 @@ final class Parser
         while (
             !$this->stream->check(TokenType::T_GROUP_CLOSE)
             && !$this->stream->isAtEnd()
+            // "(?&name(<g>))": the groups the call returns, PCRE2 10.47 on.
+            && !('' !== $name && $this->stream->check(TokenType::T_GROUP_OPEN) && $this->pcreAtLeast('10.47'))
         ) {
             if ($this->stream->check(TokenType::T_LITERAL) || $this->stream->check(TokenType::T_LITERAL_ESCAPED)) {
                 $char = $this->stream->current()->value;

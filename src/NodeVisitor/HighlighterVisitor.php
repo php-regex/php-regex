@@ -92,16 +92,16 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_CAPTURING => $open.$child.$close,
             GroupType::T_GROUP_NON_CAPTURING => $open.$this->wrap('?:', 'group').$child.$close,
             GroupType::T_GROUP_NAMED => $open
-                .$this->wrap('?<', 'group')
+                .$this->wrap($this->escape('?<'), 'group')
                 .$this->wrapReference($node->name ?? '')
-                .$this->wrap('>', 'group')
+                .$this->wrap($this->escape('>'), 'group')
                 .$child
                 .$close,
             GroupType::T_GROUP_LOOKAHEAD_POSITIVE => $open.$this->wrap('?=', 'group').$child.$close,
             GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => $open.$this->wrap('?!', 'group').$child.$close,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => $open.$this->wrap('?<=', 'group').$child.$close,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => $open.$this->wrap('?<!', 'group').$child.$close,
-            GroupType::T_GROUP_ATOMIC => $open.$this->wrap('?>', 'group').$child.$close,
+            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => $open.$this->wrap($this->escape('?<='), 'group').$child.$close,
+            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => $open.$this->wrap($this->escape('?<!'), 'group').$child.$close,
+            GroupType::T_GROUP_ATOMIC => $open.$this->wrap($this->escape('?>'), 'group').$child.$close,
             GroupType::T_GROUP_BRANCH_RESET => $open.$this->wrap('?|', 'group').$child.$close,
             GroupType::T_GROUP_INLINE_FLAGS => $this->renderInlineFlagsGroup($flags, $child, $open, $close),
         };
@@ -293,20 +293,28 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): string
     {
+        // "(?1(2,<name>))": the groups the call returns.
+        $returned = [] === $node->returnedGroups ? '' : $this->wrap('(', 'group')
+            .implode($this->wrap(',', 'group'), array_map($this->wrapReference(...), $node->returnedGroups))
+            .$this->wrap(')', 'group');
+
         return match ($node->syntax) {
             '&' => $this->wrap('(?', 'group')
-                .$this->wrap('&', 'keyword')
+                .$this->wrap($this->escape('&'), 'keyword')
                 .$this->wrapReference($node->reference)
+                .$returned
                 .$this->wrap(')', 'group'),
             'P>' => $this->wrap('(?', 'group')
-                .$this->wrap('P>', 'keyword')
+                .$this->wrap($this->escape('P>'), 'keyword')
                 .$this->wrapReference($node->reference)
+                .$returned
                 .$this->wrap(')', 'group'),
             'g' => $this->wrap($this->escape('\\g<'), 'escape')
                 .$this->wrapReference($node->reference)
                 .$this->wrap($this->escape('>'), 'escape'),
             default => $this->wrap('(?', 'group')
                 .$this->wrapReference($node->reference)
+                .$returned
                 .$this->wrap(')', 'group'),
         };
     }

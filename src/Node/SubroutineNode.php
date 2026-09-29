@@ -20,11 +20,18 @@ use RegexParser\NodeVisitor\NodeVisitorInterface;
  */
 final readonly class SubroutineNode extends AbstractNode
 {
+    /**
+     * @param list<string> $returnedGroups the groups the call returns, as
+     *                                     written: "2", "-1", "<name>" or
+     *                                     "'name'" in "(?1(2,<name>))"
+     *                                     (PCRE2 10.47)
+     */
     public function __construct(
         public string $reference,
         public string $syntax,
         int $startPosition,
-        int $endPosition
+        int $endPosition,
+        public array $returnedGroups = [],
     ) {
         parent::__construct($startPosition, $endPosition);
     }
