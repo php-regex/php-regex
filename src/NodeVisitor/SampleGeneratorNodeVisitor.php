@@ -103,6 +103,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      */
     private array $groupNumbersByName = [];
 
+    /**
+     * @var list<GroupNode> the substring scans of the pattern
+     */
+    private array $scans = [];
+
+    /**
+     * @var array<int, list<NodeInterface>> the bodies each group's capture is scanned with, by group number
+     */
+    private array $scansByGroup = [];
+
     private int $groupDefinitionCounter = 1;
 
     private bool $unicode = false;
@@ -165,6 +175,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->groupIndexMap = [];
         $this->namedGroupMap = [];
         $this->groupNumbers = [];
+        $this->scans = [];
         $this->groupDefinitionCounter = 1;
         $this->requiredPrefixes = [];
         $this->requiredSuffixes = [];
@@ -237,10 +248,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         // Store the result if it's a capturing group
         if (GroupType::T_GROUP_CAPTURING === $node->type) {
             $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
+            $result = $this->fitScans($groupIndex, $node, $result);
             $this->captures[$groupIndex] = $result;
             $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
         } elseif (GroupType::T_GROUP_NAMED === $node->type) {
             $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
+            $result = $this->fitScans($groupIndex, $node, $result);
             $this->captures[$groupIndex] = $result;
             if ($node->name) {
                 $this->captures[$node->name] = $result;
@@ -778,6 +791,31 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * A capture a substring scan reads must start with what the scan's body
+     * matches: the body's sample is put before the text, or in its place,
+     * where the group still matches the whole of it.
+     */
+    private function fitScans(int $number, GroupNode $group, string $text): string
+    {
+        foreach ($this->scansByGroup[$number] ?? [] as $body) {
+            if ($this->holds($body, $text, '\\A', '')) {
+                continue;
+            }
+
+            $prefix = $body->accept($this);
+            foreach ([$prefix.$text, $prefix] as $candidate) {
+                if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
+                    $text = $candidate;
+
+                    break;
+                }
+            }
+        }
+
+        return $text;
+    }
+
+    /**
      * Whether the text already satisfies a lookaround's body where it stands,
      * so it is left as it is: "red" before "\b(?<=\w)".
      */
@@ -954,6 +992,10 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private function collectGroups(NodeInterface $node): void
     {
         if ($node instanceof GroupNode) {
+            if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+                $this->scans[] = $node;
+            }
+
             if (\in_array($node->type, [GroupType::T_GROUP_CAPTURING, GroupType::T_GROUP_NAMED], true)) {
                 $index = $this->groupDefinitionCounter++;
                 $this->groupIndexMap[$index] = $node;
@@ -1017,6 +1059,15 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $numbering = (new GroupNumberingCollector())->collect($node);
         $numbers = $numbering->captureSequence;
         $this->groupNumbersByName = $numbering->namedGroups;
+        $this->scansByGroup = [];
+        foreach ($this->scans as $scan) {
+            foreach ($scan->scannedGroups as $group) {
+                $number = ctype_digit($group) ? [(int) $group] : ($this->groupNumbersByName[trim($group, "<>'")] ?? []);
+                foreach ($number as $scanned) {
+                    $this->scansByGroup[$scanned][] = $scan->child;
+                }
+            }
+        }
         $groups = array_values($this->groupIndexMap);
 
         $this->groupIndexMap = [];

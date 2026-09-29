@@ -107,6 +107,13 @@ final class SampleGeneratorVisitorTest extends TestCase
         // Names past ASCII.
         yield 'reference by a UTF-8 name' => ['/(?\'ABáC\'...)\\g{ABáC}/u'];
         yield 'call and reference by a UTF-8 name' => ['/^(?\'אABC\'...)(?&אABC)(?P=אABC)/u'];
+        // A group a substring scan reads starts with what its body matches.
+        yield 'scan of a group, two branches' => ['/^([a-z]++)(*scs:(1)(stx)|(ne))(.)$/'];
+        yield 'scan of the second group' => ['/^([a-z])([a-z]++)(#+)(*scs:(2)(ab.))$/'];
+        yield 'scan by name' => ['/^(?<AA>[a-zA-Z]+)(*scs:(\'AA\')(ab(*ACCEPT)cd|xy))$/'];
+        // Lookaheads in a row each hold for what follows them all.
+        yield 'password rules' => ['/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[,;:])(?=.{8,16})(?!.*[\\s])/'];
+        yield 'two lookaheads before a word' => ['/^(?=.*\\d)(?=.*[a-z])\\w{4}$/'];
         // A lookahead in a plain group holds the text after the group.
         yield 'word start and end' => ['/[[:<:]]red[[:>:]]/'];
         yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];
