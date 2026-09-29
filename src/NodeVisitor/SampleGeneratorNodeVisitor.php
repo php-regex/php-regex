@@ -123,6 +123,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private int $lookaheadDraws = 0;
 
     /**
+     * @var array<int, true> the groups being fitted to the scans that read them
+     */
+    private array $fitting = [];
+
+    /**
      * @var array<int, list<NodeInterface>> the bodies each group's capture is scanned with, by group number
      */
     private array $scansByGroup = [];
@@ -830,12 +835,29 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      */
     private function fitScans(int $number, GroupNode $group, string $text): string
     {
+        // A group inside the body of a scan that reads it is fitted once.
+        if (isset($this->fitting[$number])) {
+            return $text;
+        }
+
+        $this->fitting[$number] = true;
+
+        try {
+            return $this->fitScansOnce($number, $group, $text);
+        } finally {
+            unset($this->fitting[$number]);
+        }
+    }
+
+    private function fitScansOnce(int $number, GroupNode $group, string $text): string
+    {
         foreach ($this->scansByGroup[$number] ?? [] as $body) {
             if ($this->holds($body, $text, '\\A', '')) {
                 continue;
             }
 
-            $prefix = $body->accept($this);
+            // Laid out as a sequence, so a lookahead in it gives its text.
+            $prefix = $this->generateSequence($body instanceof SequenceNode ? $body->children : [$body]);
             foreach ([$prefix.$text, $prefix] as $candidate) {
                 if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
                     $text = $candidate;
@@ -968,6 +990,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return true;
         }
 
+        // Samples are checked by the running engine: its version decides, the
+        // minor read as a number, "10.5" below "10.49".
+        if ($condition instanceof VersionConditionNode) {
+            [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0].'.0'));
+            [$wantedMajor, $wantedMinor] = array_map(intval(...), explode('.', $condition->version.'.0'));
+            $running = [$major, $minor] <=> [$wantedMajor, $wantedMinor];
+
+            return '=' === $condition->operator ? 0 === $running : $running >= 0;
+        }
+
         return 1 === $this->randomInt(0, 1);
     }
 
@@ -1035,7 +1067,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 $this->groupIndexMap[$index] = $node;
                 $this->groupNumbers[spl_object_id($node)] = $index;
                 if (null !== $node->name) {
-                    $this->namedGroupMap[$node->name] = $node;
+                    // A call to a name several groups share runs the first.
+                    $this->namedGroupMap[$node->name] ??= $node;
                 }
             }
 

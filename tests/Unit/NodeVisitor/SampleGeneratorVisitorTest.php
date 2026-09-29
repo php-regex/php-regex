@@ -111,10 +111,16 @@ final class SampleGeneratorVisitorTest extends TestCase
         // A group a substring scan reads starts with what its body matches.
         yield 'scan of a group, two branches' => ['/^([a-z]++)(*scs:(1)(stx)|(ne))(.)$/'];
         yield 'scan of the second group' => ['/^([a-z])([a-z]++)(#+)(*scs:(2)(ab.))$/'];
+        yield 'scan with a lookahead body' => ['/^()(\\w++)=(*scs:(2)(?=abc))(\\w++)$/'];
         yield 'scan by name' => ['/^(?<AA>[a-zA-Z]+)(*scs:(\'AA\')(ab(*ACCEPT)cd|xy))$/'];
         // Lookaheads in a row each hold for what follows them all.
         yield 'password rules' => ['/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[,;:])(?=.{8,16})(?!.*[\\s])/'];
         yield 'two lookaheads before a word' => ['/^(?=.*\\d)(?=.*[a-z])\\w{4}$/'];
+        yield 'call to a name several groups share' => ['/^(?\'abc\'a|b)(?<abc>d|e)(?&abc){2}$/J'];
+        // A version condition takes the branch the running PCRE2 takes.
+        yield 'version equal to 8' => ['/^(?(VERSION=8)yes|no){3}$/'];
+        yield 'version at least 10.5, a minor of 5' => ['/^(?(VERSION>=10.5)yes|no){3}$/'];
+        yield 'version at least 99' => ['/^(?(VERSION>=99)yes|no){3}$/'];
         // A lookahead in a plain group holds the text after the group.
         yield 'word start and end' => ['/[[:<:]]red[[:>:]]/'];
         yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];
@@ -238,6 +244,18 @@ final class SampleGeneratorVisitorTest extends TestCase
             $this->assertSame(1, preg_match($shared, $this->regex->parse($shared)->accept($generator)), (string) $seed);
             $this->assertSame('abb', $this->regex->parse($inRun)->accept($generator));
             $this->assertSame(1, preg_match($reset, $this->regex->parse($reset)->accept($generator)), (string) $seed);
+        }
+    }
+
+    public function test_a_scan_of_a_group_inside_its_own_body_is_fitted_once(): void
+    {
+        // In the branch reset, group 1 is "(.)", inside the scan's body.
+        $pattern = '/x(?|(*scs:(1)(?<=(.)))|()){8}/';
+        $generator = new SampleGeneratorNodeVisitor();
+
+        for ($seed = 0; $seed < 8; $seed++) {
+            $generator->setSeed($seed);
+            $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $this->regex->parse($pattern)->accept($generator)));
         }
     }
 
