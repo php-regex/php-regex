@@ -3414,7 +3414,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private function classCodePoint(NodeInterface $member): ?int
     {
         return match (true) {
-            $member instanceof LiteralNode && 1 === mb_strlen($member->value, 'UTF-8') => $this->unicodeMode ? (int) mb_ord($member->value, 'UTF-8') : \ord($member->value),
+            // Without UTF mode, a character is a byte.
+            $member instanceof LiteralNode && $this->unicodeMode && 1 === mb_strlen($member->value, 'UTF-8') => (int) mb_ord($member->value, 'UTF-8'),
+            $member instanceof LiteralNode && !$this->unicodeMode && 1 === \strlen($member->value) => \ord($member->value),
             $member instanceof CharLiteralNode => $member->codePoint,
             default => null,
         };

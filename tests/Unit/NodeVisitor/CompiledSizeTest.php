@@ -78,6 +78,23 @@ final class CompiledSizeTest extends TestCase
     }
 
     #[Test]
+    public function test_a_class_holding_a_multibyte_literal_in_byte_mode_is_measured_quietly(): void
+    {
+        // Without "u", "é" is two bytes: no single code point, and ord()
+        // must not be asked for one (PHP 8.5 deprecates it on a longer string).
+        set_error_handler(static function (int $level, string $message): never {
+            throw new \ErrorException($message, 0, $level);
+        });
+
+        try {
+            $this->assertTrue(Regex::create(['cache' => null])->validate('/(?:[é-\xff]a){1000}/')->isValid);
+            $this->assertTrue(Regex::create(['cache' => null])->validate("/(?:[\u{20ac}-\xff]a){1000}/")->isValid);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    #[Test]
     public function test_other_errors_come_before_the_size(): void
     {
         // PCRE refuses the missing group and the escape before it measures
