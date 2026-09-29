@@ -15,7 +15,12 @@ namespace RegexParser\Tests\Unit\Cache;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Cache\ArrayCache;
+use RegexParser\Cache\CachePayloadDecoder;
 use RegexParser\Cache\FilesystemCache;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ExtendedCharClassNode;
+use RegexParser\Node\NodeInterface;
 use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
 use RegexParser\Tests\Support\AstFingerprint;
@@ -77,6 +82,39 @@ final class AstCachePayloadTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $ast);
         $this->assertSame(['hits' => 1, 'misses' => 0], $reader->getStats());
+    }
+
+    #[Test]
+    public function test_an_extended_class_is_read_back_from_a_decoded_payload(): void
+    {
+        $cache = new ArrayCache();
+        $pattern = '/(?[ \\d - [3] ])/';
+        Regex::create(['cache' => $cache, 'pcre_version' => '10.45'])->parse($pattern);
+
+        $ast = Regex::create(['cache' => $cache, 'pcre_version' => '10.45'])->parse($pattern);
+
+        $this->assertInstanceOf(ExtendedCharClassNode::class, $ast->pattern);
+        $this->assertInstanceOf(ClassSetOperationNode::class, $ast->pattern->expression);
+        $this->assertSame(['hits' => 1, 'misses' => 1], $cache->getStats());
+
+        Regex::create(['cache' => new FilesystemCache($this->cacheDir), 'pcre_version' => '10.45'])->parse($pattern);
+        $reader = new FilesystemCache($this->cacheDir);
+        $fromDisk = Regex::create(['cache' => $reader, 'pcre_version' => '10.45'])->parse($pattern);
+
+        $this->assertInstanceOf(ExtendedCharClassNode::class, $fromDisk->pattern);
+        $this->assertSame(['hits' => 1, 'misses' => 0], $reader->getStats());
+    }
+
+    #[Test]
+    public function test_every_node_class_may_be_read_back(): void
+    {
+        foreach ((array) glob(\dirname(__DIR__, 3).'/src/Node/*.php') as $file) {
+            $class = 'RegexParser\\Node\\'.basename((string) $file, '.php');
+            if (class_exists($class) && is_subclass_of($class, NodeInterface::class)
+                && !(new \ReflectionClass($class))->isAbstract()) {
+                $this->assertContains($class, CachePayloadDecoder::NODE_CLASSES, $class);
+            }
+        }
     }
 
     #[Test]

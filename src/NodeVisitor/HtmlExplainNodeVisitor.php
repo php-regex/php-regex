@@ -23,11 +23,14 @@ use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -347,6 +350,31 @@ final class HtmlExplainNodeVisitor extends AbstractNodeVisitor
     public function visitPosixClass(PosixClassNode $node): string
     {
         return \sprintf('<li>POSIX Class: [[:%s:]]</li>', $this->e($node->class));
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        // Operands come back escaped, in <li>: their text is kept.
+        return '<li>Extended character class: one character of '.strip_tags($node->expression->accept($this)).'</li>';
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        $right = strip_tags($node->right->accept($this));
+        if (null === $node->left) {
+            return 'not '.$right;
+        }
+
+        $word = match ($node->operator) {
+            ClassSetOperator::INTERSECTION => 'and',
+            ClassSetOperator::DIFFERENCE => 'but not',
+            ClassSetOperator::SYMMETRIC_DIFFERENCE => 'or else',
+            default => 'or',
+        };
+
+        return \sprintf('(%s %s %s)', strip_tags($node->left->accept($this)), $word, $right);
     }
 
     /**

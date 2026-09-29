@@ -122,6 +122,24 @@ final readonly class CharSet
         return false;
     }
 
+    public function intersect(self $other): self
+    {
+        if ($this->unknown || $other->unknown) {
+            return self::unknown();
+        }
+
+        $common = self::empty();
+        foreach ($this->ranges as [$start, $end]) {
+            foreach ($other->ranges as [$oStart, $oEnd]) {
+                if ($start <= $oEnd && $oStart <= $end) {
+                    $common = $common->union(new self([[max($start, $oStart), min($end, $oEnd)]]));
+                }
+            }
+        }
+
+        return $common;
+    }
+
     public function complement(): self
     {
         if ($this->unknown) {

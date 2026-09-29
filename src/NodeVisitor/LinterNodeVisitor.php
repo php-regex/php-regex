@@ -28,9 +28,11 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\LiteralNode;
@@ -206,6 +208,20 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
     {
         $this->dispatch($node);
 
+        return $node;
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
+    {
         return $node;
     }
 

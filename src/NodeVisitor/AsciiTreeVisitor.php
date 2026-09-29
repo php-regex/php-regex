@@ -24,11 +24,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -206,6 +208,24 @@ final class AsciiTreeVisitor extends AbstractNodeVisitor
         $ref = $node->ref;
         $display = str_starts_with($ref, '\\') ? $ref : '\\'.$ref;
         $this->addLine('Backref ('.$display.')');
+
+        return '';
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        $this->addLine('ExtendedCharClass');
+        $this->visitChildren([$node->expression]);
+
+        return '';
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        $this->addLine('ClassSetOperation ('.$node->operator->value.')');
+        $this->visitChildren(array_values(array_filter([$node->left, $node->right])));
 
         return '';
     }

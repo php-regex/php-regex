@@ -29,11 +29,13 @@ use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -841,6 +843,28 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             array_pop($this->keepsInLookarounds);
             $this->keepsInLookarounds[] = true;
         }
+    }
+
+    /**
+     * The operands of "(?[...])" are judged as the members of a class.
+     */
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): void
+    {
+        $this->charClassDepth++;
+
+        try {
+            $node->expression->accept($this);
+        } finally {
+            $this->charClassDepth--;
+        }
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): void
+    {
+        $node->left?->accept($this);
+        $node->right->accept($this);
     }
 
     #[\Override]

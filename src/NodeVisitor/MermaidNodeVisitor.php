@@ -21,10 +21,12 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
@@ -175,6 +177,28 @@ final class MermaidNodeVisitor extends AbstractNodeVisitor
     {
         $nodeId = $this->nextNodeId();
         $this->lines[] = \sprintf('    %s["Keep: \\K"]', $nodeId);
+
+        return $nodeId;
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        $nodeId = $this->nextNodeId();
+        $this->lines[] = \sprintf('    %s["ExtendedCharClass"]', $nodeId);
+        $this->lines[] = \sprintf('    %s --> %s', $nodeId, $node->expression->accept($this));
+
+        return $nodeId;
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        $nodeId = $this->nextNodeId();
+        $this->lines[] = \sprintf('    %s["%s"]', $nodeId, $node->operator->value);
+        foreach (array_filter([$node->left, $node->right]) as $operand) {
+            $this->lines[] = \sprintf('    %s --> %s', $nodeId, $operand->accept($this));
+        }
 
         return $nodeId;
     }

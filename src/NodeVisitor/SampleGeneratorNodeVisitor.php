@@ -25,11 +25,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -397,6 +399,25 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        // PCRE knows which characters are in the set: ask it, when it reads "(?[".
+        $samples = $this->charactersWithProperty($node->accept(new CompilerNodeVisitor()));
+        if ([] !== $samples) {
+            return $this->getRandomChar($samples);
+        }
+
+        return $node->expression->accept($this);
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        // A guess for an engine that cannot tell: a member of the left operand.
+        return $node->left?->accept($this) ?? '!';
+    }
+
+    #[\Override]
     public function visitScriptRun(ScriptRunNode $node): string
     {
         return $node->content?->accept($this) ?? '';
@@ -556,8 +577,9 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * Up to eight characters the escape "\p{...}" matches: common ones first,
-     * then the whole range, one chunk at a time; bytes without UTF mode.
+     * Up to eight characters the escape "\p{...}", or an extended class,
+     * matches: common ones first, then the whole range, one chunk at a time;
+     * bytes without UTF mode. None when the engine refuses it.
      *
      * @return list<string>
      */
@@ -568,7 +590,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return self::$propertySamples[$key];
         }
 
-        $pattern = '/'.$escape.'/'.($this->unicode ? 'u' : '');
+        $delimiter = str_contains($escape, '/') ? "\x01" : '/';
+        $pattern = $delimiter.$escape.$delimiter.($this->unicode ? 'u' : '');
         $found = [];
         foreach ($this->unicode ? self::codePointChunks() : [implode('', array_map(\chr(...), range(0, 255)))] as $chunk) {
             if (false === @preg_match_all($pattern, $chunk, $matches)) {

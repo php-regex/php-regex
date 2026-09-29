@@ -22,11 +22,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -304,6 +306,18 @@ final class ModernizerNodeVisitor extends AbstractNodeVisitor
 
     #[\Override]
     public function visitControlChar(ControlCharNode $node): NodeInterface
+    {
+        return $node;
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): NodeInterface
+    {
+        return $node;
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
         return $node;
     }

@@ -22,11 +22,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
@@ -52,6 +54,44 @@ use RegexParser\Node\VersionConditionNode;
  */
 final class CachePayloadDecoder
 {
+    /**
+     * The classes a cached tree is made of, and the only ones unserialized.
+     *
+     * @internal
+     */
+    public const NODE_CLASSES = [
+        RegexNode::class,
+        AlternationNode::class,
+        AnchorNode::class,
+        AssertionNode::class,
+        BackrefNode::class,
+        CalloutNode::class,
+        CharClassNode::class,
+        CharLiteralNode::class,
+        CharTypeNode::class,
+        ClassOperationNode::class,
+        ClassSetOperationNode::class,
+        CommentNode::class,
+        ConditionalNode::class,
+        ControlCharNode::class,
+        DefineNode::class,
+        DotNode::class,
+        ExtendedCharClassNode::class,
+        GroupNode::class,
+        KeepNode::class,
+        LimitMatchNode::class,
+        LiteralNode::class,
+        PcreVerbNode::class,
+        PosixClassNode::class,
+        QuantifierNode::class,
+        RangeNode::class,
+        ScriptRunNode::class,
+        SequenceNode::class,
+        SubroutineNode::class,
+        UnicodePropNode::class,
+        VersionConditionNode::class,
+    ];
+
     public static function decode(string $content): ?RegexNode
     {
         $serialized = self::extractSerializedString($content);
@@ -59,37 +99,7 @@ final class CachePayloadDecoder
             return null;
         }
 
-        $allowedClasses = [
-            RegexNode::class,
-            AlternationNode::class,
-            AnchorNode::class,
-            AssertionNode::class,
-            BackrefNode::class,
-            CalloutNode::class,
-            CharClassNode::class,
-            CharLiteralNode::class,
-            CharTypeNode::class,
-            ClassOperationNode::class,
-            CommentNode::class,
-            ConditionalNode::class,
-            ControlCharNode::class,
-            DefineNode::class,
-            DotNode::class,
-            GroupNode::class,
-            KeepNode::class,
-            LimitMatchNode::class,
-            LiteralNode::class,
-            PcreVerbNode::class,
-            PosixClassNode::class,
-            QuantifierNode::class,
-            RangeNode::class,
-            ScriptRunNode::class,
-            SequenceNode::class,
-            SubroutineNode::class,
-            UnicodePropNode::class,
-            VersionConditionNode::class,
-        ];
-        $value = @unserialize($serialized, ['allowed_classes' => $allowedClasses]);
+        $value = @unserialize($serialized, ['allowed_classes' => self::NODE_CLASSES]);
 
         return $value instanceof RegexNode ? $value : null;
     }

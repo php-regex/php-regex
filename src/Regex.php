@@ -16,6 +16,7 @@ namespace RegexParser;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Cache\CacheInterface;
+use RegexParser\Cache\CachePayloadDecoder;
 use RegexParser\Cache\NullCache;
 use RegexParser\Cache\RemovableCacheInterface;
 use RegexParser\Exception\LexerException;
@@ -26,34 +27,9 @@ use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\ResourceLimitException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\Internal\PatternParser;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\ControlCharNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\KeepNode;
-use RegexParser\Node\LimitMatchNode;
 use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
-use RegexParser\Node\ScriptRunNode;
 use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\Node\VersionConditionNode;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
@@ -96,7 +72,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-1a12c0a22ac4d05fa6341ea13ddd6a6e';
+    public const CACHE_VERSION = 'ast-7ffc017991b72b27f6c42bb7f7a5815d';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -299,7 +275,11 @@ final readonly class Regex
             // The library's own limits: the pattern is not read further.
             return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
-            return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $e);
+            // A judgement the parser had to pass on as a parse error keeps its code.
+            $cause = $e->getPrevious();
+            $judged = $cause instanceof SemanticErrorException && $cause->getPosition() === $e->getPosition() ? $cause : $e;
+
+            return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $judged);
         } catch (\Throwable $e) {
             return $this->buildValidationFailure($e);
         }
@@ -722,46 +702,6 @@ final readonly class Regex
     }
 
     /**
-     * Get the list of allowed classes for unserialization.
-     *
-     * @return array<class-string>
-     */
-    private static function getAllowedClasses(): array
-    {
-        return [
-            // Node classes
-            RegexNode::class,
-            AlternationNode::class,
-            AnchorNode::class,
-            AssertionNode::class,
-            BackrefNode::class,
-            CalloutNode::class,
-            CharClassNode::class,
-            CharLiteralNode::class,
-            CharTypeNode::class,
-            ClassOperationNode::class,
-            CommentNode::class,
-            ConditionalNode::class,
-            ControlCharNode::class,
-            DefineNode::class,
-            DotNode::class,
-            GroupNode::class,
-            KeepNode::class,
-            LimitMatchNode::class,
-            LiteralNode::class,
-            PcreVerbNode::class,
-            PosixClassNode::class,
-            QuantifierNode::class,
-            RangeNode::class,
-            ScriptRunNode::class,
-            SequenceNode::class,
-            SubroutineNode::class,
-            UnicodePropNode::class,
-            VersionConditionNode::class,
-        ];
-    }
-
-    /**
      * Checks runtime compilation by attempting to use the pattern with preg_match and capturing warnings.
      */
     private function checkRuntimeCompilation(
@@ -939,7 +879,7 @@ final readonly class Regex
     {
         $serializedAst = serialize($ast);
         $exportedAst = var_export($serializedAst, true);
-        $allowedClasses = self::getAllowedClasses();
+        $allowedClasses = CachePayloadDecoder::NODE_CLASSES;
         $exportedAllowedClasses = var_export($allowedClasses, true);
         $version = var_export(self::CACHE_VERSION, true);
 

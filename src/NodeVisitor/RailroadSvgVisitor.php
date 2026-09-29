@@ -23,11 +23,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -266,6 +268,21 @@ final class RailroadSvgVisitor extends AbstractNodeVisitor
         $display = str_starts_with($ref, '\\') ? $ref : '\\'.$ref;
 
         return $this->createNodeLayout('Backref ('.$display.')', 'node');
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node)
+    {
+        return $this->layoutWithLabel('ExtendedCharClass', [$this->layoutFor($node->expression)]);
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node)
+    {
+        return $this->layoutWithLabel('ClassSetOperation ('.$node->operator->value.')', array_map(
+            $this->layoutFor(...),
+            array_values(array_filter([$node->left, $node->right])),
+        ));
     }
 
     /**

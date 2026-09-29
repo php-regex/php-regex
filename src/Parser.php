@@ -16,8 +16,10 @@ namespace RegexParser;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
+use RegexParser\Exception\RegexException;
 use RegexParser\Exception\SyntaxErrorException;
 use RegexParser\Internal\CodePointReader;
+use RegexParser\Internal\ExtendedClassReader;
 use RegexParser\Internal\GroupNameReader;
 use RegexParser\Internal\InlineFlags;
 use RegexParser\Internal\PcreVerb;
@@ -31,11 +33,14 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -53,6 +58,7 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
+use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 
 /**
  * Recursive descent parser for regex patterns.
@@ -700,6 +706,10 @@ final class Parser
     {
         $token = $this->stream->current();
         $startPosition = $token->position;
+
+        if ($this->stream->match(TokenType::T_EXTENDED_CLASS)) {
+            return $this->parseExtendedClass($token);
+        }
 
         if ($this->stream->match(TokenType::T_COMMENT_OPEN)) {
             return $this->parseComment();
@@ -1466,22 +1476,148 @@ final class Parser
             $inner->capturesBefore = $this->captureCount;
             $pattern = $inner->parse($stream, $flags, '/', \strlen($payload));
         } catch (LexerException|ParserException $error) {
-            // Read apart, the payload counts positions from its own start:
-            // the error is reported where it stands in the whole pattern.
-            $position = (int) $error->getPosition() + $absoluteOffset;
-            $message = preg_replace_callback(
-                '/at position (\d++)/',
-                static fn (array $matches): string => 'at position '.((int) $matches[1] + $absoluteOffset),
-                $error->getMessage(),
-            ) ?? $error->getMessage();
-
-            throw $error::withContext($message, $position, $this->pattern, $error);
+            throw $this->movedError($error, $absoluteOffset);
         }
 
         // The groups it holds take numbers in the enclosing pattern.
         $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;
 
         return $pattern->pattern;
+    }
+
+    /**
+     * "(?[ \p{L} - [aeiou] ])", PCRE2 10.45: the expression is read from the
+     * text; each nested class and escape is read apart, a class under "xx"
+     * as PCRE reads it there.
+     */
+    private function parseExtendedClass(Token $token): ExtendedCharClassNode
+    {
+        $reader = new ExtendedClassReader(
+            $this->pattern,
+            // An escape is read as a class reads it: "\b" is a backspace, "\1" an octal escape.
+            function (string $escape, int $at): NodeInterface {
+                // "\p{" never closed is refused where the pattern ends.
+                if (1 === preg_match('/^\\\\[pP]\{[^}]*+$/', $escape)) {
+                    $end = \strlen($this->pattern);
+
+                    throw $this->parserException(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), $end);
+                }
+
+                // "\c" ends the pattern: a "]" after it would be its character.
+                if ('\\c' === $escape) {
+                    return $this->parseOperandAt($escape, $at, false);
+                }
+
+                $class = $this->parseOperandAt('['.$escape.']', $at - 1, true);
+
+                return $class instanceof CharClassNode ? $class->expression : $class;
+            },
+            function (string $class, int $at): NodeInterface {
+                // A POSIX class stands on its own there, "[:alpha:]", whatever
+                // its name; the name is judged as in a class.
+                if (1 === preg_match('/^\[:(.*):\]$/s', $class, $posix)) {
+                    return new PosixClassNode($posix[1], $at, $at + \strlen($class));
+                }
+
+                // "[[:<:]]" is no word boundary there, but an unknown name.
+                if ('[[:<:]]' === $class || '[[:>:]]' === $class) {
+                    throw $this->parserException(\sprintf('Unknown POSIX class "%s" at position %d.', $class[3], $at + 6), $at + 6);
+                }
+
+                return $this->parseOperandAt($class, $at, true);
+            },
+            fn (string|LexerException|ParserException $reason, int $at, array $operands): never => throw $this->firstOperandError($operands, $token->position)
+                ?? (\is_string($reason) ? $this->parserException(\sprintf('%s at position %d.', $reason, $at), $at) : $reason),
+            $this->pcreAtLeast('10.47'),
+            $this->unicodeMode || str_contains($this->flags, 'u'),
+            $this->maxRecursionDepth,
+        );
+
+        // The lexer's token ends where the reader does: past the "])".
+        [$expression, $end] = $reader->read($token->position);
+
+        return new ExtendedCharClassNode($expression, $token->position, $end, substr($this->pattern, $token->position, $end - $token->position));
+    }
+
+    /**
+     * An error in text read apart, which counts positions from its own start,
+     * reported where it stands in the whole pattern.
+     */
+    private function movedError(LexerException|ParserException $error, int $offset): LexerException|ParserException
+    {
+        $message = preg_replace_callback(
+            '/at position (\d++)/',
+            static fn (array $matches): string => 'at position '.((int) $matches[1] + $offset),
+            $error->getMessage(),
+        ) ?? $error->getMessage();
+
+        return $error::withContext($message, (int) $error->getPosition() + $offset, $this->pattern, $error);
+    }
+
+    /**
+     * The first operand of an extended class PCRE refuses: it reads and judges
+     * each one before it meets what is wrong further on.
+     *
+     * @param list<NodeInterface> $operands
+     */
+    private function firstOperandError(array $operands, int $start): ?ParserException
+    {
+        $expression = array_shift($operands);
+        if (null === $expression) {
+            return null;
+        }
+
+        foreach ($operands as $operand) {
+            $expression = new ClassSetOperationNode(ClassSetOperator::UNION, $expression, $operand, '+', $expression->getStartPosition(), $operand->getEndPosition());
+        }
+
+        $flags = $this->unicodeMode && !str_contains($this->flags, 'u') ? $this->flags.'u' : $this->flags;
+        $end = \strlen($this->pattern);
+        $tree = new RegexNode(new ExtendedCharClassNode($expression, $start, $end), $flags, '/', 0, $end, $this->pattern);
+
+        try {
+            $tree->accept(new ValidatorNodeVisitor(pattern: $this->pattern, target: $this->target));
+        } catch (RegexException $error) {
+            // A parse error, which keeps the judgement it wraps.
+            return ParserException::withContext($error->getMessage(), $error->getPosition() ?? $start, $this->pattern, $error);
+        }
+
+        return null;
+    }
+
+    /**
+     * An operand of "(?[...])" written at $at, read with offsets in the whole
+     * pattern: its tokens are moved there before they are parsed. A nested
+     * class is read under "xx", where spaces and tabs are no members.
+     */
+    private function parseOperandAt(string $text, int $at, bool $class): NodeInterface
+    {
+        try {
+            $stream = (new Lexer($this->target))->tokenize($text, $this->flags, $class);
+        } catch (LexerException $error) {
+            throw $this->movedError($error, $at);
+        }
+
+        // Under "xx", a class skips its blanks, but not those "\Q...\E" quotes.
+        $tokens = [];
+        $quoted = false;
+        foreach ($stream->getTokens() as $token) {
+            $quoted = match ($token->type) {
+                TokenType::T_QUOTE_MODE_START => true,
+                TokenType::T_QUOTE_MODE_END => false,
+                default => $quoted,
+            };
+            if ($class && !$quoted && TokenType::T_LITERAL === $token->type && \in_array($token->value, [' ', "\t"], true)) {
+                continue;
+            }
+
+            $tokens[] = new Token($token->type, $token->value, $token->position + $at, $token->sourceLength);
+        }
+
+        $parser = new self($this->maxRecursionDepth, $this->target);
+        $parser->capturesBefore = $this->captureCount;
+
+        return $parser->parse(new TokenStream($tokens, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
     }
 
     /**

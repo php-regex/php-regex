@@ -185,4 +185,10 @@ enum TokenType: string
      *             a class as plain characters. It goes in the next major version.
      */
     case T_CLASS_SUBTRACTION = 'class_subtraction';
+
+    /**
+     * A Perl extended class "(?[...])" as a whole, PCRE2 10.45: its value is
+     * the text from "(?[" to its "])", which the parser reads.
+     */
+    case T_EXTENDED_CLASS = 'extended_class';
 }

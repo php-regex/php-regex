@@ -23,11 +23,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -311,6 +313,18 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
 
     #[\Override]
     public function visitControlChar(ControlCharNode $node): LiteralSet
+    {
+        return LiteralSet::empty();
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): LiteralSet
+    {
+        return LiteralSet::empty();
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): LiteralSet
     {
         return LiteralSet::empty();
     }

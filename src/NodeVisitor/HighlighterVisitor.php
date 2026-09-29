@@ -23,16 +23,19 @@ use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
 use RegexParser\Node\LiteralNode;
+use RegexParser\Node\NodeInterface;
 use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\PosixClassNode;
 use RegexParser\Node\QuantifierNode;
@@ -214,6 +217,39 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
         return $this->wrap($this->escape($reference), 'backref');
     }
 
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        $text = $node->text;
+        if ('' === $text) {
+            return $this->wrap('(?[', 'group').$node->expression->accept($this).$this->wrap('])', 'group');
+        }
+
+        // The operands highlighted, and what the class writes between them;
+        // the operands count their offsets as the class does.
+        $start = $node->getStartPosition();
+        $highlighted = $this->wrap('(?[', 'group');
+        $at = 3;
+        foreach ($this->operandsOf($node->expression) as $operand) {
+            $highlighted .= $this->highlightLayout(substr($text, $at, $operand->getStartPosition() - $start - $at));
+            $highlighted .= $operand->accept($this);
+            $at = $operand->getEndPosition() - $start;
+        }
+
+        return $highlighted.$this->highlightLayout(substr($text, $at, \strlen($text) - 2 - $at)).$this->wrap('])', 'group');
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        $operator = $this->wrap($this->escape($node->symbol), 'meta');
+        if (null === $node->left) {
+            return $operator.$node->right->accept($this);
+        }
+
+        return $this->wrap('(', 'group').$node->left->accept($this).$operator.$node->right->accept($this).$this->wrap(')', 'group');
+    }
+
     /**
      * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
      */
@@ -392,6 +428,34 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
     abstract protected function wrap(string $content, string $type): string;
 
     abstract protected function escape(string $string): string;
+
+    /**
+     * @return list<NodeInterface>
+     */
+    private function operandsOf(NodeInterface $node): array
+    {
+        if (!$node instanceof ClassSetOperationNode) {
+            return [$node];
+        }
+
+        return [...(null === $node->left ? [] : $this->operandsOf($node->left)), ...$this->operandsOf($node->right)];
+    }
+
+    /**
+     * Operators, parentheses and blanks between the operands of an extended class.
+     */
+    private function highlightLayout(string $text): string
+    {
+        return preg_replace_callback(
+            '/[!&+|\-^]|[()]|[^!&+|\-^()]++/',
+            fn (array $part): string => match (true) {
+                '(' === $part[0], ')' === $part[0] => $this->wrap($part[0], 'group'),
+                1 === \strlen($part[0]) && str_contains('!&+|-^', $part[0]) => $this->wrap($this->escape($part[0]), 'meta'),
+                default => $this->escape($part[0]),
+            },
+            $text,
+        ) ?? $this->escape($text);
+    }
 
     private function renderInlineFlagsGroup(string $flags, string $child, string $open, string $close): string
     {

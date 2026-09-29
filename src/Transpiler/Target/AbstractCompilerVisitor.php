@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace RegexParser\Transpiler\Target;
 
 use RegexParser\Exception\TranspileException;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\NodeInterface;
 use RegexParser\NodeVisitor\AbstractNodeVisitor;
 use RegexParser\Transpiler\TranspileContext;
@@ -30,6 +32,18 @@ use RegexParser\Transpiler\TranspileContext;
 abstract class AbstractCompilerVisitor extends AbstractNodeVisitor
 {
     public function __construct(protected readonly TranspileContext $context) {}
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        return $this->unsupported('Perl extended character classes "(?[...])" are not supported by this target.', $node);
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        return $this->unsupported('Perl extended character classes "(?[...])" are not supported by this target.', $node);
+    }
 
     /**
      * Refuse a construct the target has no way to express.

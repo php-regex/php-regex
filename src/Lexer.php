@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser;
 
 use RegexParser\Exception\LexerException;
+use RegexParser\Internal\ExtendedClassReader;
 use RegexParser\Internal\InlineFlags;
 use RegexParser\Internal\PcreVerb;
 
@@ -271,7 +272,8 @@ final class Lexer
     private readonly bool $reportsPastTheFault;
 
     /**
-     * Whether "(*scs:" and "(*scan_substring:" are known, PCRE2 10.45 on.
+     * Whether PCRE2 10.45's syntax is read: "(*scs:" and "(*scan_substring:",
+     * and the Perl extended class "(?[...])".
      */
     private readonly bool $readsScanSubstring;
 
@@ -299,7 +301,11 @@ final class Lexer
         return $this->tokensRead;
     }
 
-    public function tokenize(string $pattern, string $flags = ''): TokenStream
+    /**
+     * @param bool $extendedMore whether the text is read as under "(?xx)", as the
+     *                           classes of an extended class are
+     */
+    public function tokenize(string $pattern, string $flags = '', bool $extendedMore = false): TokenStream
     {
         // Patterns that are not valid UTF-8 are tokenized byte by byte, the
         // way PCRE compiles them without the /u modifier. With /u, PCRE
@@ -314,7 +320,7 @@ final class Lexer
         $this->utf = str_contains($flags, 'u')
             || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $pattern);
         $this->extendedMode = str_contains($flags, 'x');
-        $this->extendedMoreMode = false;
+        $this->extendedMoreMode = $extendedMore;
         $this->resetState();
 
         /** @var list<Token> $tokens */
@@ -435,6 +441,13 @@ final class Lexer
             return true;
         }
 
+        // "(?[...])", PCRE2 10.45: one token the parser reads the expression of.
+        if ($this->readsScanSubstring && !$this->inCharClass && '(?[' === substr($this->pattern, $this->position, 3)) {
+            $tokens[] = $this->consumeExtendedClass();
+
+            return true;
+        }
+
         // Under "(?xx)" PCRE skips spaces and tabs before the first member of
         // a class, so "(?xx)[ ]]" holds "]". They carry no meaning there and
         // are not given a token.
@@ -447,6 +460,49 @@ final class Lexer
         }
 
         return false;
+    }
+
+    /**
+     * "(?[" to the "]" that closes it at its own level, and the ")" after it;
+     * to the end of the pattern when none does. The parser judges the text.
+     */
+    private function consumeExtendedClass(): Token
+    {
+        $start = $this->position;
+        $at = $start + 3;
+        $depth = 0;
+        while ($at < $this->length) {
+            $char = $this->pattern[$at];
+            if ('\\' === $char) {
+                $quoteEnd = 'Q' === ($this->pattern[$at + 1] ?? '') ? strpos($this->pattern, '\\E', $at + 2) : null;
+                $at = null === $quoteEnd ? $at + ExtendedClassReader::escapeLength($this->pattern, $at, $this->utf) : (false === $quoteEnd ? $this->length : $quoteEnd + 2);
+
+                continue;
+            }
+
+            if ('[' === $char) {
+                $at = ExtendedClassReader::endOfClass($this->pattern, $at);
+
+                continue;
+            }
+
+            if (')' === $char && 0 === $depth) {
+                break;
+            }
+
+            if (']' === $char && 0 === $depth) {
+                $at += ')' === ($this->pattern[$at + 1] ?? '') ? 2 : 1;
+
+                break;
+            }
+
+            $depth += '(' === $char ? 1 : (')' === $char ? -1 : 0);
+            $at++;
+        }
+
+        $this->position = min($at, $this->length);
+
+        return new Token(TokenType::T_EXTENDED_CLASS, substr($this->pattern, $start, $this->position - $start), $start);
     }
 
     /**

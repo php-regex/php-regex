@@ -16,7 +16,10 @@ namespace RegexParser\ReDoS;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharTypeNode;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\NodeInterface;
@@ -103,6 +106,26 @@ final readonly class CharSetAnalyzer
 
         if ($node instanceof GroupNode) {
             return $this->walk($node->child, $fromStart);
+        }
+
+        if ($node instanceof ExtendedCharClassNode) {
+            return $this->walk($node->expression, $fromStart);
+        }
+
+        if ($node instanceof ClassSetOperationNode) {
+            $right = $this->walk($node->right, $fromStart);
+            if (null === $node->left) {
+                return $right->complement();
+            }
+
+            $left = $this->walk($node->left, $fromStart);
+
+            return match ($node->operator) {
+                ClassSetOperator::INTERSECTION => $left->intersect($right),
+                ClassSetOperator::DIFFERENCE => $left->intersect($right->complement()),
+                ClassSetOperator::SYMMETRIC_DIFFERENCE => $left->union($right)->intersect($left->intersect($right)->complement()),
+                default => $left->union($right),
+            };
         }
 
         if ($node instanceof AlternationNode) {

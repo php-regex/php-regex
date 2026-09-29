@@ -24,11 +24,14 @@ use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -266,6 +269,30 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
     public function visitBackref(BackrefNode $node): string
     {
         return $this->line(\sprintf('Backreference: whatever the capturing group "%s" matched', $node->ref));
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        return $this->line('Extended character class: one character of '.ltrim($node->expression->accept($this)));
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        $right = ltrim($node->right->accept($this));
+        if (null === $node->left) {
+            return 'not '.$right;
+        }
+
+        $word = match ($node->operator) {
+            ClassSetOperator::INTERSECTION => 'and',
+            ClassSetOperator::DIFFERENCE => 'but not',
+            ClassSetOperator::SYMMETRIC_DIFFERENCE => 'or else',
+            default => 'or',
+        };
+
+        return \sprintf('(%s %s %s)', ltrim($node->left->accept($this)), $word, $right);
     }
 
     /**

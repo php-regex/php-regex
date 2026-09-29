@@ -23,11 +23,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
@@ -178,6 +180,22 @@ final class MetricsNodeVisitor extends AbstractNodeVisitor
     public function visitPosixClass(PosixClassNode $node): array
     {
         return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->expression);
+        });
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChildren(array_values(array_filter([$node->left, $node->right])));
+        });
     }
 
     /**

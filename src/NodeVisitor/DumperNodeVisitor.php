@@ -24,11 +24,13 @@ use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
@@ -187,6 +189,18 @@ final class DumperNodeVisitor extends AbstractNodeVisitor
         };
 
         return "{$type}({$node->originalRepresentation})";
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        return 'ExtendedCharClass('.$node->expression->accept($this).')';
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        return 'ClassSetOperation('.$node->symbol.', '.($node->left?->accept($this) ?? '').', '.$node->right->accept($this).')';
     }
 
     /**

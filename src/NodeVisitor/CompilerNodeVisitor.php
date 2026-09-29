@@ -25,11 +25,13 @@ use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -84,6 +86,16 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     // Minimal state tracking
     private bool $inCharClass = false;
 
+    /**
+     * Inside "(?[...])", where a plain character is no operand.
+     */
+    private bool $inExtendedClass = false;
+
+    /**
+     * In a class inside "(?[...])", read under "xx", where a space is skipped.
+     */
+    private bool $inClassOfExtendedClass = false;
+
     private string $delimiter = '/';
 
     private string $closingDelimiter = '/';
@@ -136,6 +148,8 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     public function resetState(): void
     {
         $this->inCharClass = false;
+        $this->inExtendedClass = false;
+        $this->inClassOfExtendedClass = false;
         $this->delimiter = '/';
         $this->closingDelimiter = '/';
         $this->flags = '';
@@ -352,6 +366,10 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             return $value;
         }
 
+        if ($this->inExtendedClass) {
+            return $this->asWritten($node, $this->extendedClassOperand($value), $value);
+        }
+
         // Special case for closing bracket outside char class
         if (!$this->inCharClass && ']' === $value && ']' !== $this->closingDelimiter) {
             return $this->asWritten($node, $value, $value);
@@ -392,17 +410,52 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     }
 
     #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): string
+    {
+        // The class as written, where the pattern is: the text has the node's
+        // own layout, wherever the class stands.
+        if (null !== $this->source && '' !== $node->text) {
+            return $node->text;
+        }
+
+        [$inCharClass, $inExtendedClass] = [$this->inCharClass, $this->inExtendedClass];
+        $this->inCharClass = $this->inExtendedClass = true;
+
+        try {
+            return '(?['.$node->expression->accept($this).'])';
+        } finally {
+            [$this->inCharClass, $this->inExtendedClass] = [$inCharClass, $inExtendedClass];
+        }
+    }
+
+    /**
+     * Without the source, every operation is parenthesised: the precedence
+     * of "&" over the others needs no reader to remember it.
+     */
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): string
+    {
+        if (null === $node->left) {
+            return '!'.$node->right->accept($this);
+        }
+
+        return '('.$node->left->accept($this).$node->symbol.$node->right->accept($this).')';
+    }
+
+    #[\Override]
     public function visitCharClass(CharClassNode $node): string
     {
-        $wasInCharClass = $this->inCharClass;
+        [$wasInCharClass, $inExtendedClass, $inClassOfExtendedClass] = [$this->inCharClass, $this->inExtendedClass, $this->inClassOfExtendedClass];
         $this->inCharClass = true;
+        $this->inClassOfExtendedClass = $inExtendedClass || $inClassOfExtendedClass;
+        $this->inExtendedClass = false;
 
         try {
             $negation = $node->isNegated ? '^' : '';
 
             return '['.$negation.$node->expression->accept($this).']';
         } finally {
-            $this->inCharClass = $wasInCharClass;
+            [$this->inCharClass, $this->inExtendedClass, $this->inClassOfExtendedClass] = [$wasInCharClass, $inExtendedClass, $inClassOfExtendedClass];
         }
     }
 
@@ -884,6 +937,26 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * A character as an operand of "(?[...])", where only an escape stands on
+     * its own: "\!" for punctuation, "\x{e9}" or "\x41" for the rest.
+     */
+    private function extendedClassOperand(string $value): string
+    {
+        $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
+        $characters = $unicodeMode ? mb_str_split($value, 1, 'UTF-8') : str_split($value);
+
+        return implode('', array_map(static function (string $character) use ($unicodeMode): string {
+            if (1 === preg_match('/^[!-\/:-@\[-`{-~ ]$/', $character)) {
+                return '\\'.$character;
+            }
+
+            return $unicodeMode
+                ? \sprintf('\\x{%x}', mb_ord($character, 'UTF-8'))
+                : \sprintf('\\x%02x', \ord($character));
+        }, $characters));
+    }
+
+    /**
      * Offsets of the \Q...\E regions of the source.
      *
      * @return array<array{0: int, 1: int}>
@@ -1194,6 +1267,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
                 || $char === $this->closingDelimiter
                 || isset($meta[$char])
                 || ($escapeExtended && (' ' === $char || '#' === $char))
+                || ($this->inClassOfExtendedClass && ' ' === $char)
                 || $ord < 32
                 || 127 === $ord
                 || (!$unicodeMode && $ord >= 128)
@@ -1218,6 +1292,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
                 || $char === $this->closingDelimiter
                 || isset($meta[$char])
                 || ($escapeExtended && (' ' === $char || '#' === $char))
+                || ($this->inClassOfExtendedClass && ' ' === $char)
             ) {
                 $result .= '\\'.$char;
             } elseif (\ord($char) < 32 || 127 === \ord($char) || (!$unicodeMode && \ord($char) >= 128)) {

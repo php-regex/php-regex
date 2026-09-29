@@ -47,6 +47,7 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | Casing settings at the start of the pattern | `(*CASELESS_RESTRICT)`, `(*TURKISH_CASING)` | PCRE2 10.45, bundled by no PHP release yet |
 | `\k` read as the letter inside a class | `[\k]` | PCRE2 10.45, bundled by no PHP release yet |
 | Substring scan assertions | `(*scan_substring:(1)abc)`, `(*scs:(1,<name>)abc)` | PCRE2 10.45, bundled by no PHP release yet |
+| Perl extended classes | `(?[ \p{L} - [aeiou] ])`, `(?[ \d & ![3] ])` | PCRE2 10.45, bundled by no PHP release yet |
 | Calls that return capture groups | `(?1(2,<name>))`, `(?R(1))`, `(?&name('id'))` | PCRE2 10.47, bundled by no PHP release yet |
 | `\K` inside a lookaround | `(?=a\K)` | allowed up to PHP 8.4; PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` and refuses it |
 

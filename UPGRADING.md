@@ -51,6 +51,15 @@ everything that reads it.
 `(?1(2,<name>))` (PCRE2 10.47); both are empty lists otherwise, and both
 constructors take them as a last, optional argument.
 
+#### Two new nodes and two visitor methods
+
+A Perl extended class, `(?[ \p{L} - [aeiou] ])` (PCRE2 10.45), is an
+`ExtendedCharClassNode` whose expression is an operand or a tree of
+`ClassSetOperationNode`s. `NodeVisitorInterface` gains
+`visitExtendedCharClass()` and `visitClassSetOperation()`: a visitor extending
+`AbstractNodeVisitor` inherits both, one implementing the interface directly
+needs them.
+
 #### `php_version` alone always means the PCRE2 that PHP bundles
 
 `php_version` naming the running PHP used to mix two engines: the parser read

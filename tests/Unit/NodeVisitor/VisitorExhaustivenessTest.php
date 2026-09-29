@@ -29,11 +29,14 @@ use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassOperationType;
+use RegexParser\Node\ClassSetOperationNode;
+use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\KeepNode;
@@ -62,6 +65,11 @@ use RegexParser\Regex;
  */
 final class VisitorExhaustivenessTest extends TestCase
 {
+    /**
+     * A release that reads every construct the corpus holds, "(?[" included.
+     */
+    private const TARGET = ['pcre_version' => '10.49'];
+
     /**
      * Patterns chosen so that, together, they produce every node type the
      * parser can emit.
@@ -93,6 +101,7 @@ final class VisitorExhaustivenessTest extends TestCase
             '/(*LIMIT_MATCH=10)a/',
             '/(?C1)a/',
             '/\x{1F600}/u',
+            '/(?[ \d - ([3] & ![:alpha:]) ])/',
         ];
 
         foreach ($patterns as $pattern) {
@@ -104,7 +113,7 @@ final class VisitorExhaustivenessTest extends TestCase
     #[DataProvider('provide_node_covering_patterns')]
     public function test_every_visitor_handles_every_parser_producible_node(string $pattern): void
     {
-        $ast = Regex::create()->parse($pattern);
+        $ast = Regex::create(self::TARGET)->parse($pattern);
 
         $visited = 0;
         foreach (self::instantiableVisitors() as $class => $visitor) {
@@ -146,11 +155,14 @@ final class VisitorExhaustivenessTest extends TestCase
             new CharLiteralNode('\\x41', 65, CharLiteralType::UNICODE, 0, 4),
             new CharTypeNode('d', 0, 2),
             new ClassOperationNode(ClassOperationType::INTERSECTION, $literal, $literal, 0, 6),
+            new ClassSetOperationNode(ClassSetOperator::DIFFERENCE, new CharTypeNode('d', 0, 2), $literal, '-', 0, 4),
+            new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, new CharTypeNode('d', 1, 3), '!', 0, 3),
             new CommentNode('c', 0, 5),
             new ConditionalNode($literal, $literal, $literal, 0, 9),
             new ControlCharNode('A', 1, 0, 3),
             new DefineNode($literal, 0, 12),
             new DotNode(0, 1),
+            new ExtendedCharClassNode(new CharTypeNode('d', 3, 5), 0, 7),
             new GroupNode($literal, GroupType::T_GROUP_CAPTURING, null, null, 0, 3),
             new KeepNode(0, 2),
             new LimitMatchNode(10, 0, 16),
@@ -194,7 +206,7 @@ final class VisitorExhaustivenessTest extends TestCase
     public function test_pattern_corpus_covers_all_parser_producible_node_types(): void
     {
         $seen = [];
-        $regex = Regex::create();
+        $regex = Regex::create(self::TARGET);
 
         foreach (self::provide_node_covering_patterns() as ['pattern' => $pattern]) {
             $this->collectNodeTypes($regex->parse($pattern), $seen);

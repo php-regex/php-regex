@@ -23,11 +23,13 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\ClassOperationNode;
+use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
+use RegexParser\Node\ExtendedCharClassNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\KeepNode;
 use RegexParser\Node\LimitMatchNode;
@@ -410,6 +412,40 @@ final class TestCaseGeneratorNodeVisitor extends AbstractNodeVisitor
             'matching' => [$char],
             'non_matching' => ['x'],
         ];
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): array
+    {
+        // PCRE knows which characters are in the set: ask it, when it reads "(?[".
+        $class = "\x01\\A".$node->accept(new CompilerNodeVisitor())."\\z\x01";
+        $cases = ['matching' => [], 'non_matching' => []];
+        for ($code = 0x20; $code < 0x7F; $code++) {
+            $verdict = @preg_match($class, \chr($code));
+            if (false === $verdict) {
+                return $cases;
+            }
+
+            $kind = 1 === $verdict ? 'matching' : 'non_matching';
+            if (\count($cases[$kind]) < self::MAX_SAMPLES) {
+                $cases[$kind][] = \chr($code);
+            }
+        }
+
+        return $cases;
+    }
+
+    /**
+     * Best effort: a member of the left operand, or none for a complement.
+     */
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): array
+    {
+        if (null === $node->left) {
+            return ['matching' => [], 'non_matching' => $node->right->accept($this)['matching']];
+        }
+
+        return $node->left->accept($this);
     }
 
     /**

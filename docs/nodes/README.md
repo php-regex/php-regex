@@ -590,6 +590,61 @@ echo $prop->hasBraces;  // true
 
 ---
 
+### ExtendedCharClassNode
+
+**Purpose:** A Perl extended class, `(?[ \p{L} - [aeiou] ])`: a set expression
+over classes, read for a target on PCRE2 10.45 or later. It matches one
+character, like a character class.
+
+
+**Fields:**
+
+| Field        | Type          | Description                                   |
+|--------------|---------------|-----------------------------------------------|
+| `expression` | NodeInterface | An operand, or a `ClassSetOperationNode` tree |
+| `text`       | string        | The class as written, `(?[` to `])`; empty for a node built by hand |
+
+Operands are the nodes a class holds: a `CharClassNode`, a `PosixClassNode`
+(`[:alpha:]`), a `CharTypeNode` (`\d`), a `UnicodePropNode` (`\p{L}`) or a
+character (`\n`, `\x61`, `\!`). An escape is read as inside a class, so `\b`
+is a backspace and `\1` an octal escape; a nested class is read as under `xx`,
+where spaces and tabs are skipped. A plain character is no operand.
+
+### ClassSetOperationNode
+
+**Purpose:** One set operation inside an extended class.
+
+**Fields:**
+
+| Field      | Type               | Description                                  |
+|------------|--------------------|----------------------------------------------|
+| `operator` | ClassSetOperator   | The operation                                |
+| `left`     | NodeInterface\|null | The left operand; null for a complement      |
+| `right`    | NodeInterface      | The right operand                            |
+| `symbol`   | string             | The operator as written (`+` or `\|` for a union) |
+
+**Operators**, `!` binding tightest, then `&`, then the others left to right:
+
+| Operator                                | Syntax       |
+|-----------------------------------------|--------------|
+| `ClassSetOperator::COMPLEMENT`          | `!a`         |
+| `ClassSetOperator::INTERSECTION`        | `a & b`      |
+| `ClassSetOperator::UNION`               | `a + b`, `a \| b` |
+| `ClassSetOperator::DIFFERENCE`          | `a - b`      |
+| `ClassSetOperator::SYMMETRIC_DIFFERENCE`| `a ^ b`      |
+
+**Example:**
+```php
+use RegexParser\Regex;
+
+$ast = Regex::create(['pcre_version' => '10.45'])->parse('/(?[ \p{L} - [aeiou] ])/u');
+$difference = $ast->pattern->expression;
+
+echo $difference->operator->name;  // 'DIFFERENCE'
+```
+
+---
+
 ## Group and Reference Nodes
 
 ### BackrefNode
@@ -843,6 +898,8 @@ echo $literal->startPosition;  // positions are 0-based
 | `AssertionNode`   | Assertion       | `value`                                    |
 | `CharClassNode`   | Character set   | `expression`, `isNegated`                  |
 | `RangeNode`       | Range in class  | `start`, `end`                             |
+| `ExtendedCharClassNode` | Extended class | `expression`                        |
+| `ClassSetOperationNode` | Set operation  | `operator`, `left`, `right`         |
 | `BackrefNode`     | Backreference   | `ref`                                      |
 | `ConditionalNode` | Conditional     | `condition`, `yes`, `no`                   |
 
