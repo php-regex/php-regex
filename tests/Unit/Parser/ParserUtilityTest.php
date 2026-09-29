@@ -18,10 +18,12 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\AssertionNode;
+use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Parser;
+use RegexParser\Regex;
 use RegexParser\Tests\TestUtils\ParserAccessor;
 use RegexParser\Tests\TestUtils\PhpErrorOffset;
 use RegexParser\TokenType;
@@ -242,23 +244,13 @@ final class ParserUtilityTest extends TestCase
 
     public function test_parse_conditional_lookaround(): void
     {
-        // Simuler (?(?=a))
-        // The condition is a lookaround: (?=a)
-        // Tokens: (?, =, a, ), )
-        $tokens = [
-            $this->accessor->createToken(TokenType::T_GROUP_MODIFIER_OPEN, '(?', 2), // (?
-            $this->accessor->createToken(TokenType::T_LITERAL, '=', 4), // =
-            $this->accessor->createToken(TokenType::T_LITERAL, 'a', 5), // a
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 6), // Fermeture Lookahead
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 7), // Fermeture Conditionnelle
-            $this->accessor->createToken(TokenType::T_EOF, '', 8),
-        ];
-        $this->accessor->setTokens($tokens);
-        $this->accessor->setPosition(0); // Start at position 0, on '(?'
+        // "(?(?=a)b)": the "?" after "(?(" opens the lookahead that is the
+        // condition. A group there, "(?((?=a))b)", is no condition: PHP
+        // refuses it, "subpattern name expected at offset 3".
+        $conditional = Regex::create(['cache' => null])->parse('/(?(?=a)b)/')->pattern;
+        $this->assertInstanceOf(ConditionalNode::class, $conditional);
 
-        // parseConditionalCondition will parse the lookaround condition itself via parseAtom
-        $condition = $this->accessor->callPrivateMethod('parseConditionalCondition');
-
+        $condition = $conditional->condition;
         $this->assertInstanceOf(GroupNode::class, $condition);
         $this->assertSame(GroupType::T_GROUP_LOOKAHEAD_POSITIVE, $condition->type);
     }
@@ -267,7 +259,12 @@ final class ParserUtilityTest extends TestCase
     {
         // Simuler (?(DEFINE)...)
         $tokens = [
-            $this->accessor->createToken(TokenType::T_ASSERTION, 'DEFINE', 2),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'D', 2),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'E', 3),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'F', 4),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'I', 5),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'N', 6),
+            $this->accessor->createToken(TokenType::T_LITERAL, 'E', 7),
             $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 8),
             $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 9), // Fermeture externe
         ];

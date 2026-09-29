@@ -1970,14 +1970,12 @@ final class Parser
             return new BackrefNode($name, $startPosition, $this->stream->current()->position);
         }
 
-        if (!$this->stream->matchLiteral('<') && !$this->stream->matchLiteral('{')) {
+        if (!$this->stream->matchLiteral('<')) {
             return null;
         }
 
-        $open = $this->stream->previous()->value;
         $name = $this->groupNames->read(false);
-        $close = '<' === $open ? '>' : '}';
-        $this->stream->consumeLiteral($close, "Expected $close after condition name");
+        $this->stream->consumeLiteral('>', 'Expected > after condition name');
 
         return new BackrefNode($name, $startPosition, $this->stream->current()->position);
     }
@@ -2043,7 +2041,9 @@ final class Parser
             $this->stream->advance();
         }
 
-        if ('' !== $name && $this->stream->check(TokenType::T_GROUP_CLOSE)) {
+        // Only characters a name may hold, up to the ")".
+        if ('' !== $name && $this->stream->check(TokenType::T_GROUP_CLOSE)
+            && $this->groupNames->invalidNameOffset($nameStart) === $this->stream->current()->position) {
             $this->guardNameLength($name, $nameStart);
 
             return new BackrefNode($name, $startPosition, $this->stream->current()->position);
@@ -2088,34 +2088,18 @@ final class Parser
             throw $this->parserException(\sprintf('Quantifier without target at position %d', $position), $position);
         }
 
-        // Anything else has to be an atom that refers to a group. PCRE wants
-        // a name there, and refuses what cannot be one before reading it.
-        try {
-            $condition = $this->parseAtom();
-        } catch (SyntaxErrorException) {
-            $condition = null;
-        }
+        // Anything else has to be a name, and PCRE refuses what cannot be one
+        // before reading it: an escape such as "\1", or a group such as
+        // "((?=a))", is no condition.
+        $position = $this->conditionErrorOffset($startPosition);
 
-        if (
-            !(
-                $condition instanceof BackrefNode
-                || $condition instanceof GroupNode
-                || $condition instanceof AssertionNode
-                || $condition instanceof SubroutineNode
-            )
-        ) {
-            $position = $this->conditionErrorOffset($startPosition);
-
-            throw $this->parserException(
-                \sprintf(
-                    'Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).',
-                    $position,
-                ),
+        throw $this->parserException(
+            \sprintf(
+                'Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).',
                 $position,
-            );
-        }
-
-        return $condition;
+            ),
+            $position,
+        );
     }
 
     /**
@@ -2741,7 +2725,7 @@ final class Parser
             return $limit;
         }
 
-        preg_match('/\G[A-Za-z_]*+/', $this->pattern, $matches, 0, $start + 2);
+        preg_match('/\G[A-Za-z0-9_]*+/', $this->pattern, $matches, 0, $start + 2);
         $name = $matches[0] ?? '';
         $nameEnd = $start + 2 + \strlen($name);
 
@@ -2750,14 +2734,14 @@ final class Parser
         }
 
         // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
-        // 10.47 an alphabetic name followed by no colon is refused past the
-        // character after it.
+        // 10.47 an alphabetic name, one that starts with a lowercase letter,
+        // followed by no colon is refused past the character after it.
         $pastTheFault = $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47');
         if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
             return $this->pastTheFault($nameEnd);
         }
 
-        return $pastTheFault && 1 === preg_match('/^[a-z_]++$/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
+        return $pastTheFault && 1 === preg_match('/^[a-z]/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
             ? $nameEnd + 1
             : $nameEnd;
     }

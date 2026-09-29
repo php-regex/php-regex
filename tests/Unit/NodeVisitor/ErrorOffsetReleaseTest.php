@@ -99,6 +99,15 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'escape where an option letter is due' => ['pattern' => '/(?i\\y/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'property escape right after (?' => ['pattern' => '/(?\\p{L/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
         yield 'hexadecimal escape after (?-' => ['pattern' => '/a(?-\\x{zz}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'alphabetic name closed with no colon' => ['pattern' => '/(*pla)/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.47'];
+        yield 'known alphabetic name closed with no colon' => ['pattern' => '/(*atomic)/', 'bundled' => 8, 'newer' => 9, 'movedIn' => '10.47'];
+        yield 'alphabetic name holding a digit' => ['pattern' => '/(*a9b)/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.47'];
+        yield 'alphabetic name ending in a digit' => ['pattern' => '/(*pla9)/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'alphabetic name ending in a digit at the end' => ['pattern' => '/(*pla9/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        yield 'unknown verb name' => ['pattern' => '/(*FOO)/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
+        yield 'verb name of a digit at the end' => ['pattern' => '/(*9/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
+        yield 'verb name of a digit before a colon' => ['pattern' => '/(*9:/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
+        yield 'verb name ending in a digit' => ['pattern' => '/(*MARK9./', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
         yield 'unmatched closing parenthesis' => ['pattern' => '/a)/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
 
         yield 'group name starting with a Unicode digit' => ['pattern' => '/(?<٣a>x)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];

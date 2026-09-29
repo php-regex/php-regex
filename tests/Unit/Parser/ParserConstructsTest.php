@@ -103,6 +103,19 @@ final class ParserConstructsTest extends TestCase
      */
     public static function provideConstructsParserRefuses(): iterable
     {
+        // preg_match() on PCRE2 10.40 to 10.48: "subpattern name expected at offset 3".
+        // After "(?(", "?" opens the assertion: "(?(?=test)" is a condition, "(?((?=test))" is not.
+        yield 'conditional with lookahead positive: /(?((?=test))yes|no)/' => ['pattern' => '/(?((?=test))yes|no)/'];
+        yield 'conditional with lookahead negative: /(?((?!test))yes|no)/' => ['pattern' => '/(?((?!test))yes|no)/'];
+        yield 'conditional with lookbehind positive: /(?((?<=test))yes|no)/' => ['pattern' => '/(?((?<=test))yes|no)/'];
+        yield 'conditional with lookbehind negative: /(?((?<!test))yes|no)/' => ['pattern' => '/(?((?<!test))yes|no)/'];
+        yield 'parser conditional with lookahead negative: /(?((?!x))yes|no)/' => ['pattern' => '/(?((?!x))yes|no)/'];
+        // preg_match() on PCRE2 10.40 to 10.48: "subpattern name expected at offset 12" and 13.
+        // A condition names its group bare, in "<>" or in quotes, never in "{}" or ">...<".
+        yield 'conditional with curly brace name: /(?<foo>x)(?({foo})yes|no)/' => ['pattern' => '/(?<foo>x)(?({foo})yes|no)/'];
+        yield 'parser conditional with curly brace name: /(?<name>x)(?({name})yes|no)/' => ['pattern' => '/(?<name>x)(?({name})yes|no)/'];
+        yield 'parser conditional with angle bracket name: /(?<name>x)(?(>name<)yes|no)/' => ['pattern' => '/(?<name>x)(?(>name<)yes|no)/'];
+
         // preg_match() on PCRE2 10.48: "unrecognized character after (?P at offset 4"; 10.40 at 3.
         // "(?P" takes "<", ">" or "=": the quoted name is "(?'name'...)", without the "P".
         yield 'python named group single quotes: /(?P\'name\'test)/' => ['pattern' => '/(?P\'name\'test)/'];
@@ -144,26 +157,6 @@ final class ParserConstructsTest extends TestCase
         yield 'conditional with named group: /(?<name>test)(?(<name>)yes|no)/' => [
             'pattern' => '/(?<name>test)(?(<name>)yes|no)/',
             'recompiled' => '/(?<name>test)(?(name)yes|no)/',
-        ];
-
-        yield 'conditional with lookahead positive: /(?((?=test))yes|no)/' => [
-            'pattern' => '/(?((?=test))yes|no)/',
-            'recompiled' => '/(?(?=test)yes|no)/',
-        ];
-
-        yield 'conditional with lookahead negative: /(?((?!test))yes|no)/' => [
-            'pattern' => '/(?((?!test))yes|no)/',
-            'recompiled' => '/(?(?!test)yes|no)/',
-        ];
-
-        yield 'conditional with lookbehind positive: /(?((?<=test))yes|no)/' => [
-            'pattern' => '/(?((?<=test))yes|no)/',
-            'recompiled' => '/(?(?<=test)yes|no)/',
-        ];
-
-        yield 'conditional with lookbehind negative: /(?((?<!test))yes|no)/' => [
-            'pattern' => '/(?((?<!test))yes|no)/',
-            'recompiled' => '/(?(?<!test)yes|no)/',
         ];
 
         yield 'conditional non define resets token stream: /(?(DEFINEX)yes|no)/' => [
@@ -597,11 +590,6 @@ final class ParserConstructsTest extends TestCase
         yield 'extract pattern and flags: /test/imsxuDUAJ' => [
             'pattern' => '/test/imsxuDUAJ',
             'recompiled' => '/test/imsxuDUAJ',
-        ];
-
-        yield 'conditional with curly brace name: /(?<foo>x)(?({foo})yes|no)/' => [
-            'pattern' => '/(?<foo>x)(?({foo})yes|no)/',
-            'recompiled' => '/(?<foo>x)(?(foo)yes|no)/',
         ];
 
         yield 'conditional with numeric reference: /(a)(?(1)yes|no)/' => [
@@ -1240,21 +1228,6 @@ final class ParserConstructsTest extends TestCase
             'recompiled' => '/()abc(?(1)yes|no)/',
         ];
 
-        yield 'parser conditional with angle bracket name: /(?<name>x)(?(>name<)yes|no)/' => [
-            'pattern' => '/(?<name>x)(?(>name<)yes|no)/',
-            'recompiled' => '/(?<name>x)(?(>name<)yes|no)/',
-        ];
-
-        yield 'parser conditional with curly brace name: /(?<name>x)(?({name})yes|no)/' => [
-            'pattern' => '/(?<name>x)(?({name})yes|no)/',
-            'recompiled' => '/(?<name>x)(?(name)yes|no)/',
-        ];
-
-        yield 'parser conditional with lookahead negative: /(?((?!x))yes|no)/' => [
-            'pattern' => '/(?((?!x))yes|no)/',
-            'recompiled' => '/(?(?!x)yes|no)/',
-        ];
-
         yield 'parser conditional bare name reference: /(?<test>x)(?(test)yes|no)/' => [
             'pattern' => '/(?<test>x)(?(test)yes|no)/',
             'recompiled' => '/(?<test>x)(?(test)yes|no)/',
@@ -1696,10 +1669,6 @@ final class ParserConstructsTest extends TestCase
         yield 'negative lookbehind: /(?<!test)abc/' => ['pattern' => '/(?<!test)abc/'];
         yield 'conditional with number: /(test)(?(1)yes|no)/' => ['pattern' => '/(test)(?(1)yes|no)/'];
         yield 'conditional with named group: /(?<name>test)(?(<name>)yes|no)/' => ['pattern' => '/(?<name>test)(?(<name>)yes|no)/'];
-        yield 'conditional with lookahead positive: /(?((?=test))yes|no)/' => ['pattern' => '/(?((?=test))yes|no)/'];
-        yield 'conditional with lookahead negative: /(?((?!test))yes|no)/' => ['pattern' => '/(?((?!test))yes|no)/'];
-        yield 'conditional with lookbehind positive: /(?((?<=test))yes|no)/' => ['pattern' => '/(?((?<=test))yes|no)/'];
-        yield 'conditional with lookbehind negative: /(?((?<!test))yes|no)/' => ['pattern' => '/(?((?<!test))yes|no)/'];
         yield 'conditional lookaround condition: /(?(?=a)yes|no)/' => ['pattern' => '/(?(?=a)yes|no)/'];
         yield 'conditional without else: /(test)(?(1)yes)/' => ['pattern' => '/(test)(?(1)yes)/'];
         yield 'subroutine call by number: /(test)(?1)/' => ['pattern' => '/(test)(?1)/'];
@@ -1784,7 +1753,6 @@ final class ParserConstructsTest extends TestCase
         yield 'extract pattern and flags: /test/imsxuDU' => ['pattern' => '/test/imsxuDU'];
         yield 'extract pattern and flags: /test/imsxuDUA' => ['pattern' => '/test/imsxuDUA'];
         yield 'extract pattern and flags: /test/imsxuDUAJ' => ['pattern' => '/test/imsxuDUAJ'];
-        yield 'conditional with curly brace name: /(?<foo>x)(?({foo})yes|no)/' => ['pattern' => '/(?<foo>x)(?({foo})yes|no)/'];
         yield 'conditional with numeric reference: /(a)(?(1)yes|no)/' => ['pattern' => '/(a)(?(1)yes|no)/'];
         yield 'conditional with multi digit numeric reference: /(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(?(12)yes|no)/' => ['pattern' => '/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(?(12)yes|no)/'];
         yield 'conditional with lookahead condition: /(?(?=test)yes|no)/' => ['pattern' => '/(?(?=test)yes|no)/'];
@@ -1904,8 +1872,6 @@ final class ParserConstructsTest extends TestCase
         yield 'octal in char class: /[\\01\\o{77}]/' => ['pattern' => '/[\\01\\o{77}]/'];
         yield 'parser conditional with recursion: /(?(R)a|b)/' => ['pattern' => '/(?(R)a|b)/'];
         yield 'parser conditional with numeric backref: /()abc(?(1)yes|no)/' => ['pattern' => '/()abc(?(1)yes|no)/'];
-        yield 'parser conditional with curly brace name: /(?<name>x)(?({name})yes|no)/' => ['pattern' => '/(?<name>x)(?({name})yes|no)/'];
-        yield 'parser conditional with lookahead negative: /(?((?!x))yes|no)/' => ['pattern' => '/(?((?!x))yes|no)/'];
         yield 'parser conditional bare name reference: /(?<test>x)(?(test)yes|no)/' => ['pattern' => '/(?<test>x)(?(test)yes|no)/'];
         yield 'parser char class with posix and range: /[[:alpha:]a-z]/' => ['pattern' => '/[[:alpha:]a-z]/'];
         yield 'parser char class with nested posix: /[[:alpha:][:digit:]]/' => ['pattern' => '/[[:alpha:][:digit:]]/'];

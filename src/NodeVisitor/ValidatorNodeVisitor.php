@@ -1388,11 +1388,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
             && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->runsPcre1045())) {
             // PCRE reports an unknown verb where its name ends; "(*)" is a
-            // "*" with nothing to repeat, refused past it from PCRE2 10.47.
-            $nameLength = 1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0;
+            // "*" with nothing to repeat, refused past it from PCRE2 10.47,
+            // and so is an alphabetic assertion, whose name starts with a
+            // lowercase letter, followed by no colon.
+            $nameEnd = $node->startPosition + 2 + (1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
-                '' === $node->verb ? $this->pastTheFault($node->startPosition + 2) : $node->startPosition + 2 + $nameLength,
+                match (true) {
+                    '' === $node->verb => $this->pastTheFault($node->startPosition + 2),
+                    1 === preg_match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + 1),
+                    default => $nameEnd,
+                },
                 'regex.verb.invalid',
             );
         }
