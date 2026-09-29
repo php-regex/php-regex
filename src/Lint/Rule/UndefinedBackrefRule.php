@@ -50,6 +50,12 @@ final class UndefinedBackrefRule extends AbstractLintRule
                 return [];
             }
 
+            // "\NN" of two digits or more that names no group is an octal
+            // escape when it starts with an octal digit: "\11" is a tab.
+            if ($num > $context->groups->maxCapturingGroup && 1 === preg_match('/^\\\\[0-7]\d/', $node->ref)) {
+                return [];
+            }
+
             if ($num > $context->groups->maxCapturingGroup) {
                 return [new LintIssue(
                     'regex.lint.backref.undefined',

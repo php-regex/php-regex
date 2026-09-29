@@ -17,6 +17,7 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\GroupNumbering;
 use RegexParser\GroupNumberingCollector;
+use RegexParser\Internal\PcreVerb;
 use RegexParser\Internal\VersionCondition;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -919,6 +920,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     return;
                 }
 
+                // Without UTF mode, one byte at most: PCRE stops where the
+                // octal digits end.
+                if ($num >= 10 && 1 === preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
+                    $this->raiseSemanticError(
+                        \sprintf('Octal value \\%s is greater than \\377 without UTF mode.', $octal[0]),
+                        $node->startPosition + 1 + \strlen($octal[0]),
+                        'regex.octal.out_of_range',
+                        'Use the "u" modifier, or \\x{...} for a code point.',
+                    );
+                }
+
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
@@ -1346,7 +1358,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++$/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
-                $closing,
+                PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->runsPcre1045()) ?? $closing,
                 'regex.verb.invalid',
             );
         }

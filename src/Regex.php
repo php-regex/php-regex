@@ -96,7 +96,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-70807592862c1c6879df6aaecdc4bc24';
+    public const CACHE_VERSION = 'ast-670f84b2b81860baa4bf2cb5961a4d1b';
 
     /**
      * Default maximum allowed regex pattern length.

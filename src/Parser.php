@@ -2648,6 +2648,15 @@ final class Parser
      */
     private function unclosedVerbOffset(int $start): int
     {
+        $limit = PcreVerb::limitValueErrorOffset(
+            $this->pattern,
+            $start,
+            $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'),
+        );
+        if (null !== $limit) {
+            return $limit;
+        }
+
         preg_match('/\G[A-Za-z_]*+/', $this->pattern, $matches, 0, $start + 2);
         $name = $matches[0] ?? '';
         $nameEnd = $start + 2 + \strlen($name);

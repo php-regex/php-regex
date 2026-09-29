@@ -4230,7 +4230,6 @@
     {
         "pattern": "/\\343\\200\\202|\\357(?:\\274\\216|\\275\\241)/s",
         "issues": [
-            "regex.lint.backref.undefined",
             "regex.lint.flag.useless.s"
         ]
     },

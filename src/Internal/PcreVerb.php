@@ -154,6 +154,28 @@ final readonly class PcreVerb
             || \in_array($name, ['', 'MARK', 'PRUNE', 'SKIP', 'THEN', 'COMMIT', 'ACCEPT', 'FAIL', 'F'], true);
     }
 
+    /**
+     * Where PCRE stops reading the value of "(*LIMIT_MATCH=n)" and the other
+     * limits, the "(" at $start, when that value is malformed or unclosed;
+     * null when it is well formed, or no limit starts there. With no digit,
+     * PCRE stops after the "="; after digits, from PCRE2 10.45 on the first
+     * other character, and before on the one after it.
+     */
+    public static function limitValueErrorOffset(string $pattern, int $start, bool $pcre1045): ?int
+    {
+        if (1 !== preg_match('/\G\(\*LIMIT_(?:MATCH|HEAP|DEPTH|RECURSION)=/', $pattern, $matches, 0, $start)) {
+            return null;
+        }
+
+        $at = $start + \strlen($matches[0]);
+        $digits = strspn($pattern, '0123456789', $at);
+        if (0 === $digits) {
+            return $at;
+        }
+
+        return ')' === ($pattern[$at + $digits] ?? '') ? null : $at + $digits + ($pcre1045 ? 0 : 1);
+    }
+
     public function isScriptRun(): bool
     {
         return null === $this->assertion && null !== $this->payload;
