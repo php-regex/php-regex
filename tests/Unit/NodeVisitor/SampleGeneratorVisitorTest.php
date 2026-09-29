@@ -121,9 +121,10 @@ final class SampleGeneratorVisitorTest extends TestCase
         $ast = $this->regex->parse('/(?<name>a)?\k<name>/');
         $generator = new SampleGeneratorNodeVisitor();
 
-        // Try multiple times - at least one should generate 'aa' (when group matches)
+        // Try multiple times - at least one should generate 'aa' (when group
+        // matches). Each try has an even chance: 64 tries miss once in 2^64.
         $validSampleFound = false;
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 64; $i++) {
             $sample = $ast->accept($generator);
             if ('aa' === $sample) {
                 $validSampleFound = true;
