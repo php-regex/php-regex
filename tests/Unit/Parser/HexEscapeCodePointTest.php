@@ -39,6 +39,32 @@ final class HexEscapeCodePointTest extends TestCase
         $this->assertSame($codePoint, $first->codePoint, $pattern);
     }
 
+    #[Test]
+    public function test_a_bare_x_is_nul_where_pcre_takes_it(): void
+    {
+        // PCRE2 10.40 to 10.44, which PHP 8.2 to 8.5 bundle, read "\x" with
+        // no digit as NUL, and "\xg" as NUL then "g"; 10.45 refuses it at
+        // the character after "\x" (pcre2test on each).
+        foreach ([80200, 80400, 80500] as $phpVersion) {
+            $regex = Regex::create(['cache' => null, 'php_version' => $phpVersion]);
+            $node = $regex->parse('/a\\xg/')->pattern;
+
+            $this->assertInstanceOf(SequenceNode::class, $node);
+            $this->assertInstanceOf(CharLiteralNode::class, $node->children[1]);
+            $this->assertSame(0, $node->children[1]->codePoint);
+            $this->assertTrue($regex->validate('/a\\xg/')->isValid);
+            $this->assertSame(['a'], $regex->literals('/a\\xg/')->literalSet->prefixes);
+        }
+
+        $running = Regex::create(['cache' => null])->validate('/a\\xg/');
+        if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=')) {
+            $this->assertSame('regex.escape.digits_missing', $running->errorCode);
+            $this->assertSame(3, $running->offset);
+        } else {
+            $this->assertTrue($running->isValid);
+        }
+    }
+
     /**
      * @return iterable<string, array{pattern: string, subject: string, codePoint: int}>
      */

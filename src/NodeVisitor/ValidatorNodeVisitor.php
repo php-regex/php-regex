@@ -1066,6 +1066,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->validatePaddedBraces($node);
 
+        // "\x" with no digit: NUL up to PCRE2 10.44, refused from 10.45.
+        if ('\\x' === $node->originalRepresentation && null !== $this->source) {
+            $this->validateHexBraces($this->source, $node->startPosition + 2);
+        }
+
         // The Lexer/Parser combination already ensures these are
         // syntactically valid. We validate the *value*.
         match ($node->type) {

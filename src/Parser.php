@@ -816,7 +816,11 @@ final class Parser
 
         return match ($type) {
             TokenType::T_LITERAL,
-            TokenType::T_LITERAL_ESCAPED => new LiteralNode($token->value, $startPosition, $token->end()),
+            // "\x" with no digit is NUL where PCRE takes it (up to 10.44).
+            TokenType::T_LITERAL_ESCAPED => '\\x' === substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
+                && '{' !== ($this->pattern[$token->end()] ?? '')
+                ? new CharLiteralNode('\\x', 0, CharLiteralType::UNICODE, $startPosition, $token->end())
+                : new LiteralNode($token->value, $startPosition, $token->end()),
             TokenType::T_CHAR_TYPE => new CharTypeNode($token->value, $startPosition, $token->end()),
             TokenType::T_ANCHOR => new AnchorNode($token->value, $startPosition, $token->end()),
             TokenType::T_ASSERTION => new AssertionNode($token->value, $startPosition, $token->end()),
