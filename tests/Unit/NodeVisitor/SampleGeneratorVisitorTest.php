@@ -73,7 +73,8 @@ final class SampleGeneratorVisitorTest extends TestCase
     #[DataProvider('provideEngineChecked')]
     public function test_generate_gives_a_sample_the_engine_matches(string $pattern): void
     {
-        $this->assertSame(1, preg_match($pattern, Regex::create(['cache' => null])->generate($pattern)), $pattern);
+        // Checked by the interpreter: the JIT takes no substring scan.
+        $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), Regex::create(['cache' => null])->generate($pattern)), $pattern);
     }
 
     /**

@@ -15,6 +15,7 @@ namespace RegexParser\NodeVisitor;
 
 use Random\Engine\Mt19937;
 use Random\Randomizer;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\GroupNumberingCollector;
 use RegexParser\Node;
 use RegexParser\Node\AlternationNode;
@@ -59,6 +60,17 @@ use RegexParser\Node\VersionConditionNode;
 final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 {
     private const MAX_RECURSION_DEPTH = 2;
+
+    /**
+     * The longest sample built: past it, repeats of references or calls
+     * would outgrow any subject worth testing with.
+     */
+    private const MAX_SAMPLE_LENGTH = 1048576;
+
+    /**
+     * How many times, for one sample, lookaheads nothing fits are drawn again.
+     */
+    private const MAX_LOOKAHEAD_DRAWS = 32;
 
     /**
      * Characters from the common scripts and categories, tried first.
@@ -107,6 +119,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      * @var list<GroupNode> the substring scans of the pattern
      */
     private array $scans = [];
+
+    private int $lookaheadDraws = 0;
 
     /**
      * @var array<int, list<NodeInterface>> the bodies each group's capture is scanned with, by group number
@@ -176,6 +190,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->namedGroupMap = [];
         $this->groupNumbers = [];
         $this->scans = [];
+        $this->lookaheadDraws = 0;
         $this->groupDefinitionCounter = 1;
         $this->requiredPrefixes = [];
         $this->requiredSuffixes = [];
@@ -275,12 +290,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         // by parseQuantifierRange()
         $repeats = ($min === $max) ? $min : $this->randomInt($min, $max);
 
-        $parts = [];
+        $sample = '';
         for ($i = 0; $i < $repeats; $i++) {
-            $parts[] = $node->node->accept($this);
+            $sample .= $node->node->accept($this);
+            // References and calls can double a sample at each repeat.
+            if (\strlen($sample) > self::MAX_SAMPLE_LENGTH) {
+                throw new SampleGenerationException(\sprintf('No sample was built: it would pass %d bytes.', self::MAX_SAMPLE_LENGTH));
+            }
         }
 
-        return implode('', $parts);
+        return $sample;
     }
 
     #[\Override]
@@ -762,14 +781,28 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         foreach ($children as $index => $child) {
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
-                // The lookahead first: what it captures holds after it.
-                $ahead = $child->child->accept($this);
-                $rest = $this->generateSequence(\array_slice($children, $index + 1));
-                if ($this->holds($child->child, $rest, '\\A', '')) {
-                    return $text.$rest;
-                }
+                // Its text laid over what follows, or before it, or after it:
+                // the first that what is left of the sequence matches, as
+                // lookaheads in a row each ask something of the same text.
+                // None does: the whole is drawn again, while tries are left.
+                $left = new SequenceNode(\array_slice($children, $index), $child->getStartPosition(), $child->getEndPosition());
+                do {
+                    // The lookahead first: what it captures holds after it.
+                    $ahead = $child->child->accept($this);
+                    $rest = $this->generateSequence(\array_slice($children, $index + 1));
+                    if ($this->holds($child->child, $rest, '\\A', '')) {
+                        return $text.$rest;
+                    }
 
-                return $text.$ahead.$this->textFrom($rest, $this->textLength($ahead));
+                    $laidOver = $ahead.$this->textFrom($rest, $this->textLength($ahead));
+                    foreach ([$laidOver, $ahead.$rest, $rest.$ahead] as $candidate) {
+                        if ($this->holds($left, $candidate, '\\A', '')) {
+                            return $text.$candidate;
+                        }
+                    }
+                } while ($this->lookaheadDraws++ < self::MAX_LOOKAHEAD_DRAWS);
+
+                return $text.$laidOver;
             }
 
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
@@ -823,7 +856,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         $compiled = $body->accept(new CompilerNodeVisitor());
 
-        return 1 === @preg_match("\x01".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text);
+        // Checked by the interpreter, as generate() checks its samples.
+        return 1 === @preg_match("\x01(*NO_JIT)".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text);
     }
 
     /**

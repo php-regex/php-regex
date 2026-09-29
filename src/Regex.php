@@ -450,12 +450,17 @@ final readonly class Regex
         // Generation is best-effort (lookaround hints, negated classes, ...):
         // verify the sample against the real engine and retry a few times
         // before settling for the last attempt.
+        // Samples are checked by the interpreter: the JIT of PCRE2 10.49
+        // crashes PHP on some pattern and subject pairs, which a sample may
+        // happen to be. "(*NO_JIT)" leads the pattern, as a start option.
+        $trimmed = ltrim($regex);
+        $checked = substr($trimmed, 0, 1).'(*NO_JIT)'.substr($trimmed, 1);
         $sample = '';
         $attempts = [];
         for ($attempt = 0; $attempt < 8; $attempt++) {
             $sample = $ast->accept($generator);
 
-            $matches = @preg_match($regex, $sample);
+            $matches = @preg_match($checked, $sample);
             if (false === $matches || 1 === $matches) {
                 // Either verified, or the pattern cannot be evaluated by
                 // this PCRE runtime — return what we have.
@@ -470,7 +475,7 @@ final readonly class Regex
         foreach (array_keys($attempts) as $attempt) {
             foreach (['a', ' ', "\n"] as $padding) {
                 foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
-                    if (1 === @preg_match($regex, $padded)) {
+                    if (1 === @preg_match($checked, $padded)) {
                         return $padded;
                     }
                 }
