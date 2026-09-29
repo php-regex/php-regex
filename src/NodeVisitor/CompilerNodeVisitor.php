@@ -227,6 +227,12 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
+        // "[[:<:]]" and "[[:>:]]" stand for "\b(?=\w)" and "\b(?<=\w)".
+        $written = $this->writtenText($node);
+        if ('[[:<:]]' === $written || '[[:>:]]' === $written) {
+            return $written;
+        }
+
         $flags = $node->flags ?? '';
 
         if ($this->pretty) {

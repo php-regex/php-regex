@@ -870,10 +870,47 @@ final class Parser
         }
 
         if ($this->stream->match(TokenType::T_CHAR_CLASS_OPEN)) {
-            return $this->parseCharClass();
+            return $this->parseWordBoundaryClass() ?? $this->parseCharClass();
         }
 
         return null;
+    }
+
+    /**
+     * "[[:<:]]" and "[[:>:]]", exactly, are no classes: PCRE2 reads them as
+     * the start and the end of a word, "\b(?=\w)" and "\b(?<=\w)".
+     */
+    private function parseWordBoundaryClass(): ?GroupNode
+    {
+        $start = $this->stream->previous()->position;
+        $text = substr($this->pattern, $start, 7);
+        if ('[[:<:]]' !== $text && '[[:>:]]' !== $text) {
+            return null;
+        }
+
+        $end = $start + 7;
+        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $end) {
+            $this->stream->advance();
+        }
+
+        // Each node starts inside the one holding it, as written groups do.
+        $side = new GroupNode(
+            new CharTypeNode('w', $start + 2, $end - 1),
+            '<' === $text[3] ? GroupType::T_GROUP_LOOKAHEAD_POSITIVE : GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+            null,
+            null,
+            $start + 1,
+            $end - 1,
+        );
+
+        return new GroupNode(
+            new SequenceNode([new AssertionNode('b', $start + 1, $start + 1), $side], $start + 1, $end - 1),
+            GroupType::T_GROUP_NON_CAPTURING,
+            null,
+            null,
+            $start,
+            $end,
+        );
     }
 
     private function parseVerbAtom(int $startPosition): ?NodeInterface

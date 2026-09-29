@@ -47,9 +47,10 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create();
 
-        // "[[:<:]]" compiles to a word boundary and a lookahead, repeated
-        // here past what PCRE compiles; the static checks do not measure it.
-        $result = $regex->validate('/[[:<:]]{65535}/');
+        // Under "u", "\d" is a Unicode property; repeated here past the
+        // 64 KiB PCRE compiles, yet below the smallest size the static checks
+        // can prove: only PCRE itself refuses it.
+        $result = $regex->validate('/(?:\da){6000}/u');
 
         $this->assertTrue($result->isValid);
     }
@@ -58,7 +59,7 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-        $result = $regex->validate('/[[:<:]]{65535}/');
+        $result = $regex->validate('/(?:\da){6000}/u');
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PCRE_RUNTIME, $result->category);
@@ -66,7 +67,7 @@ final class RegexApiTest extends TestCase
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
         // PCRE2 10.48 reports "regular expression is too large" at offset 0,
         // the releases before at the end of the pattern.
-        $this->assertContains($result->offset, [0, 14]);
+        $this->assertContains($result->offset, [0, 13]);
     }
 
     public function test_optimize(): void
