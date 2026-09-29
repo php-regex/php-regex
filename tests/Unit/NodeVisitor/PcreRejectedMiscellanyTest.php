@@ -70,6 +70,11 @@ final class PcreRejectedMiscellanyTest extends TestCase
         $this->assertSame(6, $old->validate('/x(?<=a(?<=b\\C))/u')->offset);
         $this->assertSame(3, $old->validate('/a\\C/u')->offset);
 
+        // The releases that refuse it anywhere: 8.4.25 and later 8.4, 8.5.10 and later.
+        foreach (['8.4.24' => 0, '8.4.25' => 8, '8.4.99' => 8, '8.5.0' => 0, '8.5.9' => 0, '8.5.10' => 8, '8.6.0' => 8] as $php => $offset) {
+            $this->assertSame($offset, Regex::create(['cache' => null, 'php_version' => (string) $php, 'pcre_version' => '10.44'])->validate('/(?<=ab\\Cde)X/u')->offset, (string) $php);
+        }
+
         $refusedAnywhere = \PHP_VERSION_ID >= 80510 || (\PHP_VERSION_ID >= 80425 && \PHP_VERSION_ID < 80500);
         $this->assertSame($refusedAnywhere ? 8 : 0, Regex::create(['cache' => null])->validate('/(?<=ab\\Cde)X/u')->offset);
     }
