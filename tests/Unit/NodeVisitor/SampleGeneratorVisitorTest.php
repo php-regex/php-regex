@@ -16,6 +16,10 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\LexerException;
+use RegexParser\Node\CharLiteralNode;
+use RegexParser\Node\CharLiteralType;
+use RegexParser\Node\RangeNode;
+use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 use RegexParser\Regex;
 
@@ -105,12 +109,97 @@ final class SampleGeneratorVisitorTest extends TestCase
         }
     }
 
+    public function test_the_first_and_last_surrogates_are_avoided(): void
+    {
+        // Seed 748 draws U+D800 from the range, seed 1635 U+DFFF: both give
+        // the first code point instead.
+        $ast = $this->regex->parse('/[\\x{D7FF}-\\x{E000}]/u');
+        foreach ([748, 1635] as $seed) {
+            $generator = new SampleGeneratorNodeVisitor();
+            $generator->setSeed($seed);
+            $this->assertSame("\u{D7FF}", $ast->accept($generator), (string) $seed);
+        }
+    }
+
+    public function test_a_range_between_characters_utf8_cannot_hold_gives_nothing(): void
+    {
+        // Built by hand: PCRE refuses such ends.
+        $surrogates = new RangeNode(new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 1, 9), new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 10, 18), 1, 18);
+        $this->assertSame('', (new RegexNode($surrogates, 'u', '/', 0, 19))->accept(new SampleGeneratorNodeVisitor()));
+
+        $beyond = new RangeNode(new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::UNICODE, 1, 11), new CharLiteralNode('\\x{110001}', 0x110001, CharLiteralType::UNICODE, 12, 22), 1, 22);
+        $this->assertSame('?', (new RegexNode($beyond, 'u', '/', 0, 23))->accept(new SampleGeneratorNodeVisitor()));
+    }
+
     public function test_a_lookahead_the_text_misses_is_laid_over_it(): void
     {
         $ast = $this->regex->parse('/^(?=ab)\\d\\d/');
         $generator = new SampleGeneratorNodeVisitor();
 
         $this->assertStringStartsWith('ab', $ast->accept($generator));
+    }
+
+    #[DataProvider('provideRangesAtTheEdges')]
+    public function test_a_range_gives_more_than_its_first_character(string $pattern): void
+    {
+        $ast = $this->regex->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+
+        $samples = [];
+        for ($try = 0; $try < 24; $try++) {
+            $generator->setSeed($try);
+            $sample = $ast->accept($generator);
+            $this->assertSame(1, preg_match('/^'.substr($pattern, 1, strrpos($pattern, '/') - 1).'$/'.substr($pattern, strrpos($pattern, '/') + 1), $sample), bin2hex($sample));
+            $samples[$sample] = true;
+        }
+
+        $this->assertGreaterThan(1, \count($samples), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideRangesAtTheEdges(): iterable
+    {
+        yield 'from the first code point' => ['/[\\x00-\\x02]/'];
+        yield 'up to the last code point' => ['/[\\x{10FFFD}-\\x{10FFFF}]/u'];
+        yield 'escaped ends under UTF' => ['/[\\x{100}-\\x{104}]/u'];
+        yield 'odd bytes' => ['/[\\x41-\\x43]/'];
+    }
+
+    #[DataProvider('provideLaidOut')]
+    public function test_a_lookaround_is_laid_over_the_text_only_where_it_misses(string $pattern, string $sample): void
+    {
+        $this->assertSame($sample, $this->regex->parse($pattern)->accept(new SampleGeneratorNodeVisitor()));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideLaidOut(): iterable
+    {
+        // Text the lookaround already holds is kept, text before it too.
+        yield 'lookahead holding after text' => ['/x(?=ab)ab/', 'xab'];
+        yield 'lookbehind holding, then more' => ['/red(?<=d)x/', 'redx'];
+        yield 'multibyte lookahead under UTF' => ['/(?=.$)é/u', 'é'];
+        // Where it misses, its text replaces the text at that place: the
+        // lookahead the start of what follows, the lookbehind the end of
+        // what precedes.
+        yield 'lookahead missing at the start' => ['/(?=b)ab/', 'bb'];
+        yield 'lookbehind missing at the end' => ['/ab(?<=a)c/', 'aac'];
+    }
+
+    public function test_a_lookaround_with_branches_is_judged_whole(): void
+    {
+        $generator = new SampleGeneratorNodeVisitor();
+        $ahead = $this->regex->parse('/(?=a|b)cb/');
+        $behind = $this->regex->parse('/bc(?<=b|x)d/');
+
+        for ($try = 0; $try < 8; $try++) {
+            $generator->setSeed($try);
+            $this->assertMatchesRegularExpression('/^[ab]b$/', $ahead->accept($generator));
+            $this->assertMatchesRegularExpression('/^b[bx]d$/', $behind->accept($generator));
+        }
     }
 
     public function test_generate_special_types(): void
