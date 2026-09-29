@@ -318,6 +318,12 @@ echo $result->confidence;                       // 'medium'
 
 Generates a sample string that matches the pattern. Useful for testing or documentation.
 
+Each sample is checked against the running PHP, and generation is retried
+until one matches: lookaheads, lookbehinds and assertions such as `\b` are
+held where they stand. A pattern no string can match, as `a(*FAIL)` or `$b`,
+gets its last attempt, which does not match; so may a pattern whose
+constraints are too tangled to guess, or one the running PHP cannot compile.
+
 ```php
 use RegexParser\Regex;
 
