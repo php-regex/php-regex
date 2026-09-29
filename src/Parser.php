@@ -1281,6 +1281,27 @@ final class Parser
     }
 
     /**
+     * Where PCRE refuses what follows the callout of a condition instead of
+     * an assertion: where it starts, from PCRE2 10.47; before, a character
+     * read as is on its last byte, one in "\Q...\E" included.
+     */
+    private function calloutConditionErrorOffset(): int
+    {
+        $token = $this->stream->current();
+        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->runningPcreAtLeast('10.47')) {
+            $token = $this->stream->peek();
+        }
+
+        if (TokenType::T_LITERAL !== $token->type || $this->runningPcreAtLeast('10.47')) {
+            return $token->position;
+        }
+
+        $first = $this->unicodeMode && 1 === preg_match('/^./su', $token->value, $matches) ? $matches[0] : $token->value[0];
+
+        return $token->position + \strlen($first) - 1;
+    }
+
+    /**
      * Parses "(?(?C1)(?=a)yes|no)": the condition is the callout followed by
      * the assertion, which PCRE requires there. Both are kept, in order, as
      * the condition.
@@ -1288,10 +1309,19 @@ final class Parser
     private function parseCalloutConditional(int $startPosition): NodeInterface
     {
         $callout = $this->parseCallout();
-        $this->skipEmptyQuotes();
+
+        // PCRE skips a comment, an empty "\Q\E" and "x" whitespace there.
+        do {
+            $this->skipEmptyQuotes();
+            $skipped = $this->skipExtendedModeContent();
+            if ($this->stream->match(TokenType::T_COMMENT_OPEN)) {
+                $this->parseComment();
+                $skipped++;
+            }
+        } while ($skipped > 0);
 
         if (!$this->stream->match(TokenType::T_GROUP_MODIFIER_OPEN)) {
-            $position = $this->stream->current()->position;
+            $position = $this->calloutConditionErrorOffset();
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a callout in a condition must be followed by an assertion.', $position),

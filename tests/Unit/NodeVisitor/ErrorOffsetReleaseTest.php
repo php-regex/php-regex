@@ -117,6 +117,15 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'verb name of a digit at the end' => ['pattern' => '/(*9/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
         yield 'verb name of a digit before a colon' => ['pattern' => '/(*9:/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
         yield 'verb name ending in a digit' => ['pattern' => '/(*MARK9./', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
+        // After a callout, a condition needs an assertion: PCRE refuses what
+        // comes instead where it starts, before 10.47 on the last byte of a
+        // character read as is.
+        yield 'character after a callout in a condition' => ['pattern' => '/(?(?C1)X)/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
+        yield 'quoted text after a callout in a condition' => ['pattern' => '/(?(?C1)\\QXY\\E)/', 'bundled' => 9, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'text after a comment after a callout in a condition' => ['pattern' => '/(?(?C1)(?#c)X)/', 'bundled' => 12, 'newer' => 12, 'movedIn' => '10.40'];
+        yield 'text after an empty quote after a callout in a condition' => ['pattern' => '/(?(?C1)\\Q\\EX)/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
+        yield 'escape after a callout in a condition' => ['pattern' => '/(?(?C1)\\x41)/', 'bundled' => 7, 'newer' => 7, 'movedIn' => '10.40'];
+        yield 'two-byte character after a callout in a condition' => ['pattern' => '/(?(?C1)é)/u', 'bundled' => 8, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'unmatched closing parenthesis' => ['pattern' => '/a)/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
 
         yield 'group name starting with a Unicode digit' => ['pattern' => '/(?<٣a>x)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
