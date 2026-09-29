@@ -874,7 +874,8 @@ final class Parser
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
     {
         if (TokenType::T_BACKREF === $type) {
-            $octal = $this->octalEscapeFromReference($token, $startPosition);
+            $octal = $this->digitsFromUnreadReference($token, $startPosition)
+                ?? $this->octalEscapeFromReference($token, $startPosition);
             if (null !== $octal) {
                 return $octal;
             }
@@ -1206,6 +1207,27 @@ final class Parser
      * far, is no reference: PCRE reads an octal escape of up to three octal
      * digits, and the digits left as text, "\1000" being "@" then "0".
      */
+    /**
+     * Before PCRE2 10.45 a number past 214748363 is read as no reference:
+     * "\8" or "\9" and eight digits or more is then the digit, and the
+     * digits after it text.
+     */
+    private function digitsFromUnreadReference(Token $token, int $startPosition): ?NodeInterface
+    {
+        if ($this->pcreAtLeast('10.45') || 1 !== preg_match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
+            return null;
+        }
+
+        $digitEnd = $startPosition + 2;
+        $this->splitEscape = new SequenceNode(
+            [new LiteralNode($matches[1][0], $startPosition, $digitEnd), new LiteralNode(substr($matches[1], 1), $digitEnd, $token->end())],
+            $startPosition,
+            $token->end(),
+        );
+
+        return $this->splitEscape;
+    }
+
     private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
     {
         if (1 !== preg_match('/^\\\\([1-7]\d++)$/', $token->value, $matches)

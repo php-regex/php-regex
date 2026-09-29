@@ -75,6 +75,27 @@ final class OctalEscapeReadingTest extends TestCase
     }
 
     #[Test]
+    public function test_a_reference_too_big_to_read_is_text_before_pcre2_10_45(): void
+    {
+        // PCRE2 10.44 reads no reference past 214748363: "\8" or "\9" is then
+        // the digit, and the rest text (PHP 8.2 matches "a800000000b").
+        // 10.45 refuses the number, as it does for any past 65535.
+        foreach (['/a\\800000000b/', '/a\\914748364b/', '/(a)\\9147483640{2}/'] as $pattern) {
+            $old = Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate($pattern);
+            $this->assertTrue($old->isValid, $pattern.': '.$old->error);
+            $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.45'])->validate($pattern)->isValid, $pattern);
+        }
+
+        $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate('/a\\89999999b/')->isValid);
+
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.44']);
+        $this->assertSame([11, 11], $regex->parse('/^a\\800000000b$/')->accept(new LengthRangeNodeVisitor()));
+        $this->assertSame([12, 12], $regex->parse('/^(a)\\9147483640{2}$/')->accept(new LengthRangeNodeVisitor()));
+        // Written back as the digits it matches, which every release reads alike.
+        $this->assertSame('/^a800000000b$/', $regex->parse('/^a\\800000000b$/')->accept(new CompilerNodeVisitor()));
+    }
+
+    #[Test]
     public function test_the_quantifier_takes_the_last_of_several_digits_left(): void
     {
         // "\10000*" is "@", "0", then "0*".
