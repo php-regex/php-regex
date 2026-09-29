@@ -234,7 +234,8 @@ final class SampleGeneratorSweepTest extends TestCase
     {
         $ast = $this->regexService->parse('/\p{N}/'); // Number
         $sample = $ast->accept($this->sampleVisitor);
-        $this->assertNotEmpty($sample);
+        // "0" is a number, and empty() says it is empty.
+        $this->assertNotSame('', $sample);
         $this->assertMatchesRegularExpression('/^\p{N}$/', $sample);
     }
 

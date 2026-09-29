@@ -33,6 +33,7 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
 use RegexParser\OutputFormat;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 use RegexParser\Token;
 use RegexParser\TolerantParseResult;
 use RegexParser\ValidationResult;
@@ -186,7 +187,8 @@ final class RegexTest extends TestCase
     {
         yield 'unclosed group' => ['/(a/', 'Expected ) at end of input (found eof)'];
         // PHP: "quantifier does not follow a repeatable item at offset 1".
-        yield 'quantifier on nothing' => ['/*/', 'Quantifier without target at position 1'];
+        // At offset 1 from PCRE2 10.47, 0 before: the running PHP decides.
+        yield 'quantifier on nothing' => ['/*/', \sprintf('Quantifier without target at position %d', PhpErrorOffset::of('/*/'))];
         yield 'invalid flag' => ['/a/invalid', 'Unknown regex flag(s) found: "v", "a", "l", "d"'];
     }
 

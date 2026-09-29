@@ -23,6 +23,7 @@ use RegexParser\Node\GroupType;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Parser;
 use RegexParser\Tests\TestUtils\ParserAccessor;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 use RegexParser\TokenType;
 
 /**
@@ -170,9 +171,9 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        // PHP reports "/*/" past the "*": "quantifier does not follow a
-        // repeatable item at offset 1".
-        $this->expectExceptionMessage('Quantifier without target at position 1');
+        // PHP reports "/*/" past the "*" from PCRE2 10.47, on it before:
+        // "quantifier does not follow a repeatable item".
+        $this->expectExceptionMessage(\sprintf('Quantifier without target at position %d', PhpErrorOffset::of('/*/')));
 
         $this->accessor->callPrivateMethod('parseQuantifiedAtom');
     }
@@ -229,10 +230,12 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0); // Start at 'P'
 
+        $this->accessor->setPattern('(?P[)');
+
         $this->expectException(ParserException::class);
-        // PHP reports "(?P[)" past the "[": "unrecognized character after
-        // (?P at offset 4", the number the message carries.
-        $this->expectExceptionMessage('Invalid syntax after (?P at position 4');
+        // PHP on PCRE2 10.47 and later reports "(?P[)" past the "[":
+        // "unrecognized character after (?P at offset 4"; before, on it.
+        $this->expectExceptionMessage(\sprintf('Invalid syntax after (?P at position %d', version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=') ? 4 : 3));
 
         $this->accessor->callPrivateMethod('parseGroupModifier');
     }

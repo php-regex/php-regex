@@ -52,6 +52,13 @@ or, without one, for the PCRE2 the running PHP links. That PCRE2 is not always
 the one PHP bundles: the PHP 8.4 packages of Ubuntu 24.04, for one, link its
 PCRE2 10.42, and refuse what 10.43 added. `PCRE_VERSION` says which one runs.
 
+Error offsets follow the same rule. PCRE2 10.47 reports most syntax errors past
+the character at fault rather than on it (`/+/` at offset 1 rather than 0,
+`\y` at 2 rather than 1), and 10.45 moved a few (an unknown POSIX class is
+reported past its end). `ValidationResult::$offset` is the offset the PCRE2 of
+the targeted PHP version reports, or, without a target, the one the running
+PHP links.
+
 ## PCRE vs other regex engines
 
 | Feature               | PCRE (PHP) | JavaScript | Python | .NET |

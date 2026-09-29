@@ -21,6 +21,7 @@ use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * A quantifier after "\E" repeats the last character of the quoted run, a
@@ -68,7 +69,12 @@ final class QuantifiedQuotedRunTest extends TestCase
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s is refused by PHP but was reported valid.', $pattern));
-        $this->assertSame($offset, $result->offset);
+        // The offset is PHP's on PCRE2 10.47 and later; the running PHP
+        // decides, as the library follows the PCRE2 it links.
+        $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
+        if (PhpErrorOffset::runsPcre1047()) {
+            $this->assertSame($offset, $result->offset, $pattern);
+        }
     }
 
     /**

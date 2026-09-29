@@ -23,6 +23,7 @@ use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
 use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
 use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * "(*atomic_script_run:...)", short "(*asr:...)", is a script run whose body
@@ -42,7 +43,12 @@ final class AtomicScriptRunTest extends TestCase
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
         $this->assertSame($code, $result->errorCode, $pattern);
-        $this->assertSame($offset, $result->offset, $pattern);
+        // The offset is PHP's on PCRE2 10.47 and later; the running PHP
+        // decides, as the library follows the PCRE2 it links.
+        $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
+        if (PhpErrorOffset::runsPcre1047()) {
+            $this->assertSame($offset, $result->offset, $pattern);
+        }
     }
 
     /**

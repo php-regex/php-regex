@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * Escapes and character-class forms PHP refuses to compile.
@@ -117,7 +118,12 @@ final class PcreRejectedEscapesTest extends TestCase
 
         $this->assertFalse($result->isValid);
         $this->assertSame('regex.unicode.invalid_digit', $result->errorCode);
-        $this->assertSame($offset, $result->offset);
+        // The offset is PHP's on PCRE2 10.47 and later; the running PHP
+        // decides, as the library follows the PCRE2 it links.
+        $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
+        if (PhpErrorOffset::runsPcre1047()) {
+            $this->assertSame($offset, $result->offset, $pattern);
+        }
     }
 
     /**

@@ -39,6 +39,12 @@ final class GroupNameReader
     private int $maxNameLength = self::MAX_NAME_LENGTH;
 
     /**
+     * Whether a name starting with a digit is refused past the digit, as
+     * PCRE2 10.47 does, rather than on it.
+     */
+    private bool $pastTheFault = true;
+
+    /**
      * The group numbers each name was given so far.
      *
      * @var array<string, list<int>>
@@ -64,6 +70,11 @@ final class GroupNameReader
     public function limitNameLength(int $maxNameLength): void
     {
         $this->maxNameLength = $maxNameLength;
+    }
+
+    public function reportPastTheFault(bool $pastTheFault): void
+    {
+        $this->pastTheFault = $pastTheFault;
     }
 
     public function maxNameLength(): int
@@ -180,13 +191,13 @@ final class GroupNameReader
 
         if ($this->unicodeNames) {
             if (1 === preg_match('/\G\p{Nd}/u', $pattern, $matches, 0, $position)) {
-                return $position + \strlen($matches[0]);
+                return $position + ($this->pastTheFault ? \strlen($matches[0]) : 0);
             }
 
             preg_match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
         } else {
             if (ctype_digit($pattern[$position] ?? '')) {
-                return $position + 1;
+                return $position + ($this->pastTheFault ? 1 : 0);
             }
 
             preg_match('/\G\w*+/', $pattern, $matches, 0, $position);

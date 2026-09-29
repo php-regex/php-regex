@@ -183,6 +183,7 @@ final class Parser
         $this->flags = $flags;
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
+        $this->groupNames->reportPastTheFault($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47'));
         // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
         // from 8.4.
         $this->groupNames->limitNameLength(
@@ -203,11 +204,10 @@ final class Parser
 
         $patternNode = $this->parseAlternation();
 
-        // A ")" no group opened. pcre2test 10.45 still reports it on the
-        // ")", PCRE2 10.48 past it; the releases between are taken as the
-        // newer one.
+        // A ")" no group opened: PCRE2 10.47 reports it past the ")", the
+        // releases before on it.
         if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
-            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.46') ? 1 : 0);
+            $position = $this->stream->current()->position + ($this->runningPcreAtLeast('10.47') ? 1 : 0);
 
             throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), $position);
         }
@@ -520,7 +520,7 @@ final class Parser
 
         // "a*(?#c)++": the first "+" is the modifier, the second repeats nothing.
         if (\strlen($token->value) > 1) {
-            $position = $token->position + \strlen($token->value);
+            $position = $this->pastTheFault($token->position + \strlen($token->value));
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d', $position),
@@ -691,6 +691,16 @@ final class Parser
 
         if ($this->stream->check(TokenType::T_QUANTIFIER)) {
             $position = $this->stream->current()->position;
+
+            // PCRE reads the numbers of a count before it sees there is
+            // nothing to repeat: "{2,1}" is out of order, "{65536}" too big.
+            $countError = $this->countErrorOffset($this->stream->current());
+            if (null !== $countError) {
+                throw $this->parserException(
+                    \sprintf('Invalid quantifier "%s" at position %d: its numbers are out of order or past 65535.', $this->stream->current()->value, $countError),
+                    $countError,
+                );
+            }
 
             // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
             $position = $this->startsUnclosedVerb($position)
@@ -1069,6 +1079,14 @@ final class Parser
         $position += strspn($this->pattern, $blanks, $position);
 
         if (1 === preg_match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
+            // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
+            // or, before 10.43, the space after "{" that pads it.
+            if (!$this->useRuntimePcreDetection || !$this->runningPcreAtLeast('10.47')) {
+                $padded = str_contains(" \t", $this->pattern[$start + 3] ?? 'x');
+
+                return $start + ($padded && !$this->supportsPcre1043Modifiers() ? 3 : 2);
+            }
+
             $position += \strlen($matches[0]);
         } else {
             $position = $this->groupNames->invalidNameOffset($position);
@@ -1415,10 +1433,13 @@ final class Parser
             return new BackrefNode('\\k<'.$name.'>', $startPos, $endToken->position + 1);
         }
 
-        // PCRE reports it past the character it could not read.
+        // PCRE reports it past the character it could not read from PCRE2
+        // 10.47, on it before; at the end of a pattern that ends there.
+        $position = $pPos + 1 >= \strlen($this->pattern) ? $pPos + 1 : $this->pastTheFault($pPos + 2);
+
         throw $this->parserException(
-            \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $pPos + 2),
-            $pPos + 2,
+            \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $position),
+            $position,
         );
     }
 
@@ -1605,9 +1626,9 @@ final class Parser
         $flags = $this->readModifierLetters();
 
         // "(?^" turns every other modifier off already, so PCRE refuses a
-        // "-" after it, and reports it past the hyphen.
+        // "-" after it, and reports it past the hyphen (on it before 10.47).
         if (str_starts_with($flags, '^') && str_contains($flags, '-')) {
-            $position = $startPosition + 2 + (int) strpos($flags, '-') + 1;
+            $position = $this->pastTheFault($startPosition + 2 + (int) strpos($flags, '-') + 1);
 
             throw $this->parserException(
                 \sprintf('Invalid hyphen in option setting at position %d: "(?^" cannot turn modifiers off.', $position),
@@ -1843,9 +1864,12 @@ final class Parser
             }
         }
 
+        // Past the "?" from PCRE2 10.47, on it before.
+        $position = $this->pastTheFault($startPosition + 1);
+
         throw $this->parserException(
-            'Invalid conditional condition at position '.$startPosition,
-            $startPosition,
+            'Invalid conditional condition at position '.$position,
+            $position,
         );
     }
 
@@ -2194,10 +2218,16 @@ final class Parser
      *
      * @throws ParserException
      */
-    private function guardRangeEndpoint(NodeInterface $node, int $position): void
+    private function guardRangeEndpoint(NodeInterface $node, int $position, bool $isEnd): void
     {
         if (!$this->isNonRangeEndpointType($node)) {
             return;
+        }
+
+        // Before PCRE2 10.45, a POSIX class is refused as a range end just
+        // inside its "[", and as a range start on the hyphen.
+        if ($node instanceof PosixClassNode && !($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.45'))) {
+            $position = $isEnd ? $node->getStartPosition() + 1 : $position - 1;
         }
 
         throw $this->parserException(
@@ -2376,7 +2406,7 @@ final class Parser
             return $startNode;
         }
 
-        $this->guardRangeEndpoint($startNode, $afterHyphen);
+        $this->guardRangeEndpoint($startNode, $afterHyphen, false);
 
         if ($this->stream->check(TokenType::T_CHAR_CLASS_OPEN)) {
             $this->stream->rewind(1);
@@ -2416,7 +2446,7 @@ final class Parser
         }
 
         // A class escape after it, once it has read the escape.
-        $this->guardRangeEndpoint($endNode, $endNode->getEndPosition());
+        $this->guardRangeEndpoint($endNode, $endNode->getEndPosition(), true);
 
         return new RangeNode($startNode, $endNode, $startPosition, $endNode->getEndPosition());
     }
@@ -2526,9 +2556,10 @@ final class Parser
             return $position + \strlen($matches[0]);
         }
 
-        // "(?+" without a number: past the character after the "+".
+        // "(?+" without a number: past the character after the "+", from
+        // PCRE2 10.47; on the "+" before.
         if ('+' === $char) {
-            return min($position + 2, $length);
+            return $this->pastTheFault(min($position + 2, $length), min($position + 2, $length) - $position);
         }
 
         if ('C' === $char) {
@@ -2549,7 +2580,7 @@ final class Parser
 
             if ('-' === $char) {
                 if (!$hyphenAllowed) {
-                    return $position;
+                    return $this->pastTheFault($position);
                 }
 
                 $hyphenAllowed = false;
@@ -2565,7 +2596,7 @@ final class Parser
             }
 
             if (!str_contains($letters, $char)) {
-                return $position;
+                return $this->pastTheFault($position);
             }
         }
 
@@ -2601,7 +2632,7 @@ final class Parser
         } elseif (')' !== $pattern[$position]) {
             $closing = self::CALLOUT_STRING_DELIMITERS[$pattern[$position]] ?? null;
             if (null === $closing) {
-                return $position + 1;
+                return $this->pastTheFault($position + 1);
             }
 
             $opening = $position;
@@ -2628,7 +2659,47 @@ final class Parser
     {
         $suffixed = \strlen($token->value) > 1 && \in_array(substr($token->value, -1), ['?', '+'], true);
 
-        return $token->end() - ($suffixed ? 1 : 0);
+        return $this->pastTheFault($token->end() - ($suffixed ? 1 : 0));
+    }
+
+    /**
+     * Where PCRE refuses the numbers of a count: past the digit that takes
+     * one over 65535, or at the "}" when they are out of order. Null for a
+     * count PCRE reads, or no count at all.
+     */
+    private function countErrorOffset(Token $token): ?int
+    {
+        if (1 !== preg_match('/^\{(\d++)(?:(,)(\d*+))?\}/', $token->value, $matches)) {
+            return null;
+        }
+
+        $at = $token->position + 1;
+        foreach ([$matches[1], $matches[3] ?? ''] as $index => $digits) {
+            $value = 0;
+            foreach (str_split($digits) as $offset => $digit) {
+                $value = $value * 10 + (int) $digit;
+                // Past the digit that takes it over 65535; from PCRE2 10.47,
+                // past the whole number.
+                if ($value > 65535) {
+                    return $at + ($this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47') ? \strlen($digits) : $offset + 1);
+                }
+            }
+            $at += \strlen($digits) + (0 === $index ? \strlen($matches[2] ?? '') : 0);
+        }
+
+        $maximum = $matches[3] ?? '';
+
+        return '' !== $maximum && (int) $maximum < (int) $matches[1] ? $token->position + \strlen($matches[0]) - 1 : null;
+    }
+
+    /**
+     * Where PCRE reports an error it reports past the character at fault
+     * from PCRE2 10.47, given that later offset: $shift characters earlier
+     * before 10.47, which every PHP bundles.
+     */
+    private function pastTheFault(int $offset, int $shift = 1): int
+    {
+        return $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47') ? $offset : $offset - $shift;
     }
 
     /**

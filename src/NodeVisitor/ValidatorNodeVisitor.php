@@ -748,9 +748,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return;
             }
 
+            // From PCRE2 10.47, "\N{" there is a character name, refused past
+            // the "{".
             $this->raiseSemanticError(
                 '\N is not supported in a character class.',
-                $node->getEndPosition(),
+                $node->getEndPosition() + ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->runningPcreAtLeast('10.47') ? 1 : 0),
                 'regex.charclass.invalid_escape',
             );
         }
@@ -758,7 +760,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (isset(self::CLASS_INVALID_ESCAPES[$node->value])) {
             $this->raiseSemanticError(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $node->value),
-                $node->getEndPosition(),
+                $this->pastTheFault($node->getEndPosition()),
                 'regex.charclass.invalid_escape',
             );
         }
@@ -885,7 +887,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (null !== $startCodePoint && null !== $endCodePoint && $startCodePoint > $endCodePoint) {
             $this->raiseSemanticError(
                 \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
-                $node->getEndPosition(),
+                $this->pastTheFault($node->getEndPosition()),
                 'regex.range.reversed',
             );
         }
@@ -1159,9 +1161,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         // PCRE matches the name case-sensitively: "[[:ALPHA:]]" is unknown.
         if (!$this->isPosixClassName($node->class)) {
+            // Past the class from PCRE2 10.45, on its name before.
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $node->class),
-                $node->getEndPosition(),
+                $this->runningPcreAtLeast('10.45') ? $node->getEndPosition() : $node->startPosition + 2 + (str_starts_with($node->class, '^') ? 1 : 0),
                 'regex.posix.invalid',
             );
         }
@@ -1465,7 +1468,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
                     $tooBig,
                     'regex.condition.version_syntax',
-                    'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.46 a minor of two digits.',
+                    'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.47 a minor of two digits.',
                 );
             }
 
@@ -1647,10 +1650,32 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return [$node->startPosition, $node->startPosition];
         }
 
-        $minEnd = $braceStart + $matches[1][1] + \strlen($matches[1][0]);
-        $maxEnd = isset($matches[2]) ? $braceStart + $matches[2][1] + \strlen($matches[2][0]) : $minEnd;
+        $minEnd = $braceStart + $matches[1][1] + $this->digitsReadForCount($matches[1][0]);
+        $maxEnd = isset($matches[2]) ? $braceStart + $matches[2][1] + $this->digitsReadForCount($matches[2][0]) : $minEnd;
 
         return [$minEnd, $maxEnd];
+    }
+
+    /**
+     * How many digits of a count PCRE has read when it refuses one over
+     * 65535: every one from PCRE2 10.47; before, up to the digit that takes
+     * it over.
+     */
+    private function digitsReadForCount(string $digits): int
+    {
+        if ($this->runningPcreAtLeast('10.47')) {
+            return \strlen($digits);
+        }
+
+        $value = 0;
+        foreach (str_split($digits) as $index => $digit) {
+            $value = $value * 10 + (int) $digit;
+            if ($value > 65535) {
+                return $index + 1;
+            }
+        }
+
+        return \strlen($digits);
     }
 
     private function extractUnicodePropertyKey(string $key): string
@@ -1840,9 +1865,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$this->unicodeMode && 1 === preg_match('/^[ \t]*+U\+[0-9A-Fa-f]+[ \t]*+$/', $name)) {
             $this->raiseSemanticError(
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
-                // PCRE reads the escape to its closing brace before it looks
-                // at the mode.
-                $node->getEndPosition(),
+                // From PCRE2 10.47, PCRE reads the escape to its closing
+                // brace before it looks at the mode; before, past the "\N".
+                $this->runningPcreAtLeast('10.47') ? $node->getEndPosition() : $node->startPosition + 2,
                 'regex.unicode_named.requires_utf',
             );
         }
@@ -2562,6 +2587,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * Where PCRE reports an error it reports past the character at fault
+     * from PCRE2 10.47, given that later offset: $shift characters earlier
+     * before 10.47, which every PHP bundles.
+     */
+    private function pastTheFault(int $offset, int $shift = 1): int
+    {
+        return $this->runningPcreAtLeast('10.47') ? $offset : $offset - $shift;
+    }
+
+    /**
      * Whether validation targets the running PHP, whose linked PCRE2 may be
      * newer than the one its version bundles, and that PCRE2 is at least
      * the given release.
@@ -2663,24 +2698,33 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             // "\k<5ghj>" names no group: a name cannot start with a digit.
             if ('k' === $matches[1]) {
-                return $start + 4;
+                return $this->pastTheFault($start + 4);
             }
 
-            // "\g'3gh'": the number read, what should close it is missing.
+            // "\g'3gh'": the number read, what should close it is missing;
+            // before PCRE2 10.47, "\g" itself is refused, past the "g".
             $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
             $rest = ltrim(substr($text, \strlen($matches[0])));
             if ('' !== $closing && !str_starts_with($rest, $closing)) {
-                return $start + \strlen($matches[0]);
+                return $this->runningPcreAtLeast('10.47') ? $start + \strlen($matches[0]) : $start + 2;
             }
 
             $failsWhileRead = '-' === $matches[3] || ('' !== $matches[3] && 0 === (int) $matches[4]);
+            if ($failsWhileRead && '' !== $matches[2]) {
+                return $start + 2;
+            }
 
-            return $failsWhileRead && '' !== $matches[2] ? $start + 2 : $end;
+            // Only a positive number that names no group moved in 10.47; one
+            // past 65535, a forward one counted from the groups before it
+            // included, is refused where it ends.
+            $number = (int) $matches[4] + ('+' === $matches[3] ? ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 : 0);
+
+            return '-' === $matches[3] || 0 === $number || $number > 65535 ? $end : $this->pastTheFault($end);
         }
 
-        // "\1", "\81"
+        // "\1", "\81"; a number past 65535 is refused where it ends.
         if ('\\' === $text[0]) {
-            return $end;
+            return (int) substr($text, 1) > 65535 ? $end : $this->pastTheFault($end);
         }
 
         // "(?P=name)", "(?P>name)", "(?&name)", "(?1)", "(?-1)"
@@ -2834,7 +2878,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (isset(self::UNRECOGNIZED_ESCAPES[$letter])) {
             $this->raiseSemanticError(
                 \sprintf('Unrecognized escape sequence "\%s".', $letter),
-                $end,
+                $this->pastTheFault($end),
                 'regex.escape.unrecognized',
             );
         }
@@ -2846,7 +2890,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($this->charClassDepth > 0 && isset(self::CLASS_INVALID_ESCAPES[$letter])) {
             $this->raiseSemanticError(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $letter),
-                $end,
+                $this->pastTheFault($end),
                 'regex.charclass.invalid_escape',
             );
         }
@@ -2947,11 +2991,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $digits = $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1) + 2;
 
             if (!$this->unicodeMode) {
-                // PCRE reads to the closing brace before it looks at the mode.
+                // From PCRE2 10.47, PCRE reads to the closing brace before it
+                // looks at the mode; before, it stops past the "\N".
                 $end = $digits + strspn($source, self::HEX_DIGITS.self::BRACE_PADDING, $digits);
                 $this->raiseSemanticError(
                     '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
-                    '}' === ($source[$end] ?? '') ? $end + 1 : $end,
+                    $this->runningPcreAtLeast('10.47') ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
                     'regex.unicode_named.requires_utf',
                 );
             }
@@ -3020,7 +3065,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             $this->raiseSemanticError(
                 \sprintf('Invalid character in %s, or closing brace missing.', $escape),
-                $position >= $length ? $length : $position + $this->characterLengthAt($source, $position),
+                $this->braceFaultOffset($source, $position),
                 $invalidDigitCode,
             );
         }
@@ -3045,9 +3090,29 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->raiseSemanticError(
             \sprintf('Invalid character in %s, or closing brace missing.', $escape),
-            $position >= $length ? $length : $position + $this->characterLengthAt($source, $position),
+            $this->braceFaultOffset($source, $position),
             $invalidDigitCode,
         );
+    }
+
+    /**
+     * Where PCRE refuses the character at $position inside braced digits:
+     * past it from PCRE2 10.47, on it before. At the end of the pattern, on
+     * the last character before 10.47, past the end on 10.47, and at the
+     * end from 10.48.
+     */
+    private function braceFaultOffset(string $source, int $position): int
+    {
+        $length = \strlen($source);
+        if ($position >= $length) {
+            return match (true) {
+                $this->runningPcreAtLeast('10.48') => $length,
+                $this->runningPcreAtLeast('10.47') => $length + 1,
+                default => $length - 1,
+            };
+        }
+
+        return $this->pastTheFault($position + $this->characterLengthAt($source, $position), $this->characterLengthAt($source, $position));
     }
 
     private function raiseUnsupportedEscape(string $escape, int $position): never
@@ -3091,10 +3156,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return;
         }
 
+        // Past the element from PCRE2 10.45; before, on the "[" that opens
+        // a collating element, or on the name of a class.
+        $past = $this->runningPcreAtLeast('10.45');
         if (':' !== $source[$start + 1]) {
+            // As a range end, "[a-[.x.]]", just inside its "[".
             $this->raiseSemanticError(
                 'POSIX collating elements are not supported.',
-                $terminator + 2,
+                $past ? $terminator + 2 : $start + ('-' === ($source[$start - 1] ?? '') ? 1 : 0),
                 'regex.posix.collating_element',
             );
         }
@@ -3103,7 +3172,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (!$this->isPosixClassName($name)) {
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $name),
-                $terminator + 2,
+                $past ? $terminator + 2 : $start + 2 + (str_starts_with($name, '^') ? 1 : 0),
                 'regex.posix.invalid',
             );
         }

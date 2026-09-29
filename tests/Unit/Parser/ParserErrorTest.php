@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\ParserException;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 final class ParserErrorTest extends TestCase
 {
@@ -68,8 +69,9 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_anchor(): void
     {
         $this->expectException(ParserException::class);
-        // PHP: "quantifier does not follow a repeatable item at offset 2".
-        $this->expectExceptionMessage('Quantifier "*" cannot be applied to assertion or verb "^" at position 2');
+        // PHP: "quantifier does not follow a repeatable item", at offset 2
+        // from PCRE2 10.47, 1 before.
+        $this->expectExceptionMessage(\sprintf('Quantifier "*" cannot be applied to assertion or verb "^" at position %d', PhpErrorOffset::of('/^*a/')));
 
         $regex = $this->createRegex();
         $regex->parse('/^*a/');
@@ -78,8 +80,9 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_assertion(): void
     {
         $this->expectException(ParserException::class);
-        // PHP: "quantifier does not follow a repeatable item at offset 3".
-        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion or verb "\A" at position 3');
+        // PHP: "quantifier does not follow a repeatable item", at offset 3
+        // from PCRE2 10.47, 2 before.
+        $this->expectExceptionMessage(\sprintf('Quantifier "+" cannot be applied to assertion or verb "\A" at position %d', PhpErrorOffset::of('/\A+a/')));
 
         $regex = $this->createRegex();
         $regex->parse('/\A+a/');
@@ -88,8 +91,9 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_quantifying_keep_node(): void
     {
         $this->expectException(ParserException::class);
-        // PHP: "quantifier does not follow a repeatable item at offset 4".
-        $this->expectExceptionMessage('Quantifier "?" cannot be applied to assertion or verb "\K" at position 4');
+        // PHP: "quantifier does not follow a repeatable item", at offset 4
+        // from PCRE2 10.47, 3 before.
+        $this->expectExceptionMessage(\sprintf('Quantifier "?" cannot be applied to assertion or verb "\K" at position %d', PhpErrorOffset::of('/a\K?/')));
 
         $regex = $this->createRegex();
         $regex->parse('/a\K?/');
@@ -98,8 +102,9 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_incomplete_python_group(): void
     {
         $this->expectException(ParserException::class);
-        // PHP: "unrecognized character after (?P at offset 4", past the ")".
-        $this->expectExceptionMessage('Invalid syntax after (?P at position 4');
+        // PHP: "unrecognized character after (?P", past the ")" from PCRE2
+        // 10.47, on it before.
+        $this->expectExceptionMessage(\sprintf('Invalid syntax after (?P at position %d', PhpErrorOffset::of('/(?P)/')));
 
         $regex = $this->createRegex();
         $regex->parse('/(?P)/');

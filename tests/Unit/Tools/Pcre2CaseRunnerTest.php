@@ -61,36 +61,40 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideVersionDependentOffsets(): iterable
     {
-        // PHP: "range out of order in character class at offset 4".
-        yield 'range out of order — 10.48 at 4, 10.40 at 3, library 4 (pin)' => [
+        // PCRE2 10.47 reports these past the character at fault, the releases
+        // before on it; the library reports them where the running release
+        // does.
+        $pastTheFault = version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=');
+
+        // PHP: "range out of order in character class".
+        yield 'range out of order — 10.48 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('[z-a]', 'reject', 4, 'range out of order in character class', pcre2Code: 108, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 108]),
-            'libraryOffset' => 4,
+            'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 
-        // PHP: "unrecognized character after (? or (?- at offset 4".
-        yield 'unknown (? construct — 10.48 at 4, 10.40 at 3, library 4 (pin)' => [
+        // PHP: "unrecognized character after (? or (?-".
+        yield 'unknown (? construct — 10.48 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('a(?{)b', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 111]),
-            'libraryOffset' => 4,
+            'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 
-        // PHP: "unrecognized character after (? or (?- at offset 4": 10.48
-        // takes "a" as an option and stops past the "Z", 10.40 stops on the
-        // "a". The library reads "a" where the running PCRE2 does (from 10.43)
-        // and stops past the "Z"; before, past the "a".
+        // PHP: "unrecognized character after (? or (?-": 10.48 takes "a" as
+        // an option and stops past the "Z", 10.40 stops on the "a". PCRE2
+        // 10.43 to 10.46 take the "a" and stop on the "Z", an offset neither
+        // pinned release reports.
         $readsAsciiOptions = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
         yield 'option letter — 10.48 at 4, 10.40 at 2, library as the running release' => [
             'case' => self::case('(?aZ)', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 111]),
-            'libraryOffset' => $readsAsciiOptions ? 4 : 3,
-            'outcome' => $readsAsciiOptions ? 'pass-either-offset' : 'offset-defect',
+            'libraryOffset' => $pastTheFault ? 4 : ($readsAsciiOptions ? 3 : 2),
+            'outcome' => $pastTheFault || !$readsAsciiOptions ? 'pass-either-offset' : 'offset-defect',
         ];
 
-        // testinput2:347. PCRE2 after 10.45 moved this offset past the ")", and
-        // the library reports it where the running release does.
+        // testinput2:347.
         yield 'unmatched closing parenthesis — 10.48 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('abc)', 'reject', 4, 'unmatched closing parenthesis', pcre2Code: 122, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 122]),
-            'libraryOffset' => version_compare(explode(' ', \PCRE_VERSION)[0], '10.46', '>=') ? 4 : 3,
+            'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 
