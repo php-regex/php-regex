@@ -57,6 +57,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 {
     private const MAX_RECURSION_DEPTH = 2;
 
+    /**
+     * Characters from the common scripts and categories, tried first.
+     */
+    private const COMMON_CHARACTERS = "aZ09_ .,!+\t\n\x00\u{7f}éÀÿ×αΩЖжאب٣कক中あアク한ก\u{301}\u{200b}\u{2028}\u{a0}\u{3000}€∑«»¿\u{e000}\u{378}😀Ａ\u{ff10}";
+
     private ?int $seed = null;
 
     private Randomizer $randomizer;
@@ -93,6 +98,20 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private int $groupDefinitionCounter = 1;
 
     private int $totalGroupCount = 0;
+
+    private bool $unicode = false;
+
+    /**
+     * Characters found to have a property, by the escape and the mode.
+     *
+     * @var array<string, list<string>>
+     */
+    private static array $propertySamples = [];
+
+    /**
+     * @var array<int, string>
+     */
+    private static array $codePointChunks = [];
 
     /**
      * @var array<int, string>
@@ -140,6 +159,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->requiredSuffixes = [];
         $this->collectGroups($node->pattern);
         $this->totalGroupCount = $this->groupDefinitionCounter - 1;
+        $this->unicode = str_contains($node->flags, 'u')
+            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
         // Ensure we are seeded if the user expects it
         if (null !== $this->seed) {
@@ -411,8 +432,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): string
     {
-        // Too complex to generate a *random* char for a property.
-        // Return a known-good sample.
+        // PCRE knows which characters have the property: ask it.
+        $escape = $node->hasBraces
+            ? '\\p'.$node->prop
+            : ((\strlen($node->prop) > 1 || str_starts_with($node->prop, '^')) ? '\\p{'.$node->prop.'}' : '\\p'.$node->prop);
+        $samples = $this->charactersWithProperty($escape);
+        if ([] !== $samples) {
+            return $this->getRandomChar($samples);
+        }
+
+        // Nothing encodable has it (the surrogates): a guess.
         if (str_contains($node->prop, 'L')) { // 'L' (Letter)
             return $this->getRandomChar(['a', 'b', 'c']);
         }
@@ -511,6 +540,62 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         // Callouts do not match characters, so they generate no sample text.
         return '';
+    }
+
+    /**
+     * Up to eight characters the escape "\p{...}" matches: common ones first,
+     * then the whole range, one chunk at a time; bytes without UTF mode.
+     *
+     * @return list<string>
+     */
+    private function charactersWithProperty(string $escape): array
+    {
+        $key = ($this->unicode ? 'u' : 'b').$escape;
+        if (isset(self::$propertySamples[$key])) {
+            return self::$propertySamples[$key];
+        }
+
+        $pattern = '/'.$escape.'/'.($this->unicode ? 'u' : '');
+        $found = [];
+        foreach ($this->unicode ? self::codePointChunks() : [implode('', array_map(\chr(...), range(0, 255)))] as $chunk) {
+            if (false === @preg_match_all($pattern, $chunk, $matches)) {
+                break;
+            }
+
+            foreach ($matches[0] as $character) {
+                $found[$character] = true;
+                if (\count($found) >= 8) {
+                    break 2;
+                }
+            }
+        }
+
+        return self::$propertySamples[$key] = array_map(strval(...), array_keys($found));
+    }
+
+    /**
+     * Common characters first, then every code point but the surrogates,
+     * 4096 at a time, built once.
+     *
+     * @return \Generator<int, string>
+     */
+    private static function codePointChunks(): \Generator
+    {
+        yield self::COMMON_CHARACTERS;
+
+        for ($start = 0; $start <= 0x10FFFF; $start += 4096) {
+            if (!isset(self::$codePointChunks[$start])) {
+                $chunk = '';
+                for ($codePoint = $start; $codePoint < $start + 4096 && $codePoint <= 0x10FFFF; $codePoint++) {
+                    if ($codePoint < 0xD800 || $codePoint > 0xDFFF) {
+                        $chunk .= mb_chr($codePoint, 'UTF-8');
+                    }
+                }
+                self::$codePointChunks[$start] = $chunk;
+            }
+
+            yield self::$codePointChunks[$start];
+        }
     }
 
     /**

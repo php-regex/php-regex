@@ -227,7 +227,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $ast = $this->regexService->parse('/\p{L}/'); // Letter
         $sample = $ast->accept($this->sampleVisitor);
         $this->assertNotEmpty($sample);
-        $this->assertMatchesRegularExpression('/[abc]/', $sample);
+        $this->assertMatchesRegularExpression('/^\p{L}$/', $sample);
     }
 
     public function test_sample_generator_unicode_prop_with_n(): void
@@ -235,7 +235,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $ast = $this->regexService->parse('/\p{N}/'); // Number
         $sample = $ast->accept($this->sampleVisitor);
         $this->assertNotEmpty($sample);
-        $this->assertMatchesRegularExpression('/[123]/', $sample);
+        $this->assertMatchesRegularExpression('/^\p{N}$/', $sample);
     }
 
     public function test_sample_generator_unicode_prop_with_p(): void
@@ -243,7 +243,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $ast = $this->regexService->parse('/\p{P}/'); // Punctuation
         $sample = $ast->accept($this->sampleVisitor);
         $this->assertNotEmpty($sample);
-        $this->assertMatchesRegularExpression('/[.,!]/', $sample);
+        $this->assertMatchesRegularExpression('/^\p{P}$/', $sample);
     }
 
     public function test_sample_generator_conditional_no_path(): void
