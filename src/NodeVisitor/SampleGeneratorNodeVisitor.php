@@ -191,9 +191,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitSequence(SequenceNode $node): string
     {
-        $parts = array_map(fn (NodeInterface $child): string => $child->accept($this), $node->children);
-
-        return implode('', $parts);
+        return $this->generateSequence($node->children);
     }
 
     #[\Override]
@@ -679,6 +677,55 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * A positive lookahead holds the text that follows it in the sequence,
+     * and a positive lookbehind the text before it: what either generates is
+     * laid over that text, not added at the ends of the sample.
+     *
+     * @param array<NodeInterface> $children
+     */
+    private function generateSequence(array $children): string
+    {
+        $text = '';
+        $children = array_values($children);
+
+        foreach ($children as $index => $child) {
+            if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
+                $ahead = $child->child->accept($this);
+                $rest = $this->generateSequence(\array_slice($children, $index + 1));
+
+                return $text.$ahead.$this->textFrom($rest, $this->textLength($ahead));
+            }
+
+            if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
+                $behind = $child->child->accept($this);
+                $kept = max(0, $this->textLength($text) - $this->textLength($behind));
+                $text = $this->textTo($text, $kept).$behind;
+
+                continue;
+            }
+
+            $text .= $child->accept($this);
+        }
+
+        return $text;
+    }
+
+    private function textLength(string $text): int
+    {
+        return $this->unicode ? mb_strlen($text, 'UTF-8') : \strlen($text);
+    }
+
+    private function textFrom(string $text, int $start): string
+    {
+        return $this->unicode ? mb_substr($text, $start, null, 'UTF-8') : substr($text, $start);
+    }
+
+    private function textTo(string $text, int $length): string
+    {
+        return $this->unicode ? mb_substr($text, 0, $length, 'UTF-8') : substr($text, 0, $length);
+    }
+
+    /**
      * Generates a random integer using the local RNG.
      */
     private function randomInt(int $min, int $max): int
@@ -876,13 +923,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return $this->groupIndexMap[$index] ?? null;
         }
 
-        if (str_starts_with($ref, '-') && ctype_digit(substr($ref, 1))) {
-            $resolvedIndex = $this->totalGroupCount + (int) $ref + 1;
-            if ($resolvedIndex >= 1) {
-                return $this->groupIndexMap[$resolvedIndex] ?? null;
-            }
+        // "(?-1)" and "(?+1)" count the groups opened before the call.
+        if (1 === preg_match('/^([+-])(\d++)$/', $ref, $matches)) {
+            $opened = \count(array_filter($this->groupIndexMap, static fn (GroupNode $group): bool => $group->startPosition < $node->startPosition));
+            $number = '-' === $matches[1] ? $opened - (int) $matches[2] + 1 : $opened + (int) $matches[2];
 
-            return null;
+            return $this->groupIndexMap[$number] ?? null;
         }
 
         return $this->namedGroupMap[$ref] ?? null;

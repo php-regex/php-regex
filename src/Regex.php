@@ -470,6 +470,7 @@ final readonly class Regex
         // verify the sample against the real engine and retry a few times
         // before settling for the last attempt.
         $sample = '';
+        $attempts = [];
         for ($attempt = 0; $attempt < 8; $attempt++) {
             $sample = $ast->accept($generator);
 
@@ -478,6 +479,20 @@ final readonly class Regex
                 // Either verified, or the pattern cannot be evaluated by
                 // this PCRE runtime — return what we have.
                 return $sample;
+            }
+
+            $attempts[$sample] = true;
+        }
+
+        // An assertion on what surrounds the match, as "\b" or "(?!^)", may
+        // hold once the sample has text around it.
+        foreach (array_keys($attempts) as $attempt) {
+            foreach (['a', ' ', "\n"] as $padding) {
+                foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
+                    if (1 === @preg_match($regex, $padded)) {
+                        return $padded;
+                    }
+                }
             }
         }
 

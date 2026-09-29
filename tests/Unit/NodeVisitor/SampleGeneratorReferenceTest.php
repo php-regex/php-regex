@@ -56,5 +56,10 @@ final class SampleGeneratorReferenceTest extends TestCase
         yield 'NUL by its code' => ['pattern' => '/^A\\x0{2,3}Z$/'];
         yield 'high byte by its code' => ['pattern' => '/^\\xff$/'];
         yield 'code point in UTF mode' => ['pattern' => '/^\\x{e9}$/u'];
+        yield 'relative calls back and forward' => ['pattern' => '/(A)(?-1)(?+1)(B)/'];
+        yield 'forward call' => ['pattern' => '/xy(?+1)(abc)/'];
+        yield 'forward call to a group repeated zero times' => ['pattern' => '/^(?+1)(?<a>x|y){0}z/'];
+        yield 'forward call by g' => ['pattern' => '/(?-i:\\g<+1>)(?i:(a))/'];
+        yield 'backward call after later groups' => ['pattern' => '/(a)(?-1)(b)(c)/'];
     }
 }

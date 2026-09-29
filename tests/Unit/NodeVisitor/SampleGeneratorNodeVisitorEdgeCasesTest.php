@@ -214,14 +214,16 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $this->setPrivate($generator, 'rootPattern', $root);
         $this->setPrivate($generator, 'totalGroupCount', 3);
 
-        $groupOne = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
-        $groupThree = new GroupNode(new LiteralNode('b', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
-        $this->setPrivate($generator, 'groupIndexMap', [2 => $groupOne, 3 => $groupThree]);
+        // "(x)(a)(b)(?-1)": a relative call counts the groups opened before it.
+        $groupFirst = new GroupNode(new LiteralNode('x', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
+        $groupOne = new GroupNode(new LiteralNode('a', 4, 5), GroupType::T_GROUP_CAPTURING, null, null, 3, 6);
+        $groupThree = new GroupNode(new LiteralNode('b', 7, 8), GroupType::T_GROUP_CAPTURING, null, null, 6, 9);
+        $this->setPrivate($generator, 'groupIndexMap', [1 => $groupFirst, 2 => $groupOne, 3 => $groupThree]);
 
-        $numeric = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('2', '2', 0, 0)]);
+        $numeric = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('2', '2', 9, 13)]);
         $this->assertSame($groupOne, $numeric);
 
-        $negative = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('-1', '-1', 0, 0)]);
+        $negative = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('-1', '-1', 9, 13)]);
         $this->assertSame($groupThree, $negative);
 
         $this->setPrivate($generator, 'totalGroupCount', 0);
