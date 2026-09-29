@@ -2740,7 +2740,16 @@ final class Parser
             return \strlen($this->pattern);
         }
 
-        return $nameEnd;
+        // "(*" alone, and from PCRE2 10.47 an alphabetic name followed by no
+        // colon, are refused past the character after them.
+        $pastTheFault = $this->useRuntimePcreDetection && $this->runningPcreAtLeast('10.47');
+        if ('' === $name) {
+            return $this->pastTheFault($nameEnd);
+        }
+
+        return $pastTheFault && 1 === preg_match('/^[a-z_]++$/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
+            ? $nameEnd + 1
+            : $nameEnd;
     }
 
     /**

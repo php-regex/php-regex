@@ -15,6 +15,7 @@ namespace RegexParser;
 
 use RegexParser\Exception\LexerException;
 use RegexParser\Internal\InlineFlags;
+use RegexParser\Internal\PcreVerb;
 
 /**
  * Regex lexer that tokenizes PCRE pattern strings.
@@ -600,11 +601,16 @@ final class Lexer
         }
 
         // "(*pla:" read as a plain "(": its body never closes, and PCRE runs
-        // to the end of the pattern looking for the ")".
+        // to the end of the pattern looking for the ")". A name PCRE does
+        // not know is refused where it ends.
         if (TokenType::T_GROUP_OPEN === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+            $known = PcreVerb::takesArgument($opener[1]);
+
             throw LexerException::withContext(
-                \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1]),
-                $this->length,
+                $known
+                    ? \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])
+                    : \sprintf('Unknown alphabetic assertion "(*%s:".', $opener[1]),
+                $known ? $this->length : $startPos + 2 + \strlen($opener[1]),
                 $this->pattern,
             );
         }
