@@ -67,7 +67,7 @@ final class ErrorOffsetReleaseTest extends TestCase
     #[DataProvider('provideErrors')]
     public function test_each_pcre2_release_gets_its_offset(string $pattern, int $bundled, int $newer, string $movedIn, array $quirks = []): void
     {
-        foreach (['10.40', '10.42', '10.44', '10.45', '10.46', '10.47', '10.48'] as $release) {
+        foreach (['10.40', '10.42', '10.44', '10.45', '10.46', '10.47', '10.48', '10.49'] as $release) {
             $result = Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release])->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s on PCRE2 %s', $pattern, $release));

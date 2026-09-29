@@ -123,7 +123,10 @@ final class PcreTargetTest extends TestCase
     #[Test]
     public function test_the_cache_key_names_both_versions(): void
     {
-        $this->assertSame('php80400/pcre10.44', (new PcreTarget(80400, '10.44'))->cacheKey());
+        $this->assertSame('php8.4/pcre10.44', (new PcreTarget(80400, '10.44'))->cacheKey());
         $this->assertNotSame((new PcreTarget(80400, '10.42'))->cacheKey(), (new PcreTarget(80400, '10.44'))->cacheKey());
+        // No rule depends on a PHP patch release, and "10.4" is "10.04".
+        $this->assertSame((new PcreTarget(80400, '10.44'))->cacheKey(), (new PcreTarget(80426, '10.44 2024-06-07'))->cacheKey());
+        $this->assertSame((new PcreTarget(80400, '10.04'))->cacheKey(), (new PcreTarget(80400, '10.4'))->cacheKey());
     }
 }

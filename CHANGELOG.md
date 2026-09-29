@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `php_version` naming the running PHP mixed two engines: the parser judged with the PCRE2 that PHP bundles, the validator with the one it links, so `/+/` was reported at 0 and `/[[:foo:]]/` at 8. One target now judges both.
-- The cache key did not name the PCRE2 release, though the tree depends on it (`{,2}` repeats from 10.43): a cache shared across engines, or kept across a PCRE2 upgrade, could serve a tree read for another one.
+- The cache key did not name the PCRE2 release, though the tree depends on it (`{,2}` repeats from 10.43): a cache shared across engines, or kept across a PCRE2 upgrade, could serve a tree read for another one. It now names the PHP minor version and the PCRE2 release, so PHP 8.4.1 and 8.4.26 share their trees.
 - The `r` modifier was accepted for PHP 8.4 whatever PCRE2 it links; PHP reads it only when built against PCRE2 10.43 or later.
 - The `n` modifier was accepted for PHP 8.1 and older, which refuse it ("Unknown modifier 'n'").
 - The automata solver's DFA cache did not name the target: two solvers sharing it for different PCRE2 releases could read `{,2}` as the other one does.

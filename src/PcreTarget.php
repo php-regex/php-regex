@@ -91,9 +91,19 @@ final readonly class PcreTarget
             && $this->release === $running->release;
     }
 
+    /**
+     * What a cached tree was read for: the PHP major and minor version, as
+     * no rule depends on a patch release, and the PCRE2 release.
+     */
     public function cacheKey(): string
     {
-        return 'php'.$this->phpVersionId.'/pcre'.$this->pcreVersion;
+        return \sprintf(
+            'php%d.%d/pcre%d.%d',
+            intdiv($this->phpVersionId, 10000),
+            intdiv($this->phpVersionId, 100) % 100,
+            intdiv($this->release, 1000),
+            $this->release % 1000,
+        );
     }
 
     private static function releaseNumber(string $version): ?int
