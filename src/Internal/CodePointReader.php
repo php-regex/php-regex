@@ -44,14 +44,14 @@ final class CodePointReader
     }
 
     /**
-     * "\x41", "A", "\x{1F600}", "\u{1F600}"; spaces and tabs may pad the
+     * "\x41", "\xA", "A", "\x{1F600}", "\u{1F600}"; spaces and tabs may pad the
      * braced digits, "\x{ 41 }", as PCRE2 10.48 allows.
      */
     public static function fromHexEscape(string $representation): int
     {
         $matches = [];
 
-        if (preg_match('/^\\\\x([0-9a-fA-F]{2})$/', $representation, $matches)) {
+        if (preg_match('/^\\\\x([0-9a-fA-F]{1,2})$/', $representation, $matches)) {
             return (int) hexdec($matches[1]);
         }
 

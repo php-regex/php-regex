@@ -359,6 +359,25 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             if (isset($this->captures[$key])) {
                 return $this->captures[$key];
             }
+
+            // "\NN" that names no group is an octal escape, then digits.
+            if ($key >= 10 && $key > $this->totalGroupCount && 1 === preg_match('/^([0-7]{1,3})(\d*)$/', $matches[1], $octal)) {
+                $value = (int) octdec($octal[1]);
+
+                return ($this->unicode ? (string) mb_chr($value, 'UTF-8') : \chr($value & 0xFF)).$octal[2];
+            }
+        }
+
+        // "\g1", "\g{1}", and relative "\g-1", "\g{-1}", "\g{+1}": relative
+        // ones count the groups opened before the reference.
+        if (preg_match('/^\\\\g\{?([+-]?)(\d++)\}?$/', $ref, $matches)) {
+            $number = (int) $matches[2];
+            if ('' !== $matches[1]) {
+                $opened = \count(array_filter($this->groupIndexMap, static fn (GroupNode $group): bool => $group->startPosition < $node->startPosition));
+                $number = '-' === $matches[1] ? $opened - $number + 1 : $opened + $number;
+            }
+
+            return $this->captures[$number] ?? '';
         }
 
         // Check string/named reference (e.g. for (?&name) conditionals)
@@ -415,6 +434,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         if ($node->codePoint < 0 || $node->codePoint > 0x10FFFF) {
             return '?';
+        }
+
+        // Without UTF mode, a character up to 255 is a byte.
+        if (!$this->unicode && $node->codePoint <= 0xFF) {
+            return \chr($node->codePoint);
         }
 
         try {

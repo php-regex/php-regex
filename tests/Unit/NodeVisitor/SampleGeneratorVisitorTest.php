@@ -104,9 +104,10 @@ final class SampleGeneratorVisitorTest extends TestCase
         $generator = new SampleGeneratorNodeVisitor();
         $sample = $ast->accept($generator);
 
-        // Expected: \x41 = 'A', \xE9 = U+00E9, \o{40} = ' ' (space, octal 40 = decimal 32), \010 = backspace (octal 10 = decimal 8)
-        $expected = "A\u{00E9} \x08";
+        // Expected: \x41 = 'A', \xE9 = the byte 0xE9 (no UTF mode), \o{40} = ' ' (space, octal 40 = decimal 32), \010 = backspace (octal 10 = decimal 8)
+        $expected = "A\xE9 \x08";
         $this->assertSame($expected, $sample);
+        $this->assertSame(1, preg_match($regex, $sample));
     }
 
     public function test_generate_complex_backrefs(): void
