@@ -70,7 +70,7 @@ final readonly class VersionCondition
      * take where it expects a digit, a "." or the ")"; past it, unless the
      * comparison began with ">".
      */
-    public static function errorOffset(string $pattern, int $position): ?int
+    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false): ?int
     {
         $length = \strlen($pattern);
         if ($length - $position < 10 || 'VERSION' !== substr($pattern, $position, 7)) {
@@ -96,7 +96,7 @@ final readonly class VersionCondition
             return $atLeast ? $at : $at + 1;
         }
 
-        [$at, $tooBig] = self::readVersionPart($pattern, $at);
+        [$at, $tooBig] = $twoDigitMinor ? self::readVersionPartDigitByDigit($pattern, $at) : self::readVersionPart($pattern, $at);
         if ($tooBig) {
             return $at;
         }
@@ -107,9 +107,18 @@ final readonly class VersionCondition
                 return $at < $length ? $at + 1 : $at;
             }
 
-            [$at, $tooBig] = self::readVersionPart($pattern, $at);
-            if ($tooBig) {
-                return $at;
+            // Up to PCRE2 10.45 the minor is two digits, and a third one is
+            // where PCRE stops.
+            if ($twoDigitMinor) {
+                $at += strspn($pattern, '0123456789', $at, 2);
+                if (ctype_digit($pattern[$at] ?? '')) {
+                    return $at;
+                }
+            } else {
+                [$at, $tooBig] = self::readVersionPart($pattern, $at);
+                if ($tooBig) {
+                    return $at;
+                }
             }
         }
 
@@ -131,6 +140,25 @@ final readonly class VersionCondition
         $digits = strspn($pattern, '0123456789', $position);
 
         return [$position + $digits, (int) substr($pattern, $position, $digits) > 1000];
+    }
+
+    /**
+     * As readVersionPart(), the way PCRE2 up to 10.45 reads a number: it
+     * stops right past the digit that takes it over 1000.
+     *
+     * @return array{0: int, 1: bool}
+     */
+    private static function readVersionPartDigitByDigit(string $pattern, int $position): array
+    {
+        $value = 0;
+        while (ctype_digit($pattern[$position] ?? '')) {
+            $value = $value * 10 + (int) $pattern[$position++];
+            if ($value > 1000) {
+                return [$position, true];
+            }
+        }
+
+        return [$position, false];
     }
 
     private static function isVersionNumber(string $version): bool

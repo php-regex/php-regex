@@ -356,6 +356,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private int $nestingDepth = 0;
 
+    private static ?bool $runningReadsWholeVersionNumbers = null;
+
     /**
      * Whether the walk started from the pattern root, and so ends where the
      * errors PCRE finds late can be reported.
@@ -1432,6 +1434,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // PCRE reads a major number and at most one ".minor".
         if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
+            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers());
+            if (null !== $tooBig) {
+                $this->raiseSemanticError(
+                    \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
+                    $tooBig,
+                    'regex.condition.version_syntax',
+                    'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.46 a minor of two digits.',
+                );
+            }
+
             return;
         }
 
@@ -2485,6 +2497,20 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             'regex.backref.invalid_syntax',
             'Remove the spaces inside the braces, or target PHP 8.4+.',
         );
+    }
+
+    /**
+     * Whether the version numbers of "(?(VERSION...)" are read whole, as
+     * PCRE2 10.48 does: up to 10.45, which every PHP bundles, the minor is
+     * two digits. For the running PHP, its PCRE2 is asked.
+     */
+    private function readsWholeVersionNumbers(): bool
+    {
+        if (\PHP_VERSION_ID !== $this->phpVersionId) {
+            return false;
+        }
+
+        return self::$runningReadsWholeVersionNumbers ??= false !== @preg_match('/(?(VERSION=10.100))/', '');
     }
 
     private function supportsPaddedBraces(): bool
