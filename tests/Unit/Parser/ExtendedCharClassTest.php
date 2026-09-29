@@ -437,6 +437,24 @@ final class ExtendedCharClassTest extends TestCase
     }
 
     #[Test]
+    public function test_a_caseless_class_yields_a_member_under_its_flags(): void
+    {
+        $pattern = '/^(?[ [\\p{Lu}1] ^ \\p{Ll} ])$/iu';
+        if (false === @preg_match($pattern, '')) {
+            $this->assertIsString(Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern)->accept(new SampleGeneratorNodeVisitor()));
+
+            return;
+        }
+
+        $ast = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+        for ($seed = 0; $seed < 8; $seed++) {
+            $generator->setSeed($seed);
+            $this->assertSame(1, preg_match($pattern, $ast->accept($generator)));
+        }
+    }
+
+    #[Test]
     public function test_a_slash_in_the_class_still_yields_a_member(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);

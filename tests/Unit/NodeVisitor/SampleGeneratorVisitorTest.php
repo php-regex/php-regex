@@ -100,6 +100,13 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'duplicate names' => ['/^(?<n>A)(?:(?<n>foo)|(?<n>bar))\\k<n>$/J'];
         yield 'duplicate names, Python spelling' => ['/^(?P<same>a)(?P<same>b)(?P=same)$/J'];
         yield 'names in a branch reset' => ['/^(?|(?\'a\'aaa)|(?\'a\'b))\\k\'a\'$/'];
+        // A lookahead's captures hold for what follows it.
+        yield 'reference to a capture in a lookahead' => ['/^(?=(\\w+))\\1:/'];
+        yield 'named capture in a lookahead' => ['/(?=(?\'abc\'\\w+))\\k<abc>:/'];
+        yield 'optional reference to a lookahead capture' => ['/(?=(a))\\1?b/'];
+        // Names past ASCII.
+        yield 'reference by a UTF-8 name' => ['/(?\'ABáC\'...)\\g{ABáC}/u'];
+        yield 'call and reference by a UTF-8 name' => ['/^(?\'אABC\'...)(?&אABC)(?P=אABC)/u'];
         // A lookahead in a plain group holds the text after the group.
         yield 'word start and end' => ['/[[:<:]]red[[:>:]]/'];
         yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];

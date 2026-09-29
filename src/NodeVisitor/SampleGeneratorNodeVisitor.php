@@ -108,6 +108,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private bool $unicode = false;
 
     /**
+     * Whether the pattern ignores case, which changes what a set holds.
+     */
+    private bool $caseless = false;
+
+    /**
      * Characters found to have a property, by the escape and the mode.
      *
      * @var array<string, list<string>>
@@ -165,6 +170,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->requiredSuffixes = [];
         $this->collectGroups($node->pattern);
         $this->numberGroupsAsPcre($node);
+        $this->caseless = str_contains($node->flags, 'i');
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
@@ -384,7 +390,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         // "\k<name>", "\k{name}", "\k'name'": several groups may share the
         // name, and the reference matches the first of them that captured.
-        if (1 === preg_match('/^\\\\k[<{\'](\w++)[>}\']$/', $ref, $m)) {
+        if (1 === preg_match('/^\\\\k[<{\']([^>}\']++)[>}\']$/', $ref, $m)) {
             foreach ($this->groupNumbersByName[$m[1]] ?? [] as $number) {
                 if (isset($this->captures[$number])) {
                     return $this->captures[$number];
@@ -413,8 +419,10 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): string
     {
-        // PCRE knows which characters are in the set: ask it, when it reads "(?[".
-        $samples = $this->charactersWithProperty($node->accept(new CompilerNodeVisitor()));
+        // PCRE knows which characters are in the set, under "i" too: ask it,
+        // when it reads "(?[".
+        $class = $node->accept(new CompilerNodeVisitor());
+        $samples = $this->charactersWithProperty($this->caseless ? '(?i)'.$class : $class);
         if ([] !== $samples) {
             return $this->getRandomChar($samples);
         }
@@ -741,12 +749,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         foreach ($children as $index => $child) {
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
+                // The lookahead first: what it captures holds after it.
+                $ahead = $child->child->accept($this);
                 $rest = $this->generateSequence(\array_slice($children, $index + 1));
                 if ($this->holds($child->child, $rest, '\\A', '')) {
                     return $text.$rest;
                 }
-
-                $ahead = $child->child->accept($this);
 
                 return $text.$ahead.$this->textFrom($rest, $this->textLength($ahead));
             }
