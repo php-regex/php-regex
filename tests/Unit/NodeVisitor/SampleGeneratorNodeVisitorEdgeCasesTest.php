@@ -169,11 +169,21 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
     {
         $generator = new SampleGeneratorNodeVisitor();
 
+        // A lookaround may hold or not, depending on the text around the
+        // sample: over enough tries, both branches are taken.
         $negative = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_NEGATIVE, null, null, 0, 0);
-        $this->assertFalse($this->invokePrivate($generator, 'isConditionSatisfied', [$negative]));
-
         $positive = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
-        $this->assertTrue($this->invokePrivate($generator, 'isConditionSatisfied', [$positive]));
+        $generator->setSeed(7);
+        $taken = ['negative' => [], 'positive' => []];
+        for ($try = 0; $try < 32; $try++) {
+            foreach (['negative' => $negative, 'positive' => $positive] as $kind => $condition) {
+                $satisfied = $this->invokePrivate($generator, 'isConditionSatisfied', [$condition]);
+                $this->assertIsBool($satisfied);
+                $taken[$kind][$satisfied ? 'yes' : 'no'] = true;
+            }
+        }
+        $this->assertCount(2, $taken['negative']);
+        $this->assertCount(2, $taken['positive']);
 
         $nonLookaround = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
         $this->assertTrue($this->invokePrivate($generator, 'isConditionSatisfied', [$nonLookaround]));

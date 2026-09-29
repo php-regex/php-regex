@@ -56,6 +56,63 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSampleMatches('/[a-zA-Z0-9]/');
     }
 
+    public function test_generate_ranges_of_multibyte_characters(): void
+    {
+        // A range between two UTF-8 characters gives one of them, not a byte.
+        $this->assertSampleMatches('/^[Ā-Ą]$/u');
+        $this->assertSampleMatches('/^[Ä-Ü]{3}$/u');
+        $this->assertSampleMatches('/^[\\x{100}-\\x{104}]$/u');
+        $this->assertSampleMatches('/^[\\x41-\\x45]$/');
+        $this->assertSampleMatches('/^[\\xe0-\\xef]$/');
+    }
+
+    #[DataProvider('provideEngineChecked')]
+    public function test_generate_gives_a_sample_the_engine_matches(string $pattern): void
+    {
+        $this->assertSame(1, preg_match($pattern, Regex::create(['cache' => null])->generate($pattern)), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideEngineChecked(): iterable
+    {
+        // A condition on a lookaround may take either branch.
+        yield 'lookahead condition' => ['/^(?(?=abc)\\w{3}:|\\d\\d)$/'];
+        yield 'negative lookahead condition' => ['/^(?(?!abc)\\d\\d|\\w{3}:)$/'];
+        yield 'lookbehind condition' => ['/(?(?<=foo)bar|cat)/'];
+        yield 'negative lookbehind condition' => ['/(?(?<!foo)cat|bar)/'];
+        // POSIX classes, negated ones included, are asked of the engine.
+        yield 'negated ascii under UTF' => ['/^[[:^ascii:]]$/u'];
+        yield 'no printable character under UTF' => ['/^[[:^print:]]+$/u'];
+        yield 'word character past ASCII' => ['/^[^[:ascii:]\\W]$/u'];
+        yield 'ascii' => ['/^[[:ascii:]]$/'];
+        yield 'negated digit' => ['/^[[:^digit:]]$/'];
+        // A lookahead in a plain group holds the text after the group.
+        yield 'word start and end' => ['/[[:<:]]red[[:>:]]/'];
+        yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];
+    }
+
+    public function test_a_range_across_the_surrogates_gives_no_surrogate(): void
+    {
+        $ast = $this->regex->parse('/[\\x{D7FF}-\\x{E000}]/u');
+        $generator = new SampleGeneratorNodeVisitor();
+        $generator->setSeed(1);
+
+        for ($try = 0; $try < 8; $try++) {
+            $sample = $ast->accept($generator);
+            $this->assertSame(1, preg_match('/^[\\x{D7FF}-\\x{E000}]$/u', $sample), bin2hex($sample));
+        }
+    }
+
+    public function test_a_lookahead_the_text_misses_is_laid_over_it(): void
+    {
+        $ast = $this->regex->parse('/^(?=ab)\\d\\d/');
+        $generator = new SampleGeneratorNodeVisitor();
+
+        $this->assertStringStartsWith('ab', $ast->accept($generator));
+    }
+
     public function test_generate_special_types(): void
     {
         $this->assertSampleMatches('/\d\s\w/');

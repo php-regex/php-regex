@@ -319,23 +319,22 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitRange(RangeNode $node): string
     {
-        if (!$node->start instanceof LiteralNode || !$node->end instanceof LiteralNode) {
-            // Should be caught by Validator, but good to check
-            return $node->start->accept($this);
+        $first = $this->codePointOf($node->start);
+        $last = $this->codePointOf($node->end);
+        if (null === $first || null === $last || $first > $last) {
+            $sample = $node->start->accept($this);
+
+            return '' !== $sample ? $sample : $node->end->accept($this);
         }
 
-        // Generate a random character within the ASCII range
-        try {
-            // The first byte of each end, as ord() read it before PHP 8.5
-            // deprecated passing it anything but one byte.
-            $ord1 = '' === $node->start->value ? 0 : \ord($node->start->value[0]);
-            $ord2 = '' === $node->end->value ? 0 : \ord($node->end->value[0]);
-
-            return \chr($this->randomInt($ord1, $ord2) & 0xFF);
-        } catch (\Throwable) {
-            // Fallback if ord() fails
-            return $node->start->value;
+        // A code point of the range, the surrogates aside, which UTF-8 cannot
+        // hold; without UTF mode, a byte.
+        $codePoint = $this->randomInt($first, $last);
+        if ($codePoint >= 0xD800 && $codePoint <= 0xDFFF) {
+            $codePoint = $first;
         }
+
+        return $this->unicode ? (string) mb_chr($codePoint, 'UTF-8') : \chr($codePoint & 0xFF);
     }
 
     #[\Override]
@@ -492,6 +491,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitPosixClass(PosixClassNode $node): string
     {
+        // PCRE knows the members, negated classes and UTF mode included.
+        $samples = $this->charactersWithProperty('[[:'.$node->class.':]]');
+        if ([] !== $samples) {
+            return $this->getRandomChar($samples);
+        }
+
         return match (strtolower($node->class)) {
             'alpha' => $this->getRandomChar(['a', 'b', 'C', 'Z']),
             'alnum' => $this->getRandomChar(['a', 'Z', '1', '9']),
@@ -577,6 +582,25 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * The code point a range end stands for: a character, a byte without UTF
+     * mode, or an escape.
+     */
+    private function codePointOf(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode) {
+            return $node->codePoint >= 0 && $node->codePoint <= 0x10FFFF ? $node->codePoint : null;
+        }
+
+        if (!$node instanceof LiteralNode || '' === $node->value) {
+            return null;
+        }
+
+        $codePoint = $this->unicode ? mb_ord($node->value, 'UTF-8') : \ord($node->value[0]);
+
+        return false === $codePoint ? null : $codePoint;
+    }
+
+    /**
      * Up to eight characters the escape "\p{...}", or an extended class,
      * matches: common ones first, then the whole range, one chunk at a time;
      * bytes without UTF mode. None when the engine refuses it.
@@ -658,7 +682,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 continue;
             }
 
-            $classPattern = $delimiter.$compiled.$delimiter;
+            $classPattern = $delimiter.$compiled.$delimiter.($this->unicode ? 'u' : '');
             foreach ($candidates as $candidate) {
                 if (1 === @preg_match($classPattern, $candidate)) {
                     return $candidate;
@@ -700,17 +724,25 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private function generateSequence(array $children): string
     {
         $text = '';
-        $children = array_values($children);
+        $children = $this->withPlainGroupsOpened($children);
 
         foreach ($children as $index => $child) {
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
-                $ahead = $child->child->accept($this);
                 $rest = $this->generateSequence(\array_slice($children, $index + 1));
+                if ($this->holds($child->child, $rest, '\\A', '')) {
+                    return $text.$rest;
+                }
+
+                $ahead = $child->child->accept($this);
 
                 return $text.$ahead.$this->textFrom($rest, $this->textLength($ahead));
             }
 
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
+                if ($this->holds($child->child, $text, '', '\\z')) {
+                    continue;
+                }
+
                 $behind = $child->child->accept($this);
                 $kept = max(0, $this->textLength($text) - $this->textLength($behind));
                 $text = $this->textTo($text, $kept).$behind;
@@ -722,6 +754,42 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         return $text;
+    }
+
+    /**
+     * Whether the text already satisfies a lookaround's body where it stands,
+     * so it is left as it is: "red" before "\b(?<=\w)".
+     */
+    private function holds(NodeInterface $body, string $text, string $before, string $after): bool
+    {
+        $compiled = $body->accept(new CompilerNodeVisitor());
+
+        return 1 === @preg_match("\x01".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text);
+    }
+
+    /**
+     * A plain "(?:...)" in a sequence is laid out inside it, so a lookahead
+     * that closes the group holds the text after it: "(?:\b(?=\w))red".
+     *
+     * @param array<NodeInterface> $children
+     *
+     * @return list<NodeInterface>
+     */
+    private function withPlainGroupsOpened(array $children): array
+    {
+        $opened = [];
+        foreach ($children as $child) {
+            if ($child instanceof GroupNode && GroupType::T_GROUP_NON_CAPTURING === $child->type && null === $child->flags) {
+                $inner = $child->child instanceof SequenceNode ? $child->child->children : [$child->child];
+                array_push($opened, ...$this->withPlainGroupsOpened($inner));
+
+                continue;
+            }
+
+            $opened[] = $child;
+        }
+
+        return $opened;
     }
 
     private function textLength(string $text): int
@@ -788,18 +856,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         if ($condition instanceof GroupNode) {
+            // Whether a lookaround holds depends on the text around the
+            // sample: either branch may be the one that matches, so each
+            // attempt takes one at random.
             if (\in_array($condition->type, [
                 GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
                 GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            ], true)) {
-                return true;
-            }
-
-            if (\in_array($condition->type, [
                 GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
                 GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
             ], true)) {
-                return false;
+                return 1 === $this->randomInt(0, 1);
             }
 
             return '' !== $condition->accept($this);
