@@ -215,6 +215,7 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
     public function visitExtendedCharClass(ExtendedCharClassNode $node): NodeInterface
     {
         $this->dispatch($node);
+        $node->expression->accept($this);
 
         return $node;
     }
@@ -222,6 +223,9 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
+        $node->left?->accept($this);
+        $node->right->accept($this);
+
         return $node;
     }
 

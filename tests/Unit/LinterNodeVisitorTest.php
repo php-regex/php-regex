@@ -30,6 +30,19 @@ final class LinterNodeVisitorTest extends TestCase
         $this->assertSame([], $visitor->getIssues());
     }
 
+    public function test_the_classes_of_an_extended_class_are_linted(): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
+
+        foreach (['/(?[ [aa] ])/', '/(?[ \\d - [bb] ])/', '/(?[ ![cc] ])/'] as $pattern) {
+            $visitor = new LinterNodeVisitor();
+            $regex->parse($pattern)->accept($visitor);
+
+            $issueIds = array_map(static fn ($issue): string => $issue->id, $visitor->getIssues());
+            $this->assertContains('regex.lint.charclass.redundant', $issueIds, $pattern);
+        }
+    }
+
     public function test_anchor_end_allows_optional_suffix(): void
     {
         $regex = Regex::create();
