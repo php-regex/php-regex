@@ -216,6 +216,9 @@ final class SampleGeneratorVisitorTest extends TestCase
         // what precedes.
         yield 'lookahead missing at the start' => ['/(?=b)ab/', 'bb'];
         yield 'lookbehind missing at the end' => ['/ab(?<=a)c/', 'aac'];
+        // A lookahead nothing can satisfy, drawn to the bound: its text laid
+        // over what follows, after the text before it.
+        yield 'lookahead that cannot hold' => ['/ab(?=x)c/', 'abx'];
     }
 
     public function test_a_lookaround_with_branches_is_judged_whole(): void
@@ -257,6 +260,47 @@ final class SampleGeneratorVisitorTest extends TestCase
             $generator->setSeed($seed);
             $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $this->regex->parse($pattern)->accept($generator)));
         }
+    }
+
+    /**
+     * Each draw of the visitor alone gives a sample the engine matches.
+     */
+    #[DataProvider('provideDrawnAlone')]
+    public function test_every_draw_matches(string $pattern): void
+    {
+        $ast = $this->regex->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+
+        for ($seed = 0; $seed < 16; $seed++) {
+            $generator->setSeed($seed);
+            $sample = $ast->accept($generator);
+            $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $sample), $seed.': '.json_encode($sample));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideDrawnAlone(): iterable
+    {
+        yield 'password rules' => ['/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[,;:])(?=.{8,16})(?!.*[\\s])/'];
+        yield 'lookaheads after text' => ['/^ab(?=.*\\d)(?=.*[A-Z])\\w{4}$/'];
+        yield 'scan of the second group' => ['/^([a-z])([a-z]++)(#+)(*scs:(2)(ab.))$/'];
+        yield 'scan by name' => ['/^(?<AA>[a-zA-Z]+)(*scs:(\'AA\')(ab(*ACCEPT)cd|xy))$/'];
+        yield 'scan with a lookahead body' => ['/^()(\\w++)=(*scs:(2)(?=abc))(\\w++)$/'];
+        yield 'lookahead only an appended text satisfies' => ['/^(?=.*a)\\d\\d/'];
+        yield 'version at least 10.5' => ['/^(?(VERSION>=10.5)yes|no)$/'];
+        yield 'version equal to 8' => ['/^(?(VERSION=8)yes|no)$/'];
+    }
+
+    public function test_the_running_version_is_at_least_and_equal_to_itself(): void
+    {
+        [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0]));
+        $generator = new SampleGeneratorNodeVisitor();
+
+        $this->assertSame('yes', $this->regex->parse(\sprintf('/(?(VERSION>=%d.%d)yes|no)/', $major, $minor))->accept($generator));
+        $this->assertSame('yes', $this->regex->parse(\sprintf('/(?(VERSION=%d.%d)yes|no)/', $major, $minor))->accept($generator));
+        $this->assertSame('no', $this->regex->parse(\sprintf('/(?(VERSION=%d.%d)yes|no)/', $major, $minor + 1))->accept($generator));
     }
 
     public function test_a_name_that_captured_nothing_yet_gives_nothing(): void

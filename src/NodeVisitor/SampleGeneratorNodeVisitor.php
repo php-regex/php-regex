@@ -73,6 +73,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private const MAX_LOOKAHEAD_DRAWS = 32;
 
     /**
+     * How many times the body of a scan is drawn to fit the group it reads.
+     */
+    private const MAX_SCAN_DRAWS = 8;
+
+    /**
      * Characters from the common scripts and categories, tried first.
      */
     private const COMMON_CHARACTERS = "aZ09_ .,!+\t\n\x00\u{7f}éÀÿ×αΩЖжאب٣कক中あアク한ก\u{301}\u{200b}\u{2028}\u{a0}\u{3000}€∑«»¿\u{e000}\u{378}😀Ａ\u{ff10}";
@@ -856,13 +861,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 continue;
             }
 
-            // Laid out as a sequence, so a lookahead in it gives its text.
-            $prefix = $this->generateSequence($body instanceof SequenceNode ? $body->children : [$body]);
-            foreach ([$prefix.$text, $prefix] as $candidate) {
-                if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
-                    $text = $candidate;
+            // Laid out as a sequence, so a lookahead in it gives its text;
+            // drawn again where the group takes none of it.
+            for ($draw = 0; $draw < self::MAX_SCAN_DRAWS; $draw++) {
+                $prefix = $this->generateSequence($body instanceof SequenceNode ? $body->children : [$body]);
+                foreach ([$prefix.$text, $prefix] as $candidate) {
+                    if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
+                        $text = $candidate;
 
-                    break;
+                        break 2;
+                    }
                 }
             }
         }
