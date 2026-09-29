@@ -103,6 +103,14 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => $open.$this->wrap($this->escape('?<!'), 'group').$child.$close,
             GroupType::T_GROUP_ATOMIC => $open.$this->wrap($this->escape('?>'), 'group').$child.$close,
             GroupType::T_GROUP_BRANCH_RESET => $open.$this->wrap('?|', 'group').$child.$close,
+            GroupType::T_GROUP_SCAN_SUBSTRING => $open
+                .$this->wrap('*', 'group')
+                .$this->wrap($node->name ?? 'scan_substring', 'keyword')
+                .$this->wrap(':(', 'group')
+                .implode($this->wrap(',', 'group'), array_map($this->wrapReference(...), $node->scannedGroups))
+                .$this->wrap(')', 'group')
+                .$child
+                .$close,
             GroupType::T_GROUP_INLINE_FLAGS => $this->renderInlineFlagsGroup($flags, $child, $open, $close),
         };
     }

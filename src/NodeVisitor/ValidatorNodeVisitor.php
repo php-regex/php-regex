@@ -589,6 +589,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $this->ensureGroupNumberingInitialized();
 
+        if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+            $this->validateListedGroups($node, $node->scannedGroups, $node->startPosition + 2);
+        }
+
         $previous = $this->previousNode;
         $next = $this->nextNode;
 
@@ -1495,17 +1499,30 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
-     * "(?1(2,<name>))": each group the call returns must exist. PCRE reports
-     * a missing one where it is named, a name past its "<" or quote.
+     * "(?1(2,<name>))": each group the call returns must exist.
      */
     private function validateReturnedGroups(SubroutineNode $node): void
     {
-        if ([] === $node->returnedGroups || null === $this->source) {
+        if ([] !== $node->returnedGroups) {
+            $this->validateListedGroups($node, $node->returnedGroups, $node->startPosition + 1);
+        }
+    }
+
+    /**
+     * Each group a call returns, or a substring scan matches, must exist; the
+     * list opens at the first "(" from $from. PCRE reports a missing group
+     * where it is named, a name past its "<" or quote.
+     *
+     * @param list<string> $groups
+     */
+    private function validateListedGroups(NodeInterface $node, array $groups, int $from): void
+    {
+        if (null === $this->source) {
             return;
         }
 
-        $at = (int) strpos($this->source, '(', $node->startPosition + 1) + 1;
-        foreach ($node->returnedGroups as $group) {
+        $at = (int) strpos($this->source, '(', $from) + 1;
+        foreach ($groups as $group) {
             $exists = match (true) {
                 ctype_digit($group) => (int) $group <= $this->groupNumbering->maxGroupNumber,
                 str_starts_with($group, '+') => ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 + (int) $group <= $this->groupNumbering->maxGroupNumber,
@@ -1516,7 +1533,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             if (!$exists) {
                 $this->raiseMissingReference(
-                    \sprintf('The call returns group %s, which does not exist.', $group),
+                    \sprintf('Group %s is listed but does not exist.', $group),
                     ctype_digit($group) || str_starts_with($group, '+') ? $at : $at + 1,
                     'regex.subroutine.missing_group',
                 );
@@ -2498,6 +2515,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         if ($node instanceof GroupNode) {
+            // "(*scs:(+1)...)" counts groups from where it stands.
+            if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+                $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
+            }
+
             if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
                 $this->capturesIndexed++;
                 $this->groupsByNumber[$nextGroupNumber++][] = $node;

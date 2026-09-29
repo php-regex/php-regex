@@ -165,6 +165,7 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => 'Negative lookbehind',
             GroupType::T_GROUP_ATOMIC => 'Atomic group (no backtracking)',
             GroupType::T_GROUP_BRANCH_RESET => 'Branch reset group',
+            GroupType::T_GROUP_SCAN_SUBSTRING => \sprintf('Substring scan of groups %s', implode(', ', $node->scannedGroups)),
             GroupType::T_GROUP_INLINE_FLAGS => \sprintf("Inline flags '%s'", $node->flags),
         };
 

@@ -60,6 +60,7 @@ final class LengthRangeNodeVisitor extends AbstractNodeVisitor
         GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
         GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
         GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+        GroupType::T_GROUP_SCAN_SUBSTRING,
     ];
 
     /**

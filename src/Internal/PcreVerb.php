@@ -93,6 +93,11 @@ final readonly class PcreVerb
          * Whether the script run's body is atomic: "(*asr:...)".
          */
         public bool $atomicScriptRun = false,
+        /**
+         * "scs" or "scan_substring" as written, for a substring scan
+         * "(*scs:(1)...)", PCRE2 10.45; null otherwise.
+         */
+        public ?string $scanSubstring = null,
     ) {}
 
     public static function read(string $verb): self
@@ -128,6 +133,10 @@ final readonly class PcreVerb
             return new self($verb, null, null, (int) $matches[1]);
         }
 
+        if (1 === preg_match('/^(scs|scan_substring):/', $verb, $scan)) {
+            return new self($verb, scanSubstring: $scan[1]);
+        }
+
         foreach (self::SCRIPT_RUN_PREFIXES as $prefix => $atomic) {
             if (!str_starts_with($verb, $prefix)) {
                 continue;
@@ -140,6 +149,35 @@ final readonly class PcreVerb
         }
 
         return new self($verb);
+    }
+
+    /**
+     * Where PCRE stops reading the list of groups "(1,<name>)" that opens at
+     * $open: on the character that is no "(", no item, or no "," or ")"
+     * after one. Null when the list closes.
+     */
+    public static function groupListFault(string $pattern, int $open): ?int
+    {
+        if ('(' !== ($pattern[$open] ?? '')) {
+            return $open;
+        }
+
+        $at = $open + 1;
+        while (1 === preg_match('/\G(?:[+-]?\d++|<[^>]*+>|\'[^\']*+\')/', $pattern, $item, 0, $at)) {
+            $at += \strlen($item[0]);
+            $next = $pattern[$at] ?? '';
+            if (')' === $next) {
+                return null;
+            }
+
+            if (',' !== $next) {
+                return $at;
+            }
+
+            $at++;
+        }
+
+        return $at;
     }
 
     /**

@@ -139,6 +139,7 @@ final class PythonCompilerVisitor extends AbstractCompilerVisitor
             GroupType::T_GROUP_ATOMIC => '(?=(?P<tmp>'.$child.'))(?P=tmp)', // Atomic group emulation in Python
             GroupType::T_GROUP_INLINE_FLAGS => '(?'.$node->flags.')', // Partially supported if simple
             GroupType::T_GROUP_BRANCH_RESET => $this->unsupported('Branch reset groups are not supported in Python re.', $node),
+            GroupType::T_GROUP_SCAN_SUBSTRING => $this->unsupported('Substring scans are not supported in Python re.', $node),
         };
     }
 

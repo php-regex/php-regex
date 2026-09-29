@@ -1484,9 +1484,40 @@ final class Parser
         return $pattern->pattern;
     }
 
+    /**
+     * "(*scs:(1,<name>)body)": the list of groups, then the body, read apart
+     * like the body of any alphabetic assertion.
+     */
+    private function createScanSubstringNode(string $name, int $startPosition, int $endPosition): GroupNode
+    {
+        $listOpen = $startPosition + 2 + \strlen($name) + 1;
+        if ('(' !== ($this->pattern[$listOpen] ?? '')) {
+            throw $this->parserException(\sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen), $listOpen);
+        }
+
+        [$groups, $bodyStart] = $this->readGroupList($listOpen + 1);
+        $body = substr($this->pattern, $bodyStart, $endPosition - 1 - $bodyStart);
+
+        return new GroupNode(
+            $this->parseSubPattern($body, $bodyStart),
+            GroupType::T_GROUP_SCAN_SUBSTRING,
+            // The spelling, "scs" or "scan_substring".
+            $name,
+            null,
+            $startPosition,
+            $endPosition,
+            false,
+            $groups,
+        );
+    }
+
     private function createPcreVerbNode(string $verb, int $startPosition, int $endPosition): NodeInterface
     {
         $read = PcreVerb::read($verb);
+
+        if (null !== $read->scanSubstring && $this->pcreAtLeast('10.45')) {
+            return $this->createScanSubstringNode($read->scanSubstring, $startPosition, $endPosition);
+        }
 
         if (null !== $read->assertion) {
             // "(*pla:...)" and its friends are the alphabetic spelling of a
@@ -1640,7 +1671,27 @@ final class Parser
             return null;
         }
 
-        $at = $this->stream->current()->position + 1;
+        [$groups, $at] = $this->readGroupList($this->stream->current()->position + 1);
+
+        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
+            $this->stream->advance();
+        }
+
+        return $groups;
+    }
+
+    /**
+     * A list of groups, "2,-1,<name>,'name'", from $at to its ")": the groups
+     * a call returns or a substring scan matches. PCRE reads it from the
+     * text, and refuses what it cannot take as it reads it: an item that is
+     * no number or name, group zero, a relative zero, a group before the
+     * first, or a number past 65535.
+     *
+     * @return array{0: list<string>, 1: int} the items as written, and the
+     *                                        offset past the ")"
+     */
+    private function readGroupList(int $at): array
+    {
         $groups = [];
         while (true) {
             if (1 !== preg_match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
@@ -1658,31 +1709,22 @@ final class Parser
                     default => null,
                 };
                 if (null !== $refused) {
-                    throw $this->parserException(\sprintf('Group "%s" returned at position %d %s.', $matches[0], $itemEnd, $refused), $itemEnd);
+                    throw $this->parserException(\sprintf('Group "%s" listed at position %d %s.', $matches[0], $itemEnd, $refused), $itemEnd);
                 }
             }
 
             $groups[] = $matches[0];
-            $at = $itemEnd;
-            $next = $this->pattern[$at] ?? '';
-            if (',' === $next || ')' === $next) {
-                $at++;
-                if (')' === $next) {
-                    break;
-                }
-
-                continue;
+            $at = $itemEnd + 1;
+            $next = $this->pattern[$itemEnd] ?? '';
+            if (')' === $next) {
+                return [$groups, $at];
             }
 
             // A list the pattern never closes is refused by the lexer first.
-            throw $this->parserException(\sprintf('Expected a capture group number or name at position %d.', $at), $at);
+            if (',' !== $next) {
+                throw $this->parserException(\sprintf('Expected a capture group number or name at position %d.', $itemEnd), $itemEnd);
+            }
         }
-
-        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
-            $this->stream->advance();
-        }
-
-        return $groups;
     }
 
     /**

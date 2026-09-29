@@ -78,7 +78,8 @@ final class NodePredicates
             return !(GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type
                 || GroupType::T_GROUP_LOOKAHEAD_NEGATIVE === $node->type
                 || GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type
-                || GroupType::T_GROUP_LOOKBEHIND_NEGATIVE === $node->type);
+                || GroupType::T_GROUP_LOOKBEHIND_NEGATIVE === $node->type
+                || GroupType::T_GROUP_SCAN_SUBSTRING === $node->type);
         }
         if ($node instanceof AlternationNode) {
             // If any alternative consumes, consider it consuming
@@ -166,6 +167,7 @@ final class NodePredicates
                 GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
                 GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
                 GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+                GroupType::T_GROUP_SCAN_SUBSTRING,
             ], true)) {
                 return true;
             }
@@ -234,6 +236,7 @@ final class NodePredicates
             GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
             GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::T_GROUP_SCAN_SUBSTRING,
         ], true);
     }
 

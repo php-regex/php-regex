@@ -42,6 +42,15 @@ everything that reads it.
 `null` means `PcreTarget::runtime()`, the running PHP and the PCRE2 it links.
 `PcreTarget::bundledWith(80200)` is a PHP version with the PCRE2 it bundles.
 
+#### `GroupType` has a new case, and two nodes a new field
+
+`GroupType::T_GROUP_SCAN_SUBSTRING` stands for `(*scs:(1)...)`, PCRE2 10.45: a
+`match` over `GroupType` without a `default` arm needs one for it.
+`GroupNode::$scannedGroups` lists the groups it scans, and
+`SubroutineNode::$returnedGroups` the groups a call returns,
+`(?1(2,<name>))` (PCRE2 10.47); both are empty lists otherwise, and both
+constructors take them as a last, optional argument.
+
 #### `php_version` alone always means the PCRE2 that PHP bundles
 
 `php_version` naming the running PHP used to mix two engines: the parser read

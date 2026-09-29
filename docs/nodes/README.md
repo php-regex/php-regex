@@ -148,8 +148,9 @@ foreach ($alternation->alternatives as $alt) {
 |---------|---------------|----------------------------------------|
 | `child` | NodeInterface | The grouped content                    |
 | `type`  | GroupType     | The type of group                      |
-| `name`  | string\|null  | Group name for named groups            |
+| `name`  | string\|null  | Group name for named groups; for a substring scan, its spelling (`scs` or `scan_substring`) |
 | `flags` | string\|null  | Inline flags (e.g., `i` in `(?i:foo)`) |
+| `scannedGroups` | list\<string\> | For a substring scan, the groups it matches, as written (`1`, `-1`, `<name>`, `'name'`) |
 
 **Group Types:**
 
@@ -164,7 +165,8 @@ foreach ($alternation->alternatives as $alt) {
 | `T_GROUP_LOOKBEHIND_NEGATIVE` | `(?<!foo)`     | Negative lookbehind            |
 | `T_GROUP_INLINE_FLAGS`        | `(?i:foo)`     | Inline flag modification       |
 | `T_GROUP_ATOMIC`              | `(?>foo)`      | Atomic group (no backtracking) |
-| `T_GROUP_BRANCH_RESET`        | `(?            | foo                            |bar)` | Same group numbers in branches |
+| `T_GROUP_BRANCH_RESET`        | `(?\|foo\|bar)` | Same group numbers in branches |
+| `T_GROUP_SCAN_SUBSTRING`      | `(*scs:(1)foo)` | Matches its body against what the listed groups captured (PCRE2 10.45) |
 
 **Example:**
 ```php

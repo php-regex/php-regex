@@ -113,7 +113,8 @@ final class ComplexityScoreNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
             GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
             GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => self::COMPLEX_CONSTRUCT_SCORE + $childScore,
+            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::T_GROUP_SCAN_SUBSTRING => self::COMPLEX_CONSTRUCT_SCORE + $childScore,
             default => self::BASE_SCORE + $childScore,
         };
     }

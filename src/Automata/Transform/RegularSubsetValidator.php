@@ -111,6 +111,7 @@ final class RegularSubsetValidator
                 || GroupType::T_GROUP_LOOKAHEAD_NEGATIVE === $node->type
                 || GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type
                 || GroupType::T_GROUP_LOOKBEHIND_NEGATIVE === $node->type
+                || GroupType::T_GROUP_SCAN_SUBSTRING === $node->type
                 || GroupType::T_GROUP_INLINE_FLAGS === $node->type
             ) {
                 $this->unsupported($node, 'Unsupported group type: '.$node->type->value.'.');

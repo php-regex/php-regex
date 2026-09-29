@@ -266,6 +266,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
                 GroupType::T_GROUP_ATOMIC => '(?>',
                 GroupType::T_GROUP_BRANCH_RESET => '(?|',
                 GroupType::T_GROUP_INLINE_FLAGS => '(?'.$flags.':',
+                GroupType::T_GROUP_SCAN_SUBSTRING => $this->scanSubstringOpening($node),
             };
             $closing = ')';
             $this->indentLevel++;
@@ -300,6 +301,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_ATOMIC => '(?>',
             GroupType::T_GROUP_BRANCH_RESET => '(?|',
             GroupType::T_GROUP_INLINE_FLAGS => '(?'.$flags.':',
+            GroupType::T_GROUP_SCAN_SUBSTRING => $this->scanSubstringOpening($node),
         };
 
         $opening = $this->openingAsWritten($node, $opening);
@@ -775,6 +777,15 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
      * and they mean the same thing, so the tree keeps only the name. The
      * source still knows which one was written.
      */
+    /**
+     * "(*scs:(1,<name>)" or "(*scan_substring:(1,<name>)", as the pattern
+     * spelled it.
+     */
+    private function scanSubstringOpening(GroupNode $node): string
+    {
+        return '(*'.($node->name ?? 'scan_substring').':('.implode(',', $node->scannedGroups).')';
+    }
+
     private function openingAsWritten(GroupNode $node, string $opening): string
     {
         // Under "n", "(...)" does not capture: it is read as "(?:...)" and

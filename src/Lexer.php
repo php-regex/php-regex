@@ -271,6 +271,11 @@ final class Lexer
     private readonly bool $reportsPastTheFault;
 
     /**
+     * Whether "(*scs:" and "(*scan_substring:" are known, PCRE2 10.45 on.
+     */
+    private readonly bool $readsScanSubstring;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
@@ -278,6 +283,7 @@ final class Lexer
         $target ??= PcreTarget::runtime();
         $this->wideRepeatCounts = $target->pcreAtLeast('10.43');
         $this->reportsPastTheFault = $target->pcreAtLeast('10.47');
+        $this->readsScanSubstring = $target->pcreAtLeast('10.45');
     }
 
     /**
@@ -601,6 +607,18 @@ final class Lexer
         // to the end of the pattern looking for the ")". A name PCRE does
         // not know is refused where it ends.
         if (TokenType::T_GROUP_OPEN === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+            // "(*scs:(1)...": PCRE reads the list of groups first.
+            if ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true)) {
+                $listOpen = $startPos + \strlen($opener[0]);
+                $fault = PcreVerb::groupListFault($this->pattern, $listOpen);
+
+                throw LexerException::withContext(
+                    \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1]),
+                    $fault ?? $this->length,
+                    $this->pattern,
+                );
+            }
+
             $known = PcreVerb::takesArgument($opener[1]);
 
             throw LexerException::withContext(

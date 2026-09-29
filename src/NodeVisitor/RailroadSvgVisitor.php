@@ -1187,6 +1187,7 @@ final class RailroadSvgVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_INLINE_FLAGS => 'inline flags',
             GroupType::T_GROUP_ATOMIC => 'atomic',
             GroupType::T_GROUP_BRANCH_RESET => 'branch reset',
+            GroupType::T_GROUP_SCAN_SUBSTRING => 'scan of groups '.implode(', ', $node->scannedGroups),
         };
     }
 

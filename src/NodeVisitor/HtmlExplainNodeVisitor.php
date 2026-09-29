@@ -157,6 +157,7 @@ final class HtmlExplainNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => 'Start Negative Lookbehind',
             GroupType::T_GROUP_ATOMIC => 'Start Atomic Group',
             GroupType::T_GROUP_BRANCH_RESET => 'Start Branch Reset Group',
+            GroupType::T_GROUP_SCAN_SUBSTRING => \sprintf('Start Substring Scan (of groups %s)', $this->e(implode(', ', $node->scannedGroups))),
             GroupType::T_GROUP_INLINE_FLAGS => \sprintf("Start Group (with flags: '%s')", $this->e($node->flags)),
         };
 

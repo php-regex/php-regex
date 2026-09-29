@@ -67,4 +67,11 @@ enum GroupType: string
      * A branch reset group (?|...).
      */
     case T_GROUP_BRANCH_RESET = 'branch_reset';
+
+    /**
+     * A substring scan (*scan_substring:(1)...), or (*scs:(1)...), PCRE2
+     * 10.45: an assertion that matches its body against what the listed
+     * groups captured, not against the subject where it stands.
+     */
+    case T_GROUP_SCAN_SUBSTRING = 'scan_substring';
 }

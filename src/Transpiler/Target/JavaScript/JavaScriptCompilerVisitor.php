@@ -157,6 +157,7 @@ final class JavaScriptCompilerVisitor extends AbstractCompilerVisitor
             GroupType::T_GROUP_INLINE_FLAGS => $this->unsupported('Inline flags groups are not supported in JavaScript.', $node),
             GroupType::T_GROUP_ATOMIC => $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
             GroupType::T_GROUP_BRANCH_RESET => $this->unsupported('Branch reset groups are not supported in JavaScript.', $node),
+            GroupType::T_GROUP_SCAN_SUBSTRING => $this->unsupported('Substring scans are not supported in JavaScript.', $node),
         };
     }
 
