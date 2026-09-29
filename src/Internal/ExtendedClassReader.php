@@ -16,7 +16,6 @@ namespace RegexParser\Internal;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
-use RegexParser\Exception\RegexException;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\NodeInterface;
@@ -440,8 +439,12 @@ final class ExtendedClassReader
     {
         try {
             $this->operands[] = ($this->class)(substr($this->pattern, $start).']', $start);
-        } catch (RegexException) {
-            // Read another way, the text cannot tell.
+        } catch (LexerException|ParserException $error) {
+            // A fault in what the pattern writes comes first; one at its end
+            // is the "]" added to read it.
+            if (($error->getPosition() ?? $this->length) < $this->length) {
+                ($this->fail)($error, $start, $this->operands);
+            }
         }
 
         $this->refuse('Missing "]" to close a character class', $this->length);

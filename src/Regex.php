@@ -73,7 +73,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-8b2483422f6b39a3c8d0c11f3bb2173a';
+    public const CACHE_VERSION = 'ast-bc97c7f88a84bcfef0926581a0ccfff9';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -620,9 +620,14 @@ final readonly class Regex
         $earlier = (new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target))
             ->firstEscapeErrorBefore($tokens, $pattern, $flags, $position);
 
-        $classError = $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position);
-        if (null !== $classError && (null === $earlier || ($classError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
-            $earlier = $classError;
+        $classErrors = [
+            $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
+            $this->firstExtendedClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
+        ];
+        foreach ($classErrors as $classError) {
+            if (null !== $classError && (null === $earlier || ($classError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
+                $earlier = $classError;
+            }
         }
 
         if ($error instanceof LexerException) {
@@ -676,6 +681,33 @@ final readonly class Regex
                 ->firstErrorInClassBefore($ast, $token->position, $position);
             if (null !== $error) {
                 return $error;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first error in an extended class "(?[...])" before $position: each
+     * is read alone and judged, as PCRE judges it when it reads it.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstExtendedClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?RegexException
+    {
+        foreach ($tokens as $token) {
+            if (TokenType::T_EXTENDED_CLASS !== $token->type || $token->end() > $position) {
+                continue;
+            }
+
+            try {
+                $ast = (new Parser($this->maxRecursionDepth, $this->target))
+                    ->parse(new TokenStream([$token, new Token(TokenType::T_EOF, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
+                $ast->accept(new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target));
+            } catch (RegexException $error) {
+                if (($error->getPosition() ?? $position) < $position) {
+                    return $error;
+                }
             }
         }
 

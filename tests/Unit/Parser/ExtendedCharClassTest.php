@@ -50,8 +50,11 @@ use RegexParser\NodeVisitor\RailroadSvgVisitor;
 use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
+use RegexParser\Parser;
 use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
+use RegexParser\Token;
+use RegexParser\TokenType;
 use RegexParser\Transpiler\Target\JavaScript\JavaScriptCompilerVisitor;
 use RegexParser\Transpiler\TranspileContext;
 use RegexParser\Transpiler\TranspileOptions;
@@ -205,6 +208,19 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertSame(4, ExtendedClassReader::endOfClass('[:ab', 0));
         $this->assertSame(6, ExtendedClassReader::endOfClass('[a\\Qb]', 0));
         $this->assertSame(5, ExtendedClassReader::endOfClass('[:a:]', 0));
+    }
+
+    #[Test]
+    public function test_a_member_that_cannot_stand_alone_is_passed_over(): void
+    {
+        // Only a member a class reads alone is judged alone.
+        $parser = new Parser();
+        (new \ReflectionProperty($parser, 'pattern'))->setValue($parser, '(?[[)\\N]])');
+        $members = [new Token(TokenType::T_GROUP_CLOSE, ')', 4), new Token(TokenType::T_CHAR_TYPE, 'N', 5, 2)];
+
+        $error = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, $members, 8);
+        $this->assertInstanceOf(ParserException::class, $error);
+        $this->assertSame(7, $error->getPosition());
     }
 
     #[Test]
@@ -582,6 +598,7 @@ final class ExtendedCharClassTest extends TestCase
         yield 'unknown escape, then a control escape of a non-ASCII character' => ['pattern' => '/(?[\\j\\cé])/', 'offsetBefore' => 2, 'offset1045' => 4, 'offset1049' => 5];
         yield 'quoted text after an operand' => ['pattern' => '/(?[\\t\\Qab])/', 'offsetBefore' => 2, 'offset1045' => 8, 'offset1049' => 8];
         yield 'quote at the end after an operand' => ['pattern' => '/(?[\\d\\Q/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
+        yield 'backslash at the end, after a control escape' => ['pattern' => '/(?[\\c\\\\/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
         yield 'control escape at the end' => ['pattern' => '/(?[\\c/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 5];
         yield 'control escape at the end, after an operand' => ['pattern' => '/(?[\\d\\c/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
         yield 'control "]" leaves a nested class open' => ['pattern' => '/(?[[\\c])/', 'offsetBefore' => 2, 'offset1045' => 8, 'offset1049' => 8];
@@ -611,6 +628,17 @@ final class ExtendedCharClassTest extends TestCase
         yield 'blank before a first "]", never closed' => ['pattern' => '/(?[[ ])x/', 'offsetBefore' => 2, 'offset1045' => 8, 'offset1049' => 8];
         yield 'escape no class takes, then a range no class takes' => ['pattern' => '/(?[\\X|[\\d-z]\\d])/', 'offsetBefore' => 2, 'offset1045' => 4, 'offset1049' => 5];
         yield 'complemented unknown escape, then a range no class takes' => ['pattern' => '/(?[!\\j+[\\d-z]])/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 6];
+        // PCRE reads left to right: the first fault it meets is the one reported.
+        yield 'escape no class takes, then a parenthesis unmatched' => ['pattern' => '/(?[\\N])])/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 5];
+        yield 'unknown escape, then a group never closed' => ['pattern' => '/(?[\\j])(/', 'offsetBefore' => 2, 'offset1045' => 4, 'offset1049' => 5];
+        yield 'escape no class takes, then a range no class takes, in one class' => ['pattern' => '/(?[[\\X[\\d-z]])/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 6];
+        yield 'unknown escape as a range start' => ['pattern' => '/(?[[\\j-\\v])/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 6];
+        yield 'escape no class takes, then a quote never ended' => ['pattern' => '/(?[[\\N\\Q])/', 'offsetBefore' => 2, 'offset1045' => 6, 'offset1049' => 6];
+        yield 'unknown POSIX class, then a range no class takes' => ['pattern' => '/(?[[[:foo:][\\d-z]][:foo:]])/', 'offsetBefore' => 2, 'offset1045' => 11, 'offset1049' => 11];
+        yield 'unknown escape, then a class never closed holding a fault' => ['pattern' => '/(?[\\j + [\\x61\\w-x/', 'offsetBefore' => 2, 'offset1045' => 4, 'offset1049' => 5];
+        yield 'escape no class takes as a range start' => ['pattern' => '/(?[[\\X-\\d])/', 'offsetBefore' => 2, 'offset1045' => 5, 'offset1049' => 6];
+        yield 'escape no class takes as a range start after a member' => ['pattern' => '/(?[[a\\X-\\d])/', 'offsetBefore' => 2, 'offset1045' => 6, 'offset1049' => 7];
+        yield 'range no class takes in a class never closed' => ['pattern' => '/(?[[\\x61\\w-x/', 'offsetBefore' => 2, 'offset1045' => 11, 'offset1049' => 11];
         yield 'nested class never closed' => ['pattern' => '/(?[ [a/', 'offsetBefore' => 2, 'offset1045' => 6, 'offset1049' => 6];
         yield 'complemented class never closed' => ['pattern' => '/(?[ ![a/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];
         yield 'quoted character' => ['pattern' => '/(?[ \\Qa ])/', 'offsetBefore' => 2, 'offset1045' => 7, 'offset1049' => 7];

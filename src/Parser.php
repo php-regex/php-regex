@@ -1533,6 +1533,13 @@ final class Parser
                     throw $this->parserException(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), $end);
                 }
 
+                // A backslash ends the pattern: PCRE refuses it there.
+                if ('\\' === $escape) {
+                    $end = \strlen($this->pattern);
+
+                    throw $this->parserException(\sprintf('A backslash ends the pattern at position %d.', $end), $end);
+                }
+
                 // "\c" ends the pattern: a "]" after it would be its character.
                 if ('\\c' === $escape) {
                     return $this->parseOperandAt($escape, $at, false);
@@ -1616,16 +1623,41 @@ final class Parser
      */
     private function parseOperandAt(string $text, int $at, bool $class): NodeInterface
     {
+        $lexer = new Lexer($this->target);
+
         try {
-            $stream = (new Lexer($this->target))->tokenize($text, $this->flags, $class);
+            $read = $lexer->tokenize($text, $this->flags, $class)->getTokens();
         } catch (LexerException $error) {
-            throw $this->movedError($error, $at);
+            $moved = $this->movedError($error, $at);
+
+            throw $this->firstMemberErrorBefore($this->movedTokens($lexer->tokensRead(), $at), $moved->getPosition() ?? $at) ?? $moved;
         }
 
-        // Under "xx", a class skips its blanks, but not those "\Q...\E" quotes.
+        $tokens = $this->movedTokens($read, $at, $class);
+
+        $parser = new self($this->maxRecursionDepth, $this->target);
+        $parser->capturesBefore = $this->captureCount;
+
+        try {
+            return $parser->parse(new TokenStream($tokens, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
+        } catch (ParserException $error) {
+            throw ($class ? $this->firstMemberErrorBefore($tokens, $error->getPosition() ?? $at) : null) ?? $error;
+        }
+    }
+
+    /**
+     * Tokens read apart, moved to where they stand in the whole pattern.
+     * Under "xx", a class skips its blanks, but not those "\Q...\E" quotes.
+     *
+     * @param array<Token> $read
+     *
+     * @return list<Token>
+     */
+    private function movedTokens(array $read, int $at, bool $class = true): array
+    {
         $tokens = [];
         $quoted = false;
-        foreach ($stream->getTokens() as $token) {
+        foreach ($read as $token) {
             $quoted = match ($token->type) {
                 TokenType::T_QUOTE_MODE_START => true,
                 TokenType::T_QUOTE_MODE_END => false,
@@ -1638,10 +1670,43 @@ final class Parser
             $tokens[] = new Token($token->type, $token->value, $token->position + $at, $token->sourceLength);
         }
 
-        $parser = new self($this->maxRecursionDepth, $this->target);
-        $parser->capturesBefore = $this->captureCount;
+        return $tokens;
+    }
 
-        return $parser->parse(new TokenStream($tokens, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
+    /**
+     * A member of a class PCRE refuses before $position, where reading the
+     * class failed: PCRE judges each member as it reads it.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstMemberErrorBefore(array $tokens, int $position): ?ParserException
+    {
+        foreach ($tokens as $token) {
+            if ($token->end() > $position || \in_array($token->type, [TokenType::T_CHAR_CLASS_OPEN, TokenType::T_CHAR_CLASS_CLOSE, TokenType::T_RANGE, TokenType::T_EOF], true)) {
+                continue;
+            }
+
+            $member = [
+                new Token(TokenType::T_CHAR_CLASS_OPEN, '[', $token->position),
+                $token,
+                new Token(TokenType::T_CHAR_CLASS_CLOSE, ']', $token->end()),
+                new Token(TokenType::T_EOF, '', $token->end()),
+            ];
+
+            try {
+                $class = (new self($this->maxRecursionDepth, $this->target))->parse(new TokenStream($member, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
+            } catch (ParserException) {
+                continue;
+            }
+
+            // A member refused where the fault is was read first.
+            $error = $this->firstOperandError([$class], $token->position);
+            if (null !== $error && ($error->getPosition() ?? $position) <= $position) {
+                return $error;
+            }
+        }
+
+        return null;
     }
 
     /**
