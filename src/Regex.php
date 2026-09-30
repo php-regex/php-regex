@@ -455,15 +455,18 @@ final readonly class Regex
         // happen to be. "(*NO_JIT)" leads the pattern, as a start option.
         $trimmed = ltrim($regex);
         $checked = substr($trimmed, 0, 1).'(*NO_JIT)'.substr($trimmed, 1);
+        // Only a pattern this PHP cannot compile gets a sample nothing checks.
+        error_clear_last();
+        $compiles = false !== @preg_match($checked, '') || !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');
         $sample = '';
         $attempts = [];
-        for ($attempt = 0; $attempt < 8; $attempt++) {
+        for ($attempt = 0; $attempt < 16; $attempt++) {
             $sample = $ast->accept($generator);
 
             $matches = @preg_match($checked, $sample);
             // Verified, or a pattern this PCRE runtime cannot compile: what
-            // we have. A limit it reached checks nothing: another try.
-            if (1 === $matches || (false === $matches && \PREG_INTERNAL_ERROR === preg_last_error())) {
+            // we have. A limit or an error it met checks nothing: another try.
+            if (1 === $matches || !$compiles) {
                 return $sample;
             }
 

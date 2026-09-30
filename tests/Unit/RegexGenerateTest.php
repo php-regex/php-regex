@@ -30,7 +30,7 @@ final class RegexGenerateTest extends TestCase
     #[DataProvider('provideUnmatchable')]
     public function test_no_sample_is_given_for_a_pattern_the_samples_miss(string $pattern): void
     {
-        $this->assertSame(0, preg_match($pattern, 'ab'));
+        $this->assertNotSame(1, @preg_match($pattern, 'ab'));
 
         try {
             Regex::create(['cache' => null])->generate($pattern);
@@ -49,6 +49,8 @@ final class RegexGenerateTest extends TestCase
         yield 'failing verb' => ['pattern' => '/a+(*FAIL)/'];
         yield 'anchor inside' => ['pattern' => '/a^b/'];
         yield 'assertions that exclude each other' => ['pattern' => '/(?=a)(?=b)/'];
+        // It compiles, but a match fails with an error the engine raises.
+        yield 'recursion at the same position' => ['pattern' => '/(?=\\w)(?R)/'];
         yield 'empty negative lookahead' => ['pattern' => '/a(?!)b/'];
     }
 
@@ -115,6 +117,36 @@ final class RegexGenerateTest extends TestCase
         } finally {
             ini_set('pcre.recursion_limit', false === $limit ? '100000' : $limit);
         }
+    }
+
+    #[Test]
+    public function test_a_condition_with_one_valid_branch_is_found(): void
+    {
+        // Each try takes a branch at random, and one of two holds: over 400
+        // calls, sixteen tries each, none gives up.
+        $regex = Regex::create(['cache' => null]);
+        for ($call = 0; $call < 400; $call++) {
+            $this->assertSame(1, preg_match('/(?(?<!foo)cat|bar)/', $regex->generate('/(?(?<!foo)cat|bar)/')));
+        }
+    }
+
+    /**
+     * PCRE refuses "\j"; the tree still reads it, as a "j".
+     */
+    #[Test]
+    #[DataProvider('provideUncompilable')]
+    public function test_a_pattern_this_php_cannot_compile_gets_a_sample_nothing_checks(string $pattern, string $sample): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+        $this->assertSame($sample, Regex::create(['cache' => null])->generate($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideUncompilable(): iterable
+    {
+        yield 'unknown escape' => ['/a\\j/', 'aj'];
     }
 
     #[Test]

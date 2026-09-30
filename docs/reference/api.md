@@ -338,8 +338,8 @@ until one matches: lookaheads, lookbehinds and assertions such as `\b` are
 held where they stand. When none matches, `SampleGenerationException` is
 thrown (error code `regex.generate.no_match`): the pattern matches nothing, as
 `a(*FAIL)` or `a^b`, or its constraints are too tangled to guess. A sample
-the engine gives up on, past `pcre.backtrack_limit` or `pcre.recursion_limit`,
-is no answer either, and another is tried. A pattern the running PHP cannot
+the engine gives up on, past `pcre.backtrack_limit` or `pcre.recursion_limit`
+or on an error it meets matching, is no answer either, and another is tried. A pattern the running PHP cannot
 compile gets a sample nothing checked.
 
 ```php
