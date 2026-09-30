@@ -133,8 +133,8 @@ valid. The interpreter answers "no match" without trouble.
 
 | where | result |
 |---|---|
-| pcre2test 10.40, 10.42, 10.45, 10.47, 10.49 built with `--enable-jit` | crash (every release tried) |
-| PHP 8.2 and 8.5 with PCRE2 10.42, PHP 8.4 with PCRE2 10.49 | segmentation fault |
+| pcre2test 10.40, 10.42, 10.45, 10.47, 10.49 and the development branch of 2026-09-29, built with `--enable-jit` | crash (every release tried) |
+| PHP 8.2 and 8.5 with PCRE2 10.42, PHP 8.4 with PCRE2 10.49 (arm64), PHP 8.4 with its bundled 10.44 (x86_64) | segmentation fault |
 | any of them with `pcre.jit=0`, or `(*NO_JIT)` leading the pattern | no match, no crash |
 
 What this library does about it:
