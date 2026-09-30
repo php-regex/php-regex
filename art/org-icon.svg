@@ -1,0 +1,42 @@
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+        </linearGradient>
+
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+
+    <g transform="translate(256, 256)">
+
+        <!-- Brackets as stroked paths: no font dependency, exact weight -->
+        <g fill="none" stroke="#cbd5e1" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+            <path d="M -140 -112 L -186 -112 L -186 112 L -140 112"/>
+            <path d="M 140 -112 L 186 -112 L 186 112 L 140 112"/>
+        </g>
+
+        <g filter="url(#glow)">
+            <path d="M15,-90 L-55,10 M15,-90 L85,10 M-55,10 L-85,90 M-55,10 L-25,90"
+                  fill="none" stroke="#cbd5e1" stroke-width="14" stroke-linecap="round"/>
+
+            <g stroke="#0f172a" stroke-width="6">
+                <circle cx="15" cy="-90" r="38" fill="#38bdf8"/>
+
+                <circle cx="-55" cy="10" r="29" fill="#06b6d4"/>
+                <circle cx="85" cy="10" r="29" fill="#0891b2"/>
+
+                <circle cx="-85" cy="90" r="23" fill="#fbbf24"/>
+                <circle cx="-25" cy="90" r="23" fill="#cbd5e1"/>
+            </g>
+        </g>
+    </g>
+</svg>
