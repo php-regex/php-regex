@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Lint\Rule\GroupIndex;
 use RegexParser\Lint\Rule\InlineFlagsRule;
 use RegexParser\Lint\Rule\LintContext;
@@ -48,7 +49,6 @@ use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\ReDoS\CharSetAnalyzer;
 use RegexParser\Regex;
 
 final class LinterNodeVisitorEdgeCasesTest extends TestCase

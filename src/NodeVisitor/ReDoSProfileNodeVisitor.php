@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -47,7 +48,6 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
-use RegexParser\ReDoS\CharSetAnalyzer;
 use RegexParser\ReDoS\ReDoSConfidence;
 use RegexParser\ReDoS\ReDoSFinding;
 use RegexParser\ReDoS\ReDoSHotspot;

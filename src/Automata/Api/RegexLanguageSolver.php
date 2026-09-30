@@ -24,7 +24,7 @@ use RegexParser\Automata\Solver\RegexSolverInterface;
 use RegexParser\Automata\Solver\SubsetResult;
 use RegexParser\Automata\Transform\RegularSubsetValidator;
 use RegexParser\Exception\ComplexityException;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 /**
  * Stable facade for language-level regex comparisons.
@@ -34,7 +34,7 @@ final readonly class RegexLanguageSolver
     public function __construct(private RegexSolverInterface $solver = new RegexSolver()) {}
 
     public static function forRegex(
-        Regex $regex,
+        RegexParser $regex,
         ?RegularSubsetValidator $validator = null,
         ?DfaBuilder $dfaBuilder = null,
         ?DfaCacheInterface $dfaCache = null,

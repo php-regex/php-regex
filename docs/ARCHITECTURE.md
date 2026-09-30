@@ -180,6 +180,28 @@ The CLI linter runs in two stages:
 
 When `--jobs` is used and `pcntl_fork` is available, both extraction and analysis run in parallel workers. Each worker handles a chunk of files or patterns, and the parent process aggregates results.
 
+## Layers
+
+The code falls into layers, each allowed to use only those below it, and
+[deptrac](https://github.com/deptrac/deptrac) checks the rule on every change
+(`composer deptrac`):
+
+| layer | what it holds | may use |
+|---|---|---|
+| core | lexer, parser, nodes, validation, `RegexParser`, `PcreTarget`, cache, the shared tree analyses | nothing |
+| explain | explanations, highlighting, diagrams | core |
+| optimizer | `Optimizer` and the optimizing visitors | core, automata |
+| generator | sample and test-case generation | core |
+| automata | the solver: equivalence, intersection, subset | core |
+| ReDoS | ReDoS analysis | core |
+| transpiler | JavaScript and Python output | core |
+| linter | lint rules, pattern extraction, reports | core, explain, optimizer, automata, ReDoS |
+| toolkit | the `Regex` facade | every library above |
+| CLI, language server, bridges | applications and integrations | the toolkit and the libraries |
+
+What reads a pattern below the facade takes a `RegexParser`; `Regex::parser()`
+gives the one a facade uses.
+
 ## Caching and Limits
 
 RegexParser can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.

@@ -35,6 +35,7 @@
 /phpbench.yml           export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore
+/deptrac.yaml           export-ignore
 /rector.php             export-ignore
 /phpunit.xml.dist       export-ignore
 /infection.json.dist    export-ignore

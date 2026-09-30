@@ -13,24 +13,20 @@ declare(strict_types=1);
 
 namespace RegexParser;
 
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Cache\CacheInterface;
-use RegexParser\Exception\RegexException;
 use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Internal\NoJit;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
 use RegexParser\NodeVisitor\ExplainNodeVisitor;
 use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
 use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
 use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
+use RegexParser\Optimizer\Optimizer;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSAnalyzer;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
@@ -228,7 +224,7 @@ final readonly class Regex
         ReDoSMode $mode = ReDoSMode::THEORETICAL,
         ?ReDoSConfirmOptions $confirmOptions = null,
     ): ReDoSAnalysis {
-        $analyzer = new ReDoSAnalyzer($this, $this->redosIgnoredPatterns);
+        $analyzer = new ReDoSAnalyzer($this->parser, $this->redosIgnoredPatterns);
 
         return $analyzer->analyze($regex, $threshold, $mode, $confirmOptions);
     }
@@ -243,56 +239,7 @@ final readonly class Regex
      */
     public function optimize(string $regex, array $options = []): OptimizationResult
     {
-        $verifyWithAutomata = (bool) ($options['verifyWithAutomata'] ?? false);
-        $optimizer = new OptimizerNodeVisitor(
-            optimizeDigits: (bool) ($options['digits'] ?? true),
-            optimizeWord: (bool) ($options['word'] ?? true),
-            ranges: (bool) ($options['ranges'] ?? true),
-            canonicalizeCharClasses: (bool) ($options['canonicalizeCharClasses'] ?? true),
-            autoPossessify: (bool) ($options['autoPossessify'] ?? false),
-            allowAlternationFactorization: (bool) ($options['allowAlternationFactorization'] ?? false),
-            minQuantifierCount: (int) ($options['minQuantifierCount'] ?? 4),
-        );
-
-        $ast = $this->parse($regex, false);
-        $optimizedAst = $ast->accept($optimizer);
-
-        if (!$optimizedAst instanceof RegexNode) {
-            throw new RegexException('Optimizer returned an unexpected AST root.');
-        }
-
-        if ($optimizedAst === $ast) {
-            return new OptimizationResult($regex, $regex, []);
-        }
-
-        $pretty = str_contains($ast->flags, 'x');
-        // Both sides are normalized so that a pattern only counts as optimized
-        // when its structure changed, not when it merely spells an escape
-        // differently.
-        $originalCompiled = $ast->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
-        $optimizedCompiled = $optimizedAst->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
-
-        [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->parser->target());
-        [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->parser->target());
-
-        if ($originalPattern === $optimizedPatternPart) {
-            [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->parser->target());
-            $closingDelimiter = PatternParser::closingDelimiter($delimiter);
-            $optimizedPattern = $delimiter.$pattern.$closingDelimiter.$optimizedAst->flags;
-        } else {
-            $optimizedPattern = $optimizedCompiled;
-        }
-
-        if ($optimizedPattern !== $regex && $verifyWithAutomata) {
-            $isEquivalent = $this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern);
-            if (false === $isEquivalent) {
-                return new OptimizationResult($regex, $regex, []);
-            }
-        }
-
-        $appliedChanges = $optimizedPattern === $regex ? [] : ['Optimized pattern.'];
-
-        return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+        return (new Optimizer($this->parser))->optimize($regex, $options);
     }
 
     /**
@@ -300,7 +247,7 @@ final readonly class Regex
      */
     public function transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
     {
-        $transpiler = new RegexTranspiler($this);
+        $transpiler = new RegexTranspiler($this->parser);
 
         return $transpiler->transpile($regex, $target, $options);
     }
@@ -613,20 +560,5 @@ final readonly class Regex
             'html' => new HtmlExplainNodeVisitor(),
             default => throw new \InvalidArgumentException("Invalid format: $format"),
         };
-    }
-
-    /**
-     * @return bool|null true when equivalent, false when not, null when unsupported
-     */
-    private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
-    {
-        try {
-            $solver = new RegexSolver($this);
-            $result = $solver->equivalent($original, $optimized, new SolverOptions());
-
-            return $result->isEquivalent;
-        } catch (\Throwable) {
-            return null;
-        }
     }
 }

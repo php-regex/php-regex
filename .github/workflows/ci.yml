@@ -229,6 +229,28 @@ jobs:
       - name: Run PHPLint
         run: tools/phplint/vendor/bin/phplint
 
+  deptrac:
+    # One layer per future package: the core depends on nothing, the
+    # libraries on the core, the applications and bridges on the libraries.
+    name: Deptrac
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+
+      - name: Install Deptrac Tooling
+        run: composer install -d tools/deptrac --no-interaction --no-progress
+
+      - name: Run Deptrac
+        run: tools/deptrac/vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress
+
   validation:
     name: Validation & Feature Completeness
     runs-on: ubuntu-latest

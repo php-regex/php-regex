@@ -1,0 +1,83 @@
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*Test\.php$#'
+  layers:
+    - name: Parser
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: '^RegexParser\\(Lexer|Parser|RegexParser|RegexOptions|Token|TokenStream|TokenType|GroupNumbering|GroupNumberingCollector|PcreTarget|RegexPattern|ValidationResult|ValidationErrorCategory|TolerantParseResult|LiteralExtractionResult|LiteralSet)$'
+        - type: classLike
+          value: '^RegexParser\\(Node|Internal|Exception|Cache|Analysis)\\'
+        - type: classLike
+          value: '^RegexParser\\NodeVisitor\\(AbstractNodeVisitor|NodeVisitorInterface|CompilerNodeVisitor|DumperNodeVisitor|ValidatorNodeVisitor|LengthRangeNodeVisitor|LiteralExtractorNodeVisitor|ComplexityScoreNodeVisitor|MetricsNodeVisitor)$'
+    - name: Explain
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\NodeVisitor\\(ExplainNodeVisitor|HtmlExplainNodeVisitor|AsciiTreeVisitor|MermaidNodeVisitor|RailroadSvgVisitor|HighlighterVisitor|ConsoleHighlighterVisitor|HtmlHighlighterVisitor)$'
+    - name: Optimizer
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\(NodeVisitor\\(OptimizerNodeVisitor|ModernizerNodeVisitor)$|OptimizationResult$|Optimizer\\)'
+    - name: Generator
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\NodeVisitor\\(SampleGeneratorNodeVisitor|TestCaseGeneratorNodeVisitor)$'
+    - name: Automata
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Automata\\'
+    - name: ReDoS
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\(ReDoS\\|NodeVisitor\\ReDoSProfileNodeVisitor$)'
+    - name: Transpiler
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Transpiler\\'
+    - name: Linter
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\(Lint\\|NodeVisitor\\LinterNodeVisitor$|(LintIssue|Severity|ProblemType|RegexProblem)$)'
+    - name: Toolkit
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\(Regex|AnalysisReport|OutputFormat)$'
+    - name: Cli
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\(Cli|Runtime|Bridge\\Console)\\'
+    - name: LanguageServer
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Lsp\\'
+    - name: PHPStan
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Bridge\\PHPStan\\'
+    - name: Symfony
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Bridge\\Symfony\\'
+    - name: Laravel
+      collectors:
+        - type: classLike
+          value: '^RegexParser\\Bridge\\Laravel\\'
+  ruleset:
+    Parser: ~
+    Explain: [Parser]
+    Optimizer: [Parser, Automata]
+    Generator: [Parser]
+    Automata: [Parser]
+    ReDoS: [Parser]
+    Transpiler: [Parser]
+    Linter: [Parser, Explain, ReDoS, Automata, Optimizer]
+    Toolkit: [Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
+    Cli: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
+    LanguageServer: [Toolkit, Parser, Explain, Optimizer, Linter]
+    PHPStan: [Parser, Linter, ReDoS, Automata, Optimizer]
+    Symfony: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, Cli]
+    Laravel: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, Cli]

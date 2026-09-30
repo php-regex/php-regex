@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Rule;
 
+use RegexParser\Analysis\CharSet;
 use RegexParser\Lint\Rule\Support\CharClassSets;
 use RegexParser\LintIssue;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\NodeInterface;
-use RegexParser\ReDoS\CharSet;
 
 /**
  * Detects character-class elements whose matches are fully covered by the

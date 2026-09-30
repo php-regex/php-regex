@@ -21,7 +21,7 @@ use RegexParser\Lint\RegexLintService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\ProblemType;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 final class RegexLintServiceTest extends TestCase
 {
@@ -31,7 +31,7 @@ final class RegexLintServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->analysis = new RegexAnalysisService(Regex::create());
+        $this->analysis = new RegexAnalysisService(RegexParser::create());
         $this->sources = new RegexPatternSourceCollection([]);
     }
 
@@ -147,7 +147,7 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_skips_atomic_tip_when_pattern_limit_exceeded(): void
     {
-        $analysis = new RegexAnalysisService(Regex::create(['max_pattern_length' => 10]));
+        $analysis = new RegexAnalysisService(RegexParser::create(['max_pattern_length' => 10]));
         $service = new RegexLintService($analysis, $this->sources);
         $request = new RegexLintRequest(['.'], [], 0);
         $patterns = [
@@ -355,7 +355,7 @@ final class RegexLintServiceTest extends TestCase
 
         // ReDoS analysis must be enabled on the analysis service itself;
         // the request flag alone only filters already-produced issues.
-        $analysis = new RegexAnalysisService(Regex::create(), redosEnabled: true);
+        $analysis = new RegexAnalysisService(RegexParser::create(), redosEnabled: true);
         $service = new RegexLintService($analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 

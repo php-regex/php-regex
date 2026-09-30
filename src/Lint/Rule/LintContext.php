@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Rule;
 
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Lint\Rule\Support\QuantifierMath;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\GroupType;
 use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
-use RegexParser\ReDoS\CharSetAnalyzer;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal

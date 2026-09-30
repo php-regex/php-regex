@@ -20,7 +20,7 @@ use RegexParser\Automata\Transform\AstToNfaTransformer;
 use RegexParser\Automata\Transform\RegularSubsetValidator;
 use RegexParser\Automata\Unicode\CodePointHelper;
 use RegexParser\Exception\ComplexityException;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 /**
  * Automata-based solver for regex set operations.
@@ -28,7 +28,7 @@ use RegexParser\Regex;
 final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexSolverInterface
 {
     public function __construct(
-        private ?Regex $regex = null,
+        private ?RegexParser $regex = null,
         private ?RegularSubsetValidator $validator = null,
         private ?DfaBuilder $dfaBuilder = null,
         private ?DfaCacheInterface $dfaCache = null,
@@ -101,9 +101,9 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
         return $this->buildDfa($pattern, $options);
     }
 
-    private function parser(): Regex
+    private function parser(): RegexParser
     {
-        return $this->regex ?? Regex::create();
+        return $this->regex ?? RegexParser::create();
     }
 
     /**

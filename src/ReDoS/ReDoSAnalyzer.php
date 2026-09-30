@@ -13,9 +13,10 @@ declare(strict_types=1);
 
 namespace RegexParser\ReDoS;
 
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Internal\PatternParser;
 use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 final class ReDoSAnalyzer
 {
@@ -28,7 +29,7 @@ final class ReDoSAnalyzer
      * @param array<string> $ignoredPatterns
      */
     public function __construct(
-        private readonly ?Regex $regex = null,
+        private readonly ?RegexParser $parser = null,
         /**
          * @var array<string>
          */
@@ -89,7 +90,7 @@ final class ReDoSAnalyzer
         }
 
         try {
-            $ast = ($this->regex ?? Regex::create())->parse($regex);
+            $ast = ($this->parser ?? RegexParser::create())->parse($regex);
             $visitor = new ReDoSProfileNodeVisitor(new CharSetAnalyzer($ast->flags));
             $ast->accept($visitor);
 
@@ -186,7 +187,7 @@ final class ReDoSAnalyzer
     private function normalizePattern(string $regex): string
     {
         try {
-            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->regex?->target());
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->parser?->target());
 
             return $pattern;
         } catch (\Throwable) {

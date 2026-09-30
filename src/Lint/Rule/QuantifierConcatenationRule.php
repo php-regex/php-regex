@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Rule;
 
+use RegexParser\Analysis\CharSet;
 use RegexParser\Lint\Rule\Support\CharClassSets;
 use RegexParser\Lint\Rule\Support\NodePredicates;
 use RegexParser\Lint\Rule\Support\QuantifierMath;
@@ -29,7 +30,6 @@ use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\SequenceNode;
-use RegexParser\ReDoS\CharSet;
 
 /**
  * Detects concatenated variable quantifiers where one character set is a

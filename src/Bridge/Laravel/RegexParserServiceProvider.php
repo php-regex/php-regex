@@ -192,7 +192,7 @@ final class RegexParserServiceProvider extends ServiceProvider
             ]));
 
             return new RegexAnalysisService(
-                $regex,
+                $regex->parser(),
                 $extractor,
                 $config['analysis']['warning_threshold'],
                 $config['redos']['threshold'],

@@ -133,7 +133,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
 
         $confirmOptions = $arguments->redosNoJit ? new ReDoSConfirmOptions(disableJit: true) : null;
         $analysis = new RegexAnalysisService(
-            $regex,
+            $regex->parser(),
             redosThreshold: $arguments->redosThreshold ?? ReDoSSeverity::HIGH->value,
             redosMode: $arguments->redosMode,
             redosConfirmOptions: $confirmOptions,

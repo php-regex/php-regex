@@ -20,7 +20,7 @@ use RegexParser\Lint\Formatter\OutputConfiguration;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintReport;
 use RegexParser\OptimizationResult;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 final class ConsoleFormatterTest extends TestCase
 {
@@ -654,7 +654,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_format_pattern_for_display_falls_back_when_highlighter_fails(): void
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $formatter = new ConsoleFormatter($analysis, new OutputConfiguration(ansi: true));
 
         $output = $this->invokePrivate($formatter, 'formatPatternForDisplay', '/[/');
@@ -955,7 +955,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_format_pattern_for_display_preserves_comment_text_when_highlight_changes(): void
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $formatter = new ConsoleFormatter($analysis, new OutputConfiguration(ansi: true));
 
         $output = $this->invokePrivate($formatter, 'formatPatternForDisplay', '/(?#comment)foo/');

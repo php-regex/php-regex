@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Transpiler;
 
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\Transpiler\Target\TargetRegistry;
 
 /**
@@ -21,7 +21,7 @@ use RegexParser\Transpiler\Target\TargetRegistry;
  */
 final readonly class RegexTranspiler
 {
-    public function __construct(private Regex $regex, private TargetRegistry $targets = new TargetRegistry()) {}
+    public function __construct(private RegexParser $regex, private TargetRegistry $targets = new TargetRegistry()) {}
 
     public function transpile(string $pattern, string $target, ?TranspileOptions $options = null): TranspileResult
     {

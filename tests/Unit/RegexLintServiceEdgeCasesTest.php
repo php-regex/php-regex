@@ -20,7 +20,7 @@ use RegexParser\Lint\RegexLintService;
 use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\Severity;
 use RegexParser\ValidationResult;
 
@@ -111,7 +111,7 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
 
     private function makeService(): RegexLintService
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $sources = new RegexPatternSourceCollection([]);
 
         return new RegexLintService($analysis, $sources);

@@ -60,7 +60,7 @@ final class CompareCommand extends AbstractCommand
             return 1;
         }
 
-        $solver = RegexLanguageSolver::forRegex($regex);
+        $solver = RegexLanguageSolver::forRegex($regex->parser());
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             minimizationAlgorithm: MinimizationAlgorithm::from($parsed['minimizer']),

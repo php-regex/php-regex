@@ -115,7 +115,7 @@ final class CompareCommand extends Command
             return Command::FAILURE;
         }
 
-        $solver = RegexLanguageSolver::forRegex($this->regex);
+        $solver = RegexLanguageSolver::forRegex($this->regex->parser());
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             minimizationAlgorithm: $minimizer,

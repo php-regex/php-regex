@@ -21,7 +21,7 @@ use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\InMemoryDfaCache;
 use RegexParser\Automata\Solver\RegexSolver;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 final class RegexSolverEdgeCaseTest extends TestCase
 {
@@ -172,8 +172,8 @@ final class RegexSolverEdgeCaseTest extends TestCase
     {
         // "{,2}" repeats from PCRE2 10.43 and is text before (pcre2test).
         $cache = new InMemoryDfaCache();
-        $newer = new RegexSolver(Regex::create(['cache' => null, 'pcre_version' => '10.44']), dfaCache: $cache);
-        $older = new RegexSolver(Regex::create(['cache' => null, 'pcre_version' => '10.42']), dfaCache: $cache);
+        $newer = new RegexSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.44']), dfaCache: $cache);
+        $older = new RegexSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.42']), dfaCache: $cache);
 
         $this->assertFalse($newer->equivalent('/^x{,2}$/', '/^x\{,2\}$/', $this->options())->isEquivalent);
         $this->assertTrue($older->equivalent('/^x{,2}$/', '/^x\{,2\}$/', $this->options())->isEquivalent);

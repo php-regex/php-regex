@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Node;
 use RegexParser\Node\AbstractNode;
 use RegexParser\Node\AlternationNode;
@@ -49,7 +50,6 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
-use RegexParser\ReDoS\CharSetAnalyzer;
 
 /**
  * Transforms the AST to apply optimizations, returning a new, simplified AST.

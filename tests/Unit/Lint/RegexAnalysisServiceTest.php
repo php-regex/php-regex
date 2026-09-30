@@ -23,6 +23,7 @@ use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\Tests\Support\LintFunctionOverrides;
 use RegexParser\ValidationResult;
 
@@ -33,7 +34,7 @@ final class RegexAnalysisServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->analysis = new RegexAnalysisService(
-            Regex::create(),
+            RegexParser::create(),
             null,
             50,
             'low',
@@ -127,7 +128,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_construct_with_ignore_parse_errors(): void
     {
         $analysis = new RegexAnalysisService(
-            Regex::create(),
+            RegexParser::create(),
             null,
             50,
             'high',
@@ -260,7 +261,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_lint_progress_with_ignore_parse_errors(): void
     {
-        $analysis = new RegexAnalysisService(Regex::create(), null, 50, 'high', [], [], true);
+        $analysis = new RegexAnalysisService(RegexParser::create(), null, 50, 'high', [], [], true);
         $patterns = [
             new RegexPatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
         ];
@@ -363,7 +364,7 @@ final class RegexAnalysisServiceTest extends TestCase
             }
         };
 
-        $analysis = new RegexAnalysisService(Regex::create(['cache' => $cache]));
+        $analysis = new RegexAnalysisService(RegexParser::create(['cache' => $cache]));
         $patterns = [
             new RegexPatternOccurrence('/a/x', 'test.php', 1, 'preg_match'),
         ];

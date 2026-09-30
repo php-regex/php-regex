@@ -32,7 +32,7 @@ use RegexParser\OptimizationResult;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSMode;
 use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 /**
  * Reports, in `preg_*` calls, the patterns the targeted PHP and PCRE2 refuse
@@ -138,7 +138,7 @@ final class RegexParserRule implements Rule
     /**
      * Judges patterns for the target; its cache stays in memory.
      */
-    private readonly Regex $regex;
+    private readonly RegexParser $regex;
 
     /**
      * "PHP 8.2 with PCRE2 10.40", or null when the target is the running
@@ -184,7 +184,7 @@ final class RegexParserRule implements Rule
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null)
     {
         // Built now, so that an unreadable version stops PHPStan before any file is read.
-        $this->regex = Regex::create(self::targetOptions($config, $phpVersion));
+        $this->regex = RegexParser::create(self::targetOptions($config, $phpVersion));
         $target = $this->regex->target();
         $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
             'PHP %d.%d with PCRE2 %s',

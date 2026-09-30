@@ -15,6 +15,7 @@
 /.junie/
 /.phpunit.result.cache
 /.php-cs-fixer.cache
+/.deptrac.cache
 
 # Build & Distribution
 /build/

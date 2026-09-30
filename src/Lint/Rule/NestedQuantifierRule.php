@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Rule;
 
+use RegexParser\Analysis\CharSet;
 use RegexParser\Lint\Rule\Support\NodePredicates;
 use RegexParser\Lint\Rule\Support\QuantifierMath;
 use RegexParser\LintIssue;
@@ -25,7 +26,6 @@ use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\QuantifierType;
 use RegexParser\Node\SequenceNode;
-use RegexParser\ReDoS\CharSet;
 
 /**
  * Detects nested variable quantifiers that can cause catastrophic

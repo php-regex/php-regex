@@ -53,7 +53,7 @@ final readonly class RouteConflictAnalyzer
         private string $determinizationAlgorithm = DeterminizationAlgorithm::SUBSET_INDEXED->value,
     ) {
         $this->solver = $solver ?? RegexLanguageSolver::forRegex(
-            $this->regex,
+            $this->regex->parser(),
             $this->validator,
             $this->dfaBuilder,
             new InMemoryDfaCache(),

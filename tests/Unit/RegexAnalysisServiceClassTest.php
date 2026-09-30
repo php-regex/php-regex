@@ -21,19 +21,19 @@ use RegexParser\Regex;
 
 final class RegexAnalysisServiceClassTest extends TestCase
 {
-    public function test_regex_analysis_service_exposes_regex_instance(): void
+    public function test_regex_analysis_service_exposes_its_parser(): void
     {
         $regex = Regex::create();
-        $service = new RegexAnalysisService($regex);
+        $service = new RegexAnalysisService($regex->parser());
 
-        $this->assertSame($regex, $service->getRegex());
+        $this->assertSame($regex->parser(), $service->getParser());
     }
 
     public function test_regex_analysis_service_lints_patterns_without_issues(): void
     {
         $regex = Regex::create();
         $service = new RegexAnalysisService(
-            $regex,
+            $regex->parser(),
             null,  // extractor
             50,    // warningThreshold
             ReDoSSeverity::HIGH->value,

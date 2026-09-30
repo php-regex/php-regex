@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 final class RegexAnalysisServiceTest extends TestCase
 {
@@ -151,7 +151,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_with_invalid_pattern_and_ignore_parse_errors(): void
     {
         $service = new RegexAnalysisService(
-            Regex::create(),
+            RegexParser::create(),
             null,
             10,
             'high',
@@ -375,7 +375,7 @@ final class RegexAnalysisServiceTest extends TestCase
     private function createService(int $warningThreshold, string $redosThreshold, array $ignoredPatterns = []): RegexAnalysisService
     {
         return new RegexAnalysisService(
-            Regex::create(),
+            RegexParser::create(),
             null,
             $warningThreshold,
             $redosThreshold,

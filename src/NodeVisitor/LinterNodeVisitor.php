@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Lint\Rule\GroupIndex;
 use RegexParser\Lint\Rule\LintContext;
@@ -42,7 +43,6 @@ use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Node\UnicodePropNode;
-use RegexParser\ReDoS\CharSetAnalyzer;
 
 /**
  * Lints regex patterns for semantic issues like useless flags.

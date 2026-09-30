@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\ReDoS;
 
+use RegexParser\Analysis\CharSet;
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Node\NodeInterface;
 
 /**

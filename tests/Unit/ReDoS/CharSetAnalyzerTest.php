@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\ReDoS;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Analysis\CharSetAnalyzer;
 use RegexParser\Node\CharTypeNode;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\SequenceNode;
-use RegexParser\ReDoS\CharSetAnalyzer;
 
 final class CharSetAnalyzerTest extends TestCase
 {

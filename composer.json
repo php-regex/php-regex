@@ -55,13 +55,15 @@
         "bench": "tools/phpbench/vendor/bin/phpbench run",
         "cache-version": "php tests/Tools/update_cache_version.php",
         "infection": "tools/infection/vendor/bin/infection",
+        "deptrac": "tools/deptrac/vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress",
         "lint": [
             "@rector",
             "@phpcs",
             "@cache-version",
             "@phplint",
             "@phpunit",
-            "@phpstan"
+            "@phpstan",
+            "@deptrac"
         ]
     },
     "config": {

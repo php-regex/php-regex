@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Rule\Support;
 
+use RegexParser\Analysis\CharSet;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
@@ -22,7 +23,6 @@ use RegexParser\Node\NodeInterface;
 use RegexParser\Node\PosixClassNode;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\SequenceNode;
-use RegexParser\ReDoS\CharSet;
 
 /**
  * Character-class decomposition and CharSet construction helpers shared by

@@ -1,0 +1,5 @@
+{
+    "require-dev": {
+        "deptrac/deptrac": "^4.0"
+    }
+}

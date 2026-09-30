@@ -61,7 +61,7 @@ final class TranspileCommand extends AbstractCommand
             // We use a direct instantiation here or via Regex facade if exposed?
             // The Regex facade doesn't seem to expose transpiler directly in the previous Read,
             // but we can instantiate RegexTranspiler manually.
-            $transpiler = new RegexTranspiler($regex);
+            $transpiler = new RegexTranspiler($regex->parser());
 
             $result = $transpiler->transpile($args['pattern'], $args['target']);
 

@@ -22,7 +22,7 @@ use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\Lint\RegexPatternSourceContext;
 use RegexParser\Lint\RegexPatternSourceInterface;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -169,7 +169,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_constructor_uses_defaults_when_paths_are_empty(): void
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $lint = new RegexLintService($analysis, new RegexPatternSourceCollection([]));
 
         $command = new RegexLintCommand(
@@ -349,7 +349,7 @@ final class RegexLintCommandTest extends TestCase
 
     private function createCommand(): RegexLintCommand
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $lint = new RegexLintService(
             $analysis,
             new RegexPatternSourceCollection([]),
@@ -368,7 +368,7 @@ final class RegexLintCommandTest extends TestCase
      */
     private function createCommandWithSources(array $sources): RegexLintCommand
     {
-        $analysis = new RegexAnalysisService(Regex::create());
+        $analysis = new RegexAnalysisService(RegexParser::create());
         $lint = new RegexLintService(
             $analysis,
             new RegexPatternSourceCollection($sources),

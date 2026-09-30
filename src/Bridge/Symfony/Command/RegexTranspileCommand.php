@@ -64,7 +64,7 @@ final class RegexTranspileCommand extends Command
         $format = $input->getOption('format');
 
         try {
-            $transpiler = new RegexTranspiler($this->regex);
+            $transpiler = new RegexTranspiler($this->regex->parser());
             $result = $transpiler->transpile($pattern, $target);
 
             if ('json' === $format) {

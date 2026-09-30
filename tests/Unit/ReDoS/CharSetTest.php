@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\ReDoS;
 
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\CharSet;
+use RegexParser\Analysis\CharSet;
 
 final class CharSetTest extends TestCase
 {

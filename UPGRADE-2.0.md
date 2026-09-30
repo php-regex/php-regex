@@ -158,6 +158,21 @@ longer depends on the CLI it is called from. They are now
 
 The old names are gone: import the new ones.
 
+#### What reads patterns takes a `RegexParser`
+
+Reading and judging a pattern moved from the `Regex` facade into
+`RegexParser`, which the rest of the library now takes instead of the facade:
+
+  - `new ReDoSAnalyzer(?RegexParser $parser, ...)`
+  - `new RegexSolver(?RegexParser $parser, ...)` and `RegexLanguageSolver::forRegex(RegexParser $parser, ...)`
+  - `new RegexTranspiler(RegexParser $parser, ...)`
+  - `new RegexAnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
+
+Pass `$regex->parser()` where you passed a `Regex`, or build one with
+`RegexParser::create()`, which takes the options `Regex::create()` takes.
+`CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
+`RegexParser\Analysis`.
+
 #### The cache stores trees, in memory by default
 
 `CacheInterface` now takes and gives back the tree itself:

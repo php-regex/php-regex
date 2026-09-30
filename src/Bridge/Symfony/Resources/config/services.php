@@ -44,6 +44,7 @@ use RegexParser\Lint\RegexLintService;
 use RegexParser\Lint\RegexPatternExtractor;
 use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\Regex;
+use RegexParser\RegexParser;
 
 /*
  * Base services for the RegexParser library.
@@ -77,8 +78,11 @@ return static function (ContainerConfigurator $container): void {
             '$extractor' => service(ExtractorInterface::class)->nullOnInvalid(),
         ]);
 
+    $services->set('regex_parser.parser', RegexParser::class)
+        ->factory([service('regex_parser.regex'), 'parser']);
+
     $services->set('regex_parser.service.regex_analysis', RegexAnalysisService::class)
-        ->arg('$regex', service('regex_parser.regex'))
+        ->arg('$regex', service('regex_parser.parser'))
         ->arg('$extractor', service('regex_parser.extractor')->nullOnInvalid())
         ->arg('$warningThreshold', param('regex_parser.analysis.warning_threshold'))
         ->arg('$redosThreshold', param('regex_parser.redos.threshold'))

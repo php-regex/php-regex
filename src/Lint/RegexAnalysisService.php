@@ -34,11 +34,13 @@ use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
 use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\NodeVisitor\OptimizerNodeVisitor;
 use RegexParser\OptimizationResult;
+use RegexParser\Optimizer\Optimizer;
 use RegexParser\ReDoS\ReDoSAnalysis;
+use RegexParser\ReDoS\ReDoSAnalyzer;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
 use RegexParser\ReDoS\ReDoSMode;
 use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\ValidationErrorCategory;
 use RegexParser\ValidationResult;
 
@@ -70,7 +72,7 @@ final readonly class RegexAnalysisService
      * @param array<string, bool> $lintRules
      */
     public function __construct(
-        private Regex $regex,
+        private RegexParser $regex,
         private ?RegexPatternExtractor $extractor = null,
         private int $warningThreshold = 50,
         string $redosThreshold = ReDoSSeverity::HIGH->value,
@@ -96,7 +98,10 @@ final readonly class RegexAnalysisService
         }
     }
 
-    public function getRegex(): Regex
+    /**
+     * The parser patterns are read and judged with.
+     */
+    public function getParser(): RegexParser
     {
         return $this->regex;
     }
@@ -297,7 +302,7 @@ final readonly class RegexAnalysisService
                     ];
                 }
 
-                $redos = $this->regex->redos(
+                $redos = (new ReDoSAnalyzer($this->regex))->analyze(
                     $occurrence->pattern,
                     $this->redosSeverityThreshold,
                     $this->redosMode,
@@ -479,7 +484,7 @@ final readonly class RegexAnalysisService
                 continue;
             }
 
-            $analysis = $this->regex->redos(
+            $analysis = (new ReDoSAnalyzer($this->regex))->analyze(
                 $occurrence->pattern,
                 $threshold,
                 $this->redosMode,
@@ -572,7 +577,7 @@ final readonly class RegexAnalysisService
                 } else {
                     $options = $optimizationConfig;
                     $options['verifyWithAutomata'] = $verifyWithAutomata;
-                    $optimization = $this->regex->optimize($occurrence->pattern, $options);
+                    $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
                 }
             } catch (\Throwable) {
                 continue;

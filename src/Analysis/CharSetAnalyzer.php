@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\ReDoS;
+namespace RegexParser\Analysis;
 
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;

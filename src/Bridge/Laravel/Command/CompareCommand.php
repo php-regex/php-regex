@@ -94,7 +94,7 @@ final class CompareCommand extends Command
         $startTime = microtime(true);
 
         try {
-            $solver = new RegexSolver($this->regex);
+            $solver = new RegexSolver($this->regex->parser());
             $options = new SolverOptions(
                 minimizationAlgorithm: MinimizationAlgorithm::from($minimizer),
                 determinizationAlgorithm: DeterminizationAlgorithm::from($determinizer),
