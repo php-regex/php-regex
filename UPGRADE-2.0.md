@@ -91,6 +91,36 @@ release to the bundled one. Set PHPStan's `phpVersion` to the PHP your project
 runs on, `regexParser.pcreVersion` for a PHP that links another PCRE2, or
 `regexParser.phpVersion: runtime` to keep the old behaviour.
 
+#### The PHPStan extension reports what PHPStan does not
+
+Enabled by extension-installer, the extension used to report every lint rule
+and ReDoS finding, and every invalid pattern a second time next to PHPStan's
+own `regexp.pattern`. It now reports, by default, only a pattern the target PHP
+refuses while the PHP running PHPStan compiles it, under
+`regex.invalidForTarget`. Lint rules and ReDoS analysis are opt-in: include
+`vendor/yoeunes/regex-parser/rules.neon`, or switch each on under `checks`.
+
+The configuration is `phpVersion`, `pcreVersion` and `checks` only:
+
+| removed | use instead |
+|---|---|
+| `reportRedos` | `checks.redos.enabled` |
+| `redosThreshold` | `checks.redos.threshold` |
+| `redosMode`, `checks.redos.mode` | nothing: ReDoS analysis in PHPStan is theoretical |
+| `checks.redos.noJit` | nothing: PHPStan never runs a pattern |
+| `suggestOptimizations` | `checks.optimizations.enabled` |
+| `optimizationConfig` | `checks.optimizations.options` |
+| `ignoreParseErrors` | nothing: a pattern PHP cannot compile is PHPStan's to report |
+
+The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
+`regex.syntax.empty` are gone (PHPStan reports those patterns as
+`regexp.pattern`), and ReDoS findings are reported as `regex.redos` whatever
+their severity, instead of `regex.redos.critical` and the like. Update
+`ignoreErrors` and baselines accordingly. The rule takes
+`new RegexParserRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
+its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
+`IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
+
 #### The pattern extractors moved, and one is renamed
 
 The two ways of finding regex patterns in PHP source now sit together under

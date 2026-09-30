@@ -584,7 +584,7 @@ preg_match('/(?i:foo)bar/', $input);
 
 ### Catastrophic Backtracking
 
-**Identifiers:** `regex.redos.critical`, `regex.redos.high`, `regex.redos.medium`, `regex.redos.low`
+**Identifier:** `regex.redos` in PHPStan, whatever the severity; the message names it
 
 **When it triggers:** The ReDoS analyzer detects nested quantifiers or overlapping alternatives that can explode backtracking time.
 

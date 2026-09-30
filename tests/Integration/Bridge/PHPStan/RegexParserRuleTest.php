@@ -13,8 +13,10 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Integration\Bridge\PHPStan;
 
+use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use PHPUnit\Framework\Attributes\Test;
 use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
@@ -25,14 +27,6 @@ final class RegexParserRuleTest extends RuleTestCase
     public function test_rule(): void
     {
         $this->analyse([__DIR__.'/Fixtures/MyClass.php'], [
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo#. (Pattern: "/foo")',
-                21,
-            ],
-            [
-                'Regex syntax error: Invalid quantifier range "{2,1}": min > max. (Pattern: "/a{2,1}/")',
-                22,
-            ],
             [
                 'Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): /(a+)+$/',
                 23,
@@ -69,56 +63,12 @@ final class RegexParserRuleTest extends RuleTestCase
                 28,
                 "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n\nRead more about possessive quantifiers: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#possessive-quantifiers\nRead more about atomic groups: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#atomic-groups\nRead more about catastrophic backtracking: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#catastrophic-backtracking",
             ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo1#. (Pattern: "/foo1")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo2#. (Pattern: "/foo2")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo3#. (Pattern: "/foo3")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo4#. (Pattern: "/foo4")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo5#. (Pattern: "/foo5")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo6#. (Pattern: "/foo6")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo7#. (Pattern: "/foo7")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo8#. (Pattern: "/foo8")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo9#. (Pattern: "/foo9")',
-                35,
-            ],
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo10#. (Pattern: "/foo10")',
-                35,
-            ],
         ]);
     }
 
     public function test_preg_replace_callback_array(): void
     {
         $this->analyse([__DIR__.'/Fixtures/PregReplaceCallbackArray.php'], [
-            [
-                'Regex syntax error: No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo#. (Pattern: "/foo")',
-                20,
-            ],
             [
                 'Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): /(a+)+$/',
                 20,
@@ -164,13 +114,47 @@ final class RegexParserRuleTest extends RuleTestCase
         ]);
     }
 
+    #[Test]
+    public function test_redos_is_reported_under_one_identifier_whatever_the_severity(): void
+    {
+        // The severity lives in the message ("severity: CRITICAL", "severity: MEDIUM"), not in the identifier.
+        $this->assertSame(
+            [[23, 'regex.redos'], [24, 'regex.redos'], [28, 'regex.redos']],
+            $this->identifiersOf(__DIR__.'/Fixtures/MyClass.php', 'Potential ReDoS risk'),
+        );
+    }
+
+    #[Test]
+    public function test_lint_keeps_its_identifiers(): void
+    {
+        $this->assertSame(
+            [[20, 'regex.lint.flag.useless.s']],
+            $this->identifiersOf(__DIR__.'/Fixtures/UselessFlagFixture.php', ''),
+        );
+    }
+
     protected function getRule(): Rule
     {
-        return new RegexParserRule(
-            ignoreParseErrors: false, // Report all errors for testing
-            reportRedos: true,
-            redosThreshold: 'low', // Report all ReDoS issues for testing
-            suggestOptimizations: false,
-        );
+        return new RegexParserRule(config: [
+            'checks' => [
+                'lint' => ['enabled' => true],
+                'redos' => ['enabled' => true, 'threshold' => 'low'], // Report all ReDoS issues for testing
+                'optimizations' => ['enabled' => false],
+            ],
+        ]);
+    }
+
+    /**
+     * @return list<array{int|null, string|null}>
+     */
+    private function identifiersOf(string $file, string $messagePrefix): array
+    {
+        $errors = array_values(array_filter(
+            $this->gatherAnalyserErrors([$file]),
+            static fn (Error $error): bool => str_starts_with($error->getMessage(), $messagePrefix),
+        ));
+        usort($errors, static fn (Error $a, Error $b): int => $a->getLine() <=> $b->getLine());
+
+        return array_map(static fn (Error $error): array => [$error->getLine(), $error->getIdentifier()], $errors);
     }
 }

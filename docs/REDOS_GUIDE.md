@@ -4,7 +4,7 @@ ReDoS (Regular Expression Denial of Service) happens when a regex takes exponent
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it explicitly:
 > - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
-> - PHPStan: `reportRedos: true` in rule configuration
+> - PHPStan: include `rules.neon`, or set `regexParser.checks.redos.enabled: true` (see [the PHPStan guide](guides/phpstan.md))
 > - Symfony: `regex_parser.redos.enabled: true` in bundle configuration
 
 ## What Is ReDoS?

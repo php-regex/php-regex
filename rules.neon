@@ -1,0 +1,8 @@
+# Opt-in checks, on top of extension.neon: lint and ReDoS risks.
+parameters:
+    regexParser:
+        checks:
+            lint:
+                enabled: true
+            redos:
+                enabled: true

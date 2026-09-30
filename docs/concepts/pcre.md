@@ -80,8 +80,8 @@ A release older than 10.40 is judged with the 10.40 rules, a release newer than
 the library knows with the newest rules it has. The command line takes the same
 pair as `--php-version` and `--pcre-version` (see [the CLI guide](../guides/cli.md)).
 
-The PHPStan extension judges for PHPStan's own `phpVersion`, with the PCRE2
-that PHP bundles. PHPStan takes the PHP running it unless `phpVersion` is
+The PHPStan extension (see [the PHPStan guide](../guides/phpstan.md)) judges
+for PHPStan's own `phpVersion`, with the PCRE2 that PHP bundles. PHPStan takes the PHP running it unless `phpVersion` is
 configured; when it is a range, the lowest version, the one least likely to
 know recent syntax.
 Its parameters name another target:

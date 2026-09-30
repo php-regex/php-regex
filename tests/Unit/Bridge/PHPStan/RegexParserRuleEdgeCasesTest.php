@@ -25,12 +25,28 @@ use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
+use PHPStan\Rules\TipRuleError;
+use PHPStan\Type\Constant\ConstantStringType;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 final class RegexParserRuleEdgeCasesTest extends TestCase
 {
+    /**
+     * Every check on, the lowest ReDoS threshold: what stays silent here is
+     * silent whatever the configuration.
+     */
+    private const ALL_CHECKS = [
+        'checks' => [
+            'lint' => ['enabled' => true],
+            'redos' => ['enabled' => true, 'threshold' => 'low'],
+            'optimizations' => ['enabled' => true],
+        ],
+    ];
+
     public function test_process_node_returns_empty_for_unknown_function(): void
     {
         $rule = new RegexParserRule();
@@ -97,14 +113,14 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_continues_after_non_string_callback_keys(): void
     {
-        $rule = new RegexParserRule(ignoreParseErrors: false);
+        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
 
         $array = new Array_([
             new ArrayItem(new String_('handler'), new LNumber(1)),
-            new ArrayItem(new String_('handler'), new String_('/foo')),
+            new ArrayItem(new String_('handler'), new String_('/(a+)+$/')),
         ]);
 
         $node = new FuncCall(new Name('preg_replace_callback_array'), [
@@ -114,41 +130,98 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         $errors = $rule->processNode($node, $scope);
 
         $this->assertCount(1, $errors);
-        $this->assertStringStartsWith('regex.syntax', $errors[0]->getIdentifier());
+        $this->assertSame('regex.redos', $errors[0]->getIdentifier());
     }
 
-    public function test_validate_pattern_returns_error_for_empty_string(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providePatternsTheRunningEngineRefuses(): iterable
     {
-        $rule = new RegexParserRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
+        // Each is refused by every PCRE2 (preg_match() returns false); PHPStan core
+        // reports them under "regexp.pattern", so this rule must not report them again.
+        yield 'empty pattern' => [''];
+        yield 'no delimiters' => ['foo'];
+        yield 'no closing delimiter' => ['/foo'];
+        yield 'unterminated class' => ['/['];
+        yield 'unclosed group' => ['/(foo/'];
+        yield 'reversed quantifier bounds' => ['/a{2,1}/'];
+    }
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['', 10, $scope, 'preg_match']);
+    #[Test]
+    #[DataProvider('providePatternsTheRunningEngineRefuses')]
+    public function test_a_pattern_the_running_engine_refuses_gets_no_error_from_any_check(string $pattern): void
+    {
+        $this->assertSame([], $this->errorsFor(new RegexParserRule(config: self::ALL_CHECKS), $pattern, 10));
+    }
+
+    #[Test]
+    #[DataProvider('providePatternsTheRunningEngineRefuses')]
+    public function test_a_pattern_the_running_engine_refuses_gets_no_error_by_default(string $pattern): void
+    {
+        $this->assertSame([], $this->errorsFor(new RegexParserRule(), $pattern, 10));
+    }
+
+    #[Test]
+    public function test_a_target_specific_refusal_is_reported_as_invalid_for_target(): void
+    {
+        // "(?aD)" arrived in PCRE2 10.43; PHP 8.2 bundles 10.40. Where the running
+        // engine refuses it too, PHPStan core reports it and this rule stays silent.
+        $pattern = '/(?aD)x/';
+        $rule = new RegexParserRule(config: ['phpVersion' => '8.2']);
+
+        $this->assertSame(
+            self::runningEngineCompiles($pattern) ? ['regex.invalidForTarget'] : [],
+            $this->identifiersOf($this->errorsFor($rule, $pattern, 7)),
+        );
+    }
+
+    /**
+     * The library's hint on a refusal becomes the error's tip: a lookbehind
+     * whose branches vary in length is refused before PCRE2 10.43.
+     */
+    #[Test]
+    public function test_the_hint_on_a_target_specific_refusal_is_the_tip(): void
+    {
+        $pattern = '/(?<=ab?)x/';
+        $errors = $this->errorsFor(new RegexParserRule(config: ['phpVersion' => '8.2']), $pattern, 7);
+
+        if (!self::runningEngineCompiles($pattern)) {
+            $this->assertSame([], $errors);
+
+            return;
+        }
 
         $this->assertCount(1, $errors);
-        $this->assertSame('regex.syntax.empty', $errors[0]->getIdentifier());
+        $this->assertInstanceOf(TipRuleError::class, $errors[0]);
+        $this->assertStringContainsString('fixed length', (string) $errors[0]->getTip());
     }
 
-    public function test_default_ignore_parse_errors_skips_partial_patterns(): void
+    /**
+     * A delimiter "(*NO_JIT)" holds, as "_", does not hide the pattern from
+     * the checks: the running engine still compiles it.
+     */
+    #[Test]
+    public function test_a_pattern_with_an_underscore_delimiter_is_checked(): void
     {
-        $rule = new RegexParserRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/foo', 10, $scope, 'preg_match']);
+        $this->assertNotSame([], $this->errorsFor($rule, '_\\s+_m', 7));
+    }
 
-        $this->assertSame([], $errors);
+    #[Test]
+    public function test_runtime_target_reports_no_validity_error(): void
+    {
+        $rule = new RegexParserRule(config: ['phpVersion' => 'runtime']);
+
+        $this->assertSame([], $this->errorsFor($rule, '/(?aD)x/', 7));
     }
 
     public function test_default_report_redos_is_disabled(): void
     {
         $rule = new RegexParserRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/(a+)+$/', 5, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/(a+)+$/', 5);
 
         $hasRedos = false;
         foreach ($errors as $error) {
@@ -163,14 +236,25 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         $this->assertFalse($hasRedos);
     }
 
+    #[Test]
+    public function test_default_lint_is_disabled(): void
+    {
+        $this->assertSame([], $this->errorsFor(new RegexParserRule(), '/no_dot/s', 5));
+    }
+
+    #[Test]
+    public function test_lint_is_reported_when_enabled(): void
+    {
+        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
+
+        $this->assertSame(['regex.lint.flag.useless.s'], $this->identifiersOf($this->errorsFor($rule, '/no_dot/s', 5)));
+    }
+
     public function test_default_suggest_optimizations_is_disabled(): void
     {
         $rule = new RegexParserRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[0-9]+/', 9, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/[0-9]+/', 9);
 
         $hasOptimization = false;
         foreach ($errors as $error) {
@@ -184,16 +268,13 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         $this->assertFalse($hasOptimization);
     }
 
-    public function test_checks_config_overrides_legacy_flags(): void
+    public function test_checks_config_enables_redos_and_optimizations(): void
     {
         $rule = new RegexParserRule(
-            reportRedos: false,
-            suggestOptimizations: false,
             config: [
                 'checks' => [
                     'redos' => [
                         'enabled' => true,
-                        'mode' => 'confirmed',
                         'threshold' => 'low',
                     ],
                     'optimizations' => [
@@ -209,11 +290,8 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
                 ],
             ],
         );
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
 
-        $redosErrors = $this->invokePrivate($rule, 'validatePattern', ['/(a+)+$/', 5, $scope, 'preg_match']);
+        $redosErrors = $this->errorsFor($rule, '/(a+)+$/', 5);
         $hasRedos = false;
         foreach ($redosErrors as $error) {
             if (str_starts_with($error->getIdentifier(), 'regex.redos')) {
@@ -224,7 +302,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         }
         $this->assertTrue($hasRedos);
 
-        $optimizationErrors = $this->invokePrivate($rule, 'validatePattern', ['/[0-9]+/', 6, $scope, 'preg_match']);
+        $optimizationErrors = $this->errorsFor($rule, '/[0-9]+/', 6);
         $hasOptimization = false;
         foreach ($optimizationErrors as $error) {
             if ('regex.optimization' === $error->getIdentifier()) {
@@ -238,12 +316,9 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_default_optimization_config_enables_word_optimization(): void
     {
-        $rule = new RegexParserRule(reportRedos: false, suggestOptimizations: true);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[A-Za-z0-9_]+/', 11, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/[A-Za-z0-9_]+/', 11);
 
         $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
         $this->assertContains('regex.optimization', $identifiers);
@@ -251,12 +326,9 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_default_optimization_config_avoids_cross_category_ranges(): void
     {
-        $rule = new RegexParserRule(reportRedos: false, suggestOptimizations: true);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[9:;<]/', 12, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/[9:;<]/', 12);
 
         $hasOptimization = false;
         foreach ($errors as $error) {
@@ -272,41 +344,35 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_report_redos_flag_skips_redos_issues(): void
     {
-        $rule = new RegexParserRule(reportRedos: false);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true], 'redos' => ['enabled' => false]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/(a+)+/', 5, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/(a+)+/', 5);
 
         foreach ($errors as $error) {
             $this->assertStringStartsNotWith('regex.redos', (string) $error->getIdentifier());
         }
     }
 
-    public function test_redos_low_severity_uses_default_identifier(): void
+    public function test_redos_low_severity_is_reported_under_regex_redos(): void
     {
-        $rule = new RegexParserRule(reportRedos: true, redosThreshold: 'low');
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/(a{1,5}){1,5}/', 12, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/(a{1,5}){1,5}/', 12);
 
-        $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
-        $this->assertContains('regex.redos.low', $identifiers);
+        $this->assertSame(['regex.redos'], $this->identifiersOf($errors));
+        $this->assertSame(
+            'Potential ReDoS risk (theoretical) (severity: LOW, confidence: LOW): /(a{1,5}){1,5}/',
+            $errors[0]->getMessage(),
+        );
     }
 
     public function test_unsafe_optimizations_are_skipped(): void
     {
-        $rule = new RegexParserRule(reportRedos: false, suggestOptimizations: true);
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/(?:a)/', 20, $scope, 'preg_match']);
+        $identifiers = array_map(static fn ($error): string => $error->getIdentifier(), $this->errorsFor($rule, '/(?:a)/', 20));
 
-        foreach ($errors as $error) {
-            $this->assertNotSame('regex.optimization', $error->getIdentifier());
-        }
+        $this->assertNotContains('regex.optimization', $identifiers);
     }
 
     public function test_is_optimization_safe_rejects_empty_optimized_pattern(): void
@@ -332,12 +398,9 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_default_optimization_config_enables_digits_optimization(): void
     {
-        $rule = new RegexParserRule(reportRedos: false, suggestOptimizations: true);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[0-9]+/', 11, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/[0-9]+/', 11);
 
         $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
         $this->assertContains('regex.optimization', $identifiers);
@@ -371,68 +434,29 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         $this->assertFalse($rule->isOptimizationFormatSafe('/ab/', '/a/'));
     }
 
-    public function test_validate_pattern_returns_early_on_syntax_error(): void
+    public function test_redos_critical_severity_is_reported_under_regex_redos(): void
     {
-        $rule = new RegexParserRule(ignoreParseErrors: false);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[', 10, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/(x+)+/', 12);
 
-        // Should return exactly one error and not continue processing
-        $this->assertCount(1, $errors);
-        $this->assertStringStartsWith('regex.syntax', $errors[0]->getIdentifier());
-    }
-
-    public function test_redos_critical_severity_uses_correct_identifier(): void
-    {
-        $rule = new RegexParserRule(reportRedos: true, redosThreshold: 'low');
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
-
-        // Use a pattern that might trigger ReDoS
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/(x+)+/', 12, $scope, 'preg_match']);
-
-        $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
-        // Just check that some redos identifier is present, the exact one depends on severity
-        $redosIdentifiers = array_filter($identifiers, static fn ($id) => str_starts_with((string) $id, 'regex.redos.'));
-        $this->assertNotEmpty($redosIdentifiers);
+        // One identifier whatever the severity; the severity is in the message.
+        $this->assertSame(['regex.redos'], $this->identifiersOf($errors));
+        $this->assertSame(
+            'Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): /(x+)+/',
+            $errors[0]->getMessage(),
+        );
     }
 
     public function test_suggest_optimizations_uses_limit_parameter(): void
     {
-        $rule = new RegexParserRule(reportRedos: false, suggestOptimizations: true);
-        $scope = $this->createStub(Scope::class);
-        $scope->method('getFile')->willReturn('file.php');
+        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         // This should work with the default limit of 1
-        $errors = $this->invokePrivate($rule, 'validatePattern', ['/[0-9]+/', 12, $scope, 'preg_match']);
+        $errors = $this->errorsFor($rule, '/[0-9]+/', 12);
 
         $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
         $this->assertContains('regex.optimization', $identifiers);
-    }
-
-    public function test_get_identifier_for_syntax_error_detects_delimiter(): void
-    {
-        $rule = new RegexParserRule();
-        $ref = new \ReflectionClass($rule);
-        $refMethod = $ref->getMethod('getIdentifierForSyntaxError');
-
-        $result = $refMethod->invokeArgs($rule, ['Invalid delimiter in regex pattern']);
-
-        $this->assertSame('regex.syntax.delimiter', $result);
-    }
-
-    public function test_get_identifier_for_syntax_error_defaults_to_invalid(): void
-    {
-        $rule = new RegexParserRule();
-        $ref = new \ReflectionClass($rule);
-        $refMethod = $ref->getMethod('getIdentifierForSyntaxError');
-
-        $result = $refMethod->invokeArgs($rule, ['Some other error message']);
-
-        $this->assertSame('regex.syntax.invalid', $result);
     }
 
     public function test_truncate_pattern_handles_edge_cases(): void
@@ -466,18 +490,41 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     }
 
     /**
-     * @param array<int, mixed> $args
+     * The errors the rule reports for preg_match($pattern, ...) on the given line.
      *
-     * @return array<IdentifierRuleError>
+     * @return list<IdentifierRuleError>
      */
-    private function invokePrivate(RegexParserRule $rule, string $method, array $args): array
+    private function errorsFor(RegexParserRule $rule, string $pattern, int $line): array
     {
-        $ref = new \ReflectionClass($rule);
-        $refMethod = $ref->getMethod($method);
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = $this->createStub(Scope::class);
+        $scope->method('getFile')->willReturn('file.php');
+        $scope->method('getType')->willReturn(new ConstantStringType($pattern));
 
-        /** @var array<IdentifierRuleError> $result */
-        $result = $refMethod->invokeArgs($rule, $args);
+        $node = new FuncCall(
+            new Name('preg_match'),
+            [new Arg(new String_($pattern)), new Arg(new String_('subject'))],
+            ['startLine' => $line],
+        );
 
-        return $result;
+        return array_values($rule->processNode($node, $scope));
+    }
+
+    /**
+     * The oracle: whether the PCRE2 running this test compiles the pattern.
+     */
+    private static function runningEngineCompiles(string $pattern): bool
+    {
+        return false !== @preg_match($pattern, '');
+    }
+
+    /**
+     * @param list<IdentifierRuleError> $errors
+     *
+     * @return list<string>
+     */
+    private function identifiersOf(array $errors): array
+    {
+        return array_map(static fn (IdentifierRuleError $error): string => $error->getIdentifier(), $errors);
     }
 }

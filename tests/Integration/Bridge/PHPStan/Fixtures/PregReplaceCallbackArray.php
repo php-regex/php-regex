@@ -19,8 +19,8 @@ final class PregReplaceCallbackArray
     {
         preg_replace_callback_array(
             [
-                '/foo' => fn ($m) => '', // Line 9: Missing delimiter -> regex.syntax.delimiter
-                '/(a+)+$/' => fn ($m) => '', // Line 10: ReDoS -> regex.redos.critical
+                '/foo' => fn ($m) => '', // Refused by the running engine: ignored
+                '/(a+)+$/' => fn ($m) => '', // ReDoS (critical) -> regex.redos
                 '/valid/' => fn ($m) => '',
             ],
             'subject',

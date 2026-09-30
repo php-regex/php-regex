@@ -17,21 +17,21 @@ final class MyClass
 {
     public function a(): void
     {
-        // Syntax Errors
-        preg_match('/foo', 'bar'); // Line 10: Missing delimiter -> regex.syntax.delimiter
-        preg_match('/a{2,1}/', 'bar'); // Line 11: Invalid quantifier -> regex.syntax.invalid
-        preg_match('/(a+)+$/', 'bar'); // Line 12: ReDoS -> regex.redos.critical
-        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', 'bar'); // Line 13: ReDoS -> regex.redos.high
+        // Refused by the running engine: PHPStan core reports them, the rule stays silent
+        preg_match('/foo', 'bar'); // Missing delimiter
+        preg_match('/a{2,1}/', 'bar'); // Invalid quantifier
+        preg_match('/(a+)+$/', 'bar'); // ReDoS (critical) -> regex.redos
+        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', 'bar'); // ReDoS (medium) -> regex.redos
 
         // Valid
         preg_match('/a/i', 'bar');
-        preg_match('/[0-9]+/', 'bar'); // Line 14: Optimization suggestion -> regex.optimization
+        preg_match('/[0-9]+/', 'bar'); // Optimization suggestion -> regex.optimization
         preg_split('/a/', 'bar');
         preg_grep('/a/', ['bar']);
         preg_filter('/a/', 'b', ['bar']);
 
         // Dynamic / un-analyzable
         $pattern = '/foo'.random_int(1, 10);
-        preg_match($pattern, 'bar'); // Should be ignored
+        preg_match($pattern, 'bar'); // Refused by the running engine: ignored
     }
 }

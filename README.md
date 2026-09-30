@@ -209,11 +209,10 @@ echo $regex->explain('/\d{4}-\d{2}-\d{2}/');
 RegexParser integrates with common PHP tooling:
 
 - **Symfony bundle**: [docs/guides/cli.md](docs/guides/cli.md)
-- **PHPStan**: `vendor/yoeunes/regex-parser/extension.neon`. Patterns are judged
-  for PHPStan's `phpVersion` (the PHP running PHPStan unless configured),
-  with the PCRE2 that PHP bundles; set
-  `regexParser.pcreVersion: '10.42'` for a PHP that links another release, or
-  `regexParser.phpVersion: runtime` to judge for the PHP running PHPStan
+- **PHPStan**: enabled by extension-installer, or through
+  `vendor/yoeunes/regex-parser/extension.neon`. It reports a pattern your
+  target PHP refuses while the PHP running PHPStan compiles it; lint rules and
+  ReDoS analysis come with `rules.neon`. See [the PHPStan guide](docs/guides/phpstan.md)
 - **GitHub Actions**: `vendor/bin/regex lint` in your CI pipeline
 
 ## Performance

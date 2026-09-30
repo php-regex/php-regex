@@ -25,12 +25,12 @@ final class RegexParserRuleOptimizationSafetyTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->rule = new RegexParserRule(
-            ignoreParseErrors: false,
-            reportRedos: false,
-            redosThreshold: 'high',
-            suggestOptimizations: true,
-        );
+        $this->rule = new RegexParserRule(config: [
+            'checks' => [
+                'redos' => ['enabled' => false, 'threshold' => 'high'],
+                'optimizations' => ['enabled' => true],
+            ],
+        ]);
     }
 
     public function test_rejects_effectively_empty_patterns(): void

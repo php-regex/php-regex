@@ -1,0 +1,6 @@
+includes:
+    - ../../../../../extension.neon
+
+parameters:
+    regexParser:
+        phpVersion: '8.2'

@@ -33,11 +33,11 @@ final class RegexParserRuleSafeguardTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return new RegexParserRule(
-            ignoreParseErrors: false,
-            reportRedos: false,
-            redosThreshold: 'high',
-            suggestOptimizations: true, // Enable optimizations to test the safeguard
-        );
+        return new RegexParserRule(config: [
+            'checks' => [
+                'redos' => ['enabled' => false, 'threshold' => 'high'],
+                'optimizations' => ['enabled' => true], // Enable optimizations to test the safeguard
+            ],
+        ]);
     }
 }

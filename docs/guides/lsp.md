@@ -161,7 +161,7 @@ Use the [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin by Re
 
 **Alternative: PHPStan Integration**
 
-RegexParser also integrates with PHPStan via `extension.neon`:
+RegexParser also integrates with PHPStan (see [the PHPStan guide](phpstan.md)):
 
 1. Install the [PHPStan plugin](https://plugins.jetbrains.com/plugin/12754-phpstan) for PhpStorm
 2. Configure PHPStan in **Settings → PHP → Quality Tools → PHPStan**

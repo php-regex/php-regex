@@ -24,6 +24,8 @@ use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\Internal\NoJit;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\OptimizationResult;
@@ -33,24 +35,47 @@ use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
 
 /**
- * Validates regex patterns in `preg_*` functions for syntax and ReDoS vulnerabilities.
+ * Reports, in `preg_*` calls, the patterns the targeted PHP and PCRE2 refuse
+ * while the engine running PHPStan compiles them (PHPStan core reports what
+ * the running engine refuses); lint, ReDoS risks and optimizations on demand.
  *
  * @implements Rule<FuncCall>
  */
 final class RegexParserRule implements Rule
 {
-    public const IDENTIFIER_SYNTAX_INVALID = 'regex.syntax.invalid';
-    public const IDENTIFIER_SYNTAX_DELIMITER = 'regex.syntax.delimiter';
-    public const IDENTIFIER_SYNTAX_EMPTY = 'regex.syntax.empty';
-    public const IDENTIFIER_REDOS_CRITICAL = 'regex.redos.critical';
-    public const IDENTIFIER_REDOS_HIGH = 'regex.redos.high';
-    public const IDENTIFIER_REDOS_MEDIUM = 'regex.redos.medium';
-    public const IDENTIFIER_REDOS_LOW = 'regex.redos.low';
+    public const IDENTIFIER_INVALID_FOR_TARGET = 'regex.invalidForTarget';
+    public const IDENTIFIER_REDOS = 'regex.redos';
     public const IDENTIFIER_OPTIMIZATION = 'regex.optimization';
 
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
+
+    private const REDOS_THRESHOLDS = ['low', 'medium', 'high', 'critical'];
+
+    /**
+     * The "checks.optimizations.options" keys, by the optimizer option each sets.
+     */
+    private const OPTIMIZATION_OPTION_KEYS = [
+        'digits' => 'digits',
+        'word' => 'word',
+        'ranges' => 'ranges',
+        'canonicalizeCharClasses' => 'canonicalizeCharClasses',
+        'possessive' => 'autoPossessify',
+        'factorize' => 'allowAlternationFactorization',
+        'verifyWithAutomata' => 'verifyWithAutomata',
+    ];
+
+    private const DEFAULT_OPTIMIZATION_OPTIONS = [
+        'digits' => true,
+        'word' => true,
+        'ranges' => true,
+        'canonicalizeCharClasses' => true,
+        'autoPossessify' => false,
+        'allowAlternationFactorization' => false,
+        'minQuantifierCount' => 4,
+        'verifyWithAutomata' => true,
+    ];
 
     private const PREG_FUNCTION_MAP = [
         'preg_match' => 0,
@@ -110,113 +135,79 @@ final class RegexParserRule implements Rule
         'regex.lint.quantifier.concatenation' => self::DOC_BASE_URL.'#optimal-quantifier-concatenation',
     ];
 
-    private readonly bool $ignoreParseErrors;
+    /**
+     * Judges patterns for the target; its cache stays in memory.
+     */
+    private readonly Regex $regex;
 
-    private readonly bool $reportRedos;
+    /**
+     * "PHP 8.2 with PCRE2 10.40", or null when the target is the running
+     * engine: PHPStan core reports all it refuses.
+     */
+    private readonly ?string $targetLabel;
+
+    private readonly bool $lintEnabled;
+
+    private readonly bool $redosEnabled;
 
     private readonly string $redosThreshold;
 
-    private readonly string $redosMode;
-
-    private readonly bool $suggestOptimizations;
-
-    /**
-     * @var array<string, bool|int>
-     */
-    private readonly array $optimizationConfig;
+    private readonly bool $optimizationsEnabled;
 
     private readonly int $optimizationMinSavings;
 
     /**
-     * The "php_version" and "pcre_version" patterns are judged for.
-     *
-     * @var array{php_version?: int|string, pcre_version?: string}
+     * @var array{
+     *     digits: bool,
+     *     word: bool,
+     *     ranges: bool,
+     *     canonicalizeCharClasses: bool,
+     *     autoPossessify: bool,
+     *     allowAlternationFactorization: bool,
+     *     minQuantifierCount: int,
+     *     verifyWithAutomata: bool
+     * }
      */
-    private readonly array $targetOptions;
+    private readonly array $optimizationOptions;
 
     private ?RegexAnalysisService $analysis = null;
 
     /**
-     * @param bool   $ignoreParseErrors Ignore parse errors for partial regex strings
-     * @param bool   $reportRedos       Report ReDoS risk analysis
-     * @param string $redosThreshold    Minimum ReDoS severity level to report
-     * @param string $redosMode         ReDoS reporting mode (off|theoretical|confirmed)
-     * @param array{
-     *     digits: bool,
-     *     word: bool,
-     *     ranges: bool,
-     *     canonicalizeCharClasses?: bool,
-     *     autoPossessify?: bool,
-     *     allowAlternationFactorization?: bool,
-     *     minQuantifierCount?: int,
-     *     verifyWithAutomata?: bool
-     * } $optimizationConfig
-     * @param array<string, mixed> $config
+     * @param array<string, mixed> $config     the "regexParser" parameter: "phpVersion", "pcreVersion" and
+     *                                         "checks" ("lint", "redos", "optimizations"), every key optional
      * @param PhpVersion|null      $phpVersion the PHP version PHPStan analyses the project for: patterns are
-     *                                         judged for it, with the PCRE2 it bundles, unless the "phpVersion"
-     *                                         parameter is "runtime" or names a version, and "pcreVersion" a release
+     *                                         judged for it, with the PCRE2 it bundles, unless "phpVersion"
+     *                                         is "runtime" or names a version, and "pcreVersion" a release
+     *
+     * @throws InvalidRegexOptionException when "phpVersion" or "pcreVersion" cannot be read
      */
-    public function __construct(
-        bool $ignoreParseErrors = true,
-        bool $reportRedos = false,
-        string $redosThreshold = 'high',
-        string $redosMode = 'theoretical',
-        bool $suggestOptimizations = false,
-        array $optimizationConfig = [
-            'digits' => true,
-            'word' => true,
-            'ranges' => true,
-            'canonicalizeCharClasses' => true,
-        ],
-        array $config = [],
-        ?PhpVersion $phpVersion = null,
-    ) {
-        $overrides = $this->normalizeConfigOverrides($config);
-        $this->targetOptions = $this->targetOptions($config, $phpVersion);
+    public function __construct(array $config = [], ?PhpVersion $phpVersion = null)
+    {
+        // Built now, so that an unreadable version stops PHPStan before any file is read.
+        $this->regex = Regex::create(self::targetOptions($config, $phpVersion));
+        $target = $this->regex->target();
+        $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
+            'PHP %d.%d with PCRE2 %s',
+            intdiv($target->phpVersionId, 10000),
+            intdiv($target->phpVersionId, 100) % 100,
+            $target->pcreVersion,
+        );
 
-        $ignoreParseErrorsOverride = $overrides['ignoreParseErrors'] ?? null;
-        if (\is_bool($ignoreParseErrorsOverride)) {
-            $ignoreParseErrors = $ignoreParseErrorsOverride;
-        }
-        $this->ignoreParseErrors = $ignoreParseErrors;
+        $checks = self::section($config, 'checks');
+        $lint = self::section($checks, 'lint');
+        $redos = self::section($checks, 'redos');
+        $optimizations = self::section($checks, 'optimizations');
 
-        $reportRedosOverride = $overrides['reportRedos'] ?? null;
-        if (\is_bool($reportRedosOverride)) {
-            $reportRedos = $reportRedosOverride;
-        }
-        $this->reportRedos = $reportRedos;
-
-        $redosThresholdOverride = $overrides['redosThreshold'] ?? null;
-        if (\is_string($redosThresholdOverride) && '' !== $redosThresholdOverride) {
-            $redosThreshold = $redosThresholdOverride;
-        }
-        $this->redosThreshold = $redosThreshold;
-
-        $redosModeOverride = $overrides['redosMode'] ?? null;
-        if (\is_string($redosModeOverride) && '' !== $redosModeOverride) {
-            $redosMode = $redosModeOverride;
-        }
-        $this->redosMode = $redosMode;
-
-        $suggestOptimizationsOverride = $overrides['suggestOptimizations'] ?? null;
-        if (\is_bool($suggestOptimizationsOverride)) {
-            $suggestOptimizations = $suggestOptimizationsOverride;
-        }
-        $this->suggestOptimizations = $suggestOptimizations;
-
-        $optimizationMinSavings = 1;
-        $optimizationMinSavingsOverride = $overrides['optimizationMinSavings'] ?? null;
-        if (\is_int($optimizationMinSavingsOverride)) {
-            $optimizationMinSavings = $optimizationMinSavingsOverride;
-        }
-        $this->optimizationMinSavings = $optimizationMinSavings;
-
-        /** @var array<string, bool|int> $optimizationOverrides */
-        $optimizationOverrides = $overrides['optimizationConfig'] ?? null;
-        if (\is_array($optimizationOverrides)) {
-            $optimizationConfig = $this->mergeOptimizationConfig($optimizationConfig, $optimizationOverrides);
-        }
-        $this->optimizationConfig = $optimizationConfig;
+        $this->lintEnabled = true === ($lint['enabled'] ?? false);
+        $this->redosEnabled = true === ($redos['enabled'] ?? false);
+        $threshold = $redos['threshold'] ?? null;
+        $this->redosThreshold = \is_string($threshold) && \in_array($threshold, self::REDOS_THRESHOLDS, true)
+            ? $threshold
+            : ReDoSSeverity::CRITICAL->value;
+        $this->optimizationsEnabled = true === ($optimizations['enabled'] ?? false);
+        $minSavings = $optimizations['minSavings'] ?? null;
+        $this->optimizationMinSavings = \is_int($minSavings) ? max(1, $minSavings) : 1;
+        $this->optimizationOptions = self::optimizationOptions(self::section($optimizations, 'options'));
     }
 
     public function getNodeType(): string
@@ -334,13 +325,37 @@ final class RegexParserRule implements Rule
      */
     private function validatePattern(string $pattern, int $lineNumber, Scope $scope, string $functionName): array
     {
-        if ('' === $pattern) {
-            return [
-                RuleErrorBuilder::message('Regex pattern cannot be empty.')
+        if (null === $this->targetLabel && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
+            return [];
+        }
+
+        // What the running engine refuses, PHPStan core reports ("regexp.pattern").
+        if (!$this->runningEngineCompiles($pattern)) {
+            return [];
+        }
+
+        if (null !== $this->targetLabel) {
+            $validation = $this->regex->validate($pattern);
+            if (!$validation->isValid) {
+                $reason = $this->firstLine($validation->error ?? 'Invalid regex.');
+                $builder = RuleErrorBuilder::message(\sprintf(
+                    'Regex pattern is invalid for %s: %s%s',
+                    $this->targetLabel,
+                    $reason,
+                    str_ends_with($reason, '.') ? '' : '.',
+                ))
                     ->line($lineNumber)
-                    ->identifier(self::IDENTIFIER_SYNTAX_EMPTY)
-                    ->build(),
-            ];
+                    ->identifier(self::IDENTIFIER_INVALID_FOR_TARGET);
+                if (null !== $validation->hint && '' !== $validation->hint) {
+                    $builder = $builder->tip($validation->hint);
+                }
+
+                return [$builder->build()];
+            }
+        }
+
+        if (!$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
+            return [];
         }
 
         $errors = [];
@@ -350,96 +365,55 @@ final class RegexParserRule implements Rule
             $lineNumber,
             $this->formatSource($functionName),
         );
-        $issues = $this->getAnalysisService()->lint([$occurrence]);
-
-        foreach ($issues as $issue) {
-            if (null === ($issue['issueId'] ?? null)) {
-                $shortPattern = $this->truncatePattern($pattern);
-                $message = $this->firstLine((string) ($issue['message'] ?? 'Invalid regex.'));
-                $errors[] = RuleErrorBuilder::message(\sprintf('Regex syntax error: %s (Pattern: "%s")', $message, $shortPattern))
-                    ->line($lineNumber)
-                    ->identifier($this->getIdentifierForSyntaxError($message))
-                    ->build();
-
-                return $errors;
-            }
-        }
 
         $redosIssues = [];
         $lintIssues = [];
-        foreach ($issues as $issue) {
-            $issueId = $issue['issueId'];
-            if (self::ISSUE_ID_COMPLEXITY === $issueId) {
-                continue;
+        if ($this->lintEnabled || $this->redosEnabled) {
+            foreach ($this->getAnalysisService()->lint([$occurrence]) as $issue) {
+                // A pattern the library cannot read comes back without an
+                // issue id, alone: nothing below reports it.
+                $issueId = $issue['issueId'] ?? null;
+                if (self::ISSUE_ID_COMPLEXITY === $issueId) {
+                    continue;
+                }
+
+                if (self::ISSUE_ID_REDOS === $issueId) {
+                    $redosIssues[] = $issue;
+
+                    continue;
+                }
+
+                $lintIssues[] = $issue;
             }
-
-            if (self::ISSUE_ID_REDOS === $issueId) {
-                $redosIssues[] = $issue;
-
-                continue;
-            }
-
-            $lintIssues[] = $issue;
         }
 
         foreach ($redosIssues as $issue) {
-            if (!$this->reportRedos) {
-                continue;
-            }
-
             $analysis = $issue['analysis'] ?? null;
             if (!$analysis instanceof ReDoSAnalysis) {
                 continue;
             }
 
-            $identifier = match ($analysis->severity) {
-                ReDoSSeverity::CRITICAL => self::IDENTIFIER_REDOS_CRITICAL,
-                ReDoSSeverity::HIGH => self::IDENTIFIER_REDOS_HIGH,
-                ReDoSSeverity::MEDIUM => self::IDENTIFIER_REDOS_MEDIUM,
-                default => self::IDENTIFIER_REDOS_LOW,
-            };
-
-            $status = $analysis->isConfirmed()
-                ? 'Confirmed ReDoS risk'
-                : 'Potential ReDoS risk (theoretical)';
-            $confidence = strtoupper($analysis->confidenceLevel()->value);
             $errors[] = RuleErrorBuilder::message(\sprintf(
-                '%s (severity: %s, confidence: %s): %s',
-                $status,
+                'Potential ReDoS risk (theoretical) (severity: %s, confidence: %s): %s',
                 strtoupper($analysis->severity->value),
-                $confidence,
+                strtoupper($analysis->confidenceLevel()->value),
                 $this->truncatePattern($pattern),
             ))
                 ->line($lineNumber)
                 ->tip($this->getTipForReDoS($analysis->recommendations))
-                ->identifier($identifier)
+                ->identifier(self::IDENTIFIER_REDOS)
                 ->build();
         }
 
-        if ($this->suggestOptimizations) {
-            /**
-             * @var array{
-             *     digits?: bool,
-             *     word?: bool,
-             *     ranges?: bool,
-             *     canonicalizeCharClasses?: bool,
-             *     autoPossessify?: bool,
-             *     allowAlternationFactorization?: bool,
-             *     minQuantifierCount?: int,
-             *     verifyWithAutomata?: bool
-             * } $optimizationConfig
-             */
-            $optimizationConfig = $this->optimizationConfig;
-
+        if ($this->optimizationsEnabled) {
             /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
             $optimizations = $this->getAnalysisService()->suggestOptimizations(
                 [$occurrence],
                 $this->optimizationMinSavings,
-                $optimizationConfig,
+                $this->optimizationOptions,
             );
 
             foreach ($optimizations as $optimizationEntry) {
-                /** @var OptimizationResult $optimization */
                 $optimization = $optimizationEntry['optimization'];
                 if (!$this->isOptimizationFormatSafe($pattern, $optimization->optimized)) {
                     continue;
@@ -454,12 +428,12 @@ final class RegexParserRule implements Rule
         }
 
         foreach ($lintIssues as $issue) {
-            $issueId = $issue['issueId'];
+            $issueId = $issue['issueId'] ?? null;
             if (!\is_string($issueId) || '' === $issueId) {
                 continue;
             }
 
-            $builder = RuleErrorBuilder::message((string) $issue['message'])
+            $builder = RuleErrorBuilder::message($issue['message'])
                 ->line($lineNumber)
                 ->identifier($issueId);
             $tipParts = [];
@@ -479,13 +453,14 @@ final class RegexParserRule implements Rule
         return $errors;
     }
 
-    private function getIdentifierForSyntaxError(string $errorMessage): string
+    /**
+     * Whether the engine running PHPStan compiles the pattern. The
+     * interpreter compiles it: "(*NO_JIT)" leads the pattern, as a start
+     * option, right after the opening delimiter.
+     */
+    private function runningEngineCompiles(string $pattern): bool
     {
-        if (str_contains($errorMessage, 'delimiter')) {
-            return self::IDENTIFIER_SYNTAX_DELIMITER;
-        }
-
-        return self::IDENTIFIER_SYNTAX_INVALID;
+        return false !== @preg_match(NoJit::pattern($pattern), '');
     }
 
     private function truncatePattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string
@@ -497,7 +472,7 @@ final class RegexParserRule implements Rule
     {
         $lines = explode("\n", $message);
 
-        return $lines[0] ?? $message;
+        return $lines[0];
     }
 
     private function formatSource(string $functionName): string
@@ -506,25 +481,29 @@ final class RegexParserRule implements Rule
     }
 
     /**
-     * PHPStan's PHP version by default; "runtime" for the PHP running the
-     * analysis and the PCRE2 it links; a version string for that PHP.
+     * The "php_version" and "pcre_version" options of the target: PHPStan's
+     * PHP version with the PCRE2 it bundles by default, the running PHP and
+     * the PCRE2 it links when that version is the running one or the setting
+     * is "runtime", else the version the setting names.
      *
      * @param array<string, mixed> $config
      *
-     * @return array{php_version?: int|string, pcre_version?: string}
+     * @return array<string, mixed>
      */
-    private function targetOptions(array $config, ?PhpVersion $phpVersion): array
+    private static function targetOptions(array $config, ?PhpVersion $phpVersion): array
     {
         $options = [];
         $setting = $config['phpVersion'] ?? null;
-        if (\is_string($setting) && '' !== $setting && 'runtime' !== $setting) {
+        if (null === $setting) {
+            if (null !== $phpVersion && \PHP_VERSION_ID !== $phpVersion->getVersionId()) {
+                $options['php_version'] = $phpVersion->getVersionId();
+            }
+        } elseif ('runtime' !== $setting) {
             $options['php_version'] = $setting;
-        } elseif (null === $setting && null !== $phpVersion) {
-            $options['php_version'] = $phpVersion->getVersionId();
         }
 
         $pcreVersion = $config['pcreVersion'] ?? null;
-        if (\is_string($pcreVersion) && '' !== $pcreVersion) {
+        if (null !== $pcreVersion) {
             $options['pcre_version'] = $pcreVersion;
         }
 
@@ -532,242 +511,59 @@ final class RegexParserRule implements Rule
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param array<mixed> $config
      *
-     * @return array<string, mixed>
+     * @return array<mixed>
      */
-    private function normalizeConfigOverrides(array $config): array
+    private static function section(array $config, string $key): array
     {
-        /** @var array<string, mixed> $overrides */
-        $overrides = [];
+        $section = $config[$key] ?? null;
 
-        if (\array_key_exists('ignoreParseErrors', $config) && \is_bool($config['ignoreParseErrors'])) {
-            $overrides['ignoreParseErrors'] = $config['ignoreParseErrors'];
-        }
-
-        if (\array_key_exists('reportRedos', $config) && \is_bool($config['reportRedos'])) {
-            $overrides['reportRedos'] = $config['reportRedos'];
-        }
-
-        if (
-            \array_key_exists('redosMode', $config)
-            && \is_string($config['redosMode'])
-            && '' !== $config['redosMode']
-        ) {
-            $mode = ReDoSMode::tryFrom(strtolower($config['redosMode']));
-            if (null !== $mode) {
-                $overrides['redosMode'] = $mode->value;
-            }
-        }
-
-        if (
-            \array_key_exists('redosThreshold', $config)
-            && \is_string($config['redosThreshold'])
-            && '' !== $config['redosThreshold']
-        ) {
-            $threshold = ReDoSSeverity::tryFrom(strtolower($config['redosThreshold']));
-            if (null !== $threshold) {
-                $overrides['redosThreshold'] = $threshold->value;
-            }
-        }
-
-        if (\array_key_exists('suggestOptimizations', $config) && \is_bool($config['suggestOptimizations'])) {
-            $overrides['suggestOptimizations'] = $config['suggestOptimizations'];
-        }
-
-        if (\array_key_exists('optimizationConfig', $config) && \is_array($config['optimizationConfig'])) {
-            /** @var array<string, mixed> $optionsConfig */
-            $optionsConfig = $config['optimizationConfig'];
-            $options = $this->normalizeOptimizationOptions($optionsConfig);
-            if ([] !== $options) {
-                $overrides['optimizationConfig'] = $options;
-            }
-        }
-
-        if (\array_key_exists('minSavings', $config) && \is_int($config['minSavings'])) {
-            $overrides['optimizationMinSavings'] = max(1, $config['minSavings']);
-        }
-
-        if (\array_key_exists('rules', $config) && \is_array($config['rules'])) {
-            $rules = $config['rules'];
-            if (\array_key_exists('redos', $rules) && \is_bool($rules['redos'])) {
-                $overrides['reportRedos'] = $rules['redos'];
-            }
-            if (\array_key_exists('optimization', $rules) && \is_bool($rules['optimization'])) {
-                $overrides['suggestOptimizations'] = $rules['optimization'];
-            }
-        }
-
-        if (\array_key_exists('checks', $config) && \is_array($config['checks'])) {
-            $checks = $config['checks'];
-            if (\array_key_exists('redos', $checks)) {
-                $overrides = $this->normalizeRedosOverrides($checks['redos'], $overrides);
-            }
-            if (\array_key_exists('optimizations', $checks)) {
-                $overrides = $this->normalizeOptimizationOverrides($checks['optimizations'], $overrides);
-            }
-        }
-
-        return $overrides;
+        return \is_array($section) ? $section : [];
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param array<mixed> $options
      *
-     * @return array<string, mixed>
+     * @return array{
+     *     digits: bool,
+     *     word: bool,
+     *     ranges: bool,
+     *     canonicalizeCharClasses: bool,
+     *     autoPossessify: bool,
+     *     allowAlternationFactorization: bool,
+     *     minQuantifierCount: int,
+     *     verifyWithAutomata: bool
+     * }
      */
-    private function normalizeRedosOverrides(mixed $redos, array $overrides): array
+    private static function optimizationOptions(array $options): array
     {
-        if (\is_bool($redos)) {
-            $overrides['reportRedos'] = $redos;
+        $resolved = self::DEFAULT_OPTIMIZATION_OPTIONS;
 
-            return $overrides;
-        }
-
-        if (!\is_array($redos)) {
-            return $overrides;
-        }
-
-        $enabled = null;
-
-        if (\array_key_exists('enabled', $redos) && \is_bool($redos['enabled'])) {
-            $enabled = $redos['enabled'];
-        }
-
-        if (\array_key_exists('mode', $redos) && \is_string($redos['mode']) && '' !== $redos['mode']) {
-            $mode = ReDoSMode::tryFrom(strtolower($redos['mode']));
-            if (null !== $mode) {
-                $overrides['redosMode'] = $mode->value;
-                if (ReDoSMode::OFF === $mode) {
-                    $enabled = false;
-                }
+        foreach (self::OPTIMIZATION_OPTION_KEYS as $key => $option) {
+            $value = $options[$key] ?? null;
+            if (\is_bool($value)) {
+                $resolved[$option] = $value;
             }
         }
 
-        if (\array_key_exists('threshold', $redos) && \is_string($redos['threshold']) && '' !== $redos['threshold']) {
-            $threshold = ReDoSSeverity::tryFrom(strtolower($redos['threshold']));
-            if (null !== $threshold) {
-                $overrides['redosThreshold'] = $threshold->value;
-            }
+        $minQuantifierCount = $options['minQuantifierCount'] ?? null;
+        if (\is_int($minQuantifierCount)) {
+            $resolved['minQuantifierCount'] = $minQuantifierCount;
         }
 
-        if (null !== $enabled) {
-            $overrides['reportRedos'] = $enabled;
-        }
-
-        return $overrides;
-    }
-
-    /**
-     * @param array<string, mixed> $overrides
-     *
-     * @return array<string, mixed>
-     */
-    private function normalizeOptimizationOverrides(mixed $optimizations, array $overrides): array
-    {
-        if (\is_bool($optimizations)) {
-            $overrides['suggestOptimizations'] = $optimizations;
-
-            return $overrides;
-        }
-
-        if (!\is_array($optimizations)) {
-            return $overrides;
-        }
-
-        if (\array_key_exists('enabled', $optimizations) && \is_bool($optimizations['enabled'])) {
-            $overrides['suggestOptimizations'] = $optimizations['enabled'];
-        }
-
-        if (\array_key_exists('minSavings', $optimizations) && \is_int($optimizations['minSavings'])) {
-            $overrides['optimizationMinSavings'] = max(1, $optimizations['minSavings']);
-        }
-
-        if (\array_key_exists('options', $optimizations) && \is_array($optimizations['options'])) {
-            /** @var array<string, mixed> $optionsConfig */
-            $optionsConfig = $optimizations['options'];
-            $options = $this->normalizeOptimizationOptions($optionsConfig);
-            if ([] !== $options) {
-                $overrides['optimizationConfig'] = $options;
-            }
-        }
-
-        return $overrides;
-    }
-
-    /**
-     * @param array<string, bool|int> $base
-     * @param array<string, bool|int> $overrides
-     *
-     * @return array<string, bool|int>
-     */
-    private function mergeOptimizationConfig(array $base, array $overrides): array
-    {
-        $merged = $base;
-
-        foreach ([
-            'digits',
-            'word',
-            'ranges',
-            'canonicalizeCharClasses',
-            'autoPossessify',
-            'allowAlternationFactorization',
-            'verifyWithAutomata',
-        ] as $key) {
-            if (\array_key_exists($key, $overrides) && \is_bool($overrides[$key])) {
-                $merged[$key] = $overrides[$key];
-            }
-        }
-
-        if (\array_key_exists('minQuantifierCount', $overrides) && \is_int($overrides['minQuantifierCount'])) {
-            $merged['minQuantifierCount'] = $overrides['minQuantifierCount'];
-        }
-
-        return $merged;
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     *
-     * @return array<string, bool|int>
-     */
-    private function normalizeOptimizationOptions(array $options): array
-    {
-        $normalized = [];
-        $booleanMapping = [
-            'digits' => 'digits',
-            'word' => 'word',
-            'ranges' => 'ranges',
-            'canonicalizeCharClasses' => 'canonicalizeCharClasses',
-            'possessive' => 'autoPossessify',
-            'autoPossessify' => 'autoPossessify',
-            'factorize' => 'allowAlternationFactorization',
-            'allowAlternationFactorization' => 'allowAlternationFactorization',
-            'verifyWithAutomata' => 'verifyWithAutomata',
-        ];
-
-        foreach ($booleanMapping as $inputKey => $targetKey) {
-            if (\array_key_exists($inputKey, $options) && \is_bool($options[$inputKey])) {
-                $normalized[$targetKey] = $options[$inputKey];
-            }
-        }
-
-        if (\array_key_exists('minQuantifierCount', $options) && \is_int($options['minQuantifierCount'])) {
-            $normalized['minQuantifierCount'] = $options['minQuantifierCount'];
-        }
-
-        return $normalized;
+        return $resolved;
     }
 
     private function getAnalysisService(): RegexAnalysisService
     {
         return $this->analysis ??= new RegexAnalysisService(
-            Regex::create($this->targetOptions),
+            $this->regex,
             null,
             redosThreshold: $this->redosThreshold,
-            redosMode: $this->redosMode,
-            ignoreParseErrors: $this->ignoreParseErrors,
-            redosEnabled: $this->reportRedos,
+            redosMode: ReDoSMode::THEORETICAL,
+            redosEnabled: $this->redosEnabled,
+            lintEnabled: $this->lintEnabled,
         );
     }
 

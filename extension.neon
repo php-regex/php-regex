@@ -1,23 +1,20 @@
 parametersSchema:
     regexParser: structure([
-        # Whether to ignore regex parsing errors (e.g., missing delimiters)
-        ignoreParseErrors: bool(),
         # PHP version patterns are judged for: null for PHPStan's phpVersion
-        # (the PHP running PHPStan unless configured),
-        # 'runtime' for the PHP running PHPStan, or a version like '8.2'
-        phpVersion: schema(string(), nullable()),
+        # (the PHP running PHPStan unless configured), 'runtime' for the PHP
+        # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like 80200
+        phpVersion: schema(anyOf(string(), int()), nullable()),
         # PCRE2 release patterns are judged for, like '10.42'; null for the
         # one the PHP version bundles
         pcreVersion: schema(string(), nullable()),
-        # Preferred: configure checks in one place
         checks: structure([
+            lint: structure([
+                enabled: bool()
+            ]),
             redos: structure([
                 enabled: bool(),
-                # ReDoS reporting mode: 'off', 'theoretical', 'confirmed'
-                mode: string(),
-                # Minimum severity level to report: 'low', 'medium', 'high', 'critical'
-                threshold: string(),
-                noJit: bool()
+                # Minimum severity reported
+                threshold: anyOf('low', 'medium', 'high', 'critical')
             ]),
             optimizations: structure([
                 enabled: bool(),
@@ -33,86 +30,42 @@ parametersSchema:
                     verifyWithAutomata: bool()
                 ])
             ])
-        ]),
-        # Deprecated: use checks.* instead
-        # Enable/disable ReDoS risk detection
-        reportRedos: bool(),
-        # ReDoS reporting mode: 'off', 'theoretical', 'confirmed'
-        redosMode: string(),
-        # Minimum severity level to report: 'low', 'medium', 'high', 'critical'
-        redosThreshold: string(),
-        # Enable/disable regex optimization suggestions
-        suggestOptimizations: bool(),
-        # Configuration for specific optimizations
-        optimizationConfig: structure([
-            digits: bool(),
-            word: bool(),
-            ranges: bool(),
-            canonicalizeCharClasses: bool()
         ])
     ])
 
 parameters:
     regexParser:
-        # Ignore parsing errors like missing delimiters (common in dynamic regex)
-        ignoreParseErrors: true
-
-        # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles
+        # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles.
+        # A pattern is reported only when the running engine compiles it and
+        # the target refuses it: PHPStan itself reports what the running
+        # engine refuses.
         phpVersion: null
         pcreVersion: null
 
-        # Deprecated: use checks.* instead
-        # Enable comprehensive ReDoS risk detection
-        reportRedos: true
-
-        # Report only critical ReDoS issues by default (conservative)
-        # Options: 'low' (most sensitive), 'medium', 'high', 'critical' (least sensitive)
-        redosThreshold: 'critical'
-
-        # ReDoS reporting mode (theoretical by default)
-        redosMode: 'theoretical'
-
-        # Enable regex optimization suggestions
-        suggestOptimizations: false
-
-        # Configuration for specific optimizations (both default to true for BC)
-        optimizationConfig:
-            digits: true
-            word: true
-            ranges: true
-            canonicalizeCharClasses: true
-
-        # Preferred configuration (kept in sync with legacy defaults)
+        # Off by default; rules.neon turns lint and ReDoS on.
         checks:
+            lint:
+                enabled: false
             redos:
-                enabled: %regexParser.reportRedos%
-                mode: %regexParser.redosMode%
-                threshold: %regexParser.redosThreshold%
-                noJit: false
+                enabled: false
+                threshold: critical
             optimizations:
-                enabled: %regexParser.suggestOptimizations%
+                enabled: false
                 minSavings: 1
                 options:
-                    digits: %regexParser.optimizationConfig.digits%
-                    word: %regexParser.optimizationConfig.word%
-                    ranges: %regexParser.optimizationConfig.ranges%
-                    canonicalizeCharClasses: %regexParser.optimizationConfig.canonicalizeCharClasses%
+                    digits: true
+                    word: true
+                    ranges: true
+                    canonicalizeCharClasses: true
                     possessive: false
                     factorize: false
                     minQuantifierCount: 4
                     verifyWithAutomata: true
 
 services:
-    # Main regex validation rule for PHPStan
     -
         class: RegexParser\Bridge\PHPStan\RegexParserRule
         arguments:
-            ignoreParseErrors: %regexParser.ignoreParseErrors%
-            reportRedos: %regexParser.reportRedos%
-            redosThreshold: %regexParser.redosThreshold%
-            redosMode: %regexParser.redosMode%
-            suggestOptimizations: %regexParser.suggestOptimizations%
-            optimizationConfig: %regexParser.optimizationConfig%
             config: %regexParser%
         tags:
             - phpstan.rules.rule

@@ -57,7 +57,6 @@ parameters:
         # compiles: the analysis, run on an older PCRE2, cannot compile them.
         - identifiers:
             - regexp.pattern
-            - regex.syntax.invalid
           paths:
             - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
             - tests/Unit/NodeVisitor/CasingSettingsTest.php
