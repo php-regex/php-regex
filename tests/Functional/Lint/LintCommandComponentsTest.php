@@ -296,13 +296,15 @@ final class LintCommandComponentsTest extends TestCase
 
             $property = new \ReflectionProperty(RegexPatternExtractor::class, 'extractor');
             $strategy = $property->getValue($extractor);
-
-            $this->assertInstanceOf(TokenBasedExtractionStrategy::class, $strategy);
         } finally {
             foreach ($autoloaders as $loader) {
                 spl_autoload_register($loader);
             }
         }
+
+        // Asserted once the autoloaders are back: the assertion's own classes
+        // may not be loaded yet when this test runs first.
+        $this->assertInstanceOf(TokenBasedExtractionStrategy::class, $strategy);
     }
 
     public function test_extractor_factory_prefers_phpstan_when_available(): void
