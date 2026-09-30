@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 use RegexParser\Regex;
 
 /**
@@ -51,5 +52,39 @@ final class SampleGeneratorLookaroundTest extends TestCase
         yield 'not at a line start' => ['pattern' => '/(?<!^)x/m'];
         yield 'word boundary alone' => ['pattern' => '/\\b/'];
         yield 'inside a word' => ['pattern' => '/\\Ba\\B/'];
+    }
+
+    /**
+     * An item that takes no text, repeated, is that item once, and left out
+     * when it may be: "[[:<:]]", as "(?:\b(?=\w))", adds no character of its
+     * own ahead of the word it opens.
+     */
+    #[Test]
+    #[DataProvider('provideRepeatedAssertions')]
+    public function test_a_repeated_assertion_adds_no_text(string $pattern): void
+    {
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+
+        for ($seed = 0; $seed < 32; $seed++) {
+            $generator->setSeed($seed);
+            $sample = $tree->accept($generator);
+
+            $this->assertSame(1, preg_match($pattern, $sample), \sprintf('Seed %d gave %s for %s.', $seed, json_encode($sample), $pattern));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideRepeatedAssertions(): iterable
+    {
+        yield 'start of a word, repeated' => ['pattern' => '/^[[:<:]]+red$/'];
+        yield 'group of assertions, counted' => ['pattern' => '/^(?:\\b(?=\\w)){3}ab$/'];
+        yield 'assertions in another order' => ['pattern' => '/^(?:(?=[a-z])\\b)+red$/'];
+        yield 'optional group of assertions' => ['pattern' => '/^(?:\\b(?=\\w))*ab$/'];
+        yield 'optional group of one assertion' => ['pattern' => '/^x(?:(?=y))?z$/'];
+        yield 'group of assertions that captures' => ['pattern' => '/^(?:(?=(a))\\b)+\\1$/'];
+        yield 'group defined for a call, never repeated' => ['pattern' => '/^(?=.{3}(?1))x(\\K){0}...$/'];
     }
 }

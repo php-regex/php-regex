@@ -164,9 +164,9 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private int $textAhead = 0;
 
     /**
-     * @var array<int, int> the fewest characters each node matches, by node id
+     * @var array<int, array{0: int, 1: int|null}> the fewest and most characters each node matches, by node id
      */
-    private array $minLengths = [];
+    private array $lengthRanges = [];
 
     /**
      * Characters found to have a property, by the escape and the mode.
@@ -232,7 +232,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->caseless = str_contains($node->flags, 'i');
         $this->dollarEndsLine = str_contains($node->flags, 'm');
         $this->textAhead = 0;
-        $this->minLengths = [];
+        $this->lengthRanges = [];
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
@@ -327,6 +327,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     public function visitQuantifier(QuantifierNode $node): string
     {
         [$min, $max] = $this->parseQuantifierRange($node->quantifier);
+
+        // What takes no text, optional, need not hold: it adds nothing. It
+        // stays in its sequence, where a call may name a group it holds.
+        if (0 === $min && 0 === $this->lengthRange($node->node)[1]) {
+            return '';
+        }
 
         // Pick a random number of repetitions
         // $min and $max are guaranteed to be in the correct order
@@ -866,8 +872,10 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                         return $text.$rest;
                     }
 
+                    // The rest alone again, read with the groups it defines: a
+                    // call in the lookahead may name one of them.
                     $laidOver = $ahead.$this->textFrom($rest, $this->textLength($ahead));
-                    foreach ([$laidOver, $ahead.$rest, $rest.$ahead] as $candidate) {
+                    foreach ([$rest, $laidOver, $ahead.$rest, $rest.$ahead] as $candidate) {
                         if ($this->holds($left, $candidate, '\\A', '')) {
                             return $text.$candidate;
                         }
@@ -934,7 +942,15 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             $node = $target ?? $node;
         }
 
-        return $this->minLengths[spl_object_id($node)] ??= $node->accept(new LengthRangeNodeVisitor($this->unicode))[0];
+        return $this->lengthRange($node)[0];
+    }
+
+    /**
+     * @return array{0: int, 1: int|null}
+     */
+    private function lengthRange(NodeInterface $node): array
+    {
+        return $this->lengthRanges[spl_object_id($node)] ??= $node->accept(new LengthRangeNodeVisitor($this->unicode));
     }
 
     /**
@@ -1040,6 +1056,15 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         $opened = [];
         foreach ($children as $child) {
+            // What takes no text, repeated, is generated once: each turn
+            // stands at the same place.
+            if ($child instanceof QuantifierNode && 0 === $this->lengthRange($child->node)[1]
+                && $this->parseQuantifierRange($child->quantifier)[0] > 0) {
+                array_push($opened, ...$this->withPlainGroupsOpened([$child->node]));
+
+                continue;
+            }
+
             if ($child instanceof GroupNode && GroupType::T_GROUP_NON_CAPTURING === $child->type && null === $child->flags) {
                 $inner = $child->child instanceof SequenceNode ? $child->child->children : [$child->child];
                 array_push($opened, ...$this->withPlainGroupsOpened($inner));
