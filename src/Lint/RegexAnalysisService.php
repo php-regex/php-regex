@@ -35,6 +35,7 @@ use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\NodeVisitor\OptimizerNodeVisitor;
 use RegexParser\OptimizationResult;
 use RegexParser\Optimizer\Optimizer;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSAnalyzer;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
@@ -159,8 +160,9 @@ final readonly class RegexAnalysisService
     }
 
     /**
-     * @param array<RegexPatternOccurrence>                                                                                                                                                                      $patterns
-     * @param array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, autoPossessify?: bool, allowAlternationFactorization?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool} $optimizationConfig
+     * @param array<RegexPatternOccurrence> $patterns
+     * @param OptimizerOptions|null         $options  what an optimization may rewrite; by default, what lint
+     *                                                allows, every rewrite checked with the automata
      *
      * @return array<array{
      *     file: string,
@@ -172,16 +174,18 @@ final readonly class RegexAnalysisService
      *     source?: string
      * }>
      */
-    public function suggestOptimizations(array $patterns, int $minSavings, array $optimizationConfig = [], int $workers = 1): array
+    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1): array
     {
+        $options ??= new OptimizerOptions(verifyWithAutomata: true);
+
         if ($workers <= 1 || \count($patterns) <= 1 || !$this->canRunInParallel()) {
-            return $this->suggestOptimizationsChunk($patterns, $minSavings, $optimizationConfig);
+            return $this->suggestOptimizationsChunk($patterns, $minSavings, $options);
         }
 
         return $this->runInParallel(
             $patterns,
             $workers,
-            fn (array $chunk): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $optimizationConfig),
+            fn (array $chunk): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options),
         );
     }
 
@@ -512,8 +516,7 @@ final readonly class RegexAnalysisService
     }
 
     /**
-     * @param array<RegexPatternOccurrence>                                                                                                                                                                      $patterns
-     * @param array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, autoPossessify?: bool, allowAlternationFactorization?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool} $optimizationConfig
+     * @param array<RegexPatternOccurrence> $patterns
      *
      * @return array<array{
      *     file: string,
@@ -525,10 +528,10 @@ final readonly class RegexAnalysisService
      *     source?: string
      * }>
      */
-    private function suggestOptimizationsChunk(array $patterns, int $minSavings, array $optimizationConfig = []): array
+    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options): array
     {
         $suggestions = [];
-        $verifyWithAutomata = (bool) ($optimizationConfig['verifyWithAutomata'] ?? true);
+        $verifyWithAutomata = $options->verifyWithAutomata;
 
         foreach ($patterns as $occurrence) {
             if ($occurrence->isIgnored) {
@@ -545,14 +548,16 @@ final readonly class RegexAnalysisService
 
             try {
                 if ($isExtended) {
+                    // Under /x, factorizing alternatives would reflow what the
+                    // author laid out: it stays off whatever the options say.
                     $optimizer = new OptimizerNodeVisitor(
-                        optimizeDigits: (bool) ($optimizationConfig['digits'] ?? true),
-                        optimizeWord: (bool) ($optimizationConfig['word'] ?? true),
-                        ranges: (bool) ($optimizationConfig['ranges'] ?? true),
-                        canonicalizeCharClasses: (bool) ($optimizationConfig['canonicalizeCharClasses'] ?? true),
-                        autoPossessify: (bool) ($optimizationConfig['autoPossessify'] ?? false),
+                        optimizeDigits: $options->digits,
+                        optimizeWord: $options->word,
+                        ranges: $options->ranges,
+                        canonicalizeCharClasses: $options->canonicalizeCharClasses,
+                        autoPossessify: $options->possessive,
                         allowAlternationFactorization: false,
-                        minQuantifierCount: (int) ($optimizationConfig['minQuantifierCount'] ?? 4),
+                        minQuantifierCount: $options->minQuantifierCount,
                     );
 
                     $ast = $this->regex->parse($occurrence->pattern);
@@ -575,8 +580,6 @@ final readonly class RegexAnalysisService
 
                     $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
                 } else {
-                    $options = $optimizationConfig;
-                    $options['verifyWithAutomata'] = $verifyWithAutomata;
                     $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
                 }
             } catch (\Throwable) {

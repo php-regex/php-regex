@@ -77,15 +77,9 @@ final readonly class RegexLintService
         $issues = $this->filterIssuesByRequest($issues, $request);
         $issues = $this->deduplicateIssues($issues);
 
-        /** @var array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, autoPossessify?: bool, allowAlternationFactorization?: bool, minQuantifierCount?: int} $optimizationConfig */
-        $optimizationConfig = array_merge(
-            ['allowAlternationFactorization' => false, 'autoPossessify' => false],
-            $request->optimizations,
-        );
-
         /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
         $optimizations = $request->checkOptimizations
-            ? array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $optimizationConfig, $request->analysisWorkers))
+            ? array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers))
             : [];
 
         $results = $this->combineResults($issues, $optimizations, $patterns);

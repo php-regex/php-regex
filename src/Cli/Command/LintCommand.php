@@ -30,6 +30,7 @@ use RegexParser\Lint\RegexLintReport;
 use RegexParser\Lint\RegexLintRequest;
 use RegexParser\Lint\RegexLintService;
 use RegexParser\Lint\RegexPatternSourceCollection;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
 use RegexParser\ReDoS\ReDoSSeverity;
 
@@ -208,7 +209,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
                 checkRedos: $checkRedos,
                 checkOptimizations: $checkOptimizations,
                 analysisWorkers: $jobs,
-                optimizations: $arguments->optimizations,
+                optimizations: OptimizerOptions::fromCamelCaseArray($arguments->optimizations + ['verifyWithAutomata' => true]),
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

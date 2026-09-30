@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\InlineFlags;
 use RegexParser\Node\AlternationNode;
@@ -840,13 +841,17 @@ final class ParserTest extends TestCase
     }
 
     #[Test]
-    public function test_optimize_with_mode(): void
+    public function test_optimize_refuses_an_option_it_does_not_know(): void
     {
-        $result = $this->regex->optimize('/a+/', ['mode' => 'safe']);
-        $this->assertSame('/a+/', $result->optimized);
-
-        $result2 = $this->regex->optimize('/a+/', ['mode' => 'aggressive']);
-        $this->assertSame('/a+/', $result2->optimized);
+        // 1.x ignored an unknown option; 2.0 names it.
+        foreach (['safe', 'aggressive'] as $mode) {
+            try {
+                $this->regex->optimize('/a+/', ['mode' => $mode]);
+                $this->fail('An unknown optimizer option must be refused.');
+            } catch (InvalidRegexOptionException $e) {
+                $this->assertStringStartsWith('Unknown optimizer option "mode"', $e->getMessage());
+            }
+        }
     }
 
     #[Test]

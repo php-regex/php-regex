@@ -25,14 +25,14 @@ final class CharClassCanonicalizationToggleTest extends TestCase
         $regex = Regex::create();
 
         $canonical = $regex->optimize($pattern, [
-            'canonicalizeCharClasses' => true,
+            'canonicalize_char_classes' => true,
             'digits' => false,
             'word' => false,
         ])->optimized;
         $this->assertSame($expectedCanonical, $canonical);
 
         $preserved = $regex->optimize($pattern, [
-            'canonicalizeCharClasses' => false,
+            'canonicalize_char_classes' => false,
             'digits' => false,
             'word' => false,
         ])->optimized;

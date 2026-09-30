@@ -38,7 +38,7 @@ final class OptimizerTest extends TestCase
     {
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
-        $this->assertSame('/(a)\\d\\1/', $optimizer->optimize('/(a)[0-9]\\1/', ['verifyWithAutomata' => true])->optimized);
-        $this->assertSame('/\\d+/', $optimizer->optimize('/[0-9]+/', ['verifyWithAutomata' => true])->optimized);
+        $this->assertSame('/(a)\\d\\1/', $optimizer->optimize('/(a)[0-9]\\1/', ['verify_with_automata' => true])->optimized);
+        $this->assertSame('/\\d+/', $optimizer->optimize('/[0-9]+/', ['verify_with_automata' => true])->optimized);
     }
 }

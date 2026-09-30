@@ -402,8 +402,8 @@ final class RegexAnalysisServiceTest extends TestCase
             new RegexPatternOccurrence('/b{3}/', 'test.php', 2, 'preg_match'),
         ];
 
-        $sequential = $this->analysis->suggestOptimizations($patterns, 0, [], 1);
-        $parallel = $this->analysis->suggestOptimizations($patterns, 0, [], 2);
+        $sequential = $this->analysis->suggestOptimizations($patterns, 0, null, 1);
+        $parallel = $this->analysis->suggestOptimizations($patterns, 0, null, 2);
 
         $this->assertEquals($sequential, $parallel);
     }

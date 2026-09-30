@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint;
 
+use RegexParser\Optimizer\OptimizerOptions;
+
 /**
  * Input parameters for a lint run.
  *
@@ -21,11 +23,12 @@ namespace RegexParser\Lint;
 final readonly class RegexLintRequest
 {
     /**
-     * @param array<string>           $paths
-     * @param array<string>           $excludePaths
-     * @param array<string>           $disabledSources
-     * @param array<string, bool|int> $optimizations
-     * @param array<string, bool>     $lintRules
+     * @param array<string>       $paths
+     * @param array<string>       $excludePaths
+     * @param array<string>       $disabledSources
+     * @param OptimizerOptions    $optimizations   what an optimization may rewrite; lint checks every
+     *                                             rewrite with the automata unless told otherwise
+     * @param array<string, bool> $lintRules
      */
     public function __construct(
         public array $paths,
@@ -37,7 +40,7 @@ final readonly class RegexLintRequest
         public bool $checkOptimizations = true,
         public bool $checkLint = true,
         public int $analysisWorkers = 1,
-        public array $optimizations = [],
+        public OptimizerOptions $optimizations = new OptimizerOptions(verifyWithAutomata: true),
         public array $lintRules = [],
     ) {}
 
