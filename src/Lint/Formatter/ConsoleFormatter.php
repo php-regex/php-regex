@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Formatter;
 
+use RegexParser\ValidationResult;
 use RegexParser\Internal\Ascii;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Internal\PatternParser;
@@ -189,7 +190,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->issueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, (string) ($issue['message'] ?? ''));
+            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
 
             $hint = $issue['hint'] ?? null;
             if ('error' !== $issueType && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
@@ -579,6 +580,23 @@ class ConsoleFormatter extends AbstractOutputFormatter
         }
 
         return $output;
+    }
+
+    /**
+     * The message of an issue, and under it the caret snippet its validation
+     * carries apart: the line of the pattern with the character at fault.
+     *
+     * @param array<array-key, mixed> $issue
+     */
+    private function messageWithSnippet(array $issue): string
+    {
+        $message = \is_string($issue['message'] ?? null) ? $issue['message'] : '';
+        $validation = $issue['validation'] ?? null;
+        if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
+            return $message;
+        }
+
+        return $message."\n".$validation->caretSnippet;
     }
 
     private function displaySingleIssue(string $badge, string $message): string

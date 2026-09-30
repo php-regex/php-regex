@@ -126,6 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The console output of `regex lint` and of the Symfony `regex:lint` command lost the caret line under an invalid pattern once the message stopped carrying it: the character at fault is shown again, from the snippet the validation carries apart.
 - Judged for a PCRE2 release before 10.45 or 10.47, a few refused patterns got the code the later releases report: `(?[` is no extended class before 10.45 and is refused as an unknown `(?` group, `(*pla` and an unknown `(*scs:` are unknown names, `[\E` left open is a backslash at the end of the pattern, a range ending in `\N` is an invalid range, and `(?(VERSION=10z)` is a condition left open before 10.47. The code now follows the judged release.
 - The Laravel bridge dropped every optimization setting of `config/regex-parser.php` but `digits`, `word` and `ranges`: `canonicalize_char_classes`, `possessive`, `factorize` and `min_quantifier_count` never reached the optimizer.
 - `regex redos` left `pcre.jit`, the backtrack and recursion limits and the time limit it was given set in the process after it ran, and silenced the warnings of the pattern it measured. It puts them back on every way out, and captures the warnings.
