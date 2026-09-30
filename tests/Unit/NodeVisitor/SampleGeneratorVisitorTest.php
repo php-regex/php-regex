@@ -74,7 +74,16 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_generate_gives_a_sample_the_engine_matches(string $pattern): void
     {
         // Checked by the interpreter: the JIT takes no substring scan.
-        $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), Regex::create(['cache' => null])->generate($pattern)), $pattern);
+        $checked = '/(*NO_JIT)'.substr($pattern, 1);
+        $sample = Regex::create(['cache' => null])->generate($pattern);
+        if (false === @preg_match($checked, '')) {
+            // A PCRE2 before 10.45 reads no substring scan: nothing checks the sample.
+            $this->assertIsString($sample);
+
+            return;
+        }
+
+        $this->assertSame(1, preg_match($checked, $sample), $pattern);
     }
 
     /**
@@ -256,9 +265,12 @@ final class SampleGeneratorVisitorTest extends TestCase
         $pattern = '/x(?|(*scs:(1)(?<=(.)))|()){8}/';
         $generator = new SampleGeneratorNodeVisitor();
 
+        $checked = '/(*NO_JIT)'.substr($pattern, 1);
+        $readable = false !== @preg_match($checked, '');
         for ($seed = 0; $seed < 8; $seed++) {
             $generator->setSeed($seed);
-            $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $this->regex->parse($pattern)->accept($generator)));
+            // A PCRE2 before 10.45 reads no substring scan: nothing checks the sample.
+            $this->assertSame($readable ? 1 : false, @preg_match($checked, $this->regex->parse($pattern)->accept($generator)));
         }
     }
 
@@ -271,10 +283,13 @@ final class SampleGeneratorVisitorTest extends TestCase
         $ast = $this->regex->parse($pattern);
         $generator = new SampleGeneratorNodeVisitor();
 
+        $checked = '/(*NO_JIT)'.substr($pattern, 1);
+        $readable = false !== @preg_match($checked, '');
         for ($seed = 0; $seed < 16; $seed++) {
             $generator->setSeed($seed);
             $sample = $ast->accept($generator);
-            $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $sample), $seed.': '.json_encode($sample));
+            // A PCRE2 before 10.45 reads no substring scan: nothing checks the sample.
+            $this->assertSame($readable ? 1 : false, @preg_match($checked, $sample), $seed.': '.json_encode($sample));
         }
     }
 
@@ -291,6 +306,16 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'lookahead only an appended text satisfies' => ['/^(?=.*a)\\d\\d/'];
         yield 'version at least 10.5' => ['/^(?(VERSION>=10.5)yes|no)$/'];
         yield 'version equal to 8' => ['/^(?(VERSION=8)yes|no)$/'];
+    }
+
+    public function test_a_one_digit_minor_is_read_as_the_running_pcre2_reads_it(): void
+    {
+        // Before PCRE2 10.47, "10.5" is 10.50; from 10.47, 10.5.
+        [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0]));
+        $wholeMinors = [$major, $minor] >= [10, 47];
+
+        $this->assertSame($wholeMinors ? 'yes' : 'no', $this->regex->parse('/(?(VERSION>=10.5)yes|no)/')->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame('yes', $this->regex->parse('/(?(VERSION>=10.05)yes|no)/')->accept(new SampleGeneratorNodeVisitor()));
     }
 
     public function test_the_running_version_is_at_least_and_equal_to_itself(): void

@@ -998,12 +998,14 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return true;
         }
 
-        // Samples are checked by the running engine: its version decides, the
-        // minor read as a number, "10.5" below "10.49".
+        // Samples are checked by the running engine: its version decides. From
+        // PCRE2 10.47 the minor is read as a number, "10.5" below "10.49";
+        // before, one digit counts tens, "10.5" is "10.50".
         if ($condition instanceof VersionConditionNode) {
             [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0].'.0'));
-            [$wantedMajor, $wantedMinor] = array_map(intval(...), explode('.', $condition->version.'.0'));
-            $running = [$major, $minor] <=> [$wantedMajor, $wantedMinor];
+            [$wantedMajor, $wantedMinor] = explode('.', $condition->version.'.0');
+            $tens = 1 === \strlen($wantedMinor) && [$major, $minor] < [10, 47] ? 10 : 1;
+            $running = [$major, $minor] <=> [(int) $wantedMajor, (int) $wantedMinor * $tens];
 
             return '=' === $condition->operator ? 0 === $running : $running >= 0;
         }
