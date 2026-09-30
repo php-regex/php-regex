@@ -73,7 +73,7 @@ final readonly class Regex
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-bc97c7f88a84bcfef0926581a0ccfff9';
+    public const CACHE_VERSION = 'ast-3b3e6b228ad0107b69633df757b3928e';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -460,7 +460,8 @@ final readonly class Regex
         $compiles = false !== @preg_match($checked, '') || !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');
         $sample = '';
         $attempts = [];
-        for ($attempt = 0; $attempt < 16; $attempt++) {
+        // A condition with one valid branch in two misses once in 2^32 calls.
+        for ($attempt = 0; $attempt < 32; $attempt++) {
             $sample = $ast->accept($generator);
 
             $matches = @preg_match($checked, $sample);

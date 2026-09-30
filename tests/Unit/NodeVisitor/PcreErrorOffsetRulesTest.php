@@ -24,9 +24,10 @@ use RegexParser\Regex;
  *
  * Both offsets of a row were read from the engines: the first is PHP's
  * warning on PCRE2 10.48 ("Compilation failed: ... at offset N"), the second
- * pcre2test 10.40's, the PCRE2 PHP 8.2 bundles. Where they differ, either is
- * right; the library follows 10.48, or 10.40 for a construct only newer
- * releases read. An error message that quotes a position quotes the offset.
+ * pcre2test 10.40's, the PCRE2 PHP 8.2 bundles. The running engine has the
+ * last word: where it warns with an offset, that offset is the one reported,
+ * as releases between and after place some errors elsewhere (10.44 reports
+ * "\g{ 3" at 2). An error message that quotes a position quotes the offset.
  */
 final class PcreErrorOffsetRulesTest extends TestCase
 {
@@ -37,7 +38,16 @@ final class PcreErrorOffsetRulesTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s is refused by PHP but was reported valid.', $pattern));
-        $this->assertContains($result->offset, array_values(array_unique([$pcre2Offset, $floorOffset])), \sprintf(
+
+        // The running engine says where: its offset is the one to report,
+        // whatever release it is. The row's offsets stand where it says none.
+        error_clear_last();
+        @preg_match($pattern, '');
+        if (1 === preg_match('/at offset (\d++)/', error_get_last()['message'] ?? '', $running)) {
+            $this->assertSame((int) $running[1], $result->offset, \sprintf('%s: PCRE2 %s reports offset %d, the library %s: %s', $pattern, \PCRE_VERSION, (int) $running[1], var_export($result->offset, true), explode("\n", (string) $result->error)[0]));
+        }
+
+        $this->assertContains($result->offset, array_values(array_unique([$pcre2Offset, $floorOffset, ...(isset($running[1]) ? [(int) $running[1]] : [])])), \sprintf(
             '%s: PHP reports offset %d (PCRE2 10.40: %d), the library %s: %s',
             $pattern,
             $pcre2Offset,
@@ -49,6 +59,44 @@ final class PcreErrorOffsetRulesTest extends TestCase
         if (1 === preg_match('/at position (\d++)/', (string) $result->error, $matches)) {
             $this->assertSame($result->offset, (int) $matches[1], 'The message quotes another position than the offset.');
         }
+    }
+
+    /**
+     * pcre2test 10.44, 10.45, 10.47 and 10.49.
+     *
+     * @param array<string, int> $offsets by release
+     */
+    #[Test]
+    #[DataProvider('provideReleaseOffsets')]
+    public function test_each_release_reports_its_offset(string $pattern, array $offsets): void
+    {
+        foreach ($offsets as $release => $offset) {
+            $result = Regex::create(['cache' => null, 'pcre_version' => $release])->validate($pattern);
+
+            $this->assertFalse($result->isValid, $pattern.' on '.$release);
+            $this->assertSame($offset, $result->offset, $pattern.' on '.$release);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, int>}>
+     */
+    public static function provideReleaseOffsets(): iterable
+    {
+        // Before 10.47 a minor is two digits: PCRE stops at a third one.
+        yield 'minor of four digits, then text' => ['/(?(VERSION>=10.1001x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];
+        yield 'minor of three digits, then text' => ['/(?(VERSION>=10.999x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];
+        yield 'minor of two digits, then text' => ['/(?(VERSION>=10.99x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 18, '10.49' => 18]];
+        yield 'minor of one digit, then text' => ['/(?(VERSION>=10.9x)a|b)/', ['10.44' => 16, '10.45' => 16, '10.47' => 17, '10.49' => 17]];
+        // Before 10.45 a range from a class escape is refused at the "-",
+        // before the escape at its end is read.
+        yield 'range from a type to \N' => ['/[\\d-\\N]/', ['10.44' => 3, '10.45' => 6, '10.47' => 6, '10.49' => 6]];
+        yield 'range from a type to an unknown escape' => ['/[\\d-\\j]/', ['10.44' => 3, '10.45' => 5, '10.47' => 6, '10.49' => 6]];
+        yield 'range from a type to \R, after a member' => ['/[a\\d-\\R]/', ['10.44' => 4, '10.45' => 6, '10.47' => 7, '10.49' => 7]];
+        yield 'range from a POSIX class to \X' => ['/[[:alpha:]-\\X]/', ['10.44' => 10, '10.45' => 12, '10.47' => 13, '10.49' => 13]];
+        yield 'range from a property to \X' => ['/[\\p{L}-\\X]/', ['10.44' => 6, '10.45' => 8, '10.47' => 9, '10.49' => 9]];
+        yield 'range from a type to k, a letter from 10.45' => ['/[\\d-\\k]/', ['10.44' => 3, '10.45' => 4, '10.47' => 4, '10.49' => 4]];
+        yield 'range from a type to \X' => ['/[\\d-\\X]/', ['10.44' => 3, '10.45' => 5, '10.47' => 6, '10.49' => 6]];
     }
 
     #[Test]

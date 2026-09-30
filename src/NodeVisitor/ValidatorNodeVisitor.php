@@ -1458,7 +1458,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitVersionCondition(VersionConditionNode $node): void
     {
         $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, pastTheFault: $this->pcreAtLeast('10.47'));
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->pcreAtLeast('10.47'));
 
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
@@ -1495,7 +1495,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             \sprintf('Invalid version "%s" in a version condition: PCRE takes a major number and an optional ".minor".', $node->version),
             // From PCRE2 10.47, PCRE steps past a character it reads where
             // ")" belongs; it stops on one it reads where a digit belongs.
-            $versionStart + \strlen($valid) + ($afterNumber && $this->pcreAtLeast('10.47') ? 1 : 0),
+            // Before, it stops on a third digit of a minor.
+            $pcreOffset ?? $versionStart + \strlen($valid) + ($afterNumber && $this->pcreAtLeast('10.47') ? 1 : 0),
             'regex.condition.version_syntax',
         );
     }
@@ -2865,7 +2866,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
-        $versionError = VersionCondition::errorOffset($this->source, $start, pastTheFault: $this->pcreAtLeast('10.47'));
+        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->readsWholeVersionNumbers(), $this->pcreAtLeast('10.47'));
         if (null !== $versionError) {
             return $versionError;
         }

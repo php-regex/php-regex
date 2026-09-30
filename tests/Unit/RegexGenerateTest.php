@@ -123,7 +123,7 @@ final class RegexGenerateTest extends TestCase
     public function test_a_condition_with_one_valid_branch_is_found(): void
     {
         // Each try takes a branch at random, and one of two holds: over 400
-        // calls, sixteen tries each, none gives up.
+        // calls, thirty-two tries each, none gives up.
         $regex = Regex::create(['cache' => null]);
         for ($call = 0; $call < 400; $call++) {
             $this->assertSame(1, preg_match('/(?(?<!foo)cat|bar)/', $regex->generate('/(?(?<!foo)cat|bar)/')));

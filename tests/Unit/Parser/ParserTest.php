@@ -390,7 +390,8 @@ final class ParserTest extends TestCase
         $this->assertInstanceOf(CharLiteralNode::class, $pattern);
         $this->assertSame(CharLiteralType::UNICODE_NAMED, $pattern->type);
         $this->assertSame('\N{LATIN CAPITAL LETTER A}', $pattern->originalRepresentation);
-        $this->assertSame(65, $pattern->codePoint);
+        // A character name is resolved with intl; without it, it stays unknown.
+        $this->assertSame(\extension_loaded('intl') ? 65 : -1, $pattern->codePoint);
     }
 
     #[Test]

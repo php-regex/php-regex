@@ -93,6 +93,11 @@ parameters:
         pcreVersion: '10.42'  # or: PHPStan's PHP version with this PCRE2 release
 ```
 
+The test suite runs on every supported PHP with the PCRE2 its php-src
+bundles (8.2 with 10.40, 8.3 with 10.42, 8.4 and 8.5 with 10.44), with the
+10.42 Ubuntu 24.04 ships, and with the latest release, so the answers taken
+from the running engine are checked against each of them.
+
 A few answers still come from the running engine, because PCRE2 exposes no
 other way to get them: whether a Unicode property or script name exists (the
 running engine is asked, then a table of the names each release added corrects

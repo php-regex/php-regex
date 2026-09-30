@@ -2548,7 +2548,7 @@ final class Parser
      */
     private function conditionErrorOffset(int $start): int
     {
-        return VersionCondition::errorOffset($this->pattern, $start, pastTheFault: $this->pcreAtLeast('10.47'))
+        return VersionCondition::errorOffset($this->pattern, $start, !$this->pcreAtLeast('10.47'), $this->pcreAtLeast('10.47'))
             ?? $this->groupNames->invalidNameOffset($start);
     }
 
@@ -2671,7 +2671,7 @@ final class Parser
     /**
      * Whether an escape PCRE refuses inside a class starts at $position:
      * an assertion such as "\B", "\R", "\X", or "\N" that names no code
-     * point.
+     * point, or a letter with no meaning there, as "\j".
      */
     private function isClassInvalidEscapeAt(int $position): bool
     {
@@ -2685,7 +2685,9 @@ final class Parser
             return '{' !== ($this->pattern[$position + 2] ?? '');
         }
 
-        return '' !== $letter && str_contains('ABCGKRXZz', $letter);
+        // An assertion, or a letter PCRE gives no meaning in a class; "\k" is
+        // the letter from PCRE2 10.45.
+        return '' !== $letter && (str_contains('ABCFGIJKLMORTUXYZijlmquyz', $letter) || ('k' === $letter && !$this->pcreAtLeast('10.45')));
     }
 
     private function isNonRangeEndpointType(NodeInterface $node): bool
@@ -2828,7 +2830,13 @@ final class Parser
             return $startNode;
         }
 
-        // An escape PCRE refuses in a class is reported before the range.
+        // Before PCRE2 10.45 a range from a type is refused on its hyphen,
+        // before its end is read; from 10.45 an escape PCRE refuses in a
+        // class at its end is reported first.
+        if (!$this->pcreAtLeast('10.45')) {
+            $this->guardRangeEndpoint($startNode, $afterHyphen, false);
+        }
+
         if ($this->isClassInvalidEscapeAt($this->stream->current()->position)) {
             $this->stream->setPosition($rangePosition);
 

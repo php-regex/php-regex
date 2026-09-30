@@ -45,6 +45,83 @@ jobs:
         # documentation tests are not left to rot outside of CI.
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
+  engines-bundled:
+    # Patterns are judged for a PHP version and the PCRE2 it runs, and part of
+    # the suite asks the running engine. The official images build PHP with the
+    # PCRE2 php-src bundles, so each supported PHP runs here on its own engine;
+    # the "tests" job runs them all on Ubuntu's system PCRE2.
+    name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
+    runs-on: ubuntu-latest
+    container: php:${{ matrix.php }}-cli
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.2', pcre: '10.40' }
+          - { php: '8.3', pcre: '10.42' }
+          - { php: '8.4', pcre: '10.44' }
+          - { php: '8.5', pcre: '10.44' }
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Check the engine
+        # An image that moves to another PCRE2 fails here, not in the suite.
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL; exit(str_starts_with(PCRE_VERSION, "${{ matrix.pcre }} ") ? 0 : 1);'
+
+      - name: Install Composer
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends git unzip
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+      - name: Install Dependencies
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          composer install --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpunit --prefer-dist --no-interaction --no-progress
+
+      - name: Run Test Suite
+        # As a plain user: a container job runs as root, who may write where
+        # the tests check that nothing can.
+        run: |
+          useradd --create-home tester
+          chown -R tester "$GITHUB_WORKSPACE"
+          su tester --shell /bin/sh --command 'php -d phar.readonly=0 tools/phpunit/vendor/bin/phpunit --colors=always'
+
+  engines-latest:
+    # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.
+    name: Tests (PHP ${{ matrix.php }}, latest PCRE2)
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ 8.5, 8.4, 8.3, 8.2 ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pcre, tokenizer, xml
+          ini-values: phar.readonly=0
+
+      - name: Show the engine
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL;'
+
+      - name: Install Dependencies
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpunit --prefer-dist --no-interaction --no-progress
+
+      - name: Run Test Suite
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
+
   phpstan:
     name: PHPStan (PHP ${{ matrix.php }}, ${{ matrix.dependency }})
     runs-on: ubuntu-latest
