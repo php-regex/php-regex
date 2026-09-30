@@ -40,9 +40,10 @@ final readonly class PcreTarget
      */
     public function __construct(public int $phpVersionId, string $pcreVersion)
     {
-        $this->release = self::releaseNumber($pcreVersion)
+        [$major, $minor] = self::releaseParts($pcreVersion)
             ?? throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));
-        $this->pcreVersion = intdiv($this->release, 1000).'.'.self::minorOf($pcreVersion);
+        $this->release = (int) $major * 1000 + (int) $minor;
+        $this->pcreVersion = (int) $major.'.'.$minor;
     }
 
     /**
@@ -108,18 +109,34 @@ final readonly class PcreTarget
 
     private static function releaseNumber(string $version): ?int
     {
+        $parts = self::releaseParts($version);
+
+        return null === $parts ? null : (int) $parts[0] * 1000 + (int) $parts[1];
+    }
+
+    /**
+     * The major and minor digits of a release, read without the engine: a
+     * backtrack limit set low on the host must not make it unreadable.
+     *
+     * @return array{string, string}|null
+     */
+    private static function releaseParts(string $version): ?array
+    {
+        $whitespace = " \t\n\v\f\r";
+        $release = ltrim($version, $whitespace);
+        $release = substr($release, 0, strcspn($release, $whitespace));
+
         // A pre-release build is spelled "10.45-RC1 2024-12-01".
-        if (1 !== preg_match('/^\s*+(\d++)\.(\d++)(?:-[A-Za-z0-9]++)?(?:\s|$)/', $version, $matches)) {
+        $hyphen = strpos($release, '-');
+        $build = false === $hyphen ? null : substr($release, $hyphen + 1);
+        $parts = explode('.', false === $hyphen ? $release : substr($release, 0, $hyphen));
+        if (2 !== \count($parts) || !ctype_digit($parts[0]) || !ctype_digit($parts[1])) {
+            return null;
+        }
+        if (null !== $build && !ctype_alnum($build)) {
             return null;
         }
 
-        return (int) $matches[1] * 1000 + (int) $matches[2];
-    }
-
-    private static function minorOf(string $version): string
-    {
-        preg_match('/\.(\d++)/', $version, $matches);
-
-        return $matches[1] ?? '0';
+        return [$parts[0], $parts[1]];
     }
 }

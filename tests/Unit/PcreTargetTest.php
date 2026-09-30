@@ -75,6 +75,27 @@ final class PcreTargetTest extends TestCase
         // PCRE_VERSION spells a pre-release build "10.45-RC1 2024-12-01".
         yield 'release candidate' => ['written' => '10.45-RC1 2024-12-01', 'release' => '10.45'];
         yield 'development build' => ['written' => '10.48-DEV 2025-10-01', 'release' => '10.48'];
+        yield 'leading zero kept' => ['written' => '10.05', 'release' => '10.05'];
+        yield 'tab before the date' => ['written' => "10.44\t2024-06-07", 'release' => '10.44'];
+    }
+
+    /**
+     * The host's backtrack limit is no reason to refuse a release, nor to
+     * blame the option for it.
+     */
+    #[Test]
+    #[DataProvider('provideReleaseSpellings')]
+    public function test_a_release_is_read_under_any_backtrack_limit(string $written, string $release): void
+    {
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        \ini_set('pcre.backtrack_limit', '1');
+
+        try {
+            $this->assertSame($release, (new PcreTarget(80400, $written))->pcreVersion);
+            $this->assertSame(explode(' ', \PCRE_VERSION)[0], PcreTarget::runtime()->pcreVersion);
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+        }
     }
 
     #[Test]
@@ -95,6 +116,12 @@ final class PcreTargetTest extends TestCase
         yield 'empty' => ['written' => ''];
         yield 'word' => ['written' => 'latest'];
         yield 'major only' => ['written' => '10'];
+        yield 'no minor' => ['written' => '10.'];
+        yield 'no major' => ['written' => '.44'];
+        yield 'letter after the minor' => ['written' => '10.44x'];
+        yield 'bare hyphen' => ['written' => '10.44-'];
+        yield 'symbol in the suffix' => ['written' => '10.44-RC!'];
+        yield 'prefixed' => ['written' => 'v10.44'];
     }
 
     #[Test]

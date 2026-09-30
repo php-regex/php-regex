@@ -121,6 +121,12 @@ modifier"); earlier releases compile it, but matching it can crash PHP
 every target: at the `\C` for a PHP that refuses it, at the enclosing
 lookbehind for one that compiles it, as that PHP refuses it only there.
 
+The library reads patterns with PCRE itself, so it needs the engine's limits
+left near PHP's defaults: a `pcre.backtrack_limit` of a few dozen already
+misreads some patterns, and one of 1 misreads nearly all of them. The PHP
+default is 1000000; anything from 1000 up reads the patterns in the library's
+own test corpus the same way.
+
 ## A known JIT crash
 
 PCRE2's JIT compiler, which PHP uses by default (`pcre.jit=1`), crashes the
