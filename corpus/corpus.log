@@ -11401,12 +11401,12 @@
          - /\n \*\s+/um
          + /\n \*\s+/u
 
-  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:363:21
+  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:361:21
       → /array\(([0-9a-zA-Z_'\" ]+,)*([0-9a-zA-Z_'\" ]+)\)/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:379:21
+  corpus/psalm/src/Psalm/Internal/PhpVisitor/Reflector/ClassLikeDocblockParser.php:411:21
       → /\[([0-9a-zA-Z_'\" ]+,)*([0-9a-zA-Z_'\" ]+)\]/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
