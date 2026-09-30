@@ -324,7 +324,16 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): string
     {
-        return $this->line(\sprintf('Script run assertion for script: %s', $node->script));
+        $title = \sprintf('%s: every character from one script', $node->atomic ? 'Atomic script run' : 'Script run');
+        if (null === $node->content) {
+            return $this->line($title);
+        }
+
+        $this->indentLevel++;
+        $content = $node->content->accept($this);
+        $this->indentLevel--;
+
+        return implode("\n", [$this->line($title), $content, $this->line('End script run')]);
     }
 
     #[\Override]

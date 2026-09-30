@@ -41,6 +41,7 @@ use RegexParser\Node\NodeInterface;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\RegexNode;
+use RegexParser\Node\ScriptRunNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Node\UnicodePropNode;
 
@@ -287,6 +288,20 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
         }
         $this->context->setActiveFlags($sequenceFlags);
         $this->context->popParent();
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitScriptRun(ScriptRunNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        if (null !== $node->content) {
+            $this->context->pushParent($node);
+            $node->content->accept($this);
+            $this->context->popParent();
+        }
 
         return $node;
     }

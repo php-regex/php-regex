@@ -216,7 +216,11 @@ final class MetricsNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): array
     {
-        return $this->record($node);
+        return $this->record($node, function () use ($node): void {
+            if (null !== $node->content) {
+                $this->visitChild($node->content);
+            }
+        });
     }
 
     #[\Override]

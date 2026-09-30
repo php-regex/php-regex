@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- What a script run `(*sr:...)` holds was invisible to the linter, the metrics, the explanations and literal extraction: an issue inside it went unreported, and it was explained as its raw text. They now read inside it, as a group.
 - The array, PSR-6 and PSR-16 caches never gave back a tree for a pattern holding a comma, as every `{n,m}` does, and counted a hit all the same: the stored script was cut at its first comma. Every cache now stores the tree itself, and the hits count trees given back.
 - The Laravel bridge wrapped a cache store, a PSR-16 cache, in the PSR-6 adapter, and failed on the first pattern once `regex-parser.cache.store` was set.
 - A cached tree altered to hold an object of another class is a cache miss, not a `TypeError`.

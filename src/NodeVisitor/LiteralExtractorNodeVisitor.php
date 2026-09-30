@@ -341,7 +341,8 @@ final class LiteralExtractorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): LiteralSet
     {
-        return LiteralSet::empty();
+        // A script run matches what it holds, from one script: the same literals.
+        return null === $node->content ? LiteralSet::empty() : $node->content->accept($this);
     }
 
     #[\Override]

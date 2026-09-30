@@ -394,7 +394,12 @@ final class HtmlExplainNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): string
     {
-        return \sprintf('<li>Script Run: <strong>%s</strong></li>', $this->e($node->script));
+        $title = $node->atomic ? 'Atomic script run' : 'Script run';
+        if (null === $node->content) {
+            return \sprintf('<li><strong>%s</strong>: every character from one script</li>', $title);
+        }
+
+        return \sprintf("<li><strong>%s</strong>: every character from one script\n<ul>%s</ul>\n</li>", $title, $node->content->accept($this));
     }
 
     #[\Override]
