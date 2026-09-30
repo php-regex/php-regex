@@ -39,8 +39,7 @@ small formats:
 - **No text glyphs in brand marks.** The wordmark is vectorized paths (Inter
   Display Black for "Regex", Bold for "Parser") generated with real font
   advances — hand-placed glyph paths collide; font-derived advances cannot.
-  The social tagline is the only caption (JetBrains Mono Regular),
-  vectorized.
+  The social card carries only the wordmark and the mark — no captions.
 - **Contrast gates** (measured, never eyeballed): text ≥ 4.5:1, meaningful
   graphics ≥ 3:1. Current values: ink/paper 13.3:1, amber/paper 5.4:1,
   ink/navy-tile 15.2:1, amber/navy-tile 8.4:1, border/white 4.76:1,
