@@ -214,8 +214,8 @@ echo $result->isValid ? 'Valid' : "Invalid: {$result->error}";
 ```php
 use RegexParser\Regex;
 
-// Default: Filesystem cache
-$regex = Regex::create();  // Uses temp directory cache
+// Default: the latest 1024 trees in memory, nothing on disk
+$regex = Regex::create();
 
 // Custom cache location
 $regex = Regex::create(['cache' => '/my/app/cache']);

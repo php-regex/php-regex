@@ -32,9 +32,9 @@ final class RegexEdgeCasesTest extends TestCase
                 return 'key';
             }
 
-            public function write(string $key, string $content): void {}
+            public function write(string $key, RegexNode $ast): void {}
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 $this->loadCalls++;
                 if ($this->loadCalls > 1) {
@@ -42,11 +42,6 @@ final class RegexEdgeCasesTest extends TestCase
                 }
 
                 return null;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
 
@@ -79,19 +74,14 @@ final class RegexEdgeCasesTest extends TestCase
                 return 'key';
             }
 
-            public function write(string $key, string $content): void
+            public function write(string $key, RegexNode $ast): void
             {
                 throw new \RuntimeException('cache write failed');
             }
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 return null;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
         $regex = Regex::create(['cache' => $cache]);

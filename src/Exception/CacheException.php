@@ -11,7 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require __DIR__.'/../vendor/autoload.php';
-require __DIR__.'/Support/LintFunctionOverrides.php';
-require __DIR__.'/Support/SelfUpdateFunctionOverrides.php';
-require __DIR__.'/Support/SymfonyExtractorFunctionOverrides.php';
+namespace RegexParser\Exception;
+
+/**
+ * A cache could not store or read a tree: the parse itself is not at fault.
+ */
+final class CacheException extends \RuntimeException implements RegexParserExceptionInterface {}

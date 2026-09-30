@@ -129,6 +129,26 @@ longer depends on the CLI it is called from. They are now
 The old names still resolve — they are aliased on first use — but they will
 be dropped in the next major version.
 
+#### The cache stores trees, in memory by default
+
+`CacheInterface` now takes and gives back the tree itself:
+
+```php
+public function write(string $key, RegexNode $ast): void;
+public function load(string $key): ?RegexNode;
+```
+
+`getTimestamp()` is gone, and so are `CachePayloadDecoder`,
+`FilesystemCache::defaultDirectory()` and the file extension argument of
+`FilesystemCache`. A custom cache stores the tree as it likes and returns
+`null` for anything that is not one.
+
+Without a `cache` option, `Regex::create()` keeps the latest 1024 trees in
+memory (`ArrayCache`) instead of writing files under the system temp
+directory. Name a directory to keep trees on disk: `['cache' => '/path']`. A
+filesystem cache creates it for its owner only and ignores it when another
+user owns it or others can write to it; its files hold data, not PHP.
+
 #### Cached ASTs are rebuilt
 
 `Regex::CACHE_VERSION` is now a fingerprint of the code that builds a tree, so

@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
+use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\CompilerNodeVisitor;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSSeverity;
@@ -349,9 +350,9 @@ final class RegexAnalysisServiceTest extends TestCase
                 return 'key';
             }
 
-            public function write(string $key, string $content): void {}
+            public function write(string $key, RegexNode $ast): void {}
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 $this->loadCalls++;
                 if ($this->loadCalls > 1) {
@@ -359,11 +360,6 @@ final class RegexAnalysisServiceTest extends TestCase
                 }
 
                 return null;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
 

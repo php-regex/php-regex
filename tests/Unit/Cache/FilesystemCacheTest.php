@@ -12,8 +12,12 @@ declare(strict_types=1);
  */
 
 namespace RegexParser\Tests\Unit\Cache {
+    use PHPUnit\Framework\Attributes\Test;
     use PHPUnit\Framework\TestCase;
+    use RegexParser\Cache\AstSerializer;
     use RegexParser\Cache\FilesystemCache;
+    use RegexParser\Exception\CacheException;
+    use RegexParser\Node\RegexNode;
     use RegexParser\Regex;
 
     final class FilesystemCacheTest extends TestCase
@@ -28,55 +32,60 @@ namespace RegexParser\Tests\Unit\Cache {
         protected function tearDown(): void
         {
             $this->removeDirectory($this->cacheDir);
+            @unlink($this->cacheDir.'-file');
         }
 
+        #[Test]
         public function test_write_and_load_cache_file(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/abc/');
+            $tree = $this->tree('/abc/');
 
-            $cache->write($key, "<?php return 'cached-value';\n");
+            $cache->write($key, $tree);
 
             $this->assertFileExists($key);
-            $this->assertSame('cached-value', $cache->load($key));
-            $this->assertGreaterThan(0, $cache->getTimestamp($key));
+            $this->assertSame(AstSerializer::serialize($tree), file_get_contents($key));
+            $this->assertEquals($tree, $cache->load($key));
+            $this->assertSame(['hits' => 1, 'misses' => 0], $cache->getStats());
         }
 
-        public function test_default_directory_is_namespaced_by_ast_version(): void
+        #[Test]
+        public function test_generate_key_shards_the_sha256_of_the_given_string(): void
         {
-            $this->assertStringContainsString(
-                'cache-'.Regex::CACHE_VERSION,
-                FilesystemCache::defaultDirectory(),
+            $cache = new FilesystemCache($this->cacheDir.'/');
+            $hash = hash('sha256', '/test/');
+
+            $this->assertSame(
+                $this->cacheDir.\DIRECTORY_SEPARATOR.substr($hash, 0, 2).\DIRECTORY_SEPARATOR.substr($hash, 2).'.cache',
+                $cache->generateKey('/test/'),
             );
         }
 
+        #[Test]
         public function test_clear_removes_cached_entries(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/def/');
 
-            $cache->write($key, "<?php return 42;\n");
+            $cache->write($key, $this->tree('/def/'));
             $cache->clear();
 
             $this->assertFileDoesNotExist($key);
+            $this->assertDirectoryDoesNotExist($this->cacheDir);
         }
 
+        #[Test]
         public function test_load_returns_null_for_nonexistent_file(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/nonexistent/');
 
             $this->assertNull($cache->load($key));
+            $this->assertSame(['hits' => 0, 'misses' => 1], $cache->getStats());
         }
 
-        public function test_get_timestamp_returns_zero_for_nonexistent_file(): void
-        {
-            $cache = new FilesystemCache($this->cacheDir);
-            $key = $cache->generateKey('/nonexistent/');
-
-            $this->assertSame(0, $cache->getTimestamp($key));
-        }
-
+        #[Test]
         public function test_write_throws_on_unwritable_directory(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
@@ -85,43 +94,48 @@ namespace RegexParser\Tests\Unit\Cache {
             mkdir($fileDir, 0o755, true);
             chmod($fileDir, 0o444); // Make the file's directory read-only
 
-            $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage('Failed to move cache file');
+            $this->expectException(CacheException::class);
+            $this->expectExceptionMessage('Unable to write the cache file');
 
-            $cache->write($key, 'content');
+            $cache->write($key, $this->tree('/test/'));
         }
 
+        #[Test]
         public function test_clear_specific_regex(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key1 = $cache->generateKey('/abc/');
             $key2 = $cache->generateKey('/def/');
+            $tree2 = $this->tree('/def/');
 
-            $cache->write($key1, "<?php return 'value1';\n");
-            $cache->write($key2, "<?php return 'value2';\n");
+            $cache->write($key1, $this->tree('/abc/'));
+            $cache->write($key2, $tree2);
 
             // Clear only the first regex
             $cache->clear('/abc/');
 
             $this->assertFileDoesNotExist($key1);
             $this->assertFileExists($key2);
-            $this->assertSame('value2', $cache->load($key2));
+            $this->assertEquals($tree2, $cache->load($key2));
         }
 
+        #[Test]
         public function test_clear_nonexistent_regex(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/existing/');
+            $tree = $this->tree('/existing/');
 
-            $cache->write($key, "<?php return 'value';\n");
+            $cache->write($key, $tree);
 
             // Clear a non-existent regex - should not affect existing files
             $cache->clear('/nonexistent/');
 
             $this->assertFileExists($key);
-            $this->assertSame('value', $cache->load($key));
+            $this->assertEquals($tree, $cache->load($key));
         }
 
+        #[Test]
         public function test_clear_returns_when_directory_missing(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
@@ -131,10 +145,12 @@ namespace RegexParser\Tests\Unit\Cache {
             $this->assertDirectoryDoesNotExist($this->cacheDir);
         }
 
+        #[Test]
         public function test_clear_skips_broken_symlink_paths(): void
         {
+            // Owner-only, so the cache trusts the directory and clears it.
             $cacheDir = $this->cacheDir.'/sub';
-            @mkdir($cacheDir, 0o777, true);
+            @mkdir($cacheDir, 0o700, true);
             $broken = $cacheDir.'/broken';
             @symlink($cacheDir.'/missing', $broken);
 
@@ -144,6 +160,7 @@ namespace RegexParser\Tests\Unit\Cache {
             $this->assertFileDoesNotExist($broken);
         }
 
+        #[Test]
         public function test_create_directory_throws_when_path_is_file(): void
         {
             $filePath = $this->cacheDir.'-file';
@@ -151,30 +168,29 @@ namespace RegexParser\Tests\Unit\Cache {
 
             $cache = new FilesystemCache($filePath);
 
-            $this->expectException(\RuntimeException::class);
-            $cache->write($cache->generateKey('/file/'), 'content');
+            $this->expectException(CacheException::class);
+            $this->expectExceptionMessage('Unable to create the cache directory');
+            $cache->write($cache->generateKey('/file/'), $this->tree('/file/'));
         }
 
-        public function test_generate_key_with_custom_extension(): void
-        {
-            $cache = new FilesystemCache($this->cacheDir, '.cache');
-            $key = $cache->generateKey('/test/');
-
-            $this->assertStringEndsWith('.cache', $key);
-            $this->assertStringContainsString($this->cacheDir, $key);
-        }
-
+        #[Test]
         public function test_load_handles_corrupted_file(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/test/');
+            $tree = $this->tree('/test/');
 
-            // Write invalid PHP that will cause an exception when included
-            $cache->write($key, "<?php throw new Exception('corrupted');\n");
+            $cache->write($key, $tree);
+            $data = AstSerializer::serialize($tree);
+            file_put_contents($key, substr($data, 0, intdiv(\strlen($data), 2)));
 
-            $result = $cache->load($key);
+            $this->assertNull($cache->load($key));
+            $this->assertSame(['hits' => 0, 'misses' => 1], $cache->getStats());
+        }
 
-            $this->assertNull($result);
+        private function tree(string $pattern): RegexNode
+        {
+            return Regex::create(['cache' => null])->parse($pattern);
         }
 
         private function removeDirectory(string $directory): void

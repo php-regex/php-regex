@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\RemovableCacheInterface;
+use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
 use RegexParser\ValidationErrorCategory;
 
@@ -97,13 +98,13 @@ final class RegexApiTest extends TestCase
 
             public function __construct(private readonly CacheInterface $cache) {}
 
-            public function write(string $key, string $content): void
+            public function write(string $key, RegexNode $ast): void
             {
                 $this->writeCount++;
-                $this->cache->write($key, $content);
+                $this->cache->write($key, $ast);
             }
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 $this->loadCount++;
 
@@ -113,11 +114,6 @@ final class RegexApiTest extends TestCase
             public function generateKey(string $regex): string
             {
                 return $this->cache->generateKey($regex);
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return $this->cache->getTimestamp($key);
             }
 
             public function clear(?string $regex = null): void

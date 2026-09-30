@@ -16,7 +16,6 @@ namespace RegexParser;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Cache\CacheInterface;
-use RegexParser\Cache\CachePayloadDecoder;
 use RegexParser\Cache\NullCache;
 use RegexParser\Cache\RemovableCacheInterface;
 use RegexParser\Exception\LexerException;
@@ -86,6 +85,11 @@ final readonly class Regex
      * limited by PCRE's ceiling of 65535 characters.
      */
     public const DEFAULT_MAX_LOOKBEHIND_LENGTH = 255;
+
+    /**
+     * How deep the parser may nest groups before it stops.
+     */
+    public const DEFAULT_MAX_RECURSION_DEPTH = 1024;
 
     // Visual snippet constants
     private const MAX_CONTEXT_WIDTH = 80;
@@ -902,7 +906,7 @@ final readonly class Regex
             return [null, null];
         }
 
-        return [$cachedResult instanceof RegexNode ? $cachedResult : null, $cacheKey];
+        return [$cachedResult, $cacheKey];
     }
 
     private function getCacheSeed(string $regex): string
@@ -923,39 +927,10 @@ final readonly class Regex
         }
 
         try {
-            $this->cache->write($cacheKey, self::prepareCachePayload($ast));
+            $this->cache->write($cacheKey, $ast);
         } catch (\Throwable) {
             // Cache failures are silently ignored
         }
-    }
-
-    /**
-     * Prepare AST for cache storage by serializing it.
-     *
-     * @param RegexNode $ast The AST to serialize
-     *
-     * @return string Serialized PHP code
-     */
-    private static function prepareCachePayload(RegexNode $ast): string
-    {
-        $serializedAst = serialize($ast);
-        $exportedAst = var_export($serializedAst, true);
-        $allowedClasses = CachePayloadDecoder::NODE_CLASSES;
-        $exportedAllowedClasses = var_export($allowedClasses, true);
-        $version = var_export(self::CACHE_VERSION, true);
-
-        return <<<PHP
-            <?php
-
-            declare(strict_types=1);
-
-            if (\RegexParser\Regex::CACHE_VERSION !== $version) {
-                return null;
-            }
-
-            return unserialize($exportedAst, ['allowed_classes' => $exportedAllowedClasses]);
-
-            PHP;
     }
 
     /**

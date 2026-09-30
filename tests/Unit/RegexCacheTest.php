@@ -15,6 +15,7 @@ namespace RegexParser\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
+use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
 
 final class RegexCacheTest extends TestCase
@@ -60,19 +61,14 @@ final class RegexCacheTest extends TestCase
                 return sys_get_temp_dir().'/'.md5($regex);
             }
 
-            public function write(string $key, string $content): void
+            public function write(string $key, RegexNode $ast): void
             {
                 $this->writeCalled = true;
             }
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 return null;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
 

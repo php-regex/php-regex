@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Cache;
 
+use RegexParser\Node\RegexNode;
+
 final readonly class NullCache implements RemovableCacheInterface
 {
     #[\Override]
@@ -22,18 +24,12 @@ final readonly class NullCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function write(string $key, string $content): void {}
+    public function write(string $key, RegexNode $ast): void {}
 
     #[\Override]
-    public function load(string $key): mixed
+    public function load(string $key): ?RegexNode
     {
         return null;
-    }
-
-    #[\Override]
-    public function getTimestamp(string $key): int
-    {
-        return 0;
     }
 
     #[\Override]

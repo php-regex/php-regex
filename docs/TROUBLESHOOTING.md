@@ -37,7 +37,7 @@ if (!$validation->isValid) {
 3. Use cache to skip parsing:
 ```php
 $regex = Regex::create([
-    'cache' => new \FileCache('/tmp/regex_cache'),
+    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
     // Pattern parsed once, cached for all workers
 ]);
 ```
@@ -233,7 +233,7 @@ echo "Time: " . ($elapsed * 1000) . " ms\n";
 4. Use caching:
 ```php
 $regex = Regex::create([
-    'cache' => new \FileCache('/tmp/regex_cache'),
+    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Parse once, reuse across requests
@@ -253,7 +253,7 @@ $ast = $regex->parse($pattern);
 1. Verify cache is configured:
 ```php
 $regex = Regex::create([
-    'cache' => new \FileCache('/tmp/regex_parser_cache'),
+    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Test

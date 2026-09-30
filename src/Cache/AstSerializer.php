@@ -45,19 +45,16 @@ use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
 
 /**
- * Decodes the compiled cache payload string produced by the Regex service
- * into a RegexNode instance, without executing the payload.
+ * Turns a tree into the string a cache stores, and back: data only, read
+ * with unserialize() restricted to the classes a tree is made of, so a
+ * stored value that is anything else comes back as nothing.
  *
- * The payload is a small PHP script whose return value is an
- * unserialize() call; this decoder extracts the serialized string and
- * unserializes it with a class allowlist.
+ * @internal
  */
-final class CachePayloadDecoder
+final class AstSerializer
 {
     /**
      * The classes a cached tree is made of, and the only ones unserialized.
-     *
-     * @internal
      */
     public const NODE_CLASSES = [
         RegexNode::class,
@@ -92,48 +89,21 @@ final class CachePayloadDecoder
         VersionConditionNode::class,
     ];
 
-    public static function decode(string $content): ?RegexNode
+    public static function serialize(RegexNode $ast): string
     {
-        $serialized = self::extractSerializedString($content);
-        if (null === $serialized) {
-            return null;
-        }
-
-        $value = @unserialize($serialized, ['allowed_classes' => self::NODE_CLASSES]);
-
-        return $value instanceof RegexNode ? $value : null;
+        return serialize($ast);
     }
 
-    /**
-     * Extracts the serialized AST string from the generated payload without executing it.
-     */
-    private static function extractSerializedString(string $content): ?string
+    public static function unserialize(string $data): ?RegexNode
     {
-        $code = ltrim($content);
-        if (str_starts_with($code, '<?php')) {
-            $code = substr($code, 5);
-        }
-
-        $offset = stripos($code, 'unserialize(');
-        if (false === $offset) {
+        // A class outside the list comes back incomplete, and a node property
+        // refuses it: a tree someone altered is a miss, not a failure.
+        try {
+            $value = @unserialize($data, ['allowed_classes' => self::NODE_CLASSES]);
+        } catch (\TypeError) {
             return null;
         }
 
-        $argumentBlock = substr($code, $offset + \strlen('unserialize('));
-        $commaPos = strpos($argumentBlock, ',');
-        if (false === $commaPos) {
-            return null;
-        }
-
-        $argument = trim(substr($argumentBlock, 0, $commaPos));
-        if ('' === $argument) {
-            return null;
-        }
-
-        if (\in_array($argument[0], ["'", '"'], true) && $argument[0] === substr($argument, -1)) {
-            $argument = substr($argument, 1, -1);
-        }
-
-        return stripcslashes($argument);
+        return $value instanceof RegexNode ? $value : null;
     }
 }

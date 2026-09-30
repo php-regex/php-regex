@@ -26,7 +26,7 @@ use RegexParser\Bridge\Laravel\Extractor\ValidationRuleExtractor;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
-use RegexParser\Cache\PsrCacheAdapter;
+use RegexParser\Cache\PsrSimpleCacheAdapter;
 use RegexParser\Lint\Extraction\ExtractorInterface;
 use RegexParser\Lint\Formatter\FormatterRegistry;
 use RegexParser\Lint\PhpRegexPatternSource;
@@ -116,7 +116,7 @@ final class RegexParserServiceProvider extends ServiceProvider
                 /** @var \Illuminate\Contracts\Cache\Repository $store */
                 $store = $app['cache']->store($cacheConfig['store']);
 
-                return new PsrCacheAdapter($store, $cacheConfig['prefix']);
+                return new PsrSimpleCacheAdapter($store, $cacheConfig['prefix']);
             }
 
             // Use filesystem cache if directory is specified

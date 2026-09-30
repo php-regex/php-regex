@@ -14,14 +14,11 @@ declare(strict_types=1);
 namespace RegexParser\Cache;
 
 use Psr\SimpleCache\CacheInterface;
+use RegexParser\Node\RegexNode;
 
 /**
- * PSR-16 bridge for AST caching.
- *
- * This adapter lets you plug a PSR-16 cache implementation into the
- * RegexParser cache system. It receives the compiled cache payload string
- * from the Regex service and stores the decoded RegexNode instance so
- * later reads can return the AST directly.
+ * Keeps trees in a PSR-16 cache, as serialized strings the adapter reads
+ * back itself: the store never has to rebuild an object.
  */
 final readonly class PsrSimpleCacheAdapter implements RemovableCacheInterface
 {
@@ -42,21 +39,16 @@ final readonly class PsrSimpleCacheAdapter implements RemovableCacheInterface
         return $this->prefix.hash('sha256', $regex);
     }
 
-    public function write(string $key, string $content): void
+    public function write(string $key, RegexNode $ast): void
     {
-        $value = CachePayloadDecoder::decode($content);
-
-        $this->cache->set($key, $value ?? $content);
+        $this->cache->set($key, AstSerializer::serialize($ast));
     }
 
-    public function load(string $key): mixed
+    public function load(string $key): ?RegexNode
     {
-        return $this->cache->get($key);
-    }
+        $data = $this->cache->get($key);
 
-    public function getTimestamp(string $key): int
-    {
-        return 0;
+        return \is_string($data) ? AstSerializer::unserialize($data) : null;
     }
 
     public function clear(?string $regex = null): void

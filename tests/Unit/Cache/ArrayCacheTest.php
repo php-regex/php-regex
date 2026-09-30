@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Cache;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\ArrayCache;
 use RegexParser\Node\RegexNode;
@@ -20,6 +21,7 @@ use RegexParser\Regex;
 
 final class ArrayCacheTest extends TestCase
 {
+    #[Test]
     public function test_parse_hit_returns_cached_ast(): void
     {
         $cache = new ArrayCache();
@@ -37,6 +39,7 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(['hits' => 2, 'misses' => 1], $cache->getStats());
     }
 
+    #[Test]
     public function test_generate_key_returns_hash(): void
     {
         $cache = new ArrayCache();
@@ -45,23 +48,26 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(hash('sha256', '/foo/'), $key);
     }
 
+    #[Test]
     public function test_write_and_load_cache_entry(): void
     {
         $cache = new ArrayCache();
         $key = $cache->generateKey('/test/');
-        $content = 'cached-content';
+        $tree = $this->tree('/test/');
 
-        $cache->write($key, $content);
-        $this->assertSame($content, $cache->load($key));
-        $this->assertGreaterThan(0, $cache->getTimestamp($key));
+        $cache->write($key, $tree);
+
+        // Trees are immutable: the stored instance itself is handed back.
+        $this->assertSame($tree, $cache->load($key));
     }
 
+    #[Test]
     public function test_load_increments_hits_on_cache_hit(): void
     {
         $cache = new ArrayCache();
         $key = $cache->generateKey('/hit/');
 
-        $cache->write($key, 'value');
+        $cache->write($key, $this->tree('/hit/'));
         $cache->load($key);
         $cache->load($key);
 
@@ -70,6 +76,7 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(0, $stats['misses']);
     }
 
+    #[Test]
     public function test_load_increments_misses_on_cache_miss(): void
     {
         $cache = new ArrayCache();
@@ -83,6 +90,7 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(2, $stats['misses']);
     }
 
+    #[Test]
     public function test_load_returns_null_for_nonexistent_key(): void
     {
         $cache = new ArrayCache();
@@ -91,59 +99,53 @@ final class ArrayCacheTest extends TestCase
         $this->assertNull($cache->load($key));
     }
 
-    public function test_get_timestamp_returns_zero_for_nonexistent_key(): void
-    {
-        $cache = new ArrayCache();
-        $key = $cache->generateKey('/nonexistent/');
-
-        $this->assertSame(0, $cache->getTimestamp($key));
-    }
-
+    #[Test]
     public function test_clear_removes_all_entries(): void
     {
         $cache = new ArrayCache();
         $key1 = $cache->generateKey('/abc/');
         $key2 = $cache->generateKey('/def/');
 
-        $cache->write($key1, 'value1');
-        $cache->write($key2, 'value2');
+        $cache->write($key1, $this->tree('/abc/'));
+        $cache->write($key2, $this->tree('/def/'));
         $cache->clear();
 
         $this->assertNull($cache->load($key1));
         $this->assertNull($cache->load($key2));
-        $this->assertSame(0, $cache->getTimestamp($key1));
-        $this->assertSame(0, $cache->getTimestamp($key2));
+        $this->assertSame(['hits' => 0, 'misses' => 2], $cache->getStats());
     }
 
+    #[Test]
     public function test_clear_with_specific_regex_removes_only_that_entry(): void
     {
         $cache = new ArrayCache();
         $key1 = $cache->generateKey('/abc/');
         $key2 = $cache->generateKey('/def/');
+        $tree2 = $this->tree('/def/');
 
-        $cache->write($key1, 'value1');
-        $cache->write($key2, 'value2');
+        $cache->write($key1, $this->tree('/abc/'));
+        $cache->write($key2, $tree2);
         $cache->clear('/abc/');
 
         $this->assertNull($cache->load($key1));
-        $this->assertSame(0, $cache->getTimestamp($key1));
-        $this->assertSame('value2', $cache->load($key2));
-        $this->assertGreaterThan(0, $cache->getTimestamp($key2));
+        $this->assertSame($tree2, $cache->load($key2));
     }
 
+    #[Test]
     public function test_clear_nonexistent_regex_does_not_affect_other_entries(): void
     {
         $cache = new ArrayCache();
         $key1 = $cache->generateKey('/existing/');
+        $tree = $this->tree('/existing/');
 
-        $cache->write($key1, 'value');
+        $cache->write($key1, $tree);
 
         $cache->clear('/nonexistent/');
 
-        $this->assertSame('value', $cache->load($key1));
-        $this->assertGreaterThan(0, $cache->getTimestamp($key1));
+        $this->assertSame($tree, $cache->load($key1));
     }
 
+    #[Test]
     public function test_get_stats_returns_current_stats(): void
     {
         $cache = new ArrayCache();
@@ -153,7 +155,7 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(0, $stats['hits']);
         $this->assertSame(0, $stats['misses']);
 
-        $cache->write($key, 'value');
+        $cache->write($key, $this->tree('/stats/'));
         $cache->load($key);
 
         $stats = $cache->getStats();
@@ -167,27 +169,60 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(1, $stats['misses']);
     }
 
-    public function test_write_updates_timestamp(): void
+    #[Test]
+    public function test_write_replaces_the_stored_tree(): void
     {
         $cache = new ArrayCache();
-        $key = $cache->generateKey('/timestamp/');
+        $key = $cache->generateKey('/replace/');
+        $second = $this->tree('/second/');
 
-        $cache->write($key, 'value1');
-        $timestamp1 = $cache->getTimestamp($key);
+        $cache->write($key, $this->tree('/first/'));
+        $cache->write($key, $second);
 
-        sleep(1);
-        $cache->write($key, 'value2');
-        $timestamp2 = $cache->getTimestamp($key);
-
-        $this->assertGreaterThan($timestamp1, $timestamp2);
+        $this->assertSame($second, $cache->load($key));
     }
 
+    #[Test]
+    public function test_write_makes_a_rewritten_entry_the_newest(): void
+    {
+        $cache = new ArrayCache(maxEntries: 2);
+        $a = $this->tree('/a/');
+        $c = $this->tree('/c/');
+
+        $cache->write('a', $a);
+        $cache->write('b', $this->tree('/b/'));
+        $cache->write('a', $a);
+        $cache->write('c', $c);
+
+        // Rewriting "a" moved it after "b", so "b" was the oldest when "c"
+        // pushed the cache past its size.
+        $this->assertNull($cache->load('b'));
+        $this->assertSame($a, $cache->load('a'));
+        $this->assertSame($c, $cache->load('c'));
+    }
+
+    #[Test]
+    public function test_the_default_size_keeps_1024_entries(): void
+    {
+        $cache = new ArrayCache();
+        $tree = $this->tree('/a/');
+
+        for ($i = 0; $i <= 1024; $i++) {
+            $cache->write('key'.$i, $tree);
+        }
+
+        $this->assertNull($cache->load('key0'));
+        $this->assertSame($tree, $cache->load('key1'));
+        $this->assertSame($tree, $cache->load('key1024'));
+    }
+
+    #[Test]
     public function test_clear_resets_stats(): void
     {
         $cache = new ArrayCache();
         $key = $cache->generateKey('/reset/');
 
-        $cache->write($key, 'value');
+        $cache->write($key, $this->tree('/reset/'));
         $cache->load($key);
         $cache->load($cache->generateKey('/nonexistent/'));
 
@@ -202,27 +237,30 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(1, $stats['misses']);
     }
 
+    #[Test]
     public function test_multiple_entries(): void
     {
         $cache = new ArrayCache();
-        $entries = [
-            '/pattern1/' => 'value1',
-            '/pattern2/' => 'value2',
-            '/pattern3/' => 'value3',
-        ];
-
-        foreach ($entries as $pattern => $value) {
-            $key = $cache->generateKey($pattern);
-            $cache->write($key, $value);
+        $entries = [];
+        foreach (['/pattern1/', '/pattern2/', '/pattern3/'] as $pattern) {
+            $entries[$pattern] = $this->tree($pattern);
         }
 
-        foreach ($entries as $pattern => $value) {
-            $key = $cache->generateKey($pattern);
-            $this->assertSame($value, $cache->load($key));
+        foreach ($entries as $pattern => $tree) {
+            $cache->write($cache->generateKey($pattern), $tree);
+        }
+
+        foreach ($entries as $pattern => $tree) {
+            $this->assertSame($tree, $cache->load($cache->generateKey($pattern)));
         }
 
         $stats = $cache->getStats();
         $this->assertSame(3, $stats['hits']);
         $this->assertSame(0, $stats['misses']);
+    }
+
+    private function tree(string $pattern): RegexNode
+    {
+        return Regex::create(['cache' => null])->parse($pattern);
     }
 }

@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace RegexParser\Cache;
 
+use RegexParser\Node\RegexNode;
+
 /**
- * In-memory cache using an array for storage.
+ * Trees kept in memory for the life of the process, the latest ones first:
+ * past the given number, the oldest is dropped. Trees are immutable, so the
+ * same instance is handed out on every hit.
  */
 final class ArrayCache implements RemovableCacheInterface
 {
@@ -23,14 +27,11 @@ final class ArrayCache implements RemovableCacheInterface
     private int $misses = 0;
 
     /**
-     * @var array<string, mixed>
+     * @var array<string, RegexNode>
      */
-    private array $data = [];
+    private array $trees = [];
 
-    /**
-     * @var array<string, int>
-     */
-    private array $timestamps = [];
+    public function __construct(private readonly int $maxEntries = 1024) {}
 
     #[\Override]
     public function generateKey(string $regex): string
@@ -39,51 +40,46 @@ final class ArrayCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function write(string $key, string $content): void
+    public function write(string $key, RegexNode $ast): void
     {
-        // AST payloads are decoded once at write time so that load() returns
-        // a ready-to-use RegexNode; other content is stored verbatim.
-        $this->data[$key] = CachePayloadDecoder::decode($content) ?? $content;
-        $this->timestamps[$key] = time();
+        unset($this->trees[$key]);
+        $this->trees[$key] = $ast;
+
+        while (\count($this->trees) > $this->maxEntries) {
+            unset($this->trees[array_key_first($this->trees)]);
+        }
     }
 
     #[\Override]
-    public function load(string $key): mixed
+    public function load(string $key): ?RegexNode
     {
-        if (array_key_exists($key, $this->data)) {
-            $this->hits++;
+        if (!isset($this->trees[$key])) {
+            $this->misses++;
 
-            return $this->data[$key];
+            return null;
         }
 
-        $this->misses++;
+        $this->hits++;
 
-        return null;
-    }
-
-    #[\Override]
-    public function getTimestamp(string $key): int
-    {
-        return $this->timestamps[$key] ?? 0;
+        return $this->trees[$key];
     }
 
     #[\Override]
     public function clear(?string $regex = null): void
     {
         if (null !== $regex) {
-            $key = $this->generateKey($regex);
-            unset($this->data[$key], $this->timestamps[$key]);
+            unset($this->trees[$this->generateKey($regex)]);
 
             return;
         }
 
-        $this->data = [];
-        $this->timestamps = [];
+        $this->trees = [];
     }
 
     /**
      * @return array{hits: int, misses: int}
      */
+    #[\Override]
     public function getStats(): array
     {
         return ['hits' => $this->hits, 'misses' => $this->misses];

@@ -13,8 +13,17 @@ declare(strict_types=1);
 
 namespace RegexParser\Cache;
 
-use RegexParser\Regex;
+use RegexParser\Exception\CacheException;
+use RegexParser\Node\RegexNode;
 
+/**
+ * Trees kept in files under a directory the caller names, as data read
+ * back with a class allowlist: nothing in the directory is ever run.
+ *
+ * The directory is created for its owner only, and one that another user
+ * owns or that others can write to is left alone: a tree planted there
+ * would change what a pattern is judged to be.
+ */
 final class FilesystemCache implements RemovableCacheInterface
 {
     private readonly string $directory;
@@ -23,118 +32,61 @@ final class FilesystemCache implements RemovableCacheInterface
 
     private int $misses = 0;
 
-    public function __construct(string $directory, private readonly string $extension = '.php')
+    public function __construct(string $directory)
     {
         $this->directory = rtrim($directory, '\\/');
-    }
-
-    /**
-     * Where caches go when no directory is given, namespaced by the AST
-     * version so a new release never reads a tree an older one wrote.
-     */
-    public static function defaultDirectory(): string
-    {
-        return \sys_get_temp_dir().\DIRECTORY_SEPARATOR.'regex-parser'.\DIRECTORY_SEPARATOR.'cache-'.Regex::CACHE_VERSION;
     }
 
     #[\Override]
     public function generateKey(string $regex): string
     {
-        $hash = hash('sha256', $regex.Regex::CACHE_VERSION);
+        $hash = hash('sha256', $regex);
 
-        return \sprintf(
-            '%s%s%s%s%s%s',
-            $this->directory,
-            \DIRECTORY_SEPARATOR,
-            $hash[0],
-            $hash[1],
-            \DIRECTORY_SEPARATOR,
-            substr($hash, 2).$this->extension,
-        );
+        return $this->directory.\DIRECTORY_SEPARATOR.substr($hash, 0, 2).\DIRECTORY_SEPARATOR.substr($hash, 2).'.cache';
     }
 
     #[\Override]
-    public function write(string $key, string $content): void
+    public function write(string $key, RegexNode $ast): void
     {
+        if (!$this->isTrusted()) {
+            return;
+        }
+
         $directory = \dirname($key);
         $this->createDirectory($directory);
 
-        $tmpFile = @tempnam($directory, 'regex');
-        if (false === $tmpFile) {
-            throw new \RuntimeException(\sprintf('Unable to create temporary file in "%s".', $directory));
-        }
+        // Written beside its final name, then moved there: a reader never sees
+        // half a file, and nothing lands outside the owner's directory, as
+        // tempnam() would when it falls back to the system temp directory.
+        $temporary = $key.'.'.bin2hex(random_bytes(6)).'.tmp';
+        if (false === @file_put_contents($temporary, AstSerializer::serialize($ast)) || !@chmod($temporary, 0o600) || !@rename($temporary, $key)) {
+            @unlink($temporary);
 
-        if (false === @file_put_contents($tmpFile, $content)) {
-            @unlink($tmpFile);
-
-            throw new \RuntimeException(\sprintf('Failed to write cache file "%s".', $key));
-        }
-
-        if (!@rename($tmpFile, $key)) {
-            if (!@copy($tmpFile, $key)) {
-                @unlink($tmpFile);
-
-                throw new \RuntimeException(\sprintf('Failed to move cache file "%s".', $tmpFile));
-            }
-
-            @unlink($tmpFile);
-        }
-
-        @chmod($key, 0o666 & ~umask());
-
-        if (\function_exists('opcache_invalidate')) {
-            @opcache_invalidate($key, true);
+            throw new CacheException(\sprintf('Unable to write the cache file "%s".', $key));
         }
     }
 
     #[\Override]
-    public function load(string $key): mixed
+    public function load(string $key): ?RegexNode
     {
-        if (!is_file($key)) {
-            $this->misses++;
+        $data = $this->isTrusted() && is_file($key) ? @file_get_contents($key) : false;
+        $ast = false === $data ? null : AstSerializer::unserialize($data);
 
-            return null;
-        }
+        null === $ast ? $this->misses++ : $this->hits++;
 
-        try {
-            $cached = include $key;
-        } catch (\Throwable) {
-            $cached = null;
-        }
-
-        // A file written by an incompatible version returns null, which is a
-        // miss like any other: counting it as a hit would hide the fact that
-        // nothing was reused.
-        if (null === $cached) {
-            $this->misses++;
-
-            return null;
-        }
-
-        $this->hits++;
-
-        return $cached;
-    }
-
-    #[\Override]
-    public function getTimestamp(string $key): int
-    {
-        return is_file($key) ? (int) filemtime($key) : 0;
+        return $ast;
     }
 
     #[\Override]
     public function clear(?string $regex = null): void
     {
-        if (null !== $regex) {
-            $file = $this->generateKey($regex);
-            if (is_file($file)) {
-                @unlink($file);
-            }
-
+        if (!is_dir($this->directory) || !$this->isTrusted()) {
             return;
         }
 
-        if (!is_dir($this->directory)) {
+        if (null !== $regex) {
+            @unlink($this->generateKey($regex));
+
             return;
         }
 
@@ -148,41 +100,44 @@ final class FilesystemCache implements RemovableCacheInterface
                 continue;
             }
 
-            $path = $fileInfo->getRealPath();
-            if (!\is_string($path)) {
-                continue;
-            }
-
-            if ($fileInfo->isDir()) {
-                @rmdir($path);
-            } else {
-                @unlink($path);
-            }
+            $fileInfo->isDir() ? @rmdir($fileInfo->getPathname()) : @unlink($fileInfo->getPathname());
         }
 
         @rmdir($this->directory);
     }
 
+    /**
+     * @return array{hits: int, misses: int}
+     */
     #[\Override]
     public function getStats(): array
     {
         return ['hits' => $this->hits, 'misses' => $this->misses];
     }
 
-    private function createDirectory(string $directory): void
+    /**
+     * Whether the directory is its owner's alone: it belongs to the user
+     * running PHP, and neither its group nor others can write to it. Windows
+     * permissions are ACLs this check cannot read, and are left to the host.
+     */
+    private function isTrusted(): bool
     {
-        if (is_dir($directory)) {
-            return;
+        if ('\\' === \DIRECTORY_SEPARATOR || !is_dir($this->directory)) {
+            return true;
         }
 
-        $umask = umask(0o002);
+        $permissions = @fileperms($this->directory);
+        if (false === $permissions || 0 !== ($permissions & 0o022)) {
+            return false;
+        }
 
-        try {
-            if (!@mkdir($directory, 0o777, true) && !is_dir($directory)) {
-                throw new \RuntimeException(\sprintf('Unable to create the cache directory "%s".', $directory));
-            }
-        } finally {
-            umask($umask);
+        return !\function_exists('posix_geteuid') || @fileowner($this->directory) === posix_geteuid();
+    }
+
+    private function createDirectory(string $directory): void
+    {
+        if (!is_dir($directory) && !@mkdir($directory, 0o700, true) && !is_dir($directory)) {
+            throw new CacheException(\sprintf('Unable to create the cache directory "%s".', $directory));
         }
     }
 }

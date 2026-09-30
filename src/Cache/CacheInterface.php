@@ -13,13 +13,21 @@ declare(strict_types=1);
 
 namespace RegexParser\Cache;
 
+use RegexParser\Node\RegexNode;
+
+/**
+ * Where parsed trees are kept between calls. Each implementation encodes
+ * the tree its own way; none stores or runs code.
+ */
 interface CacheInterface
 {
     public function generateKey(string $regex): string;
 
-    public function write(string $key, string $content): void;
+    public function write(string $key, RegexNode $ast): void;
 
-    public function load(string $key): mixed;
-
-    public function getTimestamp(string $key): int;
+    /**
+     * The tree stored under the key, or null on a miss or on a value that
+     * is not a tree.
+     */
+    public function load(string $key): ?RegexNode;
 }

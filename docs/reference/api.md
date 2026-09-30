@@ -89,7 +89,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 
 | Option                    | Type                                   | Default           | Description                    | Performance Impact              |
 |---------------------------|----------------------------------------|-------------------|--------------------------------|---------------------------------|
-| `cache`                   | `null` \| `string` \| `CacheInterface` | `FilesystemCache` | Cache for parsed ASTs          | High - speeds repeated patterns |
+| `cache`                   | `null` \| `string` \| `CacheInterface` | `ArrayCache`      | Cache for parsed ASTs: the latest 1024 in memory by default, files under a directory you name, a PSR-6/PSR-16 adapter, or `null` for none | High - speeds repeated patterns |
 | `max_pattern_length`      | `int`                                  | `100_000`         | Maximum pattern length         | Low - prevents abuse            |
 | `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |

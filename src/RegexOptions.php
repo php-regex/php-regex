@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser;
 
+use RegexParser\Cache\ArrayCache;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
@@ -63,7 +64,7 @@ final readonly class RegexOptions
         public CacheInterface $cache,
         public array $redosIgnoredPatterns = [],
         public bool $runtimePcreValidation = false,
-        public int $maxRecursionDepth = 1024,
+        public int $maxRecursionDepth = Regex::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
         $this->target = $target ?? PcreTarget::runtime();
@@ -116,7 +117,7 @@ final readonly class RegexOptions
         return new self(
             Regex::DEFAULT_MAX_PATTERN_LENGTH,
             Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH,
-            new FilesystemCache(FilesystemCache::defaultDirectory()),
+            new ArrayCache(),
             [],
             false,
         );
@@ -210,7 +211,7 @@ final readonly class RegexOptions
      */
     private static function getRecursionDepth(array $options): int
     {
-        $depth = $options['max_recursion_depth'] ?? 1024;
+        $depth = $options['max_recursion_depth'] ?? Regex::DEFAULT_MAX_RECURSION_DEPTH;
 
         if (!\is_int($depth) || $depth <= 0) {
             throw new InvalidRegexOptionException(
@@ -309,10 +310,9 @@ final readonly class RegexOptions
      */
     private static function createCache(array $options): CacheInterface
     {
+        // Nothing goes to disk unless a directory is named.
         if (!\array_key_exists('cache', $options)) {
-            $defaultPath = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'regex-parser'.\DIRECTORY_SEPARATOR.'cache';
-
-            return new FilesystemCache($defaultPath);
+            return new ArrayCache();
         }
 
         $cacheOption = $options['cache'];

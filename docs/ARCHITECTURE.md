@@ -182,7 +182,7 @@ When `--jobs` is used and `pcntl_fork` is available, both extraction and analysi
 
 ## Caching and Limits
 
-RegexParser can cache ASTs via `CacheInterface`. By default it uses a filesystem cache under the system temp directory. You can disable caching with `cache => null` in `Regex::create()` options.
+RegexParser can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
 
 Limits are enforced in `RegexOptions`:
 

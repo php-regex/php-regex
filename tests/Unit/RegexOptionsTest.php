@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Cache\ArrayCache;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
 use RegexParser\Exception\InvalidRegexOptionException;
@@ -52,7 +53,7 @@ final class RegexOptionsTest extends TestCase
         $options = RegexOptions::fromArray([]);
         $this->assertSame(Regex::DEFAULT_MAX_PATTERN_LENGTH, $options->maxPatternLength);
         $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, $options->maxLookbehindLength);
-        $this->assertInstanceOf(FilesystemCache::class, $options->cache);
+        $this->assertInstanceOf(ArrayCache::class, $options->cache);
         $this->assertFalse($options->runtimePcreValidation);
         $this->assertSame(1024, $options->maxRecursionDepth);
         $this->assertSame(\PHP_VERSION_ID, $options->target->phpVersionId);

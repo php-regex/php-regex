@@ -13,11 +13,14 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Cache;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\NullCache;
+use RegexParser\Regex;
 
 final class NullCacheTest extends TestCase
 {
+    #[Test]
     public function test_null_cache_no_ops(): void
     {
         $cache = new NullCache();
@@ -25,9 +28,9 @@ final class NullCacheTest extends TestCase
         $key = $cache->generateKey('/foo/');
         $this->assertSame(hash('sha256', '/foo/'), $key);
 
-        $cache->write($key, 'content'); // should not throw
+        $cache->write($key, Regex::create(['cache' => null])->parse('/foo/')); // should not throw
         $this->assertNull($cache->load($key));
-        $this->assertSame(0, $cache->getTimestamp($key));
+        $this->assertSame(['hits' => 0, 'misses' => 0], $cache->getStats());
 
         $cache->clear();
         $cache->clear('/bar/'); // should not throw

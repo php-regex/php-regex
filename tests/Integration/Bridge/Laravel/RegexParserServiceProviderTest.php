@@ -190,6 +190,24 @@ final class RegexParserServiceProviderTest extends TestCase
         $this->assertArrayHasKey('exclude_paths', $config);
     }
 
+    /**
+     * A Laravel cache store is a PSR-16 cache: parsed trees go to it.
+     */
+    public function test_a_laravel_cache_store_holds_the_trees(): void
+    {
+        $this->app['config']->set('regex-parser.cache.store', 'array');
+        $this->app->forgetInstance(Regex::class);
+        $this->app->forgetInstance('regex-parser.cache');
+
+        /** @var CacheInterface $cache */
+        $cache = $this->app->make('regex-parser.cache');
+        /** @var Regex $regex */
+        $regex = $this->app->make(Regex::class);
+        $tree = $regex->parse('/a{2,3}/');
+
+        $this->assertEquals($tree, $cache->load($cache->generateKey(Regex::cacheSeed('/a{2,3}/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH))));
+    }
+
     public function test_config_values_are_applied(): void
     {
         $this->app['config']->set('regex-parser.max_pattern_length', 5000);

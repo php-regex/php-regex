@@ -93,13 +93,13 @@ echo $result->isValid() ? 'Valid' : 'Invalid';
 
 ```php
 // PITFALL 1: Cache path not writable
-// ERROR: Cache directory must exist and be writable
+// ERROR: the cache directory must be creatable, and only its owner may write to it
 $regex = Regex::create([
     'cache' => '/nonexistent/path/cache',  // WRONG
 ]);
 
 // FIX: Use null to disable cache, or ensure path exists
-$regex = Regex::create(['cache' => null]);  // $regex = Regex::create(['cache' => '/tmp/regex-cache']);  // if writable
+$regex = Regex::create(['cache' => null]);  // or a directory of the project: ['cache' => __DIR__.'/var/cache/regex']
 
 // PITFALL 2: max_lookbehind too high
 // ERROR: Unbounded lookbehinds are invalid in PCRE
@@ -463,7 +463,7 @@ class RegexProcessor
     public function __construct()
     {
         $this->regex = Regex::create([
-            'cache' => new FilesystemCache('/tmp/regex-cache'),
+            'cache' => new FilesystemCache(__DIR__.'/var/cache/regex'),
         ]);
     }
 

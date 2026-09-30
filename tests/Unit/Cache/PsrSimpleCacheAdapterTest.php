@@ -13,46 +13,51 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Cache;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
-use RegexParser\Cache\CachePayloadDecoder;
+use RegexParser\Cache\AstSerializer;
 use RegexParser\Cache\PsrSimpleCacheAdapter;
+use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\InMemorySimpleCache;
 
 final class PsrSimpleCacheAdapterTest extends TestCase
 {
+    #[Test]
     public function test_stores_and_loads_ast_payload(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache, prefix: 'simple_');
+        $tree = $this->tree('/foo/');
 
         $key = $adapter->generateKey('/foo/');
-        $adapter->write($key, 'payload');
+        $adapter->write($key, $tree);
 
-        $this->assertSame('payload', $adapter->load($key));
+        $this->assertSame('simple_'.hash('sha256', '/foo/'), $key);
+        $this->assertSame(AstSerializer::serialize($tree), unserialize($cache->stored[$key]));
+        $this->assertEquals($tree, $adapter->load($key));
     }
 
+    #[Test]
     public function test_clear_by_regex_removes_entry(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache, prefix: 'simple_');
+        $other = $this->tree('/baz/');
 
         $key = $adapter->generateKey('/bar/');
-        $adapter->write($key, 'cached');
+        $otherKey = $adapter->generateKey('/baz/');
+        $adapter->write($key, $this->tree('/bar/'));
+        $adapter->write($otherKey, $other);
         $adapter->clear('/bar/');
 
         $this->assertNull($adapter->load($key));
+        $this->assertEquals($other, $adapter->load($otherKey));
     }
 
-    public function test_get_timestamp_always_returns_zero(): void
-    {
-        $cache = new InMemorySimpleCache();
-        $adapter = new PsrSimpleCacheAdapter($cache);
-
-        $this->assertSame(0, $adapter->getTimestamp('any_key'));
-    }
-
+    #[Test]
     public function test_clear_without_regex_clears_all(): void
     {
         $cache = new InMemorySimpleCache();
@@ -60,8 +65,8 @@ final class PsrSimpleCacheAdapterTest extends TestCase
 
         $key1 = $adapter->generateKey('/foo/');
         $key2 = $adapter->generateKey('/bar/');
-        $adapter->write($key1, 'value1');
-        $adapter->write($key2, 'value2');
+        $adapter->write($key1, $this->tree('/foo/'));
+        $adapter->write($key2, $this->tree('/bar/'));
 
         $adapter->clear();
 
@@ -69,6 +74,7 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $this->assertNull($adapter->load($key2));
     }
 
+    #[Test]
     public function test_custom_key_factory(): void
     {
         $cache = new InMemorySimpleCache();
@@ -79,67 +85,55 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $this->assertSame('test_custom_'.md5('/test/'), $key);
     }
 
-    public function test_decodes_real_cache_payload(): void
+    #[Test]
+    public function test_the_facade_stores_a_tree_it_reads_back(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache, prefix: 'test_');
 
-        $regex = Regex::create();
+        $regex = Regex::create(['cache' => $adapter]);
         $ast = $regex->parse('/test/');
 
-        // Use reflection to access private method
-        $reflection = new \ReflectionClass($regex);
-        $method = $reflection->getMethod('prepareCachePayload');
-        /** @var string $payload */
-        $payload = $method->invoke(null, $ast);
-
-        $key = $adapter->generateKey('/test/');
-        $adapter->write($key, $payload);
-
+        $key = $adapter->generateKey(Regex::cacheSeed('/test/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
         $loaded = $adapter->load($key);
+
         $this->assertInstanceOf(RegexNode::class, $loaded);
+        $this->assertEquals($ast, $loaded);
     }
 
-    public function test_extract_serialized_string(): void
-    {
-        // Test the private method through reflection
-        $method = new \ReflectionMethod(CachePayloadDecoder::class, 'extractSerializedString');
-
-        $payload = "<?php return unserialize('serialized_data', ['allowed_classes' => []]);";
-        $result = $method->invoke(null, $payload);
-        $this->assertSame('serialized_data', $result);
-    }
-
-    public function test_decode_payload_returns_null_for_non_regex_node(): void
+    /**
+     * What the store holds under a key is not trusted to be a tree: anything
+     * else reads as a miss, never as the raw value.
+     */
+    #[Test]
+    #[DataProvider('provideStoredValuesThatAreNotATree')]
+    public function test_a_stored_value_that_is_not_a_tree_loads_as_null(mixed $stored): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache);
+        $key = $adapter->generateKey('/planted/');
 
-        $payload = "<?php return unserialize('".serialize('plain')."', ['allowed_classes' => true]);";
-        $key = $adapter->generateKey('/nonnode/');
-        $adapter->write($key, $payload);
+        $cache->set($key, $stored);
 
-        $this->assertSame($payload, $adapter->load($key));
+        $this->assertNull($adapter->load($key));
     }
 
-    public function test_extract_serialized_string_returns_null_without_comma(): void
+    /**
+     * @return iterable<string, array{mixed}>
+     */
+    public static function provideStoredValuesThatAreNotATree(): iterable
     {
-        $method = new \ReflectionMethod(CachePayloadDecoder::class, 'extractSerializedString');
-
-        $payload = "<?php return unserialize('data');";
-
-        $this->assertNull($method->invoke(null, $payload));
+        yield 'a PHP script' => ["<?php return unserialize('".serialize('plain')."', ['allowed_classes' => true]);"];
+        yield 'a serialized string' => [serialize('plain')];
+        yield 'a serialized array' => [serialize(['a' => 1])];
+        yield 'a serialized object of another class' => [serialize(new \ArrayObject([1]))];
+        yield 'garbage' => ['not serialized at all'];
+        yield 'an empty string' => [''];
+        yield 'a tree object instead of a string' => [new RegexNode(new LiteralNode('a', 0, 1), '', '/', 0, 1)];
+        yield 'an integer' => [42];
     }
 
-    public function test_extract_serialized_string_returns_null_for_empty_argument(): void
-    {
-        $method = new \ReflectionMethod(CachePayloadDecoder::class, 'extractSerializedString');
-
-        $payload = "<?php return unserialize(, ['allowed_classes' => true]);";
-
-        $this->assertNull($method->invoke(null, $payload));
-    }
-
+    #[Test]
     public function test_get_stats_returns_zero_stats(): void
     {
         $adapter = new PsrSimpleCacheAdapter(new InMemorySimpleCache());
@@ -153,13 +147,14 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $this->assertSame(0, $stats['misses']);
     }
 
+    #[Test]
     public function test_get_stats_returns_zero_stats_after_cache_operations(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache);
 
         $key = $adapter->generateKey('test');
-        $adapter->write($key, 'value');
+        $adapter->write($key, $this->tree('/test/'));
         $adapter->load($key);
         $adapter->load($adapter->generateKey('nonexistent'));
 
@@ -168,79 +163,9 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $this->assertSame(0, $stats['hits']);
         $this->assertSame(0, $stats['misses']);
     }
-}
 
-final class InMemorySimpleCache implements CacheInterface
-{
-    /**
-     * @var array<string, mixed>
-     */
-    private array $values = [];
-
-    public function get(string $key, mixed $default = null): mixed
+    private function tree(string $pattern): RegexNode
     {
-        return $this->values[$key] ?? $default;
-    }
-
-    public function set(string $key, mixed $value, int|\DateInterval|null $ttl = null): bool
-    {
-        $this->values[$key] = $value;
-
-        return true;
-    }
-
-    public function delete(string $key): bool
-    {
-        unset($this->values[$key]);
-
-        return true;
-    }
-
-    public function clear(): bool
-    {
-        $this->values = [];
-
-        return true;
-    }
-
-    /**
-     * @param iterable<string> $keys
-     *
-     * @return iterable<string, mixed>
-     */
-    public function getMultiple(iterable $keys, mixed $default = null): iterable
-    {
-        foreach ($keys as $key) {
-            yield $key => $this->get($key, $default);
-        }
-    }
-
-    /**
-     * @param iterable<string, mixed> $values
-     */
-    public function setMultiple(iterable $values, int|\DateInterval|null $ttl = null): bool
-    {
-        foreach ($values as $key => $value) {
-            $this->set((string) $key, $value, $ttl);
-        }
-
-        return true;
-    }
-
-    /**
-     * @param iterable<string> $keys
-     */
-    public function deleteMultiple(iterable $keys): bool
-    {
-        foreach ($keys as $key) {
-            $this->delete((string) $key);
-        }
-
-        return true;
-    }
-
-    public function has(string $key): bool
-    {
-        return \array_key_exists($key, $this->values);
+        return Regex::create(['cache' => null])->parse($pattern);
     }
 }

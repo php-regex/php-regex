@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
@@ -22,6 +23,7 @@ use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
 use RegexParser\Exception\ResourceLimitException;
+use RegexParser\Exception\SyntaxErrorException;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\ConditionalNode;
@@ -503,17 +505,39 @@ final class RegexTest extends TestCase
         $this->assertSame('low', $method->invoke($this->regexService, 'not object'));
     }
 
-    public function test_prepare_cache_payload(): void
+    #[Test]
+    public function test_parse_writes_the_tree_itself_to_the_cache(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
-        $method = $ref->getMethod('prepareCachePayload');
+        $cache = new class implements CacheInterface {
+            /**
+             * @var array<string, RegexNode>
+             */
+            public array $written = [];
 
-        $ast = $this->regexService->parse('/a/');
-        $payload = $method->invoke(null, $ast); // static method
+            public function generateKey(string $regex): string
+            {
+                return 'key_'.$regex;
+            }
 
-        $this->assertIsString($payload);
-        $this->assertStringContainsString('<?php', (string) $payload);
-        $this->assertStringContainsString('unserialize', (string) $payload);
+            public function write(string $key, RegexNode $ast): void
+            {
+                $this->written[$key] = $ast;
+            }
+
+            public function load(string $key): ?RegexNode
+            {
+                return null;
+            }
+        };
+
+        $regex = Regex::create(['cache' => $cache]);
+        $ast = $regex->parse('/a/');
+        $key = 'key_'.Regex::cacheSeed('/a/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH);
+
+        // No payload is built any more: the cache receives the tree the
+        // parse returns, and encodes it its own way.
+        $this->assertSame([$key], array_keys($cache->written));
+        $this->assertSame($ast, $cache->written[$key]);
     }
 
     public function test_validate_resource_limits(): void
@@ -531,7 +555,7 @@ final class RegexTest extends TestCase
         $ref = new \ReflectionClass($this->regexService);
         $method = $ref->getMethod('buildValidationFailure');
 
-        $exception = new \Exception('Test error');
+        $exception = new SyntaxErrorException('Test error');
         $result = $method->invoke($this->regexService, $exception);
 
         $this->assertInstanceOf(ValidationResult::class, $result);
@@ -610,16 +634,11 @@ final class RegexTest extends TestCase
                 return 'key_'.$regex;
             }
 
-            public function write(string $key, string $content): void {}
+            public function write(string $key, RegexNode $ast): void {}
 
-            public function load(string $key): mixed
+            public function load(string $key): ?RegexNode
             {
                 return null;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
 
@@ -728,16 +747,11 @@ final class RegexTest extends TestCase
                 return 'key_'.$regex;
             }
 
-            public function write(string $key, string $content): void {}
+            public function write(string $key, RegexNode $ast): void {}
 
-            public function load(string $key): mixed
+            public function load(string $key): RegexNode
             {
                 return $this->mockAst;
-            }
-
-            public function getTimestamp(string $key): int
-            {
-                return 0;
             }
         };
         $cache->mockAst = $cachedAst;

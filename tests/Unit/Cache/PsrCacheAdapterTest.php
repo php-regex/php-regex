@@ -13,29 +13,33 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Cache;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\CacheItemPoolInterface;
+use RegexParser\Cache\AstSerializer;
 use RegexParser\Cache\PsrCacheAdapter;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
+use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\InMemoryCachePool;
 
 final class PsrCacheAdapterTest extends TestCase
 {
+    #[Test]
     public function test_generate_key_uses_prefix_and_hash(): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool, 'pfx_');
 
         $key = $cache->generateKey('/foo/');
 
-        $this->assertStringStartsWith('pfx_', $key);
-        $this->assertStringContainsString(hash('sha256', '/foo/'), $key);
+        $this->assertSame('pfx_'.hash('sha256', '/foo/'), $key);
     }
 
+    #[Test]
     public function test_custom_key_factory(): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool, 'pfx_', static fn (string $regex): string => 'custom_'.$regex);
 
         $key = $cache->generateKey('bar');
@@ -43,117 +47,96 @@ final class PsrCacheAdapterTest extends TestCase
         $this->assertSame('pfx_custom_bar', $key);
     }
 
-    public function test_write_and_load_decoded_payload(): void
+    #[Test]
+    public function test_write_stores_the_serialized_tree_and_load_reads_it_back(): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
 
         $ast = new RegexNode(new LiteralNode('', 0, 0), '', '/', 0, 0);
-        $serialized = serialize($ast);
-        $payload = <<<PHP
-            <?php
-
-            declare(strict_types=1);
-
-            return unserialize({$this->export($serialized)}, ['allowed_classes' => true]);
-            PHP;
 
         $key = $cache->generateKey('foo');
-        $cache->write($key, $payload);
+        $cache->write($key, $ast);
+
+        $this->assertSame(AstSerializer::serialize($ast), unserialize($pool->stored[$key]));
 
         $loaded = $cache->load($key);
 
         $this->assertInstanceOf(RegexNode::class, $loaded);
         $this->assertInstanceOf(LiteralNode::class, $loaded->pattern);
+        $this->assertEquals($ast, $loaded);
     }
 
-    public function test_write_falls_back_to_raw_payload_on_error(): void
-    {
-        $pool = new InMemoryPool();
-        $cache = new PsrCacheAdapter($pool);
-
-        $key = $cache->generateKey('broken');
-        $cache->write($key, '<?php broken');
-
-        $this->assertSame('<?php broken', $cache->load($key));
-    }
-
+    #[Test]
     public function test_clear(): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
+        $tree = Regex::create(['cache' => null])->parse('/x/');
 
         $key = $cache->generateKey('foo');
-        $raw = "<?php return 'x';";
-        $cache->write($key, $raw);
-        $this->assertSame($raw, $cache->load($key));
+        $cache->write($key, $tree);
+        $this->assertEquals($tree, $cache->load($key));
 
         $cache->clear('foo');
         $this->assertNull($cache->load($key));
 
-        $cache->write($key, "<?php return 'y';");
+        $cache->write($key, Regex::create(['cache' => null])->parse('/y/'));
         $cache->clear();
         $this->assertNull($cache->load($key));
     }
 
-    public function test_get_timestamp_returns_zero(): void
+    #[Test]
+    public function test_clear_by_regex_keeps_the_other_entries(): void
     {
-        $cache = new PsrCacheAdapter(new InMemoryPool());
-
-        $this->assertSame(0, $cache->getTimestamp('unused'));
-    }
-
-    public function test_decode_payload_returns_null_for_non_regex_node(): void
-    {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
-        $payload = "<?php return unserialize('".serialize('not-a-node')."', ['allowed_classes' => true]);";
+        $tree = Regex::create(['cache' => null])->parse('/b/');
 
-        $key = $cache->generateKey('nonnode');
-        $cache->write($key, $payload);
+        $cache->write($cache->generateKey('/a/'), Regex::create(['cache' => null])->parse('/a/'));
+        $cache->write($cache->generateKey('/b/'), $tree);
+        $cache->clear('/a/');
 
-        $this->assertSame($payload, $cache->load($key));
+        $this->assertNull($cache->load($cache->generateKey('/a/')));
+        $this->assertEquals($tree, $cache->load($cache->generateKey('/b/')));
     }
 
-    public function test_decode_payload_returns_null_for_malformed_unserialize(): void
+    /**
+     * What the pool holds under a key is not trusted to be a tree: anything
+     * else reads as a miss, never as the raw value.
+     */
+    #[Test]
+    #[DataProvider('provideStoredValuesThatAreNotATree')]
+    public function test_a_stored_value_that_is_not_a_tree_loads_as_null(mixed $stored): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
-        $payload = "<?php return unserialize('some string'";
+        $key = $cache->generateKey('planted');
 
-        $key = $cache->generateKey('malformed');
-        $cache->write($key, $payload);
+        $pool->save($pool->getItem($key)->set($stored));
 
-        $this->assertSame($payload, $cache->load($key));
+        $this->assertNull($cache->load($key));
     }
 
-    public function test_decode_payload_returns_null_for_empty_unserialize_arg(): void
+    /**
+     * @return iterable<string, array{mixed}>
+     */
+    public static function provideStoredValuesThatAreNotATree(): iterable
     {
-        $pool = new InMemoryPool();
-        $cache = new PsrCacheAdapter($pool);
-        $payload = "<?php return unserialize('', ['allowed_classes' => true]);";
-
-        $key = $cache->generateKey('emptyarg');
-        $cache->write($key, $payload);
-
-        $this->assertSame($payload, $cache->load($key));
+        yield 'a PHP script' => ["<?php return 'x';"];
+        yield 'a serialized string' => [serialize('not-a-node')];
+        yield 'a serialized array' => [serialize(['a' => 1])];
+        yield 'a serialized object of another class' => [serialize(new \ArrayObject([1]))];
+        yield 'a truncated serialized tree' => [substr(serialize(new RegexNode(new LiteralNode('a', 0, 1), '', '/', 0, 1)), 0, 40)];
+        yield 'an empty string' => [''];
+        yield 'a tree object instead of a string' => [new RegexNode(new LiteralNode('a', 0, 1), '', '/', 0, 1)];
+        yield 'an integer' => [42];
     }
 
-    public function test_decode_payload_returns_null_for_missing_unserialize_arg(): void
-    {
-        $pool = new InMemoryPool();
-        $cache = new PsrCacheAdapter($pool);
-        $payload = "<?php return unserialize(, ['allowed_classes' => true]);";
-
-        $key = $cache->generateKey('missingarg');
-        $cache->write($key, $payload);
-
-        $this->assertSame($payload, $cache->load($key));
-    }
-
+    #[Test]
     public function test_get_stats_returns_zero_stats(): void
     {
-        $cache = new PsrCacheAdapter(new InMemoryPool());
+        $cache = new PsrCacheAdapter(new InMemoryCachePool());
 
         $stats = $cache->getStats();
 
@@ -164,13 +147,14 @@ final class PsrCacheAdapterTest extends TestCase
         $this->assertSame(0, $stats['misses']);
     }
 
+    #[Test]
     public function test_get_stats_returns_zero_stats_after_cache_operations(): void
     {
-        $pool = new InMemoryPool();
+        $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
 
         $key = $cache->generateKey('test');
-        $cache->write($key, 'value');
+        $cache->write($key, Regex::create(['cache' => null])->parse('/test/'));
         $cache->load($key);
         $cache->load($cache->generateKey('nonexistent'));
 
@@ -178,123 +162,5 @@ final class PsrCacheAdapterTest extends TestCase
 
         $this->assertSame(0, $stats['hits']);
         $this->assertSame(0, $stats['misses']);
-    }
-
-    private function export(string $value): string
-    {
-        return var_export($value, true);
-    }
-}
-
-final class InMemoryPool implements CacheItemPoolInterface
-{
-    /**
-     * @var array<string, InMemoryItem>
-     */
-    private array $items = [];
-
-    public function getItem(string $key): CacheItemInterface
-    {
-        return $this->items[$key] ??= new InMemoryItem($key);
-    }
-
-    /**
-     * @return iterable<string, CacheItemInterface>
-     */
-    public function getItems(array $keys = []): iterable
-    {
-        foreach ($keys as $key) {
-            $key = (string) $key;
-            yield $key => $this->getItem($key);
-        }
-    }
-
-    public function hasItem(string $key): bool
-    {
-        return $this->getItem($key)->isHit();
-    }
-
-    public function clear(): bool
-    {
-        $this->items = [];
-
-        return true;
-    }
-
-    public function deleteItem(string $key): bool
-    {
-        unset($this->items[$key]);
-
-        return true;
-    }
-
-    public function deleteItems(array $keys): bool
-    {
-        foreach ($keys as $key) {
-            unset($this->items[$key]);
-        }
-
-        return true;
-    }
-
-    public function save(CacheItemInterface $item): bool
-    {
-        if ($item instanceof InMemoryItem) {
-            $this->items[$item->getKey()] = $item;
-        }
-
-        return true;
-    }
-
-    public function saveDeferred(CacheItemInterface $item): bool
-    {
-        return $this->save($item);
-    }
-
-    public function commit(): bool
-    {
-        return true;
-    }
-}
-
-final class InMemoryItem implements CacheItemInterface
-{
-    private bool $hit = false;
-
-    private mixed $value = null;
-
-    public function __construct(private readonly string $key) {}
-
-    public function getKey(): string
-    {
-        return $this->key;
-    }
-
-    public function get(): mixed
-    {
-        return $this->value;
-    }
-
-    public function isHit(): bool
-    {
-        return $this->hit;
-    }
-
-    public function set(mixed $value): static
-    {
-        $this->value = $value;
-        $this->hit = true;
-
-        return $this;
-    }
-
-    public function expiresAt(?\DateTimeInterface $expiration): static
-    {
-        return $this;
-    }
-
-    public function expiresAfter(\DateInterval|int|null $time): static
-    {
-        return $this;
     }
 }
