@@ -84,6 +84,19 @@ final class CommandTest extends TestCase
         $this->assertIsString($payload['explain']);
     }
 
+    public function test_analyze_command_json_carries_the_error_code_as_a_string(): void
+    {
+        $command = new AnalyzeCommand();
+        $output = new Output(false, false);
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/(?<=a+)b/', '--format=json']), $output), $exitCode);
+
+        $validation = $this->requireArrayKey($this->decodeJsonPayload($buffer), 'validation');
+        $this->assertFalse($validation['valid']);
+        $this->assertSame('regex.lookbehind.unbounded', $validation['error_code']);
+    }
+
     public function test_analyze_command_handles_invalid_regex_options(): void
     {
         $command = new AnalyzeCommand();

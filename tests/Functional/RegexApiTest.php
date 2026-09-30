@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\RemovableCacheInterface;
+use RegexParser\ErrorCode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Regex;
 use RegexParser\ValidationErrorCategory;
@@ -64,7 +65,7 @@ final class RegexApiTest extends TestCase
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PCRE_RUNTIME, $result->category);
-        $this->assertSame('regex.pcre.runtime', $result->errorCode);
+        $this->assertSame(ErrorCode::PcreRuntime, $result->errorCode);
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
         // PCRE2 10.48 reports "regular expression is too large" at offset 0,
         // the releases before at the end of the pattern.

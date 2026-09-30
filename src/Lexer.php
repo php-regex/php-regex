@@ -317,7 +317,7 @@ final class Lexer
         // itself refuses such patterns.
         $this->byteMode = !preg_match('//u', $pattern);
         if ($this->byteMode && str_contains($flags, 'u')) {
-            throw LexerException::withContext('Input string is not valid UTF-8.', 0, $pattern);
+            throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8, 0, $pattern);
         }
 
         $this->pattern = $pattern;
@@ -560,6 +560,7 @@ final class Lexer
         if (false === $result) {
             throw LexerException::withContext(
                 \sprintf('PCRE Error during tokenization: %s', (string) preg_last_error_msg()),
+                ErrorCode::InternalPcreFailure,
                 $this->position,
                 $this->pattern,
             );
@@ -568,16 +569,21 @@ final class Lexer
         if (0 === $result) {
             $context = substr($this->pattern, $this->position, self::ERROR_CONTEXT_LENGTH);
 
+            // Every character starts a token but a backslash with nothing
+            // after it.
             throw LexerException::withContext(
                 \sprintf('Unable to tokenize pattern at position %d. Context: "%s..."', $this->position, $context),
+                '\\' === $context ? ErrorCode::EscapeTrailingBackslash : ErrorCode::InternalUnexpectedState,
                 $this->position,
                 $this->pattern,
             );
         }
 
+        // Unreachable: a successful match always holds its whole-match string.
         if (!isset($matches[0]) || !\is_string($matches[0])) {
             throw LexerException::withContext(
                 'Lexer internal error: Missing matched token.',
+                ErrorCode::InternalUnexpectedState,
                 $this->position,
                 $this->pattern,
             );
@@ -620,6 +626,7 @@ final class Lexer
                 if ('\\c' === $matchedValue) {
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
+                        ErrorCode::ControlCharInvalid,
                         $this->reportsPastTheFault ? $this->afterCharacter($startPos + 2) : $startPos + 2,
                         $this->pattern,
                     );
@@ -630,6 +637,7 @@ final class Lexer
                 if ('\\x' === $matchedValue && '{}' === substr($this->pattern, $startPos + 2, 2)) {
                     throw LexerException::withContext(
                         'Invalid hex escape "\\x{}": at least one hexadecimal digit is required.',
+                        ErrorCode::EscapeDigitsMissing,
                         $startPos + 3,
                         $this->pattern,
                     );
@@ -646,6 +654,7 @@ final class Lexer
 
         throw LexerException::withContext(
             \sprintf('Lexer internal error: No known token matched at position %d.', $startPos),
+            ErrorCode::InternalUnexpectedState,
             $startPos,
             $this->pattern,
         );
@@ -671,13 +680,14 @@ final class Lexer
             // "(*scs:(1)...": PCRE reads the list of groups first.
             if ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true)) {
                 $listOpen = $startPos + \strlen($opener[0]);
-                $fault = PcreVerb::groupListFault($this->pattern, $listOpen);
-
-                throw LexerException::withContext(
-                    \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1]),
-                    $fault ?? $this->length,
+                [$offset, $code, $message] = PcreVerb::groupListFault(
                     $this->pattern,
-                );
+                    $listOpen,
+                    $this->reportsPastTheFault,
+                    $this->utf,
+                ) ?? [$this->length, ErrorCode::GroupUnclosed, \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])];
+
+                throw LexerException::withContext($message, $code, $offset, $this->pattern);
             }
 
             $known = PcreVerb::takesArgument($opener[1]);
@@ -686,6 +696,7 @@ final class Lexer
                 $known
                     ? \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])
                     : \sprintf('Unknown alphabetic assertion "(*%s:".', $opener[1]),
+                $known ? ErrorCode::GroupUnclosed : ErrorCode::VerbInvalid,
                 $known ? $this->length : $startPos + 2 + \strlen($opener[1]),
                 $this->pattern,
             );
@@ -936,6 +947,7 @@ final class Lexer
             // the rest of the pattern without a word.
             throw LexerException::withContext(
                 \sprintf('PCRE Error while reading a quoted run: %s', (string) preg_last_error_msg()),
+                ErrorCode::InternalPcreFailure,
                 $this->position,
                 $this->pattern,
             );
@@ -979,6 +991,7 @@ final class Lexer
         if (!preg_match($this->anchored('([^)]*)(\)|$)'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
             throw LexerException::withContext(
                 \sprintf('PCRE Error while reading a comment: %s', (string) preg_last_error_msg()),
+                ErrorCode::InternalPcreFailure,
                 $this->position,
                 $this->pattern,
             );
@@ -1134,6 +1147,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 'Unclosed character class "]" at end of input.',
+                ErrorCode::CharclassUnclosed,
                 $this->opensExtendedClass($classStart) ? $classStart : $this->position,
                 $this->pattern,
             );
@@ -1142,6 +1156,7 @@ final class Lexer
         if ($this->inCommentMode) {
             throw LexerException::withContext(
                 'Unclosed comment ")" at end of input.',
+                ErrorCode::CommentUnclosed,
                 $this->position,
                 $this->pattern,
             );

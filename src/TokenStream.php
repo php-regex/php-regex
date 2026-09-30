@@ -215,9 +215,11 @@ final class TokenStream
     /**
      * Step over a token of this type, or say what was found instead.
      *
+     * @param ErrorCode $code what is wrong with the pattern when the token is missing
+     *
      * @throws SyntaxErrorException
      */
-    public function consume(TokenType $type, string $error): Token
+    public function consume(TokenType $type, string $error, ErrorCode $code): Token
     {
         if ($this->check($type)) {
             $token = $this->current();
@@ -226,15 +228,17 @@ final class TokenStream
             return $token;
         }
 
-        throw $this->unexpected($error, '(found '.$this->current()->type->value.')');
+        throw $this->unexpected($error, '(found '.$this->current()->type->value.')', $code);
     }
 
     /**
      * Step over this literal, or say what was found instead.
      *
+     * @param ErrorCode $code what is wrong with the pattern when the literal is missing
+     *
      * @throws SyntaxErrorException
      */
-    public function consumeLiteral(string $value, string $error): Token
+    public function consumeLiteral(string $value, string $error, ErrorCode $code): Token
     {
         if ($this->checkLiteral($value)) {
             $token = $this->current();
@@ -246,6 +250,7 @@ final class TokenStream
         throw $this->unexpected(
             $error,
             '(found '.$this->current()->type->value.' with value '.$this->current()->value.')',
+            $code,
         );
     }
 
@@ -255,12 +260,13 @@ final class TokenStream
                || TokenType::T_EOF === $this->tokens[$this->position]->type;
     }
 
-    private function unexpected(string $error, string $found): SyntaxErrorException
+    private function unexpected(string $error, string $found, ErrorCode $code): SyntaxErrorException
     {
         $at = $this->isAtEnd() ? 'end of input' : 'position '.$this->current()->position;
 
         return SyntaxErrorException::withContext(
             $error.' at '.$at.' '.$found,
+            $code,
             $this->current()->position,
             $this->pattern,
         );

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Raised when a regex cannot be safely transpiled to a target dialect.
  */
@@ -25,10 +27,10 @@ final class TranspileException extends RegexException implements RegexParserExce
         ?int $position = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
-        ?string $errorCode = 'regex.transpile.unsupported',
+        ErrorCode $errorCode = ErrorCode::TranspileUnsupported,
     ) {
         $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $position, $this->getVisualSnippet(), $errorCode, $previous);
+        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 }

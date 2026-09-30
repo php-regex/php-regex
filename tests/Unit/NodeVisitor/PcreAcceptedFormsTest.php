@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
 use RegexParser\Tests\TestUtils\Pcre2ConformanceTable;
@@ -135,7 +136,7 @@ final class PcreAcceptedFormsTest extends TestCase
         $result = Regex::create()->validate((new Pcre2CaseRunner())->phpPattern($case));
 
         $this->assertFalse($result->isValid);
-        $this->assertSame('regex.lookbehind.too_complex', $result->errorCode);
+        $this->assertSame(ErrorCode::LookbehindTooComplex, $result->errorCode);
         $this->assertSame(9, $result->offset);
     }
 

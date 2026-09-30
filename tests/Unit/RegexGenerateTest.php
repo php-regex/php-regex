@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Regex;
 
@@ -36,7 +37,7 @@ final class RegexGenerateTest extends TestCase
             Regex::create(['cache' => null])->generate($pattern);
             self::fail(\sprintf('A sample was given for %s.', $pattern));
         } catch (SampleGenerationException $e) {
-            $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+            $this->assertSame(ErrorCode::GenerateNoMatch, $e->getErrorCode());
             $this->assertStringContainsString($pattern, $e->getMessage());
         }
     }
@@ -111,7 +112,7 @@ final class RegexGenerateTest extends TestCase
             try {
                 $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $regex->generate($pattern)));
             } catch (SampleGenerationException $e) {
-                $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+                $this->assertSame(ErrorCode::GenerateNoMatch, $e->getErrorCode());
             }
         }
     }
@@ -129,7 +130,7 @@ final class RegexGenerateTest extends TestCase
             $regex->generate('/^(?:\\w|\\d){500}$/');
             self::fail('A sample the engine could not check was given.');
         } catch (SampleGenerationException $e) {
-            $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+            $this->assertSame(ErrorCode::GenerateNoMatch, $e->getErrorCode());
             $this->assertStringContainsString('the engine gave up checking 8 of the samples (Recursion limit exhausted).', $e->getMessage());
         } finally {
             ini_set('pcre.recursion_limit', false === $limit ? '100000' : $limit);

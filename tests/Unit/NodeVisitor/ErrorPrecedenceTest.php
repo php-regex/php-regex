@@ -16,9 +16,11 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\ValidatorErrorCodes;
 
 /**
  * A pattern with two errors is reported at the one PCRE meets first, and PCRE
@@ -48,7 +50,7 @@ final class ErrorPrecedenceTest extends TestCase
         $this->assertContains(
             $result->offset,
             $offsets,
-            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), (string) $result->errorCode, implode(' or ', $offsets)),
+            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), var_export($result->errorCode, true), implode(' or ', $offsets)),
         );
     }
 
@@ -103,11 +105,14 @@ final class ErrorPrecedenceTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid);
-        $this->assertStringStartsWith('regex.', (string) $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        // The escape is judged by the AST validator, so its code is one the
+        // validator emits; a syntax code here would mean the later error won.
+        $this->assertInstanceOf(ErrorCode::class, $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        $this->assertContains($result->errorCode->value, ValidatorErrorCodes::VALUES, \sprintf('%s: %s', $pattern, (string) $result->error));
         $this->assertContains(
             $result->offset,
             $offsets,
-            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), (string) $result->errorCode, implode(' or ', $offsets)),
+            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), var_export($result->errorCode, true), implode(' or ', $offsets)),
         );
     }
 
@@ -123,11 +128,14 @@ final class ErrorPrecedenceTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid);
-        $this->assertNotSame('lexer.error', $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        // The class left open is found while tokenizing; the syntax error
+        // before it must win, so the code is never the unclosed class's.
+        $this->assertInstanceOf(ErrorCode::class, $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        $this->assertNotSame(ErrorCode::from('regex.charclass.unclosed'), $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
         $this->assertContains(
             $result->offset,
             $offsets,
-            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), (string) $result->errorCode, implode(' or ', $offsets)),
+            \sprintf('%s reported at offset %s (%s), PCRE2 reports %s.', $pattern, var_export($result->offset, true), var_export($result->errorCode, true), implode(' or ', $offsets)),
         );
     }
 

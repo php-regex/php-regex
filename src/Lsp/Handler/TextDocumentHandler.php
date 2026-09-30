@@ -181,6 +181,7 @@ final readonly class TextDocumentHandler
             } catch (LexerException|ParserException $e) {
                 $diagnostics[] = $this->diagnosticConverter->fromParseError(
                     $e->getMessage(),
+                    $e->getErrorCode(),
                     $occurrence->start,
                     \strlen($occurrence->pattern),
                     $e->position,

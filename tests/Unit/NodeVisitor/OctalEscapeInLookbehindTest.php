@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
@@ -46,7 +47,7 @@ final class OctalEscapeInLookbehindTest extends TestCase
         $this->assertSame(0, PhpErrorOffset::of('/(?<=\\101+)a/'));
 
         $result = Regex::create(['cache' => null])->validate('/(?<=\\101+)a/');
-        $this->assertSame('regex.lookbehind.unbounded', $result->errorCode);
+        $this->assertSame(ErrorCode::LookbehindUnbounded, $result->errorCode);
     }
 
     /**

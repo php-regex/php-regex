@@ -26,7 +26,7 @@ final readonly class ValidationResult
         public ?int $offset = null,
         public ?string $caretSnippet = null,
         public ?string $hint = null,
-        public ?string $errorCode = null,
+        public ?ErrorCode $errorCode = null,
     ) {}
 
     /**
@@ -70,7 +70,7 @@ final readonly class ValidationResult
         return $this->hint;
     }
 
-    public function getErrorCode(): ?string
+    public function getErrorCode(): ?ErrorCode
     {
         return $this->errorCode;
     }

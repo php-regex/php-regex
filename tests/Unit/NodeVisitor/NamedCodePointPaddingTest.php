@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -43,7 +44,7 @@ final class NamedCodePointPaddingTest extends TestCase
             $result = $regex->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
-            $this->assertSame('regex.unicode.invalid_digit', $result->errorCode);
+            $this->assertSame(ErrorCode::UnicodeInvalidDigit, $result->errorCode);
             $this->assertContains($result->offset, $offsets, \sprintf('%s reported at offset %s, PCRE2 reports %s.', $pattern, var_export($result->offset, true), implode(' or ', $offsets)));
         }
     }

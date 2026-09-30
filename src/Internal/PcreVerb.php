@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Internal;
 
+use RegexParser\ErrorCode;
 use RegexParser\Node\GroupType;
 
 /**
@@ -152,32 +153,64 @@ final readonly class PcreVerb
     }
 
     /**
-     * Where PCRE stops reading the list of groups "(1,<name>)" that opens at
-     * $open: on the character that is no "(", no item, or no "," or ")"
-     * after one. Null when the list closes.
+     * What stops PCRE reading the list of groups "(1,<name>,'name')" that
+     * opens at $open, read as PCRE reads it, item by item: no "(", an item
+     * that is neither a number nor a name, a name that is empty, starts with
+     * a digit or is not closed, or no "," or ")" after an item. Null when the
+     * list closes. What the numbers name is left to the caller.
+     *
+     * @param bool $pastTheDigit whether a name starting with a digit is
+     *                           refused past the digit, as from PCRE2 10.47
+     * @param bool $unicode      whether names are read in UTF mode
+     *
+     * @return array{0: int, 1: ErrorCode, 2: string}|null the offset, the
+     *                                                     code and the message
      */
-    public static function groupListFault(string $pattern, int $open): ?int
+    public static function groupListFault(string $pattern, int $open, bool $pastTheDigit = true, bool $unicode = false): ?array
     {
         if ('(' !== ($pattern[$open] ?? '')) {
-            return $open;
+            return [$open, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the list of groups at position %d.', $open)];
         }
 
         $at = $open + 1;
-        while (1 === preg_match('/\G(?:[+-]?\d++|<[^>]*+>|\'[^\']*+\')/', $pattern, $item, 0, $at)) {
-            $at += \strlen($item[0]);
+        while (true) {
+            $quote = $pattern[$at] ?? '';
+            if ('<' === $quote || "'" === $quote) {
+                $nameStart = $at + 1;
+                if (1 === preg_match($unicode ? '/\G\p{Nd}/u' : '/\G[0-9]/', $pattern, $digit, 0, $nameStart)) {
+                    $offset = $nameStart + ($pastTheDigit ? \strlen($digit[0]) : 0);
+
+                    return [$offset, ErrorCode::GroupNameInvalid, \sprintf('A group name must not start with a digit, at position %d.', $offset)];
+                }
+
+                preg_match($unicode ? '/\G[_\p{L}\p{Nd}]*+/u' : '/\G\w*+/', $pattern, $name, 0, $nameStart);
+                $nameEnd = $nameStart + \strlen($name[0] ?? '');
+                if ($nameEnd === $nameStart) {
+                    return [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Group name expected at position %d.', $nameStart)];
+                }
+
+                if (('<' === $quote ? '>' : "'") !== ($pattern[$nameEnd] ?? '')) {
+                    return [$nameEnd, ErrorCode::GroupNameUnterminated, \sprintf('Missing "%s" to close the group name at position %d.', '<' === $quote ? '>' : "'", $nameEnd)];
+                }
+
+                $at = $nameEnd + 1;
+            } elseif (1 === preg_match('/\G[+-]?\d++/', $pattern, $number, 0, $at)) {
+                $at += \strlen($number[0]);
+            } else {
+                return [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)];
+            }
+
             $next = $pattern[$at] ?? '';
             if (')' === $next) {
                 return null;
             }
 
             if (',' !== $next) {
-                return $at;
+                return [$at, ErrorCode::GroupUnclosed, \sprintf('Missing ")" to close the list of groups at position %d.', $at)];
             }
 
             $at++;
         }
-
-        return $at;
     }
 
     /**

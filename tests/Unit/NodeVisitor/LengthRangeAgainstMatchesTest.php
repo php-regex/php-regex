@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
 use RegexParser\Regex;
 
@@ -89,7 +90,7 @@ final class LengthRangeAgainstMatchesTest extends TestCase
             foreach ([80200, 80300] as $phpVersion) {
                 $result = Regex::create(['cache' => null, 'php_version' => $phpVersion])->validate($pattern);
 
-                $this->assertSame('regex.lookbehind.variable_length_not_supported', $result->errorCode, \sprintf('%s on PHP %d', $pattern, $phpVersion));
+                $this->assertSame(ErrorCode::LookbehindVariableLengthNotSupported, $result->errorCode, \sprintf('%s on PHP %d', $pattern, $phpVersion));
                 $this->assertSame(0, $result->offset);
             }
 

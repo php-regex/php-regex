@@ -12,6 +12,7 @@ This comprehensive guide explains how RegexParser reports errors and warnings, h
 | [CLI Examples](#cli-examples)                       | Command-line output   |
 | [Lint Diagnostics](#lint-diagnostics)               | Linting output        |
 | [Common Fixes](#common-fixes)                       | Quick solutions       |
+| [Error Codes](#error-codes)                         | Every stable code     |
 
 ---
 
@@ -50,11 +51,11 @@ $result = Regex::create()->validate('/[unclosed/');
 if (!$result->isValid()) {
     // Access all diagnostic information
     echo $result->isValid();        // false
-    echo $result->error;            // "Unterminated character class"
-    echo $result->errorCode;        // "regex.syntax.unterminated"
+    echo $result->error;            // "Unclosed character class "]" at end of input." + snippet
+    echo $result->errorCode->value; // "regex.charclass.unclosed"
     echo $result->offset;           // 9
     echo $result->caretSnippet;     // See below
-    echo $result->hint;             // "Close the bracket with ]"
+    echo $result->hint;             // null: no hint for this one
     echo $result->complexityScore;  // 1
     echo $result->category->value;  // "syntax"
 }
@@ -65,11 +66,11 @@ if (!$result->isValid()) {
 | Field             | Type                    | Description               | Example                          |
 |-------------------|-------------------------|---------------------------|----------------------------------|
 | `isValid`         | bool                    | Whether pattern passed    | `false`                          |
-| `error`           | string\|null            | Human-readable message    | `"Unterminated character class"` |
-| `errorCode`       | string\|null            | Stable code for handling  | `"regex.syntax.unterminated"`    |
+| `error`           | string\|null            | Human-readable message    | `"Unclosed character class..."`  |
+| `errorCode`       | ErrorCode\|null         | Stable code for handling  | `ErrorCode::CharclassUnclosed`   |
 | `offset`          | int\|null               | Byte offset in pattern    | `9`                              |
 | `caretSnippet`    | string\|null            | Visual snippet with caret | See below                        |
-| `hint`            | string\|null            | Suggested fix             | `"Close the bracket with ]"`     |
+| `hint`            | string\|null            | Suggested fix             | `"Use \g<0> for recursion..."`   |
 | `complexityScore` | int                     | Pattern complexity        | `1`                              |
 | `category`        | ValidationErrorCategory | Error type                | `syntax`                         |
 
@@ -364,13 +365,148 @@ preg_match('/(error|failure)/', $input);
 
 ## Error Code Categories
 
-| Category      | Meaning                   | Examples                              |
-|---------------|---------------------------|---------------------------------------|
-| `syntax`      | Invalid pattern structure | Unterminated class, missing delimiter |
-| `semantic`    | Violates PCRE rules       | Unbounded lookbehind, bad backref     |
-| `redos`       | Potential ReDoS risk       | Nested quantifiers                    |
-| `performance` | Suboptimal pattern        | Redundant group                       |
-| `style`       | Code style issue          | Useless flag                          |
+`ValidationResult::$category` tells which layer refused the pattern:
+
+| Category       | Meaning                                    | Examples                                 |
+|----------------|--------------------------------------------|------------------------------------------|
+| `syntax`       | The pattern cannot be read                 | Unclosed class, missing delimiter        |
+| `semantic`     | The pattern reads, but PCRE refuses it     | Unbounded lookbehind, missing group      |
+| `pcre-runtime` | PCRE itself failed on the pattern          | Compilation error the checks do not know |
+
+---
+
+## Error Codes
+
+Every `RegexException` carries an `ErrorCode` (`RegexException::getErrorCode()`), and so does a
+failed validation (`ValidationResult::$errorCode`). An invalid option (`InvalidRegexOptionException`)
+or a cache failure (`CacheException`) is no judgement on a pattern and carries none. The values are stable: match
+on the enum case, or on its string value when the code crosses a process boundary (the CLI's
+JSON output and the lint problems carry the string).
+
+```php
+use RegexParser\ErrorCode;
+use RegexParser\Regex;
+
+$result = Regex::create()->validate('/(?<=a+)b/');
+
+if (ErrorCode::LookbehindUnbounded === $result->errorCode) {
+    // ...
+}
+```
+
+Each value reads `regex.<area>.<problem>`. The one value without a problem segment is
+`regex.complexity`, raised when an analysis runs out of its work budget.
+
+| Code | Case | Meaning |
+|------|------|---------|
+| `regex.assertion.invalid` | `AssertionInvalid` | An escape written as an assertion is not one PCRE knows. |
+| `regex.backref.invalid_syntax` | `BackrefInvalidSyntax` | A backreference is not written in a form PCRE reads. |
+| `regex.backref.missing_group` | `BackrefMissingGroup` | A backreference points to a group number the pattern does not have. |
+| `regex.backref.missing_named_group` | `BackrefMissingNamedGroup` | A backreference names a group the pattern does not have. |
+| `regex.backref.relative` | `BackrefRelative` | A relative backreference points before the first group or past the last one. |
+| `regex.backref.zero` | `BackrefZero` | A backreference points to group 0, which is the whole match and no group. |
+| `regex.callout.invalid_delimiter` | `CalloutInvalidDelimiter` | A callout string opens with a character that is no string delimiter. |
+| `regex.callout.out_of_range` | `CalloutOutOfRange` | A callout number is above 255. |
+| `regex.callout.unclosed` | `CalloutUnclosed` | A callout argument is not followed by ")". |
+| `regex.callout.unclosed_string` | `CalloutUnclosedString` | A callout string is not closed by its delimiter. |
+| `regex.charclass.invalid_escape` | `CharclassInvalidEscape` | An escape is not allowed inside a character class. |
+| `regex.charclass.unclosed` | `CharclassUnclosed` | A character class is not closed by "]". |
+| `regex.comment.unclosed` | `CommentUnclosed` | A "(?#" comment is not closed by ")". |
+| `regex.complexity` | `Complexity` | The pattern is past the budget of the automata analysis. |
+| `regex.condition.assertion_expected` | `ConditionAssertionExpected` | A conditional group needs a lookaround assertion as its condition here. |
+| `regex.condition.missing_group` | `ConditionMissingGroup` | A condition names a group the pattern does not have. |
+| `regex.condition.unclosed` | `ConditionUnclosed` | The condition of a conditional group is not closed by ")". |
+| `regex.condition.version_operator` | `ConditionVersionOperator` | A VERSION condition compares with an operator other than "=" or ">=". |
+| `regex.condition.version_syntax` | `ConditionVersionSyntax` | A VERSION condition does not name a version as major.minor. |
+| `regex.conditional.invalid` | `ConditionalInvalid` | A condition is neither a group reference, a lookaround, nor DEFINE. |
+| `regex.conditional.too_many_branches` | `ConditionalTooManyBranches` | A conditional group has more than two branches. |
+| `regex.control_char.invalid` | `ControlCharInvalid` | "\c" is not followed by a printable ASCII character. |
+| `regex.define.too_many_branches` | `DefineTooManyBranches` | A "(?(DEFINE)...)" group has more than one branch. |
+| `regex.delimiter.invalid` | `DelimiterInvalid` | The pattern opens with an alphanumeric, backslash or NUL delimiter. |
+| `regex.delimiter.unclosed` | `DelimiterUnclosed` | The pattern has no closing delimiter. |
+| `regex.delimiter.unescaped` | `DelimiterUnescaped` | An unescaped delimiter ends the pattern early, and what follows reads as modifiers. |
+| `regex.encoding.invalid_utf8` | `EncodingInvalidUtf8` | The pattern is not valid UTF-8 under the "u" modifier. |
+| `regex.escape.digits_missing` | `EscapeDigitsMissing` | An escape such as "\x{}", "\o{}" or "\N{U+}" holds no digit. |
+| `regex.escape.single_byte_in_utf` | `EscapeSingleByteInUtf` | "\C" matches a single byte, which UTF mode does not allow. |
+| `regex.escape.trailing_backslash` | `EscapeTrailingBackslash` | A backslash ends the pattern with nothing to escape. |
+| `regex.escape.unrecognized` | `EscapeUnrecognized` | A backslash is followed by a letter PCRE knows no escape for. |
+| `regex.escape.unsupported` | `EscapeUnsupported` | The escape is not supported by PCRE, or not by the targeted PCRE release. |
+| `regex.extended_class.bracket_without_paren` | `ExtendedClassBracketWithoutParen` | The "]" closing an extended class is not followed by ")". |
+| `regex.extended_class.empty_expression` | `ExtendedClassEmptyExpression` | An extended class, or a parenthesis in it, holds no expression. |
+| `regex.extended_class.missing_operand` | `ExtendedClassMissingOperand` | An operator in an extended class has no operand before or after it. |
+| `regex.extended_class.missing_operator` | `ExtendedClassMissingOperator` | Two operands in an extended class have no operator between them. |
+| `regex.extended_class.nested_too_deep` | `ExtendedClassNestedTooDeep` | Parentheses in an extended class are nested deeper than PCRE allows. |
+| `regex.extended_class.too_complex` | `ExtendedClassTooComplex` | An extended class runs out of the operation budget. |
+| `regex.extended_class.unclosed` | `ExtendedClassUnclosed` | An extended class "(?[" is not closed by "])". |
+| `regex.extended_class.unclosed_paren` | `ExtendedClassUnclosedParen` | A parenthesis in an extended class is not closed by ")". |
+| `regex.extended_class.unexpected_character` | `ExtendedClassUnexpectedCharacter` | An extended class holds a character that is no operand and no operator. |
+| `regex.extended_class.unmatched_close` | `ExtendedClassUnmatchedClose` | A ")" in an extended class closes no open parenthesis. |
+| `regex.flag.removed_e` | `FlagRemovedE` | The "e" modifier was removed in PHP 7.0. |
+| `regex.flag.unknown` | `FlagUnknown` | A modifier after the closing delimiter is not one PHP knows. |
+| `regex.generate.no_match` | `GenerateNoMatch` | No sample the pattern matches was found. |
+| `regex.group.duplicate_name` | `GroupDuplicateName` | Two groups share a name, which needs the "J" modifier or "(?J)". |
+| `regex.group.name_conflict` | `GroupNameConflict` | Groups of the same number in a branch reset have different names. |
+| `regex.group.name_expected` | `GroupNameExpected` | A group name is expected where none is written. |
+| `regex.group.name_invalid` | `GroupNameInvalid` | A group name holds a non-word character, or starts with a digit. |
+| `regex.group.name_too_long` | `GroupNameTooLong` | A group name is longer than PCRE allows. |
+| `regex.group.name_unterminated` | `GroupNameUnterminated` | A group name is not closed by its ">", "'" or "}". |
+| `regex.group.nested_too_deep` | `GroupNestedTooDeep` | Groups are nested deeper than PCRE allows. |
+| `regex.group.number_too_big` | `GroupNumberTooBig` | A group number is above 65535. |
+| `regex.group.option_hyphen` | `GroupOptionHyphen` | An option setting has a hyphen PCRE does not take: a second one, or one after "(?^". |
+| `regex.group.syntax` | `GroupSyntax` | A "(?" is followed by a character PCRE does not read there. |
+| `regex.group.unclosed` | `GroupUnclosed` | A group is not closed by ")". |
+| `regex.group.unmatched_close` | `GroupUnmatchedClose` | A ")" closes no open group. |
+| `regex.group_list.item_expected` | `GroupListItemExpected` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, has an item that is no group number or name. |
+| `regex.group_list.missing_group` | `GroupListMissingGroup` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, names a group the pattern does not have. |
+| `regex.group_list.relative_zero` | `GroupListRelativeZero` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, has the relative number zero. |
+| `regex.internal.pcre_failure` | `InternalPcreFailure` | PCRE failed while the library was reading the pattern. |
+| `regex.internal.unexpected_state` | `InternalUnexpectedState` | The library reached a state it does not expect, which is a bug to report. |
+| `regex.keep.in_lookaround` | `KeepInLookaround` | "\K" is used inside a lookaround, which the targeted PHP refuses. |
+| `regex.lookbehind.too_complex` | `LookbehindTooComplex` | A lookbehind is too complicated for PCRE to measure. |
+| `regex.lookbehind.too_long` | `LookbehindTooLong` | A lookbehind is longer than PCRE allows. |
+| `regex.lookbehind.unbounded` | `LookbehindUnbounded` | A lookbehind can match text of unbounded length. |
+| `regex.lookbehind.variable_length_not_supported` | `LookbehindVariableLengthNotSupported` | A lookbehind of variable length needs a newer PCRE than the target. |
+| `regex.nesting.too_deep` | `NestingTooDeep` | The pattern nests deeper than the configured recursion limit. |
+| `regex.octal.invalid_digit` | `OctalInvalidDigit` | An octal escape holds a digit that is not octal. |
+| `regex.octal.missing_brace` | `OctalMissingBrace` | "\o" is not followed by "{". |
+| `regex.octal.out_of_range` | `OctalOutOfRange` | An octal escape names a code point past the allowed maximum. |
+| `regex.pattern.empty` | `PatternEmpty` | The pattern is empty, or only whitespace. |
+| `regex.pattern.too_large` | `PatternTooLarge` | The pattern compiles to more than PCRE's 64 KiB. |
+| `regex.pattern.too_long` | `PatternTooLong` | The pattern is longer than the configured maximum length. |
+| `regex.pcre.runtime` | `PcreRuntime` | PHP refused to compile the pattern. |
+| `regex.posix.collating_element` | `PosixCollatingElement` | A POSIX collating element such as "[.a.]" or "[=a=]" is not supported. |
+| `regex.posix.invalid` | `PosixInvalid` | A POSIX class name is not one PCRE knows. |
+| `regex.posix.outside_class` | `PosixOutsideClass` | A POSIX class is written outside a character class. |
+| `regex.quantifier.invalid_range` | `QuantifierInvalidRange` | A "{min,max}" quantifier has its numbers out of order. |
+| `regex.quantifier.nothing_to_repeat` | `QuantifierNothingToRepeat` | A quantifier follows nothing it can repeat. |
+| `regex.quantifier.too_big` | `QuantifierTooBig` | A quantifier number is above 65535. |
+| `regex.range.invalid_bounds` | `RangeInvalidBounds` | A range in a character class runs from or to something that is not a character. |
+| `regex.range.invalid_end` | `RangeInvalidEnd` | A range in a character class ends on more than one character. |
+| `regex.range.invalid_start` | `RangeInvalidStart` | A range in a character class starts on more than one character. |
+| `regex.range.reversed` | `RangeReversed` | A range in a character class runs from a higher code point to a lower one. |
+| `regex.scan_substring.missing_list` | `ScanSubstringMissingList` | A scan substring assertion has no "(" to open its group list. |
+| `regex.subroutine.invalid_syntax` | `SubroutineInvalidSyntax` | A subroutine call is not written in a form PCRE reads. |
+| `regex.subroutine.missing_group` | `SubroutineMissingGroup` | A subroutine call points to a group number the pattern does not have. |
+| `regex.subroutine.missing_named_group` | `SubroutineMissingNamedGroup` | A subroutine call names a group the pattern does not have. |
+| `regex.subroutine.recursion` | `SubroutineRecursion` | A recursion condition points to a group the pattern does not have. |
+| `regex.subroutine.relative_missing` | `SubroutineRelativeMissing` | A relative subroutine call points before the first group or past the last one. |
+| `regex.subroutine.relative_zero` | `SubroutineRelativeZero` | A subroutine call holds the relative number zero. |
+| `regex.token.unexpected` | `TokenUnexpected` | A token stands where the pattern cannot take it. |
+| `regex.transpile.unsupported` | `TranspileUnsupported` | The pattern holds a construct the target dialect cannot express. |
+| `regex.unicode.invalid_digit` | `UnicodeInvalidDigit` | A braced escape holds a character that is not a hexadecimal digit. |
+| `regex.unicode.out_of_range` | `UnicodeOutOfRange` | A code point is past U+10FFFF, or past 0xFF outside UTF mode. |
+| `regex.unicode.property_invalid` | `UnicodePropertyInvalid` | A Unicode property is unknown, or needs a newer PCRE than the target. |
+| `regex.unicode.property_malformed` | `UnicodePropertyMalformed` | A "\p" or "\P" escape is not written in a form PCRE reads. |
+| `regex.unicode.surrogate` | `UnicodeSurrogate` | A code point is a surrogate, which UTF mode does not allow. |
+| `regex.unicode_named.requires_utf` | `UnicodeNamedRequiresUtf` | "\N{U+hhhh}" needs the "u" modifier. |
+| `regex.verb.conflicting_casings` | `VerbConflictingCasings` | "(*TURKISH_CASING)" and "(*CASELESS_RESTRICT)" are used together. |
+| `regex.verb.invalid` | `VerbInvalid` | A verb, or an alphabetic assertion, is unknown or malformed. |
+| `regex.verb.limit_too_large` | `VerbLimitTooLarge` | A "(*LIMIT_...)" value is larger than PCRE takes. |
+| `regex.verb.mark_name_missing` | `VerbMarkNameMissing` | "(*MARK)" has no name. |
+| `regex.verb.misplaced` | `VerbMisplaced` | A start-of-pattern verb is written past the start of the pattern. |
+| `regex.verb.name_too_long` | `VerbNameTooLong` | The name of a verb is longer than PCRE allows. |
+| `regex.verb.turkish_casing_without_utf` | `VerbTurkishCasingWithoutUtf` | "(*TURKISH_CASING)" is used without UTF mode. |
+| `regex.verb.unclosed` | `VerbUnclosed` | A verb such as "(*MARK:name" is not closed by ")". |
 
 ---
 

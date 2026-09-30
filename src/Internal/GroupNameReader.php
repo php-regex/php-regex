@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Internal;
 
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SyntaxErrorException;
 use RegexParser\TokenStream;
 use RegexParser\TokenType;
@@ -128,32 +129,50 @@ final class GroupNameReader
     {
         $quote = $this->openingQuote();
         $nameStart = $this->stream->current()->position;
-        $name = $this->readName($quote);
+        $name = $this->readName($quote, $nameStart);
         $nameEnd = $this->stream->current()->position;
+
+        // PCRE wants a name before anything that closes it.
+        if ('' === $name) {
+            throw $this->error(\sprintf('Expected group name at position %d', $nameStart), ErrorCode::GroupNameExpected, $nameStart);
+        }
 
         if (null !== $quote) {
             $this->closeQuote($quote);
         }
 
-        if ('' === $name) {
-            throw $this->error(\sprintf('Expected group name at position %d', $nameStart), $nameStart);
-        }
-
-        // PCRE group names are word characters only and must not start with a digit.
+        // PCRE group names are word characters only and must not start with
+        // a digit: PCRE reads the characters a name may hold, and wants what
+        // closes the name right after them.
         $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+$/u' : '/^[A-Za-z_]\w*+$/';
         if (1 !== preg_match($namePattern, $name)) {
+            $offset = $this->invalidNameOffset($nameStart);
+            $fault = $this->nameFault($nameStart, $offset);
+
+            // PCRE measures the name it read before it looks for what closes it.
+            if (ErrorCode::GroupNameUnterminated === $fault && $offset - $nameStart > $this->maxNameLength) {
+                throw $this->error(
+                    \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $offset - $nameStart, $this->maxNameLength),
+                    ErrorCode::GroupNameTooLong,
+                    $offset,
+                );
+            }
+
             throw $this->error(
-                \sprintf(
-                    'Invalid group name "%s": names must contain only word characters and must not start with a digit.',
-                    $name,
-                ),
-                $this->invalidNameOffset($nameStart),
+                match ($fault) {
+                    ErrorCode::GroupNameExpected => \sprintf('Expected group name at position %d, found "%s".', $offset, $name),
+                    ErrorCode::GroupNameUnterminated => \sprintf('Invalid group name "%s": the name ends at position %d, and nothing closes it there.', $name, $offset),
+                    default => \sprintf('Invalid group name "%s": names must contain only word characters and must not start with a digit.', $name),
+                },
+                $fault,
+                $offset,
             );
         }
 
         if (\strlen($name) > $this->maxNameLength) {
             throw $this->error(
                 \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->maxNameLength),
+                ErrorCode::GroupNameTooLong,
                 $nameEnd,
             );
         }
@@ -168,6 +187,7 @@ final class GroupNameReader
                         $this->namesByNumber[$number],
                         $name,
                     ),
+                    ErrorCode::GroupNameConflict,
                     $nameEnd + 1,
                 );
             }
@@ -218,13 +238,29 @@ final class GroupNameReader
         $sameGroup = null !== $number && \in_array($number, $this->used[$name] ?? [], true);
 
         if (isset($this->used[$name]) && !$sameGroup && !$this->duplicatesAllowed) {
-            throw $this->error(\sprintf('Duplicate group name "%s" at position %d.', $name, $position), $position);
+            throw $this->error(\sprintf('Duplicate group name "%s" at position %d.', $name, $position), ErrorCode::GroupDuplicateName, $position);
         }
 
         $this->used[$name][] = $number ?? 0;
         if (null !== $number) {
             $this->namesByNumber[$number] = $name;
         }
+    }
+
+    /**
+     * What PCRE reports for a name that starts at $nameStart and that it
+     * stops reading at $stop: a name starting with a digit, no name at all
+     * when it stops where the name starts, or else a name nothing closes.
+     */
+    private function nameFault(int $nameStart, int $stop): ErrorCode
+    {
+        $digit = $this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/';
+
+        return match (true) {
+            1 === preg_match($digit, $this->stream->getPattern(), $matches, 0, $nameStart) => ErrorCode::GroupNameInvalid,
+            $stop === $nameStart => ErrorCode::GroupNameExpected,
+            default => ErrorCode::GroupNameUnterminated,
+        };
     }
 
     private function openingQuote(): ?string
@@ -242,7 +278,7 @@ final class GroupNameReader
     /**
      * @throws SyntaxErrorException
      */
-    private function readName(?string $quote): string
+    private function readName(?string $quote, int $nameStart): string
     {
         $name = '';
 
@@ -260,7 +296,7 @@ final class GroupNameReader
                 $token = $this->stream->current();
                 $written = substr($this->stream->getPattern(), $token->position, max(1, $token->end() - $token->position));
 
-                throw $this->error(\sprintf('Unexpected token "%s" in group name', $written), $token->position);
+                throw $this->error(\sprintf('Unexpected token "%s" in group name', $written), $this->nameFault($nameStart, $token->position), $token->position);
             }
 
             $name .= $this->stream->current()->value;
@@ -282,6 +318,7 @@ final class GroupNameReader
                     $quote,
                     $this->stream->current()->position,
                 ),
+                ErrorCode::GroupNameUnterminated,
                 $this->stream->current()->position,
             );
         }
@@ -289,8 +326,8 @@ final class GroupNameReader
         $this->stream->advance();
     }
 
-    private function error(string $message, int $position): SyntaxErrorException
+    private function error(string $message, ErrorCode $code, int $position): SyntaxErrorException
     {
-        return SyntaxErrorException::withContext($message, $position, $this->stream->getPattern());
+        return SyntaxErrorException::withContext($message, $code, $position, $this->stream->getPattern());
     }
 }

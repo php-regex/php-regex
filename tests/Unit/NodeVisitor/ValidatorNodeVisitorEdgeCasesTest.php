@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\GroupNumbering;
 use RegexParser\Node\AlternationNode;
@@ -145,7 +146,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('relative reference cannot be zero');
 
-        $method->invoke($validator, 0, 0, 'regex.backref.relative', 'Backreference');
+        $method->invoke($validator, 0, 0, ErrorCode::BackrefRelative, 'Backreference');
     }
 
     public function test_valid_backref_returns_cleanly(): void

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Automata\Support;
 
+use RegexParser\ErrorCode;
 use RegexParser\Exception\ComplexityException;
 
 /**
@@ -59,7 +60,7 @@ final class WorkBudget
             null,
             null,
             null,
-            'regex.complexity',
+            ErrorCode::Complexity,
             [
                 'phase' => $this->phase,
                 'states' => $this->states,

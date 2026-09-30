@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\ErrorCode;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\GroupNumbering;
@@ -552,7 +553,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
                 \strlen($node->source ?? ''),
-                'regex.pattern.too_large',
+                ErrorCode::PatternTooLarge,
                 'A group repeated with a count is compiled once per repetition: lower the count, or repeat a single item.',
             );
         }
@@ -670,7 +671,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseLateCompileError(
                 '\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.',
                 $this->patternLength - $this->positionOffset,
-                'regex.keep.in_lookaround',
+                ErrorCode::KeepInLookaround,
                 'Move the \K out of the lookaround.',
             );
         }
@@ -709,7 +710,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
                 $node->node->getEndPosition(),
-                'regex.escape.unsupported',
+                ErrorCode::EscapeUnsupported,
                 'Write the count as {n}, {n,} or {n,m} without spaces, or target PHP 8.4+.',
             );
         }
@@ -728,7 +729,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Number too big in "%s" quantifier: PCRE allows at most 65535 repetitions.', $node->quantifier),
                 $min > 65535 ? $minEnd : $maxEnd,
-                'regex.quantifier.too_big',
+                ErrorCode::QuantifierTooBig,
             );
         }
 
@@ -736,7 +737,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
                 $maxEnd,
-                'regex.quantifier.invalid_range',
+                ErrorCode::QuantifierInvalidRange,
             );
         }
     }
@@ -778,7 +779,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 '\C is not allowed in Unicode mode: it matches a single byte.',
                 null === $lookbehind ? $node->getEndPosition() : $this->lookbehindErrorPosition($lookbehind),
-                'regex.escape.single_byte_in_utf',
+                ErrorCode::EscapeSingleByteInUtf,
                 'Use "." or drop the "u" flag.',
             );
         }
@@ -797,12 +798,20 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 return;
             }
 
-            // From PCRE2 10.47, "\N{" there is a character name, refused past
-            // the "{".
+            // From PCRE2 10.47, "\N{" there is a character name, which PCRE
+            // does not support, refused past the "{".
+            if ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->supports(PcreFeature::ErrorOffsetPastTheFault)) {
+                $this->raiseSemanticError(
+                    'PCRE does not support the escape "\N{" (\F, \L, \l, \N{name}, \U and \u are not supported), in a character class either.',
+                    $node->getEndPosition() + 1,
+                    ErrorCode::EscapeUnsupported,
+                );
+            }
+
             $this->raiseSemanticError(
                 '\N is not supported in a character class.',
-                $node->getEndPosition() + ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0),
-                'regex.charclass.invalid_escape',
+                $node->getEndPosition(),
+                ErrorCode::CharclassInvalidEscape,
             );
         }
 
@@ -810,7 +819,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $node->value),
                 $this->pastTheFault($node->getEndPosition()),
-                'regex.charclass.invalid_escape',
+                ErrorCode::CharclassInvalidEscape,
             );
         }
     }
@@ -835,7 +844,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid assertion: \\%s.', $node->value),
                 $node->startPosition,
-                'regex.assertion.invalid',
+                ErrorCode::AssertionInvalid,
             );
         }
     }
@@ -919,6 +928,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         // 1. Validation: Ensure start and end nodes represent a single character.
         // We allow LiteralNode, but also CharLiteralNode and friends.
+        // Unreachable from a parsed pattern: the parser refuses such an
+        // endpoint first, with the same code; only a hand-built range gets here.
         if (!$this->isSingleCharNode($node->start) || !$this->isSingleCharNode($node->end)) {
             $this->raiseSemanticError(
                 \sprintf(
@@ -927,7 +938,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     $node->end::class,
                 ),
                 $node->startPosition,
-                'regex.range.invalid_bounds',
+                ErrorCode::RangeInvalidBounds,
             );
         }
 
@@ -937,18 +948,24 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Invalid range: start char must be a single character.',
                 $node->startPosition,
-                'regex.range.invalid_start',
+                ErrorCode::RangeInvalidStart,
             );
         }
         if ($node->end instanceof LiteralNode && mb_strlen($node->end->value, 'UTF-8') > 1) {
             $this->raiseSemanticError(
                 'Invalid range: end char must be a single character.',
                 $node->startPosition,
-                'regex.range.invalid_end',
+                ErrorCode::RangeInvalidEnd,
             );
         }
 
         $node->start->accept($this);
+
+        // "[a-[.x.]]": a collating element is no range end.
+        if (null !== $this->source && $node->end instanceof LiteralNode && '[' === $node->end->value && $this->isUnquotedClassBracket($this->source, $node->end)) {
+            $this->validateBracketInClass($this->source, $node->end->startPosition, true);
+        }
+
         $node->end->accept($this);
 
         // 3. Validation: order check, on the code points of both endpoints.
@@ -959,7 +976,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
                 $this->pastTheFault($node->getEndPosition()),
-                'regex.range.reversed',
+                ErrorCode::RangeReversed,
             );
         }
     }
@@ -981,17 +998,19 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     'Backreference \\0 is not valid.',
                     $node->startPosition,
-                    'regex.backref.zero',
+                    ErrorCode::BackrefZero,
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
             }
+            $this->guardGroupNumberSize($node, '', $matches[1]);
+
             // "\NN" that PCRE reads as an octal escape is parsed as one: a
             // reference by number here names a group or none.
             if ($num > $this->groupNumbering->maxGroupNumber) {
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
-                    'regex.backref.missing_group',
+                    ErrorCode::BackrefMissingGroup,
                 );
             }
 
@@ -1001,7 +1020,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
         if (preg_match('/^[+-]\d++$/', $ref)) {
-            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), 'regex.backref.relative', 'Condition');
+            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition');
 
             return;
         }
@@ -1013,7 +1032,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     'Backreference 0 is not valid.',
                     $this->missingReferenceOffset($node),
-                    'regex.backref.zero',
+                    ErrorCode::BackrefZero,
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
             }
@@ -1021,7 +1040,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: %d.', $num),
                     $this->missingReferenceOffset($node),
-                    'regex.backref.missing_group',
+                    ErrorCode::BackrefMissingGroup,
                 );
             }
 
@@ -1036,7 +1055,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $name).$suggestions,
                     $this->missingReferenceOffset($node),
-                    'regex.backref.missing_named_group',
+                    ErrorCode::BackrefMissingNamedGroup,
                 );
             }
 
@@ -1050,7 +1069,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $ref).$suggestions,
                     $node->startPosition,
-                    'regex.backref.missing_named_group',
+                    ErrorCode::BackrefMissingNamedGroup,
                 );
             }
 
@@ -1067,21 +1086,25 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     '\g is not followed by a braced, angle-bracketed or quoted name or number, or by a plain number.',
                     $node->startPosition + 2,
-                    'regex.backref.invalid_syntax',
+                    ErrorCode::BackrefInvalidSyntax,
                 );
             }
             if ('0' === $numStr || '+0' === $numStr || '-0' === $numStr) {
                 $this->raiseSemanticError(
                     'Backreference \\g{0} is not valid.',
                     $this->missingReferenceOffset($node),
-                    'regex.backref.zero',
+                    ErrorCode::BackrefZero,
                     'Use \\g<0> for recursion to the whole pattern.',
                 );
             }
 
+            if (1 === preg_match('/^([+-]?)(\d++)$/', $numStr, $number)) {
+                $this->guardGroupNumberSize($node, $number[1], $number[2]);
+            }
+
             if (str_starts_with($numStr, '+') || str_starts_with($numStr, '-')) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), 'regex.backref.relative', 'Backreference');
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference');
 
                 return;
             }
@@ -1091,17 +1114,28 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
                     $this->missingReferenceOffset($node),
-                    'regex.backref.missing_group',
+                    ErrorCode::BackrefMissingGroup,
                 );
             }
 
             return;
         }
 
+        // "\k<1>": PCRE reads a name there, and a name never starts with a
+        // digit. The tree spells "\g{1a}" the same way, but PCRE reads a
+        // number after "\g{" and calls it a syntax error: the source tells.
+        if (1 === preg_match('/^\\\\k[<{\']\d/', $ref) && null !== $this->source && '\\k' === substr($this->source, $node->startPosition, 2)) {
+            $this->raiseSemanticError(
+                \sprintf('Group name after \k must not start with a digit: "%s".', $ref),
+                $this->missingReferenceOffset($node),
+                ErrorCode::GroupNameInvalid,
+            );
+        }
+
         $this->raiseSemanticError(
             \sprintf('Invalid backreference syntax: "%s".', $ref),
             $this->missingReferenceOffset($node),
-            'regex.backref.invalid_syntax',
+            ErrorCode::BackrefInvalidSyntax,
         );
     }
 
@@ -1143,7 +1177,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Code point "%s" is a surrogate, which is not allowed in Unicode mode.', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                'regex.unicode.surrogate',
+                ErrorCode::UnicodeSurrogate,
             );
         }
     }
@@ -1183,7 +1217,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', ltrim($key, '\\'), $needs, $this->target->pcreVersion),
                     $node->getEndPosition(),
-                    'regex.unicode.property_invalid',
+                    ErrorCode::UnicodePropertyInvalid,
                 );
             }
 
@@ -1201,7 +1235,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 $message,
                 $node->getEndPosition(),
-                'regex.unicode.property_invalid',
+                ErrorCode::UnicodePropertyInvalid,
             );
         }
     }
@@ -1213,7 +1247,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid control character "\\c%s".', $node->char),
                 $node->startPosition,
-                'regex.control_char.invalid',
+                ErrorCode::ControlCharInvalid,
             );
         }
     }
@@ -1227,7 +1261,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $node->class),
                 $this->supports(PcreFeature::PosixItemErrorPastItsEnd) ? $node->getEndPosition() : $node->startPosition + 2 + (str_starts_with($node->class, '^') ? 1 : 0),
-                'regex.posix.invalid',
+                ErrorCode::PosixInvalid,
             );
         }
     }
@@ -1261,9 +1295,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if ($this->isBareNamedBackref($ref) && !$this->groupNumbering->hasNamedGroup($ref)) {
                 // Bare name that doesn't exist - this is an invalid conditional
                 $this->raiseMissingReference(
-                    'Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).',
+                    \sprintf('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE). The pattern has no group named "%s".', $ref),
                     $this->missingReferenceOffset($node->condition),
-                    'regex.conditional.invalid',
+                    ErrorCode::ConditionMissingGroup,
                 );
             }
             // Now validate the backreference itself
@@ -1277,17 +1311,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 // PCRE reads "R2" as a name, then as a group number digit by
                 // digit, and stops on the digit that takes it over 65535.
                 $overflow = strspn($ref, 'R') + $this->digitsWithinGroupLimit(ltrim($ref, 'R'));
-                $position = $overflow < \strlen($ref)
-                    ? $node->condition->startPosition + $overflow
-                    : $this->missingReferenceOffset($node->condition);
-                $this->assertSubroutineReferenceExists($num, $position, 'regex.subroutine.recursion', 'Recursion condition');
+                if ($overflow < \strlen($ref)) {
+                    $this->raiseSemanticError(
+                        \sprintf('Group number %s in a recursion condition is too big: PCRE takes at most 65535.', substr($ref, 1)),
+                        $node->condition->startPosition + $overflow,
+                        ErrorCode::GroupNumberTooBig,
+                    );
+                }
+                $this->assertSubroutineReferenceExists($num, $this->missingReferenceOffset($node->condition), ErrorCode::SubroutineRecursion, 'Recursion condition');
             } elseif (str_starts_with($ref, 'R&')) {
                 // "(?(R&name)...)": the group has to exist.
                 if (!$this->groupNumbering->hasNamedGroup(substr($ref, 2))) {
                     $this->raiseMissingReference(
                         \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
                         $this->missingReferenceOffset($node->condition),
-                        'regex.subroutine.missing_named_group',
+                        ErrorCode::SubroutineMissingNamedGroup,
                     );
                 }
             } else {
@@ -1317,7 +1355,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).',
                 $node->condition->getStartPosition(),
-                'regex.conditional.invalid',
+                ErrorCode::ConditionalInvalid,
             );
         }
 
@@ -1327,7 +1365,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseBranchCountError(
                 'A conditional group holds more than two branches.',
                 $node->startPosition,
-                'regex.conditional.too_many_branches',
+                ErrorCode::ConditionalTooManyBranches,
                 'Group the extra branches: (?(1)a|(?:b|c)).',
             );
         }
@@ -1353,19 +1391,27 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
             && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->supports(PcreFeature::CasingSettingVerbs))) {
-            // PCRE reports an unknown verb where its name ends; "(*)" is a
-            // "*" with nothing to repeat, refused past it from PCRE2 10.47,
-            // and so is an alphabetic assertion, whose name starts with a
-            // lowercase letter, followed by no colon.
+            // "(*)" is a "*" with nothing to repeat, refused past it from
+            // PCRE2 10.47.
+            if ('' === $node->verb) {
+                $this->raiseSemanticError(
+                    'Quantifier "*" does not follow a repeatable item: "(*)" names no verb.',
+                    $this->pastTheFault($node->startPosition + 2),
+                    ErrorCode::QuantifierNothingToRepeat,
+                );
+            }
+
+            // PCRE reports an unknown verb where its name ends, and past the
+            // character after it an alphabetic assertion, whose name starts
+            // with a lowercase letter, followed by no colon.
             $nameEnd = $node->startPosition + 2 + (1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
                 match (true) {
-                    '' === $node->verb => $this->pastTheFault($node->startPosition + 2),
                     1 === preg_match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + 1),
                     default => $nameEnd,
                 },
-                'regex.verb.invalid',
+                ErrorCode::VerbInvalid,
             );
         }
 
@@ -1380,7 +1426,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
                 PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
-                'regex.verb.invalid',
+                ErrorCode::VerbInvalid,
             );
         }
 
@@ -1389,7 +1435,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('The name of (*%s) is too long: PCRE takes at most %d code units.', $verbName, self::MAX_VERB_NAME_LENGTH),
                 $closing,
-                'regex.verb.name_too_long',
+                ErrorCode::VerbNameTooLong,
             );
         }
 
@@ -1402,7 +1448,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 '(*=...) is not a PCRE verb; a mark is written (*MARK:name) or (*:name).',
                 $node->startPosition + 2,
-                'regex.verb.invalid',
+                ErrorCode::VerbInvalid,
             );
         }
 
@@ -1410,7 +1456,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 '(*MARK) must have a name: (*MARK:name) or (*:name).',
                 $closing,
-                'regex.verb.mark_name_missing',
+                ErrorCode::VerbMarkNameMissing,
             );
         }
     }
@@ -1423,7 +1469,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseBranchCountError(
                 'A (DEFINE) group holds more than one branch.',
                 $node->startPosition + 3,
-                'regex.define.too_many_branches',
+                ErrorCode::DefineTooManyBranches,
                 'Group the branches: (?(DEFINE)(?:a|b)).',
             );
         }
@@ -1465,7 +1511,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
                 $pcreOffset ?? $node->startPosition,
-                'regex.condition.version_operator',
+                ErrorCode::ConditionVersionOperator,
             );
         }
 
@@ -1476,7 +1522,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
                     $tooBig,
-                    'regex.condition.version_syntax',
+                    ErrorCode::ConditionVersionSyntax,
                     'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.47 a minor of two digits.',
                 );
             }
@@ -1498,36 +1544,20 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // ")" belongs; it stops on one it reads where a digit belongs.
             // Before, it stops on a third digit of a minor.
             $pcreOffset ?? $versionStart + \strlen($valid) + ($afterNumber && $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0),
-            'regex.condition.version_syntax',
+            ErrorCode::ConditionVersionSyntax,
         );
     }
 
     #[\Override]
     public function visitCallout(CalloutNode $node): void
     {
-        $position = $node->startPosition + 4;
-
-        if (null === $node->identifier) {
-            return;
-        }
-
-        if (\is_int($node->identifier)) {
-            if ($node->identifier < 0 || $node->identifier > 255) {
-                $this->raiseSemanticError(
-                    \sprintf('Callout identifier must be between 0 and 255, got %d.', $node->identifier),
-                    $this->calloutOverflowOffset($node),
-                    'regex.callout.out_of_range',
-                );
-            }
-        } elseif (\is_string($node->identifier)) {
-            // Any string is a valid argument, the empty one included: PCRE2
-            // compiles (?C""), (?C'') and (?C{}).
-        } else {
-            // This case should ideally be caught by the Lexer/Parser, but as a safeguard.
+        // Any string is a valid argument, the empty one included: PCRE2
+        // compiles (?C""), (?C'') and (?C{}). A number goes up to 255.
+        if (\is_int($node->identifier) && ($node->identifier < 0 || $node->identifier > 255)) {
             $this->raiseSemanticError(
-                'Invalid callout identifier type.',
-                $position,
-                'regex.callout.invalid_type',
+                \sprintf('Callout identifier must be between 0 and 255, got %d.', $node->identifier),
+                $this->calloutOverflowOffset($node),
+                ErrorCode::CalloutOutOfRange,
             );
         }
     }
@@ -1569,7 +1599,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Group %s is listed but does not exist.', $group),
                     ctype_digit($group) || str_starts_with($group, '+') ? $at : $at + 1,
-                    'regex.subroutine.missing_group',
+                    ErrorCode::GroupListMissingGroup,
                 );
             }
 
@@ -1592,14 +1622,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             if (ctype_digit($numPart)) {
                 $num = (int) $numPart;
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.recursion', 'Recursion condition');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRecursion, 'Recursion condition');
 
                 return;
             }
 
             if (str_starts_with($numPart, '-') && ctype_digit(substr($numPart, 1))) {
                 $num = (int) $numPart;
-                $this->assertRelativeReferenceExists($num, $node->startPosition, 'regex.subroutine.recursion', 'Recursion condition');
+                $this->assertRelativeReferenceExists($num, $node->startPosition, ErrorCode::SubroutineRecursion, 'Recursion condition');
 
                 return;
             }
@@ -1611,20 +1641,21 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Subroutine call relative reference cannot be zero: "%s".', $ref),
                 'g' === $node->syntax ? $node->startPosition + 2 : max($node->startPosition, $node->getEndPosition() - 1),
-                'regex.subroutine.relative_zero',
+                ErrorCode::SubroutineRelativeZero,
             );
         }
 
         // Numeric reference: (?1), (?-1), (?+1), \g<-1>, \g<+1>
-        if (1 === preg_match('/^[+-]?\d+$/', $ref)) {
+        if (1 === preg_match('/^([+-]?)(\d+)$/', $ref, $matches)) {
+            $this->guardGroupNumberSize($node, $matches[1], $matches[2]);
             $num = (int) $ref;
             if (0 === $num) {
                 return; // (?0) is an alias for (?R)
             }
             if (str_starts_with($ref, '+') || str_starts_with($ref, '-')) {
-                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.relative_missing', 'Subroutine call');
+                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRelativeMissing, 'Subroutine call');
             } else {
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), 'regex.subroutine.missing_group', 'Subroutine call');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineMissingGroup, 'Subroutine call');
             }
 
             return;
@@ -1635,7 +1666,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseMissingReference(
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
                 $this->missingReferenceOffset($node),
-                'regex.subroutine.missing_named_group',
+                ErrorCode::SubroutineMissingNamedGroup,
             );
         }
     }
@@ -1680,7 +1711,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->raiseSemanticError(
             \sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', self::MAX_GROUP_NESTING),
             $bodyStart,
-            'regex.group.nested_too_deep',
+            ErrorCode::GroupNestedTooDeep,
             'Flatten the pattern: drop groups that only wrap one item.',
         );
     }
@@ -1713,7 +1744,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
                     // Before PCRE2 10.45, past the digit it refuses.
                     $start + $index + ($this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter) ? 0 : 1),
-                    'regex.verb.limit_too_large',
+                    ErrorCode::VerbLimitTooLarge,
                 );
             }
 
@@ -1900,7 +1931,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                'regex.unicode.out_of_range',
+                ErrorCode::UnicodeOutOfRange,
             );
         }
 
@@ -1909,7 +1940,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid code point "%s": without the "u" flag, a character is at most \xFF.', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                'regex.octal.out_of_range',
+                ErrorCode::OctalOutOfRange,
                 'Add the "u" flag, or use a code point up to \xFF.',
             );
         }
@@ -1931,7 +1962,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('Invalid octal codepoint "%s" (out of Unicode range).', $node->originalRepresentation),
                     $node->getEndPosition() - 1,
-                    'regex.octal.out_of_range',
+                    ErrorCode::OctalOutOfRange,
                 );
             }
 
@@ -1942,7 +1973,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid octal codepoint "%s".', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                'regex.octal.out_of_range',
+                ErrorCode::OctalOutOfRange,
             );
         }
     }
@@ -1956,16 +1987,17 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 \sprintf('Invalid legacy octal codepoint "%s" (out of range).', $node->originalRepresentation),
                 // PCRE reads the whole escape first, in every release.
                 $node->getEndPosition(),
-                'regex.octal.out_of_range',
+                ErrorCode::OctalOutOfRange,
             );
         }
     }
 
     private function validateUnicodeNamed(CharLiteralNode $node): void
     {
-        // Extract the Unicode name from the representation
+        // Extract the Unicode name from the representation. Unreachable from
+        // a parsed pattern: the parser always spells a non-empty "\N{...}".
         if (!preg_match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
-            throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", $node->getStartPosition(), $this->pattern);
+            throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", ErrorCode::EscapeUnsupported, $node->getStartPosition(), $this->pattern);
         }
 
         $name = $matches[1];
@@ -1977,7 +2009,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 // From PCRE2 10.47, PCRE reads the escape to its closing
                 // brace before it looks at the mode; before, past the "\N".
                 $this->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? $node->getEndPosition() : $node->startPosition + 2,
-                'regex.unicode_named.requires_utf',
+                ErrorCode::UnicodeNamedRequiresUtf,
             );
         }
 
@@ -1988,14 +2020,16 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                'regex.unicode.out_of_range',
+                ErrorCode::UnicodeOutOfRange,
             );
         }
 
         // If the codePoint is -1, the name could not be resolved. PCRE refuses
-        // a name it does not take once it has read "\N{".
+        // a name it does not take once it has read "\N{". Unreachable from a
+        // parsed pattern: visitCharLiteral refuses every "\N{...}" that is no
+        // "U+" code point before it gets here.
         if (-1 === $node->codePoint) {
-            throw new ParserException("Invalid Unicode character name: {$name}", $node->getStartPosition() + 3, $this->pattern);
+            throw new ParserException("Invalid Unicode character name: {$name}", ErrorCode::EscapeUnsupported, $node->getStartPosition() + 3, $this->pattern);
         }
     }
 
@@ -2163,7 +2197,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
                 $this->lookbehindErrorPosition($node),
-                'regex.lookbehind.unbounded',
+                ErrorCode::LookbehindUnbounded,
                 'Match the characters the cluster may hold instead of \X.',
             );
         }
@@ -2189,7 +2223,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     'Lookbehind is too complicated: in a pattern with a branch reset, PCRE gives up measuring it.',
                     $this->lookbehindErrorPosition($node),
-                    'regex.lookbehind.too_complex',
+                    ErrorCode::LookbehindTooComplex,
                     'Call fewer groups from the lookbehind, or drop the branch reset.',
                 );
             }
@@ -2250,7 +2284,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Lookbehind is unbounded. PCRE requires a bounded maximum length.',
                 $this->lookbehindErrorPosition($node),
-                'regex.lookbehind.unbounded',
+                ErrorCode::LookbehindUnbounded,
                 $hint,
             );
         }
@@ -2259,7 +2293,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
                 $this->lookbehindErrorPosition($node),
-                'regex.lookbehind.variable_length_not_supported',
+                ErrorCode::LookbehindVariableLengthNotSupported,
                 'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
             );
         }
@@ -2270,7 +2304,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (length=%d).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $max),
                 $this->lookbehindErrorPosition($node),
-                'regex.lookbehind.too_long',
+                ErrorCode::LookbehindTooLong,
                 'Shorten the lookbehind.',
             );
         }
@@ -2279,7 +2313,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLookbehindLength, $max),
                 $this->lookbehindErrorPosition($node),
-                'regex.lookbehind.too_long',
+                ErrorCode::LookbehindTooLong,
                 'Reduce the lookbehind length, or raise max_lookbehind_length.',
             );
         }
@@ -2644,10 +2678,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // the "\N", as "\N{foo}".
         $name = CharLiteralType::UNICODE_NAMED === $node->type && 1 === preg_match('/^\\\\N\{[ \t]/', $representation);
         [$code, $escape] = match (true) {
-            CharLiteralType::OCTAL === $node->type => ['regex.octal.invalid_digit', '\o{}'],
-            $name => ['regex.escape.unsupported', '\N{U+}'],
-            CharLiteralType::UNICODE_NAMED === $node->type => ['regex.unicode.invalid_digit', '\N{U+}'],
-            default => ['regex.unicode.invalid_digit', '\x{}'],
+            CharLiteralType::OCTAL === $node->type => [ErrorCode::OctalInvalidDigit, '\o{}'],
+            $name => [ErrorCode::EscapeUnsupported, '\N{U+}'],
+            CharLiteralType::UNICODE_NAMED === $node->type => [ErrorCode::UnicodeInvalidDigit, '\N{U+}'],
+            default => [ErrorCode::UnicodeInvalidDigit, '\x{}'],
         };
 
         $this->raiseSemanticError(
@@ -2684,7 +2718,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->raiseSemanticError(
             \sprintf('Spaces inside \%s{} need PCRE2 10.43, which PHP bundles from 8.4.', $matches[1]),
             $node->startPosition + $offset,
-            'regex.backref.invalid_syntax',
+            ErrorCode::BackrefInvalidSyntax,
             'Remove the spaces inside the braces, or target PHP 8.4+.',
         );
     }
@@ -2916,7 +2950,31 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         return $length;
     }
 
-    private function assertAbsoluteReferenceExists(int $num, int $position, string $code, string $context): void
+    /**
+     * PCRE refuses a group number past 65535 as it reads the pattern, before
+     * it looks up any group: a forward relative number counts the groups
+     * before it too.
+     *
+     * @param string $sign   "+", "-" or "", as written
+     * @param string $digits the number, as written
+     */
+    private function guardGroupNumberSize(BackrefNode|SubroutineNode $node, string $sign, string $digits): void
+    {
+        $number = $this->digitsWithinGroupLimit($digits) < \strlen($digits) ? 65536 : (int) $digits;
+        if ('+' === $sign) {
+            $number += ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1;
+        }
+
+        if ($number > 65535) {
+            $this->raiseSemanticError(
+                \sprintf('Group number %s%s is too big: PCRE takes at most 65535.', $sign, $digits),
+                $this->missingReferenceOffset($node),
+                ErrorCode::GroupNumberTooBig,
+            );
+        }
+    }
+
+    private function assertAbsoluteReferenceExists(int $num, int $position, ErrorCode $code, string $context): void
     {
         if ($num <= 0 || $num > $this->groupNumbering->maxGroupNumber) {
             $this->raiseMissingReference(
@@ -2927,7 +2985,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
     }
 
-    private function assertRelativeReferenceExists(int $offset, int $position, string $code, string $context): void
+    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context): void
     {
         if (0 === $offset) {
             $this->raiseSemanticError(
@@ -2961,7 +3019,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
     }
 
-    private function assertSubroutineReferenceExists(int $num, int $position, string $code, string $context): void
+    private function assertSubroutineReferenceExists(int $num, int $position, ErrorCode $code, string $context): void
     {
         if ($num > 0) {
             $this->assertAbsoluteReferenceExists($num, $position, $code, $context);
@@ -3019,7 +3077,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Unrecognized escape sequence "\%s".', $letter),
                 $this->pastTheFault($end),
-                'regex.escape.unrecognized',
+                ErrorCode::EscapeUnrecognized,
             );
         }
 
@@ -3031,7 +3089,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $letter),
                 $this->pastTheFault($end),
-                'regex.charclass.invalid_escape',
+                ErrorCode::CharclassInvalidEscape,
             );
         }
 
@@ -3041,7 +3099,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Escape sequence \k is invalid in a character class before PCRE2 10.45.',
                 $start + 1,
-                'regex.charclass.invalid_escape',
+                ErrorCode::CharclassInvalidEscape,
             );
         }
 
@@ -3065,7 +3123,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported Unicode property: \\%s{}.', $letter),
                 $position + 2,
-                'regex.unicode.property_invalid',
+                ErrorCode::UnicodePropertyInvalid,
             );
         }
 
@@ -3083,7 +3141,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->raiseSemanticError(
             \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
             $offset,
-            'regex.unicode.property_malformed',
+            ErrorCode::UnicodePropertyMalformed,
             \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),
         );
     }
@@ -3146,11 +3204,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'Missing opening brace after \o.',
                 $position,
-                'regex.octal.missing_brace',
+                ErrorCode::OctalMissingBrace,
             );
         }
 
-        $this->validateBracedDigits($source, $position + 1, self::OCTAL_DIGITS, true, 'regex.octal.invalid_digit', '\o{}');
+        $this->validateBracedDigits($source, $position + 1, self::OCTAL_DIGITS, true, ErrorCode::OctalInvalidDigit, '\o{}');
     }
 
     /**
@@ -3159,12 +3217,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     private function validateHexBraces(string $source, int $position): void
     {
         if ('{' === ($source[$position] ?? '')) {
-            $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, 'regex.unicode.invalid_digit', '\x{}');
+            $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, ErrorCode::UnicodeInvalidDigit, '\x{}');
         } elseif ($this->supports(PcreFeature::HexEscapeNeedsDigits)) {
             // A "\x" with no digit is "\x00" up to PCRE2 10.44 and an error
             // from 10.45, which no PHP release bundles yet: only a newer
             // linked PCRE2 refuses it.
-            $this->raiseSemanticError('Digits missing after \x.', $position, 'regex.escape.digits_missing');
+            $this->raiseSemanticError('Digits missing after \x.', $position, ErrorCode::EscapeDigitsMissing);
         }
     }
 
@@ -3191,11 +3249,11 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
                     $this->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
-                    'regex.unicode_named.requires_utf',
+                    ErrorCode::UnicodeNamedRequiresUtf,
                 );
             }
 
-            $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, 'regex.unicode.invalid_digit', '\N{U+}');
+            $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, ErrorCode::UnicodeInvalidDigit, '\N{U+}');
 
             // Reached only when the digits are left unjudged, "\N{U+ }": a
             // well-formed "\N{U+...}" is a token of its own.
@@ -3231,7 +3289,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         int $position,
         string $digits,
         bool $leadingPadding,
-        string $invalidDigitCode,
+        ErrorCode $invalidDigitCode,
         string $escape,
     ): void {
         $length = \strlen($source);
@@ -3268,7 +3326,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Digits missing in %s.', $escape),
                 $position,
-                'regex.escape.digits_missing',
+                ErrorCode::EscapeDigitsMissing,
             );
         }
 
@@ -3314,7 +3372,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->raiseSemanticError(
             \sprintf('PCRE does not support the escape "\%s" (\F, \L, \l, \N{name}, \U and \u are not supported).', $escape),
             $position,
-            'regex.escape.unsupported',
+            ErrorCode::EscapeUnsupported,
         );
     }
 
@@ -3343,7 +3401,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * A "[" inside a class starts a POSIX item when one closes after it:
      * "[[:alpha:]]" is known, "[[:foo:]]" and "[[.ch.]]" are errors.
      */
-    private function validateBracketInClass(string $source, int $start): void
+    /**
+     * @param bool $isRangeEnd whether the item ends a range, as in "[a-[.x.]]"
+     */
+    private function validateBracketInClass(string $source, int $start, bool $isRangeEnd = false): void
     {
         $terminator = $this->findPosixTerminator($source, $start + 1);
         if (null === $terminator) {
@@ -3354,12 +3415,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // a collating element, or on the name of a class.
         $past = $this->supports(PcreFeature::PosixItemErrorPastItsEnd);
         if (':' !== $source[$start + 1]) {
-            // As a range end, "[a-[.x.]]", just inside its "[".
-            $this->raiseSemanticError(
-                'POSIX collating elements are not supported.',
-                $past ? $terminator + 2 : $start + ('-' === ($source[$start - 1] ?? '') ? 1 : 0),
-                'regex.posix.collating_element',
-            );
+            // As a range end, "[a-[.x.]]", just inside its "[", and refused
+            // as a range PCRE cannot make.
+            $position = $past ? $terminator + 2 : $start + ('-' === ($source[$start - 1] ?? '') ? 1 : 0);
+            if ($isRangeEnd) {
+                $this->raiseSemanticError('Invalid range in character class: a POSIX collating element cannot end a range.', $position, ErrorCode::RangeInvalidBounds);
+            }
+
+            $this->raiseSemanticError('POSIX collating elements are not supported.', $position, ErrorCode::PosixCollatingElement);
         }
 
         $name = substr($source, $start + 2, $terminator - $start - 2);
@@ -3367,7 +3430,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $name),
                 $past ? $terminator + 2 : $start + 2 + (str_starts_with($name, '^') ? 1 : 0),
-                'regex.posix.invalid',
+                ErrorCode::PosixInvalid,
             );
         }
     }
@@ -3390,14 +3453,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 'POSIX named classes are supported only within a class.',
                 $offset,
-                'regex.posix.outside_class',
+                ErrorCode::PosixOutsideClass,
             );
         }
 
         $this->raiseSemanticError(
             'POSIX collating elements are not supported.',
             $offset,
-            'regex.posix.collating_element',
+            ErrorCode::PosixCollatingElement,
         );
     }
 
@@ -3587,7 +3650,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
                 $this->startOfPatternEnd,
-                'regex.verb.conflicting_casings',
+                ErrorCode::VerbConflictingCasings,
             );
         }
 
@@ -3597,7 +3660,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                     ? '(*TURKISH_CASING) needs UTF mode: UCP alone is not enough.'
                     : '(*TURKISH_CASING) needs UTF mode.',
                 $this->startOfPatternEnd,
-                'regex.verb.turkish_casing_without_utf',
+                ErrorCode::VerbTurkishCasingWithoutUtf,
                 'Add the "u" modifier.',
             );
         }
@@ -3616,7 +3679,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->raiseSemanticError(
             \sprintf('(*%s) is only recognized at the very start of the pattern.', $verbName),
             $start + 2 + \strlen($verbName),
-            'regex.verb.misplaced',
+            ErrorCode::VerbMisplaced,
             'Move it before anything else in the pattern.',
         );
     }
@@ -3824,9 +3887,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * than one: PCRE counts them once it has resolved the references, so on
      * a walk from the pattern root the error waits for the walk to end.
      */
-    private function raiseBranchCountError(string $message, int $position, string $code, string $hint): void
+    private function raiseBranchCountError(string $message, int $position, ErrorCode $code, string $hint): void
     {
-        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code, $hint);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
 
         if (!$this->walkingPattern) {
             throw $error;
@@ -3879,9 +3942,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * references to missing groups: on a walk from the pattern root, it waits
      * for the walk to end.
      */
-    private function raiseLateCompileError(string $message, int $position, string $code, string $hint): void
+    private function raiseLateCompileError(string $message, int $position, ErrorCode $code, string $hint): void
     {
-        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code, $hint);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
 
         if (!$this->walkingPattern) {
             throw $error;
@@ -3890,9 +3953,9 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->lateErrors[1] ??= $error;
     }
 
-    private function raiseMissingReference(string $message, int $position, string $code): void
+    private function raiseMissingReference(string $message, int $position, ErrorCode $code): void
     {
-        $error = new SemanticErrorException($message, $position + $this->positionOffset, $this->pattern, null, $code);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern);
 
         if (!$this->walkingPattern || $this->measuringLookbehind) {
             throw $error;
@@ -3901,14 +3964,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->lateErrors[$this->lookbehindDepth > 0 ? 0 : 1] ??= $error;
     }
 
-    private function raiseSemanticError(string $message, int $position, string $code, ?string $hint = null): never
+    private function raiseSemanticError(string $message, int $position, ErrorCode $code, ?string $hint = null): never
     {
         throw new SemanticErrorException(
             $message,
+            $code,
             $position + $this->positionOffset,
             $this->pattern,
             null,
-            $code,
             $hint,
         );
     }

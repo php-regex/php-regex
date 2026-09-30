@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\ValidationErrorCategory;
 use RegexParser\ValidationResult;
 
@@ -43,7 +44,7 @@ final class ValidationResultTest extends TestCase
             offset: 10,
             caretSnippet: 'pattern with error',
             hint: 'Fix the syntax',
-            errorCode: 'ERR001',
+            errorCode: ErrorCode::TokenUnexpected,
         );
 
         $this->assertFalse($result->isValid);
@@ -53,7 +54,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(10, $result->offset);
         $this->assertSame('pattern with error', $result->caretSnippet);
         $this->assertSame('Fix the syntax', $result->hint);
-        $this->assertSame('ERR001', $result->errorCode);
+        $this->assertSame(ErrorCode::TokenUnexpected, $result->errorCode);
     }
 
     public function test_accessors_mirror_properties(): void
@@ -117,11 +118,11 @@ final class ValidationResultTest extends TestCase
     {
         $result = new ValidationResult(
             isValid: false,
-            errorCode: 'REGEX_SYNTAX_ERROR',
+            errorCode: ErrorCode::GroupUnclosed,
         );
 
-        $this->assertSame('REGEX_SYNTAX_ERROR', $result->errorCode);
-        $this->assertSame('REGEX_SYNTAX_ERROR', $result->getErrorCode());
+        $this->assertSame(ErrorCode::GroupUnclosed, $result->errorCode);
+        $this->assertSame(ErrorCode::GroupUnclosed, $result->getErrorCode());
     }
 
     public function test_null_values(): void
@@ -195,12 +196,13 @@ final class ValidationResultTest extends TestCase
             error: '',
             caretSnippet: '',
             hint: '',
-            errorCode: '',
+            errorCode: ErrorCode::PatternEmpty,
         );
 
         $this->assertSame('', $result->getErrorMessage());
         $this->assertSame('', $result->getCaretSnippet());
         $this->assertSame('', $result->getHint());
-        $this->assertSame('', $result->getErrorCode());
+        // An error code is an enum case now, never an empty string.
+        $this->assertSame(ErrorCode::PatternEmpty, $result->getErrorCode());
     }
 }

@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace RegexParser\Internal;
 
+use RegexParser\ErrorCode;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
+use RegexParser\Exception\SyntaxErrorException;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\NodeInterface;
@@ -59,16 +61,16 @@ final class ExtendedClassReader
     private readonly int $length;
 
     /**
-     * @param \Closure(string, int): NodeInterface                                             $escape        reads an escape written at an offset
-     * @param \Closure(string, int): NodeInterface                                             $class         reads a nested class written at an offset
-     * @param \Closure(string|LexerException|ParserException, int, list<NodeInterface>): never $fail          refuses
-     *                                                                                                        the pattern at an offset, or for an error in an
-     *                                                                                                        operand, given the operands read before
-     * @param bool                                                                             $pastTheFault  whether the nesting limit is reported
-     *                                                                                                        on the character, as PCRE2 10.47 does
-     * @param bool                                                                             $utf           whether the pattern is read by UTF-8 character
-     * @param int                                                                              $maxOperations the most operations read, so the tree stays
-     *                                                                                                        one the visitors can walk
+     * @param \Closure(string, int): NodeInterface                                      $escape        reads an escape written at an offset
+     * @param \Closure(string, int): NodeInterface                                      $class         reads a nested class written at an offset
+     * @param \Closure(LexerException|ParserException, int, list<NodeInterface>): never $fail          refuses
+     *                                                                                                 the pattern at an offset, or for an error in an
+     *                                                                                                 operand, given the operands read before
+     * @param bool                                                                      $pastTheFault  whether the nesting limit is reported
+     *                                                                                                 on the character, as PCRE2 10.47 does
+     * @param bool                                                                      $utf           whether the pattern is read by UTF-8 character
+     * @param int                                                                       $maxOperations the most operations read, so the tree stays
+     *                                                                                                 one the visitors can walk
      */
     public function __construct(
         private readonly string $pattern,
@@ -98,16 +100,16 @@ final class ExtendedClassReader
         $this->skipBlanks();
         $char = $this->pattern[$this->at] ?? '';
         if (')' === $char) {
-            $this->refuse('Unmatched ")" in an extended class', $this->at + 1);
+            $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose, $this->at + 1);
         }
 
         if (']' !== $char) {
-            $this->refuse('Missing "]" to close an extended class', $this->length);
+            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
         }
 
         $this->at++;
         if (')' !== ($this->pattern[$this->at] ?? '')) {
-            $this->refuse('The "]" of an extended class must be followed by ")"', $this->at);
+            $this->refuse('The "]" of an extended class must be followed by ")"', ErrorCode::ExtendedClassBracketWithoutParen, $this->at);
         }
 
         return [$expression, $this->at + 1];
@@ -248,14 +250,17 @@ final class ExtendedClassReader
 
             $this->countOperation();
             $this->at++;
-            $right = $this->readIntersection();
+            $right = $this->readIntersection(true);
             $left = new ClassSetOperationNode($operator, $left, $right, $char, $left->getStartPosition(), $right->getEndPosition());
         }
     }
 
-    private function readIntersection(): NodeInterface
+    /**
+     * @param bool $afterOperator whether an operator comes right before
+     */
+    private function readIntersection(bool $afterOperator = false): NodeInterface
     {
-        $left = $this->readUnary();
+        $left = $this->readUnary($afterOperator);
 
         while (true) {
             $this->skipBlanks();
@@ -265,12 +270,15 @@ final class ExtendedClassReader
 
             $this->countOperation();
             $this->at++;
-            $right = $this->readUnary();
+            $right = $this->readUnary(true);
             $left = new ClassSetOperationNode(ClassSetOperator::INTERSECTION, $left, $right, '&', $left->getStartPosition(), $right->getEndPosition());
         }
     }
 
-    private function readUnary(): NodeInterface
+    /**
+     * @param bool $afterOperator whether an operator comes right before
+     */
+    private function readUnary(bool $afterOperator = false): NodeInterface
     {
         // "!!!\d" is read in a loop, not a recursion.
         $complements = [];
@@ -281,7 +289,7 @@ final class ExtendedClassReader
             $this->skipBlanks();
         }
 
-        $operand = $this->readPrimary();
+        $operand = $this->readPrimary($afterOperator || [] !== $complements);
         foreach (array_reverse($complements) as $start) {
             $operand = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $operand, '!', $start, $operand->getEndPosition());
         }
@@ -289,15 +297,23 @@ final class ExtendedClassReader
         return $operand;
     }
 
-    private function readPrimary(): NodeInterface
+    /**
+     * An operand, where one is due: a ")" there closes nothing at the top
+     * level, and after an operator a "]" or ")" leaves it without one.
+     *
+     * @param bool $afterOperator whether an operator comes right before
+     */
+    private function readPrimary(bool $afterOperator): NodeInterface
     {
         $char = $this->pattern[$this->at] ?? '';
 
         return match (true) {
-            '' === $char => $this->refuse('Missing "]" to close an extended class', $this->length),
-            ']' === $char && $this->depth > 1 => $this->refuse('Missing ")" in an extended class', $this->at),
-            ']' === $char, ')' === $char => $this->refuse('Empty expression in an extended class', $this->at + 1),
-            isset(self::OPERATORS[$char]), '&' === $char => $this->refuse(\sprintf('Operator "%s" where an operand is due in an extended class', $char), $this->at + 1),
+            '' === $char => $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length),
+            ']' === $char && $this->depth > 1 => $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->at),
+            ')' === $char && 1 === $this->depth => $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose, $this->at + 1),
+            $afterOperator && (']' === $char || ')' === $char) => $this->refuse('Operand expected after an operator in an extended class', ErrorCode::ExtendedClassMissingOperand, $this->at + 1),
+            ']' === $char, ')' === $char => $this->refuse('Empty expression in an extended class', ErrorCode::ExtendedClassEmptyExpression, $this->at + 1),
+            isset(self::OPERATORS[$char]), '&' === $char => $this->refuse(\sprintf('Operator "%s" where an operand is due in an extended class', $char), ErrorCode::ExtendedClassMissingOperand, $this->at + 1),
             default => $this->readOperand(),
         };
     }
@@ -311,18 +327,18 @@ final class ExtendedClassReader
             $this->enter($start);
             $this->at++;
             if ($this->at >= $this->length) {
-                $this->refuse('Missing ")" in an extended class', $this->length);
+                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->length);
             }
 
             $expression = $this->readUnion();
             $this->skipBlanks();
             $close = $this->pattern[$this->at] ?? '';
             if ('' === $close) {
-                $this->refuse('Missing "]" to close an extended class', $this->length);
+                $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
             }
 
             if (')' !== $close) {
-                $this->refuse('Missing ")" in an extended class', $this->at);
+                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->at);
             }
 
             $this->at++;
@@ -334,7 +350,7 @@ final class ExtendedClassReader
         if ('[' === $char) {
             $posixEnd = self::posixFormEnd($this->pattern, $start);
             if (null !== $posixEnd && ':' !== $this->pattern[$start + 1]) {
-                $this->refuse('POSIX collating elements are not supported', $posixEnd);
+                $this->refuse('POSIX collating elements are not supported', ErrorCode::PosixCollatingElement, $posixEnd);
             }
 
             $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
@@ -359,7 +375,7 @@ final class ExtendedClassReader
             return $this->operands[] = $this->readApart($this->escape, substr($this->pattern, $start, $end - $start), $start);
         }
 
-        return $this->refuse('Unexpected character in an extended class', $this->pastCharacter($start));
+        return $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter, $this->pastCharacter($start));
     }
 
     /**
@@ -388,7 +404,7 @@ final class ExtendedClassReader
             $this->operands[] = $this->readApart($this->escape, substr($this->pattern, $this->at, $end - $this->at), $this->at);
         }
 
-        $this->refuse('Two operands with no operator between them in an extended class', $end);
+        $this->refuse('Two operands with no operator between them in an extended class', ErrorCode::ExtendedClassMissingOperator, $end);
     }
 
     /**
@@ -398,10 +414,10 @@ final class ExtendedClassReader
     private function refuseQuote(int $start): never
     {
         if ($start + 2 >= $this->length) {
-            $this->refuse('Missing "]" to close an extended class', $this->length);
+            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
         }
 
-        $this->refuse('Unexpected character in an extended class', $this->pastCharacter($start + 2));
+        $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter, $this->pastCharacter($start + 2));
     }
 
     /**
@@ -417,14 +433,14 @@ final class ExtendedClassReader
     }
 
     /**
-     * Each operation deepens the tree: past the parser's own limit, it is
-     * refused as a nesting too deep would be.
+     * Each operation deepens the tree: past the parser's own limit, the
+     * class is refused as too complex, as a nesting too deep would be.
      */
     private function countOperation(): void
     {
         if (++$this->operations > $this->maxOperations) {
             ($this->fail)(
-                RecursionLimitException::withContext(\sprintf('Recursion limit of %d exceeded', $this->maxOperations), $this->at, $this->pattern),
+                RecursionLimitException::withContext(\sprintf('Recursion limit of %d exceeded: the extended class holds more operations than that.', $this->maxOperations), ErrorCode::ExtendedClassTooComplex, $this->at, $this->pattern),
                 $this->at,
                 $this->operands,
             );
@@ -447,7 +463,7 @@ final class ExtendedClassReader
             }
         }
 
-        $this->refuse('Missing "]" to close a character class', $this->length);
+        $this->refuse('Missing "]" to close a character class', ErrorCode::CharclassUnclosed, $this->length);
     }
 
     /**
@@ -468,7 +484,7 @@ final class ExtendedClassReader
     private function enter(int $position): void
     {
         if (++$this->depth > self::MAX_DEPTH) {
-            $this->refuse('Extended class nested too deeply', $this->pastTheFault ? $position : $position + 1);
+            $this->refuse('Extended class nested too deeply', ErrorCode::ExtendedClassNestedTooDeep, $this->pastTheFault ? $position : $position + 1);
         }
     }
 
@@ -486,8 +502,12 @@ final class ExtendedClassReader
         } while ($this->at > $before);
     }
 
-    private function refuse(string $message, int $position): never
+    private function refuse(string $message, ErrorCode $code, int $position): never
     {
-        ($this->fail)($message, $position, $this->operands);
+        ($this->fail)(
+            SyntaxErrorException::withContext(\sprintf('%s at position %d.', $message, $position), $code, $position, $this->pattern),
+            $position,
+            $this->operands,
+        );
     }
 }

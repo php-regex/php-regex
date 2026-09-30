@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Exception\TranspileException;
@@ -393,7 +394,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
 
         $result = $regex->validate('/(?[\\j\\t])/');
-        $this->assertSame('regex.escape.unrecognized', $result->errorCode);
+        $this->assertSame(ErrorCode::EscapeUnrecognized, $result->errorCode);
         $this->assertSame(ValidationErrorCategory::SEMANTIC, $result->category);
         $this->assertSame(5, $result->offset);
 

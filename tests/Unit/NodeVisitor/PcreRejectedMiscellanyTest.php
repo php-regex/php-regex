@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Node\QuantifierNode;
 use RegexParser\Regex;
 
@@ -51,7 +52,7 @@ final class PcreRejectedMiscellanyTest extends TestCase
             $result = Regex::create(['cache' => null] + $target)->validate('/ab\\Cde/u');
 
             $this->assertFalse($result->isValid, (string) json_encode($target));
-            $this->assertSame('regex.escape.single_byte_in_utf', $result->errorCode);
+            $this->assertSame(ErrorCode::EscapeSingleByteInUtf, $result->errorCode);
             $this->assertSame(4, $result->offset);
         }
 

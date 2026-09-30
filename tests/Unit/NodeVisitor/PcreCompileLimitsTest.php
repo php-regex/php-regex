@@ -44,7 +44,7 @@ final class PcreCompileLimitsTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', substr($pattern, 0, 60)));
-        $this->assertSame($code, $result->errorCode);
+        $this->assertSame($code, $result->errorCode?->value);
         $this->assertContains($result->offset, $offsets, \sprintf('%s reported at offset %s, PCRE2 reports %s.', substr($pattern, 0, 60), var_export($result->offset, true), implode(' or ', $offsets)));
     }
 

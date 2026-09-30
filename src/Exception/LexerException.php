@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Represents an error that occurred during the lexical analysis phase.
  *
@@ -22,15 +24,25 @@ final class LexerException extends RegexException implements RegexParserExceptio
 {
     use VisualContextTrait;
 
-    public function __construct(string $message, ?int $position = null, ?string $pattern = null, ?\Throwable $previous = null)
-    {
+    public function __construct(
+        string $message,
+        ErrorCode $errorCode,
+        ?int $position = null,
+        ?string $pattern = null,
+        ?\Throwable $previous = null,
+    ) {
         $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $position, $this->getVisualSnippet(), 'lexer.error', $previous);
+        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 
-    public static function withContext(string $message, int $position, string $pattern, ?\Throwable $previous = null): self
-    {
-        return new self($message, $position, $pattern, $previous);
+    public static function withContext(
+        string $message,
+        ErrorCode $errorCode,
+        int $position,
+        string $pattern,
+        ?\Throwable $previous = null,
+    ): self {
+        return new self($message, $errorCode, $position, $pattern, $previous);
     }
 }

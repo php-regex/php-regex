@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Raised when no sample the pattern matches was found: the pattern matches
  * nothing, as "a^b" or "(*FAIL)", or its assertions ask for more than the
@@ -20,8 +22,11 @@ namespace RegexParser\Exception;
  */
 final class SampleGenerationException extends RegexException implements RegexParserExceptionInterface
 {
-    public function __construct(string $message, ?\Throwable $previous = null)
-    {
-        parent::__construct($message, null, null, 'regex.generate.no_match', $previous);
+    public function __construct(
+        string $message,
+        ?\Throwable $previous = null,
+        ErrorCode $errorCode = ErrorCode::GenerateNoMatch,
+    ) {
+        parent::__construct($message, $errorCode, null, null, $previous);
     }
 }

@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -35,7 +36,7 @@ final class ClassNamedReferenceEscapeTest extends TestCase
             $result = Regex::create(['cache' => null, 'php_version' => $phpVersion])->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s is refused by the PCRE2 PHP %d bundles.', $pattern, $phpVersion));
-            $this->assertSame('regex.charclass.invalid_escape', $result->errorCode);
+            $this->assertSame(ErrorCode::CharclassInvalidEscape, $result->errorCode);
             $this->assertSame($offset, $result->offset, $pattern);
         }
     }

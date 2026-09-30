@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Lsp\Converter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\LintIssue;
 use RegexParser\Lsp\Converter\DiagnosticConverter;
 use RegexParser\Severity;
@@ -143,13 +144,14 @@ final class DiagnosticConverterTest extends TestCase
     {
         $diagnostic = $this->converter->fromParseError(
             'Parse error',
+            ErrorCode::GroupUnclosed,
             ['line' => 1, 'character' => 5],
             15,
             3,
         );
 
         $this->assertSame(1, $diagnostic['severity']); // Error
-        $this->assertSame('regex.parse.error', $diagnostic['code']);
+        $this->assertSame('regex.group.unclosed', $diagnostic['code']);
         $this->assertSame('Parse error', $diagnostic['message']);
         /** @var array{start: array{character: int}} $range */
         $range = $diagnostic['range'];
@@ -161,14 +163,19 @@ final class DiagnosticConverterTest extends TestCase
     {
         $diagnostic = $this->converter->fromValidationError(
             'Validation error',
+            ErrorCode::LookbehindUnbounded,
             ['line' => 2, 'character' => 10],
             20,
             5,
         );
 
         $this->assertSame(1, $diagnostic['severity']); // Error
-        $this->assertSame('regex.validation.error', $diagnostic['code']);
+        $this->assertSame('regex.lookbehind.unbounded', $diagnostic['code']);
         $this->assertSame('Validation error', $diagnostic['message']);
+        $this->assertSame(
+            ['start' => ['line' => 2, 'character' => 15], 'end' => ['line' => 2, 'character' => 30]],
+            $diagnostic['range'],
+        );
     }
 
     #[Test]

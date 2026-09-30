@@ -211,7 +211,7 @@ echo $result->category->value;     // ValidationErrorCategory enum
 |-------------------|-------------------------|--------------------------|
 | `isValid`         | bool                    | Whether pattern is valid |
 | `error`           | string\|null            | Error message if invalid |
-| `errorCode`       | string\|null            | Stable error code        |
+| `errorCode`       | ErrorCode\|null         | Stable error code        |
 | `offset`          | int\|null               | Byte offset of error     |
 | `caretSnippet`    | string\|null            | Snippet with caret       |
 | `hint`            | string\|null            | Fix suggestion           |
@@ -437,12 +437,12 @@ Returned by `validate()`. Provides structured validation feedback.
 $result = Regex::create()->validate('/[unclosed/');
 
 if (!$result->isValid()) {
-    echo $result->error;         // "Unterminated character class"
-    echo $result->errorCode;     // "regex.syntax.unterminated"
-    echo $result->offset;        // 9
-    echo $result->caretSnippet;  // "Pattern: [unclosed\n          ^"
-    echo $result->hint;          // "Close the bracket: ]"
-    echo $result->category->value;  // "syntax"
+    echo $result->error;              // "Unclosed character class..."
+    echo $result->errorCode->value;   // "regex.charclass.unclosed"
+    echo $result->offset;             // 9
+    echo $result->caretSnippet;       // "Line 1: [unclosed\n                 ^"
+    echo $result->hint;               // null: no hint for this one
+    echo $result->category->value;    // "syntax"
 }
 ```
 

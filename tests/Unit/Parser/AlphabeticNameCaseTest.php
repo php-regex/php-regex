@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -35,7 +36,7 @@ final class AlphabeticNameCaseTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
-        $this->assertSame('regex.verb.invalid', $result->errorCode, $pattern);
+        $this->assertSame(ErrorCode::VerbInvalid, $result->errorCode, $pattern);
         $this->assertSame($offset, $result->offset, $pattern);
     }
 

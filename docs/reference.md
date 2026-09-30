@@ -719,39 +719,9 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 
 ## Diagnostics Catalog
 
-| Error Code                          | Message Template                                    | Meaning                               | Fix Example              |
-|-------------------------------------|-----------------------------------------------------|---------------------------------------|--------------------------|
-| `regex.backref.missing_group`       | Backreference to non-existent group: "{ref}"        | Backreference points to missing group | Change `\2` to `\1`      |
-| `regex.backref.missing_named_group` | Backreference to non-existent named group: "{name}" | Named backreference undefined         | Add `(?<name>...)`       |
-| `regex.backref.zero`                | Backreference \0 is not valid                       | `\0` invalid in PCRE                  | Use `\g<0>`              |
-| `regex.group.duplicate_name`        | Duplicate group name "{name}"                       | Named groups must be unique           | Use different names      |
-| `regex.quantifier.invalid_range`    | Invalid quantifier range "{quant}": min > max       | `{3,2}` is invalid                    | Swap to `{2,3}`          |
-| `regex.syntax.delimiter`            | Invalid delimiter "{delim}"                         | Delimiter not allowed                 | Use `/pattern/`          |
-| `regex.escape.unrecognized`         | Unrecognized escape sequence "\{letter}"            | The letter after `\` means nothing to PCRE | Change `\i` to `i`  |
-| `regex.escape.unsupported`          | PCRE does not support the escape "\{escape}"        | `\F`, `\L`, `\l`, `\U`, `\u` and `\N{name}` are refused | Change `\u0041` to `\x{41}` |
-| `regex.escape.digits_missing`       | Digits missing in {escape}                          | `\x{}`, `\o{}` or `\N{U+}` holds no digit | Change `\o{}` to `\o{101}` |
-| `regex.octal.missing_brace`         | Missing opening brace after \o                      | `\o` takes its digits in braces       | Change `\o101` to `\o{101}` |
-| `regex.octal.invalid_digit`         | Invalid character in \o{}, or closing brace missing | A non-octal digit, or no `}`          | Change `\o{19}` to `\o{17}` |
-| `regex.unicode.invalid_digit`       | Invalid character in {escape}, or closing brace missing | A non-hex digit in `\x{}` or `\N{U+}`, or no `}` | Change `\x{zz}` to `\x{2a}` |
-| `regex.unicode.surrogate`           | Code point "{escape}" is a surrogate, which is not allowed in Unicode mode | `\x{d800}` to `\x{dfff}` under `u` or `(*UTF)` | Use a code point outside that range |
-| `regex.unicode.property_malformed` | Malformed \{letter} sequence: a property letter or a braced name must follow it | `\p` or `\P` with no letter after it, or `\p{` never closed | Change `\p{L` to `\p{L}` |
-| `regex.keep.in_lookaround`         | \K is not allowed in a lookaround from PHP 8.5     | PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` | Move `\K` out of `(?=a\K)` |
-| `regex.pattern.too_large`          | Regular expression is too large: PCRE would compile it to more than 64 KiB | A group repeated with a count is compiled once per repetition | Change `(?:ab){10000}` to `(?:ab){1000}` |
-| `regex.charclass.invalid_escape`    | Escape sequence \{letter} is invalid in a character class | `\A`, `\B`, `\C`, `\G`, `\K`, `\N`, `\R`, `\X`, `\Z`, `\z` inside `[...]` | Move `\B` out of the class |
-| `regex.posix.outside_class`         | POSIX named classes are supported only within a class | `[:alpha:]` written as a class of its own | Change `[:alpha:]` to `[[:alpha:]]` |
-| `regex.posix.collating_element`     | POSIX collating elements are not supported          | `[.ch.]` and `[=ch=]` are refused     | Change `[[.ch.]]` to `(?:ch)` |
-| `regex.conditional.too_many_branches` | A conditional group holds more than two branches  | `(?(1)a\|b\|c)` has three             | Change to `(?(1)a\|(?:b\|c))` |
-| `regex.define.too_many_branches`    | A (DEFINE) group holds more than one branch         | `(?(DEFINE)a\|b)` has two             | Change to `(?(DEFINE)(?:a\|b))` |
-| `regex.verb.misplaced`              | (*{verb}) is only recognized at the very start of the pattern | `(*CR)`, `(*UTF)`, `(*LIMIT_MATCH=n)` and the other start-of-pattern settings after anything else | Move `(*CR)` to the start |
-| `regex.verb.mark_name_missing`      | (*MARK) must have a name                            | `(*MARK)`, `(*MARK:)` and `(*:)` name nothing | Change `(*MARK)` to `(*MARK:here)` |
-| `regex.verb.name_too_long`          | The name of (*{verb}) is too long: PCRE takes at most 255 code units | A `(*MARK)`, `(*PRUNE)`, `(*SKIP)` or `(*THEN)` name longer than 255 | Shorten the name |
-| `regex.verb.limit_too_large`        | The value {n} is too large for a (*LIMIT_...) setting | `(*LIMIT_MATCH=n)`, `(*LIMIT_HEAP=n)` or `(*LIMIT_DEPTH=n)` above 4294967289 | Change `(*LIMIT_MATCH=5000000000)` to `(*LIMIT_MATCH=100000)` |
-| `regex.group.nested_too_deep`       | Parentheses are nested too deeply: PCRE allows at most 250 levels | Groups, conditionals and script runs nested more than 250 deep; `(?i)` alone does not count | Drop groups that wrap a single item |
-| `regex.verb.turkish_casing_without_utf` | (*TURKISH_CASING) needs UTF mode                | PCRE2 10.45+: Turkish casing without `u` or `(*UTF)` | Add the `u` modifier |
-| `regex.verb.conflicting_casings`    | (*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together | PCRE2 10.45+: the two casing settings exclude each other | Keep one of them |
-| `regex.subroutine.relative_zero`    | Subroutine call relative reference cannot be zero   | `(?-0)`, `(?+0)` and `\g<-0>` point nowhere | Use `(?R)` or a non-zero offset |
-| `regex.condition.version_syntax`    | Invalid version "{version}" in a version condition  | A version is a major number and an optional `.minor` | Change `(?(VERSION>=10.0.0)` to `(?(VERSION>=10.0)` |
-| `regex.semantic`                    | Various semantic errors                             | Pattern violates PCRE rules           | Add bounds to lookbehind |
+Every code an exception or a failed validation carries is listed, with its meaning, in
+[Diagnostics: Error Codes](reference/diagnostics.md#error-codes). The lint rule ids below
+are a separate vocabulary: they name advice, not a refused pattern.
 
 ---
 

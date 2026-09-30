@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Base exception for all regex-related errors.
  */
@@ -20,15 +22,15 @@ class RegexException extends \Exception implements RegexParserExceptionInterface
 {
     public function __construct(
         string $message,
+        public readonly ErrorCode $errorCode,
         public readonly ?int $position = null,
         public readonly ?string $snippet = null,
-        public readonly ?string $errorCode = null,
         ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 0, $previous);
     }
 
-    public function getErrorCode(): ?string
+    public function getErrorCode(): ErrorCode
     {
         return $this->errorCode;
     }

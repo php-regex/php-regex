@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lsp\Converter;
 
+use RegexParser\ErrorCode;
 use RegexParser\LintIssue;
 use RegexParser\Severity;
 
@@ -72,7 +73,7 @@ final class DiagnosticConverter
      *
      * @return array<string, mixed>
      */
-    public function fromParseError(string $message, array $start, int $patternLength, ?int $offset = null): array
+    public function fromParseError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
     {
         $errorOffset = $offset ?? 0;
 
@@ -88,7 +89,7 @@ final class DiagnosticConverter
                 ],
             ],
             'severity' => self::SEVERITY_ERROR,
-            'code' => 'regex.parse.error',
+            'code' => $code->value,
             'source' => 'regex-parser',
             'message' => $message,
         ];
@@ -101,7 +102,7 @@ final class DiagnosticConverter
      *
      * @return array<string, mixed>
      */
-    public function fromValidationError(string $message, array $start, int $patternLength, ?int $offset = null): array
+    public function fromValidationError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
     {
         $errorOffset = $offset ?? 0;
 
@@ -117,7 +118,7 @@ final class DiagnosticConverter
                 ],
             ],
             'severity' => self::SEVERITY_ERROR,
-            'code' => 'regex.validation.error',
+            'code' => $code->value,
             'source' => 'regex-parser',
             'message' => $message,
         ];

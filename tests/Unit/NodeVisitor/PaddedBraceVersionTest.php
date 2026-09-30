@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -55,15 +56,15 @@ final class PaddedBraceVersionTest extends TestCase
 
         $this->assertSame(2, $regex->validate('/\\N{ U+1234 }/u')->offset);
         $this->assertSame(4, $regex->validate('/ab\\N{ U+41}/u')->offset);
-        $this->assertSame('regex.escape.unsupported', $regex->validate('/ab\\N{ U+41}/u')->errorCode);
+        $this->assertSame(ErrorCode::EscapeUnsupported, $regex->validate('/ab\\N{ U+41}/u')->errorCode);
         $this->assertSame(6, $regex->validate('/a\\N{U+ 41}/u')->offset);
-        $this->assertSame('regex.unicode.invalid_digit', $regex->validate('/a\\N{U+ 41}/u')->errorCode);
+        $this->assertSame(ErrorCode::UnicodeInvalidDigit, $regex->validate('/a\\N{U+ 41}/u')->errorCode);
 
         // Elsewhere the first space is reported.
         $this->assertSame(3, $regex->validate('/\\x{ 41}/')->offset);
-        $this->assertSame('regex.unicode.invalid_digit', $regex->validate('/\\x{ 41}/')->errorCode);
+        $this->assertSame(ErrorCode::UnicodeInvalidDigit, $regex->validate('/\\x{ 41}/')->errorCode);
         $this->assertSame(3, $regex->validate('/\\o{ 101}/')->offset);
-        $this->assertSame('regex.octal.invalid_digit', $regex->validate('/\\o{ 101}/')->errorCode);
+        $this->assertSame(ErrorCode::OctalInvalidDigit, $regex->validate('/\\o{ 101}/')->errorCode);
     }
 
     #[Test]

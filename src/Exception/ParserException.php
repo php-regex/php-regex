@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Represents an error that occurred during the parsing phase.
  *
@@ -24,15 +26,25 @@ class ParserException extends RegexException implements RegexParserExceptionInte
 {
     use VisualContextTrait;
 
-    public function __construct(string $message, ?int $position = null, ?string $pattern = null, ?\Throwable $previous = null)
-    {
+    public function __construct(
+        string $message,
+        ErrorCode $errorCode,
+        ?int $position = null,
+        ?string $pattern = null,
+        ?\Throwable $previous = null,
+    ) {
         $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $position, $this->getVisualSnippet(), 'parser.error', $previous);
+        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 
-    public static function withContext(string $message, int $position, string $pattern, ?\Throwable $previous = null): static
-    {
-        return new static($message, $position, $pattern, $previous);
+    public static function withContext(
+        string $message,
+        ErrorCode $errorCode,
+        int $position,
+        string $pattern,
+        ?\Throwable $previous = null,
+    ): static {
+        return new static($message, $errorCode, $position, $pattern, $previous);
     }
 }

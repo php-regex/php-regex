@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
@@ -555,12 +556,13 @@ final class RegexTest extends TestCase
         $ref = new \ReflectionClass($this->regexService->parser());
         $method = $ref->getMethod('buildValidationFailure');
 
-        $exception = new SyntaxErrorException('Test error');
+        $exception = new SyntaxErrorException('Test error', ErrorCode::TokenUnexpected);
         $result = $method->invoke($this->regexService->parser(), $exception);
 
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertFalse($result->isValid());
         $this->assertSame('Test error', $result->getErrorMessage());
+        $this->assertSame(ErrorCode::TokenUnexpected, $result->getErrorCode());
     }
 
     public function test_safe_extract_pattern_handles_parser_exception(): void

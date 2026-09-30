@@ -42,7 +42,7 @@ final class AtomicScriptRunTest extends TestCase
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
-        $this->assertSame($code, $result->errorCode, $pattern);
+        $this->assertSame($code, $result->errorCode?->value, $pattern);
         // The offset is PHP's on PCRE2 10.47 and later; the running PHP
         // decides, as the library follows the PCRE2 it links.
         $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);

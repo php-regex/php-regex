@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Raised when a regex exceeds the supported regular subset for automata conversion.
  */
@@ -25,7 +27,7 @@ final class ComplexityException extends RegexException implements RegexParserExc
         ?int $position = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
-        ?string $errorCode = 'regex.complexity',
+        ErrorCode $errorCode = ErrorCode::Complexity,
         /**
          * @var array<string, int|string>|null
          */
@@ -33,7 +35,7 @@ final class ComplexityException extends RegexException implements RegexParserExc
     ) {
         $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $position, $this->getVisualSnippet(), $errorCode, $previous);
+        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 
     /**

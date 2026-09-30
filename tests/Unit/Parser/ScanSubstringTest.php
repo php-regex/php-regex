@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Transform\RegularSubsetValidator;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\ComplexityException;
 use RegexParser\Exception\TranspileException;
 use RegexParser\Internal\PcreVerb;
@@ -125,8 +126,8 @@ final class ScanSubstringTest extends TestCase
         }
 
         $this->assertNull(PcreVerb::groupListFault('(1,2)', 0));
-        $this->assertSame(2, PcreVerb::groupListFault('(1x', 0));
-        $this->assertSame(1, PcreVerb::groupListFault('(?', 0));
+        $this->assertSame([2, ErrorCode::GroupUnclosed], \array_slice(PcreVerb::groupListFault('(1x', 0) ?? [], 0, 2));
+        $this->assertSame([1, ErrorCode::GroupListItemExpected], \array_slice(PcreVerb::groupListFault('(?', 0) ?? [], 0, 2));
 
         foreach (['javascript', 'python'] as $target) {
             try {
@@ -260,5 +261,72 @@ final class ScanSubstringTest extends TestCase
         yield 'refused case 10' => ['pattern' => '/()(*scs:(1,1,1,1,1,1,1,1,2))/', 'offsetBefore' => 7, 'offset1045' => 25, 'offset1049' => 25];
         yield 'refused case 11' => ['pattern' => '/()()(*scs:(1,2,1,2,1,2,2,\'XYZ\'))/', 'offsetBefore' => 9, 'offset1045' => 26, 'offset1049' => 26];
         yield 'refused case 12' => ['pattern' => '/(\\w++)=(?(*scs:(1)(abc))pqr|xyz)(\\w++)/', 'offsetBefore' => 14, 'offset1045' => 14, 'offset1049' => 14];
+    }
+
+    /**
+     * PCRE reads the list of groups item by item and names what stops it:
+     * no "(", an item that is neither number nor name, a name that is
+     * empty, starts with a digit or is not closed, or no "," or ")" after
+     * an item. Codes and offsets from PHP 8.4 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideGroupListFaults')]
+    public function test_a_fault_in_the_group_list_is_reported_as_pcre_reads_it(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $result = Regex::create(['cache' => null, 'pcre_version' => '10.49'])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($code, $result->errorCode, \sprintf('%s: %s', $pattern, (string) $result->error));
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideGroupListFaults(): iterable
+    {
+        // The body never closes: the lexer reads the list.
+        yield 'no list' => ['pattern' => '/(*scs:x/', 'code' => ErrorCode::ScanSubstringMissingList, 'offset' => 6];
+        yield 'nothing after the name' => ['pattern' => '/(*scs:/', 'code' => ErrorCode::ScanSubstringMissingList, 'offset' => 6];
+        yield 'list with no item' => ['pattern' => '/(*scs:(/', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 7];
+        yield 'no item after a comma' => ['pattern' => '/(*scs:(1,/', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 9];
+        yield 'letter as an item' => ['pattern' => '/(*scs:(a)/', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 7];
+        yield 'empty name' => ['pattern' => '/(*scs:(<>/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 8];
+        yield 'name left open' => ['pattern' => '/(*scs:(<a/', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 9];
+        yield 'quoted name left open' => ['pattern' => "/(*scs:('a/", 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 9];
+        yield 'list left open after a number' => ['pattern' => '/(*scs:(1/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 8];
+        yield 'list left open after a name' => ['pattern' => '/(*scs:(<a>/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'letter after a number' => ['pattern' => '/(*scs:(1b/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 8];
+        yield 'letter after a name' => ['pattern' => '/(*scs:(<a>b/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'list closed, body left open' => ['pattern' => '/(*scs:(1)a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+
+        // The body closes: the parser reads the list.
+        yield 'empty name, body closed' => ['pattern' => '/(*scs:(<>)x)/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 8];
+        yield 'name starting with a digit' => ['pattern' => '/(*scs:(<1a>)x)/', 'code' => ErrorCode::GroupNameInvalid, 'offset' => 9];
+        yield 'letter as an item, body closed' => ['pattern' => '/(*scs:(a)x)/', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 7];
+        yield 'letter after a name, body closed' => ['pattern' => '/(*scs:(<a>b)x)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'space after a name' => ['pattern' => '/(?<n>a)(*scs:(<n> )x)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 17];
+
+        // The groups a call returns, PCRE2 10.46, are read the same way.
+        yield 'empty name in a call list' => ['pattern' => '/(a)(?1(<>))/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 8];
+        yield 'letter after a number in a call list' => ['pattern' => '/(a)(?1(1b))/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 8];
+        yield 'letter in a call list' => ['pattern' => '/(a)(?1(x))/', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 7];
+    }
+
+    /**
+     * A listed name starting with a digit is refused past the digit from
+     * PCRE2 10.47, on it before, as every group name is.
+     */
+    #[Test]
+    public function test_a_listed_name_starting_with_a_digit_is_refused_where_the_release_reports_it(): void
+    {
+        foreach (['10.46' => 8, '10.49' => 9] as $release => $offset) {
+            foreach (['/(*scs:(<1a>)x)/', '/(*scs:(<1a/'] as $pattern) {
+                $result = Regex::create(['cache' => null, 'pcre_version' => (string) $release])->validate($pattern);
+
+                $this->assertSame(ErrorCode::GroupNameInvalid, $result->errorCode, $pattern.' on '.$release);
+                $this->assertSame($offset, $result->offset, $pattern.' on '.$release);
+            }
+        }
     }
 }

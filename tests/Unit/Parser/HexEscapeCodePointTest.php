@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Parser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\SequenceNode;
 use RegexParser\Regex;
@@ -58,7 +59,7 @@ final class HexEscapeCodePointTest extends TestCase
 
         $running = Regex::create(['cache' => null])->validate('/a\\xg/');
         if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=')) {
-            $this->assertSame('regex.escape.digits_missing', $running->errorCode);
+            $this->assertSame(ErrorCode::EscapeDigitsMissing, $running->errorCode);
             $this->assertSame(3, $running->offset);
         } else {
             $this->assertTrue($running->isValid);

@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Tools;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
@@ -529,12 +530,12 @@ final class Pcre2CaseRunnerTest extends TestCase
     public static function provideThrowables(): iterable
     {
         yield 'parser exception is principled' => [
-            'throwable' => new ParserException('unbalanced parenthesis', 3, 'a(b'),
+            'throwable' => new ParserException('unbalanced parenthesis', ErrorCode::GroupUnclosed, 3, 'a(b'),
             'expected' => 'principled',
         ];
 
         yield 'lexer exception is principled' => [
-            'throwable' => new LexerException('unrecognized character', 2, 'a\\q'),
+            'throwable' => new LexerException('unrecognized character', ErrorCode::EscapeUnrecognized, 2, 'a\\q'),
             'expected' => 'principled',
         ];
 

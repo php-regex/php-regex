@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -37,7 +38,7 @@ final class PcreVersionGatingTest extends TestCase
             $result = Regex::create(['php_version' => $phpVersion])->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s does not compile on the PCRE2 PHP %s bundles.', $pattern, $phpVersion));
-            $this->assertSame('regex.lookbehind.variable_length_not_supported', $result->errorCode);
+            $this->assertSame(ErrorCode::LookbehindVariableLengthNotSupported, $result->errorCode);
         }
     }
 

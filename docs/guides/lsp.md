@@ -422,8 +422,7 @@ For large codebases:
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| `regex.parse.error` | Error | Invalid regex syntax |
-| `regex.validation.error` | Error | PCRE validation failure |
+| `regex.<area>.<problem>` | Error | A pattern PCRE refuses, with its [error code](../reference/diagnostics.md#error-codes), such as `regex.group.unclosed` |
 | `regex.lint.unicode.shorthandWithoutU` | Style | `\w`, `\d`, `\s` without `/u` |
 | `regex.lint.unicode.propertyWithoutU` | Error | `\p{L}` without `/u` |
 | `regex.lint.unicode.bracedHexWithoutU` | Error | `\x{100}` without `/u` |

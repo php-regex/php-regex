@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -283,7 +284,7 @@ final class ErrorOffsetReleaseTest extends TestCase
         foreach ([80200, 80500] as $phpVersion) {
             $regex = Regex::create(['cache' => null, 'php_version' => $phpVersion]);
 
-            $this->assertSame('regex.unicode.property_invalid', $regex->validate('/\\p{L!}/')->errorCode);
+            $this->assertSame(ErrorCode::UnicodePropertyInvalid, $regex->validate('/\\p{L!}/')->errorCode);
             $this->assertSame(5, $regex->validate('/\\p{é/u')->offset);
         }
 
@@ -291,7 +292,7 @@ final class ErrorOffsetReleaseTest extends TestCase
         // 10.47 past the whole character.
         $running = explode(' ', \PCRE_VERSION)[0];
         $regex = Regex::create(['cache' => null]);
-        $this->assertSame(version_compare($running, '10.45', '>=') ? 'regex.unicode.property_malformed' : 'regex.unicode.property_invalid', $regex->validate('/\\p{L!}/')->errorCode);
+        $this->assertSame(version_compare($running, '10.45', '>=') ? ErrorCode::UnicodePropertyMalformed : ErrorCode::UnicodePropertyInvalid, $regex->validate('/\\p{L!}/')->errorCode);
         $this->assertSame(version_compare($running, '10.45', '>=') && version_compare($running, '10.47', '<') ? 4 : 5, $regex->validate('/\\p{é/u')->offset);
     }
 

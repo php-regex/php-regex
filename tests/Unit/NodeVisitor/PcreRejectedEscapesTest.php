@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
@@ -50,15 +51,15 @@ final class PcreRejectedEscapesTest extends TestCase
         $this->assertFalse($result->isValid);
 
         // An unterminated class fails while tokenizing, before any AST exists,
-        // and reports "lexer.error" like "[abc" does; the \E family (PCRE2
-        // error 106) is that same error hidden behind an empty \Q...\E.
+        // and reports the unclosed-class code like "[abc" does; the \E family
+        // (PCRE2 error 106) is that same error hidden behind an empty \Q...\E.
         if (str_starts_with($pattern, '/[') && str_ends_with($pattern, ']AAA/')) {
-            $this->assertSame('lexer.error', $result->errorCode);
+            $this->assertSame(ErrorCode::from('regex.charclass.unclosed'), $result->errorCode);
 
             return;
         }
 
-        $this->assertStringStartsWith('regex.', (string) $result->errorCode);
+        $this->assertInstanceOf(ErrorCode::class, $result->errorCode);
     }
 
     /**
@@ -117,7 +118,7 @@ final class PcreRejectedEscapesTest extends TestCase
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid);
-        $this->assertSame('regex.unicode.invalid_digit', $result->errorCode);
+        $this->assertSame(ErrorCode::from('regex.unicode.invalid_digit'), $result->errorCode);
         // The offset is PHP's on PCRE2 10.47 and later; the running PHP
         // decides, as the library follows the PCRE2 it links.
         $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
@@ -138,7 +139,7 @@ final class PcreRejectedEscapesTest extends TestCase
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid);
-        $this->assertSame('regex.range.reversed', $result->errorCode);
+        $this->assertSame(ErrorCode::from('regex.range.reversed'), $result->errorCode);
         $this->assertStringContainsString(\sprintf('Invalid range "%s"', $range), (string) $result->error);
     }
 

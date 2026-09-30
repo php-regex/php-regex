@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Internal;
 
+use RegexParser\ErrorCode;
 use RegexParser\Exception\ParserException;
 use RegexParser\PcreFeature;
 use RegexParser\PcreTarget;
@@ -35,7 +36,16 @@ final class PatternParser
 
         $len = \strlen($regex);
         if ($len < 2) {
-            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', 0, $regex);
+            // Nothing at all is an empty pattern; a lone delimiter never
+            // closes, and a lone character that is no delimiter is refused
+            // as one.
+            $code = match (true) {
+                0 === $len => ErrorCode::PatternEmpty,
+                self::isValidDelimiter($regex) => ErrorCode::DelimiterUnclosed,
+                default => ErrorCode::DelimiterInvalid,
+            };
+
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', $code, 0, $regex);
         }
 
         $delimiter = $regex[0];
@@ -46,7 +56,7 @@ final class PatternParser
                 'Invalid delimiter "%s". Delimiters must not be alphanumeric, backslash, or whitespace. Try %s.',
                 $delimiter,
                 $suggested,
-            ));
+            ), ErrorCode::DelimiterInvalid);
         }
         // Handle bracket delimiters style: (pattern), [pattern], {pattern}, <pattern>
         $closingDelimiter = self::closingDelimiter($delimiter);
@@ -127,7 +137,7 @@ final class PatternParser
                             'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
                             $closingDelimiter,
                             $i,
-                        ), $i, $regex);
+                        ), ErrorCode::DelimiterUnescaped, $i, $regex);
                     }
 
                     $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
@@ -138,13 +148,13 @@ final class PatternParser
                         $flagsPosition = \strlen($regex) - \strlen($flags);
 
                         if (str_contains((string) $invalid, 'e')) {
-                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', $flagsPosition, $regex);
+                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagsPosition, $regex);
                         }
 
                         // Format each invalid flag individually with quotes
                         $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', $flag), str_split($invalid ?? $flags)));
 
-                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), $flagsPosition, $regex);
+                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagsPosition, $regex);
                     }
 
                     return [$pattern, $flags, $delimiter];
@@ -163,7 +173,7 @@ final class PatternParser
             $closingDelimiter,
             $closingDelimiter,
             $suggested,
-        ));
+        ), ErrorCode::DelimiterUnclosed);
     }
 
     public static function closingDelimiter(string $delimiter): string

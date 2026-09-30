@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -34,7 +35,7 @@ final class OctalFallbackRangeTest extends TestCase
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
-        $this->assertSame('regex.octal.out_of_range', $result->errorCode, $pattern);
+        $this->assertSame(ErrorCode::OctalOutOfRange, $result->errorCode, $pattern);
         $this->assertSame($offset, $result->offset, $pattern);
     }
 

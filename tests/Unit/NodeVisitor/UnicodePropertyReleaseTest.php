@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -41,7 +42,7 @@ final class UnicodePropertyReleaseTest extends TestCase
 
             if (\in_array($phpVersion, $refusedBy, true)) {
                 $this->assertFalse($result->isValid, \sprintf('%s is refused on PHP %d.', $pattern, $phpVersion));
-                $this->assertSame('regex.unicode.property_invalid', $result->errorCode);
+                $this->assertSame(ErrorCode::UnicodePropertyInvalid, $result->errorCode);
                 // Past the "}", where PCRE has read the whole name.
                 $this->assertSame(strrpos($pattern, '}'), $result->offset, $pattern);
             } else {

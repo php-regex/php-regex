@@ -40,7 +40,7 @@ final class MalformedPropertyEscapeTest extends TestCase
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
-        $this->assertStringStartsWith('regex.unicode.property_', (string) $result->errorCode);
+        $this->assertStringStartsWith('regex.unicode.property_', (string) $result->errorCode?->value);
         $this->assertContains(
             $result->offset,
             $offsets,

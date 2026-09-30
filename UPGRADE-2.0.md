@@ -207,6 +207,49 @@ user owns it or others can write to it; its files hold data, not PHP.
 entries written by 1.x are ignored and the patterns are parsed once more.
 Nothing to do; a warm cache directory rebuilds itself.
 
+#### Error codes are an `ErrorCode` enum
+
+`RegexException::getErrorCode()` returns a `RegexParser\ErrorCode` and is never
+`null`; `ValidationResult::$errorCode` and `getErrorCode()` are `?ErrorCode`.
+The values of the codes 1.x already had are unchanged, so code comparing strings
+moves to `->value` or, better, to the case:
+
+```php
+// 1.x
+if ('regex.lookbehind.unbounded' === $result->errorCode) { /* ... */ }
+
+// 2.0
+if (ErrorCode::LookbehindUnbounded === $result->errorCode) { /* ... */ }
+```
+
+`parser.error`, `lexer.error` and `regex.semantic` are gone: each error they
+covered has its own code now, such as `regex.charclass.unclosed`,
+`regex.group.unclosed` or `regex.delimiter.unclosed`. The full list is in
+[Diagnostics: Error Codes](docs/reference/diagnostics.md#error-codes).
+
+The exceptions that judge a pattern take the code as their second, required
+argument:
+
+| before | after |
+|---|---|
+| `new RegexException($message, $position, $snippet, ?string $errorCode, $previous)` | `new RegexException($message, ErrorCode $errorCode, $position, $snippet, $previous)` |
+| `new ParserException($message, $position, $pattern)` | `new ParserException($message, ErrorCode $errorCode, $position, $pattern)` |
+| `new LexerException($message, $position, $pattern)` | `new LexerException($message, ErrorCode $errorCode, $position, $pattern)` |
+| `ParserException::withContext($message, $position, $pattern)` | `ParserException::withContext($message, ErrorCode $errorCode, $position, $pattern)` |
+| `LexerException::withContext($message, $position, $pattern)` | `LexerException::withContext($message, ErrorCode $errorCode, $position, $pattern)` |
+| `new SemanticErrorException($message, $position, $pattern, $previous, $errorCode, $hint)` | `new SemanticErrorException($message, ErrorCode $errorCode, $position, $pattern, $previous, $hint)` |
+| `TokenStream::consume($type, $message)`, `consumeLiteral($value, $message)` | take an `ErrorCode $code` as third argument |
+
+`SyntaxErrorException`, `RecursionLimitException` and `ResourceLimitException`
+follow `ParserException`. `ComplexityException`, `TranspileException` and
+`SampleGenerationException` keep their parameter order and default their code,
+so a call without one keeps working; a call that passed the code as a string
+passes the `ErrorCode` case instead.
+
+`regex.callout.invalid_type` is gone: no pattern could raise it.
+
+The CLI's JSON output and `RegexProblem::$code` still carry the string value.
+
 ### Deprecated
 
 #### `ClassOperationNode` and the class operation tokens

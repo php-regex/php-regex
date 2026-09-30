@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -41,7 +42,7 @@ final class VersionConditionNumberTest extends TestCase
                 $this->assertTrue($result->isValid, \sprintf('%s compiles on PHP %d: %s', $pattern, $phpVersion, (string) $result->error));
             } else {
                 $this->assertFalse($result->isValid, \sprintf('%s is refused on PHP %d.', $pattern, $phpVersion));
-                $this->assertSame('regex.condition.version_syntax', $result->errorCode);
+                $this->assertSame(ErrorCode::ConditionVersionSyntax, $result->errorCode);
                 $this->assertSame($bundledOffset, $result->offset, $pattern);
             }
         }

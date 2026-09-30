@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -69,15 +70,15 @@ final class CasingSettingsTest extends TestCase
         $this->assertTrue($regex->validate('/(*TURKISH_CASING)i/iu')->isValid);
 
         $withoutUtf = $regex->validate('/(*TURKISH_CASING)i/i');
-        $this->assertSame('regex.verb.turkish_casing_without_utf', $withoutUtf->errorCode);
+        $this->assertSame(ErrorCode::VerbTurkishCasingWithoutUtf, $withoutUtf->errorCode);
         $this->assertSame(17, $withoutUtf->offset);
 
         $ucpAlone = $regex->validate('/(*UCP)(*TURKISH_CASING)i/i');
-        $this->assertSame('regex.verb.turkish_casing_without_utf', $ucpAlone->errorCode);
+        $this->assertSame(ErrorCode::VerbTurkishCasingWithoutUtf, $ucpAlone->errorCode);
         $this->assertSame(23, $ucpAlone->offset);
 
         $both = $regex->validate('/(*TURKISH_CASING)(*CASELESS_RESTRICT)i/iu');
-        $this->assertSame('regex.verb.conflicting_casings', $both->errorCode);
+        $this->assertSame(ErrorCode::VerbConflictingCasings, $both->errorCode);
         $this->assertSame(37, $both->offset);
     }
 
@@ -89,7 +90,7 @@ final class CasingSettingsTest extends TestCase
 
             $this->assertSame(19, $regex->validate('/(*CASELESS_RESTRICT)a/')->offset);
             $this->assertSame(16, $regex->validate('/(*TURKISH_CASING)a/u')->offset);
-            $this->assertSame('regex.verb.invalid', $regex->validate('/(*TURKISH_CASING)a/u')->errorCode);
+            $this->assertSame(ErrorCode::VerbInvalid, $regex->validate('/(*TURKISH_CASING)a/u')->errorCode);
         }
     }
 }

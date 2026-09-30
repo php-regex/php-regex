@@ -175,7 +175,7 @@ try {
 try {
     $result = Regex::create()->validate('/(?<=a+)b/');
     if (!$result->isValid()) {
-        echo "Error {$result->errorCode}: {$result->error}";
+        echo "Error {$result->errorCode?->value}: {$result->error}";
         echo "Hint: {$result->hint}";
     }
 } catch (\Throwable $e) {

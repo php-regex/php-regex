@@ -16,7 +16,9 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
+use RegexParser\Tests\TestUtils\ValidatorErrorCodes;
 
 /**
  * Group, verb and condition forms PHP refuses to compile.
@@ -55,13 +57,13 @@ final class PcreRejectedGroupsTest extends TestCase
 
         $this->assertFalse($result->isValid);
 
-        if (self::LAYER_PARSER === $layer) {
-            $this->assertSame('parser.error', $result->errorCode);
+        // Every layer names the problem now; a refusal the AST validator
+        // judges keeps the code it had before the codes became an enum.
+        $this->assertInstanceOf(ErrorCode::class, $result->errorCode);
 
-            return;
+        if (self::LAYER_VALIDATOR === $layer) {
+            $this->assertContains($result->errorCode->value, ValidatorErrorCodes::VALUES);
         }
-
-        $this->assertStringStartsWith('regex.', (string) $result->errorCode);
     }
 
     /**
@@ -90,7 +92,7 @@ final class PcreRejectedGroupsTest extends TestCase
         $result = Regex::create()->validate('/(*pla:(?(VERSION>=10.0.0)a|b))c/');
 
         $this->assertFalse($result->isValid);
-        $this->assertSame('regex.condition.version_syntax', $result->errorCode);
+        $this->assertSame(ErrorCode::from('regex.condition.version_syntax'), $result->errorCode);
     }
 
     #[Test]

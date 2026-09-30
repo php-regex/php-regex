@@ -353,7 +353,7 @@ final readonly class RegexLintService
                 $type,
                 Severity::Error,
                 $message,
-                $validation->errorCode,
+                $validation->errorCode?->value,
                 $validation->offset,
                 $validation->caretSnippet,
                 $validation->hint,

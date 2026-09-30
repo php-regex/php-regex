@@ -277,7 +277,7 @@ final class AnalyzeCommand extends AbstractCommand
                 'category' => $validation->category?->value,
                 'offset' => $validation->offset,
                 'hint' => $validation->hint,
-                'error_code' => $validation->errorCode,
+                'error_code' => $validation->errorCode?->value,
             ],
             'redos' => $analysis,
             'explain' => $explain,

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Exception;
 
+use RegexParser\ErrorCode;
+
 /**
  * Represents a semantic validation error in a regex pattern.
  */
@@ -22,15 +24,15 @@ final class SemanticErrorException extends RegexException implements RegexParser
 
     public function __construct(
         string $message,
+        ErrorCode $errorCode,
         ?int $position = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
-        ?string $errorCode = 'regex.semantic',
         public readonly ?string $hint = null,
     ) {
         $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $position, $this->getVisualSnippet(), $errorCode, $previous);
+        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 
     public function getHint(): ?string

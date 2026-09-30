@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Unit\Lexer;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\LexerException;
 use RegexParser\Lexer;
 use RegexParser\Token;
@@ -747,5 +749,31 @@ final class LexerBranchesTest extends TestCase
         $this->expectExceptionMessage('Unclosed character class');
 
         (new Lexer())->tokenize('[abc');
+    }
+
+    /**
+     * A body handed to the lexer directly can end in a lone backslash, which
+     * no delimited pattern can: there the backslash escapes the delimiter.
+     */
+    #[DataProvider('provideBodiesEndingInABackslash')]
+    public function test_a_body_ending_in_a_lone_backslash_is_refused_with_its_own_code(string $body, int $position): void
+    {
+        try {
+            (new Lexer())->tokenize($body);
+            $this->fail(\sprintf('%s must be refused.', var_export($body, true)));
+        } catch (LexerException $e) {
+            $this->assertSame(ErrorCode::EscapeTrailingBackslash, $e->getErrorCode());
+            $this->assertSame($position, $e->getPosition());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{body: string, position: int}>
+     */
+    public static function provideBodiesEndingInABackslash(): iterable
+    {
+        yield 'backslash alone' => ['body' => '\\', 'position' => 0];
+        yield 'after a literal' => ['body' => 'a\\', 'position' => 1];
+        yield 'inside a class' => ['body' => '[a\\', 'position' => 2];
     }
 }

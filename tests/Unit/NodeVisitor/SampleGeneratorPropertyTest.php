@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\UnicodePropNode;
@@ -56,7 +57,7 @@ final class SampleGeneratorPropertyTest extends TestCase
             Regex::create(['cache' => null])->generate('/\\p{Cs}/u');
             self::fail('A sample was given for a property no character has.');
         } catch (SampleGenerationException $e) {
-            $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+            $this->assertSame(ErrorCode::GenerateNoMatch, $e->getErrorCode());
         }
 
         $tree = new RegexNode(new UnicodePropNode('{NoSuchProperty}', true, 0, 17), 'u', '/', 0, 17);

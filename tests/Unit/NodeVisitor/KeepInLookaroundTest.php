@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 use RegexParser\PcreTarget;
@@ -38,7 +39,7 @@ final class KeepInLookaroundTest extends TestCase
         $result = Regex::create(['cache' => null, 'php_version' => 80500])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s is refused by PHP 8.5.', $pattern));
-        $this->assertSame('regex.keep.in_lookaround', $result->errorCode);
+        $this->assertSame(ErrorCode::KeepInLookaround, $result->errorCode);
         $this->assertSame($offset, $result->offset, $pattern);
     }
 
@@ -82,7 +83,7 @@ final class KeepInLookaroundTest extends TestCase
         // met before that comes first: "\y" at 7 (pcre2test 10.48).
         $result = Regex::create(['cache' => null, 'php_version' => 80500])->validate('/(?=\\K\\y)/');
 
-        $this->assertSame('regex.escape.unrecognized', $result->errorCode);
+        $this->assertSame(ErrorCode::EscapeUnrecognized, $result->errorCode);
     }
 
     #[Test]
@@ -92,9 +93,9 @@ final class KeepInLookaroundTest extends TestCase
         // an unbounded lookbehind comes before both.
         $regex = Regex::create(['cache' => null, 'php_version' => 80500]);
 
-        $this->assertSame('regex.keep.in_lookaround', $regex->validate('/(?=\\K)\\5/')->errorCode);
-        $this->assertSame('regex.backref.missing_group', $regex->validate('/\\5(?=\\K)/')->errorCode);
-        $this->assertSame('regex.lookbehind.unbounded', $regex->validate('/(?=\\K)(?<=a+)/')->errorCode);
+        $this->assertSame(ErrorCode::KeepInLookaround, $regex->validate('/(?=\\K)\\5/')->errorCode);
+        $this->assertSame(ErrorCode::BackrefMissingGroup, $regex->validate('/\\5(?=\\K)/')->errorCode);
+        $this->assertSame(ErrorCode::LookbehindUnbounded, $regex->validate('/(?=\\K)(?<=a+)/')->errorCode);
     }
 
     #[Test]
@@ -118,6 +119,7 @@ final class KeepInLookaroundTest extends TestCase
         yield 'lookbehind' => ['pattern' => '/(?<=\\Ka)/', 'offset' => 8];
         yield 'inside a group inside a lookahead' => ['pattern' => '/(?=(a\\K))/', 'offset' => 9];
         yield 'negative lookahead' => ['pattern' => '/(?!a\\K)b/', 'offset' => 8];
+        yield 'lookahead inside a non-atomic assertion' => ['pattern' => '/(*pla:(?=a\\K))/', 'offset' => 14];
         yield 'lookahead before a longer text' => ['pattern' => '/(?=a\\K)bcdef/', 'offset' => 12];
         yield 'alphabetic lookahead' => ['pattern' => '/(*pla:a\\K)/', 'offset' => 10];
         yield 'lookahead before more text' => ['pattern' => '/(?=a\\Kb)c/', 'offset' => 9];

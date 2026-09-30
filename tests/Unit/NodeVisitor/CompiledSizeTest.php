@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Regex;
 
 /**
@@ -41,7 +42,7 @@ final class CompiledSizeTest extends TestCase
         $body = substr($pattern, 1, (int) strrpos($pattern, '/') - 1);
 
         $this->assertFalse($result->isValid, \sprintf('%s is too large for PCRE but was reported valid.', $pattern));
-        $this->assertSame('regex.pattern.too_large', $result->errorCode);
+        $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode);
         $this->assertContains($result->offset, [0, \strlen($body)]);
     }
 
@@ -99,8 +100,8 @@ final class CompiledSizeTest extends TestCase
     {
         // PCRE refuses the missing group and the escape before it measures
         // the compiled pattern.
-        $this->assertSame('regex.backref.missing_group', Regex::create()->validate('/\\5(?:){20000}/')->errorCode);
-        $this->assertSame('regex.escape.unrecognized', Regex::create()->validate('/(?:){20000}\\y/')->errorCode);
+        $this->assertSame(ErrorCode::BackrefMissingGroup, Regex::create()->validate('/\\5(?:){20000}/')->errorCode);
+        $this->assertSame(ErrorCode::EscapeUnrecognized, Regex::create()->validate('/(?:){20000}\\y/')->errorCode);
     }
 
     /**

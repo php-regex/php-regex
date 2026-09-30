@@ -15,6 +15,7 @@ namespace RegexParser\Optimizer;
 
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\RegexException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\RegexNode;
@@ -58,7 +59,7 @@ final readonly class Optimizer
 
         // A safety net: the optimizing visitor returns a tree for a tree.
         if (!$optimizedAst instanceof RegexNode) {
-            throw new RegexException('Optimizer returned an unexpected AST root.');
+            throw new RegexException('Optimizer returned an unexpected AST root.', ErrorCode::InternalUnexpectedState);
         }
 
         if ($optimizedAst === $ast) {
