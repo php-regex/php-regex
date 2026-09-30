@@ -229,6 +229,10 @@ final class PcreAcceptedFormsTest extends TestCase
         yield 'named condition, name starting with R: /(?<Rx>a)(?(Rx)a)/' => ['pattern' => '/(?<Rx>a)(?(Rx)a)/'];
         yield 'named condition, R and a number then a letter: /(?<R1a>a)(?(R1a)a)/' => ['pattern' => '/(?<R1a>a)(?(R1a)a)/'];
         yield 'named condition, R and a number then a letter, group after: /(?(R1a)a)(?<R1a>b)/' => ['pattern' => '/(?(R1a)a)(?<R1a>b)/'];
+        // Group 0 is the whole pattern: "R0" asks whether any recursion runs, as "R" does.
+        yield 'recursion condition on group 0: /(?(R0)a|b)/' => ['pattern' => '/(?(R0)a|b)/'];
+        yield 'recursion condition on group 0, leading zero: /(?(R00)a|b)/' => ['pattern' => '/(?(R00)a|b)/'];
+        yield 'recursion condition on group 0, many zeros: /x(?(R000000)a)/' => ['pattern' => '/x(?(R000000)a)/'];
     }
 
     /**

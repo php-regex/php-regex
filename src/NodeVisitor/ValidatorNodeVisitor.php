@@ -1322,7 +1322,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                         ErrorCode::GroupNumberTooBig,
                     );
                 }
-                $this->assertSubroutineReferenceExists($num, $this->missingReferenceOffset($node->condition), ErrorCode::SubroutineRecursion, 'Recursion condition');
+                // Group 0 is the whole pattern: "R0" asks whether any recursion runs.
+                if (0 !== $num) {
+                    $this->assertSubroutineReferenceExists($num, $this->missingReferenceOffset($node->condition), ErrorCode::SubroutineRecursion, 'Recursion condition');
+                }
             } elseif (str_starts_with($ref, 'R&')) {
                 // "(?(R&name)...)": the group has to exist.
                 if (!$this->groupNumbering->hasNamedGroup(substr($ref, 2))) {
