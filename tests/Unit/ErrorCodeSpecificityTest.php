@@ -17,6 +17,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\ErrorCode;
+use RegexParser\PcreFeature;
+use RegexParser\PcreTarget;
 use RegexParser\RegexParser;
 use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
 use RegexParser\Tests\TestUtils\PcreMessageCodes;
@@ -44,8 +46,6 @@ final class ErrorCodeSpecificityTest extends TestCase
 {
     private const SUITE_JSON = __DIR__.'/../Fixtures/Pcre2/suite-cases.json';
 
-    private const PCRE_VERSION = '10.49';
-
     /**
      * @param array<string, mixed> $options
      */
@@ -53,6 +53,10 @@ final class ErrorCodeSpecificityTest extends TestCase
     #[DataProvider('provideRefusedPatternsWithTheirCode')]
     public function test_validate_reports_the_code_of_the_problem(string $pattern, array $options, bool $engineRefuses, string $expected): void
     {
+        if ($this->judgedBeforeItsRelease($pattern, $options)) {
+            return;
+        }
+
         $this->assertEngineVerdict($pattern, $engineRefuses);
 
         $result = self::validator($options)->validate($pattern);
@@ -351,6 +355,10 @@ final class ErrorCodeSpecificityTest extends TestCase
     #[DataProvider('provideFaultsWithTheirOffsetAndMessage')]
     public function test_validate_reports_code_offset_and_message_of_the_fault(string $pattern, string $code, string $message): void
     {
+        if ($this->judgedBeforeItsRelease($pattern, [])) {
+            return;
+        }
+
         $offset = PhpErrorOffset::of($pattern);
         $this->assertNotNull($offset, \sprintf('%s must be refused by the running PHP.', $pattern));
 
@@ -398,6 +406,10 @@ final class ErrorCodeSpecificityTest extends TestCase
     #[DataProvider('provideCountsReadBeforeRepeatability')]
     public function test_validate_reads_a_count_before_repeatability_in_every_form(string $pattern, string $expected, int $offset): void
     {
+        if ($this->judgedBeforeItsRelease($pattern, [])) {
+            return;
+        }
+
         $this->assertSame($offset, PhpErrorOffset::of($pattern), \sprintf('%s: the running PHP moved the offset.', $pattern));
 
         $result = self::validator([])->validate($pattern);
@@ -605,11 +617,15 @@ final class ErrorCodeSpecificityTest extends TestCase
     }
 
     /**
+     * The library judging for the PCRE2 the running PHP links: the tests
+     * ground a refusal, an offset or a message in that PHP, so both must
+     * judge the same release.
+     *
      * @param array<string, mixed> $options
      */
     private static function validator(array $options): RegexParser
     {
-        return RegexParser::create(['cache' => null, 'pcre_version' => self::PCRE_VERSION] + $options);
+        return RegexParser::create(['cache' => null, 'pcre_version' => self::runtimePin()] + $options);
     }
 
     /**
@@ -618,6 +634,48 @@ final class ErrorCodeSpecificityTest extends TestCase
     private static function runtimePin(): string
     {
         return implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+    }
+
+    /**
+     * The PCRE2 release that gives a row its meaning: an extended class, a
+     * substring scan, the groups a call returns, a padded count, a "\N{"
+     * read as a name, a group name past 32 code units or the wording of a
+     * version condition only exist from it. On an older engine the row cannot
+     * be asked what it asks; the library must then agree with that engine,
+     * refusing what it refuses and accepting what it compiles.
+     */
+    private static function releaseOf(string $pattern): ?PcreFeature
+    {
+        return match (true) {
+            str_contains($pattern, '(?[') => PcreFeature::ExtendedCharClass,
+            str_contains($pattern, '(*scs:') => PcreFeature::ScanSubstring,
+            1 === preg_match('/\(\?(?:R|[+-]?\d+)\(/', $pattern) => PcreFeature::CallsReturnCaptureGroups,
+            1 === preg_match('/\{(?: |,)/', $pattern) => PcreFeature::OpenAndPaddedRepeatCounts,
+            str_contains($pattern, '[\\N{') => PcreFeature::ErrorOffsetPastTheFault,
+            1 === preg_match('/\(\?<\w{33,128}\W/', $pattern) => PcreFeature::LongGroupNames,
+            str_contains($pattern, '(?(VERSION') => PcreFeature::VersionConditionLeftOpenIsVersionError,
+            default => null,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function judgedBeforeItsRelease(string $pattern, array $options): bool
+    {
+        $feature = self::releaseOf($pattern);
+        if (null === $feature || PcreTarget::runtime()->supports($feature)) {
+            return false;
+        }
+
+        $engineRefuses = false === @preg_match($pattern, '');
+        $this->assertSame(
+            $engineRefuses,
+            !self::validator($options)->validate($pattern)->isValid,
+            \sprintf('%s: PCRE2 %s %s it, before %s gives it its meaning; the library must agree.', var_export($pattern, true), self::runtimePin(), $engineRefuses ? 'refuses' : 'compiles', $feature->release()),
+        );
+
+        return true;
     }
 
     private function assertEngineVerdict(string $pattern, bool $engineRefuses): void

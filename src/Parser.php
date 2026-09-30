@@ -761,9 +761,21 @@ final class Parser
 
             // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
             $unclosedVerb = $this->startsUnclosedVerb($position);
+            $namePosition = $position + 1;
             $position = $unclosedVerb
                 ? $this->unclosedVerbOffset($position - 1)
                 : $this->quantifierErrorOffset($this->stream->current());
+
+            // Before PCRE2 10.47, a name that starts with a lowercase letter
+            // is an alphabetic assertion PCRE does not know, wherever it ends.
+            if ($unclosedVerb && !$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed)
+                && 1 === preg_match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)) {
+                throw $this->parserException(
+                    \sprintf('Unknown alphabetic assertion "(*%s" at position %d.', substr($this->pattern, $namePosition, $position - $namePosition), $position),
+                    ErrorCode::VerbInvalid,
+                    $position,
+                );
+            }
 
             throw $unclosedVerb
                 ? $this->parserException(\sprintf('Missing ")" to close the verb at position %d.', $position), ErrorCode::VerbUnclosed, $position)
@@ -1538,6 +1550,15 @@ final class Parser
                 ? $verbStartPosition + 2 + \strlen($name[0])
                 : $this->pastTheFault($verbStartPosition + 1);
 
+            // Before PCRE2 10.45, a substring scan is a name PCRE does not know.
+            if (\in_array($name[0] ?? '', ['scs', 'scan_substring'], true) && !$this->supports(PcreFeature::ScanSubstring)) {
+                throw $this->parserException(
+                    \sprintf('Unknown alphabetic assertion "(*%s:" at position %d.', $name[0], $position),
+                    ErrorCode::VerbInvalid,
+                    $position,
+                );
+            }
+
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
                 ErrorCode::ConditionAssertionExpected,
@@ -2298,7 +2319,7 @@ final class Parser
 
             // "(?(VERSION=10.4": PCRE reads the ")" as part of the version.
             if ($condition instanceof VersionConditionNode && !$this->stream->check(TokenType::T_GROUP_CLOSE)) {
-                throw $this->versionConditionError($this->versionConditionErrorOffset($condition->startPosition) ?? $this->stream->current()->position);
+                throw $this->versionConditionError($this->versionConditionErrorOffset($condition->startPosition) ?? $this->stream->current()->position, $condition->startPosition);
             }
 
             $this->stream->consume(TokenType::T_GROUP_CLOSE, 'Expected ) after condition', ErrorCode::ConditionUnclosed);
@@ -2604,7 +2625,7 @@ final class Parser
         // where it goes wrong.
         $versionError = $this->versionConditionErrorOffset($startPosition);
         if (null !== $versionError) {
-            throw $this->versionConditionError($versionError);
+            throw $this->versionConditionError($versionError, $startPosition);
         }
 
         // Anything else, "(?(+a)" or "(?({2})" included, has to be a name, and PCRE refuses what cannot be one
@@ -2631,8 +2652,21 @@ final class Parser
         return VersionCondition::errorOffset($this->pattern, $start, !$this->supports(PcreFeature::VersionConditionWholeNumbers), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
     }
 
-    private function versionConditionError(int $position): ParserException
+    /**
+     * @param int $start where the "VERSION" of the condition starts
+     */
+    private function versionConditionError(int $position, int $start): ParserException
     {
+        // Before PCRE2 10.47, what follows the major number where the ")"
+        // belongs leaves the condition open.
+        if (!$this->supports(PcreFeature::VersionConditionLeftOpenIsVersionError) && VersionCondition::isMajorLeftOpenAt($this->pattern, $start, $position)) {
+            return $this->parserException(
+                \sprintf('Missing ")" to close the condition at position %d.', $position),
+                ErrorCode::ConditionUnclosed,
+                $position,
+            );
+        }
+
         return $this->parserException(
             \sprintf('Invalid VERSION condition at position %d: PCRE takes "VERSION=" or "VERSION>=", a major number, an optional ".minor", and ")".', $position),
             ErrorCode::ConditionVersionSyntax,
@@ -2927,7 +2961,18 @@ final class Parser
             $this->guardRangeEndpoint($startNode, $afterHyphen, false);
         }
 
-        if ($this->isClassInvalidEscapeAt($this->stream->current()->position)) {
+        $endAt = $this->stream->current()->position;
+        if ($this->isClassInvalidEscapeAt($endAt)) {
+            // Before PCRE2 10.45, "\N" ends a range as a type does: the
+            // range is refused past its letter.
+            if ('N' === $this->pattern[$endAt + 1] && !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN)) {
+                throw $this->parserException(
+                    \sprintf('Invalid range in character class: "\N" cannot end a range, at position %d.', $endAt + 2),
+                    ErrorCode::RangeInvalidBounds,
+                    $endAt + 2,
+                );
+            }
+
             $this->stream->setPosition($rangePosition);
 
             return $startNode;

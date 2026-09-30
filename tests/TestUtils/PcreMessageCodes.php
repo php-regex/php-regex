@@ -29,6 +29,14 @@ namespace RegexParser\Tests\TestUtils;
 final class PcreMessageCodes
 {
     public const CODES = [
+        // The wording of the older releases the suite runs on: PCRE2 10.40 to 10.44.
+        'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported'],
+        'assertion expected after (?( or (?(?C)' => ['regex.condition.assertion_expected'],
+        'digits missing in \\x{} or \\o{} or \\N{U+}' => ['regex.escape.digits_missing'],
+        '\\ at end of pattern' => ['regex.escape.trailing_backslash'],
+        'digit expected after (?+ or (?-' => ['regex.subroutine.invalid_syntax'],
+        'subpattern name is too long (maximum 32 code units)' => ['regex.group.name_too_long'],
+
         // Verbs and alpha assertions.
         '(*MARK) must have an argument' => ['regex.verb.mark_name_missing'],
         // A start-of-pattern verb placed later, and a verb left open, are

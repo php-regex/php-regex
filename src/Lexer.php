@@ -282,6 +282,12 @@ final class Lexer
     private readonly bool $readsExtendedClass;
 
     /**
+     * Whether a class opened by "\E" or "\Q\E" alone, at the end of the
+     * pattern, is left open; before, PCRE meets a trailing backslash there.
+     */
+    private readonly bool $emptyQuoteOpeningClassIsUnclosed;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
@@ -291,6 +297,7 @@ final class Lexer
         $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
         $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
         $this->readsExtendedClass = $target->supports(PcreFeature::ExtendedCharClass);
+        $this->emptyQuoteOpeningClassIsUnclosed = $target->supports(PcreFeature::EmptyQuoteOpeningClassIsUnclosed);
     }
 
     /**
@@ -1145,6 +1152,30 @@ final class Lexer
     {
         if ([] !== $this->charClassStartPositions) {
             $classStart = $this->charClassStartPositions[0];
+
+            // Before PCRE2 10.45, "(?[" is no extended class: PCRE refuses
+            // the "[" after "(?", whatever follows it.
+            if (!$this->readsExtendedClass && $this->opensExtendedClass($classStart)) {
+                throw LexerException::withContext(
+                    \sprintf('Invalid group modifier syntax at position %d', $classStart),
+                    ErrorCode::GroupSyntax,
+                    $classStart,
+                    $this->pattern,
+                );
+            }
+
+            // Before PCRE2 10.45, "[\E", "[^\Q\E" and the like run into the
+            // end of the pattern as a backslash: PCRE skips the empty quotes
+            // that open a class, and meets nothing after the last one.
+            if (!$this->emptyQuoteOpeningClassIsUnclosed
+                && 1 === preg_match('/\G(?:\\\\(?:Q\\\\)?E)*+(?:\^(?:\\\\(?:Q\\\\)?E)*+)?(?<=\\\\E)\z/', $this->pattern, $quotes, 0, $classStart + 1)) {
+                throw LexerException::withContext(
+                    \sprintf('A backslash ends the pattern at position %d.', $this->length),
+                    ErrorCode::EscapeTrailingBackslash,
+                    $this->length,
+                    $this->pattern,
+                );
+            }
 
             throw LexerException::withContext(
                 'Unclosed character class "]" at end of input.',

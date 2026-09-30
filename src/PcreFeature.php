@@ -111,6 +111,16 @@ enum PcreFeature
     case HexEscapeNeedsDigits;
 
     /**
+     * "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash.
+     */
+    case EmptyQuoteOpeningClassIsUnclosed;
+
+    /**
+     * "\N" ending a range in a class is refused as "\N", not as an invalid range.
+     */
+    case ClassNEndingRangeRefusedAsN;
+
+    /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
      */
     case VersionConditionWholeNumbers;
@@ -141,6 +151,16 @@ enum PcreFeature
     case ErrorOffsetPastTheFault;
 
     /**
+     * An alphabetic name the pattern ends in, as "(*pla", is a missing ")", not an unknown assertion.
+     */
+    case AlphaNameAtPatternEndIsUnclosed;
+
+    /**
+     * A character after the major of "(?(VERSION=10z)" is a version error, not a condition left open.
+     */
+    case VersionConditionLeftOpenIsVersionError;
+
+    /**
      * A braced escape left open at the end of the pattern is reported at the end, not past it.
      */
     case UnclosedBraceAtPatternEnd;
@@ -168,13 +188,17 @@ enum PcreFeature
             self::RangeFromTypeReadToItsEnd,
             self::EmptyQuoteSkippedAfterClassEscape,
             self::ClassBackslashKIsLetter,
-            self::HexEscapeNeedsDigits => '10.45',
+            self::HexEscapeNeedsDigits,
+            self::EmptyQuoteOpeningClassIsUnclosed,
+            self::ClassNEndingRangeRefusedAsN => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GReferenceNumberReadBeforeClosing,
             self::NamedCodePointReadBeforeModeCheck,
             self::CalloutConditionErrorAtItemStart,
-            self::ErrorOffsetPastTheFault => '10.47',
+            self::ErrorOffsetPastTheFault,
+            self::AlphaNameAtPatternEndIsUnclosed,
+            self::VersionConditionLeftOpenIsVersionError => '10.47',
             self::UnclosedBraceAtPatternEnd => '10.48',
         };
     }

@@ -469,6 +469,10 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $this->unicodeFlag = str_contains($flags, 'u');
         $this->unicodeMode = $this->unicodeFlag || 1 === preg_match(self::LEADING_UTF_VERB, $source);
 
+        // Before PCRE2 10.45, "\N" ending a range is refused as the range.
+        $nEndsRange = !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN);
+        $afterRange = false;
+
         try {
             foreach ($tokens as $token) {
                 // An escape that starts on the character at fault is not
@@ -476,6 +480,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 if ($this->pastTheFault($token->position + 1) >= $limit) {
                     break;
                 }
+
+                if ($nEndsRange && $afterRange && TokenType::T_CHAR_TYPE === $token->type && 'N' === $token->value) {
+                    continue;
+                }
+
+                $afterRange = TokenType::T_RANGE === $token->type
+                    || ($afterRange && \in_array($token->type, [TokenType::T_QUOTE_MODE_START, TokenType::T_QUOTE_MODE_END], true));
 
                 $this->validateEscapeToken($token, $source);
             }
@@ -1519,6 +1530,18 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         // PCRE reads a major number and at most one ".minor".
         if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
             $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
+
+            // "(?(VERSION=10 )": before PCRE2 10.47, what follows the major
+            // where the ")" belongs leaves the condition open.
+            if (null !== $tooBig && false !== $versionAt && !$this->supports(PcreFeature::VersionConditionLeftOpenIsVersionError)
+                && VersionCondition::isMajorLeftOpenAt((string) $this->source, $versionAt, $tooBig)) {
+                $this->raiseSemanticError(
+                    \sprintf('Missing ")" to close the condition at position %d.', $tooBig),
+                    $tooBig,
+                    ErrorCode::ConditionUnclosed,
+                );
+            }
+
             if (null !== $tooBig) {
                 $this->raiseSemanticError(
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),

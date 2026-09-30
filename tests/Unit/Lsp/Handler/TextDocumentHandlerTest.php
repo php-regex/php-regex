@@ -69,7 +69,8 @@ final class TextDocumentHandlerTest extends TestCase
         Response::writeTo($stream);
 
         try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+            // A substring scan is read from PCRE2 10.45: judged for 10.49.
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
                 jsonrpc: '2.0',
                 method: 'textDocument/didOpen',
                 id: null,

@@ -118,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Judged for a PCRE2 release before 10.45 or 10.47, a few refused patterns got the code the later releases report: `(?[` is no extended class before 10.45 and is refused as an unknown `(?` group, `(*pla` and an unknown `(*scs:` are unknown names, `[\E` left open is a backslash at the end of the pattern, a range ending in `\N` is an invalid range, and `(?(VERSION=10z)` is a condition left open before 10.47. The code now follows the judged release.
 - The lint results depended on whether `intl` was installed: without it, `/é/iu` was told its `i` flag was useless. With it, `/Ⓐ/iu` and `/Ⅻ/iu` were, though PCRE folds their case. Case is now read from `mbstring` as PCRE's Unicode case folding reads it, and without UTF mode as ASCII only, as PCRE's default tables do. `PatternInfo::$intlAvailable` is gone.
 - A delimiter, a group name or a number was read with `ctype_*`, which answers for the process locale: under a Latin-1 `LC_CTYPE`, `\xE4` counted as a letter. They are read in ASCII, as PCRE reads them, and `ext-ctype` is no longer used. `ext-mbstring`, which the library already called, is declared in `composer.json`.
 - A pattern that turns UTF mode on with `(*UTF)` or `(*UTF8)` instead of `u` was accepted with bytes that are no UTF-8, which PCRE refuses: `/(*UTF)\xff/` is now refused as `regex.encoding.invalid_utf8`. That error is reported at the first byte that starts no UTF-8 character, as PCRE does, where it was reported at offset 0.

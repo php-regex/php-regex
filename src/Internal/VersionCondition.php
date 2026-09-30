@@ -132,6 +132,22 @@ final readonly class VersionCondition
     }
 
     /**
+     * Whether $offset, where PCRE refuses the version condition whose
+     * "VERSION" starts at $position, is the character right after a major
+     * number PCRE takes, where only "." or ")" may follow.
+     */
+    public static function isMajorLeftOpenAt(string $pattern, int $position, int $offset): bool
+    {
+        if (1 !== preg_match('/\GVERSION>?=(\d++)/', $pattern, $matches, 0, $position)) {
+            return false;
+        }
+
+        $end = $position + \strlen($matches[0]);
+
+        return $offset === $end && !\in_array($pattern[$end] ?? ')', ['.', ')'], true) && (int) $matches[1] <= 1000;
+    }
+
+    /**
      * Where the digits of a major or a minor number end, and whether the
      * number goes over 1000, the most PCRE reads.
      *
