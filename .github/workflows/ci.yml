@@ -202,7 +202,7 @@ jobs:
 
       - name: Cache PCRE2 Builds
         id: pcre2-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/pcre2
           key: pcre2test-10.40-10.48-v1
