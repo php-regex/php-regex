@@ -51,6 +51,23 @@ Subject lines are ignored: this is a compile-level measurement, not a match-leve
 The case-by-case record lives in `tests/Fixtures/Pcre2/`. Its JSON format is internal and may change between releases
 without notice; do not build on it.
 
+## Beyond the four pinned files
+
+The library was also run on every file of the PCRE2 10.49 test suite that applies to PHP (`testinput1` to `10`, `14`
+to `22`, `26` and `27`, some 8,000 cases), against `pcre2test` builds of the release each PHP minor bundles (10.40,
+10.42, 10.44) and against 10.49 itself:
+
+- **Compile verdict:** it agrees with every release on every case PHP can express, apart from `\C` under `u`, which
+  the library refuses on purpose (see [PCRE](../concepts/pcre.md)).
+- **Error offset:** it agrees on every pattern both reject, for each release.
+- **Analysis:** on the 7,500 or so patterns PHP compiles, with the suite's own subject lines replayed through PHP,
+  the recompiled tree and `optimize()` match exactly what the pattern matches, and the length range and `literals()`
+  hold for every match they apply to. `generate()` finds a sample PHP matches for about 98% of them; for the rest,
+  no subject matches the pattern, or its constraints are too tangled to guess.
+
+This wider run uses PCRE2 builds made outside the repository and is not part of the test suite; the continuous
+integration runs the test suite on the PCRE2 each supported PHP bundles and on the latest release.
+
 <!-- pcre2-conformance: generated below - do not edit -->
 
 Against PCRE2 10.48's official test suite, under PHP's compile options: compile verdict agrees on **4426 of 4426** extractable cases, error offset agrees on **427 of 427** shared rejections (**218** of them match one of two version-dependent offsets); **0** patterns PHP rejects are accepted (4 suite verdicts adjusted to PHP, 745 cases skipped — see the breakdown below).
