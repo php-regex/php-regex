@@ -4929,13 +4929,13 @@
 
   corpus/moodle/public/lib/adodb/drivers/adodb-sybase.inc.php:406:20
       → /([A-Za-z]{3})[-/\. ]+([0-9]{1,2})[-/\. ]+([0-9]{4})/
-     FAIL  Unescaped delimiter "/" at position 16 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 15 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([A-Za-z]{3})[-/\. ]+([0-9]{1,2})[-/\. ]+([0-9]{4})/
                                    ^
 
   corpus/moodle/public/lib/adodb/drivers/adodb-sybase.inc.php:423:20
       → /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *([apAP]{0,1})/
-     FAIL  Unescaped delimiter "/" at position 16 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 15 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([A-Za-z]{3})[-/\. ]([0-9 ]{1,2})[-/\. ]([0-9]{4}) +([0-9]{1,2}):([0-9]{1,2}) *...
                                    ^
 
@@ -5363,25 +5363,25 @@
 
   corpus/moodle/public/lib/wiki_to_markdown.php:268:26
       → /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
-     FAIL  Unescaped delimiter "/" at position 31 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 30 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
                                                   ^
 
   corpus/moodle/public/lib/wiki_to_markdown.php:270:26
       → /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
-     FAIL  Unescaped delimiter "/" at position 47 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 46 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])\(([^)]+)\)/i
                                                                   ^
 
   corpus/moodle/public/lib/wiki_to_markdown.php:274:26
       → /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i
-     FAIL  Unescaped delimiter "/" at position 31 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 30 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i
                                                   ^
 
   corpus/moodle/public/lib/wiki_to_markdown.php:276:26
       → /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])/i
-     FAIL  Unescaped delimiter "/" at position 47 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
+     FAIL  Unescaped delimiter "/" at position 46 ends the pattern early; what follows is read as modifiers. Escape it as "\/" or use another delimiter.
          ↳         /([[:space:]])www\.([^[:space:]]*)([[:alnum:]#?/&=])/i
                                                                   ^
 
@@ -8691,6 +8691,10 @@
          - !([a-zA-Z\s]+)$!s
          + !([a-zA-Z\s]+)$!
 
+  corpus/smarty/src/Lexer/TemplateLexer.php:233:24
+      → /^\xEF\xBB\xBF/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
   corpus/smarty/src/Lexer/TemplateLexer.php:335:43
       → /(.|\s)+/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -10603,9 +10607,9 @@
 
   corpus/jetpack/projects/packages/waf/src/class-waf-transforms.php:257:24
       → ~/*|*/|--|#|//~
-     FAIL  Quantifier without target at position 4
+     FAIL  Quantifier without target at position 3
          ↳         /*|*/|--|#|//
-                       ^
+                      ^
 
   corpus/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:439:30
       → /([-_].*)$/i
@@ -13895,27 +13899,27 @@
       → /^[[:alpha:]]{1,3}\s*:(.*)/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4363:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4371:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4379:33
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4387:33
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4625:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4633:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5164:32
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5172:32
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5189:41
+  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5197:41
       → /\s+.*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
@@ -14500,7 +14504,7 @@
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-  corpus/statamic/cms/src/Modifiers/CoreModifiers.php:870:38
+  corpus/statamic/cms/src/Modifiers/CoreModifiers.php:872:38
       → /="(\/[^"]+)"/ism
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -14823,14 +14827,14 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
-  corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:70:38
+  corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:103:38
       → /(?<!@)@boostsnippet\(\s*(?P<nameQuote>['"])(?P<name>[^\1]*?)\1(?:\s*,\s*(?P<langQuote>['"])(?P<lang>[^\3]*?)\3)?\s*\)(?P<content>.*?)@endboostsnippet/s
      WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
          ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.
      WARN  Suspicious \3 inside character class: this is octal (\x03), not a backreference to group 3.
          ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 3, move the check outside the class.
 
-  corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:87:17
+  corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:131:17
       → /(?<!@)@scoped\(\s*(?P<paths>\[(?:[\s,]|'[^']*'|"[^"]*")*\])\s*\)/s
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider using atomic groups (?>...) or possessive quantifiers.
