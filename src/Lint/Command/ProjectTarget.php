@@ -93,11 +93,21 @@ final readonly class ProjectTarget
         $phpSource = null;
 
         foreach ($php as $name => $version) {
-            if (null !== $version) {
-                [$phpVersionId, $phpSource] = [self::phpVersionId($version), (string) $name];
+            if (null === $version) {
+                continue;
+            }
+
+            // "runtime", as PHPStan's phpVersion takes it: the PHP running
+            // the command, with the PCRE2 it links.
+            if (\is_string($version) && 'runtime' === strtolower(trim($version))) {
+                [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, $name.' (running PHP)', true];
 
                 break;
             }
+
+            [$phpVersionId, $phpSource] = [self::phpVersionId($version), (string) $name];
+
+            break;
         }
 
         if (null === $phpVersionId || null === $phpSource) {

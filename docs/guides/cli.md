@@ -463,7 +463,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `format`                        | string           | Output format (console, json, github, checkstyle, junit) |
 | `jobs`                          | int              | Number of parallel workers (at least 1)                  |
 | `ide`                           | string           | IDE for clickable links                                  |
-| `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"` or `80300` |
+| `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
 | `extraction.interop`            | array            | Wrapper libraries whose calls carry patterns (default `["composer-pcre"]`) |
 | `extraction.functions`          | array            | Project helpers carrying patterns                        |
@@ -527,6 +527,10 @@ pattern for one target, chosen in this order:
    The `COMPOSER` environment variable names another file, as it does for
    Composer;
 4. the PHP running the command.
+
+`runtime`, given to `--php-version` or as `phpVersion`, names the PHP running
+the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
+that lints for its floor can still ask what the engine at hand says.
 
 Each version is chosen on its own. Without a PCRE2 release, the command uses
 the one the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44 for

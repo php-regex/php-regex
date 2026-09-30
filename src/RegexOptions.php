@@ -232,12 +232,20 @@ final readonly class RegexOptions
      */
     private static function getTarget(array $options): PcreTarget
     {
-        $phpVersionId = self::getPhpVersionId($options);
         $pcreVersion = $options['pcre_version'] ?? null;
 
         if (null !== $pcreVersion && !\is_string($pcreVersion)) {
             throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not a %s.', get_debug_type($pcreVersion)));
         }
+
+        // "runtime", as PHPStan's phpVersion takes it: the running PHP, with
+        // the PCRE2 it links unless a release is given beside it.
+        $phpVersion = $options['php_version'] ?? null;
+        if (\is_string($phpVersion) && 'runtime' === strtolower(trim($phpVersion))) {
+            return null === $pcreVersion ? PcreTarget::runtime() : new PcreTarget(PcreTarget::runtime()->phpVersionId, $pcreVersion);
+        }
+
+        $phpVersionId = self::getPhpVersionId($options);
 
         return match (true) {
             null === $phpVersionId && null === $pcreVersion => PcreTarget::runtime(),
@@ -262,7 +270,7 @@ final readonly class RegexOptions
         if (\is_int($version)) {
             if ($version <= 0) {
                 throw new InvalidRegexOptionException(
-                    '"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.',
+                    '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
                 );
             }
 
@@ -273,7 +281,7 @@ final readonly class RegexOptions
             $trimmed = trim($version);
             if ('' === $trimmed) {
                 throw new InvalidRegexOptionException(
-                    '"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.',
+                    '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
                 );
             }
 
@@ -281,7 +289,7 @@ final readonly class RegexOptions
                 $asInt = (int) $trimmed;
                 if ($asInt < 10000) {
                     throw new InvalidRegexOptionException(
-                        '"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.',
+                        '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
                     );
                 }
 
@@ -298,7 +306,7 @@ final readonly class RegexOptions
         }
 
         throw new InvalidRegexOptionException(
-            '"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.',
+            '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
         );
     }
 

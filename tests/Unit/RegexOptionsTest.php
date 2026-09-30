@@ -83,28 +83,28 @@ final class RegexOptionsTest extends TestCase
     public function test_from_array_invalid_php_version(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.');
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         RegexOptions::fromArray(['php_version' => 'invalid']);
     }
 
     public function test_from_array_invalid_php_version_int_zero(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.');
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         RegexOptions::fromArray(['php_version' => 0]);
     }
 
     public function test_from_array_invalid_php_version_empty_string(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.');
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         RegexOptions::fromArray(['php_version' => '   ']);
     }
 
     public function test_from_array_invalid_php_version_digits_low(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.');
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         RegexOptions::fromArray(['php_version' => '8000']);
     }
 
@@ -266,7 +266,15 @@ final class RegexOptionsTest extends TestCase
     public function test_from_array_invalid_php_version_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2" or a PHP_VERSION_ID integer.');
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         RegexOptions::fromArray(['php_version' => []]);
+    }
+
+    public function test_php_version_runtime_names_the_running_engine(): void
+    {
+        // As PHPStan's phpVersion: the running PHP, with the PCRE2 it links.
+        $this->assertEquals(PcreTarget::runtime(), RegexOptions::fromArray(['php_version' => 'runtime'])->target);
+        $this->assertEquals(PcreTarget::runtime(), RegexOptions::fromArray(['php_version' => ' Runtime '])->target);
+        $this->assertSame('10.42', RegexOptions::fromArray(['php_version' => 'runtime', 'pcre_version' => '10.42'])->target->pcreVersion);
     }
 }

@@ -119,8 +119,12 @@ a repository cloned by hand is removed on the next run unless it is added with
 Regenerate `corpus/corpus.log` after updating the corpus, from a terminal:
 
 ```bash
-php bin/regex lint corpus/ --output=corpus/corpus.log
+php bin/regex lint corpus/ --php-version=runtime --output=corpus/corpus.log
 ```
+
+`--php-version=runtime` judges the corpus for the PHP running the command and
+the PCRE2 it links; without it, the command would judge for the lowest PHP this
+repository's `composer.json` allows.
 
 Piping the command instead of running it in a terminal renders the severity
 badges without their padding, which reformats every severity line of the

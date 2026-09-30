@@ -176,10 +176,10 @@ final class LintConfigSchema
                     'examples' => ['vendor', ['vendor', 'tests', 'Fixtures']],
                 ],
                 'phpVersion' => [
-                    'description' => 'The PHP version the patterns are judged for, as "8.3" or a PHP_VERSION_ID like 80300. Omit to read it from composer.json (config.platform.php, else the lowest PHP require.php allows), else to use the running PHP. The --php-version option wins over it.',
-                    'x-expected' => 'a version like "8.3" or a PHP_VERSION_ID like 80300',
+                    'description' => 'The PHP version the patterns are judged for, as "8.3" or a PHP_VERSION_ID like 80300, or "runtime" for the PHP running the command with the PCRE2 it links. Omit to read it from composer.json (config.platform.php, else the lowest PHP require.php allows), else to use the running PHP. The --php-version option wins over it.',
+                    'x-expected' => 'a version like "8.3", a PHP_VERSION_ID like 80300, or "runtime"',
                     'type' => ['string', 'integer'],
-                    'pattern' => '^[0-9]+\.[0-9]+(\.[0-9]+)?$',
+                    'pattern' => '^([0-9]+\.[0-9]+(\.[0-9]+)?|[Rr][Uu][Nn][Tt][Ii][Mm][Ee])$',
                     'minimum' => 10000,
                     'examples' => ['8.2', '8.4', 80300],
                 ],

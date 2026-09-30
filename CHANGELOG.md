@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `--php-version=runtime`, `phpVersion: "runtime"` in `regex.json` and `Regex::create(['php_version' => 'runtime'])` name the PHP running the command and the PCRE2 it links, as PHPStan's `phpVersion` does.
 - `AbstractTraversingVisitor`: a base visitor whose every `visitX()` method visits the node's children and returns `null`. Override the node types you care about and call the parent method to keep descending; a node type added in a minor release is walked through, where `AbstractNodeVisitor` returns without visiting what it holds. See [the visitors reference](docs/visitors/README.md#which-base-to-extend).
 - `NodeInterface::getChildren()`, `NodeTraverser::walk()` and `NodeFinder`: a tree is walked, and nodes found in it, without a visitor for each kind of node. The walk keeps its own stack, so a pattern nested as deep as the parser allows is walked too. See [the visitors reference](docs/visitors/README.md#walking-a-tree-without-a-visitor).
 - `PcreFeature` and `PcreTarget::supports()`: each behaviour PCRE2 changed, named with the release it arrived in, in one table the rules ask instead of release strings written by hand; [the PCRE page](docs/concepts/pcre.md#what-changed-in-which-release) lists them. `pcreAtLeast()` refuses a release spelled short, as `'10.4'`, which read as 10.04 and held for every target, with an `InvalidRegexOptionException`.
