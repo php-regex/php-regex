@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 use RegexParser\Regex;
 
 /**
@@ -61,5 +62,39 @@ final class SampleGeneratorReferenceTest extends TestCase
         yield 'forward call to a group repeated zero times' => ['pattern' => '/^(?+1)(?<a>x|y){0}z/'];
         yield 'forward call by g' => ['pattern' => '/(?-i:\\g<+1>)(?i:(a))/'];
         yield 'backward call after later groups' => ['pattern' => '/(a)(?-1)(b)(c)/'];
+    }
+
+    /**
+     * "(?(R)" holds inside a call, "(?(R1)" and "(?(R&name)" inside a call
+     * to that group, the latest one: every seed takes the branch PCRE takes.
+     */
+    #[Test]
+    #[DataProvider('provideRecursionConditions')]
+    public function test_a_recursion_condition_takes_the_branch_of_the_call(string $pattern, string $sample): void
+    {
+        $this->assertSame(1, preg_match($pattern, $sample));
+
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+        for ($seed = 0; $seed < 16; $seed++) {
+            $generator->setSeed($seed);
+            $this->assertSame($sample, $tree->accept($generator));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, sample: string}>
+     */
+    public static function provideRecursionConditions(): iterable
+    {
+        yield 'any call' => ['pattern' => '/^(a(?(R)b|c))(?1)$/', 'sample' => 'acab'];
+        yield 'a call to the group' => ['pattern' => '/^(a(?(R1)b|c))(?1)$/', 'sample' => 'acab'];
+        yield 'a call to another group' => ['pattern' => '/^(a(?(R2)b|c))(?1)()$/', 'sample' => 'acac'];
+        yield 'a call to the group by name' => ['pattern' => '/^(?<n>a(?(R&n)b|c))(?&n)$/', 'sample' => 'acab'];
+        yield 'a call to the whole pattern' => ['pattern' => '/a(?(R)b|c(?R))/', 'sample' => 'acab'];
+        yield 'a call to the whole pattern, by number' => ['pattern' => '/a(?(R0)b|c(?R))/', 'sample' => 'acab'];
+        yield 'a call to the whole pattern, not to group 1' => ['pattern' => '/a(?(R1)b|(?(R)d|c(?R)))(x){0}/', 'sample' => 'acad'];
+        yield 'after the call' => ['pattern' => '/^(a(?(R)b|c))(?1)(?(R)x|y)$/', 'sample' => 'acaby'];
+        yield 'a call to another group by name' => ['pattern' => '/^(?<n>a(?(R&n)b|c))(?<m>x(?(R&n)y|z))(?&m)$/', 'sample' => 'acxzxz'];
     }
 }

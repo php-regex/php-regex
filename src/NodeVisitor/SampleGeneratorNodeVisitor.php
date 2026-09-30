@@ -163,6 +163,22 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private bool $dotAll = false;
 
     /**
+     * The text each sequence being generated holds so far, outermost first,
+     * held by reference: what stands before the node being generated.
+     *
+     * @var array<int, string>
+     */
+    private array $textsBefore = [];
+
+    /**
+     * The groups the calls being generated run, innermost last: 0 for the
+     * whole pattern. "(?(R)" and its like read it.
+     *
+     * @var list<int>
+     */
+    private array $calls = [];
+
+    /**
      * The fewest characters the pattern still adds after the node being
      * generated, which an alternative ending the subject leaves no room for.
      */
@@ -237,6 +253,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->caseless = str_contains($node->flags, 'i');
         $this->dollarEndsLine = str_contains($node->flags, 'm');
         $this->dotAll = str_contains($node->flags, 's');
+        $this->textsBefore = [];
+        $this->calls = [];
         $this->textAhead = 0;
         $this->lengthRanges = [];
         $this->unicode = str_contains($node->flags, 'u')
@@ -641,10 +659,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         $this->recursionDepth++;
-        $result = $this->acceptedIn($target instanceof GroupNode ? $target->child : $target, inPlace: true);
-        $this->recursionDepth--;
+        $this->calls[] = \in_array($node->reference, ['R', '0'], true) || !$target instanceof GroupNode
+            ? 0
+            : $this->groupNumbers[spl_object_id($target)] ?? -1;
 
-        return $result;
+        try {
+            return $this->acceptedIn($target instanceof GroupNode ? $target->child : $target, inPlace: true);
+        } finally {
+            array_pop($this->calls);
+            $this->recursionDepth--;
+        }
     }
 
     #[\Override]
@@ -874,10 +898,13 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             $rest += $this->minLength($children[$index]);
         }
 
+        $this->textsBefore[] = &$text;
+
         try {
             return $this->generateChildren($children, $after, $ahead, $text);
         } finally {
             $this->textAhead = $ahead;
+            array_pop($this->textsBefore);
         }
     }
 
@@ -885,7 +912,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      * @param list<NodeInterface> $children
      * @param array<int, int>     $after    the fewest characters the children after each one add
      */
-    private function generateChildren(array $children, array $after, int $ahead, string $text): string
+    private function generateChildren(array $children, array $after, int $ahead, string &$text): string
     {
         foreach ($children as $index => $child) {
             $this->textAhead = $ahead;
@@ -924,7 +951,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             }
 
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
-                if ($this->holds($child->child, $text, '', '\\z')) {
+                // What the groups around hold before this one counts too.
+                if ($this->holds($child->child, implode('', $this->textsBefore), '', '\\z')) {
                     continue;
                 }
 
@@ -1232,6 +1260,18 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0].'.0'));
 
             return self::versionConditionHolds($condition, $major, $minor);
+        }
+
+        // "(?(R)" holds inside any call, "(?(R2)" and "(?(R&name)" inside a
+        // call to that group, the latest call.
+        if ($condition instanceof SubroutineNode && 1 === preg_match('/^R(?:(\d++)|&(.++))?$/', $condition->reference, $matches, \PREG_UNMATCHED_AS_NULL)) {
+            $latest = [] === $this->calls ? null : $this->calls[\count($this->calls) - 1];
+
+            return match (true) {
+                null !== $matches[1] => (int) $matches[1] === $latest,
+                null !== $matches[2] => \in_array($latest, $this->groupNumbersByName[$matches[2]] ?? [], true),
+                default => null !== $latest,
+            };
         }
 
         return 1 === $this->randomInt(0, 1);

@@ -55,6 +55,37 @@ final class SampleGeneratorLookaroundTest extends TestCase
     }
 
     /**
+     * A lookbehind in a group reads the text before the group too: that
+     * text may already satisfy it, and is left as it is.
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindsInGroups')]
+    public function test_a_lookbehind_in_a_group_reads_the_text_before_it(string $pattern): void
+    {
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $generator = new SampleGeneratorNodeVisitor();
+
+        for ($seed = 0; $seed < 32; $seed++) {
+            $generator->setSeed($seed);
+            $sample = $tree->accept($generator);
+
+            $this->assertSame(1, preg_match($pattern, $sample), \sprintf('Seed %d gave %s for %s.', $seed, json_encode($sample), $pattern));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLookbehindsInGroups(): iterable
+    {
+        yield 'past the start of the group' => ['pattern' => '/^a(b(?<=ab))$/'];
+        yield 'past two groups' => ['pattern' => '/^x(y(z(?<=xyz)))$/'];
+        yield 'in a branch' => ['pattern' => '/^foo(?:bar|(baz(?<=obaz)))$/'];
+        yield 'in a lookbehind' => ['pattern' => '/(?<=ab(cd(?<=...)))./'];
+        yield 'past a group that ended' => ['pattern' => '/(ab)(?<=abab)c/'];
+    }
+
+    /**
      * An item that takes no text, repeated, is that item once, and left out
      * when it may be: "[[:<:]]", as "(?:\b(?=\w))", adds no character of its
      * own ahead of the word it opens.
