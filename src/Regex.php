@@ -26,6 +26,7 @@ use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\ResourceLimitException;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Exception\SemanticErrorException;
+use RegexParser\Internal\NoJit;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
@@ -459,8 +460,7 @@ final readonly class Regex
         // Samples are checked by the interpreter: the JIT of PCRE2 10.49
         // crashes PHP on some pattern and subject pairs, which a sample may
         // happen to be. "(*NO_JIT)" leads the pattern, as a start option.
-        $trimmed = ltrim($regex);
-        $checked = substr($trimmed, 0, 1).'(*NO_JIT)'.substr($trimmed, 1);
+        $checked = NoJit::pattern($regex);
         // Only a pattern this PHP cannot compile gets a sample nothing checks.
         error_clear_last();
         $compiles = false !== @preg_match($checked, '') || !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');

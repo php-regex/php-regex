@@ -63,6 +63,9 @@ final class RegexGenerateTest extends TestCase
         // It compiles, but a match fails with an error the engine raises.
         yield 'recursion at the same position' => ['pattern' => '/(?=\\w)(?R)/'];
         yield 'empty negative lookahead' => ['pattern' => '/a(?!)b/'];
+        // The delimiter is a character "(*NO_JIT)" holds: still checked.
+        yield 'underscore delimiter' => ['pattern' => '_a(?!)_'];
+        yield 'star delimiter' => ['pattern' => '*a(?!)*'];
     }
 
     /**
@@ -190,7 +193,8 @@ final class RegexGenerateTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        foreach (['/\d{3}-[A-Z]{2}/', '/^(?:foo|bar)\b/', '/\bword\b/'] as $pattern) {
+        // "_" and "*" are delimiters "(*NO_JIT)" holds.
+        foreach (['/\d{3}-[A-Z]{2}/', '/^(?:foo|bar)\b/', '/\bword\b/', '_a+_', '*b\*c*'] as $pattern) {
             $this->assertSame(1, preg_match($pattern, $regex->generate($pattern)), $pattern);
         }
     }
