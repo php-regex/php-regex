@@ -26,9 +26,11 @@ use RegexParser\Exception\ResourceLimitException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Internal\StaticCaches;
+use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
+use RegexParser\Node\VersionConditionNode;
 use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
 use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 
@@ -53,7 +55,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-1c1e92240e2c1a77ae3cb389e49be872';
+    public const CACHE_VERSION = 'ast-f9799d11815643306e7dec1ae37b83ab';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -140,7 +142,8 @@ final readonly class RegexParser
         } catch (LexerException|ParserException $parseException) {
             $fallbackAst = $this->buildFallbackAstFromException($parseException, $regex);
 
-            return new TolerantParseResult($fallbackAst, [$parseException]);
+            // The first error is the one validate() reports first.
+            return new TolerantParseResult($fallbackAst, [$this->firstParseError($regex, $parseException)]);
         }
     }
 
@@ -172,11 +175,7 @@ final readonly class RegexParser
             // The library's own limits: the pattern is not read further.
             return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
-            // A judgement the parser had to pass on as a parse error keeps its code.
-            $cause = $e->getPrevious();
-            $judged = $cause instanceof SemanticErrorException && $cause->getPosition() === $e->getPosition() ? $cause : $e;
-
-            return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $judged);
+            return $this->buildValidationFailure($this->firstParseError($regex, $e));
         } catch (RegexParserExceptionInterface $e) {
             // Only a judgement on the pattern; a failure of the library
             // surfaces, never reported as a pattern error.
@@ -274,12 +273,26 @@ final readonly class RegexParser
     }
 
     /**
+     * The error PCRE meets first in a pattern that failed to parse with
+     * $error: one earlier in the pattern, or $error itself. A judgement the
+     * parser had to pass on as a parse error keeps its code.
+     */
+    private function firstParseError(string $regex, LexerException|ParserException $error): RegexException
+    {
+        $cause = $error->getPrevious();
+        $judged = $cause instanceof SemanticErrorException && $cause->getPosition() === $error->getPosition() ? $cause : $error;
+
+        return $this->earlierError($regex, $error) ?? $judged;
+    }
+
+    /**
      * PCRE reads the pattern in one pass, left to right. This library
      * tokenizes it whole, then parses it, then judges its escapes, so the
      * error it stops on may lie after one PCRE meets first: an escape PCRE
      * refuses, a class holding an unknown POSIX name or a reversed range,
-     * or, when tokenizing failed, a syntax error in what was read before.
-     * The earliest of those before the error found is PCRE's.
+     * a version condition, or, when tokenizing failed, a syntax error in
+     * what was read before. The earliest of those before the error found is
+     * PCRE's.
      */
     private function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
     {
@@ -306,6 +319,7 @@ final readonly class RegexParser
         $classErrors = [
             $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
             $this->firstExtendedClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
+            $this->firstVersionConditionErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
         ];
         foreach ($classErrors as $classError) {
             if (null !== $classError && (null === $earlier || ($classError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
@@ -315,14 +329,18 @@ final readonly class RegexParser
 
         if ($error instanceof LexerException) {
             // The pattern read as if it ended where tokenizing stopped: an
-            // error that ending causes lies there, and is not taken.
+            // error that ending causes lies there, and is not taken. A "(?"
+            // read last is read with what follows it, which is not read:
+            // what is refused past it is refused for want of that.
             $stream = new TokenStream([...$tokens, new Token(TokenType::T_EOF, '', $position)], $pattern);
+            $last = [] === $tokens ? null : $tokens[array_key_last($tokens)];
+            $readUpTo = null !== $last && TokenType::T_GROUP_MODIFIER_OPEN === $last->type ? $last->end() : $position;
 
             try {
                 (new Parser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, $position);
             } catch (LexerException|ParserException $syntaxError) {
                 $at = $syntaxError->getPosition() ?? $position;
-                if ($at < $position && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
+                if ($at < min($position, $readUpTo) && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
                     return $syntaxError;
                 }
             }
@@ -391,6 +409,62 @@ final readonly class RegexParser
                 if (($error->getPosition() ?? $position) < $position) {
                     return $error;
                 }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first error in a version condition, "(?(VERSION>=10.4)", the tokens
+     * close before $position, where parsing failed: PCRE judges the version
+     * as it reads it. Each such condition is parsed alone and judged.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstVersionConditionErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
+    {
+        foreach ($tokens as $index => $open) {
+            $group = $tokens[$index + 1] ?? null;
+            if (TokenType::T_GROUP_MODIFIER_OPEN !== $open->type || null === $group || TokenType::T_GROUP_OPEN !== $group->type
+                || $group->position !== $open->end() || !str_starts_with(substr($pattern, $group->end(), 7), 'VERSION')) {
+                continue;
+            }
+
+            // The condition runs to the first ")".
+            $condition = [$open, $group];
+            foreach (\array_slice($tokens, $index + 2) as $token) {
+                $condition[] = $token;
+                if (TokenType::T_GROUP_CLOSE === $token->type) {
+                    break;
+                }
+            }
+
+            $close = $condition[\count($condition) - 1];
+            if (TokenType::T_GROUP_CLOSE !== $close->type || $close->end() > $position) {
+                continue;
+            }
+
+            try {
+                $ast = (new Parser($this->maxRecursionDepth, $this->target))->parse(
+                    new TokenStream([...$condition, new Token(TokenType::T_GROUP_CLOSE, ')', $close->end()), new Token(TokenType::T_EOF, '', $close->end() + 1)], $pattern),
+                    $flags,
+                    $delimiter,
+                    \strlen($pattern),
+                );
+                // A condition the parser reads as a name is looked up once the
+                // whole pattern is read.
+                if (!$ast->pattern instanceof ConditionalNode || !$ast->pattern->condition instanceof VersionConditionNode) {
+                    continue;
+                }
+
+                $ast->accept(new ValidatorNodeVisitor($this->maxLookbehindLength, $pattern, $this->target));
+            } catch (SemanticErrorException $versionError) {
+                if (($versionError->getPosition() ?? $position) < $position) {
+                    return $versionError;
+                }
+            } catch (LexerException|ParserException) {
+                continue;
             }
         }
 

@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\ErrorCode;
 use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\InlineFlags;
@@ -693,12 +694,17 @@ final class ParserTest extends TestCase
         $this->assertInstanceOf(SubroutineNode::class, $cond->condition);
         $this->assertSame('R', $cond->condition->reference);
 
-        $relative = $this->parse('/(?(R-1)a|b)/');
-        $this->assertInstanceOf(ConditionalNode::class, $relative->pattern);
-        /** @var ConditionalNode $relativeCond */
-        $relativeCond = $relative->pattern;
-        $this->assertInstanceOf(SubroutineNode::class, $relativeCond->condition);
-        $this->assertSame('R-1', $relativeCond->condition->reference);
+        // "(?(R" takes a number or "&name": PCRE reads the name "R", and
+        // refuses the sign where the ")" belongs.
+        $refusal = null;
+
+        try {
+            $this->parse('/(?(R-1)a|b)/');
+        } catch (ParserException $refusal) {
+        }
+        $this->assertInstanceOf(ParserException::class, $refusal);
+        $this->assertSame(ErrorCode::GroupNameUnterminated, $refusal->getErrorCode());
+        $this->assertSame(4, $refusal->getPosition());
     }
 
     #[Test]

@@ -21,9 +21,9 @@ use RegexParser\TokenType;
 /**
  * Reads the name of a group, whichever way the pattern spells it.
  *
- * PCRE takes "(?<name>", "(?'name'", "(?P<name>" and "(?P=name", and Python
- * patterns bring double quotes along; the name itself is the same in all of
- * them. The reader also keeps the names already used, since a pattern may
+ * PCRE takes "(?<name>", "(?'name'", "(?P<name>" and "(?P=name"; the name
+ * itself is the same in all of them, and only the "(?'name'" spellings put
+ * it in quotes. The reader also keeps the names already used, since a pattern may
  * only repeat one under the "J" modifier.
  *
  * @internal
@@ -122,12 +122,15 @@ final class GroupNameReader
      *                           rather than declaring one
      * @param int|null $number   the number of the group the name declares,
      *                           when the caller counts them
+     * @param bool     $quoted   whether the name stands in single quotes, as
+     *                           in "(?'name'" and "(?('name')": elsewhere a
+     *                           quote starts no name
      *
      * @throws SyntaxErrorException
      */
-    public function read(bool $register = true, ?int $number = null): string
+    public function read(bool $register = true, ?int $number = null, bool $quoted = false): string
     {
-        $quote = $this->openingQuote();
+        $quote = $quoted ? $this->openingQuote() : null;
         $nameStart = $this->stream->current()->position;
         $name = $this->readName($quote, $nameStart);
         $nameEnd = $this->stream->current()->position;
@@ -265,14 +268,13 @@ final class GroupNameReader
 
     private function openingQuote(): ?string
     {
-        if (!$this->stream->checkLiteral("'") && !$this->stream->checkLiteral('"')) {
+        if (!$this->stream->checkLiteral("'")) {
             return null;
         }
 
-        $quote = $this->stream->current()->value;
         $this->stream->advance();
 
-        return $quote;
+        return "'";
     }
 
     /**

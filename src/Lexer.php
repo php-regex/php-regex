@@ -701,6 +701,20 @@ final class Lexer
         // to the end of the pattern looking for the ")". A name PCRE does
         // not know is refused where it ends.
         if (TokenType::T_GROUP_OPEN === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+            // "(?(*atomic:" is no condition: PCRE takes a lookaround there,
+            // and refuses any other name it knows at the colon.
+            $known = PcreVerb::takesArgument($opener[1]) || ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true));
+            if ($known && !PcreVerb::isLookaround($opener[1]) && $this->opensCondition($currentTokens, $startPos)) {
+                $colon = $startPos + 2 + \strlen($opener[1]);
+
+                throw LexerException::withContext(
+                    \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $colon),
+                    ErrorCode::ConditionAssertionExpected,
+                    $colon,
+                    $this->pattern,
+                );
+            }
+
             // "(*scs:(1)...": PCRE reads the list of groups first.
             if ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true)) {
                 $listOpen = $startPos + \strlen($opener[0]);
@@ -1148,6 +1162,23 @@ final class Lexer
     }
 
     /**
+     * Whether what starts at $position is where the condition of "(?(" is
+     * due, the assertion, after the callout "(?(?C1)" may run first.
+     *
+     * @param array<Token> $tokens the tokens read before $position
+     */
+    private function opensCondition(array $tokens, int $position): bool
+    {
+        $previous = array_pop($tokens);
+        if (null !== $previous && TokenType::T_CALLOUT === $previous->type && $previous->end() === $position) {
+            $position = $previous->position;
+            $previous = array_pop($tokens);
+        }
+
+        return null !== $previous && TokenType::T_GROUP_MODIFIER_OPEN === $previous->type && $previous->end() === $position;
+    }
+
+    /**
      * Whether the class at $position is the "[" of "(?[", a Perl extended
      * class PCRE2 only reads from 10.45; before, PCRE2 refuses that "[",
      * whatever follows it.
@@ -1182,9 +1213,11 @@ final class Lexer
 
             // Before PCRE2 10.45, "[\E", "[^\Q\E" and the like run into the
             // end of the pattern as a backslash: PCRE skips the empty quotes
-            // that open a class, and meets nothing after the last one.
+            // that open a class, and under "(?xx)" its spaces and tabs, and
+            // meets nothing after the last quote.
+            $skipped = $this->extendedMoreMode ? '(?:\\\\(?:Q\\\\)?E|[ \t])' : '(?:\\\\(?:Q\\\\)?E)';
             if (!$this->emptyQuoteOpeningClassIsUnclosed
-                && 1 === preg_match('/\G(?:\\\\(?:Q\\\\)?E)*+(?:\^(?:\\\\(?:Q\\\\)?E)*+)?(?<=\\\\E)\z/', $this->pattern, $quotes, 0, $classStart + 1)) {
+                && 1 === preg_match('/\G'.$skipped.'*+(?:\^'.$skipped.'*+)?(?<=\\\\E)\z/', $this->pattern, $quotes, 0, $classStart + 1)) {
                 throw LexerException::withContext(
                     \sprintf('A backslash ends the pattern at position %d.', $this->length),
                     ErrorCode::EscapeTrailingBackslash,

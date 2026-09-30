@@ -42,8 +42,20 @@ final class GroupNameReaderTest extends TestCase
         $stream = $this->streamOf("'", 'test_name', "'", '>');
         $reader = new GroupNameReader($stream);
 
-        $this->assertSame('test_name', $reader->read());
+        $this->assertSame('test_name', $reader->read(quoted: true));
         $this->assertSame('>', $stream->current()->value);
+    }
+
+    #[Test]
+    public function test_a_quote_starts_no_name_where_the_name_is_not_quoted(): void
+    {
+        // PCRE: "(?<'n'>x)" is "subpattern name expected" on the quote.
+        $reader = new GroupNameReader($this->streamOf("'", 'name', "'", '>'));
+
+        $this->expectException(ParserException::class);
+        $this->expectExceptionMessage('Expected group name at position 0');
+
+        $reader->read();
     }
 
     #[Test]
@@ -76,7 +88,7 @@ final class GroupNameReaderTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('Expected closing quote');
 
-        $reader->read();
+        $reader->read(quoted: true);
     }
 
     #[Test]

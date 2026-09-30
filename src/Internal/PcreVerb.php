@@ -226,6 +226,16 @@ final readonly class PcreVerb
     }
 
     /**
+     * Whether "(*name:" is a lookahead or a lookbehind, "(*pla:" and the
+     * like, which PCRE takes as the condition of a conditional: not
+     * "(*atomic:", nor "(*napla:" and the other non-atomic ones.
+     */
+    public static function isLookaround(string $name): bool
+    {
+        return GroupType::T_GROUP_ATOMIC !== (self::ASSERTIONS[$name] ?? GroupType::T_GROUP_ATOMIC);
+    }
+
+    /**
      * Where PCRE stops reading the value of "(*LIMIT_MATCH=n)" and the other
      * limits, the "(" at $start, when that value is malformed or unclosed;
      * null when it is well formed, or no limit starts there. With no digit,

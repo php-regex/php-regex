@@ -766,10 +766,11 @@ final class Parser
                 ? $this->unclosedVerbOffset($position - 1)
                 : $this->quantifierErrorOffset($this->stream->current());
 
-            // Before PCRE2 10.47, a name that starts with a lowercase letter
-            // is an alphabetic assertion PCRE does not know, wherever it ends.
-            if ($unclosedVerb && !$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed)
-                && 1 === preg_match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)) {
+            // A name that starts with a lowercase letter is an alphabetic
+            // assertion PCRE does not know, wherever it ends before PCRE2
+            // 10.47, and from 10.47 unless the pattern ends with it.
+            if ($unclosedVerb && 1 === preg_match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)
+                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed) || 1 !== preg_match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
                 throw $this->parserException(
                     \sprintf('Unknown alphabetic assertion "(*%s" at position %d.', substr($this->pattern, $namePosition, $position - $namePosition), $position),
                     ErrorCode::VerbInvalid,
@@ -1393,6 +1394,12 @@ final class Parser
             );
         }
 
+        // 2.3 "(?(?#c)(?=a)b)": a comment where the condition starts is
+        // skipped, and the assertion is due after it.
+        if ($this->stream->check(TokenType::T_COMMENT_OPEN) && $this->stream->current()->position === $startPosition + 2) {
+            return $this->parseCommentedConditional($startPosition);
+        }
+
         // 3. PCRE-style quoted named groups (?'name'...)
         if ($this->stream->checkLiteral("'")) {
             return $this->parseNamedGroup($startPosition, false);
@@ -1483,18 +1490,97 @@ final class Parser
      */
     private function calloutConditionErrorOffset(): int
     {
+        return $this->supports(PcreFeature::CalloutConditionErrorAtItemStart)
+            ? $this->stream->current()->position
+            : $this->conditionFaultOnItsLastByte();
+    }
+
+    /**
+     * Where PCRE refuses what follows a comment where the assertion of a
+     * condition is due: past a character read as is, past the "(" or "\"
+     * that starts anything else, and on a "\Q...\E" that holds text, from
+     * PCRE2 10.47; before, as after a callout.
+     */
+    private function commentConditionErrorOffset(): int
+    {
+        if (!$this->supports(PcreFeature::ErrorOffsetPastTheFault)) {
+            return $this->conditionFaultOnItsLastByte();
+        }
+
         $token = $this->stream->current();
-        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->supports(PcreFeature::CalloutConditionErrorAtItemStart)) {
+
+        return match ($token->type) {
+            TokenType::T_QUOTE_MODE_START => $token->position,
+            TokenType::T_LITERAL => $token->position + \strlen($this->firstCharacterOf($token)),
+            default => $token->position + 1,
+        };
+    }
+
+    /**
+     * Before PCRE2 10.47, PCRE refuses what stands where the assertion of a
+     * condition is due on its first character, and a character read as is
+     * on its last byte, one in "\Q...\E" included.
+     */
+    private function conditionFaultOnItsLastByte(): int
+    {
+        $token = $this->stream->current();
+        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type) {
             $token = $this->stream->peek();
         }
 
-        if (TokenType::T_LITERAL !== $token->type || $this->supports(PcreFeature::CalloutConditionErrorAtItemStart)) {
+        if (TokenType::T_LITERAL !== $token->type) {
             return $token->position;
         }
 
-        $first = $this->unicodeMode && 1 === preg_match('/^./su', $token->value, $matches) ? $matches[0] : $token->value[0];
+        return $token->position + \strlen($this->firstCharacterOf($token)) - 1;
+    }
 
-        return $token->position + \strlen($first) - 1;
+    private function firstCharacterOf(Token $token): string
+    {
+        return $this->unicodeMode && 1 === preg_match('/^./su', $token->value, $matches) ? $matches[0] : $token->value[0];
+    }
+
+    /**
+     * Parses "(?(?#c)(?=a)yes|no)": PCRE skips the comment, as it skips "x"
+     * whitespace and an empty "\Q\E" after it, and wants the assertion
+     * next, a callout before it allowed. The comment is not kept.
+     */
+    private function parseCommentedConditional(int $startPosition): NodeInterface
+    {
+        do {
+            $this->skipEmptyQuotes();
+            $skipped = $this->skipExtendedModeContent();
+            if ($this->stream->match(TokenType::T_COMMENT_OPEN)) {
+                $this->parseComment();
+                $skipped++;
+            }
+        } while ($skipped > 0);
+
+        if ($this->stream->match(TokenType::T_CALLOUT)) {
+            return $this->parseCalloutConditional($startPosition);
+        }
+
+        if ($this->stream->match(TokenType::T_PCRE_VERB)) {
+            return $this->parseVerbConditional($startPosition, $this->stream->previous());
+        }
+
+        if ($this->stream->match(TokenType::T_GROUP_MODIFIER_OPEN)) {
+            return $this->parseConditionalBranches($startPosition, $this->parseLookaroundCondition($this->stream->previous()->position));
+        }
+
+        if ($this->stream->isAtEnd()) {
+            $position = $this->stream->current()->position;
+
+            throw $this->parserException(\sprintf('Missing ")" to close the conditional at position %d.', $position), ErrorCode::GroupUnclosed, $position);
+        }
+
+        $position = $this->commentConditionErrorOffset();
+
+        throw $this->parserException(
+            \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
+            ErrorCode::ConditionAssertionExpected,
+            $position,
+        );
     }
 
     /**
@@ -1544,20 +1630,16 @@ final class Parser
 
         $read = PcreVerb::read($verbToken->value);
         if (null === $read->assertion || GroupType::T_GROUP_ATOMIC === $read->assertion || $read->nonAtomic) {
+            $alphaError = $this->alphaNameConditionError($verbStartPosition + 2);
+            if (null !== $alphaError) {
+                throw $alphaError;
+            }
+
             // PCRE stops at the colon of a named group, or at the "*", past
             // it from PCRE2 10.47.
             $position = 1 === preg_match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
                 ? $verbStartPosition + 2 + \strlen($name[0])
                 : $this->pastTheFault($verbStartPosition + 1);
-
-            // Before PCRE2 10.45, a substring scan is a name PCRE does not know.
-            if (\in_array($name[0] ?? '', ['scs', 'scan_substring'], true) && !$this->supports(PcreFeature::ScanSubstring)) {
-                throw $this->parserException(
-                    \sprintf('Unknown alphabetic assertion "(*%s:" at position %d.', $name[0], $position),
-                    ErrorCode::VerbInvalid,
-                    $position,
-                );
-            }
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
@@ -1570,6 +1652,40 @@ final class Parser
             $startPosition,
             $this->createPcreVerbNode($verbToken->value, $verbStartPosition, $verbEndPosition),
         );
+    }
+
+    /**
+     * What PCRE refuses in an alphabetic name, one that starts with a
+     * lowercase letter, written at $nameStart where the assertion of a
+     * condition belongs: a name it does not know, where the name ends; a
+     * name no ":" follows, past the character after it from PCRE2 10.47 and
+     * where the name ends before; a name the pattern ends in, as a group
+     * left open from 10.47. Null for a name PCRE knows followed by ":", or
+     * for no such name there.
+     */
+    private function alphaNameConditionError(int $nameStart): ?ParserException
+    {
+        if (1 !== preg_match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
+            return null;
+        }
+
+        $nameEnd = $nameStart + \strlen($name[0]);
+        if (':' === ($this->pattern[$nameEnd] ?? '')) {
+            // Before PCRE2 10.45, a substring scan is a name PCRE does not know.
+            $scan = \in_array($name[0], ['scs', 'scan_substring'], true) && $this->supports(PcreFeature::ScanSubstring);
+
+            return PcreVerb::takesArgument($name[0]) || $scan
+                ? null
+                : $this->parserException(\sprintf('Unknown alphabetic assertion "(*%s:" at position %d.', $name[0], $nameEnd), ErrorCode::VerbInvalid, $nameEnd);
+        }
+
+        if ($nameEnd >= \strlen($this->pattern) && $this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed)) {
+            return $this->parserException(\sprintf('Missing ")" to close "(*%s" at position %d.', $name[0], $nameEnd), ErrorCode::GroupUnclosed, $nameEnd);
+        }
+
+        $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->pastTheFault($nameEnd + 1);
+
+        return $this->parserException(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid, $position);
     }
 
     /**
@@ -1664,6 +1780,10 @@ final class Parser
             $this->supports(PcreFeature::ErrorOffsetPastTheFault),
             $this->unicodeMode || str_contains($this->flags, 'u'),
             $this->maxRecursionDepth,
+            // Parentheses nest as groups do, against the same limit.
+            function (int $at, int $parentheses): void {
+                $this->guardRecursionDepth($at, $parentheses - 1);
+            },
         );
 
         // The lexer's token ends where the reader does: past the "])".
@@ -2484,6 +2604,14 @@ final class Parser
             throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
         }
 
+        // "(?(+n)" counts the groups before it too: past 65535 in all, PCRE
+        // refuses it where the digits end.
+        if ('+' === $sign && (int) $num + $this->captureCount > 65535) {
+            $position = $this->stream->current()->position;
+
+            throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: with the groups before it, it goes past 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
+        }
+
         return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
     }
 
@@ -2494,7 +2622,7 @@ final class Parser
     {
         // "(?('name')...)": the reader takes the quotes along with the name.
         if ($this->stream->checkLiteral("'")) {
-            $name = $this->groupNames->read(false);
+            $name = $this->groupNames->read(false, null, true);
 
             return new BackrefNode($name, $startPosition, $this->stream->current()->position);
         }
@@ -2528,25 +2656,24 @@ final class Parser
             return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
         }
 
-        $numericPart = '';
-        $sawMinus = false;
+        // "(?(R" takes a number or "&name": a sign starts neither, so PCRE
+        // reads the name "R" and wants the ")" where the sign stands.
+        if ($this->stream->checkLiteral('-') || ($this->stream->check(TokenType::T_QUANTIFIER) && '+' === $this->stream->current()->value)) {
+            $position = $this->stream->current()->position;
 
-        if ($this->stream->checkLiteral('-')) {
-            $sawMinus = true;
-            $this->stream->advance();
+            throw $this->parserException(
+                \sprintf('Invalid recursion condition at position %d: "(?(R" takes a group number or "&name", with no sign.', $position),
+                ErrorCode::GroupNameUnterminated,
+                $position,
+            );
         }
 
         $digits = $this->consumeWhile(static fn (string $c): bool => Ascii::isDigit($c));
         if ('' !== $digits) {
-            $numericPart = ($sawMinus ? '-' : '').$digits;
             $endPosition = $this->stream->previous()->position;
-        } elseif ($sawMinus) {
-            $this->stream->rewind(1);
         }
 
-        $reference = 'R'.$numericPart;
-
-        return new SubroutineNode($reference, '', $startPosition, $endPosition);
+        return new SubroutineNode('R'.$digits, '', $startPosition, $endPosition);
     }
 
     /**
@@ -2607,6 +2734,11 @@ final class Parser
         // "(?(*" the lexer read as no verb, for want of a name or a ")", is
         // no assertion either: refused past the "(", on it before 10.47.
         if ($this->stream->check(TokenType::T_QUANTIFIER) && '*' === ($this->pattern[$startPosition] ?? '')) {
+            $alphaError = $this->alphaNameConditionError($startPosition + 1);
+            if (null !== $alphaError) {
+                throw $alphaError;
+            }
+
             $position = $this->pastTheFault($startPosition);
 
             throw $this->parserException(
@@ -3475,9 +3607,12 @@ final class Parser
         return SyntaxErrorException::withContext($message, $code, $position, $this->pattern);
     }
 
-    private function guardRecursionDepth(int $position): void
+    /**
+     * @param int $deeper the levels the pattern is read at below the parser's own
+     */
+    private function guardRecursionDepth(int $position, int $deeper = 0): void
     {
-        if ($this->recursionDepth >= $this->maxRecursionDepth) {
+        if ($this->recursionDepth + $deeper >= $this->maxRecursionDepth) {
             throw RecursionLimitException::withContext(
                 \sprintf('Recursion limit of %d exceeded', $this->maxRecursionDepth),
                 ErrorCode::NestingTooDeep,
@@ -3541,7 +3676,7 @@ final class Parser
      */
     private function parseNamedGroup(int $startPosition, bool $expectAngle, bool $pythonSyntax = false): GroupNode
     {
-        $name = $this->groupNames->read(true, ++$this->captureCount);
+        $name = $this->groupNames->read(true, ++$this->captureCount, !$expectAngle);
 
         if ($expectAngle) {
             $this->stream->consumeLiteral('>', 'Expected > after group name', ErrorCode::GroupNameUnterminated);

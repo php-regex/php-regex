@@ -51,6 +51,8 @@ final class ExtendedClassReader
 
     private int $depth = 1;
 
+    private int $parentheses = 0;
+
     /**
      * @var list<NodeInterface> the operands read so far, which PCRE judges as it reads them
      */
@@ -71,6 +73,9 @@ final class ExtendedClassReader
      * @param bool                                                                      $utf           whether the pattern is read by UTF-8 character
      * @param int                                                                       $maxOperations the most operations read, so the tree stays
      *                                                                                                 one the visitors can walk
+     * @param \Closure(int, int): void|null                                             $nest          told where each "(" is read and how
+     *                                                                                                 many are open with it, for a limit on
+     *                                                                                                 nesting other than PCRE's
      */
     public function __construct(
         private readonly string $pattern,
@@ -80,6 +85,7 @@ final class ExtendedClassReader
         private readonly bool $pastTheFault,
         private readonly bool $utf = false,
         private readonly int $maxOperations = 1024,
+        private readonly ?\Closure $nest = null,
     ) {
         $this->length = \strlen($pattern);
     }
@@ -93,6 +99,7 @@ final class ExtendedClassReader
     {
         $this->at = $start + 3;
         $this->depth = 1;
+        $this->parentheses = 0;
         $this->operands = [];
         $this->operations = 0;
         $expression = $this->readUnion();
@@ -325,6 +332,9 @@ final class ExtendedClassReader
 
         if ('(' === $char) {
             $this->enter($start);
+            if (null !== $this->nest) {
+                ($this->nest)($start + 1, ++$this->parentheses);
+            }
             $this->at++;
             if ($this->at >= $this->length) {
                 $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->length);
@@ -343,6 +353,7 @@ final class ExtendedClassReader
 
             $this->at++;
             $this->depth--;
+            $this->parentheses--;
 
             return $expression;
         }

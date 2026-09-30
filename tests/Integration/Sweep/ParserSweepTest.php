@@ -309,18 +309,20 @@ final class ParserSweepTest extends TestCase
         $this->regexService->parse('/(?([a-z])yes|no)/');
     }
 
-    public function test_parser_group_name_missing_closing_single_quote(): void
+    public function test_parser_group_name_single_quote_after_angle_bracket_is_no_name(): void
     {
+        // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected closing quote');
+        $this->expectExceptionMessage('Expected group name at position 4');
 
         $this->regexService->parse("/(?P<'name>x)/");
     }
 
-    public function test_parser_group_name_missing_closing_double_quote(): void
+    public function test_parser_group_name_double_quote_after_angle_bracket_is_no_name(): void
     {
+        // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected closing quote');
+        $this->expectExceptionMessage('Expected group name at position 4');
 
         $this->regexService->parse('/(?P<"name>x)/');
     }
