@@ -161,6 +161,11 @@ enum PcreFeature
     case VersionConditionLeftOpenIsVersionError;
 
     /**
+     * A conditional on a name that holds more than two branches is not reported on that name.
+     */
+    case BranchCountErrorOffTheConditionName;
+
+    /**
      * A braced escape left open at the end of the pattern is reported at the end, not past it.
      */
     case UnclosedBraceAtPatternEnd;
@@ -198,7 +203,8 @@ enum PcreFeature
             self::CalloutConditionErrorAtItemStart,
             self::ErrorOffsetPastTheFault,
             self::AlphaNameAtPatternEndIsUnclosed,
-            self::VersionConditionLeftOpenIsVersionError => '10.47',
+            self::VersionConditionLeftOpenIsVersionError,
+            self::BranchCountErrorOffTheConditionName => '10.47',
             self::UnclosedBraceAtPatternEnd => '10.48',
         };
     }

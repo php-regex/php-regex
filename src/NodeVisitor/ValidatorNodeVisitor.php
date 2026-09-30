@@ -1368,7 +1368,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($node->no instanceof AlternationNode) {
             $this->raiseBranchCountError(
                 'A conditional group holds more than two branches.',
-                $node->startPosition,
+                $this->branchCountErrorOffset($node),
                 ErrorCode::ConditionalTooManyBranches,
                 'Group the extra branches: (?(1)a|(?:b|c)).',
             );
@@ -1509,7 +1509,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitVersionCondition(VersionConditionNode $node): void
     {
         $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
 
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
@@ -1521,7 +1521,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // PCRE reads a major number and at most one ".minor".
         if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
-            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
+            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
 
             // "(?(VERSION=10 )": before PCRE2 10.47, what follows the major
             // where the ")" belongs leaves the condition open.
@@ -2900,7 +2900,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
-        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
+        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
         if (null !== $versionError) {
             return $versionError;
         }
@@ -3887,6 +3887,33 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $optional = $max - $min;
 
         return $min * $copy + ($optional > 0 ? ($optional - 1) * ($copy + self::COMPILED_OPTIONAL_COPY_SIZE) + $copy + 1 : 0);
+    }
+
+    /**
+     * Where PCRE reports a conditional that holds more than two branches:
+     * where the group opens, one character on for each character of a group
+     * number past its first, as in "(?(+1)"; before PCRE2 10.47, on the name
+     * the condition tests.
+     */
+    private function branchCountErrorOffset(ConditionalNode $node): int
+    {
+        $condition = $node->condition;
+        if ($condition instanceof BackrefNode && 1 === preg_match('/^[+-]?\d++$/', $condition->ref)) {
+            return $node->startPosition + \strlen($condition->ref) - 1;
+        }
+
+        if ($this->supports(PcreFeature::BranchCountErrorOffTheConditionName)
+            || !($condition instanceof BackrefNode || $condition instanceof SubroutineNode)) {
+            return $node->startPosition;
+        }
+
+        // "(?(R&name)", "(?(<name>)" and "(?('name')": the name comes after
+        // what introduces it.
+        return $condition->startPosition + match (true) {
+            $condition instanceof SubroutineNode && str_starts_with($condition->reference, 'R&') => 2,
+            \in_array($this->source[$condition->startPosition] ?? '', ['<', "'"], true) => 1,
+            default => 0,
+        };
     }
 
     /**

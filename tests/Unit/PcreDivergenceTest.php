@@ -108,6 +108,37 @@ final class PcreDivergenceTest extends TestCase
             yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $offset + 1, ErrorCode::ConditionVersionSyntax);
         }
 
+        // Under /u, 10.49 steps past the whole character that stops the
+        // version, not past its first byte; before 10.45 it stops on it.
+        foreach (['VERSION then a two-byte letter' => ['/(?(VERSIONé)a)/u', 10, 12], 'VERSION= then a two-byte letter' => ['/(?(VERSION=é)a)/u', 11, 13], 'VERSION then a four-byte character' => ['/(?(VERSION😀)a)/u', 10, 14], 'VERSION=1. then a two-byte letter' => ['/(?(VERSION=1.é)a)/u', 13, 15]] as $name => [$pattern, $before, $after]) {
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $before, ErrorCode::ConditionVersionSyntax);
+            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $after, ErrorCode::ConditionVersionSyntax);
+        }
+        yield from self::rows('VERSION=10.1 then a two-byte letter', '/(?(VERSION=10.1é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 17, ErrorCode::ConditionVersionSyntax);
+        yield from self::rows('VERSION>=10 then a two-byte letter', '/(?(VERSION>=10é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 16, ErrorCode::ConditionVersionSyntax);
+        // Without /u, the same bytes are single characters.
+        yield from self::rows('VERSION then a two-byte letter, without /u', '/(?(VERSIONé)a)/', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 11, ErrorCode::ConditionVersionSyntax);
+
+        // Under /u a name starts with no digit of any script: 10.49 reports
+        // past the digit, before 10.45 on it.
+        foreach (['Arabic-Indic digit as the condition' => ['/(?(٣)a)/u', 3, 5], 'Arabic-Indic digit then a letter as the condition' => ['/(?(٣a)a)/u', 3, 5], 'Arabic-Indic digit as the condition, left open' => ['/(?(٣/u', 3, 5], 'Arabic-Indic digit as the condition, after a letter' => ['/x(?(٣)a)/u', 4, 6], 'four-byte digit as the condition' => ['/(?(𝟙)a)/u', 3, 7]] as $name => [$pattern, $before, $after]) {
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'subpattern name must start with a non-digit', $before, ErrorCode::GroupNameInvalid);
+            yield from self::rows($name, $pattern, ['10.49'], 'subpattern name must start with a non-digit', $after, ErrorCode::GroupNameInvalid);
+        }
+
+        // A conditional on a name, "R" among them, holding a third branch:
+        // before 10.45 PCRE reports it on the name the condition tests.
+        foreach (['recursion condition with three branches' => ['/(?(R)a|b|c)/', 3], 'recursion condition with three branches, after a letter' => ['/x(?(R)a|b|c)/', 4], 'recursion condition with three branches, inside a group' => ['/((?(R)a|b|c))/', 4], 'recursion condition on a group with three branches' => ['/x(?(R2)a|b|c)()()/', 4], 'recursion condition on a named group with three branches' => ['/x(?(R&n)a|b|c)(?<n>)/', 6], 'bare name condition with three branches' => ['/x(?(n)a|b|c)(?<n>)/', 4], 'angle-bracketed name condition with three branches' => ['/(?<n>)x(?(<n>)a|b|c)/', 11], 'quoted name condition with three branches' => ["/(?<n>)x(?('n')a|b|c)/", 11], 'recursion condition with three branches, nested in a branch' => ['/(?(R)a|(?(R)b|c|d))/', 10]] as $name => [$pattern, $offset]) {
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'conditional subpattern contains more than two branches', $offset, ErrorCode::ConditionalTooManyBranches);
+        }
+        yield from self::rows('recursion condition with three branches', '/(?(R)a|b|c)/', ['10.49'], 'conditional subpattern contains more than two branches', 0, ErrorCode::ConditionalTooManyBranches);
+
+        // A group number with a sign, or of two digits, moves the offset of
+        // a third branch on as many characters, on every release.
+        foreach (['relative condition with three branches' => ['/()xy(?(+1)a|b|c)()/', 5], 'negative relative condition with three branches' => ['/()xy(?(-1)a|b|c)/', 5], 'two-digit condition with three branches' => ['/()xy(?(01)a|b|c)/', 5], 'negative two-digit condition with three branches' => ['/()()()()()()()()()()xy(?(-10)a|b|c)/', 24]] as $name => [$pattern, $offset]) {
+            yield from self::rows($name, $pattern, self::LIVE_RELEASES, 'conditional subpattern contains more than two branches', $offset, ErrorCode::ConditionalTooManyBranches);
+        }
+
         // A group that is no assertion after the callout of a condition is
         // refused where it starts, on every release.
         foreach (['callout condition then a non-capturing group' => ['/(?(?C1)(?:a))/', 7], 'string callout condition then a non-capturing group' => ['/(?(?C"x")(?:a))/', 9], 'callout condition then a comment and a non-capturing group' => ['/(?(?C1)(?#c)(?:a))/', 12]] as $name => [$pattern, $offset]) {

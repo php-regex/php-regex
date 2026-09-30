@@ -163,6 +163,7 @@ and a target has it from the release it arrived in on
 | `ErrorOffsetPastTheFault` | 10.47 | Most syntax errors are reported past the faulty character rather than on it. |
 | `AlphaNameAtPatternEndIsUnclosed` | 10.47 | An alphabetic name the pattern ends in, as "(*pla", is a missing ")", not an unknown assertion. |
 | `VersionConditionLeftOpenIsVersionError` | 10.47 | A character after the major of "(?(VERSION=10z)" is a version error, not a condition left open. |
+| `BranchCountErrorOffTheConditionName` | 10.47 | A conditional on a name that holds more than two branches is not reported on that name. |
 | `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
 
 ## A known JIT crash

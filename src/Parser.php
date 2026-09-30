@@ -2765,6 +2765,18 @@ final class Parser
             throw $this->versionConditionError($versionError, $startPosition);
         }
 
+        // Under /u no name starts with a digit of any script, as in "(?(٣)":
+        // PCRE refuses the digit, past it from PCRE2 10.47.
+        if ($this->unicodeMode && 1 === preg_match('/\G\p{Nd}/u', $this->pattern, $matches, 0, $startPosition)) {
+            $position = $this->groupNames->invalidNameOffset($startPosition);
+
+            throw $this->parserException(
+                \sprintf('Invalid condition name at position %d: a group name must not start with a digit.', $position),
+                ErrorCode::GroupNameInvalid,
+                $position,
+            );
+        }
+
         $bareName = $this->parseBareNameCondition($startPosition);
         if (null !== $bareName) {
             return $bareName;
@@ -2830,7 +2842,7 @@ final class Parser
      */
     private function versionConditionErrorOffset(int $start): ?int
     {
-        return VersionCondition::errorOffset($this->pattern, $start, !$this->supports(PcreFeature::VersionConditionWholeNumbers), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
+        return VersionCondition::errorOffset($this->pattern, $start, !$this->supports(PcreFeature::VersionConditionWholeNumbers), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
     }
 
     /**

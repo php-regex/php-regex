@@ -69,11 +69,10 @@ final readonly class VersionCondition
      * holds at least ten more characters. It stops on a character it cannot
      * take where it expects a digit, a "." or the ")"; from PCRE2 10.47,
      * which $pastTheFault stands for, past it, unless the comparison began
-     * with ">".
+     * with ">". Under $utf, past it is past the whole character.
      */
-    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false, bool $pastTheFault = true): ?int
+    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false, bool $pastTheFault = true, bool $utf = false): ?int
     {
-        $shift = (int) $pastTheFault;
         $length = \strlen($pattern);
         if ($length - $position < 10 || 'VERSION' !== substr($pattern, $position, 7)) {
             return null;
@@ -90,12 +89,12 @@ final readonly class VersionCondition
         }
 
         if ('=' !== ($pattern[$at] ?? '')) {
-            return $atLeast ? $at : $at + $shift;
+            return $atLeast ? $at : $at + self::stepPast($pattern, $at, $pastTheFault, $utf);
         }
 
         $at++;
         if (!Ascii::isDigit($pattern[$at] ?? '')) {
-            return $atLeast ? $at : $at + $shift;
+            return $atLeast ? $at : $at + self::stepPast($pattern, $at, $pastTheFault, $utf);
         }
 
         [$at, $tooBig] = $twoDigitMinor ? self::readVersionPartDigitByDigit($pattern, $at) : self::readVersionPart($pattern, $at);
@@ -106,7 +105,7 @@ final readonly class VersionCondition
         if ('.' === ($pattern[$at] ?? '')) {
             $at++;
             if (!Ascii::isDigit($pattern[$at] ?? '')) {
-                return $at < $length ? $at + $shift : $at;
+                return $at < $length ? $at + self::stepPast($pattern, $at, $pastTheFault, $utf) : $at;
             }
 
             // Up to PCRE2 10.45 the minor is two digits, and a third one is
@@ -125,7 +124,7 @@ final readonly class VersionCondition
         }
 
         if (')' !== ($pattern[$at] ?? '')) {
-            return $at < $length ? $at + $shift : $at;
+            return $at < $length ? $at + self::stepPast($pattern, $at, $pastTheFault, $utf) : $at;
         }
 
         return null;
@@ -145,6 +144,23 @@ final readonly class VersionCondition
         $end = $position + \strlen($matches[0]);
 
         return $offset === $end && !\in_array($pattern[$end] ?? ')', ['.', ')'], true) && (int) $matches[1] <= 1000;
+    }
+
+    /**
+     * How far past the character at $position PCRE reports an error it
+     * reports past the fault: one byte, or the whole character under $utf.
+     */
+    private static function stepPast(string $pattern, int $position, bool $pastTheFault, bool $utf): int
+    {
+        if (!$pastTheFault) {
+            return 0;
+        }
+
+        if ($utf && 1 === preg_match('/\G./su', $pattern, $matches, 0, $position)) {
+            return \strlen($matches[0]);
+        }
+
+        return 1;
     }
 
     /**

@@ -49,6 +49,7 @@ final class PcreFeatureTest extends TestCase
     {
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
         yield 'offsets past the fault' => [PcreFeature::ErrorOffsetPastTheFault, '10.46', '10.47'];
+        yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];
         yield 'variable-length lookbehind' => [PcreFeature::VariableLengthLookbehind, '10.42', '10.43'];
         yield 'long group names' => [PcreFeature::LongGroupNames, '10.43', '10.44'];
         yield 'unclosed brace at the end' => [PcreFeature::UnclosedBraceAtPatternEnd, '10.47', '10.48'];
