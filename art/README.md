@@ -12,8 +12,10 @@ small formats:
   `#182B45`, rust amber `#A84A08`.
 - **Small formats** (org icon, favicon) — navy tile `#0F1B2E`, light ink
   `#EDF1F7`, ember amber `#E97625` (the paper system's dark tokens).
-- **Corner radii** — card = h/6.4 (rx28), icon tile = c/4.57 (rx112):
-  document family vs icon family, never mixed.
+- **Corner radii** — card = h/6.4 (rx28); favicon tile = c/4.57 (rx112
+  squircle, own canvas); org-icon = full-bleed square (rx0) because GitHub
+  circle-crops avatars — a pre-rounded tile leaves transparent bites at
+  the mask diagonals, a square fills the circle everywhere.
 - **Dark theme** — swap to `#0F1B2E` paper, `#EDF1F7` ink, `#E97625` amber.
   The amber pair is HUE-LOCKED at 24.8°: only lightness compensates for the
   background (light 34.5%, dark 52.9%) — a hue shift between themes would be
