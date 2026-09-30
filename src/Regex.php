@@ -285,7 +285,9 @@ final readonly class Regex
             $judged = $cause instanceof SemanticErrorException && $cause->getPosition() === $e->getPosition() ? $cause : $e;
 
             return $this->buildValidationFailure($this->earlierError($regex, $e) ?? $judged);
-        } catch (\Throwable $e) {
+        } catch (RegexParserExceptionInterface $e) {
+            // Only a judgement on the pattern; a failure of the library
+            // surfaces, never reported as a pattern error.
             return $this->buildValidationFailure($e);
         }
     }
@@ -980,11 +982,11 @@ final readonly class Regex
     /**
      * Build a validation failure result from an exception.
      *
-     * @param \Throwable $exception The parse exception
+     * @param RegexParserExceptionInterface $exception The judgement on the pattern
      *
      * @return ValidationResult Validation failure result
      */
-    private function buildValidationFailure(\Throwable $exception): ValidationResult
+    private function buildValidationFailure(RegexParserExceptionInterface $exception): ValidationResult
     {
         $errorMessage = $exception->getMessage();
         $visualSnippet = '';

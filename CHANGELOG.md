@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Backward-incompatible changes
 
 - Everything under **Removed**, and the changes listed in [UPGRADE-2.0.md](UPGRADE-2.0.md).
+- `validate()` lets an exception that is not the library's through instead of turning it into an invalid-pattern result.
 - `CacheInterface` stores trees: `write(string $key, RegexNode $ast)` and `load(string $key): ?RegexNode`; `getTimestamp()` is gone. `CachePayloadDecoder`, `FilesystemCache::defaultDirectory()` and the file extension argument of `FilesystemCache` are gone; the default cache is `ArrayCache`. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - ReDoS analysis is now disabled by default for better performance. Enable explicitly via:
   - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
@@ -111,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Laravel bridge wrapped a cache store, a PSR-16 cache, in the PSR-6 adapter, and failed on the first pattern once `regex-parser.cache.store` was set.
 - A cached tree altered to hold an object of another class is a cache miss, not a `TypeError`.
 - `explain()` explained a quantified group twice to lay it out, doubling its work at every level of nesting: a pattern of a hundred bytes nested twenty deep took a minute, in `analyze()` and in editor hovers too. It now takes time in proportion to the pattern, with the same output.
+- `validate()` reported any failure of the library itself, a `TypeError` or an exhausted stack, as a syntax error in the pattern. Only the library's own exceptions are a verdict now; anything else surfaces.
 - `PcreTarget` reads a PCRE2 release without the engine: with a very low `pcre.backtrack_limit`, `Regex::create()` refused every release, the running one included, and blamed the `pcre_version` option for it. The library still needs the limit near its default to read patterns (see [PCRE](docs/concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern)).
 - Error offsets for PCRE2 up to 10.46 in two places: a version condition whose minor has three digits or more, then text, as `(?(VERSION>=10.999x)`, stops at the third digit (a two-digit minor there); and a range from a type, a POSIX class or a property, as `[\d-\X]`, is refused on its hyphen up to 10.44, before its end is read. On every release, a range ending in an escape a class does not take, as `[\d-\j]`, is reported at the escape.
 - `generate()` checked its samples with the JIT, which in PCRE2 10.40 to 10.49 crashes PHP on some pattern and subject pairs, as `(?|(\*)(*napla:(.+))|()(?=\S_(\2?)))+_` with `*a_` (see [PCRE](docs/concepts/pcre.md#a-known-jit-crash)). Samples are now checked by the interpreter, one the engine gives up on past a limit, or on an error it meets matching, is not given as checked, thirty-two samples are tried instead of eight, and a sample past 1 MiB, which references repeated in a count can reach, is not built.
