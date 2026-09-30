@@ -92,4 +92,86 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertIsArray($diagnostics[0] ?? null);
         $this->assertSame($code, $diagnostics[0]['code'] ?? null);
     }
+
+    /**
+     * Offsets count from the pattern body: the diagnostic starts on the
+     * character at fault, past the quote and the opening delimiter.
+     */
+    #[Test]
+    public function test_a_diagnostic_starts_on_the_character_at_fault(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///b.php', 'text' => "<?php\npreg_match('/ab)/', \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $this->assertIsArray($diagnostics[0] ?? null);
+
+        // "preg_match('" is 12 characters: the "/" is at 12 and the body
+        // starts at 13. PCRE2 10.49 reports the ")" past it, at offset 3.
+        $this->assertSame('regex.group.unmatched_close', $diagnostics[0]['code'] ?? null);
+        $range = $diagnostics[0]['range'] ?? null;
+        $this->assertIsArray($range);
+        $this->assertSame(['line' => 1, 'character' => 16], $range['start'] ?? null);
+        // The range ends with the pattern, at the closing quote.
+        $this->assertSame(['line' => 1, 'character' => 17], $range['end'] ?? null);
+    }
+
+    /**
+     * A lint issue is placed from the body too: "[aa]" starts at offset 1
+     * of the body "x[aa]".
+     */
+    #[Test]
+    public function test_a_lint_issue_starts_on_the_character_it_names(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('/x[aa]/', \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $this->assertIsArray($diagnostics[0] ?? null);
+
+        // The body starts at 13: "x" at 13, "[" at 14, marked alone.
+        $this->assertSame('regex.lint.charclass.redundant', $diagnostics[0]['code'] ?? null);
+        $range = $diagnostics[0]['range'] ?? null;
+        $this->assertIsArray($range);
+        $this->assertSame(['line' => 1, 'character' => 14], $range['start'] ?? null);
+        $this->assertSame(['line' => 1, 'character' => 15], $range['end'] ?? null);
+    }
 }

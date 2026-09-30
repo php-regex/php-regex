@@ -212,7 +212,7 @@ echo $result->category->value;     // ValidationErrorCategory enum
 | `isValid`         | bool                    | Whether pattern is valid |
 | `error`           | string\|null            | Error message if invalid |
 | `errorCode`       | ErrorCode\|null         | Stable error code        |
-| `offset`          | int\|null               | Byte offset of error     |
+| `offset`          | int\|null               | Byte offset of the error, from the start of the pattern body |
 | `caretSnippet`    | string\|null            | Snippet with caret       |
 | `hint`            | string\|null            | Fix suggestion           |
 | `complexityScore` | int                     | Pattern complexity       |

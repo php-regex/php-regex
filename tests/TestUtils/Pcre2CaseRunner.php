@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\TestUtils;
 
-use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\RegexNode;
@@ -71,7 +70,8 @@ final readonly class Pcre2CaseRunner
         if (!$result->isValid) {
             $error = null === $result->error ? null : explode("\n", $result->error)[0];
             $errorClass = self::classifyThrowable($this->probeFailure($phpPattern));
-            $offset = $this->normalizeOffset($result->offset, $phpPattern);
+            // The library counts every offset from the body, as PCRE2 does.
+            $offset = $result->offset;
         }
 
         $outcome = $this->outcome(self::withKeepRefusalFromPhp85($case, $phpPattern), $verdict, $offset, $errorClass);
@@ -111,27 +111,6 @@ final readonly class Pcre2CaseRunner
     public static function classifyThrowable(\Throwable $throwable): string
     {
         return $throwable instanceof RegexParserExceptionInterface ? 'principled' : 'crash';
-    }
-
-    /**
-     * Shifts a full-string-relative offset to the body-relative coordinate
-     * the pinned PCRE2 offsets use. Only the delimiter and flag layer of
-     * the library reports full-string offsets, and it is the only failure
-     * the pattern header can produce, so a throw there marks the coordinate.
-     */
-    public function normalizeOffset(?int $offset, string $phpPattern): ?int
-    {
-        if (null === $offset) {
-            return null;
-        }
-
-        try {
-            PatternParser::extractPatternAndFlags($phpPattern);
-        } catch (ParserException) {
-            return max(0, $offset - 1);
-        }
-
-        return $offset;
     }
 
     /**

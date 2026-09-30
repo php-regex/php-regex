@@ -75,7 +75,8 @@ final class PatternParserTest extends TestCase
     /**
      * When what follows the first unescaped delimiter is pattern text rather
      * than flag letters, the error names the delimiter that ended the
-     * pattern early, at its position, instead of listing "flags".
+     * pattern early, at its offset from the start of the body, instead of
+     * listing "flags".
      */
     #[DataProvider('provideDelimiterEndingThePatternEarly')]
     public function test_names_the_delimiter_that_ends_the_pattern_early(string $regex, int $position): void
@@ -94,9 +95,10 @@ final class PatternParserTest extends TestCase
      */
     public static function provideDelimiterEndingThePatternEarly(): iterable
     {
-        yield 'slash in a class' => ['regex' => '/[/]/', 'position' => 2];
-        yield 'scheme separator whose tail holds an e' => ['regex' => '/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)/i', 'position' => 31];
-        yield 'hash in a class' => ['regex' => '#[#]#', 'position' => 2];
+        yield 'slash in a class' => ['regex' => '/[/]/', 'position' => 1];
+        yield 'scheme separator whose tail holds an e' => ['regex' => '/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)/i', 'position' => 30];
+        yield 'hash in a class' => ['regex' => '#[#]#', 'position' => 1];
+        yield 'after leading whitespace' => ['regex' => '  /[/]/', 'position' => 1];
     }
 
     public function test_unknown_flag_letters_keep_the_flag_message(): void

@@ -383,13 +383,12 @@ final class Pcre2CaseRunnerTest extends TestCase
     }
 
     #[Test]
-    public function test_runner_normalizes_offset_to_body_relative(): void
+    public function test_runner_reports_a_modifier_error_from_the_body(): void
     {
         $runner = new Pcre2CaseRunner();
 
-        // Flag errors come out of PatternParser full-string-relative: for
-        // '/abc/q' the library reports offset 5 (the flag position in the
-        // whole pattern string); body-relative is one delimiter earlier.
+        // The library counts a modifier error from the body, as PCRE2 does:
+        // for '/abc/q' the "q" is at 4, past the body and its delimiter.
         $slash = $runner->run(self::case(
             'abc',
             'reject',
@@ -400,10 +399,10 @@ final class Pcre2CaseRunnerTest extends TestCase
         ));
 
         $this->assertSame('reject', $slash['verdict']);
-        $this->assertSame(4, $slash['offset'], 'full-string offset 5 must be shifted past the opening delimiter');
+        $this->assertSame(4, $slash['offset'], 'the modifier is counted from the body');
 
-        // Same shape with a bracket delimiter pair: '(abc)q' also reports
-        // full-string offset 5 and normalizes to the same body coordinate.
+        // Same shape with a bracket delimiter pair: '(abc)q' puts the "q" at
+        // the same body coordinate.
         $bracket = $runner->run(self::case(
             'abc',
             'reject',

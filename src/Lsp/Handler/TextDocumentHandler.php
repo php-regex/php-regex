@@ -164,6 +164,15 @@ final readonly class TextDocumentHandler
         $diagnostics = [];
 
         foreach ($this->documents->getOccurrences($uri) as $occurrence) {
+            // Offsets count from the pattern body: past the quote and the
+            // delimiter the finder's patterns open with. The body runs to
+            // the end of the pattern, modifiers included.
+            $bodyStart = [
+                'line' => $occurrence->start['line'],
+                'character' => $occurrence->start['character'] + 2,
+            ];
+            $bodyLength = \strlen($occurrence->pattern) - 1;
+
             try {
                 $ast = $this->regex->parse($occurrence->pattern);
 
@@ -174,16 +183,16 @@ final readonly class TextDocumentHandler
                 foreach ($linter->getIssues() as $issue) {
                     $diagnostics[] = $this->diagnosticConverter->convert(
                         $issue,
-                        $occurrence->start,
-                        \strlen($occurrence->pattern),
+                        $bodyStart,
+                        $bodyLength,
                     );
                 }
             } catch (LexerException|ParserException $e) {
                 $diagnostics[] = $this->diagnosticConverter->fromParseError(
                     $e->getMessage(),
                     $e->getErrorCode(),
-                    $occurrence->start,
-                    \strlen($occurrence->pattern),
+                    $bodyStart,
+                    $bodyLength,
                     $e->position,
                 );
             }

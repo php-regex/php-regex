@@ -45,7 +45,8 @@ final class PatternParser
                 default => ErrorCode::DelimiterInvalid,
             };
 
-            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', $code, 0, $regex);
+            // No body, so no offset: offsets count from the body.
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', $code);
         }
 
         $delimiter = $regex[0];
@@ -132,12 +133,15 @@ final class PatternParser
                     // n = NO_AUTO_CAPTURE, r = PCRE2_EXTRA_CASELESS_RESTRICT (if supported)
                     // When the closing delimiter shows up again among the
                     // "flags", an unescaped one cut the pattern off early.
+                    // Offsets count from the body, and the snippet shows the
+                    // text from the body on: the modifiers after it included.
+                    $afterOpening = substr($regex, 1);
                     if (str_contains($flags, $closingDelimiter)) {
                         throw new ParserException(\sprintf(
                             'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
                             $closingDelimiter,
-                            $i,
-                        ), ErrorCode::DelimiterUnescaped, $i, $regex);
+                            $i - 1,
+                        ), ErrorCode::DelimiterUnescaped, $i - 1, $afterOpening);
                     }
 
                     $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
@@ -145,16 +149,18 @@ final class PatternParser
                         // Find the invalid flag for a better error message
                         $invalid = preg_replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
 
-                        $flagsPosition = \strlen($regex) - \strlen($flags);
+                        // The first modifier PHP refuses, whitespace skipped.
+                        $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \t\n\r\v\f");
+                        $flagPosition = $i + $faultyFlag;
 
                         if (str_contains((string) $invalid, 'e')) {
-                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagsPosition, $regex);
+                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $afterOpening);
                         }
 
                         // Format each invalid flag individually with quotes
                         $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', $flag), str_split($invalid ?? $flags)));
 
-                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagsPosition, $regex);
+                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $afterOpening);
                     }
 
                     return [$pattern, $flags, $delimiter];

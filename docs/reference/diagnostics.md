@@ -68,7 +68,7 @@ if (!$result->isValid()) {
 | `isValid`         | bool                    | Whether pattern passed    | `false`                          |
 | `error`           | string\|null            | Human-readable message    | `"Unclosed character class..."`  |
 | `errorCode`       | ErrorCode\|null         | Stable code for handling  | `ErrorCode::CharclassUnclosed`   |
-| `offset`          | int\|null               | Byte offset in pattern    | `9`                              |
+| `offset`          | int\|null               | Byte offset from the body | `9`                              |
 | `caretSnippet`    | string\|null            | Visual snippet with caret | See below                        |
 | `hint`            | string\|null            | Suggested fix             | `"Use \g<0> for recursion..."`   |
 | `complexityScore` | int                     | Pattern complexity        | `1`                              |

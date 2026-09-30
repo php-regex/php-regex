@@ -250,6 +250,25 @@ passes the `ErrorCode` case instead.
 
 The CLI's JSON output and `RegexProblem::$code` still carry the string value.
 
+#### Every offset counts from the pattern body
+
+`ValidationResult::$offset` and `RegexException::getPosition()` count from the
+first character of the pattern body, the coordinate PCRE2 uses, for every
+error. In 1.x a modifier error and a pattern past `max_pattern_length` counted
+from the start of the whole string, delimiter included, and a modifier error
+pointed at the start of the modifiers:
+
+| pattern | 1.x | 2.0 |
+|---|---|---|
+| `/a/imQ` (unknown modifier) | 3, the `i` | 4, the `Q` |
+| `/a/b/` (delimiter ending the pattern early) | 2 | 1 |
+| `/abcdefghi/` with `max_pattern_length: 10` | 10 | 9 |
+| `''`, `'/'`, `'a'` (no body) | 0 | `null` |
+
+Code that placed a caret under these errors in the whole pattern string adds
+the length of the leading whitespace and the opening delimiter, as it already
+did for every other error. The caret snippet shows the text from the body on.
+
 ### Deprecated
 
 #### `ClassOperationNode` and the class operation tokens
@@ -268,13 +287,3 @@ These stay for now and are removed before 2.0.0:
 A custom visitor keeps its `visitClassOperation()` method for now; it is no
 longer called for a parsed pattern. Code that looked for a `ClassOperationNode`
 in a parsed tree finds the members and ranges instead.
-
-### Planned
-
-#### `ValidationResult::$offset` will become body-relative everywhere
-
-Today a syntax error inside the pattern body reports an offset into the body,
-while a flag error reports an offset into the whole pattern string, delimiters
-included; a delimiter error reports none. 2.0.0 reports every offset relative
-to the body, the coordinate PCRE2 uses. Code that places a caret under flag
-errors will need to shift it by the length of the opening delimiter.
