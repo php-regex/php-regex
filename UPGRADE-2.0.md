@@ -102,7 +102,7 @@ The two ways of finding regex patterns in PHP source now sit together under
 
 The last one never had anything to do with PHPStan: it reads the source with
 nikic/php-parser, which PHPStan happens to bring along. The old names are
-aliased and will be dropped in the next major version.
+gone: import the new ones.
 
 #### Two Symfony bridge classes are renamed
 
@@ -126,8 +126,7 @@ longer depends on the CLI it is called from. They are now
 `RegexParser\Cli\Command\LintCommand` and
 `RegexParser\Cli\Command\LintOutputRenderer`.
 
-The old names still resolve — they are aliased on first use — but they will
-be dropped in the next major version.
+The old names are gone: import the new ones.
 
 #### The cache stores trees, in memory by default
 

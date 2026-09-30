@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace RegexParser\Tests\Unit;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * 2.0 carries no name from before a class moved: an old name is not found,
+ * and nothing is loaded on every request to alias it.
+ */
+final class NoLegacyNamesTest extends TestCase
+{
+    #[Test]
+    #[DataProvider('provideOldNames')]
+    public function test_an_old_name_is_not_found(string $name): void
+    {
+        $this->assertFalse(class_exists($name) || interface_exists($name) || enum_exists($name), $name);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideOldNames(): iterable
+    {
+        yield 'RegexParser\Automata\CharSet' => ['RegexParser\\Automata\\CharSet'];
+        yield 'RegexParser\Automata\DfaBuilder' => ['RegexParser\\Automata\\DfaBuilder'];
+        yield 'RegexParser\Automata\NfaBuilder' => ['RegexParser\\Automata\\NfaBuilder'];
+        yield 'RegexParser\Automata\DfaMinimizer' => ['RegexParser\\Automata\\DfaMinimizer'];
+        yield 'RegexParser\Automata\HopcroftWorklist' => ['RegexParser\\Automata\\HopcroftWorklist'];
+        yield 'RegexParser\Automata\MinimizationAlgorithm' => ['RegexParser\\Automata\\MinimizationAlgorithm'];
+        yield 'RegexParser\Automata\MinimizationAlgorithmFactory' => ['RegexParser\\Automata\\MinimizationAlgorithmFactory'];
+        yield 'RegexParser\Automata\MinimizationAlgorithmInterface' => ['RegexParser\\Automata\\MinimizationAlgorithmInterface'];
+        yield 'RegexParser\Automata\MoorePartitionRefinement' => ['RegexParser\\Automata\\MoorePartitionRefinement'];
+        yield 'RegexParser\Automata\Dfa' => ['RegexParser\\Automata\\Dfa'];
+        yield 'RegexParser\Automata\DfaState' => ['RegexParser\\Automata\\DfaState'];
+        yield 'RegexParser\Automata\Nfa' => ['RegexParser\\Automata\\Nfa'];
+        yield 'RegexParser\Automata\NfaFragment' => ['RegexParser\\Automata\\NfaFragment'];
+        yield 'RegexParser\Automata\NfaState' => ['RegexParser\\Automata\\NfaState'];
+        yield 'RegexParser\Automata\NfaTransition' => ['RegexParser\\Automata\\NfaTransition'];
+        yield 'RegexParser\Automata\MatchMode' => ['RegexParser\\Automata\\MatchMode'];
+        yield 'RegexParser\Automata\SolverOptions' => ['RegexParser\\Automata\\SolverOptions'];
+        yield 'RegexParser\Automata\EquivalenceResult' => ['RegexParser\\Automata\\EquivalenceResult'];
+        yield 'RegexParser\Automata\IntersectionResult' => ['RegexParser\\Automata\\IntersectionResult'];
+        yield 'RegexParser\Automata\RegexSolver' => ['RegexParser\\Automata\\RegexSolver'];
+        yield 'RegexParser\Automata\RegexSolverInterface' => ['RegexParser\\Automata\\RegexSolverInterface'];
+        yield 'RegexParser\Automata\SubsetResult' => ['RegexParser\\Automata\\SubsetResult'];
+        yield 'RegexParser\Automata\AstToNfaTransformer' => ['RegexParser\\Automata\\AstToNfaTransformer'];
+        yield 'RegexParser\Automata\AstToNfaTransformerInterface' => ['RegexParser\\Automata\\AstToNfaTransformerInterface'];
+        yield 'RegexParser\Automata\RegularSubsetValidator' => ['RegexParser\\Automata\\RegularSubsetValidator'];
+        yield 'RegexParser\Lint\Command\LintCommand' => ['RegexParser\\Lint\\Command\\LintCommand'];
+        yield 'RegexParser\Lint\Command\LintOutputRenderer' => ['RegexParser\\Lint\\Command\\LintOutputRenderer'];
+        yield 'RegexParser\Lint\ExtractorInterface' => ['RegexParser\\Lint\\ExtractorInterface'];
+        yield 'RegexParser\Lint\TokenBasedExtractionStrategy' => ['RegexParser\\Lint\\TokenBasedExtractionStrategy'];
+        yield 'RegexParser\Lint\PhpStanExtractionStrategy' => ['RegexParser\\Lint\\PhpStanExtractionStrategy'];
+    }
+
+    #[Test]
+    public function test_composer_loads_no_file_on_every_request(): void
+    {
+        /** @var array{autoload: array<string, mixed>} $composer */
+        $composer = json_decode((string) file_get_contents(__DIR__.'/../../composer.json'), true, 512, \JSON_THROW_ON_ERROR);
+
+        $this->assertArrayNotHasKey('files', $composer['autoload']);
+    }
+}

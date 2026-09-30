@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Everything under **Removed**, and the changes listed in [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `validate()` lets an exception that is not the library's through instead of turning it into an invalid-pattern result.
+- The aliases that kept the names of moved classes resolving are gone, with the file Composer loaded on every request to register them; the moved classes answer to their new names only. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `CacheInterface` stores trees: `write(string $key, RegexNode $ast)` and `load(string $key): ?RegexNode`; `getTimestamp()` is gone. `CachePayloadDecoder`, `FilesystemCache::defaultDirectory()` and the file extension argument of `FilesystemCache` are gone; the default cache is `ArrayCache`. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - ReDoS analysis is now disabled by default for better performance. Enable explicitly via:
   - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
