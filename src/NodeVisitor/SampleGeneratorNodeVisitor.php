@@ -158,6 +158,11 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private bool $dollarEndsLine = false;
 
     /**
+     * Whether a dot takes a newline, under "s".
+     */
+    private bool $dotAll = false;
+
+    /**
      * The fewest characters the pattern still adds after the node being
      * generated, which an alternative ending the subject leaves no room for.
      */
@@ -231,6 +236,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->numberGroupsAsPcre($node);
         $this->caseless = str_contains($node->flags, 'i');
         $this->dollarEndsLine = str_contains($node->flags, 'm');
+        $this->dotAll = str_contains($node->flags, 's');
         $this->textAhead = 0;
         $this->lengthRanges = [];
         $this->unicode = str_contains($node->flags, 'u')
@@ -278,49 +284,34 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
-        // Lookarounds are zero-width assertions and should not generate text
-        if (\in_array($node->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-            GroupType::T_GROUP_SCAN_SUBSTRING,
-        ], true)) {
-            if (GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type) {
-                $prefix = $this->acceptedIn($node->child);
-                if ('' !== $prefix) {
-                    $this->requiredPrefixes[] = $prefix;
-                }
-            } elseif (GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
-                $suffix = $this->acceptedIn($node->child);
-                if ('' !== $suffix) {
-                    $this->requiredSuffixes[] = $suffix;
-                }
-            }
+        // "(?s)" sets its flags for the rest of the group it stands in,
+        // "(?s:...)" for its own content: the group around them ends them.
+        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
+            $this->applyFlags($node->flags ?? '');
 
             return '';
         }
 
-        $result = $node->child->accept($this);
-
-        // Store the result if it's a capturing group
-        if (GroupType::T_GROUP_CAPTURING === $node->type) {
-            $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
-            $result = $this->fitScans($groupIndex, $node, $result);
-            $this->captures[$groupIndex] = $result;
-            $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
-        } elseif (GroupType::T_GROUP_NAMED === $node->type) {
-            $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
-            $result = $this->fitScans($groupIndex, $node, $result);
-            $this->captures[$groupIndex] = $result;
-            if ($node->name) {
-                $this->captures[$node->name] = $result;
-            }
-            $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
+        $modes = [$this->dotAll, $this->dollarEndsLine];
+        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type) {
+            $this->applyFlags($node->flags ?? '');
         }
 
-        // For non-capturing, etc., just return the child's result
-        return $result;
+        try {
+            return $this->generateGroup($node);
+        } finally {
+            [$this->dotAll, $this->dollarEndsLine] = $modes;
+        }
+    }
+
+    #[\Override]
+    public function visitDot(DotNode $node): string
+    {
+        // Generate a random, simple, printable ASCII char, or a newline
+        // where "s" lets the dot take one.
+        $characters = ['a', 'b', 'c', '1', '2', '3', ' '];
+
+        return $this->getRandomChar($this->dotAll ? [...$characters, "\n"] : $characters);
     }
 
     #[\Override]
@@ -368,13 +359,6 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     public function visitCharType(CharTypeNode $node): string
     {
         return $this->generateForCharType($node->value);
-    }
-
-    #[\Override]
-    public function visitDot(DotNode $node): string
-    {
-        // Generate a random, simple, printable ASCII char
-        return $this->getRandomChar(['a', 'b', 'c', '1', '2', '3', ' ']);
     }
 
     #[\Override]
@@ -688,6 +672,53 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         // Callouts do not match characters, so they generate no sample text.
         return '';
+    }
+
+    private function generateGroup(GroupNode $node): string
+    {
+        // Lookarounds are zero-width assertions and should not generate text
+        if (\in_array($node->type, [
+            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::T_GROUP_SCAN_SUBSTRING,
+        ], true)) {
+            if (GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type) {
+                $prefix = $this->acceptedIn($node->child);
+                if ('' !== $prefix) {
+                    $this->requiredPrefixes[] = $prefix;
+                }
+            } elseif (GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
+                $suffix = $this->acceptedIn($node->child);
+                if ('' !== $suffix) {
+                    $this->requiredSuffixes[] = $suffix;
+                }
+            }
+
+            return '';
+        }
+
+        $result = $node->child->accept($this);
+
+        // Store the result if it's a capturing group
+        if (GroupType::T_GROUP_CAPTURING === $node->type) {
+            $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
+            $result = $this->fitScans($groupIndex, $node, $result);
+            $this->captures[$groupIndex] = $result;
+            $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
+        } elseif (GroupType::T_GROUP_NAMED === $node->type) {
+            $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
+            $result = $this->fitScans($groupIndex, $node, $result);
+            $this->captures[$groupIndex] = $result;
+            if ($node->name) {
+                $this->captures[$node->name] = $result;
+            }
+            $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
+        }
+
+        // For non-capturing, etc., just return the child's result
+        return $result;
     }
 
     /**
@@ -1065,7 +1096,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 continue;
             }
 
-            if ($child instanceof GroupNode && GroupType::T_GROUP_NON_CAPTURING === $child->type && null === $child->flags) {
+            if ($child instanceof GroupNode && GroupType::T_GROUP_NON_CAPTURING === $child->type && null === $child->flags
+                && !$this->setsFlags($child->child)) {
                 $inner = $child->child instanceof SequenceNode ? $child->child->children : [$child->child];
                 array_push($opened, ...$this->withPlainGroupsOpened($inner));
 
@@ -1076,6 +1108,38 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         return $opened;
+    }
+
+    /**
+     * Whether "(?s)" or its like stands directly in a node: laid out in the
+     * sequence around, it would set its flags past the group that ends them.
+     */
+    private function setsFlags(NodeInterface $node): bool
+    {
+        foreach ($node instanceof SequenceNode ? $node->children : [$node] as $child) {
+            if ($child instanceof GroupNode && GroupType::T_GROUP_INLINE_FLAGS === $child->type
+                && $child->child instanceof LiteralNode && '' === $child->child->value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The "s" and "m" flags an inline setting turns on or off, as "s-m", or
+     * "^" to turn them all off first.
+     */
+    private function applyFlags(string $flags): void
+    {
+        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
+        if (str_starts_with($on, '^')) {
+            $this->dotAll = false;
+            $this->dollarEndsLine = false;
+        }
+
+        $this->dotAll = (str_contains($on, 's') || $this->dotAll) && !str_contains($off, 's');
+        $this->dollarEndsLine = (str_contains($on, 'm') || $this->dollarEndsLine) && !str_contains($off, 'm');
     }
 
     private function textLength(string $text): int
