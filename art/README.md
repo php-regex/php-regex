@@ -46,9 +46,9 @@ small formats:
   border/GitHub-dark 3.98:1, border/paper 4.44:1, border/dark-paper 3.63:1. All pass under grayscale (6.3-8.0:1) and
   deuteranopia simulation (4.9-6.0:1); the mark's hierarchy is carried by
   shape and size, never hue alone.
-- **README usage** — serve the banner with `<picture>`: `<source
-  media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=2">`
-  then `<img src="art/banner.svg?v=2" ...>`. No auto-theming inside files.
+- **README usage** — serve the banner with `<picture>`: a dark `<source>`,
+  a light `<source>`, then the light `<img>` fallback, all cache-busted
+  (`?v=2`). No auto-theming inside files.
 - **Accessibility** — every SVG carries `role="img"` and a `<title>`.
 - **Icon small-size floor** — before shipping any icon change, render at
   16px and require every node to sample ≥ 3:1 against its tile at the node's

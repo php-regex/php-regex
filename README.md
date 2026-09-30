@@ -1,5 +1,9 @@
 <p align="center">
-    <img src="art/banner.svg?v=1" alt="RegexParser" width="100%">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=2">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=2">
+        <img src="art/banner.svg?v=2" alt="RegexParser" width="100%">
+    </picture>
 </p>
 
 <p align="center">
