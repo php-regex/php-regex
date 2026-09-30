@@ -35,4 +35,10 @@ final readonly class SequenceNode extends AbstractNode
     {
         return $visitor->visitSequence($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return array_values($this->children);
+    }
 }

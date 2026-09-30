@@ -9,7 +9,7 @@ deptrac:
         - type: bool
           must:
             - type: classLike
-              value: '^RegexParser\\(Lexer|Parser|RegexParser|RegexOptions|Token|TokenStream|TokenType|GroupNumbering|GroupNumberingCollector|PcreTarget|PcreFeature|RegexPattern|ValidationResult|ValidationErrorCategory|TolerantParseResult|LiteralExtractionResult|LiteralSet)$'
+              value: '^RegexParser\\(Lexer|Parser|RegexParser|RegexOptions|Token|TokenStream|TokenType|GroupNumbering|GroupNumberingCollector|PcreTarget|PcreFeature|NodeTraverser|NodeFinder|TraversalAction|RegexPattern|ValidationResult|ValidationErrorCategory|TolerantParseResult|LiteralExtractionResult|LiteralSet)$'
         - type: classLike
           value: '^RegexParser\\(Node|Internal|Exception|Cache|Analysis)\\'
         - type: classLike

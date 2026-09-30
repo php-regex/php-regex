@@ -40,4 +40,10 @@ final readonly class ClassSetOperationNode extends AbstractNode
     {
         return $visitor->visitClassSetOperation($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return null === $this->left ? [$this->right] : [$this->left, $this->right];
+    }
 }

@@ -10,23 +10,42 @@ Visitors walk the AST using `accept()` on each node. Each node dispatches to the
 
 ## Base Classes and Interfaces
 
-### NodeVisitorInterface
+### Walking a tree without a visitor
 
-**Purpose:** The contract that all visitors must implement. Defines a `visitX()` method for each node type.
-
-**Usage:** Implement this interface when building a custom visitor from scratch.
+Most tools only need to look at some nodes: every backreference, every
+quantifier, the groups around a node. `NodeFinder` and `NodeTraverser` do that
+for any tree, without a method for each kind of node:
 
 ```php
-use RegexParser\NodeVisitor\NodeVisitorInterface;
+use RegexParser\Node\BackrefNode;
+use RegexParser\Node\NodeInterface;
+use RegexParser\NodeFinder;
+use RegexParser\NodeTraverser;
+use RegexParser\RegexParser;
+use RegexParser\TraversalAction;
 
-class MyVisitor implements NodeVisitorInterface
-{
-    public function visitRegex(Node\RegexNode $node): mixed { /* ... */ }
-    public function visitSequence(Node\SequenceNode $node): mixed { /* ... */ }
-    public function visitAlternation(Node\AlternationNode $node): mixed { /* ... */ }
-    // ... one method for each node type
-}
+$tree = RegexParser::create()->parse('/(a)(b)\\2\\1/');
+
+NodeFinder::findInstanceOf($tree, BackrefNode::class);            // both references, in order
+
+NodeTraverser::walk($tree, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
+    // $ancestors: the nodes from the root down to $node's parent
+    return null;  // or TraversalAction::SkipChildren, or TraversalAction::Stop
+});
 ```
+
+Every node gives its children in pattern order through `getChildren()`.
+
+### NodeVisitorInterface
+
+**Purpose:** The contract every visitor answers to, with a `visitX()` method
+for each node type.
+
+**Usage:** extend `AbstractNodeVisitor` rather than implementing this
+interface. A new kind of node, as PCRE2 adds syntax, adds a method to the
+interface in a minor release; `AbstractNodeVisitor` gives it a default, so a
+visitor that extends it keeps working, and one that implements the interface
+directly does not.
 
 ---
 

@@ -48,4 +48,10 @@ final readonly class ClassOperationNode extends AbstractNode
     {
         return $visitor->visitClassOperation($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->left, $this->right];
+    }
 }

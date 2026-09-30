@@ -35,4 +35,10 @@ final readonly class AlternationNode extends AbstractNode
     {
         return $visitor->visitAlternation($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return array_values($this->alternatives);
+    }
 }

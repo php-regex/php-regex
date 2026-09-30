@@ -44,4 +44,10 @@ final readonly class GroupNode extends AbstractNode
     {
         return $visitor->visitGroup($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->child];
+    }
 }

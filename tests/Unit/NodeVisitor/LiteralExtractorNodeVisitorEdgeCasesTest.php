@@ -81,6 +81,11 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
         $visitor = new LiteralExtractorNodeVisitor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function __construct(private readonly LiteralSet $set) {}
 
             public function accept(NodeVisitorInterface $visitor): LiteralSet
@@ -112,6 +117,11 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
         $visitor = new LiteralExtractorNodeVisitor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function __construct(private readonly LiteralSet $set) {}
 
             public function accept(NodeVisitorInterface $visitor): LiteralSet
@@ -143,6 +153,11 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
         $visitor = new LiteralExtractorNodeVisitor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function __construct(private readonly LiteralSet $set) {}
 
             public function accept(NodeVisitorInterface $visitor): LiteralSet

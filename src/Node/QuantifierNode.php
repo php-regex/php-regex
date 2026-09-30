@@ -34,4 +34,10 @@ final readonly class QuantifierNode extends AbstractNode
     {
         return $visitor->visitQuantifier($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->node];
+    }
 }

@@ -34,4 +34,10 @@ final readonly class ConditionalNode extends AbstractNode
     {
         return $visitor->visitConditional($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->condition, $this->yes, $this->no];
+    }
 }

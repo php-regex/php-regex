@@ -88,6 +88,11 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new ReDoSProfileNodeVisitor();
         $highNode = new class implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function accept(NodeVisitorInterface $visitor): ReDoSSeverity|string
             {
                 if ($visitor instanceof ReDoSProfileNodeVisitor) {
@@ -186,6 +191,11 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame([0, 0], $zeroRange);
 
         $unknownRange = $this->invokePrivate($visitor, 'lengthRange', [new class implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function accept(NodeVisitorInterface $visitor): ReDoSSeverity
             {
                 return ReDoSSeverity::SAFE;

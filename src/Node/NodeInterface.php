@@ -34,4 +34,12 @@ interface NodeInterface
     public function getStartPosition(): int;
 
     public function getEndPosition(): int;
+
+    /**
+     * The nodes this one holds, in the order they stand in the pattern; none
+     * for a leaf.
+     *
+     * @return list<self>
+     */
+    public function getChildren(): array;
 }

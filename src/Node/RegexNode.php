@@ -40,4 +40,10 @@ final readonly class RegexNode extends AbstractNode
     {
         return $visitor->visitRegex($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->pattern];
+    }
 }

@@ -39,4 +39,10 @@ final readonly class ExtendedCharClassNode extends AbstractNode
     {
         return $visitor->visitExtendedCharClass($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->expression];
+    }
 }

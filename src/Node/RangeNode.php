@@ -33,4 +33,10 @@ final readonly class RangeNode extends AbstractNode
     {
         return $visitor->visitRange($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->start, $this->end];
+    }
 }

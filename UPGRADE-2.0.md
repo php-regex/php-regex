@@ -173,6 +173,14 @@ Pass `$regex->parser()` where you passed a `Regex`, or build one with
 `CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
 `RegexParser\Analysis`.
 
+#### A custom node implements `getChildren()`
+
+`NodeInterface` gains `getChildren()`. The library's nodes extend
+`AbstractNode`, which returns no children; a node of your own that holds
+others returns them, in pattern order. Custom visitors should extend
+`AbstractNodeVisitor`, never implement `NodeVisitorInterface` directly: a
+new kind of node adds a method to the interface.
+
 #### The cache stores trees, in memory by default
 
 `CacheInterface` now takes and gives back the tree itself:

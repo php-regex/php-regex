@@ -35,6 +35,11 @@ final class RegexValidateFailureTest extends TestCase
         // A cache handing back a tree a visitor fails on stands for any
         // failure of the library while it judges a valid pattern.
         $failing = new class implements NodeInterface {
+            public function getChildren(): array
+            {
+                return [];
+            }
+
             public function accept(NodeVisitorInterface $visitor): never
             {
                 throw new \LogicException('A visitor failed.');

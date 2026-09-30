@@ -32,4 +32,10 @@ final readonly class DefineNode extends AbstractNode
     {
         return $visitor->visitDefine($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return [$this->content];
+    }
 }

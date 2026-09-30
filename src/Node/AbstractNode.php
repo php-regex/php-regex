@@ -29,4 +29,12 @@ abstract readonly class AbstractNode implements NodeInterface
     {
         return $this->endPosition;
     }
+
+    /**
+     * @return list<NodeInterface>
+     */
+    public function getChildren(): array
+    {
+        return [];
+    }
 }

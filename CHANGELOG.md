@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `NodeInterface::getChildren()`, `NodeTraverser::walk()` and `NodeFinder`: a tree is walked, and nodes found in it, without a visitor for each kind of node. The walk keeps its own stack, so a pattern nested as deep as the parser allows is walked too. See [the visitors reference](docs/visitors/README.md#walking-a-tree-without-a-visitor).
 - `PcreFeature` and `PcreTarget::supports()`: each behaviour PCRE2 changed, named with the release it arrived in, in one table the rules ask instead of release strings written by hand; [the PCRE page](docs/concepts/pcre.md#what-changed-in-which-release) lists them. `pcreAtLeast()` refuses a release spelled short, as `'10.4'`, which read as 10.04 and held for every target.
 - `Optimizer\Optimizer`: the optimization `Regex::optimize()` runs, on any `RegexParser`; the linter uses it directly.
 - `RegexParser`: reading and judging a pattern — `parse()`, `parseTolerant()`, `validate()`, `parsePattern()`, `tokenize()`, the cache and the target — in one class every other part of the library uses, with the options `Regex::create()` takes. `Regex::parser()` gives the one a facade uses. `RegexParser::CACHE_VERSION` fingerprints the extended-class reader, the validator the parser runs, the target and group numbering too.

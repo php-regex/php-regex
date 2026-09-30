@@ -46,4 +46,10 @@ final readonly class ScriptRunNode extends AbstractNode
     {
         return $visitor->visitScriptRun($this);
     }
+
+    #[\Override]
+    public function getChildren(): array
+    {
+        return null === $this->content ? [] : [$this->content];
+    }
 }
