@@ -52,5 +52,20 @@ parameters:
             - regex.lint.unicode.shorthandWithoutU
             # PHPUnit assertions that PHPStan considers redundant
             - method.alreadyNarrowedType
+        # These tests probe the running engine for syntax newer PCRE2 releases
+        # added, as (?[...]) or (*scs:...), and only match with it when it
+        # compiles: the analysis, run on an older PCRE2, cannot compile them.
+        - identifiers:
+            - regexp.pattern
+            - regex.syntax.invalid
+          paths:
+            - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
+            - tests/Unit/NodeVisitor/CasingSettingsTest.php
+            - tests/Unit/NodeVisitor/ExtendedCharClassDisplayTest.php
+            - tests/Unit/NodeVisitor/SampleGeneratorEndAnchorTest.php
+            - tests/Unit/NodeVisitor/SampleGeneratorVisitorTest.php
+            - tests/Unit/Parser/ExtendedCharClassTest.php
+            - tests/Unit/Parser/GroupNameLengthReleaseTest.php
+            - tests/Unit/Parser/ScanSubstringTest.php
 
     reportUnmatchedIgnoredErrors: false

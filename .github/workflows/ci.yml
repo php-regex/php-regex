@@ -63,6 +63,11 @@ jobs:
           - { php: '8.5', pcre: '10.44' }
 
     steps:
+      - name: Install Git
+        # Before the checkout: without git, it downloads an archive, which
+        # leaves out what .gitattributes marks export-ignore, tests included.
+        run: apt-get update && apt-get install -y --no-install-recommends git unzip
+
       - name: Checkout Code
         uses: actions/checkout@v7
 
@@ -72,9 +77,7 @@ jobs:
           php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL; exit(str_starts_with(PCRE_VERSION, "${{ matrix.pcre }} ") ? 0 : 1);'
 
       - name: Install Composer
-        run: |
-          apt-get update && apt-get install -y --no-install-recommends git unzip
-          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+        run: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
       - name: Install Dependencies
         run: |
