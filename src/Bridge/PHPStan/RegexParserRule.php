@@ -29,6 +29,7 @@ use RegexParser\Internal\NoJit;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\OptimizationResult;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSMode;
 use RegexParser\ReDoS\ReDoSSeverity;
@@ -52,30 +53,6 @@ final class RegexParserRule implements Rule
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
     private const REDOS_THRESHOLDS = ['low', 'medium', 'high', 'critical'];
-
-    /**
-     * The "checks.optimizations.options" keys, by the optimizer option each sets.
-     */
-    private const OPTIMIZATION_OPTION_KEYS = [
-        'digits' => 'digits',
-        'word' => 'word',
-        'ranges' => 'ranges',
-        'canonicalizeCharClasses' => 'canonicalizeCharClasses',
-        'possessive' => 'autoPossessify',
-        'factorize' => 'allowAlternationFactorization',
-        'verifyWithAutomata' => 'verifyWithAutomata',
-    ];
-
-    private const DEFAULT_OPTIMIZATION_OPTIONS = [
-        'digits' => true,
-        'word' => true,
-        'ranges' => true,
-        'canonicalizeCharClasses' => true,
-        'autoPossessify' => false,
-        'allowAlternationFactorization' => false,
-        'minQuantifierCount' => 4,
-        'verifyWithAutomata' => true,
-    ];
 
     private const PREG_FUNCTION_MAP = [
         'preg_match' => 0,
@@ -156,19 +133,7 @@ final class RegexParserRule implements Rule
 
     private readonly int $optimizationMinSavings;
 
-    /**
-     * @var array{
-     *     digits: bool,
-     *     word: bool,
-     *     ranges: bool,
-     *     canonicalizeCharClasses: bool,
-     *     autoPossessify: bool,
-     *     allowAlternationFactorization: bool,
-     *     minQuantifierCount: int,
-     *     verifyWithAutomata: bool
-     * }
-     */
-    private readonly array $optimizationOptions;
+    private readonly OptimizerOptions $optimizationOptions;
 
     private ?RegexAnalysisService $analysis = null;
 
@@ -207,7 +172,9 @@ final class RegexParserRule implements Rule
         $this->optimizationsEnabled = true === ($optimizations['enabled'] ?? false);
         $minSavings = $optimizations['minSavings'] ?? null;
         $this->optimizationMinSavings = \is_int($minSavings) ? max(1, $minSavings) : 1;
-        $this->optimizationOptions = self::optimizationOptions(self::section($optimizations, 'options'));
+        // The PHPStan parameters name the options in camelCase; every rewrite
+        // is checked with the automata unless the parameters say otherwise.
+        $this->optimizationOptions = OptimizerOptions::fromCamelCaseArray(self::section($optimizations, 'options') + ['verifyWithAutomata' => true]);
     }
 
     public function getNodeType(): string
@@ -520,39 +487,6 @@ final class RegexParserRule implements Rule
         $section = $config[$key] ?? null;
 
         return \is_array($section) ? $section : [];
-    }
-
-    /**
-     * @param array<mixed> $options
-     *
-     * @return array{
-     *     digits: bool,
-     *     word: bool,
-     *     ranges: bool,
-     *     canonicalizeCharClasses: bool,
-     *     autoPossessify: bool,
-     *     allowAlternationFactorization: bool,
-     *     minQuantifierCount: int,
-     *     verifyWithAutomata: bool
-     * }
-     */
-    private static function optimizationOptions(array $options): array
-    {
-        $resolved = self::DEFAULT_OPTIMIZATION_OPTIONS;
-
-        foreach (self::OPTIMIZATION_OPTION_KEYS as $key => $option) {
-            $value = $options[$key] ?? null;
-            if (\is_bool($value)) {
-                $resolved[$option] = $value;
-            }
-        }
-
-        $minQuantifierCount = $options['minQuantifierCount'] ?? null;
-        if (\is_int($minQuantifierCount)) {
-            $resolved['minQuantifierCount'] = $minQuantifierCount;
-        }
-
-        return $resolved;
     }
 
     private function getAnalysisService(): RegexAnalysisService

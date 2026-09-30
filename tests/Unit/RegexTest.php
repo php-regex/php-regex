@@ -108,7 +108,7 @@ final class RegexTest extends TestCase
 
     public function test_optimize_method_with_automata_verification(): void
     {
-        $optimized = $this->regexService->optimize('/[0-9]+/', ['verifyWithAutomata' => true]);
+        $optimized = $this->regexService->optimize('/[0-9]+/', ['verify_with_automata' => true]);
         $this->assertSame('/\\d+/', $optimized->optimized);
     }
 

@@ -518,8 +518,8 @@ final class LintConfigLoader
             'word' => 'word',
             'ranges' => 'ranges',
             'canonicalizeCharClasses' => 'canonicalizeCharClasses',
-            'possessive' => 'autoPossessify',
-            'factorize' => 'allowAlternationFactorization',
+            'possessive' => 'possessive',
+            'factorize' => 'factorize',
             'verifyWithAutomata' => 'verifyWithAutomata',
         ];
         foreach ($keyMapping as $jsonKey => $internalKey) {

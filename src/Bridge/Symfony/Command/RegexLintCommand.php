@@ -21,6 +21,7 @@ use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintReport;
 use RegexParser\Lint\RegexLintRequest;
 use RegexParser\Lint\RegexLintService;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -61,15 +62,12 @@ final class RegexLintCommand extends Command
      */
     private array $defaultExcludePaths;
 
-    /**
-     * @var array<string, bool|int>
-     */
-    private readonly array $defaultOptimizations;
+    private readonly OptimizerOptions $defaultOptimizations;
 
     /**
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
-     * @param array<string, bool|int> $defaultOptimizations
+     * @param array<string, bool|int> $defaultOptimizations the bundle's optimizations, in snake_case
      */
     public function __construct(
         private readonly RegexLintService $lint,
@@ -404,22 +402,11 @@ final class RegexLintCommand extends Command
 
     /**
      * @param array<string, bool|int> $optimizations
-     *
-     * @return array<string, bool|int>
      */
-    private function normalizeOptimizations(array $optimizations): array
+    private function normalizeOptimizations(array $optimizations): OptimizerOptions
     {
-        $normalized = [];
-        foreach ($optimizations as $key => $value) {
-            if (!\is_string($key)) {
-                continue;
-            }
-            if (\is_bool($value) || \is_int($value)) {
-                $normalized[$key] = $value;
-            }
-        }
-
-        return $normalized;
+        // Lint checks every rewrite with the automata unless told otherwise.
+        return OptimizerOptions::fromArray($optimizations + ['verify_with_automata' => true]);
     }
 
     /**

@@ -16,6 +16,7 @@ namespace RegexParser\Optimizer;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\ErrorCode;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\RegexException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\RegexNode;
@@ -36,22 +37,26 @@ final readonly class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                                                                                                                                                                                  $regex   The regular expression to optimize
-     * @param array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, autoPossessify?: bool, allowAlternationFactorization?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool, ...} $options Optimization options (unknown keys are ignored)
+     * @param string                                   $regex   The regular expression to optimize
+     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
+     *                                                          the array OptimizerOptions::fromArray() reads
+     *
+     * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
      *
      * @return OptimizationResult Optimization results with changes applied
      */
-    public function optimize(string $regex, array $options = []): OptimizationResult
+    public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {
-        $verifyWithAutomata = (bool) ($options['verifyWithAutomata'] ?? false);
+        $options = \is_array($options) ? OptimizerOptions::fromArray($options) : $options;
+        $verifyWithAutomata = $options->verifyWithAutomata;
         $optimizer = new OptimizerNodeVisitor(
-            optimizeDigits: (bool) ($options['digits'] ?? true),
-            optimizeWord: (bool) ($options['word'] ?? true),
-            ranges: (bool) ($options['ranges'] ?? true),
-            canonicalizeCharClasses: (bool) ($options['canonicalizeCharClasses'] ?? true),
-            autoPossessify: (bool) ($options['autoPossessify'] ?? false),
-            allowAlternationFactorization: (bool) ($options['allowAlternationFactorization'] ?? false),
-            minQuantifierCount: (int) ($options['minQuantifierCount'] ?? 4),
+            optimizeDigits: $options->digits,
+            optimizeWord: $options->word,
+            ranges: $options->ranges,
+            canonicalizeCharClasses: $options->canonicalizeCharClasses,
+            autoPossessify: $options->possessive,
+            allowAlternationFactorization: $options->factorize,
+            minQuantifierCount: $options->minQuantifierCount,
         );
 
         $ast = $this->parser->parse($regex);

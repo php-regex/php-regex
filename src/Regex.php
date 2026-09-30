@@ -27,6 +27,7 @@ use RegexParser\NodeVisitor\LinterNodeVisitor;
 use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 use RegexParser\Optimizer\Optimizer;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\ReDoS\ReDoSAnalysis;
 use RegexParser\ReDoS\ReDoSAnalyzer;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
@@ -232,12 +233,12 @@ final readonly class Regex
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                                                                                                                                                                                  $regex   The regular expression to optimize
-     * @param array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, autoPossessify?: bool, allowAlternationFactorization?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool, ...} $options Optimization options (unknown keys are ignored)
+     * @param string                                   $regex   The regular expression to optimize
+     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
      *
      * @return OptimizationResult Optimization results with changes applied
      */
-    public function optimize(string $regex, array $options = []): OptimizationResult
+    public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {
         return (new Optimizer($this->parser))->optimize($regex, $options);
     }

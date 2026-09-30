@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Laravel\Command;
 
+use RegexParser\Optimizer\OptimizerOptions;
 use Illuminate\Console\Command;
 use RegexParser\Bridge\Laravel\Output\LaravelConsoleFormatter;
 use RegexParser\Lint\Formatter\FormatterRegistry;
@@ -154,7 +155,6 @@ final class LintCommand extends Command
             $collectionProgress = null;
         }
 
-        /** @var array<string, bool|int> $defaultOptimizations */
         $defaultOptimizations = $this->normalizeOptimizations(config('regex-parser.optimizations', []));
 
         try {
@@ -345,25 +345,13 @@ final class LintCommand extends Command
     }
 
     /**
-     * @return array<string, bool|int>
+     * The optimizations of config/regex-parser.php, keyed in snake_case as
+     * the optimizer reads them. Lint checks every rewrite with the automata
+     * unless the config says otherwise.
      */
-    private function normalizeOptimizations(mixed $optimizations): array
+    private function normalizeOptimizations(mixed $optimizations): OptimizerOptions
     {
-        if (!\is_array($optimizations)) {
-            return [];
-        }
-
-        $normalized = [];
-        foreach ($optimizations as $key => $value) {
-            if (!\is_string($key)) {
-                continue;
-            }
-            if (\is_bool($value) || \is_int($value)) {
-                $normalized[$key] = $value;
-            }
-        }
-
-        return $normalized;
+        return OptimizerOptions::fromArray((\is_array($optimizations) ? $optimizations : []) + ['verify_with_automata' => true]);
     }
 
     /**

@@ -250,6 +250,24 @@ passes the `ErrorCode` case instead.
 
 The CLI's JSON output and `RegexProblem::$code` still carry the string value.
 
+#### Optimizer options are typed, and keyed in snake_case
+
+`Regex::optimize()` and `Optimizer::optimize()` take an `OptimizerOptions` value
+or an array keyed in snake_case, as `Regex::create()` is. An unknown key or a
+value of the wrong type throws `InvalidRegexOptionException`; 1.x ignored the
+one and cast the other.
+
+| 1.x key | 2.0 key |
+|---|---|
+| `canonicalizeCharClasses` | `canonicalize_char_classes` |
+| `autoPossessify` | `possessive` |
+| `allowAlternationFactorization` | `factorize` |
+| `minQuantifierCount` | `min_quantifier_count` |
+| `verifyWithAutomata` | `verify_with_automata` |
+
+`digits`, `word` and `ranges` are unchanged. `RegexLintRequest::$optimizations`
+and `RegexAnalysisService::suggestOptimizations()` take an `OptimizerOptions`.
+
 #### `ValidationResult::$error` is the message alone
 
 In 1.x a failed validation's `$error` ended with the caret snippet, on the

@@ -135,8 +135,8 @@ final class LintConfigLoaderTest extends TestCase
                 'word' => true,
                 'ranges' => true,
                 'canonicalizeCharClasses' => false,
-                'autoPossessify' => false,
-                'allowAlternationFactorization' => false,
+                'possessive' => false,
+                'factorize' => false,
             ], $result->config['optimizations']);
         } finally {
             chdir($cwd);
@@ -233,8 +233,8 @@ final class LintConfigLoaderTest extends TestCase
                     'word' => true,
                     'ranges' => false,
                     'canonicalizeCharClasses' => true,
-                    'autoPossessify' => true,
-                    'allowAlternationFactorization' => true,
+                    'possessive' => true,
+                    'factorize' => true,
                     'verifyWithAutomata' => false,
                     'minQuantifierCount' => 5,
                 ],

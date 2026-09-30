@@ -69,10 +69,10 @@ final class RegexParserExtensionTest extends TestCase
             'digits' => true,
             'word' => true,
             'ranges' => true,
-            'canonicalizeCharClasses' => true,
-            'autoPossessify' => false,
-            'allowAlternationFactorization' => false,
-            'minQuantifierCount' => 4,
+            'canonicalize_char_classes' => true,
+            'possessive' => false,
+            'factorize' => false,
+            'min_quantifier_count' => 4,
         ], $container->getParameter('regex_parser.optimizations'));
 
         $this->assertTrue($container->hasDefinition('regex_parser.regex'));

@@ -290,23 +290,30 @@ echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 
 ## Transform and Extract Methods
 
-### optimize(string $regex, array $options = []): OptimizationResult
+### optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
 
-Applies safe optimizations to the pattern.
+Applies safe optimizations to the pattern. The options are an `OptimizerOptions` value, or an array keyed in
+snake_case as `Regex::create()`'s are; an unknown key or a value of the wrong type throws
+`InvalidRegexOptionException`.
 
 ```php
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/', [
-    'digits' => true,              // [0-9] -> \d
-    'word' => true,                // [A-Za-z0-9_] -> \w
-    'ranges' => true,              // Normalize ranges
-    'canonicalizeCharClasses' => true, // Normalize character class order/dedup
-    'autoPossessify' => false,     // Add possessive quantifiers
-    'allowAlternationFactorization' => false,  // Factor common parts
-    'minQuantifierCount' => 4,     // Use {n} only when repetition >= 4
-    'verifyWithAutomata' => false, // Verify equivalence with the automata solver when possible
+    'digits' => true,                    // [0-9] -> \d
+    'word' => true,                      // [A-Za-z0-9_] -> \w
+    'ranges' => true,                    // Normalize ranges
+    'canonicalize_char_classes' => true, // Normalize character class order/dedup
+    'possessive' => false,               // Add possessive quantifiers
+    'factorize' => false,                // Factor common prefixes of alternatives
+    'min_quantifier_count' => 4,         // Use {n} only when repetition >= 4
+    'verify_with_automata' => false,     // Verify equivalence with the automata solver when possible
 ]);
+
+// The same, as a value:
+$result = Regex::create()->optimize('/[0-9]+/', new OptimizerOptions(possessive: false));
+```
 
 echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'

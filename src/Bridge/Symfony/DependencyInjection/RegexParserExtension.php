@@ -107,10 +107,10 @@ final class RegexParserExtension extends Extension
             'digits' => $config['optimizations']['digits'],
             'word' => $config['optimizations']['word'],
             'ranges' => $config['optimizations']['ranges'],
-            'canonicalizeCharClasses' => $config['optimizations']['canonicalize_char_classes'],
-            'autoPossessify' => $config['optimizations']['possessive'],
-            'allowAlternationFactorization' => $config['optimizations']['factorize'],
-            'minQuantifierCount' => $config['optimizations']['min_quantifier_count'],
+            'canonicalize_char_classes' => $config['optimizations']['canonicalize_char_classes'],
+            'possessive' => $config['optimizations']['possessive'],
+            'factorize' => $config['optimizations']['factorize'],
+            'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
         ]);
         $container->setParameter('regex_parser.paths', $config['paths']);
         $container->setParameter('regex_parser.exclude_paths', $config['exclude_paths']);
