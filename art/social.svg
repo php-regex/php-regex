@@ -26,7 +26,7 @@
         </filter>
 
         <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1" stroke-opacity="0.03"/>
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1" stroke-opacity="0.04"/>
         </pattern>
 
         <clipPath id="avatarClip">
