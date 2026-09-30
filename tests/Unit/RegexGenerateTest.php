@@ -99,6 +99,25 @@ final class RegexGenerateTest extends TestCase
     }
 
     #[Test]
+    public function test_a_sample_the_engine_could_not_check_is_not_given(): void
+    {
+        // Past its depth limit the engine gives no answer on a sample 500
+        // characters deep: the sample is unchecked, and none is given.
+        $regex = Regex::create(['cache' => null]);
+        $limit = \ini_get('pcre.recursion_limit');
+        ini_set('pcre.recursion_limit', '50');
+
+        try {
+            $regex->generate('/^(?:\\w|\\d){500}$/');
+            self::fail('A sample the engine could not check was given.');
+        } catch (SampleGenerationException $e) {
+            $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+        } finally {
+            ini_set('pcre.recursion_limit', false === $limit ? '100000' : $limit);
+        }
+    }
+
+    #[Test]
     public function test_a_sample_the_engine_matches_is_given(): void
     {
         $regex = Regex::create(['cache' => null]);

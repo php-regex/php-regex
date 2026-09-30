@@ -461,9 +461,9 @@ final readonly class Regex
             $sample = $ast->accept($generator);
 
             $matches = @preg_match($checked, $sample);
-            if (false === $matches || 1 === $matches) {
-                // Either verified, or the pattern cannot be evaluated by
-                // this PCRE runtime — return what we have.
+            // Verified, or a pattern this PCRE runtime cannot compile: what
+            // we have. A limit it reached checks nothing: another try.
+            if (1 === $matches || (false === $matches && \PREG_INTERNAL_ERROR === preg_last_error())) {
                 return $sample;
             }
 
