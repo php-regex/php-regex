@@ -133,15 +133,15 @@ final class PatternParser
                     // n = NO_AUTO_CAPTURE, r = PCRE2_EXTRA_CASELESS_RESTRICT (if supported)
                     // When the closing delimiter shows up again among the
                     // "flags", an unescaped one cut the pattern off early.
-                    // Offsets count from the body, and the snippet shows the
-                    // text from the body on: the modifiers after it included.
-                    $afterOpening = substr($regex, 1);
+                    // Offsets count from the body; the snippet shows the
+                    // pattern as written, one character further for the
+                    // opening delimiter.
                     if (str_contains($flags, $closingDelimiter)) {
                         throw new ParserException(\sprintf(
                             'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
                             $closingDelimiter,
                             $i - 1,
-                        ), ErrorCode::DelimiterUnescaped, $i - 1, $afterOpening);
+                        ), ErrorCode::DelimiterUnescaped, $i - 1, $regex, null, $i);
                     }
 
                     $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
@@ -154,13 +154,13 @@ final class PatternParser
                         $flagPosition = $i + $faultyFlag;
 
                         if (str_contains((string) $invalid, 'e')) {
-                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $afterOpening);
+                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $regex, null, $flagPosition + 1);
                         }
 
                         // Format each invalid flag individually with quotes
                         $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', $flag), str_split($invalid ?? $flags)));
 
-                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $afterOpening);
+                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $regex, null, $flagPosition + 1);
                     }
 
                     return [$pattern, $flags, $delimiter];

@@ -53,7 +53,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-bef2a3e2f1011754b0c002dd789e36ee';
+    public const CACHE_VERSION = 'ast-1c1e92240e2c1a77ae3cb389e49be872';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -709,15 +709,19 @@ final readonly class RegexParser
     {
         if (\strlen($regex) > $this->maxPatternLength) {
             // Past the last character allowed, counted from the body: after
-            // the whitespace PHP skips and the opening delimiter.
+            // the whitespace PHP skips and the opening delimiter. The snippet
+            // shows the pattern as written, from its delimiter.
             $trimmed = ltrim($regex);
             $bodyStart = \strlen($regex) - \strlen($trimmed) + 1;
+            $offset = max(0, $this->maxPatternLength - $bodyStart);
 
             throw ResourceLimitException::withContext(
                 \sprintf('Regex pattern exceeds maximum length of %d characters.', $this->maxPatternLength),
                 ErrorCode::PatternTooLong,
-                max(0, $this->maxPatternLength - $bodyStart),
-                substr($trimmed, 1),
+                $offset,
+                $trimmed,
+                null,
+                $offset + 1,
             );
         }
     }

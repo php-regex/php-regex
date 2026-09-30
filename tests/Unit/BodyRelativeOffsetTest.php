@@ -72,6 +72,30 @@ final class BodyRelativeOffsetTest extends TestCase
     }
 
     /**
+     * A fault outside the body is shown in the pattern as it was written,
+     * opening delimiter included: the offset counts from the body, the
+     * caret stands under the character at fault.
+     *
+     * @param array<string, mixed> $options
+     */
+    #[Test]
+    #[DataProvider('provideFaultsOutsideTheBody')]
+    public function test_snippet_shows_the_pattern_as_written(string $pattern, array $options, ErrorCode $code, int $offset, string $underCaret): void
+    {
+        unset($code, $offset, $underCaret);
+        $result = Regex::create(['cache' => null] + $options)->validate($pattern);
+
+        $lines = explode("\n", (string) $result->caretSnippet);
+        $shown = (string) preg_replace('/^Line \d+: /', '', $lines[0]);
+        $written = explode("\n", ltrim($pattern));
+
+        $this->assertContains($shown, $written, $pattern);
+        if (1 === \count($written)) {
+            $this->assertStringStartsWith(ltrim($pattern)[0], $shown, $pattern);
+        }
+    }
+
+    /**
      * A syntax error inside the body already counted from the body: it
      * does not move.
      */

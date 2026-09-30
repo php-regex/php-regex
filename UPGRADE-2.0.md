@@ -293,7 +293,8 @@ pointed at the start of the modifiers:
 
 Code that placed a caret under these errors in the whole pattern string adds
 the length of the leading whitespace and the opening delimiter, as it already
-did for every other error. The caret snippet shows the text from the body on.
+did for every other error. The caret snippet of such an error still shows the
+whole pattern as written, its caret under the character at fault.
 
 #### regex.json: one spelling per setting, and nothing unknown
 
