@@ -18,6 +18,7 @@ use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Engine\PcreEngine;
 use RegexParser\Regex;
 
 /**
@@ -146,8 +147,9 @@ final class CompareCommand extends Command
                     $this->line('  <fg=yellow>'.$counterexample.'</>');
 
                     // Show which pattern matches
-                    $match1 = @preg_match($pattern1, $counterexample);
-                    $match2 = @preg_match($pattern2, $counterexample);
+                    $engine = new PcreEngine();
+                    $match1 = $engine->match($pattern1, $counterexample)->matched;
+                    $match2 = $engine->match($pattern2, $counterexample)->matched;
 
                     $this->line('  Pattern 1: '.($match1 ? '<fg=green>matches</>' : '<fg=red>no match</>'));
                     $this->line('  Pattern 2: '.($match2 ? '<fg=green>matches</>' : '<fg=red>no match</>'));

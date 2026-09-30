@@ -82,7 +82,7 @@ final readonly class PcreTarget
         [, $minor] = explode('.', $release, 2) + [1 => ''];
         $number = \strlen($minor) >= 2 ? self::releaseNumber($release) : null;
         if (null === $number) {
-            throw new \LogicException(\sprintf('"%s" is not a PCRE2 release like "10.45".', $release));
+            throw new InvalidRegexOptionException(\sprintf('"%s" is not a PCRE2 release like "10.45".', $release));
         }
 
         return $this->release >= $number;

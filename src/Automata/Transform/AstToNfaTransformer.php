@@ -21,6 +21,7 @@ use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Unicode\CodePointHelper;
 use RegexParser\Exception\ComplexityException;
+use RegexParser\Internal\StaticCaches;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\CharClassNode;
@@ -115,7 +116,10 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
 
     private int $alphabetMax = CharSet::MAX_CODEPOINT;
 
-    public function __construct(private readonly string $pattern) {}
+    public function __construct(private readonly string $pattern)
+    {
+        StaticCaches::register(self::class, self::clearCaches(...));
+    }
 
     /**
      * @throws ComplexityException
@@ -802,6 +806,24 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         sort($codePoints);
 
         return $charSet->union(CharSet::fromRanges($this->toRanges($codePoints), $this->alphabetMax));
+    }
+
+    /**
+     * The sets are keyed by the alphabet and the mode, a handful of each;
+     * the table is built once.
+     */
+    private static function clearCaches(): void
+    {
+        self::$caseFoldingTable = null;
+        self::$fullCharSet = [];
+        self::$dotCharSet = [];
+        self::$dotAllCharSet = [];
+        self::$wordCharSet = [];
+        self::$spaceCharSet = [];
+        self::$digitCharSet = [];
+        self::$wordCharSetComplement = [];
+        self::$spaceCharSetComplement = [];
+        self::$digitCharSetComplement = [];
     }
 
     /**

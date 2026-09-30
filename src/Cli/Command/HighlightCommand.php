@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Cli\Command;
 
+use RegexParser\Cli\CliException;
 use RegexParser\Cli\ConsoleStyle;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
@@ -84,7 +85,7 @@ final class HighlightCommand extends AbstractCommand
             $visitor = match ($format) {
                 'cli' => new ConsoleHighlighterVisitor(),
                 'html' => new HtmlHighlighterVisitor(),
-                default => throw new \InvalidArgumentException("Invalid format: $format"),
+                default => throw new CliException("Invalid format: $format"),
             };
 
             $ast = $regex->parse($pattern);
@@ -100,7 +101,7 @@ final class HighlightCommand extends AbstractCommand
             } else {
                 $output->write($highlighted."\n");
             }
-        } catch (LexerException|ParserException|\InvalidArgumentException $e) {
+        } catch (LexerException|ParserException|CliException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error("Error: {$e->getMessage()}")."\n");
 
             return 1;

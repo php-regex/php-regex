@@ -32,6 +32,11 @@ final class RedosCommand extends AbstractCommand
 {
     private const PREVIEW_LIMIT = 120;
 
+    /**
+     * What a run may change, and puts back.
+     */
+    private const RUNTIME_SETTINGS = ['pcre.jit', 'pcre.backtrack_limit', 'pcre.recursion_limit', 'max_execution_time'];
+
     public function getName(): string
     {
         return 'redos';
@@ -48,6 +53,37 @@ final class RedosCommand extends AbstractCommand
     }
 
     public function run(Input $input, Output $output): int
+    {
+        // The benchmark runs the pattern with the JIT on purpose, unless
+        // "--jit 0" says otherwise: it measures what production sees. So it
+        // runs the pattern itself, not through the engine, and gives the
+        // process back as it found it on every way out.
+        $saved = [];
+        foreach (self::RUNTIME_SETTINGS as $key) {
+            $saved[$key] = \ini_get($key);
+        }
+
+        try {
+            return $this->benchmark($input, $output);
+        } finally {
+            foreach ($saved as $key => $value) {
+                if (false === $value || \ini_get($key) === $value) {
+                    continue;
+                }
+
+                if ('max_execution_time' === $key) {
+                    // Setting the time limit again restarts its count.
+                    set_time_limit((int) $value);
+
+                    continue;
+                }
+
+                ini_set($key, $value);
+            }
+        }
+    }
+
+    private function benchmark(Input $input, Output $output): int
     {
         $parsed = $this->parseArguments($input->args);
         if (null !== $parsed['error']) {
@@ -657,8 +693,35 @@ final class RedosCommand extends AbstractCommand
      */
     private function bench(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
     {
+        // A pattern PHP refuses warns on every call: its error is read from
+        // preg_last_error() below.
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            return $this->measure($label, $pattern, $subject, $warmup, $iterations);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * @return array{
+     *     label: string,
+     *     result: string,
+     *     wall_ms: float,
+     *     avg_ms: float,
+     *     cpu_ms: ?float,
+     *     mem_bytes: int,
+     *     peak_bytes: int,
+     *     err_msg: string,
+     *     err_code: int,
+     *     iterations: int
+     * }
+     */
+    private function measure(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
+    {
         for ($i = 0; $i < $warmup; $i++) {
-            @preg_match($pattern, $subject);
+            preg_match($pattern, $subject);
         }
 
         $usageStart = \function_exists('getrusage') ? (array) getrusage() : null;
@@ -672,7 +735,7 @@ final class RedosCommand extends AbstractCommand
 
         for ($i = 0; $i < $iterations; $i++) {
             $iterationsRun++;
-            $result = @preg_match($pattern, $subject);
+            $result = preg_match($pattern, $subject);
             $errCode = preg_last_error();
 
             if (false === $result && \PREG_NO_ERROR !== $errCode) {

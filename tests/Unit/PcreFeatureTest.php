@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\PcreFeature;
 use RegexParser\PcreTarget;
 
@@ -59,7 +60,7 @@ final class PcreFeatureTest extends TestCase
     #[Test]
     public function test_a_release_spelled_short_is_refused(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(InvalidRegexOptionException::class);
 
         (new PcreTarget(80400, '10.40'))->pcreAtLeast('10.4');
     }

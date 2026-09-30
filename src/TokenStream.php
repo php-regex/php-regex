@@ -36,31 +36,31 @@ final class TokenStream
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws \LogicException
      */
     public function current(): Token
     {
         if ($this->position > $this->maxPosition) {
-            throw new \RuntimeException('Token stream is exhausted');
+            throw new \LogicException('Token stream is exhausted');
         }
 
         return $this->tokens[$this->position];
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws \LogicException
      */
     public function next(): void
     {
         if ($this->position > $this->maxPosition) {
-            throw new \RuntimeException('Token stream is exhausted');
+            throw new \LogicException('Token stream is exhausted');
         }
 
         $this->position++;
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws \LogicException
      */
     public function rewind(int $count = 1): void
     {
@@ -70,7 +70,7 @@ final class TokenStream
 
         $newPosition = $this->position - $count;
         if ($newPosition < 0) {
-            throw new \RuntimeException(\sprintf(
+            throw new \LogicException(\sprintf(
                 'Cannot rewind %d tokens, would go before start of stream',
                 $count,
             ));
@@ -82,7 +82,7 @@ final class TokenStream
     public function setPosition(int $position): void
     {
         if ($position < 0 || $position > $this->maxPosition + 1) {
-            throw new \RuntimeException(\sprintf(
+            throw new \LogicException(\sprintf(
                 'Position %d is out of bounds [0, %d]',
                 $position,
                 $this->maxPosition + 1,

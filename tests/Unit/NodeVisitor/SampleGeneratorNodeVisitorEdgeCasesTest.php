@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\TestCase;
 use Random\Engine;
 use Random\Randomizer;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\AssertionNode;
 use RegexParser\Node\BackrefNode;
 use RegexParser\Node\CalloutNode;
@@ -114,7 +115,7 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $generator = new SampleGeneratorNodeVisitor();
         $this->setPrivate($generator, 'rootPattern', new LiteralNode('a', 0, 0));
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(SampleGenerationException::class);
         $this->expectExceptionMessage('Sample generation for subroutines is not supported.');
 
         (new SubroutineNode('99', '99', 0, 0))->accept($generator);

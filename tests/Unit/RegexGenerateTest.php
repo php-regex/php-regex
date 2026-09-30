@@ -171,7 +171,8 @@ final class RegexGenerateTest extends TestCase
     }
 
     /**
-     * PCRE refuses "\j"; the tree still reads it, as a "j".
+     * Oracle: PCRE2 refuses eight thousand "\ba" as too large; the library
+     * judges the pattern valid, and reads it.
      */
     #[Test]
     #[DataProvider('provideUncompilable')]
@@ -186,7 +187,31 @@ final class RegexGenerateTest extends TestCase
      */
     public static function provideUncompilable(): iterable
     {
-        yield 'unknown escape' => ['/a\\j/', 'aj'];
+        yield 'too large for the engine' => ['/(?:\\ba){8000}/', str_repeat('a', 8000)];
+    }
+
+    /**
+     * PCRE refuses "\j", and so does the library: no sample is drawn for a
+     * pattern it judges invalid.
+     */
+    #[Test]
+    #[DataProvider('provideInvalid')]
+    public function test_a_pattern_the_library_judges_invalid_gets_no_sample(string $pattern, string $message): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $this->expectException(SampleGenerationException::class);
+        $this->expectExceptionMessage($message);
+
+        Regex::create(['cache' => null])->generate($pattern);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideInvalid(): iterable
+    {
+        yield 'unknown escape' => ['/a\\j/', 'Unrecognized escape sequence'];
     }
 
     #[Test]

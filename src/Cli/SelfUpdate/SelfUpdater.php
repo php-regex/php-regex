@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Cli\SelfUpdate;
 
+use RegexParser\Cli\CliException;
 use RegexParser\Cli\Output;
 
 class SelfUpdater
@@ -68,15 +69,15 @@ class SelfUpdater
     private function validatePharPath(string $pharPath): void
     {
         if ('' === $pharPath) {
-            throw new \RuntimeException('Self-update is only supported for phar installs.');
+            throw new CliException('Self-update is only supported for phar installs.');
         }
 
         if (!file_exists($pharPath)) {
-            throw new \RuntimeException('Unable to locate the running phar.');
+            throw new CliException('Unable to locate the running phar.');
         }
 
         if (!is_writable($pharPath)) {
-            throw new \RuntimeException('The phar file is not writable: '.$pharPath.'.');
+            throw new CliException('The phar file is not writable: '.$pharPath.'.');
         }
     }
 
@@ -84,7 +85,7 @@ class SelfUpdater
     {
         $tempBase = tempnam(sys_get_temp_dir(), 'regex-phar-');
         if (false === $tempBase) {
-            throw new \RuntimeException('Unable to create a temporary file.');
+            throw new CliException('Unable to create a temporary file.');
         }
 
         @unlink($tempBase);
@@ -98,13 +99,13 @@ class SelfUpdater
         if (false === $hash) {
             @unlink($tempPath);
 
-            throw new \RuntimeException('Unable to hash the downloaded phar.');
+            throw new CliException('Unable to hash the downloaded phar.');
         }
 
         if (strtolower($hash) !== strtolower($expectedChecksum)) {
             @unlink($tempPath);
 
-            throw new \RuntimeException('Checksum verification failed.');
+            throw new CliException('Checksum verification failed.');
         }
     }
 
@@ -119,7 +120,7 @@ class SelfUpdater
             if (!@copy($tempPath, $pharPath)) {
                 @unlink($tempPath);
 
-                throw new \RuntimeException('Unable to replace the existing binary.');
+                throw new CliException('Unable to replace the existing binary.');
             }
             @unlink($tempPath);
         }
@@ -142,7 +143,7 @@ class SelfUpdater
             return;
         }
 
-        throw new \RuntimeException('Unable to download '.$url.'.');
+        throw new CliException('Unable to download '.$url.'.');
     }
 
     private function downloadWithStreamContext(string $url, string $destination): bool
@@ -158,7 +159,7 @@ class SelfUpdater
         if (!\is_resource($write)) {
             fclose($read);
 
-            throw new \RuntimeException('Unable to write to '.$destination.'.');
+            throw new CliException('Unable to write to '.$destination.'.');
         }
 
         stream_copy_to_stream($read, $write);
@@ -166,7 +167,7 @@ class SelfUpdater
         fclose($write);
 
         if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new \RuntimeException('Downloaded file is empty.');
+            throw new CliException('Downloaded file is empty.');
         }
 
         return true;
@@ -199,7 +200,7 @@ class SelfUpdater
         }
 
         if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new \RuntimeException('Downloaded file is empty.');
+            throw new CliException('Downloaded file is empty.');
         }
 
         return true;
@@ -232,7 +233,7 @@ class SelfUpdater
         }
 
         if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new \RuntimeException('Downloaded file is empty.');
+            throw new CliException('Downloaded file is empty.');
         }
 
         return true;
@@ -261,14 +262,14 @@ class SelfUpdater
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'regex-update-');
         if (false === $tempFile) {
-            throw new \RuntimeException('Unable to create a temporary file.');
+            throw new CliException('Unable to create a temporary file.');
         }
 
         try {
             $this->downloadFile($url, $tempFile);
             $data = file_get_contents($tempFile);
             if (false === $data) {
-                throw new \RuntimeException('Unable to read downloaded data.');
+                throw new CliException('Unable to read downloaded data.');
             }
         } finally {
             @unlink($tempFile);
@@ -284,7 +285,7 @@ class SelfUpdater
         $checksum = strtolower($parts[0] ?? '');
 
         if (!preg_match('/^[a-f0-9]{64}$/', $checksum)) {
-            throw new \RuntimeException('Invalid checksum format.');
+            throw new CliException('Invalid checksum format.');
         }
 
         return $checksum;
@@ -295,7 +296,7 @@ class SelfUpdater
         try {
             new \Phar($path);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Downloaded phar is invalid: '.$e->getMessage());
+            throw new CliException('Downloaded phar is invalid: '.$e->getMessage());
         }
     }
 }

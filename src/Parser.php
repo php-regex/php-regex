@@ -1337,7 +1337,7 @@ final class Parser
             TokenType::T_UNICODE_NAMED => ['\\N{'.$token->value.'}', CharLiteralType::UNICODE_NAMED],
             TokenType::T_OCTAL => [$token->value, CharLiteralType::OCTAL],
             TokenType::T_OCTAL_LEGACY => ['\\'.$token->value, CharLiteralType::OCTAL_LEGACY],
-            default => throw new \InvalidArgumentException('Unsupported character literal token type.'),
+            default => throw new \LogicException('Unsupported character literal token type.'),
         };
 
         return new CharLiteralNode(

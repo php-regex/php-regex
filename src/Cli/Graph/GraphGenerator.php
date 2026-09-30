@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Cli\Graph;
 
 use RegexParser\Automata\Model\Nfa;
+use RegexParser\Cli\CliException;
 
 final class GraphGenerator
 {
@@ -22,7 +23,7 @@ final class GraphGenerator
         return match ($format) {
             'dot', 'graphviz' => (new GraphvizDumper())->dump($nfa),
             'mermaid' => (new MermaidDumper())->dump($nfa),
-            default => throw new \InvalidArgumentException("Unsupported format: $format"),
+            default => throw new CliException("Unsupported format: $format"),
         };
     }
 }

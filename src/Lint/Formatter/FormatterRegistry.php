@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Formatter;
 
+use RegexParser\Lint\LintException;
+
 /**
  * Registry for managing output formatters.
  */
@@ -46,7 +48,7 @@ final class FormatterRegistry
     public function get(string $name): OutputFormatterInterface
     {
         if (!isset($this->formatters[$name])) {
-            throw new \InvalidArgumentException(\sprintf('Formatter "%s" not found. Available formatters: %s',
+            throw new LintException(\sprintf('Formatter "%s" not found. Available formatters: %s',
                 $name, implode(', ', array_keys($this->formatters))));
         }
 

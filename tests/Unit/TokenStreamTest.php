@@ -74,7 +74,7 @@ final class TokenStreamTest extends TestCase
         $stream = new TokenStream($tokens, 'a');
         $stream->next();
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot rewind 2 tokens, would go before start of stream');
         $stream->rewind(2);
     }
@@ -90,7 +90,7 @@ final class TokenStreamTest extends TestCase
         $stream->next(); // move to EOF
         $stream->next(); // consume EOF, buffer exhausted
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Token stream is exhausted');
         $stream->next();
     }
@@ -149,7 +149,7 @@ final class TokenStreamTest extends TestCase
         ];
         $stream = new TokenStream($tokens, 'a');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Position -1 is out of bounds [0, 2]');
         $stream->setPosition(-1);
     }
@@ -162,7 +162,7 @@ final class TokenStreamTest extends TestCase
         ];
         $stream = new TokenStream($tokens, 'a');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Position 3 is out of bounds [0, 2]');
         $stream->setPosition(3);
     }
@@ -209,7 +209,7 @@ final class TokenStreamTest extends TestCase
         $stream->next(); // consume a
         $stream->next(); // consume EOF, buffer exhausted
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Token stream is exhausted');
         $stream->current();
     }

@@ -15,9 +15,11 @@ namespace RegexParser\NodeVisitor;
 
 use Random\Engine\Mt19937;
 use Random\Randomizer;
+use RegexParser\Engine\PcreEngine;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\GroupNumberingCollector;
 use RegexParser\Internal\Ascii;
+use RegexParser\Internal\StaticCaches;
 use RegexParser\Node;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -213,9 +215,10 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private array $requiredSuffixes = [];
 
     /**
-     * @param int $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
+     * @param int        $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
+     * @param PcreEngine $engine        Asks the running engine what a class or a property holds
      */
-    public function __construct(private readonly int $maxRepetition = 3)
+    public function __construct(private readonly int $maxRepetition = 3, private readonly PcreEngine $engine = new PcreEngine())
     {
         $this->resetRandomizer();
     }
@@ -410,8 +413,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
         if (empty($parts)) {
-            // e.g., [] which can never match
-            throw new \RuntimeException('Cannot generate sample for empty character class');
+            // Only an AST built by hand holds one: "[]" opens a class whose first member is "]".
+            throw new SampleGenerationException('Cannot generate sample for empty character class');
         }
 
         // Pick one of the parts at random
@@ -647,7 +650,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     public function visitSubroutine(SubroutineNode $node): string
     {
         if (null === $this->rootPattern || $this->rootPattern instanceof SubroutineNode) {
-            throw new \LogicException('Sample generation for subroutines is not supported.');
+            throw new SampleGenerationException('Sample generation for subroutines is not supported.');
         }
 
         if ($this->recursionDepth >= self::MAX_RECURSION_DEPTH) {
@@ -656,7 +659,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
         $target = $this->resolveSubroutineTarget($node);
         if (null === $target) {
-            throw new \LogicException('Sample generation for subroutines is not supported.');
+            throw new SampleGenerationException('Sample generation for subroutines is not supported.');
         }
 
         $this->recursionDepth++;
@@ -783,11 +786,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $pattern = '/'.$escape.'/'.($this->unicode ? 'u' : '');
         $found = [];
         foreach ($this->unicode ? self::codePointChunks() : [implode('', array_map(\chr(...), range(0, 255)))] as $chunk) {
-            if (false === @preg_match_all($pattern, $chunk, $matches)) {
+            $matches = $this->engine->matchAll($pattern, $chunk);
+            if (null === $matches) {
                 break;
             }
 
-            foreach ($matches[0] as $character) {
+            foreach ($matches as $character) {
                 $found[$character] = true;
                 if (\count($found) >= 8) {
                     break 2;
@@ -795,7 +799,20 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             }
         }
 
+        self::$propertySamples = StaticCaches::makeRoom(self::$propertySamples);
+        StaticCaches::register(self::class, self::clearCaches(...));
+
         return self::$propertySamples[$key] = array_map(strval(...), array_keys($found));
+    }
+
+    /**
+     * The chunks are bounded by the code points, 272 of them; the property
+     * samples by StaticCaches::MAX_ENTRIES.
+     */
+    private static function clearCaches(): void
+    {
+        self::$propertySamples = [];
+        self::$codePointChunks = [];
     }
 
     /**
@@ -816,6 +833,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                         $chunk .= mb_chr($codePoint, 'UTF-8');
                     }
                 }
+                StaticCaches::register(self::class, self::clearCaches(...));
                 self::$codePointChunks[$start] = $chunk;
             }
 
@@ -849,7 +867,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
             $classPattern = $delimiter.$compiled.$delimiter.($this->unicode ? 'u' : '');
             foreach ($candidates as $candidate) {
-                if (1 === @preg_match($classPattern, $candidate)) {
+                if (true === $this->engine->match($classPattern, $candidate)->matched) {
                     return $candidate;
                 }
             }
@@ -1100,8 +1118,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         $compiled = $body->accept(new CompilerNodeVisitor());
 
-        // Checked by the interpreter, as generate() checks its samples.
-        return 1 === @preg_match("\x01(*NO_JIT)".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text);
+        // Checked by the engine, as generate() checks its samples.
+        return true === $this->engine->match("\x01".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text)->matched;
     }
 
     /**

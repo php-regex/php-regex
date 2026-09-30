@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Internal\StaticCaches;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -334,6 +335,14 @@ final class ComplexityScoreNodeVisitor extends AbstractNodeVisitor
             return self::$unboundedQuantifierCache[$quant];
         }
 
+        self::$unboundedQuantifierCache = StaticCaches::makeRoom(self::$unboundedQuantifierCache);
+        StaticCaches::register(self::class, self::clearCaches(...));
+
         return self::$unboundedQuantifierCache[$quant] = QuantifierBounds::parse($quant)?->isUnbounded() ?? false;
+    }
+
+    private static function clearCaches(): void
+    {
+        self::$unboundedQuantifierCache = [];
     }
 }

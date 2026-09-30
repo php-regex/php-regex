@@ -82,9 +82,9 @@ $regex->parser()->parse('/a+/');              // the tree $regex->parse() gives
 
 A library that only reads and validates patterns needs nothing else.
 
-### Regex::clearValidatorCaches(): void
+### Regex::clearCaches(): void
 
-Clears static caches used by the validator. Important for long-running processes to prevent memory growth.
+Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. `RegexParser::clearCaches()` does the same.
 
 ```php
 use RegexParser\Regex;
@@ -97,8 +97,31 @@ foreach ($patterns as $pattern) {
 }
 
 // Clear caches periodically
-$regex->clearValidatorCaches();
+$regex->clearCaches();
 ```
+
+### PcreEngine
+
+`RegexParser\Engine\PcreEngine` runs a pattern on the running PHP the way the
+library runs every pattern it is given: without the JIT (`(*NO_JIT)` leads the
+pattern), with its warning captured instead of raised, and with limits set for
+the one call and put back after it.
+
+```php
+use RegexParser\Engine\PcreEngine;
+use RegexParser\Engine\PcreLimits;
+
+$engine = new PcreEngine();
+
+$engine->compile('/(?1)a/')?->message;  // "reference to non-existent subpattern at offset 3"
+$engine->match('/a(b)/', 'xab')->groups; // ['ab', 'b']
+$engine->match('/(a+)+$/', str_repeat('a', 20).'!', new PcreLimits(10, 100000))->error;
+// "Backtrack limit exhausted"
+```
+
+`compile()` returns a `PcreError` (message and offset, as PHP reports them for
+the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
+`matched` is `null` when the engine gave no answer.
 
 ---
 

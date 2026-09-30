@@ -13,37 +13,31 @@ declare(strict_types=1);
 
 namespace RegexParser\ReDoS;
 
-use RegexParser\Internal\Ascii;
+use RegexParser\Engine\PcreEngine;
+use RegexParser\Engine\PcreLimits;
 use RegexParser\RegexPattern;
 
-final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
+/**
+ * Runs the pattern on inputs growing in length, through the engine: without
+ * the JIT, under the limits of the options, the ini left as it was found.
+ */
+final readonly class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
 {
+    /**
+     * The engine runs every pattern without the JIT: this is the setting the
+     * confirmation reports, whatever the ini says and whether or not the
+     * options asked for it.
+     */
+    private const JIT_SETTING = '0';
+
+    public function __construct(private PcreEngine $engine = new PcreEngine()) {}
+
     public function confirm(string $regex, ReDoSAnalysis $analysis, ?ReDoSConfirmOptions $options = null): ReDoSConfirmation
     {
         $options ??= new ReDoSConfirmOptions();
-
-        $originalJit = ini_get('pcre.jit');
-        $originalBacktrack = ini_get('pcre.backtrack_limit');
-        $originalRecursion = ini_get('pcre.recursion_limit');
-
-        $note = null;
-        $jitDisableRequested = $options->disableJit;
+        $limits = new PcreLimits($options->backtrackLimit, $options->recursionLimit);
 
         try {
-            if ($options->disableJit) {
-                $jitResult = ini_set('pcre.jit', '0');
-                if (false === $jitResult) {
-                    $note = 'Unable to disable JIT at runtime (pcre.jit may be system-level).';
-                }
-            }
-
-            ini_set('pcre.backtrack_limit', (string) $options->backtrackLimit);
-            ini_set('pcre.recursion_limit', (string) $options->recursionLimit);
-
-            $jitSetting = ini_get('pcre.jit');
-            $backtrackLimit = $this->parseIniInt(ini_get('pcre.backtrack_limit'));
-            $recursionLimit = $this->parseIniInt(ini_get('pcre.recursion_limit'));
-
             [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
             $lengths = $this->buildLengths($baseLength, $options);
 
@@ -64,14 +58,14 @@ final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
                 for ($i = 0; $i < $options->iterations; $i++) {
                     $iterationsRun++;
                     $start = hrtime(true);
-                    @preg_match($regex, $input);
+                    $match = $this->engine->match($regex, $input, $limits);
                     $elapsed = (hrtime(true) - $start) / 1_000_000;
                     $durationMs += $elapsed;
 
-                    $errorCode = preg_last_error();
+                    $errorCode = $match->errorCode;
                     if (\PREG_NO_ERROR !== $errorCode) {
                         $pregErrorCode = $errorCode;
-                        $pregError = preg_last_error_msg();
+                        $pregError = $match->error;
                     }
 
                     $evidenceForError = $this->evidenceForError($errorCode);
@@ -106,42 +100,32 @@ final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
             return new ReDoSConfirmation(
                 $confirmed,
                 $samples,
-                false !== $jitSetting ? (string) $jitSetting : null,
-                $backtrackLimit,
-                $recursionLimit,
+                self::JIT_SETTING,
+                $options->backtrackLimit,
+                $options->recursionLimit,
                 $options->iterations,
                 $options->timeoutMs,
                 $timedOut,
                 $evidence,
-                $note,
                 null,
-                $jitDisableRequested,
+                null,
+                $options->disableJit,
             );
         } catch (\Throwable $e) {
             return new ReDoSConfirmation(
                 false,
                 [],
-                false !== $originalJit ? (string) $originalJit : null,
-                $this->parseIniInt($originalBacktrack),
-                $this->parseIniInt($originalRecursion),
+                self::JIT_SETTING,
+                $options->backtrackLimit,
+                $options->recursionLimit,
                 $options->iterations,
                 $options->timeoutMs,
                 false,
                 null,
-                $note,
+                null,
                 $e->getMessage(),
-                $jitDisableRequested,
+                $options->disableJit,
             );
-        } finally {
-            if (false !== $originalJit) {
-                @ini_set('pcre.jit', (string) $originalJit);
-            }
-            if (false !== $originalBacktrack) {
-                @ini_set('pcre.backtrack_limit', (string) $originalBacktrack);
-            }
-            if (false !== $originalRecursion) {
-                @ini_set('pcre.recursion_limit', (string) $originalRecursion);
-            }
         }
     }
 
@@ -220,21 +204,5 @@ final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
         }
 
         return null;
-    }
-
-    private function parseIniInt(mixed $value): ?int
-    {
-        if (!\is_string($value) && !\is_int($value)) {
-            return null;
-        }
-
-        if (\is_string($value)) {
-            $value = trim($value);
-            if ('' === $value || !Ascii::isDigit($value)) {
-                return null;
-            }
-        }
-
-        return (int) $value;
     }
 }

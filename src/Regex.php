@@ -14,9 +14,10 @@ declare(strict_types=1);
 namespace RegexParser;
 
 use RegexParser\Cache\CacheInterface;
+use RegexParser\Engine\PcreEngine;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Internal\NoJit;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
@@ -71,8 +72,13 @@ final readonly class Regex
     /**
      * @param RegexParser   $parser               Reads and judges every pattern
      * @param array<string> $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
+     * @param PcreEngine    $engine               Runs the pattern to check the samples
      */
-    private function __construct(private RegexParser $parser, private array $redosIgnoredPatterns) {}
+    private function __construct(
+        private RegexParser $parser,
+        private array $redosIgnoredPatterns,
+        private PcreEngine $engine = new PcreEngine(),
+    ) {}
 
     /**
      * Create a new Regex instance with optional configuration.
@@ -314,25 +320,28 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to generate a sample for
      *
-     * @throws SampleGenerationException when no sample the running engine matches was found
+     * @throws SampleGenerationException when the pattern is invalid, or no sample the running engine matches was found
      *
      * @return string Generated sample string
      */
     public function generate(string $regex): string
     {
         $ast = $this->parse($regex, false);
+        // A pattern PCRE refuses, as a call to a group that does not exist,
+        // has no sample to draw.
+        $validation = $this->parser->validate($regex);
+        if (!$validation->isValid) {
+            throw new SampleGenerationException(\sprintf('No sample matching %s can be drawn: %s', $regex, (string) $validation->error), null, $validation->errorCode ?? ErrorCode::GenerateNoMatch);
+        }
+
         $generator = new SampleGeneratorNodeVisitor();
 
         // Generation is best-effort (lookaround hints, negated classes, ...):
         // verify the sample against the real engine and retry a few times
-        // before settling for the last attempt.
-        // Samples are checked by the interpreter: the JIT of PCRE2 10.49
-        // crashes PHP on some pattern and subject pairs, which a sample may
-        // happen to be. "(*NO_JIT)" leads the pattern, as a start option.
-        $checked = NoJit::pattern($regex);
+        // before settling for the last attempt. The engine checks it without
+        // the JIT, which crashes PHP on some pattern and subject pairs.
         // Only a pattern this PHP cannot compile gets a sample nothing checks.
-        error_clear_last();
-        $compiles = false !== @preg_match($checked, '') || !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');
+        $compiles = null === $this->engine->compile($regex);
         $sample = '';
         $attempts = [];
         $gaveUp = 0;
@@ -341,18 +350,18 @@ final readonly class Regex
         for ($attempt = 0; $attempt < 32; $attempt++) {
             $sample = $ast->accept($generator);
 
-            $matches = @preg_match($checked, $sample);
+            $match = $this->engine->match($regex, $sample);
             // Verified, or a pattern this PCRE runtime cannot compile: what
             // we have. A limit or an error it met checks nothing: another try.
-            if (1 === $matches || !$compiles) {
+            if (true === $match->matched || !$compiles) {
                 return $sample;
             }
 
-            if (0 === $matches) {
+            if (false === $match->matched) {
                 $attempts[$sample] = true;
             } else {
                 $gaveUp++;
-                $engineError = preg_last_error_msg();
+                $engineError = (string) $match->error;
                 // A sample that matches is found quickly: the samples the
                 // engine gives up on are costly misses, and eight end it.
                 if (8 === $gaveUp) {
@@ -367,7 +376,7 @@ final readonly class Regex
         foreach (array_keys($attempts) as $attempt) {
             foreach (['a', ' ', "\n"] as $padding) {
                 foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
-                    if (1 === @preg_match($checked, $padded)) {
+                    if (true === $this->engine->match($regex, $padded)->matched) {
                         return $padded;
                     }
                 }
@@ -439,11 +448,12 @@ final readonly class Regex
     }
 
     /**
-     * Clear static validator caches (useful for long-running processes).
+     * Empty the library's process-wide caches (useful for long-running
+     * processes); see RegexParser::clearCaches().
      */
-    public function clearValidatorCaches(): void
+    public function clearCaches(): void
     {
-        $this->parser->clearValidatorCaches();
+        $this->parser->clearCaches();
     }
 
     /**
@@ -559,7 +569,7 @@ final readonly class Regex
         return match ($format) {
             'text' => new ExplainNodeVisitor(),
             'html' => new HtmlExplainNodeVisitor(),
-            default => throw new \InvalidArgumentException("Invalid format: $format"),
+            default => throw new InvalidRegexOptionException("Invalid format: $format"),
         };
     }
 }

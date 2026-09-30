@@ -357,6 +357,43 @@ running PHP.
   `{"error": "..."}`, and the progress and status lines stay out of stdout, so
   that stdout always holds one JSON document.
 
+#### `clearCaches()` replaces `clearValidatorCaches()`
+
+`RegexParser::clearValidatorCaches()` and `Regex::clearValidatorCaches()` are
+gone. `clearCaches()` takes their place on both, and empties every
+process-wide cache of the library, the validator's among them:
+
+| before | after |
+|---|---|
+| `$regex->clearValidatorCaches()` | `$regex->clearCaches()` |
+| `$parser->clearValidatorCaches()` | `$parser->clearCaches()` |
+
+Each of these caches is bounded now, so a long-running process no longer has
+to empty them to keep its memory in check; it still may.
+
+#### Exceptions say whose mistake it is
+
+A mistake of the caller throws an exception implementing
+`RegexParser\Exception\RegexParserExceptionInterface`, so one `catch` holds
+every one of them. A bug of the library throws a plain `\LogicException`,
+which no caller should catch on purpose.
+
+| what went wrong | before | 2.0 |
+|---|---|---|
+| `Regex::explain()` with an unknown format | `\InvalidArgumentException` | `InvalidRegexOptionException` |
+| `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `RegexParser\Lint\LintException` |
+| a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `RegexParser\Lint\LintException` |
+| `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `RegexParser\Cli\CliException` |
+| the sample generator on a call it cannot follow, as `(?R)`, or an empty class built by hand | `\LogicException`, `\RuntimeException` | `SampleGenerationException` |
+| `Regex::generate()` on a pattern the library judges invalid, as `/(?1)a/` | the parse or visitor exception, or a sample | `SampleGenerationException` |
+| a `TokenStream` read or moved past its bounds | `\RuntimeException` | `\LogicException` |
+
+`LintException` and `CliException` extend `\RuntimeException`, so a `catch`
+of that class keeps holding them. `InvalidRegexOptionException` extends
+`\InvalidArgumentException`. A `catch (\RuntimeException)` around a token
+stream, or around the sample generator for a subroutine, catches
+`\LogicException` or `SampleGenerationException` instead.
+
 ### Deprecated
 
 #### `ClassOperationNode` and the class operation tokens

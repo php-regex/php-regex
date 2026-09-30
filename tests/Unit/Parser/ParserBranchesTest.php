@@ -65,7 +65,7 @@ final class ParserBranchesTest extends TestCase
 
         $token = new Token(TokenType::T_LITERAL, 'test', 0);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Unsupported character literal token type.');
 
         // Call createCharLiteralNodeFromToken with unsupported type

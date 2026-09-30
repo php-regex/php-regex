@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Lint;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
+use RegexParser\Lint\LintException;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\Node\RegexNode;
@@ -489,7 +490,7 @@ final class RegexAnalysisServiceTest extends TestCase
         LintFunctionOverrides::queuePcntlForkResult(1234);
         LintFunctionOverrides::$pcntlWaitpidResult = 0;
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(LintException::class);
         $this->expectExceptionMessage('Parallel analysis failed: RuntimeException: Boom');
 
         $this->invokePrivate(

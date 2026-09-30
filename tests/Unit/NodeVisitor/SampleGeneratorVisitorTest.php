@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\NodeVisitor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Exception\LexerException;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\RangeNode;
@@ -75,7 +76,8 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         // Checked by the interpreter: the JIT takes no substring scan.
         $checked = '/(*NO_JIT)'.substr($pattern, 1);
-        $sample = Regex::create(['cache' => null])->generate($pattern);
+        // Judged for a release that reads a substring scan, whatever runs.
+        $sample = Regex::create(['cache' => null, 'pcre_version' => '10.49'])->generate($pattern);
         if (false === @preg_match($checked, '')) {
             // A PCRE2 before 10.45 reads no substring scan: nothing checks the sample.
             $this->assertIsString($sample);
@@ -444,7 +446,7 @@ final class SampleGeneratorVisitorTest extends TestCase
 
     public function test_generate_throws_on_subroutine(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(SampleGenerationException::class);
         $this->expectExceptionMessage('Sample generation for subroutines is not supported.');
         $this->generateSample('/(?R)/');
     }

@@ -15,6 +15,7 @@ namespace RegexParser\NodeVisitor;
 
 use RegexParser\Internal\Ascii;
 use RegexParser\Internal\InlineFlags;
+use RegexParser\Internal\StaticCaches;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -1237,15 +1238,24 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
      */
     private function getClosingDelimiter(string $delimiter): string
     {
-        self::$delimiterCache[$delimiter] ??= match ($delimiter) {
-            '(' => ')',
-            '[' => ']',
-            '{' => '}',
-            '<' => '>',
-            default => $delimiter,
-        };
+        // One entry per delimiter byte at most.
+        if (!isset(self::$delimiterCache[$delimiter])) {
+            StaticCaches::register(self::class, self::clearCaches(...));
+            self::$delimiterCache[$delimiter] = match ($delimiter) {
+                '(' => ')',
+                '[' => ']',
+                '{' => '}',
+                '<' => '>',
+                default => $delimiter,
+            };
+        }
 
         return self::$delimiterCache[$delimiter];
+    }
+
+    private static function clearCaches(): void
+    {
+        self::$delimiterCache = [];
     }
 
     /**

@@ -66,10 +66,10 @@ final class RegexFacadeEdgeCasesTest extends TestCase
     }
 
     #[DoesNotPerformAssertions]
-    public function test_regex_can_clear_validator_caches(): void
+    public function test_regex_can_clear_caches(): void
     {
         $regex = Regex::create();
 
-        $regex->clearValidatorCaches();
+        $regex->clearCaches();
     }
 }

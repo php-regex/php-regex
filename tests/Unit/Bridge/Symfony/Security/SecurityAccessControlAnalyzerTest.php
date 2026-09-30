@@ -75,4 +75,29 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame(1, $report->stats['critical']);
         $this->assertSame('shadowed', $report->conflicts[0]['type']);
     }
+
+    /**
+     * The automata read "i" and "s" only: a rule whose path needs another
+     * flag is skipped, and the report says which flag.
+     */
+    #[Test]
+    public function test_a_path_with_a_flag_the_automata_do_not_read_is_skipped_with_that_flag(): void
+    {
+        $analyzer = new SecurityAccessControlAnalyzer(Regex::create());
+        $report = $analyzer->analyze([[
+            'file' => 'security.yaml',
+            'line' => 3,
+            'path' => '#^/admin#x',
+            'host' => null,
+            'roles' => ['ROLE_ADMIN'],
+            'methods' => [],
+            'ips' => [],
+            'allowIf' => null,
+            'requestMatcher' => null,
+            'requiresChannel' => null,
+        ]]);
+
+        $this->assertCount(1, $report->skippedRules);
+        $this->assertSame('Unsupported regex flags: x.', $report->skippedRules[0]['reason']);
+    }
 }

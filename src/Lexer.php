@@ -17,6 +17,7 @@ use RegexParser\Exception\LexerException;
 use RegexParser\Internal\ExtendedClassReader;
 use RegexParser\Internal\InlineFlags;
 use RegexParser\Internal\PcreVerb;
+use RegexParser\Internal\StaticCaches;
 
 /**
  * Regex lexer that tokenizes PCRE pattern strings.
@@ -375,6 +376,7 @@ final class Lexer
                 $patterns['T_PCRE_VERB'] = str_replace(self::GROUP_BODY_TEXT, self::GROUP_BODY_TEXT_EXTENDED, $patterns['T_PCRE_VERB']);
             }
 
+            StaticCaches::register(self::class, self::clearCaches(...));
             self::$regexOutside[$key] = $this->compilePattern($patterns);
         }
 
@@ -385,7 +387,21 @@ final class Lexer
     {
         $key = $this->byteMode ? 1 : 0;
 
-        return self::$regexInside[$key] ??= $this->compilePattern(self::PATTERNS_INSIDE);
+        if (!isset(self::$regexInside[$key])) {
+            StaticCaches::register(self::class, self::clearCaches(...));
+            self::$regexInside[$key] = $this->compilePattern(self::PATTERNS_INSIDE);
+        }
+
+        return self::$regexInside[$key];
+    }
+
+    /**
+     * Four regexes outside a class and two inside at most, one per mode.
+     */
+    private static function clearCaches(): void
+    {
+        self::$regexOutside = [];
+        self::$regexInside = [];
     }
 
     /**

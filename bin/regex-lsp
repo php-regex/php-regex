@@ -63,4 +63,4 @@ if (in_array('--version', $argv, true) || in_array('-v', $argv, true)) {
 
 // Run the server
 $server = new Server();
-$server->run();
+exit($server->run());

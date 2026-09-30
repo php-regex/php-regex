@@ -224,7 +224,7 @@ $regex = Regex::create(['cache' => '/my/app/cache']);
 $regex = Regex::create(['cache' => null]);
 
 // Long-running processes should clear cache
-$regex->clearValidatorCaches();
+$regex->clearCaches();
 ```
 
 ---

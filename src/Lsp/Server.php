@@ -40,6 +40,11 @@ final class Server
 
     private bool $shutdown = false;
 
+    /**
+     * The code the session ends with, once the "exit" notification came.
+     */
+    private ?int $exitCode = null;
+
     private readonly InitializeHandler $initHandler;
 
     private readonly TextDocumentHandler $textDocHandler;
@@ -65,17 +70,27 @@ final class Server
     }
 
     /**
-     * Run the LSP server main loop.
+     * Run the LSP server main loop, until "shutdown", "exit" or the end of
+     * the input.
+     *
+     * @return int the code to exit with: 1 on an "exit" no "shutdown" came before, 0 otherwise
      */
-    public function run(): void
+    public function run(): int
     {
-        // Set up stdin/stdout for binary mode
-        if (\function_exists('stream_set_read_buffer')) {
-            stream_set_read_buffer(\STDIN, 0);
+        // STDIN is only defined when PHP runs a script from the command line
+        // with its standard streams: a child PHP process may have to open it.
+        $input = $this->input ?? (\defined('STDIN') ? \STDIN : fopen('php://stdin', 'r'));
+        if (false === $input) {
+            return 1;
         }
 
-        while (!$this->shutdown) {
-            $message = Message::readFrom($this->input ?? \STDIN);
+        // Unbuffered: a message is read as soon as it arrives.
+        if (\function_exists('stream_set_read_buffer')) {
+            stream_set_read_buffer($input, 0);
+        }
+
+        while (!$this->shutdown && null === $this->exitCode) {
+            $message = Message::readFrom($input);
             if (null === $message) {
                 // EOF or read error
                 break;
@@ -89,6 +104,8 @@ final class Server
                 $this->reportFailure($message, $failure);
             }
         }
+
+        return $this->exitCode ?? 0;
     }
 
     /**
@@ -129,9 +146,11 @@ final class Server
             return;
         }
 
-        // Exit notification
+        // Exit notification: the protocol's code, the binary exits with it.
         if ('exit' === $method) {
-            exit($this->shutdown ? 0 : 1);
+            $this->exitCode = $this->shutdown ? 0 : 1;
+
+            return;
         }
 
         // Handle initialize before anything else

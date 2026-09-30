@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Engine\PcreEngine;
 use RegexParser\Node;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -54,6 +55,11 @@ use RegexParser\Node\VersionConditionNode;
 final class TestCaseGeneratorNodeVisitor extends AbstractNodeVisitor
 {
     private const MAX_SAMPLES = 3;
+
+    /**
+     * @param PcreEngine $engine Asks the running engine which characters a class holds
+     */
+    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     /**
      * Visits a RegexNode and generates test cases for its pattern.
@@ -421,12 +427,12 @@ final class TestCaseGeneratorNodeVisitor extends AbstractNodeVisitor
         $class = "\x01\\A".$node->accept(new CompilerNodeVisitor())."\\z\x01";
         $cases = ['matching' => [], 'non_matching' => []];
         for ($code = 0x20; $code < 0x7F; $code++) {
-            $verdict = @preg_match($class, \chr($code));
-            if (false === $verdict) {
+            $verdict = $this->engine->match($class, \chr($code))->matched;
+            if (null === $verdict) {
                 return $cases;
             }
 
-            $kind = 1 === $verdict ? 'matching' : 'non_matching';
+            $kind = $verdict ? 'matching' : 'non_matching';
             if (\count($cases[$kind]) < self::MAX_SAMPLES) {
                 $cases[$kind][] = \chr($code);
             }

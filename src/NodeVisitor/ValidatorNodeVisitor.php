@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Engine\PcreEngine;
 use RegexParser\ErrorCode;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SemanticErrorException;
@@ -433,11 +434,13 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @param PcreEngine      $engine asks the running engine which property names it knows
      */
     public function __construct(
         private readonly int $maxLookbehindLength = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
         private readonly ?string $pattern = null,
         ?PcreTarget $target = null,
+        private readonly PcreEngine $engine = new PcreEngine(),
     ) {
         $this->target = $target ?? PcreTarget::runtime();
     }
@@ -2111,12 +2114,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
     private function compileUnicodeProperty(string $key): bool
     {
-        // Use error suppression as preg_match warns on invalid properties
-        $result = @preg_match("/^\\{$key}$/u", '');
-        $error = preg_last_error();
-
-        // PREG_NO_ERROR means it compiled successfully
-        return false !== $result && \PREG_NO_ERROR === $error;
+        return null === $this->engine->compile("/^\\{$key}$/u");
     }
 
     private function isSingleCharNode(NodeInterface $node): bool

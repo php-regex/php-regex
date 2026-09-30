@@ -468,7 +468,7 @@ final readonly class SecurityAccessControlAnalyzer
             }
 
             if ([] !== $unsupportedFlags) {
-                throw new \RuntimeException('Unsupported regex flags: '.implode(', ', $unsupportedFlags).'.');
+                throw new ComplexityException('Unsupported regex flags: '.implode(', ', $unsupportedFlags).'.');
             }
 
             $normalizedBody = $this->normalizeSearchPattern($regexPattern->pattern);

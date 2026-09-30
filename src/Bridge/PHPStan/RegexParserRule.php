@@ -24,8 +24,8 @@ use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use RegexParser\Engine\PcreEngine;
 use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Internal\NoJit;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
 use RegexParser\OptimizationResult;
@@ -421,13 +421,11 @@ final class RegexParserRule implements Rule
     }
 
     /**
-     * Whether the engine running PHPStan compiles the pattern. The
-     * interpreter compiles it: "(*NO_JIT)" leads the pattern, as a start
-     * option, right after the opening delimiter.
+     * Whether the engine running PHPStan compiles the pattern.
      */
     private function runningEngineCompiles(string $pattern): bool
     {
-        return false !== @preg_match(NoJit::pattern($pattern), '');
+        return null === (new PcreEngine())->compile($pattern);
     }
 
     private function truncatePattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string

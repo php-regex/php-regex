@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Functional\Cli;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Cli\CliException;
 use RegexParser\Cli\Output;
 use RegexParser\Cli\SelfUpdate\SelfUpdater;
 use RegexParser\Tests\Support\SelfUpdateFunctionOverrides;
@@ -54,7 +55,7 @@ final class SelfUpdaterTest extends TestCase
         $updater = new SelfUpdater();
         $output = new Output(false, true);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(CliException::class);
         $this->expectExceptionMessage('Self-update is only supported for phar installs.');
 
         $updater->run($output);
@@ -68,7 +69,7 @@ final class SelfUpdaterTest extends TestCase
         $checksum = str_repeat('A', 64);
         $this->assertSame(strtolower($checksum), $method->invoke($updater, $checksum.'  file.phar'));
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(CliException::class);
         $this->expectExceptionMessage('Invalid checksum format.');
         $method->invoke($updater, 'invalid');
     }
@@ -119,7 +120,7 @@ final class SelfUpdaterTest extends TestCase
         copy(__DIR__.'/../../Fixtures/Cli/not_a_phar.txt', $file);
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Downloaded phar is invalid');
             $method->invoke($updater, $file);
         } finally {
@@ -168,7 +169,7 @@ final class SelfUpdaterTest extends TestCase
         @unlink($destination);
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to download invalid://url.');
             $method->invoke($updater, 'invalid://url', $destination);
         } finally {
@@ -285,7 +286,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Checksum verification failed.');
             $updater->run($output);
         } finally {
@@ -347,7 +348,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Downloaded phar is invalid');
             $updater->run($output);
         } finally {
@@ -369,7 +370,7 @@ final class SelfUpdaterTest extends TestCase
             'file://'.$nonExistentPath,
         );
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(CliException::class);
         $this->expectExceptionMessage('Unable to locate the running phar.');
         $updater->run($output);
     }
@@ -403,7 +404,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('The phar file is not writable');
             $updater->run($output);
         } finally {
@@ -442,7 +443,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('The phar file is not writable');
             $updater->run($output);
         } finally {
@@ -467,7 +468,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to create a temporary file.');
             $updater->run($output);
         } finally {
@@ -491,7 +492,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to hash the downloaded phar.');
             $updater->run($output);
         } finally {
@@ -513,7 +514,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Checksum verification failed.');
             $updater->run($output);
         } finally {
@@ -538,7 +539,7 @@ final class SelfUpdaterTest extends TestCase
         );
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to replace the existing binary.');
             $updater->run($output);
         } finally {
@@ -590,7 +591,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::$forceFopenWriteFail = true;
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to write to '.$destination.'.');
             $method->invoke($updater, 'file://'.$source, $destination);
         } finally {
@@ -623,7 +624,7 @@ final class SelfUpdaterTest extends TestCase
         @unlink($destination);
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Downloaded file is empty.');
             $method->invoke($updater, 'file://'.$source, $destination);
         } finally {
@@ -672,7 +673,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueExecResult(0, $destination, '');
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Downloaded file is empty.');
             $method->invoke($updater, 'https://example.com/file', $destination);
         } finally {
@@ -723,7 +724,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueExecResult(0, $destination, '');
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Downloaded file is empty.');
             $method->invoke($updater, 'https://example.com/file', $destination);
         } finally {
@@ -739,7 +740,7 @@ final class SelfUpdaterTest extends TestCase
 
         SelfUpdateFunctionOverrides::queueTempnam(false);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(CliException::class);
         $this->expectExceptionMessage('Unable to create a temporary file.');
         $method->invoke($updater, 'file://'.__FILE__);
     }
@@ -758,7 +759,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueFileGetContents(false);
 
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(CliException::class);
             $this->expectExceptionMessage('Unable to read downloaded data.');
             $method->invoke($updater, 'file://'.$source);
         } finally {

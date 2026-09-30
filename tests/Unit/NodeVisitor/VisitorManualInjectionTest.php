@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\LiteralNode;
@@ -53,7 +54,7 @@ final class VisitorManualInjectionTest extends TestCase
         $node = new CharClassNode(new AlternationNode([], 0, 0), false, 0, 0);
         $generator = new SampleGeneratorNodeVisitor();
 
-        $this->expectException(\RuntimeException::class); // Ou le comportement attendu
+        $this->expectException(SampleGenerationException::class);
         $node->accept($generator);
     }
 

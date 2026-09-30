@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Bridge\Symfony\Command;
 
 use RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Lint\Formatter\FormatterRegistry;
 use RegexParser\Lint\Formatter\LinkFormatter;
 use RegexParser\Lint\Formatter\RelativePathHelper;
@@ -158,7 +159,7 @@ final class RegexLintCommand extends Command
 
         try {
             $format = $this->validateAndNormalizeFormat($input, $io);
-        } catch (\RuntimeException) {
+        } catch (InvalidRegexOptionException) {
             return Command::FAILURE;
         }
 
@@ -382,7 +383,7 @@ final class RegexLintCommand extends Command
                 implode(', ', $this->formatterRegistry->getNames()),
             ));
 
-            throw new \RuntimeException('Invalid format');
+            throw new InvalidRegexOptionException('Invalid format');
         }
 
         return $format;

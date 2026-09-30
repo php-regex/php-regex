@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Lint\Formatter\FormatterRegistry;
 use RegexParser\Lint\Formatter\OutputFormatterInterface;
+use RegexParser\Lint\LintException;
 
 final class FormatterRegistryTest extends TestCase
 {
@@ -47,7 +48,7 @@ final class FormatterRegistryTest extends TestCase
 
     public function test_get_throws_exception_for_unknown_formatter(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(LintException::class);
         $this->expectExceptionMessage('Formatter "unknown" not found. Available formatters: console, json, github, checkstyle, junit');
 
         $this->registry->get('unknown');
@@ -172,7 +173,7 @@ final class FormatterRegistryTest extends TestCase
         try {
             $this->registry->get('nonexistent');
             $this->fail('Expected exception was not thrown');
-        } catch (\InvalidArgumentException $e) {
+        } catch (LintException $e) {
             $message = $e->getMessage();
             $this->assertStringContainsString('Formatter "nonexistent" not found', $message);
             $this->assertStringContainsString('console', $message);

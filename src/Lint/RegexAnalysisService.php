@@ -638,30 +638,16 @@ final readonly class RegexAnalysisService
                 break;
             }
 
-            $pid = pcntl_fork();
+            $pid = (new ForkedWorkerPool())->fork(
+                static fn (): array => $worker($chunk),
+                function (array $payload) use ($tmpFile): void {
+                    $this->writeWorkerPayload($tmpFile, $payload);
+                },
+            );
             if (-1 === $pid) {
                 $failed = true;
 
                 break;
-            }
-
-            if (0 === $pid) {
-                $payload = null;
-
-                try {
-                    $payload = ['ok' => true, 'result' => $worker($chunk)];
-                } catch (\Throwable $e) {
-                    $payload = [
-                        'ok' => false,
-                        'error' => [
-                            'message' => $e->getMessage(),
-                            'class' => $e::class,
-                        ],
-                    ];
-                }
-
-                $this->writeWorkerPayload($tmpFile, $payload);
-                exit($payload['ok'] ? 0 : 1);
             }
 
             $children[$pid] = [
@@ -698,7 +684,7 @@ final readonly class RegexAnalysisService
                 $errorClass = \is_array($error) && isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
                 $errorMessage = \is_array($error) && isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
 
-                throw new \RuntimeException(\sprintf('Parallel analysis failed: %s: %s', $errorClass, $errorMessage));
+                throw new LintException(\sprintf('Parallel analysis failed: %s: %s', $errorClass, $errorMessage));
             }
 
             $resultsByIndex[$meta['index']] = $payload['result'] ?? [];

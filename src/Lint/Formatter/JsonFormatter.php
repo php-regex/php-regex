@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Lint\Formatter;
 
 use RegexParser\Internal\DisplayEscaper;
+use RegexParser\Lint\LintException;
 use RegexParser\Lint\RegexLintReport;
 
 /**
@@ -39,7 +40,7 @@ final class JsonFormatter extends AbstractOutputFormatter
 
         $json = json_encode($data, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
         if (false === $json) {
-            throw new \RuntimeException('Failed to encode JSON');
+            throw new LintException('Failed to encode JSON');
         }
 
         return $json;

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
+use RegexParser\Exception\SampleGenerationException;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
 use RegexParser\Node\BackrefNode;
@@ -202,12 +203,12 @@ final class VisitorMethodsTest extends TestCase
         }
     }
 
-    public function test_sample_generator_throws_logic_exception_on_subroutine(): void
+    public function test_sample_generator_throws_on_subroutine(): void
     {
         $visitor = new SampleGeneratorNodeVisitor();
         $node = new SubroutineNode('R', '', 0, 0);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(SampleGenerationException::class);
         $node->accept($visitor);
     }
 }

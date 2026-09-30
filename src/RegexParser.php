@@ -16,6 +16,7 @@ namespace RegexParser;
 use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\NullCache;
 use RegexParser\Cache\RemovableCacheInterface;
+use RegexParser\Engine\PcreEngine;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
@@ -24,6 +25,7 @@ use RegexParser\Exception\RegexParserExceptionInterface;
 use RegexParser\Exception\ResourceLimitException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\Internal\PatternParser;
+use RegexParser\Internal\StaticCaches;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\RegexNode;
 use RegexParser\Node\SequenceNode;
@@ -51,7 +53,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-1d40d258579bdc7c8fc1f2e970978293';
+    public const CACHE_VERSION = 'ast-bef2a3e2f1011754b0c002dd789e36ee';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -85,6 +87,7 @@ final readonly class RegexParser
      * @param bool           $runtimePcreValidation Whether to also compile the pattern with the running PHP
      * @param int            $maxRecursionDepth     Maximum recursion depth during parsing
      * @param PcreTarget     $target                The PHP and PCRE2 judged
+     * @param PcreEngine     $engine                Compiles the pattern with the running PHP
      */
     private function __construct(
         private int $maxPatternLength,
@@ -93,6 +96,7 @@ final readonly class RegexParser
         private bool $runtimePcreValidation,
         private int $maxRecursionDepth,
         private PcreTarget $target,
+        private PcreEngine $engine = new PcreEngine(),
     ) {}
 
     /**
@@ -236,11 +240,15 @@ final readonly class RegexParser
     }
 
     /**
-     * Clear static validator caches (useful for long-running processes).
+     * Empty every process-wide cache the library keeps (useful for
+     * long-running processes): the validator's, and every other one a class
+     * filled so far (the lexer's, the compiler's, the scorer's, the sample
+     * generator's, the automata's).
      */
-    public function clearValidatorCaches(): void
+    public function clearCaches(): void
     {
         ValidatorNodeVisitor::clearCaches();
+        StaticCaches::clear();
     }
 
     /**
@@ -412,43 +420,21 @@ final readonly class RegexParser
     }
 
     /**
-     * Checks runtime compilation by attempting to use the pattern with preg_match and capturing warnings.
+     * Compiles the pattern with the running engine, without its JIT: its error, when it refuses it.
      */
     private function checkRuntimeCompilation(
         string $regex,
         ?string $pattern,
         int $complexityScore,
     ): ?ValidationResult {
-        $warning = null;
-
-        set_error_handler(static function (int $errno, string $errstr) use (&$warning): bool {
-            if (\E_WARNING === $errno) {
-                $warning = $errstr;
-            }
-
-            return true;
-        });
-
-        try {
-            $result = preg_match($regex, '');
-        } finally {
-            restore_error_handler();
-        }
-
-        if (false !== $result && null === $warning) {
+        $error = $this->engine->compile($regex);
+        if (null === $error) {
             return null;
         }
 
-        $message = $this->normalizeRuntimeErrorMessage((string) ($warning ?? preg_last_error_msg()));
-        // Unreachable from PHP as it stands, which names every failure it
-        // reports; kept so an unnamed one still reads as an error.
-        if ('' === $message || 'No error' === $message) {
-            $message = 'PCRE runtime error.';
-        }
-
-        $offset = $this->extractOffsetFromMessage($message);
+        $offset = $error->offset;
         $snippet = $this->buildVisualSnippet($pattern, $offset);
-        $fullMessage = 'PCRE runtime error: '.$message;
+        $fullMessage = 'PCRE runtime error: '.$error->message;
 
         return new ValidationResult(
             false,
@@ -460,23 +446,6 @@ final readonly class RegexParser
             null,
             ErrorCode::PcreRuntime,
         );
-    }
-
-    private function normalizeRuntimeErrorMessage(string $message): string
-    {
-        $normalized = preg_replace('/^preg_[a-z_]+\\(\\):\\s*/i', '', $message) ?? $message;
-
-        return trim($normalized);
-    }
-
-    private function extractOffsetFromMessage(string $message): ?int
-    {
-        // @regex-ignore-next-line
-        if (preg_match('/\\b(?:at offset|offset)\\s+(\\d+)/i', $message, $matches)) {
-            return (int) $matches[1];
-        }
-
-        return null;
     }
 
     private function buildVisualSnippet(?string $pattern, ?int $position): string

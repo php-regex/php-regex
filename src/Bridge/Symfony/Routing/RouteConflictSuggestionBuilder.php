@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\Routing;
 
+use RegexParser\Engine\PcreEngine;
+
 /**
  * @internal
  *
@@ -21,6 +23,11 @@ namespace RegexParser\Bridge\Symfony\Routing;
  */
 final readonly class RouteConflictSuggestionBuilder
 {
+    /**
+     * @param PcreEngine $engine Runs a route's pattern on the example that conflicts
+     */
+    public function __construct(private PcreEngine $engine = new PcreEngine()) {}
+
     /**
      * @phpstan-param array<RouteConflict> $conflicts
      *
@@ -110,13 +117,13 @@ final readonly class RouteConflictSuggestionBuilder
      */
     private function extractRouteVariables(string $pattern, string $example): array
     {
-        $matches = [];
-        if (1 !== \preg_match($pattern, $example, $matches)) {
+        $match = $this->engine->match($pattern, $example);
+        if (true !== $match->matched) {
             return [];
         }
 
         $variables = [];
-        foreach ($matches as $key => $value) {
+        foreach ($match->groups as $key => $value) {
             if (!\is_string($key)) {
                 continue;
             }

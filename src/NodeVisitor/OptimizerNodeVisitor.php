@@ -1725,7 +1725,7 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
                 $startPos,
                 $endPos,
             ),
-            default => throw new \InvalidArgumentException("Unsupported char type: {$node->value}"),
+            default => throw new \LogicException("Unsupported char type: {$node->value}"),
         };
     }
 

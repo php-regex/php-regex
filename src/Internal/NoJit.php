@@ -27,32 +27,85 @@ namespace RegexParser\Internal;
  */
 final class NoJit
 {
+    public const VERB = '(*NO_JIT)';
+
     private const WHITE_SPACE = " \t\n\r\v\f";
 
     private const HELD_BY_THE_VERB = ['*', '_', ')'];
 
     private const REPLACEMENTS = ["\x01", '#', '~', '%', '!', '@', ';', ','];
 
+    private const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
+
+    /**
+     * The pattern with the verb after its opening delimiter; the pattern as
+     * it is when PHP refuses its delimiters, or when its body holds every
+     * other delimiter.
+     */
     public static function pattern(string $regex): string
     {
-        $trimmed = ltrim($regex, self::WHITE_SPACE);
-        $delimiter = substr($trimmed, 0, 1);
-        if (!\in_array($delimiter, self::HELD_BY_THE_VERB, true)) {
-            return $delimiter.'(*NO_JIT)'.substr($trimmed, 1);
-        }
-
-        $end = strrpos($trimmed, $delimiter);
-        if (false === $end || 0 === $end) {
+        $parts = self::split($regex);
+        if (null === $parts) {
             return $regex;
         }
 
-        $body = substr($trimmed, 1, $end - 1);
+        [$open, $body, $close, $flags] = $parts;
+        if (!\in_array($open, self::HELD_BY_THE_VERB, true)) {
+            return $open.self::VERB.$body.$close.$flags;
+        }
+
         foreach (self::REPLACEMENTS as $replacement) {
             if (!str_contains($body, $replacement)) {
-                return $replacement.'(*NO_JIT)'.$body.$replacement.substr($trimmed, $end + 1);
+                return $replacement.self::VERB.$body.$replacement.$flags;
             }
         }
 
         return $regex;
+    }
+
+    /**
+     * The opening delimiter, the body, the closing delimiter and the flags,
+     * read as PHP reads them: white space skipped, the body ending at the
+     * first delimiter no backslash escapes (at the bracket closing the
+     * opening one, for a bracket pair). Null when PHP refuses the pattern
+     * before its body: empty, a letter, a digit, a backslash or NUL as the
+     * delimiter, no closing delimiter.
+     *
+     * @return array{string, string, string, string}|null
+     */
+    public static function split(string $regex): ?array
+    {
+        $trimmed = ltrim($regex, self::WHITE_SPACE);
+        if ('' === $trimmed) {
+            return null;
+        }
+
+        $open = $trimmed[0];
+        if (Ascii::isAlnum($open) || '\\' === $open || "\0" === $open) {
+            return null;
+        }
+
+        $close = self::CLOSING_BRACKETS[$open] ?? $open;
+        $length = \strlen($trimmed);
+        $depth = 1;
+        for ($index = 1; $index < $length; $index++) {
+            $character = $trimmed[$index];
+            if ('\\' === $character && $index + 1 < $length) {
+                $index++;
+
+                continue;
+            }
+
+            if ($close === $character) {
+                $depth--;
+                if ($open === $close || 0 === $depth) {
+                    return [$open, substr($trimmed, 1, $index - 1), $close, substr($trimmed, $index + 1)];
+                }
+            } elseif ($open === $character) {
+                $depth++;
+            }
+        }
+
+        return null;
     }
 }

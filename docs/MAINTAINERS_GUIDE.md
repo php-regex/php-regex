@@ -476,7 +476,7 @@ class RegexProcessor
             // Periodically clear caches
             static $counter = 0;
             if (++$counter % 100 === 0) {
-                $this->regex->clearValidatorCaches();
+                $this->regex->clearCaches();
             }
         }
     }

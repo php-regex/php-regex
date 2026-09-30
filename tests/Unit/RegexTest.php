@@ -267,18 +267,12 @@ final class RegexTest extends TestCase
         $reflection = new \ReflectionClass($regex->parser());
         $method = $reflection->getMethod('checkRuntimeCompilation');
 
-        // First, verify that normalizeRuntimeErrorMessage returns 'No error' for certain inputs
-        $normalizeMethod = $reflection->getMethod('normalizeRuntimeErrorMessage');
-        $normalizedEmpty = $normalizeMethod->invoke($regex->parser(), 'preg_match(): No error');
-        $this->assertSame('No error', $normalizedEmpty);
-
-        // Now test checkRuntimeCompilation with a pattern that triggers compilation error
-        // The exact message will vary, but we verify it contains 'PCRE runtime error:'
-        // This tests the path where the error message processing happens
+        // A pattern that triggers a compilation error: the message is the
+        // engine's, prefixed, without the name of the function that ran it.
         $result = $method->invoke($regex->parser(), '/invalid[pattern/', 'invalid[pattern', 7);
 
-        // Should return ValidationResult with error message containing the default prefix
         $this->assertInstanceOf(ValidationResult::class, $result);
+        $this->assertStringNotContainsString('preg_match()', (string) $result->error);
         $this->assertFalse($result->isValid);
         $this->assertStringStartsWith('PCRE runtime error: ', (string) $result->error);
     }
@@ -413,23 +407,37 @@ final class RegexTest extends TestCase
         $method->invoke($this->regexService, 'invalid');
     }
 
-    public function test_normalize_runtime_error_message(): void
+    /**
+     * Oracle: PCRE2 refuses "(?1)" with no group 1, "reference to
+     * non-existent subpattern at offset 3"; the parser alone reads it.
+     */
+    public function test_runtime_error_message_is_the_engine_s(): void
     {
         $ref = new \ReflectionClass($this->regexService->parser());
-        $method = $ref->getMethod('normalizeRuntimeErrorMessage');
+        $method = $ref->getMethod('checkRuntimeCompilation');
 
-        $this->assertSame('No error', $method->invoke($this->regexService->parser(), 'preg_match(): No error'));
-        $this->assertSame('Some error', $method->invoke($this->regexService->parser(), 'preg_match(): Some error'));
+        $result = $method->invoke($this->regexService->parser(), '/(?1)a/', '(?1)a', 1);
+
+        $this->assertInstanceOf(ValidationResult::class, $result);
+        $this->assertSame('PCRE runtime error: reference to non-existent subpattern at offset 3', $result->error);
     }
 
-    public function test_extract_offset_from_message(): void
+    /**
+     * The offset is counted in the body as written, not in the body the
+     * engine ran; none when the engine names none.
+     */
+    public function test_runtime_error_offset_is_counted_in_the_body_as_written(): void
     {
         $ref = new \ReflectionClass($this->regexService->parser());
-        $method = $ref->getMethod('extractOffsetFromMessage');
+        $method = $ref->getMethod('checkRuntimeCompilation');
 
-        $this->assertSame(10, $method->invoke($this->regexService->parser(), 'Error at offset 10'));
-        $this->assertSame(5, $method->invoke($this->regexService->parser(), 'Offset 5 found'));
-        $this->assertNull($method->invoke($this->regexService->parser(), 'No offset here'));
+        $body = $method->invoke($this->regexService->parser(), '/aaaaaaaaaaaa(/', 'aaaaaaaaaaaa(', 1);
+        $modifier = $method->invoke($this->regexService->parser(), '/a/Q', 'a', 1);
+
+        $this->assertInstanceOf(ValidationResult::class, $body);
+        $this->assertSame(13, $body->offset);
+        $this->assertInstanceOf(ValidationResult::class, $modifier);
+        $this->assertNull($modifier->offset);
     }
 
     public function test_build_visual_snippet_edge_cases(): void
