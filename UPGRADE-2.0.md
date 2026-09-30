@@ -295,6 +295,68 @@ Code that placed a caret under these errors in the whole pattern string adds
 the length of the leading whitespace and the opening delimiter, as it already
 did for every other error. The caret snippet shows the text from the body on.
 
+#### regex.json: one spelling per setting, and nothing unknown
+
+The lint command reads `regex.dist.json` and `regex.json` strictly. A key it
+does not know, a lint rule id it does not know, or a value of the wrong kind
+is an error: the command lists every one of them at once and exits with code
+2 before scanning anything. 1.x ignored an unknown key and still read the old
+spellings; 2.0 refuses them and names the key to use:
+
+| 1.x | 2.0 |
+|---|---|
+| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": true, "optimizations": {"enabled": false}}` |
+| `"redosMode": "confirmed"` | `"checks": {"redos": {"mode": "confirmed"}}` |
+| `"redosThreshold": "high"` | `"checks": {"redos": {"threshold": "high"}}` |
+| `"redosNoJit": true`, `"checks": {"redos": {"noJit": true}}` | nothing: the confirmation always runs without JIT |
+| `"optimizations": {"digits": true}` | `"checks": {"optimizations": {"options": {"digits": true}}}` |
+| `"minSavings": 2` | `"checks": {"optimizations": {"minSavings": 2}}` |
+| `"checks": {"redos": {"mode": "off"}}` | `"checks": {"redos": {"enabled": false}}` |
+| `"checks": {"redos": true}` (any check as a boolean) | `"checks": {"redos": {"enabled": true}}` |
+
+Three behaviours changed with the keys:
+
+- Setting `mode` or `threshold` no longer switches ReDoS analysis on, and
+  setting `minSavings`, `options` or `rules` no longer switches their check on:
+  only `enabled` does. A `regex.json` that relied on `"redos": {"mode":
+  "confirmed"}` alone adds `"enabled": true`.
+- A list in `regex.json` replaces the one in `regex.dist.json` whole. 1.x
+  merged them item by item, so `"exclude": ["build"]` over
+  `["vendor", "tests"]` gave `["build", "tests"]`; it now gives `["build"]`.
+- `threshold` accepts `low`, `medium`, `high` and `critical`, in any case;
+  `safe` and `unknown` are refused.
+
+`regex.schema.json` describes the new keys, and `phpVersion` and
+`pcreVersion` join them: see below.
+
+#### The lint command judges for the project's lowest PHP
+
+Without `--php-version` or `--pcre-version`, 1.x linted for the PHP running
+the command. The lint command now reads the target from `phpVersion` and
+`pcreVersion` in `regex.json`, else from `composer.json` (`config.platform.php`,
+else the lowest version `require.php` allows), and only then falls back to the
+running PHP; the PCRE2 release is the one that PHP bundles unless given.
+A project requiring `^8.2` running its CI on PHP 8.4 is now told about a
+pattern PHP 8.2 refuses. To lint for the running engine as before, pass its
+PHP version and PCRE2 release with `--php-version` and `--pcre-version`, or set
+`phpVersion` and `pcreVersion` in `regex.json`.
+
+The JSON report gains a `target` key (`{"php": "8.2", "pcre": "10.40",
+"source": "composer.json require.php"}`); the other formats print the same line
+on stderr. Single-pattern commands, such as `analyze`, still judge for the
+running PHP.
+
+#### The lint command's exit codes and streams
+
+- Exit code 2 now means the configuration or the command line cannot be used
+  (1.x returned 1, as for a pattern error). This covers an invalid
+  `regex.json`, an unknown option or `--format`, and the removed options below.
+- `--redos-mode=off` is refused: use `--no-redos`. `--redos-no-jit` is refused:
+  the confirmation always runs without JIT.
+- Errors go to stderr. With `--format=json` they go to stdout as
+  `{"error": "..."}`, and the progress and status lines stay out of stdout, so
+  that stdout always holds one JSON document.
+
 ### Deprecated
 
 #### `ClassOperationNode` and the class operation tokens

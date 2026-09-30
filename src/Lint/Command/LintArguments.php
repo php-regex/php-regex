@@ -47,7 +47,6 @@ final readonly class LintArguments
         public array $optimizations = [],
         public string $redosMode = 'theoretical',
         public ?string $redosThreshold = null,
-        public bool $redosNoJit = false,
         public array $lintRules = [],
         public array $interop = InteropPresets::DEFAULT_PRESETS,
         public array $patternFunctions = [],
@@ -175,11 +174,6 @@ final readonly class LintArguments
             $redosThreshold = strtolower($redosThreshold);
         }
 
-        $redosNoJit = $defaults['redosNoJit'] ?? false;
-        if (!\is_bool($redosNoJit)) {
-            $redosNoJit = false;
-        }
-
         $optimizations = $defaults['optimizations'] ?? [];
         if (!\is_array($optimizations)) {
             $optimizations = [];
@@ -227,7 +221,6 @@ final readonly class LintArguments
             $optimizations,
             $redosMode,
             $redosThreshold,
-            $redosNoJit,
             $lintRules,
             $interop,
             $patternFunctions,

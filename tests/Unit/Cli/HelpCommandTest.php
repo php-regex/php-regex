@@ -281,8 +281,8 @@ final class HelpCommandTest extends TestCase
         $this->assertArrayHasKey('examples', $data);
         $this->assertIsArray($data['options']);
         $this->assertIsArray($data['notes']);
-        $this->assertCount(12, $data['options']);
-        $this->assertCount(2, $data['notes']);
+        $this->assertCount(11, $data['options']);
+        $this->assertCount(4, $data['notes']);
     }
 
     public function test_get_command_data_returns_null_for_invalid_command(): void

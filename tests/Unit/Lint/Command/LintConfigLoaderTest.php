@@ -130,14 +130,14 @@ final class LintConfigLoaderTest extends TestCase
             $result = $loader->load();
 
             $this->assertNull($result->error);
-            $this->assertSame([
+            $this->assertSame(['checks' => ['optimizations' => ['options' => [
                 'digits' => false,
                 'word' => true,
                 'ranges' => true,
                 'canonicalizeCharClasses' => false,
                 'possessive' => false,
                 'factorize' => false,
-            ], $result->config['optimizations']);
+            ]]]], $result->config);
         } finally {
             chdir($cwd);
             @unlink($configPath);
@@ -164,8 +164,10 @@ final class LintConfigLoaderTest extends TestCase
 
             $this->assertNull($result->error);
             $this->assertSame([
-                'interop' => ['composer-pcre', 'nette-utils'],
-                'patternFunctions' => ['App\\Support\\Str::matches#1', 'regex_check'],
+                'extraction' => [
+                    'interop' => ['composer-pcre', 'nette-utils'],
+                    'functions' => ['App\\Support\\Str::matches#1', 'regex_check'],
+                ],
             ], $result->config);
         } finally {
             chdir($cwd);
@@ -219,24 +221,27 @@ final class LintConfigLoaderTest extends TestCase
 
             $this->assertNull($result->error);
             $this->assertSame([
-                'rules' => [
+                'checks' => [
                     'validation' => false,
-                    'redos' => true,
-                    'optimization' => false,
-                ],
-                'redosMode' => 'confirmed',
-                'redosThreshold' => 'critical',
-                'redosNoJit' => true,
-                'minSavings' => 3,
-                'optimizations' => [
-                    'digits' => false,
-                    'word' => true,
-                    'ranges' => false,
-                    'canonicalizeCharClasses' => true,
-                    'possessive' => true,
-                    'factorize' => true,
-                    'verifyWithAutomata' => false,
-                    'minQuantifierCount' => 5,
+                    'redos' => [
+                        'enabled' => true,
+                        'mode' => 'confirmed',
+                        'threshold' => 'critical',
+                    ],
+                    'optimizations' => [
+                        'enabled' => false,
+                        'minSavings' => 3,
+                        'options' => [
+                            'digits' => false,
+                            'word' => true,
+                            'ranges' => false,
+                            'canonicalizeCharClasses' => true,
+                            'possessive' => true,
+                            'factorize' => true,
+                            'minQuantifierCount' => 5,
+                            'verifyWithAutomata' => false,
+                        ],
+                    ],
                 ],
             ], $result->config);
         } finally {

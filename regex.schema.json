@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/php-regex/regex-parser/main/regex.schema.json",
   "title": "RegexParser Lint Configuration",
-  "description": "Configuration schema for RegexParser CLI lint defaults (regex.json or regex.dist.json).",
+  "description": "Configuration of the regex lint command (regex.json or regex.dist.json). Keys regex.json sets replace the ones regex.dist.json sets: objects key by key, lists whole.",
   "type": "object",
   "additionalProperties": false,
   "$defs": {
@@ -12,6 +12,7 @@
     },
     "stringList": {
       "description": "A single string or a list of strings.",
+      "x-expected": "a list of non-empty strings",
       "anyOf": [
         {
           "$ref": "#/$defs/nonEmptyString"
@@ -77,23 +78,21 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Enable ReDoS vulnerability analysis. Disabled by default for performance; enable explicitly when needed.",
+          "description": "Enable ReDoS vulnerability analysis. Disabled by default for performance; setting mode or threshold does not enable it.",
           "default": false
         },
         "mode": {
           "type": "string",
-          "description": "ReDoS analysis mode.",
-          "enum": ["off", "theoretical", "confirmed"],
+          "description": "ReDoS analysis mode. To turn the analysis off, set enabled to false.",
+          "enum": [
+            "theoretical",
+            "confirmed"
+          ],
           "enumDescriptions": [
-            "Disable ReDoS analysis.",
             "Report theoretical ReDoS risks.",
             "Only report confirmed ReDoS risks."
           ],
           "x-intellij-enum-metadata": [
-            {
-              "value": "off",
-              "description": "Disable ReDoS analysis."
-            },
             {
               "value": "theoretical",
               "description": "Report theoretical ReDoS risks."
@@ -103,12 +102,19 @@
               "description": "Only report confirmed ReDoS risks."
             }
           ],
-          "default": "theoretical"
+          "default": "theoretical",
+          "x-case-insensitive": true,
+          "x-expected": "theoretical or confirmed (the \"off\" mode was removed: set checks.redos.enabled to false)"
         },
         "threshold": {
           "type": "string",
           "description": "Minimum severity threshold for reporting ReDoS issues.",
-          "enum": ["low", "medium", "high", "critical"],
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
           "enumDescriptions": [
             "Report low and higher.",
             "Report medium and higher.",
@@ -133,12 +139,8 @@
               "description": "Report only critical."
             }
           ],
-          "default": "high"
-        },
-        "noJit": {
-          "type": "boolean",
-          "description": "Disable PHP JIT when running ReDoS analysis (prevents false positives).",
-          "default": false
+          "default": "high",
+          "x-case-insensitive": true
         }
       }
     },
@@ -148,7 +150,7 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Enable regex optimization suggestions.",
+          "description": "Enable regex optimization suggestions. Setting minSavings or options does not enable them.",
           "default": true
         },
         "minSavings": {
@@ -158,7 +160,8 @@
           "default": 1
         },
         "options": {
-          "$ref": "#/$defs/optimizationOptions"
+          "$ref": "#/$defs/optimizationOptions",
+          "description": "What the optimizer may rewrite."
         }
       }
     },
@@ -169,7 +172,7 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Enable lint checks for regex anti-patterns and style issues.",
+          "description": "Enable lint checks for regex anti-patterns and style issues. Setting rules does not enable them.",
           "default": true
         },
         "rules": {
@@ -264,7 +267,7 @@
             },
             "alternation.dotNewline": {
               "type": "boolean",
-              "description": "Warn about (.|\n) anti-pattern for matching any character.",
+              "description": "Warn about (.|\\n) anti-pattern for matching any character.",
               "default": true
             },
             "quantifier.useless": {
@@ -347,7 +350,9 @@
       "type": "string",
       "description": "JSON Schema reference for editor integration.",
       "format": "uri-reference",
-      "examples": ["./regex.schema.json"]
+      "examples": [
+        "./regex.schema.json"
+      ]
     },
     "$id": {
       "type": "string",
@@ -355,22 +360,52 @@
       "format": "uri-reference"
     },
     "paths": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/stringList"
-        }
-      ],
+      "$ref": "#/$defs/stringList",
       "description": "Directories or files to scan for regex patterns. Omit to scan the working directory.",
-      "examples": ["src", ["src", "tests"]]
+      "examples": [
+        "src",
+        [
+          "src",
+          "tests"
+        ]
+      ]
     },
     "exclude": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/stringList"
-        }
-      ],
+      "$ref": "#/$defs/stringList",
       "description": "Paths to exclude from scanning. Omit to use the CLI default (vendor).",
-      "examples": ["vendor", ["vendor", "tests", "Fixtures"]]
+      "examples": [
+        "vendor",
+        [
+          "vendor",
+          "tests",
+          "Fixtures"
+        ]
+      ]
+    },
+    "phpVersion": {
+      "description": "The PHP version the patterns are judged for, as \"8.3\" or a PHP_VERSION_ID like 80300. Omit to read it from composer.json (config.platform.php, else the lowest PHP require.php allows), else to use the running PHP. The --php-version option wins over it.",
+      "x-expected": "a version like \"8.3\" or a PHP_VERSION_ID like 80300",
+      "type": [
+        "string",
+        "integer"
+      ],
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+      "minimum": 10000,
+      "examples": [
+        "8.2",
+        "8.4",
+        80300
+      ]
+    },
+    "pcreVersion": {
+      "description": "The PCRE2 release the patterns are judged for, as \"10.44\". Omit to use the release bundled with the target PHP, or the running PCRE2 when the target is the running PHP. The --pcre-version option wins over it.",
+      "x-expected": "a PCRE2 release like \"10.44\"",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]{2}$",
+      "examples": [
+        "10.42",
+        "10.44"
+      ]
     },
     "extraction": {
       "type": "object",
@@ -380,7 +415,11 @@
         "interop": {
           "type": "array",
           "description": "Wrapper libraries whose static methods carry a regex pattern. Set to [] to look at native preg_* calls only.",
-          "default": ["composer-pcre"],
+          "x-expected": "a list of distinct presets among composer-pcre, nette-utils, spatie-regex, laravel-str",
+          "x-item": "preset",
+          "default": [
+            "composer-pcre"
+          ],
           "uniqueItems": true,
           "items": {
             "oneOf": [
@@ -402,18 +441,35 @@
               }
             ]
           },
-          "examples": [["composer-pcre"], ["composer-pcre", "nette-utils"], []]
+          "examples": [
+            [
+              "composer-pcre"
+            ],
+            [
+              "composer-pcre",
+              "nette-utils"
+            ],
+            []
+          ]
         },
         "functions": {
           "type": "array",
           "description": "Project helpers carrying a pattern, as \"function\" or \"Some\\Class::method\". Append \"#<index>\" when the pattern is not the first argument, and \"#<index>:keys\" when that argument is an array whose keys hold the patterns.",
+          "x-expected": "a list of distinct non-empty strings",
           "default": [],
           "uniqueItems": true,
           "items": {
-            "type": "string",
-            "minLength": 1
+            "$ref": "#/$defs/nonEmptyString"
           },
-          "examples": [["App\\Support\\Str::matches"], ["App\\Support\\Str::matches#1", "regex_check"]]
+          "examples": [
+            [
+              "App\\Support\\Str::matches"
+            ],
+            [
+              "App\\Support\\Str::matches#1",
+              "regex_check"
+            ]
+          ]
         }
       }
     },
@@ -421,20 +477,20 @@
       "type": "integer",
       "description": "Number of parallel workers. Omit to auto-detect based on CPU cores.",
       "minimum": 1,
-      "examples": [4]
-    },
-    "minSavings": {
-      "type": "integer",
-      "description": "Deprecated. Use checks.optimizations.minSavings.",
-      "minimum": 1,
-      "default": 1,
-      "examples": [2],
-      "deprecated": true
+      "examples": [
+        4
+      ]
     },
     "format": {
       "type": "string",
       "description": "Output format for lint results.",
-      "enum": ["console", "json", "github", "checkstyle", "junit"],
+      "enum": [
+        "console",
+        "json",
+        "github",
+        "checkstyle",
+        "junit"
+      ],
       "enumDescriptions": [
         "Human-friendly console output.",
         "Machine-readable JSON report.",
@@ -468,6 +524,7 @@
     },
     "ide": {
       "description": "IDE name or custom URL template for clickable file links. Use placeholders like %f, %l, %c, or %relFile%.",
+      "x-expected": "one of phpstorm, vscode, textmate, sublime, emacs, atom, macvim, an empty string, or a URL template holding %f or %l",
       "default": "",
       "oneOf": [
         {
@@ -509,11 +566,15 @@
           "description": "Custom URL template with placeholders."
         }
       ],
-      "examples": ["phpstorm", "vscode", "vscode://file/%f:%l"]
+      "examples": [
+        "phpstorm",
+        "vscode",
+        "vscode://file/%f:%l"
+      ]
     },
     "checks": {
       "type": "object",
-      "description": "Enable or configure lint checks (preferred).",
+      "description": "Which checks run, and how.",
       "additionalProperties": false,
       "properties": {
         "validation": {
@@ -522,164 +583,49 @@
           "default": true
         },
         "redos": {
-          "description": "ReDoS analysis settings or toggle.",
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Enable or disable ReDoS analysis."
-            },
-            {
-              "$ref": "#/$defs/checksRedos"
-            }
-          ]
+          "$ref": "#/$defs/checksRedos",
+          "description": "ReDoS analysis settings."
         },
         "optimizations": {
-          "description": "Optimization suggestion settings or toggle.",
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Enable or disable optimization suggestions."
-            },
-            {
-              "$ref": "#/$defs/checksOptimizations"
-            }
-          ]
+          "$ref": "#/$defs/checksOptimizations",
+          "description": "Optimization suggestion settings."
         },
         "lint": {
-          "description": "Lint check settings or toggle.",
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Enable or disable lint checks."
-            },
-            {
-              "$ref": "#/$defs/checksLint"
-            }
-          ]
+          "$ref": "#/$defs/checksLint",
+          "description": "Lint rule settings."
         }
       }
-    },
-    "rules": {
-      "type": "object",
-      "description": "Deprecated. Use checks instead.",
-      "additionalProperties": false,
-      "deprecated": true,
-      "properties": {
-        "redos": {
-          "type": "boolean",
-          "description": "Enable ReDoS vulnerability analysis.",
-          "default": false
-        },
-        "validation": {
-          "type": "boolean",
-          "description": "Enable regex syntax validation.",
-          "default": true
-        },
-        "optimization": {
-          "type": "boolean",
-          "description": "Enable regex optimization suggestions.",
-          "default": true
-        }
-      }
-    },
-    "redosMode": {
-      "type": "string",
-      "description": "Deprecated. Use checks.redos.mode.",
-      "enum": ["off", "theoretical", "confirmed"],
-      "enumDescriptions": [
-        "Disable ReDoS analysis.",
-        "Report theoretical ReDoS risks.",
-        "Only report confirmed ReDoS risks."
-      ],
-      "x-intellij-enum-metadata": [
-        {
-          "value": "off",
-          "description": "Disable ReDoS analysis."
-        },
-        {
-          "value": "theoretical",
-          "description": "Report theoretical ReDoS risks."
-        },
-        {
-          "value": "confirmed",
-          "description": "Only report confirmed ReDoS risks."
-        }
-      ],
-      "default": "theoretical",
-      "deprecated": true
-    },
-    "redosThreshold": {
-      "type": "string",
-      "description": "Deprecated. Use checks.redos.threshold.",
-      "enum": ["low", "medium", "high", "critical"],
-      "enumDescriptions": [
-        "Report low and higher.",
-        "Report medium and higher.",
-        "Report high and higher.",
-        "Report only critical."
-      ],
-      "x-intellij-enum-metadata": [
-        {
-          "value": "low",
-          "description": "Report low and higher."
-        },
-        {
-          "value": "medium",
-          "description": "Report medium and higher."
-        },
-        {
-          "value": "high",
-          "description": "Report high and higher."
-        },
-        {
-          "value": "critical",
-          "description": "Report only critical."
-        }
-      ],
-      "default": "high",
-      "deprecated": true
-    },
-    "redosNoJit": {
-      "type": "boolean",
-      "description": "Deprecated. Use checks.redos.noJit.",
-      "default": false,
-      "deprecated": true
-    },
-    "optimizations": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/optimizationOptions"
-        }
-      ],
-      "description": "Deprecated. Use checks.optimizations.options.",
-      "deprecated": true
     }
   },
   "examples": [
     {
       "$schema": "./regex.schema.json",
-      "paths": ["src"],
-      "exclude": ["vendor", "tests"],
+      "paths": [
+        "src"
+      ],
+      "exclude": [
+        "vendor",
+        "tests"
+      ],
+      "phpVersion": "8.2",
       "format": "console",
       "jobs": 4,
       "ide": "phpstorm",
       "checks": {
         "validation": true,
         "redos": {
+          "enabled": true,
           "mode": "theoretical",
           "threshold": "high"
         },
         "optimizations": {
+          "enabled": true,
           "minSavings": 2,
           "options": {
             "digits": true,
             "word": true,
-            "ranges": true,
-            "canonicalizeCharClasses": true,
             "possessive": false,
-            "factorize": false,
-            "minQuantifierCount": 4,
-            "verifyWithAutomata": true
+            "minQuantifierCount": 4
           }
         }
       }

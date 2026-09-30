@@ -1,1 +1,1 @@
-{"optimizations":{"digits":false,"word":true,"ranges":true,"canonicalizeCharClasses":false,"possessive":false,"factorize":false}}
+{"checks":{"optimizations":{"options":{"digits":false,"word":true,"ranges":true,"canonicalizeCharClasses":false,"possessive":false,"factorize":false}}}}

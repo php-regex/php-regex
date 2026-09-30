@@ -16,10 +16,14 @@ namespace RegexParser\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Lint\Command\LintConfigLoader;
 use RegexParser\Lint\Command\LintConfigResult;
+use RegexParser\Lint\Command\LintDefaultsBuilder;
 use RegexParser\Tests\Support\LintFunctionOverrides;
+use RegexParser\Tests\Support\TemporaryProject;
 
 final class LintConfigLoaderEdgeCasesTest extends TestCase
 {
+    use TemporaryProject;
+
     protected function tearDown(): void
     {
         LintFunctionOverrides::reset();
@@ -36,61 +40,58 @@ final class LintConfigLoaderEdgeCasesTest extends TestCase
         $this->assertSame([], $result->files);
     }
 
-    public function test_normalize_lint_config_rejects_invalid_values(): void
+    public function test_load_rejects_invalid_values(): void
     {
-        $loader = new LintConfigLoader();
-        $ref = new \ReflectionClass($loader);
-        $method = $ref->getMethod('normalizeLintConfig');
-
-        $paths = $method->invoke($loader, ['paths' => 1], 'cfg.json');
+        $paths = $this->loadJson('{"paths": 1}');
         $this->assertInstanceOf(LintConfigResult::class, $paths);
         $this->assertNotNull($paths->error);
 
-        $exclude = $method->invoke($loader, ['exclude' => 1], 'cfg.json');
+        $exclude = $this->loadJson('{"exclude": 1}');
         $this->assertInstanceOf(LintConfigResult::class, $exclude);
         $this->assertNotNull($exclude->error);
 
-        $jobs = $method->invoke($loader, ['jobs' => 'no'], 'cfg.json');
+        $jobs = $this->loadJson('{"jobs": "no"}');
         $this->assertInstanceOf(LintConfigResult::class, $jobs);
         $this->assertNotNull($jobs->error);
 
-        $minSavingsType = $method->invoke($loader, ['minSavings' => 'no'], 'cfg.json');
+        $minSavingsType = $this->loadJson('{"checks": {"optimizations": {"minSavings": "no"}}}');
         $this->assertInstanceOf(LintConfigResult::class, $minSavingsType);
         $this->assertNotNull($minSavingsType->error);
 
-        $minSavingsValue = $method->invoke($loader, ['minSavings' => 0], 'cfg.json');
+        $minSavingsValue = $this->loadJson('{"checks": {"optimizations": {"minSavings": 0}}}');
         $this->assertInstanceOf(LintConfigResult::class, $minSavingsValue);
         $this->assertNotNull($minSavingsValue->error);
 
-        $format = $method->invoke($loader, ['format' => ''], 'cfg.json');
+        $format = $this->loadJson('{"format": ""}');
         $this->assertInstanceOf(LintConfigResult::class, $format);
         $this->assertNotNull($format->error);
 
-        $rules = $method->invoke($loader, ['rules' => 'no'], 'cfg.json');
-        $this->assertInstanceOf(LintConfigResult::class, $rules);
-        $this->assertNotNull($rules->error);
+        $checks = $this->loadJson('{"checks": "no"}');
+        $this->assertInstanceOf(LintConfigResult::class, $checks);
+        $this->assertNotNull($checks->error);
 
-        $ruleEntry = $method->invoke($loader, ['rules' => ['redos' => 'yes']], 'cfg.json');
-        $this->assertInstanceOf(LintConfigResult::class, $ruleEntry);
-        $this->assertNotNull($ruleEntry->error);
+        $checkEntry = $this->loadJson('{"checks": {"redos": {"enabled": "yes"}}}');
+        $this->assertInstanceOf(LintConfigResult::class, $checkEntry);
+        $this->assertNotNull($checkEntry->error);
     }
 
-    public function test_normalize_string_list_variants(): void
+    public function test_load_reads_string_list_variants(): void
     {
-        $loader = new LintConfigLoader();
-        $ref = new \ReflectionClass($loader);
-        $method = $ref->getMethod('normalizeStringList');
-
-        $single = $method->invoke($loader, 'src', 'cfg.json', 'paths');
+        $single = $this->loadJson('{"paths": "src"}');
         $this->assertInstanceOf(LintConfigResult::class, $single);
-        $this->assertSame(['src'], $single->config['paths']);
+        $this->assertSame(['src'], (new LintDefaultsBuilder())->build($single->config)['paths'] ?? null);
 
-        $invalidType = $method->invoke($loader, 123, 'cfg.json', 'paths');
+        $invalidType = $this->loadJson('{"paths": 123}');
         $this->assertInstanceOf(LintConfigResult::class, $invalidType);
         $this->assertNotNull($invalidType->error);
 
-        $invalidEntry = $method->invoke($loader, [''], 'cfg.json', 'paths');
+        $invalidEntry = $this->loadJson('{"paths": [""]}');
         $this->assertInstanceOf(LintConfigResult::class, $invalidEntry);
         $this->assertNotNull($invalidEntry->error);
+    }
+
+    private function loadJson(string $json): LintConfigResult
+    {
+        return (new LintConfigLoader())->load($this->makeProject(['regex.json' => $json]));
     }
 }

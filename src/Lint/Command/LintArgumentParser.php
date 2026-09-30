@@ -150,7 +150,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -179,7 +178,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -189,12 +187,10 @@ final class LintArgumentParser
             }
 
             if (str_starts_with($arg, '--redos-mode=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-mode=')));
-                $mode = ReDoSMode::tryFrom($value);
-                if (null === $mode) {
-                    return new LintParseResult(null, 'Invalid value for --redos-mode.');
+                $mode = $this->redosMode(substr($arg, \strlen('--redos-mode=')));
+                if (\is_string($mode)) {
+                    return new LintParseResult(null, $mode);
                 }
-                $checkRedos = ReDoSMode::OFF !== $mode;
                 $arguments = new LintArguments(
                     $arguments->paths,
                     $arguments->exclude,
@@ -202,7 +198,7 @@ final class LintArgumentParser
                     $arguments->verbosity,
                     $arguments->format,
                     $arguments->quiet,
-                    $checkRedos,
+                    true,
                     $arguments->checkValidation,
                     $arguments->checkOptimizations,
                     $arguments->checkLint,
@@ -214,7 +210,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $mode->value,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -228,11 +223,10 @@ final class LintArgumentParser
                 if ('' === $value || str_starts_with($value, '-')) {
                     return new LintParseResult(null, 'Missing value for --redos-mode.');
                 }
-                $mode = ReDoSMode::tryFrom(strtolower($value));
-                if (null === $mode) {
-                    return new LintParseResult(null, 'Invalid value for --redos-mode.');
+                $mode = $this->redosMode($value);
+                if (\is_string($mode)) {
+                    return new LintParseResult(null, $mode);
                 }
-                $checkRedos = ReDoSMode::OFF !== $mode;
                 $arguments = new LintArguments(
                     $arguments->paths,
                     $arguments->exclude,
@@ -240,7 +234,7 @@ final class LintArgumentParser
                     $arguments->verbosity,
                     $arguments->format,
                     $arguments->quiet,
-                    $checkRedos,
+                    true,
                     $arguments->checkValidation,
                     $arguments->checkOptimizations,
                     $arguments->checkLint,
@@ -252,7 +246,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $mode->value,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -286,7 +279,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $value,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -323,7 +315,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $value,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -334,32 +325,7 @@ final class LintArgumentParser
             }
 
             if ('--redos-no-jit' === $arg) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    true,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                );
-
-                continue;
+                return new LintParseResult(null, 'The --redos-no-jit option was removed in 2.0: the lint command always runs the ReDoS confirmation without JIT.');
             }
 
             if ('--no-validate' === $arg) {
@@ -382,7 +348,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -411,7 +376,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -441,7 +405,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -471,7 +434,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -500,7 +462,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -533,7 +494,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -565,7 +525,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -600,7 +559,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -630,7 +588,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -663,7 +620,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -697,7 +653,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -735,7 +690,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -765,7 +719,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -798,7 +751,6 @@ final class LintArgumentParser
                     $arguments->optimizations,
                     $arguments->redosMode,
                     $arguments->redosThreshold,
-                    $arguments->redosNoJit,
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
@@ -837,7 +789,6 @@ final class LintArgumentParser
                 $arguments->optimizations,
                 $arguments->redosMode,
                 $arguments->redosThreshold,
-                $arguments->redosNoJit,
                 $arguments->lintRules,
                 $arguments->interop,
                 $arguments->patternFunctions,
@@ -845,6 +796,20 @@ final class LintArgumentParser
         }
 
         return new LintParseResult($arguments);
+    }
+
+    /**
+     * A --redos-mode value, or the message refusing it.
+     */
+    private function redosMode(string $value): ReDoSMode|string
+    {
+        $mode = ReDoSMode::tryFrom(strtolower($value));
+
+        return match ($mode) {
+            null => 'Invalid value for --redos-mode: expected theoretical or confirmed.',
+            ReDoSMode::OFF => 'The --redos-mode=off value was removed in 2.0: use --no-redos.',
+            default => $mode,
+        };
     }
 
     /**
@@ -871,7 +836,6 @@ final class LintArgumentParser
             $arguments->optimizations,
             $arguments->redosMode,
             $arguments->redosThreshold,
-            $arguments->redosNoJit,
             $arguments->lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
@@ -924,7 +888,6 @@ final class LintArgumentParser
             $arguments->optimizations,
             $arguments->redosMode,
             $arguments->redosThreshold,
-            $arguments->redosNoJit,
             $arguments->lintRules,
             $interop,
             $arguments->patternFunctions,
@@ -957,7 +920,6 @@ final class LintArgumentParser
             $arguments->optimizations,
             $arguments->redosMode,
             $arguments->redosThreshold,
-            $arguments->redosNoJit,
             $arguments->lintRules,
             $arguments->interop,
             $patternFunctions,
@@ -985,7 +947,6 @@ final class LintArgumentParser
             $arguments->optimizations,
             $arguments->redosMode,
             $arguments->redosThreshold,
-            $arguments->redosNoJit,
             $arguments->lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
@@ -1016,7 +977,6 @@ final class LintArgumentParser
             $arguments->optimizations,
             $arguments->redosMode,
             $arguments->redosThreshold,
-            $arguments->redosNoJit,
             $lintRules,
             $arguments->interop,
             $arguments->patternFunctions,

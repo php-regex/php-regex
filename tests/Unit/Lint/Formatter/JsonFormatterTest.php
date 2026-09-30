@@ -49,6 +49,28 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame([], $decoded['results']);
     }
 
+    public function test_format_leads_with_the_target_when_given(): void
+    {
+        $target = ['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php'];
+        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+
+        $decoded = json_decode((new JsonFormatter(target: $target))->format($report), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertSame(['target', 'stats', 'results'], array_keys($decoded));
+        $this->assertSame($target, $decoded['target']);
+    }
+
+    public function test_format_has_no_target_by_default(): void
+    {
+        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+
+        $decoded = json_decode($this->formatter->format($report), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertArrayNotHasKey('target', $decoded);
+    }
+
     public function test_format_with_results(): void
     {
         $result1 = [

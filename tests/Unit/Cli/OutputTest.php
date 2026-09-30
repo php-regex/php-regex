@@ -36,4 +36,20 @@ final class OutputTest extends TestCase
         $this->assertSame('PASS', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
         $this->assertSame('OK  ', $output->badge('OK', Output::WHITE, Output::BG_GREEN));
     }
+
+    public function test_write_error_goes_to_the_error_stream_even_when_quiet(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $output = new Output(false, true, errorStream: $stream);
+
+        ob_start();
+        $output->write('report');
+        $output->writeError('failure');
+        $stdout = (string) ob_get_clean();
+
+        rewind($stream);
+        $this->assertSame('', $stdout);
+        $this->assertSame('failure', stream_get_contents($stream));
+    }
 }

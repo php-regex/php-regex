@@ -23,8 +23,7 @@
         "redos": {
             "enabled": false,
             "mode": "confirmed",
-            "threshold": "critical",
-            "noJit": false
+            "threshold": "critical"
         },
         "optimizations": {
             "enabled": true,

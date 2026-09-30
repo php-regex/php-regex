@@ -43,11 +43,15 @@ final class Output
 
     private int $progressStartedAt = 0;
 
+    /**
+     * @param resource|null $errorStream where writeError() writes; STDERR by default
+     */
     public function __construct(
         private bool $ansi,
         private bool $quiet,
         private readonly string $progressBarFull = '#',
-        private readonly string $progressBarEmpty = '-'
+        private readonly string $progressBarEmpty = '-',
+        private $errorStream = null,
     ) {}
 
     public function isAnsi(): bool
@@ -74,6 +78,18 @@ final class Output
     {
         if (!$this->quiet) {
             echo $text;
+        }
+    }
+
+    /**
+     * Write to the error stream, which stays apart from a report on stdout.
+     * Quiet mode silences stdout only: an error still reaches the user.
+     */
+    public function writeError(string $text): void
+    {
+        $stream = $this->errorStream ?? (\defined('STDERR') ? \STDERR : null);
+        if (\is_resource($stream)) {
+            fwrite($stream, $text);
         }
     }
 

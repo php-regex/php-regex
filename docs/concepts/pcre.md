@@ -191,9 +191,10 @@ What this library does about it:
 - `generate()` checks its samples with the interpreter: it puts `(*NO_JIT)`
   at the start of the pattern it runs, a start option that changes no
   result.
-- The ReDoS confirmation (`--redos-mode=confirmed`) runs patterns as
-  production does, JIT included; pass `--redos-no-jit` to run them with the
-  interpreter.
+- The ReDoS confirmation of `regex lint` (`checks.redos.mode: "confirmed"`)
+  runs patterns with the interpreter. The one of `regex analyze` and
+  `regex debug` (`--redos-mode=confirmed`) runs them as production does, JIT
+  included; pass `--redos-no-jit` to run them with the interpreter.
 
 Code that runs untrusted patterns against generated subjects is exposed the
 same way; `pcre.jit=0` or a leading `(*NO_JIT)` avoids it, at the cost of

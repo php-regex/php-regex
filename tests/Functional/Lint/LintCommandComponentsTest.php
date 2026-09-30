@@ -38,12 +38,11 @@ final class LintCommandComponentsTest extends TestCase
             'paths' => ['src'],
             'exclude' => ['vendor'],
             'jobs' => 2,
-            'minSavings' => 3,
             'format' => 'json',
-            'rules' => [
-                'redos' => false,
+            'checks' => [
                 'validation' => true,
-                'optimization' => false,
+                'redos' => ['enabled' => false],
+                'optimizations' => ['enabled' => false, 'minSavings' => 3],
             ],
         ]);
 
@@ -168,17 +167,6 @@ final class LintCommandComponentsTest extends TestCase
             $this->markTestSkipped('Unable to create temp directory.');
         }
 
-        $distConfig = [
-            'paths' => ['src'],
-            'rules' => ['validation' => false],
-            'jobs' => 2,
-        ];
-        $jsonConfig = [
-            'exclude' => ['vendor'],
-            'format' => 'json',
-            'rules' => ['validation' => true, 'optimization' => false],
-        ];
-
         copy(__DIR__.'/../../Fixtures/Config/dist_config.json', $tempDir.'/regex.dist.json');
         copy(__DIR__.'/../../Fixtures/Config/user_config.json', $tempDir.'/regex.json');
 
@@ -195,7 +183,7 @@ final class LintCommandComponentsTest extends TestCase
             $this->assertSame(['vendor'], $result->config['exclude']);
             $this->assertSame('json', $result->config['format']);
             $this->assertSame(2, $result->config['jobs']);
-            $this->assertSame(['validation' => true, 'optimization' => false], $result->config['rules']);
+            $this->assertSame(['validation' => true, 'optimizations' => ['enabled' => false]], $result->config['checks']);
             $expectedFiles = array_map(realpath(...), [$tempDir.'/regex.dist.json', $tempDir.'/regex.json']);
             $actualFiles = array_map(realpath(...), $result->files);
             $this->assertSame($expectedFiles, $actualFiles);

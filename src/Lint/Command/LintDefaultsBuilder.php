@@ -13,10 +13,37 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Command;
 
+/**
+ * The lint command's defaults from a loaded regex.json, which the command
+ * line then overrides. A check is switched on or off by its "enabled" key
+ * only: setting one of its other keys never enables it.
+ */
 final class LintDefaultsBuilder
 {
     /**
-     * @param array<string, mixed> $config
+     * Top-level keys read as they are.
+     */
+    private const TOP_LEVEL = ['paths', 'exclude', 'jobs', 'format', 'ide'];
+
+    /**
+     * Nested keys, as a path in the file => the default they set.
+     */
+    private const NESTED = [
+        'extraction.interop' => 'interop',
+        'extraction.functions' => 'patternFunctions',
+        'checks.validation' => 'checkValidation',
+        'checks.redos.enabled' => 'checkRedos',
+        'checks.redos.mode' => 'redosMode',
+        'checks.redos.threshold' => 'redosThreshold',
+        'checks.optimizations.enabled' => 'checkOptimizations',
+        'checks.optimizations.minSavings' => 'minSavings',
+        'checks.optimizations.options' => 'optimizations',
+        'checks.lint.enabled' => 'checkLint',
+        'checks.lint.rules' => 'lintRules',
+    ];
+
+    /**
+     * @param array<string, mixed> $config the configuration LintConfigLoader returns
      *
      * @return array<string, mixed>
      */
@@ -24,136 +51,23 @@ final class LintDefaultsBuilder
     {
         $defaults = [];
 
-        if (isset($config['paths'])) {
-            $defaults['paths'] = $config['paths'];
-        }
-
-        if (isset($config['exclude'])) {
-            $defaults['exclude'] = $config['exclude'];
-        }
-
-        if (isset($config['jobs'])) {
-            $defaults['jobs'] = $config['jobs'];
-        }
-
-        if (isset($config['minSavings'])) {
-            $defaults['minSavings'] = $config['minSavings'];
-        }
-
-        if (isset($config['format'])) {
-            $defaults['format'] = $config['format'];
-        }
-
-        // Handle new "checks" configuration format (preferred)
-        if (isset($config['checks']) && \is_array($config['checks'])) {
-            if (\array_key_exists('validation', $config['checks'])) {
-                $defaults['checkValidation'] = $config['checks']['validation'];
+        foreach (self::TOP_LEVEL as $key) {
+            if (\array_key_exists($key, $config)) {
+                $defaults[$key] = \is_string($config[$key]) && \in_array($key, ['paths', 'exclude'], true)
+                    ? [$config[$key]]
+                    : $config[$key];
             }
+        }
 
-            // Handle checks.redos (can be boolean or object)
-            if (\array_key_exists('redos', $config['checks'])) {
-                $redos = $config['checks']['redos'];
-                if (\is_bool($redos)) {
-                    $defaults['checkRedos'] = $redos;
-                } elseif (\is_array($redos)) {
-                    if (\array_key_exists('enabled', $redos)) {
-                        $defaults['checkRedos'] = $redos['enabled'];
-                    }
-                    if (\array_key_exists('mode', $redos)) {
-                        $defaults['redosMode'] = $redos['mode'];
-                    }
-                    if (\array_key_exists('threshold', $redos)) {
-                        $defaults['redosThreshold'] = $redos['threshold'];
-                    }
-                    if (\array_key_exists('noJit', $redos)) {
-                        $defaults['redosNoJit'] = $redos['noJit'];
-                    }
+        foreach (self::NESTED as $path => $default) {
+            $value = $config;
+            foreach (explode('.', $path) as $segment) {
+                if (!\is_array($value) || !\array_key_exists($segment, $value)) {
+                    continue 2;
                 }
+                $value = $value[$segment];
             }
-
-            // Handle checks.optimizations (can be boolean or object)
-            if (\array_key_exists('optimizations', $config['checks'])) {
-                $optimizations = $config['checks']['optimizations'];
-                if (\is_bool($optimizations)) {
-                    $defaults['checkOptimizations'] = $optimizations;
-                } elseif (\is_array($optimizations)) {
-                    if (\array_key_exists('enabled', $optimizations)) {
-                        $defaults['checkOptimizations'] = $optimizations['enabled'];
-                    }
-                    if (\array_key_exists('minSavings', $optimizations)) {
-                        $defaults['minSavings'] = $optimizations['minSavings'];
-                    }
-                    if (\array_key_exists('options', $optimizations) && \is_array($optimizations['options'])) {
-                        $defaults['optimizations'] = $optimizations['options'];
-                    }
-                }
-            }
-
-            // Handle checks.lint (can be boolean or object)
-            if (\array_key_exists('lint', $config['checks'])) {
-                $lint = $config['checks']['lint'];
-                if (\is_bool($lint)) {
-                    $defaults['checkLint'] = $lint;
-                } elseif (\is_array($lint)) {
-                    if (\array_key_exists('enabled', $lint)) {
-                        $defaults['checkLint'] = $lint['enabled'];
-                    }
-                    if (\array_key_exists('rules', $lint) && \is_array($lint['rules'])) {
-                        $defaults['lintRules'] = $lint['rules'];
-                    }
-                }
-            }
-        }
-
-        // Handle normalized lintEnabled/lintRules (from config loader)
-        if (isset($config['lintEnabled']) && !isset($defaults['checkLint'])) {
-            $defaults['checkLint'] = $config['lintEnabled'];
-        }
-
-        if (isset($config['lintRules']) && !isset($defaults['lintRules'])) {
-            $defaults['lintRules'] = $config['lintRules'];
-        }
-
-        // Handle deprecated "rules" configuration format (for BC)
-        if (isset($config['rules']) && \is_array($config['rules'])) {
-            if (\array_key_exists('redos', $config['rules']) && !isset($defaults['checkRedos'])) {
-                $defaults['checkRedos'] = $config['rules']['redos'];
-            }
-            if (\array_key_exists('validation', $config['rules']) && !isset($defaults['checkValidation'])) {
-                $defaults['checkValidation'] = $config['rules']['validation'];
-            }
-            if (\array_key_exists('optimization', $config['rules']) && !isset($defaults['checkOptimizations'])) {
-                $defaults['checkOptimizations'] = $config['rules']['optimization'];
-            }
-        }
-
-        if (isset($config['interop'])) {
-            $defaults['interop'] = $config['interop'];
-        }
-
-        if (isset($config['patternFunctions'])) {
-            $defaults['patternFunctions'] = $config['patternFunctions'];
-        }
-
-        if (isset($config['ide'])) {
-            $defaults['ide'] = $config['ide'];
-        }
-
-        // Handle deprecated top-level redos options (for BC, only if not set by checks)
-        if (isset($config['redosMode']) && !isset($defaults['redosMode'])) {
-            $defaults['redosMode'] = $config['redosMode'];
-        }
-
-        if (isset($config['redosThreshold']) && !isset($defaults['redosThreshold'])) {
-            $defaults['redosThreshold'] = $config['redosThreshold'];
-        }
-
-        if (isset($config['redosNoJit']) && !isset($defaults['redosNoJit'])) {
-            $defaults['redosNoJit'] = $config['redosNoJit'];
-        }
-
-        if (isset($config['optimizations']) && !isset($defaults['optimizations'])) {
-            $defaults['optimizations'] = $config['optimizations'];
+            $defaults[$default] = $value;
         }
 
         return $defaults;

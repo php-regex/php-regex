@@ -373,10 +373,12 @@ Create `regex.json` or `regex.dist.json` in your project root:
 
 ```json
 {
+  "$schema": "./vendor/yoeunes/regex-parser/regex.schema.json",
   "format": "console",
   "jobs": 4,
   "exclude": ["vendor", "var", "tests"],
   "ide": "phpstorm",
+  "phpVersion": "8.2",
   "checks": {
     "validation": true,
     "redos": {
@@ -399,22 +401,121 @@ Create `regex.json` or `regex.dist.json` in your project root:
 }
 ```
 
+`regex.dist.json` is the file you commit; `regex.json` is read after it and
+wins. Keys merge the way you would expect from a settings file: an object is
+merged key by key, and anything else, a list included, is replaced whole. So
+`{"exclude": ["build"]}` in `regex.json` replaces the whole `exclude` list of
+`regex.dist.json`, and `{"exclude": []}` clears it.
+
 ### Configuration Options
 
-| Option                          | Type           | Description                                              |
-|---------------------------------|----------------|----------------------------------------------------------|
-| `format`                        | string         | Output format (console, json, github, checkstyle, junit) |
-| `jobs`                          | int            | Number of parallel workers                               |
-| `exclude`                       | array          | Paths to exclude                                         |
-| `extraction.interop`            | array          | Wrapper libraries whose calls carry patterns (default `["composer-pcre"]`) |
-| `extraction.functions`          | array          | Project helpers carrying patterns                        |
-| `ide`                           | string         | IDE for clickable links                                  |
-| `checks`                        | object         | Enable or configure lint checks (validation, redos, optimizations) |
-| `checks.redos`                  | boolean or object | ReDoS analysis toggle or settings (mode, threshold, noJit) |
-| `checks.optimizations`          | boolean or object | Optimization suggestions toggle or settings (minSavings, options) |
-| `checks.optimizations.options`  | object         | Optimization options (digits/word/ranges/canonicalizeCharClasses/possessive/factorize/minQuantifierCount/verifyWithAutomata) |
+| Option                          | Type             | Description                                              |
+|---------------------------------|------------------|----------------------------------------------------------|
+| `paths`                         | array or string  | Paths to scan (default: the working directory)           |
+| `exclude`                       | array or string  | Paths to exclude (default: `vendor`)                     |
+| `format`                        | string           | Output format (console, json, github, checkstyle, junit) |
+| `jobs`                          | int              | Number of parallel workers (at least 1)                  |
+| `ide`                           | string           | IDE for clickable links                                  |
+| `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"` or `80300` |
+| `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
+| `extraction.interop`            | array            | Wrapper libraries whose calls carry patterns (default `["composer-pcre"]`) |
+| `extraction.functions`          | array            | Project helpers carrying patterns                        |
+| `checks.validation`             | boolean          | Report patterns PCRE2 refuses (default `true`)           |
+| `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
+| `checks.optimizations`          | object           | `enabled` (default `true`), `minSavings`, `options`      |
+| `checks.optimizations.options`  | object           | digits, word, ranges, canonicalizeCharClasses, possessive, factorize, minQuantifierCount, verifyWithAutomata |
+| `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false` |
 
-Legacy keys (`rules`, `redosMode`, `redosThreshold`, `redosNoJit`, `optimizations`, `minSavings`) are still supported but deprecated.
+`checks.redos`, `checks.optimizations` and `checks.lint` are objects, and only
+their `enabled` key switches a check on or off: setting `threshold`, `mode`,
+`minSavings`, `options` or `rules` alone never enables it. `mode` and
+`threshold` are read whatever their case.
+
+The lint command refuses a file it cannot fully use. Every unknown key, every
+unknown lint rule id and every value of the wrong kind is an error, and the
+command lists all of them at once, each with the key it is about, then exits
+with code 2 before scanning anything.
+
+### Removed Keys
+
+These 1.x keys are refused, with the message naming what replaced them:
+
+| 1.x key                 | Use instead                                                  |
+|-------------------------|--------------------------------------------------------------|
+| `rules`                 | `checks` (`rules.optimization` is `checks.optimizations.enabled`) |
+| `redosMode`             | `checks.redos.mode`                                          |
+| `redosThreshold`        | `checks.redos.threshold`                                     |
+| `redosNoJit`            | nothing: the ReDoS confirmation always runs without JIT      |
+| `optimizations`         | `checks.optimizations.options`                               |
+| `minSavings`            | `checks.optimizations.minSavings`                            |
+| `checks.redos.noJit`    | nothing: the ReDoS confirmation always runs without JIT      |
+| `checks.redos.mode: "off"` | `checks.redos.enabled: false`                             |
+| `checks.redos: true` (and the other boolean forms) | `checks.redos: {"enabled": true}`  |
+
+### Schema
+
+`regex.schema.json`, at the root of the package, describes every key, so an
+editor can complete and check the file: point `$schema` at it, as in the
+example above. The lint command validates against the same definition, so
+the editor and the command accept exactly the same files; the command is
+only more lenient about the case of `mode` and `threshold`.
+
+The file is generated. When a key changes, it is written again from the
+definition with:
+
+```bash
+php tests/Tools/write_config_schema.php
+```
+
+### Target PHP and PCRE2
+
+Whether a pattern compiles, and how it behaves, depends on the PCRE2 release
+and, for a few rules, on the PHP version. The lint command judges every
+pattern for one target, chosen in this order:
+
+1. `--php-version` and `--pcre-version` on the command line;
+2. `phpVersion` and `pcreVersion` in `regex.json`;
+3. `composer.json` in the working directory: `config.platform.php` if set,
+   else the lowest version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2).
+   The `COMPOSER` environment variable names another file, as it does for
+   Composer;
+4. the PHP running the command.
+
+Each version is chosen on its own. Without a PCRE2 release, the command uses
+the one the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44 for
+8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
+PHP.
+
+The lowest PHP is the one that matters because a library, or an application
+deployed on several servers, runs on every version its constraint allows: a
+pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
+below PHP 8.2 is judged as PHP 8.2, the oldest this library supports, and the
+command says so. A constraint the command cannot read (`*`, `<9`, a branch
+name) falls back to the running PHP, with a note naming it; reading
+`composer.json` never stops a run.
+
+The console, GitHub, Checkstyle and JUnit formats print the target on stderr,
+so that the report on stdout stays unchanged:
+
+```text
+Target: PHP 8.2, PCRE2 10.40 (composer.json require.php)
+```
+
+The JSON report carries it as its `target` key (see [JSON](#json) below).
+Single-pattern commands, such as `analyze` or `validate`, judge for the
+running PHP unless `--php-version` or `--pcre-version` is given.
+
+### Exit Codes
+
+| Code | Meaning                                                            |
+|------|--------------------------------------------------------------------|
+| `0`  | No error found                                                     |
+| `1`  | At least one error found                                           |
+| `2`  | The configuration or the command line cannot be used; nothing was scanned |
+
+With `--format=json`, a configuration or command-line error is printed on
+stdout as `{"error": "..."}`, so that stdout always holds one JSON document;
+with the other formats it is printed on stderr.
 
 ### IDE Integration
 
@@ -472,6 +573,11 @@ vendor/bin/regex lint src/ --format=json
 **Output:**
 ```json
 {
+  "target": {
+    "php": "8.2",
+    "pcre": "10.40",
+    "source": "composer.json require.php"
+  },
   "stats": {
     "errors": 1,
     "warnings": 0,
@@ -526,8 +632,12 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--exclude <path>`  | Exclude path (repeatable)                          |
 | `--min-savings <n>` | Minimum optimization savings                       |
 | `--jobs <n>`        | Parallel workers                                   |
+| `--format <format>` | Output format (console, json, github, checkstyle, junit) |
+| `--output <file>`   | Also write the report to a file                    |
 | `--redos`           | Enable ReDoS analysis (disabled by default)        |
 | `--no-redos`        | Explicitly disable ReDoS analysis                  |
+| `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
+| `--redos-threshold <sev>` | Lowest severity reported: low, medium, high, critical |
 | `--no-validate`     | Skip validation                                    |
 | `--no-optimize`     | Disable optimization suggestions                   |
 | `--interop <presets>` | Wrapper libraries to read patterns from (comma separated, `none` to disable) |
@@ -537,6 +647,10 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--debug`           | Debug information                                  |
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration.
+
+`--redos-mode=off` and `--redos-no-jit` were removed in 2.0: use `--no-redos`
+to skip the analysis; the confirmation always runs without JIT. Either one is
+now a usage error (exit code 2), as is an unknown `--format`.
 
 ---
 

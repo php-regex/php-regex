@@ -109,9 +109,8 @@ final readonly class HelpCommand implements CommandInterface
             ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
             ['--output <file>', 'Write output to file'],
             ['--no-redos', 'Skip ReDoS risk analysis'],
-            ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
+            ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
             ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-            ['--redos-no-jit', 'Disable JIT during confirmation runs'],
             ['--no-validate', 'Skip validation errors (structural lint only)'],
             ['--no-optimize', 'Disable optimization suggestions'],
             ['--interop <presets>', 'Wrapper libraries to read patterns from (composer-pcre, nette-utils, spatie-regex, laravel-str, none)'],
@@ -122,6 +121,7 @@ final readonly class HelpCommand implements CommandInterface
         ];
         $this->renderTableSection($output, 'Lint Options', $lintOptions, fn (string $value): string => $this->formatOption($output, $value));
         $output->write($output->dim('  Config: regex.json or regex.dist.json in the working directory sets lint defaults.')."\n");
+        $output->write($output->dim('  Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.')."\n");
         $output->write($output->dim('  Inline ignore: // @regex-ignore-next-line or // @regex-ignore')."\n\n");
 
         $diagramOptions = [
@@ -438,9 +438,8 @@ final readonly class HelpCommand implements CommandInterface
                     ['--jobs <n>', 'Parallel workers for analysis'],
                     ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
                     ['--no-redos', 'Skip ReDoS risk analysis'],
-                    ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
+                    ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                    ['--redos-no-jit', 'Disable JIT during confirmation runs'],
                     ['--no-validate', 'Skip validation errors (structural lint only)'],
                     ['--no-optimize', 'Disable optimization suggestions'],
                     ['-v, --verbose', 'Show detailed output'],
@@ -448,6 +447,8 @@ final readonly class HelpCommand implements CommandInterface
                 ],
                 'notes' => [
                     'Config: regex.json or regex.dist.json in the working directory sets lint defaults.',
+                    'Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.',
+                    'Exit codes: 0 clean, 1 errors found, 2 unusable configuration or command line.',
                     'Inline ignore: // @regex-ignore-next-line or // @regex-ignore',
                 ],
                 'examples' => [

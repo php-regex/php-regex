@@ -1,1 +1,1 @@
-{"paths":["src"],"exclude":["vendor"],"jobs":2,"minSavings":3,"format":"console","rules":{"redos":false,"validation":true,"optimization":false}}
+{"paths":["src"],"exclude":["vendor"],"jobs":2,"format":"console","checks":{"validation":true,"redos":{"enabled":false},"optimizations":{"enabled":false,"minSavings":3}}}

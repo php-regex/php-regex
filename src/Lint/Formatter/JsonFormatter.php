@@ -21,9 +21,18 @@ use RegexParser\Lint\RegexLintReport;
  */
 final class JsonFormatter extends AbstractOutputFormatter
 {
+    /**
+     * @param array{php: string, pcre: string, source: string}|null $target the PHP and PCRE2 the patterns were judged for, and where that came from
+     */
+    public function __construct(OutputConfiguration $config = new OutputConfiguration(), private readonly ?array $target = null)
+    {
+        parent::__construct($config);
+    }
+
     public function format(RegexLintReport $report): string
     {
-        $data = [
+        $data = null === $this->target ? [] : ['target' => $this->target];
+        $data += [
             'stats' => $report->stats,
             'results' => $this->normalizeResults($report->results),
         ];

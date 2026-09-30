@@ -1,1 +1,1 @@
-{"paths":["src"],"exclude":["vendor"],"format":"json","jobs":2,"rules":{"validation":true,"optimization":true}}
+{"paths":["src"],"exclude":["vendor"],"format":"json","jobs":2,"checks":{"validation":true,"optimizations":{"enabled":true}}}

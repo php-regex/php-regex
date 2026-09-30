@@ -34,6 +34,11 @@ final class LintCommandEdgeCasesTest extends TestCase
      */
     private array $tempDirs = [];
 
+    /**
+     * @var resource|null
+     */
+    private $errorStream;
+
     protected function tearDown(): void
     {
         LintFunctionOverrides::reset();
@@ -46,12 +51,12 @@ final class LintCommandEdgeCasesTest extends TestCase
     public function test_lint_command_reports_argument_parse_error(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput(['--format']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing value for --format', $buffer);
         $this->assertStringContainsString('Usage: regex lint', $buffer);
     }
@@ -59,24 +64,24 @@ final class LintCommandEdgeCasesTest extends TestCase
     public function test_lint_command_defaults_paths_when_empty(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput(['--format=bogus']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Unknown format', $buffer);
     }
 
     public function test_lint_command_returns_error_for_invalid_regex_options(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput(['--format=bogus'], ['bogus' => true]), $output), $exitCode);
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput(['--format=console'], 'eight'), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option', $buffer);
     }
 
@@ -84,12 +89,12 @@ final class LintCommandEdgeCasesTest extends TestCase
     public function test_lint_command_builds_output_config_for_verbosity(string $flag): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $this->captureOutput(fn (): int => $command->run($this->makeInput([$flag, '--format=bogus']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
     }
 
     /**
@@ -107,7 +112,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $dir = $this->makeTempDir();
 
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
@@ -127,7 +132,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $dir = $this->makeTempDir();
 
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
@@ -154,7 +159,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         LintFunctionOverrides::queueMicrotime(4.5);
 
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
@@ -176,7 +181,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         @chmod($dir, 0o000);
 
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = '';
@@ -212,17 +217,29 @@ final class LintCommandEdgeCasesTest extends TestCase
     }
 
     /**
-     * @param array<int, string>   $args
-     * @param array<string, mixed> $regexOptions
+     * @param array<int, string> $args
+     * @param string|null        $phpVersion the --php-version option
      */
-    private function makeInput(array $args, array $regexOptions = []): Input
+    private function makeInput(array $args, ?string $phpVersion = null): Input
     {
         return new Input(
             'lint',
             $args,
-            new GlobalOptions(false, false, false, true, null, null),
-            $regexOptions,
+            new GlobalOptions(false, false, false, true, $phpVersion, null),
+            null === $phpVersion ? [] : ['php_version' => $phpVersion],
         );
+    }
+
+    /**
+     * An output whose error stream the test reads back with stdout.
+     */
+    private function makeOutput(): Output
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $this->errorStream = $stream;
+
+        return new Output(false, false, errorStream: $stream);
     }
 
     /**
@@ -238,6 +255,11 @@ final class LintCommandEdgeCasesTest extends TestCase
 
         while (ob_get_level() > $level) {
             ob_end_clean();
+        }
+
+        if (\is_resource($this->errorStream)) {
+            rewind($this->errorStream);
+            $output .= (string) stream_get_contents($this->errorStream);
         }
 
         return $output;

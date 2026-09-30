@@ -15,12 +15,15 @@ namespace RegexParser\Cli\Command;
 
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Lint\Command\LintArgumentParser;
 use RegexParser\Lint\Command\LintConfigLoader;
 use RegexParser\Lint\Command\LintDefaultsBuilder;
 use RegexParser\Lint\Command\LintExtractorFactory;
+use RegexParser\Lint\Command\ProjectTarget;
 use RegexParser\Lint\Formatter\ConsoleFormatter;
 use RegexParser\Lint\Formatter\FormatterRegistry;
+use RegexParser\Lint\Formatter\JsonFormatter;
 use RegexParser\Lint\Formatter\LinkFormatter;
 use RegexParser\Lint\Formatter\OutputConfiguration;
 use RegexParser\Lint\Formatter\RelativePathHelper;
@@ -33,9 +36,17 @@ use RegexParser\Lint\RegexPatternSourceCollection;
 use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\ReDoS\ReDoSConfirmOptions;
 use RegexParser\ReDoS\ReDoSSeverity;
+use RegexParser\Regex;
 
 final class LintCommand extends AbstractCommand implements CommandInterface
 {
+    /**
+     * A configuration or a command line the command cannot use.
+     */
+    public const EXIT_USAGE = 2;
+
+    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
+
     public function __construct(
         private readonly HelpCommand $helpCommand,
         private readonly LintConfigLoader $configLoader,
@@ -62,11 +73,11 @@ final class LintCommand extends AbstractCommand implements CommandInterface
 
     public function run(Input $input, Output $output): int
     {
+        $json = self::asksForJson($input->args);
+
         $lintConfigResult = $this->configLoader->load();
         if (null !== $lintConfigResult->error) {
-            $output->write($output->error('Error: '.$lintConfigResult->error."\n"));
-
-            return 1;
+            return $this->fail($output, $json, $lintConfigResult->error, self::EXIT_USAGE);
         }
 
         $lintDefaults = $this->defaultsBuilder->build($lintConfigResult->config);
@@ -76,30 +87,42 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         if ($parsed->help) {
             return $this->helpCommand->run(new Input('help', [], $input->globalOptions, []), $output);
         }
-        if (null !== $parsed->error) {
-            $output->write($output->error('Error: '.$parsed->error."\n"));
-            $output->write("Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--output <file>] [--baseline <file>] [--generate-baseline] [--redos] [--no-redos] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--redos-no-jit] [--no-validate] [--no-optimize] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
+        $arguments = $parsed->arguments;
+        if (null !== $parsed->error || null === $arguments) {
+            $code = $this->fail($output, $json, $parsed->error ?? 'Invalid lint arguments', self::EXIT_USAGE);
+            if (!$json) {
+                $output->writeError(self::USAGE);
+            }
 
-            return 1;
+            return $code;
         }
 
-        $arguments = $parsed->arguments;
-        if (null === $arguments) {
-            $output->write($output->error("Error: Invalid lint arguments\n"));
+        $format = $arguments->format;
+        $json = 'json' === $format;
+        $formatterRegistry = new FormatterRegistry();
+        if (!$formatterRegistry->has($format)) {
+            return $this->fail($output, $json, \sprintf('Unknown format: %s. Available formats: %s', $format, implode(', ', $formatterRegistry->getNames())), self::EXIT_USAGE);
+        }
 
-            return 1;
+        try {
+            $target = ProjectTarget::resolve(
+                $input->globalOptions->phpVersion,
+                $input->globalOptions->pcreVersion,
+                $lintConfigResult->config,
+                getcwd() ?: '.',
+                getenv(),
+            );
+            $regex = Regex::create($target->regexOptions());
+        } catch (InvalidRegexOptionException $e) {
+            return $this->fail($output, $json, 'Invalid option: '.$e->getMessage(), self::EXIT_USAGE);
         }
 
         $paths = $arguments->paths;
         $exclude = $arguments->exclude;
         $minSavings = (int) $arguments->minSavings;
         $verbosity = $arguments->verbosity;
-        $format = $arguments->format;
         $quiet = $arguments->quiet;
         $checkRedos = $arguments->checkRedos;
-        if ('off' === $arguments->redosMode) {
-            $checkRedos = false;
-        }
         $checkValidation = $arguments->checkValidation;
         $checkOptimizations = $arguments->checkOptimizations;
         $jobs = (int) $arguments->jobs;
@@ -118,9 +141,13 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             $exclude = ['vendor'];
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
-            return 1;
+        if (OutputConfiguration::VERBOSITY_QUIET !== $verbosity && !$output->isQuiet()) {
+            foreach ($target->notices() as $notice) {
+                $output->writeError('Note: '.$notice."\n");
+            }
+            if (!$json) {
+                $output->writeError(\sprintf("Target: PHP %s, PCRE2 %s (%s)\n", $target->php(), $target->target()->pcreVersion, $target->source()));
+            }
         }
 
         // Always respect configuration values regardless of verbosity
@@ -132,23 +159,18 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             showOptimizations: $checkOptimizations,
         );
 
-        $confirmOptions = $arguments->redosNoJit ? new ReDoSConfirmOptions(disableJit: true) : null;
+        // The confirmation always runs the interpreter, whose backtrack limit
+        // is the one it measures against; there is no setting to turn JIT on.
         $analysis = new RegexAnalysisService(
             $regex->parser(),
             redosThreshold: $arguments->redosThreshold ?? ReDoSSeverity::HIGH->value,
             redosMode: $arguments->redosMode,
-            redosConfirmOptions: $confirmOptions,
+            redosConfirmOptions: new ReDoSConfirmOptions(disableJit: true),
             lintEnabled: $arguments->checkLint,
             lintRules: $arguments->lintRules,
         );
 
-        $formatterRegistry = new FormatterRegistry();
-        if (!$formatterRegistry->has($format)) {
-            $output->write($output->error(\sprintf('Unknown format: %s. Available formats: %s', $format, implode(', ', $formatterRegistry->getNames()))."\n"));
-
-            return 1;
-        }
-        $formatter = $formatterRegistry->get($format);
+        $formatter = $json ? new JsonFormatter(target: $target->toArray()) : $formatterRegistry->get($format);
 
         if ('console' === $format) {
             $linkFormatter = '' !== $arguments->ide
@@ -213,9 +235,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
-            $output->write($output->error("Failed to collect patterns: {$e->getMessage()}\n"));
-
-            return 1;
+            return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), 1);
         }
 
         $collectionTime = (float) microtime(true) - $collectionStartTime;
@@ -231,8 +251,10 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             return 0;
         }
 
-        $patternCount = \count($patterns);
-        $output->write('  '.$output->dim("Scanned {$fileCount} files, found {$patternCount} patterns.\n\n"));
+        if ('console' === $format) {
+            $patternCount = \count($patterns);
+            $output->write('  '.$output->dim("Scanned {$fileCount} files, found {$patternCount} patterns.\n\n"));
+        }
 
         $progressCallback = null;
         $analysisStartTime = (float) microtime(true);
@@ -278,8 +300,11 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             $output->write($formatter->formatFooter());
         }
 
+        // Only the console report shares stdout with status lines.
+        $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
+
         if ($arguments->generateBaseline) {
-            $output->write("Baseline generated at {$arguments->generateBaseline}\n");
+            $status("Baseline generated at {$arguments->generateBaseline}\n");
         }
 
         if (null !== $outputFile) {
@@ -290,15 +315,48 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             }
             $dir = dirname($outputFile);
             if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
-                $output->write($output->error("Could not create directory: $dir\n"));
+                $output->writeError("Could not create directory: $dir\n");
             } elseif (false === @file_put_contents($outputFile, $content)) {
-                $output->write($output->error("Could not write to file: $outputFile\n"));
+                $output->writeError("Could not write to file: $outputFile\n");
             } else {
-                $output->write("Output also written to: {$outputFile}\n");
+                $status("Output also written to: {$outputFile}\n");
             }
         }
 
         return $report->stats['errors'] > 0 ? 1 : 0;
+    }
+
+    /**
+     * Report an error the run cannot go past: as JSON on stdout when a JSON
+     * report was asked for, so that stdout stays one JSON document, else on
+     * stderr.
+     */
+    private function fail(Output $output, bool $json, string $message, int $exitCode): int
+    {
+        if ($json) {
+            $output->write((new JsonFormatter())->formatError($message)."\n");
+        } else {
+            $output->writeError('Error: '.$message."\n");
+        }
+
+        return $exitCode;
+    }
+
+    /**
+     * Whether the command line asks for a JSON report, read before the
+     * configuration is: an unreadable regex.json is still reported as JSON.
+     *
+     * @param array<int, string> $args
+     */
+    private static function asksForJson(array $args): bool
+    {
+        foreach ($args as $index => $arg) {
+            if ('--format=json' === $arg || ('--format' === $arg && 'json' === ($args[$index + 1] ?? null))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

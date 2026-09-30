@@ -27,6 +27,11 @@ use RegexParser\Lint\Command\LintExtractorFactory;
 
 final class LintCommandTest extends TestCase
 {
+    /**
+     * @var resource|null
+     */
+    private $errorStream;
+
     public function test_lint_command_reports_invalid_config(): void
     {
         $cwd = getcwd();
@@ -43,12 +48,12 @@ final class LintCommandTest extends TestCase
             }
 
             $command = $this->makeLintCommand();
-            $output = new Output(false, false);
+            $output = $this->makeOutput();
 
             $exitCode = 0;
             $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput([]), $output), $exitCode);
 
-            $this->assertSame(1, $exitCode);
+            $this->assertSame(2, $exitCode);
             $this->assertStringContainsString('Invalid JSON', $buffer);
         } finally {
             if (is_dir($tempDir)) {
@@ -64,7 +69,7 @@ final class LintCommandTest extends TestCase
     public function test_lint_command_invokes_help(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput(['--help']), $output), $exitCode);
@@ -76,19 +81,19 @@ final class LintCommandTest extends TestCase
     public function test_lint_command_rejects_unknown_format(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput(['--format=bogus', self::fixturePath('simple_text.php')]), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Unknown format', $buffer);
     }
 
     public function test_lint_command_handles_empty_patterns(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput([
@@ -106,7 +111,7 @@ final class LintCommandTest extends TestCase
     public function test_lint_command_outputs_json_report(): void
     {
         $command = $this->makeLintCommand();
-        $output = new Output(false, false);
+        $output = $this->makeOutput();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput([
@@ -161,7 +166,25 @@ final class LintCommandTest extends TestCase
     {
         ob_start();
         $exitCode = $callback();
+        $output = (string) ob_get_clean();
 
-        return (string) ob_get_clean();
+        if (\is_resource($this->errorStream)) {
+            rewind($this->errorStream);
+            $output .= (string) stream_get_contents($this->errorStream);
+        }
+
+        return $output;
+    }
+
+    /**
+     * An output whose error stream the test reads back with stdout.
+     */
+    private function makeOutput(): Output
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $this->errorStream = $stream;
+
+        return new Output(false, false, errorStream: $stream);
     }
 }

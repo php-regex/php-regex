@@ -320,8 +320,7 @@ final class DebugCommand extends AbstractCommand
             $redosThreshold = ReDoSSeverity::tryFrom($defaults['redosThreshold']);
         }
 
-        // Use config defaults for redosNoJit
-        $disableJit = (bool) ($defaults['redosNoJit'] ?? false);
+        $disableJit = false;
 
         $confirmOptions = null;
         $stopParsing = false;
