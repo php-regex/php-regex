@@ -1678,7 +1678,7 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/tempestphp/tempest-framework/src/Tempest/Framework/Commands/MetaViewComponentCommand.php:74:24
+  corpus/tempestphp/tempest-framework/src/Tempest/Framework/Commands/MetaViewComponentCommand.php:73:24
       → /<x-slot\s*(name="(?<name>[\w-]+)")?((\s*\/>)|>(?<default>(.|\n)*?)<\/x-slot>)/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
