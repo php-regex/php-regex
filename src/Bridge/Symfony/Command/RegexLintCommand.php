@@ -15,7 +15,9 @@ namespace RegexParser\Bridge\Symfony\Command;
 
 use RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter;
 use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\Lint\Command\ProjectTarget;
 use RegexParser\Lint\Formatter\FormatterRegistry;
+use RegexParser\Lint\Formatter\JsonFormatter;
 use RegexParser\Lint\Formatter\LinkFormatter;
 use RegexParser\Lint\Formatter\RelativePathHelper;
 use RegexParser\Lint\RegexAnalysisService;
@@ -30,6 +32,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -69,6 +72,11 @@ final class RegexLintCommand extends Command
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
      * @param array<string, bool|int> $defaultOptimizations the bundle's optimizations, in snake_case
+     * @param array<string, mixed>    $regexOptions         what Regex::create() takes, but the target and the
+     *                                                      runtime validation: the settings patterns are read with
+     * @param string|int|null         $phpVersion           the bundle's php_version
+     * @param string|null             $pcreVersion          the bundle's pcre_version
+     * @param string|null             $projectDir           where composer.json is read; null reads none
      */
     public function __construct(
         private readonly RegexLintService $lint,
@@ -78,6 +86,10 @@ final class RegexLintCommand extends Command
         array $defaultExcludePaths = ['vendor'],
         array $defaultOptimizations = [],
         private readonly ?string $editorUrl = null,
+        private readonly array $regexOptions = [],
+        private readonly string|int|null $phpVersion = null,
+        private readonly ?string $pcreVersion = null,
+        private readonly ?string $projectDir = null,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -163,10 +175,29 @@ final class RegexLintCommand extends Command
             return Command::FAILURE;
         }
 
+        // The runtime service judges for the running PHP; the lint judges
+        // for the project's target, and never compiles with the running PHP.
+        try {
+            $target = ProjectTarget::fromSources(
+                ['regex_parser.php_version' => $this->phpVersion],
+                ['regex_parser.pcre_version' => $this->pcreVersion],
+                $this->projectDir,
+                getenv(),
+            );
+            $parser = Regex::create($this->regexOptions + $target->regexOptions())->parser();
+        } catch (InvalidRegexOptionException $e) {
+            $io->error('Invalid option: '.$e->getMessage());
+
+            return Command::FAILURE;
+        }
+        $analysis = $this->analysis->withParser($parser);
+        $lint = $this->lint->withAnalysis($analysis);
+
         $this->formatterRegistry->override(
             self::FORMAT_CONSOLE,
-            new SymfonyConsoleFormatter($this->analysis, $this->linkFormatter, $output->isDecorated()),
+            new SymfonyConsoleFormatter($analysis, $this->linkFormatter, $output->isDecorated()),
         );
+        $this->formatterRegistry->override('json', new JsonFormatter(target: $target->toArray()));
 
         $jobsExplicitlySet = $input->hasParameterOption(['--jobs', '-j']);
         $jobsValue = $input->getOption('jobs');
@@ -184,7 +215,9 @@ final class RegexLintCommand extends Command
         }
 
         if (self::FORMAT_CONSOLE === $format) {
-            $this->showBanner($io, $jobs);
+            $this->showBanner($io, $jobs, $target);
+        } else {
+            $this->reportTargetOnStderr($output, $target);
         }
 
         $startTime = (float) microtime(true);
@@ -234,7 +267,7 @@ final class RegexLintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $this->defaultOptimizations,
             );
-            $patterns = $this->lint->collectPatterns($request, $collectionProgress);
+            $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
             return $this->renderCollectionFailure($format, $output, $io, $e->getMessage());
         }
@@ -266,7 +299,7 @@ final class RegexLintCommand extends Command
             $progressCallback = null;
         }
 
-        $report = $this->lint->analyze($patterns, $request, $progressCallback);
+        $report = $lint->analyze($patterns, $request, $progressCallback);
 
         if (null !== $analysisBar) {
             $analysisBar->setMessage(str_pad(\count($patterns).'/'.\count($patterns), 15, ' ', \STR_PAD_LEFT));
@@ -287,7 +320,7 @@ final class RegexLintCommand extends Command
         if (self::FORMAT_CONSOLE === $format) {
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            $cacheStats = $this->analysis->getParser()->getCacheStats();
+            $cacheStats = $parser->getCacheStats();
             $io->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.$jobs.'</>');
             $io->newLine();
         }
@@ -295,18 +328,44 @@ final class RegexLintCommand extends Command
         return $stats['errors'] > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 
-    private function showBanner(SymfonyStyle $io, int $jobs): void
+    private function showBanner(SymfonyStyle $io, int $jobs, ProjectTarget $target): void
     {
         $version = Regex::VERSION;
 
         $io->writeln('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
         $io->newLine();
 
-        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Processes']));
+        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
         $io->writeln('<fg=white;options=bold>'.str_pad('Runtime', $maxLabelLength).'</> : PHP <fg=yellow>'.\PHP_VERSION.'</>');
+        $io->writeln('<fg=white;options=bold>'.str_pad('Target', $maxLabelLength).'</> : '.$this->describeTarget($target));
         $io->writeln('<fg=white;options=bold>'.str_pad('Processes', $maxLabelLength).'</> : <fg=yellow>'.$jobs.'</>');
+        foreach ($target->notices() as $notice) {
+            $io->writeln('<fg=gray>Note: '.$notice.'</>');
+        }
 
         $io->newLine();
+    }
+
+    /**
+     * Outside the console format, stdout holds the report alone: the target
+     * and what resolving it noticed go to stderr, when there is one.
+     */
+    private function reportTargetOnStderr(OutputInterface $output, ProjectTarget $target): void
+    {
+        if (!$output instanceof ConsoleOutputInterface) {
+            return;
+        }
+
+        $stderr = $output->getErrorOutput();
+        foreach ($target->notices() as $notice) {
+            $stderr->writeln('Note: '.$notice, OutputInterface::OUTPUT_RAW);
+        }
+        $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
+    }
+
+    private function describeTarget(ProjectTarget $target): string
+    {
+        return \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</> (%s)', $target->php(), $target->target()->pcreVersion, $target->source());
     }
 
     private function renderCollectionFailure(

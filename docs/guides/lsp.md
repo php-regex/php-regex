@@ -114,6 +114,52 @@ Context-aware completions for:
 
 ---
 
+## Target PHP and PCRE2
+
+Whether a pattern compiles depends on the PCRE2 release and, for a few rules,
+on the PHP version. The server judges every pattern of the workspace for one
+target, chosen once, when the editor sends `initialize`:
+
+1. `initializationOptions.phpVersion` and `initializationOptions.pcreVersion`
+   sent by the editor;
+2. `phpVersion` and `pcreVersion` in `regex.json` (and `regex.dist.json`) at
+   the root folder;
+3. `composer.json` at the root folder: `config.platform.php` if set, else the
+   lowest version `require.php` allows;
+4. the PHP running the server.
+
+The root folder is the first entry of `workspaceFolders`, else `rootUri`.
+Each version is chosen on its own: without a PCRE2 release, the server uses
+the one the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44 for
+8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
+PHP.
+
+```json
+{
+  "initializationOptions": {
+    "phpVersion": "8.2",
+    "pcreVersion": "10.40"
+  }
+}
+```
+
+`phpVersion` takes `"8.2"`, `"8.2.4"` or `80200`; `pcreVersion` takes a
+release such as `"10.42"`. A value the server cannot read is logged as a
+warning and the next source is used.
+
+The server logs the target once through `window/logMessage`, where most
+editors show the language server output:
+
+```text
+Target: PHP 8.2, PCRE2 10.40 (initializationOptions)
+```
+
+What it noticed on the way, such as a `composer.json` without `require.php`,
+comes in messages of its own. Changing the target takes a restart of the
+server.
+
+---
+
 ## IDE Configuration
 
 ### VS Code

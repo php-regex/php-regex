@@ -49,6 +49,8 @@ final readonly class ProjectTarget
     ) {}
 
     /**
+     * The target of the CLI: the command-line options, then regex.json.
+     *
      * @param string|null           $phpFlag    the --php-version option
      * @param string|null           $pcreFlag   the --pcre-version option
      * @param array<string, mixed>  $config     the loaded regex.json
@@ -59,17 +61,47 @@ final readonly class ProjectTarget
      */
     public static function resolve(?string $phpFlag, ?string $pcreFlag, array $config, string $projectDir, array $env): self
     {
-        $notices = [];
-        $runningPhp = false;
         $configPhp = $config['phpVersion'] ?? null;
         $configPcre = $config['pcreVersion'] ?? null;
 
-        if (null !== $phpFlag) {
-            [$phpVersionId, $phpSource] = [self::phpVersionId($phpFlag), '--php-version'];
-        } elseif (\is_string($configPhp) || \is_int($configPhp)) {
-            [$phpVersionId, $phpSource] = [self::phpVersionId($configPhp), 'regex.json'];
-        } else {
-            $fromComposer = self::fromComposer($projectDir, $env, $notices);
+        return self::fromSources(
+            ['--php-version' => $phpFlag, 'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null],
+            ['--pcre-version' => $pcreFlag, 'regex.json' => \is_string($configPcre) ? $configPcre : null],
+            $projectDir,
+            $env,
+        );
+    }
+
+    /**
+     * The target of an entry point that names its own settings: for each
+     * field, the first source that is set, in the order given; then, for
+     * the PHP version, composer.json and the running PHP, and for the PCRE2
+     * release, the one the PHP version bundles.
+     *
+     * @param array<string, string|int|null> $php        source name => version, e.g. "regex_parser.php_version" => "8.2"
+     * @param array<string, string|null>     $pcre       source name => PCRE2 release
+     * @param string|null                    $projectDir where composer.json is read, never a parent of it; null reads none
+     * @param array<string, string>          $env        the environment, for COMPOSER
+     *
+     * @throws InvalidRegexOptionException when a source that is set names no version
+     */
+    public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env): self
+    {
+        $notices = [];
+        $runningPhp = false;
+        $phpVersionId = null;
+        $phpSource = null;
+
+        foreach ($php as $name => $version) {
+            if (null !== $version) {
+                [$phpVersionId, $phpSource] = [self::phpVersionId($version), (string) $name];
+
+                break;
+            }
+        }
+
+        if (null === $phpVersionId || null === $phpSource) {
+            $fromComposer = null === $projectDir ? null : self::fromComposer($projectDir, $env, $notices);
             if (null === $fromComposer) {
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, 'running PHP', true];
             } else {
@@ -77,14 +109,17 @@ final readonly class ProjectTarget
             }
         }
 
+        $pcreVersion = null;
         $pcreSource = null;
-        if (null !== $pcreFlag) {
-            [$pcreVersion, $pcreSource] = [$pcreFlag, '--pcre-version'];
-        } elseif (\is_string($configPcre)) {
-            [$pcreVersion, $pcreSource] = [$configPcre, 'regex.json'];
-        } else {
-            $pcreVersion = $runningPhp ? PcreTarget::runtime()->pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
+        foreach ($pcre as $name => $release) {
+            if (null !== $release) {
+                [$pcreVersion, $pcreSource] = [$release, (string) $name];
+
+                break;
+            }
         }
+
+        $pcreVersion ??= $runningPhp ? PcreTarget::runtime()->pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
 
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
 

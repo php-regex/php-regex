@@ -74,7 +74,11 @@ parameters:
 ```
 
 A `phpVersion` or `pcreVersion` that names no release stops the analysis when
-it starts, not on the first file.
+it starts, not on the first file. So does a `threshold` that is not `low`,
+`medium`, `high` or `critical`, even while `redos` is off: `safe` and
+`unknown` are the verdicts a pattern gets, not thresholds. The configuration
+schema takes the four values in lower case; a rule built from an array, in
+custom wiring, reads them in any case.
 
 ## Identifiers
 

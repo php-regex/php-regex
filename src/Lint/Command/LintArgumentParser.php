@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Command;
 
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Lint\Extraction\InteropPresets;
 use RegexParser\Lint\Formatter\OutputConfiguration;
 use RegexParser\ReDoS\ReDoSMode;
@@ -256,9 +257,10 @@ final class LintArgumentParser
             }
 
             if (str_starts_with($arg, '--redos-threshold=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-threshold=')));
-                if (null === ReDoSSeverity::tryFrom($value)) {
-                    return new LintParseResult(null, 'Invalid value for --redos-threshold.');
+                try {
+                    $value = ReDoSSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')))->value;
+                } catch (InvalidRegexOptionException $e) {
+                    return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
                 $arguments = new LintArguments(
                     $arguments->paths,
@@ -292,9 +294,11 @@ final class LintArgumentParser
                 if ('' === $value || str_starts_with($value, '-')) {
                     return new LintParseResult(null, 'Missing value for --redos-threshold.');
                 }
-                $value = strtolower($value);
-                if (null === ReDoSSeverity::tryFrom($value)) {
-                    return new LintParseResult(null, 'Invalid value for --redos-threshold.');
+
+                try {
+                    $value = ReDoSSeverity::fromConfig($value)->value;
+                } catch (InvalidRegexOptionException $e) {
+                    return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
                 $arguments = new LintArguments(
                     $arguments->paths,

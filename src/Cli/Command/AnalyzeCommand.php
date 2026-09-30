@@ -16,6 +16,7 @@ namespace RegexParser\Cli\Command;
 use RegexParser\Cli\ConsoleStyle;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
@@ -168,12 +169,11 @@ final class AnalyzeCommand extends AbstractCommand
             }
 
             if (!$stopParsing && str_starts_with($arg, '--redos-threshold=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-threshold=')));
-                $threshold = ReDoSSeverity::tryFrom($value);
-                if (null === $threshold) {
-                    return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold.');
+                try {
+                    $redosThreshold = ReDoSSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
+                } catch (InvalidRegexOptionException $e) {
+                    return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
-                $redosThreshold = $threshold;
 
                 continue;
             }
@@ -183,11 +183,12 @@ final class AnalyzeCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Missing value for --redos-threshold.');
                 }
-                $threshold = ReDoSSeverity::tryFrom(strtolower($value));
-                if (null === $threshold) {
-                    return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold.');
+
+                try {
+                    $redosThreshold = ReDoSSeverity::fromConfig($value);
+                } catch (InvalidRegexOptionException $e) {
+                    return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
-                $redosThreshold = $threshold;
                 $i++;
 
                 continue;

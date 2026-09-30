@@ -50,6 +50,14 @@ final readonly class RegexLintService
     public function __construct(private RegexAnalysisService $analysis, private RegexPatternSourceCollection $sources) {}
 
     /**
+     * The same sources, analysed by another analysis.
+     */
+    public function withAnalysis(RegexAnalysisService $analysis): self
+    {
+        return new self($analysis, $this->sources);
+    }
+
+    /**
      * @param callable(int, int): void|null $progress
      *
      * @return array<RegexPatternOccurrence>

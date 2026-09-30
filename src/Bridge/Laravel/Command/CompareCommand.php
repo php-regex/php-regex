@@ -34,8 +34,8 @@ final class CompareCommand extends Command
     protected $signature = 'regex:compare
         {pattern1 : The first regex pattern}
         {pattern2 : The second regex pattern}
-        {--minimizer=hopcroft : DFA minimization algorithm (hopcroft, moore)}
-        {--determinizer=subset-indexed : NFA determinization algorithm (subset, subset-indexed)}
+        {--minimizer= : DFA minimization algorithm (hopcroft, moore); config regex-parser.automata.minimization_algorithm by default}
+        {--determinizer= : NFA determinization algorithm (subset, subset-indexed); config regex-parser.automata.determinization_algorithm by default}
         {--format=console : Output format (console, json)}';
 
     /**
@@ -58,8 +58,8 @@ final class CompareCommand extends Command
     {
         $pattern1 = (string) $this->argument('pattern1');
         $pattern2 = (string) $this->argument('pattern2');
-        $minimizer = strtolower((string) $this->option('minimizer'));
-        $determinizer = strtolower((string) $this->option('determinizer'));
+        $minimizer = strtolower($this->optionOrConfig('minimizer', 'minimization_algorithm', 'hopcroft'));
+        $determinizer = strtolower($this->optionOrConfig('determinizer', 'determinization_algorithm', 'subset-indexed'));
         $format = strtolower((string) $this->option('format'));
 
         // Validate patterns
@@ -174,5 +174,21 @@ final class CompareCommand extends Command
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * The option when given, else the automata setting of
+     * config/regex-parser.php, else the package default.
+     */
+    private function optionOrConfig(string $option, string $setting, string $default): string
+    {
+        $value = $this->option($option);
+        if (\is_string($value) && '' !== $value) {
+            return $value;
+        }
+
+        $configured = config('regex-parser.automata.'.$setting);
+
+        return \is_string($configured) && '' !== $configured ? $configured : $default;
     }
 }

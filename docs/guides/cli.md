@@ -63,7 +63,9 @@ RegexParser CLI provides these commands:
 
 ## Symfony Bundle Commands
 
-When using the Symfony bundle, you also get these `bin/console` commands:
+When using the Symfony bundle, you also get these `bin/console` commands
+(configuration and target: [the Symfony guide](symfony.md); the Laravel
+commands: [the Laravel guide](laravel.md)):
 
 | Command                 | Description                                           |
 |-------------------------|-------------------------------------------------------|

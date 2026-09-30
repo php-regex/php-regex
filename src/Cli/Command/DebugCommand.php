@@ -16,6 +16,7 @@ namespace RegexParser\Cli\Command;
 use RegexParser\Cli\ConsoleStyle;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Internal\DisplayEscaper;
@@ -317,7 +318,8 @@ final class DebugCommand extends AbstractCommand
         // Use config defaults for redosThreshold
         $redosThreshold = null;
         if (isset($defaults['redosThreshold']) && \is_string($defaults['redosThreshold'])) {
-            $redosThreshold = ReDoSSeverity::tryFrom($defaults['redosThreshold']);
+            // regex.json was validated when it was loaded.
+            $redosThreshold = ReDoSSeverity::fromConfig($defaults['redosThreshold']);
         }
 
         $disableJit = false;
@@ -401,12 +403,11 @@ final class DebugCommand extends AbstractCommand
             }
 
             if (!$stopParsing && str_starts_with($arg, '--redos-threshold=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-threshold=')));
-                $threshold = ReDoSSeverity::tryFrom($value);
-                if (null === $threshold) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold.'];
+                try {
+                    $redosThreshold = ReDoSSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
+                } catch (InvalidRegexOptionException $e) {
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
-                $redosThreshold = $threshold;
 
                 continue;
             }
@@ -416,11 +417,12 @@ final class DebugCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --redos-threshold.'];
                 }
-                $threshold = ReDoSSeverity::tryFrom(strtolower($value));
-                if (null === $threshold) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold.'];
+
+                try {
+                    $redosThreshold = ReDoSSeverity::fromConfig($value);
+                } catch (InvalidRegexOptionException $e) {
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
-                $redosThreshold = $threshold;
                 $i++;
 
                 continue;

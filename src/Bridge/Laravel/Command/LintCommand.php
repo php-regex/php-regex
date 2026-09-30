@@ -13,18 +13,24 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Laravel\Command;
 
-use RegexParser\Optimizer\OptimizerOptions;
 use Illuminate\Console\Command;
 use RegexParser\Bridge\Laravel\Output\LaravelConsoleFormatter;
+use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
+use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\Lint\Command\ProjectTarget;
 use RegexParser\Lint\Formatter\FormatterRegistry;
+use RegexParser\Lint\Formatter\JsonFormatter;
 use RegexParser\Lint\Formatter\LinkFormatter;
 use RegexParser\Lint\Formatter\RelativePathHelper;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintReport;
 use RegexParser\Lint\RegexLintRequest;
 use RegexParser\Lint\RegexLintService;
+use RegexParser\Optimizer\OptimizerOptions;
 use RegexParser\Regex;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Lint regex patterns in PHP source code.
@@ -36,6 +42,16 @@ final class LintCommand extends Command
     private const PROGRESS_BAR_WIDTH = 28;
     private const MESSAGE_PAD_LENGTH = 15;
     private const FORMAT_CONSOLE = 'console';
+
+    /**
+     * Keys of config/regex-parser.php that 2.0 no longer reads, with what
+     * to write instead. A config published by 1.x may still hold them.
+     */
+    private const STALE_KEYS = [
+        'exclude_paths' => 'renamed "exclude"',
+        'analysis.ignore_patterns' => 'merged into "redos.ignored_patterns"',
+        'analysis.redos_threshold' => 'removed, it was never read; the ReDoS threshold is "redos.threshold"',
+    ];
 
     /**
      * The name and signature of the console command.
@@ -58,9 +74,12 @@ final class LintCommand extends Command
      */
     protected $description = 'Lints, validates, and optimizes regex patterns in your PHP code';
 
+    /**
+     * The lint and analysis services are resolved when the command runs,
+     * not when artisan lists its commands: a setting they cannot use then
+     * stops this command only.
+     */
     public function __construct(
-        private readonly RegexLintService $lint,
-        private readonly RegexAnalysisService $analysis,
         private readonly FormatterRegistry $formatterRegistry,
     ) {
         parent::__construct();
@@ -85,7 +104,7 @@ final class LintCommand extends Command
         /** @var array<string>|null $excludeOption */
         $excludeOption = $this->option('exclude');
         /** @var array<string> $defaultExclude */
-        $defaultExclude = config('regex-parser.exclude_paths', ['vendor', 'node_modules', 'storage']);
+        $defaultExclude = config('regex-parser.exclude', ['vendor', 'node_modules', 'storage']);
         $exclude = !empty($excludeOption) ? $excludeOption : $defaultExclude;
 
         $minSavings = (int) $this->option('min-savings');
@@ -108,13 +127,36 @@ final class LintCommand extends Command
             $jobs = $this->detectCpuCount();
         }
 
+        // The Regex service judges for the running PHP; the lint judges for
+        // the project's target, and never compiles with the running PHP.
+        try {
+            $target = ProjectTarget::fromSources(
+                ['config regex-parser.php_version' => $this->configVersion('php_version')],
+                ['config regex-parser.pcre_version' => $this->configRelease('pcre_version')],
+                base_path(),
+                getenv(),
+            );
+            $parser = Regex::create(RegexParserServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
+            /** @var RegexAnalysisService $appAnalysis */
+            $appAnalysis = $this->laravel->make('regex-parser.analysis');
+            /** @var RegexLintService $appLint */
+            $appLint = $this->laravel->make('regex-parser.lint');
+        } catch (InvalidRegexOptionException $e) {
+            return $this->renderFailure($format, 'Invalid config/regex-parser.php: '.$e->getMessage());
+        }
+        $analysis = $appAnalysis->withParser($parser);
+        $lint = $appLint->withAnalysis($analysis);
+
         $this->formatterRegistry->override(
             self::FORMAT_CONSOLE,
-            new LaravelConsoleFormatter($this->analysis, $linkFormatter, $this->output->isDecorated()),
+            new LaravelConsoleFormatter($analysis, $linkFormatter, $this->output->isDecorated()),
         );
+        $this->formatterRegistry->override('json', new JsonFormatter(target: $target->toArray()));
 
         if (self::FORMAT_CONSOLE === $format) {
-            $this->showBanner($jobs);
+            $this->showBanner($jobs, $target);
+        } else {
+            $this->reportOnStderr($target);
         }
 
         $startTime = (float) microtime(true);
@@ -169,7 +211,7 @@ final class LintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $defaultOptimizations,
             );
-            $patterns = $this->lint->collectPatterns($request, $collectionProgress);
+            $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
             return $this->renderCollectionFailure($format, $e->getMessage());
         }
@@ -201,7 +243,7 @@ final class LintCommand extends Command
             $progressCallback = null;
         }
 
-        $report = $this->lint->analyze($patterns, $request, $progressCallback);
+        $report = $lint->analyze($patterns, $request, $progressCallback);
 
         if (null !== $analysisBar) {
             $analysisBar->setMessage(str_pad(\count($patterns).'/'.\count($patterns), 15, ' ', \STR_PAD_LEFT));
@@ -222,7 +264,7 @@ final class LintCommand extends Command
         if (self::FORMAT_CONSOLE === $format) {
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            $cacheStats = $this->analysis->getParser()->getCacheStats();
+            $cacheStats = $parser->getCacheStats();
             $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.$jobs.'</>');
             $this->newLine();
         }
@@ -230,16 +272,28 @@ final class LintCommand extends Command
         return $stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
     }
 
-    private function showBanner(int $jobs): void
+    private function showBanner(int $jobs, ProjectTarget $target): void
     {
         $version = Regex::VERSION;
 
         $this->line('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
         $this->newLine();
 
-        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Processes']));
+        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
         $this->line('<fg=white;options=bold>'.str_pad('Runtime', $maxLabelLength).'</> : PHP <fg=yellow>'.\PHP_VERSION.'</>');
+        $this->line('<fg=white;options=bold>'.str_pad('Target', $maxLabelLength).'</> : '.\sprintf(
+            'PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</> (%s)',
+            $target->php(),
+            $target->target()->pcreVersion,
+            $target->source(),
+        ));
         $this->line('<fg=white;options=bold>'.str_pad('Processes', $maxLabelLength).'</> : <fg=yellow>'.$jobs.'</>');
+        foreach ($target->notices() as $notice) {
+            $this->line('<fg=gray>Note: '.$notice.'</>');
+        }
+        foreach ($this->staleKeyWarnings() as $warning) {
+            $this->warn($warning);
+        }
 
         $this->newLine();
     }
@@ -254,6 +308,82 @@ final class LintCommand extends Command
             $formatter = $this->formatterRegistry->get($format);
             $this->output->writeln($formatter->formatError($message));
         }
+
+        return self::FAILURE;
+    }
+
+    /**
+     * Outside the console format, stdout holds the report alone: the
+     * target, the notices and the stale keys go to stderr, when there is one.
+     */
+    private function reportOnStderr(ProjectTarget $target): void
+    {
+        $output = $this->output->getOutput();
+        if (!$output instanceof ConsoleOutputInterface) {
+            return;
+        }
+
+        $stderr = $output->getErrorOutput();
+        foreach ([...$target->notices(), ...$this->staleKeyWarnings()] as $line) {
+            $stderr->writeln($line, OutputInterface::OUTPUT_RAW);
+        }
+        $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
+    }
+
+    /**
+     * The keys of config/regex-parser.php 2.0 ignores, each with what
+     * replaces it.
+     *
+     * @return list<string>
+     */
+    private function staleKeyWarnings(): array
+    {
+        $warnings = [];
+        foreach (self::STALE_KEYS as $key => $replacement) {
+            if (config()->has('regex-parser.'.$key)) {
+                $warnings[] = \sprintf(
+                    'config/regex-parser.php: "%s" is ignored since 2.0: %s. Re-publish the config (php artisan vendor:publish --tag=regex-parser-config --force) or edit the key.',
+                    $key,
+                    $replacement,
+                );
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * A version of config/regex-parser.php, as written: an int or a string.
+     */
+    private function configVersion(string $key): string|int|null
+    {
+        $value = config('regex-parser.'.$key);
+        if (null === $value || \is_string($value) || \is_int($value)) {
+            return $value;
+        }
+
+        throw new InvalidRegexOptionException(\sprintf('"%s" must be a version string like "8.2" or a PHP_VERSION_ID like 80200, not a %s.', $key, get_debug_type($value)));
+    }
+
+    private function configRelease(string $key): ?string
+    {
+        $value = config('regex-parser.'.$key);
+        if (null === $value || \is_string($value)) {
+            return $value;
+        }
+
+        throw new InvalidRegexOptionException(\sprintf('"%s" must be a PCRE2 release string like "10.42", not a %s.', $key, get_debug_type($value)));
+    }
+
+    private function renderFailure(string $format, string $message): int
+    {
+        if (self::FORMAT_CONSOLE !== $format) {
+            $this->output->writeln($this->formatterRegistry->get($format)->formatError($message));
+
+            return self::FAILURE;
+        }
+
+        $this->error($message);
 
         return self::FAILURE;
     }

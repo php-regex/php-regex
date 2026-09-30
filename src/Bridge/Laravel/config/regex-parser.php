@@ -42,13 +42,30 @@ return [
     | Runtime PCRE Validation
     |--------------------------------------------------------------------------
     |
-    | Whether to validate patterns against the runtime PCRE engine
-    | (preg_match compile check). Useful for catching PCRE-specific errors.
-    |
-    | Set to true in development, false in production for performance.
+    | Whether the Regex service also compiles every pattern with the running
+    | PHP (preg_match compile check), on top of its own validation. Off by
+    | default: it compiles each pattern twice. regex:lint never does it: it
+    | judges for php_version / pcre_version below.
     |
     */
-    'runtime_pcre_validation' => env('APP_DEBUG', false),
+    'runtime_pcre_validation' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Target PHP and PCRE2
+    |--------------------------------------------------------------------------
+    |
+    | The PHP version ("8.2", "8.2.4" or 80200) and the PCRE2 release
+    | ("10.42") regex:lint judges patterns for. Left null, the PHP version is
+    | the lowest one composer.json allows (base_path('composer.json')), else
+    | the running PHP, and the PCRE2 release is the one that PHP bundles.
+    | The Regex service always judges for the running PHP: it is the one the
+    | application runs on.
+    |
+    */
+    'php_version' => null,
+
+    'pcre_version' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -86,12 +103,13 @@ return [
         'enabled' => false,
 
         /*
-        | Minimum ReDoS severity to report: safe, low, medium, high, critical
+        | Minimum ReDoS severity to report: low, medium, high or critical, in
+        | any case. Another value stops regex:lint with an error.
         */
         'threshold' => 'high',
 
         /*
-        | List of patterns or full regexes to exclude from ReDoS analysis.
+        | Patterns, fragments or full regexes to skip in the risk analysis.
         */
         'ignored_patterns' => [],
     ],
@@ -109,16 +127,6 @@ return [
         | Complexity score above which a warning is emitted.
         */
         'warning_threshold' => 50,
-
-        /*
-        | Complexity score above which a pattern is flagged as ReDoS risk.
-        */
-        'redos_threshold' => 100,
-
-        /*
-        | List of regex fragments to treat as safe.
-        */
-        'ignore_patterns' => [],
     ],
 
     /*
@@ -126,7 +134,7 @@ return [
     | Automata Settings
     |--------------------------------------------------------------------------
     |
-    | Configuration for automata-based regex comparisons.
+    | The algorithms regex:compare uses unless its options say otherwise.
     |
     */
     'automata' => [
@@ -203,10 +211,10 @@ return [
     | Exclude Paths
     |--------------------------------------------------------------------------
     |
-    | Directories to exclude from scanning.
+    | Directories regex:lint does not scan.
     |
     */
-    'exclude_paths' => ['vendor', 'node_modules', 'storage'],
+    'exclude' => ['vendor', 'node_modules', 'storage'],
 
     /*
     |--------------------------------------------------------------------------

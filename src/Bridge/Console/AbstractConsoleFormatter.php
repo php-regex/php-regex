@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Console;
 
-use RegexParser\ValidationResult;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Lint\Formatter\LinkFormatter;
 use RegexParser\Lint\Formatter\OutputFormatterInterface;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintReport;
 use RegexParser\OptimizationResult;
+use RegexParser\ValidationResult;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**

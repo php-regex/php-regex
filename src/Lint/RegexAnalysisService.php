@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Lint;
 
 use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 use RegexParser\Node\AlternationNode;
@@ -68,9 +69,13 @@ final readonly class RegexAnalysisService
     private ReDoSMode $redosMode;
 
     /**
+     * @param string              $redosThreshold       the lowest severity reported: low, medium, high or
+     *                                                  critical, in any case
      * @param array<string>       $ignoredPatterns
      * @param array<string>       $redosIgnoredPatterns
      * @param array<string, bool> $lintRules
+     *
+     * @throws InvalidRegexOptionException when the threshold names no severity
      */
     public function __construct(
         private RegexParser $regex,
@@ -86,7 +91,7 @@ final readonly class RegexAnalysisService
         private bool $lintEnabled = true,
         private array $lintRules = [],
     ) {
-        $this->redosSeverityThreshold = ReDoSSeverity::tryFrom(strtolower($redosThreshold)) ?? ReDoSSeverity::HIGH;
+        $this->redosSeverityThreshold = ReDoSSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
 
         // When redosEnabled is false, force mode to OFF
@@ -105,6 +110,29 @@ final readonly class RegexAnalysisService
     public function getParser(): RegexParser
     {
         return $this->regex;
+    }
+
+    /**
+     * The same analysis, judging patterns with another parser: how a lint
+     * command judges for the project's target with the settings of the
+     * application's service.
+     */
+    public function withParser(RegexParser $parser): self
+    {
+        return new self(
+            $parser,
+            $this->extractor,
+            $this->warningThreshold,
+            $this->redosSeverityThreshold->value,
+            $this->ignoredPatterns,
+            [],
+            $this->ignoreParseErrors,
+            $this->redosMode,
+            $this->redosConfirmOptions,
+            ReDoSMode::OFF !== $this->redosMode,
+            $this->lintEnabled,
+            $this->lintRules,
+        );
     }
 
     /**

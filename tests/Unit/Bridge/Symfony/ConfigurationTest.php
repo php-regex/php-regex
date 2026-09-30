@@ -36,8 +36,11 @@ final class ConfigurationTest extends TestCase
          *     extractor_service: string|null,
          *     analysis: array{
          *         warning_threshold: int,
-         *         redos_threshold: int,
-         *         ignore_patterns: array<int, string>
+         *     },
+         *     redos: array{
+         *         enabled: bool,
+         *         threshold: string,
+         *         ignored_patterns: array<int, string>
          *     },
          *     automata: array{
          *         minimization_algorithm: string,
@@ -62,8 +65,9 @@ final class ConfigurationTest extends TestCase
         $this->assertSame('regex_', $config['cache']['prefix']);
         $this->assertNull($config['extractor_service']);
         $this->assertSame(50, $config['analysis']['warning_threshold']);
-        $this->assertSame(100, $config['analysis']['redos_threshold']);
-        $this->assertSame([], $config['analysis']['ignore_patterns']);
+        // 2.0: no unread complexity score, one ignore list, under "redos".
+        $this->assertArrayNotHasKey('redos_threshold', $config['analysis']);
+        $this->assertSame([], $config['redos']['ignored_patterns']);
         $this->assertSame('hopcroft', $config['automata']['minimization_algorithm']);
         $this->assertSame('subset-indexed', $config['automata']['determinization_algorithm']);
         $this->assertTrue($config['optimizations']['digits']);
@@ -91,8 +95,11 @@ final class ConfigurationTest extends TestCase
          *     extractor_service: string|null,
          *     analysis: array{
          *         warning_threshold: int,
-         *         redos_threshold: int,
-         *         ignore_patterns: array<int, string>
+         *     },
+         *     redos: array{
+         *         enabled: bool,
+         *         threshold: string,
+         *         ignored_patterns: array<int, string>
          *     },
          *     automata: array{
          *         minimization_algorithm: string,
@@ -117,8 +124,9 @@ final class ConfigurationTest extends TestCase
             'extractor_service' => 'my_custom_extractor',
             'analysis' => [
                 'warning_threshold' => 1,
-                'redos_threshold' => 2,
-                'ignore_patterns' => ['foo', 'bar'],
+            ],
+            'redos' => [
+                'ignored_patterns' => ['foo', 'bar'],
             ],
             'automata' => [
                 'minimization_algorithm' => 'moore',
@@ -142,8 +150,6 @@ final class ConfigurationTest extends TestCase
          *     extractor_service: string|null,
          *     analysis: array{
          *         warning_threshold: int,
-         *         redos_threshold: int,
-         *         ignore_patterns: array<int, string>
          *     }
          * } $config
          */
@@ -152,9 +158,9 @@ final class ConfigurationTest extends TestCase
         $cacheConfig = $config['cache'];
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
         $this->assertSame('my_custom_extractor', $config['extractor_service'] ?? 'should_not_exist');
-        $this->assertSame(['foo', 'bar'], $config['analysis']['ignore_patterns'] ?? []);
+        $this->assertSame(['foo', 'bar'], $config['redos']['ignored_patterns']);
         $this->assertSame(1, $config['analysis']['warning_threshold'] ?? 0);
-        $this->assertSame(2, $config['analysis']['redos_threshold'] ?? 'high');
+        $this->assertArrayNotHasKey('redos_threshold', $config['analysis']);
         $this->assertSame('moore', $config['automata']['minimization_algorithm'] ?? '');
         $this->assertSame('subset', $config['automata']['determinization_algorithm'] ?? '');
         $this->assertFalse($config['optimizations']['digits']);

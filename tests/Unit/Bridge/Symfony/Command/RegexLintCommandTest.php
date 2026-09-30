@@ -15,6 +15,7 @@ namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
 
 use PHPUnit\Framework\TestCase;
 use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
+use RegexParser\Lint\Command\ProjectTarget;
 use RegexParser\Lint\Formatter\FormatterRegistry;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintService;
@@ -147,9 +148,10 @@ final class RegexLintCommandTest extends TestCase
 
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->exactly(2))->method('newLine');
-        $io->expects($this->exactly(3))->method('writeln');
+        // Title, runtime, target and processes.
+        $io->expects($this->exactly(4))->method('writeln');
 
-        $method->invoke($command, $io, 1);
+        $method->invoke($command, $io, 1, ProjectTarget::fromSources([], [], null, []));
     }
 
     public function test_show_footer_outputs_correct_format(): void

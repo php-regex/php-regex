@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Bridge\Laravel;
 
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\ServiceProvider;
 use PhpParser\ParserFactory;
 use RegexParser\Bridge\Laravel\Command\CompareCommand;
@@ -27,6 +28,7 @@ use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
 use RegexParser\Cache\PsrSimpleCacheAdapter;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Lint\Extraction\ExtractorInterface;
 use RegexParser\Lint\Formatter\FormatterRegistry;
 use RegexParser\Lint\PhpRegexPatternSource;
@@ -48,7 +50,7 @@ final class RegexParserServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom($this->configPath(), 'regex-parser');
+        $this->mergeConfigWithNestedDefaults();
 
         $this->registerCache();
         $this->registerExtractor();
@@ -99,9 +101,74 @@ final class RegexParserServiceProvider extends ServiceProvider
         ];
     }
 
+    /**
+     * The config file values under the package defaults, section by
+     * section: a config published by an older release lacks the keys added
+     * since, which Laravel's mergeConfigFrom() only fills at the top level.
+     * A list (paths, exclude, ignored_patterns) is replaced wholesale.
+     *
+     * @internal
+     *
+     * @param array<array-key, mixed> $defaults
+     * @param array<array-key, mixed> $config
+     *
+     * @return array<array-key, mixed>
+     */
+    public static function withDefaults(array $defaults, array $config): array
+    {
+        foreach ($defaults as $key => $default) {
+            if (!\array_key_exists($key, $config)) {
+                $config[$key] = $default;
+
+                continue;
+            }
+
+            if (\is_array($default) && !array_is_list($default) && \is_array($config[$key])) {
+                $config[$key] = self::withDefaults($default, $config[$key]);
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * What Regex::create() takes from config/regex-parser.php, the target
+     * and the runtime validation left out: the settings patterns are read
+     * with, by the Regex service and by regex:lint alike.
+     *
+     * @internal
+     *
+     * @return array<string, mixed>
+     */
+    public static function regexOptions(Application $app): array
+    {
+        /** @var array{max_pattern_length: int, max_lookbehind_length: int, redos: array{ignored_patterns: array<string>}} $config */
+        $config = $app['config']['regex-parser'];
+
+        return [
+            'max_pattern_length' => $config['max_pattern_length'],
+            'max_lookbehind_length' => $config['max_lookbehind_length'],
+            'cache' => $app->make('regex-parser.cache'),
+            'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
+        ];
+    }
+
     private function configPath(): string
     {
         return __DIR__.'/config/regex-parser.php';
+    }
+
+    private function mergeConfigWithNestedDefaults(): void
+    {
+        // A cached configuration was merged when it was cached.
+        if (!($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
+            $config = $this->app->make('config');
+            /** @var array<string, mixed> $defaults */
+            $defaults = require $this->configPath();
+            $current = $config->get('regex-parser', []);
+
+            $config->set('regex-parser', self::withDefaults($defaults, \is_array($current) ? $current : []));
+        }
     }
 
     private function registerCache(): void
@@ -158,18 +225,11 @@ final class RegexParserServiceProvider extends ServiceProvider
 
     private function registerRegex(): void
     {
+        // The application's own service: it judges for the running PHP,
+        // whatever php_version / pcre_version say (they drive regex:lint).
         $this->app->singleton(Regex::class, static function (Application $app): Regex {
-            /** @var array{max_pattern_length: int, max_lookbehind_length: int, runtime_pcre_validation: bool, redos: array{ignored_patterns: array<string>}} $config */
-            $config = $app['config']['regex-parser'];
-            /** @var CacheInterface $cache */
-            $cache = $app->make('regex-parser.cache');
-
-            return Regex::create([
-                'max_pattern_length' => $config['max_pattern_length'],
-                'max_lookbehind_length' => $config['max_lookbehind_length'],
-                'cache' => $cache,
-                'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
-                'runtime_pcre_validation' => $config['runtime_pcre_validation'],
+            return Regex::create(self::regexOptions($app) + [
+                'runtime_pcre_validation' => true === $app['config']['regex-parser.runtime_pcre_validation'],
             ]);
         });
 
@@ -178,27 +238,25 @@ final class RegexParserServiceProvider extends ServiceProvider
 
     private function registerAnalysisServices(): void
     {
+        // Resolved when first used, never while the application boots: an
+        // unknown ReDoS threshold stops the command that analyses, not every
+        // artisan command.
         $this->app->singleton('regex-parser.analysis', static function (Application $app): RegexAnalysisService {
-            /** @var array{redos: array{enabled: bool, threshold: string, ignored_patterns: array<string>}, analysis: array{warning_threshold: int, ignore_patterns: array<string>}} $config */
+            /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, analysis: array{warning_threshold: int}} $config */
             $config = $app['config']['regex-parser'];
             /** @var Regex $regex */
             $regex = $app->make(Regex::class);
             /** @var RegexPatternExtractor $extractor */
             $extractor = $app->make('regex-parser.extractor');
-
-            $ignoredPatterns = array_values(array_unique([
-                ...$config['analysis']['ignore_patterns'],
-                ...$config['redos']['ignored_patterns'],
-            ]));
+            $threshold = $config['redos']['threshold'];
 
             return new RegexAnalysisService(
                 $regex->parser(),
                 $extractor,
-                $config['analysis']['warning_threshold'],
-                $config['redos']['threshold'],
-                $ignoredPatterns,
-                $config['redos']['ignored_patterns'],
-                $config['redos']['enabled'],
+                warningThreshold: $config['analysis']['warning_threshold'],
+                redosThreshold: \is_string($threshold) ? $threshold : throw new InvalidRegexOptionException(\sprintf('The ReDoS threshold must be low, medium, high or critical, not a %s.', get_debug_type($threshold))),
+                redosIgnoredPatterns: $config['redos']['ignored_patterns'],
+                redosEnabled: $config['redos']['enabled'],
             );
         });
 

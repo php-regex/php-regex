@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\DependencyInjection;
 
+use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
+use RegexParser\RegexOptions;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\Builder\VariableNodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -22,6 +26,15 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 final readonly class Configuration implements ConfigurationInterface
 {
+    /**
+     * The 1.x keys 2.0 refuses, with what replaces them.
+     */
+    private const REMOVED_KEYS = [
+        'exclude_paths' => '"exclude_paths" was renamed "exclude" in 2.0.',
+        'ignore_patterns' => '"ignore_patterns" was merged into "redos.ignored_patterns" in 2.0.',
+        'redos_threshold' => '"redos_threshold" was removed in 2.0: it was never read; the ReDoS threshold is "redos.threshold".',
+    ];
+
     /**
      * @return TreeBuilder<'array'> the tree builder instance
      */
@@ -41,8 +54,22 @@ final readonly class Configuration implements ConfigurationInterface
                     ->info('The maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE\'s 65535.')
                 ->end()
                 ->booleanNode('runtime_pcre_validation')
-                    ->defaultValue('%kernel.debug%')
-                    ->info('Whether to validate patterns against the runtime PCRE engine (preg_match compile check).')
+                    ->defaultFalse()
+                    ->info('Whether the regex_parser.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version.')
+                ->end()
+                ->scalarNode('php_version')
+                    ->defaultNull()
+                    ->info('The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The regex_parser.regex service always judges for the running PHP.')
+                    ->validate()
+                        ->always(static fn (mixed $version): string|int|null => self::targetVersion('php_version', $version))
+                    ->end()
+                ->end()
+                ->scalarNode('pcre_version')
+                    ->defaultNull()
+                    ->info('The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles.')
+                    ->validate()
+                        ->always(static fn (mixed $release): string|int|null => self::targetVersion('pcre_version', $release))
+                    ->end()
                 ->end()
                 ->arrayNode('cache')
                     ->addDefaultsIfNotSet()
@@ -75,20 +102,15 @@ final readonly class Configuration implements ConfigurationInterface
                         ->end()
                         ->scalarNode('threshold')
                             ->defaultValue('high')
-                            ->info('Minimum ReDoS severity to report (safe|low|medium|high|critical).')
-                            ->beforeNormalization()
-                                ->ifString()
-                                ->then(static fn (string $value): string => strtolower($value))
-                            ->end()
+                            ->info('Minimum ReDoS severity to report (low|medium|high|critical, in any case).')
                             ->validate()
-                                ->ifNotInArray(['safe', 'low', 'medium', 'high', 'critical'])
-                                ->thenInvalid('Invalid "regex_parser.redos.threshold" value "%s". Allowed: safe, low, medium, high, critical.')
+                                ->always(static fn (mixed $value): string => self::redosThreshold($value))
                             ->end()
                         ->end()
                         ->arrayNode('ignored_patterns')
                             ->scalarPrototype()->end()
                             ->defaultValue([])
-                            ->info('List of patterns or full regexes to exclude from ReDoS analysis.')
+                            ->info('Patterns, fragments or full regexes to skip in the risk analysis (e.g. Symfony requirement constants).')
                         ->end()
                     ->end()
                 ->end()
@@ -100,16 +122,8 @@ final readonly class Configuration implements ConfigurationInterface
                             ->min(0)
                             ->info('Complexity score above which a warning is emitted.')
                         ->end()
-                        ->integerNode('redos_threshold')
-                            ->defaultValue(100)
-                            ->min(0)
-                            ->info('Complexity score above which a pattern is flagged as ReDoS risk.')
-                        ->end()
-                        ->arrayNode('ignore_patterns')
-                            ->scalarPrototype()->end()
-                            ->defaultValue([])
-                            ->info('List of regex fragments to treat as safe (e.g. Symfony requirement constants).')
-                        ->end()
+                        ->append(self::removedKey('ignore_patterns'))
+                        ->append(self::removedKey('redos_threshold'))
                     ->end()
                 ->end()
                 ->arrayNode('automata')
@@ -181,11 +195,12 @@ final readonly class Configuration implements ConfigurationInterface
                     ->defaultValue(['src'])
                     ->info('Directories to scan for regex patterns. Defaults to src/ for Symfony applications.')
                 ->end()
-                ->arrayNode('exclude_paths')
+                ->arrayNode('exclude')
                     ->scalarPrototype()->end()
                     ->defaultValue(['vendor'])
-                    ->info('Directories to exclude from scanning. Defaults to vendor/, tests/, and Fixtures/ for Symfony applications.')
+                    ->info('Directories regex:lint does not scan. Defaults to vendor/.')
                 ->end()
+                ->append(self::removedKey('exclude_paths'))
                 ->scalarNode('ide')
                     ->defaultValue('%env(default::SYMFONY_IDE)%')
                     ->info('IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Falls back to framework.ide.')
@@ -193,5 +208,56 @@ final readonly class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    /**
+     * A 1.x key: no value, and refused with what replaces it when set, so
+     * that the message names the new key instead of listing every option.
+     */
+    private static function removedKey(string $name): VariableNodeDefinition
+    {
+        $node = new VariableNodeDefinition($name);
+        $node
+            ->info('Removed in 2.0. '.self::REMOVED_KEYS[$name])
+            ->validate()
+                ->always(static fn (): never => throw new InvalidRegexOptionException(self::REMOVED_KEYS[$name]))
+            ->end();
+
+        return $node;
+    }
+
+    /**
+     * The threshold, lower-cased, read with the one threshold parser.
+     *
+     * @throws InvalidRegexOptionException when it names no threshold
+     */
+    private static function redosThreshold(mixed $value): string
+    {
+        if (!\is_string($value)) {
+            throw new InvalidRegexOptionException(\sprintf('The ReDoS threshold must be low, medium, high or critical, not a %s.', get_debug_type($value)));
+        }
+
+        return ReDoSSeverity::fromConfig($value)->value;
+    }
+
+    /**
+     * The version as given, once Regex::create() could read it.
+     *
+     * @throws InvalidRegexOptionException when it names no version
+     */
+    private static function targetVersion(string $key, mixed $version): string|int|null
+    {
+        if (null === $version) {
+            return null;
+        }
+
+        if (!\is_string($version) && !\is_int($version)) {
+            // YAML reads an unquoted 8.2 as a float, and 8.10 as 8.1.
+            throw new InvalidRegexOptionException(\sprintf('"%s" must be a quoted version like "8.2", not a %s.', $key, get_debug_type($version)));
+        }
+
+        RegexOptions::fromArray([$key => $version]);
+
+        return $version;
     }
 }

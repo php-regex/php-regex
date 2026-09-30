@@ -52,8 +52,6 @@ final class RegexParserRule implements Rule
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
-    private const REDOS_THRESHOLDS = ['low', 'medium', 'high', 'critical'];
-
     private const PREG_FUNCTION_MAP = [
         'preg_match' => 0,
         'preg_match_all' => 0,
@@ -144,7 +142,7 @@ final class RegexParserRule implements Rule
      *                                         judged for it, with the PCRE2 it bundles, unless "phpVersion"
      *                                         is "runtime" or names a version, and "pcreVersion" a release
      *
-     * @throws InvalidRegexOptionException when "phpVersion" or "pcreVersion" cannot be read
+     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null)
     {
@@ -165,10 +163,7 @@ final class RegexParserRule implements Rule
 
         $this->lintEnabled = true === ($lint['enabled'] ?? false);
         $this->redosEnabled = true === ($redos['enabled'] ?? false);
-        $threshold = $redos['threshold'] ?? null;
-        $this->redosThreshold = \is_string($threshold) && \in_array($threshold, self::REDOS_THRESHOLDS, true)
-            ? $threshold
-            : ReDoSSeverity::CRITICAL->value;
+        $this->redosThreshold = self::redosThreshold($redos['threshold'] ?? null);
         $this->optimizationsEnabled = true === ($optimizations['enabled'] ?? false);
         $minSavings = $optimizations['minSavings'] ?? null;
         $this->optimizationMinSavings = \is_int($minSavings) ? max(1, $minSavings) : 1;
@@ -473,6 +468,25 @@ final class RegexParserRule implements Rule
         }
 
         return $options;
+    }
+
+    /**
+     * "checks.redos.threshold", critical when unset. It is read even while
+     * the section is off: a typo there would bite the day it is switched on.
+     *
+     * @throws InvalidRegexOptionException when the value names no threshold
+     */
+    private static function redosThreshold(mixed $threshold): string
+    {
+        if (null === $threshold) {
+            return ReDoSSeverity::CRITICAL->value;
+        }
+
+        if (!\is_string($threshold)) {
+            throw new InvalidRegexOptionException(\sprintf('"checks.redos.threshold" must be low, medium, high or critical, not a %s.', get_debug_type($threshold)));
+        }
+
+        return ReDoSSeverity::fromConfig($threshold)->value;
     }
 
     /**

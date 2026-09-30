@@ -358,6 +358,95 @@ running PHP.
   `{"error": "..."}`, and the progress and status lines stay out of stdout, so
   that stdout always holds one JSON document.
 
+#### A ReDoS threshold is low, medium, high or critical, everywhere
+
+Every place that takes a ReDoS threshold reads it the same way: `low`,
+`medium`, `high` or `critical`, in any case. `safe` and `unknown` are the
+verdicts a pattern gets, not thresholds, and are refused like any other word,
+with the value quoted in the message.
+
+| Where                                               | 1.x with an unknown value      | 2.0                                  |
+|-----------------------------------------------------|--------------------------------|--------------------------------------|
+| `--redos-threshold` (`lint`, `analyze`, `debug`)    | refused; `safe` accepted       | refused, `safe` and `unknown` too    |
+| `regex_parser.redos.threshold` (Symfony)            | refused; `safe` accepted       | refused when the container compiles  |
+| `--redos-threshold` of `regex:analyze`, `regex:security` | refused; `safe` accepted  | refused                              |
+| `redos.threshold` (Laravel)                         | read as `high`                 | `regex:lint` stops with an error     |
+| `checks.redos.threshold` (PHPStan, array wiring)    | read as `critical`             | refused when the rule is built, even with ReDoS off |
+| `RegexAnalysisService` `$redosThreshold`            | read as `high`                 | `InvalidRegexOptionException`        |
+
+A Symfony configuration using `threshold: safe` to report every finding
+should use `low`.
+
+#### Symfony: the bundle configuration in 2.0
+
+| 1.x                                     | 2.0                                                        |
+|-----------------------------------------|------------------------------------------------------------|
+| `runtime_pcre_validation: '%kernel.debug%'` (default) | `runtime_pcre_validation: false` (default)   |
+| `exclude_paths`                         | `exclude`                                                  |
+| `analysis.ignore_patterns`              | `redos.ignored_patterns` (the two lists were merged anyway) |
+| `analysis.redos_threshold`              | removed: it was never read                                 |
+| —                                       | `php_version`, `pcre_version`: the target of `regex:lint`  |
+
+A 1.x key stops the container compile with a message naming the key that
+replaces it.
+
+`runtime_pcre_validation` no longer follows `kernel.debug`: a debug kernel
+compiled every pattern a second time with the running PHP. Set it to `true` to
+keep that. It applies to the `regex_parser.regex` service only.
+
+`regex:lint` judges for the project's target, like the standalone lint
+command: `php_version` / `pcre_version`, else `composer.json` in
+`%kernel.project_dir%`, else the running PHP. It never uses
+`runtime_pcre_validation`, and its JSON report gains a `target` key. The
+`regex_parser.regex` service keeps judging for the running PHP. See
+[the Symfony guide](docs/guides/symfony.md).
+
+The container parameters `regex_parser.analysis.redos_threshold`,
+`regex_parser.analysis.ignore_patterns` and `regex_parser.exclude_paths` are
+gone; `regex_parser.exclude`, `regex_parser.php_version` and
+`regex_parser.pcre_version` are new.
+
+#### Laravel: config/regex-parser.php in 2.0
+
+| 1.x                                              | 2.0                                                   |
+|--------------------------------------------------|-------------------------------------------------------|
+| `'runtime_pcre_validation' => env('APP_DEBUG', false)` | `'runtime_pcre_validation' => false`            |
+| `exclude_paths`                                  | `exclude`                                             |
+| `analysis.ignore_patterns`                       | `redos.ignored_patterns`                              |
+| `analysis.redos_threshold`                       | removed: it was never read                            |
+| —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
+| `automata.*`, never read                         | the defaults of `regex:compare`                       |
+
+Re-publish the file:
+
+```bash
+php artisan vendor:publish --tag=regex-parser-config --force
+```
+
+A file published by 1.x keeps working: every key it lacks, inside each section
+too, takes the package default, and `regex:lint` prints a warning for each 1.x
+key it still holds, with the key that replaces it. The old key is not read. A
+published file still has `'runtime_pcre_validation' => env('APP_DEBUG', false)`
+until you change it.
+
+`redos.enabled` now switches the ReDoS analysis of `regex:lint` on; 1.x handed
+it to another setting and never ran the analysis. `regex:lint` judges for the
+project's target (`php_version` / `pcre_version`, else `composer.json` at
+`base_path()`, else the running PHP), never with `runtime_pcre_validation`,
+and its JSON report gains a `target` key. The `Regex` service keeps judging for
+the running PHP. The lint and analysis services are resolved when a command
+uses them, so a setting they cannot use stops that command only. See
+[the Laravel guide](docs/guides/laravel.md).
+
+#### The language server judges for the workspace's target
+
+1.x judged for the PHP running the server. The server now resolves the target
+at `initialize`, for the first workspace folder (else `rootUri`):
+`initializationOptions.phpVersion` / `pcreVersion`, else `regex.json` there,
+else `composer.json` there, else the running PHP. It logs the target with
+`window/logMessage`. A `Regex` passed to `new Server($regex)` is used as it is.
+See [the language server guide](docs/guides/lsp.md#target-php-and-pcre2).
+
 #### `clearCaches()` replaces `clearValidatorCaches()`
 
 `RegexParser::clearValidatorCaches()` and `Regex::clearValidatorCaches()` are

@@ -86,7 +86,6 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$extractor', service('regex_parser.extractor')->nullOnInvalid())
         ->arg('$warningThreshold', param('regex_parser.analysis.warning_threshold'))
         ->arg('$redosThreshold', param('regex_parser.redos.threshold'))
-        ->arg('$ignoredPatterns', param('regex_parser.analysis.ignore_patterns'))
         ->arg('$redosIgnoredPatterns', param('regex_parser.redos.ignored_patterns'))
         ->arg('$redosEnabled', param('regex_parser.redos.enabled'));
 
@@ -128,9 +127,21 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$analysis', service('regex_parser.service.regex_analysis'))
         ->arg('$formatterRegistry', service('regex_parser.formatter_registry'))
         ->arg('$defaultPaths', param('regex_parser.paths'))
-        ->arg('$defaultExcludePaths', param('regex_parser.exclude_paths'))
+        ->arg('$defaultExcludePaths', param('regex_parser.exclude'))
         ->arg('$defaultOptimizations', param('regex_parser.optimizations'))
         ->arg('$editorUrl', param('regex_parser.editor_format'))
+        // The lint judges for the project's target, with the service's
+        // settings but never its runtime validation, which only the running
+        // PHP can do.
+        ->arg('$regexOptions', [
+            'max_pattern_length' => param('regex_parser.max_pattern_length'),
+            'max_lookbehind_length' => param('regex_parser.max_lookbehind_length'),
+            'cache' => service('regex_parser.cache'),
+            'redos_ignored_patterns' => param('regex_parser.redos.ignored_patterns'),
+        ])
+        ->arg('$phpVersion', param('regex_parser.php_version'))
+        ->arg('$pcreVersion', param('regex_parser.pcre_version'))
+        ->arg('$projectDir', param('regex_parser.project_dir'))
         ->tag('console.command')
         ->public();
 

@@ -20,6 +20,7 @@ use RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor;
 use RegexParser\Bridge\Symfony\Security\SecurityConfigLocator;
 use RegexParser\Bridge\Symfony\Security\SecurityFirewallAnalyzer;
 use RegexParser\Bridge\Symfony\Security\SecurityFirewallReport;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Lint\Formatter\RelativePathHelper;
 use RegexParser\ReDoS\ReDoSSeverity;
@@ -84,7 +85,7 @@ final class RegexSecurityCommand extends Command
                 'redos-threshold',
                 null,
                 InputOption::VALUE_OPTIONAL,
-                'Minimum ReDoS severity to report (safe|low|medium|high|critical).',
+                'Minimum ReDoS severity to report (low|medium|high|critical).',
                 $this->defaultRedosThreshold,
             )
             ->setHelp(<<<'EOF'
@@ -216,17 +217,15 @@ final class RegexSecurityCommand extends Command
     private function resolveThreshold(InputInterface $input, SymfonyStyle $io): ?ReDoSSeverity
     {
         $thresholdValue = $input->getOption('redos-threshold');
-        $normalized = is_string($thresholdValue) ? strtolower(trim($thresholdValue)) : '';
-        $threshold = '' === $normalized ? $this->defaultRedosThreshold : $normalized;
+        $threshold = \is_string($thresholdValue) ? trim($thresholdValue) : '';
 
-        $severity = ReDoSSeverity::tryFrom($threshold);
-        if (null === $severity || ReDoSSeverity::UNKNOWN === $severity) {
-            $io->error('The --redos-threshold value must be one of: safe, low, medium, high, critical.');
+        try {
+            return ReDoSSeverity::fromConfig('' === $threshold ? $this->defaultRedosThreshold : $threshold);
+        } catch (InvalidRegexOptionException $e) {
+            $io->error('Invalid value for --redos-threshold: '.$e->getMessage());
 
             return null;
         }
-
-        return $severity;
     }
 
     private function isYamlFile(string $path): bool

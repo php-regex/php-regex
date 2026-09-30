@@ -187,7 +187,7 @@ final class RegexParserServiceProviderTest extends TestCase
         $this->assertArrayHasKey('automata', $config);
         $this->assertArrayHasKey('optimizations', $config);
         $this->assertArrayHasKey('paths', $config);
-        $this->assertArrayHasKey('exclude_paths', $config);
+        $this->assertArrayHasKey('exclude', $config);
     }
 
     /**

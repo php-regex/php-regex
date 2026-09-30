@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\ReDoS;
 
+use RegexParser\Exception\InvalidRegexOptionException;
+
 /**
  * @api
  */
@@ -47,4 +49,25 @@ enum ReDoSSeverity: string
      * Critical risk.
      */
     case CRITICAL = 'critical';
+
+    /**
+     * The severity a configured threshold names: low, medium, high or
+     * critical, in any case. "safe" and "unknown" are verdicts a pattern
+     * gets, not levels to report from, and are refused like any other word.
+     *
+     * @throws InvalidRegexOptionException when the value names no threshold
+     */
+    public static function fromConfig(string $value): self
+    {
+        $severity = self::tryFrom(strtolower($value));
+
+        if (null === $severity || self::SAFE === $severity || self::UNKNOWN === $severity) {
+            throw new InvalidRegexOptionException(\sprintf(
+                '"%s" is not a ReDoS threshold; expected low, medium, high or critical.',
+                $value,
+            ));
+        }
+
+        return $severity;
+    }
 }

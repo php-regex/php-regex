@@ -52,8 +52,9 @@ final class RegexParserExtensionTest extends TestCase
             ],
             'analysis' => [
                 'warning_threshold' => 1,
-                'redos_threshold' => 2,
-                'ignore_patterns' => ['foo'],
+            ],
+            'redos' => [
+                'ignored_patterns' => ['foo'],
             ],
         ]], $container);
 
@@ -61,8 +62,9 @@ final class RegexParserExtensionTest extends TestCase
         $cacheConfig = (array) $container->getParameter('regex_parser.cache');
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
         $this->assertSame(1, $container->getParameter('regex_parser.analysis.warning_threshold'));
-        $this->assertSame(2, $container->getParameter('regex_parser.analysis.redos_threshold'));
-        $this->assertSame(['foo'], $container->getParameter('regex_parser.analysis.ignore_patterns'));
+        // 2.0 has one ignore list, and no complexity score named after ReDoS.
+        $this->assertFalse($container->hasParameter('regex_parser.analysis.redos_threshold'));
+        $this->assertSame(['foo'], $container->getParameter('regex_parser.redos.ignored_patterns'));
         $this->assertSame('hopcroft', $container->getParameter('regex_parser.automata.minimization_algorithm'));
         $this->assertSame('subset-indexed', $container->getParameter('regex_parser.automata.determinization_algorithm'));
         $this->assertSame([
