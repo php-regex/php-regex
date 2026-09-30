@@ -41,16 +41,16 @@ final class ParseCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? '';
-
-        if ('' === $pattern) {
-            return $this->handleMissingPattern($output);
+        $arguments = $this->readArguments($input->args, ['--validate']);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], "Usage: regex parse <pattern> [--validate]\n");
         }
 
-        $validate = $this->shouldValidate($input);
+        $pattern = $arguments['pattern'];
+        $validate = isset($arguments['options']['--validate']);
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -62,19 +62,6 @@ final class ParseCommand extends AbstractCommand
         } catch (LexerException|ParserException $e) {
             return $this->handleParseError($output, $e->getMessage());
         }
-    }
-
-    private function handleMissingPattern(Output $output): int
-    {
-        $output->write($output->error("Error: Missing pattern\n"));
-        $output->write("Usage: regex parse <pattern> [--validate]\n");
-
-        return 1;
-    }
-
-    private function shouldValidate(Input $input): bool
-    {
-        return \in_array('--validate', $input->args, true);
     }
 
     /**
@@ -105,11 +92,11 @@ final class ParseCommand extends AbstractCommand
 
         $this->renderParsingSection($style, $highlightedPattern, $compiled);
 
-        if ($validate) {
-            $this->renderValidationSection($output, $regex, $style, $pattern, $steps);
+        if ($validate && !$this->renderValidationSection($output, $regex, $style, $pattern, $steps)) {
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function renderParsingSection(ConsoleStyle $style, string $highlightedPattern, string $compiled): void
@@ -122,7 +109,10 @@ final class ParseCommand extends AbstractCommand
         ]);
     }
 
-    private function renderValidationSection(Output $output, Regex $regex, ConsoleStyle $style, string $pattern, int $steps): void
+    /**
+     * @return bool whether the pattern is valid
+     */
+    private function renderValidationSection(Output $output, Regex $regex, ConsoleStyle $style, string $pattern, int $steps): bool
     {
         if ($style->visualsEnabled()) {
             $output->write("\n");
@@ -142,12 +132,14 @@ final class ParseCommand extends AbstractCommand
         if (!$validation->isValid && null !== $validation->caretSnippet) {
             $output->write($output->error($validation->caretSnippet)."\n");
         }
+
+        return $validation->isValid;
     }
 
     private function handleParseError(Output $output, string $errorMessage): int
     {
         $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Parse failed: '.$errorMessage)."\n");
 
-        return 1;
+        return self::FAILURE;
     }
 }

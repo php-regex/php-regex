@@ -37,7 +37,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
             $exitCode = $command->run($input, $output);
         });
 
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Error:', $buffer);
         $this->assertStringContainsString('UNKNOWN', $buffer);
     }

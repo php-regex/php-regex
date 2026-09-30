@@ -53,12 +53,12 @@ final class AnalyzeCommand extends AbstractCommand
             $output->write($output->error('Error: '.$parsed['error']."\n"));
             $output->write("Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
 
-            return 1;
+            return self::INVALID;
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -85,11 +85,15 @@ final class AnalyzeCommand extends AbstractCommand
                 ? $ast->accept(new ConsoleHighlighterVisitor())
                 : $pattern;
 
-            if ('json' === $format) {
-                return $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain);
+            $rendered = 'json' === $format
+                ? $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain)
+                : $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
+
+            if (self::SUCCESS !== $rendered || !$validation->isValid || $this->isConfirmedRedos($analysis, $redosThreshold)) {
+                return self::FAILURE;
             }
 
-            return $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
+            return self::SUCCESS;
         } catch (LexerException|ParserException $e) {
             return $this->handleAnalysisError($output, $parsed['format'], $e->getMessage());
         }
@@ -281,12 +285,12 @@ final class AnalyzeCommand extends AbstractCommand
         if (false === $json) {
             $output->write($output->error("Error: Failed to encode JSON\n"));
 
-            return 1;
+            return self::FAILURE;
         }
 
         $output->write($json."\n");
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, ReDoSAnalysis $analysis, string $explain): int
@@ -352,7 +356,7 @@ final class AnalyzeCommand extends AbstractCommand
         $style->renderSection('Explanation', 4, $steps);
         $output->write($explain."\n");
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function renderConfirmationSection(Output $output, ConsoleStyle $style, ReDoSConfirmation $confirmation): void
@@ -404,12 +408,12 @@ final class AnalyzeCommand extends AbstractCommand
             $json = json_encode(['error' => $errorMessage, 'stage' => 'analyze'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
             $output->write(($json ?: '{"error":"Analyze failed"}')."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
         $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Analyze failed: '.$errorMessage)."\n");
 
-        return 1;
+        return self::FAILURE;
     }
 
     private function formatRedosSeverity(ReDoSAnalysis $analysis, Output $output): string

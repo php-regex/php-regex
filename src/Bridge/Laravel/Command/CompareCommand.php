@@ -62,6 +62,19 @@ final class CompareCommand extends Command
         $determinizer = strtolower($this->optionOrConfig('determinizer', 'determinization_algorithm', 'subset-indexed'));
         $format = strtolower((string) $this->option('format'));
 
+        // A command line it cannot use is reported before the patterns.
+        if (!\in_array($minimizer, ['hopcroft', 'moore'], true)) {
+            $this->error("Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore");
+
+            return self::INVALID;
+        }
+
+        if (!\in_array($determinizer, ['subset', 'subset-indexed'], true)) {
+            $this->error("Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed");
+
+            return self::INVALID;
+        }
+
         // Validate patterns
         $validation1 = $this->regex->validate($pattern1);
         if (!$validation1->isValid) {
@@ -75,19 +88,6 @@ final class CompareCommand extends Command
         if (!$validation2->isValid) {
             $this->error('Invalid second pattern:');
             $this->line((string) $validation2->error);
-
-            return self::FAILURE;
-        }
-
-        // Validate algorithm options
-        if (!\in_array($minimizer, ['hopcroft', 'moore'], true)) {
-            $this->error("Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore");
-
-            return self::FAILURE;
-        }
-
-        if (!\in_array($determinizer, ['subset', 'subset-indexed'], true)) {
-            $this->error("Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed");
 
             return self::FAILURE;
         }

@@ -112,6 +112,10 @@ php artisan regex:lint app/ --format=json
 php artisan regex:compare '/[0-9]+/' '/\d+/'
 ```
 
+Each command exits with 0 when it found nothing wrong, 1 when the patterns or
+the files it judged have a problem, and 2 when an option or the configuration
+cannot be used (see [the CLI guide](cli.md#exit-codes)).
+
 ## Upgrading from 1.x
 
 2.0 renames or removes three keys. `regex:lint` warns about each one it still

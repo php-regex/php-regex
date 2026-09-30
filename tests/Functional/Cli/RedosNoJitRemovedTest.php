@@ -46,8 +46,8 @@ final class RedosNoJitRemovedTest extends TestCase
             $written = (string) ob_get_clean();
         }
 
-        // A usage error, as every single-pattern command reports one.
-        $this->assertSame(1, $exitCode);
+        // A usage error, as every command reports one.
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('--redos-no-jit was removed in 2.0: the confirmation always runs without JIT', $written);
     }
 

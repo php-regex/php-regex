@@ -17,6 +17,7 @@ use RegexParser\Cache\RemovableCacheInterface;
 use RegexParser\Cli\ConsoleStyle;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
+use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\RegexOptions;
 
 final class ClearCacheCommand extends AbstractCommand implements CommandInterface
@@ -38,8 +39,13 @@ final class ClearCacheCommand extends AbstractCommand implements CommandInterfac
 
     public function run(Input $input, Output $output): int
     {
-        $options = RegexOptions::fromArray($input->regexOptions);
-        $cache = $options->cache;
+        try {
+            $cache = RegexOptions::fromArray($input->regexOptions)->cache;
+        } catch (InvalidRegexOptionException $e) {
+            $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
+
+            return self::INVALID;
+        }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $style->renderBanner('clear-cache');
@@ -52,6 +58,6 @@ final class ClearCacheCommand extends AbstractCommand implements CommandInterfac
             $output->write('  '.$output->badge('INFO', Output::BLACK, Output::BG_YELLOW).' '.$output->warning('No clearable cache configured.')."\n");
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

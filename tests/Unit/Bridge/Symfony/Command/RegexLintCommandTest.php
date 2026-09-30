@@ -94,7 +94,7 @@ final class RegexLintCommandTest extends TestCase
         $tester = new CommandTester($command);
         $status = $tester->execute(['paths' => ['nonexistent'], '--format' => 'invalid']);
 
-        $this->assertSame(1, $status);
+        $this->assertSame(2, $status);
         $display = preg_replace('/\s+/', ' ', $tester->getDisplay()) ?? '';
         $this->assertStringContainsString(
             'Invalid format \'invalid\'. Supported formats: console, json, github, checkstyle, junit',
@@ -193,7 +193,7 @@ final class RegexLintCommandTest extends TestCase
         $tester = new CommandTester($command);
         $status = $tester->execute(['paths' => ['nonexistent'], '--jobs' => '0']);
 
-        $this->assertSame(1, $status);
+        $this->assertSame(2, $status);
         $this->assertStringContainsString('positive integer', (string) $tester->getDisplay());
     }
 

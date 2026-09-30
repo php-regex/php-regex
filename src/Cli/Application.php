@@ -119,7 +119,7 @@ final class Application
     {
         $this->output->write($this->output->error('Error: '.$errorMessage."\n"));
 
-        return 1;
+        return CommandInterface::INVALID;
     }
 
     /**
@@ -147,7 +147,7 @@ final class Application
     {
         $this->help()->run(new Input('help', [], $options, []), $this->output);
 
-        return 1;
+        return CommandInterface::INVALID;
     }
 
     /**
@@ -202,7 +202,7 @@ final class Application
         $this->output->write($this->output->error("Unknown command: {$commandName}\n\n"));
         $this->help()->run(new Input('help', [], $options, []), $this->output);
 
-        return 1;
+        return CommandInterface::INVALID;
     }
 
     /**

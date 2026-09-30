@@ -114,7 +114,7 @@ final class RegexAnalyzeCommand extends Command
 
         $format = $this->resolveFormat($input, $io);
         if (null === $format) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $onlyOption = $input->getOption('only');
@@ -125,7 +125,7 @@ final class RegexAnalyzeCommand extends Command
             if ([] !== $unknown) {
                 $io->error('Unknown analyzer ids: '.implode(', ', $unknown).'.');
 
-                return Command::FAILURE;
+                return Command::INVALID;
             }
         }
 
@@ -137,17 +137,17 @@ final class RegexAnalyzeCommand extends Command
             }
             $io->error($message);
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $failOn = $this->resolveFailOn($input, $io);
         if (null === $failOn) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $threshold = $this->resolveThreshold($input, $io);
         if (null === $threshold) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $debug = (bool) $input->getOption('debug') || $output->isVerbose();

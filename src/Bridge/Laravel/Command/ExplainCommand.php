@@ -56,7 +56,7 @@ final class ExplainCommand extends Command
         if (!\in_array($format, ['text', 'html'], true)) {
             $this->error("Invalid format '{$format}'. Supported formats: text, html");
 
-            return self::FAILURE;
+            return self::INVALID;
         }
 
         // Validate the pattern first

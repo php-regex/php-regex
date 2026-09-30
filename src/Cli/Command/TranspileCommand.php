@@ -20,6 +20,7 @@ use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
 use RegexParser\Exception\TranspileException;
 use RegexParser\Transpiler\RegexTranspiler;
+use RegexParser\Transpiler\Target\TargetRegistry;
 use RegexParser\Transpiler\TranspileResult;
 
 final class TranspileCommand extends AbstractCommand
@@ -47,12 +48,12 @@ final class TranspileCommand extends AbstractCommand
             $output->write($output->error('Error: '.$args['error']."\n"));
             $output->write("Usage: regex transpile <pattern> [--target=js|python] [--format=json]\n");
 
-            return 1;
+            return self::INVALID;
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -74,7 +75,7 @@ final class TranspileCommand extends AbstractCommand
             if ('json' === $args['format']) {
                 $output->write(json_encode(['error' => $e->getMessage()], \JSON_PRETTY_PRINT)."\n");
 
-                return 1;
+                return self::FAILURE;
             }
             $output->write('  '.$output->error('Transpile failed: '.$e->getMessage())."\n");
 
@@ -82,7 +83,7 @@ final class TranspileCommand extends AbstractCommand
                 $output->write('  At offset '.$e->position."\n");
             }
 
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -151,6 +152,16 @@ final class TranspileCommand extends AbstractCommand
             return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing pattern.'];
         }
 
+        if (!\in_array($format, ['console', 'json'], true)) {
+            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Invalid value for --format. Use console or json.'];
+        }
+
+        try {
+            (new TargetRegistry())->get($target);
+        } catch (TranspileException $e) {
+            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => $e->getMessage()];
+        }
+
         return [
             'pattern' => $pattern,
             'target' => $target,
@@ -191,7 +202,7 @@ final class TranspileCommand extends AbstractCommand
             }
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function renderJsonOutput(Output $output, TranspileResult $result): int
@@ -209,6 +220,6 @@ final class TranspileCommand extends AbstractCommand
 
         $output->write(json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES)."\n");
 
-        return 0;
+        return self::SUCCESS;
     }
 }

@@ -76,7 +76,7 @@ final class RegexRoutesCommand extends Command
         if (null === $this->router) {
             $io->error('Router service is not available. Install Symfony Routing or enable the router service.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $collection = $this->router->getRouteCollection();

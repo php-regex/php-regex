@@ -127,6 +127,10 @@ bin/console regex:analyze --redos-threshold=medium
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
 
+Each command exits with 0 when it found nothing wrong, 1 when the patterns or
+the files it judged have a problem, and 2 when an option or the configuration
+cannot be used (see [the CLI guide](cli.md#exit-codes)).
+
 ## Upgrading from 1.x
 
 See [UPGRADE-2.0.md](../../UPGRADE-2.0.md): `exclude_paths` is now `exclude`,

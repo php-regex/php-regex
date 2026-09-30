@@ -358,6 +358,37 @@ running PHP.
   `{"error": "..."}`, and the progress and status lines stay out of stdout, so
   that stdout always holds one JSON document.
 
+#### Every command exits with 0, 1 or 2
+
+Every CLI command now uses the codes of the lint command:
+
+| Code | Meaning                                                              |
+|------|----------------------------------------------------------------------|
+| `0`  | The command did what it was asked and found nothing wrong            |
+| `1`  | The patterns or the files it judged have a problem                   |
+| `2`  | The command line or the configuration cannot be used                 |
+
+- A usage error exited with 1 in 1.x and exits with 2 now: an unknown command
+  or option, a missing pattern or option value, an unknown `--format`,
+  `--target` or `--method`, an invalid `--php-version`, a removed option, an
+  `--input-file` that cannot be read, an `--output` file that cannot be
+  written. `regex` without a command and `regex help <unknown>` exit with 2.
+- Some results that exited with 0 exit with 1: `analyze` and `parse --validate`
+  on an invalid pattern, `debug` on a pattern that does not parse, `analyze`
+  and `debug` on a ReDoS risk that `--redos-mode=confirmed` confirms at high
+  severity or more, `redos` on a pattern PHP refuses. A theoretical ReDoS
+  finding still exits with 0.
+- `debug` stops with 2 on a `regex.json` it cannot read, where it ignored it.
+- `parse`, `validate`, `explain`, `diagram`, `highlight` and `graph` refuse an
+  option they do not know, and accept options before the pattern; `--` ends
+  the options.
+- The Symfony and Laravel console commands exit with 2 (`Command::INVALID`)
+  where an option or the configuration cannot be used, and keep 1 for what
+  they found.
+
+A script that tested for 1 to catch any failure should test for a non-zero
+code instead.
+
 #### A ReDoS threshold is low, medium, high or critical, everywhere
 
 Every place that takes a ReDoS threshold reads it the same way: `low`,

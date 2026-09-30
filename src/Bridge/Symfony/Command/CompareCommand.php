@@ -82,19 +82,19 @@ final class CompareCommand extends Command
         if (!\is_string($pattern1) || '' === $pattern1) {
             $io->error('The first pattern must be a non-empty string.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         if (!\is_string($pattern2) || '' === $pattern2) {
             $io->error('The second pattern must be a non-empty string.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         if (!\is_string($methodOption) || '' === $methodOption) {
             $io->error('Invalid --method. Choose intersection, subset, or equivalence.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $method = \strtolower($methodOption);
@@ -102,17 +102,17 @@ final class CompareCommand extends Command
         if (!\in_array($method, [self::METHOD_INTERSECTION, self::METHOD_SUBSET, self::METHOD_EQUIVALENCE], true)) {
             $io->error('Invalid --method. Choose intersection, subset, or equivalence.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $minimizer = $this->resolveMinimizationAlgorithm($minimizerOption, $io);
         if (null === $minimizer) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $determinizer = $this->resolveDeterminizationAlgorithm($determinizerOption, $io);
         if (null === $determinizer) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $solver = RegexLanguageSolver::forRegex($this->regex->parser());

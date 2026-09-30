@@ -62,7 +62,7 @@ final class ApplicationTest extends TestCase
         $buffer = '';
         $exitCode = $this->runApp($app, ['regex'], $buffer);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertSame(1, $help->runs);
     }
 
@@ -75,7 +75,7 @@ final class ApplicationTest extends TestCase
         $buffer = '';
         $exitCode = $this->runApp($app, ['regex', 'unknown'], $buffer);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertSame(1, $help->runs);
         $this->assertStringContainsString('Unknown command', $buffer);
     }
@@ -106,7 +106,7 @@ final class ApplicationTest extends TestCase
         $buffer = '';
         $exitCode = $this->runApp($app, ['regex', '--php-version', '--help'], $buffer);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing value for --php-version', $buffer);
         $this->assertSame(0, $help->runs);
     }
@@ -135,7 +135,7 @@ final class ApplicationTest extends TestCase
         $buffer = '';
         $exitCode = $this->runApp($app, ['regex', ''], $buffer);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertSame(1, $help->runs);
     }
 

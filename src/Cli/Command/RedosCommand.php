@@ -90,7 +90,7 @@ final class RedosCommand extends AbstractCommand
             $output->write($output->error('Error: '.$parsed['error']."\n"));
             $output->write("Usage: regex redos <pattern> [--safe <pattern>] [--input <string> | --input-file <path>] [--repeat <n>] [--prefix <string>] [--suffix <string>] [--iterations <n>] [--warmup <n>] [--jit 0|1] [--backtrack-limit <n>] [--recursion-limit <n>] [--time-limit <sec>] [--format=json] [--show-input]\n");
 
-            return 1;
+            return self::INVALID;
         }
 
         $pattern = $parsed['pattern'];
@@ -111,7 +111,7 @@ final class RedosCommand extends AbstractCommand
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $target = $regex->target();
@@ -134,16 +134,11 @@ final class RedosCommand extends AbstractCommand
         $inputSource = 'user';
         $inputNote = null;
         if (null !== $inputFile) {
-            if (!is_readable($inputFile)) {
+            $inputValue = is_file($inputFile) && is_readable($inputFile) ? @file_get_contents($inputFile) : false;
+            if (false === $inputValue) {
                 $output->write($output->error("Error: Input file not readable: {$inputFile}\n"));
 
-                return 1;
-            }
-            $inputValue = file_get_contents($inputFile);
-            if (false === $inputValue) {
-                $output->write($output->error("Error: Failed to read input file: {$inputFile}\n"));
-
-                return 1;
+                return self::INVALID;
             }
             $inputSource = 'file';
         }
@@ -221,6 +216,12 @@ final class RedosCommand extends AbstractCommand
             $rows['safe'] = $this->bench('safe', $safePattern, $subject, $warmup, $iterations);
         }
 
+        // A pattern PHP refuses is a problem of the pattern, whatever the
+        // benchmark measured.
+        $verdict = $this->refuses($pattern) || (isset($rows['safe']) && null !== $safePattern && $this->refuses($safePattern))
+            ? self::FAILURE
+            : self::SUCCESS;
+
         if ('json' === $format) {
             $summary = null;
             if (isset($rows['safe'])) {
@@ -253,11 +254,11 @@ final class RedosCommand extends AbstractCommand
             if (false === $json) {
                 $output->write($output->error("Error: Failed to encode JSON\n"));
 
-                return 1;
+                return self::FAILURE;
             }
             $output->write($json."\n");
 
-            return 0;
+            return $verdict;
         }
 
         $this->renderBenchmarkTable($output, $rows);
@@ -266,7 +267,29 @@ final class RedosCommand extends AbstractCommand
             $this->renderSummary($output, $rows['vuln'], $rows['safe']);
         }
 
-        return 0;
+        return $verdict;
+    }
+
+    /**
+     * Whether PHP refuses to compile the pattern: the call fails with a
+     * warning, which a failure while matching never raises.
+     */
+    private function refuses(string $pattern): bool
+    {
+        $warned = false;
+        set_error_handler(static function () use (&$warned): bool {
+            $warned = true;
+
+            return true;
+        });
+
+        try {
+            $result = preg_match($pattern, '');
+        } finally {
+            restore_error_handler();
+        }
+
+        return false === $result && $warned;
     }
 
     /**

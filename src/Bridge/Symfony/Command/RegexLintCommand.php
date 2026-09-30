@@ -172,7 +172,7 @@ final class RegexLintCommand extends Command
         try {
             $format = $this->validateAndNormalizeFormat($input, $io);
         } catch (InvalidRegexOptionException) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         // The runtime service judges for the running PHP; the lint judges
@@ -188,7 +188,7 @@ final class RegexLintCommand extends Command
         } catch (InvalidRegexOptionException $e) {
             $io->error('Invalid option: '.$e->getMessage());
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
         $analysis = $this->analysis->withParser($parser);
         $lint = $this->lint->withAnalysis($analysis);
@@ -207,7 +207,7 @@ final class RegexLintCommand extends Command
             if ($jobs < 1) {
                 $io->error('The --jobs value must be a positive integer.');
 
-                return Command::FAILURE;
+                return Command::INVALID;
             }
         } else {
             // Auto-detect optimal number of jobs

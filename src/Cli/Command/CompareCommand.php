@@ -52,12 +52,12 @@ final class CompareCommand extends AbstractCommand
             $output->write($output->error('Error: '.$parsed['error']."\n"));
             $output->write("Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
 
-            return 1;
+            return self::INVALID;
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $solver = RegexLanguageSolver::forRegex($regex->parser());
@@ -85,16 +85,16 @@ final class CompareCommand extends AbstractCommand
                 self::METHOD_INTERSECTION => $this->handleIntersection($solver, $options, $parsed, $output),
                 self::METHOD_SUBSET => $this->handleSubset($solver, $options, $parsed, $output),
                 self::METHOD_EQUIVALENCE => $this->handleEquivalence($solver, $options, $parsed, $output),
-                default => 1,
+                default => self::INVALID,
             };
         } catch (ComplexityException) {
             $output->write($output->error('Comparison not supported: Pattern contains advanced features (e.g., lookarounds).')."\n");
 
-            return 1;
+            return self::FAILURE;
         } catch (\Throwable $exception) {
             $output->write($output->error('Comparison failed: '.$exception->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -108,14 +108,14 @@ final class CompareCommand extends AbstractCommand
         if ($result->isEmpty) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('No intersection found. These regexes are disjoint.')."\n");
 
-            return 0;
+            return self::SUCCESS;
         }
 
         $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Conflict detected!')."\n");
         $output->write("\n");
         $this->writeDetail($output, 'Example', $this->formatExample($result->example ?? ''));
 
-        return 1;
+        return self::FAILURE;
     }
 
     /**
@@ -128,14 +128,14 @@ final class CompareCommand extends AbstractCommand
         if ($result->isSubset) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('Pattern 1 is a strict subset of Pattern 2.')."\n");
 
-            return 0;
+            return self::SUCCESS;
         }
 
         $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Pattern 1 allows strings that Pattern 2 forbids.')."\n");
         $output->write("\n");
         $this->writeDetail($output, 'Counter-example', $this->formatExample($result->counterExample ?? ''));
 
-        return 1;
+        return self::FAILURE;
     }
 
     /**
@@ -148,7 +148,7 @@ final class CompareCommand extends AbstractCommand
         if ($result->isEquivalent) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('Patterns are mathematically equivalent.')."\n");
 
-            return 0;
+            return self::SUCCESS;
         }
 
         $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Patterns are different.')."\n");
@@ -163,7 +163,7 @@ final class CompareCommand extends AbstractCommand
             $this->writeDetail($output, 'Pattern 2 only', $this->formatExample($result->rightOnlyExample));
         }
 
-        return 1;
+        return self::FAILURE;
     }
 
     private function formatExample(string $example): string

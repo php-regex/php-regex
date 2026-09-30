@@ -16,6 +16,8 @@ namespace RegexParser\Cli\Command;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
 use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\ReDoS\ReDoSAnalysis;
+use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
 
 abstract class AbstractCommand implements CommandInterface
@@ -32,6 +34,96 @@ abstract class AbstractCommand implements CommandInterface
 
             return null;
         }
+    }
+
+    /**
+     * Read a command line of one pattern and the options named here. A flag
+     * stands alone; a valued option is "--name=value" or "--name value". An
+     * argument starting with "--" is an option until "--" ends them, and the
+     * first other argument is the pattern.
+     *
+     * @param array<int, string> $args
+     * @param list<string>       $flags
+     * @param list<string>       $valued
+     *
+     * @return array{pattern: string, options: array<string, string|true>, error: ?string}
+     */
+    protected function readArguments(array $args, array $flags = [], array $valued = []): array
+    {
+        $pattern = null;
+        $options = [];
+        $endOfOptions = false;
+        $count = \count($args);
+
+        for ($i = 0; $i < $count; $i++) {
+            $arg = $args[$i];
+
+            if ($endOfOptions || !str_starts_with($arg, '--')) {
+                $pattern ??= $arg;
+
+                continue;
+            }
+
+            if ('--' === $arg) {
+                $endOfOptions = true;
+
+                continue;
+            }
+
+            $parts = explode('=', $arg, 2);
+            $name = $parts[0];
+            $value = $parts[1] ?? null;
+
+            if (null === $value && \in_array($name, $flags, true)) {
+                $options[$name] = true;
+
+                continue;
+            }
+
+            if (!\in_array($name, $valued, true)) {
+                return ['pattern' => '', 'options' => [], 'error' => 'Unknown option: '.$arg];
+            }
+
+            if (null === $value) {
+                $value = $args[$i + 1] ?? '';
+                if ('' === $value || str_starts_with($value, '-')) {
+                    return ['pattern' => '', 'options' => [], 'error' => \sprintf('Missing value for %s.', $name)];
+                }
+                $i++;
+            }
+
+            $options[$name] = $value;
+        }
+
+        if (null === $pattern || '' === $pattern) {
+            return ['pattern' => '', 'options' => [], 'error' => 'Missing pattern.'];
+        }
+
+        return ['pattern' => $pattern, 'options' => $options, 'error' => null];
+    }
+
+    /**
+     * Report a command line the command cannot use, with its usage.
+     */
+    protected function usageError(Output $output, string $message, string $usage): int
+    {
+        $output->write($output->error('Error: '.$message."\n"));
+        $output->write($usage);
+
+        return self::INVALID;
+    }
+
+    /**
+     * Whether a ReDoS analysis is a problem the exit code reports: a risk the
+     * confirmed mode confirmed, at the threshold or above and of high
+     * severity or more, the verdict the lint command counts as an error. A
+     * theoretical finding is a warning.
+     */
+    protected function isConfirmedRedos(ReDoSAnalysis $analysis, ?ReDoSSeverity $threshold): bool
+    {
+        return $analysis->isConfirmed()
+            && $analysis->exceedsThreshold($threshold ?? ReDoSSeverity::HIGH)
+            && $analysis->exceedsThreshold(ReDoSSeverity::HIGH);
     }
 
     /**

@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace RegexParser\Cli\Command;
 
-use RegexParser\Cli\CliException;
 use RegexParser\Cli\ConsoleStyle;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
@@ -41,31 +40,26 @@ final class HighlightCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? '';
-        if ('' === $pattern) {
-            $output->write($output->error("Error: Missing pattern\n"));
-            $output->write("Usage: regex highlight <pattern> [--format=auto|cli|html]\n");
-
-            return 1;
+        $arguments = $this->readArguments($input->args, [], ['--format']);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], "Usage: regex highlight <pattern> [--format=auto|cli|html]\n");
         }
 
-        $format = 'auto';
-        for ($i = 0; $i < \count($input->args); $i++) {
-            $arg = $input->args[$i];
-            if (str_starts_with($arg, '--format=')) {
-                $format = substr($arg, 9);
+        $pattern = $arguments['pattern'];
+        $format = (string) ($arguments['options']['--format'] ?? 'auto');
+        if ('auto' === $format) {
+            $format = \PHP_SAPI === 'cli' ? 'cli' : 'html';
+        }
 
-                break;
-            }
-            if ('--format' === $arg) {
-                $format = $input->args[$i + 1] ?? $format;
-                $i++;
-            }
+        if (!\in_array($format, ['cli', 'html'], true)) {
+            $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error("Error: Invalid format: {$format}")."\n");
+
+            return self::INVALID;
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -73,20 +67,12 @@ final class HighlightCommand extends AbstractCommand
         $meta += $this->targetMeta($input, $output);
 
         try {
-            if ('auto' === $format) {
-                $format = \PHP_SAPI === 'cli' ? 'cli' : 'html';
-            }
-
             if ('cli' === $format && $style->visualsEnabled()) {
                 $meta['Format'] = $output->warning('cli');
                 $style->renderBanner('highlight', $meta);
             }
 
-            $visitor = match ($format) {
-                'cli' => new ConsoleHighlighterVisitor(),
-                'html' => new HtmlHighlighterVisitor(),
-                default => throw new CliException("Invalid format: $format"),
-            };
+            $visitor = 'cli' === $format ? new ConsoleHighlighterVisitor() : new HtmlHighlighterVisitor();
 
             $ast = $regex->parse($pattern);
             $highlighted = $ast->accept($visitor);
@@ -101,12 +87,12 @@ final class HighlightCommand extends AbstractCommand
             } else {
                 $output->write($highlighted."\n");
             }
-        } catch (LexerException|ParserException|CliException $e) {
+        } catch (LexerException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error("Error: {$e->getMessage()}")."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

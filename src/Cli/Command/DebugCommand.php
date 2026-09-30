@@ -30,6 +30,7 @@ use RegexParser\ReDoS\ReDoSHotspot;
 use RegexParser\ReDoS\ReDoSInputGenerator;
 use RegexParser\ReDoS\ReDoSMode;
 use RegexParser\ReDoS\ReDoSSeverity;
+use RegexParser\Regex;
 use RegexParser\RegexPattern;
 use RegexParser\Runtime\PcreRuntimeInfo;
 
@@ -54,13 +55,16 @@ final class DebugCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        // Load config file defaults if available
+        // The configuration file's defaults, when there is one to read.
         $defaults = [];
         if (null !== $this->configLoader && null !== $this->defaultsBuilder) {
             $configResult = $this->configLoader->load();
-            if (null === $configResult->error) {
-                $defaults = $this->defaultsBuilder->build($configResult->config);
+            if (null !== $configResult->error) {
+                $output->write($output->error('Error: '.$configResult->error."\n"));
+
+                return self::INVALID;
             }
+            $defaults = $this->defaultsBuilder->build($configResult->config);
         }
 
         $parsed = $this->parseArguments($input->args, $defaults);
@@ -68,7 +72,7 @@ final class DebugCommand extends AbstractCommand
             $output->write($output->error('Error: '.$parsed['error']."\n"));
             $output->write("Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
 
-            return 1;
+            return self::INVALID;
         }
 
         $pattern = $parsed['pattern'];
@@ -80,7 +84,7 @@ final class DebugCommand extends AbstractCommand
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -101,6 +105,11 @@ final class DebugCommand extends AbstractCommand
         try {
             $patternInfo = RegexPattern::fromDelimited($pattern, $target);
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
+            // The analysis reports a pattern it cannot parse as its error;
+            // the exit code reports it as a problem of the pattern.
+            $verdict = $this->parses($regex, $pattern) && !$this->isConfirmedRedos($analysis, $redosThreshold)
+                ? self::SUCCESS
+                : self::FAILURE;
             $steps = [] !== $analysis->findings ? 2 : 1;
             $heatmap = new ReDoSHeatmap();
             $heatmapBody = $heatmap->highlight($patternInfo->pattern, $analysis->hotspots, $output->isAnsi());
@@ -146,11 +155,11 @@ final class DebugCommand extends AbstractCommand
                 if (false === $json) {
                     $output->write($output->error("Error: Failed to encode JSON\n"));
 
-                    return 1;
+                    return self::FAILURE;
                 }
                 $output->write($json."\n");
 
-                return 0;
+                return $verdict;
             }
 
             $style->renderSection('Heatmap', 1, $steps);
@@ -284,15 +293,26 @@ final class DebugCommand extends AbstractCommand
                 $json = json_encode(['error' => $e->getMessage(), 'stage' => 'debug'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
                 $output->write(($json ?: '{"error":"Debug failed"}')."\n");
 
-                return 1;
+                return self::FAILURE;
             }
 
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Debug failed: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return $verdict;
+    }
+
+    private function parses(Regex $regex, string $pattern): bool
+    {
+        try {
+            $regex->parse($pattern);
+
+            return true;
+        } catch (LexerException|ParserException) {
+            return false;
+        }
     }
 
     /**

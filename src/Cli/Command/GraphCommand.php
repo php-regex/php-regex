@@ -40,29 +40,23 @@ final class GraphCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? null;
-
-        if (null === $pattern) {
-            $output->write($output->error("Missing pattern argument.\n"));
-            $output->write("Usage: bin/regex graph <pattern> [--format=dot|mermaid] [--output=file]\n");
-
-            return 1;
+        $usage = "Usage: regex graph <pattern> [--format=dot|mermaid] [--output=<file>]\n";
+        $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], $usage);
         }
 
-        $format = 'dot';
-        $outputFile = null;
-
-        foreach ($input->args as $arg) {
-            if (str_starts_with($arg, '--format=')) {
-                $format = substr($arg, 9);
-            } elseif (str_starts_with($arg, '--output=')) {
-                $outputFile = substr($arg, 9);
-            }
+        $pattern = $arguments['pattern'];
+        $format = (string) ($arguments['options']['--format'] ?? 'dot');
+        $outputFile = $arguments['options']['--output'] ?? null;
+        $outputFile = \is_string($outputFile) ? $outputFile : null;
+        if (!\in_array($format, ['dot', 'graphviz', 'mermaid'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=dot or --format=mermaid.", $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         try {
@@ -76,22 +70,29 @@ final class GraphCommand extends AbstractCommand
             $generator = new GraphGenerator();
             $content = $generator->generate($nfa, $format);
 
-            if (null !== $outputFile) {
-                file_put_contents($outputFile, $content);
-                $output->write($output->success("Graph written to $outputFile")."\n");
-            } else {
+            if (null === $outputFile) {
                 $output->write($content);
+
+                return self::SUCCESS;
             }
 
-            return 0;
+            if (false === @file_put_contents($outputFile, $content)) {
+                $output->write($output->error("Error: Unable to write the graph to '{$outputFile}'.")."\n");
+
+                return self::INVALID;
+            }
+
+            $output->write($output->success("Graph written to $outputFile")."\n");
+
+            return self::SUCCESS;
         } catch (LexerException|ParserException $e) {
             $output->write($output->error('Error: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         } catch (\Throwable $e) {
             $output->write($output->error('Graph generation failed: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
     }
 }

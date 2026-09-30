@@ -66,7 +66,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Usage:', $text);
     }
 
-    public function test_render_command_help_returns_one_for_invalid_command(): void
+    public function test_render_command_help_returns_two_for_invalid_command(): void
     {
         $command = new HelpCommand();
         $output = new Output(false, false);
@@ -78,7 +78,7 @@ final class HelpCommandTest extends TestCase
         $result = $method->invoke($command, $output, 'regex', 'invalid');
         $text = (string) ob_get_clean();
 
-        $this->assertSame(1, $result);
+        $this->assertSame(2, $result);
         $this->assertStringContainsString('Unknown command: invalid', $text);
         $this->assertStringContainsString('Available Commands', $text);
     }

@@ -41,15 +41,15 @@ final class ValidateCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? '';
-
-        if ('' === $pattern) {
-            return $this->handleMissingPattern($output);
+        $arguments = $this->readArguments($input->args);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], "Usage: regex validate <pattern>\n");
         }
 
+        $pattern = $arguments['pattern'];
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -66,14 +66,6 @@ final class ValidateCommand extends AbstractCommand
         }
 
         return $this->renderErrorResult($style, $output, $validation);
-    }
-
-    private function handleMissingPattern(Output $output): int
-    {
-        $output->write($output->error("Error: Missing pattern\n"));
-        $output->write("Usage: regex validate <pattern>\n");
-
-        return 1;
     }
 
     /**
@@ -115,7 +107,7 @@ final class ValidateCommand extends AbstractCommand
             'Status' => $output->success('OK'),
         ]);
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function renderErrorResult(ConsoleStyle $style, Output $output, ValidationResult $validation): int
@@ -132,6 +124,6 @@ final class ValidateCommand extends AbstractCommand
             $output->write($output->error($validation->caretSnippet)."\n");
         }
 
-        return 1;
+        return self::FAILURE;
     }
 }

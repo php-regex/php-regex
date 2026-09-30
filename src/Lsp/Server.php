@@ -72,24 +72,18 @@ final class Server
     private readonly CompletionHandler $completionHandler;
 
     /**
-     * The Regex the server was given, which the workspace does not replace.
+     * @param Regex|null    $givenRegex judges every pattern; null judges for the
+     *                                  workspace's target
+     * @param resource|null $input      stream the messages are read from, or null
+     *                                  for stdin
      */
-    private readonly ?Regex $givenRegex;
-
-    /**
-     * @param Regex|null    $regex judges every pattern; null judges for the
-     *                             workspace's target
-     * @param resource|null $input stream the messages are read from, or null
-     *                             for stdin
-     */
-    public function __construct(?Regex $regex = null, private $input = null)
+    public function __construct(private readonly ?Regex $givenRegex = null, private $input = null)
     {
-        $this->givenRegex = $regex;
         $this->documents = new DocumentManager(new RegexFinder());
 
         $this->initHandler = new InitializeHandler();
         $this->completionHandler = new CompletionHandler($this->documents);
-        $this->judgeWith($regex ?? Regex::create());
+        $this->judgeWith($this->givenRegex ?? Regex::create());
     }
 
     /**

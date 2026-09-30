@@ -59,6 +59,46 @@ RegexParser CLI provides these commands:
 | `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
 | `--help`              | Show help                         |
 
+### Exit Codes
+
+Every command exits with one of three codes:
+
+| Code | Meaning                                                                   |
+|------|---------------------------------------------------------------------------|
+| `0`  | The command did what it was asked and found nothing wrong                 |
+| `1`  | The patterns or the files it judged have a problem                        |
+| `2`  | The command line or the configuration cannot be used; nothing was judged |
+
+What each command counts as a problem (code 1):
+
+| Command                                      | Exits with 1 when                                                                  |
+|----------------------------------------------|------------------------------------------------------------------------------------|
+| `lint`                                       | At least one error is found (warnings alone leave 0), or the files cannot be read |
+| `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
+| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
+| `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
+| `transpile`                                  | The pattern does not parse, or cannot be written for the target                    |
+| `debug`                                      | The pattern does not parse                                                         |
+| `analyze`, `debug`                           | `--redos-mode=confirmed` confirms a ReDoS risk of high severity or more, at or above `--redos-threshold` |
+| `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
+| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
+| `self-update`                                | The update fails                                                                   |
+
+A theoretical ReDoS finding is a warning, as it is for `lint`: it is printed
+and leaves the code at 0.
+
+Code 2 covers an unknown command or option, an option without its value or
+with a value the command does not accept (an unknown `--format`, `--target`,
+`--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
+a missing pattern, a removed option such as `--redos-no-jit`, an
+`--input-file` that cannot be read, an `--output` file that cannot be written,
+and a `regex.json` that cannot be read (`lint` and `debug`). `regex` run
+without a command prints the help and exits with 2, as `regex help` with an
+unknown command does.
+
+Options may come before or after the pattern; `--` ends them, so that what
+follows is read as the pattern even when it starts with `-`.
+
 ---
 
 ## Symfony Bundle Commands
@@ -86,6 +126,11 @@ bin/console regex:analyze
 bin/console regex:analyze --only=routes
 bin/console regex:analyze --fail-on=any --format=json
 ```
+
+These commands, like the Laravel ones, exit with the same codes as the
+binary: `Command::INVALID` (2) for an option or a configuration they cannot
+use, `Command::FAILURE` (1) for what they found, such as a route conflict or
+an invalid pattern.
 
 ---
 
@@ -507,13 +552,12 @@ The JSON report carries it as its `target` key (see [JSON](#json) below).
 Single-pattern commands, such as `analyze` or `validate`, judge for the
 running PHP unless `--php-version` or `--pcre-version` is given.
 
-### Exit Codes
+### Errors and Exit Codes
 
-| Code | Meaning                                                            |
-|------|--------------------------------------------------------------------|
-| `0`  | No error found                                                     |
-| `1`  | At least one error found                                           |
-| `2`  | The configuration or the command line cannot be used; nothing was scanned |
+`lint` exits with the codes every command uses (see
+[Exit Codes](#exit-codes)): 1 when at least one error is found, 2 when the
+configuration or the command line cannot be used, in which case nothing is
+scanned.
 
 With `--format=json`, a configuration or command-line error is printed on
 stdout as `{"error": "..."}`, so that stdout always holds one JSON document;

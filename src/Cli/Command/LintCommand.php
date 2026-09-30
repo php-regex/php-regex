@@ -40,11 +40,6 @@ use RegexParser\Regex;
 
 final class LintCommand extends AbstractCommand implements CommandInterface
 {
-    /**
-     * A configuration or a command line the command cannot use.
-     */
-    public const EXIT_USAGE = 2;
-
     private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
 
     public function __construct(
@@ -77,7 +72,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
 
         $lintConfigResult = $this->configLoader->load();
         if (null !== $lintConfigResult->error) {
-            return $this->fail($output, $json, $lintConfigResult->error, self::EXIT_USAGE);
+            return $this->fail($output, $json, $lintConfigResult->error, self::INVALID);
         }
 
         $lintDefaults = $this->defaultsBuilder->build($lintConfigResult->config);
@@ -89,7 +84,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         }
         $arguments = $parsed->arguments;
         if (null !== $parsed->error || null === $arguments) {
-            $code = $this->fail($output, $json, $parsed->error ?? 'Invalid lint arguments', self::EXIT_USAGE);
+            $code = $this->fail($output, $json, $parsed->error ?? 'Invalid lint arguments', self::INVALID);
             if (!$json) {
                 $output->writeError(self::USAGE);
             }
@@ -101,7 +96,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         $json = 'json' === $format;
         $formatterRegistry = new FormatterRegistry();
         if (!$formatterRegistry->has($format)) {
-            return $this->fail($output, $json, \sprintf('Unknown format: %s. Available formats: %s', $format, implode(', ', $formatterRegistry->getNames())), self::EXIT_USAGE);
+            return $this->fail($output, $json, \sprintf('Unknown format: %s. Available formats: %s', $format, implode(', ', $formatterRegistry->getNames())), self::INVALID);
         }
 
         try {
@@ -114,7 +109,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             );
             $regex = Regex::create($target->regexOptions());
         } catch (InvalidRegexOptionException $e) {
-            return $this->fail($output, $json, 'Invalid option: '.$e->getMessage(), self::EXIT_USAGE);
+            return $this->fail($output, $json, 'Invalid option: '.$e->getMessage(), self::INVALID);
         }
 
         $paths = $arguments->paths;
@@ -235,7 +230,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
-            return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), 1);
+            return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), self::FAILURE);
         }
 
         $collectionTime = (float) microtime(true) - $collectionStartTime;
@@ -248,7 +243,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
                 $output->write($formatter->format($emptyReport));
             }
 
-            return 0;
+            return self::SUCCESS;
         }
 
         if ('console' === $format) {
@@ -323,7 +318,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             }
         }
 
-        return $report->stats['errors'] > 0 ? 1 : 0;
+        return $report->stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
     }
 
     /**

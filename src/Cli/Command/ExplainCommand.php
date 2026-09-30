@@ -39,37 +39,21 @@ final class ExplainCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? '';
-        if ('' === $pattern) {
-            $output->write($output->error("Error: Missing pattern\n"));
-            $output->write("Usage: regex explain <pattern> [--format=text|html]\n");
-
-            return 1;
+        $usage = "Usage: regex explain <pattern> [--format=text|html]\n";
+        $arguments = $this->readArguments($input->args, [], ['--format']);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], $usage);
         }
 
-        $format = 'text';
-        for ($i = 0; $i < \count($input->args); $i++) {
-            $arg = $input->args[$i];
-            if (str_starts_with($arg, '--format=')) {
-                $format = substr($arg, \strlen('--format='));
-
-                break;
-            }
-            if ('--format' === $arg) {
-                $format = $input->args[$i + 1] ?? $format;
-                $i++;
-            }
-        }
-
-        if (!\in_array($format, ['text', 'html'], true)) {
-            $output->write($output->error("Error: Unsupported format '{$format}'. Use --format=text or --format=html.\n"));
-
-            return 1;
+        $pattern = $arguments['pattern'];
+        $format = $arguments['options']['--format'] ?? 'text';
+        if (!\is_string($format) || !\in_array($format, ['text', 'html'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=text or --format=html.", (string) $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -103,9 +87,9 @@ final class ExplainCommand extends AbstractCommand
         } catch (LexerException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Explain failed: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

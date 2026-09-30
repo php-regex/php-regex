@@ -188,7 +188,7 @@ final readonly class HelpCommand implements CommandInterface
         ];
         $this->renderExamplesSection($output, $examples);
 
-        return 0;
+        return self::SUCCESS;
     }
 
     /**
@@ -246,7 +246,7 @@ final readonly class HelpCommand implements CommandInterface
             $output->write($output->error("Unknown command: {$command}\n\n"));
             $this->renderTextSection($output, 'Available Commands', $this->commandNames());
 
-            return 1;
+            return self::INVALID;
         }
 
         $this->renderTextSection($output, 'Description', [$this->describe($command, $commandData['description'])]);
@@ -267,7 +267,7 @@ final readonly class HelpCommand implements CommandInterface
             $this->renderExamplesSection($output, $commandData['examples']);
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
     /**

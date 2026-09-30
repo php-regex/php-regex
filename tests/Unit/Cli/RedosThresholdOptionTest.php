@@ -79,7 +79,7 @@ final class RedosThresholdOptionTest extends TestCase
     {
         [$exitCode, $buffer] = $this->runCommand(new AnalyzeCommand(), 'analyze', ['/a+/', ...$option]);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('"'.$value.'"', $buffer);
     }
 
@@ -92,7 +92,7 @@ final class RedosThresholdOptionTest extends TestCase
     {
         [$exitCode, $buffer] = $this->runCommand(new DebugCommand(), 'debug', ['/a+/', ...$option]);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('"'.$value.'"', $buffer);
     }
 

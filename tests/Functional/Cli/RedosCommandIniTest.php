@@ -91,7 +91,7 @@ final class RedosCommandIniTest extends TestCase
         yield 'a run that completes' => [['/a+$/', '--input', 'aaa'], 0];
         yield 'a run that completes, as JSON' => [['/a+$/', '--input', 'aaa', '--format=json'], 0];
         yield 'a run that hits its own backtrack limit' => [['/(a+)+$/', '--input', 'aaaaaaaaaaaaaaaaaaaa!', '--backtrack-limit', '10'], 0];
-        yield 'a run that stops on an unreadable input file' => [['/a+$/', '--input-file', '/nonexistent/regex-parser/input.txt'], 1];
+        yield 'a run that stops on an unreadable input file' => [['/a+$/', '--input-file', '/nonexistent/regex-parser/input.txt'], 2];
     }
 
     /**

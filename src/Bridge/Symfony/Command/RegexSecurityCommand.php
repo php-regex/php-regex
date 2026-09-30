@@ -117,7 +117,7 @@ final class RegexSecurityCommand extends Command
 
         $threshold = $this->resolveThreshold($input, $io);
         if (null === $threshold) {
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $configOption = $input->getOption('config');
@@ -131,13 +131,13 @@ final class RegexSecurityCommand extends Command
             if ([] === $existing) {
                 $io->error('None of the provided --config files could be found.');
 
-                return Command::FAILURE;
+                return Command::INVALID;
             }
         }
         if ([] === $configPaths) {
             $io->error('No security config files found. Use --config to specify one.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $rules = [];

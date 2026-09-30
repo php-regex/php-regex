@@ -54,7 +54,7 @@ final class RedosThresholdOptionTest extends TestCase
 
         $status = $tester->execute(['--redos-threshold' => $threshold]);
 
-        $this->assertSame(Command::FAILURE, $status);
+        $this->assertSame(Command::INVALID, $status);
         $this->assertStringContainsString('"'.$threshold.'"', $tester->getDisplay());
     }
 
@@ -66,7 +66,7 @@ final class RedosThresholdOptionTest extends TestCase
 
         $status = $tester->execute(['--redos-threshold' => $threshold]);
 
-        $this->assertSame(Command::FAILURE, $status);
+        $this->assertSame(Command::INVALID, $status);
         $this->assertStringContainsString('"'.$threshold.'"', $tester->getDisplay());
     }
 

@@ -76,7 +76,7 @@ final class TranspileCommand extends Command
                 implode(', ', self::SUPPORTED_TARGETS),
             ));
 
-            return self::FAILURE;
+            return self::INVALID;
         }
 
         // Validate pattern

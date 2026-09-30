@@ -42,7 +42,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -114,7 +114,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
@@ -139,7 +139,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a{5,3}/']), $output), $exitCode);
 
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(1, $exitCode);
         // Check if validation error is shown
         // This covers the if (!$validation->isValid && $validation->error) branch
     }
@@ -188,7 +188,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -200,7 +200,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing value for --input', $buffer);
     }
 
@@ -304,7 +304,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
@@ -348,7 +348,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -360,7 +360,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=bogus']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Unsupported format', $buffer);
     }
 
@@ -447,7 +447,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
@@ -459,7 +459,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -519,7 +519,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('FAIL Error: Invalid format: invalid', $buffer);
     }
 
@@ -539,7 +539,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
@@ -551,7 +551,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -594,7 +594,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
@@ -606,7 +606,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', []), $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
@@ -686,7 +686,7 @@ final class CommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 

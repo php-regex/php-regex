@@ -92,7 +92,7 @@ final class LintCommandTargetOutputTest extends TestCase
 
         $status = $tester->execute(['paths' => ['.'], '--no-routes' => true, '--no-validators' => true]);
 
-        $this->assertSame(Command::FAILURE, $status);
+        $this->assertSame(Command::INVALID, $status);
         $this->assertStringContainsString('php_version', $tester->getDisplay());
     }
 

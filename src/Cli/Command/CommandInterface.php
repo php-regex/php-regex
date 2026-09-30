@@ -16,8 +16,26 @@ namespace RegexParser\Cli\Command;
 use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
 
+/**
+ * A command of the binary. Every one exits with one of the three codes below.
+ */
 interface CommandInterface
 {
+    /**
+     * The command did what it was asked and found nothing wrong.
+     */
+    public const SUCCESS = 0;
+
+    /**
+     * The patterns or the files the command judged have a problem.
+     */
+    public const FAILURE = 1;
+
+    /**
+     * The command line or the configuration cannot be used.
+     */
+    public const INVALID = 2;
+
     public function getName(): string;
 
     /**

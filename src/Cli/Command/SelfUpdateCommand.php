@@ -42,7 +42,7 @@ final readonly class SelfUpdateCommand implements CommandInterface
         if (\in_array('--help', $input->args, true)) {
             $output->write("Usage: regex self-update\n");
 
-            return 0;
+            return self::SUCCESS;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -54,9 +54,9 @@ final readonly class SelfUpdateCommand implements CommandInterface
         } catch (\RuntimeException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Self-update failed: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

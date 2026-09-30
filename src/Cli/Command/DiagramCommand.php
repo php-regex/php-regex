@@ -41,50 +41,23 @@ final class DiagramCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $pattern = $input->args[0] ?? '';
-        if ('' === $pattern) {
-            $output->write($output->error("Error: Missing pattern\n"));
-            $output->write("Usage: regex diagram <pattern> [--format=text|svg] [--output=<file>]\n");
-
-            return 1;
+        $usage = "Usage: regex diagram <pattern> [--format=text|svg] [--output=<file>]\n";
+        $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
+        if (null !== $arguments['error']) {
+            return $this->usageError($output, $arguments['error'], $usage);
         }
 
-        $format = 'text';
-        $outputPath = null;
-        for ($i = 0; $i < \count($input->args); $i++) {
-            $arg = $input->args[$i];
-            if (str_starts_with($arg, '--format=')) {
-                $format = substr($arg, \strlen('--format='));
-
-                continue;
-            }
-            if ('--format' === $arg) {
-                $format = $input->args[$i + 1] ?? $format;
-                $i++;
-
-                continue;
-            }
-            if (str_starts_with($arg, '--output=')) {
-                $outputPath = substr($arg, \strlen('--output='));
-
-                continue;
-            }
-            if ('--output' === $arg) {
-                $outputPath = $input->args[$i + 1] ?? $outputPath;
-                $i++;
-            }
-        }
-
-        $format = strtolower($format);
+        $pattern = $arguments['pattern'];
+        $format = strtolower((string) ($arguments['options']['--format'] ?? 'text'));
+        $outputPath = $arguments['options']['--output'] ?? null;
+        $outputPath = \is_string($outputPath) ? $outputPath : null;
         if (!\in_array($format, ['ascii', 'cli', 'text', 'svg'], true)) {
-            $output->write($output->error("Error: Unsupported format '{$format}'. Use --format=text or --format=svg.\n"));
-
-            return 1;
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=text or --format=svg.", $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
-            return 1;
+            return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -102,29 +75,29 @@ final class DiagramCommand extends AbstractCommand
                 /** @var string $diagram */
                 $diagram = $ast->accept(new RailroadSvgVisitor());
                 if (null !== $outputPath) {
-                    if (false === file_put_contents($outputPath, $diagram)) {
+                    if (false === @file_put_contents($outputPath, $diagram)) {
                         $output->write($output->error("Error: Unable to write SVG to '{$outputPath}'.\n"));
 
-                        return 1;
+                        return self::INVALID;
                     }
 
-                    return 0;
+                    return self::SUCCESS;
                 }
 
                 $output->write($diagram."\n");
 
-                return 0;
+                return self::SUCCESS;
             }
 
             $diagram = $ast->accept(new AsciiTreeVisitor());
             if (null !== $outputPath) {
-                if (false === file_put_contents($outputPath, $diagram)) {
+                if (false === @file_put_contents($outputPath, $diagram)) {
                     $output->write($output->error("Error: Unable to write output to '{$outputPath}'.\n"));
 
-                    return 1;
+                    return self::INVALID;
                 }
 
-                return 0;
+                return self::SUCCESS;
             }
 
             if ($style->visualsEnabled()) {
@@ -140,9 +113,9 @@ final class DiagramCommand extends AbstractCommand
         } catch (LexerException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Diagram failed: '.$e->getMessage())."\n");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

@@ -35,7 +35,7 @@ final class RegexRoutesCommandTest extends TestCase
         $tester = new CommandTester($command);
         $status = $tester->execute([]);
 
-        $this->assertSame(1, $status);
+        $this->assertSame(2, $status);
         $this->assertStringContainsString('Router service is not available', (string) $tester->getDisplay());
     }
 

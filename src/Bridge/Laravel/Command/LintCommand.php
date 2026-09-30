@@ -119,7 +119,7 @@ final class LintCommand extends Command
                 implode(', ', $this->formatterRegistry->getNames()),
             ));
 
-            return self::FAILURE;
+            return self::INVALID;
         }
 
         $jobs = (int) $this->option('jobs');
@@ -375,17 +375,20 @@ final class LintCommand extends Command
         throw new InvalidRegexOptionException(\sprintf('"%s" must be a PCRE2 release string like "10.42", not a %s.', $key, get_debug_type($value)));
     }
 
+    /**
+     * Report a configuration the command cannot use.
+     */
     private function renderFailure(string $format, string $message): int
     {
         if (self::FORMAT_CONSOLE !== $format) {
             $this->output->writeln($this->formatterRegistry->get($format)->formatError($message));
 
-            return self::FAILURE;
+            return self::INVALID;
         }
 
         $this->error($message);
 
-        return self::FAILURE;
+        return self::INVALID;
     }
 
     private function renderEmptyResults(string $format): int

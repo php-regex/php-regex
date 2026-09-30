@@ -18,6 +18,7 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Exception\TranspileException;
 use RegexParser\Regex;
 use RegexParser\Transpiler\RegexTranspiler;
+use RegexParser\Transpiler\Target\TargetRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -53,12 +54,20 @@ final class RegexTranspileCommand extends Command
         if (!\is_string($pattern)) {
             $io->error('Pattern must be a string.');
 
-            return Command::FAILURE;
+            return Command::INVALID;
         }
 
         $target = $input->getOption('target');
         if (!\is_string($target)) {
             $target = 'js'; // Default fallback if something weird happens, though definition says default is 'js'
+        }
+
+        try {
+            (new TargetRegistry())->get($target);
+        } catch (TranspileException $e) {
+            $io->error($e->getMessage());
+
+            return Command::INVALID;
         }
 
         $format = $input->getOption('format');

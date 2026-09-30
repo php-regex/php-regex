@@ -64,7 +64,7 @@ final class RedosCommandTimeLimitTest extends TestCase
         }
 
         $this->assertSame([], $warnings);
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('"err_code": '.\PREG_INTERNAL_ERROR, $buffer);
     }
 
