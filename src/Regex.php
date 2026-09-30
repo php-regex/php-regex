@@ -59,8 +59,8 @@ use RegexParser\Transpiler\TranspileResult;
  */
 final readonly class Regex
 {
-    public const VERSION = '1.3.0';
-    public const VERSION_ID = 10300;
+    public const VERSION = '2.0.0-DEV';
+    public const VERSION_ID = 20000;
 
     /**
      * Cache version for AST serialization.

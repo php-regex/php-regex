@@ -1,0 +1,165 @@
+# Upgrading from 1.x to 2.0
+
+2.0 is a new major line. The 1.x line stays on the
+[`1.x` branch](https://github.com/php-regex/regex-parser/tree/1.x), with its own
+upgrade notes; this guide covers moving from 1.3 to 2.0. For every change, see
+[CHANGELOG.md](CHANGELOG.md).
+
+### Breaking Changes
+
+#### `UnicodeNode` and `visitUnicode()` are gone
+
+No parser path ever produced a `UnicodeNode`: a `\u{...}` or `\x{...}` escape
+becomes a `CharLiteralNode`. The node is removed, and with it the
+`visitUnicode()` method of `NodeVisitorInterface`.
+
+A custom visitor keeps working as it is — an extra `visitUnicode()` method on
+your class is simply never called, and you can delete it. Code that names
+`RegexParser\Node\UnicodeNode` has to be updated to `CharLiteralNode`, whose
+`codePoint` holds the value the `code` string used to spell.
+
+#### `ReDoSAnalyzerInterface` is gone
+
+Nothing implemented it, `ReDoSAnalyzer` included. Type against `ReDoSAnalyzer`.
+
+#### One target: `PcreTarget` replaces the PHP version id
+
+A pattern is judged for one PHP version and one PCRE2 release, now a value,
+`RegexParser\PcreTarget`, resolved once by `Regex::create()` and passed to
+everything that reads it.
+
+| before | after |
+|---|---|
+| `new Lexer($versionId)` or `new Lexer(bool)` | `new Lexer(?PcreTarget $target = null)` |
+| `new Parser($depth, ?int $phpVersionId)` | `new Parser($depth, ?PcreTarget $target)` |
+| `new ValidatorNodeVisitor($max, $pattern, int $phpVersionId)` | `new ValidatorNodeVisitor($max, $pattern, ?PcreTarget $target)` |
+| `Regex::tokenize($regex, ?int $phpVersionId)` | `Regex::tokenize($regex, ?PcreTarget $target)` |
+| `Regex::cacheSeed($regex, int $phpVersionId, $depth)` | `Regex::cacheSeed($regex, PcreTarget $target, $depth)` |
+| `RegexPattern::fromDelimited($regex, ?int)`, `PatternParser::extractPatternAndFlags($regex, ?int)` | take `?PcreTarget` |
+| `RegexOptions::$phpVersionId`, `$phpVersionExplicit` | `RegexOptions::$target` |
+| `new RegexOptions(..., $maxRecursionDepth, int $phpVersionId, bool $phpVersionExplicit)` | `new RegexOptions(..., $maxRecursionDepth, ?PcreTarget $target)` |
+| `Lexer::readsWideRepeatCounts()` | gone: `PcreTarget::pcreAtLeast('10.43')` |
+
+`null` means `PcreTarget::runtime()`, the running PHP and the PCRE2 it links.
+`PcreTarget::bundledWith(80200)` is a PHP version with the PCRE2 it bundles.
+
+#### `GroupType` has a new case, and two nodes a new field
+
+`GroupType::T_GROUP_SCAN_SUBSTRING` stands for `(*scs:(1)...)`, PCRE2 10.45: a
+`match` over `GroupType` without a `default` arm needs one for it.
+`GroupNode::$scannedGroups` lists the groups it scans, and
+`SubroutineNode::$returnedGroups` the groups a call returns,
+`(?1(2,<name>))` (PCRE2 10.47); both are empty lists otherwise, and both
+constructors take them as a last, optional argument.
+
+#### Two new nodes and two visitor methods
+
+A Perl extended class, `(?[ \p{L} - [aeiou] ])` (PCRE2 10.45), is an
+`ExtendedCharClassNode` whose expression is an operand or a tree of
+`ClassSetOperationNode`s. `NodeVisitorInterface` gains
+`visitExtendedCharClass()` and `visitClassSetOperation()`: a visitor extending
+`AbstractNodeVisitor` inherits both, one implementing the interface directly
+needs them.
+
+#### `generate()` throws when it finds no matching sample
+
+`Regex::generate()` used to return its last attempt when no sample matched,
+as for `a(*FAIL)`: a string the pattern does not match. It now throws
+`RegexParser\Exception\SampleGenerationException`. Catch it where a pattern
+may match nothing.
+
+#### `php_version` alone always means the PCRE2 that PHP bundles
+
+`php_version` naming the running PHP used to mix two engines: the parser read
+the bundled PCRE2, the validator the linked one. It now judges with the bundled
+one throughout, as for any other version. Judging for the running engine is the
+default, with no option; add `pcre_version` to name the linked release.
+
+#### `runtime_pcre_validation` needs the running engine as target
+
+It compiles with the running PHP, so combining it with a target that is another
+engine now throws `InvalidRegexOptionException` instead of judging with the
+wrong one. Drop one of the two options.
+
+#### The PHPStan extension judges for PHPStan's `phpVersion`
+
+The rule used to judge for the PHP running PHPStan and the PCRE2 it links; it
+now judges for the `phpVersion` PHPStan analyses the project for, with the
+PCRE2 that PHP bundles. Without a `phpVersion` in your PHPStan configuration,
+PHPStan takes the PHP running it, so only the PCRE2 moves, from the linked
+release to the bundled one. Set PHPStan's `phpVersion` to the PHP your project
+runs on, `regexParser.pcreVersion` for a PHP that links another PCRE2, or
+`regexParser.phpVersion: runtime` to keep the old behaviour.
+
+#### The pattern extractors moved, and one is renamed
+
+The two ways of finding regex patterns in PHP source now sit together under
+`RegexParser\Lint\Extraction`, with the interface they implement:
+
+  - `RegexParser\Lint\ExtractorInterface` → `RegexParser\Lint\Extraction\ExtractorInterface`
+  - `RegexParser\Lint\TokenBasedExtractionStrategy` → `RegexParser\Lint\Extraction\TokenBasedExtractionStrategy`
+  - `RegexParser\Lint\PhpStanExtractionStrategy` → `RegexParser\Lint\Extraction\PhpParserExtractionStrategy`
+
+The last one never had anything to do with PHPStan: it reads the source with
+nikic/php-parser, which PHPStan happens to bring along. The old names are
+aliased and will be dropped in the next major version.
+
+#### Two Symfony bridge classes are renamed
+
+`RegexParser\Bridge\Symfony\Analyzer\Severity` said `pass`, `warn`, `fail`
+and `critical` — the outcome of a check, not the severity of a lint issue,
+which is what `RegexParser\Severity` means. It is now `CheckOutcome`.
+
+`RegexParser\Bridge\Symfony\Analyzer\AnalysisReport` is the sectioned
+report of the `regex:security` command and has nothing in common with
+`RegexParser\AnalysisReport`, the result of `Regex::analyze()`. It is now
+`SecurityReport`.
+
+Both are marked `@internal`; the commands that build them are the only
+callers.
+
+#### The lint CLI command moved to the CLI namespace
+
+`RegexParser\Lint\Command\LintCommand` and `LintOutputRenderer` are the only
+two classes of that namespace that needed the console, so the lint domain no
+longer depends on the CLI it is called from. They are now
+`RegexParser\Cli\Command\LintCommand` and
+`RegexParser\Cli\Command\LintOutputRenderer`.
+
+The old names still resolve — they are aliased on first use — but they will
+be dropped in the next major version.
+
+#### Cached ASTs are rebuilt
+
+`Regex::CACHE_VERSION` is now a fingerprint of the code that builds a tree, so
+entries written by 1.x are ignored and the patterns are parsed once more.
+Nothing to do; a warm cache directory rebuilds itself.
+
+### Deprecated
+
+#### `ClassOperationNode` and the class operation tokens
+
+PHP compiles patterns without PCRE2's extended class syntax, so inside a
+character class `&&` is two `&` members and `--` a range through `-`:
+`[a&&b]` matches `&`, and `[a--b]` is refused as a range out of order. The
+parser now reads them that way and never builds a `ClassOperationNode`.
+
+These stay for now and are removed before 2.0.0:
+
+  - `RegexParser\Node\ClassOperationNode` and `RegexParser\Node\ClassOperationType`
+  - `TokenType::T_CLASS_INTERSECTION` and `TokenType::T_CLASS_SUBTRACTION`, which the lexer no longer produces
+  - `NodeVisitorInterface::visitClassOperation()` and its implementations
+
+A custom visitor keeps its `visitClassOperation()` method for now; it is no
+longer called for a parsed pattern. Code that looked for a `ClassOperationNode`
+in a parsed tree finds the members and ranges instead.
+
+### Planned
+
+#### `ValidationResult::$offset` will become body-relative everywhere
+
+Today a syntax error inside the pattern body reports an offset into the body,
+while a flag error reports an offset into the whole pattern string, delimiters
+included; a delimiter error reports none. 2.0.0 reports every offset relative
+to the body, the coordinate PCRE2 uses. Code that places a caret under flag
+errors will need to shift it by the length of the opening delimiter.

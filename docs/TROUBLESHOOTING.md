@@ -469,7 +469,7 @@ https://stackoverflow.com/questions/tagged/regexparser
 - [ReDoS Guide](REDOS_GUIDE.md)
 - [Architecture Documentation](ARCHITECTURE.md)
 - [Contributing Guide](CONTRIBUTING.md)
-- [Upgrading Guide](UPGRADING.md)
+- [Upgrading to 2.0](../UPGRADE-2.0.md)
 
 ## Still Need Help?
 

@@ -5,25 +5,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - Unreleased
+
+2.0 is a new major line; 1.x lives on the `1.x` branch. [UPGRADE-2.0.md](UPGRADE-2.0.md) walks through every change below that needs one on your side.
+
+### Backward-incompatible changes
+
+- Everything under **Removed**, and the changes listed in [UPGRADE-2.0.md](UPGRADE-2.0.md).
+- ReDoS analysis is now disabled by default for better performance. Enable explicitly via:
+  - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
+  - PHPStan: `reportRedos: true` in rule configuration
+  - Symfony: `regex_parser.redos.enabled: true` in bundle configuration
+- `unicode.shorthandWithoutU` lint rule is now disabled by default to reduce noise. Most PHP codebases intentionally use ASCII-only matching. Enable via:
+  - CLI: `--enable-rule=unicode.shorthandWithoutU`
+  - Config: `checks.lint.rules.unicode.shorthandWithoutU: true` in `regex.json`
+- Lint identifiers now use camelCase instead of snake_case for PHPStan compatibility:
+  - `regex.lint.unicode.shorthand_without_u` → `regex.lint.unicode.shorthandWithoutU`
+  - `regex.lint.alternation.duplicate_disjunction` → `regex.lint.alternation.duplicateDisjunction`
+  - `regex.lint.charclass.duplicate_chars` → `regex.lint.charclass.duplicateChars`
+  - `regex.lint.charclass.suspicious_range` → `regex.lint.charclass.suspiciousRange`
+  - `regex.lint.charclass.suspicious_pipe` → `regex.lint.charclass.suspiciousPipe`
 
 ### Added
+
 - Substring scan assertions, PCRE2 10.45: `(*scan_substring:(1)abc)` and `(*scs:(1,<name>)abc)` are read for a target on 10.45 or later, as a `GroupNode` of the new type `GroupType::T_GROUP_SCAN_SUBSTRING` whose `scannedGroups` lists the groups; each is checked, lengths and samples treat the assertion as matching nothing of the subject, and the transpilers refuse it. Before 10.45 the name is unknown, as before. All 81 cases of the PCRE2 suite agree with pcre2test 10.44, 10.45 and 10.49.
 - Perl extended classes, PCRE2 10.45: `(?[ \p{L} - [aeiou] ])` is read for a target on 10.45 or later, as an `ExtendedCharClassNode` holding a tree of `ClassSetOperationNode`s — `!` complement, `&` intersection, then `+` or `|` union, `-` difference and `^` symmetric difference left to right. It matches one character; samples and test cases are asked of the running engine when it reads the syntax, the ReDoS analysis computes the set, and the transpilers refuse it. More than 1024 operations in one class are refused as too deep, as nesting past the recursion limit is. Before 10.45 it is refused as before. All 105 cases of the PCRE2 suite agree with pcre2test 10.44, 10.45 and 10.49, offsets included.
 - Calls that return capture groups, PCRE2 10.47: `(?1(2,<name>))`, `(?R(1))`, `(?&name('id'))` and `(?P>name(-1))` are read for a target on 10.47 or later, with the list in `SubroutineNode::$returnedGroups`, written back by the compiler and the highlighters, and each group checked, where PCRE refuses a missing one. Before 10.47 they are refused as before.
 - `pcre_version`, next to `php_version`: patterns are judged for one PHP version and one PCRE2 release, `RegexParser\PcreTarget`, resolved once and read by the lexer, the parser, the validator and the cache key. With neither option, the running PHP and the PCRE2 it links; `php_version` alone, that PHP with the PCRE2 it bundles; `php_version: 8.4, pcre_version: 10.42` judges for the PHP 8.4 packages of Ubuntu 24.04. `Regex::target()` says which. The command line takes `--pcre-version`.
 - The PHPStan extension judges patterns for PHPStan's `phpVersion`, with new `regexParser.phpVersion` (`runtime` for the PHP running PHPStan) and `regexParser.pcreVersion` parameters.
+- PCRE2's official test suite (10.48, pinned) is replayed against `Regex::validate()` at compile level, under PHP's compile options. The compile verdict, the error offset and the patterns accepted although PHP refuses them are counted and published, with a fix plan, on the [PCRE2 conformance page](docs/reference/pcre2-conformance.md). Cases whose compile verdict differs on PCRE2 10.40, the engine of the oldest supported PHP, are set aside, and CI rebuilds both engines to re-check every recorded outcome. The test suite fails when a count moves without the page following.
+- `regex lint` reads patterns from regex wrappers, not only from the native `preg_*` functions. `composer/pcre` (`Preg::`, `Regex::`) is recognised out of the box; `nette-utils`, `spatie-regex` and `laravel-str` are enabled with `--interop` or `extraction.interop`. A codebase that had migrated away from `preg_*` reported no patterns at all before.
+- Project helpers carrying a pattern are declared with `--pattern-function` or `extraction.functions`, as `function` or `Some\Class::method`, with `#<index>` when the pattern is not the first argument and `#<index>:keys` when that argument is an array whose keys hold the patterns.
+- Alphabetic assertion verbs (PCRE2 10.32+): `(*pla:...)`, `(*positive_lookahead:...)`, `(*nla:...)`, `(*plb:...)`, `(*nlb:...)`, `(*negative_lookbehind:...)`, `(*atomic:...)` parse as their classic lookaround / atomic group equivalents.
+- Script run content is now parsed into the AST: `(*sr:(a+)+b)` is analyzed like any sub-pattern (its catastrophic backtracking is detected by the ReDoS engine, its length/complexity contribute to metrics).
+- `ScriptRunNode::$atomic`: `true` for `(*atomic_script_run:...)` and `(*asr:...)`, whose body is atomic.
+- `Regex::parseTolerant()` — explicit tolerant parsing without the `parse($regex, true)` bool-flag union return.
+- `OutputFormat` enum accepted by `Regex::explain()` and `Regex::highlight()` (strings still work).
+- **Laravel bridge** (`RegexParser\Bridge\Laravel`) with package auto-discovery:
+  - Service provider and `Regex` facade
+  - Artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare`, `regex:transpile`
+  - Pattern extractors for route `where()` constraints and `regex:`/`not_regex:` validation rules
+  - Publishable configuration (`config/regex-parser.php`)
+  - No new runtime dependencies — `illuminate/*` packages are suggested only
+- **Language Server Protocol (LSP) support** via `bin/regex-lsp` for real-time regex analysis in IDEs.
+  - Real-time diagnostics (parse errors, validation issues, lint warnings)
+  - Hover information with pattern explanations
+  - Code actions for quick fixes (add `/u` flag, apply optimizations)
+  - Completion support for regex syntax (character classes, anchors, quantifiers, groups, Unicode properties, POSIX classes, flags)
+  - Works with VS Code, Neovim, Vim, Emacs, Sublime Text, Helix, Zed, and PhpStorm (via LSP4IJ plugin)
+- **Unicode awareness lint checks** (3 new rules):
+  - `regex.lint.unicode.shorthandWithoutU` (Style): Warns when `\w`, `\d`, `\s` used without `/u` flag
+  - `regex.lint.unicode.propertyWithoutU` (Error): Error when `\p{L}` used without `/u` flag
+  - `regex.lint.unicode.bracedHexWithoutU` (Error): Error when `\x{100}` used without `/u` flag for code points > U+FF
+- **Configurable lint rules** via `checks.lint` in `regex.json`/`regex.dist.json`:
+  - Enable/disable individual lint rules (32 rules available)
+  - Configuration schema with all rule IDs and default values
+  - CLI flags: `--lint`/`--no-lint`, `--enable-rule=<id>`, `--disable-rule=<id>`
+- CLI `--redos` flag to explicitly enable ReDoS analysis (counterpart to `--no-redos`).
+- Recompiling a parsed AST gives the pattern back byte for byte, spelling included: optional escapes (`\{` or `{`, `[a-z\-]` or `[a-z-]`, `\]` outside a class), the backreference syntax that was used (`(?P=name)` is no longer rewritten to `\k<name>`), the way a code point was written (`\a` stays `\a`, `«` stays `«`), and assertion conditions (`(?(?<!x)y)` is no longer re-parenthesized). Text inside `\Q...\E` is still escaped, since the quoting is not kept. Comparing patterns — what the optimizer does to decide whether a pattern changed — still runs on the normalized form, so optimization suggestions are unaffected.
+- Recompiling an AST gives the pattern back byte for byte under `/x`: the whitespace the modifier makes ignorable is read back from the source, so `/  a  b  /x` and documented multi-line patterns keep their layout instead of collapsing to `/ab/x`. `RegexNode` carries the body it was parsed from for that purpose; an AST built by hand, a pretty-printed compile and normalized output are unaffected.
+- `/x` can be turned on from inside the pattern: `(?x)`, `(?x:...)`, `(?-x)` and `(?^x)` now drive extended mode in the lexer, the parser and the compiler, with PCRE's scoping — a bare `(?x)` holds until the end of the enclosing group and crosses `|`, while `(?x:...)` stops at its own `)`. Comments and ignorable whitespace were previously only recognised through the pattern-level `x` modifier.
 
 ### Changed
-- `Regex::generate()` throws `SampleGenerationException` when no sample the running engine matches was found, where it returned its last attempt, a string that does not match. See [UPGRADING.md](UPGRADING.md).
+
+- `Regex::generate()` throws `SampleGenerationException` when no sample the running engine matches was found, where it returned its last attempt, a string that does not match. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
+- `max_lookbehind_length` (default 255) now only limits variable-length lookbehinds, as PCRE2's own `max_varlookbehind` does: `(?<=a{256})` validates, `(?<=a{0,256})` does not. A fixed-length lookbehind is limited by PCRE's ceiling of 65535 characters, which no option changes. Each top-level branch of a lookbehind is measured on its own.
+- `Regex::CACHE_VERSION` is a fingerprint of the code that builds an AST rather than a number raised by hand: `task cache-version` writes it, `task lint` runs that, and the test suite fails while the constant and the code disagree. Cached ASTs written by an earlier state of `main` are ignored.
+- `Regex::analyze()` only reports what the pattern itself causes: a failure that is not a RegexParser exception now surfaces instead of being written into the report as a pattern error.
+- A cache that throws while reading is treated as a cache miss, the way a cache that throws while writing already was.
+- Symfony bundle `redos.enabled` configuration option (defaults to `false`).
+- Lint configuration `checks` section with nested ReDoS and optimization settings (schema + defaults).
+- PHPStan extension support for `checks` configuration overrides.
+- Lint check for backreference-as-octal in character classes: `[^\1]` is treated as octal `\x01`, not a backreference — warns when a corresponding capturing group exists.
+- Lint check for literal metacharacters in character classes: `[\w+]` where `+`, `*`, `?` are literals, not quantifiers. Skips negated classes and multi-element sets (3+ other elements) to avoid false positives on URI schemes, Base64, etc.
+- Lint check for `(.|\n)` anti-pattern: suggests using the `s` (DOTALL) flag or `[\s\S]` instead.
+- Lint check for quantified capturing groups: `(?<name>\d+)+` warns that only the last iteration's capture is retained. Named groups report as Warning; anonymous groups report as Info.
+- `CharSet::contains()` now uses binary search over sorted ranges, reducing lookup from O(n) to O(log n) on the determinization hot path.
+- Deprecated legacy lint config keys (`rules`, `redosMode`, `redosThreshold`, `redosNoJit`, `optimizations`, `minSavings`) in favor of `checks.*`.
+- `SecurityAccessControlAnalyzer` now uses `MatchMode::FULL` instead of `MatchMode::PARTIAL`, avoiding redundant NFA self-loops since patterns are already manually wrapped with `.*` by `normalizeSearchPattern()`.
+- `RegexSolver::findExample()` product-automaton BFS now uses integer pair keys instead of string concatenation, reducing allocation overhead during DFA intersection/subset/equivalence checks.
+- **Unified quantifier parsing** via a new `QuantifierBounds` value object. Previously ~20 inline re-implementations disagreed: `{,5}` meant "0 to 5" to the validator but "exactly once" to the length/lint analyzers and "never" to the sample generator; `{ 2 }` (extended mode) was only understood by the validator. All visitors (length ranges, ReDoS, linter, sample/test-case generators, optimizer, explain, railroad) now share one canonical parser.
+- **Stricter (PCRE-conformant) character class ranges**: a character type, POSIX class, or Unicode property can no longer be a range endpoint. Patterns like `[\w-_]`, `[\d-z]`, `[a-\d]` — which PCRE rejects at compile time — now fail to parse instead of being silently re-interpreted with a literal hyphen. Literal hyphens at class edges (`[-a]`, `[\d-]`) are unaffected.
+
+### Deprecated
+
+- `Regex::new()` (identical to `Regex::create()`); `ValidationResult::isValid()` and `getErrorMessage()` methods in favor of the public `$isValid` / `$error` properties.
+- `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()`: the parser no longer builds the node, and they go in the next major version. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ### Removed
-- `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADING.md](UPGRADING.md).
+
+- `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `RegexParser\ReDoS\ReDoSAnalyzerInterface`: implemented by nothing, `ReDoSAnalyzer` included.
-- The PHP version id taken by `Lexer`, `Parser`, `ValidatorNodeVisitor`, `Regex::tokenize()`, `Regex::cacheSeed()`, `RegexPattern::fromDelimited()` and `PatternParser::extractPatternAndFlags()`, and `RegexOptions::$phpVersionId`/`$phpVersionExplicit`: each takes or holds a `PcreTarget` instead. `Lexer::readsWideRepeatCounts()` is gone. See [UPGRADING.md](UPGRADING.md).
+- The PHP version id taken by `Lexer`, `Parser`, `ValidatorNodeVisitor`, `Regex::tokenize()`, `Regex::cacheSeed()`, `RegexPattern::fromDelimited()` and `PatternParser::extractPatternAndFlags()`, and `RegexOptions::$phpVersionId`/`$phpVersionExplicit`: each takes or holds a `PcreTarget` instead. `Lexer::readsWideRepeatCounts()` is gone. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
+- Dead `HelpfulExceptionTrait` (~430 lines, referenced nowhere).
 
 ### Fixed
+
 - `PcreTarget` reads a PCRE2 release without the engine: with a very low `pcre.backtrack_limit`, `Regex::create()` refused every release, the running one included, and blamed the `pcre_version` option for it. The library still needs the limit near its default to read patterns (see [PCRE](docs/concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern)).
 - Error offsets for PCRE2 up to 10.46 in two places: a version condition whose minor has three digits or more, then text, as `(?(VERSION>=10.999x)`, stops at the third digit (a two-digit minor there); and a range from a type, a POSIX class or a property, as `[\d-\X]`, is refused on its hyphen up to 10.44, before its end is read. On every release, a range ending in an escape a class does not take, as `[\d-\j]`, is reported at the escape.
 - `generate()` checked its samples with the JIT, which in PCRE2 10.40 to 10.49 crashes PHP on some pattern and subject pairs, as `(?|(\*)(*napla:(.+))|()(?=\S_(\2?)))+_` with `*a_` (see [PCRE](docs/concepts/pcre.md#a-known-jit-crash)). Samples are now checked by the interpreter, one the engine gives up on past a limit, or on an error it meets matching, is not given as checked, thirty-two samples are tried instead of eight, and a sample past 1 MiB, which references repeated in a count can reach, is not built.
@@ -136,87 +214,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation accepted escapes and character-class forms that PHP refuses to compile. It now reports them: an escaped letter PCRE does not know, such as `\i` (`regex.escape.unrecognized`); `\F`, `\l`, `\L`, `\u` (`\u0041` included) and `\U`, and a `\N{...}` that is neither a repeat count nor `\N{U+...}` (`regex.escape.unsupported`); `\o` without braces and bad or missing digits in `\o{...}`, `\x{...}` and `\N{U+...}` (`regex.octal.missing_brace`, `regex.octal.invalid_digit`, `regex.unicode.invalid_digit`, `regex.escape.digits_missing`); `\N{U+...}` without Unicode mode, however it is spelled; surrogate code points in Unicode mode (`regex.unicode.surrogate`); `\B`, `\R`, `\X`, `\N` and the other escapes a class cannot hold (`regex.charclass.invalid_escape`); POSIX items outside a class and collating elements (`regex.posix.outside_class`, `regex.posix.collating_element`); unknown POSIX names such as `[[:foo:]]` or `[[:ALPHA:]]`, which PCRE matches case-sensitively; and out-of-order ranges between escapes, such as `[\x5a-\x41]` (`regex.range.reversed`). A `]` that follows only `\E`, `\Q\E` or `^` at the start of a class is a member, so `[\E]a` is an unterminated class, and `[\E^a]` is negated. A leading `(*UTF)` now counts as Unicode mode, so `/(*UTF)\N{U+41}/` validates, and `/[^^]/` is no longer refused. Octal escapes above `\377` validate in Unicode mode (`/\400/u`, `/[\400]/u`), and a range from a multibyte character without Unicode mode is read byte by byte, as PCRE reads it, so `/[ÿ-é]/` validates. Spaces and tabs padding the digits of `\x{...}`, `\o{...}` and `\N{U+...}`, and before the `U+`, are read as PCRE2 10.48 reads them: `\x{ 41 }` is the character `A`, not five literals.
 - Validation accepted group, verb and condition forms that PHP refuses to compile. The parser now refuses: a `)` left over after a verb name, which ends at the first `)`, so `(*:ab(d\)c)` is unbalanced; a verb, an atomic group or a script run as a condition, such as `(?(*ACCEPT)...)` or `(?(*CR)...)`; `(?P'name'...)` and `(?P"name"...)`, which PCRE spells `(?'name'...)`; a group name longer than 128 code units; two names for one group number in a branch reset; `\k` without a name, and an empty `\k<>`, `\k''` or `\k{}`; a bare word after `(?C`, such as `(?Cname)`; and a `-` after `(?^`. Validation now reports: `\X` inside a lookbehind (`regex.lookbehind.unbounded`); `(?-0)` and `(?+0)` (`regex.subroutine.relative_zero`); a conditional with more than two branches (`regex.conditional.too_many_branches`); a `(DEFINE)` group with more than one (`regex.define.too_many_branches`); `(*CR)`, `(*UTF)` and the other start-of-pattern settings anywhere but at the start (`regex.verb.misplaced`); `(*LIMIT_MATCH=)` without a number and `(*=name)` (`regex.verb.invalid`); `(*MARK)`, `(*MARK:)` and `(*:)` (`regex.verb.mark_name_missing`); and a version such as `10.0.0` in `(?(VERSION>=...)` (`regex.condition.version_syntax`). Some forms PHP compiles now validate: a mark name holding a `(`, such as `(*:a(b)`; the same name given twice to one group number in a branch reset, `(?|(?<a>A)|(?<a>B))`; and callout strings between `` ` ``, `'`, `^`, `%`, `#`, `$` or `{...}`, with a doubled delimiter standing for itself. `(?(*pla:a)yes|no)` is read as a conditional; it was read as a lookahead followed by `yes|no`. Two false refusals go as well: an empty callout string, `(?C"")`, `(?C'')` or `(?C{})`, which PCRE compiles; and `\X` inside a lookahead within a lookbehind, such as `(?<=(?=\X)a)b`, since a lookahead adds no length to the lookbehind.
 - Validation refused patterns PHP compiles. These now validate: a lookbehind holding a call or a back reference to a group of bounded length, such as `(a)(?<=b(?1))` or `(a)(?<=b\1)`, and a repeated lookahead inside one, `(?<=(?=.)*)`; a repeated empty group, such as `(){3,5}` or `(?!)?`; the non-atomic assertions `(*napla:...)`, `(*naplb:...)`, their long names, `(?*...)` and `(?<*...)`, kept as non-atomic when the pattern is written back; named conditions in quotes, `(?('name')...)`, relative conditions, `(?(-1)...)` and `(?(+1)...)`, and `(?(R&name)...)`; group names in any script under `u`, such as `(?<nämed>b)`; the empty option settings `(?)` and `(?-)`; a callout before the assertion of a condition, `(?(?C1)(?=a)...)`; a repeated `(*ACCEPT)`; `\E` or `\Q\E` between `-` and the end of a range, `[a-\Ec]`; a repeated `\N`, `\N{4}`; a `)` inside a callout string, `(?C"a)b""c")`; and fixed-length lookbehinds longer than 255 characters, up to PCRE's 65535.
-
-### Changed
-- `max_lookbehind_length` (default 255) now only limits variable-length lookbehinds, as PCRE2's own `max_varlookbehind` does: `(?<=a{256})` validates, `(?<=a{0,256})` does not. A fixed-length lookbehind is limited by PCRE's ceiling of 65535 characters, which no option changes. Each top-level branch of a lookbehind is measured on its own.
-- `Regex::CACHE_VERSION` is a fingerprint of the code that builds an AST rather than a number raised by hand: `task cache-version` writes it, `task lint` runs that, and the test suite fails while the constant and the code disagree. Cached ASTs written by an earlier state of `main` are ignored.
-- `Regex::analyze()` only reports what the pattern itself causes: a failure that is not a RegexParser exception now surfaces instead of being written into the report as a pattern error.
-- A cache that throws while reading is treated as a cache miss, the way a cache that throws while writing already was.
-
-### Added
-- PCRE2's official test suite (10.48, pinned) is replayed against `Regex::validate()` at compile level, under PHP's compile options. The compile verdict, the error offset and the patterns accepted although PHP refuses them are counted and published, with a fix plan, on the [PCRE2 conformance page](docs/reference/pcre2-conformance.md). Cases whose compile verdict differs on PCRE2 10.40, the engine of the oldest supported PHP, are set aside, and CI rebuilds both engines to re-check every recorded outcome. The test suite fails when a count moves without the page following.
-- `regex lint` reads patterns from regex wrappers, not only from the native `preg_*` functions. `composer/pcre` (`Preg::`, `Regex::`) is recognised out of the box; `nette-utils`, `spatie-regex` and `laravel-str` are enabled with `--interop` or `extraction.interop`. A codebase that had migrated away from `preg_*` reported no patterns at all before.
-- Project helpers carrying a pattern are declared with `--pattern-function` or `extraction.functions`, as `function` or `Some\Class::method`, with `#<index>` when the pattern is not the first argument and `#<index>:keys` when that argument is an array whose keys hold the patterns.
-- Alphabetic assertion verbs (PCRE2 10.32+): `(*pla:...)`, `(*positive_lookahead:...)`, `(*nla:...)`, `(*plb:...)`, `(*nlb:...)`, `(*negative_lookbehind:...)`, `(*atomic:...)` parse as their classic lookaround / atomic group equivalents.
-- Script run content is now parsed into the AST: `(*sr:(a+)+b)` is analyzed like any sub-pattern (its catastrophic backtracking is detected by the ReDoS engine, its length/complexity contribute to metrics).
-- `ScriptRunNode::$atomic`: `true` for `(*atomic_script_run:...)` and `(*asr:...)`, whose body is atomic.
-- `Regex::parseTolerant()` — explicit tolerant parsing without the `parse($regex, true)` bool-flag union return.
-- `OutputFormat` enum accepted by `Regex::explain()` and `Regex::highlight()` (strings still work).
-
-### Deprecated
-- `Regex::new()` (identical to `Regex::create()`); `ValidationResult::isValid()` and `getErrorMessage()` methods in favor of the public `$isValid` / `$error` properties.
-- `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()`: the parser no longer builds the node, and they go in the next major version. See [UPGRADING.md](UPGRADING.md).
-
-### Added
-- **Laravel bridge** (`RegexParser\Bridge\Laravel`) with package auto-discovery:
-  - Service provider and `Regex` facade
-  - Artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare`, `regex:transpile`
-  - Pattern extractors for route `where()` constraints and `regex:`/`not_regex:` validation rules
-  - Publishable configuration (`config/regex-parser.php`)
-  - No new runtime dependencies — `illuminate/*` packages are suggested only
-- **Language Server Protocol (LSP) support** via `bin/regex-lsp` for real-time regex analysis in IDEs.
-  - Real-time diagnostics (parse errors, validation issues, lint warnings)
-  - Hover information with pattern explanations
-  - Code actions for quick fixes (add `/u` flag, apply optimizations)
-  - Completion support for regex syntax (character classes, anchors, quantifiers, groups, Unicode properties, POSIX classes, flags)
-  - Works with VS Code, Neovim, Vim, Emacs, Sublime Text, Helix, Zed, and PhpStorm (via LSP4IJ plugin)
-- **Unicode awareness lint checks** (3 new rules):
-  - `regex.lint.unicode.shorthandWithoutU` (Style): Warns when `\w`, `\d`, `\s` used without `/u` flag
-  - `regex.lint.unicode.propertyWithoutU` (Error): Error when `\p{L}` used without `/u` flag
-  - `regex.lint.unicode.bracedHexWithoutU` (Error): Error when `\x{100}` used without `/u` flag for code points > U+FF
-- **Configurable lint rules** via `checks.lint` in `regex.json`/`regex.dist.json`:
-  - Enable/disable individual lint rules (32 rules available)
-  - Configuration schema with all rule IDs and default values
-  - CLI flags: `--lint`/`--no-lint`, `--enable-rule=<id>`, `--disable-rule=<id>`
-- CLI `--redos` flag to explicitly enable ReDoS analysis (counterpart to `--no-redos`).
-
-### Changed
-- **BREAKING**: ReDoS analysis is now disabled by default for better performance. Enable explicitly via:
-  - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
-  - PHPStan: `reportRedos: true` in rule configuration
-  - Symfony: `regex_parser.redos.enabled: true` in bundle configuration
-- **BREAKING**: `unicode.shorthandWithoutU` lint rule is now disabled by default to reduce noise. Most PHP codebases intentionally use ASCII-only matching. Enable via:
-  - CLI: `--enable-rule=unicode.shorthandWithoutU`
-  - Config: `checks.lint.rules.unicode.shorthandWithoutU: true` in `regex.json`
-- **BREAKING**: Lint identifiers now use camelCase instead of snake_case for PHPStan compatibility:
-  - `regex.lint.unicode.shorthand_without_u` → `regex.lint.unicode.shorthandWithoutU`
-  - `regex.lint.alternation.duplicate_disjunction` → `regex.lint.alternation.duplicateDisjunction`
-  - `regex.lint.charclass.duplicate_chars` → `regex.lint.charclass.duplicateChars`
-  - `regex.lint.charclass.suspicious_range` → `regex.lint.charclass.suspiciousRange`
-  - `regex.lint.charclass.suspicious_pipe` → `regex.lint.charclass.suspiciousPipe`
-- Symfony bundle `redos.enabled` configuration option (defaults to `false`).
-- Lint configuration `checks` section with nested ReDoS and optimization settings (schema + defaults).
-- PHPStan extension support for `checks` configuration overrides.
-- Lint check for backreference-as-octal in character classes: `[^\1]` is treated as octal `\x01`, not a backreference — warns when a corresponding capturing group exists.
-- Lint check for literal metacharacters in character classes: `[\w+]` where `+`, `*`, `?` are literals, not quantifiers. Skips negated classes and multi-element sets (3+ other elements) to avoid false positives on URI schemes, Base64, etc.
-- Lint check for `(.|\n)` anti-pattern: suggests using the `s` (DOTALL) flag or `[\s\S]` instead.
-- Lint check for quantified capturing groups: `(?<name>\d+)+` warns that only the last iteration's capture is retained. Named groups report as Warning; anonymous groups report as Info.
-- `CharSet::contains()` now uses binary search over sorted ranges, reducing lookup from O(n) to O(log n) on the determinization hot path.
-
-### Changed
-- Deprecated legacy lint config keys (`rules`, `redosMode`, `redosThreshold`, `redosNoJit`, `optimizations`, `minSavings`) in favor of `checks.*`.
-- `SecurityAccessControlAnalyzer` now uses `MatchMode::FULL` instead of `MatchMode::PARTIAL`, avoiding redundant NFA self-loops since patterns are already manually wrapped with `.*` by `normalizeSearchPattern()`.
-- `RegexSolver::findExample()` product-automaton BFS now uses integer pair keys instead of string concatenation, reducing allocation overhead during DFA intersection/subset/equivalence checks.
-
-### Removed
-- Dead `HelpfulExceptionTrait` (~430 lines, referenced nowhere).
-
-### Added
-- Recompiling a parsed AST gives the pattern back byte for byte, spelling included: optional escapes (`\{` or `{`, `[a-z\-]` or `[a-z-]`, `\]` outside a class), the backreference syntax that was used (`(?P=name)` is no longer rewritten to `\k<name>`), the way a code point was written (`\a` stays `\a`, `«` stays `«`), and assertion conditions (`(?(?<!x)y)` is no longer re-parenthesized). Text inside `\Q...\E` is still escaped, since the quoting is not kept. Comparing patterns — what the optimizer does to decide whether a pattern changed — still runs on the normalized form, so optimization suggestions are unaffected.
-- Recompiling an AST gives the pattern back byte for byte under `/x`: the whitespace the modifier makes ignorable is read back from the source, so `/  a  b  /x` and documented multi-line patterns keep their layout instead of collapsing to `/ab/x`. `RegexNode` carries the body it was parsed from for that purpose; an AST built by hand, a pretty-printed compile and normalized output are unaffected.
-- `/x` can be turned on from inside the pattern: `(?x)`, `(?x:...)`, `(?-x)` and `(?^x)` now drive extended mode in the lexer, the parser and the compiler, with PCRE's scoping — a bare `(?x)` holds until the end of the enclosing group and crosses `|`, while `(?x:...)` stops at its own `)`. Comments and ignorable whitespace were previously only recognised through the pattern-level `x` modifier.
-
-### Fixed
 - PCRE conformance, found by linting the corpus: `[[:^word:]]` is accepted (PCRE negates every POSIX class it supports, and only `word` was rejected), and a `#` comment under `/x` no longer lets its `[` or `(` be tokenized as regex syntax — `/a # [ x\nb/x` compiles in PCRE but was reported as an unclosed character class.
 - `--format=json` no longer dies with "Failed to encode JSON" on byte-mode patterns: every string of the report, including the ones held by issue and optimization objects, is escaped the way the console renders them. The checkstyle and JUnit formatters used to silently drop such values, since `htmlspecialchars()` returns an empty string on invalid UTF-8.
 - Reported patterns keep their non-ASCII characters instead of being rewritten as octal escapes. `/《붉은별》/iu` used to be printed as `/\343\200\212…/iu`, which is a different pattern under `/u` (`\343` is `ã`, so the `i` flag stops being useless) and could not be copied back into PHP. Control bytes are still escaped, and invalid UTF-8 still falls back to full byte escaping.
@@ -239,15 +236,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sample generator produced non-matching samples**: negated classes always returned `'!'` (impossible for e.g. `/[^!"#]/`); lookbehind suffix hints used substring instead of suffix matching. `generate()` now verifies samples against the real engine and retries.
 - **Backreference/octal disambiguation now follows PCRE**: `(a)\11` is the octal escape `\011` (TAB), not an invalid backreference; `\19` is octal `\1` + literal `9`; `\81` remains an error. Previously all multi-digit `\NN` were treated as backreferences and wrongly rejected.
 
-### Changed
-- **Unified quantifier parsing** via a new `QuantifierBounds` value object. Previously ~20 inline re-implementations disagreed: `{,5}` meant "0 to 5" to the validator but "exactly once" to the length/lint analyzers and "never" to the sample generator; `{ 2 }` (extended mode) was only understood by the validator. All visitors (length ranges, ReDoS, linter, sample/test-case generators, optimizer, explain, railroad) now share one canonical parser.
-- **Stricter (PCRE-conformant) character class ranges**: a character type, POSIX class, or Unicode property can no longer be a range endpoint. Patterns like `[\w-_]`, `[\d-z]`, `[a-\d]` — which PCRE rejects at compile time — now fail to parse instead of being silently re-interpreted with a literal hyphen. Literal hyphens at class edges (`[-a]`, `[\d-]`) are unaffected.
-
 ### Documentation
+
 - Added comprehensive LSP integration guide (`docs/guides/lsp.md`) with configuration for VS Code, PhpStorm (LSP4IJ), Neovim, Vim, Emacs, Sublime Text, Helix, and Zed.
 - Updated CLI configuration examples to use `checks` and note deprecated keys.
 
 ### Tests
+
 - Added comprehensive LSP server test suite (97 tests) covering Protocol, Handlers, Document management, and Converters.
 - Added Unicode lint rules tests covering all shorthand patterns and Unicode properties.
 - Added coverage for `checks` normalization and PHPStan `checks` overrides.
