@@ -28,7 +28,6 @@ use RegexParser\Node\BackrefNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
@@ -546,13 +545,6 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
 
         if ($node instanceof CharClassNode) {
             $this->collectCapturingGroupInfo($node->expression, $alternation);
-
-            return;
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            $this->collectCapturingGroupInfo($node->left, $alternation);
-            $this->collectCapturingGroupInfo($node->right, $alternation);
 
             return;
         }

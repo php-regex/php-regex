@@ -44,10 +44,6 @@ final class SuspiciousCharClassRangeRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         foreach ($parts as $part) {
             if (!$part instanceof RangeNode) {
                 continue;

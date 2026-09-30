@@ -14,12 +14,6 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Unit\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
 use RegexParser\NodeVisitor\AsciiTreeVisitor;
 use RegexParser\Regex;
 
@@ -166,22 +160,6 @@ final class AsciiTreeVisitorTest extends TestCase
         $this->assertStringNotContainsString('ClassOperation', $diagram);
         $this->assertStringContainsString("Literal ('&')", $diagram);
         $this->assertStringContainsString("Literal ('[')", $diagram);
-    }
-
-    public function test_diagram_with_class_operation(): void
-    {
-        // The parser no longer builds this node; a tree built by hand still renders.
-        $operation = new ClassOperationNode(
-            ClassOperationType::INTERSECTION,
-            new LiteralNode('a', 1, 2),
-            new RangeNode(new LiteralNode('b', 4, 5), new LiteralNode('z', 6, 7), 4, 7),
-            1,
-            7,
-        );
-        $ast = new RegexNode(new CharClassNode($operation, false, 0, 8), '', '/', 0, 8);
-        $diagram = $ast->accept(new AsciiTreeVisitor());
-
-        $this->assertStringContainsString('ClassOperation (intersection)', $diagram);
     }
 
     public function test_diagram_with_control_char(): void

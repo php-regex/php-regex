@@ -123,10 +123,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 - `Regex::new()` (identical to `Regex::create()`); `ValidationResult::isValid()` and `getErrorMessage()` methods in favor of the public `$isValid` / `$error` properties.
-- `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()`: the parser no longer builds the node, and they go in the next major version. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ### Removed
 
+- `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()` with every implementation: PHP reads `&&` and `--` inside a class as members and ranges, so the parser never built the node and the lexer never produced the tokens. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `RegexParser\ReDoS\ReDoSAnalyzerInterface`: implemented by nothing, `ReDoSAnalyzer` included.
 - The PHP version id taken by `Lexer`, `Parser`, `ValidatorNodeVisitor`, `Regex::tokenize()`, `Regex::cacheSeed()`, `RegexPattern::fromDelimited()` and `PatternParser::extractPatternAndFlags()`, and `RegexOptions::$phpVersionId`/`$phpVersionExplicit`: each takes or holds a `PcreTarget` instead. `Lexer::readsWideRepeatCounts()` is gone. See [UPGRADE-2.0.md](UPGRADE-2.0.md).

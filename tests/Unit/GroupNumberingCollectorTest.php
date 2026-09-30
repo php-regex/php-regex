@@ -17,8 +17,6 @@ use PHPUnit\Framework\TestCase;
 use RegexParser\GroupNumberingCollector;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\GroupNode;
@@ -184,22 +182,6 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
-    public function test_collect_with_class_operation(): void
-    {
-        $literal1 = new LiteralNode('a', 0, 1);
-        $literal2 = new LiteralNode('b', 1, 2);
-        $classOp = new ClassOperationNode(ClassOperationType::INTERSECTION, $literal1, $literal2, 0, 2);
-        $sequence = new SequenceNode([$classOp], 0, 2);
-        $root = new RegexNode($sequence, '', '/', 0, 2);
-
-        $collector = new GroupNumberingCollector();
-        $result = $collector->collect($root);
-
-        $this->assertSame(0, $result->maxGroupNumber);
-        $this->assertEmpty($result->captureSequence);
-        $this->assertEmpty($result->namedGroups);
-    }
-
     public function test_collect_with_range(): void
     {
         $start = new LiteralNode('a', 0, 1);
@@ -216,16 +198,15 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
-    public function test_collect_handles_branch_reset_define_and_class_operations(): void
+    public function test_collect_handles_branch_reset_define_and_char_classes(): void
     {
         $literalA = new LiteralNode('a', 0, 1);
         $literalB = new LiteralNode('b', 1, 2);
 
         $range = new RangeNode($literalA, $literalB, 0, 2);
         $charClass = new CharClassNode($range, false, 0, 2);
-        $classOp = new ClassOperationNode(ClassOperationType::INTERSECTION, $charClass, $charClass, 0, 2);
 
-        $capturedInDefine = new GroupNode($classOp, GroupType::T_GROUP_CAPTURING, null, null, 0, 2);
+        $capturedInDefine = new GroupNode($charClass, GroupType::T_GROUP_CAPTURING, null, null, 0, 2);
         $define = new DefineNode($capturedInDefine, 0, 2);
 
         $conditional = new ConditionalNode($literalA, $capturedInDefine, $literalB, 0, 2);

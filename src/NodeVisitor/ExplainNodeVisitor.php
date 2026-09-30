@@ -22,8 +22,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
@@ -302,17 +300,6 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
         };
 
         return \sprintf('(%s %s %s)', ltrim($node->left->accept($this)), $word, $right);
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        $op = ClassOperationType::INTERSECTION === $node->type ? 'intersection' : 'subtraction';
-
-        return $this->line(\sprintf('Class %s between %s and %s', $op, $node->left->accept($this), $node->right->accept($this)));
     }
 
     #[\Override]

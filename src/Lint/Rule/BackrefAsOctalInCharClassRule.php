@@ -47,10 +47,6 @@ final class BackrefAsOctalInCharClassRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         foreach ($parts as $part) {
             if (!$part instanceof CharLiteralNode) {
                 continue;

@@ -23,8 +23,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
@@ -291,17 +289,6 @@ final class JavaScriptCompilerVisitor extends AbstractCompilerVisitor
     public function visitBackref(BackrefNode $node): string
     {
         return $this->normalizeBackreference($node->ref, $node->getStartPosition());
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        $operator = ClassOperationType::INTERSECTION === $node->type ? '&&' : '--';
-
-        return $this->unsupported('Character class operation '.$operator.' is not supported in JavaScript.', $node);
     }
 
     #[\Override]

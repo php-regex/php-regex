@@ -15,7 +15,6 @@ namespace RegexParser;
 
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\GroupNode;
@@ -126,13 +125,6 @@ final class GroupNumberingCollector
 
         if ($node instanceof CharClassNode) {
             $this->collectNode($node->expression);
-
-            return;
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            $this->collectNode($node->left);
-            $this->collectNode($node->right);
 
             return;
         }

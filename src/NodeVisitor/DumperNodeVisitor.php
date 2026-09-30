@@ -22,8 +22,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -201,17 +199,6 @@ final class DumperNodeVisitor extends AbstractNodeVisitor
     public function visitClassSetOperation(ClassSetOperationNode $node): string
     {
         return 'ClassSetOperation('.$node->symbol.', '.($node->left?->accept($this) ?? '').', '.$node->right->accept($this).')';
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        $op = ClassOperationType::INTERSECTION === $node->type ? '&&' : '--';
-
-        return "ClassOperation({$op}, ".$node->left->accept($this).', '.$node->right->accept($this).')';
     }
 
     #[\Override]

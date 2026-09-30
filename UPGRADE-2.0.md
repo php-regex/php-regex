@@ -18,6 +18,23 @@ your class is simply never called, and you can delete it. Code that names
 `RegexParser\Node\UnicodeNode` has to be updated to `CharLiteralNode`, whose
 `codePoint` holds the value the `code` string used to spell.
 
+#### `ClassOperationNode` and the class operation tokens are gone
+
+PHP compiles patterns without PCRE2's extended class syntax, so inside a
+character class `&&` is two `&` members and `--` a range through `-`:
+`[a&&b]` matches `&`, and `[a--b]` is refused as a range out of order. The
+parser reads them that way and never builds a class operation, so these are
+removed:
+
+  - `RegexParser\Node\ClassOperationNode` and `RegexParser\Node\ClassOperationType`
+  - `TokenType::T_CLASS_INTERSECTION` and `TokenType::T_CLASS_SUBTRACTION`, which the lexer no longer produced
+  - `NodeVisitorInterface::visitClassOperation()` and its implementations in every visitor of the library
+
+A custom visitor can delete its `visitClassOperation()` method; left in place it
+is never called, but with `#[\Override]` on it PHP 8.3 and later refuse the
+class. Code that looked for a `ClassOperationNode` in a parsed tree finds the
+members and ranges instead.
+
 #### `ReDoSAnalyzerInterface` is gone
 
 Nothing implemented it, `ReDoSAnalyzer` included. Type against `ReDoSAnalyzer`.
@@ -546,22 +563,3 @@ of that class keeps holding them. `InvalidRegexOptionException` extends
 `\InvalidArgumentException`. A `catch (\RuntimeException)` around a token
 stream, or around the sample generator for a subroutine, catches
 `\LogicException` or `SampleGenerationException` instead.
-
-### Deprecated
-
-#### `ClassOperationNode` and the class operation tokens
-
-PHP compiles patterns without PCRE2's extended class syntax, so inside a
-character class `&&` is two `&` members and `--` a range through `-`:
-`[a&&b]` matches `&`, and `[a--b]` is refused as a range out of order. The
-parser now reads them that way and never builds a `ClassOperationNode`.
-
-These stay for now and are removed before 2.0.0:
-
-  - `RegexParser\Node\ClassOperationNode` and `RegexParser\Node\ClassOperationType`
-  - `TokenType::T_CLASS_INTERSECTION` and `TokenType::T_CLASS_SUBTRACTION`, which the lexer no longer produces
-  - `NodeVisitorInterface::visitClassOperation()` and its implementations
-
-A custom visitor keeps its `visitClassOperation()` method for now; it is no
-longer called for a parsed pattern. Code that looked for a `ClassOperationNode`
-in a parsed tree finds the members and ranges instead.

@@ -22,7 +22,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -493,15 +492,6 @@ final class ReDoSProfileNodeVisitor extends AbstractNodeVisitor
     public function visitClassSetOperation(ClassSetOperationNode $node): ReDoSSeverity
     {
         return ReDoSSeverity::SAFE;
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): ReDoSSeverity
-    {
-        return $this->maxSeverity($node->left->accept($this), $node->right->accept($this));
     }
 
     #[\Override]

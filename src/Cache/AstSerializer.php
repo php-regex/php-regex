@@ -21,7 +21,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -66,7 +65,6 @@ final class AstSerializer
         CharClassNode::class,
         CharLiteralNode::class,
         CharTypeNode::class,
-        ClassOperationNode::class,
         ClassSetOperationNode::class,
         CommentNode::class,
         ConditionalNode::class,

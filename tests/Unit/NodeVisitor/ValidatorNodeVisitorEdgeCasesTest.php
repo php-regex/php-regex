@@ -24,8 +24,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
@@ -436,15 +434,6 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
         $define = new DefineNode(new BackrefNode('1', 0, 0), 0, 0);
         $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $define));
-
-        $classOperation = new ClassOperationNode(
-            ClassOperationType::SUBTRACTION,
-            new BackrefNode('1', 0, 0),
-            new LiteralNode('a', 0, 0),
-            0,
-            0,
-        );
-        $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $classOperation));
 
         $range = new RangeNode(new BackrefNode('1', 0, 0), new LiteralNode('b', 0, 0), 0, 0);
         $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $range));

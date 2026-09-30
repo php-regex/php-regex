@@ -49,10 +49,6 @@ final class LiteralMetacharInCharClassRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         // Only flag when the class also contains \w, \d, or \s (shorthand
         // types that the author likely intended to quantify).
         $hasShorthand = false;

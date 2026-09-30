@@ -24,7 +24,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DefineNode;
@@ -161,13 +160,6 @@ final class RegularSubsetValidator
         if ($node instanceof RangeNode) {
             $this->assertRangeEndpoint($node->start);
             $this->assertRangeEndpoint($node->end);
-
-            return;
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            $this->assertNode($node->left, true);
-            $this->assertNode($node->right, true);
 
             return;
         }

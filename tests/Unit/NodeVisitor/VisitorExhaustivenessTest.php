@@ -27,8 +27,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
@@ -154,7 +152,6 @@ final class VisitorExhaustivenessTest extends TestCase
             new CharClassNode($literal, false, 0, 3),
             new CharLiteralNode('\\x41', 65, CharLiteralType::UNICODE, 0, 4),
             new CharTypeNode('d', 0, 2),
-            new ClassOperationNode(ClassOperationType::INTERSECTION, $literal, $literal, 0, 6),
             new ClassSetOperationNode(ClassSetOperator::DIFFERENCE, new CharTypeNode('d', 0, 2), $literal, '-', 0, 4),
             new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, new CharTypeNode('d', 1, 3), '!', 0, 3),
             new CommentNode('c', 0, 5),

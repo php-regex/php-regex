@@ -42,10 +42,6 @@ final class RedundantCharClassRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         $unicodeMode = $context->pattern->unicodeMode;
 
         $ranges = [];

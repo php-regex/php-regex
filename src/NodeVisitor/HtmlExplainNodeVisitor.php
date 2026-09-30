@@ -22,7 +22,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
@@ -375,20 +374,6 @@ final class HtmlExplainNodeVisitor extends AbstractNodeVisitor
         };
 
         return \sprintf('(%s %s %s)', strip_tags($node->left->accept($this)), $word, $right);
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        return \sprintf(
-            '<li>Class Operation: %s <strong>%s</strong> %s</li>',
-            strip_tags($node->left->accept($this)),
-            $this->e($node->type->value),
-            strip_tags($node->right->accept($this)),
-        );
     }
 
     #[\Override]

@@ -33,8 +33,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\DotNode;
@@ -167,22 +165,6 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $issues = (new RedundantCharClassRule())->check($charClass, $this->createRuleContext());
 
         $this->assertNotEmpty($issues);
-    }
-
-    public function test_lint_redundant_char_class_returns_on_class_operation(): void
-    {
-        $operation = new ClassOperationNode(
-            ClassOperationType::INTERSECTION,
-            new LiteralNode('a', 0, 0),
-            new LiteralNode('b', 0, 0),
-            0,
-            0,
-        );
-        $charClass = new CharClassNode($operation, false, 0, 0);
-
-        $issues = (new RedundantCharClassRule())->check($charClass, $this->createRuleContext());
-
-        $this->assertSame([], $issues);
     }
 
     public function test_collect_char_class_parts_sequence(): void

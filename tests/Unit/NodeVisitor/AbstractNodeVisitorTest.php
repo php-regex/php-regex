@@ -23,8 +23,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
@@ -171,19 +169,6 @@ final class AbstractNodeVisitorTest extends TestCase
     {
         $node = new BackrefNode('1', 0, 0);
         $result = $this->visitor->visitBackref($node);
-        $this->assertSame('default', $result);
-    }
-
-    public function test_visit_class_operation(): void
-    {
-        $node = new ClassOperationNode(
-            ClassOperationType::INTERSECTION,
-            new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0),
-            new CharClassNode(new LiteralNode('b', 0, 0), false, 0, 0),
-            0,
-            0,
-        );
-        $result = $this->visitor->visitClassOperation($node);
         $this->assertSame('default', $result);
     }
 

@@ -43,10 +43,6 @@ final class UselessCharClassRangeRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         $unicodeMode = $context->pattern->unicodeMode;
         $issues = [];
 

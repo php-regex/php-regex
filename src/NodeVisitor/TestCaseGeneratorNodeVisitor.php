@@ -23,7 +23,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -451,15 +450,6 @@ final class TestCaseGeneratorNodeVisitor extends AbstractNodeVisitor
             return ['matching' => [], 'non_matching' => $node->right->accept($this)['matching']];
         }
 
-        return $node->left->accept($this);
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): array
-    {
         return $node->left->accept($this);
     }
 

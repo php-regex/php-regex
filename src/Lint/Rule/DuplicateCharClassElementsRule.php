@@ -42,7 +42,7 @@ final class DuplicateCharClassElementsRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts || \count($parts) < 2) {
+        if (\count($parts) < 2) {
             return [];
         }
 

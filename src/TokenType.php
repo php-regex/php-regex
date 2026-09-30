@@ -171,22 +171,6 @@ enum TokenType: string
     case T_CONTROL_CHAR = 'control_char';
 
     /**
-     * Character class intersection operator (&&).
-     *
-     * @deprecated the lexer no longer produces this token: PHP reads "&&" in
-     *             a class as plain characters. It goes in the next major version.
-     */
-    case T_CLASS_INTERSECTION = 'class_intersection';
-
-    /**
-     * Character class subtraction operator (--).
-     *
-     * @deprecated the lexer no longer produces this token: PHP reads "--" in
-     *             a class as plain characters. It goes in the next major version.
-     */
-    case T_CLASS_SUBTRACTION = 'class_subtraction';
-
-    /**
      * A Perl extended class "(?[...])" as a whole, PCRE2 10.45: its value is
      * the text from "(?[" to its "])", which the parser reads.
      */

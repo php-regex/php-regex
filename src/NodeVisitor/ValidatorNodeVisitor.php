@@ -31,7 +31,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -926,16 +925,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         } finally {
             $this->charClassDepth--;
         }
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): void
-    {
-        $node->left->accept($this);
-        $node->right->accept($this);
     }
 
     #[\Override]
@@ -2823,10 +2812,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         if ($node instanceof CharClassNode) {
             return $this->findUnboundedLookbehindNode($node->expression);
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            return $this->findUnboundedLookbehindNode($node->left) ?? $this->findUnboundedLookbehindNode($node->right);
         }
 
         if ($node instanceof RangeNode) {

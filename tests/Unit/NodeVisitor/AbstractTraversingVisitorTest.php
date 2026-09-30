@@ -25,8 +25,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\ClassSetOperator;
 use RegexParser\Node\CommentNode;
@@ -261,7 +259,6 @@ final class AbstractTraversingVisitorTest extends TestCase
             new CharClassNode($marker(), false, 0, 4),
             new CharLiteralNode('\x41', 0x41, CharLiteralType::UNICODE, 0, 4),
             new CharTypeNode('d', 0, 2),
-            new ClassOperationNode(ClassOperationType::INTERSECTION, $marker(), $marker(), 0, 7),
             new ClassSetOperationNode(ClassSetOperator::UNION, $marker(), $marker(), '|', 0, 5),
             new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $marker(), '!', 0, 3),
             new CommentNode('note', 0, 8),

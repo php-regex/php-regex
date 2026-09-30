@@ -18,8 +18,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\BackrefNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\GroupNode;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\NodeInterface;
@@ -89,7 +87,6 @@ final class NodeTraversalTest extends TestCase
 
         $this->assertSame([$a, $b], (new SequenceNode(['x' => $a, 'y' => $b], 0, 2))->getChildren());
         $this->assertSame([$a, $b], (new AlternationNode([3 => $a, 7 => $b], 0, 2))->getChildren());
-        $this->assertSame([$a, $b], (new ClassOperationNode(ClassOperationType::INTERSECTION, $a, $b, 0, 2))->getChildren());
     }
 
     #[Test]

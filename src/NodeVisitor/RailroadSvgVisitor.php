@@ -22,7 +22,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -283,18 +282,6 @@ final class RailroadSvgVisitor extends AbstractNodeVisitor
             $this->layoutFor(...),
             array_values(array_filter([$node->left, $node->right])),
         ));
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node)
-    {
-        return $this->layoutWithLabel('ClassOperation ('.$node->type->value.')', [
-            $this->layoutFor($node->left),
-            $this->layoutFor($node->right),
-        ]);
     }
 
     #[\Override]

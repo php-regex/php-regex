@@ -21,7 +21,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -126,13 +125,6 @@ interface NodeVisitorInterface
      * @return TReturn
      */
     public function visitBackref(BackrefNode $node);
-
-    /**
-     * @return TReturn
-     *
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    public function visitClassOperation(ClassOperationNode $node);
 
     /**
      * @return TReturn

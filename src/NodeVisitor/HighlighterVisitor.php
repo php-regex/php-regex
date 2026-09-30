@@ -22,8 +22,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -249,19 +247,6 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
         }
 
         return $this->wrap('(', 'group').$node->left->accept($this).$operator.$node->right->accept($this).$this->wrap(')', 'group');
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        $left = $node->left->accept($this);
-        $right = $node->right->accept($this);
-        $op = ClassOperationType::INTERSECTION === $node->type ? '&&' : '--';
-
-        return $left.$this->wrap($this->escape($op), 'meta').$right;
     }
 
     #[\Override]

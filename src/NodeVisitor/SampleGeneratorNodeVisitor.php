@@ -29,7 +29,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -498,16 +497,6 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         // (or doesn't exist). In a real engine, this fails the match.
         // For generation, we must return empty string.
         return '';
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        // Best-effort: a member of the left operand usually satisfies the operation.
-        return $node->left->accept($this);
     }
 
     #[\Override]

@@ -23,8 +23,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\ControlCharNode;
@@ -297,19 +295,6 @@ final class ModernizerNodeVisitorTest extends TestCase
         $result = $controlChar->accept($this->visitor);
 
         $this->assertSame($controlChar, $result);
-    }
-
-    public function test_preserves_class_operation(): void
-    {
-        $classOperation = new ClassOperationNode(
-            ClassOperationType::SUBTRACTION,
-            new LiteralNode('a', 0, 1),
-            new LiteralNode('b', 3, 4),
-            0, 6,
-        );
-        $result = $classOperation->accept($this->visitor);
-
-        $this->assertSame($classOperation, $result);
     }
 
     public function test_modernizes_whitespace_char_class(): void

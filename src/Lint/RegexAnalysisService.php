@@ -19,7 +19,6 @@ use RegexParser\Internal\PatternParser;
 use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharClassNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ConditionalNode;
 use RegexParser\Node\DefineNode;
 use RegexParser\Node\GroupNode;
@@ -474,15 +473,6 @@ final readonly class RegexAnalysisService
 
         if ($node instanceof CharClassNode) {
             return $this->findQuantifierByOffset($node->expression, $offset);
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            $found = $this->findQuantifierByOffset($node->left, $offset);
-            if (null !== $found) {
-                return $found;
-            }
-
-            return $this->findQuantifierByOffset($node->right, $offset);
         }
 
         if ($node instanceof RangeNode) {

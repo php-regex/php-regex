@@ -16,6 +16,8 @@ namespace RegexParser\Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\NodeVisitor\NodeVisitorInterface;
+use RegexParser\TokenType;
 
 /**
  * 2.0 carries no name from before a class moved: an old name is not found,
@@ -69,6 +71,30 @@ final class NoLegacyNamesTest extends TestCase
         yield 'RegexParser\Lint\ExtractorInterface' => ['RegexParser\\Lint\\ExtractorInterface'];
         yield 'RegexParser\Lint\TokenBasedExtractionStrategy' => ['RegexParser\\Lint\\TokenBasedExtractionStrategy'];
         yield 'RegexParser\Lint\PhpStanExtractionStrategy' => ['RegexParser\\Lint\\PhpStanExtractionStrategy'];
+        yield 'RegexParser\Node\ClassOperationNode' => ['RegexParser\\Node\\ClassOperationNode'];
+        yield 'RegexParser\Node\ClassOperationType' => ['RegexParser\\Node\\ClassOperationType'];
+    }
+
+    #[Test]
+    #[DataProvider('provideOldTokenTypes')]
+    public function test_an_old_token_type_is_not_found(string $case): void
+    {
+        $this->assertFalse(\defined(TokenType::class.'::'.$case), $case);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideOldTokenTypes(): iterable
+    {
+        yield 'T_CLASS_INTERSECTION' => ['T_CLASS_INTERSECTION'];
+        yield 'T_CLASS_SUBTRACTION' => ['T_CLASS_SUBTRACTION'];
+    }
+
+    #[Test]
+    public function test_a_visitor_has_no_class_operation_method(): void
+    {
+        $this->assertFalse(method_exists(NodeVisitorInterface::class, 'visitClassOperation'));
     }
 
     #[Test]

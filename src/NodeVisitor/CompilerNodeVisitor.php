@@ -25,8 +25,6 @@ use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharLiteralType;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -529,15 +527,6 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
         }
 
         return $rep;
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        return $node->left->accept($this).(ClassOperationType::INTERSECTION === $node->type ? '&&' : '--').$node->right->accept($this);
     }
 
     #[\Override]

@@ -42,10 +42,6 @@ final class SuspiciousCharClassPipeRule extends AbstractLintRule
         }
 
         $parts = CharClassSets::collectParts($node->expression);
-        if (null === $parts) {
-            return [];
-        }
-
         $letters = 0;
         $pipes = 0;
 

@@ -27,8 +27,6 @@ use RegexParser\Node\AnchorNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\ControlCharNode;
 use RegexParser\Node\DotNode;
 use RegexParser\Node\GroupNode;
@@ -466,16 +464,6 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
             $set = $this->buildCharClassExpression($node->expression);
 
             return $node->isNegated ? $set->complement() : $set;
-        }
-
-        if ($node instanceof ClassOperationNode) {
-            $left = $this->buildCharClassExpression($node->left);
-            $right = $this->buildCharClassExpression($node->right);
-
-            return match ($node->type) {
-                ClassOperationType::INTERSECTION => $left->intersect($right),
-                ClassOperationType::SUBTRACTION => $left->subtract($right),
-            };
         }
 
         throw new ComplexityException('Unsupported character class expression.', $node->getStartPosition(), $this->pattern);

@@ -17,7 +17,6 @@ use RegexParser\Analysis\CharSet;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\LiteralNode;
 use RegexParser\Node\NodeInterface;
 use RegexParser\Node\PosixClassNode;
@@ -35,14 +34,10 @@ final class CharClassSets
     private function __construct() {}
 
     /**
-     * @return list<NodeInterface>|null
+     * @return list<NodeInterface>
      */
-    public static function collectParts(NodeInterface $node): ?array
+    public static function collectParts(NodeInterface $node): array
     {
-        if ($node instanceof ClassOperationNode) {
-            return null;
-        }
-
         if ($node instanceof AlternationNode) {
             return array_values($node->alternatives);
         }

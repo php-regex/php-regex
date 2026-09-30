@@ -23,7 +23,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -226,19 +225,6 @@ final class AsciiTreeVisitor extends AbstractNodeVisitor
     {
         $this->addLine('ClassSetOperation ('.$node->operator->value.')');
         $this->visitChildren(array_values(array_filter([$node->left, $node->right])));
-
-        return '';
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): string
-    {
-        $label = 'ClassOperation ('.$node->type->value.')';
-        $this->addLine($label);
-        $this->visitChildren([$node->left, $node->right]);
 
         return '';
     }

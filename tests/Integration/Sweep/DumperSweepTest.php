@@ -14,10 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Tests\Integration\Sweep;
 
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\ClassOperationNode;
-use RegexParser\Node\ClassOperationType;
 use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\LiteralNode;
 use RegexParser\Node\ScriptRunNode;
 use RegexParser\Node\VersionConditionNode;
 use RegexParser\NodeVisitor\DumperNodeVisitor;
@@ -59,16 +56,6 @@ final class DumperSweepTest extends TestCase
     {
         $visitor = new DumperNodeVisitor();
         $node = new VersionConditionNode('>=', '10.0', 0, 18);
-        $result = $node->accept($visitor);
-        $this->assertNotEmpty($result);
-    }
-
-    public function test_dumper_visitor_class_operation(): void
-    {
-        $visitor = new DumperNodeVisitor();
-        $left = new LiteralNode('a', 0, 1);
-        $right = new LiteralNode('b', 2, 3);
-        $node = new ClassOperationNode(ClassOperationType::INTERSECTION, $left, $right, 0, 3);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
     }

@@ -24,7 +24,6 @@ use RegexParser\Node\CalloutNode;
 use RegexParser\Node\CharClassNode;
 use RegexParser\Node\CharLiteralNode;
 use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassOperationNode;
 use RegexParser\Node\ClassSetOperationNode;
 use RegexParser\Node\CommentNode;
 use RegexParser\Node\ConditionalNode;
@@ -508,15 +507,6 @@ final class OptimizerNodeVisitor extends AbstractNodeVisitor
 
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
-    {
-        return $node;
-    }
-
-    /**
-     * @deprecated the parser no longer builds a ClassOperationNode; this method goes in the next major version
-     */
-    #[\Override]
-    public function visitClassOperation(ClassOperationNode $node): NodeInterface
     {
         return $node;
     }
