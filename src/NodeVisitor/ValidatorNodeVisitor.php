@@ -54,6 +54,7 @@ use RegexParser\Node\SequenceNode;
 use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
+use RegexParser\PcreFeature;
 use RegexParser\PcreTarget;
 use RegexParser\RegexParser;
 use RegexParser\Token;
@@ -704,7 +705,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if ($node->node instanceof CharTypeNode && 'N' === $node->node->value && 0 === $this->charClassDepth
             && str_starts_with($node->quantifier, '{')
             && 1 !== preg_match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
-            && !$this->supportsPaddedBraces()) {
+            && !$this->supports(PcreFeature::OpenAndPaddedRepeatCounts)) {
             $this->raiseSemanticError(
                 \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
                 $node->node->getEndPosition(),
@@ -800,7 +801,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // the "{".
             $this->raiseSemanticError(
                 '\N is not supported in a character class.',
-                $node->getEndPosition() + ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->pcreAtLeast('10.47') ? 1 : 0),
+                $node->getEndPosition() + ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0),
                 'regex.charclass.invalid_escape',
             );
         }
@@ -1225,7 +1226,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // Past the class from PCRE2 10.45, on its name before.
             $this->raiseSemanticError(
                 \sprintf('Invalid POSIX class: "%s".', $node->class),
-                $this->pcreAtLeast('10.45') ? $node->getEndPosition() : $node->startPosition + 2 + (str_starts_with($node->class, '^') ? 1 : 0),
+                $this->supports(PcreFeature::PosixItemErrorPastItsEnd) ? $node->getEndPosition() : $node->startPosition + 2 + (str_starts_with($node->class, '^') ? 1 : 0),
                 'regex.posix.invalid',
             );
         }
@@ -1351,7 +1352,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $verbName = preg_split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
-            && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->runsPcre1045())) {
+            && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->supports(PcreFeature::CasingSettingVerbs))) {
             // PCRE reports an unknown verb where its name ends; "(*)" is a
             // "*" with nothing to repeat, refused past it from PCRE2 10.47,
             // and so is an alphabetic assertion, whose name starts with a
@@ -1378,7 +1379,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++$/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
-                PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->runsPcre1045()) ?? $closing,
+                PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
                 'regex.verb.invalid',
             );
         }
@@ -1458,7 +1459,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     public function visitVersionCondition(VersionConditionNode $node): void
     {
         $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->pcreAtLeast('10.47'));
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
 
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
@@ -1470,7 +1471,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // PCRE reads a major number and at most one ".minor".
         if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
-            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->pcreAtLeast('10.47'));
+            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
             if (null !== $tooBig) {
                 $this->raiseSemanticError(
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
@@ -1496,7 +1497,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // From PCRE2 10.47, PCRE steps past a character it reads where
             // ")" belongs; it stops on one it reads where a digit belongs.
             // Before, it stops on a third digit of a minor.
-            $pcreOffset ?? $versionStart + \strlen($valid) + ($afterNumber && $this->pcreAtLeast('10.47') ? 1 : 0),
+            $pcreOffset ?? $versionStart + \strlen($valid) + ($afterNumber && $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0),
             'regex.condition.version_syntax',
         );
     }
@@ -1711,7 +1712,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
                     // Before PCRE2 10.45, past the digit it refuses.
-                    $start + $index + ($this->runsPcre1045() ? 0 : 1),
+                    $start + $index + ($this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter) ? 0 : 1),
                     'regex.verb.limit_too_large',
                 );
             }
@@ -1770,7 +1771,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function digitsReadForCount(string $digits): int
     {
-        if ($this->pcreAtLeast('10.45')) {
+        if ($this->supports(PcreFeature::NumberTooBigPastWholeNumber)) {
             return \strlen($digits);
         }
 
@@ -1975,7 +1976,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
                 // From PCRE2 10.47, PCRE reads the escape to its closing
                 // brace before it looks at the mode; before, past the "\N".
-                $this->pcreAtLeast('10.47') ? $node->getEndPosition() : $node->startPosition + 2,
+                $this->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? $node->getEndPosition() : $node->startPosition + 2,
                 'regex.unicode_named.requires_utf',
             );
         }
@@ -2635,7 +2636,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $representation = $node->originalRepresentation;
         $space = strcspn($representation, " \t");
-        if ($space === \strlen($representation) || $this->supportsPaddedBraces()) {
+        if ($space === \strlen($representation) || $this->supports(PcreFeature::PaddedBracedEscapes)) {
             return;
         }
 
@@ -2664,7 +2665,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function validateReferenceBracePadding(BackrefNode $node): void
     {
-        if (null === $this->source || $this->supportsPaddedBraces()) {
+        if (null === $this->source || $this->supports(PcreFeature::PaddedBracedEscapes)) {
             return;
         }
 
@@ -2694,17 +2695,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function readsWholeVersionNumbers(): bool
     {
-        return $this->pcreAtLeast('10.47');
-    }
-
-    private function supportsPaddedBraces(): bool
-    {
-        return $this->pcreAtLeast('10.43');
+        return $this->supports(PcreFeature::VersionConditionWholeNumbers);
     }
 
     private function supportsVariableLengthLookbehind(): bool
     {
-        return $this->pcreAtLeast('10.43');
+        return $this->supports(PcreFeature::VariableLengthLookbehind);
     }
 
     /**
@@ -2714,15 +2710,12 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function pastTheFault(int $offset, int $shift = 1): int
     {
-        return $this->pcreAtLeast('10.47') ? $offset : $offset - $shift;
+        return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
     }
 
-    /**
-     * Whether the PCRE2 judged is at least the given release.
-     */
-    private function pcreAtLeast(string $release): bool
+    private function supports(PcreFeature $feature): bool
     {
-        return $this->target->pcreAtLeast($release);
+        return $this->target->supports($feature);
     }
 
     private function findUnboundedLookbehindNode(NodeInterface $node): ?NodeInterface
@@ -2830,7 +2823,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
             $rest = ltrim(substr($text, \strlen($matches[0])));
             if ('' !== $closing && !str_starts_with($rest, $closing)) {
-                return $this->pcreAtLeast('10.47') ? $start + \strlen($matches[0]) : $start + 2;
+                return $this->supports(PcreFeature::GReferenceNumberReadBeforeClosing) ? $start + \strlen($matches[0]) : $start + 2;
             }
 
             $failsWhileRead = '-' === $matches[3] || ('' !== $matches[3] && 0 === (int) $matches[4]);
@@ -2866,7 +2859,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
-        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->readsWholeVersionNumbers(), $this->pcreAtLeast('10.47'));
+        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault));
         if (null !== $versionError) {
             return $versionError;
         }
@@ -2902,7 +2895,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             return null;
         }
 
-        return $digitsStart + ($this->pcreAtLeast('10.45') ? \strlen($digits) : $read + 1);
+        return $digitsStart + ($this->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);
     }
 
     /**
@@ -3044,7 +3037,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // "\k" in a class is the letter from PCRE2 10.45, which no PHP release
         // bundles yet; the releases before refuse it, on the "k".
-        if ($this->charClassDepth > 0 && 'k' === $letter && !$this->pcreAtLeast('10.45')) {
+        if ($this->charClassDepth > 0 && 'k' === $letter && !$this->supports(PcreFeature::ClassBackslashKIsLetter)) {
             $this->raiseSemanticError(
                 'Escape sequence \k is invalid in a character class before PCRE2 10.45.',
                 $start + 1,
@@ -3134,8 +3127,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
             // Names hold "&" to "z" only; 10.45 and 10.46 stopped past the
             // first byte of a longer UTF-8 character, 10.47 past all of it.
-            if (($char < '&' || $char > 'z') && $this->pcreAtLeast('10.45')) {
-                return $this->pcreAtLeast('10.47') ? $position : $position - $step + 1;
+            if (($char < '&' || $char > 'z') && $this->supports(PcreFeature::MalformedPropertyName)) {
+                return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $position : $position - $step + 1;
             }
 
             $read++;
@@ -3167,7 +3160,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         if ('{' === ($source[$position] ?? '')) {
             $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, 'regex.unicode.invalid_digit', '\x{}');
-        } elseif ($this->pcreAtLeast('10.45')) {
+        } elseif ($this->supports(PcreFeature::HexEscapeNeedsDigits)) {
             // A "\x" with no digit is "\x00" up to PCRE2 10.44 and an error
             // from 10.45, which no PHP release bundles yet: only a newer
             // linked PCRE2 refuses it.
@@ -3197,7 +3190,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 $end = $digits + strspn($source, self::HEX_DIGITS.self::BRACE_PADDING, $digits);
                 $this->raiseSemanticError(
                     '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
-                    $this->pcreAtLeast('10.47') ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
+                    $this->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
                     'regex.unicode_named.requires_utf',
                 );
             }
@@ -3250,7 +3243,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             // its first character; from 10.43 it may only run up to the
             // closing brace, "\N{U+ }", and anything else is refused past
             // the first character that is not padding.
-            if (!$this->supportsPaddedBraces()) {
+            if (!$this->supports(PcreFeature::PaddedBracedEscapes)) {
                 $this->raiseSemanticError(
                     \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape),
                     $position,
@@ -3307,8 +3300,8 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $length = \strlen($source);
         if ($position >= $length) {
             return match (true) {
-                $this->pcreAtLeast('10.48') => $length,
-                $this->pcreAtLeast('10.47') => $length + 1,
+                $this->supports(PcreFeature::UnclosedBraceAtPatternEnd) => $length,
+                $this->supports(PcreFeature::ErrorOffsetPastTheFault) => $length + 1,
                 default => $length - 1,
             };
         }
@@ -3359,7 +3352,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         // Past the element from PCRE2 10.45; before, on the "[" that opens
         // a collating element, or on the name of a class.
-        $past = $this->pcreAtLeast('10.45');
+        $past = $this->supports(PcreFeature::PosixItemErrorPastItsEnd);
         if (':' !== $source[$start + 1]) {
             // As a range end, "[a-[.x.]]", just inside its "[".
             $this->raiseSemanticError(
@@ -3391,7 +3384,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         // Past its end from PCRE2 10.47, on its "[" before.
-        $offset = $this->pcreAtLeast('10.47') ? $terminator + 2 : $start;
+        $offset = $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $terminator + 2 : $start;
 
         if (':' === $source[$start + 1]) {
             $this->raiseSemanticError(
@@ -3581,7 +3574,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      */
     private function validateCasingSettings(RegexNode $node): void
     {
-        if (null === $node->source || null === $this->startOfPatternEnd || !$this->runsPcre1045()) {
+        if (null === $node->source || null === $this->startOfPatternEnd || !$this->supports(PcreFeature::CasingSettingVerbs)) {
             return;
         }
 
@@ -3608,14 +3601,6 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
                 'Add the "u" modifier.',
             );
         }
-    }
-
-    /**
-     * Whether the PCRE2 judged is 10.45 or later.
-     */
-    private function runsPcre1045(): bool
-    {
-        return $this->pcreAtLeast('10.45');
     }
 
     private function validateStartOfPatternPlacement(string $verbName, int $start): void

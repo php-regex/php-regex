@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Internal;
 
 use RegexParser\Exception\ParserException;
+use RegexParser\PcreFeature;
 use RegexParser\PcreTarget;
 
 /**
@@ -110,7 +111,7 @@ final class PatternParser
                     // only when built against PCRE2 10.43 or later; "e" left
                     // in PHP 7.0.
                     $allowedFlags = 'imsxADSUXJu'.($phpVersionId >= 80200 ? 'n' : '');
-                    if ($phpVersionId >= 80400 && $target->pcreAtLeast('10.43')) {
+                    if ($phpVersionId >= 80400 && $target->supports(PcreFeature::CaselessRestrictModifier)) {
                         $allowedFlags .= 'r';
                     }
                     if ($phpVersionId < 70000) {

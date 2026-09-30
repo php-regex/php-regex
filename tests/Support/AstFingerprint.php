@@ -41,6 +41,7 @@ final class AstFingerprint
         'src/Node/*.php',
         'src/NodeVisitor/ValidatorNodeVisitor.php',
         'src/PcreTarget.php',
+        'src/PcreFeature.php',
         'src/GroupNumbering.php',
         'src/GroupNumberingCollector.php',
         'src/Internal/CodePointReader.php',

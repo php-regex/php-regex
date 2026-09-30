@@ -78,6 +78,7 @@ tasks:
       - src/Internal/**/*.php
       - src/NodeVisitor/ValidatorNodeVisitor.php
       - src/PcreTarget.php
+      - src/PcreFeature.php
       - src/GroupNumbering*.php
       - tests/Support/AstFingerprint.php
     generates:

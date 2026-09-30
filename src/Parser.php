@@ -196,11 +196,11 @@ final class Parser
         $this->flags = $flags;
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
-        $this->groupNames->reportPastTheFault($this->pcreAtLeast('10.47'));
+        $this->groupNames->reportPastTheFault($this->supports(PcreFeature::ErrorOffsetPastTheFault));
         // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
         // from 8.4.
         $this->groupNames->limitNameLength(
-            $this->pcreAtLeast('10.44')
+            $this->supports(PcreFeature::LongGroupNames)
                 ? GroupNameReader::MAX_NAME_LENGTH
                 : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044,
         );
@@ -221,7 +221,7 @@ final class Parser
         // A ")" no group opened: PCRE2 10.47 reports it past the ")", the
         // releases before on it.
         if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
-            $position = $this->stream->current()->position + ($this->pcreAtLeast('10.47') ? 1 : 0);
+            $position = $this->stream->current()->position + ($this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0);
 
             throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), $position);
         }
@@ -1140,10 +1140,10 @@ final class Parser
         if (1 === preg_match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
             // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
             // or, before 10.43, the space after "{" that pads it.
-            if (!$this->pcreAtLeast('10.47')) {
+            if (!$this->supports(PcreFeature::GReferenceNumberReadBeforeClosing)) {
                 $padded = str_contains(" \t", $this->pattern[$start + 3] ?? 'x');
 
-                return $start + ($padded && !$this->supportsPcre1043Modifiers() ? 3 : 2);
+                return $start + ($padded && !$this->supports(PcreFeature::PaddedBracedEscapes) ? 3 : 2);
             }
 
             $position += \strlen($matches[0]);
@@ -1214,7 +1214,7 @@ final class Parser
      */
     private function digitsFromUnreadReference(Token $token, int $startPosition): ?NodeInterface
     {
-        if ($this->pcreAtLeast('10.45') || 1 !== preg_match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
+        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference) || 1 !== preg_match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
             return null;
         }
 
@@ -1398,11 +1398,11 @@ final class Parser
     private function calloutConditionErrorOffset(): int
     {
         $token = $this->stream->current();
-        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->pcreAtLeast('10.47')) {
+        if (TokenType::T_QUOTE_MODE_START === $token->type && TokenType::T_LITERAL === $this->stream->peek()->type && !$this->supports(PcreFeature::CalloutConditionErrorAtItemStart)) {
             $token = $this->stream->peek();
         }
 
-        if (TokenType::T_LITERAL !== $token->type || $this->pcreAtLeast('10.47')) {
+        if (TokenType::T_LITERAL !== $token->type || $this->supports(PcreFeature::CalloutConditionErrorAtItemStart)) {
             return $token->position;
         }
 
@@ -1565,7 +1565,7 @@ final class Parser
             },
             fn (string|LexerException|ParserException $reason, int $at, array $operands): never => throw $this->firstOperandError($operands, $token->position)
                 ?? (\is_string($reason) ? $this->parserException(\sprintf('%s at position %d.', $reason, $at), $at) : $reason),
-            $this->pcreAtLeast('10.47'),
+            $this->supports(PcreFeature::ErrorOffsetPastTheFault),
             $this->unicodeMode || str_contains($this->flags, 'u'),
             $this->maxRecursionDepth,
         );
@@ -1740,7 +1740,7 @@ final class Parser
     {
         $read = PcreVerb::read($verb);
 
-        if (null !== $read->scanSubstring && $this->pcreAtLeast('10.45')) {
+        if (null !== $read->scanSubstring && $this->supports(PcreFeature::ScanSubstring)) {
             return $this->createScanSubstringNode($read->scanSubstring, $startPosition, $endPosition);
         }
 
@@ -1892,7 +1892,7 @@ final class Parser
      */
     private function readReturnedGroups(): ?array
     {
-        if (!$this->pcreAtLeast('10.47') || !$this->stream->check(TokenType::T_GROUP_OPEN)) {
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) || !$this->stream->check(TokenType::T_GROUP_OPEN)) {
             return null;
         }
 
@@ -2079,7 +2079,7 @@ final class Parser
             );
         }
 
-        $letters = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
         // The ASCII options were only read where PCRE2 takes them.
         $tracked = InlineFlags::withoutAsciiOptions($flags);
         $modifiers = InlineFlags::read($tracked, $letters);
@@ -2161,10 +2161,10 @@ final class Parser
             $this->stream->advance();
         }
 
-        $accepted = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
+        $accepted = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
 
         // From PCRE2 10.43, "a" may take one of "D", "S", "W", "P", "T".
-        $ascii = $this->supportsPcre1043Modifiers();
+        $ascii = $this->supports(PcreFeature::AsciiOptions);
         $afterA = false;
 
         return $letters.$this->consumeWhile(
@@ -2182,12 +2182,9 @@ final class Parser
         );
     }
 
-    /**
-     * Whether the PCRE2 judged is at least the given release.
-     */
-    private function pcreAtLeast(string $release): bool
+    private function supports(PcreFeature $feature): bool
     {
-        return $this->target->pcreAtLeast($release);
+        return $this->target->supports($feature);
     }
 
     /**
@@ -2204,15 +2201,6 @@ final class Parser
         return $this->unicodeMode
             ? \in_array($character, ["\u{85}", "\u{200e}", "\u{200f}", "\u{2028}", "\u{2029}"], true)
             : "\x85" === $character;
-    }
-
-    /**
-     * Whether the modifiers PCRE2 10.43 added to "(?...)" are read: "r", and
-     * the ASCII options "a", "aD", "aS", "aW", "aP", "aT".
-     */
-    private function supportsPcre1043Modifiers(): bool
-    {
-        return $this->pcreAtLeast('10.43');
     }
 
     /**
@@ -2388,7 +2376,7 @@ final class Parser
         foreach (str_split($num) as $read => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > 65535) {
-                $position = $startPosition + \strlen($sign) + ($this->pcreAtLeast('10.45') ? \strlen($num) : $read + 1);
+                $position = $startPosition + \strlen($sign) + ($this->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($num) : $read + 1);
 
                 throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), $position);
             }
@@ -2548,7 +2536,7 @@ final class Parser
      */
     private function conditionErrorOffset(int $start): int
     {
-        return VersionCondition::errorOffset($this->pattern, $start, !$this->pcreAtLeast('10.47'), $this->pcreAtLeast('10.47'))
+        return VersionCondition::errorOffset($this->pattern, $start, !$this->supports(PcreFeature::VersionConditionWholeNumbers), $this->supports(PcreFeature::ErrorOffsetPastTheFault))
             ?? $this->groupNames->invalidNameOffset($start);
     }
 
@@ -2650,7 +2638,7 @@ final class Parser
         // Before PCRE2 10.45, a range start is refused on the hyphen, a POSIX
         // class ending a range just inside its "[", and a type or a property
         // ending one past its letter.
-        if (!($this->pcreAtLeast('10.45'))) {
+        if (!($this->supports(PcreFeature::RangeFromTypeReadToItsEnd))) {
             $position = match (true) {
                 !$isEnd => $position - 1,
                 $node instanceof PosixClassNode => $node->getStartPosition() + 1,
@@ -2687,7 +2675,7 @@ final class Parser
 
         // An assertion, or a letter PCRE gives no meaning in a class; "\k" is
         // the letter from PCRE2 10.45.
-        return '' !== $letter && (str_contains('ABCFGIJKLMORTUXYZijlmquyz', $letter) || ('k' === $letter && !$this->pcreAtLeast('10.45')));
+        return '' !== $letter && (str_contains('ABCFGIJKLMORTUXYZijlmquyz', $letter) || ('k' === $letter && !$this->supports(PcreFeature::ClassBackslashKIsLetter)));
     }
 
     private function isNonRangeEndpointType(NodeInterface $node): bool
@@ -2804,7 +2792,7 @@ final class Parser
         $classEscapeStart = $startNode instanceof CharTypeNode
             || $startNode instanceof PosixClassNode
             || $startNode instanceof UnicodePropNode;
-        if ($singleCharacterStart && (!$classEscapeStart || $this->pcreAtLeast('10.45'))) {
+        if ($singleCharacterStart && (!$classEscapeStart || $this->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape))) {
             $this->skipEmptyQuotes();
         }
 
@@ -2833,7 +2821,7 @@ final class Parser
         // Before PCRE2 10.45 a range from a type is refused on its hyphen,
         // before its end is read; from 10.45 an escape PCRE refuses in a
         // class at its end is reported first.
-        if (!$this->pcreAtLeast('10.45')) {
+        if (!$this->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
             $this->guardRangeEndpoint($startNode, $afterHyphen, false);
         }
 
@@ -2923,7 +2911,7 @@ final class Parser
             !$this->stream->check(TokenType::T_GROUP_CLOSE)
             && !$this->stream->isAtEnd()
             // "(?&name(<g>))": the groups the call returns, PCRE2 10.47 on.
-            && !('' !== $name && $this->stream->check(TokenType::T_GROUP_OPEN) && $this->pcreAtLeast('10.47'))
+            && !('' !== $name && $this->stream->check(TokenType::T_GROUP_OPEN) && $this->supports(PcreFeature::CallsReturnCaptureGroups))
         ) {
             if ($this->stream->check(TokenType::T_LITERAL) || $this->stream->check(TokenType::T_LITERAL_ESCAPED)) {
                 $char = $this->stream->current()->value;
@@ -3007,7 +2995,7 @@ final class Parser
 
         // Option letters: PCRE stops past the first one it does not know,
         // past a "-" it cannot take, or at the end of the pattern.
-        $letters = self::INLINE_FLAG_LETTERS.($this->supportsPcre1043Modifiers() ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
         $hyphenAllowed = true;
         if ('^' === $char) {
             $hyphenAllowed = false;
@@ -3028,7 +3016,7 @@ final class Parser
             }
 
             // An ASCII option, "a", takes at most one class letter along.
-            if ('a' === $char && $this->supportsPcre1043Modifiers()) {
+            if ('a' === $char && $this->supports(PcreFeature::AsciiOptions)) {
                 $position += (int) ($position < $length && str_contains('DSWPT', $pattern[$position]));
 
                 continue;
@@ -3126,7 +3114,7 @@ final class Parser
                 // Past the digit that takes it over 65535; from PCRE2 10.45,
                 // past the whole number.
                 if ($value > 65535) {
-                    return $at + ($this->pcreAtLeast('10.45') ? \strlen($digits) : $offset + 1);
+                    return $at + ($this->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $offset + 1);
                 }
             }
             $at += \strlen($digits) + (0 === $index ? \strlen($matches[2] ?? '') : 0);
@@ -3144,7 +3132,7 @@ final class Parser
      */
     private function pastTheFault(int $offset, int $shift = 1): int
     {
-        return $this->pcreAtLeast('10.47') ? $offset : $offset - $shift;
+        return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
     }
 
     /**
@@ -3174,7 +3162,7 @@ final class Parser
         $limit = $start > \strlen($settings[0] ?? '') ? null : PcreVerb::limitValueErrorOffset(
             $this->pattern,
             $start,
-            $this->pcreAtLeast('10.45'),
+            $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter),
         );
         if (null !== $limit) {
             return $limit;
@@ -3191,7 +3179,7 @@ final class Parser
         // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
         // 10.47 an alphabetic name, one that starts with a lowercase letter,
         // followed by no colon is refused past the character after it.
-        $pastTheFault = $this->pcreAtLeast('10.47');
+        $pastTheFault = $this->supports(PcreFeature::ErrorOffsetPastTheFault);
         if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
             return $this->pastTheFault($nameEnd);
         }

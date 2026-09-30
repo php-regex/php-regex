@@ -272,10 +272,14 @@ final class Lexer
     private readonly bool $reportsPastTheFault;
 
     /**
-     * Whether PCRE2 10.45's syntax is read: "(*scs:" and "(*scan_substring:",
-     * and the Perl extended class "(?[...])".
+     * Whether "(*scs:" and "(*scan_substring:" are read.
      */
     private readonly bool $readsScanSubstring;
+
+    /**
+     * Whether the Perl extended class "(?[...])" is read.
+     */
+    private readonly bool $readsExtendedClass;
 
     /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
@@ -283,9 +287,10 @@ final class Lexer
     public function __construct(?PcreTarget $target = null)
     {
         $target ??= PcreTarget::runtime();
-        $this->wideRepeatCounts = $target->pcreAtLeast('10.43');
-        $this->reportsPastTheFault = $target->pcreAtLeast('10.47');
-        $this->readsScanSubstring = $target->pcreAtLeast('10.45');
+        $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
+        $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
+        $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
+        $this->readsExtendedClass = $target->supports(PcreFeature::ExtendedCharClass);
     }
 
     /**
@@ -442,7 +447,7 @@ final class Lexer
         }
 
         // "(?[...])", PCRE2 10.45: one token the parser reads the expression of.
-        if ($this->readsScanSubstring && !$this->inCharClass && '(?[' === substr($this->pattern, $this->position, 3)) {
+        if ($this->readsExtendedClass && !$this->inCharClass && '(?[' === substr($this->pattern, $this->position, 3)) {
             $tokens[] = $this->consumeExtendedClass();
 
             return true;

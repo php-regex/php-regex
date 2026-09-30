@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `PcreFeature` and `PcreTarget::supports()`: each behaviour PCRE2 changed, named with the release it arrived in, in one table the rules ask instead of release strings written by hand; [the PCRE page](docs/concepts/pcre.md#what-changed-in-which-release) lists them. `pcreAtLeast()` refuses a release spelled short, as `'10.4'`, which read as 10.04 and held for every target.
 - `Optimizer\Optimizer`: the optimization `Regex::optimize()` runs, on any `RegexParser`; the linter uses it directly.
 - `RegexParser`: reading and judging a pattern — `parse()`, `parseTolerant()`, `validate()`, `parsePattern()`, `tokenize()`, the cache and the target — in one class every other part of the library uses, with the options `Regex::create()` takes. `Regex::parser()` gives the one a facade uses. `RegexParser::CACHE_VERSION` fingerprints the extended-class reader, the validator the parser runs, the target and group numbering too.
 - Substring scan assertions, PCRE2 10.45: `(*scan_substring:(1)abc)` and `(*scs:(1,<name>)abc)` are read for a target on 10.45 or later, as a `GroupNode` of the new type `GroupType::T_GROUP_SCAN_SUBSTRING` whose `scannedGroups` lists the groups; each is checked, lengths and samples treat the assertion as matching nothing of the subject, and the transpilers refuse it. Before 10.45 the name is unknown, as before. All 81 cases of the PCRE2 suite agree with pcre2test 10.44, 10.45 and 10.49.

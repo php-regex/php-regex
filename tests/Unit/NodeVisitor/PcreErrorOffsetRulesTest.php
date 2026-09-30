@@ -83,6 +83,10 @@ final class PcreErrorOffsetRulesTest extends TestCase
      */
     public static function provideReleaseOffsets(): iterable
     {
+        // An unclosed "\g{ 1": on the space before 10.43, which takes no
+        // padding, on "\g" until 10.47, past the number from then on
+        // (pcre2test 10.40, 10.42, 10.44, 10.45, 10.46; PHP on 10.49).
+        yield 'unclosed padded \\g number' => ['/a\\g{ 1/', ['10.40' => 4, '10.42' => 4, '10.44' => 3, '10.45' => 3, '10.47' => 6, '10.49' => 6]];
         // Before 10.47 a minor is two digits: PCRE stops at a third one.
         yield 'minor of four digits, then text' => ['/(?(VERSION>=10.1001x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];
         yield 'minor of three digits, then text' => ['/(?(VERSION>=10.999x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];

@@ -230,7 +230,7 @@ final class AstSerializerTest extends TestCase
             Regex::CACHE_VERSION,
             AstFingerprint::compute(),
             'The code that builds the AST changed, so trees cached before it are no longer the ones this '
-            .'code would build. Run "task cache-version" and commit src/Regex.php.',
+            .'code would build. Run "task cache-version" and commit src/RegexParser.php.',
         );
     }
 

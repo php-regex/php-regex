@@ -127,6 +127,40 @@ misreads some patterns, and one of 1 misreads nearly all of them. The PHP
 default is 1000000; anything from 1000 up reads the patterns in the library's
 own test corpus the same way.
 
+## What changed in which release
+
+The rules that differ between releases each name the behaviour that changed,
+and a target has it from the release it arrived in on
+(`PcreTarget::supports(PcreFeature::ScanSubstring)`):
+
+| behaviour | from | what changed |
+|---|---|---|
+| `OpenAndPaddedRepeatCounts` | 10.43 | "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text. |
+| `PaddedBracedEscapes` | 10.43 | Spaces are allowed inside braced escapes and references, as "\x{ 41 }" or "\g{ 1 }". |
+| `VariableLengthLookbehind` | 10.43 | A lookbehind may hold branches of different lengths, up to 255 characters. |
+| `CaselessRestrictModifier` | 10.43 | The "r" modifier and "(?r)": caseless matching restricted to one script. |
+| `AsciiOptions` | 10.43 | "(?a)" and its "D", "S", "W", "P", "T" variants: ASCII-only classes. |
+| `LongGroupNames` | 10.44 | A group name may be 128 code units long, not 32. |
+| `ScanSubstring` | 10.45 | "(*scan_substring:(1)...)", or "(*scs:": a match read inside a capture. |
+| `ExtendedCharClass` | 10.45 | Perl extended character classes, "(?[ ... ])". |
+| `CasingSettingVerbs` | 10.45 | "(*CASELESS_RESTRICT)" and "(*TURKISH_CASING)". |
+| `HugeBackreferenceNumberIsReference` | 10.45 | "\8" or "\9" followed by eight digits or more is a reference, not a digit and text. |
+| `NumberTooBigPastWholeNumber` | 10.45 | A number past 65535 is reported past the whole number. |
+| `LimitValueErrorOnFaultingCharacter` | 10.45 | An error in a "(*LIMIT_x=" value is reported on the faulty character. |
+| `PosixItemErrorPastItsEnd` | 10.45 | An unknown POSIX class or collating element is reported past its end. |
+| `MalformedPropertyName` | 10.45 | A character no property name holds makes "\p{...}" malformed at that character. |
+| `RangeFromTypeReadToItsEnd` | 10.45 | A range from a type, a POSIX class or a property is read to its end before it is refused. |
+| `EmptyQuoteSkippedAfterClassEscape` | 10.45 | "[\w\E-a]": the empty quote is skipped, and the hyphen makes a range. |
+| `ClassBackslashKIsLetter` | 10.45 | "\k" in a class is the letter k, not an invalid escape. |
+| `HexEscapeNeedsDigits` | 10.45 | "\x" with no hexadecimal digit is an error, not a NUL. |
+| `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
+| `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
+| `GReferenceNumberReadBeforeClosing` | 10.47 | An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g". |
+| `NamedCodePointReadBeforeModeCheck` | 10.47 | "\N{U+...}" without UTF is read to its brace before it is refused. |
+| `CalloutConditionErrorAtItemStart` | 10.47 | An error in a callout condition is reported at the start of the item. |
+| `ErrorOffsetPastTheFault` | 10.47 | Most syntax errors are reported past the faulty character rather than on it. |
+| `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
+
 ## A known JIT crash
 
 PCRE2's JIT compiler, which PHP uses by default (`pcre.jit=1`), crashes the

@@ -132,6 +132,20 @@ instance judges for. `PcreTarget::runtime()` is the running engine,
 
 ---
 
+A rule that depends on the release asks the target for a behaviour, named in
+`PcreFeature`, rather than for a release written by hand:
+
+```php
+use RegexParser\PcreFeature;
+use RegexParser\PcreTarget;
+
+(new PcreTarget(80400, '10.44'))->supports(PcreFeature::ScanSubstring);  // false: it arrived in 10.45
+PcreFeature::ScanSubstring->release();                                   // '10.45'
+```
+
+`pcreAtLeast('10.45')` stays for a release that comes from data; it refuses a
+release spelled short, as `'10.4'`, which would read as 10.04.
+
 ## Parsing Methods
 
 ### parsePattern(string $pattern, string $flags = '', string $delimiter = '/'): RegexNode

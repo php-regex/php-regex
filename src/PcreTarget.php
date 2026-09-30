@@ -76,7 +76,24 @@ final readonly class PcreTarget
      */
     public function pcreAtLeast(string $release): bool
     {
-        return $this->release >= (self::releaseNumber($release) ?? \PHP_INT_MAX);
+        // "10.4" would read as 10.04 and hold for every release: a minor is
+        // written with two digits at least, as PCRE2 writes it.
+        [, $minor] = explode('.', $release, 2) + [1 => ''];
+        $number = \strlen($minor) >= 2 ? self::releaseNumber($release) : null;
+        if (null === $number) {
+            throw new \LogicException(\sprintf('"%s" is not a PCRE2 release like "10.45".', $release));
+        }
+
+        return $this->release >= $number;
+    }
+
+    /**
+     * Whether the PCRE2 judged has a behaviour: it arrived in that release
+     * or an earlier one.
+     */
+    public function supports(PcreFeature $feature): bool
+    {
+        return $this->pcreAtLeast($feature->release());
     }
 
     /**
