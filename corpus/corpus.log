@@ -11628,7 +11628,7 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1609:32
+  corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1643:32
       → #^(?:[[:alnum:]_]+/)+$#
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider using atomic groups (?>...) or possessive quantifiers.
