@@ -13,7 +13,7 @@ deptrac:
         - type: classLike
           value: '^RegexParser\\(Node|Internal|Exception|Cache|Analysis|Engine)\\'
         - type: classLike
-          value: '^RegexParser\\NodeVisitor\\(AbstractNodeVisitor|NodeVisitorInterface|CompilerNodeVisitor|DumperNodeVisitor|ValidatorNodeVisitor|LengthRangeNodeVisitor|LiteralExtractorNodeVisitor|ComplexityScoreNodeVisitor|MetricsNodeVisitor)$'
+          value: '^RegexParser\\NodeVisitor\\(AbstractNodeVisitor|AbstractTraversingVisitor|NodeVisitorInterface|CompilerNodeVisitor|DumperNodeVisitor|ValidatorNodeVisitor|LengthRangeNodeVisitor|LiteralExtractorNodeVisitor|ComplexityScoreNodeVisitor|MetricsNodeVisitor)$'
     - name: Explain
       collectors:
         - type: classLike
@@ -49,7 +49,7 @@ deptrac:
     - name: Cli
       collectors:
         - type: classLike
-          value: '^RegexParser\\(Cli|Runtime|Bridge\\Console)\\'
+          value: '^RegexParser\\(Cli|Runtime)\\'
     - name: LanguageServer
       collectors:
         - type: classLike
@@ -79,5 +79,5 @@ deptrac:
     Cli: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
     LanguageServer: [Toolkit, Parser, Explain, Optimizer, Linter]
     PHPStan: [Parser, Linter, ReDoS, Automata, Optimizer]
-    Symfony: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, Cli]
-    Laravel: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, Cli]
+    Symfony: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
+    Laravel: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]

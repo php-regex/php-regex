@@ -82,13 +82,17 @@ $htmlOutput = $ast->accept($htmlHighlighter);
 
 ## Creating custom visitors
 
-### Step 1: Extend AbstractNodeVisitor
+### Step 1: Extend a base class
+
+Extend `AbstractTraversingVisitor` to act on some node types wherever they
+stand: every node you do not override has its children visited. Call the
+parent method to keep descending below a node you override.
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\NodeVisitor\AbstractTraversingVisitor;
 use RegexParser\Node;
 
-class QuantifierCounter extends AbstractNodeVisitor
+class QuantifierCounter extends AbstractTraversingVisitor
 {
     private int $count = 0;
 
@@ -97,20 +101,18 @@ class QuantifierCounter extends AbstractNodeVisitor
         return $this->count;
     }
 
-    public function visitQuantifier(Node\QuantifierNode $node): void
+    public function visitQuantifier(Node\QuantifierNode $node)
     {
         $this->count++;
-        $node->node->accept($this); // Continue traversal
-    }
 
-    // Implement other visit methods as needed
-    public function visitLiteral(Node\LiteralNode $node): void {}
-    public function visitRegex(Node\RegexNode $node): void
-    {
-        $node->pattern->accept($this);
+        return parent::visitQuantifier($node); // Continue traversal
     }
 }
 ```
+
+Extend `AbstractNodeVisitor` instead when each method returns the node's
+value and you choose which children to visit: a node you do not override
+returns `null` and its children are not visited.
 
 ### Step 2: Use Your Visitor
 

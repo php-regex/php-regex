@@ -11,30 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Bridge\Console;
+namespace RegexParser\Lint\Formatter;
 
 use RegexParser\Internal\DisplayEscaper;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\OutputFormatterInterface;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexLintReport;
 use RegexParser\OptimizationResult;
 use RegexParser\ValidationResult;
-use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
  * Console output formatter shared by the framework bridges.
  *
  * Renders the classic Nuno-style layout with console tags. Laravel builds its
  * console on Symfony's, so both bridges render the report the same way; each
- * one only names the formatter it exposes.
+ * one only names the formatter it exposes. The text it quotes is escaped as
+ * Symfony Console's OutputFormatter::escape() escapes it, so the linter does
+ * not depend on Symfony Console.
+ *
+ * @internal shared by the Symfony and Laravel bridges, not for extension
  *
  * @phpstan-import-type LintIssue from RegexLintReport
  * @phpstan-import-type OptimizationEntry from RegexLintReport
  * @phpstan-import-type LintResult from RegexLintReport
  * @phpstan-import-type LintStats from RegexLintReport
  */
-abstract readonly class AbstractConsoleFormatter implements OutputFormatterInterface
+abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterInterface
 {
     private const ARROW_LABEL = "\u{21B3}";
 
@@ -133,7 +134,7 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
             $output .= \sprintf(
                 '     <fg=gray>%s %s</>'.\PHP_EOL,
                 self::ARROW_LABEL,
-                OutputFormatter::escape($location),
+                self::escape($location),
             );
         }
 
@@ -151,20 +152,20 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
         $escapedPattern = DisplayEscaper::escape($pattern);
 
         if (!$this->decorated) {
-            return OutputFormatter::escape($escapedPattern);
+            return self::escape($escapedPattern);
         }
 
         try {
             // Try highlighting the escaped pattern, but if it contains escapes, skip highlighting
             if (str_contains($escapedPattern, '\\')) {
-                return OutputFormatter::escape($escapedPattern);
+                return self::escape($escapedPattern);
             }
 
             $highlighted = $this->analysis->highlight($pattern);
 
-            return OutputFormatter::escape($highlighted);
+            return self::escape($highlighted);
         } catch (\Throwable) {
-            return OutputFormatter::escape($escapedPattern);
+            return self::escape($escapedPattern);
         }
     }
 
@@ -186,7 +187,7 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     self::ARROW_LABEL,
-                    OutputFormatter::escape($hint),
+                    self::escape($hint),
                 );
             }
 
@@ -270,7 +271,7 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
         $parts = [\sprintf(
             '    %s <fg=white>%s</>'.\PHP_EOL,
             $badge,
-            OutputFormatter::escape($firstLine),
+            self::escape($firstLine),
         )];
 
         if (!empty($lines)) {
@@ -278,7 +279,7 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     0 === $index ? self::ARROW_LABEL : ' ',
-                    OutputFormatter::escape($this->stripMessageLine($line)),
+                    self::escape($this->stripMessageLine($line)),
                 );
             }
         }
@@ -354,6 +355,26 @@ abstract readonly class AbstractConsoleFormatter implements OutputFormatterInter
         }
 
         return null;
+    }
+
+    /**
+     * Escapes text for a console that reads style tags: "<" and ">" take a
+     * backslash, and trailing backslashes become NUL bytes so they do not
+     * escape the closing tag that follows (the console prints them back as
+     * backslashes).
+     */
+    private static function escape(string $text): string
+    {
+        $text = str_replace(['<', '>'], ['\\<', '\\>'], $text);
+
+        if (!str_ends_with($text, '\\')) {
+            return $text;
+        }
+
+        $length = \strlen($text);
+        $text = str_replace("\0", '', rtrim($text, '\\'));
+
+        return $text.str_repeat("\0", $length - \strlen($text));
     }
 
     private function stripMessageLine(string $message): string

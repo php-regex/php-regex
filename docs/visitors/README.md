@@ -41,30 +41,59 @@ Every node gives its children in pattern order through `getChildren()`.
 **Purpose:** The contract every visitor answers to, with a `visitX()` method
 for each node type.
 
-**Usage:** extend `AbstractNodeVisitor` rather than implementing this
-interface. A new kind of node, as PCRE2 adds syntax, adds a method to the
-interface in a minor release; `AbstractNodeVisitor` gives it a default, so a
-visitor that extends it keeps working, and one that implements the interface
-directly does not.
+**Usage:** extend `AbstractTraversingVisitor` or `AbstractNodeVisitor`
+rather than implementing this interface. A new kind of node, as PCRE2 adds
+syntax, adds a method to the interface in a minor release; both base classes
+give it a default, so a visitor that extends one keeps working, and one that
+implements the interface directly does not.
 
 ---
 
-### AbstractNodeVisitor
+### Which base to extend
 
-**Purpose:** Convenience base class that provides default implementations for all visitor methods. Override only the methods you need.
+| You want to | Extend | A node you do not override |
+|---|---|---|
+| collect or check something wherever it stands in the pattern | `AbstractTraversingVisitor` | has its children visited, then returns `null` |
+| compute a value per node and decide yourself which children to visit | `AbstractNodeVisitor` | returns the default value (`null`) without visiting its children |
 
-**Usage:** Extend this class when you only need to handle a few node types.
+With `AbstractNodeVisitor`, a node type added in a minor release returns the
+default and the nodes below it are never visited. With
+`AbstractTraversingVisitor`, they still reach your overrides.
+
+### AbstractTraversingVisitor
+
+**Purpose:** Base class that walks the whole tree: every `visitX()` method
+visits the node's children, in the order they stand in the pattern, and
+returns `null`.
+
+**Usage:** Override the node types you care about. Call the parent method to
+keep descending below the node; return without calling it to skip the
+subtree.
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\Node;
+use RegexParser\NodeVisitor\AbstractTraversingVisitor;
+use RegexParser\Regex;
 
-class LiteralCollector extends AbstractNodeVisitor
+class LiteralCollector extends AbstractTraversingVisitor
 {
     private array $literals = [];
 
-    public function visitLiteral(Node\LiteralNode $node): void
+    public function visitLiteral(Node\LiteralNode $node)
     {
         $this->literals[] = $node->value;
+
+        return parent::visitLiteral($node);
+    }
+
+    public function visitGroup(Node\GroupNode $node)
+    {
+        // Skip what lookaheads hold; descend into every other group.
+        if (Node\GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
+            return null;
+        }
+
+        return parent::visitGroup($node);
     }
 
     public function getLiterals(): array
@@ -73,13 +102,52 @@ class LiteralCollector extends AbstractNodeVisitor
     }
 }
 
-// Usage
-$ast = Regex::create()->parse('/hello world/');
 $visitor = new LiteralCollector();
-$ast->accept($visitor);
+Regex::create()->parse('/ab(?=cd)e/')->accept($visitor);
 
-print_r($visitor->getLiterals());
-// Array ( [0] => hello [1] => world )
+echo implode('', $visitor->getLiterals()); // abe
+```
+
+---
+
+### AbstractNodeVisitor
+
+**Purpose:** Base class that returns a default value for every node, `null`
+unless you override `defaultReturn()`, and visits no children.
+
+**Usage:** Extend it when each method computes the node's value and you
+decide which children to visit, as the compiler and the explainer do.
+
+```php
+use RegexParser\Node;
+use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\Regex;
+
+/** @extends AbstractNodeVisitor<bool> */
+class StartsWithCaret extends AbstractNodeVisitor
+{
+    public function visitRegex(Node\RegexNode $node): bool
+    {
+        return $node->pattern->accept($this);
+    }
+
+    public function visitSequence(Node\SequenceNode $node): bool
+    {
+        return [] !== $node->children && $node->children[0]->accept($this);
+    }
+
+    public function visitAnchor(Node\AnchorNode $node): bool
+    {
+        return '^' === $node->value;
+    }
+
+    protected function defaultReturn(): bool
+    {
+        return false;
+    }
+}
+
+var_dump(Regex::create()->parse('/^abc/')->accept(new StartsWithCaret())); // bool(true)
 ```
 
 ---
@@ -536,6 +604,11 @@ use RegexParser\NodeVisitor\AbstractNodeVisitor;
 
 class LiteralCountVisitor extends AbstractNodeVisitor
 {
+    public function visitRegex(Node\RegexNode $node): int
+    {
+        return $node->pattern->accept($this);
+    }
+
     public function visitLiteral(Node\LiteralNode $node): int
     {
         return 1;
@@ -554,7 +627,7 @@ $ast = Regex::create()->parse('/hello world/');
 $visitor = new LiteralCountVisitor();
 $count = $ast->accept($visitor);
 
-echo $count;  // 2
+echo $count;  // 11, one literal per character
 ```
 
 ---
@@ -562,23 +635,19 @@ echo $count;  // 2
 ### Pattern 2: Stateful Visitor (Accumulates State)
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\NodeVisitor\AbstractTraversingVisitor;
 
-class GroupCollectorVisitor extends AbstractNodeVisitor
+class GroupCollectorVisitor extends AbstractTraversingVisitor
 {
     private array $groups = [];
 
-    public function visitGroup(Node\GroupNode $node): Node\GroupNode
+    public function visitGroup(Node\GroupNode $node)
     {
         if ($node->name !== null) {
             $this->groups[] = $node->name;
         }
 
-        return new Node\GroupNode(
-            $node->child->accept($this),
-            $node->type,
-            $node->name
-        );
+        return parent::visitGroup($node); // keep descending: groups nest
     }
 
     public function getGroupNames(): array
@@ -676,7 +745,7 @@ Presentation and visualization:
 
 | Category  | Key Visitors                                                 |
 |-----------|--------------------------------------------------------------|
-| Base      | `NodeVisitorInterface`, `AbstractNodeVisitor`                |
+| Base      | `NodeVisitorInterface`, `AbstractTraversingVisitor`, `AbstractNodeVisitor` |
 | Compile   | `CompilerNodeVisitor`, `OptimizerNodeVisitor`                |
 | Validate  | `ValidatorNodeVisitor`, `LinterNodeVisitor`                  |
 | Analyze   | `ComplexityScoreNodeVisitor`, `MetricsNodeVisitor`           |

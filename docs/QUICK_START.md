@@ -250,14 +250,16 @@ $suffix = $literals->literalSet->getLongestSuffix();
 
 ```php
 // Create a visitor to count quantifiers
-class QuantifierCounter extends \RegexParser\NodeVisitor\AbstractNodeVisitor
+// AbstractTraversingVisitor visits the children of every node you do not override
+class QuantifierCounter extends \RegexParser\NodeVisitor\AbstractTraversingVisitor
 {
     private int $count = 0;
 
-    public function visitQuantifier(\RegexParser\Node\QuantifierNode $node): void
+    public function visitQuantifier(\RegexParser\Node\QuantifierNode $node)
     {
         $this->count++;
-        $node->node->accept($this);
+
+        return parent::visitQuantifier($node);
     }
 
     public function getCount(): int { return $this->count; }

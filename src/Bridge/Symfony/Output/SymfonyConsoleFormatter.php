@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\Output;
 
-use RegexParser\Bridge\Console\AbstractConsoleFormatter;
+use RegexParser\Lint\Formatter\AbstractConsoleTagFormatter;
 
 /**
  * Symfony-specific console output formatter.
  *
  * Renders the classic Nuno-style layout with Symfony console tags.
  */
-final readonly class SymfonyConsoleFormatter extends AbstractConsoleFormatter {}
+final readonly class SymfonyConsoleFormatter extends AbstractConsoleTagFormatter {}

@@ -134,20 +134,36 @@ $metrics = $visitor->getMetrics(); // Get accumulated data
 | Stateless | Transformation, compilation    | `CompilerNodeVisitor`                        |
 | Stateful  | Metrics collection, validation | `MetricsNodeVisitor`, `ValidatorNodeVisitor` |
 
-### Using AbstractNodeVisitor
+### Choosing a base class
 
-`AbstractNodeVisitor` provides default implementations that return `null` or a safe default. This reduces boilerplate when you only need to override a few methods:
+Two base classes give every `visitX()` method a default, so a visitor that
+extends one keeps working when a minor release adds a node type:
+
+- `AbstractTraversingVisitor` visits the children of every node, in pattern
+  order, and returns `null`. Extend it to collect or check something wherever
+  it stands: override the node types you care about and call the parent
+  method to keep descending (return without calling it to skip the subtree).
+  A node type added later is walked through, so the nodes below it still
+  reach your overrides.
+- `AbstractNodeVisitor` returns the default value (`null`, or what
+  `defaultReturn()` gives) and visits no children. Extend it when each method
+  computes the node's value and you choose which children to visit, as the
+  compiler does. A node you do not override hides its subtree, a node type
+  added later included.
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\Node;
+use RegexParser\NodeVisitor\AbstractTraversingVisitor;
 
-class OnlyLiteralVisitor extends AbstractNodeVisitor
+class OnlyLiteralVisitor extends AbstractTraversingVisitor
 {
     private array $literals = [];
 
-    public function visitLiteral(Node\LiteralNode $node): void
+    public function visitLiteral(Node\LiteralNode $node)
     {
         $this->literals[] = $node->value;
+
+        return parent::visitLiteral($node);
     }
 
     public function getLiterals(): array
@@ -272,7 +288,7 @@ foreach ($node->alternatives as $index => $alternative) {
 
 ## Best Practices Checklist
 
-- Use `AbstractNodeVisitor` for partial implementations.
+- Use `AbstractTraversingVisitor` for partial implementations that must see every node, `AbstractNodeVisitor` for those that drive the traversal themselves.
 - Always return a node from visit methods (even if unchanged).
 - Preserve source positions when creating new nodes.
 - Delegate to `child->accept($this)`, not `$this->accept($node)`.

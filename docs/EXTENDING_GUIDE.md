@@ -144,6 +144,23 @@ public function visitCallout(CalloutNode $node): mixed
 }
 ```
 
+### Add Descent to AbstractTraversingVisitor
+
+**Location:** `src/NodeVisitor/AbstractTraversingVisitor.php`
+
+The method visits the node's children through `getChildren()`, so a visitor
+that extends this base still reaches the nodes below the new one:
+
+```php
+public function visitCallout(CalloutNode $node)
+{
+    return $this->traverse($node);
+}
+```
+
+A node that holds other nodes returns them from `getChildren()`, in the order
+they stand in the pattern.
+
 ### Implement in Your Visitor
 
 **Location:** Your custom visitor class

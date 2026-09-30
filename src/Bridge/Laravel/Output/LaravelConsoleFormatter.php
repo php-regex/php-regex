@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Laravel\Output;
 
-use RegexParser\Bridge\Console\AbstractConsoleFormatter;
+use RegexParser\Lint\Formatter\AbstractConsoleTagFormatter;
 
 /**
  * Laravel-specific console output formatter.
  *
  * Renders the classic Nuno-style layout with console tags.
  */
-final readonly class LaravelConsoleFormatter extends AbstractConsoleFormatter {}
+final readonly class LaravelConsoleFormatter extends AbstractConsoleTagFormatter {}

@@ -362,16 +362,18 @@ class RegexValidator
 namespace MyApp\Regex;
 
 use RegexParser\Regex;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use RegexParser\NodeVisitor\AbstractTraversingVisitor;
 use RegexParser\Node;
 
-class LiteralCollector extends AbstractNodeVisitor
+class LiteralCollector extends AbstractTraversingVisitor
 {
     private array $literals = [];
 
-    public function visitLiteral(Node\LiteralNode $node): void
+    public function visitLiteral(Node\LiteralNode $node)
     {
         $this->literals[] = $node->value;
+
+        return parent::visitLiteral($node);
     }
 
     public function getLiterals(): array
