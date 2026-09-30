@@ -112,6 +112,17 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
 
     private int $indentLevel = 0;
 
+    /**
+     * What a quantified node explains to at a level: a quantifier asks for
+     * its child at two levels, and without this every level of nesting
+     * doubled the work.
+     *
+     * Keyed by the node itself, so an entry goes with its tree.
+     *
+     * @var \WeakMap<NodeInterface, array<int, string>>|null
+     */
+    private ?\WeakMap $explained = null;
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
@@ -182,18 +193,16 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        $childExplain = $node->node->accept($this);
+        $childExplain = $this->explainAt($node->node, $this->indentLevel);
         $quantExplain = $this->explainQuantifierValue($node->quantifier, $node->type->value);
 
         // If the child is simple (one line), put it on one line.
-        if (!str_contains((string) $childExplain, "\n")) {
+        if (!str_contains($childExplain, "\n")) {
             return $this->line(\sprintf('%s (%s)', $childExplain, $quantExplain));
         }
 
         // If the child is complex, indent it.
-        $this->indentLevel++;
-        $childExplain = $node->node->accept($this);
-        $this->indentLevel--;
+        $childExplain = $this->explainAt($node->node, $this->indentLevel + 1);
 
         return implode("\n", [
             $this->line('Start Quantified Group ('.$quantExplain.')'),
@@ -559,6 +568,28 @@ final class ExplainNodeVisitor extends AbstractNodeVisitor
         }
 
         return $node->originalRepresentation;
+    }
+
+    private function explainAt(NodeInterface $node, int $level): string
+    {
+        $this->explained ??= new \WeakMap();
+        $known = $this->explained[$node] ?? [];
+        if (isset($known[$level])) {
+            return $known[$level];
+        }
+
+        $indentLevel = $this->indentLevel;
+        $this->indentLevel = $level;
+
+        try {
+            $known[$level] = (string) $node->accept($this);
+        } finally {
+            $this->indentLevel = $indentLevel;
+        }
+
+        $this->explained[$node] = $known;
+
+        return $known[$level];
     }
 
     private function line(string $text): string
