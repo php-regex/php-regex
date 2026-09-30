@@ -478,6 +478,11 @@ final readonly class Regex
             } else {
                 $gaveUp++;
                 $engineError = preg_last_error_msg();
+                // A sample that matches is found quickly: the samples the
+                // engine gives up on are costly misses, and eight end it.
+                if (8 === $gaveUp) {
+                    break;
+                }
             }
         }
 

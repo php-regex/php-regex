@@ -94,7 +94,9 @@ final class RegexGenerateTest extends TestCase
     /**
      * The JIT of PCRE2 10.49 crashes PHP on this pattern for some samples,
      * "*a_cb2a1_a_1!_a_Z1a!_Z_Z" among them; the interpreter gives the same
-     * answers without crashing.
+     * answers without crashing. One sample in ten to fifteen crashes it, and
+     * a call checks six or more: checked with the JIT, sixteen calls would
+     * crash PHP 998 times in 1000.
      */
     #[Test]
     #[DataProvider('provideJitCrashes')]
@@ -102,7 +104,7 @@ final class RegexGenerateTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        for ($try = 0; $try < 64; $try++) {
+        for ($try = 0; $try < 16; $try++) {
             try {
                 $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $regex->generate($pattern)));
             } catch (SampleGenerationException $e) {
@@ -125,7 +127,7 @@ final class RegexGenerateTest extends TestCase
             self::fail('A sample the engine could not check was given.');
         } catch (SampleGenerationException $e) {
             $this->assertSame('regex.generate.no_match', $e->getErrorCode());
-            $this->assertStringContainsString('the engine gave up checking 32 of the samples (Recursion limit exhausted).', $e->getMessage());
+            $this->assertStringContainsString('the engine gave up checking 8 of the samples (Recursion limit exhausted).', $e->getMessage());
         } finally {
             ini_set('pcre.recursion_limit', false === $limit ? '100000' : $limit);
         }
@@ -133,10 +135,10 @@ final class RegexGenerateTest extends TestCase
 
     /**
      * A sample the engine gave up on is not checked again with text around
-     * it, which the engine gives up on as well. Each check here runs to the
-     * backtrack limit, two ways at each of 25 characters: 32 of them take
-     * about a second, the 288 padded ones took ten more. The generator's own
-     * work is small beside them.
+     * it, which the engine gives up on as well, and eight of them end the
+     * search: a sample that matches is found quickly, one it gives up on is
+     * a costly miss. Each check here runs to the backtrack limit, two ways
+     * at each of 25 characters; the 288 padded ones took ten seconds.
      */
     #[Test]
     public function test_a_sample_the_engine_gave_up_on_is_not_padded(): void
@@ -147,7 +149,7 @@ final class RegexGenerateTest extends TestCase
             Regex::create(['cache' => null])->generate('/(?:\\w|\\w){25}\\z!/');
             self::fail('A sample was given for a pattern nothing matches.');
         } catch (SampleGenerationException $e) {
-            $this->assertStringEndsWith('the engine gave up checking 32 of the samples (Backtrack limit exhausted).', $e->getMessage());
+            $this->assertStringEndsWith('the engine gave up checking 8 of the samples (Backtrack limit exhausted).', $e->getMessage());
         }
 
         $this->assertLessThan(4.0, (hrtime(true) - $start) / 1e9);

@@ -339,8 +339,8 @@ held where they stand. When none matches, `SampleGenerationException` is
 thrown (error code `regex.generate.no_match`): the pattern matches nothing, as
 `a(*FAIL)` or `a^b`, or its constraints are too tangled to guess. A sample
 the engine gives up on, past `pcre.backtrack_limit` or `pcre.recursion_limit`
-or on an error it meets matching, is no answer either, and another is tried;
-when none is found, the exception's message says how many samples the engine
+or on an error it meets matching, is no answer either, and another is tried,
+up to eight such samples; when none is found, the exception's message says how many samples the engine
 gave up on and the error it gave, as `Backtrack limit exhausted`. A pattern
 the running PHP cannot compile gets a sample nothing checked.
 
