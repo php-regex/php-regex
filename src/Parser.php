@@ -1612,7 +1612,10 @@ final class Parser
             );
         }
 
-        $assertion = $this->parseLookaroundCondition($this->stream->previous()->position);
+        // A group that is no assertion is refused where it starts, as
+        // anything else there is.
+        $groupStart = $this->stream->previous()->position;
+        $assertion = $this->parseLookaroundCondition($groupStart, $groupStart);
         $condition = new SequenceNode([$callout, $assertion], $callout->getStartPosition(), $assertion->getEndPosition());
 
         return $this->parseConditionalBranches($startPosition, $condition);
@@ -2491,8 +2494,11 @@ final class Parser
 
     /**
      * Parses lookaround conditions inside conditional constructs (?(?=...)...).
+     *
+     * @param int|null $faultPosition where a group that is no lookaround is
+     *                                refused, past its "?" when null
      */
-    private function parseLookaroundCondition(int $startPosition): NodeInterface
+    private function parseLookaroundCondition(int $startPosition, ?int $faultPosition = null): NodeInterface
     {
         $lookaround = $this->matchLookaround($startPosition, self::LOOKAHEADS);
         if (null !== $lookaround) {
@@ -2507,7 +2513,7 @@ final class Parser
         }
 
         // Past the "?" from PCRE2 10.47, on it before.
-        $position = $this->pastTheFault($startPosition + 1);
+        $position = $faultPosition ?? $this->pastTheFault($startPosition + 1);
 
         throw $this->parserException(
             'Invalid conditional condition at position '.$position,
@@ -2554,7 +2560,8 @@ final class Parser
             $this->stream->advance();
         }
 
-        $condition = VersionCondition::read($word);
+        // A space before "VERSION" stands where PCRE wants a name.
+        $condition = str_starts_with($word, 'VERSION') ? VersionCondition::read($word) : null;
         if (null === $condition) {
             $this->stream->setPosition($savedPos);
 
@@ -2642,6 +2649,7 @@ final class Parser
      */
     private function parseSubroutineRCondition(int $startPosition): ?SubroutineNode
     {
+        $savedPos = $this->stream->getPosition();
         if (!$this->stream->matchLiteral('R')) {
             return null;
         }
@@ -2656,19 +2664,21 @@ final class Parser
             return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
         }
 
-        // "(?(R" takes a number or "&name": a sign starts neither, so PCRE
-        // reads the name "R" and wants the ")" where the sign stands.
-        if ($this->stream->checkLiteral('-') || ($this->stream->check(TokenType::T_QUANTIFIER) && '+' === $this->stream->current()->value)) {
-            $position = $this->stream->current()->position;
-
-            throw $this->parserException(
-                \sprintf('Invalid recursion condition at position %d: "(?(R" takes a group number or "&name", with no sign.', $position),
-                ErrorCode::GroupNameUnterminated,
-                $position,
-            );
+        // Anything else PCRE reads as a name up to the ")": a sign, as in
+        // "(?(R-1)", ends it unterminated. "R" and digits alone is the
+        // recursion condition; any other name, "Rx" or "R1a", is looked up.
+        $nameError = $this->conditionNameError($startPosition);
+        if (null !== $nameError) {
+            throw $nameError;
         }
 
         $digits = $this->consumeWhile(static fn (string $c): bool => Ascii::isDigit($c));
+        if (!$this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            $this->stream->setPosition($savedPos);
+
+            return null;
+        }
+
         if ('' !== $digits) {
             $endPosition = $this->stream->previous()->position;
         }
@@ -2748,16 +2758,22 @@ final class Parser
             );
         }
 
+        // "(?(VERSION=10z)", or "(?(VERSIONx)": PCRE reads a version
+        // condition before a name, and refuses it where it goes wrong.
+        $versionError = $this->versionConditionErrorOffset($startPosition);
+        if (null !== $versionError) {
+            throw $this->versionConditionError($versionError, $startPosition);
+        }
+
         $bareName = $this->parseBareNameCondition($startPosition);
         if (null !== $bareName) {
             return $bareName;
         }
 
-        // "(?(VERSION=10z)": PCRE reads a version condition, and refuses it
-        // where it goes wrong.
-        $versionError = $this->versionConditionErrorOffset($startPosition);
-        if (null !== $versionError) {
-            throw $this->versionConditionError($versionError, $startPosition);
+        // A name that something other than ")" ends, as in "(?(ab!)".
+        $nameError = $this->conditionNameError($startPosition);
+        if (null !== $nameError) {
+            throw $nameError;
         }
 
         // Anything else, "(?(+a)" or "(?({2})" included, has to be a name, and PCRE refuses what cannot be one
@@ -2772,6 +2788,39 @@ final class Parser
             ),
             ErrorCode::ConditionalInvalid,
             $position,
+        );
+    }
+
+    /**
+     * What PCRE refuses in the name it reads as a condition from $nameStart
+     * to the ")" that must end it: past the length limit, where the name
+     * ends, then anything but ")" there. Null when ")" ends the name, or
+     * when no name starts there: nothing a name holds, or a digit.
+     */
+    private function conditionNameError(int $nameStart): ?ParserException
+    {
+        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
+        $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
+        if ($nameEnd === $nameStart || 1 === preg_match($digit, $this->pattern, $matches, 0, $nameStart)) {
+            return null;
+        }
+
+        if ($nameEnd - $nameStart > $this->groupNames->maxNameLength()) {
+            return $this->parserException(
+                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $nameEnd - $nameStart, $this->groupNames->maxNameLength()),
+                ErrorCode::GroupNameTooLong,
+                $nameEnd,
+            );
+        }
+
+        if (')' === ($this->pattern[$nameEnd] ?? '')) {
+            return null;
+        }
+
+        return $this->parserException(
+            \sprintf('Missing ")" to close the condition name at position %d.', $nameEnd),
+            ErrorCode::GroupNameUnterminated,
+            $nameEnd,
         );
     }
 

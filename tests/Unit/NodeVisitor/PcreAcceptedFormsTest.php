@@ -224,6 +224,11 @@ final class PcreAcceptedFormsTest extends TestCase
         yield 'lookbehind length limit, positive, 256 characters: /(?<=a{256})x/' => ['pattern' => '/(?<=a{256})x/'];
         yield 'lookbehind length limit, positive, 65535 characters: /(?<=a{65535})x/' => ['pattern' => '/(?<=a{65535})x/'];
         yield 'lookbehind length limit, 65535 characters over two atoms: /(?<!a{65534}b)x/' => ['pattern' => '/(?<!a{65534}b)x/'];
+
+        // "R" followed by anything but digits is a name, not a recursion condition.
+        yield 'named condition, name starting with R: /(?<Rx>a)(?(Rx)a)/' => ['pattern' => '/(?<Rx>a)(?(Rx)a)/'];
+        yield 'named condition, R and a number then a letter: /(?<R1a>a)(?(R1a)a)/' => ['pattern' => '/(?<R1a>a)(?(R1a)a)/'];
+        yield 'named condition, R and a number then a letter, group after: /(?(R1a)a)(?<R1a>b)/' => ['pattern' => '/(?(R1a)a)(?<R1a>b)/'];
     }
 
     /**

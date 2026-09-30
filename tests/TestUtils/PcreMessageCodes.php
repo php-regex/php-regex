@@ -58,7 +58,9 @@ final class PcreMessageCodes
         '(?R (recursive pattern call) must be followed by a closing parenthesis' => ['regex.subroutine.invalid_syntax'],
 
         // Group names.
-        'subpattern name expected' => ['regex.group.name_expected'],
+        // In a condition, what cannot start a name is no condition at all:
+        // "(?(+a)", "(?({2})", "(?( VERSION=10)".
+        'subpattern name expected' => ['regex.group.name_expected', 'regex.conditional.invalid'],
         'subpattern name must start with a non-digit' => ['regex.group.name_invalid'],
         'syntax error in subpattern name (missing terminator?)' => ['regex.group.name_unterminated'],
         'subpattern name is too long (maximum 128 code units)' => ['regex.group.name_too_long'],

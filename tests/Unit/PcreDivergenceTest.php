@@ -75,6 +75,46 @@ final class PcreDivergenceTest extends TestCase
         yield from self::rows('recursion condition with a negative number', '/(?(R-1)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 4, ErrorCode::GroupNameUnterminated);
         yield from self::rows('recursion condition on a missing group', '/(?(R1)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::SubroutineRecursion);
 
+        // Past a number, a "VERSION" and a quoted name, "(?(" reads a name
+        // up to the ")": a character no name holds leaves it unterminated,
+        // "R", "R1" and "DEFINE" included, once the name is measured.
+        yield from self::rows('recursion condition then a character no name holds', '/(?(R!)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 4, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('name starting with R left open', '/(?(Rx/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 5, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('recursion condition on a number then a character no name holds', '/(?(R1!)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 5, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('bare name then a character no name holds', '/(?(ab!)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 5, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('bare name then a sign', '/(?(a-1)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 4, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('DEFINE then a character no name holds', '/(?(DEFINE!)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 9, ErrorCode::GroupNameUnterminated);
+        yield from self::rows('name starting with R past the length limit, unterminated', '/(?(R'.str_repeat('a', 130).'!)a)/', ['10.40', '10.42'], 'subpattern name is too long (maximum 32 code units)', 134, ErrorCode::GroupNameTooLong);
+        yield from self::rows('name starting with R past the length limit, unterminated', '/(?(R'.str_repeat('a', 130).'!)a)/', ['10.44', '10.49'], 'subpattern name is too long (maximum 128 code units)', 134, ErrorCode::GroupNameTooLong);
+        // "R" and forty digits is a name past 32 code units before it is a
+        // group number past 65535.
+        yield from self::rows('recursion condition on a number of forty digits', '/(?(R'.str_repeat('1', 40).')a)/', ['10.40', '10.42'], 'subpattern name is too long (maximum 32 code units)', 44, ErrorCode::GroupNameTooLong);
+        yield from self::rows('recursion condition on a number of forty digits', '/(?(R'.str_repeat('1', 40).')a)/', ['10.44', '10.49'], 'subpattern number is too big', 9, ErrorCode::GroupNumberTooBig);
+        yield from self::rows('bare name past the length limit, unterminated', '/(?('.str_repeat('a', 130).'!)a)/', ['10.40', '10.42'], 'subpattern name is too long (maximum 32 code units)', 133, ErrorCode::GroupNameTooLong);
+        yield from self::rows('bare name past the length limit, unterminated', '/(?('.str_repeat('a', 130).'!)a)/', ['10.44', '10.49'], 'subpattern name is too long (maximum 128 code units)', 133, ErrorCode::GroupNameTooLong);
+
+        // "R" followed by anything but digits is a name like any other.
+        yield from self::rows('recursion condition with a letter after the number', '/(?(R1a)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionMissingGroup);
+        yield from self::rows('name starting with R', '/(?(Rx)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionMissingGroup);
+        yield from self::rows('recursion condition with a letter after the number, left open', '/(?(R1a)/', self::LIVE_RELEASES, 'missing closing parenthesis', 7, ErrorCode::GroupUnclosed);
+
+        // A space before "VERSION" is where the name was expected.
+        yield from self::rows('version condition after a space', '/(?( VERSION=10)a)/', self::LIVE_RELEASES, 'subpattern name expected', 3, ErrorCode::ConditionalInvalid);
+
+        // "VERSION" not followed by ")", with ten characters left, is a
+        // version condition before it can be a name, a group's name included.
+        foreach (['VERSION then a letter' => ['/(?(VERSIONx)a)/', 10], 'VERSION then a letter, a group left open after' => ['/(?(VERSIONx)a)(/', 10], 'VERSION then letters naming a group' => ['/(?<VERSIONab>a)(?(VERSIONab)a)/', 25]] as $name => [$pattern, $offset]) {
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $offset, ErrorCode::ConditionVersionSyntax);
+            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $offset + 1, ErrorCode::ConditionVersionSyntax);
+        }
+
+        // A group that is no assertion after the callout of a condition is
+        // refused where it starts, on every release.
+        foreach (['callout condition then a non-capturing group' => ['/(?(?C1)(?:a))/', 7], 'string callout condition then a non-capturing group' => ['/(?(?C"x")(?:a))/', 9], 'callout condition then a comment and a non-capturing group' => ['/(?(?C1)(?#c)(?:a))/', 12]] as $name => [$pattern, $offset]) {
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionAssertionExpected);
+            yield from self::rows($name, $pattern, ['10.49'], 'atomic assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionAssertionExpected);
+        }
+
         // A comment where the condition belongs: 10.49 reports one character
         // later, under its "atomic assertion" wording.
         yield from self::rows('comment as the condition', '/(?(?#c)a)/', self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', 7, ErrorCode::ConditionAssertionExpected);
@@ -185,6 +225,11 @@ final class PcreDivergenceTest extends TestCase
         // PCRE: "unknown POSIX class name" at 3, at 8 on 10.49.
         yield 'unknown POSIX class, 10.44' => ['pattern' => '/[[:foo:]](/', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 3];
         yield 'unknown POSIX class, 10.49' => ['pattern' => '/[[:foo:]](/', 'release' => '10.49', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
+        // PCRE: "syntax error or number too big in (?(VERSION condition" at 10, at 11 on 10.49.
+        yield 'VERSION then a letter, 10.44' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.44', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 10];
+        yield 'VERSION then a letter, 10.49' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.49', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 11];
+        // PCRE: "syntax error in subpattern name (missing terminator?)" at 5.
+        yield 'bare name then a character no name holds, 10.49' => ['pattern' => '/(?(ab!)a)(/', 'release' => '10.49', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 5];
     }
 
     /**
