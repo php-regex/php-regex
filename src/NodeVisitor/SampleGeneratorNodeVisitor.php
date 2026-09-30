@@ -153,6 +153,22 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private bool $caseless = false;
 
     /**
+     * Whether "$" ends a line, under "m", rather than the subject.
+     */
+    private bool $dollarEndsLine = false;
+
+    /**
+     * The fewest characters the pattern still adds after the node being
+     * generated, which an alternative ending the subject leaves no room for.
+     */
+    private int $textAhead = 0;
+
+    /**
+     * @var array<int, int> the fewest characters each node matches, by node id
+     */
+    private array $minLengths = [];
+
+    /**
      * Characters found to have a property, by the escape and the mode.
      *
      * @var array<string, list<string>>
@@ -214,6 +230,9 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->collectGroups($node->pattern);
         $this->numberGroupsAsPcre($node);
         $this->caseless = str_contains($node->flags, 'i');
+        $this->dollarEndsLine = str_contains($node->flags, 'm');
+        $this->textAhead = 0;
+        $this->minLengths = [];
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
@@ -236,9 +255,16 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             return '';
         }
 
-        // Pick one of the alternatives at random
-        $randomKey = $this->randomInt(0, \count($node->alternatives) - 1);
-        $chosenAlt = $node->alternatives[$randomKey];
+        // Pick one of the alternatives at random, among those that leave
+        // room for what the pattern still adds.
+        $alternatives = array_values(array_filter(
+            $node->alternatives,
+            fn (NodeInterface $alternative): bool => $this->textAhead <= $this->roomAfter($alternative),
+        ));
+        if ([] === $alternatives) {
+            $alternatives = $node->alternatives;
+        }
+        $chosenAlt = $alternatives[$this->randomInt(0, \count($alternatives) - 1)];
 
         return $chosenAlt->accept($this);
     }
@@ -308,8 +334,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $repeats = ($min === $max) ? $min : $this->randomInt($min, $max);
 
         $sample = '';
+        $ahead = $this->textAhead;
+        $each = $this->minLength($node->node);
         for ($i = 0; $i < $repeats; $i++) {
+            $this->textAhead = $ahead + ($repeats - 1 - $i) * $each;
             $sample .= $node->node->accept($this);
+            $this->textAhead = $ahead;
             if ($this->accepted) {
                 break;
             }
@@ -621,7 +651,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         $this->recursionDepth++;
-        $result = $this->acceptedIn($target instanceof GroupNode ? $target->child : $target);
+        $result = $this->acceptedIn($target instanceof GroupNode ? $target->child : $target, inPlace: true);
         $this->recursionDepth--;
 
         return $result;
@@ -798,8 +828,30 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     {
         $text = '';
         $children = $this->withPlainGroupsOpened($children);
+        $ahead = $this->textAhead;
+        // What the children after each one add, at the fewest.
+        $after = [];
+        $rest = 0;
+        for ($index = \count($children) - 1; $index >= 0; $index--) {
+            $after[$index] = $rest;
+            $rest += $this->minLength($children[$index]);
+        }
 
+        try {
+            return $this->generateChildren($children, $after, $ahead, $text);
+        } finally {
+            $this->textAhead = $ahead;
+        }
+    }
+
+    /**
+     * @param list<NodeInterface> $children
+     * @param array<int, int>     $after    the fewest characters the children after each one add
+     */
+    private function generateChildren(array $children, array $after, int $ahead, string $text): string
+    {
         foreach ($children as $index => $child) {
+            $this->textAhead = $ahead;
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
                 // Its text laid over what follows, or before it, or after it:
                 // the first that what is left of the sequence matches, as
@@ -844,6 +896,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 continue;
             }
 
+            $this->textAhead = $ahead + $after[$index];
             $text .= $child->accept($this);
             if ($this->accepted) {
                 return $text;
@@ -851,6 +904,37 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         return $text;
+    }
+
+    /**
+     * How many characters may follow an alternative: none after one that
+     * ends the subject, any number after the others. "$" and "\Z" let a
+     * final newline follow, which what the pattern still adds seldom is.
+     */
+    private function roomAfter(NodeInterface $alternative): int
+    {
+        $last = $alternative instanceof SequenceNode ? ($alternative->children[\count($alternative->children) - 1] ?? null) : $alternative;
+
+        return match (true) {
+            $last instanceof AssertionNode && 'z' === $last->value => 0,
+            $last instanceof AssertionNode && 'Z' === $last->value => 0,
+            $last instanceof AnchorNode && '$' === $last->value && !$this->dollarEndsLine => 0,
+            default => \PHP_INT_MAX,
+        };
+    }
+
+    /**
+     * The fewest characters a node matches. A call counts what it runs; a
+     * reference, or a call inside another node, counts none.
+     */
+    private function minLength(NodeInterface $node): int
+    {
+        if ($node instanceof SubroutineNode) {
+            $target = null === $this->rootPattern ? null : $this->resolveSubroutineTarget($node);
+            $node = $target ?? $node;
+        }
+
+        return $this->minLengths[spl_object_id($node)] ??= $node->accept(new LengthRangeNodeVisitor($this->unicode))[0];
     }
 
     /**
@@ -869,9 +953,19 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
      * The text of a call or an assertion: a "(*ACCEPT)" in it ends it, and
      * no more. Laid out as a sequence, a lookahead in it gives its text.
      */
-    private function acceptedIn(NodeInterface $node, bool $asSequence = false): string
+    private function acceptedIn(NodeInterface $node, bool $asSequence = false, bool $inPlace = false): string
     {
-        $text = $asSequence ? $this->generateSequence($node instanceof SequenceNode ? $node->children : [$node]) : $node->accept($this);
+        // A lookaround's or a scan's text stands over the subject, not
+        // before what follows it: nothing it holds is refused for lack of
+        // room. A call's text stands in the call's place.
+        $ahead = $this->textAhead;
+        $this->textAhead = $inPlace ? $ahead : 0;
+
+        try {
+            $text = $asSequence ? $this->generateSequence($node instanceof SequenceNode ? $node->children : [$node]) : $node->accept($this);
+        } finally {
+            $this->textAhead = $ahead;
+        }
         $this->accepted = false;
 
         return $text;
