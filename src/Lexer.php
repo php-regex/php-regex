@@ -313,17 +313,18 @@ final class Lexer
     public function tokenize(string $pattern, string $flags = '', bool $extendedMore = false): TokenStream
     {
         // Patterns that are not valid UTF-8 are tokenized byte by byte, the
-        // way PCRE compiles them without the /u modifier. With /u, PCRE
-        // itself refuses such patterns.
+        // way PCRE compiles them outside UTF mode. In UTF mode, set by /u or
+        // by "(*UTF)" among the settings that open the pattern, PCRE itself
+        // refuses them, at the first byte that starts no UTF-8 character.
         $this->byteMode = !preg_match('//u', $pattern);
-        if ($this->byteMode && str_contains($flags, 'u')) {
-            throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8, 0, $pattern);
+        $this->utf = str_contains($flags, 'u')
+            || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $pattern);
+        if ($this->byteMode && $this->utf) {
+            throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8, self::firstInvalidUtf8Offset($pattern), $pattern);
         }
 
         $this->pattern = $pattern;
         $this->length = \strlen($this->pattern);
-        $this->utf = str_contains($flags, 'u')
-            || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $pattern);
         $this->extendedMode = str_contains($flags, 'x');
         $this->extendedMoreMode = $extendedMore;
         $this->resetState();
@@ -1161,5 +1162,21 @@ final class Lexer
                 $this->pattern,
             );
         }
+    }
+
+    /**
+     * Where the longest run of well-formed UTF-8 at the start of $text ends.
+     * Overlong forms, surrogates and code points past U+10FFFF are no UTF-8.
+     */
+    private static function firstInvalidUtf8Offset(string $text): int
+    {
+        preg_match(
+            '/\A(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}'
+            .'|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})*+/',
+            $text,
+            $valid,
+        );
+
+        return \strlen($valid[0] ?? '');
     }
 }

@@ -376,6 +376,18 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'name past 128 units' => ['pattern' => '/(?<'.str_repeat('a', 129).' b>x)/', 'code' => 'regex.group.name_too_long', 'message' => '129 code units'];
         yield '\\k name starting with a digit, left open' => ['pattern' => "/\\k'1a/", 'code' => 'regex.group.name_invalid', 'message' => 'must not start with a digit'];
         yield 'invalid UTF-8 under u' => ['pattern' => "/\xff/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+
+        // UTF mode set by a start-of-pattern verb checks the bytes as "u"
+        // does, and PCRE reports the first byte that is no UTF-8.
+        yield 'illegal byte under (*UTF)' => ['pattern' => "/(*UTF)\xff/", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'illegal byte under (*UTF8)' => ['pattern' => "/(*UTF8)\xff/", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'truncated sequence under (*UTF)' => ['pattern' => "/(*UTF)a\xc3/", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield '(*UTF) after another setting' => ['pattern' => "/(*LIMIT_MATCH=10)(*UTF)\xff/", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'illegal byte under (*UTF) and u' => ['pattern' => "/(*UTF)\xff/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'isolated continuation byte after text' => ['pattern' => "/ab\x80/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'broken three-byte sequence after text' => ['pattern' => "/ab\xe2\x82z/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield 'surrogate after text' => ['pattern' => "/ab\xed\xa0\x80/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
+        yield '(*UTF) not at the start' => ['pattern' => "/a(*UTF)\xff/", 'code' => 'regex.verb.misplaced', 'message' => '(*UTF)'];
     }
 
     /**
