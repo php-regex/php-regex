@@ -57,6 +57,7 @@ final class RegexGenerateTest extends TestCase
      */
     public static function provideJitCrashes(): iterable
     {
+        yield 'smallest known crash' => ['/(?|(\\*)(*napla:(.+))|()(?=\\S_(\\2?)))+_/'];
         yield 'branch reset with lookaheads and references' => ['/^(?|(\\*)(*napla:\\S*_(\\2?+.+))|(\\w)(?=\\S*_(\\2?+\\1)))+_\\2$/'];
     }
 

@@ -116,6 +116,40 @@ modifier"); earlier releases compile it, but matching it can crash PHP
 every target: at the `\C` for a PHP that refuses it, at the enclosing
 lookbehind for one that compiles it, as that PHP refuses it only there.
 
+## A known JIT crash
+
+PCRE2's JIT compiler, which PHP uses by default (`pcre.jit=1`), crashes the
+process on this pattern and subject, found while testing sample generation:
+
+```php
+preg_match('/(?|(\*)(*napla:(.+))|()(?=\S_(\2?)))+_/', '*a_'); // SIGSEGV
+```
+
+Every part is needed: a repeated branch reset, a non-atomic lookahead
+capturing group 2 in one branch, and in the other a lookahead where group 2
+refers to itself (`(\2?)`). The machine code the JIT generates for the
+reference `\2` reads the capture's text from an address that is no longer
+valid. The interpreter answers "no match" without trouble.
+
+| where | result |
+|---|---|
+| pcre2test 10.40, 10.42, 10.45, 10.47, 10.49 built with `--enable-jit` | crash (every release tried) |
+| PHP 8.2 and 8.5 with PCRE2 10.42, PHP 8.4 with PCRE2 10.49 | segmentation fault |
+| any of them with `pcre.jit=0`, or `(*NO_JIT)` leading the pattern | no match, no crash |
+
+What this library does about it:
+
+- `generate()` checks its samples with the interpreter: it puts `(*NO_JIT)`
+  at the start of the pattern it runs, a start option that changes no
+  result.
+- The ReDoS confirmation (`--redos-mode=confirmed`) runs patterns as
+  production does, JIT included; pass `--redos-no-jit` to run them with the
+  interpreter.
+
+Code that runs untrusted patterns against generated subjects is exposed the
+same way; `pcre.jit=0` or a leading `(*NO_JIT)` avoids it, at the cost of
+the JIT's speed.
+
 ## PCRE vs other regex engines
 
 | Feature               | PCRE (PHP) | JavaScript | Python | .NET |
