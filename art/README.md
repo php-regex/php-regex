@@ -36,8 +36,11 @@ small formats:
 
 - **The mark** — brackets frame a three-node tree: one root (r38) and two
   children (r30), the tree optically centered (+14) inside the brackets.
-  One construction, two optical curves: icons at <=512px use stroke 40/34,
-  large formats 27/22 — small sizes get the heavier skeleton.
+  One construction, three optical curves: favicon 40/34 (16px floor),
+  org-icon 40/28 (lighter tree, circle-crop constraint, root r44), large
+  formats 27/22 — smaller sizes get the heavier skeleton. The tree's +14
+  optical nudge is exact for the r30 family; the r34/r44 icon families sit
+  within ±2 units of perfect centering — below perception, accepted.
 - **No text glyphs in brand marks.** The wordmark is vectorized paths (Inter
   Display Black for "Regex", Bold for "Parser") generated with real font
   advances — hand-placed glyph paths collide; font-derived advances cannot.
