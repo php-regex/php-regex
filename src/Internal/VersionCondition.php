@@ -94,7 +94,7 @@ final readonly class VersionCondition
         }
 
         $at++;
-        if (!ctype_digit($pattern[$at] ?? '')) {
+        if (!Ascii::isDigit($pattern[$at] ?? '')) {
             return $atLeast ? $at : $at + $shift;
         }
 
@@ -105,7 +105,7 @@ final readonly class VersionCondition
 
         if ('.' === ($pattern[$at] ?? '')) {
             $at++;
-            if (!ctype_digit($pattern[$at] ?? '')) {
+            if (!Ascii::isDigit($pattern[$at] ?? '')) {
                 return $at < $length ? $at + $shift : $at;
             }
 
@@ -113,7 +113,7 @@ final readonly class VersionCondition
             // where PCRE stops.
             if ($twoDigitMinor) {
                 $at += strspn($pattern, '0123456789', $at, 2);
-                if (ctype_digit($pattern[$at] ?? '')) {
+                if (Ascii::isDigit($pattern[$at] ?? '')) {
                     return $at;
                 }
             } else {
@@ -153,7 +153,7 @@ final readonly class VersionCondition
     private static function readVersionPartDigitByDigit(string $pattern, int $position): array
     {
         $value = 0;
-        while (ctype_digit($pattern[$position] ?? '')) {
+        while (Ascii::isDigit($pattern[$position] ?? '')) {
             $value = $value * 10 + (int) $pattern[$position++];
             if ($value > 1000) {
                 return [$position, true];
@@ -170,7 +170,7 @@ final readonly class VersionCondition
         }
 
         foreach (explode('.', $version) as $part) {
-            if ('' === $part || !ctype_digit($part)) {
+            if ('' === $part || !Ascii::isDigit($part)) {
                 return false;
             }
         }

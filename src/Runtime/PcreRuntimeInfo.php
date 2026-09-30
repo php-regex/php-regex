@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Runtime;
 
+use RegexParser\Internal\Ascii;
+
 final readonly class PcreRuntimeInfo implements \JsonSerializable
 {
     public function __construct(
@@ -75,7 +77,7 @@ final readonly class PcreRuntimeInfo implements \JsonSerializable
         }
 
         $value = trim((string) $value);
-        if ('' === $value || !ctype_digit($value)) {
+        if ('' === $value || !Ascii::isDigit($value)) {
             return null;
         }
 

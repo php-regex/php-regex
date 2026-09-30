@@ -18,6 +18,7 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Exception\RecursionLimitException;
 use RegexParser\Exception\RegexException;
 use RegexParser\Exception\SyntaxErrorException;
+use RegexParser\Internal\Ascii;
 use RegexParser\Internal\CodePointReader;
 use RegexParser\Internal\ExtendedClassReader;
 use RegexParser\Internal\GroupNameReader;
@@ -1020,7 +1021,7 @@ final class Parser
             return new CalloutNode(null, false, $startPosition, $endPosition);
         }
 
-        if (ctype_digit($value)) {
+        if (Ascii::isDigit($value)) {
             return new CalloutNode((int) $value, false, $startPosition, $endPosition);
         }
 
@@ -1933,7 +1934,7 @@ final class Parser
             $tokensConsumed++;
 
             // Consume additional digits
-            while ($this->stream->check(TokenType::T_LITERAL) && ctype_digit($this->stream->current()->value)) {
+            while ($this->stream->check(TokenType::T_LITERAL) && Ascii::isDigit($this->stream->current()->value)) {
                 $num .= $this->stream->current()->value;
                 $this->stream->advance();
                 $tokensConsumed++;
@@ -2274,7 +2275,7 @@ final class Parser
      */
     private function isExtendedWhitespace(string $character): bool
     {
-        if (ctype_space($character)) {
+        if (Ascii::isSpace($character)) {
             return true;
         }
 
@@ -2453,7 +2454,7 @@ final class Parser
 
         $this->stream->advance();
         $num = (string) ($this->stream->previous()->value.$this->consumeWhile(
-            static fn (string $c): bool => ctype_digit($c),
+            static fn (string $c): bool => Ascii::isDigit($c),
         ));
 
         // PCRE refuses a number past 65535 as it reads it, before the ")".
@@ -2514,7 +2515,7 @@ final class Parser
             $this->stream->advance();
         }
 
-        $digits = $this->consumeWhile(static fn (string $c): bool => ctype_digit($c));
+        $digits = $this->consumeWhile(static fn (string $c): bool => Ascii::isDigit($c));
         if ('' !== $digits) {
             $numericPart = ($sawMinus ? '-' : '').$digits;
             $endPosition = $this->stream->previous()->position;
@@ -3227,9 +3228,9 @@ final class Parser
             return [$length, ErrorCode::GroupUnclosed];
         }
 
-        if (ctype_digit($pattern[$position])) {
+        if (Ascii::isDigit($pattern[$position])) {
             $number = 0;
-            while ($position < $length && ctype_digit($pattern[$position])) {
+            while ($position < $length && Ascii::isDigit($pattern[$position])) {
                 $number = $number * 10 + (int) $pattern[$position++];
                 if ($number > 255) {
                     return [$position, ErrorCode::CalloutOutOfRange];
@@ -3528,7 +3529,7 @@ final class Parser
      */
     private function isLiteralDigitToken(): bool
     {
-        return $this->stream->check(TokenType::T_LITERAL) && ctype_digit($this->stream->current()->value);
+        return $this->stream->check(TokenType::T_LITERAL) && Ascii::isDigit($this->stream->current()->value);
     }
 
     /**
@@ -3536,7 +3537,7 @@ final class Parser
      */
     private function isLiteralAlphaToken(): bool
     {
-        return $this->stream->check(TokenType::T_LITERAL) && ctype_alpha($this->stream->current()->value);
+        return $this->stream->check(TokenType::T_LITERAL) && Ascii::isAlpha($this->stream->current()->value);
     }
 
     /**

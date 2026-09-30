@@ -702,6 +702,8 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 
 - **PHP 8.2** and above
 - Uses readonly classes and enum features
+- Needs the `mbstring` extension; `intl` is optional
+- Reads digits, letters and spaces in ASCII, as PCRE does: the locale of the process changes no verdict
 
 ### Target Engine
 

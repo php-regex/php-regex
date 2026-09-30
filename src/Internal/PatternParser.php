@@ -196,8 +196,8 @@ final class PatternParser
     private static function isValidDelimiter(string $delimiter): bool
     {
         return 1 === \strlen($delimiter)
-            && !ctype_alnum($delimiter)
-            && !ctype_space($delimiter)
+            && !Ascii::isAlnum($delimiter)
+            && !Ascii::isSpace($delimiter)
             && '\\' !== $delimiter;
     }
 

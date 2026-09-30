@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Extraction;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\Lint\RegexPatternOccurrence;
 
 /**
@@ -1046,7 +1047,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         $hexDigits = '';
         $pos = $startPos;
-        while ($pos < $length && $pos < $startPos + 2 && ctype_xdigit($body[$pos])) {
+        while ($pos < $length && $pos < $startPos + 2 && Ascii::isHexDigit($body[$pos])) {
             $hexDigits .= $body[$pos];
             $pos++;
         }
@@ -1078,7 +1079,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         $hexPart = substr($body, $startPos + 1, $closeBrace - $startPos - 1);
 
-        if ('' === $hexPart || !ctype_xdigit($hexPart)) {
+        if ('' === $hexPart || !Ascii::isHexDigit($hexPart)) {
             return ['value' => substr($body, $i, $closeBrace - $i + 1), 'newIndex' => $closeBrace + 1];
         }
 

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\Internal\InlineFlags;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -468,7 +469,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitBackref(BackrefNode $node): string
     {
-        $compiled = ctype_digit($node->ref) ? '\\'.$node->ref : $node->ref;
+        $compiled = Ascii::isDigit($node->ref) ? '\\'.$node->ref : $node->ref;
 
         // "(?P=name)", "\k<name>" and "\k{name}" are the same reference, so
         // the pattern keeps the syntax it was written with.
@@ -1108,7 +1109,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
             return false;
         }
 
-        return str_starts_with($matches['escape'], 'x') ? ctype_xdigit($next) : ctype_digit($next);
+        return str_starts_with($matches['escape'], 'x') ? Ascii::isHexDigit($next) : Ascii::isDigit($next);
     }
 
     /**
@@ -1178,7 +1179,7 @@ final class CompilerNodeVisitor extends AbstractNodeVisitor
 
         $text = substr($this->source, $start, $length);
 
-        return ctype_space($text) ? $text : '';
+        return Ascii::isSpace($text) ? $text : '';
     }
 
     /**

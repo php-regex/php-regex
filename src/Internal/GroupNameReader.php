@@ -216,7 +216,7 @@ final class GroupNameReader
 
             preg_match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
         } else {
-            if (ctype_digit($pattern[$position] ?? '')) {
+            if (Ascii::isDigit($pattern[$position] ?? '')) {
                 return $position + ($this->pastTheFault ? 1 : 0);
             }
 

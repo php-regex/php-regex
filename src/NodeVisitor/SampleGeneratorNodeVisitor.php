@@ -17,6 +17,7 @@ use Random\Engine\Mt19937;
 use Random\Randomizer;
 use RegexParser\Exception\SampleGenerationException;
 use RegexParser\GroupNumberingCollector;
+use RegexParser\Internal\Ascii;
 use RegexParser\Node;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
@@ -446,7 +447,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $ref = $node->ref;
 
         // Check numeric reference first
-        if (ctype_digit($ref)) {
+        if (Ascii::isDigit($ref)) {
             $key = (int) $ref;
             if (isset($this->captures[$key])) {
                 return $this->captures[$key];
@@ -1279,7 +1280,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
 
     private function hasCaptureForReference(string $reference): bool
     {
-        if (ctype_digit($reference)) {
+        if (Ascii::isDigit($reference)) {
             return isset($this->captures[(int) $reference]);
         }
 
@@ -1403,7 +1404,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->scansByGroup = [];
         foreach ($this->scans as $scan) {
             foreach ($scan->scannedGroups as $group) {
-                $number = ctype_digit($group) ? [(int) $group] : ($this->groupNumbersByName[trim($group, "<>'")] ?? []);
+                $number = Ascii::isDigit($group) ? [(int) $group] : ($this->groupNumbersByName[trim($group, "<>'")] ?? []);
                 foreach ($number as $scanned) {
                     $this->scansByGroup[$scanned][] = $scan->child;
                 }
@@ -1434,7 +1435,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             }
         }
 
-        if (ctype_digit($ref)) {
+        if (Ascii::isDigit($ref)) {
             $index = (int) $ref;
 
             return $this->groupIndexMap[$index] ?? null;

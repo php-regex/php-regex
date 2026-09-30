@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Formatter;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Lint\RegexAnalysisService;
@@ -780,7 +781,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
             // Bounded quantifier like {2} or {1,3}.
             if ('{' === $ch) {
                 $j = $i + 1;
-                while ($j < $len && ctype_digit($body[$j])) {
+                while ($j < $len && Ascii::isDigit($body[$j])) {
                     $j++;
                 }
 
@@ -789,7 +790,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
                     $isQuant = true;
                 } elseif ($j < $len && ',' === $body[$j]) {
                     $j++;
-                    while ($j < $len && ctype_digit($body[$j])) {
+                    while ($j < $len && Ascii::isDigit($body[$j])) {
                         $j++;
                     }
                     if ($j < $len && '}' === $body[$j]) {
@@ -842,7 +843,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $delimiter = $pattern[0];
 
         // Delimiters in PCRE must be non-alphanumeric, non-backslash, non-whitespace.
-        if (ctype_alnum($delimiter) || '\\' === $delimiter || ctype_space($delimiter)) {
+        if (Ascii::isAlnum($delimiter) || '\\' === $delimiter || Ascii::isSpace($delimiter)) {
             return null;
         }
 

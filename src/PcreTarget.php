@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace RegexParser;
 
 use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\Internal\Ascii;
 
 /**
  * The PHP version and the PCRE2 release a pattern is judged for.
@@ -147,10 +148,10 @@ final readonly class PcreTarget
         $hyphen = strpos($release, '-');
         $build = false === $hyphen ? null : substr($release, $hyphen + 1);
         $parts = explode('.', false === $hyphen ? $release : substr($release, 0, $hyphen));
-        if (2 !== \count($parts) || !ctype_digit($parts[0]) || !ctype_digit($parts[1])) {
+        if (2 !== \count($parts) || !Ascii::isDigit($parts[0]) || !Ascii::isDigit($parts[1])) {
             return null;
         }
-        if (null !== $build && !ctype_alnum($build)) {
+        if (null !== $build && !Ascii::isAlnum($build)) {
             return null;
         }
 

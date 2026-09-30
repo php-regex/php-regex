@@ -30,4 +30,23 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         $this->assertSame(1, $arguments->minSavings);
         $this->assertSame(-1, $arguments->jobs);
     }
+
+    public function test_from_defaults_reads_a_quantifier_count_written_as_digits(): void
+    {
+        $arguments = LintArguments::fromDefaults([
+            'optimizations' => ['minQuantifierCount' => '5', 'digits' => true],
+        ]);
+
+        $this->assertSame(['minQuantifierCount' => 5, 'digits' => true], $arguments->optimizations);
+    }
+
+    public function test_from_defaults_drops_a_quantifier_count_that_is_no_number(): void
+    {
+        // "\xB2" is a superscript two in Latin-1: no digit, whatever the locale.
+        $arguments = LintArguments::fromDefaults([
+            'optimizations' => ['minQuantifierCount' => "5\xB2"],
+        ]);
+
+        $this->assertSame([], $arguments->optimizations);
+    }
 }

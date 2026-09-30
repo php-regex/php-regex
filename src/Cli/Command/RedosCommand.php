@@ -18,6 +18,7 @@ use RegexParser\Cli\Input;
 use RegexParser\Cli\Output;
 use RegexParser\Exception\LexerException;
 use RegexParser\Exception\ParserException;
+use RegexParser\Internal\Ascii;
 use RegexParser\Internal\DisplayEscaper;
 use RegexParser\Internal\PatternParser;
 use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
@@ -935,7 +936,7 @@ final class RedosCommand extends AbstractCommand
 
     private function parseIntOption(string $value, int $min): ?int
     {
-        if ('' === $value || !ctype_digit($value)) {
+        if ('' === $value || !Ascii::isDigit($value)) {
             return null;
         }
 

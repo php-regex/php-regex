@@ -18,6 +18,7 @@ use RegexParser\Exception\ParserException;
 use RegexParser\Exception\SemanticErrorException;
 use RegexParser\GroupNumbering;
 use RegexParser\GroupNumberingCollector;
+use RegexParser\Internal\Ascii;
 use RegexParser\Internal\PcreVerb;
 use RegexParser\Internal\VersionCondition;
 use RegexParser\Node\AlternationNode;
@@ -757,7 +758,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $letter = $node->value;
         $start = $node->startPosition;
-        if (1 !== \strlen($letter) || !ctype_alpha($letter)
+        if (1 !== \strlen($letter) || !Ascii::isAlpha($letter)
             || '\\'.$letter !== substr($this->source, $start, $node->endPosition - $start)) {
             return;
         }
@@ -1588,7 +1589,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         $at = (int) strpos($this->source, '(', $from) + 1;
         foreach ($groups as $group) {
             $exists = match (true) {
-                ctype_digit($group) => (int) $group <= $this->groupNumbering->maxGroupNumber,
+                Ascii::isDigit($group) => (int) $group <= $this->groupNumbering->maxGroupNumber,
                 str_starts_with($group, '+') => ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 + (int) $group <= $this->groupNumbering->maxGroupNumber,
                 str_starts_with($group, '<'), str_starts_with($group, "'") => $this->groupNumbering->hasNamedGroup(substr($group, 1, -1)),
                 // A relative number back is refused as it is read.
@@ -1598,7 +1599,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
             if (!$exists) {
                 $this->raiseMissingReference(
                     \sprintf('Group %s is listed but does not exist.', $group),
-                    ctype_digit($group) || str_starts_with($group, '+') ? $at : $at + 1,
+                    Ascii::isDigit($group) || str_starts_with($group, '+') ? $at : $at + 1,
                     ErrorCode::GroupListMissingGroup,
                 );
             }
@@ -1620,14 +1621,14 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         if (str_starts_with($ref, 'R')) {
             $numPart = substr($ref, 1);
 
-            if (ctype_digit($numPart)) {
+            if (Ascii::isDigit($numPart)) {
                 $num = (int) $numPart;
                 $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRecursion, 'Recursion condition');
 
                 return;
             }
 
-            if (str_starts_with($numPart, '-') && ctype_digit(substr($numPart, 1))) {
+            if (str_starts_with($numPart, '-') && Ascii::isDigit(substr($numPart, 1))) {
                 $num = (int) $numPart;
                 $this->assertRelativeReferenceExists($num, $node->startPosition, ErrorCode::SubroutineRecursion, 'Recursion condition');
 
@@ -1704,7 +1705,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
 
         $this->nestingDepth--;
         $source = $this->source ?? '';
-        while ($bodyStart > 0 && isset($source[$bodyStart - 1]) && ctype_space($source[$bodyStart - 1])) {
+        while ($bodyStart > 0 && isset($source[$bodyStart - 1]) && Ascii::isSpace($source[$bodyStart - 1])) {
             $bodyStart--;
         }
 
@@ -2940,7 +2941,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
     {
         $number = 0;
         $length = \strlen($digits);
-        for ($index = 0; $index < $length && ctype_digit($digits[$index]); $index++) {
+        for ($index = 0; $index < $length && Ascii::isDigit($digits[$index]); $index++) {
             $number = $number * 10 + (int) $digits[$index];
             if ($number > 65535) {
                 return $index;
@@ -3059,7 +3060,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
         }
 
         $letter = $token->value;
-        if (TokenType::T_LITERAL_ESCAPED === $token->type && 1 === \strlen($letter) && ctype_alpha($letter)
+        if (TokenType::T_LITERAL_ESCAPED === $token->type && 1 === \strlen($letter) && Ascii::isAlpha($letter)
             && '\\'.$letter === substr($source, $token->position, 2)) {
             $this->validateEscapedLetter($source, $letter, $token->position);
         }

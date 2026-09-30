@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Extraction;
 
+use RegexParser\Internal\Ascii;
+
 /**
  * The set of calls an extractor treats as carrying a regex pattern.
  *
@@ -211,7 +213,7 @@ final readonly class PatternFunctionRegistry
             }
 
             if ('' !== $suffix) {
-                if (!ctype_digit($suffix)) {
+                if (!Ascii::isDigit($suffix)) {
                     return null;
                 }
 

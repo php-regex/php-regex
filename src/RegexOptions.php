@@ -18,6 +18,7 @@ use RegexParser\Cache\CacheInterface;
 use RegexParser\Cache\FilesystemCache;
 use RegexParser\Cache\NullCache;
 use RegexParser\Exception\InvalidRegexOptionException;
+use RegexParser\Internal\Ascii;
 
 /**
  * Configuration options for Regex parser.
@@ -276,7 +277,7 @@ final readonly class RegexOptions
                 );
             }
 
-            if (ctype_digit($trimmed)) {
+            if (Ascii::isDigit($trimmed)) {
                 $asInt = (int) $trimmed;
                 if ($asInt < 10000) {
                     throw new InvalidRegexOptionException(

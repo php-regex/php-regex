@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\ReDoS;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\RegexPattern;
 
 final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
@@ -229,7 +230,7 @@ final class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerInterface
 
         if (\is_string($value)) {
             $value = trim($value);
-            if ('' === $value || !ctype_digit($value)) {
+            if ('' === $value || !Ascii::isDigit($value)) {
                 return null;
             }
         }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\NodeVisitor;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\Node\AlternationNode;
 use RegexParser\Node\AnchorNode;
 use RegexParser\Node\AssertionNode;
@@ -480,7 +481,7 @@ abstract class HighlighterVisitor extends AbstractNodeVisitor
             return '';
         }
 
-        if (ctype_digit($ref)) {
+        if (Ascii::isDigit($ref)) {
             return '\\'.$ref;
         }
 

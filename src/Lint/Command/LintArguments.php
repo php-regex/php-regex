@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint\Command;
 
+use RegexParser\Internal\Ascii;
 use RegexParser\Lint\Extraction\InteropPresets;
 use RegexParser\Lint\Formatter\OutputConfiguration;
 
@@ -62,7 +63,7 @@ final readonly class LintArguments
 
         $minSavings = $defaults['minSavings'] ?? 1;
         if (!\is_int($minSavings)) {
-            if (\is_string($minSavings) && ctype_digit($minSavings)) {
+            if (\is_string($minSavings) && Ascii::isDigit($minSavings)) {
                 $minSavings = (int) $minSavings;
             } else {
                 $minSavings = 1;
@@ -131,7 +132,7 @@ final readonly class LintArguments
 
         $jobs = $defaults['jobs'] ?? -1; // -1 means auto-detect
         if (!\is_int($jobs)) {
-            if (\is_string($jobs) && ctype_digit($jobs)) {
+            if (\is_string($jobs) && Ascii::isDigit($jobs)) {
                 $jobs = (int) $jobs;
             } else {
                 $jobs = -1;
@@ -194,7 +195,7 @@ final readonly class LintArguments
 
                         continue;
                     }
-                    if (\is_string($value) && ctype_digit($value)) {
+                    if (\is_string($value) && Ascii::isDigit($value)) {
                         $validated[$key] = (int) $value;
 
                         continue;
