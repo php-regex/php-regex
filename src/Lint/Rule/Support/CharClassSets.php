@@ -54,10 +54,10 @@ final class CharClassSets
         return [$node];
     }
 
-    public static function partCharSet(NodeInterface $node, bool $unicodeMode, bool $intlAvailable): ?CharSet
+    public static function partCharSet(NodeInterface $node, bool $unicodeMode): ?CharSet
     {
         if ($node instanceof LiteralNode || $node instanceof CharLiteralNode) {
-            $codePoint = CodePoints::fromNode($node, $unicodeMode, $intlAvailable);
+            $codePoint = CodePoints::fromNode($node, $unicodeMode);
             if (null === $codePoint) {
                 return null;
             }
@@ -68,8 +68,8 @@ final class CharClassSets
         }
 
         if ($node instanceof RangeNode) {
-            $start = CodePoints::fromNode($node->start, $unicodeMode, $intlAvailable);
-            $end = CodePoints::fromNode($node->end, $unicodeMode, $intlAvailable);
+            $start = CodePoints::fromNode($node->start, $unicodeMode);
+            $end = CodePoints::fromNode($node->end, $unicodeMode);
             if (null === $start || null === $end) {
                 return null;
             }

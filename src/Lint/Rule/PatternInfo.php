@@ -25,7 +25,6 @@ final readonly class PatternInfo
         public string $delimiter,
         public string $patternValue,
         public bool $unicodeMode,
-        public bool $intlAvailable,
     ) {}
 
     /**

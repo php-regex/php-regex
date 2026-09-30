@@ -702,7 +702,7 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 
 - **PHP 8.2** and above
 - Uses readonly classes and enum features
-- Needs the `mbstring` extension; `intl` is optional
+- Needs the `mbstring` extension. `intl` is optional: it only lets a lint message name the character a `\N{name}` escape spells, an escape PCRE refuses anyway; every verdict and every other lint result is the same without it
 - Reads digits, letters and spaces in ASCII, as PCRE does: the locale of the process changes no verdict
 
 ### Target Engine

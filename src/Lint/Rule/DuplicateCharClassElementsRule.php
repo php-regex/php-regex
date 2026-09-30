@@ -47,11 +47,10 @@ final class DuplicateCharClassElementsRule extends AbstractLintRule
         }
 
         $unicodeMode = $context->pattern->unicodeMode;
-        $intlAvailable = $context->pattern->intlAvailable;
 
         $entries = [];
         foreach ($parts as $part) {
-            $set = CharClassSets::partCharSet($part, $unicodeMode, $intlAvailable);
+            $set = CharClassSets::partCharSet($part, $unicodeMode);
             $entries[] = [
                 'node' => $part,
                 'set' => $set,

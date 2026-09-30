@@ -95,8 +95,6 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
 
     private bool $unicodeMode = false;
 
-    private bool $intlAvailable = false;
-
     /**
      * Per-run context shared with the lint rules: immutable pattern facts
      * plus the mutable traversal cursor (parents, alternation branches,
@@ -125,7 +123,6 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
         ?LintRuleRegistry $registry = null)
     {
         $this->charSetAnalyzer = new CharSetAnalyzer();
-        $this->intlAvailable = class_exists(\IntlChar::class);
         $this->rules = ($registry ?? new LintRuleRegistry())->all();
         foreach ($this->rules as $rule) {
             foreach ($rule->getNodeTypes() as $nodeType) {
@@ -170,7 +167,6 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
         $this->flags = $node->flags;
         $this->delimiter = $node->delimiter;
         $this->unicodeMode = str_contains($this->flags, 'u');
-        $this->intlAvailable = class_exists(\IntlChar::class);
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
         $this->issues = [];
         $this->maxCapturingGroup = 0;
@@ -378,7 +374,6 @@ final class LinterNodeVisitor extends AbstractNodeVisitor
                 $this->delimiter,
                 $this->patternValue ?? '',
                 $this->unicodeMode,
-                $this->intlAvailable,
             ),
             new GroupIndex(
                 $this->maxCapturingGroup,

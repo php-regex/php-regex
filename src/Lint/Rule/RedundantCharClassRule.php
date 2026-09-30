@@ -47,7 +47,6 @@ final class RedundantCharClassRule extends AbstractLintRule
         }
 
         $unicodeMode = $context->pattern->unicodeMode;
-        $intlAvailable = $context->pattern->intlAvailable;
 
         $ranges = [];
         $literals = [];
@@ -57,7 +56,7 @@ final class RedundantCharClassRule extends AbstractLintRule
 
         foreach ($parts as $part) {
             if (!$part instanceof RangeNode) {
-                $codePoint = CodePoints::fromNode($part, $unicodeMode, $intlAvailable);
+                $codePoint = CodePoints::fromNode($part, $unicodeMode);
                 if (null !== $codePoint) {
                     if (isset($literals[$codePoint])) {
                         $redundant = true;
@@ -84,8 +83,8 @@ final class RedundantCharClassRule extends AbstractLintRule
             }
 
             if ($part instanceof RangeNode) {
-                $start = CodePoints::fromNode($part->start, $unicodeMode, $intlAvailable);
-                $end = CodePoints::fromNode($part->end, $unicodeMode, $intlAvailable);
+                $start = CodePoints::fromNode($part->start, $unicodeMode);
+                $end = CodePoints::fromNode($part->end, $unicodeMode);
                 if (null === $start || null === $end) {
                     continue;
                 }

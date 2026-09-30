@@ -48,7 +48,6 @@ final class UselessCharClassRangeRule extends AbstractLintRule
         }
 
         $unicodeMode = $context->pattern->unicodeMode;
-        $intlAvailable = $context->pattern->intlAvailable;
         $issues = [];
 
         foreach ($parts as $part) {
@@ -56,8 +55,8 @@ final class UselessCharClassRangeRule extends AbstractLintRule
                 continue;
             }
 
-            $start = CodePoints::fromNode($part->start, $unicodeMode, $intlAvailable);
-            $end = CodePoints::fromNode($part->end, $unicodeMode, $intlAvailable);
+            $start = CodePoints::fromNode($part->start, $unicodeMode);
+            $end = CodePoints::fromNode($part->end, $unicodeMode);
             if (null === $start || null === $end) {
                 continue;
             }

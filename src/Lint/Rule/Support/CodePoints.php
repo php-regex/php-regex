@@ -26,10 +26,10 @@ final class CodePoints
 {
     private function __construct() {}
 
-    public static function fromNode(NodeInterface $node, bool $unicodeMode, bool $intlAvailable): ?int
+    public static function fromNode(NodeInterface $node, bool $unicodeMode): ?int
     {
         if ($node instanceof LiteralNode) {
-            return self::fromLiteral($node->value, $unicodeMode, $intlAvailable);
+            return self::fromLiteral($node->value, $unicodeMode);
         }
 
         if ($node instanceof CharLiteralNode) {
@@ -39,19 +39,21 @@ final class CodePoints
         return null;
     }
 
-    public static function fromLiteral(string $value, bool $unicodeMode, bool $intlAvailable): ?int
+    public static function fromLiteral(string $value, bool $unicodeMode): ?int
     {
         if ('' === $value) {
             return null;
         }
 
-        if ($unicodeMode && $intlAvailable) {
+        if ($unicodeMode) {
             $chars = preg_split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
             if (false === $chars || 1 !== \count($chars)) {
                 return null;
             }
 
-            return \IntlChar::ord($chars[0]);
+            $codePoint = mb_ord($chars[0], 'UTF-8');
+
+            return false === $codePoint ? null : $codePoint;
         }
 
         if (1 !== \strlen($value)) {

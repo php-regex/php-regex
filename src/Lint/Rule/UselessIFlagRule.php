@@ -42,8 +42,6 @@ final class UselessIFlagRule extends AbstractLintRule
 
     private bool $unicodeMode = false;
 
-    private bool $intlAvailable = false;
-
     public function getRuleIds(): array
     {
         return ['regex.lint.flag.useless.i'];
@@ -66,7 +64,6 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->hasBackreferences = false;
         $this->trackCaseSensitivity = $context->pattern->hasFlag('i');
         $this->unicodeMode = $context->pattern->unicodeMode;
-        $this->intlAvailable = $context->pattern->intlAvailable;
     }
 
     public function check(NodeInterface $node, LintContext $context): array
@@ -163,8 +160,8 @@ final class UselessIFlagRule extends AbstractLintRule
 
     private function rangeHasLetters(RangeNode $node): bool
     {
-        $start = CodePoints::fromNode($node->start, $this->unicodeMode, $this->intlAvailable);
-        $end = CodePoints::fromNode($node->end, $this->unicodeMode, $this->intlAvailable);
+        $start = CodePoints::fromNode($node->start, $this->unicodeMode);
+        $end = CodePoints::fromNode($node->end, $this->unicodeMode);
 
         if (null === $start || null === $end) {
             return false;
@@ -177,7 +174,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return true;
         }
 
-        if (!$this->unicodeMode || !$this->intlAvailable) {
+        if (!$this->unicodeMode) {
             return false;
         }
 
@@ -200,7 +197,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return true;
         }
 
-        if (!$this->unicodeMode || !$this->intlAvailable) {
+        if (!$this->unicodeMode) {
             return false;
         }
 
@@ -210,8 +207,8 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         foreach ($chars as $char) {
-            $codePoint = \IntlChar::ord($char);
-            if ($this->codePointHasCase($codePoint)) {
+            $codePoint = mb_ord($char, 'UTF-8');
+            if (false !== $codePoint && $this->codePointHasCase($codePoint)) {
                 return true;
             }
         }
@@ -243,17 +240,21 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        if (!$this->intlAvailable) {
+        // Without UTF mode PCRE folds the case of ASCII letters only; with
+        // it, of every character Unicode gives another case, a circled
+        // letter or a Roman numeral included.
+        if (!$this->unicodeMode) {
             return ($codePoint >= \ord('A') && $codePoint <= \ord('Z'))
                 || ($codePoint >= \ord('a') && $codePoint <= \ord('z'));
         }
 
-        if (!\IntlChar::isalpha($codePoint)) {
+        $char = mb_chr($codePoint, 'UTF-8');
+        if (false === $char) {
             return false;
         }
 
-        return \IntlChar::toupper($codePoint) !== $codePoint
-            || \IntlChar::tolower($codePoint) !== $codePoint;
+        return mb_strtoupper($char, 'UTF-8') !== $char
+            || mb_strtolower($char, 'UTF-8') !== $char;
     }
 
     private function unicodePropIsCaseSensitive(string $prop): bool

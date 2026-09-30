@@ -369,7 +369,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     private function createRuleContext(string $flags = ''): LintContext
     {
         return new LintContext(
-            new PatternInfo($flags, '/', '', str_contains($flags, 'u'), class_exists(\IntlChar::class)),
+            new PatternInfo($flags, '/', '', str_contains($flags, 'u')),
             new GroupIndex(0, [], [], [], false),
             new CharSetAnalyzer($flags),
         );
