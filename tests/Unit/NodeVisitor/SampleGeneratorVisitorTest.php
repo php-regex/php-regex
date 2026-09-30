@@ -228,6 +228,10 @@ final class SampleGeneratorVisitorTest extends TestCase
         // A lookahead nothing can satisfy, drawn to the bound: its text laid
         // over what follows, after the text before it.
         yield 'lookahead that cannot hold' => ['/ab(?=x)c/', 'abx'];
+        // "(*ACCEPT)" ends a lookaround standing alone, and a repeat.
+        yield 'accept in a lone lookbehind' => ['/(?<=a(*ACCEPT)b)/', 'a'];
+        yield 'accept in a lone lookahead' => ['/(?=b(*ACCEPT)c)/', 'b'];
+        yield 'accept in a repeat' => ['/(?:a(*ACCEPT)b){3}c/', 'a'];
     }
 
     public function test_a_lookaround_with_branches_is_judged_whole(): void
@@ -304,6 +308,10 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'scan by name' => ['/^(?<AA>[a-zA-Z]+)(*scs:(\'AA\')(ab(*ACCEPT)cd|xy))$/'];
         yield 'scan with a lookahead body' => ['/^()(\\w++)=(*scs:(2)(?=abc))(\\w++)$/'];
         yield 'lookahead only an appended text satisfies' => ['/^(?=.*a)\\d\\d/'];
+        // "(*ACCEPT)" ends what it stands in: nothing after it is read.
+        yield 'accept in a lookbehind' => ['/(?<=a(*ACCEPT)b)c/'];
+        yield 'accept in a captured lookbehind' => ['/(?<=(a(*ACCEPT)b))c/'];
+        yield 'accept in a called group' => ['/^(?1)#(?(DEFINE)(a(.(*ACCEPT).)b))/'];
         yield 'version at least 10.5' => ['/^(?(VERSION>=10.5)yes|no)$/'];
         yield 'version equal to 8' => ['/^(?(VERSION=8)yes|no)$/'];
     }

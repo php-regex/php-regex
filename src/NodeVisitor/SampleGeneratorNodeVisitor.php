@@ -128,6 +128,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     private int $lookaheadDraws = 0;
 
     /**
+     * Whether a "(*ACCEPT)" ended what is being generated, up to the call or
+     * the assertion it stands in.
+     */
+    private bool $accepted = false;
+
+    /**
      * @var array<int, true> the groups being fitted to the scans that read them
      */
     private array $fitting = [];
@@ -201,6 +207,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $this->groupNumbers = [];
         $this->scans = [];
         $this->lookaheadDraws = 0;
+        $this->accepted = false;
         $this->groupDefinitionCounter = 1;
         $this->requiredPrefixes = [];
         $this->requiredSuffixes = [];
@@ -254,12 +261,12 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             GroupType::T_GROUP_SCAN_SUBSTRING,
         ], true)) {
             if (GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type) {
-                $prefix = $node->child->accept($this);
+                $prefix = $this->acceptedIn($node->child);
                 if ('' !== $prefix) {
                     $this->requiredPrefixes[] = $prefix;
                 }
             } elseif (GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
-                $suffix = $node->child->accept($this);
+                $suffix = $this->acceptedIn($node->child);
                 if ('' !== $suffix) {
                     $this->requiredSuffixes[] = $suffix;
                 }
@@ -303,6 +310,9 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         $sample = '';
         for ($i = 0; $i < $repeats; $i++) {
             $sample .= $node->node->accept($this);
+            if ($this->accepted) {
+                break;
+            }
             // References and calls can double a sample at each repeat.
             if (\strlen($sample) > self::MAX_SAMPLE_LENGTH) {
                 throw new SampleGenerationException(\sprintf('No sample was built: it would pass %d bytes.', self::MAX_SAMPLE_LENGTH));
@@ -611,7 +621,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         }
 
         $this->recursionDepth++;
-        $result = $target instanceof GroupNode ? $target->child->accept($this) : $target->accept($this);
+        $result = $this->acceptedIn($target instanceof GroupNode ? $target->child : $target);
         $this->recursionDepth--;
 
         return $result;
@@ -798,7 +808,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 $left = new SequenceNode(\array_slice($children, $index), $child->getStartPosition(), $child->getEndPosition());
                 do {
                     // The lookahead first: what it captures holds after it.
-                    $ahead = $child->child->accept($this);
+                    $ahead = $this->acceptedIn($child->child);
                     $rest = $this->generateSequence(\array_slice($children, $index + 1));
                     if ($this->holds($child->child, $rest, '\\A', '')) {
                         return $text.$rest;
@@ -815,12 +825,19 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
                 return $text.$laidOver;
             }
 
+            // "(*ACCEPT)" ends what it stands in: what follows it is not read.
+            if ($child instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::|$)/', $child->verb)) {
+                $this->accepted = true;
+
+                return $text;
+            }
+
             if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
                 if ($this->holds($child->child, $text, '', '\\z')) {
                     continue;
                 }
 
-                $behind = $child->child->accept($this);
+                $behind = $this->acceptedIn($child->child);
                 $kept = max(0, $this->textLength($text) - $this->textLength($behind));
                 $text = $this->textTo($text, $kept).$behind;
 
@@ -828,7 +845,22 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             }
 
             $text .= $child->accept($this);
+            if ($this->accepted) {
+                return $text;
+            }
         }
+
+        return $text;
+    }
+
+    /**
+     * The text of a call or an assertion: a "(*ACCEPT)" in it ends it, and
+     * no more. Laid out as a sequence, a lookahead in it gives its text.
+     */
+    private function acceptedIn(NodeInterface $node, bool $asSequence = false): string
+    {
+        $text = $asSequence ? $this->generateSequence($node instanceof SequenceNode ? $node->children : [$node]) : $node->accept($this);
+        $this->accepted = false;
 
         return $text;
     }
@@ -864,7 +896,7 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
             // Laid out as a sequence, so a lookahead in it gives its text;
             // drawn again where the group takes none of it.
             for ($draw = 0; $draw < self::MAX_SCAN_DRAWS; $draw++) {
-                $prefix = $this->generateSequence($body instanceof SequenceNode ? $body->children : [$body]);
+                $prefix = $this->acceptedIn($body, true);
                 foreach ([$prefix.$text, $prefix] as $candidate) {
                     if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
                         $text = $candidate;
