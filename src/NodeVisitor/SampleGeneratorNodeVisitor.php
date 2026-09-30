@@ -854,6 +854,18 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * Whether "(?(VERSION...)" holds on a PCRE2 release.
+     */
+    private static function versionConditionHolds(VersionConditionNode $condition, int $major, int $minor): bool
+    {
+        [$wantedMajor, $wantedMinor] = explode('.', $condition->version.'.0');
+        $tens = 1 === \strlen($wantedMinor) && [$major, $minor] < [10, 47] ? 10 : 1;
+        $running = [$major, $minor] <=> [(int) $wantedMajor, (int) $wantedMinor * $tens];
+
+        return '=' === $condition->operator ? 0 === $running : $running >= 0;
+    }
+
+    /**
      * The text of a call or an assertion: a "(*ACCEPT)" in it ends it, and
      * no more. Laid out as a sequence, a lookahead in it gives its text.
      */
@@ -1035,11 +1047,8 @@ final class SampleGeneratorNodeVisitor extends AbstractNodeVisitor
         // before, one digit counts tens, "10.5" is "10.50".
         if ($condition instanceof VersionConditionNode) {
             [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0].'.0'));
-            [$wantedMajor, $wantedMinor] = explode('.', $condition->version.'.0');
-            $tens = 1 === \strlen($wantedMinor) && [$major, $minor] < [10, 47] ? 10 : 1;
-            $running = [$major, $minor] <=> [(int) $wantedMajor, (int) $wantedMinor * $tens];
 
-            return '=' === $condition->operator ? 0 === $running : $running >= 0;
+            return self::versionConditionHolds($condition, $major, $minor);
         }
 
         return 1 === $this->randomInt(0, 1);

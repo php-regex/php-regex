@@ -31,6 +31,7 @@ use RegexParser\Node\LiteralNode;
 use RegexParser\Node\PcreVerbNode;
 use RegexParser\Node\RangeNode;
 use RegexParser\Node\SubroutineNode;
+use RegexParser\Node\VersionConditionNode;
 use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
@@ -193,6 +194,24 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
 
         $fallback = $this->invokePrivate($generator, 'isConditionSatisfied', [new LiteralNode('b', 0, 0)]);
         $this->assertIsBool($fallback);
+    }
+
+    public function test_a_version_condition_is_judged_as_each_release_reads_it(): void
+    {
+        // pcre2test: before 10.47 a one-digit minor counts tens ("10.5" is
+        // 10.50, "10.4" is 10.40); from 10.47 it is read whole.
+        $holds = static fn (string $operator, string $version, int $major, int $minor): bool => true === (new \ReflectionMethod(SampleGeneratorNodeVisitor::class, 'versionConditionHolds'))
+            ->invoke(null, new VersionConditionNode($operator, $version, 0, 0), $major, $minor);
+
+        $this->assertFalse($holds('>=', '10.5', 10, 42));
+        $this->assertFalse($holds('>=', '10.5', 10, 46));
+        $this->assertTrue($holds('>=', '10.5', 10, 47));
+        $this->assertTrue($holds('>=', '10.5', 10, 49));
+        $this->assertTrue($holds('>=', '10.05', 10, 42));
+        $this->assertTrue($holds('=', '10.4', 10, 40));
+        $this->assertFalse($holds('=', '10.4', 10, 47));
+        $this->assertTrue($holds('>=', '9.99', 10, 40));
+        $this->assertFalse($holds('>=', '11', 10, 49));
     }
 
     public function test_has_capture_for_reference_branches(): void

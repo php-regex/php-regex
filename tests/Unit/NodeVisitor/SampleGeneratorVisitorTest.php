@@ -232,6 +232,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'accept in a lone lookbehind' => ['/(?<=a(*ACCEPT)b)/', 'a'];
         yield 'accept in a lone lookahead' => ['/(?=b(*ACCEPT)c)/', 'b'];
         yield 'accept in a repeat' => ['/(?:a(*ACCEPT)b){3}c/', 'a'];
+        yield 'mark named ACCEPT' => ['/(*MARK:ACCEPT)ab/', 'ab'];
     }
 
     public function test_a_lookaround_with_branches_is_judged_whole(): void
