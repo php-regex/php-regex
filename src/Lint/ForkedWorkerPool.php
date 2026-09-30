@@ -26,32 +26,33 @@ namespace RegexParser\Lint;
 final class ForkedWorkerPool
 {
     /**
-     * Forks a child that runs the work, hands what it gives (or the failure
-     * it throws) to $write, and ends. The parent gets the process id of the
-     * child, or -1 when no child could be forked.
+     * Forks a child that runs the work, writes what it gives (or the failure
+     * it throws) to the payload file, and ends. The parent gets the process
+     * id of the child, or -1 when no child could be forked.
      *
-     * @param \Closure(): mixed                                                                              $work
-     * @param \Closure(array{ok: bool, result?: mixed, error?: array{message: string, class: string}}): void $write
+     * @param \Closure(): mixed $work
      */
-    public function fork(\Closure $work, \Closure $write): int
+    public function fork(\Closure $work, string $payloadFile): int
     {
         $pid = pcntl_fork();
         if (0 !== $pid) {
             return $pid;
         }
 
-        // The child. No test reaches this line: its coverage ends with it.
-        exit($this->runChild($work, $write));
+        // Unreachable from a test: only the forked child runs this line, and
+        // its coverage ends with it. Everything it runs is in runChild().
+        exit($this->runChild($work, $payloadFile));
     }
 
     /**
-     * What the child does before it ends: the exit code it ends with, 0
-     * when the work gave a result, 1 when it threw.
+     * What the child does before it ends: runs the work, writes the payload
+     * the parent reads back (serialized, over whatever the file held) and
+     * gives the exit code it ends with, 0 when the work gave a result, 1
+     * when it threw.
      *
-     * @param \Closure(): mixed                                                                              $work
-     * @param \Closure(array{ok: bool, result?: mixed, error?: array{message: string, class: string}}): void $write
+     * @param \Closure(): mixed $work
      */
-    public function runChild(\Closure $work, \Closure $write): int
+    public function runChild(\Closure $work, string $payloadFile): int
     {
         try {
             $payload = ['ok' => true, 'result' => $work()];
@@ -65,7 +66,7 @@ final class ForkedWorkerPool
             ];
         }
 
-        $write($payload);
+        @file_put_contents($payloadFile, serialize($payload));
 
         return $payload['ok'] ? 0 : 1;
     }

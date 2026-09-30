@@ -143,9 +143,7 @@ final readonly class RegexPatternExtractor
 
             $pid = (new ForkedWorkerPool())->fork(
                 fn (): array => $this->extractor->extract($chunk),
-                function (array $payload) use ($tmpFile): void {
-                    $this->writeWorkerPayload($tmpFile, $payload);
-                },
+                $tmpFile,
             );
             if (-1 === $pid) {
                 $failed = true;
@@ -275,15 +273,6 @@ final readonly class RegexPatternExtractor
         }
 
         return $files;
-    }
-
-    /**
-     * @param array{ok: bool, result?: mixed, error?: array{message: string, class: string}} $payload
-     */
-    private function writeWorkerPayload(string $path, array $payload): void
-    {
-        $serialized = serialize($payload);
-        @file_put_contents($path, $serialized);
     }
 
     /**

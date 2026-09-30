@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Lint;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Lint\Extraction\ExtractorInterface;
+use RegexParser\Lint\ForkedWorkerPool;
 use RegexParser\Lint\LintException;
 use RegexParser\Lint\RegexPatternExtractor;
 use RegexParser\Lint\RegexPatternOccurrence;
@@ -237,13 +238,10 @@ final class RegexPatternExtractorTest extends TestCase
 
     public function test_write_worker_payload_creates_serialized_file(): void
     {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('writeWorkerPayload');
-
         $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
         $payload = ['ok' => true, 'result' => ['test']];
 
-        $method->invoke($this->patternExtractor, $tmpFile, $payload);
+        (new ForkedWorkerPool())->runChild(static fn (): array => ['test'], $tmpFile);
 
         $this->assertFileExists($tmpFile);
         $content = file_get_contents($tmpFile);
@@ -254,6 +252,34 @@ final class RegexPatternExtractorTest extends TestCase
         $this->assertSame($payload['ok'], $unserialized['ok']);
 
         @unlink($tmpFile);
+    }
+
+    /**
+     * The occurrences a child collects come back to the parent whole.
+     */
+    public function test_worker_payload_round_trips_the_occurrences_a_child_writes(): void
+    {
+        $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
+        $occurrence = new RegexPatternOccurrence('/a+/', 'test.php', 3, 'preg_match');
+
+        (new ForkedWorkerPool())->runChild(static fn (): array => [$occurrence], $tmpFile);
+        $result = (new \ReflectionMethod($this->patternExtractor, 'readWorkerPayload'))->invoke($this->patternExtractor, $tmpFile);
+        @unlink($tmpFile);
+
+        $this->assertIsArray($result);
+        $this->assertTrue($result['ok']);
+        $this->assertEquals(['ok' => true, 'result' => [$occurrence]], $result);
+    }
+
+    public function test_worker_payload_round_trips_the_failure_a_child_writes(): void
+    {
+        $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
+
+        (new ForkedWorkerPool())->runChild(static fn (): never => throw new \LogicException('Broken chunk'), $tmpFile);
+        $result = (new \ReflectionMethod($this->patternExtractor, 'readWorkerPayload'))->invoke($this->patternExtractor, $tmpFile);
+        @unlink($tmpFile);
+
+        $this->assertSame(['ok' => false, 'error' => ['message' => 'Broken chunk', 'class' => \LogicException::class]], $result);
     }
 
     public function test_read_worker_payload_reads_valid_payload(): void

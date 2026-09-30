@@ -16,6 +16,7 @@ namespace RegexParser\Tests\Unit\Lint;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cache\CacheInterface;
+use RegexParser\Lint\ForkedWorkerPool;
 use RegexParser\Lint\LintException;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\Lint\RegexPatternOccurrence;
@@ -558,11 +559,10 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_worker_payload_helpers_cover_error_branches(): void
     {
-        $writeMethod = new \ReflectionMethod($this->analysis, 'writeWorkerPayload');
         $readMethod = new \ReflectionMethod($this->analysis, 'readWorkerPayload');
 
         $tempFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        $writeMethod->invoke($this->analysis, $tempFile, ['ok' => true, 'result' => ['ok']]);
+        (new ForkedWorkerPool())->runChild(static fn (): array => ['ok'], $tempFile);
         $payload = $readMethod->invoke($this->analysis, $tempFile);
         $this->assertIsArray($payload);
         $this->assertArrayHasKey('ok', $payload);
@@ -601,6 +601,27 @@ final class RegexAnalysisServiceTest extends TestCase
         $this->assertIsArray($validError['error']);
         $this->assertSame('fail', $validError['error']['message'] ?? null);
         @unlink($validErrorFile);
+    }
+
+    /**
+     * What a child writes, the parent reads back: the result of the work,
+     * or the failure it threw.
+     */
+    public function test_worker_payload_round_trips_what_a_child_writes(): void
+    {
+        $readMethod = new \ReflectionMethod($this->analysis, 'readWorkerPayload');
+        $pool = new ForkedWorkerPool();
+        $tempFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
+
+        $pool->runChild(static fn (): array => [['file' => 'test.php', 'line' => 1]], $tempFile);
+        $result = $readMethod->invoke($this->analysis, $tempFile);
+
+        $pool->runChild(static fn (): never => throw new \UnexpectedValueException('No chunk'), $tempFile);
+        $failure = $readMethod->invoke($this->analysis, $tempFile);
+        @unlink($tempFile);
+
+        $this->assertSame(['ok' => true, 'result' => [['file' => 'test.php', 'line' => 1]]], $result);
+        $this->assertSame(['ok' => false, 'error' => ['message' => 'No chunk', 'class' => \UnexpectedValueException::class]], $failure);
     }
 
     public function test_skip_risk_analysis_helpers(): void

@@ -658,9 +658,7 @@ final readonly class RegexAnalysisService
 
             $pid = (new ForkedWorkerPool())->fork(
                 static fn (): array => $worker($chunk),
-                function (array $payload) use ($tmpFile): void {
-                    $this->writeWorkerPayload($tmpFile, $payload);
-                },
+                $tmpFile,
             );
             if (-1 === $pid) {
                 $failed = true;
@@ -733,15 +731,6 @@ final readonly class RegexAnalysisService
         return \PHP_SAPI === 'cli'
             && \function_exists('pcntl_fork')
             && \function_exists('pcntl_waitpid');
-    }
-
-    /**
-     * @param array{ok: bool, result?: mixed, error?: array{message: string, class: string}} $payload
-     */
-    private function writeWorkerPayload(string $path, array $payload): void
-    {
-        $serialized = serialize($payload);
-        @file_put_contents($path, $serialized);
     }
 
     /**

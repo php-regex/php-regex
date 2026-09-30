@@ -37,94 +37,78 @@ final readonly class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerI
         $options ??= new ReDoSConfirmOptions();
         $limits = new PcreLimits($options->backtrackLimit, $options->recursionLimit);
 
-        try {
-            [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
-            $lengths = $this->buildLengths($baseLength, $options);
+        [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
+        $lengths = $this->buildLengths($baseLength, $options);
 
-            $samples = [];
-            $confirmed = false;
-            $timedOut = false;
-            $evidence = null;
+        $samples = [];
+        $confirmed = false;
+        $timedOut = false;
+        $evidence = null;
 
-            foreach ($lengths as $length) {
-                $input = $this->buildInput($baseChar, $suffixChar, $length);
-                $preview = $options->previewLength > 0 ? substr($input, 0, $options->previewLength) : null;
+        foreach ($lengths as $length) {
+            $input = $this->buildInput($baseChar, $suffixChar, $length);
+            $preview = $options->previewLength > 0 ? substr($input, 0, $options->previewLength) : null;
 
-                $durationMs = 0.0;
-                $iterationsRun = 0;
-                $pregErrorCode = null;
-                $pregError = null;
+            $durationMs = 0.0;
+            $iterationsRun = 0;
+            $pregErrorCode = null;
+            $pregError = null;
 
-                for ($i = 0; $i < $options->iterations; $i++) {
-                    $iterationsRun++;
-                    $start = hrtime(true);
-                    $match = $this->engine->match($regex, $input, $limits);
-                    $elapsed = (hrtime(true) - $start) / 1_000_000;
-                    $durationMs += $elapsed;
+            for ($i = 0; $i < $options->iterations; $i++) {
+                $iterationsRun++;
+                $start = hrtime(true);
+                $match = $this->engine->match($regex, $input, $limits);
+                $elapsed = (hrtime(true) - $start) / 1_000_000;
+                $durationMs += $elapsed;
 
-                    $errorCode = $match->errorCode;
-                    if (\PREG_NO_ERROR !== $errorCode) {
-                        $pregErrorCode = $errorCode;
-                        $pregError = $match->error;
-                    }
-
-                    $evidenceForError = $this->evidenceForError($errorCode);
-                    if (null !== $evidenceForError) {
-                        $confirmed = true;
-                        $evidence = $evidenceForError;
-
-                        break;
-                    }
-
-                    if (($durationMs / $iterationsRun) > $options->timeoutMs) {
-                        $timedOut = true;
-
-                        break;
-                    }
+                $errorCode = $match->errorCode;
+                if (\PREG_NO_ERROR !== $errorCode) {
+                    $pregErrorCode = $errorCode;
+                    $pregError = $match->error;
                 }
 
-                $averageMs = $iterationsRun > 0 ? $durationMs / $iterationsRun : 0.0;
-                $samples[] = new ReDoSConfirmationSample(
-                    $length,
-                    $averageMs,
-                    $preview,
-                    $pregErrorCode,
-                    $pregError,
-                );
+                $evidenceForError = $this->evidenceForError($errorCode);
+                if (null !== $evidenceForError) {
+                    $confirmed = true;
+                    $evidence = $evidenceForError;
 
-                if ($confirmed || $timedOut) {
+                    break;
+                }
+
+                if (($durationMs / $iterationsRun) > $options->timeoutMs) {
+                    $timedOut = true;
+
                     break;
                 }
             }
 
-            return new ReDoSConfirmation(
-                $confirmed,
-                $samples,
-                self::JIT_SETTING,
-                $options->backtrackLimit,
-                $options->recursionLimit,
-                $options->iterations,
-                $options->timeoutMs,
-                $timedOut,
-                $evidence,
-                null,
-                null,
+            $averageMs = $iterationsRun > 0 ? $durationMs / $iterationsRun : 0.0;
+            $samples[] = new ReDoSConfirmationSample(
+                $length,
+                $averageMs,
+                $preview,
+                $pregErrorCode,
+                $pregError,
             );
-        } catch (\Throwable $e) {
-            return new ReDoSConfirmation(
-                false,
-                [],
-                self::JIT_SETTING,
-                $options->backtrackLimit,
-                $options->recursionLimit,
-                $options->iterations,
-                $options->timeoutMs,
-                false,
-                null,
-                null,
-                $e->getMessage(),
-            );
+
+            if ($confirmed || $timedOut) {
+                break;
+            }
         }
+
+        return new ReDoSConfirmation(
+            $confirmed,
+            $samples,
+            self::JIT_SETTING,
+            $options->backtrackLimit,
+            $options->recursionLimit,
+            $options->iterations,
+            $options->timeoutMs,
+            $timedOut,
+            $evidence,
+            null,
+            null,
+        );
     }
 
     /**
