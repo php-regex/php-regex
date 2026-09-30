@@ -102,20 +102,20 @@ final class ReDoSAnalyzerTest extends TestCase
                     'backtrack_limit',
                     null,
                     null,
-                    $options?->disableJit,
                 );
             }
         };
 
         $analyzer = new ReDoSAnalyzer(null, [], ReDoSSeverity::LOW, $runner);
-        $analysis = $analyzer->analyze('/(a+)+$/', ReDoSSeverity::LOW, ReDoSMode::CONFIRMED, new ReDoSConfirmOptions(disableJit: true));
+        $analysis = $analyzer->analyze('/(a+)+$/', ReDoSSeverity::LOW, ReDoSMode::CONFIRMED, new ReDoSConfirmOptions());
 
         $this->assertSame(1, $runner->calls);
         $this->assertSame(ReDoSMode::CONFIRMED, $analysis->mode);
         $this->assertTrue($analysis->isConfirmed());
         $this->assertInstanceOf(ReDoSConfirmation::class, $analysis->confirmation);
         $this->assertSame('backtrack_limit', $analysis->confirmation->evidence);
-        $this->assertTrue($analysis->confirmation->jitDisableRequested);
+        // The confirmation runs without the JIT, whatever the process sets.
+        $this->assertSame('0', $analysis->confirmation->jitSetting);
         $this->assertSame(ReDoSConfidence::HIGH, $analysis->confidenceLevel());
     }
 

@@ -140,7 +140,6 @@ final readonly class HelpCommand implements CommandInterface
             ['--format <format>', 'Output format (console, json)'],
             ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
             ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-            ['--redos-no-jit', 'Disable JIT during confirmation runs'],
         ];
         $this->renderTableSection($output, 'Analyze Options', $analyzeOptions, fn (string $value): string => $this->formatOption($output, $value));
 
@@ -149,7 +148,6 @@ final readonly class HelpCommand implements CommandInterface
             ['--format <format>', 'Output format (console, json)'],
             ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
             ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-            ['--redos-no-jit', 'Disable JIT during confirmation runs'],
         ];
         $this->renderTableSection($output, 'Debug Options', $debugOptions, fn (string $value): string => $this->formatOption($output, $value));
 
@@ -302,7 +300,6 @@ final readonly class HelpCommand implements CommandInterface
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                    ['--redos-no-jit', 'Disable JIT during confirmation runs'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -343,7 +340,6 @@ final readonly class HelpCommand implements CommandInterface
                     ['--format <format>', 'Output format (console, json)'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                    ['--redos-no-jit', 'Disable JIT during confirmation runs'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],

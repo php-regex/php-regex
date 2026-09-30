@@ -66,7 +66,7 @@ final class DebugCommand extends AbstractCommand
         $parsed = $this->parseArguments($input->args, $defaults);
         if (null !== $parsed['error']) {
             $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--redos-no-jit]\n");
+            $output->write("Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
 
             return 1;
         }
@@ -322,8 +322,6 @@ final class DebugCommand extends AbstractCommand
             $redosThreshold = ReDoSSeverity::fromConfig($defaults['redosThreshold']);
         }
 
-        $disableJit = false;
-
         $confirmOptions = null;
         $stopParsing = false;
 
@@ -429,9 +427,7 @@ final class DebugCommand extends AbstractCommand
             }
 
             if (!$stopParsing && '--redos-no-jit' === $arg) {
-                $disableJit = true;
-
-                continue;
+                return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => '--redos-no-jit was removed in 2.0: the confirmation always runs without JIT.'];
             }
 
             if (!$stopParsing && str_starts_with($arg, '-')) {
@@ -451,10 +447,6 @@ final class DebugCommand extends AbstractCommand
 
         if (!\in_array($format, ['console', 'json'], true)) {
             return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --format.'];
-        }
-
-        if ($disableJit) {
-            $confirmOptions = new ReDoSConfirmOptions(disableJit: true);
         }
 
         return [

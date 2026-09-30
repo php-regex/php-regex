@@ -650,9 +650,10 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration.
 
-`--redos-mode=off` and `--redos-no-jit` were removed in 2.0: use `--no-redos`
-to skip the analysis; the confirmation always runs without JIT. Either one is
-now a usage error (exit code 2), as is an unknown `--format`.
+`--redos-mode=off` and `--redos-no-jit` were removed from `lint` in 2.0: use
+`--no-redos` to skip the analysis; the confirmation always runs without JIT.
+Either one is now a usage error (exit code 2), as is an unknown `--format`.
+`analyze` and `debug` refuse `--redos-no-jit` too, for the same reason.
 
 ---
 

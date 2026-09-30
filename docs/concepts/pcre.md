@@ -192,8 +192,8 @@ What this library does about it:
   `RegexParser\Engine\PcreEngine`, which runs it with the interpreter: it
   puts `(*NO_JIT)` at the start of the pattern, a start option that changes
   no result. That covers `generate()` and its samples, runtime validation,
-  the ReDoS confirmation (`--redos-mode=confirmed`, where `--redos-no-jit` is
-  still accepted and changes nothing), the PHPStan extension and the bridges.
+  the ReDoS confirmation (`--redos-mode=confirmed`), the PHPStan extension
+  and the bridges.
 - The `redos` command's benchmark alone runs the JIT, unless `--jit 0` says
   otherwise: it measures what production sees.
 

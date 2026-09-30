@@ -447,6 +447,14 @@ else `composer.json` there, else the running PHP. It logs the target with
 `window/logMessage`. A `Regex` passed to `new Server($regex)` is used as it is.
 See [the language server guide](docs/guides/lsp.md#target-php-and-pcre2).
 
+#### The ReDoS confirmation has no JIT switch
+
+The confirmation always runs patterns without the JIT, so the switch that
+turned the JIT off is gone: `regex analyze` and `regex debug` refuse
+`--redos-no-jit`, `ReDoSConfirmOptions` has no `disableJit` argument, and
+`ReDoSConfirmation` no longer carries `jitDisableRequested`
+(`jit_disable_requested` in its JSON). Drop them; nothing else changes.
+
 #### `clearCaches()` replaces `clearValidatorCaches()`
 
 `RegexParser::clearValidatorCaches()` and `Regex::clearValidatorCaches()` are

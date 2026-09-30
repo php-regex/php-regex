@@ -42,7 +42,6 @@ final readonly class ReDoSConfirmOptions
         float $timeoutMs = 50.0,
         int $backtrackLimit = 100_000,
         int $recursionLimit = 10_000,
-        public bool $disableJit = false,
         int $previewLength = 64,
     ) {
         $this->minInputLength = max(1, $minInputLength);

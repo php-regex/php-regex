@@ -109,7 +109,6 @@ final readonly class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerI
                 $evidence,
                 null,
                 null,
-                $options->disableJit,
             );
         } catch (\Throwable $e) {
             return new ReDoSConfirmation(
@@ -124,7 +123,6 @@ final readonly class ReDoSConfirmationRunner implements ReDoSConfirmationRunnerI
                 null,
                 null,
                 $e->getMessage(),
-                $options->disableJit,
             );
         }
     }

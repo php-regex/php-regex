@@ -51,7 +51,7 @@ final class AnalyzeCommand extends AbstractCommand
 
         if (null !== $parsed['error']) {
             $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--redos-no-jit]\n");
+            $output->write("Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
 
             return 1;
         }
@@ -107,7 +107,6 @@ final class AnalyzeCommand extends AbstractCommand
         $redosMode = ReDoSMode::THEORETICAL;
         $redosThreshold = null;
         $confirmOptions = null;
-        $disableJit = false;
         $stopParsing = false;
 
         for ($i = 0; $i < \count($args); $i++) {
@@ -195,9 +194,7 @@ final class AnalyzeCommand extends AbstractCommand
             }
 
             if (!$stopParsing && '--redos-no-jit' === $arg) {
-                $disableJit = true;
-
-                continue;
+                return $this->errorResult($format, $redosMode, $redosThreshold, '--redos-no-jit was removed in 2.0: the confirmation always runs without JIT.');
             }
 
             if (!$stopParsing && str_starts_with($arg, '-')) {
@@ -217,10 +214,6 @@ final class AnalyzeCommand extends AbstractCommand
 
         if (!\in_array($format, ['console', 'json'], true)) {
             return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --format.');
-        }
-
-        if ($disableJit) {
-            $confirmOptions = new ReDoSConfirmOptions(disableJit: true);
         }
 
         return [

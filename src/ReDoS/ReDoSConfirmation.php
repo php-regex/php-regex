@@ -33,7 +33,6 @@ final readonly class ReDoSConfirmation implements \JsonSerializable
         public ?string $evidence = null,
         public ?string $note = null,
         public ?string $error = null,
-        public ?bool $jitDisableRequested = null,
     ) {}
 
     /**
@@ -49,7 +48,6 @@ final readonly class ReDoSConfirmation implements \JsonSerializable
      *     evidence: string|null,
      *     note: string|null,
      *     error: string|null,
-     *     jit_disable_requested: bool|null,
      * }
      */
     public function jsonSerialize(): array
@@ -66,7 +64,6 @@ final readonly class ReDoSConfirmation implements \JsonSerializable
             'evidence' => $this->evidence,
             'note' => $this->note,
             'error' => $this->error,
-            'jit_disable_requested' => $this->jitDisableRequested,
         ];
     }
 }

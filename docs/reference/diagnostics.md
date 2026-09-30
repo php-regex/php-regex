@@ -384,7 +384,9 @@ preg_match('/(error|failure)/', $input);
 
 Every `RegexException` carries an `ErrorCode` (`RegexException::getErrorCode()`), and so does a
 failed validation (`ValidationResult::$errorCode`). An invalid option (`InvalidRegexOptionException`)
-or a cache failure (`CacheException`) is no judgement on a pattern and carries none. The values are stable: match
+or a cache failure (`CacheException`) is no judgement on a pattern and carries none. Lint advice has
+ids of its own, `regex.lint.<area>.<rule>` in camelCase (see the lint rule reference): PHPStan reports
+them as identifiers, and PHPStan identifiers take no underscore. The values are stable: match
 on the enum case, or on its string value when the code crosses a process boundary (the CLI's
 JSON output and the lint problems carry the string).
 
