@@ -86,10 +86,14 @@ final class TranspileCommand extends Command
                 $this->output->writeln((string) json_encode([
                     'error' => 'Invalid pattern',
                     'details' => $validation->error,
+                    'snippet' => $validation->caretSnippet,
                 ], \JSON_PRETTY_PRINT));
             } else {
                 $this->error('Invalid pattern:');
                 $this->line((string) $validation->error);
+                if (null !== $validation->caretSnippet) {
+                    $this->line($validation->caretSnippet);
+                }
             }
 
             return self::FAILURE;

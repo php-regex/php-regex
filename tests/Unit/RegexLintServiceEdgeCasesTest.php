@@ -104,9 +104,12 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
         $this->assertInstanceOf(Severity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
-        $strip = $this->getPrivateMethod($service, 'stripSnippetFromMessage');
-        $this->assertSame('message', $strip->invoke($service, 'message', null));
-        $this->assertSame('message', $strip->invoke($service, 'message', 'snippet'));
+        // The message a validation hands over holds no snippet to strip: the
+        // snippet travels apart, and the problem carries both.
+        $validation = RegexParser::create()->validate('/a(/');
+        $this->assertStringNotContainsString("\n", (string) $validation->error);
+        $this->assertStringStartsWith('Line 1: a(', (string) $validation->caretSnippet);
+        $this->assertSame('Expected ) at end of input (found eof)', $validation->error);
     }
 
     private function makeService(): RegexLintService

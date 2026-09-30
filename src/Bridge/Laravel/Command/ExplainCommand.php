@@ -64,6 +64,9 @@ final class ExplainCommand extends Command
         if (!$validation->isValid) {
             $this->error('Invalid regex pattern:');
             $this->line((string) $validation->error);
+            if (null !== $validation->caretSnippet) {
+                $this->line($validation->caretSnippet);
+            }
 
             return self::FAILURE;
         }

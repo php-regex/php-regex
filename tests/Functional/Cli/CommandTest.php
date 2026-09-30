@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Tests\Functional\Cli;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Cli\Command\AnalyzeCommand;
 use RegexParser\Cli\Command\CompareCommand;
@@ -619,6 +620,42 @@ final class CommandTest extends TestCase
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('INVALID', $buffer);
+    }
+
+    /**
+     * The message and the caret snippet under it: the snippet no longer
+     * rides inside the message, so each command prints it.
+     *
+     * @return iterable<string, array{command: string, arguments: list<string>}>
+     */
+    public static function provideCommandsReportingAValidationError(): iterable
+    {
+        yield 'validate' => ['command' => 'validate', 'arguments' => ['/(?<=a+)b/']];
+        yield 'analyze' => ['command' => 'analyze', 'arguments' => ['/(?<=a+)b/']];
+        yield 'parse --validate' => ['command' => 'parse', 'arguments' => ['/(?<=a+)b/', '--validate']];
+    }
+
+    /**
+     * @param list<string> $arguments
+     */
+    #[DataProvider('provideCommandsReportingAValidationError')]
+    public function test_command_prints_the_message_and_the_caret_snippet(string $command, array $arguments): void
+    {
+        $instance = match ($command) {
+            'validate' => new ValidateCommand(),
+            'analyze' => new AnalyzeCommand(),
+            default => new ParseCommand(),
+        };
+        $output = new Output(false, false);
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $instance->run(self::makeInput($command, $arguments), $output), $exitCode);
+
+        $this->assertStringContainsString("  Lookbehind is unbounded. PCRE requires a bounded maximum length.\nLine 1: (?<=a+)b\n", $buffer);
+        // PCRE reports an unbounded lookbehind where it opens, at offset 0;
+        // the caret line ends its own line.
+        $this->assertMatchesRegularExpression('/^ {8}\^$/m', $buffer);
+        $this->assertStringContainsString("\n        ^\n", $buffer);
     }
 
     public function test_validate_command_accepts_valid_pattern(): void

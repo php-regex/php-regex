@@ -319,6 +319,10 @@ final class AnalyzeCommand extends AbstractCommand
             $output->write('  '.$output->error($validation->error)."\n");
         }
 
+        if (!$validation->isValid && null !== $validation->caretSnippet) {
+            $output->write($output->error($validation->caretSnippet)."\n");
+        }
+
         if ($style->visualsEnabled()) {
             $output->write("\n");
         }

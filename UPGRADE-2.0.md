@@ -250,6 +250,14 @@ passes the `ErrorCode` case instead.
 
 The CLI's JSON output and `RegexProblem::$code` still carry the string value.
 
+#### `ValidationResult::$error` is the message alone
+
+In 1.x a failed validation's `$error` ended with the caret snippet, on the
+lines after the message. It is now the message alone; the snippet is in
+`$caretSnippet`, as it already was. Code that printed `$error` to show the
+caret prints `$caretSnippet` after it; code that cut `$error` at its first
+line can drop that step.
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::getPosition()` count from the

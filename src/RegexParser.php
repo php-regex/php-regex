@@ -449,9 +449,6 @@ final readonly class RegexParser
         $offset = $this->extractOffsetFromMessage($message);
         $snippet = $this->buildVisualSnippet($pattern, $offset);
         $fullMessage = 'PCRE runtime error: '.$message;
-        if ('' !== $snippet) {
-            $fullMessage .= "\n".$snippet;
-        }
 
         return new ValidationResult(
             false,
@@ -644,10 +641,6 @@ final readonly class RegexParser
 
         if ($exception instanceof SemanticErrorException) {
             $hint = $exception->getHint();
-        }
-
-        if ('' !== $visualSnippet) {
-            $errorMessage .= "\n".$visualSnippet;
         }
 
         if ($exception instanceof SemanticErrorException) {

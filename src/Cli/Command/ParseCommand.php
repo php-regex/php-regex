@@ -138,6 +138,10 @@ final class ParseCommand extends AbstractCommand
         if (!$validation->isValid && null !== $validation->error) {
             $output->write('  '.$output->error($validation->error)."\n");
         }
+
+        if (!$validation->isValid && null !== $validation->caretSnippet) {
+            $output->write($output->error($validation->caretSnippet)."\n");
+        }
     }
 
     private function handleParseError(Output $output, string $errorMessage): int

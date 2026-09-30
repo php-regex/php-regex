@@ -128,6 +128,10 @@ final class ValidateCommand extends AbstractCommand
             $output->write('  '.$output->error($validation->error)."\n");
         }
 
+        if (null !== $validation->caretSnippet) {
+            $output->write($output->error($validation->caretSnippet)."\n");
+        }
+
         return 1;
     }
 }

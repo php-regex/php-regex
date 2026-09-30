@@ -346,7 +346,6 @@ final readonly class RegexLintService
         $validation = $issue['validation'] ?? null;
         if ($validation instanceof ValidationResult) {
             $message = $issue['message'] ?? ($validation->error ?? 'Invalid regex.');
-            $message = $this->stripSnippetFromMessage($message, $validation->caretSnippet);
             $type = ValidationErrorCategory::SEMANTIC === $validation->category ? ProblemType::Semantic : ProblemType::Syntax;
 
             return new RegexProblem(
@@ -432,20 +431,6 @@ final readonly class RegexLintService
             ReDoSSeverity::UNKNOWN => Severity::Warning,
             ReDoSSeverity::LOW, ReDoSSeverity::SAFE => Severity::Info,
         };
-    }
-
-    private function stripSnippetFromMessage(string $message, ?string $snippet): string
-    {
-        if (null === $snippet || '' === $snippet) {
-            return $message;
-        }
-
-        $withPrefix = "\n".$snippet;
-        if (str_contains($message, $withPrefix)) {
-            return str_replace($withPrefix, '', $message);
-        }
-
-        return $message;
     }
 
     /**

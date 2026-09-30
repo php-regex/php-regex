@@ -51,7 +51,7 @@ $result = Regex::create()->validate('/[unclosed/');
 if (!$result->isValid()) {
     // Access all diagnostic information
     echo $result->isValid();        // false
-    echo $result->error;            // "Unclosed character class "]" at end of input." + snippet
+    echo $result->error;            // "Unclosed character class "]" at end of input."
     echo $result->errorCode->value; // "regex.charclass.unclosed"
     echo $result->offset;           // 9
     echo $result->caretSnippet;     // See below
@@ -95,16 +95,19 @@ This visual representation helps you quickly locate and fix issues.
 vendor/bin/regex --no-ansi validate '/(?<=a+)b/'
 ```
 
-**Output:**
+**Output** (after the version and runtime header):
 ```
-INVALID  /(?<=a+)b/
+  [1/1] Validating pattern
+  Pattern
+      → /(?<=a+)b/
+  Status : INVALID
   Lookbehind is unbounded. PCRE requires a bounded maximum length.
 Line 1: (?<=a+)b
-            ^
+        ^
 ```
 
 **What to notice:**
-1. `INVALID` status indicates failure
+1. `Status : INVALID` indicates failure
 2. The message explains the problem
 3. The caret (`^`) shows exact position
 
@@ -116,10 +119,12 @@ Line 1: (?<=a+)b
 vendor/bin/regex --no-ansi validate '/^[a-z]+$/'
 ```
 
-**Output:**
+**Output** (after the version and runtime header):
 ```
-VALID  /^[a-z]+$/
-  Pattern is valid.
+  [1/1] Validating pattern
+  Pattern
+      → /^[a-z]+$/
+  Status : OK
 ```
 
 ---
