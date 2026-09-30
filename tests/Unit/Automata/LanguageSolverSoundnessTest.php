@@ -17,17 +17,17 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 
-final class RegexSolverSoundnessTest extends TestCase
+final class LanguageSolverSoundnessTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideDeterminizationAlgorithms')]
     public function test_solver_matches_pcre_for_bounded_language(DeterminizationAlgorithm $determinization): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             determinizationAlgorithm: $determinization,

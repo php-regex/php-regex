@@ -78,6 +78,58 @@ Result:
 
 Educational value: **Equivalence** asks "do these patterns accept the exact same set of strings?"
 
+## PHP API
+
+`RegexParser\Automata\LanguageSolver` is the one entry point. Each method takes two patterns (with delimiters and
+flags) and optional `SolverOptions`, and returns a result object that carries the shortest string proving the answer:
+
+```php
+use RegexParser\Automata\LanguageSolver;
+
+$solver = new LanguageSolver();
+
+$intersection = $solver->intersection('/order\/\d+/', '/order\/[a-z0-9]+/');
+$intersection->isEmpty;             // false
+$intersection->example;             // "order/0"
+
+$subset = $solver->subsetOf('/\w+/', '/[a-zA-Z0-9]+/');
+$subset->isSubset;                  // false
+$subset->counterExample;            // "_"
+
+$equivalence = $solver->equivalent('/[0-9]+/', '/\d+/');
+$equivalence->isEquivalent;         // true
+$equivalence->leftOnlyExample;      // null: no string only the left pattern matches
+$equivalence->rightOnlyExample;     // null: no string only the right pattern matches
+
+$dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (RegexParser\Automata\Model\Dfa)
+```
+
+| method                                        | result               | answer            | witness                                  |
+|-----------------------------------------------|----------------------|-------------------|------------------------------------------|
+| `intersection($left, $right, $options = null)` | `IntersectionResult` | `isEmpty`         | `example`: a string both match           |
+| `subsetOf($left, $right, $options = null)`     | `SubsetResult`       | `isSubset`        | `counterExample`: only the left matches  |
+| `equivalent($left, $right, $options = null)`   | `EquivalenceResult`  | `isEquivalent`    | `leftOnlyExample`, `rightOnlyExample`    |
+| `compile($pattern, $options = null)`           | `Dfa`                | the pattern's DFA | stored in the DFA cache when one is set  |
+
+The constructor takes the parser that reads the patterns, so they are read for its PHP and PCRE2 target, and a DFA cache
+that keeps compiled patterns between questions:
+
+```php
+use RegexParser\Automata\LanguageSolver;
+use RegexParser\Automata\Solver\InMemoryDfaCache;
+use RegexParser\RegexParser;
+
+$solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), new InMemoryDfaCache());
+```
+
+A pattern outside the regular subset (backreferences, lookarounds, recursion, ...) throws a `ComplexityException`
+instead of returning an answer that would be wrong.
+
+The public classes of `RegexParser\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
+`Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the three result classes in
+`Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`. Every other class of the namespace is
+`@internal` and may change in any release.
+
 ## How it Works (Under the Hood)
 
 RegexParser follows a formal pipeline:
@@ -165,11 +217,11 @@ Large patterns can cause determinization or minimization to grow quickly. You ca
 `SolverOptions::maxTransitionsProcessed`.
 
 ```php
-use RegexParser\Automata\Api\RegexLanguageSolver;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Exception\ComplexityException;
 
-$solver = new RegexLanguageSolver();
+$solver = new LanguageSolver();
 $options = new SolverOptions(maxTransitionsProcessed: 200000);
 
 try {

@@ -60,6 +60,10 @@ final class NoLegacyNamesTest extends TestCase
         yield 'RegexParser\Automata\AstToNfaTransformer' => ['RegexParser\\Automata\\AstToNfaTransformer'];
         yield 'RegexParser\Automata\AstToNfaTransformerInterface' => ['RegexParser\\Automata\\AstToNfaTransformerInterface'];
         yield 'RegexParser\Automata\RegularSubsetValidator' => ['RegexParser\\Automata\\RegularSubsetValidator'];
+        yield 'RegexParser\Automata\Api\RegexLanguageSolver' => ['RegexParser\\Automata\\Api\\RegexLanguageSolver'];
+        yield 'RegexParser\Automata\Solver\RegexSolver' => ['RegexParser\\Automata\\Solver\\RegexSolver'];
+        yield 'RegexParser\Automata\Solver\RegexSolverInterface' => ['RegexParser\\Automata\\Solver\\RegexSolverInterface'];
+        yield 'RegexParser\Automata\Solver\RegexSolverCompilerInterface' => ['RegexParser\\Automata\\Solver\\RegexSolverCompilerInterface'];
         yield 'RegexParser\Lint\Command\LintCommand' => ['RegexParser\\Lint\\Command\\LintCommand'];
         yield 'RegexParser\Lint\Command\LintOutputRenderer' => ['RegexParser\\Lint\\Command\\LintOutputRenderer'];
         yield 'RegexParser\Lint\ExtractorInterface' => ['RegexParser\\Lint\\ExtractorInterface'];

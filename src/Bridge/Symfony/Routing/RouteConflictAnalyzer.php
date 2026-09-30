@@ -13,14 +13,12 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\Routing;
 
-use RegexParser\Automata\Api\RegexLanguageSolver;
-use RegexParser\Automata\Builder\DfaBuilder;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\Automata\Transform\RegularSubsetValidator;
 use RegexParser\Exception\ComplexityException;
 use RegexParser\Regex;
 use RegexParser\RegexPattern;
@@ -42,22 +40,15 @@ final readonly class RouteConflictAnalyzer
 
     private const IGNORED_FLAGS = ['D'];
 
-    private RegexLanguageSolver $solver;
+    private LanguageSolver $solver;
 
     public function __construct(
         private Regex $regex,
-        private ?RegularSubsetValidator $validator = null,
-        private ?DfaBuilder $dfaBuilder = null,
         private string $minimizationAlgorithm = MinimizationAlgorithm::HOPCROFT->value,
-        ?RegexLanguageSolver $solver = null,
+        ?LanguageSolver $solver = null,
         private string $determinizationAlgorithm = DeterminizationAlgorithm::SUBSET_INDEXED->value,
     ) {
-        $this->solver = $solver ?? RegexLanguageSolver::forRegex(
-            $this->regex->parser(),
-            $this->validator,
-            $this->dfaBuilder,
-            new InMemoryDfaCache(),
-        );
+        $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
     }
 
     public function analyze(RouteCollection $collection, bool $includeOverlaps = true): RouteConflictReport
@@ -149,7 +140,7 @@ final readonly class RouteConflictAnalyzer
 
                 try {
                     $pathIntersections++;
-                    $intersection = $this->solver->intersectionEmpty($left['pathPattern'], $right['pathPattern'], $options);
+                    $intersection = $this->solver->intersection($left['pathPattern'], $right['pathPattern'], $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
 
@@ -438,7 +429,7 @@ final readonly class RouteConflictAnalyzer
 
         try {
             $hostIntersections++;
-            $intersection = $this->solver->intersectionEmpty($left['hostPattern'], $right['hostPattern'], $options);
+            $intersection = $this->solver->intersection($left['hostPattern'], $right['hostPattern'], $options);
         } catch (ComplexityException) {
             $skippedPairs++;
             $hostSkipped++;

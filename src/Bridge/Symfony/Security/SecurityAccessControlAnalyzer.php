@@ -13,14 +13,12 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\Security;
 
-use RegexParser\Automata\Api\RegexLanguageSolver;
-use RegexParser\Automata\Builder\DfaBuilder;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\Automata\Transform\RegularSubsetValidator;
 use RegexParser\Exception\ComplexityException;
 use RegexParser\Regex;
 use RegexParser\RegexPattern;
@@ -46,23 +44,16 @@ final readonly class SecurityAccessControlAnalyzer
 
     private const IGNORED_FLAGS = ['D'];
 
-    private RegexLanguageSolver $solver;
+    private LanguageSolver $solver;
 
     public function __construct(
         private Regex $regex,
         private SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer(),
-        private ?RegularSubsetValidator $validator = null,
-        private ?DfaBuilder $dfaBuilder = null,
         private string $minimizationAlgorithm = MinimizationAlgorithm::HOPCROFT->value,
-        ?RegexLanguageSolver $solver = null,
+        ?LanguageSolver $solver = null,
         private string $determinizationAlgorithm = DeterminizationAlgorithm::SUBSET_INDEXED->value,
     ) {
-        $this->solver = $solver ?? RegexLanguageSolver::forRegex(
-            $this->regex->parser(),
-            $this->validator,
-            $this->dfaBuilder,
-            new InMemoryDfaCache(),
-        );
+        $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
     }
 
     /**
@@ -134,7 +125,7 @@ final readonly class SecurityAccessControlAnalyzer
                 }
 
                 $pathIntersections++;
-                $intersection = $this->solver->intersectionEmpty($left['pattern'], $right['pattern'], $options);
+                $intersection = $this->solver->intersection($left['pattern'], $right['pattern'], $options);
                 if ($intersection->isEmpty) {
                     continue;
                 }
@@ -549,7 +540,7 @@ final readonly class SecurityAccessControlAnalyzer
 
         $hostChecks++;
         $hostIntersections++;
-        $intersection = $this->solver->intersectionEmpty($left['hostPattern'], $right['hostPattern'], $options);
+        $intersection = $this->solver->intersection($left['hostPattern'], $right['hostPattern'], $options);
 
         return !$intersection->isEmpty;
     }

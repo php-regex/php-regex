@@ -20,6 +20,8 @@ use RegexParser\Node\RegexNode;
 
 /**
  * Transforms a regex AST into an NFA.
+ *
+ * @internal
  */
 interface AstToNfaTransformerInterface
 {

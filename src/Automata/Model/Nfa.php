@@ -17,6 +17,8 @@ use RegexParser\Automata\Alphabet\CharSet;
 
 /**
  * Immutable NFA container.
+ *
+ * @internal
  */
 final readonly class Nfa
 {

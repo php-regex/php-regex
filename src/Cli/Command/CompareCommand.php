@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Cli\Command;
 
-use RegexParser\Automata\Api\RegexLanguageSolver;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
@@ -60,7 +60,7 @@ final class CompareCommand extends AbstractCommand
             return self::INVALID;
         }
 
-        $solver = RegexLanguageSolver::forRegex($regex->parser());
+        $solver = new LanguageSolver($regex->parser());
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             minimizationAlgorithm: MinimizationAlgorithm::from($parsed['minimizer']),
@@ -101,9 +101,9 @@ final class CompareCommand extends AbstractCommand
     /**
      * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
      */
-    private function handleIntersection(RegexLanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
+    private function handleIntersection(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
-        $result = $solver->intersectionEmpty($parsed['pattern1'], $parsed['pattern2'], $options);
+        $result = $solver->intersection($parsed['pattern1'], $parsed['pattern2'], $options);
 
         if ($result->isEmpty) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('No intersection found. These regexes are disjoint.')."\n");
@@ -121,7 +121,7 @@ final class CompareCommand extends AbstractCommand
     /**
      * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
      */
-    private function handleSubset(RegexLanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
+    private function handleSubset(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
         $result = $solver->subsetOf($parsed['pattern1'], $parsed['pattern2'], $options);
 
@@ -141,7 +141,7 @@ final class CompareCommand extends AbstractCommand
     /**
      * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
      */
-    private function handleEquivalence(RegexLanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
+    private function handleEquivalence(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
         $result = $solver->equivalent($parsed['pattern1'], $parsed['pattern2'], $options);
 

@@ -22,6 +22,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * Mutable builder for NFA graphs.
+ *
+ * @internal
  */
 final class NfaBuilder
 {

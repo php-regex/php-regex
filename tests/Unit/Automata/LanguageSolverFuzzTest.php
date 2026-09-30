@@ -15,16 +15,16 @@ namespace RegexParser\Tests\Unit\Automata;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 
-final class RegexSolverFuzzTest extends TestCase
+final class LanguageSolverFuzzTest extends TestCase
 {
     #[Test]
     public function test_intersection_examples_match_literal_patterns(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::FULL);
 
         for ($i = 0; $i < 50; $i++) {

@@ -17,18 +17,18 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
 use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\RegexParser;
 
-final class RegexSolverEdgeCaseTest extends TestCase
+final class LanguageSolverEdgeCaseTest extends TestCase
 {
     #[Test]
     public function test_intersection_of_identical_patterns(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->intersection('/abc/', '/abc/', $this->options());
 
         $this->assertFalse($result->isEmpty);
@@ -38,7 +38,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_intersection_of_empty_languages(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->intersection('/a[^\x00-\xff]/', '/b/', $this->options());
 
         $this->assertTrue($result->isEmpty);
@@ -48,7 +48,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_equivalence_of_case_insensitive_patterns(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/[a-z]+/i', '/[A-Za-z]+/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -57,7 +57,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_equivalence_of_char_class_shorthand(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/[0-9]/', '/\\d/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -66,7 +66,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_subset_of_dot_star(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->subsetOf('/abc/', '/.*/', $this->options());
 
         $this->assertTrue($result->isSubset);
@@ -75,7 +75,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_dot_star_not_subset_of_literal(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->subsetOf('/.*/', '/abc/', $this->options());
 
         $this->assertFalse($result->isSubset);
@@ -85,7 +85,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_empty_string_pattern_equivalence(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/^$/', '//', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -94,7 +94,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_quantifier_equivalences(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
 
         $result = $solver->equivalent('/a?a?/', '/a{0,2}/', $this->options());
         $this->assertTrue($result->isEquivalent);
@@ -106,7 +106,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_alternation_commutativity(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/foo|bar/', '/bar|foo/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -115,7 +115,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_alternation_distributivity(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/ab|ac/', '/a(b|c)/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -125,7 +125,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[DataProvider('provideDeterminizationAlgorithms')]
     public function test_both_algorithms_agree_on_intersection(DeterminizationAlgorithm $algorithm): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             determinizationAlgorithm: $algorithm,
@@ -142,7 +142,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[DataProvider('provideDeterminizationAlgorithms')]
     public function test_both_algorithms_agree_on_equivalence(DeterminizationAlgorithm $algorithm): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             determinizationAlgorithm: $algorithm,
@@ -157,7 +157,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     public function test_dfa_cache_avoids_recompilation(): void
     {
         $cache = new InMemoryDfaCache();
-        $solver = new RegexSolver(dfaCache: $cache);
+        $solver = new LanguageSolver(dfaCache: $cache);
         $options = $this->options();
 
         $result1 = $solver->intersection('/abc/', '/def/', $options);
@@ -172,8 +172,8 @@ final class RegexSolverEdgeCaseTest extends TestCase
     {
         // "{,2}" repeats from PCRE2 10.43 and is text before (pcre2test).
         $cache = new InMemoryDfaCache();
-        $newer = new RegexSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.44']), dfaCache: $cache);
-        $older = new RegexSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.42']), dfaCache: $cache);
+        $newer = new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.44']), dfaCache: $cache);
+        $older = new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.42']), dfaCache: $cache);
 
         $this->assertFalse($newer->equivalent('/^x{,2}$/', '/^x\{,2\}$/', $this->options())->isEquivalent);
         $this->assertTrue($older->equivalent('/^x{,2}$/', '/^x\{,2\}$/', $this->options())->isEquivalent);
@@ -182,7 +182,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_compile_returns_dfa(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $dfa = $solver->compile('/[a-z]+/', $this->options());
 
         $this->assertNotEmpty($dfa->states);
@@ -193,7 +193,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_dotall_flag_equivalence(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/.*/s', '/[\\x00-\\xff]*/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -202,7 +202,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_word_char_equivalence(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/\\w/', '/[A-Za-z0-9_]/', $this->options());
 
         $this->assertTrue($result->isEquivalent);
@@ -211,7 +211,7 @@ final class RegexSolverEdgeCaseTest extends TestCase
     #[Test]
     public function test_space_char_equivalence(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/\\s/', '/[ \\t\\n\\r\\f\\x0B]/', $this->options());
 
         $this->assertTrue($result->isEquivalent);

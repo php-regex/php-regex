@@ -164,7 +164,7 @@ Reading and judging a pattern moved from the `Regex` facade into
 `RegexParser`, which the rest of the library now takes instead of the facade:
 
   - `new ReDoSAnalyzer(?RegexParser $parser, ...)`
-  - `new RegexSolver(?RegexParser $parser, ...)` and `RegexLanguageSolver::forRegex(RegexParser $parser, ...)`
+  - `new LanguageSolver(?RegexParser $parser, ...)`, which replaces `RegexSolver` and `RegexLanguageSolver` (see below)
   - `new RegexTranspiler(RegexParser $parser, ...)`
   - `new RegexAnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
 
@@ -172,6 +172,30 @@ Pass `$regex->parser()` where you passed a `Regex`, or build one with
 `RegexParser::create()`, which takes the options `Regex::create()` takes.
 `CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
 `RegexParser\Analysis`.
+
+#### One automata entry point: `LanguageSolver`
+
+`RegexParser\Automata\Solver\RegexSolver` and `RegexParser\Automata\Api\RegexLanguageSolver` offered the same
+questions under two sets of names. Both are gone, with `RegexSolverInterface` and `RegexSolverCompilerInterface`;
+`RegexParser\Automata\LanguageSolver` answers every question they did. The result classes are unchanged.
+
+| 1.x | 2.0 |
+|---|---|
+| `new RegexSolver($parser, $validator, $dfaBuilder, $dfaCache)` | `new LanguageSolver($parser, $dfaCache)` |
+| `new RegexLanguageSolver($solver)`, `RegexLanguageSolver::forRegex($parser, $validator, $dfaBuilder, $dfaCache)` | `new LanguageSolver($parser, $dfaCache)` |
+| `RegexSolver::intersection()`, `RegexLanguageSolver::intersectionEmpty()` | `LanguageSolver::intersection()` |
+| `RegexSolver::subsetOf()`, `RegexLanguageSolver::subsetOf()` | `LanguageSolver::subsetOf()` |
+| `RegexSolver::equivalent()`, `RegexLanguageSolver::equivalent()` | `LanguageSolver::equivalent()` |
+| `RegexSolver::compile()` | `LanguageSolver::compile()` |
+| `RegexLanguageSolver::prepare()` | `LanguageSolver::compile()`, whose `Dfa` you may ignore |
+| `RegexSolverInterface`, `RegexSolverCompilerInterface` | gone: type against `LanguageSolver` |
+
+The solver no longer takes a `RegularSubsetValidator` or a `DfaBuilder`: choose the algorithms through
+`SolverOptions`. The public classes of `RegexParser\Automata` are now `LanguageSolver`, `Options\SolverOptions`,
+`Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`,
+`Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\EquivalenceResult`, `Model\Dfa`,
+`Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`; every other class of the namespace is `@internal` and may
+change in any release.
 
 #### A custom node implements `getChildren()`
 

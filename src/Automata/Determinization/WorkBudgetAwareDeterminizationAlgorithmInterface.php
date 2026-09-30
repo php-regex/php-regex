@@ -17,6 +17,8 @@ use RegexParser\Automata\Support\WorkBudget;
 
 /**
  * Allows determinization algorithms to receive a work budget.
+ *
+ * @internal
  */
 interface WorkBudgetAwareDeterminizationAlgorithmInterface
 {

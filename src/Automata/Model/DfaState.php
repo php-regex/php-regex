@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace RegexParser\Automata\Model;
 
 /**
- * Immutable DFA state.
+ * Immutable DFA state, as `Dfa` hands it out: read, never built by a caller.
  */
 final readonly class DfaState
 {

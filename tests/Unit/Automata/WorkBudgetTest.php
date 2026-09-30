@@ -15,11 +15,11 @@ namespace RegexParser\Tests\Unit\Automata;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Minimization\DfaMinimizer;
 use RegexParser\Automata\Model\Dfa;
 use RegexParser\Automata\Model\DfaState;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Exception\ComplexityException;
 
 final class WorkBudgetTest extends TestCase
@@ -27,7 +27,7 @@ final class WorkBudgetTest extends TestCase
     #[Test]
     public function test_determinize_budget_is_enforced(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(maxTransitionsProcessed: 0);
 
         try {

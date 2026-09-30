@@ -15,6 +15,8 @@ namespace RegexParser\Automata\Model;
 
 /**
  * NFA fragment with a start state and accepting states.
+ *
+ * @internal
  */
 final readonly class NfaFragment
 {

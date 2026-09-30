@@ -17,6 +17,8 @@ use RegexParser\Automata\Alphabet\CharSet;
 
 /**
  * NFA transition labeled with a character set.
+ *
+ * @internal
  */
 final readonly class NfaTransition
 {

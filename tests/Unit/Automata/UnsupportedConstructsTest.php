@@ -16,7 +16,7 @@ namespace RegexParser\Tests\Unit\Automata;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Exception\ComplexityException;
 
 final class UnsupportedConstructsTest extends TestCase
@@ -25,7 +25,7 @@ final class UnsupportedConstructsTest extends TestCase
     #[DataProvider('provideNonRegularPatterns')]
     public function test_non_regular_patterns_throw_complexity_exception(string $pattern): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
 
         $this->expectException(ComplexityException::class);
 

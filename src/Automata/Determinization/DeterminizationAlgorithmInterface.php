@@ -20,6 +20,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * Defines an algorithm that determinizes an NFA into a DFA.
+ *
+ * @internal
  */
 interface DeterminizationAlgorithmInterface
 {

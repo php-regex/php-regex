@@ -11,11 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Solver;
+namespace RegexParser\Automata;
 
 use RegexParser\Automata\Builder\DfaBuilder;
 use RegexParser\Automata\Model\Dfa;
 use RegexParser\Automata\Options\SolverOptions;
+use RegexParser\Automata\Solver\DfaCacheInterface;
+use RegexParser\Automata\Solver\EquivalenceResult;
+use RegexParser\Automata\Solver\IntersectionResult;
+use RegexParser\Automata\Solver\SubsetResult;
 use RegexParser\Automata\Transform\AstToNfaTransformer;
 use RegexParser\Automata\Transform\RegularSubsetValidator;
 use RegexParser\Automata\Unicode\CodePointHelper;
@@ -23,19 +27,25 @@ use RegexParser\Exception\ComplexityException;
 use RegexParser\RegexParser;
 
 /**
- * Automata-based solver for regex set operations.
+ * Answers questions about the languages regexes match: whether two overlap,
+ * whether one is contained in another, whether they match the same strings.
+ *
+ * Each pattern is compiled to a DFA, so only the regular subset is supported:
+ * backreferences, lookarounds, recursion and the like throw a
+ * ComplexityException instead of an answer that would be wrong.
  */
-final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexSolverInterface
+final readonly class LanguageSolver
 {
-    public function __construct(
-        private ?RegexParser $regex = null,
-        private ?RegularSubsetValidator $validator = null,
-        private ?DfaBuilder $dfaBuilder = null,
-        private ?DfaCacheInterface $dfaCache = null,
-    ) {}
+    /**
+     * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
+     * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
+     */
+    public function __construct(private ?RegexParser $parser = null, private ?DfaCacheInterface $dfaCache = null) {}
 
     /**
-     * @throws ComplexityException
+     * Whether some string matches both patterns, and the shortest such string.
+     *
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
@@ -52,7 +62,10 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
     }
 
     /**
-     * @throws ComplexityException
+     * Whether every string the left pattern matches is matched by the right one,
+     * and the shortest string that is not.
+     *
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
@@ -69,7 +82,10 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
     }
 
     /**
-     * @throws ComplexityException
+     * Whether both patterns match exactly the same strings, and the shortest
+     * string only one side matches, for each side.
+     *
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
@@ -92,18 +108,19 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
     }
 
     /**
-     * @throws ComplexityException
+     * Compiles a pattern to its DFA, and stores it in the cache when there is one,
+     * so that later questions about the pattern reuse it.
+     *
+     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $pattern, ?SolverOptions $options = null): Dfa
     {
-        $options ??= new SolverOptions();
-
-        return $this->buildDfa($pattern, $options);
+        return $this->buildDfa($pattern, $options ?? new SolverOptions());
     }
 
     private function parser(): RegexParser
     {
-        return $this->regex ?? RegexParser::create();
+        return $this->parser ?? RegexParser::create();
     }
 
     /**
@@ -140,15 +157,12 @@ final readonly class RegexSolver implements RegexSolverCompilerInterface, RegexS
         }
 
         $ast = $this->parser()->parse($pattern);
-        $validator = $this->validator ?? new RegularSubsetValidator();
-        $validator->assertSupported($ast, $pattern, $options);
+        (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options);
 
         $transformer = new AstToNfaTransformer($pattern);
         $nfa = $transformer->transform($ast, $options);
 
-        $dfaBuilder = $this->dfaBuilder ?? new DfaBuilder();
-
-        $dfa = $dfaBuilder->determinize($nfa, $options);
+        $dfa = (new DfaBuilder())->determinize($nfa, $options);
 
         if (null !== $this->dfaCache && null !== $cacheKey) {
             $this->dfaCache->set($cacheKey, $dfa);

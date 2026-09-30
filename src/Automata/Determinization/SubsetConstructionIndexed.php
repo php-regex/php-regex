@@ -23,6 +23,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * Subset construction with indexed transition ranges for faster moves.
+ *
+ * @internal
  */
 final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterface, WorkBudgetAwareDeterminizationAlgorithmInterface
 {

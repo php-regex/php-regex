@@ -15,6 +15,8 @@ namespace RegexParser\Automata\Minimization;
 
 /**
  * Factory for DFA minimization algorithm strategies.
+ *
+ * @internal
  */
 final class MinimizationAlgorithmFactory
 {

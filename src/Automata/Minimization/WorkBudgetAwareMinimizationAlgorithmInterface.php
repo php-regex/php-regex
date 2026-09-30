@@ -17,6 +17,8 @@ use RegexParser\Automata\Support\WorkBudget;
 
 /**
  * Optional hook to enforce work budgets inside minimization algorithms.
+ *
+ * @internal
  */
 interface WorkBudgetAwareMinimizationAlgorithmInterface
 {

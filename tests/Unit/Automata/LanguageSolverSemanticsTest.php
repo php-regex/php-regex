@@ -16,12 +16,12 @@ namespace RegexParser\Tests\Unit\Automata;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Exception\ComplexityException;
 
-final class RegexSolverTest extends TestCase
+final class LanguageSolverSemanticsTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideIntersectionCases')]
@@ -31,7 +31,7 @@ final class RegexSolverTest extends TestCase
         bool $expectedEmpty,
         ?string $expectedExample,
     ): void {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->intersection($left, $right, $this->fullMatchOptions());
 
         $this->assertSame($expectedEmpty, $result->isEmpty);
@@ -46,7 +46,7 @@ final class RegexSolverTest extends TestCase
         bool $expectedSubset,
         bool $expectsCounterExample,
     ): void {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->subsetOf($left, $right, $this->fullMatchOptions());
 
         $this->assertSame($expectedSubset, $result->isSubset);
@@ -61,7 +61,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_route_shadowing_is_detected(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->subsetOf('/edit/', '/[a-z]+/', $this->fullMatchOptions());
 
         $this->assertTrue($result->isSubset);
@@ -70,7 +70,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_equivalence_of_refactorings_is_detected(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/(a|b)c/', '/ac|bc/', $this->fullMatchOptions());
 
         $this->assertTrue($result->isEquivalent);
@@ -81,7 +81,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_non_equivalence_returns_counter_example(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/a*/', '/a+/', $this->fullMatchOptions());
 
         $this->assertFalse($result->isEquivalent);
@@ -92,7 +92,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_full_match_semantics_treat_anchors_as_redundant(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $result = $solver->equivalent('/^foo$/', '/foo/', $this->fullMatchOptions());
 
         $this->assertTrue($result->isEquivalent);
@@ -101,7 +101,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_partial_match_intersection_uses_search_semantics(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
 
         $result = $solver->intersection('/admin/', '/admin\\/secure/', $options);
@@ -115,7 +115,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_partial_match_rejects_anchors(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
 
         $this->expectException(ComplexityException::class);
@@ -125,7 +125,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_partial_match_start_anchor_limits_language(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
 
         $anchoredSubset = $solver->subsetOf('/^a/', '/a/', $options);
@@ -139,7 +139,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_partial_match_end_anchor_limits_language(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
 
         $anchoredSubset = $solver->subsetOf('/a$/', '/a/', $options);
@@ -153,7 +153,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_partial_match_rejects_nested_anchor_alternation(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
 
         $this->expectException(ComplexityException::class);
@@ -176,7 +176,7 @@ final class RegexSolverTest extends TestCase
     #[DataProvider('provideMisplacedAnchorPatterns')]
     public function test_full_match_refuses_an_anchor_it_would_have_to_ignore(string $pattern, string $expected): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessage($expected);
@@ -210,7 +210,7 @@ final class RegexSolverTest extends TestCase
     #[Test]
     public function test_full_match_keeps_accepting_anchors_at_the_edges(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
 
         // A whole-string match starts at the start and ends at the end, so
         // these anchors really do say nothing.

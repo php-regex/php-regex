@@ -123,6 +123,26 @@ $engine->match('/(a+)+$/', str_repeat('a', 20).'!', new PcreLimits(10, 100000))-
 the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
 `matched` is `null` when the engine gave no answer.
 
+### LanguageSolver
+
+`RegexParser\Automata\LanguageSolver` compares the languages of two patterns of
+the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
+return a result carrying the shortest string that proves the answer, and
+`compile()` returns a pattern's DFA.
+
+```php
+use RegexParser\Automata\LanguageSolver;
+
+$solver = new LanguageSolver();
+
+$solver->intersection('/[a-c]+/', '/[b-d]+/')->example; // "b"
+$solver->subsetOf('/\w+/', '/[a-zA-Z0-9]+/')->counterExample; // "_"
+$solver->equivalent('/[0-9]+/', '/\d+/')->isEquivalent; // true
+```
+
+See [the logic solver reference](logic-solver.md#php-api) for the options, the
+DFA cache and the classes of the namespace that are public.
+
 ---
 
 ## Configuration Options

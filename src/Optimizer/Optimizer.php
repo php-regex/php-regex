@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Optimizer;
 
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\ErrorCode;
 use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Exception\RegexException;
@@ -108,7 +108,7 @@ final readonly class Optimizer
     private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new RegexSolver($this->parser);
+            $solver = new LanguageSolver($this->parser);
             $result = $solver->equivalent($original, $optimized, new SolverOptions());
 
             return $result->isEquivalent;

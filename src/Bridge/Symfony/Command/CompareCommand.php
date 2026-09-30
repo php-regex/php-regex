@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace RegexParser\Bridge\Symfony\Command;
 
-use RegexParser\Automata\Api\RegexLanguageSolver;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
@@ -115,7 +115,7 @@ final class CompareCommand extends Command
             return Command::INVALID;
         }
 
-        $solver = RegexLanguageSolver::forRegex($this->regex->parser());
+        $solver = new LanguageSolver($this->regex->parser());
         $options = new SolverOptions(
             matchMode: MatchMode::FULL,
             minimizationAlgorithm: $minimizer,
@@ -144,13 +144,13 @@ final class CompareCommand extends Command
     }
 
     private function handleIntersection(
-        RegexLanguageSolver $solver,
+        LanguageSolver $solver,
         SolverOptions $options,
         string $pattern1,
         string $pattern2,
         SymfonyStyle $io,
     ): int {
-        $result = $solver->intersectionEmpty($pattern1, $pattern2, $options);
+        $result = $solver->intersection($pattern1, $pattern2, $options);
 
         if ($result->isEmpty) {
             $io->success('No intersection found. These regexes are disjoint.');
@@ -165,7 +165,7 @@ final class CompareCommand extends Command
     }
 
     private function handleSubset(
-        RegexLanguageSolver $solver,
+        LanguageSolver $solver,
         SolverOptions $options,
         string $pattern1,
         string $pattern2,
@@ -186,7 +186,7 @@ final class CompareCommand extends Command
     }
 
     private function handleEquivalence(
-        RegexLanguageSolver $solver,
+        LanguageSolver $solver,
         SolverOptions $options,
         string $pattern1,
         string $pattern2,

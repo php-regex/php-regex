@@ -26,6 +26,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * Determinizes NFAs into DFAs using a configured strategy.
+ *
+ * @internal
  */
 final readonly class DfaBuilder
 {

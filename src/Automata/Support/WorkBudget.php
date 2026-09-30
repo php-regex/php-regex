@@ -18,6 +18,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * Tracks automata work and enforces a hard budget.
+ *
+ * @internal
  */
 final class WorkBudget
 {

@@ -19,6 +19,8 @@ use RegexParser\Automata\Support\WorkBudget;
 
 /**
  * Hopcroft's DFA minimization using a worklist and inverse transitions.
+ *
+ * @internal
  */
 final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudgetAwareMinimizationAlgorithmInterface
 {

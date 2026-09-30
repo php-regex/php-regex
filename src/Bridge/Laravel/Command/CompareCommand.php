@@ -17,7 +17,7 @@ use Illuminate\Console\Command;
 use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
 use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Engine\PcreEngine;
 use RegexParser\Regex;
 
@@ -95,7 +95,7 @@ final class CompareCommand extends Command
         $startTime = microtime(true);
 
         try {
-            $solver = new RegexSolver($this->regex->parser());
+            $solver = new LanguageSolver($this->regex->parser());
             $options = new SolverOptions(
                 minimizationAlgorithm: MinimizationAlgorithm::from($minimizer),
                 determinizationAlgorithm: DeterminizationAlgorithm::from($determinizer),

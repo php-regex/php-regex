@@ -17,6 +17,8 @@ use RegexParser\Automata\Model\Dfa;
 
 /**
  * Strategy interface for DFA minimization algorithms.
+ *
+ * @internal
  */
 interface MinimizationAlgorithmInterface
 {

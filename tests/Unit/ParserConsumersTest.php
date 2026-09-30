@@ -15,8 +15,7 @@ namespace RegexParser\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Api\RegexLanguageSolver;
-use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\ReDoS\ReDoSAnalyzer;
 use RegexParser\ReDoS\ReDoSSeverity;
@@ -36,8 +35,8 @@ final class ParserConsumersTest extends TestCase
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.2']);
 
         $this->assertSame(ReDoSSeverity::CRITICAL, (new ReDoSAnalyzer($parser))->analyze('/(a+)+$/')->severity);
-        $this->assertTrue((new RegexSolver($parser))->equivalent('/a|a/', '/a/')->isEquivalent);
-        $this->assertTrue(RegexLanguageSolver::forRegex($parser)->equivalent('/ab?/', '/a|ab/')->isEquivalent);
+        $this->assertTrue((new LanguageSolver($parser))->equivalent('/a|a/', '/a/')->isEquivalent);
+        $this->assertTrue((new LanguageSolver($parser))->equivalent('/ab?/', '/a|ab/')->isEquivalent);
         $this->assertSame('/a+/', (new RegexTranspiler($parser))->transpile('/a+/', 'javascript')->literal);
     }
 

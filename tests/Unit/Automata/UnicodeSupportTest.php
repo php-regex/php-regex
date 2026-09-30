@@ -15,9 +15,9 @@ namespace RegexParser\Tests\Unit\Automata;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Automata\Options\MatchMode;
 use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\RegexSolver;
 use RegexParser\Automata\Unicode\CodePointHelper;
 use RegexParser\Exception\LexerException;
 
@@ -26,7 +26,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_emoji_range_intersection(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         $result = $solver->intersection('/[🥵-🥶]/u', '/[🥳-🥶]/u', $options);
@@ -44,7 +44,7 @@ final class UnicodeSupportTest extends TestCase
             $this->markTestSkipped('mbstring is required for unicode length assertions.');
         }
 
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         $result = $solver->intersection('/./u', '/🙂/u', $options);
@@ -58,7 +58,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_unicode_word_class_matches_arabic(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         $result = $solver->intersection('/\\w+/u', '/مرحبا/u', $options);
@@ -70,7 +70,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_unicode_boundary_code_point(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         $boundaryChar = CodePointHelper::toString(0x10FFFF);
@@ -85,7 +85,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_invalid_utf8_literal_is_rejected(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         $this->expectException(LexerException::class);
@@ -95,7 +95,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_case_folding_covers_a_whole_unicode_block(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         // Folding used to walk every code point of the class; a class this
@@ -109,7 +109,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_case_folding_reaches_outside_the_basic_plane(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         // U+10400 DESERET CAPITAL LONG I folds to U+10428.
@@ -121,7 +121,7 @@ final class UnicodeSupportTest extends TestCase
     #[Test]
     public function test_unicode_classes_keep_their_boundaries(): void
     {
-        $solver = new RegexSolver();
+        $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
         // The classes are read from PCRE a block at a time; the edges of a

@@ -41,6 +41,8 @@ use RegexParser\Node\SequenceNode;
 
 /**
  * Builds an NFA from a regex AST using Thompson construction.
+ *
+ * @internal
  */
 final class AstToNfaTransformer implements AstToNfaTransformerInterface
 {

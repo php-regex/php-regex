@@ -15,6 +15,8 @@ namespace RegexParser\Automata\Model;
 
 /**
  * Immutable NFA state.
+ *
+ * @internal
  */
 final readonly class NfaState
 {

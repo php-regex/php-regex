@@ -17,6 +17,8 @@ use RegexParser\Automata\Alphabet\CharSet;
 
 /**
  * UTF-8 code point helpers for automata output and decoding.
+ *
+ * @internal
  */
 final class CodePointHelper
 {

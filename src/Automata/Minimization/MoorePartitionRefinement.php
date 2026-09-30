@@ -19,6 +19,8 @@ use RegexParser\Automata\Support\WorkBudget;
 
 /**
  * Moore's partition refinement minimization algorithm.
+ *
+ * @internal
  */
 final class MoorePartitionRefinement implements MinimizationAlgorithmInterface, WorkBudgetAwareMinimizationAlgorithmInterface
 {

@@ -19,6 +19,8 @@ use RegexParser\Automata\Support\WorkBudget;
 
 /**
  * Deterministic DFA minimizer delegating to a strategy implementation.
+ *
+ * @internal
  */
 final readonly class DfaMinimizer
 {

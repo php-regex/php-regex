@@ -17,6 +17,8 @@ use RegexParser\Automata\Unicode\CodePointHelper;
 
 /**
  * Immutable character set for automata alphabets.
+ *
+ * @internal
  */
 final readonly class CharSet
 {

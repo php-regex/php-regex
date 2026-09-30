@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace RegexParser\Lint;
 
-use RegexParser\Automata\Solver\RegexSolver;
+use RegexParser\Automata\LanguageSolver;
 use RegexParser\Exception\InvalidRegexOptionException;
 use RegexParser\Internal\PatternParser;
 use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
@@ -1198,7 +1198,7 @@ final readonly class RegexAnalysisService
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new RegexSolver($this->regex);
+            $solver = new LanguageSolver($this->regex);
             $result = $solver->equivalent($original, $optimized);
 
             return $result->isEquivalent;

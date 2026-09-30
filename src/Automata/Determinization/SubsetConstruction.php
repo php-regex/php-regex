@@ -23,6 +23,8 @@ use RegexParser\Exception\ComplexityException;
 
 /**
  * NFA determinization using classic subset (powerset) construction.
+ *
+ * @internal
  */
 final class SubsetConstruction implements DeterminizationAlgorithmInterface, WorkBudgetAwareDeterminizationAlgorithmInterface
 {

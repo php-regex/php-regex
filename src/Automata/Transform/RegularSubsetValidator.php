@@ -48,6 +48,8 @@ use RegexParser\Node\VersionConditionNode;
 
 /**
  * Validates that a regex AST stays within the supported regular subset.
+ *
+ * @internal
  */
 final class RegularSubsetValidator
 {

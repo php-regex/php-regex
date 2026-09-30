@@ -15,6 +15,8 @@ namespace RegexParser\Automata\Determinization;
 
 /**
  * Factory for NFA determinization algorithm strategies.
+ *
+ * @internal
  */
 final class DeterminizationAlgorithmFactory
 {
