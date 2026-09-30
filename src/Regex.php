@@ -460,6 +460,8 @@ final readonly class Regex
         $compiles = false !== @preg_match($checked, '') || !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');
         $sample = '';
         $attempts = [];
+        $gaveUp = 0;
+        $engineError = '';
         // A condition with one valid branch in two misses once in 2^32 calls.
         for ($attempt = 0; $attempt < 32; $attempt++) {
             $sample = $ast->accept($generator);
@@ -471,11 +473,17 @@ final readonly class Regex
                 return $sample;
             }
 
-            $attempts[$sample] = true;
+            if (0 === $matches) {
+                $attempts[$sample] = true;
+            } else {
+                $gaveUp++;
+                $engineError = preg_last_error_msg();
+            }
         }
 
         // An assertion on what surrounds the match, as "\b" or "(?!^)", may
-        // hold once the sample has text around it.
+        // hold once the sample has text around it. A sample the engine gave
+        // up on is not tried again: with text around it, it gives up again.
         foreach (array_keys($attempts) as $attempt) {
             foreach (['a', ' ', "\n"] as $padding) {
                 foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
@@ -484,6 +492,10 @@ final readonly class Regex
                     }
                 }
             }
+        }
+
+        if ($gaveUp > 0) {
+            throw new SampleGenerationException(\sprintf('No sample matching %s was found: the engine gave up checking %d of the samples (%s).', $regex, $gaveUp, $engineError));
         }
 
         throw new SampleGenerationException(\sprintf('No sample matching %s was found: the pattern may match nothing, or its assertions ask for more than the samples give.', $regex));

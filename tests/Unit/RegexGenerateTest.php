@@ -41,6 +41,17 @@ final class RegexGenerateTest extends TestCase
         }
     }
 
+    #[Test]
+    public function test_a_pattern_the_engine_answers_on_is_said_to_match_nothing(): void
+    {
+        try {
+            Regex::create(['cache' => null])->generate('/a+(*FAIL)/');
+            self::fail('A sample was given for a pattern nothing matches.');
+        } catch (SampleGenerationException $e) {
+            $this->assertSame('No sample matching /a+(*FAIL)/ was found: the pattern may match nothing, or its assertions ask for more than the samples give.', $e->getMessage());
+        }
+    }
+
     /**
      * @return iterable<string, array{pattern: string}>
      */
@@ -114,9 +125,32 @@ final class RegexGenerateTest extends TestCase
             self::fail('A sample the engine could not check was given.');
         } catch (SampleGenerationException $e) {
             $this->assertSame('regex.generate.no_match', $e->getErrorCode());
+            $this->assertStringContainsString('the engine gave up checking 32 of the samples (Recursion limit exhausted).', $e->getMessage());
         } finally {
             ini_set('pcre.recursion_limit', false === $limit ? '100000' : $limit);
         }
+    }
+
+    /**
+     * A sample the engine gave up on is not checked again with text around
+     * it, which the engine gives up on as well. Each check here runs to the
+     * backtrack limit, two ways at each of 25 characters: 32 of them take
+     * about a second, the 288 padded ones took ten more. The generator's own
+     * work is small beside them.
+     */
+    #[Test]
+    public function test_a_sample_the_engine_gave_up_on_is_not_padded(): void
+    {
+        $start = hrtime(true);
+
+        try {
+            Regex::create(['cache' => null])->generate('/(?:\\w|\\w){25}\\z!/');
+            self::fail('A sample was given for a pattern nothing matches.');
+        } catch (SampleGenerationException $e) {
+            $this->assertStringEndsWith('the engine gave up checking 32 of the samples (Backtrack limit exhausted).', $e->getMessage());
+        }
+
+        $this->assertLessThan(4.0, (hrtime(true) - $start) / 1e9);
     }
 
     #[Test]
