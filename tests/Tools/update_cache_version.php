@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 
 /*
- * Writes Regex::CACHE_VERSION from the code that builds an AST.
+ * Writes RegexParser::CACHE_VERSION from the code that builds an AST.
  *
  * The version is not a number to remember to raise: a cached tree is only
  * worth restoring while the current code would build the same one, so the
@@ -26,16 +26,16 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\Tests\Support\AstFingerprint;
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];
 
 $check = \in_array('--check', $arguments, true);
-$path = AstFingerprint::root().'/src/Regex.php';
+$path = AstFingerprint::root().'/src/RegexParser.php';
 $fingerprint = AstFingerprint::compute();
-$current = Regex::CACHE_VERSION;
+$current = RegexParser::CACHE_VERSION;
 
 if ($fingerprint === $current) {
     echo 'Cache version is up to date: ', $current, \PHP_EOL;
@@ -45,7 +45,7 @@ if ($fingerprint === $current) {
 
 if ($check) {
     fwrite(\STDERR, \sprintf(
-        'The code that builds the AST changed.%s  cache version: %s%s  fingerprint:   %s%sRun "task cache-version" and commit src/Regex.php.%s',
+        'The code that builds the AST changed.%s  cache version: %s%s  fingerprint:   %s%sRun "task cache-version" and commit src/RegexParser.php.%s',
         \PHP_EOL,
         $current,
         \PHP_EOL,

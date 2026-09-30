@@ -63,6 +63,25 @@ foreach ($stream as $token) {
 
 ---
 
+### RegexParser: reading and judging a pattern
+
+`RegexParser` does the reading: `parse()`, `parseTolerant()`, `validate()`,
+`parsePattern()`, `tokenize()`, with the cache and the target. It takes the same
+options as `Regex::create()` and gives the same answers; `Regex` hands its own
+to anything else that reads patterns, through `parser()`:
+
+```php
+use RegexParser\RegexParser;
+
+$parser = RegexParser::create(['php_version' => '8.2']);
+$parser->validate('/(?[ \d ])/')->isValid;  // false: PHP 8.2 bundles PCRE2 10.40
+
+$regex = \RegexParser\Regex::create(['cache' => null]);
+$regex->parser()->parse('/a+/');              // the tree $regex->parse() gives
+```
+
+A library that only reads and validates patterns needs nothing else.
+
 ### Regex::clearValidatorCaches(): void
 
 Clears static caches used by the validator. Important for long-running processes to prevent memory growth.

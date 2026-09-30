@@ -64,7 +64,7 @@ final readonly class RegexOptions
         public CacheInterface $cache,
         public array $redosIgnoredPatterns = [],
         public bool $runtimePcreValidation = false,
-        public int $maxRecursionDepth = Regex::DEFAULT_MAX_RECURSION_DEPTH,
+        public int $maxRecursionDepth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
         $this->target = $target ?? PcreTarget::runtime();
@@ -115,8 +115,8 @@ final readonly class RegexOptions
     private static function createDefault(): self
     {
         return new self(
-            Regex::DEFAULT_MAX_PATTERN_LENGTH,
-            Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+            RegexParser::DEFAULT_MAX_PATTERN_LENGTH,
+            RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
             new ArrayCache(),
             [],
             false,
@@ -153,7 +153,7 @@ final readonly class RegexOptions
      */
     private static function getPatternLength(array $options): int
     {
-        $length = $options['max_pattern_length'] ?? Regex::DEFAULT_MAX_PATTERN_LENGTH;
+        $length = $options['max_pattern_length'] ?? RegexParser::DEFAULT_MAX_PATTERN_LENGTH;
 
         if (!\is_int($length) || $length <= 0) {
             throw new InvalidRegexOptionException(
@@ -173,7 +173,7 @@ final readonly class RegexOptions
      */
     private static function getLookbehindLength(array $options): int
     {
-        $length = $options['max_lookbehind_length'] ?? Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH;
+        $length = $options['max_lookbehind_length'] ?? RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
         if (!\is_int($length) || $length < 0) {
             throw new InvalidRegexOptionException(
@@ -211,7 +211,7 @@ final readonly class RegexOptions
      */
     private static function getRecursionDepth(array $options): int
     {
-        $depth = $options['max_recursion_depth'] ?? Regex::DEFAULT_MAX_RECURSION_DEPTH;
+        $depth = $options['max_recursion_depth'] ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
 
         if (!\is_int($depth) || $depth <= 0) {
             throw new InvalidRegexOptionException(

@@ -57,10 +57,10 @@ final class RegexEdgeCasesTest extends TestCase
     public function test_cache_seed_includes_the_target(): void
     {
         $regex = Regex::create(['php_version' => 80000]);
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
 
         $method = $ref->getMethod('getCacheSeed');
-        $seed = $method->invoke($regex, '/abc/');
+        $seed = $method->invoke($regex->parser(), '/abc/');
 
         $this->assertIsString($seed);
         $this->assertStringContainsString('#target=php8.0/pcre10.40', (string) $seed);
@@ -86,22 +86,22 @@ final class RegexEdgeCasesTest extends TestCase
         };
         $regex = Regex::create(['cache' => $cache]);
 
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
 
         $method = $ref->getMethod('storeInCache');
         $ast = new RegexNode(new SequenceNode([new LiteralNode('a', 0, 0)], 0, 0), '', '/', 0, 1);
 
-        $result = $method->invoke($regex, 'key', $ast);
+        $result = $method->invoke($regex->parser(), 'key', $ast);
         $this->assertNull($result);
     }
 
     public function test_build_fallback_ast_uses_full_pattern_when_no_error_position(): void
     {
         $regex = Regex::create();
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
         $method = $ref->getMethod('buildFallbackAst');
 
-        $fallback = $method->invoke($regex, 'abc', '', '/', 3, null);
+        $fallback = $method->invoke($regex->parser(), 'abc', '', '/', 3, null);
 
         $this->assertInstanceOf(RegexNode::class, $fallback);
         $this->assertInstanceOf(SequenceNode::class, $fallback->pattern);

@@ -55,7 +55,7 @@ use RegexParser\Node\SubroutineNode;
 use RegexParser\Node\UnicodePropNode;
 use RegexParser\Node\VersionConditionNode;
 use RegexParser\PcreTarget;
-use RegexParser\Regex;
+use RegexParser\RegexParser;
 use RegexParser\Token;
 use RegexParser\TokenType;
 
@@ -432,7 +432,7 @@ final class ValidatorNodeVisitor extends AbstractNodeVisitor
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(
-        private readonly int $maxLookbehindLength = Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+        private readonly int $maxLookbehindLength = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
         private readonly ?string $pattern = null,
         ?PcreTarget $target = null,
     ) {

@@ -41,10 +41,10 @@ final class RegexOptionsTest extends TestCase
             'max_recursion_depth' => 2048,
             'php_version' => '8.3',
         ]);
-        $this->assertSame(50_000, (new \ReflectionProperty($regex, 'maxPatternLength'))->getValue($regex));
-        $this->assertSame(512, (new \ReflectionProperty($regex, 'maxLookbehindLength'))->getValue($regex));
-        $this->assertFalse((new \ReflectionProperty($regex, 'runtimePcreValidation'))->getValue($regex));
-        $this->assertSame(2048, (new \ReflectionProperty($regex, 'maxRecursionDepth'))->getValue($regex));
+        $this->assertSame(50_000, (new \ReflectionProperty($regex->parser(), 'maxPatternLength'))->getValue($regex->parser()));
+        $this->assertSame(512, (new \ReflectionProperty($regex->parser(), 'maxLookbehindLength'))->getValue($regex->parser()));
+        $this->assertFalse((new \ReflectionProperty($regex->parser(), 'runtimePcreValidation'))->getValue($regex->parser()));
+        $this->assertSame(2048, (new \ReflectionProperty($regex->parser(), 'maxRecursionDepth'))->getValue($regex->parser()));
         $this->assertSame(80300, $regex->target()->phpVersionId);
     }
 

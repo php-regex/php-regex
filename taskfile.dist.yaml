@@ -65,7 +65,7 @@ tasks:
     method: checksum
 
   cache-version:
-    desc: Write Regex::CACHE_VERSION from the code that builds an AST
+    desc: Write RegexParser::CACHE_VERSION from the code that builds an AST
     cmds:
       - cmd: php tests/Tools/update_cache_version.php
     sources:
@@ -76,9 +76,12 @@ tasks:
       - src/TokenType.php
       - src/Node/**/*.php
       - src/Internal/**/*.php
+      - src/NodeVisitor/ValidatorNodeVisitor.php
+      - src/PcreTarget.php
+      - src/GroupNumbering*.php
       - tests/Support/AstFingerprint.php
     generates:
-      - src/Regex.php
+      - src/RegexParser.php
     method: checksum
 
   phpunit:

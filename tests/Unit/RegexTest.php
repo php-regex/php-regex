@@ -247,12 +247,12 @@ final class RegexTest extends TestCase
     public function test_check_runtime_compilation_default_error_message(): void
     {
         $regex = Regex::create();
-        $reflection = new \ReflectionClass($regex);
+        $reflection = new \ReflectionClass($regex->parser());
         $method = $reflection->getMethod('checkRuntimeCompilation');
 
         // Use an invalid regex pattern that causes preg_match to fail
         // This should trigger the default error message path
-        $result = $method->invoke($regex, '/invalid[pattern/', 'invalid[pattern', 1);
+        $result = $method->invoke($regex->parser(), '/invalid[pattern/', 'invalid[pattern', 1);
 
         // Should return ValidationResult with default error message
         $this->assertInstanceOf(ValidationResult::class, $result);
@@ -263,18 +263,18 @@ final class RegexTest extends TestCase
     public function test_check_runtime_compilation_uses_default_for_empty_message(): void
     {
         $regex = Regex::create();
-        $reflection = new \ReflectionClass($regex);
+        $reflection = new \ReflectionClass($regex->parser());
         $method = $reflection->getMethod('checkRuntimeCompilation');
 
         // First, verify that normalizeRuntimeErrorMessage returns 'No error' for certain inputs
         $normalizeMethod = $reflection->getMethod('normalizeRuntimeErrorMessage');
-        $normalizedEmpty = $normalizeMethod->invoke($regex, 'preg_match(): No error');
+        $normalizedEmpty = $normalizeMethod->invoke($regex->parser(), 'preg_match(): No error');
         $this->assertSame('No error', $normalizedEmpty);
 
         // Now test checkRuntimeCompilation with a pattern that triggers compilation error
         // The exact message will vary, but we verify it contains 'PCRE runtime error:'
         // This tests the path where the error message processing happens
-        $result = $method->invoke($regex, '/invalid[pattern/', 'invalid[pattern', 7);
+        $result = $method->invoke($regex->parser(), '/invalid[pattern/', 'invalid[pattern', 7);
 
         // Should return ValidationResult with error message containing the default prefix
         $this->assertInstanceOf(ValidationResult::class, $result);
@@ -340,11 +340,11 @@ final class RegexTest extends TestCase
     public function test_build_visual_snippet_truncates_and_marks_caret(): void
     {
         $regex = Regex::create();
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
         $method = $ref->getMethod('buildVisualSnippet');
 
         $pattern = str_repeat('a', 120);
-        $snippet = $method->invoke($regex, $pattern, 110);
+        $snippet = $method->invoke($regex->parser(), $pattern, 110);
 
         $this->assertIsString($snippet);
         /** @var string $snippetString */
@@ -357,10 +357,10 @@ final class RegexTest extends TestCase
     public function test_build_visual_snippet_returns_empty_for_nulls(): void
     {
         $regex = Regex::create();
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
         $method = $ref->getMethod('buildVisualSnippet');
 
-        $this->assertSame('', $method->invoke($regex, null, null));
+        $this->assertSame('', $method->invoke($regex->parser(), null, null));
     }
 
     public function test_build_search_patterns_and_confidence_levels(): void
@@ -414,34 +414,34 @@ final class RegexTest extends TestCase
 
     public function test_normalize_runtime_error_message(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
+        $ref = new \ReflectionClass($this->regexService->parser());
         $method = $ref->getMethod('normalizeRuntimeErrorMessage');
 
-        $this->assertSame('No error', $method->invoke($this->regexService, 'preg_match(): No error'));
-        $this->assertSame('Some error', $method->invoke($this->regexService, 'preg_match(): Some error'));
+        $this->assertSame('No error', $method->invoke($this->regexService->parser(), 'preg_match(): No error'));
+        $this->assertSame('Some error', $method->invoke($this->regexService->parser(), 'preg_match(): Some error'));
     }
 
     public function test_extract_offset_from_message(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
+        $ref = new \ReflectionClass($this->regexService->parser());
         $method = $ref->getMethod('extractOffsetFromMessage');
 
-        $this->assertSame(10, $method->invoke($this->regexService, 'Error at offset 10'));
-        $this->assertSame(5, $method->invoke($this->regexService, 'Offset 5 found'));
-        $this->assertNull($method->invoke($this->regexService, 'No offset here'));
+        $this->assertSame(10, $method->invoke($this->regexService->parser(), 'Error at offset 10'));
+        $this->assertSame(5, $method->invoke($this->regexService->parser(), 'Offset 5 found'));
+        $this->assertNull($method->invoke($this->regexService->parser(), 'No offset here'));
     }
 
     public function test_build_visual_snippet_edge_cases(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
+        $ref = new \ReflectionClass($this->regexService->parser());
         $method = $ref->getMethod('buildVisualSnippet');
 
-        $this->assertSame('', $method->invoke($this->regexService, 'pattern', -1));
-        $snippet = $method->invoke($this->regexService, 'pattern', 100);
+        $this->assertSame('', $method->invoke($this->regexService->parser(), 'pattern', -1));
+        $snippet = $method->invoke($this->regexService->parser(), 'pattern', 100);
         $this->assertIsString($snippet);
         $this->assertStringContainsString('Line 1:', (string) $snippet);
         $this->assertStringContainsString('^', (string) $snippet);
-        $this->assertSame('', $method->invoke($this->regexService, null, 5));
+        $this->assertSame('', $method->invoke($this->regexService->parser(), null, 5));
     }
 
     public function test_extract_unique_literals(): void
@@ -543,20 +543,20 @@ final class RegexTest extends TestCase
     public function test_validate_resource_limits(): void
     {
         $regex = Regex::create(['max_pattern_length' => 5]);
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
         $method = $ref->getMethod('validateResourceLimits');
 
         $this->expectException(ResourceLimitException::class);
-        $method->invoke($regex, 'long pattern here');
+        $method->invoke($regex->parser(), 'long pattern here');
     }
 
     public function test_build_validation_failure(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
+        $ref = new \ReflectionClass($this->regexService->parser());
         $method = $ref->getMethod('buildValidationFailure');
 
         $exception = new SyntaxErrorException('Test error');
-        $result = $method->invoke($this->regexService, $exception);
+        $result = $method->invoke($this->regexService->parser(), $exception);
 
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertFalse($result->isValid());
@@ -566,10 +566,10 @@ final class RegexTest extends TestCase
     public function test_safe_extract_pattern_handles_parser_exception(): void
     {
         $regex = Regex::create();
-        $ref = new \ReflectionClass($regex);
+        $ref = new \ReflectionClass($regex->parser());
         $method = $ref->getMethod('safeExtractPattern');
 
-        $result = $method->invoke($regex, 'invalid');
+        $result = $method->invoke($regex->parser(), 'invalid');
 
         $this->assertSame(['invalid', '', '/', \strlen('invalid')], $result);
     }
@@ -674,10 +674,10 @@ final class RegexTest extends TestCase
         $cache = new NullCache();
         $regex = Regex::create(['cache' => $cache]);
 
-        $reflection = new \ReflectionClass($regex);
+        $reflection = new \ReflectionClass($regex->parser());
         $loadFromCacheMethod = $reflection->getMethod('loadFromCache');
 
-        $result = $loadFromCacheMethod->invoke($regex, 'test_regex');
+        $result = $loadFromCacheMethod->invoke($regex->parser(), 'test_regex');
 
         $this->assertSame([null, null], $result);
     }
@@ -689,11 +689,11 @@ final class RegexTest extends TestCase
 
         $ast = $regex->parse('/test/');
 
-        $reflection = new \ReflectionClass($regex);
+        $reflection = new \ReflectionClass($regex->parser());
         $storeInCacheMethod = $reflection->getMethod('storeInCache');
 
         // This should not throw an exception and should return early
-        $storeInCacheMethod->invoke($regex, null, $ast);
+        $storeInCacheMethod->invoke($regex->parser(), null, $ast);
 
         // If we reach here without exception, the early return worked correctly
         $this->expectNotToPerformAssertions();
@@ -714,11 +714,11 @@ final class RegexTest extends TestCase
         $regex2 = Regex::create(['cache' => $cache]);
 
         // Use reflection to call the private doParse method
-        $reflection = new \ReflectionClass($regex2);
+        $reflection = new \ReflectionClass($regex2->parser());
         $doParseMethod = $reflection->getMethod('doParse');
 
         // This should return the cached AST without parsing from scratch
-        $cachedAst = $doParseMethod->invoke($regex2, '/test/');
+        $cachedAst = $doParseMethod->invoke($regex2->parser(), '/test/');
 
         // Should return the same AST that was cached
         $this->assertEquals($originalAst, $cachedAst);
@@ -758,11 +758,11 @@ final class RegexTest extends TestCase
 
         $regex = Regex::create(['cache' => $cache]);
 
-        $reflection = new \ReflectionClass($regex);
+        $reflection = new \ReflectionClass($regex->parser());
         $doParseMethod = $reflection->getMethod('doParse');
 
         // This should return the cached AST immediately without parsing
-        $result = $doParseMethod->invoke($regex, '/any-pattern/');
+        $result = $doParseMethod->invoke($regex->parser(), '/any-pattern/');
 
         // Should return the exact same cached AST instance
         $this->assertSame($cachedAst, $result);
