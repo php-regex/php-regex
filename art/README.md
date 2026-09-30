@@ -31,7 +31,8 @@ small formats:
 | `banner-dark.svg` / `banner-dark.png` | Dark-token twin, for `<picture>`-based theme switching |
 | `social.svg` / `social.png` | GitHub social preview (light), upload in repo settings; key content keeps a 71px+ safe margin against 16:9 recrops |
 | `social-dark.svg` / `social-dark.png` | Dark-token twin of the social card |
-| `org-icon.svg` / `org-icon.png` | GitHub organization avatar (circle-cropped at 20-40px); navy tile variant |
+| `org-icon.svg` / `org-icon.png` | Organization icon, light paper tile |
+| `org-icon-dark.svg` / `org-icon-dark.png` | Organization icon, navy tile — the recommended GitHub avatar (circle-cropped at 20-40px, reads on light and dark UIs) |
 | `favicon.svg` / `favicon.png` | Browser tab / docs-site icon; same navy tile design |
 
 ## Rules
@@ -78,6 +79,7 @@ $ rsvg-convert -w 1280 -h 640 art/social-dark.svg -o art/social-dark.png
 $ rsvg-convert -w 512 -h 512 art/favicon.svg -o /tmp/fav.png
 $ pngquant --force --output art/favicon.png /tmp/fav.png
 $ rsvg-convert -w 1024 -h 1024 art/org-icon.svg -o art/org-icon.png
+$ rsvg-convert -w 1024 -h 1024 art/org-icon-dark.svg -o art/org-icon-dark.png
 ```
 
 The wordmark paths are generated from Inter Display (Black 900 / Bold 700) with
