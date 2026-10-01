@@ -23,6 +23,25 @@ source still pointed there.
    `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`,
    `regex-toolkit`, `regex-cli`, `regex-language-server`, `regex-phpstan`,
    `regex-symfony`, `regex-laravel`.
+3b. **GitHub, `php-regex/regex-parser`, once Packagist has switched** — every
+   `composer.lock` of 1.x points at
+   `api.github.com/repos/php-regex/regex-parser/zipball/<commit>` (~13k
+   installs a month): the new repository must hold those commits, under refs
+   Composer does not read (a `1.x` branch or `v1.*` tags there would be
+   imported as `php-regex/regex-parser` 1.x). Checked on a scratch repository:
+   GitHub keeps such refs and serves the zipball of a commit only they reach.
+   ```bash
+   gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki \
+     --homepage https://github.com/php-regex/php-regex \
+     --description "[READ-ONLY] The PCRE2 regex parser. Split of php-regex/php-regex."
+   git fetch origin 1.x
+   git push git@github.com:php-regex/regex-parser.git \
+     refs/remotes/origin/1.x:refs/archive/1.x \
+     b14ef028:refs/archive/2.x-before-split
+   ```
+   Then add `regex-parser` to the `SPLIT_TOKEN` token: the next push to `2.x`
+   splits it (`bin/split` no longer skips it once it is a repository of its
+   own).
 4. ~~**GitHub** — create a fine-grained token~~ (done 2026-10-01; add `regex-parser` to it once that repository exists) with *Contents: read and write* on
    those 14 repositories only, and store it as the secret `SPLIT_TOKEN` of
    `php-regex/php-regex` (Settings → Secrets and variables → Actions).
