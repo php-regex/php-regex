@@ -6486,7 +6486,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/composer/composer/src/Composer/Command/PackageDiscoveryTrait.php:224:43
+  corpus/composer/composer/src/Composer/Command/PackageDiscoveryTrait.php:225:43
       → {^\s*(?P<name>[\S/]+)(?:\s+(?P<version>\S+))?\s*$}
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
@@ -6569,7 +6569,7 @@
          - {^(?:\* ) *(\(no branch\)|\(detached from \S+\)|\(HEAD detached at \S+\)|\S+) *([a-f0-9]+) .*$}
          + {^\*  *(\(no branch\)|\(detached from \S+\)|\(HEAD detached at \S+\)|\S+) *([a-f0-9]+) .*$}
 
-  corpus/composer/composer/src/Composer/Package/Loader/ArrayLoader.php:328:42
+  corpus/composer/composer/src/Composer/Package/Loader/ArrayLoader.php:331:42
       → {(\.9{7})+}
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10554,7 +10554,7 @@
          - %^(?:(?:https?|ftp)://)?(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu
          + %^(?:(?:https?|ftp)://)?(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?>(?:[a-z\d\x{00a1}-\x{ffff}]+-?))*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu
 
-  corpus/jetpack/projects/packages/connection/src/class-manager.php:2121:4
+  corpus/jetpack/projects/packages/connection/src/class-manager.php:2334:4
       → #(https?://[^?/]+)(/?.*)?$#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
@@ -15236,7 +15236,7 @@
          - {(-----BEGIN PUBLIC KEY-----.+?-----END PUBLIC KEY-----)}s
          + {(-{5}BEGIN PUBLIC KEY-{5}.+?-{5}END PUBLIC KEY-{5})}s
 
-  corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:305:36
+  corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:313:36
       → {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
      TIP 
          - {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
