@@ -45,7 +45,7 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0], $decoded['stats']);
         $this->assertSame([], $decoded['results']);
     }
 
@@ -102,7 +102,7 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array<string, int>, results: array<array<string, mixed>>} $decoded */
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1], $decoded['stats']);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos' => 0], $decoded['stats']);
         $this->assertIsArray($decoded['results']);
         $this->assertCount(2, $decoded['results']);
 

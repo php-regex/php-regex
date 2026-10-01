@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Internal\LintSummary;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\Ascii;
@@ -88,7 +89,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int} $stats
      */
     public function getSummary(array $stats): string
     {
@@ -111,8 +112,8 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $warnings = $report->stats['warnings'];
 
         if ($errors > 0) {
-            return \sprintf('FAIL: %d invalid patterns, %d warnings, %d optimizations.'.\PHP_EOL,
-                $errors, $warnings, $report->stats['optimizations']);
+            return \sprintf('FAIL: %s, %d warnings, %d optimizations.'.\PHP_EOL,
+                LintSummary::errors($report->stats), $warnings, $report->stats['optimizations']);
         }
 
         if ($warnings > 0) {
@@ -194,8 +195,10 @@ class ConsoleFormatter extends AbstractOutputFormatter
             $badge = $this->issueBadge($issueType);
             $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
 
+            // An invalid pattern says it all in its message and caret; a
+            // ReDoS error still needs its hint, which opens on the evidence.
             $hint = $issue['hint'] ?? null;
-            if ('error' !== $issueType && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
+            if (('error' !== $issueType || isset($issue['analysis'])) && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
                 $formattedHint = $this->formatHint($hint);
                 if ('' !== $formattedHint) {
                     $parts[] = \sprintf('         %s'.\PHP_EOL, $this->dim(self::ARROW_LABEL.' '.$formattedHint));
@@ -564,7 +567,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         if ($errors > 0) {
             $output .= \sprintf('  %s %s%s'.\PHP_EOL,
                 $this->badge('FAIL', self::WHITE, self::BG_RED),
-                $this->color(\sprintf('%d invalid patterns', $errors), self::RED.self::BOLD),
+                $this->color(LintSummary::errors($stats), self::RED.self::BOLD),
                 $this->dim(\sprintf(', %d warnings, %d optimizations.', $warnings, $optimizations)),
             );
         } elseif ($warnings > 0) {

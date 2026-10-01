@@ -87,6 +87,8 @@ $analysis = Regex::redos('/^(a+)+$/');
 $analysis->isSafe();                  // false
 $analysis->severity->value;           // 'critical'
 $analysis->getVulnerableSubpattern(); // 'a+'
+$analysis->headline();                // 'Exponential backtracking (proven)'
+$analysis->witness->render();         // '"a" x n . "!"', the input that triggers it
 ```
 
 Or transpile it for another engine:

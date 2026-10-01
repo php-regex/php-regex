@@ -55,7 +55,7 @@ The LSP server analyzes PHP files and reports regex issues as you type:
 | Validation Errors | PCRE compatibility issues |
 | Unicode Warnings | Missing `/u` flag for Unicode features |
 | Style Issues | Anti-patterns and best practice violations |
-| Performance Hints | Potential ReDoS vulnerabilities |
+| Performance Hints | Lint warnings on shapes that backtrack, as nested quantifiers; the ReDoS verdict itself comes from `regex analyze`, `regex lint --redos` or PHPStan |
 
 **Example diagnostics:**
 

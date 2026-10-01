@@ -49,19 +49,17 @@ final class ReDoSAnalyzerTest extends TestCase
         yield ['/^\d{4}-\d{2}-\d{2}$/', RedosSeverity::Safe];
         yield ['/^[a-z0-9]+(?:-[a-z0-9]+)*$/', RedosSeverity::Safe];
 
-        // LOW (Bounded nested)
-        yield ['/(a{1,5}){1,5}/', RedosSeverity::Low];
-
-        // MEDIUM (Single unbounded)
-        yield ['/a+/', RedosSeverity::Medium];
-        yield ['/.*ok/', RedosSeverity::Medium];
-
-        // HIGH (Nested unbounded)
-        yield ['/(a+)+/', RedosSeverity::Critical]; // Triggers Star Height > 1
-
-        // CRITICAL (Overlapping alternation in loop)
-        yield ['/(a|a)+/', RedosSeverity::Critical];
-        yield ['/(a|a)*/', RedosSeverity::Critical];
+        // Proven linear: no continuation of the pumped input is rejected, so a
+        // match attempt never backtracks. Measured on PCRE2 10.49, JIT off:
+        // every one matches a…a! (or never finds "ok") in under 0.5 ms at n=8000.
+        yield ['/(a{1,5}){1,5}/', RedosSeverity::Safe];
+        yield ['/a+/', RedosSeverity::Safe];
+        // o…o!k (the required "k" present): 0.11 ms at n=8000.
+        yield ['/.*ok/', RedosSeverity::Safe];
+        // Nested loops with nothing after them: the first run already matches.
+        yield ['/(a+)+/', RedosSeverity::Safe];
+        yield ['/(a|a)+/', RedosSeverity::Safe];
+        yield ['/(a|a)*/', RedosSeverity::Safe];
 
         // CRITICAL payload inside a conditional's condition (lookaround)
         yield ['/(?(?=(a+)+b)x|y)/', RedosSeverity::Critical];
@@ -74,9 +72,11 @@ final class ReDoSAnalyzerTest extends TestCase
 
     public function test_analysis_details(): void
     {
-        $analysis = $this->analyzer->analyze('/(a+)+/');
+        // Anchored at the end, so that a rejected continuation makes the nesting
+        // critical: a…a! fails at 19 pumps on 10.49. Without the "$", /(a+)+/
+        // matches a…a! at once and is proven linear.
+        $analysis = $this->analyzer->analyze('/(a+)+$/');
 
-        // The visitor detects critical nesting for this specific pattern
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertNotEmpty($analysis->recommendations);
     }

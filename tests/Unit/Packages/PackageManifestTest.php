@@ -151,12 +151,12 @@ final class PackageManifestTest extends TestCase
         // that promises nothing; make the class public instead, or keep it.
         $allowed = [
             'Automata' => ['Parser\Internal\StaticCaches'],
-            'Cli' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+            'Cli' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
             'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper'],
             'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\StaticCaches'],
             'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser'],
             'Optimizer' => ['Parser\Internal\PatternParser'],
-            'Redos' => ['Parser\Internal\PatternParser'],
+            'Redos' => ['Parser\Internal\PatternParser', 'Parser\Internal\StaticCaches'],
             'Symfony' => ['Parser\Internal\DisplayEscaper'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
         ];

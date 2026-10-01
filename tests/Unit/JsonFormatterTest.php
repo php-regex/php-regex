@@ -44,7 +44,7 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array{errors: int, warnings: int, optimizations: int}, results: array<int, array<string, mixed>>} $decoded */
         $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
 
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0], $decoded['stats']);
         $this->assertSame('/a+/', $decoded['results'][0]['pattern']);
         $this->assertArrayNotHasKey('problems', $decoded['results'][0]);
     }

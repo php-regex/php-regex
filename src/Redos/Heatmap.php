@@ -43,7 +43,7 @@ final class Heatmap
             return $body;
         }
 
-        $levels = array_fill(0, $length, 0);
+        $levels = array_fill(0, $length, RedosSeverity::Safe);
         foreach ($hotspots as $hotspot) {
             if (!$hotspot instanceof Hotspot) {
                 continue;
@@ -55,10 +55,10 @@ final class Heatmap
                 continue;
             }
 
-            $rank = $this->severityRank($hotspot->severity);
+            $rank = $hotspot->severity->rank();
             for ($i = $start; $i < $end; $i++) {
-                if ($rank > $levels[$i]) {
-                    $levels[$i] = $rank;
+                if ($rank > $levels[$i]->rank()) {
+                    $levels[$i] = $hotspot->severity;
                 }
             }
         }
@@ -66,7 +66,7 @@ final class Heatmap
         $output = '';
         $currentLevel = null;
         for ($i = 0; $i < $length; $i++) {
-            $level = $levels[$i];
+            $level = $this->levelFor($levels[$i]);
             if (null === $currentLevel || $level !== $currentLevel) {
                 if (null !== $currentLevel) {
                     $output .= self::RESET;
@@ -78,14 +78,16 @@ final class Heatmap
             $output .= $body[$i];
         }
 
-        if (null !== $currentLevel) {
-            $output .= self::RESET;
-        }
-
-        return $output;
+        return $output.self::RESET;
     }
 
-    private function severityRank(RedosSeverity $severity): int
+    /**
+     * The colour level of a severity: green for safe and low, yellow,
+     * red and bright red up to critical, gray for a verdict the analysis
+     * could not reach. Which hotspot wins a span follows the severity's
+     * rank, not this level.
+     */
+    private function levelFor(RedosSeverity $severity): int
     {
         return match ($severity) {
             RedosSeverity::Safe => 0,
@@ -93,7 +95,7 @@ final class Heatmap
             RedosSeverity::Medium => 2,
             RedosSeverity::High => 3,
             RedosSeverity::Critical => 4,
-            RedosSeverity::Unknown => 1,
+            RedosSeverity::Unknown => 5,
         };
     }
 

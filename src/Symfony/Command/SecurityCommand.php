@@ -27,6 +27,7 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -489,6 +490,7 @@ final class SecurityCommand extends Command
                 $finding['score'],
             );
             $io->writeln($header);
+            $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Verdict:</> '.$finding['verdict']);
             $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Pattern:</> '.$this->formatPattern($finding['pattern']));
 
             if (null !== $finding['vulnerable'] && '' !== $finding['vulnerable']) {
@@ -501,6 +503,10 @@ final class SecurityCommand extends Command
                 $io->writeln(
                     '      <fg=gray>'.self::ARROW_LABEL.' Trigger:</> '.$this->formatExample($finding['trigger']),
                 );
+            }
+
+            if (null !== $finding['attack']) {
+                $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Attack:</> '.OutputFormatter::escape($finding['attack']));
             }
 
             $io->newLine();

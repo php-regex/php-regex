@@ -25,13 +25,13 @@ use PHPRegex\Redos\RedosAnalysis;
  * @phpstan-type LintIssue array{type: string, message: string, file: string, line: int, column?: int, fileOffset?: int|null, position?: int|null, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, pattern?: string, regex?: string, analysis?: RedosAnalysis, validation?: ValidationResult}
  * @phpstan-type OptimizationEntry array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}
  * @phpstan-type LintResult array{file: string, line: int, column?: int, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int}
  */
 final readonly class LintReport
 {
     /**
      * @param array<LintResult> $results
-     * @param LintStats         $stats
+     * @param LintStats         $stats   "redos" counts the errors that are ReDoS verdicts, among "errors"; the JSON report always carries it, 0 when there are none
      */
     public function __construct(
         /**

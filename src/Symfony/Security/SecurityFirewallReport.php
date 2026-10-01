@@ -25,6 +25,8 @@ namespace PHPRegex\Symfony\Security;
  *     score: int,
  *     vulnerable: ?string,
  *     trigger: ?string,
+ *     verdict: string,
+ *     attack: ?string,
  * }
  * @phpstan-type FirewallSkip array{name: string, file: string, line: int, reason: string}
  */

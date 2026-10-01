@@ -209,6 +209,7 @@ final class LintCommand extends Command
                 ])),
                 analysisWorkers: $jobs,
                 optimizations: $defaultOptimizations,
+                checkRedos: true === config('php-regex.redos.enabled'),
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

@@ -17,6 +17,6 @@ final class ReDoSFixture
 {
     public function testReDoS(): void
     {
-        preg_match('/[0-9]+/', 'test');
+        preg_match('/(a+)+$/', 'test'); // proven exponential: the tip carries the attack and the links
     }
 }

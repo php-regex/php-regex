@@ -9,7 +9,7 @@
 PHPRegex Redos
 ==============
 
-Finds the patterns that backtrack catastrophically (ReDoS) from the AST, and can confirm a finding against the engine.
+Proves a pattern safe from catastrophic backtracking (ReDoS), or hands you the input that triggers it — and can replay that input on the engine.
 
 Requires PHP 8.2+. MIT licensed.
 
@@ -37,8 +37,9 @@ Configuration
 -------------
 
 `new RedosAnalyzer()` takes named arguments: `ignoredPatterns` (`array<string>`,
-patterns skipped by value, with or without their delimiters) and `threshold`
-(`RedosSeverity::High`, the lowest severity that triggers a confirmation run).
+patterns skipped by value, with or without their delimiters), `threshold`
+(`RedosSeverity::High`, the lowest severity that triggers a confirmation run)
+and `options` (a `RedosOptions`).
 
 `RedosOptions` is the budget of the backtracking model, counted in states and
 steps, never in time — the same pattern gets the same verdict on every machine:
@@ -46,7 +47,7 @@ steps, never in time — the same pattern gets the same verdict on every machine
 | Option | Default | Role |
 | --- | --- | --- |
 | `maxStates` | `2000` | states the pattern's automata may hold |
-| `maxSteps` | `250_000` | states created and product pairs visited |
+| `maxSteps` | `250_000` | states created, product pairs visited, class scans and the memory they take |
 | `boundedRepeatCutoff` | `16` | largest bounded-repeat maximum unrolled; past it, `{m,n}` is analyzed as `{m,}` |
 
 `ConfirmationOptions` drives the runtime probe:
@@ -89,13 +90,38 @@ echo $adjacent->severity->value, ' ', $adjacent->complexity->value, ' ', $adjace
 // medium polynomial 2
 ```
 
-The witness — the input family that drives the worst case:
+The witness — the input family that drives the worst case — and the headline every consumer prints:
 
 ```php
 $vuln = (new RedosAnalyzer())->analyze('/(a+)+b/');
 
-echo $vuln->witness->render(), "\n"; // "a" x n
-echo $vuln->witness->build(3), "\n"; // aaa
+echo $vuln->headline(), "\n";        // Exponential backtracking (proven)
+echo $vuln->witness->render(), "\n"; // "a" x n . "!b"
+echo $vuln->witness->build(3), "\n"; // aaa!b
+```
+
+Confirmed mode replays an exponential witness on the running engine; it tries several candidate suffixes and publishes the one that made `preg_match()` exhaust the backtrack limit:
+
+```php
+use PHPRegex\Redos\RedosMode;
+
+$replayed = (new RedosAnalyzer())->analyze('/(a+)+b/', mode: RedosMode::Confirmed);
+
+echo $replayed->witness->render(), "\n";         // "a" x n . "!b"
+var_dump($replayed->replayed);                   // bool(true)
+echo $replayed->confidenceLevel()->value, "\n"; // high
+```
+
+What the model analysed differently from the pattern, and the budget it ran under:
+
+```php
+use PHPRegex\Redos\RedosOptions;
+
+$bounded = (new RedosAnalyzer())->analyze('/(a{1,20})+$/');
+echo $bounded->abstractions[0], "\n"; // {1,20} at offset 1 analysed as {1,}
+
+$small = new RedosAnalyzer(options: new RedosOptions(maxStates: 100, maxSteps: 5_000));
+echo $small->analyze('/^(?:\d{1,16}|[a-f]{1,16})+$/')->proof->value, "\n"; // budget_exceeded
 ```
 
 The confirm step, with your own limits on the probe:
@@ -120,8 +146,8 @@ Documentation
 -------------
 
 * [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — where the ReDoS check sits in the opening tour
-* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — the risky shapes, the detection modes and the mitigations
-* [ReDoS deep dive](https://github.com/php-regex/php-regex/blob/2.x/docs/concepts/redos.md) — how backtracking explodes, shape by shape
+* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — the verdict and its guarantee, the witness, confirmed mode and the mitigations
+* [ReDoS deep dive](https://github.com/php-regex/php-regex/blob/2.x/docs/concepts/redos.md) — how backtracking explodes, shape by shape, and how the model finds it
 * [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — the analyzer's options and the aggregate analysis report
 * [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
 

@@ -17,6 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -42,6 +43,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 
@@ -334,11 +336,7 @@ final readonly class AnalysisService
                     $this->redosConfirmOptions,
                 );
 
-                // When mode is CONFIRMED, only report findings that were actually confirmed
-                $shouldReport = $redos->exceedsThreshold($this->redosSeverityThreshold)
-                    && (RedosMode::Confirmed !== $this->redosMode || $redos->isConfirmed());
-
-                if ($shouldReport) {
+                if ($this->shouldReportRedos($redos, $this->redosSeverityThreshold)) {
                     $issues[] = [
                         'type' => $this->resolveRedosIssueType($redos),
                         'file' => $occurrence->file,
@@ -507,11 +505,7 @@ final readonly class AnalysisService
                 $this->redosConfirmOptions,
             );
 
-            // When mode is CONFIRMED, only report findings that were actually confirmed
-            $shouldReport = $analysis->exceedsThreshold($threshold)
-                && (RedosMode::Confirmed !== $this->redosMode || $analysis->isConfirmed());
-
-            if (!$shouldReport) {
+            if (!$this->shouldReportRedos($analysis, $threshold)) {
                 continue;
             }
 
@@ -1119,7 +1113,9 @@ final readonly class AnalysisService
 
     private function getReDoSHint(RedosAnalysis $analysis, string $pattern): string
     {
-        $hints = [];
+        // The attack and its replay first: a hint cut short still shows them.
+        $hints = RedosVerdict::evidence($analysis);
+        $evidenceCount = \count($hints);
 
         if (!empty($analysis->recommendations)) {
             $hints = array_merge($hints, $analysis->recommendations);
@@ -1140,11 +1136,12 @@ final readonly class AnalysisService
             $hints = array_merge($hints, $patternHints);
         }
 
-        if (empty($hints)) {
+        if (\count($hints) === $evidenceCount) {
             $hints[] = 'Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS.';
         }
 
-        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
+        // A replayed witness already says what the engine did, in its own line.
+        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation && null === $analysis->replayed) {
             if ($analysis->confirmation->confirmed) {
                 $hints[] = 'Confirmation: bounded runtime checks observed evidence of excessive backtracking.';
             } else {
@@ -1215,26 +1212,25 @@ final readonly class AnalysisService
 
     private function formatRedosMessage(RedosAnalysis $analysis): string
     {
-        $severity = strtoupper($analysis->severity->value);
-        $confidence = strtoupper($analysis->confidenceLevel()->value);
+        return RedosVerdict::message($analysis);
+    }
 
-        if ($analysis->isConfirmed()) {
-            $evidence = $analysis->confirmation?->evidence;
-            $evidenceLabel = null !== $evidence ? 'evidence: '.$evidence : 'evidence present';
-
-            return \sprintf(
-                'Confirmed ReDoS risk (%s, severity: %s, confidence: %s).',
-                $evidenceLabel,
-                $severity,
-                $confidence,
-            );
+    /**
+     * Whether a verdict is reported: at or above the threshold, and in
+     * confirmed mode only when the engine confirmed it, except a polynomial
+     * verdict, which is never replayed and is reported as it stands.
+     */
+    private function shouldReportRedos(RedosAnalysis $analysis, RedosSeverity $threshold): bool
+    {
+        if (!$analysis->exceedsThreshold($threshold)) {
+            return false;
         }
 
-        return \sprintf(
-            'Potential ReDoS risk (theoretical, severity: %s, confidence: %s).',
-            $severity,
-            $confidence,
-        );
+        if (RedosMode::Confirmed !== $this->redosMode || $analysis->isConfirmed()) {
+            return true;
+        }
+
+        return RedosComplexity::Polynomial === $analysis->complexity && null === $analysis->replayed;
     }
 
     private function isLikelyPartialRegexError(string $errorMessage): bool

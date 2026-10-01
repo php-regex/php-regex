@@ -16,11 +16,18 @@ namespace PHPRegex\Redos;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Redos\Internal\Backtrack\WitnessReplayer;
 use PHPRegex\Redos\Internal\InputGenerator;
 
 /**
  * Runs the pattern on inputs growing in length, through the engine: without
  * the JIT, under the limits of the options, the ini left as it was found.
+ *
+ * An exponential verdict with a witness is replayed: the witness is built
+ * with one pump, then two, and so on up to 64, until preg_match() gives up
+ * at the backtrack limit of the options, within a fixed budget of work. The
+ * failing sample is the shortest build that gives up there: the same input
+ * does on every run, whatever the machine.
  */
 final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
 {
@@ -37,6 +44,10 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
     {
         $options ??= new ConfirmationOptions();
         $limits = new PcreLimits($options->backtrackLimit, $options->recursionLimit);
+
+        if (null !== $analysis->witness && RedosComplexity::Exponential === $analysis->complexity) {
+            return $this->replay($regex, $analysis->witness, $options);
+        }
 
         [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
         $lengths = $this->buildLengths($baseLength, $options);
@@ -110,6 +121,15 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
             null,
             null,
         );
+    }
+
+    /**
+     * The shortest build of the witness that makes the engine give up, or
+     * the longest one tried when none does.
+     */
+    private function replay(string $regex, RedosWitness $witness, ConfirmationOptions $options): Confirmation
+    {
+        return (new WitnessReplayer($this->engine))->replay($regex, [$witness], $options, false)[0];
     }
 
     /**

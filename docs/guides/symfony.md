@@ -127,6 +127,70 @@ bin/console regex:analyze --redos-threshold=medium
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
 
+## ReDoS findings
+
+With `redos.enabled: true`, `regex:lint` adds the ReDoS issue,
+`regex.lint.redos`, to the lint findings of each pattern at or above
+`redos.threshold`, as `vendor/bin/regex lint --redos` does (see
+[the CLI guide](cli.md#7-lint-your-codebase)): the verdict's headline, such as
+`Exponential backtracking (proven)`, then the severity, the confidence and the
+attack.
+
+`regex:security` and `regex:analyze` run the same analysis on the `pattern` of
+each firewall. A finding names the verdict and, when it was proven, the attack:
+
+```yaml
+# config/packages/security.yaml
+security:
+    firewalls:
+        api:
+            pattern: ^/api/(\w+/?)+$
+            stateless: true
+```
+
+```bash
+bin/console regex:security
+```
+
+```
+Firewalls : 2
+ReDoS >=  : high
+Flagged   : 1
+
+   FAIL  1 firewall regex patterns exceed the ReDoS threshold.
+
+Firewall Regex ReDoS
+--------------------
+
+   CRIT  api (config/packages/security.yaml:4) CRITICAL score 10
+      ↳ Verdict: Exponential backtracking (proven)
+      ↳ Pattern: ^/api/(\w+/?)+$
+      ↳ Attack: "/api/" . "0" x n . "!"
+```
+
+`"/api/" . "0" x n . "!"` reads as PHP: `"/api/" . str_repeat("0", $n) .
+"!"`, a request path that makes `preg_match()` give up from 19 repetitions
+under PHP's default limits. `regex:analyze` prints the same finding as
+`Verdict` and `Attack` rows, and its JSON report carries them as details:
+
+```json
+{
+    "kind": "redos",
+    "severity": "critical",
+    "title": "api (config/packages/security.yaml:4)",
+    "details": [
+        {"label": "CheckOutcome", "value": "CRITICAL", "kind": "text"},
+        {"label": "Verdict", "value": "Exponential backtracking (proven)", "kind": "text"},
+        {"label": "Score", "value": "10", "kind": "text"},
+        {"label": "Pattern", "value": "^/api/(\\w+/?)+$", "kind": "pattern"},
+        {"label": "Attack", "value": "\"/api/\" . \"0\" x n . \"!\"", "kind": "text"}
+    ],
+    "notes": []
+}
+```
+
+The [ReDoS guide](../REDOS_GUIDE.md) explains the verdicts and the attack.
+
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
@@ -137,3 +201,6 @@ See [UPGRADE-2.0.md](../../UPGRADE-2.0.md): `exclude_paths` is now `exclude`,
 `analysis.ignore_patterns` is merged into `redos.ignored_patterns`, and
 `analysis.redos_threshold` is gone. A 1.x key stops the container compile with
 the key that replaces it.
+
+`redos.enabled: true` now makes `regex:lint` report ReDoS findings: 1.x read
+the setting and never ran the analysis. Expect new warnings on the first run.

@@ -237,7 +237,13 @@ $pattern = '/(a+)+$/';
 $analysis = $regex->redos($pattern);
 
 echo "Severity: " . $analysis->severity->value . "\n";
-// Output: "critical" (structural severity)
+// Output: "critical"
+
+echo $analysis->headline() . "\n";
+// Output: "Exponential backtracking (proven)"
+
+echo "Attack: " . $analysis->witness->render() . "\n";
+// Output: Attack: "a" x n . "!", the input that triggers it
 
 echo "Suggestion (verify behavior): " . $analysis->recommendations[0] . "\n";
 ```

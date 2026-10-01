@@ -285,7 +285,7 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 
 ### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
 
-Analyzes ReDoS risk without an analysis report. Default mode is **theoretical** (structural). Use **confirmed** mode to attempt bounded evidence collection.
+Analyzes ReDoS risk without an analysis report. Default mode is **theoretical**: the pattern is read, never run, and the verdict is proven where the backtracking model covers the pattern, heuristic elsewhere. **Confirmed** mode replays the attack on the running PCRE (see [the ReDoS guide](../REDOS_GUIDE.md)).
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -293,15 +293,20 @@ use PHPRegex\Redos\RedosMode;
 
 $analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
 
-echo $analysis->severity->value;       // 'critical', 'safe', etc.
-echo $analysis->score;                 // int (0-10)
-echo $analysis->confidenceLevel()->value; // 'high', 'medium', 'low'
-echo $analysis->vulnerablePart;        // Subpattern causing risk
-echo $analysis->recommendations[0];    // Suggested fix
+echo $analysis->severity->value;          // 'critical'
+echo $analysis->headline();               // 'Exponential backtracking (proven)'
+echo $analysis->complexity->value;        // 'exponential'
+echo $analysis->proof->value;             // 'proven'
+echo $analysis->witness->render();        // '"a" x n . "!b"'
+echo $analysis->score;                    // 10
+echo $analysis->confidenceLevel()->value; // 'medium' until replayed
+echo $analysis->vulnerablePart;           // 'a+'
+echo $analysis->recommendations[0];       // Suggested fix
 
-// Optional: bounded confirmation
+// Optional: replay the attack on the running PCRE
 $confirmed = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Confirmed);
-echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
+echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical'; // 'confirmed'
+var_dump($confirmed->replayed);                               // bool(true)
 ```
 
 **RedosAnalysis Fields:**
@@ -311,12 +316,22 @@ echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 | `severity`         | RedosSeverity      | Risk level                                |
 | `score`            | int               | Risk score (0-10)                         |
 | `mode`             | RedosMode          | off, theoretical, or confirmed            |
+| `complexity`       | RedosComplexity    | linear, polynomial, exponential, or unknown when nothing was proven |
+| `degree`           | int\|null         | Degree of a polynomial verdict (2 or more) |
+| `proof`            | RedosProof         | proven, heuristic, budget_exceeded or not_analyzed |
+| `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()` |
+| `replayed`         | bool\|null        | Whether the witness made the running PCRE fail; `null` when not replayed |
+| `abstractions`     | list<string>      | What the model analysed differently from the pattern |
+| `pcreVersion`      | string            | PCRE2 release the verdict was computed with |
+| `analysisVersion`  | string            | `RedosAnalyzer::ANALYSIS_VERSION`         |
 | `confidence`       | Confidence         | Analysis confidence (use `confidenceLevel()`) |
 | `confirmation`     | Confirmation\|null | Bounded evidence details              |
 | `vulnerablePart`   | string\|null       | Risky subpattern                          |
 | `recommendations`  | array              | Suggested fixes (verify behavior)         |
 | `hotspots`         | array              | Problem locations                         |
 | `suggestedRewrite` | string\|null       | Suggested rewrite (verify behavior)       |
+
+`headline()` is the verdict in a few words, the one every consumer prints; `isProvenSafe()` is true only for a proven linear verdict, while `isSafe()` is true for `safe` and `low`, proven or not.
 
 ---
 

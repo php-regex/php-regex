@@ -124,6 +124,7 @@ git commit -m "test: add behavioral compliance tests for lookarounds"
 Every package is released together, from the monorepo:
 
 ```bash
+php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php   # ReDoS analysis cost on the corpus
 bin/status                     # CI, the split repositories, Packagist
 bin/bump 2.1.0                 # Regex::VERSION, and the CHANGELOG section dated
 git commit -am "Release 2.1.0"
@@ -132,6 +133,12 @@ bin/release --dry-run 2.1.0    # every check, nothing tagged
 bin/release 2.1.0              # the phar, the tag, the GitHub release
 bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
 ```
+
+The first command analyses every pattern of the repository corpus the way
+PHPStan and the linter do, and prints the median and 99th-percentile time per
+pattern and the share of each ReDoS proof. It exits with 1 when the 99th
+percentile is above 5 ms (`--max-p99=<ms>` sets another limit); a release
+waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 The tag triggers the split workflow, which tags every `php-regex/regex-*`
 repository; Packagist picks the versions up from there. A pre-release

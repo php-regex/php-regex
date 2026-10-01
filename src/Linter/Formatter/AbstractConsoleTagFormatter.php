@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Internal\LintSummary;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\DisplayEscaper;
@@ -182,8 +183,10 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
             $badge = $this->getIssueBadge($issueType);
             $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
 
+            // An invalid pattern says it all in its message and caret; a
+            // ReDoS error still needs its hint, which opens on the evidence.
             $hint = $issue['hint'] ?? null;
-            if ('error' !== $issueType && \is_string($hint) && '' !== $hint) {
+            if (('error' !== $issueType || isset($issue['analysis'])) && \is_string($hint) && '' !== $hint) {
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     self::ARROW_LABEL,
@@ -309,8 +312,8 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
 
         $message = match (true) {
             $errors > 0 => \sprintf(
-                '  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>%d invalid patterns</><fg=gray>, %d warnings, %d optimizations.</>',
-                $errors,
+                '  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>%s</><fg=gray>, %d warnings, %d optimizations.</>',
+                LintSummary::errors($stats),
                 $warnings,
                 $optimizations,
             ),

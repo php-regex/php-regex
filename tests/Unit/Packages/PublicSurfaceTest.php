@@ -69,6 +69,7 @@ final class PublicSurfaceTest extends TestCase
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Heatmap', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
+            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions',
         ],
         'Symfony' => ['PHPRegexBundle'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'OutputFormat'],

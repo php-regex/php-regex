@@ -81,6 +81,26 @@ final readonly class PcreEngine
     }
 
     /**
+     * What preg_match() answers when called without $matches, as most code
+     * calls it: PHP then retries an empty match at the same offset with
+     * NOTEMPTY_ATSTART | ANCHORED, which match() does not do.
+     */
+    public function test(string $pattern, string $subject, ?PcreLimits $limits = null): PcreMatch
+    {
+        $outcome = $this->run(
+            $pattern,
+            static fn (string $prepared): int|false => preg_match($prepared, $subject),
+            $limits,
+        );
+
+        if (false === $outcome['result']) {
+            return new PcreMatch(null, [], $outcome['error']->message ?? $outcome['lastErrorMessage'], $outcome['lastError']);
+        }
+
+        return new PcreMatch(1 === $outcome['result']);
+    }
+
+    /**
      * Every match of the whole pattern in the subject, in order; null when
      * the engine refuses the pattern or gives up.
      *

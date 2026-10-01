@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -37,7 +38,7 @@ use PHPRegex\Redos\RedosSeverity;
  *     source?: string
  * }
  * @phpstan-type LintResult array{file: string, line: int, column?: int, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int}
  */
 final readonly class LintService
 {
@@ -363,6 +364,9 @@ final readonly class LintService
         $analysis = $issue['analysis'] ?? null;
         if ($analysis instanceof RedosAnalysis) {
             $suggestion = $analysis->recommendations[0] ?? null;
+            // The attack, already escaped, and its replay: the reports that
+            // only keep the message and the suggestion still show them.
+            $evidence = RedosVerdict::evidence($analysis);
 
             return new Diagnostic(
                 DiagnosticType::Security,
@@ -370,7 +374,7 @@ final readonly class LintService
                 $issue['message'],
                 $issue['issueId'] ?? null,
                 null,
-                null,
+                [] !== $evidence ? implode("\n", $evidence) : null,
                 $suggestion,
             );
         }
@@ -442,16 +446,27 @@ final readonly class LintService
      */
     private function updateStatsFromResults(array $stats, array $results): array
     {
+        $redos = 0;
+
         foreach ($results as $result) {
             foreach ($result['issues'] as $issue) {
                 if ('error' === $issue['type']) {
                     $stats['errors']++;
+                    // A ReDoS error fails the run like any error, but the
+                    // pattern compiles: the summaries name it apart.
+                    if (isset($issue['analysis'])) {
+                        $redos++;
+                    }
                 } elseif ('warning' === $issue['type']) {
                     $stats['warnings']++;
                 }
             }
 
             $stats['optimizations'] += \count($result['optimizations']);
+        }
+
+        if ($redos > 0) {
+            $stats['redos'] = $redos;
         }
 
         return $stats;

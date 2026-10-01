@@ -54,14 +54,19 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
                 'Read more: '.self::DOCS.'#useless-flag-s-dotall',
             ],
             [
-                'Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): /(a+)+$/',
+                'Exponential backtracking (ReDoS): /(a+)+$/',
                 22,
-                "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
-                "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
-                "\n".
-                'Read more about possessive quantifiers: '.self::DOCS."#possessive-quantifiers\n".
-                'Read more about atomic groups: '.self::DOCS."#atomic-groups\n".
-                'Read more about catastrophic backtracking: '.self::DOCS.'#catastrophic-backtracking',
+                RedosTip::expected(
+                    '/(a+)+$/',
+                    'critical, exponential (proven)',
+                    true,
+                    "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
+                    "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
+                    "\n".
+                    'Read more about possessive quantifiers: '.self::DOCS."#possessive-quantifiers\n".
+                    'Read more about atomic groups: '.self::DOCS."#atomic-groups\n".
+                    'Read more about catastrophic backtracking: '.self::DOCS.'#catastrophic-backtracking',
+                ),
             ],
             [
                 'Nested quantifiers can cause catastrophic backtracking.',

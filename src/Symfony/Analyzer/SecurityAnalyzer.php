@@ -383,6 +383,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         $details = [
             new IssueDetail('CheckOutcome', strtoupper($finding['severity'])),
+            new IssueDetail('Verdict', $finding['verdict']),
             new IssueDetail('Score', (string) $finding['score']),
             new IssueDetail('Pattern', $finding['pattern'], 'pattern'),
         ];
@@ -393,6 +394,11 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if (null !== $finding['trigger'] && '' !== $finding['trigger']) {
             $details[] = new IssueDetail('Trigger', $finding['trigger'], 'example');
+        }
+
+        // The attack is already a quoted PHP expression: a text row, not an example quoted again.
+        if (null !== $finding['attack']) {
+            $details[] = new IssueDetail('Attack', $finding['attack']);
         }
 
         return new AnalysisIssue('redos', $severity, $title, $details);

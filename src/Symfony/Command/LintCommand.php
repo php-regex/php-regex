@@ -92,6 +92,7 @@ final class LintCommand extends Command
         private readonly string|int|null $phpVersion = null,
         private readonly ?string $pcreVersion = null,
         private readonly ?string $projectDir = null,
+        private readonly bool $checkRedos = false,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -268,6 +269,7 @@ final class LintCommand extends Command
                 ], static fn (?string $source): bool => null !== $source)),
                 analysisWorkers: $jobs,
                 optimizations: $this->defaultOptimizations,
+                checkRedos: $this->checkRedos,
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

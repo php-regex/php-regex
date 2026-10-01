@@ -86,13 +86,15 @@ What each command counts as a problem (code 1):
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
 | `transpile`                                  | The pattern does not parse, or cannot be written for the target                    |
 | `debug`                                      | The pattern does not parse                                                         |
-| `analyze`, `debug`                           | `--redos-mode=confirmed` confirms a ReDoS risk of high severity or more, at or above `--redos-threshold` |
+| `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
 
-A theoretical ReDoS finding is a warning, as it is for `lint`: it is printed
-and leaves the code at 0.
+A theoretical ReDoS verdict is a warning, as it is for `lint`: it is printed
+and leaves the code at 0, proven or not. A verdict the confirmed mode did not
+reproduce (`Not reproduced on PCRE2 …`), and a polynomial verdict, which is
+never replayed, leave 0 too.
 
 Code 2 covers an unknown command or option, an option without its value or
 with a value the command does not accept (an unknown `--format`, `--target`,
@@ -165,7 +167,7 @@ Recompiled: /^hello/
 
 ### 2. Analyze a Pattern
 
-Detailed analysis including validation, ReDoS risk, and explanation:
+Detailed analysis including validation, ReDoS verdict, and explanation:
 
 ```bash
 # Analyze email pattern
@@ -174,25 +176,128 @@ vendor/bin/regex analyze '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i'
 
 **Output:**
 ```
-Analyze
-  Pattern:    /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i
-  Parse:      Validation: ReDoS:      SAFE (score 0)
+  [1/4] Parsing pattern
+  Pattern
+      → /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i
+  Parse : OK
 
-Explanation
-Start of string
-  One or more characters from: a-z, 0-9, ., _, %, +, -
-  Literal '@'
-  One or more characters from: a-z, 0-9, ., -
-  Literal '.'
-  Two or more characters from: a-z
-End of string (case-insensitive)
+  [2/4] Validation
+  Status : OK
+
+  [3/4] ReDoS analysis
+  Status     : safe (proven)
+  Severity   : SAFE (score 0)
+  Mode       : THEORETICAL
+  Confidence : HIGH
+
+  [4/4] Explanation
+Regex matches (with flags: i)
+  Anchor: the beginning of a line
+    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '_',   '%',   '+',   '-' ] (one or more times)
+  '@'
+  ...
+```
+
+`Status` is the verdict's headline: `safe (proven)`, `Exponential
+backtracking (proven)`, `Polynomial backtracking, degree N (proven)`,
+`Potential backtracking (heuristic)`, `no risk found (heuristic)`, `not
+analyzed (budget exceeded)` or `not analyzed (analysis error)` (see
+[the ReDoS guide](../REDOS_GUIDE.md#what-the-verdict-means)). Up to three lines
+follow it:
+
+- `Model:` what the analysis read differently from the pattern as written, as
+  a bounded repeat above 16 analysed as unbounded; the proof is about that
+  model;
+- `Note: analysis budget exceeded, the heuristics decided`;
+- `Attack:` the input that drives the worst case, as PHP: `"a" x n . "!"` is
+  `str_repeat("a", $n) . "!"`.
+
+```bash
+vendor/bin/regex analyze '/(a{1,20})+$/'
+```
+
+```
+  [3/4] ReDoS analysis
+  Status     : Exponential backtracking (proven)
+  Severity   : CRITICAL (score 10)
+  Mode       : THEORETICAL
+  Confidence : MEDIUM
+  Model: {1,20} at offset 1 analysed as {1,}
+  Attack: "a" x n . "!"
+  Hotspot:   0-10
+```
+
+`--redos-mode=confirmed` replays an exponential attack on the running PCRE,
+without the JIT, and says at which length `preg_match()` gives up:
+
+```bash
+vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed   # exits 1
+```
+
+```
+  [3/5] ReDoS analysis
+  Status     : Exponential backtracking (proven)
+  Severity   : CRITICAL (score 10)
+  Mode       : CONFIRMED
+  Confidence : HIGH
+  Attack: "a" x n . "!"
+  Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).
+  Hotspot:   1-3
+
+  [4/5] Confirmation
+  Status:    CONFIRMED
+  Evidence:  backtrack_limit
+  Samples:   len=17 avg=1.25ms
+  JIT:       0
+  Backtrack: 100000
+  Recursion: 10000
+```
+
+The confirmation adds a step, so the steps are numbered out of five. The
+evidence line names the limit PCRE hit and the JIT setting it ran under; only
+an exhausted backtrack limit counts as reproduced. When the engine does not
+fail, the line reads `Not reproduced on PCRE2 10.49 (PCRE's optimisations
+defuse it).`, the confidence stays `MEDIUM`, and the command exits with 0. A
+polynomial verdict is never replayed.
+
+`--format=json` prints the same verdict under `redos`, with `complexity`,
+`degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version` and
+`analysis_version` next to the 1.x keys:
+
+```bash
+vendor/bin/regex analyze '/(a+)+$/' --format=json
+```
+
+```json
+"redos": {
+    "severity": "critical",
+    "score": 10,
+    "mode": "theoretical",
+    "confirmed": false,
+    "confidence": "medium",
+    ...
+    "confirmation": null,
+    "complexity": "exponential",
+    "degree": null,
+    "proof": "proven",
+    "witness": {
+        "prefix": "",
+        "pump": "a",
+        "suffix": "!"
+    },
+    "replayed": null,
+    "abstractions": [],
+    "pcre_version": "10.49",
+    "analysis_version": "1"
+},
 ```
 
 ---
 
 ### 3. Debug (Deep ReDoS Analysis)
 
-Show detailed ReDoS analysis with heatmap:
+Show detailed ReDoS analysis with heatmap. `debug` reads the ReDoS mode and
+threshold of `regex.json` when there is one; the options win:
 
 ```bash
 # Analyze dangerous pattern
@@ -201,24 +306,30 @@ vendor/bin/regex debug '/(a+)+$/'
 
 **Output:**
 ```
-Debug
+  [1/2] Heatmap
   Pattern:    /(a+)+$/
-  ReDoS:      CRITICAL (score 10)
+                ^^
+  Status:    Exponential backtracking (proven)
+  Severity:  CRITICAL (score 10)
+  Mode:      THEORETICAL
+  Confidence: MEDIUM
   Culprit:    a+
   Trigger:    quantifier +
   Hotspots:   2
+  Attack: "a" x n . "!"
   Input:      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!" (auto)
 
-Heatmap:
-  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!
-  ^^
-
-Findings
-  - [CRITICAL] Nested unbounded quantifiers detected.
-    Pattern: /(a+)+$/
-    This allows exponential backtracking.
-    Suggested: Replace inner quantifiers with possessive variants or wrap in atomic groups.
+  [2/2] Findings
+  - [MEDIUM] Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...).
+      Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.
+  - [CRITICAL] Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
+      Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).
 ```
+
+The carets under the pattern mark the hotspot. With
+`--redos-mode=confirmed`, the `Replayed on …` or `Not reproduced on …` line
+follows the attack, a `[2/3] Confirmation` step follows the heatmap, and the
+exit code follows the same rule as `analyze`.
 
 ---
 
@@ -403,21 +514,72 @@ Configuration : regex.dist.json
 ```
 
 **With Issues:**
+
+```bash
+vendor/bin/regex lint src/ --redos
 ```
-  [1/2] Collecting patterns
+
+```
+  [1/2] Scanning files
+  Scanned 1 files, found 2 patterns.
+
   [2/2] Analyzing patterns
+  src/Example.php:3:12
+      → /(?<=a+)b/
+    FAIL Lookbehind is unbounded. PCRE requires a bounded maximum length.
+         ↳         (?<=a+)b
+                   ^
 
-  [1/1] src/Example.php:42
+  src/Example.php:4:12
+      → /^(a+)+$/
+    WARN Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+    TIP
+         - /^(a+)+$/
+         + /^(?>(a+))+$/
+    WARN Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+    WARN Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
+         ↳ Attack: "a" x n . "!" Unbounded quantifier detected. May cause backtracking on non-matching input. ...
 
-  INVALID  /(?<=a+)b/
-    Variable-length lookbehind is not supported in PCRE.
-    Line 1: (?<=a+)b
-                ^
-
-  [CRITICAL] src/Example.php:43
-  /(a+)+$/ (ReDoS)
-    Nested unbounded quantifiers detected.
+  FAIL 1 invalid patterns, 3 warnings, 0 optimizations.
 ```
+
+The ReDoS issue, `regex.lint.redos`, carries the verdict's headline, then
+`Severity: …, confidence: …`, and in its hint the attack. It is a warning in
+theoretical mode. With `--redos-mode=confirmed`, a verdict the running PCRE
+reproduced at `high` or above is an error, and makes the command exit with 1;
+its hint adds the replay, and the summary counts it apart from the invalid
+patterns:
+
+```bash
+vendor/bin/regex lint src/ --redos --redos-mode=confirmed
+```
+
+```
+  src/Example.php:4:12
+      → /^(a+)+$/
+    ...
+    FAIL Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+         ↳ Attack: "a" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. ...
+
+  FAIL 1 invalid patterns, 1 ReDoS errors, 2 warnings, 0 optimizations.
+```
+
+An exponential verdict the engine did not reproduce is dropped, and a
+polynomial one, never replayed, stays a warning:
+
+```bash
+vendor/bin/regex lint src/ --redos --redos-mode=confirmed --format=github
+```
+
+```
+::error file=src/Validator.php,line=7,col=1,title=Security (regex.lint.redos)::Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.%0AAttack: "0" x n . "!"%0AReplayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).%0ASuggestion: ...
+::warning file=src/Validator.php,line=12,col=1,title=Security (regex.lint.redos)::Polynomial backtracking, degree 3 (proven). Severity: HIGH, confidence: MEDIUM.%0AAttack: "0" x n . "!"%0ASuggestion: ...
+```
+
+In JSON, the issue carries the whole analysis under `analysis`, with the keys
+`analyze --format=json` prints.
 
 ---
 
@@ -625,37 +787,72 @@ Human-readable colored output for terminal.
 
 ```bash
 vendor/bin/regex lint src/ --format=json
+
+# The sample below: one invalid pattern, one replayed ReDoS verdict
+vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimize --format=json
 ```
 
-**Output:**
+**Output (trimmed):**
 ```json
 {
-  "target": {
-    "php": "8.2",
-    "pcre": "10.40",
-    "source": "composer.json require.php"
-  },
-  "stats": {
-    "errors": 1,
-    "warnings": 0,
-    "optimizations": 0
-  },
-  "results": [
-    {
-      "file": "src/Example.php",
-      "line": 42,
-      "pattern": "/(?<=a+)b/",
-      "issues": [
+    "target": {
+        "php": "8.4",
+        "pcre": "10.49",
+        "source": "running PHP"
+    },
+    "stats": {
+        "errors": 2,
+        "warnings": 0,
+        "optimizations": 0,
+        "redos": 1
+    },
+    "results": [
         {
-          "type": "validation",
-          "severity": "error",
-          "message": "Variable-length lookbehind is not supported"
+            "file": "src/Example.php",
+            "line": 3,
+            "column": 12,
+            "fileOffset": 18,
+            "source": "preg_match()",
+            "pattern": "/(?<=a+)b/",
+            "location": null,
+            "issues": [
+                {
+                    "type": "error",
+                    "file": "src/Example.php",
+                    "line": 3,
+                    "column": 12,
+                    "fileOffset": 18,
+                    "position": 0,
+                    "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",
+                    ...
+                }
+            ],
+            "optimizations": []
+        },
+        {
+            "file": "src/Example.php",
+            "line": 4,
+            ...
+            "pattern": "/^(a+)+$/",
+            "issues": [
+                {
+                    "type": "error",
+                    ...
+                    "issueId": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"a\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). ...",
+                    "source": "preg_match()",
+                    "analysis": { ... }
+                }
+            ],
+            "optimizations": []
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
+
+`stats.errors` counts every error; `stats.redos`, always present, counts the
+ReDoS errors among them.
 
 ### GitHub Actions
 
@@ -691,8 +888,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--jobs <n>`        | Parallel workers                                   |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--output <file>`   | Also write the report to a file                    |
-| `--redos`           | Enable ReDoS analysis (disabled by default)        |
-| `--no-redos`        | Explicitly disable ReDoS analysis                  |
+| `--redos`           | Run the ReDoS analysis, off by default             |
+| `--no-redos`        | Skip it when `regex.json` turns it on              |
 | `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
 | `--redos-threshold <sev>` | Lowest severity reported: low, medium, high, critical |
 | `--no-validate`     | Skip validation                                    |
@@ -703,7 +900,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `-v, --verbose`     | Detailed output                                    |
 | `--debug`           | Debug information                                  |
 
-> **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration.
+> **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration. The default threshold is `high`: a proven quadratic pattern is `medium`, and is reported with `--redos-threshold=medium` only.
 
 `--redos-mode=off` and `--redos-no-jit` were removed from `lint` in 2.0: use
 `--no-redos` to skip the analysis; the confirmation always runs without JIT.
@@ -772,7 +969,7 @@ done
 
 ```bash
 # Find all ReDoS issues in your code
-vendor/bin/regex lint src/ --no-validate --no-optimize
+vendor/bin/regex lint src/ --redos --no-lint --no-validate --no-optimize
 
 # Get detailed analysis
 vendor/bin/regex debug '/your-pattern/'

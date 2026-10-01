@@ -15,6 +15,7 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
  * Explain a regular expression in human-readable format.
@@ -106,8 +107,11 @@ final class ExplainCommand extends Command
             // Show ReDoS analysis
             if (!$analysis->redos->isSafe()) {
                 $this->line('<fg=white;options=bold>Security Warning:</>');
-                $this->line('  <fg=red>ReDoS vulnerability detected!</>');
+                $this->line('  <fg=red>'.$analysis->redos->headline().'</>');
                 $this->line('  Severity: <fg=yellow>'.$analysis->redos->severity->value.'</>');
+                if (null !== $analysis->redos->witness) {
+                    $this->line('  Attack: <fg=yellow>'.OutputFormatter::escape($analysis->redos->witness->render()).'</>');
+                }
                 if (null !== $analysis->redos->vulnerablePart) {
                     $this->line('  Vulnerable part: <fg=yellow>'.$analysis->redos->vulnerablePart.'</>');
                 }

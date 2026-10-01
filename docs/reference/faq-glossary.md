@@ -40,20 +40,19 @@ preg_match('/\p{L}/u', $text);  // Unicode properties
 
 #### Does this guarantee ReDoS safety?
 
-**No.** PHPRegex detects known risky structures and suggests safer alternatives, but safety depends on:
-- Input patterns
-- Flags used
-- Runtime limits set by PHP or the application
+**Within limits.** For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The guarantee is per match attempt (the retries of an unanchored search and `preg_match_all()` are not counted), about the pattern as analysed (see `abstractions`), and for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so. The [ReDoS guide](../REDOS_GUIDE.md#the-guarantee) lists every limit.
 
 ```php
-// PHPRegex will warn about this:
 $analysis = Regex::create()->redos('/(a+)+b/');
-// severity: 'critical'
+echo $analysis->headline();        // 'Exponential backtracking (proven)'
+echo $analysis->witness->render(); // '"a" x n . "!b"': the input that triggers it
 
-// But you must still:
-// 1. Apply runtime limits
+var_dump(Regex::create()->redos('/a+b/')->isProvenSafe()); // bool(true)
+
+// You should still:
+// 1. Check preg_* results for false
 // 2. Validate input length
-// 3. Consider using atomic groups
+// 3. Prefer atomic groups and possessive quantifiers
 ```
 
 ---
@@ -113,7 +112,7 @@ The Abstract Syntax Tree provides:
 | Benefit            | Description                                            |
 |--------------------|--------------------------------------------------------|
 | **Precision**      | Exact error locations, not just "somewhere in pattern" |
-| **Analysis**       | Detect complex issues like ReDoS structurally          |
+| **Analysis**       | Detect complex issues like ReDoS, proven on a model of PCRE |
 | **Transformation** | Refactor patterns safely without string hacking        |
 | **Tooling**        | Support IDEs, linters, formatters                      |
 
@@ -137,9 +136,12 @@ use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 
-echo $analysis->severity->value;      // 'critical', 'safe', 'low', 'medium'
-echo $analysis->confidence->value;    // 'high', 'medium', 'low'
-echo $analysis->recommendations[0];   // Suggested fix
+echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'medium', 'high', 'unknown')
+echo $analysis->headline();               // 'Exponential backtracking (proven)'
+echo $analysis->confidenceLevel()->value; // 'medium' ('high' once replayed on PCRE)
+echo $analysis->recommendations[0];       // Suggested fix
+
+$analysis->isProvenSafe();                // false: true only for 'safe (proven)'
 ```
 
 ---

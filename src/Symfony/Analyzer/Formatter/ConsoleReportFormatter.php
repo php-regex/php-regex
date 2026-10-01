@@ -20,6 +20,7 @@ use PHPRegex\Symfony\Analyzer\IssueDetail;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -151,7 +152,8 @@ final readonly class ConsoleReportFormatter
         return match ($detail->kind) {
             'example' => $this->formatExample($detail->value),
             'pattern' => $this->formatPattern($detail->value),
-            default => $detail->value,
+            // Text rows carry user input (paths, attacks): never console markup.
+            default => OutputFormatter::escape($detail->value),
         };
     }
 

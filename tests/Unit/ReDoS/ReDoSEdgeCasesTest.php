@@ -99,18 +99,22 @@ final class ReDoSEdgeCasesTest extends TestCase
 
     public function test_dangerous_pattern_overlapping_alternation(): void
     {
-        $analysis = $this->regex->redos('/(a|a)*/');
+        // Unanchored, (a|a)* accepts after the first run and never backtracks; before the end,
+        // a…a! makes preg_match() fail at n=19 (PCRE2 10.49).
+        $analysis = $this->regex->redos('/(a|a)*$/');
 
         $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
-            'Overlapping alternation (a|a)* should be flagged as dangerous');
+            'Overlapping alternation (a|a)*$ should be flagged as dangerous');
     }
 
     public function test_dangerous_pattern_overlapping_alternation_patterns(): void
     {
-        $analysis = $this->regex->redos('/(?:a|ab)*c/');
+        // (?:a|ab)*c reads every input one way and never fails on the engine; with "b" as its
+        // own branch, "ab" is read two ways: ab…ab!c fails at 19 pumps (PCRE2 10.49).
+        $analysis = $this->regex->redos('/(?:a|ab|b)*c/');
 
         $this->assertContains($analysis->severity, [RedosSeverity::Medium, RedosSeverity::High, RedosSeverity::Critical],
-            'Overlapping alternation (?:a|ab)* should be flagged');
+            'Overlapping alternation (?:a|ab|b)* should be flagged');
     }
 
     public function test_dangerous_pattern_nested_non_capturing(): void
@@ -132,9 +136,11 @@ final class ReDoSEdgeCasesTest extends TestCase
 
     public function test_edge_case_bounded_nested_quantifiers(): void
     {
+        // A bounded inner repeat is still ambiguous: a…a!b makes preg_match() fail at n=22
+        // (PCRE2 10.49), so the verdict is critical, not below it.
         $analysis = $this->regex->redos('/(a{1,3})+b/');
 
-        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 
     public function test_edge_case_triple_nesting(): void
@@ -147,7 +153,8 @@ final class ReDoSEdgeCasesTest extends TestCase
 
     public function test_dangerous_pattern_alternative_quantifiers_nested(): void
     {
-        $analysis = $this->regex->redos('/(a*|b*)+/');
+        // Unanchored it accepts after the first run; before the end, a…a! fails at n=18 (PCRE2 10.49).
+        $analysis = $this->regex->redos('/(a*|b*)+$/');
 
         $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Alternation with quantifiers nested should be flagged');
@@ -179,7 +186,8 @@ final class ReDoSEdgeCasesTest extends TestCase
 
     public function test_threshold_allows_contextual_pass_fail(): void
     {
-        $analysis = $this->regex->redos('/(a+)+/');
+        // (a+)+ alone matches a…a! at once (linear); before the end it fails at n=19 (PCRE2 10.49).
+        $analysis = $this->regex->redos('/(a+)+$/');
 
         $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High));
         $this->assertSame(

@@ -137,21 +137,36 @@ vendor/bin/regex --no-ansi analyze '/(a+)+$/'
 
 **Output:**
 ```
-Analyze
-  Pattern:    /(a+)+$/
-  Parse:      Validation: ReDoS:      CRITICAL (score 10)
+  [1/4] Parsing pattern
+  Pattern
+      → /(a+)+$/
+  Parse : OK
 
-Explanation
-  Match
-    Quantified Group (one or more times)
-      'a' (one or more times)
-    End Group
-    Anchor: the end of the string
+  [2/4] Validation
+  Status : OK
+
+  [3/4] ReDoS analysis
+  Status     : Exponential backtracking (proven)
+  Severity   : CRITICAL (score 10)
+  Mode       : THEORETICAL
+  Confidence : MEDIUM
+  Attack: "a" x n . "!"
+  Hotspot:   1-3
+
+  [4/4] Explanation
+Regex matches
+  Start Quantified Group (one or more times)
+    Capturing group
+            'a' (one or more times)
+    End group
+  End Quantified Group
+  Anchor: the end of a line
 ```
 
 **What to notice:**
 - `Parse` and `Validation` show structural validity
-- `ReDoS` highlights security concerns even in valid patterns
+- The ReDoS `Status` is the verdict: `(proven)` when the backtracking model decided, `(heuristic)` when structural rules did
+- `Attack` is the input that triggers it, as PHP: `str_repeat("a", $n) . "!"`
 - `Explanation` translates AST to plain language
 
 ---

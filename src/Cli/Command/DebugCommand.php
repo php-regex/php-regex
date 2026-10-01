@@ -27,7 +27,6 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Heatmap;
-use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\Internal\InputGenerator;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
@@ -113,7 +112,9 @@ final class DebugCommand extends AbstractCommand
             $verdict = $this->parses($regex, $pattern) && !$this->isConfirmedRedos($analysis, $redosThreshold)
                 ? self::SUCCESS
                 : self::FAILURE;
-            $steps = [] !== $analysis->findings ? 2 : 1;
+            $hasConfirmation = RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation;
+            // One number per section printed: Heatmap, then Confirmation and Findings when there are any.
+            $steps = 1 + ($hasConfirmation ? 1 : 0) + ([] !== $analysis->findings ? 1 : 0);
             $heatmap = new Heatmap();
             $heatmapBody = $heatmap->highlight($patternInfo->pattern, $analysis->hotspots, $output->isAnsi());
             $heatmapPattern = $patternInfo->delimiter.$heatmapBody.$patternInfo->delimiter.$patternInfo->flags;
@@ -171,11 +172,25 @@ final class DebugCommand extends AbstractCommand
             }
 
             $showHeatmapLine = [] !== $analysis->hotspots || !$showSyntaxPattern;
-            $heatmapPrefix = '';
             if ($showHeatmapLine) {
                 $label = $showSyntaxPattern ? 'Heatmap' : 'Pattern';
                 $heatmapPrefix = '  '.$label.':    ';
                 $output->write($heatmapPrefix.$heatmapPattern."\n");
+
+                // The caret marks the primary hotspot on the line right above it.
+                $hotspot = $analysis->getPrimaryHotspot();
+                if (null !== $hotspot) {
+                    $start = max(0, $hotspot->start);
+                    $length = max(1, $hotspot->end - $hotspot->start);
+                    $caret = str_repeat(' ', \strlen($heatmapPrefix) + \strlen($patternInfo->delimiter) + $start).str_repeat('^', $length);
+                    $caretColor = match ($hotspot->severity) {
+                        RedosSeverity::Safe, RedosSeverity::Low => Output::GREEN,
+                        RedosSeverity::Medium => Output::YELLOW,
+                        RedosSeverity::High, RedosSeverity::Critical => Output::RED,
+                        RedosSeverity::Unknown => Output::GRAY,
+                    };
+                    $output->write($output->color($caret, $caretColor)."\n");
+                }
             }
 
             if (null !== $analysis->error) {
@@ -183,14 +198,7 @@ final class DebugCommand extends AbstractCommand
             }
 
             $severityOutput = $this->formatRedosSeverity($analysis, $output);
-            $status = match (true) {
-                RedosMode::Off === $analysis->mode => 'ReDoS analysis disabled',
-                \in_array($analysis->severity, [RedosSeverity::Safe, RedosSeverity::Low], true) => 'No significant ReDoS risk detected',
-                $analysis->isConfirmed() => 'Confirmed ReDoS risk',
-                default => 'Potential ReDoS risk (theoretical)',
-            };
-
-            $output->write('  Status:    '.$status."\n");
+            $output->write('  Status:    '.$this->redosHeadline($analysis)."\n");
             $output->write('  Severity:  '.$severityOutput.' (score '.$analysis->score.")\n");
             $output->write('  Mode:      '.strtoupper($analysis->mode->value)."\n");
             $output->write('  Confidence: '.strtoupper($analysis->confidenceLevel()->value)."\n");
@@ -207,15 +215,19 @@ final class DebugCommand extends AbstractCommand
                 $output->write('  Hotspots:   '.\count($analysis->hotspots)."\n");
             }
 
+            foreach ($this->redosVerdictLines($analysis) as $line) {
+                $output->write('  '.$line."\n");
+            }
+
             if (null !== $inputValue) {
                 $escaped = DisplayEscaper::escape($inputValue);
                 $output->write('  Input:      "'.$escaped.'"'.$inputSource."\n");
             }
 
-            if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
+            if ($hasConfirmation && null !== $analysis->confirmation) {
                 $confirmation = $analysis->confirmation;
                 $output->write("\n");
-                $style->renderSection('Confirmation', $steps, $steps);
+                $style->renderSection('Confirmation', 2, $steps);
                 $sampleParts = [];
                 foreach ($confirmation->samples as $sample) {
                     $sampleParts[] = \sprintf('len=%d avg=%.2fms', $sample->inputLength, $sample->durationMs);
@@ -236,40 +248,6 @@ final class DebugCommand extends AbstractCommand
                 if (null !== $confirmation->note) {
                     $output->write('  Note:      '.$confirmation->note."\n");
                 }
-            }
-
-            $hotspot = null;
-            $hotspotRank = -1;
-            foreach ($analysis->hotspots as $candidate) {
-                if (!$candidate instanceof Hotspot) {
-                    continue;
-                }
-                $rank = match ($candidate->severity) {
-                    RedosSeverity::Safe => 0,
-                    RedosSeverity::Low => 1,
-                    RedosSeverity::Medium => 2,
-                    RedosSeverity::High => 3,
-                    RedosSeverity::Critical => 4,
-                    RedosSeverity::Unknown => 1,
-                };
-                if ($rank > $hotspotRank) {
-                    $hotspotRank = $rank;
-                    $hotspot = $candidate;
-                }
-            }
-
-            if (null !== $hotspot && '' !== $heatmapPrefix) {
-                $prefix = $heatmapPrefix;
-                $start = max(0, $hotspot->start);
-                $length = max(1, $hotspot->end - $hotspot->start);
-                $caret = str_repeat(' ', \strlen($prefix) + 1 + $start).str_repeat('^', $length);
-                $caretColor = match ($hotspot->severity) {
-                    RedosSeverity::Safe, RedosSeverity::Low => Output::GREEN,
-                    RedosSeverity::Medium => Output::YELLOW,
-                    RedosSeverity::High, RedosSeverity::Critical => Output::RED,
-                    RedosSeverity::Unknown => Output::GRAY,
-                };
-                $output->write($output->color($caret, $caretColor)."\n");
             }
 
             if ([] !== $analysis->findings) {

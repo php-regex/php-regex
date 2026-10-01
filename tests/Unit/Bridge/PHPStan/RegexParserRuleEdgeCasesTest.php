@@ -357,11 +357,13 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
-        $errors = $this->errorsFor($rule, '/(a{1,5}){1,5}/', 12);
+        // /(a{1,5}){1,5}/ is now proven linear and no longer reported. Recursion is out of
+        // the model: the heuristics judge /a(?R)?b/ low (a…a! never fails on PCRE2 10.49).
+        $errors = $this->errorsFor($rule, '/a(?R)?b/', 12);
 
         $this->assertSame(['regex.redos'], $this->identifiersOf($errors));
         $this->assertSame(
-            'Potential ReDoS risk (theoretical) (severity: LOW, confidence: LOW): /(a{1,5}){1,5}/',
+            'Potential backtracking (ReDoS): /a(?R)?b/',
             $errors[0]->getMessage(),
         );
     }
@@ -438,12 +440,14 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
-        $errors = $this->errorsFor($rule, '/(x+)+/', 12);
+        // /(x+)+/ matches x…x! at once and is now proven linear; anchored, x…x! fails at
+        // 19 pumps on PCRE2 10.49: proven exponential.
+        $errors = $this->errorsFor($rule, '/(x+)+$/', 12);
 
-        // One identifier whatever the severity; the severity is in the message.
+        // One identifier whatever the class; the class is in the message.
         $this->assertSame(['regex.redos'], $this->identifiersOf($errors));
         $this->assertSame(
-            'Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): /(x+)+/',
+            'Exponential backtracking (ReDoS): /(x+)+$/',
             $errors[0]->getMessage(),
         );
     }

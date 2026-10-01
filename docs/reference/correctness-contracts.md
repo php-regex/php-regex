@@ -30,9 +30,25 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## ReDoS Analysis
 
 **ReDoS Analyzer**
-- **Semantics:** Static heuristics for catastrophic backtracking risk.
-- **Guarantee:** Best-effort. Can produce false positives or miss complex backtracking cases.
-- **Fallbacks:** When patterns are unsupported, the analyzer reports a skip reason instead of guessing.
+- **Semantics:** A prioritized NFA models PCRE's backtracking order; the analyzer computes the complexity class of one
+  match attempt (linear, polynomial of degree k, exponential) and, for a vulnerable pattern, a witness
+  `prefix . pump x n . suffix`.
+- **Guarantee:** A `safe (proven)` verdict is **sound** for the model: it is given only when the model holds no
+  exponential and no polynomial ambiguity, so in one match attempt at one start position no input drives a
+  backtracking engine that follows PCRE's order beyond a linear number of steps, on the pattern as analysed. PCRE's
+  optimizations can only lower that cost. The second search `preg_match()` runs without `$matches` after an empty
+  match is covered. A proven vulnerable verdict is **not complete**: it certifies the class of the model, and
+  confirmed mode reports whether the running PCRE2 reproduces it (`replayed`).
+- **Limits:** Per match attempt: the retries of an unanchored search and the every-match functions (`preg_match_all`,
+  `preg_replace`, `preg_split`) are not counted. Lookaround constraints are not evaluated (a lookaround may fail);
+  `{m,n}` above 16, and a bounded repeat whose copies can read the same input in two ways, are analysed as `{m,}`; an
+  atomic body that is more than one run over one set is kept as written. Each abstraction is listed in
+  `abstractions`. Verdicts are deterministic per analysis version and PCRE2 release.
+- **Fallbacks:** Backreferences, conditionals, recursion, subroutine calls, verbs, callouts, `\X`, `\R`, non-atomic
+  lookarounds, the `xx` option, bounded repeats whose body can match empty, a pattern over the analysis budget, an
+  ambiguity the analysis cannot witness, and a witness crossing an over-approximated atomic body or character class
+  are judged by the structural heuristics (best-effort, as in 1.x), with `proof: heuristic` or `budget_exceeded`. An
+  invalid pattern is never proven safe: `proof: not_analyzed`, severity `unknown`.
 
 ## Automata Solver
 
@@ -64,6 +80,6 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Fallbacks:** `allow_if`, IP constraints, and request matchers are reported in notes and excluded from automata checks.
 
 **Firewall ReDoS (`regex:security`)**
-- **Semantics:** Uses ReDoS heuristics on firewall patterns.
-- **Guarantee:** Best-effort; reports above-threshold findings.
+- **Semantics:** Runs the ReDoS analyzer on firewall patterns.
+- **Guarantee:** The analyzer's (see above); reports above-threshold findings with their verdict and attack.
 - **Fallbacks:** `request_matcher` firewalls are skipped with a reason.

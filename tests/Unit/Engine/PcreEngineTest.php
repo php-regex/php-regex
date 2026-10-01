@@ -265,6 +265,32 @@ final class PcreEngineTest extends TestCase
         $this->assertSame([], $match->groups);
     }
 
+    /**
+     * Oracle (PCRE2 10.49, JIT off): preg_match('/^(!+?)*?^/', '!' x 20)
+     * returns 1 with $matches and fails on the backtrack limit without it,
+     * where PHP retries the empty match at the same offset with
+     * NOTEMPTY_ATSTART | ANCHORED.
+     */
+    #[Test]
+    public function test_test_calls_preg_match_without_matches(): void
+    {
+        $pattern = '/^(!+?)*?^/';
+        $subject = str_repeat('!', 20);
+        $engine = new PcreEngine();
+        $limits = new PcreLimits(backtrackLimit: 1000000, recursionLimit: 100000);
+
+        $this->assertTrue($engine->match($pattern, $subject, $limits)->matched);
+
+        $test = $this->withoutWarnings(static fn (): PcreMatch => $engine->test($pattern, $subject, $limits));
+
+        $this->assertNull($test->matched);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $test->errorCode);
+        $this->assertSame([], $test->groups);
+        $this->assertSame($this->backtrackLimit, \ini_get('pcre.backtrack_limit'));
+        $this->assertTrue($engine->test('/a/', 'xa')->matched);
+        $this->assertFalse($engine->test('/a/', 'x')->matched);
+    }
+
     #[Test]
     public function test_a_backtrack_limit_stops_a_catastrophic_pattern(): void
     {

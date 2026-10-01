@@ -586,16 +586,18 @@ preg_match('/(?i:foo)bar/', $input);
 
 **Identifier:** `regex.redos` in PHPStan, whatever the severity; the message names it
 
-**When it triggers:** The ReDoS analyzer detects nested quantifiers or overlapping alternatives that can explode backtracking time.
+**When it triggers:** The ReDoS analyzer proves how one match attempt grows with the input, by following PCRE's backtracking order, and hands back the input that triggers it. Patterns outside that model (backreferences, conditionals, recursion, an analysis over budget) are judged by heuristics, and the report says which of the two decided. The message prefix names the class: `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`.
 
 **Risk Levels:**
 
-| Level      | Severity                | Action Required      |
-|------------|-------------------------|----------------------|
-| `critical` | Easily exploitable      | Refactor immediately |
-| `high`     | Requires specific input | Consider refactoring |
-| `medium`   | Requires crafted input  | Monitor and plan fix |
-| `low`      | Minimal risk            | Accept with logging  |
+| Level      | Proven class                     | Action Required      |
+|------------|----------------------------------|----------------------|
+| `critical` | exponential                      | Refactor immediately |
+| `high`     | polynomial, degree 3 or more     | Consider refactoring |
+| `medium`   | polynomial, degree 2 (quadratic) | Monitor and plan fix |
+| `low`      | heuristic finding only           | Accept with logging  |
+
+See the [ReDoS guide](REDOS_GUIDE.md) for the guarantee and its limits.
 
 **Example:**
 ```php

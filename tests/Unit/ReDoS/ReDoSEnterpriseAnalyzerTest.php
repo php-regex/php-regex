@@ -54,7 +54,8 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
 
     public function test_empty_match_quantifier_is_reported(): void
     {
-        $analysis = $this->analyzer->analyze('/(a?)+/');
+        // (a?)+ never fails on the engine; (a*)* before the end fails on a…a! at n=18.
+        $analysis = $this->analyzer->analyze('/(a*)*$/');
 
         $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High));
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'match empty'));
@@ -90,10 +91,9 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
         yield 'possessive quantifier' => ['/a++b/'];
         yield 'fixed alternation' => ['/^(?:foo|bar|baz)$/'];
         yield 'bounded list' => ['/^[^,]{1,10}(?:,[^,]{1,10}){0,3}$/'];
-    }
-
-    public static function provideMediumPatterns(): \Iterator
-    {
+        // Pinned medium (unbounded quantifier) by the heuristics. Proven linear: no input up to
+        // 64 bytes trips the backtrack limit and the time stays linear from 4,000 to 8,000
+        // characters with JIT off (PCRE2 10.49).
         yield 'simple plus' => ['/a+/'];
         yield 'digits' => ['/\d+/'];
         yield 'char class plus' => ['/([a-z])+/'];
@@ -103,27 +103,52 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
         yield 'url-ish' => ['/^https?:\/\/\S+$/'];
         yield 'disjoint alternation' => ['/(?:foo|bar)+/'];
         yield 'unicode class' => ['/\\p{L}+/u'];
+        // Pinned high by the heuristics. Without an end constraint every continuation is
+        // accepted after the first run, so nothing backtracks: a…a! matches at once on the engine.
+        yield 'nested plus without an end constraint' => ['/(a+)+/'];
+        yield 'nested word chars without an end constraint' => ['/(\\w+)+/'];
+        yield 'overlapping alternation without an end constraint' => ['/(a|aa)+/'];
+        yield 'overlap with star without an end constraint' => ['/(a|a)*/'];
+        yield 'prefix overlap without an end constraint' => ['/(?:foo|foobar)+/'];
+        yield 'dot overlap without an end constraint' => ['/(?:a|.)*/'];
+        yield 'nested empty repeat without an end constraint' => ['/(a*)*/'];
+        // Pinned high by the heuristics; PCRE never fails on a…a! up to 64 bytes, anchored with $
+        // or not: the empty iteration is cut by the engine and \b consumes nothing.
+        yield 'empty repeat plus' => ['/(a?)+/'];
+        yield 'zero-width repeat' => ['/(?:\\b)+/'];
+    }
+
+    public static function provideMediumPatterns(): \Iterator
+    {
+        // Proven polynomial of degree 2 (quadratic per attempt): with JIT off a…a! takes
+        // 5.6 s at 4,000 characters and 43 s at 8,000 over every start position (PCRE2 10.49).
+        yield 'adjacent plus before the end' => ['/a+a+$/'];
+        yield 'adjacent word runs before the end' => ['/(?:\\w+)(?:\\w+)$/'];
     }
 
     public static function provideHighPatterns(): \Iterator
     {
-        yield 'nested plus' => ['/(a+)+/'];
-        yield 'nested word chars' => ['/(\\w+)+/'];
-        yield 'overlapping alternation' => ['/(a|aa)+/'];
-        yield 'overlap with star' => ['/(a|a)*/'];
+        // The shapes with an end constraint, so that the engine really backtracks: each makes
+        // preg_match() fail with "Backtrack limit exhausted" (PCRE2 10.49, JIT on and off).
+        // The unanchored forms are linear: see provideSafePatterns().
+        yield 'nested plus' => ['/(a+)+$/']; // a…a! fails at n=19
+        yield 'nested word chars' => ['/(\\w+)+$/']; // 0…0! fails at n=19
+        yield 'overlapping alternation' => ['/(a|aa)+$/']; // aaa…aaa! fails at 10 pumps
+        yield 'overlap with star' => ['/(a|a)*$/']; // a…a! fails at n=19
         yield 'backref loop' => ['/(?:([a-z]+)\\1)+/'];
-        yield 'prefix overlap' => ['/(?:foo|foobar)+/'];
-        yield 'dot overlap' => ['/(?:a|.)*/'];
-        yield 'empty repeat plus' => ['/(a?)+/'];
-        yield 'nested empty repeat' => ['/(a*)*/'];
+        // (?:foo|foobar)+ has no ambiguity; foo…foo! fails at 28 pumps with foofoo.
+        yield 'prefix overlap' => ['/(?:foo|foofoo)+$/'];
+        yield 'dot overlap' => ['/(?:a|.)*$/']; // aa…aa\n! fails at 10 pumps
+        yield 'nested empty repeat' => ['/(a*)*$/']; // a…a! fails at n=18
         yield 'variable backref' => ['/(?:([0-9]{2,4})\\1)+/'];
-        yield 'zero-width repeat' => ['/(?:\\b)+/'];
     }
 
     public static function provideAdjacentQuantifierPatterns(): \Iterator
     {
-        yield 'direct adjacent' => ['/a+a+/'];
-        yield 'grouped adjacent' => ['/(?:\\w+)(?:\\w+)/'];
+        // Unanchored, the second run takes the last character and the match ends: linear.
+        // Before the end they are quadratic per attempt (see provideMediumPatterns()).
+        yield 'direct adjacent' => ['/a+a+$/'];
+        yield 'grouped adjacent' => ['/(?:\\w+)(?:\\w+)$/'];
     }
 
     public static function provideDisjointAdjacentPatterns(): \Iterator

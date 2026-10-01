@@ -91,6 +91,8 @@ final readonly class SecurityFirewallAnalyzer
                 'score' => $analysis->score,
                 'vulnerable' => $analysis->getVulnerableSubpattern(),
                 'trigger' => $analysis->trigger,
+                'verdict' => $analysis->headline(),
+                'attack' => $analysis->witness?->render(),
             ];
         }
 

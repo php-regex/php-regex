@@ -15,8 +15,11 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
@@ -119,7 +122,7 @@ abstract class AbstractCommand implements CommandInterface
     /**
      * Whether a ReDoS analysis is a problem the exit code reports: a risk the
      * confirmed mode confirmed, at the threshold or above and of high
-     * severity or more, the verdict the lint command counts as an error. A
+     * severity or more, the rule the lint command uses for an error. A
      * theoretical finding is a warning.
      */
     protected function isConfirmedRedos(RedosAnalysis $analysis, ?RedosSeverity $threshold): bool
@@ -127,6 +130,43 @@ abstract class AbstractCommand implements CommandInterface
         return $analysis->isConfirmed()
             && $analysis->exceedsThreshold($threshold ?? RedosSeverity::High)
             && $analysis->exceedsThreshold(RedosSeverity::High);
+    }
+
+    /**
+     * The one-line verdict of a ReDoS analysis: the analysis' own headline,
+     * or the disabled analysis the command line asked for.
+     */
+    protected function redosHeadline(RedosAnalysis $analysis): string
+    {
+        if (RedosMode::Off === $analysis->mode) {
+            return 'ReDoS analysis disabled';
+        }
+
+        return $analysis->headline();
+    }
+
+    /**
+     * The lines that follow the headline: what the model analysed
+     * differently from the pattern as written, the budget when the
+     * heuristics decided past it, then the evidence of the lint report: the
+     * attack and, in confirmed mode, what the running engine made of it.
+     *
+     * @return list<string>
+     */
+    protected function redosVerdictLines(RedosAnalysis $analysis): array
+    {
+        $lines = [];
+
+        if ([] !== $analysis->abstractions) {
+            $lines[] = 'Model: '.implode('; ', $analysis->abstractions);
+        }
+
+        // The heuristic headline won over the budget: the budget is named here.
+        if (RedosProof::BudgetExceeded === $analysis->proof && RedosSeverity::Safe !== $analysis->severity) {
+            $lines[] = 'Note: analysis budget exceeded, the heuristics decided';
+        }
+
+        return [...$lines, ...RedosVerdict::evidence($analysis)];
     }
 
     /**
