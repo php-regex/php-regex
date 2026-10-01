@@ -86,8 +86,12 @@ echo
 echo "Packages"
 for repository in $repositories; do
     github="✗ repository"
-    # Until the rename, php-regex/regex-parser is the monorepo itself.
-    if gh api "repos/php-regex/$repository/contents/bin/split?ref=2.x" --jq .name >/dev/null 2>&1; then
+    # Until the rename, php-regex/regex-parser is the monorepo itself; after
+    # it, GitHub redirects the old name to the monorepo until it is reused.
+    actual=$(gh api "repos/php-regex/$repository" --jq .full_name 2>/dev/null)
+    if [ -n "$actual" ] && [ "$actual" != "php-regex/$repository" ]; then
+        github="· redirects to $actual"
+    elif gh api "repos/php-regex/$repository/contents/bin/split?ref=2.x" --jq .name >/dev/null 2>&1; then
         github="✗ still the monorepo"
     elif pushed=$(gh api "repos/php-regex/$repository/branches/2.x" --jq '.commit.sha[0:8]' 2>/dev/null); then
         github="✓ 2.x at $pushed"
@@ -95,5 +99,5 @@ for repository in $repositories; do
         github="· repository, no 2.x yet"
     fi
     if curl -sf -o /dev/null "https://repo.packagist.org/p2/php-regex/$repository.json"; then packagist="✓ Packagist"; else packagist="✗ Packagist"; fi
-    printf '  %-34s %-26s %s\n' "php-regex/$repository" "$github" "$packagist"
+    printf '  %-34s %-38s %s\n' "php-regex/$repository" "$github" "$packagist"
 done
