@@ -534,8 +534,8 @@ now judges for the `phpVersion` PHPStan analyses the project for, with the
 PCRE2 that PHP bundles. Without a `phpVersion` in your PHPStan configuration,
 PHPStan takes the PHP running it, so only the PCRE2 moves, from the linked
 release to the bundled one. Set PHPStan's `phpVersion` to the PHP your project
-runs on, `regexParser.pcreVersion` for a PHP that links another PCRE2, or
-`regexParser.phpVersion: runtime` to keep the old behaviour.
+runs on, `phpRegex.pcreVersion` for a PHP that links another PCRE2, or
+`phpRegex.phpVersion: runtime` to keep the old behaviour.
 
 #### The PHPStan extension reports what PHPStan does not
 
@@ -544,7 +544,7 @@ and ReDoS finding, and every invalid pattern a second time next to PHPStan's
 own `regexp.pattern`. It now reports, by default, only a pattern the target PHP
 refuses while the PHP running PHPStan compiles it, under
 `regex.invalidForTarget`. Lint rules and ReDoS analysis are opt-in: include
-`vendor/yoeunes/regex-parser/rules.neon`, or switch each on under `checks`.
+`vendor/php-regex/phpstan/rules.neon`, or switch each on under `checks`.
 
 The configuration is `phpVersion`, `pcreVersion` and `checks` only:
 
@@ -563,7 +563,7 @@ The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
 `regexp.pattern`), and ReDoS findings are reported as `regex.redos` whatever
 their severity, instead of `regex.redos.critical` and the like. Update
 `ignoreErrors` and baselines accordingly. The rule takes
-`new RegexParserRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
+`new RegexPatternRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
 its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 `IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
 
@@ -869,7 +869,7 @@ with the value quoted in the message.
 | Where                                               | 1.x with an unknown value      | 2.0                                  |
 |-----------------------------------------------------|--------------------------------|--------------------------------------|
 | `--redos-threshold` (`lint`, `analyze`, `debug`)    | refused; `safe` accepted       | refused, `safe` and `unknown` too    |
-| `regex_parser.redos.threshold` (Symfony)            | refused; `safe` accepted       | refused when the container compiles  |
+| `php_regex.redos.threshold` (Symfony)               | refused; `safe` accepted       | refused when the container compiles  |
 | `--redos-threshold` of `regex:analyze`, `regex:security` | refused; `safe` accepted  | refused                              |
 | `redos.threshold` (Laravel)                         | read as `high`                 | `regex:lint` stops with an error     |
 | `checks.redos.threshold` (PHPStan, array wiring)    | read as `critical`             | refused when the rule is built, even with ReDoS off |
@@ -879,6 +879,8 @@ A Symfony configuration using `threshold: safe` to report every finding
 should use `low`.
 
 #### Symfony: the bundle configuration in 2.0
+
+The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 
 | 1.x                                     | 2.0                                                        |
 |-----------------------------------------|------------------------------------------------------------|
@@ -893,21 +895,24 @@ replaces it.
 
 `runtime_pcre_validation` no longer follows `kernel.debug`: a debug kernel
 compiled every pattern a second time with the running PHP. Set it to `true` to
-keep that. It applies to the `regex_parser.regex` service only.
+keep that. It applies to the `php_regex.regex` service only.
 
 `regex:lint` judges for the project's target, like the standalone lint
 command: `php_version` / `pcre_version`, else `composer.json` in
 `%kernel.project_dir%`, else the running PHP. It never uses
 `runtime_pcre_validation`, and its JSON report gains a `target` key. The
-`regex_parser.regex` service keeps judging for the running PHP. See
+`php_regex.regex` service keeps judging for the running PHP. See
 [the Symfony guide](docs/guides/symfony.md).
 
-The container parameters `regex_parser.analysis.redos_threshold`,
-`regex_parser.analysis.ignore_patterns` and `regex_parser.exclude_paths` are
-gone; `regex_parser.exclude`, `regex_parser.php_version` and
-`regex_parser.pcre_version` are new.
+Every container parameter and service moves from `regex_parser.*` to
+`php_regex.*`. `regex_parser.analysis.redos_threshold`,
+`regex_parser.analysis.ignore_patterns` and `regex_parser.exclude_paths` have
+no 2.0 counterpart; `php_regex.exclude`, `php_regex.php_version` and
+`php_regex.pcre_version` are new.
 
-#### Laravel: config/regex-parser.php in 2.0
+#### Laravel: config/php-regex.php replaces config/regex-parser.php
+
+The keys of `config/regex-parser.php` become, in `config/php-regex.php`:
 
 | 1.x                                              | 2.0                                                   |
 |--------------------------------------------------|-------------------------------------------------------|
@@ -918,17 +923,17 @@ gone; `regex_parser.exclude`, `regex_parser.php_version` and
 | —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
 | `automata.*`, never read                         | the defaults of `regex:compare`                       |
 
-Re-publish the file:
+Publish the new file:
 
 ```bash
-php artisan vendor:publish --tag=regex-parser-config --force
+php artisan vendor:publish --tag=php-regex-config
 ```
 
-A file published by 1.x keeps working: every key it lacks, inside each section
-too, takes the package default, and `regex:lint` prints a warning for each 1.x
-key it still holds, with the key that replaces it. The old key is not read. A
-published file still has `'runtime_pcre_validation' => env('APP_DEBUG', false)`
-until you change it.
+then move your settings over from `config/regex-parser.php`, under the keys
+above, and delete the old file: nothing reads it, and the provider raises a
+deprecation while it is there. Every key the new file lacks, inside each
+section too, takes the package default. A 1.x key copied as it is is not read,
+and `regex:lint` prints a warning for it with the key that replaces it.
 
 `redos.enabled` now switches the ReDoS analysis of `regex:lint` on; 1.x handed
 it to another setting and never ran the analysis. `regex:lint` judges for the
