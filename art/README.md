@@ -10,8 +10,9 @@ small formats:
 
 - **Large formats** (banner, social) — cream paper `#F8F7F2`, ink navy
   `#182B45`, rust amber `#A84A08`.
-- **Small formats** (org icon, favicon) — navy tile `#0F1B2E`, light ink
-  `#EDF1F7`, ember amber `#E97625` (the paper system's dark tokens).
+- **Small formats** (favicon, org-icon dark twin) — navy tile `#0F1B2E`,
+  light ink `#EDF1F7`, ember amber `#E97625` (the paper system's dark
+  tokens; `org-icon.svg` stays on the paper tokens above).
 - **Corner radii** — none, square corners everywhere: banner card = square
   (no rx, keeps its 10px transparent margin + border); favicon tile =
   full-bleed square (no rx); org-icon = full-bleed square because GitHub
@@ -23,8 +24,9 @@ small formats:
   brand drift, not compensation. Theming is explicit files only, never
   `@media`: every themed asset ships FOUR files — `X.svg` + `X.png` (light)
   and `X-dark.svg` + `X-dark.png` (dark) — each rendering identically in
-  every viewer. README switches themes via `<picture>`. The icons are
-  theme-neutral by design (navy tile reads on light and dark).
+  every viewer. README switches themes via `<picture>`. The favicon is
+  theme-neutral by design (navy tile reads on light and dark); the org
+  icon ships a themed pair since it is consumed as an upload, not a URL.
 - **Package banners** — every `src/<Package>/art/` carries `banner.svg` +
   `banner-dark.svg`: the same 1000×200 square card and the same mark, then
   the one-word brand in ink (PHP Black, Regex Bold) followed by the package
