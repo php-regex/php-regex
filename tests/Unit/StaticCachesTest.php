@@ -45,7 +45,9 @@ final class StaticCachesTest extends TestCase
         $parser->parse('/\p{Latin}/')->accept(new SampleGenerator());
         $parser->parse('/\p{Linear_B}/u')->accept(new SampleGenerator());
         $parser->parse('#a#')->accept(new PatternPrinter());
-        (new RedosAnalyzer())->analyze('/([a-c]+)+$/');
+        // \w, not a class of ranges: the model builds those itself and
+        // never asks the class-set cache.
+        (new RedosAnalyzer())->analyze('/(\w+)+$/');
 
         foreach (self::caches() as [$class, $property]) {
             $this->assertNotSame([], $this->read($class, $property), 'Not warmed: '.$class.'::$'.$property);
