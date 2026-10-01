@@ -23,10 +23,10 @@ source still pointed there.
    `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`,
    `regex-toolkit`, `regex-cli`, `regex-language-server`, `regex-phpstan`,
    `regex-symfony`, `regex-laravel`.
-4. **GitHub** — create a fine-grained token with *Contents: read and write* on
+4. ~~**GitHub** — create a fine-grained token~~ (done 2026-10-01; add `regex-parser` to it once that repository exists) with *Contents: read and write* on
    those 14 repositories only, and store it as the secret `SPLIT_TOKEN` of
    `php-regex/php-regex` (Settings → Secrets and variables → Actions).
-5. **Split** — first run `bin/split --dry-run` locally to read the plan, then
+5. ~~**Split**~~ (enabled 2026-10-01: 13 repositories split by CI; `regex-parser` is skipped until it exists) — first run `bin/split --dry-run` locally to read the plan, then
    set the repository variable `SPLIT_ENABLED` to `true` (same page, tab
    *Variables*): `.github/workflows/split.yml` then splits on every push to
    `2.x` and every `v2.*` tag. Push once (or run `bin/split` locally with
