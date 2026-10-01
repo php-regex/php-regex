@@ -25,20 +25,20 @@ use PHPUnit\Framework\TestCase;
 final class PackageManifestTest extends TestCase
 {
     private const PACKAGES = [
-        'Automata' => 'automata',
-        'Cli' => 'cli',
-        'Explain' => 'explain',
-        'Generator' => 'generator',
-        'LanguageServer' => 'language-server',
-        'Laravel' => 'laravel',
-        'Linter' => 'linter',
-        'Optimizer' => 'optimizer',
-        'Parser' => 'parser',
-        'PHPStan' => 'phpstan',
-        'Redos' => 'redos',
-        'Symfony' => 'symfony',
-        'Toolkit' => 'toolkit',
-        'Transpiler' => 'transpiler',
+        'Automata' => 'regex-automata',
+        'Cli' => 'regex-cli',
+        'Explain' => 'regex-explain',
+        'Generator' => 'regex-generator',
+        'LanguageServer' => 'regex-language-server',
+        'Laravel' => 'regex-laravel',
+        'Linter' => 'regex-linter',
+        'Optimizer' => 'regex-optimizer',
+        'Parser' => 'regex-parser',
+        'PHPStan' => 'regex-phpstan',
+        'Redos' => 'regex-redos',
+        'Symfony' => 'regex-symfony',
+        'Toolkit' => 'regex-toolkit',
+        'Transpiler' => 'regex-transpiler',
     ];
 
     #[Test]
@@ -133,12 +133,23 @@ final class PackageManifestTest extends TestCase
         $this->assertSame(['extension.neon'], self::dig(self::manifest('PHPStan'), 'extra', 'phpstan', 'includes'));
         $this->assertFileExists(self::root().'/src/PHPStan/extension.neon');
         $this->assertFileExists(self::root().'/src/PHPStan/rules.neon');
+        // The linter reads regex.json, so it ships the file's schema.
+        $this->assertFileExists(self::root().'/src/Linter/regex.schema.json');
 
         foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
             $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
             $this->assertTrue(is_executable(self::root().'/src/'.$directory.'/'.$script), $script);
         }
+    }
+
+    #[Test]
+    public function test_the_root_package_is_the_monorepo(): void
+    {
+        $root = self::decode(self::root().'/composer.json');
+
+        $this->assertSame('php-regex/php-regex', self::dig($root, 'name'));
+        $this->assertSame('https://github.com/php-regex/php-regex', self::dig($root, 'homepage'));
     }
 
     #[Test]

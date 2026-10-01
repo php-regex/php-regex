@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/toolkit",
+    "name": "php-regex/regex-toolkit",
     "type": "library",
     "description": "One entry point to every PHPRegex library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.",
     "keywords": [
@@ -18,13 +18,13 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/explain": "^2.0",
-        "php-regex/generator": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0",
-        "php-regex/transpiler": "^2.0"
+        "php-regex/regex-explain": "^2.0",
+        "php-regex/regex-generator": "^2.0",
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0",
+        "php-regex/regex-transpiler": "^2.0"
     },
     "suggest": {
         "rector/rector": "To run the 1.x to 2.0 upgrade set in Resources/rector."

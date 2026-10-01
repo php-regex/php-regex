@@ -306,7 +306,7 @@ bin/regex help
 ```bash
 composer update
 # or
-composer require yoeunes/regex-parser@latest
+composer require php-regex/regex-toolkit:^2.0
 ```
 
 3. Check if command is deprecated:
@@ -353,7 +353,7 @@ linting:
 
 1. Verify bundle is installed:
 ```bash
-composer show yoeunes/regex-parser
+composer show php-regex/regex-toolkit
 # Check if Symfony bridge is listed
 ```
 
@@ -446,7 +446,7 @@ php examples/basic/validate.php
 4. Search issues:
 ```bash
 # Search GitHub issues
-https://github.com/php-regex/regex-parser/issues
+https://github.com/php-regex/php-regex/issues
 
 # Create new issue with question
 ```
@@ -454,7 +454,7 @@ https://github.com/php-regex/regex-parser/issues
 5. Join community:
 ```bash
 # GitHub Discussions
-https://github.com/php-regex/regex-parser/discussions
+https://github.com/php-regex/php-regex/discussions
 
 # Stack Overflow
 https://stackoverflow.com/questions/tagged/regexparser
@@ -473,7 +473,7 @@ https://stackoverflow.com/questions/tagged/regexparser
 
 ## Still Need Help?
 
-1. Check the [GitHub Issues](https://github.com/php-regex/regex-parser/issues) for similar problems
+1. Check the [GitHub Issues](https://github.com/php-regex/php-regex/issues) for similar problems
 2. Search for your specific error message in the codebase
 3. Enable verbose mode for more details:
 ```bash

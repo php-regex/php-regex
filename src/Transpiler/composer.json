@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/transpiler",
+    "name": "php-regex/regex-transpiler",
     "type": "library",
     "description": "Transpiles PCRE patterns to JavaScript and Python regular expressions, with the losses reported.",
     "keywords": [
@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {

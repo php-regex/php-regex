@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/optimizer",
+    "name": "php-regex/regex-optimizer",
     "type": "library",
     "description": "Rewrites regex patterns into shorter equivalents and modernizes old syntax, checked by language equivalence.",
     "keywords": [
@@ -18,8 +18,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/automata": "^2.0",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-automata": "^2.0",
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {

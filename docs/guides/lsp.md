@@ -20,7 +20,7 @@ The PHPRegex LSP server provides:
 ### 1. Install PHPRegex
 
 ```bash
-composer require --dev yoeunes/regex-parser
+composer require --dev php-regex/regex-language-server
 ```
 
 ### 2. Locate the LSP Server

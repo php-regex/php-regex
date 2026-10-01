@@ -418,7 +418,7 @@ final class SelfUpdaterTest extends TestCase
         $updater = new SelfUpdater();
         $method = new \ReflectionMethod(SelfUpdater::class, 'getUpdateUrl');
 
-        $this->assertSame('https://github.com/php-regex/regex-parser/releases/latest/download/regex.phar', $method->invoke($updater));
+        $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar', $method->invoke($updater));
     }
 
     public function test_get_checksum_url_returns_expected_url(): void
@@ -426,7 +426,7 @@ final class SelfUpdaterTest extends TestCase
         $updater = new SelfUpdater();
         $method = new \ReflectionMethod(SelfUpdater::class, 'getChecksumUrl');
 
-        $this->assertSame('https://github.com/php-regex/regex-parser/releases/latest/download/regex.phar.sha256', $method->invoke($updater));
+        $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar.sha256', $method->invoke($updater));
     }
 
     public function test_run_throws_when_phar_not_writable_via_override(): void

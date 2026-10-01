@@ -720,7 +720,7 @@ final class CommandTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('PHPRegex', $buffer);
-        $this->assertStringContainsString('github.com/php-regex/regex-parser', $buffer);
+        $this->assertStringContainsString('github.com/php-regex/php-regex', $buffer);
     }
 
     public function test_self_update_command_help_and_error_paths(): void

@@ -164,7 +164,7 @@ final class RegexLintCommandTest extends TestCase
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->exactly(2))->method('newLine');
         $io->expects($this->once())->method('writeln')
-            ->with('  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/regex-parser</>');
+            ->with('  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex</>');
 
         $method->invoke($command, $io);
     }

@@ -7,7 +7,7 @@ enables it on install.
 ## Installation
 
 ```bash
-composer require --dev yoeunes/regex-parser
+composer require --dev php-regex/regex-laravel
 php artisan vendor:publish --tag=php-regex-config
 ```
 

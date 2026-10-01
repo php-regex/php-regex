@@ -1,14 +1,14 @@
 {
-    "name": "yoeunes/regex-parser",
+    "name": "php-regex/php-regex",
     "description": "A PCRE regex parser with lexer, AST builder, validation, ReDoS analysis, and syntax highlighting. Zero runtime dependencies.",
     "keywords": ["regex", "parser", "pcre", "lexer", "ast", "validation", "redos", "security", "syntax-highlighting", "php", "cli"],
-    "homepage": "https://github.com/php-regex/regex-parser",
+    "homepage": "https://github.com/php-regex/php-regex",
     "type": "library",
     "license": "MIT",
     "support": {
-        "issues": "https://github.com/php-regex/regex-parser/issues",
-        "source": "https://github.com/php-regex/regex-parser",
-        "docs": "https://github.com/php-regex/regex-parser#readme"
+        "issues": "https://github.com/php-regex/php-regex/issues",
+        "source": "https://github.com/php-regex/php-regex",
+        "docs": "https://github.com/php-regex/php-regex#readme"
     },
     "funding": [
         {
@@ -31,20 +31,20 @@
         "ext-mbstring": "*"
     },
     "replace": {
-        "php-regex/automata": "self.version",
-        "php-regex/cli": "self.version",
-        "php-regex/explain": "self.version",
-        "php-regex/generator": "self.version",
-        "php-regex/language-server": "self.version",
-        "php-regex/laravel": "self.version",
-        "php-regex/linter": "self.version",
-        "php-regex/optimizer": "self.version",
-        "php-regex/parser": "self.version",
-        "php-regex/phpstan": "self.version",
-        "php-regex/redos": "self.version",
-        "php-regex/symfony": "self.version",
-        "php-regex/toolkit": "self.version",
-        "php-regex/transpiler": "self.version"
+        "php-regex/regex-automata": "self.version",
+        "php-regex/regex-cli": "self.version",
+        "php-regex/regex-explain": "self.version",
+        "php-regex/regex-generator": "self.version",
+        "php-regex/regex-language-server": "self.version",
+        "php-regex/regex-laravel": "self.version",
+        "php-regex/regex-linter": "self.version",
+        "php-regex/regex-optimizer": "self.version",
+        "php-regex/regex-parser": "self.version",
+        "php-regex/regex-phpstan": "self.version",
+        "php-regex/regex-redos": "self.version",
+        "php-regex/regex-symfony": "self.version",
+        "php-regex/regex-toolkit": "self.version",
+        "php-regex/regex-transpiler": "self.version"
     },
     "autoload": {
         "psr-4": {
@@ -106,7 +106,7 @@
             ]
         },
         "ide": {
-            "regex.dist.json": "./regex.schema.json"
+            "regex.dist.json": "./src/Linter/regex.schema.json"
         }
     },
     "suggest": {

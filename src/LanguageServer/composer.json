@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/language-server",
+    "name": "php-regex/regex-language-server",
     "type": "library",
     "description": "A Language Server for the regex patterns of PHP files: diagnostics, hovers and code actions in any LSP editor.",
     "keywords": [
@@ -19,10 +19,10 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/explain": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/toolkit": "^2.0"
+        "php-regex/regex-explain": "^2.0",
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-toolkit": "^2.0"
     },
     "autoload": {
         "psr-4": {

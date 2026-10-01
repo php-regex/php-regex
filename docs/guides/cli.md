@@ -19,7 +19,7 @@ vendor/bin/regex --help
 
 ```bash
 # Download the PHAR
-curl -Ls https://github.com/php-regex/regex-parser/releases/latest/download/regex.phar \
+curl -Ls https://github.com/php-regex/php-regex/releases/latest/download/regex.phar \
   -o ~/.local/bin/regex
 chmod +x ~/.local/bin/regex
 
@@ -392,7 +392,7 @@ Configuration : regex.dist.json
   [PASS] No issues found, 0 optimizations available.
   Time: 0.08s | Memory: 10 MB | Cache: 0 hits, 0 misses | Processes: 10
 
-  Found it useful? Consider starring: https://github.com/php-regex/regex-parser
+  Found it useful? Consider starring: https://github.com/php-regex/php-regex
 ```
 
 **With Issues:**
@@ -420,7 +420,7 @@ Create `regex.json` or `regex.dist.json` in your project root:
 
 ```json
 {
-  "$schema": "./vendor/yoeunes/regex-parser/regex.schema.json",
+  "$schema": "./vendor/php-regex/regex-linter/regex.schema.json",
   "format": "console",
   "jobs": 4,
   "exclude": ["vendor", "var", "tests"],
@@ -501,7 +501,7 @@ These 1.x keys are refused, with the message naming what replaced them:
 
 ### Schema
 
-`regex.schema.json`, at the root of the package, describes every key, so an
+`regex.schema.json`, shipped by `php-regex/regex-linter`, describes every key, so an
 editor can complete and check the file: point `$schema` at it, as in the
 example above. The lint command validates against the same definition, so
 the editor and the command accept exactly the same files; the command is

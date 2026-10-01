@@ -1,9 +1,28 @@
 # Upgrading from 1.x to 2.0
 
 2.0 is a new major line. The 1.x line stays on the
-[`1.x` branch](https://github.com/php-regex/regex-parser/tree/1.x), with its own
+[`1.x` branch](https://github.com/php-regex/php-regex/tree/1.x), with its own
 upgrade notes; this guide covers moving from 1.3 to 2.0. For every change, see
 [CHANGELOG.md](CHANGELOG.md).
+
+### Packages
+
+`yoeunes/regex-parser` stays on 1.x. 2.0 ships as `php-regex/regex-*`
+packages; replace it with the one you use:
+
+| what you use | require |
+|---|---|
+| the `Regex` facade, or a bit of everything | `php-regex/regex-toolkit` |
+| the parser, the validator and the AST only | `php-regex/regex-parser` |
+| the PHPStan extension | `php-regex/regex-phpstan` (dev) |
+| the Symfony bundle | `php-regex/regex-symfony` |
+| the Laravel provider | `php-regex/regex-laravel` |
+| the `regex` command | `php-regex/regex-cli` (dev) |
+| the language server | `php-regex/regex-language-server` (dev) |
+
+The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
+`regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`) come with
+the toolkit, or alone when only that part is needed.
 
 ### Names
 
@@ -16,7 +35,7 @@ A Rector set makes these changes in your code. Add it to your `rector.php`
 and run Rector twice:
 
 ```php
-$rectorConfig->sets([__DIR__.'/vendor/php-regex/toolkit/Resources/rector/upgrade-2.0.php']);
+$rectorConfig->sets([__DIR__.'/vendor/php-regex/regex-toolkit/Resources/rector/upgrade-2.0.php']);
 ```
 
 It renames classes, enum cases and the renamed methods; the second run catches
@@ -544,11 +563,11 @@ and ReDoS finding, and every invalid pattern a second time next to PHPStan's
 own `regexp.pattern`. It now reports, by default, only a pattern the target PHP
 refuses while the PHP running PHPStan compiles it, under
 `regex.invalidForTarget`. Lint rules and ReDoS analysis are opt-in: include
-`vendor/php-regex/phpstan/rules.neon`, or switch each on under `checks`.
+`vendor/php-regex/regex-phpstan/rules.neon`, or switch each on under `checks`.
 
-The extension is its own package, `php-regex/phpstan`: an include written by
+The extension is its own package, `php-regex/regex-phpstan`: an include written by
 hand moves from `vendor/yoeunes/regex-parser/extension.neon` to
-`vendor/php-regex/phpstan/extension.neon` (extension-installer finds it on its
+`vendor/php-regex/regex-phpstan/extension.neon` (extension-installer finds it on its
 own).
 
 The configuration is `phpVersion`, `pcreVersion` and `checks` only:

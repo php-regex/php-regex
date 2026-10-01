@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/automata",
+    "name": "php-regex/regex-automata",
     "type": "library",
     "description": "Compiles the regular subset of PCRE to automata to compare languages: equivalence, intersection, subset and example strings.",
     "keywords": [
@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {

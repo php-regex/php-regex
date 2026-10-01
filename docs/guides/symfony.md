@@ -7,7 +7,7 @@ The bundle registers a `Regex` service for your application and the
 ## Installation
 
 ```bash
-composer require --dev yoeunes/regex-parser
+composer require --dev php-regex/regex-symfony
 ```
 
 ```php

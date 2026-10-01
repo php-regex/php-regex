@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/explain",
+    "name": "php-regex/regex-explain",
     "type": "library",
     "description": "Explains, highlights and draws regex ASTs: plain text and HTML explanations, console and HTML highlighting, ASCII trees, Mermaid and railroad diagrams.",
     "keywords": [
@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {

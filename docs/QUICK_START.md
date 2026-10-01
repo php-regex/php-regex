@@ -16,7 +16,7 @@ If you are new to regex, start here and follow the examples. If you already know
 ## Installation
 
 ```bash
-composer require yoeunes/regex-parser
+composer require php-regex/regex-toolkit
 ```
 
 No additional dependencies are required.
@@ -406,7 +406,7 @@ Reference:
 
 ## Getting help
 
-- Issues and bug reports: <https://github.com/php-regex/regex-parser/issues>
+- Issues and bug reports: <https://github.com/php-regex/php-regex/issues>
 - Real-world examples: see `tests/Integration/`
 - Interactive playground: <https://regex101.com> (PCRE2 mode)
 

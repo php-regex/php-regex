@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/cli",
+    "name": "php-regex/regex-cli",
     "type": "library",
     "description": "The regex command: validate, explain, analyze, lint and compare patterns from the terminal.",
     "keywords": [
@@ -18,14 +18,14 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/automata": "^2.0",
-        "php-regex/explain": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0",
-        "php-regex/toolkit": "^2.0",
-        "php-regex/transpiler": "^2.0"
+        "php-regex/regex-automata": "^2.0",
+        "php-regex/regex-explain": "^2.0",
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0",
+        "php-regex/regex-toolkit": "^2.0",
+        "php-regex/regex-transpiler": "^2.0"
     },
     "autoload": {
         "psr-4": {

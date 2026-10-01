@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/symfony",
+    "name": "php-regex/regex-symfony",
     "type": "symfony-bundle",
     "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:compare and regex:transpile commands.",
     "keywords": [
@@ -22,13 +22,13 @@
         "symfony/console": "^7.4|^8.0",
         "symfony/dependency-injection": "^7.4|^8.0",
         "symfony/http-kernel": "^7.4|^8.0",
-        "php-regex/automata": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0",
-        "php-regex/toolkit": "^2.0",
-        "php-regex/transpiler": "^2.0"
+        "php-regex/regex-automata": "^2.0",
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0",
+        "php-regex/regex-toolkit": "^2.0",
+        "php-regex/regex-transpiler": "^2.0"
     },
     "suggest": {
         "symfony/routing": "To analyze route requirements with regex:routes.",

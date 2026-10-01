@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/generator",
+    "name": "php-regex/regex-generator",
     "type": "library",
     "description": "Generates sample strings and test cases that a regex matches or rejects.",
     "keywords": [
@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {

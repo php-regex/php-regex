@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/phpstan",
+    "name": "php-regex/regex-phpstan",
     "type": "phpstan-extension",
     "description": "PHPStan extension that reports the regex patterns your target PHP refuses, and, opt-in, lint and ReDoS findings.",
     "keywords": [
@@ -19,10 +19,10 @@
     "require": {
         "php": ">=8.2",
         "phpstan/phpstan": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0"
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0"
     },
     "autoload": {
         "psr-4": {

@@ -220,7 +220,7 @@ RegexParser integrates with common PHP tooling:
 - **Laravel**: [the Laravel guide](docs/guides/laravel.md)
 - **Language server**: [the language server guide](docs/guides/lsp.md)
 - **PHPStan**: enabled by extension-installer, or through
-  `vendor/php-regex/phpstan/extension.neon`. It reports a pattern your
+  `vendor/php-regex/regex-phpstan/extension.neon`. It reports a pattern your
   target PHP refuses while the PHP running PHPStan compiles it; lint rules and
   ReDoS analysis come with `rules.neon`. See [the PHPStan guide](docs/guides/phpstan.md)
 - **GitHub Actions**: `vendor/bin/regex lint` in your CI pipeline
@@ -269,4 +269,4 @@ Released under the [MIT License](LICENSE).
 
 ## Support
 
-If you run into issues or have questions, please open an issue on GitHub: <https://github.com/php-regex/regex-parser/issues>.
+If you run into issues or have questions, please open an issue on GitHub: <https://github.com/php-regex/php-regex/issues>.

@@ -127,7 +127,7 @@ final class LintConfigSchema
     {
         return [
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-            '$id' => 'https://raw.githubusercontent.com/php-regex/regex-parser/main/regex.schema.json',
+            '$id' => 'https://raw.githubusercontent.com/php-regex/php-regex/2.x/src/Linter/regex.schema.json',
             'title' => 'PHPRegex Lint Configuration',
             'description' => 'Configuration of the regex lint command (regex.json or regex.dist.json). Keys regex.json sets replace the ones regex.dist.json sets: objects key by key, lists whole.',
             'type' => 'object',
@@ -158,7 +158,7 @@ final class LintConfigSchema
                     'type' => 'string',
                     'description' => 'JSON Schema reference for editor integration.',
                     'format' => 'uri-reference',
-                    'examples' => ['./regex.schema.json'],
+                    'examples' => ['./vendor/php-regex/regex-linter/regex.schema.json'],
                 ],
                 '$id' => [
                     'type' => 'string',
@@ -226,7 +226,7 @@ final class LintConfigSchema
             ],
             'examples' => [
                 [
-                    '$schema' => './regex.schema.json',
+                    '$schema' => './vendor/php-regex/regex-linter/regex.schema.json',
                     'paths' => ['src'],
                     'exclude' => ['vendor', 'tests'],
                     'phpVersion' => '8.2',

@@ -59,7 +59,7 @@ final readonly class ConsoleReportFormatter
     public function renderFooter(SymfonyStyle $io): void
     {
         $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
+        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
         $io->newLine();
     }
 

@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/linter",
+    "name": "php-regex/regex-linter",
     "type": "library",
     "description": "Lints the regex patterns of a PHP code base: extraction from PHP sources, lint rules, ReDoS and validity checks, reports in console, JSON, GitHub, Checkstyle and JUnit formats.",
     "keywords": [
@@ -18,11 +18,11 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/automata": "^2.0",
-        "php-regex/explain": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0"
+        "php-regex/regex-automata": "^2.0",
+        "php-regex/regex-explain": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0"
     },
     "suggest": {
         "nikic/php-parser": "To extract patterns with a full PHP parser instead of the tokenizer."

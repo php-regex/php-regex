@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/laravel",
+    "name": "php-regex/regex-laravel",
     "type": "library",
     "description": "Laravel integration for PHPRegex: the Regex service and facade, and the regex:lint, regex:routes, regex:explain, regex:compare and regex:transpile commands.",
     "keywords": [
@@ -22,13 +22,13 @@
         "illuminate/routing": "^12.0",
         "illuminate/support": "^12.0",
         "symfony/console": "^7.4|^8.0",
-        "php-regex/automata": "^2.0",
-        "php-regex/linter": "^2.0",
-        "php-regex/optimizer": "^2.0",
-        "php-regex/parser": "^2.0",
-        "php-regex/redos": "^2.0",
-        "php-regex/toolkit": "^2.0",
-        "php-regex/transpiler": "^2.0"
+        "php-regex/regex-automata": "^2.0",
+        "php-regex/regex-linter": "^2.0",
+        "php-regex/regex-optimizer": "^2.0",
+        "php-regex/regex-parser": "^2.0",
+        "php-regex/regex-redos": "^2.0",
+        "php-regex/regex-toolkit": "^2.0",
+        "php-regex/regex-transpiler": "^2.0"
     },
     "suggest": {
         "nikic/php-parser": "To extract patterns with a full PHP parser."

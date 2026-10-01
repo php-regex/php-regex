@@ -1,5 +1,5 @@
 {
-    "$schema": "./regex.schema.json",
+    "$schema": "./src/Linter/regex.schema.json",
     "paths": [
         "src"
     ],

@@ -31,14 +31,14 @@ final class RegexParserRuleHighThresholdTest extends RuleTestCase
                 "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
                 "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
                 "\n".
-                "Read more about possessive quantifiers: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#possessive-quantifiers\n".
-                "Read more about atomic groups: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#atomic-groups\n".
-                'Read more about catastrophic backtracking: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#catastrophic-backtracking',
+                "Read more about possessive quantifiers: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#possessive-quantifiers\n".
+                "Read more about atomic groups: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#atomic-groups\n".
+                'Read more about catastrophic backtracking: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#catastrophic-backtracking',
             ],
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 23,
-                "Consider using atomic groups (?>...) or possessive quantifiers.\nRead more: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#nested-quantifiers",
+                "Consider using atomic groups (?>...) or possessive quantifiers.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers",
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
@@ -49,7 +49,7 @@ final class RegexParserRuleHighThresholdTest extends RuleTestCase
             [
                 'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                 24,
-                "Consider tightening the first quantifier to its minimum.\nRead more: https://github.com/php-regex/regex-parser/blob/main/docs/reference.md#optimal-quantifier-concatenation",
+                "Consider tightening the first quantifier to its minimum.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#optimal-quantifier-concatenation",
             ],
         ]);
     }

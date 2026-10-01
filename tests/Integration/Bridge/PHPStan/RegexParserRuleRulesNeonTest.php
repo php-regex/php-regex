@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexParserRuleRulesNeonTest extends RuleTestCase
 {
-    private const DOCS = 'https://github.com/php-regex/regex-parser/blob/main/docs/reference.md';
+    private const DOCS = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md';
 
     public static function getAdditionalConfigFiles(): array
     {

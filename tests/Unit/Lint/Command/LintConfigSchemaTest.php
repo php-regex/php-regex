@@ -37,7 +37,7 @@ final class LintConfigSchemaTest extends TestCase
     {
         $this->assertSame(
             self::roundTrip(LintConfigSchema::definition()),
-            self::decodeFile(self::ROOT.'/regex.schema.json'),
+            self::decodeFile(self::ROOT.'/src/Linter/regex.schema.json'),
             'regex.schema.json differs from LintConfigSchema::definition(); regenerate the file from the definition.',
         );
     }

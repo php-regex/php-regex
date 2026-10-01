@@ -70,6 +70,6 @@ final class ConsoleFormatterTest extends TestCase
 
         $footer = $formatter->formatFooter();
 
-        $this->assertStringContainsString('https://github.com/php-regex/regex-parser', $footer);
+        $this->assertStringContainsString('https://github.com/php-regex/php-regex', $footer);
     }
 }

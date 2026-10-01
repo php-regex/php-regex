@@ -41,7 +41,7 @@ require_once __DIR__.'/../../vendor/autoload.php';
 $arguments = $_SERVER['argv'] ?? [];
 
 $check = \in_array('--check', $arguments, true);
-$path = dirname(__DIR__, 2).'/regex.schema.json';
+$path = dirname(__DIR__, 2).'/src/Linter/regex.schema.json';
 $json = json_encode(
     LintConfigSchema::definition(),
     \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR,

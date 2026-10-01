@@ -1,5 +1,5 @@
 {
-    "name": "php-regex/redos",
+    "name": "php-regex/regex-redos",
     "type": "library",
     "description": "Finds the patterns that backtrack catastrophically (ReDoS) from the AST, and can confirm a finding against the engine.",
     "keywords": [
@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/parser": "^2.0"
+        "php-regex/regex-parser": "^2.0"
     },
     "autoload": {
         "psr-4": {
