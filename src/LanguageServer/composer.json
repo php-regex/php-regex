@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-language-server",
     "type": "library",
-    "description": "A Language Server for the regex patterns of PHP files: diagnostics, hovers and code actions in any LSP editor.",
+    "description": "A Language Server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.",
     "keywords": [
         "regex",
         "pcre",

@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-optimizer",
     "type": "library",
-    "description": "Rewrites regex patterns into shorter equivalents and modernizes old syntax, checked by language equivalence.",
+    "description": "Rewrites regex patterns into shorter equivalents and modernizes old syntax; equivalence can be proven, opt-in, by regex-automata.",
     "keywords": [
         "regex",
         "pcre",

@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-phpstan",
     "type": "phpstan-extension",
-    "description": "PHPStan extension that reports the regex patterns your target PHP refuses, and, opt-in, lint and ReDoS findings.",
+    "description": "PHPStan extension that reports the regex patterns your target PHP refuses, and, opt-in, lint, ReDoS and optimization findings.",
     "keywords": [
         "regex",
         "pcre",

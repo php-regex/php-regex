@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-toolkit",
     "type": "library",
-    "description": "One entry point to every PHPRegex library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.",
+    "description": "One entry point to every PHPRegex analysis library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.",
     "keywords": [
         "regex",
         "pcre",

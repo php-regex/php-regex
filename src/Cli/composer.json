@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-cli",
     "type": "library",
-    "description": "The regex command: validate, explain, analyze, lint and compare patterns from the terminal.",
+    "description": "The regex console: sixteen subcommands to parse, explain, validate, lint, hunt ReDoS, transpile, diagram and debug patterns — also shipped as a self-updating regex.phar.",
     "keywords": [
         "regex",
         "pcre",

@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-symfony",
     "type": "symfony-bundle",
-    "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:compare and regex:transpile commands.",
+    "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare and regex:transpile commands.",
     "keywords": [
         "regex",
         "pcre",
