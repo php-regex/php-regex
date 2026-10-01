@@ -11,44 +11,44 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\KeepNode;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Redos\RedosConfidence;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\KeepNode;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\ReDoS\ReDoSConfidence;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_get_result_includes_message_without_suggested_rewrite(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $this->invokePrivate($visitor, 'addVulnerability', [
-            ReDoSSeverity::LOW,
+            RedosSeverity::LOW,
             'Test risk',
             new LiteralNode('a', 0, 0),
             null,
-            ReDoSConfidence::LOW,
+            RedosConfidence::LOW,
             null,
         ]);
 
@@ -59,13 +59,13 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_get_result_includes_hint_for_suggested_rewrite(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $this->invokePrivate($visitor, 'addVulnerability', [
-            ReDoSSeverity::MEDIUM,
+            RedosSeverity::MEDIUM,
             'Test risk with suggestion',
             new LiteralNode('a', 0, 0),
             'Use possessive quantifiers',
-            ReDoSConfidence::MEDIUM,
+            RedosConfidence::MEDIUM,
             null,
         ]);
 
@@ -76,27 +76,27 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_large_bounded_quantifier_adds_low_risk(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{1,2001}', QuantifierType::T_GREEDY, 0, 0);
 
         $severity = $quantifier->accept($visitor);
 
-        $this->assertSame(ReDoSSeverity::LOW, $severity);
+        $this->assertSame(RedosSeverity::LOW, $severity);
     }
 
     public function test_star_height_critical_when_child_returns_high(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $highNode = new class implements NodeInterface {
             public function getChildren(): array
             {
                 return [];
             }
 
-            public function accept(NodeVisitorInterface $visitor): ReDoSSeverity|string
+            public function accept(NodeVisitorInterface $visitor): RedosSeverity|string
             {
-                if ($visitor instanceof ReDoSProfileNodeVisitor) {
-                    return ReDoSSeverity::HIGH;
+                if ($visitor instanceof RedosProfiler) {
+                    return RedosSeverity::HIGH;
                 }
 
                 return '';
@@ -116,12 +116,12 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
         $quantifier = new QuantifierNode($highNode, '*', QuantifierType::T_GREEDY, 0, 0);
         $severity = $quantifier->accept($visitor);
 
-        $this->assertSame(ReDoSSeverity::CRITICAL, $severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $severity);
     }
 
     public function test_safe_nodes_return_safe_severity(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $nodes = [
             new AssertionNode('A', 0, 0),
             new KeepNode(0, 0),
@@ -134,23 +134,23 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
         ];
 
         foreach ($nodes as $node) {
-            $this->assertSame(ReDoSSeverity::SAFE, $node->accept($visitor));
+            $this->assertSame(RedosSeverity::SAFE, $node->accept($visitor));
         }
     }
 
     public function test_conditional_and_define_delegate_to_children(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $conditional = new ConditionalNode(new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0), new LiteralNode('c', 0, 0), 0, 0);
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
 
-        $this->assertSame(ReDoSSeverity::SAFE, $conditional->accept($visitor));
-        $this->assertSame(ReDoSSeverity::SAFE, $define->accept($visitor));
+        $this->assertSame(RedosSeverity::SAFE, $conditional->accept($visitor));
+        $this->assertSame(RedosSeverity::SAFE, $define->accept($visitor));
     }
 
     public function test_overlapping_alternatives_handles_unknown_sets(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $alternation = new AlternationNode([new DotNode(0, 0), new LiteralNode('a', 0, 0)], 0, 0);
 
         $result = $this->invokePrivate($visitor, 'hasOverlappingAlternatives', [$alternation]);
@@ -160,7 +160,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_overlapping_alternatives_does_not_assume_overlap_for_unknown_sets(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         // Create an alternation with unknown set (e.g., UnicodePropNode) and a literal
         // Should not trigger overlap since unknown doesn't mean overlap
         $alternation = new AlternationNode([
@@ -175,7 +175,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_prefix_signature_recurses_through_group(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $group = new GroupNode(new DotNode(0, 0), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
 
         $signature = $this->invokePrivate($visitor, 'getPrefixSignature', [$group]);
@@ -185,7 +185,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_length_range_and_quantifier_bounds_helpers(): void
     {
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
 
         $zeroRange = $this->invokePrivate($visitor, 'lengthRange', [new PcreVerbNode('FAIL', 0, 0)]);
         $this->assertSame([0, 0], $zeroRange);
@@ -196,9 +196,9 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
                 return [];
             }
 
-            public function accept(NodeVisitorInterface $visitor): ReDoSSeverity
+            public function accept(NodeVisitorInterface $visitor): RedosSeverity
             {
-                return ReDoSSeverity::SAFE;
+                return RedosSeverity::SAFE;
             }
 
             public function getStartPosition(): int

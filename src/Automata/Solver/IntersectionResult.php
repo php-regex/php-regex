@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Solver;
+namespace PhpRegex\Automata\Solver;
 
 /**
  * Result of an intersection check between two regexes.

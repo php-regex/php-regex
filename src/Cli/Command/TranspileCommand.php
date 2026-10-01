@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\TranspileException;
-use RegexParser\Transpiler\RegexTranspiler;
-use RegexParser\Transpiler\Target\TargetRegistry;
-use RegexParser\Transpiler\TranspileResult;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Transpiler\Target\TargetRegistry;
+use PhpRegex\Transpiler\TranspileException;
+use PhpRegex\Transpiler\Transpiler;
+use PhpRegex\Transpiler\TranspileResult;
 
 final class TranspileCommand extends AbstractCommand
 {
@@ -61,8 +61,8 @@ final class TranspileCommand extends AbstractCommand
         try {
             // We use a direct instantiation here or via Regex facade if exposed?
             // The Regex facade doesn't seem to expose transpiler directly in the previous Read,
-            // but we can instantiate RegexTranspiler manually.
-            $transpiler = new RegexTranspiler($regex->parser());
+            // but we can instantiate Transpiler manually.
+            $transpiler = new Transpiler($regex->parser());
 
             $result = $transpiler->transpile($args['pattern'], $args['target']);
 

@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Converter;
+namespace PhpRegex\Tests\Unit\Lsp\Converter;
 
+use PhpRegex\LanguageServer\Converter\PositionConverter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Converter\PositionConverter;
 
 final class PositionConverterTest extends TestCase
 {

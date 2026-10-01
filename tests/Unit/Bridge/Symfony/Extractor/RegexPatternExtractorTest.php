@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Extractor;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
+use PhpRegex\Linter\Extraction\ExtractorInterface;
+use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\PatternExtractor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\ExtractorInterface;
-use RegexParser\Lint\Extraction\PhpParserExtractionStrategy;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\RegexPatternExtractor;
 
 final class RegexPatternExtractorTest extends TestCase
 {
@@ -26,7 +26,7 @@ final class RegexPatternExtractorTest extends TestCase
         $mockExtractor = $this->createStub(ExtractorInterface::class);
         $mockExtractor->method('extract')->willReturn(['pattern1', 'pattern2']);
 
-        $extractor = new RegexPatternExtractor($mockExtractor);
+        $extractor = new PatternExtractor($mockExtractor);
 
         $result = $extractor->extract([__FILE__]);
 
@@ -38,7 +38,7 @@ final class RegexPatternExtractorTest extends TestCase
         $mockExtractor = $this->createStub(ExtractorInterface::class);
         $mockExtractor->method('extract')->willReturn([]);
 
-        $extractor = new RegexPatternExtractor($mockExtractor);
+        $extractor = new PatternExtractor($mockExtractor);
 
         $result = $extractor->extract(['test.php']);
 
@@ -50,7 +50,7 @@ final class RegexPatternExtractorTest extends TestCase
         $mockExtractor = $this->createStub(ExtractorInterface::class);
         $mockExtractor->method('extract')->willReturn([]);
 
-        $extractor = new RegexPatternExtractor($mockExtractor);
+        $extractor = new PatternExtractor($mockExtractor);
 
         $result = $extractor->extract(['test.php'], ['custom_exclude']);
 
@@ -61,7 +61,7 @@ final class RegexPatternExtractorTest extends TestCase
     {
         $phpstanExtractor = new PhpParserExtractionStrategy();
 
-        $extractor = new RegexPatternExtractor($phpstanExtractor);
+        $extractor = new PatternExtractor($phpstanExtractor);
 
         $result = $extractor->extract(['nonexistent']);
 
@@ -72,7 +72,7 @@ final class RegexPatternExtractorTest extends TestCase
     {
         $tokenExtractor = new TokenBasedExtractionStrategy();
 
-        $extractor = new RegexPatternExtractor($tokenExtractor);
+        $extractor = new PatternExtractor($tokenExtractor);
 
         $result = $extractor->extract(['nonexistent']);
 
@@ -82,7 +82,7 @@ final class RegexPatternExtractorTest extends TestCase
     public function test_collects_and_filters_php_files_with_default_excludes(): void
     {
         // Use a real extractor to test actual file discovery behavior
-        $extractor = new RegexPatternExtractor(new TokenBasedExtractionStrategy());
+        $extractor = new PatternExtractor(new TokenBasedExtractionStrategy());
 
         $fixtureDir = __DIR__.'/../../../../Fixtures/Extractor/DefaultExclude';
 
@@ -100,7 +100,7 @@ final class RegexPatternExtractorTest extends TestCase
     public function test_collects_and_filters_php_files_with_custom_excludes(): void
     {
         // Use a real extractor to test actual file discovery behavior
-        $extractor = new RegexPatternExtractor(new TokenBasedExtractionStrategy());
+        $extractor = new PatternExtractor(new TokenBasedExtractionStrategy());
 
         $fixtureDir = __DIR__.'/../../../../Fixtures/Extractor/CustomExclude';
 

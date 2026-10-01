@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 final class SampleGeneratorNodeVisitorTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class SampleGeneratorNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a[bc]/');
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $visitor->setSeed(123);
 
         $sample = $ast->accept($visitor);

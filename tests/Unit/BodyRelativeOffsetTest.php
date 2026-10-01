@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Regex;
 
 /**
  * Every offset counts from the first character of the pattern body, the
@@ -54,7 +54,7 @@ final class BodyRelativeOffsetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, options: array<string, mixed>, code: ErrorCode, offset: int, underCaret: string}>
+     * @return iterable<string, array{pattern: string, options: array<string, mixed>, code: \PhpRegex\Parser\ErrorCode, offset: int, underCaret: string}>
      */
     public static function provideFaultsOutsideTheBody(): iterable
     {
@@ -120,7 +120,7 @@ final class BodyRelativeOffsetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, code: ErrorCode}>
+     * @return iterable<string, array{pattern: string, code: \PhpRegex\Parser\ErrorCode}>
      */
     public static function provideFaultsWithNoBody(): iterable
     {

@@ -11,12 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
-
-echo "Benchmarking CompilerNodeVisitor performance improvements...\n\n";
+echo "Benchmarking PatternPrinter performance improvements...\n\n";
 
 // Test patterns of varying complexity for compilation
 $testPatterns = [
@@ -38,7 +47,7 @@ foreach ($testPatterns as $name => $pattern) {
     for ($i = 0; $i < $iterations; $i++) {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
     }
     $compileTime = microtime(true) - $start;
 
@@ -53,7 +62,7 @@ echo "=== Compilation-Only Performance ===\n";
 
 $regex = Regex::create();
 $ast = $regex->parse('/[a-zA-Z0-9_\\-\\.]+(?:\\?(?:[^#]*))?(?:#.*)?/');
-$compiler = new CompilerNodeVisitor();
+$compiler = new PatternPrinter();
 
 $start = microtime(true);
 for ($i = 0; $i < 10000; $i++) {
@@ -75,7 +84,7 @@ for ($i = 0; $i < 1000; $i++) {
         // This would trigger delimiter mapping in the old implementation
         $regex = Regex::create();
         $ast = $regex->parse("{$delimiter}test{$delimiter}");
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
     }
 }
 $delimiterTime = microtime(true) - $start;

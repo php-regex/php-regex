@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Engine;
+namespace PhpRegex\Tests\Unit\Engine;
 
+use PhpRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\Support\LibrarySource;
 
 /**
  * A pattern the library was given reaches the running engine through
- * src/Engine only. The library still runs its own regexes (tokenizing,
+ * src/Parser/Engine only. The library still runs its own regexes (tokenizing,
  * reading escapes): those files are named below. A file whose only preg
  * call ran a pattern it was given is not among them.
  */
 final class UserPatternsGoThroughTheEngineTest extends TestCase
 {
-    private const ENGINE = 'src/Engine/';
+    private const ENGINE = 'src/Parser/Engine/';
 
     /**
      * The files that run the library's own regexes. The CLI benchmark
@@ -33,64 +33,64 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * what production sees, so it stays out of the engine.
      */
     private const OWN_REGEX_FILES = [
-        'src/Analysis/CharSetAnalyzer.php',
+        'src/Parser/Analysis/CharSetAnalyzer.php',
         'src/Automata/Transform/AstToNfaTransformer.php',
         'src/Automata/Transform/RegularSubsetValidator.php',
         'src/Automata/Unicode/CodePointHelper.php',
-        'src/Bridge/Laravel/Command/LintCommand.php',
-        'src/Bridge/Laravel/Extractor/ValidationRuleExtractor.php',
-        'src/Bridge/Symfony/Command/RegexLintCommand.php',
-        'src/Bridge/Symfony/Extractor/RouteRegexPatternSource.php',
-        'src/Bridge/Symfony/Routing/RouteConflictAnalyzer.php',
-        'src/Bridge/Symfony/Security/SecurityConfigExtractor.php',
+        'src/Laravel/Command/LintCommand.php',
+        'src/Laravel/Extractor/ValidationRulePatternSource.php',
+        'src/Symfony/Command/LintCommand.php',
+        'src/Symfony/Extractor/RoutePatternSource.php',
+        'src/Symfony/Routing/RouteConflictAnalyzer.php',
+        'src/Symfony/Security/SecurityConfigExtractor.php',
         'src/Cli/Command/HelpCommand.php',
         'src/Cli/Command/LintCommand.php',
         'src/Cli/Command/RedosCommand.php',
         'src/Cli/SelfUpdate/SelfUpdater.php',
-        'src/Internal/CodePointReader.php',
-        'src/Internal/DisplayEscaper.php',
-        'src/Internal/ExtendedClassReader.php',
-        'src/Internal/GroupNameReader.php',
-        'src/Internal/InlineFlags.php',
-        'src/Internal/PatternParser.php',
-        'src/Internal/PcreVerb.php',
-        'src/Internal/VersionCondition.php',
-        'src/Lexer.php',
-        'src/Lint/Command/LintConfigValidator.php',
-        'src/Lint/Command/ProjectTarget.php',
-        'src/Lint/Extraction/TokenBasedExtractionStrategy.php',
-        'src/Lint/Formatter/AbstractConsoleTagFormatter.php',
-        'src/Lint/Formatter/ConsoleFormatter.php',
-        'src/Lint/Formatter/LinkFormatter.php',
-        'src/Lint/RegexAnalysisService.php',
-        'src/Lint/Rule/BackrefAsOctalInCharClassRule.php',
-        'src/Lint/Rule/Support/BackrefTarget.php',
-        'src/Lint/Rule/Support/CodePoints.php',
-        'src/Lint/Rule/SuspiciousEscapeRule.php',
-        'src/Lint/Rule/UndefinedBackrefRule.php',
-        'src/Lint/Rule/UselessIFlagRule.php',
-        'src/Lsp/Converter/PositionConverter.php',
-        'src/Lsp/Document/RegexFinder.php',
-        'src/Lsp/Handler/CompletionHandler.php',
-        'src/Lsp/Protocol/Message.php',
-        'src/Node/QuantifierBounds.php',
-        'src/NodeVisitor/CompilerNodeVisitor.php',
-        'src/NodeVisitor/ExplainNodeVisitor.php',
-        'src/NodeVisitor/HighlighterVisitor.php',
-        'src/NodeVisitor/HtmlExplainNodeVisitor.php',
-        'src/NodeVisitor/LengthRangeNodeVisitor.php',
-        'src/NodeVisitor/LiteralExtractorNodeVisitor.php',
-        'src/NodeVisitor/OptimizerNodeVisitor.php',
-        'src/NodeVisitor/RailroadSvgVisitor.php',
-        'src/NodeVisitor/SampleGeneratorNodeVisitor.php',
-        'src/NodeVisitor/ValidatorNodeVisitor.php',
-        'src/Parser.php',
-        'src/Regex.php',
-        'src/RegexOptions.php',
-        'src/RegexParser.php',
-        'src/Transpiler/Target/AbstractCompilerVisitor.php',
-        'src/Transpiler/Target/JavaScript/JavaScriptCompilerVisitor.php',
-        'src/Transpiler/Target/Python/PythonCompilerVisitor.php',
+        'src/Parser/Internal/CodePointReader.php',
+        'src/Parser/Internal/DisplayEscaper.php',
+        'src/Parser/Internal/ExtendedClassReader.php',
+        'src/Parser/Internal/GroupNameReader.php',
+        'src/Parser/Internal/InlineFlags.php',
+        'src/Parser/Internal/PatternParser.php',
+        'src/Parser/Internal/PcreVerb.php',
+        'src/Parser/Internal/VersionCondition.php',
+        'src/Parser/Lexer.php',
+        'src/Linter/Config/LintConfigValidator.php',
+        'src/Linter/Config/ProjectTarget.php',
+        'src/Linter/Extraction/TokenBasedExtractionStrategy.php',
+        'src/Linter/Formatter/AbstractConsoleTagFormatter.php',
+        'src/Linter/Formatter/ConsoleFormatter.php',
+        'src/Linter/Formatter/LinkFormatter.php',
+        'src/Linter/AnalysisService.php',
+        'src/Linter/Rule/BackrefAsOctalInCharClassRule.php',
+        'src/Linter/Rule/Support/BackrefTarget.php',
+        'src/Linter/Rule/Support/CodePoints.php',
+        'src/Linter/Rule/SuspiciousEscapeRule.php',
+        'src/Linter/Rule/UndefinedBackrefRule.php',
+        'src/Linter/Rule/UselessIFlagRule.php',
+        'src/LanguageServer/Converter/PositionConverter.php',
+        'src/LanguageServer/Document/RegexFinder.php',
+        'src/LanguageServer/Handler/CompletionHandler.php',
+        'src/LanguageServer/Protocol/Message.php',
+        'src/Parser/Node/QuantifierBounds.php',
+        'src/Parser/Printer/PatternPrinter.php',
+        'src/Explain/TextExplainer.php',
+        'src/Explain/Highlighter/AbstractHighlighter.php',
+        'src/Explain/HtmlExplainer.php',
+        'src/Parser/Analysis/LengthRangeCalculator.php',
+        'src/Parser/Analysis/LiteralExtractor.php',
+        'src/Optimizer/Rewriter.php',
+        'src/Explain/RailroadSvgRenderer.php',
+        'src/Generator/SampleGenerator.php',
+        'src/Parser/Validation/Validator.php',
+        'src/Parser/Syntax/TokenParser.php',
+        'src/Toolkit/Regex.php',
+        'src/Parser/ParserOptions.php',
+        'src/Parser/RegexParser.php',
+        'src/Transpiler/Target/AbstractTargetPrinter.php',
+        'src/Transpiler/Target/JavaScript/JavaScriptPrinter.php',
+        'src/Transpiler/Target/Python/PythonPrinter.php',
         'src/Transpiler/Target/Python/PythonTarget.php',
     ];
 
@@ -99,7 +99,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * the engine, the Lexer for its own tokenizing regexes, the benchmark.
      */
     private const LAST_ERROR_READERS = [
-        'src/Lexer.php',
+        'src/Parser/Lexer.php',
         'src/Cli/Command/RedosCommand.php',
     ];
 

@@ -184,8 +184,8 @@ vendor/bin/regex lint src/
 ## PHP API at a glance
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSMode;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosMode;
 
 $regex = Regex::create([
     'runtime_pcre_validation' => true,
@@ -205,7 +205,7 @@ $analysis = $regex->redos('/(a+)+$/');
 echo $analysis->severity->value; // 'critical', 'safe', etc.
 
 // Optional: attempt bounded confirmation
-$confirmed = $regex->redos('/(a+)+$/', mode: ReDoSMode::CONFIRMED);
+$confirmed = $regex->redos('/(a+)+$/', mode: RedosMode::CONFIRMED);
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 
 // Get human-readable explanation

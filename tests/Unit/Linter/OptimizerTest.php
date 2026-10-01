@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Linter;
+namespace PhpRegex\Tests\Unit\Linter;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Tests for the regex linter/optimizer to verify correct optimization suggestions.
@@ -29,15 +29,15 @@ final class OptimizerTest extends TestCase
 {
     private Regex $regex;
 
-    private OptimizerNodeVisitor $optimizer;
+    private Rewriter $optimizer;
 
-    private CompilerNodeVisitor $compiler;
+    private PatternPrinter $compiler;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->optimizer = new OptimizerNodeVisitor();
-        $this->compiler = new CompilerNodeVisitor();
+        $this->optimizer = new Rewriter();
+        $this->compiler = new PatternPrinter();
     }
 
     #[DataProvider('optimizationProvider')]

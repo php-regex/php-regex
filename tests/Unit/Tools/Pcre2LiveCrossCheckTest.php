@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Tools;
+namespace PhpRegex\Tests\Unit\Tools;
 
+use PhpRegex\Tests\TestUtils\Pcre2LiveCrossCheck;
+use PhpRegex\Tests\TestUtils\Pcre2TestdataExtractor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\Pcre2LiveCrossCheck;
-use RegexParser\Tests\TestUtils\Pcre2TestdataExtractor;
 
 /**
  * Unit coverage for the live cross-check run at extraction time.

@@ -1,7 +1,7 @@
 <?php
 
 require_once "vendor/autoload.php";
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

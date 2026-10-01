@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintConfigSchema;
+use PhpRegex\Tests\Support\TemporaryProject;
+use PhpRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintConfigSchema;
-use RegexParser\Tests\Support\TemporaryProject;
-use RegexParser\Tests\TestUtils\JsonSchemaSubsetValidator;
 
 /**
  * One definition of regex.json: the PHP one. regex.schema.json is written

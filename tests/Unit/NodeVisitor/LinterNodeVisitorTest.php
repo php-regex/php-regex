@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\RuleViolation;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LintIssue;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\Severity;
 
 final class LinterNodeVisitorTest extends TestCase
 {
     public function test_useless_i_flag_on_digits(): void
     {
         $regex = Regex::create()->parse('/^\d+$/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -35,7 +35,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_on_letters(): void
     {
         $regex = Regex::create()->parse('/[a-z]/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -47,7 +47,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_with_backreference(): void
     {
         $regex = Regex::create()->parse('/^<(\\w+)>.*<\\/\\1>$/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -57,7 +57,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_with_named_backreference(): void
     {
         $regex = Regex::create()->parse('/^<(?<tag>\\w+)>.*<\\/\\k<tag>>$/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -67,7 +67,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_on_unicode_escape(): void
     {
         $regex = Regex::create()->parse('/\\x41/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -77,7 +77,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_on_char_class_unicode_escape(): void
     {
         $regex = Regex::create()->parse('/[\\x41]/i');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -87,7 +87,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_i_flag_not_useless_on_unicode_property(): void
     {
         $regex = Regex::create()->parse('/\\p{Lu}/iu');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -97,7 +97,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_useless_s_flag_no_dots(): void
     {
         $regex = Regex::create()->parse('/^\d+$/s');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -107,7 +107,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_s_flag_not_useless_with_dots(): void
     {
         $regex = Regex::create()->parse('/.+/s');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -117,7 +117,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_useless_m_flag_no_anchors(): void
     {
         $regex = Regex::create()->parse('/\\d+/m');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -135,7 +135,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_m_flag_not_useless_with_anchors(): void
     {
         $regex = Regex::create()->parse('/^test$/m');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -145,7 +145,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_start_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/foo^bar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -155,7 +155,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_end_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/$foo/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -165,7 +165,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_start_anchor_assertion_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\Abar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issueIds = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
@@ -175,7 +175,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_end_anchor_assertion_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\zbar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issueIds = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
@@ -185,7 +185,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_no_anchor_conflict_at_boundaries(): void
     {
         $regex = Regex::create()->parse('/^foo$/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -196,7 +196,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_start_anchor_multiline_valid(): void
     {
         $regex = Regex::create()->parse('/^header\n^body/m');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -206,7 +206,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_start_anchor_false_positive(): void
     {
         $regex = Regex::create()->parse('/foo^bar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -216,7 +216,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_start_anchor_no_multiline_flag(): void
     {
         $regex = Regex::create()->parse('/foo\\n^bar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -226,7 +226,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_escaped_dollar_does_not_trigger_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\$bar/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -238,7 +238,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_anchor_conflict_detection(string $pattern, bool $expectStart, bool $expectEnd): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -288,11 +288,11 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_redundant_char_class_hints(string $pattern, string $expectedHint): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.charclass.redundant');
-        $this->assertInstanceOf(LintIssue::class, $issue);
+        $this->assertInstanceOf(RuleViolation::class, $issue);
         $this->assertNotNull($issue->hint);
         $this->assertStringContainsString($expectedHint, (string) $issue->hint);
     }
@@ -316,11 +316,11 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_inline_flag_redundant_hints(string $pattern, string $expectedHint): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.flag.redundant');
-        $this->assertInstanceOf(LintIssue::class, $issue);
+        $this->assertInstanceOf(RuleViolation::class, $issue);
         $this->assertNotNull($issue->hint);
         $this->assertStringContainsString($expectedHint, (string) $issue->hint);
     }
@@ -343,7 +343,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_char_class_group_tokens_are_literal(): void
     {
         $regex = Regex::create()->parse('/[?:()]+/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issueIds = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
@@ -357,7 +357,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\2/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -367,7 +367,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_backref_to_valid_group(): void
     {
         $regex = Regex::create()->parse('/(a)\\1/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -377,7 +377,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_g_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\g{2}/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -387,7 +387,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_g_backref_relative_reference_is_not_flagged(): void
     {
         $regex = Regex::create()->parse('/(a)\\g{-1}/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -397,7 +397,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_named_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\k<foo>/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -407,7 +407,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_named_backref_to_valid_group(): void
     {
         $regex = Regex::create()->parse('/(?<foo>a)\\k<foo>/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -418,7 +418,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Overlapping alternations should only be flagged when inside an unbounded quantifier
         $regex = Regex::create()->parse('/([a-c]|[b-d])+/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -429,7 +429,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Without a quantifier, overlapping alternations don't cause ReDoS
         $regex = Regex::create()->parse('/[a-c]|[b-d]/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -439,7 +439,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_no_semantic_overlap_in_alternation(): void
     {
         $regex = Regex::create()->parse('/[a-c]|[d-e]/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -449,7 +449,7 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_no_overlap_warning_without_alternation(): void
     {
         $regex = Regex::create()->parse('/[0-9]/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -460,7 +460,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Overlapping alternations should only be flagged when inside an unbounded quantifier
         $regex = Regex::create()->parse('/(\\d|[0-9])+/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -471,7 +471,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // The canonical line-ending pattern should NOT be flagged as it's safe
         $regex = Regex::create()->parse('/\\r\\n|\\r|\\n/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -482,7 +482,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Fixed-length literal alternations should NOT be flagged
         $regex = Regex::create()->parse('/^(978|979)/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -493,7 +493,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Possessive quantifiers don't backtrack, so overlaps are safe
         $regex = Regex::create()->parse('/([a-c]|[b-d])++/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -504,7 +504,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         // Atomic groups don't backtrack, so overlaps are safe
         $regex = Regex::create()->parse('/(?>[a-c]|[b-d])+/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
@@ -519,16 +519,16 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_backref_as_octal_in_char_class(string $pattern, bool $expectWarning): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.charclass.backrefAsOctal');
 
         if ($expectWarning) {
-            $this->assertInstanceOf(LintIssue::class, $issue, "Expected backref_as_octal warning for: {$pattern}");
+            $this->assertInstanceOf(RuleViolation::class, $issue, "Expected backref_as_octal warning for: {$pattern}");
             $this->assertNotNull($issue->hint);
         } else {
-            $this->assertNotInstanceOf(LintIssue::class, $issue, "Did NOT expect backref_as_octal warning for: {$pattern}");
+            $this->assertNotInstanceOf(RuleViolation::class, $issue, "Did NOT expect backref_as_octal warning for: {$pattern}");
         }
     }
 
@@ -553,16 +553,16 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_literal_metachar_in_char_class(string $pattern, bool $expectWarning): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.charclass.literalMetachar');
 
         if ($expectWarning) {
-            $this->assertInstanceOf(LintIssue::class, $issue, "Expected literal_metachar warning for: {$pattern}");
+            $this->assertInstanceOf(RuleViolation::class, $issue, "Expected literal_metachar warning for: {$pattern}");
             $this->assertNotNull($issue->hint);
         } else {
-            $this->assertNotInstanceOf(LintIssue::class, $issue, "Did NOT expect literal_metachar warning for: {$pattern}");
+            $this->assertNotInstanceOf(RuleViolation::class, $issue, "Did NOT expect literal_metachar warning for: {$pattern}");
         }
     }
 
@@ -588,19 +588,19 @@ final class LinterNodeVisitorTest extends TestCase
     public function test_dot_newline_anti_pattern(string $pattern, bool $expectWarning, ?string $hintFragment = null): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.alternation.dotNewline');
 
         if ($expectWarning) {
-            $this->assertInstanceOf(LintIssue::class, $issue, "Expected dot_newline warning for: {$pattern}");
+            $this->assertInstanceOf(RuleViolation::class, $issue, "Expected dot_newline warning for: {$pattern}");
             if (null !== $hintFragment) {
                 $this->assertNotNull($issue->hint);
                 $this->assertStringContainsString($hintFragment, (string) $issue->hint);
             }
         } else {
-            $this->assertNotInstanceOf(LintIssue::class, $issue, "Did NOT expect dot_newline warning for: {$pattern}");
+            $this->assertNotInstanceOf(RuleViolation::class, $issue, "Did NOT expect dot_newline warning for: {$pattern}");
         }
     }
 
@@ -620,32 +620,32 @@ final class LinterNodeVisitorTest extends TestCase
     // ---------------------------------------------------------------
 
     #[DataProvider('provideQuantifiedCapturingGroupCases')]
-    public function test_quantified_capturing_group(string $pattern, bool $expectWarning, ?Severity $expectedSeverity = null): void
+    public function test_quantified_capturing_group(string $pattern, bool $expectWarning, ?LintSeverity $expectedSeverity = null): void
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.group.quantifiedCapture');
 
         if ($expectWarning) {
-            $this->assertInstanceOf(LintIssue::class, $issue, "Expected quantified_capture warning for: {$pattern}");
+            $this->assertInstanceOf(RuleViolation::class, $issue, "Expected quantified_capture warning for: {$pattern}");
             $this->assertNotNull($issue->hint);
             if (null !== $expectedSeverity) {
                 $this->assertSame($expectedSeverity, $issue->severity, "Expected severity {$expectedSeverity->value} for: {$pattern}");
             }
         } else {
-            $this->assertNotInstanceOf(LintIssue::class, $issue, "Did NOT expect quantified_capture warning for: {$pattern}");
+            $this->assertNotInstanceOf(RuleViolation::class, $issue, "Did NOT expect quantified_capture warning for: {$pattern}");
         }
     }
 
     public static function provideQuantifiedCapturingGroupCases(): \Generator
     {
-        yield 'named group with + — Warning' => ['/(?<digit>\d+)+/', true, Severity::Warning];
-        yield 'numbered group with + — Info' => ['/(\d+)+/', true, Severity::Info];
-        yield 'numbered group with * — Info' => ['/(\d+)*/', true, Severity::Info];
-        yield 'numbered group with {2,} — Info' => ['/(\d+){2,}/', true, Severity::Info];
-        yield 'exact repetition {3} — still warns' => ['/(\d+){3}/', true, Severity::Info];
+        yield 'named group with + — Warning' => ['/(?<digit>\d+)+/', true, LintSeverity::Warning];
+        yield 'numbered group with + — Info' => ['/(\d+)+/', true, LintSeverity::Info];
+        yield 'numbered group with * — Info' => ['/(\d+)*/', true, LintSeverity::Info];
+        yield 'numbered group with {2,} — Info' => ['/(\d+){2,}/', true, LintSeverity::Info];
+        yield 'exact repetition {3} — still warns' => ['/(\d+){3}/', true, LintSeverity::Info];
         yield 'non-capturing group — not flagged' => ['/(?:\d+)+/', false];
         yield 'optional group (?) — not flagged' => ['/(\d+)?/', false];
         yield 'single repetition {1} — not flagged' => ['/(\d+){1}/', false];
@@ -653,9 +653,9 @@ final class LinterNodeVisitorTest extends TestCase
     }
 
     /**
-     * @param array<LintIssue> $issues
+     * @param array<\PhpRegex\Linter\Rule\RuleViolation> $issues
      */
-    private function findIssueById(array $issues, string $id): ?LintIssue
+    private function findIssueById(array $issues, string $id): ?RuleViolation
     {
         foreach ($issues as $issue) {
             if ($issue->id === $id) {

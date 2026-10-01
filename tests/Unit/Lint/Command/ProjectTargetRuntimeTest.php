@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintConfigSchema;
+use PhpRegex\Linter\Config\ProjectTarget;
+use PhpRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintConfigSchema;
-use RegexParser\Lint\Command\ProjectTarget;
-use RegexParser\PcreTarget;
 
 /**
  * "runtime" names the PHP running the command and the PCRE2 it links, as

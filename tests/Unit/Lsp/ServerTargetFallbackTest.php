@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp;
+namespace PhpRegex\Tests\Unit\Lsp;
 
+use PhpRegex\LanguageServer\Protocol\Response;
+use PhpRegex\LanguageServer\Server;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Protocol\Response;
-use RegexParser\Lsp\Server;
-use RegexParser\Regex;
 
 /**
  * What the language server does with a target it cannot use, and with a

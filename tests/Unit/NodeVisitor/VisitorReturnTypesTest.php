@@ -11,32 +11,32 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Generator\TestCaseGenerator;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class VisitorReturnTypesTest extends TestCase
 {
@@ -49,7 +49,7 @@ final class VisitorReturnTypesTest extends TestCase
 
     /**
      * This provider includes rare PCRE constructs to hit specific branches
-     * in ExplainVisitor, CompilerNodeVisitor, and DumperNodeVisitor.
+     * in ExplainVisitor, PatternPrinter, and NodeDumper.
      */
     public static function provideRareConstructs(): \Iterator
     {
@@ -94,22 +94,22 @@ final class VisitorReturnTypesTest extends TestCase
         }
 
         // 1. Test Compiler (Round-trip)
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $ast->accept($compiler);
         $this->assertNotEmpty($compiled);
 
         // 2. Test Dumper (String representation)
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
         $this->assertNotEmpty($dump);
 
         // 3. Test Explain (Text)
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertNotEmpty($explanation);
 
         // 4. Test HTML Explain
-        $htmlExplainer = new HtmlExplainNodeVisitor();
+        $htmlExplainer = new HtmlExplainer();
         $html = $ast->accept($htmlExplainer);
         $this->assertNotEmpty($html);
     }
@@ -118,26 +118,26 @@ final class VisitorReturnTypesTest extends TestCase
     {
         // Instantiate all visitor classes to cover class coverage
         $visitors = [
-            new CompilerNodeVisitor(),
-            new ComplexityScoreNodeVisitor(),
-            new ConsoleHighlighterVisitor(),
-            new DumperNodeVisitor(),
-            new ExplainNodeVisitor(),
-            new HtmlExplainNodeVisitor(),
-            new HtmlHighlighterVisitor(),
-            new LengthRangeNodeVisitor(),
-            new LinterNodeVisitor(),
-            new LiteralExtractorNodeVisitor(),
-            new MermaidNodeVisitor(),
-            new MetricsNodeVisitor(),
-            new ModernizerNodeVisitor(),
-            new OptimizerNodeVisitor(),
-            new AsciiTreeVisitor(),
-            new RailroadSvgVisitor(),
-            new ReDoSProfileNodeVisitor(),
-            new SampleGeneratorNodeVisitor(),
-            new TestCaseGeneratorNodeVisitor(),
-            new ValidatorNodeVisitor(),
+            new PatternPrinter(),
+            new ComplexityScorer(),
+            new ConsoleHighlighter(),
+            new NodeDumper(),
+            new TextExplainer(),
+            new HtmlExplainer(),
+            new HtmlHighlighter(),
+            new LengthRangeCalculator(),
+            new PatternLinter(),
+            new LiteralExtractor(),
+            new MermaidRenderer(),
+            new MetricsCollector(),
+            new Modernizer(),
+            new Rewriter(),
+            new AsciiTreeRenderer(),
+            new RailroadSvgRenderer(),
+            new RedosProfiler(),
+            new SampleGenerator(),
+            new TestCaseGenerator(),
+            new Validator(),
         ];
 
         // Visitors instantiated for coverage testing

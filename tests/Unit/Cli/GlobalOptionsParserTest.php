@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cli;
+namespace PhpRegex\Tests\Unit\Cli;
 
+use PhpRegex\Cli\GlobalOptionsParser;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\GlobalOptionsParser;
 
 final class GlobalOptionsParserTest extends TestCase
 {

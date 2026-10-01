@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class AdvancedPcreFeaturesTest extends TestCase
 {
@@ -35,13 +35,13 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse($pattern);
 
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $recompiled = $ast->accept($compiler);
 
         $this->assertSame($pattern, $recompiled);
 
         // Verify the identifier in the AST (using Dumper for inspection)
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
         if (null === $expectedIdentifier) {
             $this->assertStringContainsString('Callout()', $dump);
@@ -82,7 +82,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
     public function test_it_validates_callout_arguments(): void
     {
         $regexService = Regex::create();
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         // Valid numeric callout
         $ast = $regexService->parse('/(?C123)abc/');
@@ -111,12 +111,12 @@ final class AdvancedPcreFeaturesTest extends TestCase
     {
         $regexService = Regex::create();
         $ast = $regexService->parse('/(?C1)abc/');
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertStringContainsString('Callout: passes control to user function with argument 1', $explanation);
 
         $ast = $regexService->parse('/(?C"my_func")abc/');
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertStringContainsString('Callout: passes control to user function with argument "my_func"', $explanation);
     }
@@ -125,13 +125,13 @@ final class AdvancedPcreFeaturesTest extends TestCase
     {
         $regexService = Regex::create();
         $ast = $regexService->parse('/(?C1)abc/');
-        $explainer = new HtmlExplainNodeVisitor();
+        $explainer = new HtmlExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertStringContainsString('Callout: <strong>(?C1)</strong></span></li>', $explanation);
         $this->assertStringContainsString('title="passes control to user function with argument 1"', $explanation);
 
         $ast = $regexService->parse('/(?C"my_func")abc/');
-        $explainer = new HtmlExplainNodeVisitor();
+        $explainer = new HtmlExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertStringContainsString('Callout: <strong>(?C&quot;my_func&quot;)</strong></span></li>', $explanation);
         $this->assertStringContainsString('title="passes control to user function with argument &quot;my_func&quot;"', $explanation);
@@ -142,11 +142,11 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse('/(?C)abc/');
 
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
         $explanation = $ast->accept($explainer);
         $this->assertStringContainsString('Callout: passes control to user function with no argument', $explanation);
 
-        $htmlExplainer = new HtmlExplainNodeVisitor();
+        $htmlExplainer = new HtmlExplainer();
         $html = $ast->accept($htmlExplainer);
         $this->assertStringContainsString('Callout: <strong>(?C)</strong></span></li>', $html);
         $this->assertStringContainsString('title="passes control to user function with no argument"', $html);
@@ -156,10 +156,10 @@ final class AdvancedPcreFeaturesTest extends TestCase
     {
         $regexService = Regex::create();
         $ast = $regexService->parse('/(?C1)abc/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimizedAst = $ast->accept($optimizer);
         // Callouts are atomic and should not be changed by the optimizer
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $this->assertSame('/(?C1)abc/', $optimizedAst->accept($compiler));
     }
 
@@ -167,7 +167,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
     {
         $regexService = Regex::create();
         $ast = $regexService->parse('/a(?C1)b/');
-        $sampleGenerator = new SampleGeneratorNodeVisitor();
+        $sampleGenerator = new SampleGenerator();
         $sample = $ast->accept($sampleGenerator);
         // Callouts do not match characters, so they should not appear in the sample
         $this->assertSame('ab', $sample);
@@ -177,7 +177,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
     {
         $regexService = Regex::create();
         $ast = $regexService->parse('/a(?C1)b/');
-        $complexityVisitor = new ComplexityScoreNodeVisitor();
+        $complexityVisitor = new ComplexityScorer();
         $score = $ast->accept($complexityVisitor);
         // a (1) + (?C1) (5) + b (1) = 7
         $this->assertSame(7, $score);
@@ -189,10 +189,10 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse($pattern);
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $ast->accept($validator); // Should not throw an exception
 
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $this->assertSame($pattern, $ast->accept($compiler));
     }
 
@@ -207,7 +207,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse($pattern);
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $ast->accept($validator);
     }
 
@@ -217,10 +217,10 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse($pattern);
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $ast->accept($validator); // Should not throw an exception
 
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $this->assertSame($pattern, $ast->accept($compiler));
     }
 
@@ -236,7 +236,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
         $ast = $regexService->parse($pattern);
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $ast->accept($validator);
     }
 
@@ -246,7 +246,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
 
         // Test whitespace ignored
         $ast = $regexService->parse('/a b c/x');
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
         $this->assertStringContainsString('Sequence', $dump);
         $this->assertStringContainsString("Literal('a')", $dump);
@@ -263,7 +263,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         // Should not contain comment text
 
         // Test compilation
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $recompiled = $ast->accept($compiler);
         $this->assertSame("/a#comment\nb/x", $recompiled);
     }

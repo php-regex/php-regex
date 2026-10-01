@@ -11,22 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfirmation;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
-use RegexParser\ReDoS\ReDoSMode;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Runtime\PcreRuntimeInfo;
-use RegexParser\ValidationResult;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\PcreRuntimeInfo;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Redos\Confirmation;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosMode;
+use PhpRegex\Redos\RedosSeverity;
 
 final class AnalyzeCommand extends AbstractCommand
 {
@@ -82,7 +81,7 @@ final class AnalyzeCommand extends AbstractCommand
             $explain = $regex->explain($pattern);
 
             $highlightedPattern = $output->isAnsi()
-                ? $ast->accept(new ConsoleHighlighterVisitor())
+                ? $ast->accept(new ConsoleHighlighter())
                 : $pattern;
 
             $rendered = 'json' === $format
@@ -102,13 +101,13 @@ final class AnalyzeCommand extends AbstractCommand
     /**
      * @param array<int, string> $args
      *
-     * @return array{pattern: string, format: string, redosMode: ReDoSMode, redosThreshold: ?ReDoSSeverity, confirmOptions: ?ReDoSConfirmOptions, error: ?string}
+     * @return array{pattern: string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: ?string}
      */
     private function parseArguments(array $args): array
     {
         $pattern = '';
         $format = 'console';
-        $redosMode = ReDoSMode::THEORETICAL;
+        $redosMode = RedosMode::THEORETICAL;
         $redosThreshold = null;
         $confirmOptions = null;
         $stopParsing = false;
@@ -147,7 +146,7 @@ final class AnalyzeCommand extends AbstractCommand
 
             if (!$stopParsing && str_starts_with($arg, '--redos-mode=')) {
                 $value = strtolower(substr($arg, \strlen('--redos-mode=')));
-                $mode = ReDoSMode::tryFrom($value);
+                $mode = RedosMode::tryFrom($value);
                 if (null === $mode) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-mode.');
                 }
@@ -161,7 +160,7 @@ final class AnalyzeCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Missing value for --redos-mode.');
                 }
-                $mode = ReDoSMode::tryFrom(strtolower($value));
+                $mode = RedosMode::tryFrom(strtolower($value));
                 if (null === $mode) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-mode.');
                 }
@@ -173,7 +172,7 @@ final class AnalyzeCommand extends AbstractCommand
 
             if (!$stopParsing && str_starts_with($arg, '--redos-threshold=')) {
                 try {
-                    $redosThreshold = ReDoSSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
+                    $redosThreshold = RedosSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
                 } catch (InvalidRegexOptionException $e) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
@@ -188,7 +187,7 @@ final class AnalyzeCommand extends AbstractCommand
                 }
 
                 try {
-                    $redosThreshold = ReDoSSeverity::fromConfig($value);
+                    $redosThreshold = RedosSeverity::fromConfig($value);
                 } catch (InvalidRegexOptionException $e) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
@@ -231,9 +230,9 @@ final class AnalyzeCommand extends AbstractCommand
     }
 
     /**
-     * @return array{pattern: string, format: string, redosMode: ReDoSMode, redosThreshold: ?ReDoSSeverity, confirmOptions: ?ReDoSConfirmOptions, error: string}
+     * @return array{pattern: string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: string}
      */
-    private function errorResult(string $format, ReDoSMode $redosMode, ?ReDoSSeverity $redosThreshold, string $error): array
+    private function errorResult(string $format, RedosMode $redosMode, ?RedosSeverity $redosThreshold, string $error): array
     {
         return [
             'pattern' => '',
@@ -262,7 +261,7 @@ final class AnalyzeCommand extends AbstractCommand
         return $meta;
     }
 
-    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, ReDoSAnalysis $analysis, string $explain): int
+    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, RedosAnalysis $analysis, string $explain): int
     {
         $payload = [
             'pattern' => $pattern,
@@ -293,7 +292,7 @@ final class AnalyzeCommand extends AbstractCommand
         return self::SUCCESS;
     }
 
-    private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, ReDoSAnalysis $analysis, string $explain): int
+    private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, RedosAnalysis $analysis, string $explain): int
     {
         $steps = 4;
 
@@ -345,7 +344,7 @@ final class AnalyzeCommand extends AbstractCommand
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }
 
-        if (ReDoSMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
+        if (RedosMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
             $this->renderConfirmationSection($output, $style, $analysis->confirmation);
         }
 
@@ -359,7 +358,7 @@ final class AnalyzeCommand extends AbstractCommand
         return self::SUCCESS;
     }
 
-    private function renderConfirmationSection(Output $output, ConsoleStyle $style, ReDoSConfirmation $confirmation): void
+    private function renderConfirmationSection(Output $output, ConsoleStyle $style, Confirmation $confirmation): void
     {
         $output->write("\n");
         $style->renderSection('Confirmation', 3, 4);
@@ -392,11 +391,11 @@ final class AnalyzeCommand extends AbstractCommand
         }
     }
 
-    private function getRedosStatus(ReDoSAnalysis $analysis): string
+    private function getRedosStatus(RedosAnalysis $analysis): string
     {
         return match (true) {
-            ReDoSMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
-            \in_array($analysis->severity, [ReDoSSeverity::SAFE, ReDoSSeverity::LOW], true) => 'No significant ReDoS risk detected',
+            RedosMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
+            \in_array($analysis->severity, [RedosSeverity::SAFE, RedosSeverity::LOW], true) => 'No significant ReDoS risk detected',
             $analysis->isConfirmed() => 'Confirmed ReDoS risk',
             default => 'Potential ReDoS risk (theoretical)',
         };
@@ -416,17 +415,17 @@ final class AnalyzeCommand extends AbstractCommand
         return self::FAILURE;
     }
 
-    private function formatRedosSeverity(ReDoSAnalysis $analysis, Output $output): string
+    private function formatRedosSeverity(RedosAnalysis $analysis, Output $output): string
     {
         $label = strtoupper($analysis->severity->value);
 
         $color = match ($analysis->severity) {
-            ReDoSSeverity::SAFE, ReDoSSeverity::LOW => $output->success($label),
-            ReDoSSeverity::MEDIUM => $output->warning($label),
-            ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL => $analysis->isConfirmed()
+            RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
+            RedosSeverity::MEDIUM => $output->warning($label),
+            RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
                 ? $output->error($label)
                 : $output->warning($label),
-            ReDoSSeverity::UNKNOWN => $output->info($label),
+            RedosSeverity::UNKNOWN => $output->info($label),
         };
 
         return $color;

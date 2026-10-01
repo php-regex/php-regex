@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Symfony\Analyzer\AnalysisContext;
+use PhpRegex\Symfony\Analyzer\AnalyzerInterface;
+use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PhpRegex\Symfony\Command\AnalyzeCommand;
+use PhpRegex\Symfony\Command\SecurityCommand;
+use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PhpRegex\Symfony\Security\SecurityConfigExtractor;
+use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Analyzer\AnalysisContext;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerInterface;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use RegexParser\Bridge\Symfony\Command\RegexAnalyzeCommand;
-use RegexParser\Bridge\Symfony\Command\RegexSecurityCommand;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer;
-use RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor;
-use RegexParser\Bridge\Symfony\Security\SecurityFirewallAnalyzer;
-use RegexParser\Regex;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -82,7 +82,7 @@ final class RedosThresholdOptionTest extends TestCase
         $this->assertStringContainsString('Access Control Conflicts', $tester->getDisplay());
     }
 
-    private function analyzeCommand(): RegexAnalyzeCommand
+    private function analyzeCommand(): AnalyzeCommand
     {
         $analyzer = new class implements AnalyzerInterface {
             public function getId(): string
@@ -106,12 +106,12 @@ final class RedosThresholdOptionTest extends TestCase
             }
         };
 
-        return new RegexAnalyzeCommand(new AnalyzerRegistry([$analyzer]), new ConsoleReportFormatter(), new JsonReportFormatter());
+        return new AnalyzeCommand(new AnalyzerRegistry([$analyzer]), new ConsoleReportFormatter(), new JsonReportFormatter());
     }
 
-    private function securityCommand(): RegexSecurityCommand
+    private function securityCommand(): SecurityCommand
     {
-        return new RegexSecurityCommand(
+        return new SecurityCommand(
             new SecurityConfigExtractor(),
             new SecurityAccessControlAnalyzer(Regex::create()),
             new SecurityFirewallAnalyzer(Regex::create()),

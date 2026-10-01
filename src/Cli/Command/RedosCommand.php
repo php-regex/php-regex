@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\Ascii;
-use RegexParser\Internal\DisplayEscaper;
-use RegexParser\Internal\PatternParser;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\PcreTarget;
-use RegexParser\ReDoS\ReDoSInputGenerator;
-use RegexParser\Regex;
-use RegexParser\RegexPattern;
-use RegexParser\Runtime\PcreRuntimeInfo;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\PcreRuntimeInfo;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Parser\DelimitedPattern;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\Ascii;
+use PhpRegex\Parser\Internal\DisplayEscaper;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Redos\Internal\InputGenerator;
+use PhpRegex\Toolkit\Regex;
 
 final class RedosCommand extends AbstractCommand
 {
@@ -669,8 +669,8 @@ final class RedosCommand extends AbstractCommand
             $analysis = $regex->redos($pattern);
             $culprit = $analysis->getCulpritNode();
             if (null !== $culprit) {
-                $patternInfo = RegexPattern::fromDelimited($pattern, $target);
-                $generated = (new ReDoSInputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);
+                $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
+                $generated = (new InputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);
                 if ('' !== $generated) {
                     return [$generated, 'auto', null];
                 }
@@ -690,8 +690,8 @@ final class RedosCommand extends AbstractCommand
 
         try {
             $ast = $regex->parse($pattern);
-            $patternInfo = RegexPattern::fromDelimited($pattern, $target);
-            $highlightedBody = $ast->accept(new ConsoleHighlighterVisitor());
+            $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
+            $highlightedBody = $ast->accept(new ConsoleHighlighter());
             $closingDelimiter = PatternParser::closingDelimiter($patternInfo->delimiter);
 
             return $patternInfo->delimiter.$highlightedBody.$closingDelimiter.$patternInfo->flags;

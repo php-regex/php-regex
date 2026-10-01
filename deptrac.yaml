@@ -6,66 +6,60 @@ deptrac:
   layers:
     - name: Parser
       collectors:
-        - type: bool
-          must:
-            - type: classLike
-              value: '^RegexParser\\(Lexer|Parser|RegexParser|RegexOptions|Token|TokenStream|TokenType|GroupNumbering|GroupNumberingCollector|PcreTarget|PcreFeature|ErrorCode|NodeTraverser|NodeFinder|TraversalAction|RegexPattern|ValidationResult|ValidationErrorCategory|TolerantParseResult|LiteralExtractionResult|LiteralSet)$'
         - type: classLike
-          value: '^RegexParser\\(Node|Internal|Exception|Cache|Analysis|Engine)\\'
-        - type: classLike
-          value: '^RegexParser\\NodeVisitor\\(AbstractNodeVisitor|AbstractTraversingVisitor|NodeVisitorInterface|CompilerNodeVisitor|DumperNodeVisitor|ValidatorNodeVisitor|LengthRangeNodeVisitor|LiteralExtractorNodeVisitor|ComplexityScoreNodeVisitor|MetricsNodeVisitor)$'
+          value: '^PhpRegex\\Parser\\'
     - name: Explain
       collectors:
         - type: classLike
-          value: '^RegexParser\\NodeVisitor\\(ExplainNodeVisitor|HtmlExplainNodeVisitor|AsciiTreeVisitor|MermaidNodeVisitor|RailroadSvgVisitor|HighlighterVisitor|ConsoleHighlighterVisitor|HtmlHighlighterVisitor)$'
+          value: '^PhpRegex\\Explain\\'
     - name: Optimizer
       collectors:
         - type: classLike
-          value: '^RegexParser\\(NodeVisitor\\(OptimizerNodeVisitor|ModernizerNodeVisitor)$|OptimizationResult$|Optimizer\\)'
+          value: '^PhpRegex\\Optimizer\\'
     - name: Generator
       collectors:
         - type: classLike
-          value: '^RegexParser\\NodeVisitor\\(SampleGeneratorNodeVisitor|TestCaseGeneratorNodeVisitor)$'
+          value: '^PhpRegex\\Generator\\'
     - name: Automata
       collectors:
         - type: classLike
-          value: '^RegexParser\\Automata\\'
+          value: '^PhpRegex\\Automata\\'
     - name: ReDoS
       collectors:
         - type: classLike
-          value: '^RegexParser\\(ReDoS\\|NodeVisitor\\ReDoSProfileNodeVisitor$)'
+          value: '^PhpRegex\\Redos\\'
     - name: Transpiler
       collectors:
         - type: classLike
-          value: '^RegexParser\\Transpiler\\'
+          value: '^PhpRegex\\Transpiler\\'
     - name: Linter
       collectors:
         - type: classLike
-          value: '^RegexParser\\(Lint\\|NodeVisitor\\LinterNodeVisitor$|(LintIssue|Severity|ProblemType|RegexProblem)$)'
+          value: '^PhpRegex\\Linter\\'
     - name: Toolkit
       collectors:
         - type: classLike
-          value: '^RegexParser\\(Regex|AnalysisReport|OutputFormat)$'
+          value: '^PhpRegex\\Toolkit\\'
     - name: Cli
       collectors:
         - type: classLike
-          value: '^RegexParser\\(Cli|Runtime)\\'
+          value: '^PhpRegex\\Cli\\'
     - name: LanguageServer
       collectors:
         - type: classLike
-          value: '^RegexParser\\Lsp\\'
+          value: '^PhpRegex\\LanguageServer\\'
     - name: PHPStan
       collectors:
         - type: classLike
-          value: '^RegexParser\\Bridge\\PHPStan\\'
+          value: '^PhpRegex\\PHPStan\\'
     - name: Symfony
       collectors:
         - type: classLike
-          value: '^RegexParser\\Bridge\\Symfony\\'
+          value: '^PhpRegex\\Symfony\\'
     - name: Laravel
       collectors:
         - type: classLike
-          value: '^RegexParser\\Bridge\\Laravel\\'
+          value: '^PhpRegex\\Laravel\\'
   ruleset:
     Parser: ~
     Explain: [Parser]

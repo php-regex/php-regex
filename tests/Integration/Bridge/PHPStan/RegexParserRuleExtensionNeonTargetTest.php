@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
  * The shipped extension.neon with "regexParser.phpVersion: '8.2'": a project
  * judged for PHP 8.2 and the PCRE2 10.40 it bundles.
  *
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleExtensionNeonTargetTest extends RuleTestCase
 {
@@ -64,7 +64,7 @@ final class RegexParserRuleExtensionNeonTargetTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return self::getContainer()->getByType(RegexParserRule::class);
+        return self::getContainer()->getByType(RegexPatternRule::class);
     }
 
     /**

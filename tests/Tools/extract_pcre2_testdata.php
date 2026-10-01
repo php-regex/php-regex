@@ -38,9 +38,9 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use RegexParser\Tests\TestUtils\Pcre2FloorOracle;
-use RegexParser\Tests\TestUtils\Pcre2LiveCrossCheck;
-use RegexParser\Tests\TestUtils\Pcre2TestdataExtractor;
+use PhpRegex\Tests\TestUtils\Pcre2FloorOracle;
+use PhpRegex\Tests\TestUtils\Pcre2LiveCrossCheck;
+use PhpRegex\Tests\TestUtils\Pcre2TestdataExtractor;
 
 $argv = $_SERVER['argv'] ?? [];
 $floorBinary = null;

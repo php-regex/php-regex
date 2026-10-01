@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\Lexer;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\TokenType;
 
 /**
  * A pattern that is not valid UTF-8 is read byte by byte, everywhere.
@@ -66,7 +66,7 @@ final class ByteModeTest extends TestCase
         // content would hide the bug this test is here for.
         $recompiled = Regex::create(['cache' => new NullCache()])
             ->parse($pattern)
-            ->accept(new CompilerNodeVisitor());
+            ->accept(new PatternPrinter());
 
         $this->assertNotSame('/' === $pattern[0] ? '//' : '', $recompiled, 'The pattern came back empty.');
 

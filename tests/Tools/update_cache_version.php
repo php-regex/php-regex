@@ -11,6 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Parser\RegexParser;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 /*
  * Writes RegexParser::CACHE_VERSION from the code that builds an AST.
  *
@@ -25,15 +36,13 @@ declare(strict_types=1);
  */
 
 require_once __DIR__.'/../../vendor/autoload.php';
-
-use RegexParser\RegexParser;
-use RegexParser\Tests\Support\AstFingerprint;
+use PhpRegex\Tests\Support\AstFingerprint;
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];
 
 $check = \in_array('--check', $arguments, true);
-$path = AstFingerprint::root().'/src/RegexParser.php';
+$path = AstFingerprint::root().'/src/Parser/RegexParser.php';
 $fingerprint = AstFingerprint::compute();
 $current = RegexParser::CACHE_VERSION;
 
@@ -45,7 +54,7 @@ if ($fingerprint === $current) {
 
 if ($check) {
     fwrite(\STDERR, \sprintf(
-        'The code that builds the AST changed.%s  cache version: %s%s  fingerprint:   %s%sRun "task cache-version" and commit src/RegexParser.php.%s',
+        'The code that builds the AST changed.%s  cache version: %s%s  fingerprint:   %s%sRun "task cache-version" and commit src/Parser/RegexParser.php.%s',
         \PHP_EOL,
         $current,
         \PHP_EOL,

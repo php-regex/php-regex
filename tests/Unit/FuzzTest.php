@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 class FuzzTest extends TestCase
 {
@@ -49,7 +49,7 @@ class FuzzTest extends TestCase
             $ast = $this->regex->parse($pattern);
 
             // Compile back to string
-            $compiler = new CompilerNodeVisitor();
+            $compiler = new PatternPrinter();
             $recompiled = $ast->accept($compiler);
 
             // Parse the recompiled

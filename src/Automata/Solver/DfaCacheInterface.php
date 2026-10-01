@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Solver;
+namespace PhpRegex\Automata\Solver;
 
-use RegexParser\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\Dfa;
 
 /**
  * Cache storage for compiled DFAs.

@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class PcreVerbNodeTest extends TestCase
 {

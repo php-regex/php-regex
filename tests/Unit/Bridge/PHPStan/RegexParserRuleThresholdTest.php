@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\PHPStan;
+namespace PhpRegex\Tests\Unit\Bridge\PHPStan;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
-use RegexParser\Exception\InvalidRegexOptionException;
 
 /**
  * The rule reads "checks.redos.threshold" with the one threshold parser: a
@@ -45,7 +45,7 @@ final class RegexParserRuleThresholdTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessage('"'.$threshold.'"');
 
-        new RegexParserRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => $threshold]]]);
+        new RegexPatternRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => $threshold]]]);
     }
 
     #[Test]
@@ -55,6 +55,6 @@ final class RegexParserRuleThresholdTest extends TestCase
         // the day the section is switched on.
         $this->expectException(InvalidRegexOptionException::class);
 
-        new RegexParserRule(['checks' => ['redos' => ['enabled' => false, 'threshold' => 'severe']]]);
+        new RegexPatternRule(['checks' => ['redos' => ['enabled' => false, 'threshold' => 'severe']]]);
     }
 }

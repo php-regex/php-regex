@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintConfigSchema;
+use PhpRegex\Linter\Extraction\InteropPresets;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\Rule\LintRuleRegistry;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintConfigSchema;
-use RegexParser\Lint\Extraction\InteropPresets;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\Rule\LintRuleRegistry;
-use RegexParser\Tests\Support\TemporaryProject;
 
 /**
  * What a refused regex.json is told, and the lists the schema must keep in

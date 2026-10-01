@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * One case per PCRE construct the parser claims to read.
@@ -38,14 +38,14 @@ final class ParserConstructsTest extends TestCase
         $ast = Regex::create()->parse($pattern);
 
         $this->assertInstanceOf(RegexNode::class, $ast);
-        $this->assertSame($recompiled, $ast->accept(new CompilerNodeVisitor()));
+        $this->assertSame($recompiled, $ast->accept(new PatternPrinter()));
     }
 
     #[Test]
     #[DataProvider('provideConstructsPcreAccepts')]
     public function test_what_is_written_back_is_still_a_pattern_pcre_accepts(string $pattern): void
     {
-        $recompiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $recompiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertTrue(
             $this->compiles($recompiled),
@@ -58,7 +58,7 @@ final class ParserConstructsTest extends TestCase
     {
         // "(?(R)" asks whether the pattern is recursing. Compiling it as a
         // subroutine call, "(?((?R))", gives a pattern PCRE refuses.
-        $recompiled = Regex::create()->parse('/(?(R)yes|no)/')->accept(new CompilerNodeVisitor());
+        $recompiled = Regex::create()->parse('/(?(R)yes|no)/')->accept(new PatternPrinter());
 
         $this->assertSame('/(?(R)yes|no)/', $recompiled);
     }

@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Builder;
+namespace PhpRegex\Automata\Builder;
 
-use RegexParser\Automata\Alphabet\CharSet;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Model\NfaFragment;
-use RegexParser\Automata\Model\NfaState;
-use RegexParser\Automata\Model\NfaTransition;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Model\NfaFragment;
+use PhpRegex\Automata\Model\NfaState;
+use PhpRegex\Automata\Model\NfaTransition;
 
 /**
  * Mutable builder for NFA graphs.
@@ -28,7 +28,7 @@ use RegexParser\Exception\ComplexityException;
 final class NfaBuilder
 {
     /**
-     * @var array<int, array<NfaTransition>>
+     * @var array<int, array<\PhpRegex\Automata\Model\NfaTransition>>
      */
     private array $transitions = [];
 
@@ -51,7 +51,7 @@ final class NfaBuilder
     ) {}
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     public function createState(bool $accepting = false): int
     {

@@ -11,10 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require __DIR__.'/../../vendor/autoload.php';
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require __DIR__.'/../../vendor/autoload.php';
 
 echo "=== RegexParser Library Validation Report ===\n\n";
 
@@ -133,7 +142,7 @@ $roundTripPatterns = [
 
 foreach ($roundTripPatterns as $pattern) {
     try {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         $ast = Regex::create(['runtime_pcre_validation' => true])->parse($pattern);
         $compiled = $ast->accept($compiler);

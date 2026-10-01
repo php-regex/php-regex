@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\TokenType;
 
 /**
  * 2.0 carries no name from before a class moved: an old name is not found,

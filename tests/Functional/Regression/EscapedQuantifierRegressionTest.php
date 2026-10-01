@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Regression;
+namespace PhpRegex\Tests\Functional\Regression;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 final class EscapedQuantifierRegressionTest extends TestCase
 {
@@ -47,7 +47,7 @@ final class EscapedQuantifierRegressionTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
 
         return $ast->accept($visitor);
     }

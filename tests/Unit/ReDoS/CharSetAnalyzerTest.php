@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Parser\Analysis\CharSetAnalyzer;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\SequenceNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Analysis\CharSetAnalyzer;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\SequenceNode;
 
 final class CharSetAnalyzerTest extends TestCase
 {

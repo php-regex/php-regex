@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
 
 final class ExplainCommand extends AbstractCommand
 {
@@ -71,7 +71,7 @@ final class ExplainCommand extends AbstractCommand
             $highlightedPattern = $pattern;
             if ('text' === $format && $style->visualsEnabled() && $output->isAnsi()) {
                 $ast = $regex->parse($pattern);
-                $highlightedPattern = $ast->accept(new ConsoleHighlighterVisitor());
+                $highlightedPattern = $ast->accept(new ConsoleHighlighter());
             }
 
             $explanation = $regex->explain($pattern, $format);

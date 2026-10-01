@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Parser\Analysis\ByteCharSet;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Analysis\CharSet;
 
 final class CharSetEdgeCasesTest extends TestCase
 {
     public function test_union_returns_empty_for_two_empty_sets(): void
     {
-        $result = CharSet::empty()->union(CharSet::empty());
+        $result = ByteCharSet::empty()->union(ByteCharSet::empty());
 
         $this->assertTrue($result->isEmpty());
     }
 
     public function test_sample_char_returns_null_when_range_is_missing(): void
     {
-        $ref = new \ReflectionClass(CharSet::class);
+        $ref = new \ReflectionClass(ByteCharSet::class);
         $set = $ref->newInstanceWithoutConstructor();
 
         $ref->getProperty('ranges')->setValue($set, [[]]);

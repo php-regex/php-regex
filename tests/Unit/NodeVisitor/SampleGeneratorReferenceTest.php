@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Samples for references and escapes the generator used to get wrong: the
@@ -75,7 +75,7 @@ final class SampleGeneratorReferenceTest extends TestCase
         $this->assertSame(1, preg_match($pattern, $sample));
 
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         for ($seed = 0; $seed < 16; $seed++) {
             $generator->setSeed($seed);
             $this->assertSame($sample, $tree->accept($generator));

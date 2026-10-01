@@ -11,28 +11,27 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Laravel\Extractor\RoutePatternSource;
+use PhpRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PhpRegex\Laravel\Command\LintCommand;
+use PhpRegex\Laravel\Command\RoutesCommand;
+use PhpRegex\Laravel\Command\ExplainCommand;
+use PhpRegex\Laravel\Command\CompareCommand;
+use PhpRegex\Laravel\Command\TranspileCommand;
+use PhpRegex\Laravel\PhpRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase;
-use RegexParser\Bridge\Laravel\Command\CompareCommand;
-use RegexParser\Bridge\Laravel\Command\ExplainCommand;
-use RegexParser\Bridge\Laravel\Command\LintCommand;
-use RegexParser\Bridge\Laravel\Command\RoutesCommand;
-use RegexParser\Bridge\Laravel\Command\TranspileCommand;
-use RegexParser\Bridge\Laravel\Extractor\LaravelRouteExtractor;
-use RegexParser\Bridge\Laravel\Extractor\ValidationRuleExtractor;
-use RegexParser\Bridge\Laravel\Facades\Regex as RegexFacade;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\Node\RegexNode;
-use RegexParser\Regex;
-use RegexParser\PcreTarget;
 
 /**
  * Integration tests for the Laravel bridge.
@@ -44,14 +43,14 @@ final class RegexParserServiceProviderTest extends TestCase
         $this->assertTrue($this->app->bound(Regex::class));
         $this->assertTrue($this->app->bound('regex-parser'));
 
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
         $this->assertInstanceOf(Regex::class, $regex);
     }
 
     public function test_regex_service_parses_patterns(): void
     {
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
 
         $ast = $regex->parse('/^hello$/');
@@ -60,13 +59,13 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_facade_works(): void
     {
-        $ast = RegexFacade::parse('/[a-z]+/');
+        $ast = \PhpRegex\Laravel\Facades\Regex::parse('/[a-z]+/');
         $this->assertInstanceOf(RegexNode::class, $ast);
 
-        $validation = RegexFacade::validate('/^test$/');
+        $validation = \PhpRegex\Laravel\Facades\Regex::validate('/^test$/');
         $this->assertTrue($validation->isValid);
 
-        $validation = RegexFacade::validate('/^(unclosed/');
+        $validation = \PhpRegex\Laravel\Facades\Regex::validate('/^(unclosed/');
         $this->assertFalse($validation->isValid);
     }
 
@@ -74,7 +73,7 @@ final class RegexParserServiceProviderTest extends TestCase
     {
         $this->assertTrue($this->app->bound('regex-parser.cache'));
 
-        /** @var CacheInterface $cache */
+        /** @var \PhpRegex\Parser\Cache\CacheInterface $cache */
         $cache = $this->app->make('regex-parser.cache');
         $this->assertInstanceOf(CacheInterface::class, $cache);
     }
@@ -84,7 +83,7 @@ final class RegexParserServiceProviderTest extends TestCase
         /** @var string $cacheDir */
         $cacheDir = $this->app['config']->get('regex-parser.cache.directory');
 
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
 
         // Parse a pattern to populate the cache
@@ -103,25 +102,25 @@ final class RegexParserServiceProviderTest extends TestCase
     {
         $this->assertTrue($this->app->bound('regex-parser.analysis'));
 
-        /** @var RegexAnalysisService $analysis */
+        /** @var \PhpRegex\Linter\AnalysisService $analysis */
         $analysis = $this->app->make('regex-parser.analysis');
-        $this->assertInstanceOf(RegexAnalysisService::class, $analysis);
+        $this->assertInstanceOf(AnalysisService::class, $analysis);
     }
 
     public function test_lint_service_is_registered(): void
     {
         $this->assertTrue($this->app->bound('regex-parser.lint'));
 
-        /** @var RegexLintService $lint */
+        /** @var \PhpRegex\Linter\LintService $lint */
         $lint = $this->app->make('regex-parser.lint');
-        $this->assertInstanceOf(RegexLintService::class, $lint);
+        $this->assertInstanceOf(LintService::class, $lint);
     }
 
     public function test_formatter_registry_is_registered(): void
     {
         $this->assertTrue($this->app->bound('regex-parser.formatter-registry'));
 
-        /** @var FormatterRegistry $registry */
+        /** @var \PhpRegex\Linter\Formatter\FormatterRegistry $registry */
         $registry = $this->app->make('regex-parser.formatter-registry');
         $this->assertInstanceOf(FormatterRegistry::class, $registry);
     }
@@ -130,29 +129,29 @@ final class RegexParserServiceProviderTest extends TestCase
     {
         $this->assertTrue($this->app->bound('regex-parser.pattern-sources'));
 
-        /** @var RegexPatternSourceCollection $sources */
+        /** @var \PhpRegex\Linter\Source\PatternSourceCollection $sources */
         $sources = $this->app->make('regex-parser.pattern-sources');
-        $this->assertInstanceOf(RegexPatternSourceCollection::class, $sources);
+        $this->assertInstanceOf(PatternSourceCollection::class, $sources);
     }
 
     public function test_route_extractor_is_registered(): void
     {
-        $this->assertTrue($this->app->bound(LaravelRouteExtractor::class));
+        $this->assertTrue($this->app->bound(RoutePatternSource::class));
 
-        /** @var LaravelRouteExtractor $extractor */
-        $extractor = $this->app->make(LaravelRouteExtractor::class);
-        $this->assertInstanceOf(LaravelRouteExtractor::class, $extractor);
+        /** @var \PhpRegex\Laravel\Extractor\RoutePatternSource $extractor */
+        $extractor = $this->app->make(RoutePatternSource::class);
+        $this->assertInstanceOf(RoutePatternSource::class, $extractor);
         $this->assertSame('routes', $extractor->getName());
         $this->assertTrue($extractor->isSupported());
     }
 
     public function test_validation_extractor_is_registered(): void
     {
-        $this->assertTrue($this->app->bound(ValidationRuleExtractor::class));
+        $this->assertTrue($this->app->bound(ValidationRulePatternSource::class));
 
-        /** @var ValidationRuleExtractor $extractor */
-        $extractor = $this->app->make(ValidationRuleExtractor::class);
-        $this->assertInstanceOf(ValidationRuleExtractor::class, $extractor);
+        /** @var \PhpRegex\Laravel\Extractor\ValidationRulePatternSource $extractor */
+        $extractor = $this->app->make(ValidationRulePatternSource::class);
+        $this->assertInstanceOf(ValidationRulePatternSource::class, $extractor);
         $this->assertSame('validators', $extractor->getName());
         $this->assertTrue($extractor->isSupported());
     }
@@ -199,9 +198,9 @@ final class RegexParserServiceProviderTest extends TestCase
         $this->app->forgetInstance(Regex::class);
         $this->app->forgetInstance('regex-parser.cache');
 
-        /** @var CacheInterface $cache */
+        /** @var \PhpRegex\Parser\Cache\CacheInterface $cache */
         $cache = $this->app->make('regex-parser.cache');
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
         $tree = $regex->parse('/a{2,3}/');
 
@@ -216,7 +215,7 @@ final class RegexParserServiceProviderTest extends TestCase
         $this->app->forgetInstance(Regex::class);
         $this->app->forgetInstance('regex-parser.cache');
 
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
 
         // Create a pattern that's exactly 5000 characters (4998 chars + 2 delimiters)
@@ -229,7 +228,7 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_service_provider_provides_list(): void
     {
-        $provider = new RegexParserServiceProvider($this->app);
+        $provider = new PhpRegexServiceProvider($this->app);
         $provides = $provider->provides();
 
         $this->assertContains(Regex::class, $provides);
@@ -249,7 +248,7 @@ final class RegexParserServiceProviderTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            RegexParserServiceProvider::class,
+            PhpRegexServiceProvider::class,
         ];
     }
 
@@ -263,7 +262,7 @@ final class RegexParserServiceProviderTest extends TestCase
     protected function getPackageAliases($app): array
     {
         return [
-            'Regex' => RegexFacade::class,
+            'Regex' => \PhpRegex\Laravel\Facades\Regex::class,
         ];
     }
 

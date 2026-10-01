@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\PcreTarget;
-use RegexParser\Regex;
-use RegexParser\TokenType;
 
 /**
  * PCRE2 10.43 widened the repeat count: "{,2}" means "{0,2}", and spaces may

@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Symfony\Command\SecurityCommand;
+use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PhpRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PhpRegex\Symfony\Security\SecurityConfigExtractor;
+use PhpRegex\Symfony\Security\SecurityConfigLocator;
+use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexSecurityCommand;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessSuggestionBuilder;
-use RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor;
-use RegexParser\Bridge\Symfony\Security\SecurityConfigLocator;
-use RegexParser\Bridge\Symfony\Security\SecurityFirewallAnalyzer;
-use RegexParser\Regex;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class RegexSecurityCommandTest extends TestCase
@@ -31,7 +31,7 @@ final class RegexSecurityCommandTest extends TestCase
     {
         $path = dirname(__DIR__, 4).'/Fixtures/Symfony/security_access_control.yaml';
 
-        $command = new RegexSecurityCommand(
+        $command = new SecurityCommand(
             new SecurityConfigExtractor(),
             new SecurityAccessControlAnalyzer(Regex::create()),
             new SecurityFirewallAnalyzer(Regex::create()),

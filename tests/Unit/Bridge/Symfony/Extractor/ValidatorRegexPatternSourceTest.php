@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Extractor;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
+use PhpRegex\Linter\Source\PatternSourceContext;
+use PhpRegex\Symfony\Extractor\ValidatorPatternSource;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Extractor\ValidatorRegexPatternSource;
-use RegexParser\Lint\RegexPatternSourceContext;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
@@ -35,7 +35,7 @@ final class ValidatorRegexPatternSourceTest extends TestCase
 
     public function test_construct(): void
     {
-        $source = new ValidatorRegexPatternSource();
+        $source = new ValidatorPatternSource();
         $this->assertSame('validators', $source->getName());
     }
 
@@ -44,26 +44,26 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $loader = $this->createLoaderStub();
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
+        $source = new ValidatorPatternSource($validator, $loader);
         $this->assertTrue($source->isSupported());
     }
 
     public function test_get_name(): void
     {
-        $source = new ValidatorRegexPatternSource();
+        $source = new ValidatorPatternSource();
         $this->assertSame('validators', $source->getName());
     }
 
     public function test_is_supported_returns_false_when_no_validator(): void
     {
-        $source = new ValidatorRegexPatternSource();
+        $source = new ValidatorPatternSource();
         $this->assertFalse($source->isSupported());
     }
 
     public function test_is_supported_returns_false_when_no_loader(): void
     {
         $validator = $this->createStub(ValidatorInterface::class);
-        $source = new ValidatorRegexPatternSource($validator);
+        $source = new ValidatorPatternSource($validator);
         $this->assertFalse($source->isSupported());
     }
 
@@ -72,14 +72,14 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $loader = $this->createLoaderStub();
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
+        $source = new ValidatorPatternSource($validator, $loader);
         $this->assertTrue($source->isSupported());
     }
 
     public function test_extract_returns_empty_when_not_supported(): void
     {
-        $source = new ValidatorRegexPatternSource();
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource();
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -91,8 +91,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $loader = $this->createLoaderStub([]);
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -105,8 +105,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator->expects($this->never())->method('getMetadataFor');
         $loader = $this->createLoaderStub([null, 123, '']);
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -131,8 +131,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
 
         $metadata->method('getPropertyMetadata')->willReturn([$propertyMetadata]);
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -154,8 +154,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $metadata->method('getConstrainedProperties')->willReturn([]);
 
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -177,8 +177,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $metadata->method('getConstrainedProperties')->willReturn([]);
 
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -197,8 +197,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $metadata->method('getConstrainedProperties')->willReturn([]);
 
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -217,8 +217,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $metadata->method('getConstrainedProperties')->willReturn([]);
 
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -231,8 +231,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $loader = $this->createLoaderStub([TestEntity::class]);
 
         $validator->method('getMetadataFor')->willThrowException(new \Exception('Metadata not found'));
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -249,8 +249,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
             123, // Not a string
         ]);
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -270,8 +270,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $metadata->method('getConstrainedProperties')->willReturn([]);
 
         $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -284,8 +284,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $loader = $this->createLoaderStub([], new \Exception('Loader error'));
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -297,8 +297,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $loader = $this->createLoaderWithoutMappedClasses();
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -312,14 +312,14 @@ final class ValidatorRegexPatternSourceTest extends TestCase
         }
 
         // This test will only run when Symfony is not available
-        $source = new ValidatorRegexPatternSource();
+        $source = new ValidatorPatternSource();
         $this->assertFalse($source->isSupported());
         $this->assertSame('validators', $source->getName());
     }
 
     public function test_get_mapped_classes_returns_empty_when_loader_missing(): void
     {
-        $source = new ValidatorRegexPatternSource(null, null);
+        $source = new ValidatorPatternSource(null, null);
 
         $reflection = new \ReflectionClass($source);
         $method = $reflection->getMethod('getMappedClasses');
@@ -342,7 +342,7 @@ final class ValidatorRegexPatternSourceTest extends TestCase
             }
         };
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
+        $source = new ValidatorPatternSource($validator, $loader);
         $reflection = new \ReflectionClass($source);
         $method = $reflection->getMethod('getMappedClasses');
 
@@ -361,8 +361,8 @@ final class ValidatorRegexPatternSourceTest extends TestCase
 
         $validator->method('getMetadataFor')->willReturn($metadata);
 
-        $source = new ValidatorRegexPatternSource($validator, $loader);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new ValidatorPatternSource($validator, $loader);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -371,7 +371,7 @@ final class ValidatorRegexPatternSourceTest extends TestCase
 
     public function test_get_class_file_returns_null_for_unknown_class(): void
     {
-        $source = new ValidatorRegexPatternSource();
+        $source = new ValidatorPatternSource();
 
         $reflection = new \ReflectionClass($source);
         $method = $reflection->getMethod('getClassFile');

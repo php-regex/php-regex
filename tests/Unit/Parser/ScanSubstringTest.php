@@ -11,28 +11,28 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Transform\RegularSubsetValidator;
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Internal\PcreVerb;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Transform\RegularSubsetValidator;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\Exception\TranspileException;
-use RegexParser\Internal\PcreVerb;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\Regex;
 
 /**
  * "(*scan_substring:(1)...)", or "(*scs:", PCRE2 10.45: an assertion that
@@ -51,7 +51,7 @@ final class ScanSubstringTest extends TestCase
             $result = $regex->validate($pattern);
 
             $this->assertTrue($result->isValid, \sprintf('%s on %s: %s', $pattern, $release, $result->error));
-            $this->assertSame($pattern, $regex->parse($pattern)->accept(new CompilerNodeVisitor()), $pattern);
+            $this->assertSame($pattern, $regex->parse($pattern)->accept(new PatternPrinter()), $pattern);
         }
 
         $before = Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate($pattern);
@@ -86,17 +86,17 @@ final class ScanSubstringTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $ast = $regex->parse("/(a)(*scs:(1,'n')b)(?<n>c)/");
 
-        $this->assertStringContainsString("(*scs:(1,'n')", $ast->accept(new CompilerNodeVisitor(true)));
+        $this->assertStringContainsString("(*scs:(1,'n')", $ast->accept(new PatternPrinter(true)));
         $this->assertSame("(a)(*scs:(1,'n')b)(?<n>c)", preg_replace('/\e\[[\d;]*+m/', '', $regex->highlight("/(a)(*scs:(1,'n')b)(?<n>c)/")));
 
         // Rebuilt trees keep the list.
         $this->assertStringContainsString("(*scs:(1,'n')", $regex->optimize("/(a)(*scs:(1,'n')b)(?<n>c)/")->optimized);
-        $python = $regex->parse('/(?P<n>a)(*scs:(1)b)/')->accept(new ModernizerNodeVisitor());
+        $python = $regex->parse('/(?P<n>a)(*scs:(1)b)/')->accept(new Modernizer());
         $this->assertInstanceOf(RegexNode::class, $python);
-        $this->assertSame('/(?<n>a)(*scs:(1)b)/', $python->accept(new CompilerNodeVisitor()));
-        $modernized = $ast->accept(new ModernizerNodeVisitor());
+        $this->assertSame('/(?<n>a)(*scs:(1)b)/', $python->accept(new PatternPrinter()));
+        $modernized = $ast->accept(new Modernizer());
         $this->assertInstanceOf(RegexNode::class, $modernized);
-        $this->assertStringContainsString("(*scs:(1,'n')", $modernized->accept(new CompilerNodeVisitor()));
+        $this->assertStringContainsString("(*scs:(1,'n')", $modernized->accept(new PatternPrinter()));
     }
 
     #[Test]
@@ -108,14 +108,14 @@ final class ScanSubstringTest extends TestCase
 
         $this->assertStringContainsString('Substring scan of groups 1', $regex->explain($pattern));
         $this->assertStringContainsString('Substring Scan (of groups 1)', $regex->explain($pattern, 'html'));
-        $tree = $ast->accept(new AsciiTreeVisitor());
-        $diagram = $ast->accept(new RailroadSvgVisitor());
+        $tree = $ast->accept(new AsciiTreeRenderer());
+        $diagram = $ast->accept(new RailroadSvgRenderer());
         $this->assertIsString($tree);
         $this->assertIsString($diagram);
         $this->assertStringContainsString('scan of groups 1', $tree);
         $this->assertStringContainsString('scan of groups 1', (string) $diagram);
         $this->assertSame($pattern, $regex->optimize($pattern)->original);
-        $this->assertInstanceOf(ReDoSAnalysis::class, $regex->redos($pattern));
+        $this->assertInstanceOf(RedosAnalysis::class, $regex->redos($pattern));
         $this->assertTrue($regex->analyze($pattern)->isValid);
 
         try {
@@ -157,7 +157,7 @@ final class ScanSubstringTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $pattern = '/(a+)(*scs:(1)a)b/';
 
-        $this->assertSame([2, null], $regex->parse($pattern)->accept(new LengthRangeNodeVisitor()));
+        $this->assertSame([2, null], $regex->parse($pattern)->accept(new LengthRangeCalculator()));
         if (false !== @preg_match($pattern, '')) {
             $this->assertSame(1, preg_match($pattern, $regex->generate($pattern)));
         }
@@ -281,7 +281,7 @@ final class ScanSubstringTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
      */
     public static function provideGroupListFaults(): iterable
     {

@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class UnicodeNamedNodeTest extends TestCase
 {

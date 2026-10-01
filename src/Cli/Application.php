@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli;
+namespace PhpRegex\Cli;
 
-use RegexParser\Cli\Command\CommandInterface;
-use RegexParser\Cli\Command\HelpCommand;
+use PhpRegex\Cli\Command\CommandInterface;
+use PhpRegex\Cli\Command\HelpCommand;
 
 final class Application
 {
     /**
-     * @var array<string, CommandInterface>
+     * @var array<string, \PhpRegex\Cli\Command\CommandInterface>
      */
     private array $commands = [];
 
     /**
      * The commands as they were registered, without their aliases.
      *
-     * @var array<int, CommandInterface>
+     * @var array<int, \PhpRegex\Cli\Command\CommandInterface>
      */
     private array $registered = [];
 
@@ -86,7 +86,7 @@ final class Application
     }
 
     /**
-     * @return array<int, CommandInterface>
+     * @return array<int, \PhpRegex\Cli\Command\CommandInterface>
      */
     public function registeredCommands(): array
     {

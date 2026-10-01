@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\Regex;
 
 /**
  * From PCRE2 10.47 a call may name the groups it returns, "(?1(2,<name>))":
@@ -39,7 +39,7 @@ final class ReturnedGroupsTest extends TestCase
             $result = $regex->validate($pattern);
 
             $this->assertTrue($result->isValid, \sprintf('%s on %s: %s', $pattern, $release, $result->error));
-            $this->assertSame($pattern, $regex->parse($pattern)->accept(new CompilerNodeVisitor()), $pattern);
+            $this->assertSame($pattern, $regex->parse($pattern)->accept(new PatternPrinter()), $pattern);
         }
 
         $before = Regex::create(['cache' => null, 'pcre_version' => '10.46'])->validate($pattern);
@@ -92,7 +92,7 @@ final class ReturnedGroupsTest extends TestCase
         $this->assertSame("(a)(?<n>b)(?1(1,'n'))(?&n(<n>))", preg_replace('/\e\[[\d;]*+m/', '', $highlighted));
 
         $pattern = '(?<=a)(?<!b)(?>c)(?<n>d)(?&n(<n>))(?P>n(<n>))';
-        $html = Regex::create(['cache' => null, 'pcre_version' => '10.47'])->parse('/'.$pattern.'/')->accept(new HtmlHighlighterVisitor());
+        $html = Regex::create(['cache' => null, 'pcre_version' => '10.47'])->parse('/'.$pattern.'/')->accept(new HtmlHighlighter());
         $this->assertSame($pattern, html_entity_decode(strip_tags($html)));
     }
 

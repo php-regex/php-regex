@@ -11,30 +11,30 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli;
+namespace PhpRegex\Cli;
 
-use RegexParser\Cli\Command\AnalyzeCommand;
-use RegexParser\Cli\Command\ClearCacheCommand;
-use RegexParser\Cli\Command\CompareCommand;
-use RegexParser\Cli\Command\DebugCommand;
-use RegexParser\Cli\Command\DiagramCommand;
-use RegexParser\Cli\Command\ExplainCommand;
-use RegexParser\Cli\Command\GraphCommand;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Cli\Command\HighlightCommand;
-use RegexParser\Cli\Command\LintCommand;
-use RegexParser\Cli\Command\LintOutputRenderer;
-use RegexParser\Cli\Command\ParseCommand;
-use RegexParser\Cli\Command\RedosCommand;
-use RegexParser\Cli\Command\SelfUpdateCommand;
-use RegexParser\Cli\Command\TranspileCommand;
-use RegexParser\Cli\Command\ValidateCommand;
-use RegexParser\Cli\Command\VersionCommand;
-use RegexParser\Cli\SelfUpdate\SelfUpdater;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Lint\Command\LintExtractorFactory;
+use PhpRegex\Cli\Command\AnalyzeCommand;
+use PhpRegex\Cli\Command\ClearCacheCommand;
+use PhpRegex\Cli\Command\CompareCommand;
+use PhpRegex\Cli\Command\DebugCommand;
+use PhpRegex\Cli\Command\DiagramCommand;
+use PhpRegex\Cli\Command\ExplainCommand;
+use PhpRegex\Cli\Command\GraphCommand;
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Cli\Command\HighlightCommand;
+use PhpRegex\Cli\Command\LintCommand;
+use PhpRegex\Cli\Command\LintOutputRenderer;
+use PhpRegex\Cli\Command\ParseCommand;
+use PhpRegex\Cli\Command\RedosCommand;
+use PhpRegex\Cli\Command\SelfUpdateCommand;
+use PhpRegex\Cli\Command\TranspileCommand;
+use PhpRegex\Cli\Command\ValidateCommand;
+use PhpRegex\Cli\Command\VersionCommand;
+use PhpRegex\Cli\SelfUpdate\SelfUpdater;
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Linter\Config\LintExtractorFactory;
 
 /**
  * Builds the CLI with every command it ships.
@@ -57,7 +57,7 @@ final class ApplicationFactory
     }
 
     /**
-     * @return array<int, Command\CommandInterface>
+     * @return array<int, \PhpRegex\Cli\Command\CommandInterface>
      */
     public static function commands(HelpCommand $help): array
     {

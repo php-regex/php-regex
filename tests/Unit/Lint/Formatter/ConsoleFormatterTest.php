@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Optimizer\OptimizationResult;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\OptimizationResult;
-use RegexParser\RegexParser;
 
 final class ConsoleFormatterTest extends TestCase
 {
@@ -47,13 +47,13 @@ final class ConsoleFormatterTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_construct_with_analysis_service(): void
     {
-        // Since RegexAnalysisService is final, we test with null
+        // Since AnalysisService is final, we test with null
         $formatter = new ConsoleFormatter(null);
     }
 
     public function test_format_empty_report(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -65,7 +65,7 @@ final class ConsoleFormatterTest extends TestCase
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
         $formatter = new ConsoleFormatter(config: $config);
 
-        $report = new RegexLintReport([], ['errors' => 1, 'warnings' => 2, 'optimizations' => 3]);
+        $report = new LintReport([], ['errors' => 1, 'warnings' => 2, 'optimizations' => 3]);
 
         $output = $formatter->format($report);
 
@@ -77,7 +77,7 @@ final class ConsoleFormatterTest extends TestCase
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
         $formatter = new ConsoleFormatter(config: $config);
 
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 2, 'optimizations' => 3]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 2, 'optimizations' => 3]);
 
         $output = $formatter->format($report);
 
@@ -89,7 +89,7 @@ final class ConsoleFormatterTest extends TestCase
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
         $formatter = new ConsoleFormatter(config: $config);
 
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 3]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 3]);
 
         $output = $formatter->format($report);
 
@@ -155,7 +155,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -187,7 +187,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -210,7 +210,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -254,7 +254,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -287,7 +287,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -321,7 +321,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -350,7 +350,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -378,7 +378,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -411,7 +411,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -447,7 +447,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -482,7 +482,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -512,7 +512,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -542,7 +542,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -563,7 +563,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
         $output = $formatter->format($report);
 
         $this->assertStringContainsString('only.php', $output);
@@ -580,7 +580,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
         $output = $this->formatter->format($report);
 
         $this->assertStringContainsString('pattern unavailable', $output);
@@ -654,7 +654,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_format_pattern_for_display_falls_back_when_highlighter_fails(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
+        $analysis = new AnalysisService(RegexParser::create());
         $formatter = new ConsoleFormatter($analysis, new OutputConfiguration(ansi: true));
 
         $output = $this->invokePrivate($formatter, 'formatPatternForDisplay', '/[/');
@@ -747,7 +747,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -775,7 +775,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -804,7 +804,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -836,7 +836,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -864,7 +864,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -892,7 +892,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
 
@@ -926,7 +926,7 @@ final class ConsoleFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $formatter->format($report);
 
@@ -955,7 +955,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_format_pattern_for_display_preserves_comment_text_when_highlight_changes(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
+        $analysis = new AnalysisService(RegexParser::create());
         $formatter = new ConsoleFormatter($analysis, new OutputConfiguration(ansi: true));
 
         $output = $this->invokePrivate($formatter, 'formatPatternForDisplay', '/(?#comment)foo/');

@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Tests\TestUtils\Pcre2CaseRunner;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
 
 /**
  * Conformance of Regex::validate() with the pinned PCRE2 10.48 suite.

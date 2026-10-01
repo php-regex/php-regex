@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Lint;
+namespace PhpRegex\Tests\Functional\Lint;
 
 use PhpParser\ParserFactory;
+use PhpRegex\Cli\Command\LintOutputRenderer;
+use PhpRegex\Cli\Output;
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintArguments;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Linter\Config\LintExtractorFactory;
+use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
+use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\PatternExtractor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\LintOutputRenderer;
-use RegexParser\Cli\Output;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintArguments;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Lint\Command\LintExtractorFactory;
-use RegexParser\Lint\Extraction\PatternFunctionRegistry;
-use RegexParser\Lint\Extraction\PhpParserExtractionStrategy;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\RegexPatternExtractor;
 
 final class LintCommandComponentsTest extends TestCase
 {
@@ -268,7 +268,7 @@ final class LintCommandComponentsTest extends TestCase
         }
 
         class_exists(LintExtractorFactory::class);
-        class_exists(RegexPatternExtractor::class);
+        class_exists(PatternExtractor::class);
         class_exists(TokenBasedExtractionStrategy::class);
         // The factory builds the default pattern functions: load what they need.
         PatternFunctionRegistry::defaults();
@@ -282,7 +282,7 @@ final class LintCommandComponentsTest extends TestCase
             $factory = new LintExtractorFactory();
             $extractor = $factory->create();
 
-            $property = new \ReflectionProperty(RegexPatternExtractor::class, 'extractor');
+            $property = new \ReflectionProperty(PatternExtractor::class, 'extractor');
             $strategy = $property->getValue($extractor);
         } finally {
             foreach ($autoloaders as $loader) {
@@ -300,7 +300,7 @@ final class LintCommandComponentsTest extends TestCase
         $factory = new LintExtractorFactory();
         $extractor = $factory->create();
 
-        $property = new \ReflectionProperty(RegexPatternExtractor::class, 'extractor');
+        $property = new \ReflectionProperty(PatternExtractor::class, 'extractor');
         $strategy = $property->getValue($extractor);
 
         $this->assertInstanceOf(PhpParserExtractionStrategy::class, $strategy);

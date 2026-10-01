@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Cli\Command\LintOutputRenderer;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\LintOutputRenderer;
-use RegexParser\Tests\Support\LintFunctionOverrides;
 
 final class LintOutputRendererEdgeCasesTest extends TestCase
 {

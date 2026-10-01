@@ -11,55 +11,55 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Generator\TestCaseGenerator;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\AbstractNodeVisitor;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\ExtendedClassReader;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\ClassSetOperationNode;
+use PhpRegex\Parser\Node\ClassSetOperator;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\ExtendedCharClassNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Parser\Validation\ValidationErrorCategory;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
+use PhpRegex\Transpiler\TranspileContext;
+use PhpRegex\Transpiler\TranspileException;
+use PhpRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Exception\TranspileException;
-use RegexParser\Internal\ExtendedClassReader;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ClassSetOperationNode;
-use RegexParser\Node\ClassSetOperator;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\ExtendedCharClassNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
-use RegexParser\Parser;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
-use RegexParser\Token;
-use RegexParser\TokenType;
-use RegexParser\Transpiler\Target\JavaScript\JavaScriptCompilerVisitor;
-use RegexParser\Transpiler\TranspileContext;
-use RegexParser\Transpiler\TranspileOptions;
-use RegexParser\ValidationErrorCategory;
 
 /**
  * "(?[ \p{L} - [aeiou] ])", PCRE2 10.45: a set expression over classes,
@@ -77,7 +77,7 @@ final class ExtendedCharClassTest extends TestCase
         $result = $regex->validate($pattern);
 
         $this->assertTrue($result->isValid, \sprintf('%s: %s', $pattern, $result->error));
-        $this->assertSame($pattern, $regex->parse($pattern)->accept(new CompilerNodeVisitor()), $pattern);
+        $this->assertSame($pattern, $regex->parse($pattern)->accept(new PatternPrinter()), $pattern);
 
         $before = Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate($pattern);
         $this->assertFalse($before->isValid, $pattern);
@@ -131,7 +131,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $pattern = '/^(?[ \\p{L} - [aeiou] ])+$/u';
 
-        $this->assertSame([1, null], $regex->parse($pattern)->accept(new LengthRangeNodeVisitor()));
+        $this->assertSame([1, null], $regex->parse($pattern)->accept(new LengthRangeCalculator()));
         if (false !== @preg_match($pattern, '')) {
             $sample = $regex->generate($pattern);
             $this->assertSame(1, preg_match($pattern, $sample), $sample);
@@ -142,7 +142,7 @@ final class ExtendedCharClassTest extends TestCase
     public function test_the_explanation_reads_the_expression(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
-        $explained = $regex->parse('/(?[ \\d - [3] & ![a] ^ \\n | \\t ])/')->accept(new ExplainNodeVisitor());
+        $explained = $regex->parse('/(?[ \\d - [3] & ![a] ^ \\n | \\t ])/')->accept(new TextExplainer());
 
         $this->assertStringContainsString('Extended character class: one character of', $explained);
         $this->assertStringContainsString(' but not (', $explained);
@@ -163,28 +163,28 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertSame('(?[ \\d - ( [3] & ![:alpha:] ) ^ \\x61 |\\Q\\E\\p{Lu} ])', $quantified->node->text);
         // Without the text, the highlighter writes each operation in parentheses.
         $unwritten = new ExtendedCharClassNode($quantified->node->expression, 0, 0);
-        $this->assertSame('(?[(((\\d-([3]&![:alpha:]))^\\x61)|\\p{Lu})])', html_entity_decode(strip_tags($unwritten->accept(new HtmlHighlighterVisitor()))));
+        $this->assertSame('(?[(((\\d-([3]&![:alpha:]))^\\x61)|\\p{Lu})])', html_entity_decode(strip_tags($unwritten->accept(new HtmlHighlighter()))));
 
         $body = substr($pattern, 1, -1);
-        $this->assertSame($body, preg_replace('/\e\[[\d;]*+m/', '', $ast->accept(new ConsoleHighlighterVisitor())));
-        $this->assertSame($body, html_entity_decode(strip_tags($ast->accept(new HtmlHighlighterVisitor()))));
-        $this->assertStringContainsString('ExtendedCharClass', $ast->accept(new DumperNodeVisitor()));
-        $this->assertStringContainsString('Extended', $ast->accept(new AsciiTreeVisitor()));
-        $this->assertStringContainsString('Extended', $ast->accept(new HtmlExplainNodeVisitor()));
-        $this->assertStringContainsString('Extended', $ast->accept(new MermaidNodeVisitor()));
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $this->assertSame($body, preg_replace('/\e\[[\d;]*+m/', '', $ast->accept(new ConsoleHighlighter())));
+        $this->assertSame($body, html_entity_decode(strip_tags($ast->accept(new HtmlHighlighter()))));
+        $this->assertStringContainsString('ExtendedCharClass', $ast->accept(new NodeDumper()));
+        $this->assertStringContainsString('Extended', $ast->accept(new AsciiTreeRenderer()));
+        $this->assertStringContainsString('Extended', $ast->accept(new HtmlExplainer()));
+        $this->assertStringContainsString('Extended', $ast->accept(new MermaidRenderer()));
+        $svg = $ast->accept(new RailroadSvgRenderer());
         $this->assertIsString($svg);
         $this->assertStringContainsString('<svg', (string) $svg);
-        $this->assertGreaterThan(0, $ast->accept(new ComplexityScoreNodeVisitor()));
-        $this->assertNotEmpty($ast->accept(new MetricsNodeVisitor()));
-        $this->assertNotEmpty($ast->accept(new ReDoSProfileNodeVisitor()));
-        $this->assertNotEmpty($ast->accept(new TestCaseGeneratorNodeVisitor()));
-        $this->assertNotNull($ast->accept(new LiteralExtractorNodeVisitor()));
-        $this->assertSame($pattern, $ast->accept(new OptimizerNodeVisitor())->accept(new CompilerNodeVisitor()));
+        $this->assertGreaterThan(0, $ast->accept(new ComplexityScorer()));
+        $this->assertNotEmpty($ast->accept(new MetricsCollector()));
+        $this->assertNotEmpty($ast->accept(new RedosProfiler()));
+        $this->assertNotEmpty($ast->accept(new TestCaseGenerator()));
+        $this->assertNotNull($ast->accept(new LiteralExtractor()));
+        $this->assertSame($pattern, $ast->accept(new Rewriter())->accept(new PatternPrinter()));
         // The modernized tree has no source: each operation comes back in parentheses.
-        $this->assertSame('/(?[(((\\d-([3]&![:alpha:]))^\\x61)|\\p{Lu})])+/', $ast->accept(new ModernizerNodeVisitor())->accept(new CompilerNodeVisitor()));
-        $ast->accept(new LinterNodeVisitor());
-        $this->assertStringContainsString('but not (', $ast->accept(new HtmlExplainNodeVisitor()));
+        $this->assertSame('/(?[(((\\d-([3]&![:alpha:]))^\\x61)|\\p{Lu})])+/', $ast->accept(new Modernizer())->accept(new PatternPrinter()));
+        $ast->accept(new PatternLinter());
+        $this->assertStringContainsString('but not (', $ast->accept(new HtmlExplainer()));
 
         // Each visitor answers for an operation on its own, too.
         $operation = $quantified->node;
@@ -192,13 +192,13 @@ final class ExtendedCharClassTest extends TestCase
         $operation = $operation->expression;
         $this->assertInstanceOf(ClassSetOperationNode::class, $operation);
         $complement = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, new CharTypeNode('d', 0, 2), '!', 0, 3);
-        $this->assertSame(['matching' => [], 'non_matching' => ['0']], $complement->accept(new TestCaseGeneratorNodeVisitor()));
-        $this->assertSame([1, 1], $operation->accept(new LengthRangeNodeVisitor()));
-        $this->assertTrue($operation->accept(new LiteralExtractorNodeVisitor())->isVoid());
-        $this->assertSame($operation, $operation->accept(new OptimizerNodeVisitor()));
-        $this->assertSame($operation, $operation->accept(new ModernizerNodeVisitor()));
-        $this->assertSame($operation, $operation->accept(new LinterNodeVisitor()));
-        $this->assertSame(ReDoSSeverity::SAFE, $operation->accept(new ReDoSProfileNodeVisitor()));
+        $this->assertSame(['matching' => [], 'non_matching' => ['0']], $complement->accept(new TestCaseGenerator()));
+        $this->assertSame([1, 1], $operation->accept(new LengthRangeCalculator()));
+        $this->assertTrue($operation->accept(new LiteralExtractor())->isVoid());
+        $this->assertSame($operation, $operation->accept(new Rewriter()));
+        $this->assertSame($operation, $operation->accept(new Modernizer()));
+        $this->assertSame($operation, $operation->accept(new PatternLinter()));
+        $this->assertSame(RedosSeverity::SAFE, $operation->accept(new RedosProfiler()));
         $this->assertNull($operation->accept(new class extends AbstractNodeVisitor {}));
         $this->assertNull($quantified->node->accept(new class extends AbstractNodeVisitor {}));
     }
@@ -215,7 +215,7 @@ final class ExtendedCharClassTest extends TestCase
     public function test_a_member_that_cannot_stand_alone_is_passed_over(): void
     {
         // Only a member a class reads alone is judged alone.
-        $parser = new Parser();
+        $parser = new TokenParser();
         (new \ReflectionProperty($parser, 'pattern'))->setValue($parser, '(?[[)\\N]])');
         $members = [new Token(TokenType::T_GROUP_CLOSE, ')', 4), new Token(TokenType::T_CHAR_TYPE, 'N', 5, 2)];
 
@@ -240,7 +240,7 @@ final class ExtendedCharClassTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
 
-        $this->assertSame([1, 1], $regex->parse('/(?[ \\d - [3] ])/')->accept(new LengthRangeNodeVisitor()));
+        $this->assertSame([1, 1], $regex->parse('/(?[ \\d - [3] ])/')->accept(new LengthRangeCalculator()));
     }
 
     #[Test]
@@ -248,8 +248,8 @@ final class ExtendedCharClassTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
 
-        $this->assertSame('/(?[\\x38])/', $regex->parse('/(?[ \\8 ])/')->accept(new CompilerNodeVisitor(true)));
-        $this->assertSame('/[a b]/', $regex->parse('/[a b]/')->accept(new CompilerNodeVisitor(true)));
+        $this->assertSame('/(?[\\x38])/', $regex->parse('/(?[ \\8 ])/')->accept(new PatternPrinter(true)));
+        $this->assertSame('/[a b]/', $regex->parse('/[a b]/')->accept(new PatternPrinter(true)));
     }
 
     #[Test]
@@ -259,10 +259,10 @@ final class ExtendedCharClassTest extends TestCase
 
         // Each set leaves out [5-9], so the branches never overlap.
         foreach (['(?[ [0-4] & [0-9] ])', '(?[ [0-9] ^ [5-9] ])', '(?[ [0-9] - [5-9] ])'] as $set) {
-            $this->assertNotSame(ReDoSSeverity::CRITICAL, $regex->redos('/^('.$set.'|[5-9])+$/')->severity, $set);
+            $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^('.$set.'|[5-9])+$/')->severity, $set);
         }
 
-        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ [0-4] + [5-6] ])|[5-9])+$/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-4] + [5-6] ])|[5-9])+$/')->severity);
     }
 
     #[Test]
@@ -285,7 +285,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $pattern = '/^(?[ \\! + \\. + \\  + \\# + \\( + \\& + [a] ])$/';
 
-        $written = $regex->parse($pattern)->accept(new CompilerNodeVisitor(true));
+        $written = $regex->parse($pattern)->accept(new PatternPrinter(true));
         $this->assertIsString($written);
         $this->assertTrue($regex->validate($written)->isValid, $written);
         if (false !== @preg_match($pattern, '')) {
@@ -300,9 +300,9 @@ final class ExtendedCharClassTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
 
-        $this->assertSame('/(?=(?[ \\d - [3] ]))\\d/', $regex->parse('/(*pla:(?[ \\d - [3] ]))\\d/')->accept(new CompilerNodeVisitor()));
-        $this->assertSame('/(a)(*scs:(1)(?[ \\d ]))/', $regex->parse('/(a)(*scs:(1)(?[ \\d ]))/')->accept(new CompilerNodeVisitor()));
-        $this->assertSame('/(?[ \\w ])(?=(?[ \\d ]))/', $regex->parse('/(?[ \\w ])(*pla:(?[ \\d ]))/')->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/(?=(?[ \\d - [3] ]))\\d/', $regex->parse('/(*pla:(?[ \\d - [3] ]))\\d/')->accept(new PatternPrinter()));
+        $this->assertSame('/(a)(*scs:(1)(?[ \\d ]))/', $regex->parse('/(a)(*scs:(1)(?[ \\d ]))/')->accept(new PatternPrinter()));
+        $this->assertSame('/(?[ \\w ])(?=(?[ \\d ]))/', $regex->parse('/(?[ \\w ])(*pla:(?[ \\d ]))/')->accept(new PatternPrinter()));
     }
 
     #[Test]
@@ -311,7 +311,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
         $pattern = '/^(?[ [\\Qa b\\E] ])$/';
 
-        $written = $regex->parse($pattern)->accept(new CompilerNodeVisitor(true));
+        $written = $regex->parse($pattern)->accept(new PatternPrinter(true));
         $this->assertIsString($written);
         if (false !== @preg_match($pattern, '')) {
             foreach ([' ', 'a', 'b', 'c'] as $subject) {
@@ -326,7 +326,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $pattern = '/^(?[ \\é + \\8 + \\! ])$/u';
 
-        $written = $regex->parse($pattern)->accept(new CompilerNodeVisitor(true));
+        $written = $regex->parse($pattern)->accept(new PatternPrinter(true));
         $this->assertSame('/^(?[((\\x{e9}+\\x{38})+\\!)])$/u', $written);
     }
 
@@ -335,7 +335,7 @@ final class ExtendedCharClassTest extends TestCase
     {
         $unreadable = new ExtendedCharClassNode(new DotNode(3, 4), 0, 6);
 
-        $this->assertSame(['matching' => [], 'non_matching' => []], $unreadable->accept(new TestCaseGeneratorNodeVisitor()));
+        $this->assertSame(['matching' => [], 'non_matching' => []], $unreadable->accept(new TestCaseGenerator()));
     }
 
     #[Test]
@@ -354,7 +354,7 @@ final class ExtendedCharClassTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         foreach (['/^(?[ [ab] - [a] ])$/', '/^(?[ [ab] & [b] ])$/', '/^(?[ [ab] ^ [a] ])$/', '/^(?[ ![a] ])$/'] as $pattern) {
-            $cases = $regex->parse($pattern)->accept(new TestCaseGeneratorNodeVisitor());
+            $cases = $regex->parse($pattern)->accept(new TestCaseGenerator());
             $this->assertIsArray($cases);
             if (false === @preg_match($pattern, '')) {
                 continue;
@@ -380,12 +380,12 @@ final class ExtendedCharClassTest extends TestCase
             $regex->redos('/^(\\d|\\d)+$/')->severity,
             $regex->redos('/^((?[\\d])|(?[ \\d - [5] ]))+$/')->severity,
         );
-        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] & [0-4] ])|(?[ [0-9] ^ [5-9] ]))+$/')->severity);
-        $this->assertNotSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] - [5-9] ])|(?[ [5-9] ]))+$/')->severity);
-        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|b)+$/')->severity);
-        $this->assertNotSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|a)+$/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] & [0-4] ])|(?[ [0-9] ^ [5-9] ]))+$/')->severity);
+        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] - [5-9] ])|(?[ [5-9] ]))+$/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|b)+$/')->severity);
+        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|a)+$/')->severity);
         // A property is no set of known characters: the overlap is assumed.
-        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/^((?[ \\p{L} & [a] ])|a)+$/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ \\p{L} & [a] ])|a)+$/')->severity);
     }
 
     #[Test]
@@ -417,7 +417,7 @@ final class ExtendedCharClassTest extends TestCase
 
         $class = $regex->parse('/(?[ \\d - [3] ])/')->pattern;
         $this->assertInstanceOf(ExtendedCharClassNode::class, $class);
-        $visitor = new JavaScriptCompilerVisitor(new TranspileContext('(?[ \\d - [3] ])', '', new TranspileOptions()), false, '/');
+        $visitor = new JavaScriptPrinter(new TranspileContext('(?[ \\d - [3] ])', '', new TranspileOptions()), false, '/');
         $this->expectException(TranspileException::class);
         $class->expression->accept($visitor);
     }
@@ -430,7 +430,7 @@ final class ExtendedCharClassTest extends TestCase
 
         // The visitor guesses from the left operand; generate() finds no
         // sample the engine matches, and says so.
-        $this->assertSame(1, preg_match('/^\\d$/', $regex->parse($pattern)->accept(new SampleGeneratorNodeVisitor())));
+        $this->assertSame(1, preg_match('/^\\d$/', $regex->parse($pattern)->accept(new SampleGenerator())));
         if (false !== @preg_match($pattern, '')) {
             $this->expectException(SampleGenerationException::class);
             $regex->generate($pattern);
@@ -442,13 +442,13 @@ final class ExtendedCharClassTest extends TestCase
     {
         $pattern = '/^(?[ [\\p{Lu}1] ^ \\p{Ll} ])$/iu';
         if (false === @preg_match($pattern, '')) {
-            $this->assertIsString(Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern)->accept(new SampleGeneratorNodeVisitor()));
+            $this->assertIsString(Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern)->accept(new SampleGenerator()));
 
             return;
         }
 
         $ast = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         for ($seed = 0; $seed < 8; $seed++) {
             $generator->setSeed($seed);
             $this->assertSame(1, preg_match($pattern, $ast->accept($generator)));
@@ -476,7 +476,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $class = $regex->parse('/(?[ [b] - [a] ])/')->pattern;
         $this->assertInstanceOf(ExtendedCharClassNode::class, $class);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $this->assertSame('b', $class->expression->accept($generator));
         $complement = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $class->expression, '!', 0, 0);
@@ -489,7 +489,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $pattern = '/(?[ \\d - [3] & ![:alpha:] + [a] ])/';
 
-        $written = $regex->parse($pattern)->accept(new CompilerNodeVisitor(true));
+        $written = $regex->parse($pattern)->accept(new PatternPrinter(true));
         $this->assertIsString($written);
         $this->assertStringContainsString('(?[', $written);
         if (false !== @preg_match($pattern, '')) {

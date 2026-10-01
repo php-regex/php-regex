@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 final class ParserErrorTest extends TestCase
 {

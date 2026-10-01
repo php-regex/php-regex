@@ -11,49 +11,49 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\GroupIndex;
+use PhpRegex\Linter\Rule\InlineFlagsRule;
+use PhpRegex\Linter\Rule\LintContext;
+use PhpRegex\Linter\Rule\NestedDotStarRule;
+use PhpRegex\Linter\Rule\NestedQuantifierRule;
+use PhpRegex\Linter\Rule\OverlappingAlternationRule;
+use PhpRegex\Linter\Rule\PatternInfo;
+use PhpRegex\Linter\Rule\RedundantCharClassRule;
+use PhpRegex\Linter\Rule\RedundantGroupRule;
+use PhpRegex\Linter\Rule\Support\CharClassSets;
+use PhpRegex\Linter\Rule\Support\NodePredicates;
+use PhpRegex\Linter\Rule\UselessIFlagRule;
+use PhpRegex\Parser\Analysis\CharSetAnalyzer;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Analysis\CharSetAnalyzer;
-use RegexParser\Lint\Rule\GroupIndex;
-use RegexParser\Lint\Rule\InlineFlagsRule;
-use RegexParser\Lint\Rule\LintContext;
-use RegexParser\Lint\Rule\NestedDotStarRule;
-use RegexParser\Lint\Rule\NestedQuantifierRule;
-use RegexParser\Lint\Rule\OverlappingAlternationRule;
-use RegexParser\Lint\Rule\PatternInfo;
-use RegexParser\Lint\Rule\RedundantCharClassRule;
-use RegexParser\Lint\Rule\RedundantGroupRule;
-use RegexParser\Lint\Rule\Support\CharClassSets;
-use RegexParser\Lint\Rule\Support\NodePredicates;
-use RegexParser\Lint\Rule\UselessIFlagRule;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 final class LinterNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_octal_escape_out_of_range_adds_issue(): void
     {
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
 
         $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OCTAL, 0, 0);
         $node->accept($linter);
@@ -67,7 +67,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     {
         // "\666" is U+01B6 with "u"; without it PHP refuses it.
         $octalWarnings = static function (string $pattern): array {
-            $linter = new LinterNodeVisitor();
+            $linter = new PatternLinter();
             Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
             return array_values(array_filter($linter->getWarnings(), static fn (string $warning): bool => str_contains($warning, 'Suspicious octal escape')));
@@ -79,7 +79,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_count_capturing_groups_handles_conditionals(): void
     {
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $conditional = new ConditionalNode(
             new LiteralNode('a', 0, 0),
             new GroupNode(new LiteralNode('b', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0),
@@ -150,7 +150,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_lint_redundant_char_class_handles_ranges_and_literals(): void
     {
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
 
         $parts = [
             new LiteralNode('c', 0, 0),

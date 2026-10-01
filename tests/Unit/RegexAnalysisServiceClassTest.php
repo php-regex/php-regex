@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
 
 final class RegexAnalysisServiceClassTest extends TestCase
 {
     public function test_regex_analysis_service_exposes_its_parser(): void
     {
         $regex = Regex::create();
-        $service = new RegexAnalysisService($regex->parser());
+        $service = new AnalysisService($regex->parser());
 
         $this->assertSame($regex->parser(), $service->getParser());
     }
@@ -32,17 +32,17 @@ final class RegexAnalysisServiceClassTest extends TestCase
     public function test_regex_analysis_service_lints_patterns_without_issues(): void
     {
         $regex = Regex::create();
-        $service = new RegexAnalysisService(
+        $service = new AnalysisService(
             $regex->parser(),
             null,  // extractor
             50,    // warningThreshold
-            ReDoSSeverity::HIGH->value,
+            RedosSeverity::HIGH->value,
             [],     // ignoredPatterns
             [],     // redosIgnoredPatterns
             false,    // ignoreParseErrors
         );
 
-        $occurrence = new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match');
+        $occurrence = new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match');
         $issues = $service->lint([$occurrence]);
 
         $this->assertSame([], $issues);

@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use RegexParser\Tests\TestUtils\Pcre2ConformanceTable;
+use PhpRegex\Tests\TestUtils\Pcre2ConformanceTable;
 
 $argv = $_SERVER['argv'] ?? [];
 $arguments = [];

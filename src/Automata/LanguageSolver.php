@@ -11,20 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata;
+namespace PhpRegex\Automata;
 
-use RegexParser\Automata\Builder\DfaBuilder;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\DfaCacheInterface;
-use RegexParser\Automata\Solver\EquivalenceResult;
-use RegexParser\Automata\Solver\IntersectionResult;
-use RegexParser\Automata\Solver\SubsetResult;
-use RegexParser\Automata\Transform\AstToNfaTransformer;
-use RegexParser\Automata\Transform\RegularSubsetValidator;
-use RegexParser\Automata\Unicode\CodePointHelper;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\RegexParser;
+use PhpRegex\Automata\Builder\DfaBuilder;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Solver\DfaCacheInterface;
+use PhpRegex\Automata\Solver\EquivalenceResult;
+use PhpRegex\Automata\Solver\IntersectionResult;
+use PhpRegex\Automata\Solver\SubsetResult;
+use PhpRegex\Automata\Transform\AstToNfaTransformer;
+use PhpRegex\Automata\Transform\RegularSubsetValidator;
+use PhpRegex\Automata\Unicode\CodePointHelper;
+use PhpRegex\Parser\RegexParser;
 
 /**
  * Answers questions about the languages regexes match: whether two overlap,
@@ -37,15 +36,15 @@ use RegexParser\RegexParser;
 final readonly class LanguageSolver
 {
     /**
-     * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
-     * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
+     * @param \PhpRegex\Parser\RegexParser|null                $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
+     * @param \PhpRegex\Automata\Solver\DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
      */
     public function __construct(private ?RegexParser $parser = null, private ?DfaCacheInterface $dfaCache = null) {}
 
     /**
      * Whether some string matches both patterns, and the shortest such string.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
@@ -65,7 +64,7 @@ final readonly class LanguageSolver
      * Whether every string the left pattern matches is matched by the right one,
      * and the shortest string that is not.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
@@ -85,7 +84,7 @@ final readonly class LanguageSolver
      * Whether both patterns match exactly the same strings, and the shortest
      * string only one side matches, for each side.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
@@ -111,7 +110,7 @@ final readonly class LanguageSolver
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws \PhpRegex\Automata\Exception\ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $pattern, ?SolverOptions $options = null): Dfa
     {
@@ -124,9 +123,9 @@ final readonly class LanguageSolver
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      *
-     * @return array{0:Dfa, 1:Dfa}
+     * @return array{0: \PhpRegex\Automata\Model\Dfa, 1: \PhpRegex\Automata\Model\Dfa}
      */
     private function buildDfas(string $left, string $right, SolverOptions $options): array
     {
@@ -143,7 +142,7 @@ final readonly class LanguageSolver
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildDfa(string $pattern, SolverOptions $options): Dfa
     {

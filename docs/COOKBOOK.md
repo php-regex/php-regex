@@ -83,7 +83,7 @@ Each pattern includes:
 ### PHP Example
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $email = 'user@example.com';
 $pattern = '/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i';
@@ -135,7 +135,7 @@ echo $analysis->severity->value;  // Output: safe
 ### PHP Example
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $url = 'https://example.com/path?query=1';
 $pattern = '/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\/[^\s]*)?$/i';
@@ -566,7 +566,7 @@ function luhnCheck(string $number): bool
 ### Validation Workflow
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

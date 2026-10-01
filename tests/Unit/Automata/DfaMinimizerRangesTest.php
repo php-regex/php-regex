@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Minimization\DfaMinimizer;
+use PhpRegex\Automata\Minimization\HopcroftWorklist;
+use PhpRegex\Automata\Minimization\MinimizationAlgorithmInterface;
+use PhpRegex\Automata\Minimization\MoorePartitionRefinement;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Minimization\DfaMinimizer;
-use RegexParser\Automata\Minimization\HopcroftWorklist;
-use RegexParser\Automata\Minimization\MinimizationAlgorithmInterface;
-use RegexParser\Automata\Minimization\MoorePartitionRefinement;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
 
 /**
  * Tests DFA minimization when states use range-based transitions
@@ -101,7 +101,7 @@ final class DfaMinimizerRangesTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{MinimizationAlgorithmInterface}>
+     * @return \Generator<string, array{\PhpRegex\Automata\Minimization\MinimizationAlgorithmInterface}>
      */
     public static function provideAlgorithms(): \Generator
     {

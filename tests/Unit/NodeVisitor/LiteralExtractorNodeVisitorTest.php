@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\LiteralSet;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LiteralSet;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\Regex;
 
 final class LiteralExtractorNodeVisitorTest extends TestCase
 {
-    private LiteralExtractorNodeVisitor $visitor;
+    private LiteralExtractor $visitor;
 
     private Regex $regexService;
 
     protected function setUp(): void
     {
-        $this->visitor = new LiteralExtractorNodeVisitor();
+        $this->visitor = new LiteralExtractor();
         $this->regexService = Regex::create();
     }
 

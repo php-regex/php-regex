@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Laravel\Facades\Regex;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\TolerantParseResult;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Toolkit\AnalysisReport;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Optimizer\OptimizationResult;
+use PhpRegex\Transpiler\TranspileResult;
+use PhpRegex\Parser\Analysis\LiteralExtractionResult;
+use PhpRegex\Laravel\PhpRegexServiceProvider;
 use Orchestra\Testbench\TestCase;
-use RegexParser\AnalysisReport;
-use RegexParser\Bridge\Laravel\Facades\Regex;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
-use RegexParser\LiteralExtractionResult;
-use RegexParser\Node\RegexNode;
-use RegexParser\OptimizationResult;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\TolerantParseResult;
-use RegexParser\Transpiler\TranspileResult;
-use RegexParser\ValidationResult;
 
 /**
  * Tests for the Laravel Regex Facade.
@@ -85,18 +85,18 @@ final class FacadeTest extends TestCase
     {
         $analysis = Regex::redos('/^(a+)+$/');
 
-        $this->assertInstanceOf(ReDoSAnalysis::class, $analysis);
+        $this->assertInstanceOf(RedosAnalysis::class, $analysis);
     }
 
     public function test_redos_detects_vulnerable_patterns(): void
     {
         $analysis = Regex::redos('/^(a+)+$/');
 
-        $this->assertInstanceOf(ReDoSAnalysis::class, $analysis);
+        $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         // Use isSafe() method - vulnerable patterns are NOT safe
         $this->assertFalse($analysis->isSafe());
         // Or check severity is not SAFE or LOW
-        $this->assertNotSame(ReDoSSeverity::SAFE, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::SAFE, $analysis->severity);
     }
 
     public function test_optimize_returns_optimization_result(): void
@@ -189,7 +189,7 @@ final class FacadeTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            RegexParserServiceProvider::class,
+            PhpRegexServiceProvider::class,
         ];
     }
 

@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Transpiler\Target\Python;
+namespace PhpRegex\Transpiler\Target\Python;
 
-use RegexParser\Exception\TranspileException;
-use RegexParser\Node\RegexNode;
-use RegexParser\Transpiler\Target\TranspileTargetInterface;
-use RegexParser\Transpiler\TranspileContext;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Transpiler\Target\TargetInterface;
+use PhpRegex\Transpiler\TranspileContext;
+use PhpRegex\Transpiler\TranspileException;
 
 /**
  * Transpile target for Python 're' module.
  */
-final readonly class PythonTarget implements TranspileTargetInterface
+final readonly class PythonTarget implements TargetInterface
 {
     // Python re flags: ASCII (a), IGNORECASE (i), LOCALE (L), MULTILINE (m), DOTALL (s), VERBOSE (x)
     // We map PCRE flags to these.
@@ -44,7 +44,7 @@ final readonly class PythonTarget implements TranspileTargetInterface
 
     public function compile(RegexNode $ast, TranspileContext $context): string
     {
-        $visitor = new PythonCompilerVisitor($context);
+        $visitor = new PythonPrinter($context);
 
         return $ast->accept($visitor);
     }

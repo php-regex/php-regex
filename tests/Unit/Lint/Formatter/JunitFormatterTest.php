@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\JunitFormatter;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\JunitFormatter;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class JunitFormatterTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_empty_report(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -49,9 +49,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_critical_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Critical,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Critical,
             'Critical security issue',
             'regex.redos',
             5,
@@ -70,7 +70,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -85,9 +85,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_error_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Syntax error',
             'regex.syntax',
             3,
@@ -104,7 +104,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -115,9 +115,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_warning_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Lint warning',
             'regex.lint',
             null,
@@ -134,7 +134,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -145,9 +145,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_info_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Info,
             'Info message',
             null,
             null,
@@ -164,7 +164,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -175,9 +175,9 @@ final class JunitFormatterTest extends TestCase
     public function test_format_with_multiple_problems(): void
     {
         $problems = [
-            new RegexProblem(ProblemType::Syntax, Severity::Error, 'Error 1', null, null, null, null),
-            new RegexProblem(ProblemType::Lint, Severity::Warning, 'Warning 1', null, null, null, null),
-            new RegexProblem(ProblemType::Security, Severity::Critical, 'Critical 1', null, null, null, null),
+            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null, null),
+            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical 1', null, null, null, null),
         ];
 
         $result = [
@@ -189,7 +189,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => $problems,
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -204,7 +204,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
@@ -215,7 +215,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -224,7 +224,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -235,7 +235,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -244,7 +244,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_calculates_column_positions(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, 5, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 5, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -255,7 +255,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -267,9 +267,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_escapes_xml(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Message with <tags> & "quotes"',
             null,
             null,
@@ -286,7 +286,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -295,9 +295,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_problem_title_with_code(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Test message',
             'regex.lint.test',
             null,
@@ -314,7 +314,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -323,9 +323,9 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_problem_title_without_code(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Error,
             'Test message',
             null,
             null,
@@ -342,7 +342,7 @@ final class JunitFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 

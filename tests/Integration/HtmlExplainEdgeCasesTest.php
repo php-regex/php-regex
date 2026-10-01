@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Tests to increase HtmlExplainVisitor coverage.
@@ -24,12 +24,12 @@ final class HtmlExplainEdgeCasesTest extends TestCase
 {
     private Regex $regexService;
 
-    private HtmlExplainNodeVisitor $visitor;
+    private HtmlExplainer $visitor;
 
     protected function setUp(): void
     {
         $this->regexService = Regex::create();
-        $this->visitor = new HtmlExplainNodeVisitor();
+        $this->visitor = new HtmlExplainer();
     }
 
     public function test_html_explain_unicode_prop(): void

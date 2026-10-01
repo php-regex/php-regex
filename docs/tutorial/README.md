@@ -54,7 +54,7 @@ RegexNode
 ### PHP API
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $ast = $regex->parse('/^cat.*dog$/');
@@ -119,7 +119,7 @@ bin/regex analyze '/(a+)+$/'
 ### In Your PHP Code
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

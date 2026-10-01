@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Converter;
+namespace PhpRegex\Tests\Unit\Lsp\Converter;
 
+use PhpRegex\LanguageServer\Converter\DiagnosticConverter;
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Linter\Rule\RuleViolation;
+use PhpRegex\Parser\ErrorCode;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\LintIssue;
-use RegexParser\Lsp\Converter\DiagnosticConverter;
-use RegexParser\Severity;
 
 final class DiagnosticConverterTest extends TestCase
 {
@@ -33,11 +33,11 @@ final class DiagnosticConverterTest extends TestCase
     #[Test]
     public function test_convert_creates_diagnostic_with_correct_structure(): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'regex.lint.test',
             message: 'Test message',
             offset: 5,
-            severity: Severity::Warning,
+            severity: LintSeverity::Warning,
         );
 
         $start = ['line' => 1, 'character' => 10];
@@ -53,11 +53,11 @@ final class DiagnosticConverterTest extends TestCase
     #[Test]
     public function test_convert_calculates_range_from_offset(): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'regex.lint.test',
             message: 'Test',
             offset: 5,
-            severity: Severity::Warning,
+            severity: LintSeverity::Warning,
         );
 
         $start = ['line' => 1, 'character' => 10];
@@ -74,7 +74,7 @@ final class DiagnosticConverterTest extends TestCase
     #[Test]
     public function test_convert_sets_correct_source(): void
     {
-        $issue = new LintIssue('test', 'message');
+        $issue = new RuleViolation('test', 'message');
         $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
 
         $this->assertSame('regex-parser', $diagnostic['source']);
@@ -83,7 +83,7 @@ final class DiagnosticConverterTest extends TestCase
     #[Test]
     public function test_convert_sets_correct_code(): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'regex.lint.unicode.shorthandWithoutU',
             message: 'Test',
         );
@@ -95,9 +95,9 @@ final class DiagnosticConverterTest extends TestCase
 
     #[Test]
     #[DataProvider('provideSeverityMapping')]
-    public function test_convert_maps_severity_correctly(Severity $inputSeverity, int $expectedLspSeverity): void
+    public function test_convert_maps_severity_correctly(LintSeverity $inputSeverity, int $expectedLspSeverity): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'test',
             message: 'Test',
             severity: $inputSeverity,
@@ -109,22 +109,22 @@ final class DiagnosticConverterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Severity, int}>
+     * @return iterable<string, array{\PhpRegex\Linter\LintSeverity, int}>
      */
     public static function provideSeverityMapping(): iterable
     {
-        yield 'Critical -> Error (1)' => [Severity::Critical, 1];
-        yield 'Error -> Error (1)' => [Severity::Error, 1];
-        yield 'Warning -> Warning (2)' => [Severity::Warning, 2];
-        yield 'Style -> Information (3)' => [Severity::Style, 3];
-        yield 'Perf -> Information (3)' => [Severity::Perf, 3];
-        yield 'Info -> Hint (4)' => [Severity::Info, 4];
+        yield 'Critical -> Error (1)' => [LintSeverity::Critical, 1];
+        yield 'Error -> Error (1)' => [LintSeverity::Error, 1];
+        yield 'Warning -> Warning (2)' => [LintSeverity::Warning, 2];
+        yield 'Style -> Information (3)' => [LintSeverity::Style, 3];
+        yield 'Perf -> Information (3)' => [LintSeverity::Perf, 3];
+        yield 'Info -> Hint (4)' => [LintSeverity::Info, 4];
     }
 
     #[Test]
     public function test_convert_clamps_offset_to_pattern_bounds(): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'test',
             message: 'Test',
             offset: 100, // Beyond pattern length
@@ -181,7 +181,7 @@ final class DiagnosticConverterTest extends TestCase
     #[Test]
     public function test_handles_null_offset(): void
     {
-        $issue = new LintIssue(
+        $issue = new RuleViolation(
             id: 'test',
             message: 'Test',
             offset: null,

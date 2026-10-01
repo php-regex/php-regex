@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Application;
+use PhpRegex\Cli\Command\CommandInterface;
+use PhpRegex\Cli\GlobalOptionsParser;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Application;
-use RegexParser\Cli\Command\CommandInterface;
-use RegexParser\Cli\GlobalOptionsParser;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
 
 final class ApplicationTest extends TestCase
 {

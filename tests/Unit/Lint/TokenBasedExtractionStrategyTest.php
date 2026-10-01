@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 
 final class TokenBasedExtractionStrategyTest extends TestCase
 {
@@ -18,7 +18,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
         $occurrences = $strategy->extract([$file]);
 
-        $patterns = array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences);
+        $patterns = array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences);
         $this->assertContains('/foo/i', $patterns);
         $this->assertContains('#bar#', $patterns);
     }
@@ -30,7 +30,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy(['My\Util::check', 'myfunc']);
         $occurrences = $strategy->extract([$file]);
 
-        $this->assertSame(['/baz/', '/qux/'], array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences));
+        $this->assertSame(['/baz/', '/qux/'], array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences));
     }
 
     public function test_does_not_repair_mismatched_delimiters(): void
@@ -40,7 +40,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
         $occurrences = $strategy->extract([$file]);
 
-        $patterns = array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences);
+        $patterns = array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences);
 
         // '/foo#' is broken at runtime (no ending delimiter); the extractor
         // must keep it verbatim so the linter reports the delimiter error
@@ -56,7 +56,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
         $occurrences = $strategy->extract([$file]);
 
-        $patterns = array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences);
+        $patterns = array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences);
         $this->assertContains('/\x{41}/', $patterns);
     }
 
@@ -67,7 +67,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
         $occurrences = $strategy->extract([$file]);
 
-        $patterns = array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences);
+        $patterns = array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences);
         $this->assertContains('/pattern/i', $patterns);
     }
 
@@ -78,7 +78,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
         $occurrences = $strategy->extract([$file]);
 
-        $patterns = array_map(fn (RegexPatternOccurrence $o) => $o->pattern, $occurrences);
+        $patterns = array_map(fn (PatternOccurrence $o) => $o->pattern, $occurrences);
         $this->assertContains('/pattern/', $patterns);
     }
 

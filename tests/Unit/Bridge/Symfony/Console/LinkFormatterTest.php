@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Console;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Console;
 
+use PhpRegex\Linter\Formatter\LinkFormatter;
+use PhpRegex\Linter\Formatter\RelativePathHelper;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\RelativePathHelper;
 
 final class LinkFormatterTest extends TestCase
 {

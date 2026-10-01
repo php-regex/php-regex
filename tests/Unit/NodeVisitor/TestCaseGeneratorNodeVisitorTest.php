@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\TestCaseGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 final class TestCaseGeneratorNodeVisitorTest extends TestCase
 {
-    private TestCaseGeneratorNodeVisitor $visitor;
+    private TestCaseGenerator $visitor;
 
     protected function setUp(): void
     {
-        $this->visitor = new TestCaseGeneratorNodeVisitor();
+        $this->visitor = new TestCaseGenerator();
     }
 
     public function test_literal(): void

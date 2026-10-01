@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Symfony\Command\RoutesCommand;
+use PhpRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PhpRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexRoutesCommand;
-use RegexParser\Bridge\Symfony\Routing\RouteConflictAnalyzer;
-use RegexParser\Bridge\Symfony\Routing\RouteConflictSuggestionBuilder;
-use RegexParser\Regex;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -30,7 +30,7 @@ final class RegexRoutesCommandTest extends TestCase
     public function test_command_fails_without_router(): void
     {
         $analyzer = new RouteConflictAnalyzer(Regex::create());
-        $command = new RegexRoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), null);
+        $command = new RoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), null);
 
         $tester = new CommandTester($command);
         $status = $tester->execute([]);
@@ -50,7 +50,7 @@ final class RegexRoutesCommandTest extends TestCase
         $router->method('getRouteCollection')->willReturn($collection);
 
         $analyzer = new RouteConflictAnalyzer(Regex::create());
-        $command = new RegexRoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), $router);
+        $command = new RoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), $router);
 
         $tester = new CommandTester($command);
         $status = $tester->execute([]);
@@ -75,7 +75,7 @@ final class RegexRoutesCommandTest extends TestCase
         $router->method('getRouteCollection')->willReturn($collection);
 
         $analyzer = new RouteConflictAnalyzer(Regex::create());
-        $command = new RegexRoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), $router);
+        $command = new RoutesCommand($analyzer, new RouteConflictSuggestionBuilder(), $router);
 
         $tester = new CommandTester($command);
         $status = $tester->execute([]);

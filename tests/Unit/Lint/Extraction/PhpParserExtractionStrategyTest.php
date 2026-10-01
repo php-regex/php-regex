@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Extraction;
+namespace PhpRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\PhpParserExtractionStrategy;
 
 final class PhpParserExtractionStrategyTest extends TestCase
 {

@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Tests\TestUtils\Pcre2LiveCrossCheck;
+use PhpRegex\Tests\TestUtils\Pcre2TestdataExtractor;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\Pcre2LiveCrossCheck;
-use RegexParser\Tests\TestUtils\Pcre2TestdataExtractor;
 
 /**
  * Consistency between the vendored PCRE2 testdata, the extractor and the

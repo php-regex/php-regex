@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Optimizer\OptimizationResult;
+use PhpRegex\Redos\Finding;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosConfidence;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\AnalysisReport;
 use PHPUnit\Framework\TestCase;
-use RegexParser\AnalysisReport;
-use RegexParser\OptimizationResult;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfidence;
-use RegexParser\ReDoS\ReDoSFinding;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 /**
  * A sweep of patterns through ReDoS.
@@ -33,7 +33,7 @@ final class ReDoSSweepTest extends TestCase
     public function test_analysis_report_optimizations(): void
     {
         $optimizations = new OptimizationResult('/a+b/', '/a+b/', []);
-        $redos = new ReDoSAnalysis(ReDoSSeverity::SAFE, 0);
+        $redos = new RedosAnalysis(RedosSeverity::SAFE, 0);
 
         $report = new AnalysisReport(
             isValid: true,
@@ -52,13 +52,13 @@ final class ReDoSSweepTest extends TestCase
 
     public function test_redos_analysis_get_vulnerable_subpattern_with_both(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::HIGH,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::HIGH,
             8,
             vulnerablePart: '(a+)+',
             vulnerableSubpattern: 'nested',
             trigger: 'aaaaaaaaab',
-            confidence: ReDoSConfidence::HIGH,
+            confidence: RedosConfidence::HIGH,
             findings: [],
         );
 
@@ -67,13 +67,13 @@ final class ReDoSSweepTest extends TestCase
 
     public function test_redos_analysis_get_vulnerable_subpattern_with_part_only(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::HIGH,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::HIGH,
             8,
             vulnerablePart: '(a+)+',
             vulnerableSubpattern: null,
             trigger: 'aaaaaaaaab',
-            confidence: ReDoSConfidence::HIGH,
+            confidence: RedosConfidence::HIGH,
             findings: [],
         );
 
@@ -82,8 +82,8 @@ final class ReDoSSweepTest extends TestCase
 
     public function test_redos_analysis_get_vulnerable_subpattern_null(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::SAFE,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::SAFE,
             0,
             vulnerablePart: null,
             vulnerableSubpattern: null,
@@ -95,20 +95,20 @@ final class ReDoSSweepTest extends TestCase
     public function test_redos_analysis_with_findings(): void
     {
         $findings = [
-            new ReDoSFinding(
-                ReDoSSeverity::HIGH,
+            new Finding(
+                RedosSeverity::HIGH,
                 'nested quantifiers',
                 '(a+)+',
                 'aaaaaaaaab',
             ),
         ];
 
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::HIGH,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::HIGH,
             8,
             vulnerablePart: '(a+)+',
             findings: $findings,
-            confidence: ReDoSConfidence::HIGH,
+            confidence: RedosConfidence::HIGH,
         );
 
         $this->assertCount(1, $analysis->findings);
@@ -117,8 +117,8 @@ final class ReDoSSweepTest extends TestCase
 
     public function test_redos_analysis_with_suggested_rewrite(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::HIGH,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::HIGH,
             8,
             vulnerablePart: '(a+)+',
             suggestedRewrite: '(?:a+)+',

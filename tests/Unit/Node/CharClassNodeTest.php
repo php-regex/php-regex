@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class CharClassNodeTest extends TestCase
 {

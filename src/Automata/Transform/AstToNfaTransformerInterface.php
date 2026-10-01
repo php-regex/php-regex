@@ -11,12 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Transform;
+namespace PhpRegex\Automata\Transform;
 
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\Node\RegexNode;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Parser\Node\RegexNode;
 
 /**
  * Transforms a regex AST into an NFA.
@@ -26,7 +25,7 @@ use RegexParser\Node\RegexNode;
 interface AstToNfaTransformerInterface
 {
     /**
-     * @throws ComplexityException When regex exceeds supported subset
+     * @throws \PhpRegex\Automata\Exception\ComplexityException When regex exceeds supported subset
      */
     public function transform(RegexNode $regex, SolverOptions $options): Nfa;
 }

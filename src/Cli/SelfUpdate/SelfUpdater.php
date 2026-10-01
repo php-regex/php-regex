@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\SelfUpdate;
+namespace PhpRegex\Cli\SelfUpdate;
 
-use RegexParser\Cli\CliException;
-use RegexParser\Cli\Output;
+use PhpRegex\Cli\CliException;
+use PhpRegex\Cli\Output;
 
 class SelfUpdater
 {

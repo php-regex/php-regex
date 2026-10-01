@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\GithubFormatter;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\GithubFormatter;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class GithubFormatterTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_empty_report(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -47,9 +47,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_error_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Invalid regex pattern',
             'regex.syntax.error',
             5,
@@ -68,7 +68,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -81,9 +81,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_warning_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Nested quantifier detected',
             'regex.lint.quantifier.nested',
             null,
@@ -100,7 +100,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -110,9 +110,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_info_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Info,
             'Info message',
             null,
             null,
@@ -129,7 +129,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -139,9 +139,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_critical_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Critical,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Critical,
             'Critical security issue',
             'regex.redos',
             2,
@@ -158,7 +158,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -170,8 +170,8 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_multiple_problems(): void
     {
-        $problem1 = new RegexProblem(ProblemType::Syntax, Severity::Error, 'Error 1', null, null, null, null);
-        $problem2 = new RegexProblem(ProblemType::Lint, Severity::Warning, 'Warning 1', null, null, null, null);
+        $problem1 = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null, null);
+        $problem2 = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null, null);
 
         $result1 = [
             'file' => 'file1.php',
@@ -191,7 +191,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem2],
         ];
 
-        $report = new RegexLintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -203,7 +203,7 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_empty_file(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => '',
@@ -214,7 +214,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -226,9 +226,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_problem_title_with_code(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Test message',
             'regex.lint.test',
             null,
@@ -245,7 +245,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -254,9 +254,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_problem_title_without_code(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Error,
             'Test message',
             null,
             null,
@@ -273,7 +273,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -282,9 +282,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_properties(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Test message',
             null,
             null,
@@ -301,7 +301,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -310,9 +310,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_data(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             "Message with\nnewlines and\r\ncrlf",
             null,
             null,
@@ -329,7 +329,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -338,9 +338,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_title(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Test message',
             'code with % and \n',
             null,
@@ -357,7 +357,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -375,9 +375,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_minimal_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Info,
             'Simple message',
             null,
             null,
@@ -394,7 +394,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -403,9 +403,9 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_location_and_snippet(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Warning message',
             null,
             null,
@@ -423,7 +423,7 @@ final class GithubFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 

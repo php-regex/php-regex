@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class ValidatorNodeVisitorTest extends TestCase
 {
@@ -24,7 +24,7 @@ final class ValidatorNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a{2,1}/');
-        $visitor = new ValidatorNodeVisitor();
+        $visitor = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Invalid quantifier range');

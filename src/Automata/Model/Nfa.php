@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
-use RegexParser\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Alphabet\CharSet;
 
 /**
  * Immutable NFA container.
@@ -23,7 +23,7 @@ use RegexParser\Automata\Alphabet\CharSet;
 final readonly class Nfa
 {
     /**
-     * @param array<int, NfaState> $states
+     * @param array<int, \PhpRegex\Automata\Model\NfaState> $states
      */
     public function __construct(
         public int $startState,

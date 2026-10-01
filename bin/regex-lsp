@@ -32,8 +32,8 @@ if (!$autoloaded) {
     exit(1);
 }
 
-use RegexParser\Lsp\Server;
-use RegexParser\Regex;
+use PhpRegex\LanguageServer\Server;
+use PhpRegex\Toolkit\Regex;
 
 // Handle --help and --version
 if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
 /**
  * One pattern case while the extractor parses a testinput file: the pattern

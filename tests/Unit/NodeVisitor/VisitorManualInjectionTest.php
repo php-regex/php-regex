@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class VisitorManualInjectionTest extends TestCase
 {
@@ -30,7 +30,7 @@ final class VisitorManualInjectionTest extends TestCase
     {
         // Cas impossible via parser : AlternationNode vide
         $node = new AlternationNode([], 0, 0);
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Should return the node as is or not crash
         $result = $node->accept($optimizer);
@@ -42,7 +42,7 @@ final class VisitorManualInjectionTest extends TestCase
         // The parser handles ']' as a literal if there's no open '[',
         // but let's explicitly test that the compiler doesn't escape it unnecessarily
         $node = new LiteralNode(']', 0, 0);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         $this->assertSame(']', $node->accept($compiler));
     }
@@ -52,7 +52,7 @@ final class VisitorManualInjectionTest extends TestCase
         // An empty class [] is normally a parsing error,
         // but if we construct it manually:
         $node = new CharClassNode(new AlternationNode([], 0, 0), false, 0, 0);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $this->expectException(SampleGenerationException::class);
         $node->accept($generator);
@@ -67,7 +67,7 @@ final class VisitorManualInjectionTest extends TestCase
         ], 0, 0);
 
         $quantifier = new QuantifierNode($alt, '*', QuantifierType::T_GREEDY, 0, 0);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Must produce (?:a|b)*
         $this->assertSame('(?:a|b)*', $quantifier->accept($compiler));

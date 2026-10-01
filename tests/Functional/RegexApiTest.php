@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional;
+namespace PhpRegex\Tests\Functional;
 
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\Cache\RemovableCacheInterface;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Validation\ValidationErrorCategory;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Cache\RemovableCacheInterface;
-use RegexParser\ErrorCode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Regex;
-use RegexParser\ValidationErrorCategory;
 
 final class RegexApiTest extends TestCase
 {
@@ -78,7 +78,7 @@ final class RegexApiTest extends TestCase
         // Should optimize [0-9] to \d
         $optimized = $regex->optimize('/[0-9]/');
 
-        // Note: the CompilerNodeVisitor adds the \ before d
+        // Note: the PatternPrinter adds the \ before d
         $this->assertSame('/\d/', $optimized->optimized);
     }
 

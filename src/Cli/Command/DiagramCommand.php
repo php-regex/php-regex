@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
 
 final class DiagramCommand extends AbstractCommand
 {
@@ -73,7 +73,7 @@ final class DiagramCommand extends AbstractCommand
             $ast = $regex->parse($pattern);
             if ('svg' === $format) {
                 /** @var string $diagram */
-                $diagram = $ast->accept(new RailroadSvgVisitor());
+                $diagram = $ast->accept(new RailroadSvgRenderer());
                 if (null !== $outputPath) {
                     if (false === @file_put_contents($outputPath, $diagram)) {
                         $output->write($output->error("Error: Unable to write SVG to '{$outputPath}'.\n"));
@@ -89,7 +89,7 @@ final class DiagramCommand extends AbstractCommand
                 return self::SUCCESS;
             }
 
-            $diagram = $ast->accept(new AsciiTreeVisitor());
+            $diagram = $ast->accept(new AsciiTreeRenderer());
             if (null !== $outputPath) {
                 if (false === @file_put_contents($outputPath, $diagram)) {
                     $output->write($output->error("Error: Unable to write output to '{$outputPath}'.\n"));
@@ -103,7 +103,7 @@ final class DiagramCommand extends AbstractCommand
             if ($style->visualsEnabled()) {
                 $style->renderSection('Rendering diagram', 1, 1);
                 $highlightedPattern = $output->isAnsi()
-                    ? $ast->accept(new ConsoleHighlighterVisitor())
+                    ? $ast->accept(new ConsoleHighlighter())
                     : $pattern;
                 $style->renderPattern($highlightedPattern);
                 $output->write("\n");

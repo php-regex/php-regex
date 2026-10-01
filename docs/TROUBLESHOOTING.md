@@ -8,7 +8,7 @@ This guide helps you resolve common issues when using RegexParser.
 
 **Problem:**
 ```
-RegexParser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
+PhpRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
 ```
 
 **Causes:**
@@ -37,7 +37,7 @@ if (!$validation->isValid) {
 3. Use cache to skip parsing:
 ```php
 $regex = Regex::create([
-    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
     // Pattern parsed once, cached for all workers
 ]);
 ```
@@ -64,9 +64,9 @@ if (strlen($pattern) > 100_000) {
 $regex = Regex::create();
 $result = $regex->redos(
     $pattern,
-    ReDoSSeverity::HIGH,
-    ReDoSMode::CONFIRMED,  // ← Test with real inputs
-    new ReDoSConfirmOptions(
+    RedosSeverity::HIGH,
+    RedosMode::CONFIRMED,  // ← Test with real inputs
+    new ConfirmationOptions(
         maxTestStrings: 1000,
         maxStringLength: 1000,
     )
@@ -111,7 +111,7 @@ $realisticInputs = [
 
 **Problem:**
 ```
-RegexParser\Exception\LexerException: Invalid escape sequence '\c' at position 5
+PhpRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at position 5
 ```
 
 **Causes:**
@@ -157,7 +157,7 @@ $pattern = '\x{41}';        // Hexadecimal with braces
 
 **Problem:**
 ```
-RegexParser\Exception\LexerException: Unable to tokenize pattern at position 15. Context: "abc..."
+PhpRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position 15. Context: "abc..."
 ```
 
 **Causes:**
@@ -233,7 +233,7 @@ echo "Time: " . ($elapsed * 1000) . " ms\n";
 4. Use caching:
 ```php
 $regex = Regex::create([
-    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Parse once, reuse across requests
@@ -253,7 +253,7 @@ $ast = $regex->parse($pattern);
 1. Verify cache is configured:
 ```php
 $regex = Regex::create([
-    'cache' => new \RegexParser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Test
@@ -361,7 +361,7 @@ composer show yoeunes/regex-parser
 ```yaml
 # config/bundles.php
 return [
-    RegexParser\Bridge\Symfony\RegexParserBundle::class => ['all' => true],
+    PhpRegex\Symfony\PhpRegexBundle::class => ['all' => true],
 ];
 ```
 

@@ -11,6 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Toolkit\Regex;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 /*
  * Rebuilds the corpus lint expectations from corpus/corpus.log.
  *
@@ -27,10 +40,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__.'/../../vendor/autoload.php';
-
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 const ARROW = "\xE2\x86\x92";
 
@@ -63,7 +72,7 @@ foreach ($patterns as $pattern) {
         continue;
     }
 
-    $linter = new LinterNodeVisitor();
+    $linter = new PatternLinter();
     $ast->accept($linter);
 
     $issues = array_values(array_unique(array_map(

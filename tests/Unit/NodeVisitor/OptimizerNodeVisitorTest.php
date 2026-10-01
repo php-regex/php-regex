@@ -11,39 +11,39 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\Regex;
 
 final class OptimizerNodeVisitorTest extends TestCase
 {
     private Regex $regex;
 
-    private OptimizerNodeVisitor $optimizer;
+    private Rewriter $optimizer;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->optimizer = new OptimizerNodeVisitor();
+        $this->optimizer = new Rewriter();
     }
 
     public function test_merge_adjacent_literals(): void
     {
         $regex = Regex::create();
         $ast = $regex->parse('/abc/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -69,9 +69,9 @@ final class OptimizerNodeVisitorTest extends TestCase
             new LiteralNode('delta', 0, 0),
         ], 0, 0);
 
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var AlternationNode $newAst */
+        /** @var \PhpRegex\Parser\Node\AlternationNode $newAst */
         $newAst = $rootAlt->accept($optimizer);
 
         // The optimizer should have "lifted" beta and gamma to the root level -> 4 alternatives
@@ -84,7 +84,7 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a|b|c/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -109,7 +109,7 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/(?:abc)/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -122,7 +122,7 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/(?:a)*/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -135,7 +135,7 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a|-|z/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -151,7 +151,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $regex = Regex::create();
         $ast = $regex->parse('/abc/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Simulate a more complex AST to test the merging of adjacent LiteralNodes
         $rawAst = new RegexNode(
@@ -190,7 +190,7 @@ final class OptimizerNodeVisitorTest extends TestCase
             '', '/', 0, 2,
         );
 
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimizedAst = $rawAst->accept($optimizer);
 
         $this->assertInstanceOf(RegexNode::class, $optimizedAst);
@@ -203,7 +203,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         // a|-|z should NOT become [a-z] because the '-' is a literal, not part of a range.
         $regex = Regex::create();
         $ast = $regex->parse('/a|-|z/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $newAst = $ast->accept($optimizer);
 
@@ -220,7 +220,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $optimized);
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
-        /** @var CharClassNode $charClass */
+        /** @var \PhpRegex\Parser\Node\CharClassNode $charClass */
         $charClass = $optimized->pattern;
         $this->assertInstanceOf(RangeNode::class, $charClass->expression);
         $range = $charClass->expression;
@@ -237,7 +237,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $optimized);
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
-        /** @var CharClassNode $charClass */
+        /** @var \PhpRegex\Parser\Node\CharClassNode $charClass */
         $charClass = $optimized->pattern;
         $this->assertInstanceOf(AlternationNode::class, $charClass->expression);
         $this->assertCount(2, $charClass->expression->alternatives);
@@ -260,7 +260,7 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $pattern = new LiteralNode('a', 0, 1);
         $originalAst = new RegexNode($pattern, 'i', '/', 0, 3);
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Le pattern est un LiteralNode simple, l'optimizer ne fait rien dessus.
         $optimizedAst = $originalAst->accept($optimizer);
@@ -277,7 +277,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         // [a-zA-Z0-9_] -> \w, but NOT if the 'u' flag is present
         $regex = Regex::create();
         $ast = $regex->parse('/[a-zA-Z0-9_]+/u'); // 'u' flag is present
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimizedAst = $ast->accept($optimizer);
 
@@ -296,9 +296,9 @@ final class OptimizerNodeVisitorTest extends TestCase
         // [a-zA-Z0-9_] -> \w
         $regex = Regex::create();
         $ast = $regex->parse('/[a-zA-Z0-9_]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var RegexNode $newAst */
+        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharTypeNode::class, $newAst->pattern);
@@ -310,9 +310,9 @@ final class OptimizerNodeVisitorTest extends TestCase
         // [a-zA-Z0-9_] -> NOT \w if /u is present (semantics change in PCRE)
         $regex = Regex::create();
         $ast = $regex->parse('/[a-zA-Z0-9_]/u');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var RegexNode $newAst */
+        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
@@ -331,7 +331,7 @@ final class OptimizerNodeVisitorTest extends TestCase
             new LiteralNode('c', 0, 0)
         ], 0, 0);
 
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $result = $outer->accept($optimizer);
 
         $this->assertInstanceOf(LiteralNode::class, $result);
@@ -343,9 +343,9 @@ final class OptimizerNodeVisitorTest extends TestCase
         // a|b|c -> [abc]
         $regex = Regex::create();
         $ast = $regex->parse('/a|b|c/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var RegexNode $newAst */
+        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
@@ -358,9 +358,9 @@ final class OptimizerNodeVisitorTest extends TestCase
         // but your logic strictly avoids meta chars.
         $regex = Regex::create();
         $ast = $regex->parse('/a|^|c/'); // ^ is anchor here
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var RegexNode $newAst */
+        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         // Should remain alternation because ^ was an AnchorNode in parse,
@@ -475,7 +475,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         // We compare the string representation to verify semantic equivalence
         // Note: The AST structure checks are implicit via the string output
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $this->assertSame($expected, $optimized->accept($compiler));
     }
 
@@ -507,29 +507,29 @@ final class OptimizerNodeVisitorTest extends TestCase
     public function test_optimizations_can_be_disabled(): void
     {
         $regex = Regex::create();
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Test disabling digits optimization
         $ast = $regex->parse('/[0-9]/');
-        $optimizerDisabled = new OptimizerNodeVisitor(optimizeDigits: false);
+        $optimizerDisabled = new Rewriter(optimizeDigits: false);
         $optimizedDisabled = $ast->accept($optimizerDisabled);
         $resultDisabled = $optimizedDisabled->accept($compiler);
         $this->assertSame('/[0-9]/', $resultDisabled, 'Digits optimization should be disabled');
 
-        $optimizerEnabled = new OptimizerNodeVisitor(optimizeDigits: true);
+        $optimizerEnabled = new Rewriter(optimizeDigits: true);
         $optimizedEnabled = $ast->accept($optimizerEnabled);
         $resultEnabled = $optimizedEnabled->accept($compiler);
         $this->assertSame('/\d/', $resultEnabled, 'Digits optimization should work when enabled');
 
         // Test disabling word optimization
         $ast2 = $regex->parse('/[a-zA-Z0-9_]/');
-        $optimizerWordDisabled = new OptimizerNodeVisitor(optimizeWord: false);
+        $optimizerWordDisabled = new Rewriter(optimizeWord: false);
         $optimizedWordDisabled = $ast2->accept($optimizerWordDisabled);
         $resultWordDisabled = $optimizedWordDisabled->accept($compiler);
         $this->assertNotSame('/\w/', $resultWordDisabled, 'Word optimization should be disabled');
         $this->assertStringStartsWith('/[', $resultWordDisabled, 'Should remain as char class');
 
-        $optimizerWordEnabled = new OptimizerNodeVisitor(optimizeWord: true);
+        $optimizerWordEnabled = new Rewriter(optimizeWord: true);
         $optimizedWordEnabled = $ast2->accept($optimizerWordEnabled);
         $resultWordEnabled = $optimizedWordEnabled->accept($compiler);
         $this->assertSame('/\w/', $resultWordEnabled, 'Word optimization should work when enabled');
@@ -538,11 +538,11 @@ final class OptimizerNodeVisitorTest extends TestCase
     public function test_strict_ranges_option(): void
     {
         $regex = Regex::create();
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Test strict ranges (default): prevent merging different categories
         $ast = $regex->parse('/[0-9:]/');
-        $optimizerStrict = new OptimizerNodeVisitor(ranges: true);
+        $optimizerStrict = new Rewriter(ranges: true);
         $optimizedStrict = $ast->accept($optimizerStrict);
         $resultStrict = $optimizedStrict->accept($compiler);
         // Should remain [0-9:] or equivalent, not [0-: ]
@@ -551,7 +551,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $this->assertNotSame('/[0-:]/', $resultStrict, 'Strict ranges should not merge digits and symbols');
 
         // Test loose ranges: allow merging different categories
-        $optimizerLoose = new OptimizerNodeVisitor(ranges: false);
+        $optimizerLoose = new Rewriter(ranges: false);
         $optimizedLoose = $ast->accept($optimizerLoose);
         $resultLoose = $optimizedLoose->accept($compiler);
         $this->assertSame('/[0-:]/', $resultLoose, 'Loose ranges should merge digits and symbols');
@@ -560,11 +560,11 @@ final class OptimizerNodeVisitorTest extends TestCase
     public function test_optimizer_does_not_fill_gaps(): void
     {
         $regex = Regex::create();
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Test that gaps are not filled: [!#] should not become [!-\#]
         $ast = $regex->parse('/[!#]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimized = $ast->accept($optimizer);
         $result = $optimized->accept($compiler);
         $this->assertSame('/[!#]/', $result, 'Should not create ranges that fill gaps');
@@ -585,11 +585,11 @@ final class OptimizerNodeVisitorTest extends TestCase
     public function test_optimizer_handles_short_hex_escapes(): void
     {
         $regex = Regex::create();
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Test short hex escapes in character class
         $ast = $regex->parse('/[\x9\xA\xD]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimized = $ast->accept($optimizer);
         $result = $optimized->accept($compiler);
 
@@ -604,11 +604,11 @@ final class OptimizerNodeVisitorTest extends TestCase
     public function test_optimizer_handles_alternation_with_empty_branch(): void
     {
         $regex = Regex::create();
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Test that alternation with empty branch is not merged into char class
         $ast = $regex->parse('/^(\+|)\d+$/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimized = $ast->accept($optimizer);
         $result = $optimized->accept($compiler);
 
@@ -628,10 +628,10 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Test that [a-z]|[0-9] becomes [a-z0-9] when digit optimization is disabled
         $regex = Regex::create();
         $ast = $regex->parse('/[a-z]|[0-9]/');
-        $optimizer = new OptimizerNodeVisitor(optimizeDigits: false);
+        $optimizer = new Rewriter(optimizeDigits: false);
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-z0-9]/', $result);
@@ -642,10 +642,10 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Test that [a-z]|[^0-9] does not merge, even if [^0-9] becomes \D
         $regex = Regex::create();
         $ast = $regex->parse('/[a-z]|[^0-9]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-z]|\D/', $result);
@@ -656,9 +656,9 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
-        /** @var RegexNode $optimized */
+        /** @var \PhpRegex\Parser\Node\RegexNode $optimized */
         $optimized = $ast->accept($optimizer);
 
         if (null !== $expectedCharType) {
@@ -694,10 +694,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/[^a-zA-Z0-9_]+/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/\W+/', $result);
@@ -707,10 +707,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/[^a-zA-Z0-9_]+/u');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[^0-9A-Z_a-z]+/u', $result);
@@ -720,10 +720,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/[^0-9]+/u');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[^0-9]+/u', $result);
@@ -733,10 +733,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/abc/m');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/abc/', $result);
@@ -746,10 +746,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/^abc$/m');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/^abc$/m', $result);
@@ -757,12 +757,12 @@ final class OptimizerNodeVisitorTest extends TestCase
 
     public function test_auto_possessify_skips_nullable_subpattern(): void
     {
-        $optimizer = new OptimizerNodeVisitor(autoPossessify: true);
+        $optimizer = new Rewriter(autoPossessify: true);
         $regex = Regex::create();
         $ast = $regex->parse('/(?:a?)+b/');
 
         $optimized = $ast->pattern->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         $this->assertStringContainsString('(?:a?)+b', $optimizedPattern);
@@ -771,12 +771,12 @@ final class OptimizerNodeVisitorTest extends TestCase
 
     public function test_auto_possessify_skips_capture_sensitive_group(): void
     {
-        $optimizer = new OptimizerNodeVisitor(autoPossessify: true);
+        $optimizer = new Rewriter(autoPossessify: true);
         $regex = Regex::create();
         $ast = $regex->parse('/(a+)+b/');
 
         $optimized = $ast->pattern->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         $this->assertStringContainsString('(a+)+b', $optimizedPattern);
@@ -785,12 +785,12 @@ final class OptimizerNodeVisitorTest extends TestCase
 
     public function test_auto_possessify_applies_to_star_and_range(): void
     {
-        $optimizer = new OptimizerNodeVisitor(autoPossessify: true);
+        $optimizer = new Rewriter(autoPossessify: true);
         $regex = Regex::create();
 
         $ast = $regex->parse('/a*b/');
         $optimized = $ast->pattern->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
         $this->assertStringContainsString('a*+b', $optimizedPattern);
 
@@ -804,10 +804,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/abcde|xyzde/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/abcde|xyzde/', $result, 'Should not factor common suffix "de" by default');
@@ -817,10 +817,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/abc|def/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/abc|def/', $result, 'Should not factor when no common suffix');
@@ -830,10 +830,10 @@ final class OptimizerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/alpha|beta|gamma|delta/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/alpha|beta|gamma|delta/', $result, 'Should not factor single character suffix');
@@ -846,9 +846,9 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         // Test \N (any char except newline)
         $ast = $regex->parse('/\N+/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
         $this->assertSame('/\N+/', $result, '\N should be preserved');
 
@@ -870,10 +870,10 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Test that [\b] (backspace) is preserved correctly during optimization
         $regex = Regex::create();
         $ast = $regex->parse('/[\b]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[\b]/', $result, '[\b] (backspace) should be preserved');
@@ -884,10 +884,10 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Test that \N|[\b] pattern is not corrupted during optimization
         $regex = Regex::create();
         $ast = $regex->parse('/\N|[\b]/');
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         // The pattern should preserve \N as a char type and [\b] as backspace in char class
@@ -906,7 +906,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/(a)(a)/');
 
         $optimized = $ast->pattern->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         // Should not merge to /(a){2}/ as that changes capture semantics
@@ -923,7 +923,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/(?<name1>a)(?<name2>a)/');
 
         $optimized = $ast->pattern->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         $this->assertStringContainsString('(?<name1>a)(?<name2>a)', $optimizedPattern);
@@ -938,7 +938,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/(?|(a)|(b))(?|(a)|(b))/');
 
         $optimized = $ast->pattern->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         // Branch reset groups should not be merged
@@ -951,12 +951,12 @@ final class OptimizerNodeVisitorTest extends TestCase
      */
     public function test_auto_possessify_checks_suffix_disjointness(): void
     {
-        $optimizer = new OptimizerNodeVisitor(autoPossessify: true);
+        $optimizer = new Rewriter(autoPossessify: true);
         $regex = Regex::create();
         $ast = $regex->parse('/( ?\d{4}){1,} ?\d{1,4}/'); // IBAN-like pattern with {1,}
 
         $optimized = $ast->pattern->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         // The ( ?\d{4})+ should not be possessified because suffix ?\d{1,4} can match digits
@@ -969,12 +969,12 @@ final class OptimizerNodeVisitorTest extends TestCase
      */
     public function test_auto_possessify_works_when_safe(): void
     {
-        $optimizer = new OptimizerNodeVisitor(autoPossessify: true);
+        $optimizer = new Rewriter(autoPossessify: true);
         $regex = Regex::create();
         $ast = $regex->parse('/\d+[a-z]/'); // \d+ followed by [a-z], disjoint
 
         $optimized = $ast->pattern->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimized->accept($compiler);
 
         // Should possessify \d+ since [a-z] is disjoint from digits

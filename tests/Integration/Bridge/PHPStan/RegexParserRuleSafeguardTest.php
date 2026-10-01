@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
- * Tests the safeguard in RegexParserRule that prevents suggesting invalid optimizations.
+ * Tests the safeguard in RegexPatternRule that prevents suggesting invalid optimizations.
  *
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleSafeguardTest extends RuleTestCase
 {
@@ -33,7 +33,7 @@ final class RegexParserRuleSafeguardTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return new RegexParserRule(config: [
+        return new RegexPatternRule(config: [
             'checks' => [
                 'redos' => ['enabled' => false, 'threshold' => 'high'],
                 'optimizations' => ['enabled' => true], // Enable optimizations to test the safeguard

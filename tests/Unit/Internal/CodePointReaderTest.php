@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Internal\CodePointReader;
+use PhpRegex\Parser\Node\CharLiteralType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\CodePointReader;
-use RegexParser\Node\CharLiteralType;
 
 /**
  * Every way PCRE lets a pattern name a character, and what it names.
@@ -32,7 +32,7 @@ final class CodePointReaderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{escape: string, type: CharLiteralType, codePoint: int}>
+     * @return iterable<string, array{escape: string, type: \PhpRegex\Parser\Node\CharLiteralType, codePoint: int}>
      */
     public static function provideEscapes(): iterable
     {

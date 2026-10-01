@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Parser\Validation\ValidationErrorCategory;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\Regex;
-use RegexParser\ValidationErrorCategory;
 
 /**
  * validate() judges the pattern. When the library itself fails, the

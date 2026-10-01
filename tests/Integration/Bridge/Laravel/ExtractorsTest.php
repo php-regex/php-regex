@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Laravel\Extractor\RoutePatternSource;
+use PhpRegex\Linter\Source\PatternSourceContext;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PhpRegex\Laravel\Facades\Regex;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
-use RegexParser\Bridge\Laravel\Extractor\LaravelRouteExtractor;
-use RegexParser\Bridge\Laravel\Extractor\ValidationRuleExtractor;
-use RegexParser\Bridge\Laravel\Facades\Regex as RegexFacade;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Lint\RegexPatternSourceContext;
 
 /**
  * Tests for Laravel pattern extractors.
@@ -41,9 +41,9 @@ final class ExtractorsTest extends TestCase
 
         /** @var Router $router */
         $router = $this->app->make('router');
-        $extractor = new LaravelRouteExtractor($router);
+        $extractor = new RoutePatternSource($router);
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [base_path('app')],
             excludePaths: [],
         );
@@ -51,11 +51,11 @@ final class ExtractorsTest extends TestCase
         $patterns = $extractor->extract($context);
 
         $this->assertNotEmpty($patterns);
-        $this->assertContainsOnlyInstancesOf(RegexPatternOccurrence::class, $patterns);
+        $this->assertContainsOnlyInstancesOf(PatternOccurrence::class, $patterns);
 
         // Check that our patterns were extracted
         $extractedPatterns = array_map(
-            static fn (RegexPatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
+            static fn (PatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
             $patterns,
         );
 
@@ -71,9 +71,9 @@ final class ExtractorsTest extends TestCase
 
         /** @var Router $router */
         $router = $this->app->make('router');
-        $extractor = new LaravelRouteExtractor($router);
+        $extractor = new RoutePatternSource($router);
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [base_path('app')],
             excludePaths: [],
         );
@@ -103,9 +103,9 @@ final class ExtractorsTest extends TestCase
 
         /** @var Router $router */
         $router = $this->app->make('router');
-        $extractor = new LaravelRouteExtractor($router);
+        $extractor = new RoutePatternSource($router);
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [base_path('app')],
             excludePaths: [],
         );
@@ -149,9 +149,9 @@ final class ExtractorsTest extends TestCase
             }
             PHP);
 
-        $extractor = new ValidationRuleExtractor();
+        $extractor = new ValidationRulePatternSource();
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [$tempDir],
             excludePaths: [],
         );
@@ -159,10 +159,10 @@ final class ExtractorsTest extends TestCase
         $patterns = $extractor->extract($context);
 
         $this->assertCount(3, $patterns);
-        $this->assertContainsOnlyInstancesOf(RegexPatternOccurrence::class, $patterns);
+        $this->assertContainsOnlyInstancesOf(PatternOccurrence::class, $patterns);
 
         $extractedPatterns = array_map(
-            static fn (RegexPatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
+            static fn (PatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
             $patterns,
         );
 
@@ -189,9 +189,9 @@ final class ExtractorsTest extends TestCase
             ];
             PHP);
 
-        $extractor = new ValidationRuleExtractor();
+        $extractor = new ValidationRulePatternSource();
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [$tempDir],
             excludePaths: [],
         );
@@ -199,7 +199,7 @@ final class ExtractorsTest extends TestCase
         $patterns = $extractor->extract($context);
 
         $extracted = array_map(
-            static fn (RegexPatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
+            static fn (PatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
             $patterns,
         );
 
@@ -224,9 +224,9 @@ final class ExtractorsTest extends TestCase
             ];
             PHP);
 
-        $extractor = new ValidationRuleExtractor();
+        $extractor = new ValidationRulePatternSource();
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [$tempDir],
             excludePaths: [],
         );
@@ -254,9 +254,9 @@ final class ExtractorsTest extends TestCase
             $rules = ['email' => 'regex:/^test$/'];
             PHP);
 
-        $extractor = new ValidationRuleExtractor();
+        $extractor = new ValidationRulePatternSource();
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [$tempDir],
             excludePaths: [],
         );
@@ -287,9 +287,9 @@ final class ExtractorsTest extends TestCase
             $rules = ['field' => 'regex:/^excluded$/'];
             PHP);
 
-        $extractor = new ValidationRuleExtractor();
+        $extractor = new ValidationRulePatternSource();
 
-        $context = new RegexPatternSourceContext(
+        $context = new PatternSourceContext(
             paths: [$tempDir.'/app', $tempDir.'/vendor'],
             excludePaths: ['vendor'],
         );
@@ -297,7 +297,7 @@ final class ExtractorsTest extends TestCase
         $patterns = $extractor->extract($context);
 
         $extractedPatterns = array_map(
-            static fn (RegexPatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
+            static fn (PatternOccurrence $p): string => $p->displayPattern ?? $p->pattern,
             $patterns,
         );
 
@@ -322,7 +322,7 @@ final class ExtractorsTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            RegexParserServiceProvider::class,
+            PhpRegexServiceProvider::class,
         ];
     }
 
@@ -336,7 +336,7 @@ final class ExtractorsTest extends TestCase
     protected function getPackageAliases($app): array
     {
         return [
-            'Regex' => RegexFacade::class,
+            'Regex' => Regex::class,
         ];
     }
 }

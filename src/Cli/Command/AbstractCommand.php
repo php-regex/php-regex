@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 
 abstract class AbstractCommand implements CommandInterface
 {
@@ -119,11 +119,11 @@ abstract class AbstractCommand implements CommandInterface
      * severity or more, the verdict the lint command counts as an error. A
      * theoretical finding is a warning.
      */
-    protected function isConfirmedRedos(ReDoSAnalysis $analysis, ?ReDoSSeverity $threshold): bool
+    protected function isConfirmedRedos(RedosAnalysis $analysis, ?RedosSeverity $threshold): bool
     {
         return $analysis->isConfirmed()
-            && $analysis->exceedsThreshold($threshold ?? ReDoSSeverity::HIGH)
-            && $analysis->exceedsThreshold(ReDoSSeverity::HIGH);
+            && $analysis->exceedsThreshold($threshold ?? RedosSeverity::HIGH)
+            && $analysis->exceedsThreshold(RedosSeverity::HIGH);
     }
 
     /**

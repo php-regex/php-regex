@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Tests compatibility between parsed/compiled patterns and PHP's native preg_* functions.
@@ -25,12 +25,12 @@ final class PregFunctionCompatibilityTest extends TestCase
 {
     private Regex $regexService;
 
-    private CompilerNodeVisitor $compiler;
+    private PatternPrinter $compiler;
 
     protected function setUp(): void
     {
         $this->regexService = Regex::create();
-        $this->compiler = new CompilerNodeVisitor();
+        $this->compiler = new PatternPrinter();
     }
 
     public function test_preg_match_simple_literal(): void

@@ -69,20 +69,20 @@ tasks:
     cmds:
       - cmd: php tests/Tools/update_cache_version.php
     sources:
-      - src/Lexer.php
-      - src/Parser.php
-      - src/Token.php
-      - src/TokenStream.php
-      - src/TokenType.php
-      - src/Node/**/*.php
-      - src/Internal/**/*.php
-      - src/NodeVisitor/ValidatorNodeVisitor.php
-      - src/PcreTarget.php
-      - src/PcreFeature.php
-      - src/GroupNumbering*.php
+      - src/Parser/Lexer.php
+      - src/Parser/Syntax/TokenParser.php
+      - src/Parser/Token/Token.php
+      - src/Parser/Token/TokenStream.php
+      - src/Parser/Token/TokenType.php
+      - src/Parser/Node/**/*.php
+      - src/Parser/Internal/**/*.php
+      - src/Parser/Validation/Validator.php
+      - src/Parser/PcreTarget.php
+      - src/Parser/PcreFeature.php
+      - src/Parser/Analysis/GroupNumbering*.php
       - tests/Support/AstFingerprint.php
     generates:
-      - src/RegexParser.php
+      - src/Parser/RegexParser.php
     method: checksum
 
   phpunit:

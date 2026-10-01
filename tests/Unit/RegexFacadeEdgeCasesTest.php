@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\Regex;
 
 final class RegexFacadeEdgeCasesTest extends TestCase
 {

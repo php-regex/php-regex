@@ -11,12 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Toolkit\Regex;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\Regex;
-
-echo "Benchmarking ComplexityScoreNodeVisitor performance improvements...\n\n";
+echo "Benchmarking ComplexityScorer performance improvements...\n\n";
 
 // Test patterns of varying complexity for scoring
 $testPatterns = [
@@ -41,7 +50,7 @@ foreach ($testPatterns as $name => $pattern) {
     for ($i = 0; $i < $iterations; $i++) {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new ComplexityScoreNodeVisitor();
+        $visitor = new ComplexityScorer();
         $score = $ast->accept($visitor);
     }
     $scoreTime = microtime(true) - $start;
@@ -65,7 +74,7 @@ for ($i = 0; $i < 100; $i++) {
     foreach ($patternsWithRepeatedQuantifiers as $pattern) {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new ComplexityScoreNodeVisitor();
+        $visitor = new ComplexityScorer();
         $score = $ast->accept($visitor);
     }
 }
@@ -89,7 +98,7 @@ for ($i = 0; $i < 100; $i++) {
     foreach ($redosPatterns as $pattern) {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new ComplexityScoreNodeVisitor();
+        $visitor = new ComplexityScorer();
         $score = $ast->accept($visitor);
     }
 }

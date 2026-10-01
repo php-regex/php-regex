@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Regex;
 
 final class AdvancedParserTest extends TestCase
 {

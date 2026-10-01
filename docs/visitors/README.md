@@ -13,22 +13,22 @@ Visitors walk the AST using `accept()` on each node. Each node dispatches to the
 ### Walking a tree without a visitor
 
 Most tools only need to look at some nodes: every backreference, every
-quantifier, the groups around a node. `NodeFinder` and `NodeTraverser` do that
+quantifier, the groups around a node. `NodeFinder` and `NodeWalker` do that
 for any tree, without a method for each kind of node:
 
 ```php
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\NodeFinder;
-use RegexParser\NodeTraverser;
-use RegexParser\RegexParser;
-use RegexParser\TraversalAction;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\NodeFinder;
+use PhpRegex\Parser\NodeWalker;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\TraversalAction;
 
 $tree = RegexParser::create()->parse('/(a)(b)\\2\\1/');
 
 NodeFinder::findInstanceOf($tree, BackrefNode::class);            // both references, in order
 
-NodeTraverser::walk($tree, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
+NodeWalker::walk($tree, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
     // $ancestors: the nodes from the root down to $node's parent
     return null;  // or TraversalAction::SkipChildren, or TraversalAction::Stop
 });
@@ -71,9 +71,9 @@ keep descending below the node; return without calling it to skip the
 subtree.
 
 ```php
-use RegexParser\Node;
-use RegexParser\NodeVisitor\AbstractTraversingVisitor;
-use RegexParser\Regex;
+use PhpRegex\Parser\Node;
+use PhpRegex\Parser\AbstractTraversingVisitor;
+use PhpRegex\Toolkit\Regex;
 
 class LiteralCollector extends AbstractTraversingVisitor
 {
@@ -119,9 +119,9 @@ unless you override `defaultReturn()`, and visits no children.
 decide which children to visit, as the compiler and the explainer do.
 
 ```php
-use RegexParser\Node;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
-use RegexParser\Regex;
+use PhpRegex\Parser\Node;
+use PhpRegex\Parser\AbstractNodeVisitor;
+use PhpRegex\Toolkit\Regex;
 
 /** @extends AbstractNodeVisitor<bool> */
 class StartsWithCaret extends AbstractNodeVisitor
@@ -154,18 +154,18 @@ var_dump(Regex::create()->parse('/^abc/')->accept(new StartsWithCaret())); // bo
 
 ## Compilation and Transformation Visitors
 
-### CompilerNodeVisitor
+### PatternPrinter
 
 **Purpose:** Converts the AST back into a PCRE string. Useful for round-tripping or pattern normalization.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Printer\PatternPrinter;
 
 $ast = Regex::create()->parse('/foo/i');
 
 // Compile back to string
-$pattern = $ast->accept(new CompilerNodeVisitor());
+$pattern = $ast->accept(new PatternPrinter());
 echo $pattern;  // '/foo/i'
 ```
 
@@ -176,7 +176,7 @@ echo $pattern;  // '/foo/i'
 
 ---
 
-### OptimizerNodeVisitor
+### Rewriter
 
 **Purpose:** Applies safe optimizations to make patterns more efficient without changing behavior.
 
@@ -190,19 +190,19 @@ echo $pattern;  // '/foo/i'
 | `\x{61}` | `a`   | Unnecessary escape   |
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Optimizer\Rewriter;
 
 $ast = Regex::create()->parse('/(?:foo)/');
-$optimized = $ast->accept(new OptimizerNodeVisitor());
+$optimized = $ast->accept(new Rewriter());
 
-$pattern = $optimized->accept(new CompilerNodeVisitor());
+$pattern = $optimized->accept(new PatternPrinter());
 echo $pattern;  // '/foo/'
 ```
 
 ---
 
-### ModernizerNodeVisitor
+### Modernizer
 
 **Purpose:** Converts legacy or verbose syntax to modern equivalents.
 
@@ -215,13 +215,13 @@ echo $pattern;  // '/foo/'
 | `\0`           | `\x{00}`          |
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Optimizer\Modernizer;
 
 $ast = Regex::create()->parse('/(?i)foo/');
-$modernized = $ast->accept(new ModernizerNodeVisitor());
+$modernized = $ast->accept(new Modernizer());
 
-$pattern = $modernized->accept(new CompilerNodeVisitor());
+$pattern = $modernized->accept(new PatternPrinter());
 echo $pattern;  // Modernized version
 ```
 
@@ -229,7 +229,7 @@ echo $pattern;  // Modernized version
 
 ## Validation and Linting Visitors
 
-### ValidatorNodeVisitor
+### Validator
 
 **Purpose:** Performs semantic validation of the pattern. Used internally by `Regex::validate()`.
 
@@ -240,11 +240,11 @@ echo $pattern;  // Modernized version
 - Valid group numbers and names
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Validation\Validator;
 
 $ast = Regex::create()->parse('/\1(foo)/');  // Invalid: \1 before capture
-$result = $ast->accept(new ValidatorNodeVisitor());
+$result = $ast->accept(new Validator());
 
 echo $result->isValid();      // false
 echo count($result->getProblems());
@@ -252,7 +252,7 @@ echo count($result->getProblems());
 
 ---
 
-### LinterNodeVisitor
+### PatternLinter
 
 **Purpose:** Checks for performance issues, anti-patterns, and readability problems. Used by CLI linter and PHPStan rule.
 
@@ -266,11 +266,11 @@ echo count($result->getProblems());
 | `ComplexPattern`       | Pattern is complex        | info     |
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Linter\PatternLinter;
 
 $ast = Regex::create()->parse('/(a+)+b/');  // Potential ReDoS risk
-$result = $ast->accept(new LinterNodeVisitor());
+$result = $ast->accept(new PatternLinter());
 
 foreach ($result->getIssues() as $issue) {
     echo $issue->getMessage() . "\n";
@@ -294,7 +294,7 @@ foreach ($result->getIssues() as $issue) {
 | `critical` | High structural risk        | Review and refactor    |
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 echo $analysis->severity->value;     // 'critical'
@@ -303,16 +303,16 @@ echo $analysis->confidence->value;   // 'high'
 
 ---
 
-### ComplexityScoreNodeVisitor
+### ComplexityScorer
 
 **Purpose:** Returns a numeric complexity score for a pattern. Useful for CI quality gates.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
 
 $ast = Regex::create()->parse('/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/');
-$score = $ast->accept(new ComplexityScoreNodeVisitor());
+$score = $ast->accept(new ComplexityScorer());
 
 echo $score;  // e.g., 42
 ```
@@ -328,16 +328,16 @@ echo $score;  // e.g., 42
 
 ---
 
-### MetricsNodeVisitor
+### MetricsCollector
 
 **Purpose:** Collects various metrics about the pattern structure.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Analysis\MetricsCollector;
 
 $ast = Regex::create()->parse('/\d{4}-\d{2}-\d{2}/');
-$metrics = $ast->accept(new MetricsNodeVisitor());
+$metrics = $ast->accept(new MetricsCollector());
 
 echo $metrics->getTotalNodeCount();
 echo $metrics->getQuantifierCount();
@@ -356,18 +356,18 @@ echo $metrics->getCaptureGroupCount();
 
 ---
 
-### LengthRangeNodeVisitor
+### LengthRangeCalculator
 
 **Purpose:** Computes the minimum and maximum length of the text a match consumes, as `[min, max]`, with `null` for
 no upper bound. Lengths count bytes, or UTF-8 characters when the pattern is in UTF mode. `(*ACCEPT)` ends the match
 early and lowers the minimum; `\K` only moves the start of the reported match and does not change the range.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
 
 $ast = Regex::create()->parse('/a{2,4}b*/');
-[$min, $max] = $ast->accept(new LengthRangeNodeVisitor());
+[$min, $max] = $ast->accept(new LengthRangeCalculator());
 
 echo $min;        // 2 (aa)
 var_dump($max);   // NULL (unbounded)
@@ -377,16 +377,16 @@ var_dump($max);   // NULL (unbounded)
 
 ## Extraction and Generation Visitors
 
-### LiteralExtractorNodeVisitor
+### LiteralExtractor
 
 **Purpose:** Extracts fixed literals from the pattern, useful for optimization or indexing.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Analysis\LiteralExtractor;
 
 $ast = Regex::create()->parse('/user-\d{4}/');
-$literals = $ast->accept(new LiteralExtractorNodeVisitor());
+$literals = $ast->accept(new LiteralExtractor());
 
 echo $literals->getLiterals()[0];  // 'user-'
 echo $literals->getPrefix();       // 'user-'
@@ -395,32 +395,32 @@ echo $literals->getSuffix();       // ''
 
 ---
 
-### SampleGeneratorNodeVisitor
+### SampleGenerator
 
 **Purpose:** Generates a sample string that matches the pattern. Used by `Regex::generate()`.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Generator\SampleGenerator;
 
 $ast = Regex::create()->parse('/[A-Z][a-z]{3,5}\d{2}/');
-$sample = $ast->accept(new SampleGeneratorNodeVisitor());
+$sample = $ast->accept(new SampleGenerator());
 
 echo $sample;  // e.g., "Word12"
 ```
 
 ---
 
-### TestCaseGeneratorNodeVisitor
+### TestCaseGenerator
 
 **Purpose:** Generates test cases for the pattern, useful for QA tooling.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Generator\TestCaseGenerator;
 
 $ast = Regex::create()->parse('/\d{3}-\d{4}/');
-$cases = $ast->accept(new TestCaseGeneratorNodeVisitor());
+$cases = $ast->accept(new TestCaseGenerator());
 
 print_r($cases);
 /*
@@ -441,16 +441,16 @@ Array (
 
 ## Presentation and Visualization Visitors
 
-### ExplainNodeVisitor
+### TextExplainer
 
 **Purpose:** Generates a plain-text explanation of what the pattern does. Used by `Regex::explain()`.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\TextExplainer;
 
 $ast = Regex::create()->parse('/\d{3}-\d{4}/');
-$explanation = $ast->accept(new ExplainNodeVisitor());
+$explanation = $ast->accept(new TextExplainer());
 
 echo $explanation;
 /*
@@ -460,16 +460,16 @@ Match exactly 3 digits, then hyphen, then exactly 4 digits.
 
 ---
 
-### HtmlExplainNodeVisitor
+### HtmlExplainer
 
 **Purpose:** Generates HTML explanation for use in documentation or web UIs.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\HtmlExplainer;
 
 $ast = Regex::create()->parse('/\w+@\w+\.\w+/');
-$html = $ast->accept(new HtmlExplainNodeVisitor());
+$html = $ast->accept(new HtmlExplainer());
 
 echo $html;
 // <span class="regex-token regex-literal">...</span>
@@ -477,16 +477,16 @@ echo $html;
 
 ---
 
-### DumperNodeVisitor
+### NodeDumper
 
 **Purpose:** Generates a debug-friendly AST dump. Useful for development and debugging.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Printer\NodeDumper;
 
 $ast = Regex::create()->parse('/foo/');
-$dump = $ast->accept(new DumperNodeVisitor());
+$dump = $ast->accept(new NodeDumper());
 
 echo $dump;
 /*
@@ -506,16 +506,16 @@ RegexNode {
 
 ---
 
-### MermaidNodeVisitor
+### MermaidRenderer
 
 **Purpose:** Renders the AST as a Mermaid diagram for documentation or visualization.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\MermaidRenderer;
 
 $ast = Regex::create()->parse('/a|b/');
-$mermaid = $ast->accept(new MermaidNodeVisitor());
+$mermaid = $ast->accept(new MermaidRenderer());
 
 echo $mermaid;
 /*
@@ -530,16 +530,16 @@ graph TD
 
 ---
 
-### AsciiTreeVisitor
+### AsciiTreeRenderer
 
 **Purpose:** Renders a text-based tree of the AST for quick inspection.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\AsciiTreeRenderer;
 
 $ast = Regex::create()->parse('/^a+$/');
-$tree = $ast->accept(new AsciiTreeVisitor());
+$tree = $ast->accept(new AsciiTreeRenderer());
 
 echo $tree;
 /*
@@ -554,16 +554,16 @@ Regex
 
 ---
 
-### RailroadSvgVisitor
+### RailroadSvgRenderer
 
 **Purpose:** Renders a railroad-style SVG diagram suitable for graphical output.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\RailroadSvgRenderer;
 
 $ast = Regex::create()->parse('/a|b/');
-$svg = $ast->accept(new RailroadSvgVisitor());
+$svg = $ast->accept(new RailroadSvgRenderer());
 
 echo $svg;
 // <svg ...>...</svg>
@@ -577,17 +577,17 @@ Base classes for syntax highlighting:
 
 | Visitor                     | Output Format | Use Case   |
 |-----------------------------|---------------|------------|
-| `ConsoleHighlighterVisitor` | ANSI colors   | CLI output |
-| `HtmlHighlighterVisitor`    | HTML spans    | Web output |
+| `ConsoleHighlighter` | ANSI colors   | CLI output |
+| `HtmlHighlighter`    | HTML spans    | Web output |
 
 HTML spans include a base `regex-token` class plus semantic classes like `regex-escape`, `regex-group`, `regex-comment`, and `regex-backref` so themes can style them distinctly.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
 
 $ast = Regex::create()->parse('/\d+/');
-$highlighted = $ast->accept(new ConsoleHighlighterVisitor());
+$highlighted = $ast->accept(new ConsoleHighlighter());
 
 echo $highlighted;
 // "\033[38;2;78;201;176m\\d\033[0m\033[38;2;215;186;125m+\033[0m"
@@ -600,7 +600,7 @@ echo $highlighted;
 ### Pattern 1: Stateless Visitor (Returns a Value)
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use PhpRegex\Parser\AbstractNodeVisitor;
 
 class LiteralCountVisitor extends AbstractNodeVisitor
 {
@@ -635,7 +635,7 @@ echo $count;  // 11, one literal per character
 ### Pattern 2: Stateful Visitor (Accumulates State)
 
 ```php
-use RegexParser\NodeVisitor\AbstractTraversingVisitor;
+use PhpRegex\Parser\AbstractTraversingVisitor;
 
 class GroupCollectorVisitor extends AbstractTraversingVisitor
 {
@@ -670,7 +670,7 @@ print_r($visitor->getGroupNames());
 ### Pattern 3: Transforming Visitor
 
 ```php
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use PhpRegex\Parser\AbstractNodeVisitor;
 
 class UppercaserVisitor extends AbstractNodeVisitor
 {
@@ -689,7 +689,7 @@ $ast = Regex::create()->parse('/hello/');
 $visitor = new UppercaserVisitor();
 $newAst = $ast->accept($visitor);
 
-echo $newAst->accept(new CompilerNodeVisitor());  // '/HELLO/'
+echo $newAst->accept(new PatternPrinter());  // '/HELLO/'
 ```
 
 ---
@@ -697,31 +697,31 @@ echo $newAst->accept(new CompilerNodeVisitor());  // '/HELLO/'
 ## Visitor Quick Reference
 
 Compilation and transformation:
-- `CompilerNodeVisitor` converts the AST to a pattern string.
-- `OptimizerNodeVisitor` applies safe optimizations.
-- `ModernizerNodeVisitor` modernizes legacy syntax.
+- `PatternPrinter` converts the AST to a pattern string.
+- `Rewriter` applies safe optimizations.
+- `Modernizer` modernizes legacy syntax.
 
 Validation and linting:
-- `ValidatorNodeVisitor` performs semantic validation.
-- `LinterNodeVisitor` checks performance and readability.
-- `ComplexityScoreNodeVisitor` computes a complexity score.
-- `MetricsNodeVisitor` collects metrics.
-- `LengthRangeNodeVisitor` estimates match length.
+- `Validator` performs semantic validation.
+- `PatternLinter` checks performance and readability.
+- `ComplexityScorer` computes a complexity score.
+- `MetricsCollector` collects metrics.
+- `LengthRangeCalculator` estimates match length.
 
 Extraction and generation:
-- `LiteralExtractorNodeVisitor` extracts literals.
-- `SampleGeneratorNodeVisitor` generates matching strings.
-- `TestCaseGeneratorNodeVisitor` generates test cases.
+- `LiteralExtractor` extracts literals.
+- `SampleGenerator` generates matching strings.
+- `TestCaseGenerator` generates test cases.
 
 Presentation and visualization:
-- `ExplainNodeVisitor` provides plain-text explanations.
-- `HtmlExplainNodeVisitor` provides HTML explanations.
-- `DumperNodeVisitor` dumps the AST for debugging.
-- `MermaidNodeVisitor` builds Mermaid diagrams.
-- `AsciiTreeVisitor` prints an ASCII tree.
-- `RailroadSvgVisitor` renders railroad SVGs.
-- `ConsoleHighlighterVisitor` outputs ANSI highlighting.
-- `HtmlHighlighterVisitor` outputs HTML highlighting.
+- `TextExplainer` provides plain-text explanations.
+- `HtmlExplainer` provides HTML explanations.
+- `NodeDumper` dumps the AST for debugging.
+- `MermaidRenderer` builds Mermaid diagrams.
+- `AsciiTreeRenderer` prints an ASCII tree.
+- `RailroadSvgRenderer` renders railroad SVGs.
+- `ConsoleHighlighter` outputs ANSI highlighting.
+- `HtmlHighlighter` outputs HTML highlighting.
 
 ---
 
@@ -729,15 +729,15 @@ Presentation and visualization:
 
 | Use Case                 | Visitor(s)                               |
 |--------------------------|------------------------------------------|
-| Check pattern validity   | `ValidatorNodeVisitor`                   |
+| Check pattern validity   | `Validator`                   |
 | Check for ReDoS          | `Regex::redos()` (uses internal visitor) |
-| Optimize pattern         | `OptimizerNodeVisitor`                   |
-| Explain pattern to users | `ExplainNodeVisitor`                     |
-| Generate test cases      | `TestCaseGeneratorNodeVisitor`           |
-| Count groups/metrics     | `MetricsNodeVisitor`                     |
-| Visualize AST            | `MermaidNodeVisitor`, `AsciiTreeVisitor`, `RailroadSvgVisitor` |
-| Highlight in CLI         | `ConsoleHighlighterVisitor`              |
-| Round-trip parsing       | `CompilerNodeVisitor`                    |
+| Optimize pattern         | `Rewriter`                   |
+| Explain pattern to users | `TextExplainer`                     |
+| Generate test cases      | `TestCaseGenerator`           |
+| Count groups/metrics     | `MetricsCollector`                     |
+| Visualize AST            | `MermaidRenderer`, `AsciiTreeRenderer`, `RailroadSvgRenderer` |
+| Highlight in CLI         | `ConsoleHighlighter`              |
+| Round-trip parsing       | `PatternPrinter`                    |
 
 ---
 
@@ -746,11 +746,11 @@ Presentation and visualization:
 | Category  | Key Visitors                                                 |
 |-----------|--------------------------------------------------------------|
 | Base      | `NodeVisitorInterface`, `AbstractTraversingVisitor`, `AbstractNodeVisitor` |
-| Compile   | `CompilerNodeVisitor`, `OptimizerNodeVisitor`                |
-| Validate  | `ValidatorNodeVisitor`, `LinterNodeVisitor`                  |
-| Analyze   | `ComplexityScoreNodeVisitor`, `MetricsNodeVisitor`           |
-| Generate  | `SampleGeneratorNodeVisitor`, `TestCaseGeneratorNodeVisitor` |
-| Visualize | `ExplainNodeVisitor`, `MermaidNodeVisitor`, `AsciiTreeVisitor`, `RailroadSvgVisitor` |
+| Compile   | `PatternPrinter`, `Rewriter`                |
+| Validate  | `Validator`, `PatternLinter`                  |
+| Analyze   | `ComplexityScorer`, `MetricsCollector`           |
+| Generate  | `SampleGenerator`, `TestCaseGenerator` |
+| Visualize | `TextExplainer`, `MermaidRenderer`, `AsciiTreeRenderer`, `RailroadSvgRenderer` |
 
 ---
 

@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lexer;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\TokenType;
 
 final class LexerExtendedModeTest extends TestCase
 {
@@ -104,7 +104,7 @@ final class LexerExtendedModeTest extends TestCase
     #[DataProvider('provideInlineExtendedPatterns')]
     public function test_inline_x_matches_pcre(string $pattern): void
     {
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         foreach (['ab', 'a b', 'abc d', 'a bc d', 'cd', 'c d', 'a#b', 'ab c'] as $subject) {
             $this->assertSame(

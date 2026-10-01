@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Every kind of condition, written back out.
@@ -36,7 +36,7 @@ final class ConditionalRoundTripTest extends TestCase
     {
         $recompiled = Regex::create(['cache' => new NullCache()])
             ->parse($pattern)
-            ->accept(new CompilerNodeVisitor());
+            ->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $recompiled);
     }
@@ -47,7 +47,7 @@ final class ConditionalRoundTripTest extends TestCase
     {
         $recompiled = Regex::create(['cache' => new NullCache()])
             ->parse($pattern)
-            ->accept(new CompilerNodeVisitor());
+            ->accept(new PatternPrinter());
 
         set_error_handler(static fn (): bool => true);
         $compiles = false !== @preg_match($recompiled, '');

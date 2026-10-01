@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleOptimizationTest extends RuleTestCase
 {
@@ -71,7 +71,7 @@ final class RegexParserRuleOptimizationTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return new RegexParserRule(config: [
+        return new RegexPatternRule(config: [
             'checks' => [
                 'lint' => ['enabled' => true],
                 'redos' => ['enabled' => true, 'threshold' => 'low'],

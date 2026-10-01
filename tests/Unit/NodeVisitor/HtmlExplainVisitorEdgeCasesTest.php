@@ -11,25 +11,25 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\Regex;
 
 final class HtmlExplainVisitorEdgeCasesTest extends TestCase
 {
     private Regex $regex;
 
-    private HtmlExplainNodeVisitor $visitor;
+    private HtmlExplainer $visitor;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->visitor = new HtmlExplainNodeVisitor();
+        $this->visitor = new HtmlExplainer();
     }
 
     public function test_visit_conditional_with_else_branch(): void

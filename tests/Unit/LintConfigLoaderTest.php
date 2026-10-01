@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Config\LintConfigLoader;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintConfigLoader;
 
 final class LintConfigLoaderTest extends TestCase
 {

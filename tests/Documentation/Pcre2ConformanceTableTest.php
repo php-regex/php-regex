@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Documentation;
+namespace PhpRegex\Tests\Documentation;
 
+use PhpRegex\Tests\TestUtils\Pcre2ConformanceTable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\Pcre2ConformanceTable;
 
 /**
  * Keeps the published conformance page identical to its generator's output.

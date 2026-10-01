@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Non-atomic assertions and callout conditions, compiled back to a pattern.
@@ -61,7 +61,7 @@ final class CompilerAssertionRoundTripTest extends TestCase
     {
         $pretty = Regex::create(['cache' => new NullCache()])
             ->parse($pattern)
-            ->accept(new CompilerNodeVisitor(true));
+            ->accept(new PatternPrinter(true));
 
         $this->assertSame($compiled, $pretty);
     }
@@ -113,7 +113,7 @@ final class CompilerAssertionRoundTripTest extends TestCase
     {
         return Regex::create(['cache' => new NullCache()])
             ->parse($pattern)
-            ->accept(new CompilerNodeVisitor());
+            ->accept(new PatternPrinter());
     }
 
     /**

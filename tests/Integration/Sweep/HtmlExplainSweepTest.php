@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Node\VersionConditionNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through HtmlExplain.
@@ -32,7 +32,7 @@ use RegexParser\Regex;
  */
 final class HtmlExplainSweepTest extends TestCase
 {
-    private HtmlExplainNodeVisitor $htmlExplainVisitor;
+    private HtmlExplainer $htmlExplainVisitor;
 
     private Regex $regex;
 
@@ -40,14 +40,14 @@ final class HtmlExplainSweepTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->htmlExplainVisitor = new HtmlExplainNodeVisitor();
+        $this->htmlExplainVisitor = new HtmlExplainer();
         $this->regex = Regex::create();
         $this->regexService = Regex::create();
     }
 
     public function test_html_highlighter_visitor_dot(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $node = new DotNode(1, 2);
         $result = $visitor->visitDot($node);
         $this->assertNotEmpty($result);
@@ -55,7 +55,7 @@ final class HtmlExplainSweepTest extends TestCase
 
     public function test_html_highlighter_visitor_limit_match(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -63,7 +63,7 @@ final class HtmlExplainSweepTest extends TestCase
 
     public function test_html_highlighter_visitor_callout(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $node = new CalloutNode(1, false, 0, 4);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -71,7 +71,7 @@ final class HtmlExplainSweepTest extends TestCase
 
     public function test_html_highlighter_visitor_script_run(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $node = new ScriptRunNode('Latin', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -79,7 +79,7 @@ final class HtmlExplainSweepTest extends TestCase
 
     public function test_html_highlighter_visitor_version_condition(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $node = new VersionConditionNode('>=', '10.0', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -87,7 +87,7 @@ final class HtmlExplainSweepTest extends TestCase
 
     public function test_html_explain_visitor_limit_match(): void
     {
-        $visitor = new HtmlExplainNodeVisitor();
+        $visitor = new HtmlExplainer();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -289,7 +289,7 @@ final class HtmlExplainSweepTest extends TestCase
         // Test HtmlExplainVisitor with PCRE verb
         $ast = $this->regexService->parse('/(*FAIL)/');
 
-        $visitor = new HtmlExplainNodeVisitor();
+        $visitor = new HtmlExplainer();
         $result = $ast->accept($visitor);
 
         $this->assertNotEmpty($result);
@@ -300,7 +300,7 @@ final class HtmlExplainSweepTest extends TestCase
         // Test HtmlExplainVisitor with \K (keep)
         $ast = $this->regexService->parse('/test\Kmore/');
 
-        $visitor = new HtmlExplainNodeVisitor();
+        $visitor = new HtmlExplainer();
         $result = $ast->accept($visitor);
 
         $this->assertNotEmpty($result);
@@ -311,7 +311,7 @@ final class HtmlExplainSweepTest extends TestCase
         // Test HtmlExplainVisitor with subroutine
         $ast = $this->regexService->parse('/(?<group>test)(?&group)/');
 
-        $visitor = new HtmlExplainNodeVisitor();
+        $visitor = new HtmlExplainer();
         $result = $ast->accept($visitor);
 
         $this->assertNotEmpty($result);

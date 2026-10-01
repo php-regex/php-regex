@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Tests Symfony framework integration capabilities.
@@ -363,7 +363,7 @@ final class SymfonyIntegrationTest extends TestCase
     {
         // Developers can dump AST for debugging in Symfony profiler
         $pattern = '/^test$/';
-        $dump = $this->regex->parse($pattern)->accept(new DumperNodeVisitor());
+        $dump = $this->regex->parse($pattern)->accept(new NodeDumper());
 
         $this->assertIsString($dump);
         $this->assertNotEmpty($dump);

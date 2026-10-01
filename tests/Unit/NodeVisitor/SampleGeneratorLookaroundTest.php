@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A lookahead constrains the text that follows it, a lookbehind the text
@@ -63,7 +63,7 @@ final class SampleGeneratorLookaroundTest extends TestCase
     public function test_a_lookbehind_in_a_group_reads_the_text_before_it(string $pattern): void
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         for ($seed = 0; $seed < 32; $seed++) {
             $generator->setSeed($seed);
@@ -95,7 +95,7 @@ final class SampleGeneratorLookaroundTest extends TestCase
     public function test_a_repeated_assertion_adds_no_text(string $pattern): void
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         for ($seed = 0; $seed < 32; $seed++) {
             $generator->setSeed($seed);

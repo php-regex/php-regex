@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Transform\AstToNfaTransformer;
-use RegexParser\Cli\Graph\GraphGenerator;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Transform\AstToNfaTransformer;
+use PhpRegex\Cli\Graph\GraphGenerator;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
 
 final class GraphCommand extends AbstractCommand
 {

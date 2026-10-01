@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\RegexNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
 
 final class MermaidNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_limit_match_verb_is_rendered(): void
     {
-        $visitor = new MermaidNodeVisitor();
+        $visitor = new MermaidRenderer();
         $regex = new RegexNode(new PcreVerbNode('LIMIT_MATCH=12', 0, 0), '', '/', 0, 0);
 
         $diagram = $regex->accept($visitor);
@@ -33,7 +33,7 @@ final class MermaidNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_callout_string_identifier_labels_are_rendered(): void
     {
-        $visitor = new MermaidNodeVisitor();
+        $visitor = new MermaidRenderer();
         $regex = new RegexNode(new CalloutNode('named', true, 0, 0), '', '/', 0, 0);
 
         $diagram = $regex->accept($visitor);
@@ -43,7 +43,7 @@ final class MermaidNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_callout_default_identifier_labels_are_rendered(): void
     {
-        $visitor = new MermaidNodeVisitor();
+        $visitor = new MermaidRenderer();
         $regex = new RegexNode(new CalloutNode('id', false, 0, 0), '', '/', 0, 0);
 
         $diagram = $regex->accept($visitor);

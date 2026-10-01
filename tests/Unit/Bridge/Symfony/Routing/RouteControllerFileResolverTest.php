@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Routing;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Routing;
 
+use PhpRegex\Symfony\Routing\RouteControllerFileResolver;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver;
 use Symfony\Component\Routing\Route;
 
 final class RouteControllerFileResolverTest extends TestCase

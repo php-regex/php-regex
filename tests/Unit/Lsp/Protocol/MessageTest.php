@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Protocol;
+namespace PhpRegex\Tests\Unit\Lsp\Protocol;
 
+use PhpRegex\LanguageServer\Protocol\Message;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Protocol\Message;
 
 final class MessageTest extends TestCase
 {

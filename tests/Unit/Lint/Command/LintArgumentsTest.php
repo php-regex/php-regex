@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintArguments;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintArguments;
-use RegexParser\Lint\Formatter\OutputConfiguration;
 
 final class LintArgumentsTest extends TestCase
 {

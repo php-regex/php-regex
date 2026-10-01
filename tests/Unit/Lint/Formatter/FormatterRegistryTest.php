@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\Formatter\OutputFormatterInterface;
+use PhpRegex\Linter\LintException;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\Formatter\OutputFormatterInterface;
-use RegexParser\Lint\LintException;
 
 final class FormatterRegistryTest extends TestCase
 {

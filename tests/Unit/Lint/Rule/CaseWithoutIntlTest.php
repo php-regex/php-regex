@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Rule;
+namespace PhpRegex\Tests\Unit\Lint\Rule;
 
+use PhpRegex\Automata\Unicode\CodePointHelper;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\Support\CodePoints;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Unicode\CodePointHelper;
-use RegexParser\Lint\Rule\Support\CodePoints;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Whether "i" changes what a pattern matches is PCRE's case folding, the
@@ -98,7 +98,7 @@ final class CaseWithoutIntlTest extends TestCase
         }
         sort($readers);
 
-        $this->assertSame(['src/Internal/CodePointReader.php', 'src/Lint/Rule/SuspiciousEscapeRule.php'], $readers);
+        $this->assertSame(['src/Linter/Rule/SuspiciousEscapeRule.php', 'src/Parser/Internal/CodePointReader.php'], $readers);
     }
 
     /**
@@ -106,7 +106,7 @@ final class CaseWithoutIntlTest extends TestCase
      */
     private function issueIds(string $pattern): array
     {
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
         return array_values(array_map(static fn ($issue): string => $issue->id, $linter->getIssues()));

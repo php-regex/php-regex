@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
 /**
  * Compiles suite cases with a real pcre2test of the PCRE2 floor release

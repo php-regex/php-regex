@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class QuantifierNodeTest extends TestCase
 {
     /**
-     * @return \Iterator<string, array{LiteralNode, string, QuantifierType}>
+     * @return \Iterator<string, array{\PhpRegex\Parser\Node\LiteralNode, string, \PhpRegex\Parser\Node\QuantifierType}>
      */
     public static function data_provider_quantifiers(): \Iterator
     {

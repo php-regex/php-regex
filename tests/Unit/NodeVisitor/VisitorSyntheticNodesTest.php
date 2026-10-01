@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
 
 final class VisitorSyntheticNodesTest extends TestCase
 {
     /**
      * Teste la compilation avec un délimiteur inhabituel '('.
-     * Couvre la logique de mapping des délimiteurs dans CompilerNodeVisitor::visitRegex.
+     * Couvre la logique de mapping des délimiteurs dans PatternPrinter::visitRegex.
      */
     public function test_compiler_paren_delimiter(): void
     {
@@ -31,7 +31,7 @@ final class VisitorSyntheticNodesTest extends TestCase
         // RegexNode avec '(' comme délimiteur
         $ast = new RegexNode($pattern, 'i', '(', 0, 3);
 
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $ast->accept($compiler);
 
         // Doit produire (abc)i
@@ -48,7 +48,7 @@ final class VisitorSyntheticNodesTest extends TestCase
         $pattern = new LiteralNode('abc', 0, 3);
         $ast = new RegexNode($pattern, '', '/', 0, 3);
 
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $result = $ast->accept($optimizer);
 
         $this->assertSame($ast, $result);

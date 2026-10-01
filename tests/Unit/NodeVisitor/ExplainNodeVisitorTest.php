@@ -11,36 +11,36 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
 
 final class ExplainNodeVisitorTest extends TestCase
 {
     public function test_visit_octal_legacy_node(): void
     {
         $node = new CharLiteralNode('077', 0o77, CharLiteralType::OCTAL_LEGACY, 0, 3);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('Character with octal value 077', $node->accept($visitor));
     }
@@ -51,7 +51,7 @@ final class ExplainNodeVisitorTest extends TestCase
             new LiteralNode('a', 0, 1),
             new LiteralNode('b', 2, 3),
         ], 0, 3);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("  EITHER\n    'a'\n  OR\n    'b'", $node->accept($visitor));
     }
@@ -62,7 +62,7 @@ final class ExplainNodeVisitorTest extends TestCase
             new LiteralNode('a', 0, 1),
             new LiteralNode('b', 1, 2),
         ], 0, 2);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("'a'\n'b'", $node->accept($visitor));
     }
@@ -77,7 +77,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             3,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("Capturing group\n  'a'\nEnd group", $node->accept($visitor));
     }
@@ -91,7 +91,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             2,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("'a' (zero or more times)", $node->accept($visitor));
     }
@@ -104,7 +104,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             3,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("Character Class: any character in [ 'a' ]", $node->accept($visitor));
     }
@@ -117,7 +117,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             5,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("Range: from 'a' to 'z'", $node->accept($visitor));
     }
@@ -125,7 +125,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_backref_node(): void
     {
         $node = new BackrefNode('1', 0, 2);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('Backreference: whatever the capturing group "1" matched', $node->accept($visitor));
     }
@@ -133,7 +133,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_unicode_node(): void
     {
         $node = new CharLiteralNode('\x{2603}', 0x2603, CharLiteralType::UNICODE, 0, 7);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('Character with hexadecimal value 0x2603', $node->accept($visitor));
     }
@@ -141,7 +141,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_unicode_prop_node(): void
     {
         $node = new UnicodePropNode('L', 0, 2);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('Unicode Property: any character matching "L"', $node->accept($visitor));
     }
@@ -149,7 +149,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_posix_class_node(): void
     {
         $node = new PosixClassNode('alpha', 0, 8);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('POSIX Class: alpha', $node->accept($visitor));
     }
@@ -157,7 +157,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_comment_node(): void
     {
         $node = new CommentNode('test', 0, 7);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("Comment: 'test'", $node->accept($visitor));
     }
@@ -171,7 +171,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             8,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("IF (  Backreference: whatever the capturing group \"1\" matched) THEN\n  'a'\nELSE\n  'b'", $node->accept($visitor));
     }
@@ -179,7 +179,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_subroutine_node(): void
     {
         $node = new SubroutineNode('R', '', 0, 3);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('Subroutine Call: recurses to the entire pattern', $node->accept($visitor));
     }
@@ -187,7 +187,7 @@ final class ExplainNodeVisitorTest extends TestCase
     public function test_visit_pcre_verb_node(): void
     {
         $node = new PcreVerbNode('FAIL', 0, 7);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame('PCRE Verb: (*FAIL)', $node->accept($visitor));
     }
@@ -199,7 +199,7 @@ final class ExplainNodeVisitorTest extends TestCase
             0,
             11,
         );
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertSame("DEFINE block (defines subpatterns without matching)\n  'a'\nEnd DEFINE Block", $node->accept($visitor));
     }

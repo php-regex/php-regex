@@ -11,29 +11,29 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 final class SampleGeneratorVisitorTest extends TestCase
 {
     private Regex $regex;
 
-    private SampleGeneratorNodeVisitor $generator;
+    private SampleGenerator $generator;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->generator = new SampleGeneratorNodeVisitor();
+        $this->generator = new SampleGenerator();
         $this->generator->setSeed(42); // Deterministic
     }
 
@@ -140,7 +140,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_a_range_across_the_surrogates_gives_no_surrogate(): void
     {
         $ast = $this->regex->parse('/[\\x{D7FF}-\\x{E000}]/u');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $generator->setSeed(1);
 
         for ($try = 0; $try < 8; $try++) {
@@ -155,7 +155,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         // the first code point instead.
         $ast = $this->regex->parse('/[\\x{D7FF}-\\x{E000}]/u');
         foreach ([748, 1635] as $seed) {
-            $generator = new SampleGeneratorNodeVisitor();
+            $generator = new SampleGenerator();
             $generator->setSeed($seed);
             $this->assertSame("\u{D7FF}", $ast->accept($generator), (string) $seed);
         }
@@ -165,16 +165,16 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         // Built by hand: PCRE refuses such ends.
         $surrogates = new RangeNode(new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 1, 9), new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 10, 18), 1, 18);
-        $this->assertSame('', (new RegexNode($surrogates, 'u', '/', 0, 19))->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame('', (new RegexNode($surrogates, 'u', '/', 0, 19))->accept(new SampleGenerator()));
 
         $beyond = new RangeNode(new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::UNICODE, 1, 11), new CharLiteralNode('\\x{110001}', 0x110001, CharLiteralType::UNICODE, 12, 22), 1, 22);
-        $this->assertSame('?', (new RegexNode($beyond, 'u', '/', 0, 23))->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame('?', (new RegexNode($beyond, 'u', '/', 0, 23))->accept(new SampleGenerator()));
     }
 
     public function test_a_lookahead_the_text_misses_is_laid_over_it(): void
     {
         $ast = $this->regex->parse('/^(?=ab)\\d\\d/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $this->assertStringStartsWith('ab', $ast->accept($generator));
     }
@@ -183,7 +183,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_a_range_gives_more_than_its_first_character(string $pattern): void
     {
         $ast = $this->regex->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $samples = [];
         for ($try = 0; $try < 24; $try++) {
@@ -210,7 +210,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     #[DataProvider('provideLaidOut')]
     public function test_a_lookaround_is_laid_over_the_text_only_where_it_misses(string $pattern, string $sample): void
     {
-        $this->assertSame($sample, $this->regex->parse($pattern)->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame($sample, $this->regex->parse($pattern)->accept(new SampleGenerator()));
     }
 
     /**
@@ -239,7 +239,7 @@ final class SampleGeneratorVisitorTest extends TestCase
 
     public function test_a_lookaround_with_branches_is_judged_whole(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $ahead = $this->regex->parse('/(?=a|b)cb/');
         $behind = $this->regex->parse('/bc(?<=b|x)d/');
 
@@ -252,7 +252,7 @@ final class SampleGeneratorVisitorTest extends TestCase
 
     public function test_groups_are_numbered_through_script_runs_and_shared_names(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $shared = '/^(?:(?<n>a)|(?<n>b))\\k<n>$/J';
         $inRun = '/^(*sr:(a))(b)(?2)$/';
         // In a branch reset, a call to a shared number runs the first group.
@@ -270,7 +270,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         // In the branch reset, group 1 is "(.)", inside the scan's body.
         $pattern = '/x(?|(*scs:(1)(?<=(.)))|()){8}/';
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $checked = '/(*NO_JIT)'.substr($pattern, 1);
         $readable = false !== @preg_match($checked, '');
@@ -288,7 +288,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_every_draw_matches(string $pattern): void
     {
         $ast = $this->regex->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $checked = '/(*NO_JIT)'.substr($pattern, 1);
         $readable = false !== @preg_match($checked, '');
@@ -325,14 +325,14 @@ final class SampleGeneratorVisitorTest extends TestCase
         [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0]));
         $wholeMinors = [$major, $minor] >= [10, 47];
 
-        $this->assertSame($wholeMinors ? 'yes' : 'no', $this->regex->parse('/(?(VERSION>=10.5)yes|no)/')->accept(new SampleGeneratorNodeVisitor()));
-        $this->assertSame('yes', $this->regex->parse('/(?(VERSION>=10.05)yes|no)/')->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame($wholeMinors ? 'yes' : 'no', $this->regex->parse('/(?(VERSION>=10.5)yes|no)/')->accept(new SampleGenerator()));
+        $this->assertSame('yes', $this->regex->parse('/(?(VERSION>=10.05)yes|no)/')->accept(new SampleGenerator()));
     }
 
     public function test_the_running_version_is_at_least_and_equal_to_itself(): void
     {
         [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0]));
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $this->assertSame('yes', $this->regex->parse(\sprintf('/(?(VERSION>=%d.%d)yes|no)/', $major, $minor))->accept($generator));
         $this->assertSame('yes', $this->regex->parse(\sprintf('/(?(VERSION=%d.%d)yes|no)/', $major, $minor))->accept($generator));
@@ -341,7 +341,7 @@ final class SampleGeneratorVisitorTest extends TestCase
 
     public function test_a_name_that_captured_nothing_yet_gives_nothing(): void
     {
-        $this->assertSame('a', $this->regex->parse('/\\k<n>(?<n>a)/')->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertSame('a', $this->regex->parse('/\\k<n>(?<n>a)/')->accept(new SampleGenerator()));
     }
 
     public function test_generate_special_types(): void
@@ -355,7 +355,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         // (a|b)\1 must generate "aa" or "bb", but never "ab"
         $regex = Regex::create();
         $ast = $regex->parse('/(a|b)\1/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $sample = $ast->accept($generator);
         $this->assertContains($sample, ['aa', 'bb']);
@@ -365,7 +365,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/[a-z]{10}/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $generator->setSeed(12345);
         $sample1 = $ast->accept($generator);
@@ -389,7 +389,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         // Note: PHP PCRE doesn't support \u{} and \o{} syntax, so we test the generated output directly
         $regex = '/\x41\xE9\o{40}\010/';
         $ast = $this->regex->parse($regex);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $sample = $ast->accept($generator);
 
         // Expected: \x41 = 'A', \xE9 = the byte 0xE9 (no UTF mode), \o{40} = ' ' (space, octal 40 = decimal 32), \010 = backspace (octal 10 = decimal 8)
@@ -407,7 +407,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         // the backref fails the entire match in PCRE. The generator randomly chooses 0 or 1
         // for '?', so we test this separately to ensure it can generate a valid match.
         $ast = $this->regex->parse('/(?<name>a)?\k<name>/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         // Try multiple times - at least one should generate 'aa' (when group
         // matches). Each try has an even chance: 64 tries miss once in 2^64.
@@ -430,7 +430,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         // So the generator can produce 'Y', 'N', or '' (when no branch is chosen)
         $regex = Regex::create();
         $ast = $regex->parse('/(?(?=\d)Y|N)/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $output = $ast->accept($generator);
         // The output should be one of these values based on how the parser interprets the pattern
@@ -514,7 +514,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/[^abc]/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $result = $ast->accept($generator);
         $this->assertMatchesRegularExpression('/^[^abc]$/', $result);
@@ -542,7 +542,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     private function assertSampleMatches(string $regex): void
     {
         $ast = $this->regex->parse($regex);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         for ($i = 0; $i < 5; $i++) {
             $sample = $ast->accept($generator);
@@ -553,7 +553,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     private function generateSample(string $regex): string
     {
         $ast = $this->regex->parse($regex);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         return $ast->accept($generator);
     }

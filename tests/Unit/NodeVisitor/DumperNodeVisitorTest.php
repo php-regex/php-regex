@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\Regex;
 
 final class DumperNodeVisitorTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class DumperNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a(b|c)/');
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
         $this->assertStringContainsString('Group(type: capturing flags: )', $dump);
         $this->assertStringContainsString('Alternation', $dump);
@@ -34,7 +34,7 @@ final class DumperNodeVisitorTest extends TestCase
         // /a|b/
         $regex = Regex::create();
         $ast = $regex->parse('/a(b|c)d/');
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
 
         // Expected to test Alternation and Sequence dumping/indentation
@@ -57,7 +57,7 @@ final class DumperNodeVisitorTest extends TestCase
         $pattern = '/(?P>name)(?(?=a)b)(*FAIL)\o{7}[[:alnum:]]/';
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
 
         $this->assertStringContainsString('Subroutine(ref: name, syntax: \'P>\')', $dump);
@@ -74,7 +74,7 @@ final class DumperNodeVisitorTest extends TestCase
     {
         // Test all remaining node types to achieve 100% coverage
         $regex = Regex::create();
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
 
         // Test visitDot
         $ast = $regex->parse('/./');

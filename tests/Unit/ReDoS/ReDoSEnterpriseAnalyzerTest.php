@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Redos\RedosAnalyzer;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\ReDoSAnalyzer;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 final class ReDoSEnterpriseAnalyzerTest extends TestCase
 {
-    private ReDoSAnalyzer $analyzer;
+    private RedosAnalyzer $analyzer;
 
     protected function setUp(): void
     {
-        $this->analyzer = new ReDoSAnalyzer();
+        $this->analyzer = new RedosAnalyzer();
     }
 
     #[DataProvider('provideSafePatterns')]
@@ -40,8 +40,8 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(ReDoSSeverity::MEDIUM), "Expected at least MEDIUM for pattern: {$pattern}");
-        $this->assertFalse($analysis->exceedsThreshold(ReDoSSeverity::HIGH), "Expected below HIGH for pattern: {$pattern}");
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::MEDIUM), "Expected at least MEDIUM for pattern: {$pattern}");
+        $this->assertFalse($analysis->exceedsThreshold(RedosSeverity::HIGH), "Expected below HIGH for pattern: {$pattern}");
     }
 
     #[DataProvider('provideHighPatterns')]
@@ -49,14 +49,14 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(ReDoSSeverity::HIGH), "Expected HIGH+ severity for pattern: {$pattern}");
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::HIGH), "Expected HIGH+ severity for pattern: {$pattern}");
     }
 
     public function test_empty_match_quantifier_is_reported(): void
     {
         $analysis = $this->analyzer->analyze('/(a?)+/');
 
-        $this->assertTrue($analysis->exceedsThreshold(ReDoSSeverity::HIGH));
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::HIGH));
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'match empty'));
     }
 
@@ -65,7 +65,7 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(ReDoSSeverity::MEDIUM));
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::MEDIUM));
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'Adjacent quantified tokens'));
     }
 

@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class ValidatorEdgeCaseTest extends TestCase
 {
     private Regex $regex;
 
-    private ValidatorNodeVisitor $validator;
+    private Validator $validator;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->validator = new ValidatorNodeVisitor();
+        $this->validator = new Validator();
     }
 
     public function test_invalid_quantifier_range(): void

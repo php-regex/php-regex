@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli;
+namespace PhpRegex\Cli;
 
-use RegexParser\Exception\RegexParserExceptionInterface;
+use PhpRegex\Parser\Exception\ExceptionInterface;
 
 /**
  * The command line tool could not do what it was asked: a format it does not
  * write, a self-update that cannot proceed.
  */
-final class CliException extends \RuntimeException implements RegexParserExceptionInterface {}
+final class CliException extends \RuntimeException implements ExceptionInterface {}

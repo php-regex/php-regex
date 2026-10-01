@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Redos\Internal\InputGenerator;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\ReDoSInputGenerator;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
 
 final class ReDoSInputGeneratorTest extends TestCase
 {
-    private ReDoSInputGenerator $generator;
+    private InputGenerator $generator;
 
     protected function setUp(): void
     {
-        $this->generator = new ReDoSInputGenerator();
+        $this->generator = new InputGenerator();
     }
 
     public function test_generate_with_critical_severity(): void
     {
         $ast = Regex::create()->parse('/a+/');
-        $input = $this->generator->generate($ast, '', ReDoSSeverity::CRITICAL);
+        $input = $this->generator->generate($ast, '', RedosSeverity::CRITICAL);
         $this->assertStringStartsWith(str_repeat('a', 50), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -38,7 +38,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_high_severity(): void
     {
         $ast = Regex::create()->parse('/b+/');
-        $input = $this->generator->generate($ast, '', ReDoSSeverity::HIGH);
+        $input = $this->generator->generate($ast, '', RedosSeverity::HIGH);
         $this->assertStringStartsWith(str_repeat('b', 40), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -46,7 +46,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_medium_severity(): void
     {
         $ast = Regex::create()->parse('/c+/');
-        $input = $this->generator->generate($ast, '', ReDoSSeverity::MEDIUM);
+        $input = $this->generator->generate($ast, '', RedosSeverity::MEDIUM);
         $this->assertStringStartsWith(str_repeat('c', 30), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -54,7 +54,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_low_severity(): void
     {
         $ast = Regex::create()->parse('/d+/');
-        $input = $this->generator->generate($ast, '', ReDoSSeverity::LOW);
+        $input = $this->generator->generate($ast, '', RedosSeverity::LOW);
         $this->assertStringStartsWith(str_repeat('d', 20), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -62,7 +62,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_safe_severity(): void
     {
         $ast = Regex::create()->parse('/e+/');
-        $input = $this->generator->generate($ast, '', ReDoSSeverity::SAFE);
+        $input = $this->generator->generate($ast, '', RedosSeverity::SAFE);
         $this->assertStringStartsWith(str_repeat('e', 10), $input);
         $this->assertStringEndsWith('!', $input);
     }

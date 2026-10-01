@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Support;
+namespace PhpRegex\Tests\Unit\Support;
 
-use RegexParser\ValidationResult;
+use PhpRegex\Parser\Validation\ValidationResult;
 
 final class StubRegex
 {

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Lint;
+namespace PhpRegex\Tests\Functional\Lint;
 
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 
 /**
  * Focused tests for the regex pattern extraction fixes.

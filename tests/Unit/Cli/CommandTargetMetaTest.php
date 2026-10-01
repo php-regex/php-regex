@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cli;
+namespace PhpRegex\Tests\Unit\Cli;
 
+use PhpRegex\Cli\Command\AbstractCommand;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\AbstractCommand;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
 
 /**
  * Every command's banner names the PHP version and the PCRE2 release asked

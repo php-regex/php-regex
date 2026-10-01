@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Config\ProjectTarget;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Linter\Source\PatternSourceContext;
+use PhpRegex\Linter\Source\PatternSourceInterface;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\Command\LintCommand;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
-use RegexParser\Lint\Command\ProjectTarget;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\Lint\RegexPatternSourceContext;
-use RegexParser\Lint\RegexPatternSourceInterface;
-use RegexParser\RegexParser;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -171,10 +171,10 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_constructor_uses_defaults_when_paths_are_empty(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $lint = new RegexLintService($analysis, new RegexPatternSourceCollection([]));
+        $analysis = new AnalysisService(RegexParser::create());
+        $lint = new LintService($analysis, new PatternSourceCollection([]));
 
-        $command = new RegexLintCommand(
+        $command = new LintCommand(
             lint: $lint,
             analysis: $analysis,
             formatterRegistry: new FormatterRegistry(),
@@ -199,7 +199,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_execute_progress_callback_handles_empty_totals(): void
     {
-        $progressSource = new class implements RegexPatternSourceInterface {
+        $progressSource = new class implements PatternSourceInterface {
             public function getName(): string
             {
                 return 'progress';
@@ -210,7 +210,7 @@ final class RegexLintCommandTest extends TestCase
                 return true;
             }
 
-            public function extract(RegexPatternSourceContext $context): array
+            public function extract(PatternSourceContext $context): array
             {
                 if (\is_callable($context->progress)) {
                     ($context->progress)(0, 0);
@@ -234,7 +234,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_execute_renders_collection_failure(): void
     {
-        $failingSource = new class implements RegexPatternSourceInterface {
+        $failingSource = new class implements PatternSourceInterface {
             public function getName(): string
             {
                 return 'fail';
@@ -245,7 +245,7 @@ final class RegexLintCommandTest extends TestCase
                 return true;
             }
 
-            public function extract(RegexPatternSourceContext $context): array
+            public function extract(PatternSourceContext $context): array
             {
                 throw new \RuntimeException('boom');
             }
@@ -262,7 +262,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_execute_renders_collection_failure_for_json(): void
     {
-        $failingSource = new class implements RegexPatternSourceInterface {
+        $failingSource = new class implements PatternSourceInterface {
             public function getName(): string
             {
                 return 'fail';
@@ -273,7 +273,7 @@ final class RegexLintCommandTest extends TestCase
                 return true;
             }
 
-            public function extract(RegexPatternSourceContext $context): array
+            public function extract(PatternSourceContext $context): array
             {
                 throw new \RuntimeException('boom');
             }
@@ -290,7 +290,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_execute_analyzes_patterns_with_progress(): void
     {
-        $source = new class implements RegexPatternSourceInterface {
+        $source = new class implements PatternSourceInterface {
             public function getName(): string
             {
                 return 'custom';
@@ -301,10 +301,10 @@ final class RegexLintCommandTest extends TestCase
                 return true;
             }
 
-            public function extract(RegexPatternSourceContext $context): array
+            public function extract(PatternSourceContext $context): array
             {
                 return [
-                    new RegexPatternOccurrence('/foo/', 'test.php', 12, 'php:preg_match()'),
+                    new PatternOccurrence('/foo/', 'test.php', 12, 'php:preg_match()'),
                 ];
             }
         };
@@ -320,7 +320,7 @@ final class RegexLintCommandTest extends TestCase
 
     public function test_execute_analyzes_patterns_without_progress_in_json(): void
     {
-        $source = new class implements RegexPatternSourceInterface {
+        $source = new class implements PatternSourceInterface {
             public function getName(): string
             {
                 return 'custom';
@@ -331,10 +331,10 @@ final class RegexLintCommandTest extends TestCase
                 return true;
             }
 
-            public function extract(RegexPatternSourceContext $context): array
+            public function extract(PatternSourceContext $context): array
             {
                 return [
-                    new RegexPatternOccurrence('/foo/', 'test.php', 12, 'php:preg_match()'),
+                    new PatternOccurrence('/foo/', 'test.php', 12, 'php:preg_match()'),
                 ];
             }
         };
@@ -349,15 +349,15 @@ final class RegexLintCommandTest extends TestCase
         $this->assertIsArray(json_decode($tester->getDisplay(), true));
     }
 
-    private function createCommand(): RegexLintCommand
+    private function createCommand(): LintCommand
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $lint = new RegexLintService(
+        $analysis = new AnalysisService(RegexParser::create());
+        $lint = new LintService(
             $analysis,
-            new RegexPatternSourceCollection([]),
+            new PatternSourceCollection([]),
         );
 
-        return new RegexLintCommand(
+        return new LintCommand(
             lint: $lint,
             analysis: $analysis,
             formatterRegistry: new FormatterRegistry(),
@@ -366,17 +366,17 @@ final class RegexLintCommandTest extends TestCase
     }
 
     /**
-     * @param array<int, RegexPatternSourceInterface> $sources
+     * @param array<int, \PhpRegex\Linter\Source\PatternSourceInterface> $sources
      */
-    private function createCommandWithSources(array $sources): RegexLintCommand
+    private function createCommandWithSources(array $sources): LintCommand
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $lint = new RegexLintService(
+        $analysis = new AnalysisService(RegexParser::create());
+        $lint = new LintService(
             $analysis,
-            new RegexPatternSourceCollection($sources),
+            new PatternSourceCollection($sources),
         );
 
-        return new RegexLintCommand(
+        return new LintCommand(
             lint: $lint,
             analysis: $analysis,
             formatterRegistry: new FormatterRegistry(),

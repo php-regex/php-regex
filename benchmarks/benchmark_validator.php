@@ -11,11 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Toolkit\Regex;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-use RegexParser\Regex;
-
-echo "Benchmarking ValidatorNodeVisitor performance improvements...\n\n";
+echo "Benchmarking Validator performance improvements...\n\n";
 
 // Test patterns of varying complexity for validation
 $testPatterns = [

@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
 
 final class AdvancedFeaturesComplianceTest extends TestCase
 {
@@ -28,7 +28,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_sample_generator_handles_recursion(int $seed, string $expectedSample): void
     {
         $regex = Regex::create()->parse('/a(?R)?z/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $generator->setSeed($seed);
 
         $this->assertSame($expectedSample, $regex->accept($generator));
@@ -42,10 +42,10 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     }
 
     #[DataProvider('provideControlVerbPatterns')]
-    public function test_redos_analyzer_respects_commit(string $pattern, ReDoSSeverity $expected): void
+    public function test_redos_analyzer_respects_commit(string $pattern, RedosSeverity $expected): void
     {
         $regex = Regex::create()->parse($pattern);
-        $visitor = new ReDoSProfileNodeVisitor();
+        $visitor = new RedosProfiler();
         $regex->accept($visitor);
         $result = $visitor->getResult();
 
@@ -54,16 +54,16 @@ final class AdvancedFeaturesComplianceTest extends TestCase
 
     public static function provideControlVerbPatterns(): \Iterator
     {
-        yield 'commit' => ['/(a+(*COMMIT))+/', ReDoSSeverity::SAFE];
-        yield 'prune' => ['/(a+(*PRUNE))+/', ReDoSSeverity::SAFE];
-        yield 'skip' => ['/(a+(*SKIP))+/', ReDoSSeverity::SAFE];
+        yield 'commit' => ['/(a+(*COMMIT))+/', RedosSeverity::SAFE];
+        yield 'prune' => ['/(a+(*PRUNE))+/', RedosSeverity::SAFE];
+        yield 'skip' => ['/(a+(*SKIP))+/', RedosSeverity::SAFE];
     }
 
     #[DataProvider('provideRecursiveConditionPatterns')]
     public function test_recursive_condition_validation(string $pattern): void
     {
         $regex = Regex::create()->parse($pattern);
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $regex->accept($validator); // Validation passed without exception.
 
@@ -81,7 +81,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     {
         // These counts repeat from PCRE2 10.43, which PHP bundles from 8.4.
         $regex = Regex::create(['php_version' => '8.4'])->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertSame($expectedCompiled, $compiled, "PHP 8.4 quantifier syntax should compile correctly: {$pattern}");
@@ -101,7 +101,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_newline_verbs(string $pattern): void
     {
         $regex = Regex::create()->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertSame($pattern, $compiled, "Newline verb should round-trip: {$pattern}");
@@ -118,7 +118,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_encoding_verbs(string $pattern): void
     {
         $regex = Regex::create()->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertSame($pattern, $compiled, "Encoding verb should round-trip: {$pattern}");
@@ -134,7 +134,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_match_control_verbs(string $pattern): void
     {
         $regex = Regex::create()->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertSame($pattern, $compiled, "Match control verb should round-trip: {$pattern}");
@@ -150,7 +150,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_unicode_properties(string $pattern, string $expected): void
     {
         $regex = Regex::create()->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertSame($expected, $compiled, "Unicode property should compile to: {$expected}");
@@ -179,11 +179,11 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         $ast = $regex->parse($pattern);
 
         // Should compile back to valid regex
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $ast->accept($compiler);
 
         // Should validate without errors
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $ast->accept($validator);
 
         // Ensure the pattern is preserved or normalized correctly
@@ -259,7 +259,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     public function test_comprehensive_pcre84_parsing(string $pattern, string $description): void
     {
         $regex = Regex::create()->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $regex->accept($compiler);
 
         $this->assertIsString($compiled, "Pattern should parse and compile successfully: {$description}");

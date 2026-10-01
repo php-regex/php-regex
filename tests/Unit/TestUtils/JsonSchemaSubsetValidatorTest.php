@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\TestUtils;
+namespace PhpRegex\Tests\Unit\TestUtils;
 
+use PhpRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\JsonSchemaSubsetValidator;
 
 /**
  * The validator the configuration schema tests rely on: a green schema test

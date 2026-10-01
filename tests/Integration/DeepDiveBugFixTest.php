@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 final class DeepDiveBugFixTest extends TestCase
 {
@@ -47,7 +47,7 @@ final class DeepDiveBugFixTest extends TestCase
         $pattern = '/\Q[a-z]\E/';
         $ast = $this->regexService->parse($pattern);
 
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $compiled = $ast->accept($compiler);
 
         // The compiled regex should match the literal string "[a-z]"
@@ -59,7 +59,7 @@ final class DeepDiveBugFixTest extends TestCase
         $ast2 = $this->regexService->parse($compiled);
         // The AST might be a Sequence of Literals or a single Literal depending on optimization.
         // Let's verify it compiles back to a valid regex that matches the literal string "[a-z]".
-        $compiled2 = $ast2->accept(new CompilerNodeVisitor());
+        $compiled2 = $ast2->accept(new PatternPrinter());
 
         // We expect the compiled regex to match the literal string "[a-z]"
         // The compiled regex should be something like /\[a-z\]/ or /\[a-z]/

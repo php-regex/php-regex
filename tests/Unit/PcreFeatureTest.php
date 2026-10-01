@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\PcreFeature;
+use PhpRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\PcreFeature;
-use RegexParser\PcreTarget;
 
 /**
  * What changed in which PCRE2 release is one table: a rule asks whether its
@@ -43,7 +43,7 @@ final class PcreFeatureTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{PcreFeature, string, string}>
+     * @return iterable<string, array{\PhpRegex\Parser\PcreFeature, string, string}>
      */
     public static function provideReleases(): iterable
     {

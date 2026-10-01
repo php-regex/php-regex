@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Command\AnalyzeCommand;
+use PhpRegex\Cli\Command\DebugCommand;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Redos\Confirmation;
+use PhpRegex\Redos\ConfirmationOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\AnalyzeCommand;
-use RegexParser\Cli\Command\DebugCommand;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\ReDoS\ReDoSConfirmation;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
 
 /**
  * The ReDoS confirmation always runs without the JIT: the option that
@@ -63,8 +63,8 @@ final class RedosNoJitRemovedTest extends TestCase
     #[Test]
     public function test_nothing_records_a_jit_request(): void
     {
-        $this->assertFalse(property_exists(ReDoSConfirmOptions::class, 'disableJit'));
-        $this->assertFalse(property_exists(ReDoSConfirmation::class, 'jitDisableRequested'));
-        $this->assertArrayNotHasKey('jit_disable_requested', (new ReDoSConfirmation(false, [], '0', 1, 1, 1, 1.0))->jsonSerialize());
+        $this->assertFalse(property_exists(ConfirmationOptions::class, 'disableJit'));
+        $this->assertFalse(property_exists(Confirmation::class, 'jitDisableRequested'));
+        $this->assertArrayNotHasKey('jit_disable_requested', (new Confirmation(false, [], '0', 1, 1, 1, 1.0))->jsonSerialize());
     }
 }

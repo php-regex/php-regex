@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through Parser.
@@ -284,7 +284,7 @@ final class ParserSweepTest extends TestCase
         $explanation = $this->regexService->explain($pattern);
         $this->assertNotEmpty($explanation);
 
-        $dump = $this->regexService->parse($pattern)->accept(new DumperNodeVisitor());
+        $dump = $this->regexService->parse($pattern)->accept(new NodeDumper());
         $this->assertNotEmpty($dump);
 
         $optimized = $this->regexService->optimize($pattern)->optimized;

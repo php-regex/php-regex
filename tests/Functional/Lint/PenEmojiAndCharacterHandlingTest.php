@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Lint;
+namespace PhpRegex\Tests\Functional\Lint;
 
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\PatternParser;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Node\LiteralNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Comprehensive tests for pen emoji display and non-printable character handling.
@@ -33,18 +33,18 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
 
     private TokenBasedExtractionStrategy $strategy;
 
-    private ExplainNodeVisitor $explainVisitor;
+    private TextExplainer $explainVisitor;
 
-    private ConsoleHighlighterVisitor $highlightVisitor;
+    private ConsoleHighlighter $highlightVisitor;
 
-    private CompilerNodeVisitor $compilerVisitor;
+    private PatternPrinter $compilerVisitor;
 
     protected function setUp(): void
     {
         $this->strategy = new TokenBasedExtractionStrategy();
-        $this->explainVisitor = new ExplainNodeVisitor();
-        $this->highlightVisitor = new ConsoleHighlighterVisitor();
-        $this->compilerVisitor = new CompilerNodeVisitor();
+        $this->explainVisitor = new TextExplainer();
+        $this->highlightVisitor = new ConsoleHighlighter();
+        $this->compilerVisitor = new PatternPrinter();
     }
 
     /**
@@ -104,7 +104,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
     }
 
     /**
-     * Test non-printable characters are handled in ExplainNodeVisitor.
+     * Test non-printable characters are handled in TextExplainer.
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]
@@ -119,7 +119,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
     }
 
     /**
-     * Test non-printable characters are handled in CompilerNodeVisitor.
+     * Test non-printable characters are handled in PatternPrinter.
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]
@@ -134,7 +134,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
     }
 
     /**
-     * Test non-printable characters are handled in ConsoleHighlighterVisitor.
+     * Test non-printable characters are handled in ConsoleHighlighter.
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]

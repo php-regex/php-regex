@@ -44,7 +44,7 @@ Examples by layer:
 When you call `Regex::validate()`, you get a `ValidationResult` object:
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/[unclosed/');
 
@@ -391,8 +391,8 @@ on the enum case, or on its string value when the code crosses a process boundar
 JSON output and the lint problems carry the string).
 
 ```php
-use RegexParser\ErrorCode;
-use RegexParser\Regex;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/(?<=a+)b/');
 

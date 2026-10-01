@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
  * The rule as extension-installer loads it for every project: the shipped
  * extension.neon and nothing else. PHPStan's phpVersion is left unset, so the
  * target is the PHP running this test with the PCRE2 it links.
  *
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleExtensionNeonTest extends RuleTestCase
 {
@@ -95,6 +95,6 @@ final class RegexParserRuleExtensionNeonTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return self::getContainer()->getByType(RegexParserRule::class);
+        return self::getContainer()->getByType(RegexPatternRule::class);
     }
 }

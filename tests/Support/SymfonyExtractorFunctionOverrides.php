@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Support;
+namespace PhpRegex\Tests\Support;
 
 final class SymfonyExtractorFunctionOverrides
 {
@@ -48,9 +48,9 @@ final class SymfonyExtractorFunctionOverrides
     }
 }
 
-namespace RegexParser\Bridge\Symfony\Extractor;
+namespace PhpRegex\Symfony\Extractor;
 
-use RegexParser\Tests\Support\SymfonyExtractorFunctionOverrides;
+use PhpRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
 
 /**
  * @param 0|1|2|3|4|5|6|7|16|17|18|19|20|21|22|23 $flags

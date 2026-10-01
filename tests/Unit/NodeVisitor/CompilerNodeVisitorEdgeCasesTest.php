@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
 
 final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_pretty_group_prefixes_are_rendered(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $child = new LiteralNode('a', 0, 0);
 
         $named = new GroupNode($child, GroupType::T_GROUP_NAMED, 'name', null, 0, 0);
@@ -54,7 +54,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_char_literal_control_escapes_use_f_and_e(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
 
         $formFeed = new CharLiteralNode("\x0C", 12, CharLiteralType::UNICODE, 0, 0);
         $this->assertSame('\\f', $formFeed->accept($visitor));
@@ -65,7 +65,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_literal_control_characters_escape_string(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
 
         $formFeed = new LiteralNode("\x0C", 0, 0);
         $this->assertSame('\\f', $formFeed->accept($visitor));
@@ -76,7 +76,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_collapse_extended_comments_in_extended_mode(): void
     {
-        $visitor = new CompilerNodeVisitor(false, true);
+        $visitor = new PatternPrinter(false, true);
         $regex = new RegexNode(new CommentNode('comment', 0, 0), 'x', '/', 0, 0);
 
         $this->assertSame('/(?#...)/x', $regex->accept($visitor));
@@ -84,7 +84,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pretty_inline_comment_multiline_formats_lines(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $comment = new CommentNode("line1\nline2\n", 0, 0);
         $regex = new RegexNode($comment, '', '/', 0, 0);
 
@@ -96,7 +96,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pretty_inline_comment_hash_is_indented(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $comment = new CommentNode('# note', 0, 0);
         $regex = new RegexNode($comment, '', '/', 0, 0);
 
@@ -105,7 +105,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pretty_define_block_includes_newlines(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
 
         $compiled = $define->accept($visitor);
@@ -116,7 +116,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pretty_conditional_without_else_branch(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $conditional = new ConditionalNode(
             new BackrefNode('1', 0, 0),
             new LiteralNode('a', 0, 0),
@@ -133,7 +133,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pretty_conditional_with_else_branch(): void
     {
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
         $conditional = new ConditionalNode(
             new BackrefNode('1', 0, 0),
             new LiteralNode('a', 0, 0),

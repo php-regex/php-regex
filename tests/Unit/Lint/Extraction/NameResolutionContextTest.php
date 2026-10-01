@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Extraction;
+namespace PhpRegex\Tests\Unit\Lint\Extraction;
 
+use PhpRegex\Linter\Extraction\NameResolutionContext;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\NameResolutionContext;
 
 final class NameResolutionContextTest extends TestCase
 {

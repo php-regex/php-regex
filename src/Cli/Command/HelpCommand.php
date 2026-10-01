@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\PatternParser;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\PatternParser;
 
 final readonly class HelpCommand implements CommandInterface
 {
@@ -32,15 +32,15 @@ final readonly class HelpCommand implements CommandInterface
     ];
 
     /**
-     * @param array<int, CommandInterface> $commands the commands the
-     *                                               application knows, so
-     *                                               that the summary cannot
-     *                                               drift from what it runs
+     * @param array<int, \PhpRegex\Cli\Command\CommandInterface> $commands the commands the
+     *                                                                     application knows, so
+     *                                                                     that the summary cannot
+     *                                                                     drift from what it runs
      */
     public function __construct(private array $commands = []) {}
 
     /**
-     * @param array<int, CommandInterface> $commands
+     * @param array<int, \PhpRegex\Cli\Command\CommandInterface> $commands
      */
     public function withCommands(array $commands): self
     {

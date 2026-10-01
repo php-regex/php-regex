@@ -19,9 +19,9 @@ This guide shows how to add new PCRE features, build custom visitors, and integr
 ## Extension Architecture
 
 RegexParser core extension points:
-- Nodes (`src/Node/`) for new node types.
-- Visitors (`src/NodeVisitor/`) for new analyses or transforms.
-- Parser (`src/Parser.php`) to recognize new syntax.
+- Nodes (`src/Parser/Node/`) for new node types.
+- Visitors (`src/Parser/AbstractNodeVisitor.php` and its subclasses in each package) for new analyses or transforms.
+- Parser (`src/Parser/Syntax/TokenParser.php`) to recognize new syntax.
 - CLI (`src/Cli/`) for new commands.
 
 ---
@@ -30,16 +30,16 @@ RegexParser core extension points:
 
 Create a node class for your new PCRE feature:
 
-**Location:** `src/Node/YourFeatureNode.php`
+**Location:** `src/Parser/Node/YourFeatureNode.php`
 
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace RegexParser\Node;
+namespace PhpRegex\Parser\Node;
 
-use RegexParser\NodeVisitor\NodeVisitorInterface;
+use PhpRegex\Parser\NodeVisitorInterface;
 
 /**
  * Represents your new PCRE feature.
@@ -79,7 +79,7 @@ readonly class CalloutNode extends AbstractNode
 
 ## Step 2: Update the Parser
 
-Add parsing logic in `src/Parser.php`:
+Add parsing logic in `src/Parser/Syntax/TokenParser.php`:
 
 ```php
 // In the parseGroup() method, add your feature
@@ -127,7 +127,7 @@ private function parseCallout(int $startPosition): CalloutNode
 
 ### Add Method to NodeVisitorInterface
 
-**Location:** `src/NodeVisitor/NodeVisitorInterface.php`
+**Location:** `src/Parser/NodeVisitorInterface.php`
 
 ```php
 public function visitCallout(CalloutNode $node): mixed;
@@ -135,7 +135,7 @@ public function visitCallout(CalloutNode $node): mixed;
 
 ### Add Default to AbstractNodeVisitor
 
-**Location:** `src/NodeVisitor/AbstractNodeVisitor.php`
+**Location:** `src/Parser/AbstractNodeVisitor.php`
 
 ```php
 public function visitCallout(CalloutNode $node): mixed
@@ -146,7 +146,7 @@ public function visitCallout(CalloutNode $node): mixed
 
 ### Add Descent to AbstractTraversingVisitor
 
-**Location:** `src/NodeVisitor/AbstractTraversingVisitor.php`
+**Location:** `src/Parser/AbstractTraversingVisitor.php`
 
 The method visits the node's children through `getChildren()`, so a visitor
 that extends this base still reaches the nodes below the new one:
@@ -187,19 +187,19 @@ declare(strict_types=1);
 
 namespace App\Regex;
 
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\AbstractNodeVisitor;
 
 /**
  * Calculates pattern complexity score.
@@ -284,7 +284,7 @@ final class ComplexityVisitor extends AbstractNodeVisitor
 
 ```php
 use App\Regex\ComplexityVisitor;
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $ast = $regex->parse('/^(?:[a-z]+|\d{3,})+$/');
@@ -308,10 +308,10 @@ Create tests for your extension:
 
 declare(strict_types=1);
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CalloutNode;
+use PhpRegex\Parser\Node\CalloutNode;
 
 class CalloutNodeTest extends TestCase
 {

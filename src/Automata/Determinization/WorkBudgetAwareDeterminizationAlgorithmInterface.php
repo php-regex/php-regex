@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Determinization;
+namespace PhpRegex\Automata\Determinization;
 
-use RegexParser\Automata\Support\WorkBudget;
+use PhpRegex\Automata\Support\WorkBudget;
 
 /**
  * Allows determinization algorithms to receive a work budget.

@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\Node\LimitMatchNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
 
 /**
  * A sweep of patterns through Metrics.
@@ -28,7 +28,7 @@ final class MetricsSweepTest extends TestCase
 {
     public function test_metrics_visitor_limit_match(): void
     {
-        $visitor = new MetricsNodeVisitor();
+        $visitor = new MetricsCollector();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);

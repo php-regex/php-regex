@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "\NN" is a back reference when at least NN groups opened before it, or
@@ -89,8 +89,8 @@ final class OctalEscapeReadingTest extends TestCase
         $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate('/a\\89999999b/')->isValid);
 
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.44']);
-        $this->assertSame([11, 11], $regex->parse('/^a\\800000000b$/')->accept(new LengthRangeNodeVisitor()));
-        $this->assertSame([12, 12], $regex->parse('/^(a)\\9147483640{2}$/')->accept(new LengthRangeNodeVisitor()));
+        $this->assertSame([11, 11], $regex->parse('/^a\\800000000b$/')->accept(new LengthRangeCalculator()));
+        $this->assertSame([12, 12], $regex->parse('/^(a)\\9147483640{2}$/')->accept(new LengthRangeCalculator()));
         $digits = $regex->parse('/a\\800000000b/')->pattern;
         $this->assertInstanceOf(SequenceNode::class, $digits);
         $split = $digits->children[1];
@@ -98,7 +98,7 @@ final class OctalEscapeReadingTest extends TestCase
         $this->assertSame([1, 3, 3, 11], [$split->children[0]->getStartPosition(), $split->children[0]->getEndPosition(), $split->children[1]->getStartPosition(), $split->children[1]->getEndPosition()]);
 
         // Written back as the digits it matches, which every release reads alike.
-        $this->assertSame('/^a800000000b$/', $regex->parse('/^a\\800000000b$/')->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/^a800000000b$/', $regex->parse('/^a\\800000000b$/')->accept(new PatternPrinter()));
     }
 
     #[Test]
@@ -154,8 +154,8 @@ final class OctalEscapeReadingTest extends TestCase
         $ast = $regex->parse($pattern);
 
         $this->assertTrue($regex->validate($pattern)->isValid, $pattern);
-        $this->assertSame(1, preg_match($ast->accept(new CompilerNodeVisitor()), $subject), $pattern);
-        $this->assertSame([$length, $length], $ast->accept(new LengthRangeNodeVisitor()), $pattern);
+        $this->assertSame(1, preg_match($ast->accept(new PatternPrinter()), $subject), $pattern);
+        $this->assertSame([$length, $length], $ast->accept(new LengthRangeCalculator()), $pattern);
         $this->assertSame(1, preg_match($pattern, $regex->generate($pattern)), $pattern);
     }
 
@@ -180,7 +180,7 @@ final class OctalEscapeReadingTest extends TestCase
     }
 
     /**
-     * @return array<NodeInterface>
+     * @return array<\PhpRegex\Parser\Node\NodeInterface>
      */
     private function nodesOf(string $pattern): array
     {

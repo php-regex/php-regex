@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\PatternParser;
-use RegexParser\PcreTarget;
 
 final class PatternParserTest extends TestCase
 {

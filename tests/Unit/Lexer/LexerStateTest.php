@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Regex;
 
 final class LexerStateTest extends TestCase
 {

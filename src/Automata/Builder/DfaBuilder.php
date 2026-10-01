@@ -11,18 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Builder;
+namespace PhpRegex\Automata\Builder;
 
-use RegexParser\Automata\Determinization\DeterminizationAlgorithmFactory;
-use RegexParser\Automata\Determinization\DeterminizationAlgorithmInterface;
-use RegexParser\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
-use RegexParser\Automata\Minimization\DfaMinimizer;
-use RegexParser\Automata\Minimization\MinimizationAlgorithmFactory;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Support\WorkBudget;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithmFactory;
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithmInterface;
+use PhpRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
+use PhpRegex\Automata\Minimization\DfaMinimizer;
+use PhpRegex\Automata\Minimization\MinimizationAlgorithmFactory;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Support\WorkBudget;
 
 /**
  * Determinizes NFAs into DFAs using a configured strategy.
@@ -39,7 +38,7 @@ final readonly class DfaBuilder
     ) {}
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options): Dfa
     {

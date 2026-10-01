@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
 use PhpParser\Node\Expr\FuncCall;
+use PhpRegex\PHPStan\RegexPatternRule;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
-use RegexParser\Regex;
 
 /**
  * Tests for Symfony codebase compatibility.
@@ -137,7 +137,7 @@ final class SymfonyCompatibilityTest extends TestCase
 
     public function test_phpstan_rule_validates_complete_patterns(): void
     {
-        $rule = new RegexParserRule(config: []);
+        $rule = new RegexPatternRule(config: []);
 
         // Complete patterns should be validated
         $this->assertSame(FuncCall::class, $rule->getNodeType());

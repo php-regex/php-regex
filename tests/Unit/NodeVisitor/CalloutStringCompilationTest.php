@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A string callout writes its delimiter twice to hold it: "(?C"a""b")" carries
@@ -35,7 +35,7 @@ final class CalloutStringCompilationTest extends TestCase
     {
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
 
-        $compiled = Regex::create(['cache' => null])->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create(['cache' => null])->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $compiled);
     }
@@ -60,7 +60,7 @@ final class CalloutStringCompilationTest extends TestCase
     {
         $tree = new RegexNode(new CalloutNode('a"b', true, 0, 9), '', '/', 0, 9);
 
-        $compiled = $tree->accept(new CompilerNodeVisitor());
+        $compiled = $tree->accept(new PatternPrinter());
 
         $this->assertSame('/(?C"a""b")/', $compiled);
         $this->assertNotFalse(@preg_match($compiled, ''));

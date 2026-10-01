@@ -80,11 +80,11 @@ Educational value: **Equivalence** asks "do these patterns accept the exact same
 
 ## PHP API
 
-`RegexParser\Automata\LanguageSolver` is the one entry point. Each method takes two patterns (with delimiters and
+`PhpRegex\Automata\LanguageSolver` is the one entry point. Each method takes two patterns (with delimiters and
 flags) and optional `SolverOptions`, and returns a result object that carries the shortest string proving the answer:
 
 ```php
-use RegexParser\Automata\LanguageSolver;
+use PhpRegex\Automata\LanguageSolver;
 
 $solver = new LanguageSolver();
 
@@ -101,7 +101,7 @@ $equivalence->isEquivalent;         // true
 $equivalence->leftOnlyExample;      // null: no string only the left pattern matches
 $equivalence->rightOnlyExample;     // null: no string only the right pattern matches
 
-$dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (RegexParser\Automata\Model\Dfa)
+$dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PhpRegex\Automata\Model\Dfa)
 ```
 
 | method                                        | result               | answer            | witness                                  |
@@ -115,9 +115,9 @@ The constructor takes the parser that reads the patterns, so they are read for i
 that keeps compiled patterns between questions:
 
 ```php
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\RegexParser;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Solver\InMemoryDfaCache;
+use PhpRegex\Parser\RegexParser;
 
 $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), new InMemoryDfaCache());
 ```
@@ -125,7 +125,7 @@ $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), n
 A pattern outside the regular subset (backreferences, lookarounds, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong.
 
-The public classes of `RegexParser\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
+The public classes of `PhpRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the three result classes in
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`. Every other class of the namespace is
 `@internal` and may change in any release.
@@ -169,8 +169,8 @@ regex_parser:
 You can also set it programmatically:
 
 ```php
-use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
-use RegexParser\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PhpRegex\Automata\Options\SolverOptions;
 
 $options = new SolverOptions(
     determinizationAlgorithm: DeterminizationAlgorithm::SUBSET_INDEXED,
@@ -217,9 +217,9 @@ Large patterns can cause determinization or minimization to grow quickly. You ca
 `SolverOptions::maxTransitionsProcessed`.
 
 ```php
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Exception\ComplexityException;
 
 $solver = new LanguageSolver();
 $options = new SolverOptions(maxTransitionsProcessed: 200000);

@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Internal\InlineFlags;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\InlineFlags;
 
 /**
  * What a "(?...)" group turns on, what it turns off, and what it refuses.

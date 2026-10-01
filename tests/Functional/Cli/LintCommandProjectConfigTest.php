@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Cli\Command\LintCommand;
+use PhpRegex\Cli\Command\LintOutputRenderer;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Linter\Config\LintExtractorFactory;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Cli\Command\LintCommand;
-use RegexParser\Cli\Command\LintOutputRenderer;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Lint\Command\LintExtractorFactory;
-use RegexParser\Tests\Support\TemporaryProject;
 
 /**
  * The lint command on a project directory: a configuration it cannot use

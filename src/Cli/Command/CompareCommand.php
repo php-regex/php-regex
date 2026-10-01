@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Minimization\MinimizationAlgorithm;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\Internal\DisplayEscaper;
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Internal\DisplayEscaper;
 
 final class CompareCommand extends AbstractCommand
 {

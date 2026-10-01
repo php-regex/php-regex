@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Rule;
+namespace PhpRegex\Tests\Unit\Lint\Rule;
 
+use PhpRegex\Linter\Rule\LintRuleInterface;
+use PhpRegex\Linter\Rule\LintRuleRegistry;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Rule\LintRuleInterface;
-use RegexParser\Lint\Rule\LintRuleRegistry;
 
 final class LintRuleRegistryTest extends TestCase
 {

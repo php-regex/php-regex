@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class ManualFallbackTest extends TestCase
 {
@@ -29,7 +29,7 @@ final class ManualFallbackTest extends TestCase
     {
         // We inject a node with an invalid type 'z'
         $node = new CharTypeNode('z', 0, 0);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         // Must return '?' (the default of the switch)
         $this->assertSame('?', $node->accept($generator));
@@ -43,7 +43,7 @@ final class ManualFallbackTest extends TestCase
     {
         // Syntaxe vide '' déclenche le default dans visitSubroutine
         $node = new SubroutineNode('1', 'UNKNOWN_SYNTAX', 0, 0);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // The default returns '(?reference)'
         $this->assertSame('(?1)', $node->accept($compiler));
@@ -55,7 +55,7 @@ final class ManualFallbackTest extends TestCase
      */
     public function test_sample_generator_parse_quantifier_fallback(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('parseQuantifierRange');
 

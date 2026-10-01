@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\LiteralSet;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LiteralSet;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\Regex;
 
 final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_case_insensitive_char_class_expands_literals(): void
     {
         $regex = Regex::create();
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
 
         $ast = $regex->parse('/[ab]/i');
         $result = $ast->accept($visitor);
@@ -46,7 +46,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_assertion_returns_empty_literal_set(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $result = $visitor->visitAssertion(new AssertionNode('A', 0, 0));
 
         $this->assertSame([''], $result->prefixes);
@@ -54,7 +54,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_range_returns_empty_literal_set(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $range = new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('z', 0, 0), 0, 0);
 
         $this->assertTrue($visitor->visitRange($range)->isVoid());
@@ -62,7 +62,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_char_literal_returns_empty_literal_set(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $literal = new CharLiteralNode('\\x41', 0x41, CharLiteralType::UNICODE, 0, 0);
 
         $this->assertTrue($visitor->visitCharLiteral($literal)->isVoid());
@@ -70,7 +70,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_posix_class_returns_empty_literal_set(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $posix = new PosixClassNode('alpha', 0, 0);
 
         $this->assertTrue($visitor->visitPosixClass($posix)->isVoid());
@@ -78,7 +78,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_sequence_caps_large_literal_sets(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
             public function getChildren(): array
@@ -114,7 +114,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_quantifier_caps_large_literal_sets(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
             public function getChildren(): array
@@ -150,7 +150,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_alternation_exits_on_large_literal_sets(): void
     {
-        $visitor = new LiteralExtractorNodeVisitor();
+        $visitor = new LiteralExtractor();
         $largeSet = $this->makeLiteralSetWithPrefixes(200);
         $node = new class($largeSet) implements NodeInterface {
             public function getChildren(): array

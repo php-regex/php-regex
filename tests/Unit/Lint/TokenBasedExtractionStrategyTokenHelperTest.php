@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Tests\Support\LintFunctionOverrides;
 
 final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
 {

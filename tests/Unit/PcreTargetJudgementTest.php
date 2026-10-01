@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Cache\ArrayCache;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\ArrayCache;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\PcreTarget;
-use RegexParser\Regex;
 
 /**
  * One PHP version and one PCRE2 release judge a pattern, whoever runs the

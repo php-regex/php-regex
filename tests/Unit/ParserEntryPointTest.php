@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Syntax\TokenParser;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lexer;
-use RegexParser\Parser;
 
 final class ParserEntryPointTest extends TestCase
 {
     public function test_parser_can_parse_simple_pattern(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $lexer = new Lexer();
 
         $tokenStream = $lexer->tokenize('test');
@@ -34,7 +34,7 @@ final class ParserEntryPointTest extends TestCase
 
     public function test_parser_can_parse_with_flags(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $lexer = new Lexer();
 
         $tokenStream = $lexer->tokenize('test');
@@ -47,7 +47,7 @@ final class ParserEntryPointTest extends TestCase
 
     public function test_parser_with_custom_recursion_depth(): void
     {
-        $parser = new Parser(100);
+        $parser = new TokenParser(100);
         $lexer = new Lexer();
 
         $tokenStream = $lexer->tokenize('test');

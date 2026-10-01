@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\LintRequest;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintRequest;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\RegexParser;
-use RegexParser\Severity;
-use RegexParser\ValidationResult;
 
 final class RegexLintServiceEdgeCasesTest extends TestCase
 {
@@ -34,7 +34,7 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
         $issues = [
             ['validation' => new ValidationResult(false, 'error', 0)],
         ];
-        $request = new RegexLintRequest(
+        $request = new LintRequest(
             paths: [],
             excludePaths: [],
             minSavings: 1,
@@ -84,24 +84,24 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
 
         $mapIssueSeverity = $this->getPrivateMethod($service, 'mapIssueSeverity');
         $issueSeverity = $mapIssueSeverity->invoke($service, 'error');
-        $this->assertInstanceOf(Severity::class, $issueSeverity);
+        $this->assertInstanceOf(LintSeverity::class, $issueSeverity);
         $this->assertSame('error', $issueSeverity->value);
 
         $mapRedosSeverity = $this->getPrivateMethod($service, 'mapRedosSeverity');
 
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::HIGH, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
-        $this->assertInstanceOf(Severity::class, $redosSeverity);
+        $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::MEDIUM, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::MEDIUM, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
-        $this->assertInstanceOf(Severity::class, $redosSeverity);
+        $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::UNKNOWN, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::UNKNOWN, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
-        $this->assertInstanceOf(Severity::class, $redosSeverity);
+        $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
         // The message a validation hands over holds no snippet to strip: the
@@ -112,12 +112,12 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
         $this->assertSame('Expected ) at end of input (found eof)', $validation->error);
     }
 
-    private function makeService(): RegexLintService
+    private function makeService(): LintService
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $sources = new RegexPatternSourceCollection([]);
+        $analysis = new AnalysisService(RegexParser::create());
+        $sources = new PatternSourceCollection([]);
 
-        return new RegexLintService($analysis, $sources);
+        return new LintService($analysis, $sources);
     }
 
     private function getPrivateMethod(object $object, string $method): \ReflectionMethod

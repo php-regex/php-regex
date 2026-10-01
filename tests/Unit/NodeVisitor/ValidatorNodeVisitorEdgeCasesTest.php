@@ -11,40 +11,40 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\GroupNumbering;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\ControlCharNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\GroupNumbering;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\ControlCharNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_clear_caches_resets_static_state(): void
     {
-        $ref = new \ReflectionClass(ValidatorNodeVisitor::class);
+        $ref = new \ReflectionClass(Validator::class);
 
         $unicodePropCache = $ref->getProperty('unicodePropCache');
         $unicodePropCache->setValue(null, ['p{X}' => true]);
@@ -52,7 +52,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $quantifierBoundsCache = $ref->getProperty('quantifierBoundsCache');
         $quantifierBoundsCache->setValue(null, ['{1,2}' => [1, 2]]);
 
-        ValidatorNodeVisitor::clearCaches();
+        Validator::clearCaches();
 
         $this->assertSame([], $unicodePropCache->getValue());
         $this->assertSame([], $quantifierBoundsCache->getValue());
@@ -60,7 +60,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_invalid_assertion_raises_error(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new AssertionNode('X', 0, 0);
 
         $this->expectException(SemanticErrorException::class);
@@ -71,7 +71,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_range_invalid_start_length(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $range = new RangeNode(new LiteralNode('ab', 0, 0), new LiteralNode('c', 0, 0), 0, 0);
 
         $this->expectException(SemanticErrorException::class);
@@ -82,7 +82,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_range_invalid_end_length(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $range = new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('bc', 0, 0), 0, 0);
 
         $this->expectException(SemanticErrorException::class);
@@ -93,7 +93,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_zero_variants_are_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Backreference \\0 is not valid.');
@@ -102,7 +102,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_zero_without_slash_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Backreference 0 is not valid.');
@@ -111,7 +111,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_missing_named_group_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('non-existent named group');
@@ -120,7 +120,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_bare_name_missing_group_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('non-existent named group');
@@ -129,7 +129,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_missing_group_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('non-existent group');
@@ -138,7 +138,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_backref_relative_zero_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('assertRelativeReferenceExists');
 
         $this->expectException(SemanticErrorException::class);
@@ -157,7 +157,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_control_char_out_of_range_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new ControlCharNode('A', 0x1FF, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
@@ -168,7 +168,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_invalid_conditional_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new ConditionalNode(
             new LiteralNode('a', 0, 0),
             new LiteralNode('b', 0, 0),
@@ -185,7 +185,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_conditional_accepts_lookaround_condition(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $lookahead = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
         $node = new ConditionalNode(
             $lookahead,
@@ -201,7 +201,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_conditional_accepts_define_condition(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $defineAssertion = new AssertionNode('DEFINE', 0, 0);
         $node = new ConditionalNode(
             $defineAssertion,
@@ -217,7 +217,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_conditional_subroutine_branch_hits_reference_check(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new ConditionalNode(
             new SubroutineNode('R-1', 'R-1', 0, 0),
             new LiteralNode('b', 0, 0),
@@ -232,7 +232,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_conditional_subroutine_accepts_numeric_reference(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new ConditionalNode(
             new SubroutineNode('1', '1', 0, 0),
             new LiteralNode('b', 0, 0),
@@ -247,7 +247,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_reference_variants_hit_branches(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         (new SubroutineNode('R', 'R', 0, 0))->accept($validator);
 
@@ -257,7 +257,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_absolute_recursion_reference_returns(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $this->setPrivateProperty($validator, 'groupNumbering', new GroupNumbering(1, [1], []));
 
         (new SubroutineNode('R1', 'R1', 0, 0))->accept($validator);
@@ -266,7 +266,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_relative_recursion_reference_returns(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $this->setPrivateProperty($validator, 'groupNumbering', new GroupNumbering(1, [1], []));
         $this->setPrivateProperty($validator, 'captureSequence', [1]);
         $this->setPrivateProperty($validator, 'captureIndex', 1);
@@ -277,7 +277,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_relative_reference_hits_branch(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         (new SubroutineNode('R-1', 'R-1', 0, 0))->accept($validator);
@@ -285,7 +285,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_subroutine_zero_reference_returns(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         (new SubroutineNode('0', '0', 0, 0))->accept($validator);
         $this->expectNotToPerformAssertions();
     }
@@ -295,13 +295,13 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         // preg_match() on PCRE2 10.48: "a relative value of zero is not allowed at offset 5" for "x(?-0)y".
         $this->expectException(SemanticErrorException::class);
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         (new SubroutineNode('-0', '-0', 0, 0))->accept($validator);
     }
 
     public function test_define_and_limit_match_nodes_are_noops(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
         $limit = new LimitMatchNode(10, 0, 0);
 
@@ -312,7 +312,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_octal_legacy_out_of_range_is_rejected(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OCTAL_LEGACY, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
@@ -323,7 +323,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_calculate_fixed_length_helpers(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateFixedLength');
 
         $this->assertSame(1, $method->invoke($validator, new LiteralNode('a', 0, 0)));
@@ -352,7 +352,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_calculate_sequence_length_variable_returns_null(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateSequenceLength');
 
         $sequence = new SequenceNode([
@@ -365,7 +365,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_calculate_quantifier_length_variable_returns_null(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
         $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
@@ -374,7 +374,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_calculate_quantifier_length_child_null_returns_null(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
         $child = new AlternationNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
@@ -385,7 +385,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_calculate_quantifier_length_fixed_returns_value(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
         $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{3}', QuantifierType::T_GREEDY, 0, 0);
@@ -394,8 +394,8 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_quantifier_bounds_cache_eviction_runs(): void
     {
-        $validator = new ValidatorNodeVisitor();
-        $ref = new \ReflectionClass(ValidatorNodeVisitor::class);
+        $validator = new Validator();
+        $ref = new \ReflectionClass(Validator::class);
         $quantifierCache = $ref->getProperty('quantifierBoundsCache');
         $cache = [];
         for ($i = 0; $i < 1000; $i++) {
@@ -411,7 +411,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_find_unbounded_lookbehind_node_traverses_branches(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('findUnboundedLookbehindNode');
 
         $group = new GroupNode(new BackrefNode('1', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);

@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\GroupNameReader;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenStream;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\GroupNameReader;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Parser;
-use RegexParser\Regex;
-use RegexParser\Token;
-use RegexParser\TokenStream;
-use RegexParser\TokenType;
 
 /**
  * What the parser refuses, and what it does when a guess turns out wrong.
@@ -167,7 +167,7 @@ final class ParserRejectionsTest extends TestCase
 
     public function test_conditional_condition_parses_lookaround_literal_question(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $tokens = [
             new Token(TokenType::T_LITERAL, '?', 0),
             new Token(TokenType::T_LITERAL, '=', 1),

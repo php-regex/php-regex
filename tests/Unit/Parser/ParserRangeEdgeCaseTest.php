@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Regex;
 
 final class ParserRangeEdgeCaseTest extends TestCase
 {

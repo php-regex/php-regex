@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Support;
+namespace PhpRegex\Tests\Support;
 
 /**
  * A fingerprint of the code that decides what a pattern parses into.
@@ -24,7 +24,7 @@ namespace RegexParser\Tests\Support;
  * Comments and formatting are dropped: only what runs can change a tree, so
  * rewording a docblock costs nobody their cache.
  *
- * `task cache-version` writes it into src/Regex.php, and the test suite
+ * `task cache-version` writes it into src/Toolkit/Regex.php, and the test suite
  * fails while the two disagree.
  */
 final class AstFingerprint
@@ -33,24 +33,24 @@ final class AstFingerprint
      * Everything whose behaviour decides what a pattern parses into.
      */
     private const SOURCES = [
-        'src/Lexer.php',
-        'src/Parser.php',
-        'src/Token.php',
-        'src/TokenStream.php',
-        'src/TokenType.php',
-        'src/Node/*.php',
-        'src/NodeVisitor/ValidatorNodeVisitor.php',
-        'src/PcreTarget.php',
-        'src/PcreFeature.php',
-        'src/GroupNumbering.php',
-        'src/GroupNumberingCollector.php',
-        'src/Internal/CodePointReader.php',
-        'src/Internal/ExtendedClassReader.php',
-        'src/Internal/GroupNameReader.php',
-        'src/Internal/InlineFlags.php',
-        'src/Internal/PatternParser.php',
-        'src/Internal/PcreVerb.php',
-        'src/Internal/VersionCondition.php',
+        'src/Parser/Lexer.php',
+        'src/Parser/Syntax/TokenParser.php',
+        'src/Parser/Token/Token.php',
+        'src/Parser/Token/TokenStream.php',
+        'src/Parser/Token/TokenType.php',
+        'src/Parser/Node/*.php',
+        'src/Parser/Validation/Validator.php',
+        'src/Parser/PcreTarget.php',
+        'src/Parser/PcreFeature.php',
+        'src/Parser/Analysis/GroupNumbering.php',
+        'src/Parser/Analysis/GroupNumberingCollector.php',
+        'src/Parser/Internal/CodePointReader.php',
+        'src/Parser/Internal/ExtendedClassReader.php',
+        'src/Parser/Internal/GroupNameReader.php',
+        'src/Parser/Internal/InlineFlags.php',
+        'src/Parser/Internal/PatternParser.php',
+        'src/Parser/Internal/PcreVerb.php',
+        'src/Parser/Internal/VersionCondition.php',
     ];
 
     public static function compute(): string

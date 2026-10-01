@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through Validator.
@@ -31,13 +31,13 @@ final class ValidatorSweepTest extends TestCase
 
     private Regex $regexService;
 
-    private ValidatorNodeVisitor $validatorVisitor;
+    private Validator $validatorVisitor;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
         $this->regexService = Regex::create();
-        $this->validatorVisitor = new ValidatorNodeVisitor();
+        $this->validatorVisitor = new Validator();
     }
 
     public function test_validator_visitor_dot_node(): void
@@ -253,23 +253,23 @@ final class ValidatorSweepTest extends TestCase
 
     public function test_validator_with_invalid_backref(): void
     {
-        // Test ValidatorNodeVisitor with invalid backreference
+        // Test Validator with invalid backreference
         $this->expectException(SemanticErrorException::class);
 
         $ast = $this->regexService->parse('/\1/');
 
-        $visitor = new ValidatorNodeVisitor();
+        $visitor = new Validator();
         $ast->accept($visitor);
     }
 
     public function test_validator_with_invalid_subroutine(): void
     {
-        // Test ValidatorNodeVisitor with invalid subroutine
+        // Test Validator with invalid subroutine
         $this->expectException(SemanticErrorException::class);
 
         $ast = $this->regexService->parse('/(?&nonexistent)/');
 
-        $visitor = new ValidatorNodeVisitor();
+        $visitor = new Validator();
         $ast->accept($visitor);
     }
 }

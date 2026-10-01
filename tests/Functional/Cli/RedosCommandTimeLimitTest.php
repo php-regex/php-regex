@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Command\RedosCommand;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\RedosCommand;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
 
 /**
  * "--time-limit" holds for the run only: the process gets its own limit

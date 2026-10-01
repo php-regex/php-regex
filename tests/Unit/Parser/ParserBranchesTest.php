@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\RecursionLimitException;
+use PhpRegex\Parser\Exception\SyntaxErrorException;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Tests\TestUtils\ParserAccessor;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\RecursionLimitException;
-use RegexParser\Exception\SyntaxErrorException;
-use RegexParser\Parser;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\ParserAccessor;
-use RegexParser\Token;
-use RegexParser\TokenType;
 
 /**
  * Tests specifically targeting uncovered methods to achieve 100% method coverage.
@@ -34,7 +34,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_callout_invalid_argument(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens with T_CALLOUT having invalid value
@@ -60,7 +60,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_create_char_literal_unsupported_type(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         $token = new Token(TokenType::T_LITERAL, 'test', 0);
@@ -95,7 +95,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_char_class_part_unexpected_token(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens with an unexpected token in char class
@@ -124,7 +124,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_char_class_part_range_unicode_prop(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for [a-\pL]
@@ -148,7 +148,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_char_class_part_range_posix_class(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for [a-[:alnum:]]
@@ -172,7 +172,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_char_class_part_range_unexpected_token(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for [a-^] (invalid range end)
@@ -198,7 +198,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_group_modifier_rewind_r(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for (?Rabc) invalid
@@ -231,7 +231,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_pcre_verb_in_group_verb_break(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for (?(*TEST^)expr) where ^ breaks verb collection
@@ -267,7 +267,7 @@ final class ParserBranchesTest extends TestCase
      */
     public function test_parser_parse_pcre_verb_in_group_arg_break(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Create tokens for (?(*MARK:name^)expr) where ^ breaks argument collection

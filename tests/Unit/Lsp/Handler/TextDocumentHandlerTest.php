@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Handler;
+namespace PhpRegex\Tests\Unit\Lsp\Handler;
 
+use PhpRegex\LanguageServer\Document\DocumentManager;
+use PhpRegex\LanguageServer\Document\RegexFinder;
+use PhpRegex\LanguageServer\Handler\TextDocumentHandler;
+use PhpRegex\LanguageServer\Protocol\Message;
+use PhpRegex\LanguageServer\Protocol\Response;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Document\DocumentManager;
-use RegexParser\Lsp\Document\RegexFinder;
-use RegexParser\Lsp\Handler\TextDocumentHandler;
-use RegexParser\Lsp\Protocol\Message;
-use RegexParser\Lsp\Protocol\Response;
-use RegexParser\Regex;
 
 final class TextDocumentHandlerTest extends TestCase
 {

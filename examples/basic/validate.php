@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosSeverity;
+
 /**
  * Example: Validate a regex pattern with RegexParser
  *
@@ -13,9 +16,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 $pattern = '/\d{4}-\d{2}-\d{2}/';
 
@@ -41,7 +41,7 @@ if ($result->isValid) {
 
 $redosResult = $regex->redos($pattern);
 
-$severityOrder = [ReDoSSeverity::SAFE, ReDoSSeverity::LOW, ReDoSSeverity::MEDIUM, ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL];
+$severityOrder = [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM, RedosSeverity::HIGH, RedosSeverity::CRITICAL];
 $riskLevel = array_search($redosResult->severity, $severityOrder, true);
 
 if ($riskLevel >= 2) {  // MEDIUM or worse

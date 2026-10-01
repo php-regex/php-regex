@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Output;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Output;
 
 final class OutputTest extends TestCase
 {

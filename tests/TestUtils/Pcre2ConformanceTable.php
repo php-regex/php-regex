@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
 /**
  * Renders the generated sections of the public PCRE2 conformance page from

@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PhpRegex\Laravel\Facades\Regex;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
-use RegexParser\Bridge\Laravel\Facades\Regex as RegexFacade;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
 
 /**
  * Tests for Laravel Artisan commands.
@@ -240,7 +240,7 @@ final class CommandsTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            RegexParserServiceProvider::class,
+            PhpRegexServiceProvider::class,
         ];
     }
 
@@ -254,7 +254,7 @@ final class CommandsTest extends TestCase
     protected function getPackageAliases($app): array
     {
         return [
-            'Regex' => RegexFacade::class,
+            'Regex' => Regex::class,
         ];
     }
 

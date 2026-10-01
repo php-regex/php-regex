@@ -11,42 +11,42 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\DelimitedPattern;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\InlineFlags;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\InlineFlags;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\Regex;
-use RegexParser\RegexPattern;
 
 final class ParserTest extends TestCase
 {
@@ -671,7 +671,7 @@ final class ParserTest extends TestCase
         $ast = $this->parse('/'.$pattern.'/');
 
         $this->assertInstanceOf(ConditionalNode::class, $ast->pattern);
-        /** @var ConditionalNode $conditional */
+        /** @var \PhpRegex\Parser\Node\ConditionalNode $conditional */
         $conditional = $ast->pattern;
         $condition = $conditional->condition;
         $this->assertInstanceOf(GroupNode::class, $condition);
@@ -689,7 +689,7 @@ final class ParserTest extends TestCase
     {
         $ast = $this->parse('/(?(R)a|b)/');
         $this->assertInstanceOf(ConditionalNode::class, $ast->pattern);
-        /** @var ConditionalNode $cond */
+        /** @var \PhpRegex\Parser\Node\ConditionalNode $cond */
         $cond = $ast->pattern;
         $this->assertInstanceOf(SubroutineNode::class, $cond->condition);
         $this->assertSame('R', $cond->condition->reference);
@@ -876,7 +876,7 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_regex_pattern_from_delimited(): void
     {
-        $pattern = RegexPattern::fromDelimited('/foo/i');
+        $pattern = DelimitedPattern::fromDelimited('/foo/i');
 
         $this->assertSame('foo', $pattern->pattern);
         $this->assertSame('i', $pattern->flags);
@@ -886,7 +886,7 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_regex_pattern_from_raw(): void
     {
-        $pattern = RegexPattern::fromRaw('foo', 'i', '#');
+        $pattern = DelimitedPattern::fromRaw('foo', 'i', '#');
 
         $this->assertSame('foo', $pattern->pattern);
         $this->assertSame('i', $pattern->flags);

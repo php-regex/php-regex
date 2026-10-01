@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Tests\TestUtils\ParserAccessor;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\PatternParser;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Parser;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\ParserAccessor;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
-use RegexParser\TokenType;
 
 /**
  * Tests the private utility methods of the Parser class.
@@ -37,7 +37,7 @@ final class ParserUtilityTest extends TestCase
 
     protected function setUp(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $this->accessor = new ParserAccessor($parser);
     }
 

@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\LexerException;
-use RegexParser\Lexer;
-use RegexParser\Tests\TestUtils\LexerAccessor;
-use RegexParser\Token as RegexToken;
-use RegexParser\TokenType;
 
 /**
  * The corners of the lexer: escapes it resolves, modes it enters and leaves,
@@ -177,13 +177,13 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setInQuoteMode(true);
 
         $literalToken = $accessor->callPrivateMethod('consumeQuoteMode');
-        $this->assertInstanceOf(RegexToken::class, $literalToken);
+        $this->assertInstanceOf(Token::class, $literalToken);
         $this->assertSame('abc', $literalToken->value);
         $this->assertSame(2, $literalToken->position);
         $this->assertTrue($accessor->getInQuoteMode());
 
         $endToken = $accessor->callPrivateMethod('consumeQuoteMode');
-        $this->assertInstanceOf(RegexToken::class, $endToken);
+        $this->assertInstanceOf(Token::class, $endToken);
         $this->assertSame(TokenType::T_QUOTE_MODE_END, $endToken->type);
         $this->assertFalse($accessor->getInQuoteMode());
     }
@@ -237,13 +237,13 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setInCommentMode(true);
 
         $literal = $accessor->callPrivateMethod('consumeCommentMode');
-        $this->assertInstanceOf(RegexToken::class, $literal);
+        $this->assertInstanceOf(Token::class, $literal);
         $this->assertSame('t', $literal->value);
         $this->assertSame(3, $literal->position);
         $this->assertTrue($this->getPrivateBool($lexer, 'inCommentMode'));
 
         $closing = $accessor->callPrivateMethod('consumeCommentMode');
-        $this->assertInstanceOf(RegexToken::class, $closing);
+        $this->assertInstanceOf(Token::class, $closing);
         $this->assertSame(TokenType::T_GROUP_CLOSE, $closing->type);
         $this->assertFalse($this->getPrivateBool($lexer, 'inCommentMode'));
     }

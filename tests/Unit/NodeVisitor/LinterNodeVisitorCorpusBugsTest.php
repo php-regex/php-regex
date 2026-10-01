@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 final class LinterNodeVisitorCorpusBugsTest extends TestCase
 {
@@ -35,7 +35,7 @@ final class LinterNodeVisitorCorpusBugsTest extends TestCase
         array $unexpectedIssueIds,
     ): void {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $actualIssueIds = array_map(
@@ -100,7 +100,7 @@ final class LinterNodeVisitorCorpusBugsTest extends TestCase
     {
         $pattern = '/^[a-zA-z0-9_]+$/';
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issueIds = array_map(
@@ -121,7 +121,7 @@ final class LinterNodeVisitorCorpusBugsTest extends TestCase
     {
         $pattern = '/^[A-Za-z0-9_]+$/';
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issueIds = array_map(

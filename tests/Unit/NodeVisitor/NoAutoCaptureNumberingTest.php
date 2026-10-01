@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Under (?n) or the n flag, a plain "(...)" group does not capture, so it
@@ -48,7 +48,7 @@ final class NoAutoCaptureNumberingTest extends TestCase
     public function test_compiling_keeps_the_groups_as_written(string $pattern): void
     {
         // Under n a plain group does not capture: preg_match() fills no group.
-        $this->assertSame($pattern, Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor()));
+        $this->assertSame($pattern, Regex::create()->parse($pattern)->accept(new PatternPrinter()));
         $this->assertSame(1, preg_match($pattern, 'ab', $matches));
         $this->assertSame(['ab'], $matches);
     }

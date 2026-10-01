@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Regex;
 
 /**
  * Under "x", PCRE skips Pattern_White_Space, not only ASCII whitespace: in

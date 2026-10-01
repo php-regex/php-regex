@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Solver\InMemoryDfaCache;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\RegexParser;
 
 /**
  * The one entry point for questions about the languages two patterns match.

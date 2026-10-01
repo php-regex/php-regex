@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class ValidatorSuccessTest extends TestCase
 {
-    private ValidatorNodeVisitor $validator;
+    private Validator $validator;
 
     protected function setUp(): void
     {
-        $this->validator = new ValidatorNodeVisitor();
+        $this->validator = new Validator();
     }
 
     public function test_valid_backreferences_pass(): void

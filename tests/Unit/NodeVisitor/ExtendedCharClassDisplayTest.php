@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Generator\TestCaseGenerator;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * What each display visitor shows of "(?[ \d - ( [3] & ![a] ) ^ \x61 | [b] ])",
@@ -42,7 +42,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     private const PATTERN = '/(?[ \d - ( [3] & ![a] ) ^ \x61 | [b] ])/';
 
     /**
-     * @param NodeVisitorInterface<string> $visitor
+     * @param \PhpRegex\Parser\NodeVisitorInterface<string> $visitor
      */
     #[Test]
     #[DataProvider('provideDisplays')]
@@ -55,22 +55,22 @@ final class ExtendedCharClassDisplayTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, NodeVisitorInterface<string>}>
+     * @return iterable<string, array{string, \PhpRegex\Parser\NodeVisitorInterface<string>}>
      */
     public static function provideDisplays(): iterable
     {
-        yield 'dump' => ['Dumper', new DumperNodeVisitor()];
-        yield 'ASCII tree' => ['AsciiTree', new AsciiTreeVisitor()];
-        yield 'explanation' => ['Explain', new ExplainNodeVisitor()];
-        yield 'HTML explanation' => ['HtmlExplain', new HtmlExplainNodeVisitor()];
-        yield 'Mermaid graph' => ['Mermaid', new MermaidNodeVisitor()];
-        yield 'HTML highlight' => ['Html', new HtmlHighlighterVisitor()];
+        yield 'dump' => ['Dumper', new NodeDumper()];
+        yield 'ASCII tree' => ['AsciiTree', new AsciiTreeRenderer()];
+        yield 'explanation' => ['Explain', new TextExplainer()];
+        yield 'HTML explanation' => ['HtmlExplain', new HtmlExplainer()];
+        yield 'Mermaid graph' => ['Mermaid', new MermaidRenderer()];
+        yield 'HTML highlight' => ['Html', new HtmlHighlighter()];
     }
 
     #[Test]
     public function test_the_console_highlight_colours_operators_and_parentheses(): void
     {
-        $highlighted = $this->tree()->accept(new ConsoleHighlighterVisitor());
+        $highlighted = $this->tree()->accept(new ConsoleHighlighter());
         $this->assertIsString($highlighted);
 
         $parts = [];
@@ -94,7 +94,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     public function test_a_class_after_other_text_keeps_its_layout(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
-        $highlighted = $regex->parse('/xy(?[ \\d - [3] ])z/')->accept(new ConsoleHighlighterVisitor());
+        $highlighted = $regex->parse('/xy(?[ \\d - [3] ])z/')->accept(new ConsoleHighlighter());
         $this->assertIsString($highlighted);
 
         $this->assertSame('xy(?[ \\d - [3] ])z', preg_replace('/\e\[[\d;]*+m/', '', $highlighted));
@@ -103,7 +103,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     #[Test]
     public function test_a_lone_operand_is_explained_in_line(): void
     {
-        $explained = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse('/(?[ \\d ])/')->accept(new ExplainNodeVisitor());
+        $explained = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse('/(?[ \\d ])/')->accept(new TextExplainer());
 
         $this->assertStringContainsString("\n  Extended character class: one character of Character Type: A digit: [0-9]", $explained);
     }
@@ -111,7 +111,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     #[Test]
     public function test_the_railroad_diagram_labels_every_operation(): void
     {
-        $svg = $this->tree()->accept(new RailroadSvgVisitor());
+        $svg = $this->tree()->accept(new RailroadSvgRenderer());
         $this->assertIsString($svg);
         preg_match_all('/<text[^>]*>([^<]*)<\/text>/', $svg, $labels);
 
@@ -126,7 +126,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     #[Test]
     public function test_the_counts_see_every_operand(): void
     {
-        $this->assertSame(14, $this->tree()->accept(new ComplexityScoreNodeVisitor()));
+        $this->assertSame(14, $this->tree()->accept(new ComplexityScorer()));
         $this->assertSame([
             'counts' => [
                 'RegexNode' => 1,
@@ -139,7 +139,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
             ],
             'total' => 15,
             'maxDepth' => 9,
-        ], $this->tree()->accept(new MetricsNodeVisitor()));
+        ], $this->tree()->accept(new MetricsCollector()));
     }
 
     #[Test]
@@ -147,14 +147,14 @@ final class ExtendedCharClassDisplayTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         if (false === @preg_match('/(?[ \d ])/', '')) {
-            $this->assertSame(['matching' => [], 'non_matching' => []], $regex->parse('/(?[ [ab] - [a] ])/')->accept(new TestCaseGeneratorNodeVisitor()));
+            $this->assertSame(['matching' => [], 'non_matching' => []], $regex->parse('/(?[ [ab] - [a] ])/')->accept(new TestCaseGenerator()));
 
             return;
         }
 
         // Printable ASCII is scanned, from the space to the tilde.
-        $this->assertSame(['matching' => ['b'], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [ab] - [a] ])/')->accept(new TestCaseGeneratorNodeVisitor()));
-        $this->assertSame(['matching' => [], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [\x1f\x7f] ])/')->accept(new TestCaseGeneratorNodeVisitor()));
+        $this->assertSame(['matching' => ['b'], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [ab] - [a] ])/')->accept(new TestCaseGenerator()));
+        $this->assertSame(['matching' => [], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [\x1f\x7f] ])/')->accept(new TestCaseGenerator()));
     }
 
     #[Test]
@@ -162,14 +162,14 @@ final class ExtendedCharClassDisplayTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         if (false === @preg_match('/(?[ \d ])/', '')) {
-            $this->assertContains($regex->parse('/(?[ [ab] - [a] ])/')->accept(new SampleGeneratorNodeVisitor()), ['a', 'b']);
+            $this->assertContains($regex->parse('/(?[ [ab] - [a] ])/')->accept(new SampleGenerator()), ['a', 'b']);
 
             return;
         }
 
         $difference = $regex->parse('/(?[ [ab] - [a] ])/');
         $slash = $regex->parse('#(?[ [/a] - [a] ])#');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         for ($seed = 0; $seed < 8; $seed++) {
             $generator->setSeed($seed);
             $this->assertSame('b', $difference->accept($generator));

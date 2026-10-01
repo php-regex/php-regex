@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
 
 final class HighlighterVisitorEdgeCasesTest extends TestCase
 {
     public function test_console_highlighter_visitor_wrap_with_empty_content(): void
     {
-        $visitor = new ConsoleHighlighterVisitor();
+        $visitor = new ConsoleHighlighter();
         $reflection = new \ReflectionClass($visitor);
         $wrapMethod = $reflection->getMethod('wrap');
 
@@ -32,7 +32,7 @@ final class HighlighterVisitorEdgeCasesTest extends TestCase
 
     public function test_console_highlighter_visitor_wrap_with_unknown_type(): void
     {
-        $visitor = new ConsoleHighlighterVisitor();
+        $visitor = new ConsoleHighlighter();
         $reflection = new \ReflectionClass($visitor);
         $wrapMethod = $reflection->getMethod('wrap');
 
@@ -43,7 +43,7 @@ final class HighlighterVisitorEdgeCasesTest extends TestCase
 
     public function test_html_highlighter_visitor_wrap_with_empty_content(): void
     {
-        $visitor = new HtmlHighlighterVisitor();
+        $visitor = new HtmlHighlighter();
         $reflection = new \ReflectionClass($visitor);
         $wrapMethod = $reflection->getMethod('wrap');
 

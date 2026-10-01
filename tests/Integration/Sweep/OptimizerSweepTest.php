@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through Optimizer.
@@ -26,7 +26,7 @@ use RegexParser\Regex;
  */
 final class OptimizerSweepTest extends TestCase
 {
-    private OptimizerNodeVisitor $optimizerVisitor;
+    private Rewriter $optimizerVisitor;
 
     private Regex $regex;
 
@@ -34,7 +34,7 @@ final class OptimizerSweepTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->optimizerVisitor = new OptimizerNodeVisitor();
+        $this->optimizerVisitor = new Rewriter();
         $this->regex = Regex::create();
         $this->regexService = Regex::create();
     }
@@ -198,7 +198,7 @@ final class OptimizerSweepTest extends TestCase
 
     public function test_optimizer_char_class_optimization(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Character class that could be optimized
         $ast = $this->regexService->parse('/[a]/');
@@ -213,7 +213,7 @@ final class OptimizerSweepTest extends TestCase
 
     public function test_optimizer_quantifier_edge_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Quantifier with 0 min
         $ast = $this->regexService->parse('/a{0,5}/');
@@ -228,7 +228,7 @@ final class OptimizerSweepTest extends TestCase
 
     public function test_optimizer_sequence_flattening(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Nested sequences
         $ast = $this->regexService->parse('/abc/');
@@ -238,7 +238,7 @@ final class OptimizerSweepTest extends TestCase
 
     public function test_optimizer_alternation_with_empty(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Alternation with one empty branch
         $ast = $this->regexService->parse('/a|/');

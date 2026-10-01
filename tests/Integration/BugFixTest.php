@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
 
 final class BugFixTest extends TestCase
 {
@@ -68,7 +68,7 @@ final class BugFixTest extends TestCase
     {
         // (a|.)* should be CRITICAL
         $analysis = $this->regexService->redos('/(a|.)*/');
-        $this->assertSame(ReDoSSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
     }
 
     #[Test]
@@ -76,14 +76,14 @@ final class BugFixTest extends TestCase
     {
         // ([a-z]|[0-9])* -> disjoint branches, should not be critical
         $analysis = $this->regexService->redos('/([a-z]|[0-9])*/');
-        $this->assertNotSame(ReDoSSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(ReDoSSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
 
         // ([a-z]|[a-f])* -> Critical (overlap)
         // With overlap detection, this should remain critical.
         // Given the request to "fix bugs", false positive is acceptable for v1.0 safety.
 
         $analysis = $this->regexService->redos('/([a-z]|[a-f])*/');
-        $this->assertSame(ReDoSSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
     }
 }

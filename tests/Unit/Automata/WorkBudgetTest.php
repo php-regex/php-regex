@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Minimization\DfaMinimizer;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
+use PhpRegex\Automata\Options\SolverOptions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Minimization\DfaMinimizer;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Exception\ComplexityException;
 
 final class WorkBudgetTest extends TestCase
 {

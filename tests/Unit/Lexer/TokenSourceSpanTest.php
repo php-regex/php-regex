@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\PatternParser;
-use RegexParser\Lexer;
-use RegexParser\TokenType;
 
 /**
  * Every token knows the span of pattern it was cut from.

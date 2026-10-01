@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * PCRE2 10.43 added the ASCII-restriction options: "a" alone, or followed by
@@ -78,7 +78,7 @@ final class AsciiRestrictionOptionsTest extends TestCase
     public function test_compiling_keeps_the_modifiers_next_to_ascii_options(string $pattern): void
     {
         // "(?aDx)" still turns x on: the space and the comment go.
-        $compiled = Regex::create(['php_version' => 80400])->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create(['php_version' => 80400])->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $compiled);
         if (self::runningPcre1043()) {
@@ -138,7 +138,7 @@ final class AsciiRestrictionOptionsTest extends TestCase
      * PHP 8.4 as a target, which bundles PCRE2 10.44, and the running PHP
      * when the PCRE2 it links is 10.43 or newer.
      *
-     * @return list<Regex>
+     * @return list<\PhpRegex\Toolkit\Regex>
      */
     private static function readersOfPcre1043(): array
     {

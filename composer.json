@@ -32,12 +32,12 @@
     },
     "autoload": {
         "psr-4": {
-            "RegexParser\\": "src/"
+            "PhpRegex\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "RegexParser\\Tests\\": "tests/"
+            "PhpRegex\\Tests\\": "tests/"
         },
         "exclude-from-classmap": [
             "tests/Fixtures/"
@@ -78,10 +78,10 @@
         },
         "laravel": {
             "providers": [
-                "RegexParser\\Bridge\\Laravel\\RegexParserServiceProvider"
+                "PhpRegex\\Laravel\\PhpRegexServiceProvider"
             ],
             "aliases": {
-                "Regex": "RegexParser\\Bridge\\Laravel\\Facades\\Regex"
+                "Regex": "PhpRegex\\Laravel\\Facades\\Regex"
             }
         },
         "phpstan": {

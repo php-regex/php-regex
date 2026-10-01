@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cache;
+namespace PhpRegex\Tests\Unit\Cache;
 
+use PhpRegex\Parser\Cache\ArrayCache;
+use PhpRegex\Parser\Cache\AstSerializer;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\Node\ClassSetOperationNode;
+use PhpRegex\Parser\Node\ExtendedCharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Tests\Support\AstFingerprint;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\ArrayCache;
-use RegexParser\Cache\AstSerializer;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Node\ClassSetOperationNode;
-use RegexParser\Node\ExtendedCharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\RegexNode;
-use RegexParser\Regex;
-use RegexParser\Tests\Support\AstFingerprint;
 
 final class AstSerializerTest extends TestCase
 {
@@ -142,8 +142,8 @@ final class AstSerializerTest extends TestCase
     #[Test]
     public function test_every_node_class_may_be_read_back(): void
     {
-        foreach ((array) glob(\dirname(__DIR__, 3).'/src/Node/*.php') as $file) {
-            $class = 'RegexParser\\Node\\'.basename((string) $file, '.php');
+        foreach ((array) glob(\dirname(__DIR__, 3).'/src/Parser/Node/*.php') as $file) {
+            $class = 'PhpRegex\\Parser\\Node\\'.basename((string) $file, '.php');
             if (class_exists($class) && is_subclass_of($class, NodeInterface::class)
                 && !(new \ReflectionClass($class))->isAbstract()) {
                 $this->assertContains($class, AstSerializer::NODE_CLASSES, $class);
@@ -190,7 +190,7 @@ final class AstSerializerTest extends TestCase
     public function test_a_tree_holding_a_foreign_object_is_rejected(): void
     {
         $data = AstSerializer::serialize(Regex::create(['cache' => null])->parse('/a{2,3}/'));
-        $planted = preg_replace('/O:\\d++:"RegexParser\\\\Node\\\\QuantifierNode"/', 'O:8:"stdClass"', $data, 1, $count);
+        $planted = preg_replace('/O:\\d++:"PhpRegex\\\\Parser\\\\Node\\\\QuantifierNode"/', 'O:8:"stdClass"', $data, 1, $count);
         $this->assertSame(1, $count);
 
         $this->assertNull(AstSerializer::unserialize((string) $planted));
@@ -230,7 +230,7 @@ final class AstSerializerTest extends TestCase
             Regex::CACHE_VERSION,
             AstFingerprint::compute(),
             'The code that builds the AST changed, so trees cached before it are no longer the ones this '
-            .'code would build. Run "task cache-version" and commit src/RegexParser.php.',
+            .'code would build. Run "task cache-version" and commit src/Parser/RegexParser.php.',
         );
     }
 

@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser\Bugs;
+namespace PhpRegex\Tests\Unit\Parser\Bugs;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Regex;
 
 /**
  * Regression tests for range endpoints in character classes.

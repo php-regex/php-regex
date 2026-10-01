@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class ManualNodeInjectionTest extends TestCase
 {
     public function test_sample_generator_fallbacks(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         // 1. CharTypeNode with unknown type
         // Parser only allows d, D, s, S, etc. We force '?' to hit the default match arm.
@@ -49,7 +49,7 @@ final class ManualNodeInjectionTest extends TestCase
 
     public function test_optimizer_alternation_logic(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // 1. Alternation containing non-literals (should NOT optimize to CharClass)
         // Case: (a|\d) -> Non-literal child

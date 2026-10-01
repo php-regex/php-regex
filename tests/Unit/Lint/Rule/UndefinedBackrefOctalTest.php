@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Rule;
+namespace PhpRegex\Tests\Unit\Lint\Rule;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "\NN" of two digits or more that names no group is an octal escape, not a
@@ -67,7 +67,7 @@ final class UndefinedBackrefOctalTest extends TestCase
      */
     private function lint(string $pattern): array
     {
-        $visitor = new LinterNodeVisitor();
+        $visitor = new PatternLinter();
         Regex::create(['cache' => null])->parse($pattern)->accept($visitor);
 
         return array_values(array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues()));

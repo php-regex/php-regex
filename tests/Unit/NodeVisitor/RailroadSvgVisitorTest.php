@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\Regex;
 
 final class RailroadSvgVisitorTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/^a+$/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('<svg', $svg);
         $this->assertStringContainsString('</svg>', $svg);
@@ -36,7 +36,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a|b|c/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('<svg', $svg);
         $this->assertStringContainsString('class="path"', $svg);
@@ -46,7 +46,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('<svg', $svg);
         $this->assertStringContainsString('class="group-box"', $svg);
@@ -57,7 +57,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?<name>abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group #1 (name)', $svg);
     }
@@ -66,7 +66,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?:abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (non-capturing)', $svg);
     }
@@ -75,7 +75,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?=abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (positive lookahead)', $svg);
     }
@@ -84,7 +84,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?!abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (negative lookahead)', $svg);
     }
@@ -93,7 +93,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?<=abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (positive lookbehind)', $svg);
     }
@@ -102,7 +102,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?<!abc)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (negative lookbehind)', $svg);
     }
@@ -111,7 +111,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a?/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('path bypass', $svg);
         $this->assertStringContainsString('0 or 1 time', $svg);
@@ -121,7 +121,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a*/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('path loop', $svg);
         $this->assertStringContainsString('0 or more times', $svg);
@@ -131,7 +131,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a+/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('path loop', $svg);
         $this->assertStringContainsString('1 or more times', $svg);
@@ -141,7 +141,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a{2,5}/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('2 to 5 times', $svg);
     }
@@ -150,7 +150,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a{3}/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('3 times', $svg);
     }
@@ -159,7 +159,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a{2,}/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('2 or more times', $svg);
     }
@@ -169,7 +169,7 @@ final class RailroadSvgVisitorTest extends TestCase
         // "{,3}" repeats from PCRE2 10.43, which PHP bundles from 8.4.
         $ast = Regex::create(['php_version' => '8.4'])->parse('/a{,3}/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('0 to 3 times', $svg);
     }
@@ -178,7 +178,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/[abc]/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharClass', $svg);
         $this->assertStringContainsString('class="node class-positive"', $svg);
@@ -188,7 +188,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/[^abc]/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharClass (negated)', $svg);
         $this->assertStringContainsString('class="node class-negated"', $svg);
@@ -198,7 +198,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/[a-z]/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Range', $svg);
     }
@@ -207,7 +207,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/./');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Dot (.)', $svg);
         $this->assertStringContainsString('class="node anychar"', $svg);
@@ -217,7 +217,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/^/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Anchor (^)', $svg);
         $this->assertStringContainsString('class="node anchor"', $svg);
@@ -227,7 +227,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/$/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Anchor ($)', $svg);
     }
@@ -236,7 +236,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\b/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Assertion (\\b)', $svg);
     }
@@ -245,7 +245,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\d/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharType (\\d)', $svg);
     }
@@ -254,7 +254,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\w/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharType (\\w)', $svg);
     }
@@ -263,7 +263,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\s/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharType (\\s)', $svg);
     }
@@ -272,7 +272,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\x41/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharLiteral (\\x41)', $svg);
     }
@@ -281,7 +281,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(a)\1/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Backref (\\1)', $svg);
     }
@@ -290,7 +290,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?<x>a)\k<x>/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Backref (\\k&lt;x&gt;)', $svg);
     }
@@ -299,7 +299,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?1)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Subroutine (1)', $svg);
     }
@@ -308,7 +308,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\p{L}/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('UnicodeProperty (\\p{L})', $svg);
     }
@@ -317,7 +317,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('PosixClass ([:alpha:])', $svg);
     }
@@ -326,7 +326,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?#comment)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Comment', $svg);
     }
@@ -335,7 +335,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?C)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Callout (?C)', $svg);
     }
@@ -344,7 +344,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?C123)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Callout (?C123)', $svg);
     }
@@ -353,7 +353,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?C"test")/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Callout (?C="test")', $svg);
     }
@@ -362,7 +362,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\A/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Assertion (\\A)', $svg);
     }
@@ -371,7 +371,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\K/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Keep (\\K)', $svg);
     }
@@ -380,7 +380,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(*FAIL)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('PCREVerb (*FAIL)', $svg);
     }
@@ -389,7 +389,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(*ACCEPT)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('PCREVerb (*ACCEPT)', $svg);
     }
@@ -398,7 +398,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(*IF:7.0.0)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('PCREVerb (*IF:7.0.0)', $svg);
     }
@@ -407,7 +407,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(*DEFINE)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('PCREVerb (*DEFINE)', $svg);
     }
@@ -416,7 +416,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\cA/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('ControlChar (\\cA)', $svg);
     }
@@ -425,7 +425,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/\h/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('CharType (\\h)', $svg);
     }
@@ -434,7 +434,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a/i');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('flags: i', $svg);
     }
@@ -443,7 +443,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a||c/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('<svg', $svg);
     }
@@ -452,7 +452,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?(1)a|b)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Conditional', $svg);
     }
@@ -463,7 +463,7 @@ final class RailroadSvgVisitorTest extends TestCase
         // holding "&" and "[", and preg_match() finds "&]".
         $ast = Regex::create()->parse('/[[:alpha:]&&[a-z]]/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringNotContainsString('ClassOperation', $svg);
         $this->assertStringNotContainsString('(intersection)', $svg);
@@ -473,7 +473,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a\d+/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('class="node literal"', $svg);
         $this->assertStringContainsString('class="node control"', $svg);
@@ -483,7 +483,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('//');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString("Literal ('(empty)')", $svg);
     }
@@ -492,7 +492,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/a/imsx');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('flags: imsx', $svg);
     }
@@ -501,7 +501,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/^(?<foo>\w+)@(?<bar>\w+)\.(?<baz>\w+)$/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('<svg', $svg);
         $this->assertStringContainsString('Group #1 (foo)', $svg);
@@ -514,7 +514,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?<word>\w+)+/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('path loop', $svg);
         $this->assertStringContainsString('Group #1 (word)', $svg);
@@ -524,7 +524,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(a)(b)\1\2/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Backref (\\1)', $svg);
         $this->assertStringContainsString('Backref (\\2)', $svg);
@@ -534,7 +534,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/((a)(b))/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('class="group-box"', $svg);
     }
@@ -543,7 +543,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?i:a)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (inline flags)', $svg);
         $this->assertStringContainsString('flags: i', $svg);
@@ -553,7 +553,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?>a)/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (atomic)', $svg);
     }
@@ -562,7 +562,7 @@ final class RailroadSvgVisitorTest extends TestCase
     {
         $ast = Regex::create()->parse('/(?|(a)|(b)|(c))/');
         /** @var string $svg */
-        $svg = $ast->accept(new RailroadSvgVisitor());
+        $svg = $ast->accept(new RailroadSvgRenderer());
 
         $this->assertStringContainsString('Group (branch reset)', $svg);
     }

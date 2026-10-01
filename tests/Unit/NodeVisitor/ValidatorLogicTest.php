@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 
 final class ValidatorLogicTest extends TestCase
 {
     public function test_octal_invalid_digits(): void
     {
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         // \o{8} contains invalid octal digit, but use large codePoint for test
         $node = new CharLiteralNode('\o{8}', 0x100, CharLiteralType::OCTAL, 0, 0);
@@ -42,7 +42,7 @@ final class ValidatorLogicTest extends TestCase
 
         // This tests the Validator's internal parsing logic directly via a QuantifierNode
         // constructed with a raw string that might not come from standard parsing.
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         // {n} case
         $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5}', QuantifierType::T_GREEDY, 0, 0);
@@ -55,7 +55,7 @@ final class ValidatorLogicTest extends TestCase
 
         // Testing the "default" match in parseQuantifierBounds
         // {5,}
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
         $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5,}', QuantifierType::T_GREEDY, 0, 0);
         $node->accept($validator);
 

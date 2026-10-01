@@ -15,7 +15,7 @@ Factory steps:
 
 **Example:**
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create([
     'cache' => '/var/cache/regex',
@@ -51,7 +51,7 @@ $regex = Regex::new();
 Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $stream = Regex::tokenize('/foo|bar/i');
 
@@ -71,12 +71,12 @@ options as `Regex::create()` and gives the same answers; `Regex` hands its own
 to anything else that reads patterns, through `parser()`:
 
 ```php
-use RegexParser\RegexParser;
+use PhpRegex\Parser\RegexParser;
 
 $parser = RegexParser::create(['php_version' => '8.2']);
 $parser->validate('/(?[ \d ])/')->isValid;  // false: PHP 8.2 bundles PCRE2 10.40
 
-$regex = \RegexParser\Regex::create(['cache' => null]);
+$regex = \PhpRegex\Toolkit\Regex::create(['cache' => null]);
 $regex->parser()->parse('/a+/');              // the tree $regex->parse() gives
 ```
 
@@ -87,7 +87,7 @@ A library that only reads and validates patterns needs nothing else.
 Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. `RegexParser::clearCaches()` does the same.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -102,14 +102,14 @@ $regex->clearCaches();
 
 ### PcreEngine
 
-`RegexParser\Engine\PcreEngine` runs a pattern on the running PHP the way the
+`PhpRegex\Parser\Engine\PcreEngine` runs a pattern on the running PHP the way the
 library runs every pattern it is given: without the JIT (`(*NO_JIT)` leads the
 pattern), with its warning captured instead of raised, and with limits set for
 the one call and put back after it.
 
 ```php
-use RegexParser\Engine\PcreEngine;
-use RegexParser\Engine\PcreLimits;
+use PhpRegex\Parser\Engine\PcreEngine;
+use PhpRegex\Parser\Engine\PcreLimits;
 
 $engine = new PcreEngine();
 
@@ -125,13 +125,13 @@ the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
 
 ### LanguageSolver
 
-`RegexParser\Automata\LanguageSolver` compares the languages of two patterns of
+`PhpRegex\Automata\LanguageSolver` compares the languages of two patterns of
 the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
 return a result carrying the shortest string that proves the answer, and
 `compile()` returns a pattern's DFA.
 
 ```php
-use RegexParser\Automata\LanguageSolver;
+use PhpRegex\Automata\LanguageSolver;
 
 $solver = new LanguageSolver();
 
@@ -171,7 +171,7 @@ The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
 instance judges for. `PcreTarget::runtime()` is the running engine,
 `PcreTarget::bundledWith(80400)` a PHP version with its bundled PCRE2, and
 `new PcreTarget(80400, '10.42')` any pair; `Lexer`, `Parser`,
-`ValidatorNodeVisitor` and `Regex::cacheSeed()` take one.
+`Validator` and `Regex::cacheSeed()` take one.
 
 ---
 
@@ -179,8 +179,8 @@ A rule that depends on the release asks the target for a behaviour, named in
 `PcreFeature`, rather than for a release written by hand:
 
 ```php
-use RegexParser\PcreFeature;
-use RegexParser\PcreTarget;
+use PhpRegex\Parser\PcreFeature;
+use PhpRegex\Parser\PcreTarget;
 
 (new PcreTarget(80400, '10.44'))->supports(PcreFeature::ScanSubstring);  // false: it arrived in 10.45
 PcreFeature::ScanSubstring->release();                                   // '10.45'
@@ -196,7 +196,7 @@ release spelled short, as `'10.4'`, which would read as 10.04.
 Parses a pattern body plus flags/delimiter into a `RegexNode`. Use this when you have separate pattern components.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $pattern = 'foo|bar';
 $flags = 'i';
@@ -216,7 +216,7 @@ echo $ast->pattern;    // SequenceNode or AlternationNode
 Parses a full PCRE string (`/pattern/flags`).
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // Strict parsing (default)
 $ast = Regex::create()->parse('/foo|bar/i');
@@ -239,7 +239,7 @@ echo $result->errors[0]->getMessage();  // First error
 Returns a structured validation result without throwing exceptions.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/foo|bar/');
 
@@ -268,7 +268,7 @@ echo $result->category->value;     // ValidationErrorCategory enum
 Aggregates validation, lint, ReDoS analysis, optimization, and explanation into a single report.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $report = Regex::create()->analyze('/(a+)+b/');
 
@@ -287,22 +287,22 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 | `isValid`       | bool          | Pattern is syntactically valid |
 | `errors`        | array         | Validation errors              |
 | `lintIssues`    | array         | Linting warnings               |
-| `redos`         | ReDoSAnalysis | ReDoS analysis result          |
+| `redos`         | RedosAnalysis | ReDoS analysis result          |
 | `optimizations` | array         | Suggested optimizations        |
 | `explain`       | string        | Human explanation              |
 | `highlighted`   | string        | Highlighted pattern            |
 
 ---
 
-### redos(string $regex, ?ReDoSSeverity $threshold = null, ReDoSMode $mode = ReDoSMode::THEORETICAL, ?ReDoSConfirmOptions $confirmOptions = null): ReDoSAnalysis
+### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::THEORETICAL, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
 
 Analyzes ReDoS risk without an analysis report. Default mode is **theoretical** (structural). Use **confirmed** mode to attempt bounded evidence collection.
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSMode;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+b/', mode: ReDoSMode::THEORETICAL);
+$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::THEORETICAL);
 
 echo $analysis->severity->value;       // 'critical', 'safe', etc.
 echo $analysis->score;                 // int (0-10)
@@ -311,19 +311,19 @@ echo $analysis->vulnerablePart;        // Subpattern causing risk
 echo $analysis->recommendations[0];    // Suggested fix
 
 // Optional: bounded confirmation
-$confirmed = Regex::create()->redos('/(a+)+b/', mode: ReDoSMode::CONFIRMED);
+$confirmed = Regex::create()->redos('/(a+)+b/', mode: RedosMode::CONFIRMED);
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 ```
 
-**ReDoSAnalysis Fields:**
+**RedosAnalysis Fields:**
 
 | Field              | Type              | Description                              |
 |--------------------|-------------------|------------------------------------------|
-| `severity`         | ReDoSSeverity      | Risk level                                |
+| `severity`         | RedosSeverity      | Risk level                                |
 | `score`            | int               | Risk score (0-10)                         |
-| `mode`             | ReDoSMode          | off, theoretical, or confirmed            |
+| `mode`             | RedosMode          | off, theoretical, or confirmed            |
 | `confidence`       | Confidence         | Analysis confidence (use `confidenceLevel()`) |
-| `confirmation`     | ReDoSConfirmation\|null | Bounded evidence details              |
+| `confirmation`     | Confirmation\|null | Bounded evidence details              |
 | `vulnerablePart`   | string\|null       | Risky subpattern                          |
 | `recommendations`  | array              | Suggested fixes (verify behavior)         |
 | `hotspots`         | array              | Problem locations                         |
@@ -340,8 +340,8 @@ snake_case as `Regex::create()`'s are; an unknown key or a value of the wrong ty
 `InvalidRegexOptionException`.
 
 ```php
-use RegexParser\Optimizer\OptimizerOptions;
-use RegexParser\Regex;
+use PhpRegex\Optimizer\OptimizerOptions;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/', [
     'digits' => true,                    // [0-9] -> \d
@@ -373,7 +373,7 @@ supported regular subset. Unsupported patterns fall back to the original behavio
 Transpiles a PCRE literal to another regex dialect (starting with JavaScript).
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
 
@@ -399,7 +399,7 @@ an empty list says nothing about that end. Lookarounds add nothing, `(*ACCEPT)` 
 to keep is dropped rather than cut.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->literals('/user-\d{4}/');
 
@@ -428,7 +428,7 @@ gave up on and the error it gave, as `Backtrack limit exhausted`. A pattern
 the running PHP cannot compile gets a sample nothing checked.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $sample = Regex::create()->generate('/[A-Z][a-z]{3,5}\d{2}/');
 echo $sample;  // e.g., "Word12"
@@ -441,7 +441,7 @@ echo $sample;  // e.g., "Word12"
 Generates a human-readable explanation of the pattern.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // Plain text explanation
 $text = Regex::create()->explain('/\d{3}-\d{4}/');
@@ -463,7 +463,7 @@ echo $html;
 Generates syntax-highlighted output.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // ANSI colors for console
 $highlighted = Regex::create()->highlight('/\d+/', 'console');
@@ -505,7 +505,7 @@ Returned by `parse($regex, true)`. Contains partial AST plus errors.
 ```php
 $result = Regex::create()->parse('/[broken/i', true);
 
-echo $result->ast instanceof \RegexParser\Node\RegexNode;  // true (partial)
+echo $result->ast instanceof \PhpRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
 echo $result->errors[0]->getMessage();  // "Unterminated character class"
 ```
@@ -601,7 +601,7 @@ foreach ($result->literals as $literal) {
 RegexParser uses a focused exception hierarchy for precise error handling:
 
 Exception hierarchy (simplified):
-- `RegexParserExceptionInterface`
+- `ExceptionInterface`
   - `InvalidRegexOptionException` (invalid configuration option)
   - `LexerException` (tokenization failure)
   - `ParserException`
@@ -616,10 +616,10 @@ Exception hierarchy (simplified):
 **Usage Examples:**
 
 ```php
-use RegexParser\Regex;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\InvalidRegexOptionException;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 
 try {
     $regex = Regex::create(['invalid_key' => 'value']);
@@ -638,7 +638,7 @@ try {
 // Catch-all for any library error
 try {
     $result = Regex::create()->validate('/test/');
-} catch (\RegexParser\Exception\RegexParserExceptionInterface $e) {
+} catch (\PhpRegex\Parser\Exception\ExceptionInterface $e) {
     echo "RegexParser error: {$e->getMessage()}";
 }
 ```
@@ -654,7 +654,7 @@ try {
 | `parse($pattern, true)` | TolerantParseResult     | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
 | `analyze($regex)`       | AnalysisReport          | Analysis report   |
-| `redos($regex)`         | ReDoSAnalysis           | ReDoS check       |
+| `redos($regex)`         | RedosAnalysis           | ReDoS check       |
 | `optimize($regex)`      | OptimizationResult      | Optimize pattern  |
 | `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |

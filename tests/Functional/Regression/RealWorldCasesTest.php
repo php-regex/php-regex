@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Regression;
+namespace PhpRegex\Tests\Functional\Regression;
 
+use PhpRegex\Linter\Rule\RuleViolation;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LintIssue;
-use RegexParser\Regex;
 
 final class RealWorldCasesTest extends TestCase
 {
@@ -27,7 +27,7 @@ final class RealWorldCasesTest extends TestCase
 
         $issueMessages = [];
         foreach ($report->lintIssues as $issue) {
-            $this->assertInstanceOf(LintIssue::class, $issue);
+            $this->assertInstanceOf(RuleViolation::class, $issue);
             $issueMessages[] = $issue->message;
         }
 

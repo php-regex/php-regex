@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Routing;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Routing;
 
+use PhpRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Routing\RouteConflictAnalyzer;
-use RegexParser\Regex;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 

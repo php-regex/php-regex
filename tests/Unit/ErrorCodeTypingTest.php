@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\RegexException;
+use PhpRegex\Parser\Exception\SyntaxErrorException;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\Validation\ValidationResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\RegexException;
-use RegexParser\Exception\SyntaxErrorException;
-use RegexParser\RegexParser;
-use RegexParser\ValidationResult;
 
 /**
  * The code travels as an ErrorCode, never as a string: an exception always

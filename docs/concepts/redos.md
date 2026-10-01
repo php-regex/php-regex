@@ -38,8 +38,8 @@ RegexParser detects these common problematic patterns:
 RegexParser analyzes the AST without executing the pattern:
 
 - The lexer and parser build a `RegexNode` AST.
-- `ReDoSProfileNodeVisitor` walks the tree.
-- The result is a `ReDoSAnalysis` with severity, findings, and hints.
+- `RedosProfiler` walks the tree.
+- The result is a `RedosAnalysis` with severity, findings, and hints.
 
 ### Detection Methods
 
@@ -64,8 +64,8 @@ bin/regex lint src/ --redos-only
 ### PHP API
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSSeverity;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosSeverity;
 
 $regex = Regex::create();
 
@@ -74,7 +74,7 @@ $analysis = $regex->redos('/(a+)+b/');
 echo $analysis->severity->value; // 'critical', 'high', 'medium', 'low', 'safe'
 
 // Check against threshold
-if ($analysis->exceedsThreshold(ReDoSSeverity::HIGH)) {
+if ($analysis->exceedsThreshold(RedosSeverity::HIGH)) {
     echo "Pattern is potentially dangerous!";
 }
 

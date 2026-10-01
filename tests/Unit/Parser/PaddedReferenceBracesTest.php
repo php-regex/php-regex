@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * From PCRE2 10.43, spaces and tabs may follow the "{" and precede the "}"
@@ -144,6 +144,6 @@ final class PaddedReferenceBracesTest extends TestCase
         $this->assertSame('\\k{n}', $name->children[1]->ref);
 
         // The pattern compiles back as it was written.
-        $this->assertSame('/(?<n>a)\\k{ n }/', $regex->parse('/(?<n>a)\\k{ n }/')->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/(?<n>a)\\k{ n }/', $regex->parse('/(?<n>a)\\k{ n }/')->accept(new PatternPrinter()));
     }
 }

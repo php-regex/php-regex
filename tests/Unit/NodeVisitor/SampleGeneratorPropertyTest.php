@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sample for "\p{...}" must be a character with that property: most
@@ -51,7 +51,7 @@ final class SampleGeneratorPropertyTest extends TestCase
         // visitor guesses, and generate() says it found no sample. A name
         // PCRE does not know, built by hand, makes it refuse the probe.
         $surrogates = Regex::create(['cache' => null])->parse('/\\p{Cs}/u');
-        $this->assertNotSame('', $surrogates->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertNotSame('', $surrogates->accept(new SampleGenerator()));
 
         try {
             Regex::create(['cache' => null])->generate('/\\p{Cs}/u');
@@ -61,7 +61,7 @@ final class SampleGeneratorPropertyTest extends TestCase
         }
 
         $tree = new RegexNode(new UnicodePropNode('{NoSuchProperty}', true, 0, 17), 'u', '/', 0, 17);
-        $this->assertNotSame('', $tree->accept(new SampleGeneratorNodeVisitor()));
+        $this->assertNotSame('', $tree->accept(new SampleGenerator()));
     }
 
     /**

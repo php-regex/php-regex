@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class VisitorsFinalPushTest extends TestCase
 {
     /**
-     * Tests the branch "if ($optimizedPart !== $part)" in OptimizerNodeVisitor::visitCharClass.
+     * Tests the branch "if ($optimizedPart !== $part)" in Rewriter::visitCharClass.
      * Normally, the children of a character class don't change.
      * We use a Mock to force a change.
      */
     public function test_optimizer_detects_change_in_char_class_parts(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // We create a Mock of a node that returns a NEW instance when visited
         $mockPart = $this->createMock(NodeInterface::class);
@@ -57,7 +57,7 @@ final class VisitorsFinalPushTest extends TestCase
      */
     public function test_sample_generator_unknown_char_type(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         // 'Z' is not a standard type known to the generator
         $node = new CharTypeNode('Z', 0, 0);
 

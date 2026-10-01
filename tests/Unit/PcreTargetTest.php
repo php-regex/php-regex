@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\PcreTarget;
 
 final class PcreTargetTest extends TestCase
 {

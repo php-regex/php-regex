@@ -11,35 +11,34 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\RecursionLimitException;
+use PhpRegex\Parser\Exception\ResourceLimitException;
+use PhpRegex\Parser\Exception\SyntaxErrorException;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\TolerantParseResult;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Toolkit\OutputFormat;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Cache\NullCache;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\RecursionLimitException;
-use RegexParser\Exception\ResourceLimitException;
-use RegexParser\Exception\SyntaxErrorException;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\OutputFormat;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
-use RegexParser\Token;
-use RegexParser\TolerantParseResult;
-use RegexParser\ValidationResult;
 
 final class RegexTest extends TestCase
 {
@@ -51,7 +50,7 @@ final class RegexTest extends TestCase
     }
 
     /**
-     * @param class-string<NodeInterface> $expectedPatternClass
+     * @param class-string<\PhpRegex\Parser\Node\NodeInterface> $expectedPatternClass
      */
     #[DataProvider('provideValidRegexForParsing')]
     public function test_parse_method_with_valid_regex(
@@ -401,7 +400,7 @@ final class RegexTest extends TestCase
         $method = $ref->getMethod('createExplanationVisitor');
 
         $htmlVisitor = $method->invoke($this->regexService, 'html');
-        $this->assertInstanceOf(HtmlExplainNodeVisitor::class, $htmlVisitor);
+        $this->assertInstanceOf(HtmlExplainer::class, $htmlVisitor);
 
         $this->expectException(\InvalidArgumentException::class);
         $method->invoke($this->regexService, 'invalid');
@@ -519,7 +518,7 @@ final class RegexTest extends TestCase
     {
         $cache = new class implements CacheInterface {
             /**
-             * @var array<string, RegexNode>
+             * @var array<string, \PhpRegex\Parser\Node\RegexNode>
              */
             public array $written = [];
 

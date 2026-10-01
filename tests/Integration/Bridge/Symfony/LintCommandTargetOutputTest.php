@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Symfony;
+namespace PhpRegex\Tests\Integration\Bridge\Symfony;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\PatternExtractor;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Linter\Source\PhpFilePatternSource;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\Command\LintCommand;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\PhpRegexPatternSource;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternExtractor;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\RegexParser;
-use RegexParser\Tests\Support\TemporaryProject;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -96,15 +96,15 @@ final class LintCommandTargetOutputTest extends TestCase
         $this->assertStringContainsString('php_version', $tester->getDisplay());
     }
 
-    private function command(?string $projectDir, ?string $phpVersion = null): RegexLintCommand
+    private function command(?string $projectDir, ?string $phpVersion = null): LintCommand
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $sources = new RegexPatternSourceCollection([
-            new PhpRegexPatternSource(new RegexPatternExtractor(new TokenBasedExtractionStrategy())),
+        $analysis = new AnalysisService(RegexParser::create());
+        $sources = new PatternSourceCollection([
+            new PhpFilePatternSource(new PatternExtractor(new TokenBasedExtractionStrategy())),
         ]);
 
-        return new RegexLintCommand(
-            lint: new RegexLintService($analysis, $sources),
+        return new LintCommand(
+            lint: new LintService($analysis, $sources),
             analysis: $analysis,
             phpVersion: $phpVersion,
             projectDir: $projectDir,

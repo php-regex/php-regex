@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
  * The shipped extension.neon plus the opt-in rules.neon: lint and ReDoS on.
  *
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleRulesNeonTest extends RuleTestCase
 {
@@ -116,6 +116,6 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
 
     protected function getRule(): Rule
     {
-        return self::getContainer()->getByType(RegexParserRule::class);
+        return self::getContainer()->getByType(RegexPatternRule::class);
     }
 }

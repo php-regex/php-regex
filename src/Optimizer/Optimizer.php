@@ -11,19 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Optimizer;
+namespace PhpRegex\Optimizer;
 
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Exception\RegexException;
-use RegexParser\Internal\PatternParser;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\OptimizationResult;
-use RegexParser\RegexParser;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\RegexException;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\RegexParser;
 
 /**
  * Rewrites a pattern into a shorter or faster one that matches the same
@@ -37,19 +34,19 @@ final readonly class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                   $regex   The regular expression to optimize
-     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
-     *                                                          the array OptimizerOptions::fromArray() reads
+     * @param string                                                       $regex   The regular expression to optimize
+     * @param \PhpRegex\Optimizer\OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
+     *                                                                              the array OptimizerOptions::fromArray() reads
      *
-     * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
+     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on an option it does not know or a value of the wrong type
      *
-     * @return OptimizationResult Optimization results with changes applied
+     * @return \PhpRegex\Optimizer\OptimizationResult Optimization results with changes applied
      */
     public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {
         $options = \is_array($options) ? OptimizerOptions::fromArray($options) : $options;
         $verifyWithAutomata = $options->verifyWithAutomata;
-        $optimizer = new OptimizerNodeVisitor(
+        $optimizer = new Rewriter(
             optimizeDigits: $options->digits,
             optimizeWord: $options->word,
             ranges: $options->ranges,
@@ -75,8 +72,8 @@ final readonly class Optimizer
         // Both sides are normalized so that a pattern only counts as optimized
         // when its structure changed, not when it merely spells an escape
         // differently.
-        $originalCompiled = $ast->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
-        $optimizedCompiled = $optimizedAst->accept(new CompilerNodeVisitor($pretty, preserveSpelling: false));
+        $originalCompiled = $ast->accept(new PatternPrinter($pretty, preserveSpelling: false));
+        $optimizedCompiled = $optimizedAst->accept(new PatternPrinter($pretty, preserveSpelling: false));
 
         [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->parser->target());
         [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->parser->target());

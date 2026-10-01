@@ -11,38 +11,38 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Exception;
+namespace PhpRegex\Tests\Unit\Exception;
 
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Cli\CliException;
+use PhpRegex\Cli\Graph\GraphGenerator;
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\Formatter\JsonFormatter;
+use PhpRegex\Linter\LintException;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\Exception\ExceptionInterface;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenStream;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Redos\Confirmation;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Cache\NullCache;
-use RegexParser\Cli\CliException;
-use RegexParser\Cli\Graph\GraphGenerator;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Exception\RegexParserExceptionInterface;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\Formatter\JsonFormatter;
-use RegexParser\Lint\LintException;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\PcreTarget;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfirmation;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
-use RegexParser\Token;
-use RegexParser\TokenStream;
-use RegexParser\TokenType;
 
 /**
  * A caller's mistake throws an exception implementing
- * RegexParserExceptionInterface, each of its package; a library bug, such
+ * ExceptionInterface, each of its package; a library bug, such
  * as a token stream walked past its end, stays a plain \LogicException.
  */
 final class CallerMistakeExceptionsTest extends TestCase
@@ -82,9 +82,9 @@ final class CallerMistakeExceptionsTest extends TestCase
     #[Test]
     public function test_a_report_json_cannot_encode_is_a_lint_exception(): void
     {
-        $confirmation = new ReDoSConfirmation(false, [], null, null, null, 0, \INF);
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::SAFE, 0, confirmation: $confirmation);
-        $report = new RegexLintReport([[
+        $confirmation = new Confirmation(false, [], null, null, null, 0, \INF);
+        $analysis = new RedosAnalysis(RedosSeverity::SAFE, 0, confirmation: $confirmation);
+        $report = new LintReport([[
             'file' => 'a.php',
             'line' => 1,
             'pattern' => '/a/',
@@ -101,8 +101,8 @@ final class CallerMistakeExceptionsTest extends TestCase
     #[Test]
     public function test_the_lint_and_cli_exceptions_implement_the_library_interface(): void
     {
-        $this->assertTrue((new \ReflectionClass(LintException::class))->implementsInterface(RegexParserExceptionInterface::class));
-        $this->assertTrue((new \ReflectionClass(CliException::class))->implementsInterface(RegexParserExceptionInterface::class));
+        $this->assertTrue((new \ReflectionClass(LintException::class))->implementsInterface(ExceptionInterface::class));
+        $this->assertTrue((new \ReflectionClass(CliException::class))->implementsInterface(ExceptionInterface::class));
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class CallerMistakeExceptionsTest extends TestCase
 
         $this->expectException(SampleGenerationException::class);
 
-        $ast->accept(new SampleGeneratorNodeVisitor());
+        $ast->accept(new SampleGenerator());
     }
 
     /**
@@ -148,7 +148,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     #[DataProvider('provideUnresolvedSubroutines')]
     public function test_generating_from_an_unresolved_subroutine_throws_a_library_exception(string $pattern): void
     {
-        $this->expectException(RegexParserExceptionInterface::class);
+        $this->expectException(ExceptionInterface::class);
 
         Regex::create(['cache' => new NullCache()])->generate($pattern);
     }
@@ -174,11 +174,11 @@ final class CallerMistakeExceptionsTest extends TestCase
 
         $this->expectException(SampleGenerationException::class);
 
-        $class->accept(new SampleGeneratorNodeVisitor());
+        $class->accept(new SampleGenerator());
     }
 
     /**
-     * @param \Closure(TokenStream): mixed $walk
+     * @param \Closure(\PhpRegex\Parser\Token\TokenStream):mixed $walk
      */
     #[Test]
     #[DataProvider('provideWalksPastTheBounds')]
@@ -201,7 +201,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\Closure(TokenStream): mixed}>
+     * @return iterable<string, array{\Closure(\PhpRegex\Parser\Token\TokenStream):mixed}>
      */
     public static function provideWalksPastTheBounds(): iterable
     {

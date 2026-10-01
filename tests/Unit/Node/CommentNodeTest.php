@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CommentNode;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class CommentNodeTest extends TestCase
 {

@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Traversal;
+namespace PhpRegex\Tests\Unit\Traversal;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\NodeFinder;
+use PhpRegex\Parser\NodeWalker;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\TraversalAction;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeFinder;
-use RegexParser\NodeTraverser;
-use RegexParser\RegexParser;
-use RegexParser\TraversalAction;
 
 /**
  * A tree is walked without a visitor for each node type: every node gives
@@ -42,7 +42,7 @@ final class NodeTraversalTest extends TestCase
         $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse($pattern);
         $reached = 0;
 
-        NodeTraverser::walk($tree, static function () use (&$reached): null {
+        NodeWalker::walk($tree, static function () use (&$reached): null {
             $reached++;
 
             return null;
@@ -95,7 +95,7 @@ final class NodeTraversalTest extends TestCase
         $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse('/(a)(b)/');
         $left = [];
 
-        NodeTraverser::walk(
+        NodeWalker::walk(
             $tree,
             static fn (): null => null,
             static function (NodeInterface $node) use (&$left): ?TraversalAction {
@@ -120,7 +120,7 @@ final class NodeTraversalTest extends TestCase
         $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse('/x(ab)y(c)z/');
         $seen = [];
 
-        NodeTraverser::walk($tree, static function (NodeInterface $node) use (&$seen): ?TraversalAction {
+        NodeWalker::walk($tree, static function (NodeInterface $node) use (&$seen): ?TraversalAction {
             if ($node instanceof LiteralNode) {
                 $seen[] = $node->value;
             }
@@ -141,7 +141,7 @@ final class NodeTraversalTest extends TestCase
         $depths = [];
         $left = [];
 
-        NodeTraverser::walk(
+        NodeWalker::walk(
             $tree,
             static function (NodeInterface $node, array $ancestors) use (&$depths): null {
                 if ($node instanceof LiteralNode) {

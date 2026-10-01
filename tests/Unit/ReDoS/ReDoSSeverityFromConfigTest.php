@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 /**
  * The one reading of a configured ReDoS threshold, shared by every surface
@@ -27,24 +27,24 @@ use RegexParser\ReDoS\ReDoSSeverity;
 final class ReDoSSeverityFromConfigTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, ReDoSSeverity}>
+     * @return iterable<string, array{string, \PhpRegex\Redos\RedosSeverity}>
      */
     public static function provideThresholds(): iterable
     {
-        yield 'low' => ['low', ReDoSSeverity::LOW];
-        yield 'medium' => ['medium', ReDoSSeverity::MEDIUM];
-        yield 'high' => ['high', ReDoSSeverity::HIGH];
-        yield 'critical' => ['critical', ReDoSSeverity::CRITICAL];
-        yield 'upper case' => ['HIGH', ReDoSSeverity::HIGH];
-        yield 'mixed case' => ['Critical', ReDoSSeverity::CRITICAL];
-        yield 'mixed case inside the word' => ['mEdIuM', ReDoSSeverity::MEDIUM];
+        yield 'low' => ['low', RedosSeverity::LOW];
+        yield 'medium' => ['medium', RedosSeverity::MEDIUM];
+        yield 'high' => ['high', RedosSeverity::HIGH];
+        yield 'critical' => ['critical', RedosSeverity::CRITICAL];
+        yield 'upper case' => ['HIGH', RedosSeverity::HIGH];
+        yield 'mixed case' => ['Critical', RedosSeverity::CRITICAL];
+        yield 'mixed case inside the word' => ['mEdIuM', RedosSeverity::MEDIUM];
     }
 
     #[Test]
     #[DataProvider('provideThresholds')]
-    public function test_from_config_reads_a_threshold_in_any_case(string $value, ReDoSSeverity $expected): void
+    public function test_from_config_reads_a_threshold_in_any_case(string $value, RedosSeverity $expected): void
     {
-        $this->assertSame($expected, ReDoSSeverity::fromConfig($value));
+        $this->assertSame($expected, RedosSeverity::fromConfig($value));
     }
 
     /**
@@ -68,6 +68,6 @@ final class ReDoSSeverityFromConfigTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessage('"'.$value.'"');
 
-        ReDoSSeverity::fromConfig($value);
+        RedosSeverity::fromConfig($value);
     }
 }

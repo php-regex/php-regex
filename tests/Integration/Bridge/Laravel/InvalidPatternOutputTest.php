@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Laravel\PhpRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
 
 /**
  * An Artisan command refusing a pattern prints the message and, under it,
@@ -63,7 +63,7 @@ final class InvalidPatternOutputTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            RegexParserServiceProvider::class,
+            PhpRegexServiceProvider::class,
         ];
     }
 }

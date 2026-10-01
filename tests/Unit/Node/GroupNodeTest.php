@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class GroupNodeTest extends TestCase
 {
     /**
-     * @return \Iterator<string, array{GroupType, ?string, ?string}>
+     * @return \Iterator<string, array{\PhpRegex\Parser\Node\GroupType, ?string, ?string}>
      */
     public static function data_provider_group_types(): \Iterator
     {

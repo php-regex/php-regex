@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "\c\" is the control character 0x1C. Written right before the closing
@@ -34,7 +34,7 @@ final class ControlBackslashCompilationTest extends TestCase
         $this->assertSame(1, preg_match($pattern, $subject), $pattern);
 
         $regex = Regex::create(['cache' => null]);
-        $compiled = $regex->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = $regex->parse($pattern)->accept(new PatternPrinter());
         $optimized = $regex->optimize($pattern)->optimized;
 
         $this->assertSame(1, @preg_match($compiled, $subject), \sprintf('%s compiled into %s', $pattern, $compiled));

@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Tests\TestUtils\ValidatorErrorCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Tests\TestUtils\ValidatorErrorCodes;
 
 /**
  * The error codes form one closed enum. Every value reads

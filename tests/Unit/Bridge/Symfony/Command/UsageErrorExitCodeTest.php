@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Symfony\Analyzer\AnalysisContext;
+use PhpRegex\Symfony\Analyzer\AnalyzerInterface;
+use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PhpRegex\Symfony\Command\AnalyzeCommand;
+use PhpRegex\Symfony\Command\CompareCommand;
+use PhpRegex\Symfony\Command\SecurityCommand;
+use PhpRegex\Symfony\Command\TranspileCommand;
+use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PhpRegex\Symfony\Security\SecurityConfigExtractor;
+use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Analyzer\AnalysisContext;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerInterface;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use RegexParser\Bridge\Symfony\Command\CompareCommand;
-use RegexParser\Bridge\Symfony\Command\RegexAnalyzeCommand;
-use RegexParser\Bridge\Symfony\Command\RegexSecurityCommand;
-use RegexParser\Bridge\Symfony\Command\RegexTranspileCommand;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer;
-use RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor;
-use RegexParser\Bridge\Symfony\Security\SecurityFirewallAnalyzer;
-use RegexParser\Regex;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -59,7 +59,7 @@ final class UsageErrorExitCodeTest extends TestCase
     {
         $analyze = static fn (): Command => self::analyzeCommand();
         $security = static fn (): Command => self::securityCommand();
-        $transpile = static fn (): Command => new RegexTranspileCommand(Regex::create());
+        $transpile = static fn (): Command => new TranspileCommand(Regex::create());
         $compare = static fn (): Command => new CompareCommand(Regex::create());
 
         yield 'regex:analyze with an unknown --format' => [$analyze, ['--format' => 'xml']];
@@ -83,7 +83,7 @@ final class UsageErrorExitCodeTest extends TestCase
     #[Test]
     public function test_a_pattern_the_command_judges_still_exits_failure(): void
     {
-        $tester = new CommandTester(new RegexTranspileCommand(Regex::create()));
+        $tester = new CommandTester(new TranspileCommand(Regex::create()));
 
         $this->assertSame(Command::FAILURE, $tester->execute(['pattern' => '/(/']));
     }
@@ -97,9 +97,9 @@ final class UsageErrorExitCodeTest extends TestCase
     }
 
     /**
-     * @param list<AnalyzerInterface>|null $analyzers
+     * @param list<\PhpRegex\Symfony\Analyzer\AnalyzerInterface>|null $analyzers
      */
-    private static function analyzeCommand(?array $analyzers = null): RegexAnalyzeCommand
+    private static function analyzeCommand(?array $analyzers = null): AnalyzeCommand
     {
         $analyzers ??= [new class implements AnalyzerInterface {
             public function getId(): string
@@ -123,12 +123,12 @@ final class UsageErrorExitCodeTest extends TestCase
             }
         }];
 
-        return new RegexAnalyzeCommand(new AnalyzerRegistry($analyzers), new ConsoleReportFormatter(), new JsonReportFormatter());
+        return new AnalyzeCommand(new AnalyzerRegistry($analyzers), new ConsoleReportFormatter(), new JsonReportFormatter());
     }
 
-    private static function securityCommand(): RegexSecurityCommand
+    private static function securityCommand(): SecurityCommand
     {
-        return new RegexSecurityCommand(
+        return new SecurityCommand(
             new SecurityConfigExtractor(),
             new SecurityAccessControlAnalyzer(Regex::create()),
             new SecurityFirewallAnalyzer(Regex::create()),

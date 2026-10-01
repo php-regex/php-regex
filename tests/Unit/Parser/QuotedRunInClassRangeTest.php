@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Inside a class, a \Q...\E run stands for its characters one by one:
@@ -47,7 +47,7 @@ final class QuotedRunInClassRangeTest extends TestCase
     #[Test]
     public function test_the_range_starts_at_the_last_quoted_character(): void
     {
-        $dump = Regex::create()->parse('/[\\Qabc\\E-z]/')->accept(new DumperNodeVisitor());
+        $dump = Regex::create()->parse('/[\\Qabc\\E-z]/')->accept(new NodeDumper());
 
         $this->assertStringContainsString('Range', $dump);
         $this->assertStringNotContainsString("'abc'", $dump);
@@ -60,7 +60,7 @@ final class QuotedRunInClassRangeTest extends TestCase
     #[DataProvider('provideMatchingPatterns')]
     public function test_the_tree_matches_what_php_matches(string $pattern, array $subjects): void
     {
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));

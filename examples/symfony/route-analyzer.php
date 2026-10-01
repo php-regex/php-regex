@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosSeverity;
+
 /**
  * Example: Symfony bundle route conflict analysis
  *
@@ -12,9 +15,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 // Example routes from a Symfony application
 $routes = [
@@ -40,7 +40,7 @@ foreach ($routes as $route) {
 
     $redos = $regex->redos($route);
 
-    $severityOrder = [ReDoSSeverity::SAFE, ReDoSSeverity::LOW, ReDoSSeverity::MEDIUM, ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL];
+    $severityOrder = [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM, RedosSeverity::HIGH, RedosSeverity::CRITICAL];
     $riskLevel = array_search($redos->severity, $severityOrder, true);
 
     if ($riskLevel >= 2) {  // MEDIUM or worse

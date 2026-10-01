@@ -11,12 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Lint;
+namespace PhpRegex\Tests\Functional\Lint;
 
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\PatternExtractor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\RegexPatternExtractor;
-use RegexParser\Lint\RegexPatternOccurrence;
 
 /**
  * Regression tests for the linter to ensure false positives are avoided
@@ -24,11 +23,11 @@ use RegexParser\Lint\RegexPatternOccurrence;
  */
 final class RegressionTest extends TestCase
 {
-    private RegexPatternExtractor $extractor;
+    private PatternExtractor $extractor;
 
     protected function setUp(): void
     {
-        $this->extractor = new RegexPatternExtractor(new TokenBasedExtractionStrategy());
+        $this->extractor = new PatternExtractor(new TokenBasedExtractionStrategy());
     }
 
     /**
@@ -256,7 +255,7 @@ final class RegressionTest extends TestCase
     /**
      * Helper method to extract patterns from fixture file.
      *
-     * @return array<RegexPatternOccurrence>
+     * @return array<\PhpRegex\Linter\PatternOccurrence>
      */
     private function extractFromFixture(string $fixtureName): array
     {

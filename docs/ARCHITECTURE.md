@@ -19,11 +19,11 @@ RegexParser treats a regex literal as structured input:
 - Delimiter (the chosen boundary character)
 - Flags (`i`, `m`, `s`, `u`, `x`, and more)
 
-This happens in `RegexParser\Internal\PatternParser`. The output is then passed to the lexer.
+This happens in `PhpRegex\Parser\Internal\PatternParser`. The output is then passed to the lexer.
 
 ## Step 2: Lexer (Tokenization)
 
-`src/Lexer.php` scans the pattern body as bytes and emits tokens with start/end offsets. The lexer is stateful because PCRE syntax changes meaning depending on context. The main states include:
+`src/Parser/Lexer.php` scans the pattern body as bytes and emits tokens with start/end offsets. The lexer is stateful because PCRE syntax changes meaning depending on context. The main states include:
 
 - Default text
 - Character class (`[...]`)
@@ -58,7 +58,7 @@ This keeps lexing fast and deterministic while preserving byte offsets.
 
 ## Step 3: Parser (Recursive Descent)
 
-`src/Parser.php` is a handwritten recursive descent parser. It walks the `TokenStream` and builds an AST that reflects PCRE precedence:
+`src/Parser/Syntax/TokenParser.php` is a handwritten recursive descent parser. It walks the `TokenStream` and builds an AST that reflects PCRE precedence:
 
 - Atoms (literals, classes, groups)
 - Quantifiers
@@ -113,7 +113,7 @@ RegexNode
     └── AnchorNode("$")
 ```
 
-Node definitions live in `src/Node/`. The full node reference is in [docs/nodes/README.md](nodes/README.md).
+Node definitions live in `src/Parser/Node/`. The full node reference is in [docs/nodes/README.md](nodes/README.md).
 
 ## Step 5: Visitors and Traversal
 
@@ -124,13 +124,13 @@ $node->accept($visitor)
   -> $visitor->visitXxx($node)
 ```
 
-Built-in visitors live in `src/NodeVisitor/` and include:
+Built-in visitors live in the package that owns their concern, and include:
 
-- `ValidatorNodeVisitor`
-- `ExplainNodeVisitor`
-- `CompilerNodeVisitor`
-- `ReDoSProfileNodeVisitor`
-- `OptimizerNodeVisitor`
+- `Parser\Validation\Validator` (`src/Parser/Validation/`)
+- `Explain\TextExplainer` (`src/Explain/`)
+- `Parser\Printer\PatternPrinter` (`src/Parser/Printer/`)
+- `Redos\RedosProfiler` (`src/Redos/`)
+- `Optimizer\Rewriter` (`src/Optimizer/`)
 
 Traversal details are in [docs/design/AST_TRAVERSAL.md](design/AST_TRAVERSAL.md).
 
@@ -146,7 +146,7 @@ Diagnostics codes and explanations are documented in [docs/reference/diagnostics
 
 ## ReDoS Analysis (Static)
 
-ReDoS analysis uses the AST and never executes the regex. `ReDoSAnalyzer` builds a `ReDoSProfileNodeVisitor` with a `CharSetAnalyzer`, then walks the tree.
+ReDoS analysis uses the AST and never executes the regex. `RedosAnalyzer` builds a `RedosProfiler` with a `CharSetAnalyzer`, then walks the tree.
 
 Core heuristics include:
 
@@ -158,25 +158,25 @@ Core heuristics include:
 - Large bounded quantifiers (low risk, but flagged)
 - Atomic groups and possessive quantifiers lowering severity
 
-Analysis results are wrapped in `ReDoSAnalysis` and include severity, findings, and suggested rewrites. See [docs/REDOS_GUIDE.md](REDOS_GUIDE.md) for user-facing guidance.
+Analysis results are wrapped in `RedosAnalysis` and include severity, findings, and suggested rewrites. See [docs/REDOS_GUIDE.md](REDOS_GUIDE.md) for user-facing guidance.
 
 ### ReDoS Heuristics in Practice
 
-`ReDoSProfileNodeVisitor` tracks quantifier depth and atomic context while walking the AST:
+`RedosProfiler` tracks quantifier depth and atomic context while walking the AST:
 
 - `unboundedQuantifierDepth` and `totalQuantifierDepth` model star height and nesting.
 - Atomic groups (`(?>...)`) and possessive quantifiers (`*+`, `++`, `{m,n}+`) toggle `inAtomicGroup`, which reduces or avoids severity.
 - `CharSetAnalyzer` compares alternation branches to detect overlap inside repetition.
 - Backreference loops inside unbounded quantifiers are flagged as high risk.
 
-Findings are collected as `ReDoSFinding` objects, and the visitor records a `culpritNode` and `hotspots` so the CLI can highlight where the risk originates.
+Findings are collected as `Finding` objects, and the visitor records a `culpritNode` and `hotspots` so the CLI can highlight where the risk originates.
 
 ## CLI Lint Pipeline
 
 The CLI linter runs in two stages:
 
-1. Extract patterns from files into `RegexPatternOccurrence` entries.
-2. Analyze and format the results into a `RegexLintReport` (console/json/github).
+1. Extract patterns from files into `PatternOccurrence` entries.
+2. Analyze and format the results into a `LintReport` (console/json/github).
 
 When `--jobs` is used and `pcntl_fork` is available, both extraction and analysis run in parallel workers. Each worker handles a chunk of files or patterns, and the parent process aggregates results.
 
@@ -206,7 +206,7 @@ gives the one a facade uses.
 
 RegexParser can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
 
-Limits are enforced in `RegexOptions`:
+Limits are enforced in `ParserOptions`:
 
 - `max_pattern_length`
 - `max_lookbehind_length` (variable-length lookbehinds; a fixed-length one is only limited by PCRE's 65535)
@@ -218,9 +218,9 @@ Limits are enforced in `RegexOptions`:
 
 When you add a new PCRE construct, you typically update:
 
-- `src/Node/*` to define a node
-- `src/Parser.php` and `src/Lexer.php` to recognize syntax
-- `src/NodeVisitor/*` to support traversal
+- `src/Parser/Node/*` to define a node
+- `src/Parser/Syntax/TokenParser.php` and `src/Parser/Lexer.php` to recognize syntax
+- `src/Parser/NodeVisitorInterface.php` and every visitor that implements it, to support traversal
 - Tests and fixtures for valid/invalid cases
 
 See [docs/EXTENDING_GUIDE.md](EXTENDING_GUIDE.md) for the full workflow.

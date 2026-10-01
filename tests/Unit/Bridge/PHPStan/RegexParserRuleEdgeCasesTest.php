@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\PHPStan;
+namespace PhpRegex\Tests\Unit\Bridge\PHPStan;
 
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\Array_;
@@ -21,6 +21,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
@@ -31,7 +32,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 final class RegexParserRuleEdgeCasesTest extends TestCase
 {
@@ -49,7 +49,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_returns_empty_for_unknown_function(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
@@ -61,7 +61,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_returns_empty_for_non_name_function(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
@@ -72,7 +72,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_returns_empty_when_pattern_arg_missing(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
@@ -83,7 +83,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_ignores_non_array_callback_patterns(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
@@ -96,7 +96,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_skips_non_string_callback_keys(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
@@ -113,7 +113,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_process_node_continues_after_non_string_callback_keys(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
@@ -152,14 +152,14 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     #[DataProvider('providePatternsTheRunningEngineRefuses')]
     public function test_a_pattern_the_running_engine_refuses_gets_no_error_from_any_check(string $pattern): void
     {
-        $this->assertSame([], $this->errorsFor(new RegexParserRule(config: self::ALL_CHECKS), $pattern, 10));
+        $this->assertSame([], $this->errorsFor(new RegexPatternRule(config: self::ALL_CHECKS), $pattern, 10));
     }
 
     #[Test]
     #[DataProvider('providePatternsTheRunningEngineRefuses')]
     public function test_a_pattern_the_running_engine_refuses_gets_no_error_by_default(string $pattern): void
     {
-        $this->assertSame([], $this->errorsFor(new RegexParserRule(), $pattern, 10));
+        $this->assertSame([], $this->errorsFor(new RegexPatternRule(), $pattern, 10));
     }
 
     #[Test]
@@ -168,7 +168,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         // "(?aD)" arrived in PCRE2 10.43; PHP 8.2 bundles 10.40. Where the running
         // engine refuses it too, PHPStan core reports it and this rule stays silent.
         $pattern = '/(?aD)x/';
-        $rule = new RegexParserRule(config: ['phpVersion' => '8.2']);
+        $rule = new RegexPatternRule(config: ['phpVersion' => '8.2']);
 
         $this->assertSame(
             self::runningEngineCompiles($pattern) ? ['regex.invalidForTarget'] : [],
@@ -184,7 +184,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_the_hint_on_a_target_specific_refusal_is_the_tip(): void
     {
         $pattern = '/(?<=ab?)x/';
-        $errors = $this->errorsFor(new RegexParserRule(config: ['phpVersion' => '8.2']), $pattern, 7);
+        $errors = $this->errorsFor(new RegexPatternRule(config: ['phpVersion' => '8.2']), $pattern, 7);
 
         if (!self::runningEngineCompiles($pattern)) {
             $this->assertSame([], $errors);
@@ -204,7 +204,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     #[Test]
     public function test_a_pattern_with_an_underscore_delimiter_is_checked(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
 
         $this->assertNotSame([], $this->errorsFor($rule, '_\\s+_m', 7));
     }
@@ -212,14 +212,14 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     #[Test]
     public function test_runtime_target_reports_no_validity_error(): void
     {
-        $rule = new RegexParserRule(config: ['phpVersion' => 'runtime']);
+        $rule = new RegexPatternRule(config: ['phpVersion' => 'runtime']);
 
         $this->assertSame([], $this->errorsFor($rule, '/(?aD)x/', 7));
     }
 
     public function test_default_report_redos_is_disabled(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $errors = $this->errorsFor($rule, '/(a+)+$/', 5);
 
@@ -239,20 +239,20 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     #[Test]
     public function test_default_lint_is_disabled(): void
     {
-        $this->assertSame([], $this->errorsFor(new RegexParserRule(), '/no_dot/s', 5));
+        $this->assertSame([], $this->errorsFor(new RegexPatternRule(), '/no_dot/s', 5));
     }
 
     #[Test]
     public function test_lint_is_reported_when_enabled(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['lint' => ['enabled' => true]]]);
 
         $this->assertSame(['regex.lint.flag.useless.s'], $this->identifiersOf($this->errorsFor($rule, '/no_dot/s', 5)));
     }
 
     public function test_default_suggest_optimizations_is_disabled(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $errors = $this->errorsFor($rule, '/[0-9]+/', 9);
 
@@ -270,7 +270,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_checks_config_enables_redos_and_optimizations(): void
     {
-        $rule = new RegexParserRule(
+        $rule = new RegexPatternRule(
             config: [
                 'checks' => [
                     'redos' => [
@@ -316,7 +316,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_default_optimization_config_enables_word_optimization(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         $errors = $this->errorsFor($rule, '/[A-Za-z0-9_]+/', 11);
 
@@ -326,7 +326,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_default_optimization_config_avoids_cross_category_ranges(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         $errors = $this->errorsFor($rule, '/[9:;<]/', 12);
 
@@ -344,7 +344,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_report_redos_flag_skips_redos_issues(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['lint' => ['enabled' => true], 'redos' => ['enabled' => false]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['lint' => ['enabled' => true], 'redos' => ['enabled' => false]]]);
 
         $errors = $this->errorsFor($rule, '/(a+)+/', 5);
 
@@ -355,7 +355,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_redos_low_severity_is_reported_under_regex_redos(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
         $errors = $this->errorsFor($rule, '/(a{1,5}){1,5}/', 12);
 
@@ -368,7 +368,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_unsafe_optimizations_are_skipped(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         $identifiers = array_map(static fn ($error): string => $error->getIdentifier(), $this->errorsFor($rule, '/(?:a)/', 20));
 
@@ -377,28 +377,28 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_is_optimization_safe_rejects_empty_optimized_pattern(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', ''));
     }
 
     public function test_is_optimization_safe_rejects_short_pattern(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/a/', '/a/'));
     }
 
     public function test_is_optimization_safe_rejects_delimiter_only(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/a/', '/'));
     }
 
     public function test_default_optimization_config_enables_digits_optimization(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         $errors = $this->errorsFor($rule, '/[0-9]+/', 11);
 
@@ -408,35 +408,35 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_is_optimization_format_safe_rejects_empty_delimiter(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', ''));
     }
 
     public function test_is_optimization_format_safe_rejects_delimiter_at_start_only(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', '/'));
     }
 
     public function test_is_optimization_format_safe_rejects_empty_pattern_part(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', '//'));
     }
 
     public function test_is_optimization_format_safe_rejects_short_pattern(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
 
         $this->assertFalse($rule->isOptimizationFormatSafe('/ab/', '/a/'));
     }
 
     public function test_redos_critical_severity_is_reported_under_regex_redos(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
 
         $errors = $this->errorsFor($rule, '/(x+)+/', 12);
 
@@ -450,7 +450,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_suggest_optimizations_uses_limit_parameter(): void
     {
-        $rule = new RegexParserRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         // This should work with the default limit of 1
         $errors = $this->errorsFor($rule, '/[0-9]+/', 12);
@@ -461,7 +461,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_truncate_pattern_handles_edge_cases(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         $ref = new \ReflectionClass($rule);
         $refMethod = $ref->getMethod('truncatePattern');
 
@@ -480,7 +480,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_format_source_concatenates_correctly(): void
     {
-        $rule = new RegexParserRule();
+        $rule = new RegexPatternRule();
         $ref = new \ReflectionClass($rule);
         $refMethod = $ref->getMethod('formatSource');
 
@@ -494,7 +494,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
      *
      * @return list<IdentifierRuleError>
      */
-    private function errorsFor(RegexParserRule $rule, string $pattern, int $line): array
+    private function errorsFor(RegexPatternRule $rule, string $pattern, int $line): array
     {
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);

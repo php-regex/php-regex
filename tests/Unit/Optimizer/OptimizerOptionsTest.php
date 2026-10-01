@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Optimizer;
+namespace PhpRegex\Tests\Unit\Optimizer;
 
+use PhpRegex\Optimizer\OptimizerOptions;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Optimizer\OptimizerOptions;
-use RegexParser\Regex;
 
 /**
  * The optimizer's options are one typed value. As an array they are keyed in

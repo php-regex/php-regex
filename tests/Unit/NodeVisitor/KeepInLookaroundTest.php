@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\PcreTarget;
-use RegexParser\Regex;
 
 /**
  * Up to PHP 8.4, PHP compiles every pattern with the PCRE2 option that lets
@@ -107,7 +107,7 @@ final class KeepInLookaroundTest extends TestCase
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('not allowed in a lookaround');
 
-        $lookahead->accept(new ValidatorNodeVisitor(target: PcreTarget::bundledWith(80500)));
+        $lookahead->accept(new Validator(target: PcreTarget::bundledWith(80500)));
     }
 
     /**

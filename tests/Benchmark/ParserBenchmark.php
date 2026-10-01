@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Benchmark;
+namespace PhpRegex\Tests\Benchmark;
 
 use PhpBench\Attributes as Bench;
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 final class ParserBenchmark
 {

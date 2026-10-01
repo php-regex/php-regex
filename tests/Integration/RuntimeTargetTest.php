@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Tests\Unit\NodeVisitor\ErrorOffsetReleaseTest;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
-use RegexParser\Tests\Unit\NodeVisitor\ErrorOffsetReleaseTest;
 
 /**
  * With no target, the running PHP and the PCRE2 it links judge: the one test

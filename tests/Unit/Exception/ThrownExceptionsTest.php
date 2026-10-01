@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Exception;
+namespace PhpRegex\Tests\Unit\Exception;
 
+use PhpRegex\Parser\Exception\ExceptionInterface;
+use PhpRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\RegexParserExceptionInterface;
-use RegexParser\Tests\Support\LibrarySource;
 
 /**
  * What the library throws says whose mistake it is. The caller's mistake
  * (a pattern, an option, a format name, a worker or an output that failed)
- * implements RegexParserExceptionInterface, so one catch holds every one of
+ * implements ExceptionInterface, so one catch holds every one of
  * them. A library bug is a plain \LogicException: no caller catches it on
  * purpose, and none should.
  */
@@ -38,7 +38,7 @@ final class ThrownExceptionsTest extends TestCase
                     continue;
                 }
 
-                if (class_exists($class) && is_subclass_of($class, RegexParserExceptionInterface::class)) {
+                if (class_exists($class) && is_subclass_of($class, ExceptionInterface::class)) {
                     continue;
                 }
 

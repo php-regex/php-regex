@@ -11,25 +11,25 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\LintSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class RegexProblemTest extends TestCase
 {
     public function test_construct_with_minimal_parameters(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Test message',
         );
 
-        $this->assertSame(ProblemType::Syntax, $problem->type);
-        $this->assertSame(Severity::Error, $problem->severity);
+        $this->assertSame(DiagnosticType::Syntax, $problem->type);
+        $this->assertSame(LintSeverity::Error, $problem->severity);
         $this->assertSame('Test message', $problem->message);
         $this->assertNull($problem->code);
         $this->assertNull($problem->position);
@@ -41,9 +41,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_construct_with_all_parameters(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Critical,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Critical,
             'Critical security issue',
             'regex.redos',
             42,
@@ -53,8 +53,8 @@ final class RegexProblemTest extends TestCase
             'Consider possessive quantifiers',
         );
 
-        $this->assertSame(ProblemType::Security, $problem->type);
-        $this->assertSame(Severity::Critical, $problem->severity);
+        $this->assertSame(DiagnosticType::Security, $problem->type);
+        $this->assertSame(LintSeverity::Critical, $problem->severity);
         $this->assertSame('Critical security issue', $problem->message);
         $this->assertSame('regex.redos', $problem->code);
         $this->assertSame(42, $problem->position);
@@ -66,9 +66,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_with_minimal_parameters(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Lint warning',
         );
 
@@ -89,9 +89,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_with_all_parameters(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Optimization,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Optimization,
+            LintSeverity::Info,
             'Optimization opportunity',
             'regex.opt.unused',
             10,
@@ -118,9 +118,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_with_empty_strings(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Semantic,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Semantic,
+            LintSeverity::Error,
             'Semantic error',
             '',
             0,
@@ -148,15 +148,15 @@ final class RegexProblemTest extends TestCase
     public function test_all_problem_types(): void
     {
         $problemTypes = [
-            ProblemType::Syntax,
-            ProblemType::Semantic,
-            ProblemType::Lint,
-            ProblemType::Security,
-            ProblemType::Optimization,
+            DiagnosticType::Syntax,
+            DiagnosticType::Semantic,
+            DiagnosticType::Lint,
+            DiagnosticType::Security,
+            DiagnosticType::Optimization,
         ];
 
         foreach ($problemTypes as $type) {
-            $problem = new RegexProblem($type, Severity::Info, 'Test message');
+            $problem = new Diagnostic($type, LintSeverity::Info, 'Test message');
 
             $array = $problem->toArray();
             $this->assertSame($type->value, $array['type']);
@@ -167,14 +167,14 @@ final class RegexProblemTest extends TestCase
     public function test_all_severity_levels(): void
     {
         $severities = [
-            Severity::Info,
-            Severity::Warning,
-            Severity::Error,
-            Severity::Critical,
+            LintSeverity::Info,
+            LintSeverity::Warning,
+            LintSeverity::Error,
+            LintSeverity::Critical,
         ];
 
         foreach ($severities as $severity) {
-            $problem = new RegexProblem(ProblemType::Lint, $severity, 'Test message');
+            $problem = new Diagnostic(DiagnosticType::Lint, $severity, 'Test message');
 
             $array = $problem->toArray();
             $this->assertSame($severity->value, $array['severity']);
@@ -184,9 +184,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_zero_position(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Error at start',
             null,
             0,
@@ -199,9 +199,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_negative_position(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Error before start',
             null,
             -5,
@@ -214,9 +214,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_preserves_null_values(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Warning message',
         );
 
@@ -232,9 +232,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_readonly_properties(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Security,
-            Severity::Critical,
+        $problem = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Critical,
             'Security issue',
             'SEC001',
             100,
@@ -245,8 +245,8 @@ final class RegexProblemTest extends TestCase
         );
 
         // Test that all properties are set correctly
-        $this->assertSame(ProblemType::Security, $problem->type);
-        $this->assertSame(Severity::Critical, $problem->severity);
+        $this->assertSame(DiagnosticType::Security, $problem->type);
+        $this->assertSame(LintSeverity::Critical, $problem->severity);
         $this->assertSame('Security issue', $problem->message);
         $this->assertSame('SEC001', $problem->code);
         $this->assertSame(100, $problem->position);
@@ -258,9 +258,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_structure(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Syntax error',
         );
 
@@ -288,9 +288,9 @@ final class RegexProblemTest extends TestCase
 
     public function test_to_array_enum_values(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Optimization,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Optimization,
+            LintSeverity::Info,
             'Optimization',
         );
 
@@ -303,9 +303,9 @@ final class RegexProblemTest extends TestCase
     public function test_construct_with_multiline_message(): void
     {
         $message = "Line 1\nLine 2\nLine 3";
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             $message,
         );
 

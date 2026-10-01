@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
 
 /**
  * A command of the binary. Every one exits with one of the three codes below.

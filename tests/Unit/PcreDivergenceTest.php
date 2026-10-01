@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\RegexException;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\RegexException;
-use RegexParser\RegexParser;
-use RegexParser\Tests\TestUtils\PcreMessageCodes;
 
 /**
  * Patterns the engine refuses with one message at one offset, where the
@@ -60,7 +60,7 @@ final class PcreDivergenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: ErrorCode}>
+     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: \PhpRegex\Parser\ErrorCode}>
      */
     public static function provideDivergences(): iterable
     {
@@ -243,7 +243,7 @@ final class PcreDivergenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, release: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
      */
     public static function provideErrorsBeforeAnUnclosedGroup(): iterable
     {
@@ -266,7 +266,7 @@ final class PcreDivergenceTest extends TestCase
     /**
      * @param list<string> $releases
      *
-     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: ErrorCode}>
+     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: \PhpRegex\Parser\ErrorCode}>
      */
     private static function rows(string $name, string $pattern, array $releases, string $message, int $offset, ErrorCode $code): iterable
     {

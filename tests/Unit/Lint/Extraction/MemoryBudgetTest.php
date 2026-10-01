@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Extraction;
+namespace PhpRegex\Tests\Unit\Lint\Extraction;
 
+use PhpRegex\Linter\Extraction\MemoryBudget;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\MemoryBudget;
 
 final class MemoryBudgetTest extends TestCase
 {

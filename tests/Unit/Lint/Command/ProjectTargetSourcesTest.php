@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\ProjectTarget;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Lint\Command\ProjectTarget;
-use RegexParser\PcreTarget;
-use RegexParser\Tests\Support\TemporaryProject;
 
 /**
  * The same chain for every entry point that reads project files, each

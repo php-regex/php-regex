@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\GroupNameReader;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenStream;
+use PhpRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\GroupNameReader;
-use RegexParser\Token;
-use RegexParser\TokenStream;
-use RegexParser\TokenType;
 
 /**
  * Reading the name of a group, and refusing the ones PCRE would refuse.

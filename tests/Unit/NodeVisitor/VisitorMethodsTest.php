@@ -11,36 +11,36 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerationException;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\KeepNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SampleGenerationException;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\KeepNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 
 final class VisitorMethodsTest extends TestCase
 {
     public function test_optimizer_leaf_nodes_return_same_instance(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $nodes = [
             new LiteralNode('a', 0, 0),
@@ -68,7 +68,7 @@ final class VisitorMethodsTest extends TestCase
 
     public function test_sample_generator_ignored_nodes_return_empty_string(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $nodes = [
             new AnchorNode('^', 0, 0),
@@ -86,7 +86,7 @@ final class VisitorMethodsTest extends TestCase
 
     public function test_complexity_score_leaf_nodes(): void
     {
-        $scorer = new ComplexityScoreNodeVisitor();
+        $scorer = new ComplexityScorer();
 
         // Base score of 1
         $baseNodes = [
@@ -119,7 +119,7 @@ final class VisitorMethodsTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $nodes = [
             new LiteralNode('a', 0, 0),
@@ -160,39 +160,39 @@ final class VisitorMethodsTest extends TestCase
         ];
 
         $visitors = [
-            new ExplainNodeVisitor(),
-            new HtmlExplainNodeVisitor(),
-            new OptimizerNodeVisitor(),
-            new ComplexityScoreNodeVisitor(),
-            new ValidatorNodeVisitor(),
-            new SampleGeneratorNodeVisitor(),
+            new TextExplainer(),
+            new HtmlExplainer(),
+            new Rewriter(),
+            new ComplexityScorer(),
+            new Validator(),
+            new SampleGenerator(),
         ];
 
         foreach ($visitors as $visitor) {
             foreach ($nodes as $node) {
                 // SampleGenerator does not support subroutines
-                if ($visitor instanceof SampleGeneratorNodeVisitor && $node instanceof SubroutineNode) {
+                if ($visitor instanceof SampleGenerator && $node instanceof SubroutineNode) {
                     continue;
                 }
 
-                // ValidatorNodeVisitor requires group context for backreferences
-                if ($visitor instanceof ValidatorNodeVisitor && $node instanceof BackrefNode) {
+                // Validator requires group context for backreferences
+                if ($visitor instanceof Validator && $node instanceof BackrefNode) {
                     continue;
                 }
 
-                // ValidatorNodeVisitor treats CharLiteralNode with OCTAL_LEGACY '0' as invalid backreference \0
-                if ($visitor instanceof ValidatorNodeVisitor && $node instanceof CharLiteralNode && CharLiteralType::OCTAL_LEGACY === $node->type && 0 === $node->codePoint) {
+                // Validator treats CharLiteralNode with OCTAL_LEGACY '0' as invalid backreference \0
+                if ($visitor instanceof Validator && $node instanceof CharLiteralNode && CharLiteralType::OCTAL_LEGACY === $node->type && 0 === $node->codePoint) {
                     continue;
                 }
 
-                // ValidatorNodeVisitor requires group context for subroutines
-                if ($visitor instanceof ValidatorNodeVisitor && $node instanceof SubroutineNode) {
+                // Validator requires group context for subroutines
+                if ($visitor instanceof Validator && $node instanceof SubroutineNode) {
                     continue;
                 }
 
                 $result = $node->accept($visitor);
 
-                if ($visitor instanceof ValidatorNodeVisitor) {
+                if ($visitor instanceof Validator) {
                     // The validator returns void (null)
                     $this->assertNull($result);
                 } else {
@@ -205,7 +205,7 @@ final class VisitorMethodsTest extends TestCase
 
     public function test_sample_generator_throws_on_subroutine(): void
     {
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $node = new SubroutineNode('R', '', 0, 0);
 
         $this->expectException(SampleGenerationException::class);

@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
-use RegexParser\Exception\InvalidRegexOptionException;
 
 /**
  * The rule judges patterns for the PHP version PHPStan analyses the project
@@ -31,7 +31,7 @@ use RegexParser\Exception\InvalidRegexOptionException;
  * itself refuses the pattern (the 10.40 and 10.42 CI images), the rule must
  * stay silent.
  *
- * @extends RuleTestCase<RegexParserRule>
+ * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexParserRuleTargetVersionTest extends RuleTestCase
 {
@@ -150,7 +150,7 @@ final class RegexParserRuleTargetVersionTest extends RuleTestCase
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        new RegexParserRule(config: ['phpVersion' => 'not-a-version']);
+        new RegexPatternRule(config: ['phpVersion' => 'not-a-version']);
     }
 
     #[Test]
@@ -158,12 +158,12 @@ final class RegexParserRuleTargetVersionTest extends RuleTestCase
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        new RegexParserRule(config: ['pcreVersion' => 'ten']);
+        new RegexPatternRule(config: ['pcreVersion' => 'ten']);
     }
 
     protected function getRule(): Rule
     {
-        return new RegexParserRule(config: $this->config, phpVersion: $this->phpVersion);
+        return new RegexPatternRule(config: $this->config, phpVersion: $this->phpVersion);
     }
 
     /**

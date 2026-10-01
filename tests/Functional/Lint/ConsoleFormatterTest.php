@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Lint;
+namespace PhpRegex\Tests\Functional\Lint;
 
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
 
 final class ConsoleFormatterTest extends TestCase
 {

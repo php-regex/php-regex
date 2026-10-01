@@ -11,41 +11,41 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\LintRequest;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintRequest;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\ProblemType;
-use RegexParser\RegexParser;
 
 final class RegexLintServiceTest extends TestCase
 {
-    private RegexAnalysisService $analysis;
+    private AnalysisService $analysis;
 
-    private RegexPatternSourceCollection $sources;
+    private PatternSourceCollection $sources;
 
     protected function setUp(): void
     {
-        $this->analysis = new RegexAnalysisService(RegexParser::create());
-        $this->sources = new RegexPatternSourceCollection([]);
+        $this->analysis = new AnalysisService(RegexParser::create());
+        $this->sources = new PatternSourceCollection([]);
     }
 
     #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
     }
 
     public function test_collect_patterns(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->collectPatterns($request, null);
 
         $this->assertSame([], $result);
@@ -53,10 +53,10 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_empty_patterns(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertSame([], $result->results);
@@ -65,12 +65,12 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_invalid_pattern(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results);
@@ -82,12 +82,12 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_reports_invalid_delimiter_patterns(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('nok', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('nok', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results);
@@ -104,12 +104,12 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_filters_validation_issues_when_disabled(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0, [], true, false, true); // checkValidation = false
+        $request = new LintRequest(['.'], [], 0, [], true, false, true); // checkValidation = false
         $patterns = [
-            new RegexPatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // Even with checkValidation=false, invalid patterns still produce validation errors
@@ -121,13 +121,13 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_pattern_warnings(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         // Pattern with nested quantifier which should produce a warning
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results);
@@ -147,11 +147,11 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_skips_atomic_tip_when_pattern_limit_exceeded(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create(['max_pattern_length' => 10]));
-        $service = new RegexLintService($analysis, $this->sources);
-        $request = new RegexLintRequest(['.'], [], 0);
+        $analysis = new AnalysisService(RegexParser::create(['max_pattern_length' => 10]));
+        $service = new LintService($analysis, $this->sources);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $service->analyze($patterns, $request, null);
@@ -167,12 +167,12 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_adds_atomic_group_tip_for_dotstar_warning(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/(?:.*)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(?:.*)+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $dotstarWarnings = array_values(array_filter(
@@ -187,14 +187,14 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_deduplicates_issues(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         // Create two identical patterns that would produce the same issue
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results); // Should be deduplicated to one result
@@ -202,9 +202,9 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_does_not_deduplicate_patterns_with_different_offsets(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence(
+            new PatternOccurrence(
                 pattern: '/(a+)+/',
                 file: 'test.php',
                 line: 1,
@@ -212,7 +212,7 @@ final class RegexLintServiceTest extends TestCase
                 column: 5,
                 fileOffset: 10,
             ),
-            new RegexPatternOccurrence(
+            new PatternOccurrence(
                 pattern: '/(a+)+/',
                 file: 'test.php',
                 line: 1,
@@ -222,7 +222,7 @@ final class RegexLintServiceTest extends TestCase
             ),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(2, $result->results);
@@ -234,13 +234,13 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_optimizations(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0, [], true, true, true); // checkOptimizations = true
+        $request = new LintRequest(['.'], [], 0, [], true, true, true); // checkOptimizations = true
         // Pattern that can be optimized (simple case)
         $patterns = [
-            new RegexPatternOccurrence('/(?:abc)/', 'test.php', 1, 'preg_match'), // Non-capturing group that can be simplified
+            new PatternOccurrence('/(?:abc)/', 'test.php', 1, 'preg_match'), // Non-capturing group that can be simplified
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results);
@@ -253,12 +253,12 @@ final class RegexLintServiceTest extends TestCase
     {
         $file = __DIR__.'/../../Fixtures/Extractor/regex_lint_ignore.php';
 
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', $file, 3, 'preg_match'), // Line 3 has the pattern
+            new PatternOccurrence('/(a+)+/', $file, 3, 'preg_match'), // Line 3 has the pattern
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // The issue should be ignored due to the comment on the previous line
@@ -267,14 +267,14 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_filters_complexity_issues(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         // Create a complex pattern that will trigger complexity warnings
         $complexPattern = '/'.str_repeat('a?', 60).'/'; // Very complex due to many alternations
         $patterns = [
-            new RegexPatternOccurrence($complexPattern, 'test.php', 1, 'preg_match'),
+            new PatternOccurrence($complexPattern, 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // Complexity issues should be filtered out by filterLintIssues
@@ -287,12 +287,12 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_route_pattern_filters_route_issues(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'route:home'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'route:home'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // For route patterns, certain issues like nested quantifiers should be filtered
@@ -307,13 +307,13 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_filters_redos_issues_when_disabled(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0, [], true, false, true); // checkRedos = false
+        $request = new LintRequest(['.'], [], 0, [], true, false, true); // checkRedos = false
         // Create a pattern that might trigger ReDoS but disable ReDoS checking
         $patterns = [
-            new RegexPatternOccurrence('/(x+)+y/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(x+)+y/', 'test.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // With checkRedos = false, any ReDoS issues should be filtered out
@@ -330,9 +330,9 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_with_progress_callback(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/abc/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/abc/', 'test.php', 1, 'preg_match'),
         ];
 
         $progressCalls = 0;
@@ -340,7 +340,7 @@ final class RegexLintServiceTest extends TestCase
             $progressCalls++;
         };
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, $progressCallback);
 
         $this->assertGreaterThanOrEqual(0, $progressCalls); // Progress may be called during analysis
@@ -348,34 +348,34 @@ final class RegexLintServiceTest extends TestCase
 
     public function test_analyze_creates_redos_problems(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0, [], true, true); // checkRedos = true explicitly
+        $request = new LintRequest(['.'], [], 0, [], true, true); // checkRedos = true explicitly
         $patterns = [
-            new RegexPatternOccurrence('/(x+)+y/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(x+)+y/', 'test.php', 1, 'preg_match'),
         ];
 
         // ReDoS analysis must be enabled on the analysis service itself;
         // the request flag alone only filters already-produced issues.
-        $analysis = new RegexAnalysisService(RegexParser::create(), redosEnabled: true);
-        $service = new RegexLintService($analysis, $this->sources);
+        $analysis = new AnalysisService(RegexParser::create(), redosEnabled: true);
+        $service = new LintService($analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertNotEmpty($result->results, 'Analyzing a vulnerable pattern must produce a result');
 
         $redosProblems = array_filter(
             $result->results[0]['problems'] ?? [],
-            static fn ($problem) => ProblemType::Security === $problem->type,
+            static fn ($problem) => DiagnosticType::Security === $problem->type,
         );
         $this->assertNotEmpty($redosProblems, 'Should create security problems for ReDoS issues');
     }
 
     public function test_analyze_processes_issues_for_nonexistent_file(): void
     {
-        $request = new RegexLintRequest(['.'], [], 0);
+        $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', '/nonexistent/file.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', '/nonexistent/file.php', 1, 'preg_match'),
         ];
 
-        $service = new RegexLintService($this->analysis, $this->sources);
+        $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         // Issues for nonexistent files should still be processed (not ignored)

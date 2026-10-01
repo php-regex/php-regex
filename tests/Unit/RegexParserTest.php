@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 
 /**
  * Reading and judging a pattern is the core's alone: the facade hands it

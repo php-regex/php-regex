@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Support;
+namespace PhpRegex\Tests\Support;
 
 final class LintFunctionOverrides
 {
@@ -188,9 +188,47 @@ final class LintFunctionOverrides
     }
 }
 
-namespace RegexParser\Lint;
+namespace PhpRegex\Linter\Internal;
 
-use RegexParser\Tests\Support\LintFunctionOverrides;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
+
+function pcntl_fork(): int
+{
+    return LintFunctionOverrides::pcntlFork();
+}
+
+namespace PhpRegex\Linter;
+
+use PhpRegex\Tests\Support\LintFunctionOverrides;
+
+/**
+ * @param ?array<int|string, mixed> $rusage
+ *
+ * @param-out int|null $status
+ */
+function pcntl_waitpid(int $pid, ?int &$status = null, int $options = 0, ?array &$rusage = null): int
+{
+    return LintFunctionOverrides::pcntlWaitpid($pid, $status, $options, $rusage);
+}
+
+function tempnam(string $dir, string $prefix): string|false
+{
+    return LintFunctionOverrides::tempnam($dir, $prefix);
+}
+
+function mb_check_encoding(string $string, string $encoding): bool
+{
+    return LintFunctionOverrides::mbCheckEncoding($string, $encoding);
+}
+
+function mb_convert_encoding(string $string, string $toEncoding, string $fromEncoding): string|false
+{
+    return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
+}
+
+namespace PhpRegex\Linter\Extraction;
+
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 
 function pcntl_fork(): int
 {
@@ -222,43 +260,9 @@ function mb_convert_encoding(string $string, string $toEncoding, string $fromEnc
     return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
 }
 
-namespace RegexParser\Lint\Extraction;
+namespace PhpRegex\Linter\Config;
 
-use RegexParser\Tests\Support\LintFunctionOverrides;
-
-function pcntl_fork(): int
-{
-    return LintFunctionOverrides::pcntlFork();
-}
-
-/**
- * @param ?array<int|string, mixed> $rusage
- *
- * @param-out int|null $status
- */
-function pcntl_waitpid(int $pid, ?int &$status = null, int $options = 0, ?array &$rusage = null): int
-{
-    return LintFunctionOverrides::pcntlWaitpid($pid, $status, $options, $rusage);
-}
-
-function tempnam(string $dir, string $prefix): string|false
-{
-    return LintFunctionOverrides::tempnam($dir, $prefix);
-}
-
-function mb_check_encoding(string $string, string $encoding): bool
-{
-    return LintFunctionOverrides::mbCheckEncoding($string, $encoding);
-}
-
-function mb_convert_encoding(string $string, string $toEncoding, string $fromEncoding): string|false
-{
-    return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
-}
-
-namespace RegexParser\Lint\Command;
-
-use RegexParser\Tests\Support\LintFunctionOverrides;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 
 function getcwd(): string|false
 {

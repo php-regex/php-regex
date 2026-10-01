@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\PHPStan;
+namespace PhpRegex\Tests\Unit\Bridge\PHPStan;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
-use RegexParser\Exception\InvalidRegexOptionException;
 
 /**
  * A threshold wired by hand as something else than a string is refused with
@@ -30,13 +30,13 @@ final class RegexParserRuleThresholdTypeTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessage('checks.redos.threshold');
 
-        new RegexParserRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => 3]]]);
+        new RegexPatternRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => 3]]]);
     }
 
     #[Test]
     public function test_rule_reads_an_unset_threshold_as_critical(): void
     {
-        $rule = new RegexParserRule(['checks' => ['redos' => ['enabled' => true]]]);
+        $rule = new RegexPatternRule(['checks' => ['redos' => ['enabled' => true]]]);
 
         $this->assertSame('critical', (new \ReflectionProperty($rule, 'redosThreshold'))->getValue($rule));
     }

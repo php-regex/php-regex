@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cli;
+namespace PhpRegex\Tests\Unit\Cli;
 
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
 
 final class HelpCommandTest extends TestCase
 {

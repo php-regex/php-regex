@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Solver;
+namespace PhpRegex\Automata\Solver;
 
-use RegexParser\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\Dfa;
 
 /**
  * Simple in-memory cache for DFAs.
@@ -21,7 +21,7 @@ use RegexParser\Automata\Model\Dfa;
 final class InMemoryDfaCache implements DfaCacheInterface
 {
     /**
-     * @var array<string, Dfa>
+     * @var array<string, \PhpRegex\Automata\Model\Dfa>
      */
     private array $cache = [];
 

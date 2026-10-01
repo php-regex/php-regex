@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cache\RemovableCacheInterface;
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\RegexOptions;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Cache\RemovableCacheInterface;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\ParserOptions;
 
 final class ClearCacheCommand extends AbstractCommand implements CommandInterface
 {
@@ -40,7 +40,7 @@ final class ClearCacheCommand extends AbstractCommand implements CommandInterfac
     public function run(Input $input, Output $output): int
     {
         try {
-            $cache = RegexOptions::fromArray($input->regexOptions)->cache;
+            $cache = ParserOptions::fromArray($input->regexOptions)->cache;
         } catch (InvalidRegexOptionException $e) {
             $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
 

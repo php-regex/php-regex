@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Protocol;
+namespace PhpRegex\Tests\Unit\Lsp\Protocol;
 
+use PhpRegex\LanguageServer\Protocol\Response;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Protocol\Response;
 
 final class ResponseTest extends TestCase
 {

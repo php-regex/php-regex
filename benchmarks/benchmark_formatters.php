@@ -11,21 +11,30 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
+use PhpRegex\Linter\Formatter\GithubFormatter;
+use PhpRegex\Linter\Formatter\LinkFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\Formatter\RelativePathHelper;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Optimizer\OptimizationResult;
+use PhpRegex\Symfony\Output\SymfonyConsoleFormatter;
+use PhpRegex\Toolkit\Regex;
 
-use RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
-use RegexParser\Lint\Formatter\GithubFormatter;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\Formatter\RelativePathHelper;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\OptimizationResult;
-use RegexParser\ProblemType;
-use RegexParser\Regex;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
 
 echo "Benchmarking formatter output performance...\n\n";
 
@@ -38,7 +47,7 @@ $formatters = [
 
 if (\class_exists('Symfony\\Component\\Console\\Formatter\\OutputFormatter')) {
     $formatters['SymfonyConsoleFormatter (decorated off)'] = new SymfonyConsoleFormatter(
-        new RegexAnalysisService(Regex::create()),
+        new AnalysisService(Regex::create()),
         new LinkFormatter(null, new RelativePathHelper()),
         false,
     );
@@ -73,7 +82,7 @@ foreach ($formatters as $label => $formatter) {
 
 echo 'Total memory usage: '.(memory_get_peak_usage(true) / 1024 / 1024)." MB\n";
 
-function buildReport(int $count): RegexLintReport
+function buildReport(int $count): LintReport
 {
     $results = [];
     $errors = 0;
@@ -82,9 +91,9 @@ function buildReport(int $count): RegexLintReport
 
     $pattern = '/(foo|bar)+/';
     $optimization = new OptimizationResult($pattern, '/(?:foo|bar)+/', ['group']);
-    $problem = new RegexProblem(
-        ProblemType::Lint,
-        Severity::Warning,
+    $problem = new Diagnostic(
+        DiagnosticType::Lint,
+        LintSeverity::Warning,
         'Nested quantifier detected',
         'regex.lint.quantifier.nested',
         1,
@@ -132,7 +141,7 @@ function buildReport(int $count): RegexLintReport
         ];
     }
 
-    return new RegexLintReport(
+    return new LintReport(
         $results,
         [
             'errors' => $errors,

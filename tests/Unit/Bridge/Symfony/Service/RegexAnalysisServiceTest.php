@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Service;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Service;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\RegexParser;
 
 final class RegexAnalysisServiceTest extends TestCase
 {
     public function test_reports_invalid_pattern(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('#^($#', 'file.php', 1, 'route:test', '(');
+        $pattern = new PatternOccurrence('#^($#', 'file.php', 1, 'route:test', '(');
 
         $issues = $service->lint([$pattern]);
 
@@ -35,7 +35,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_warns_on_complexity_threshold(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
-        $pattern = new RegexPatternOccurrence('#^[a-z]+$#', 'file.php', 1, 'route:test', '[a-z]+');
+        $pattern = new PatternOccurrence('#^[a-z]+$#', 'file.php', 1, 'route:test', '[a-z]+');
 
         $issues = $service->lint([$pattern]);
 
@@ -48,7 +48,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_trivial_alternation_skips_risk_checks(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
-        $pattern = new RegexPatternOccurrence('#^en|fr|de$#', 'file.php', 1, 'route:test', 'en|fr|de');
+        $pattern = new PatternOccurrence('#^en|fr|de$#', 'file.php', 1, 'route:test', 'en|fr|de');
 
         $issues = $service->lint([$pattern]);
 
@@ -62,7 +62,7 @@ final class RegexAnalysisServiceTest extends TestCase
             redosThreshold: 'critical',
             ignoredPatterns: ['[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*'],
         );
-        $pattern = new RegexPatternOccurrence(
+        $pattern = new PatternOccurrence(
             '#^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$#',
             'file.php',
             1,
@@ -78,7 +78,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_reports_redos_risk(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new RegexPatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()');
+        $pattern = new PatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -104,10 +104,10 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()'),
+            new PatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()'),
         ];
 
-        $issues = $service->analyzeRedos($patterns, ReDoSSeverity::LOW);
+        $issues = $service->analyzeRedos($patterns, RedosSeverity::LOW);
 
         $this->assertIsArray($issues);
         $this->assertNotEmpty($issues);
@@ -120,7 +120,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
         $patterns = [
-            new RegexPatternOccurrence('/a*b*c*/', 'file.php', 1, 'php:preg_match()'),
+            new PatternOccurrence('/a*b*c*/', 'file.php', 1, 'php:preg_match()'),
         ];
 
         $optimizations = $service->suggestOptimizations($patterns, 1);
@@ -150,7 +150,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_lint_with_invalid_pattern_and_ignore_parse_errors(): void
     {
-        $service = new RegexAnalysisService(
+        $service = new AnalysisService(
             RegexParser::create(),
             null,
             10,
@@ -161,7 +161,7 @@ final class RegexAnalysisServiceTest extends TestCase
         );
 
         // Use a pattern that would trigger "No closing delimiter" which should be ignored
-        $pattern = new RegexPatternOccurrence('/^test', 'file.php', 1, 'route:test', '^test');
+        $pattern = new PatternOccurrence('/^test', 'file.php', 1, 'route:test', '^test');
 
         $issues = $service->lint([$pattern]);
 
@@ -173,7 +173,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
         // Use a pattern with nested quantifiers that should trigger linter warnings
-        $pattern = new RegexPatternOccurrence('#(a*)*#', 'file.php', 1, 'route:test', '(a*)*');
+        $pattern = new PatternOccurrence('#(a*)*#', 'file.php', 1, 'route:test', '(a*)*');
 
         $issues = $service->lint([$pattern]);
 
@@ -187,7 +187,7 @@ final class RegexAnalysisServiceTest extends TestCase
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
         // Create a complex pattern that exceeds the threshold
         $complexPattern = '#^'.str_repeat('(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)*', 10).'$#';
-        $pattern = new RegexPatternOccurrence($complexPattern, 'file.php', 1, 'route:test', substr($complexPattern, 1, -1));
+        $pattern = new PatternOccurrence($complexPattern, 'file.php', 1, 'route:test', substr($complexPattern, 1, -1));
 
         $issues = $service->lint([$pattern]);
 
@@ -198,7 +198,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_with_redos_pattern(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new RegexPatternOccurrence('/(x+)+y/', 'file.php', 1, 'php:preg_match()');
+        $pattern = new PatternOccurrence('/(x+)+y/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -211,7 +211,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
         $patterns = [
-            new RegexPatternOccurrence('/a*a*a*/', 'file.php', 1, 'php:preg_match()'), // This should be optimizable
+            new PatternOccurrence('/a*a*a*/', 'file.php', 1, 'php:preg_match()'), // This should be optimizable
         ];
 
         $optimizations = $service->suggestOptimizations($patterns, 10); // High min savings
@@ -224,7 +224,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
         $patterns = [
-            new RegexPatternOccurrence("/a+\n# comment\nb+/x", 'file.php', 1, 'php:preg_match()'),
+            new PatternOccurrence("/a+\n# comment\nb+/x", 'file.php', 1, 'php:preg_match()'),
         ];
 
         $optimizations = $service->suggestOptimizations($patterns, 1);
@@ -235,7 +235,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_validation_error_tips_delimiter_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('/test', 'file.php', 1, 'php:preg_match()', 'test');
+        $pattern = new PatternOccurrence('/test', 'file.php', 1, 'php:preg_match()', 'test');
 
         $issues = $service->lint([$pattern]);
 
@@ -251,7 +251,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_validation_error_tips_character_class_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('/[a-z/', 'file.php', 1, 'php:preg_match()', '[a-z');
+        $pattern = new PatternOccurrence('/[a-z/', 'file.php', 1, 'php:preg_match()', '[a-z');
 
         $issues = $service->lint([$pattern]);
 
@@ -264,7 +264,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_validation_error_tips_quantifier_range_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('/a{3,2}/', 'file.php', 1, 'php:preg_match()', 'a{3,2}');
+        $pattern = new PatternOccurrence('/a{3,2}/', 'file.php', 1, 'php:preg_match()', 'a{3,2}');
 
         $issues = $service->lint([$pattern]);
 
@@ -277,7 +277,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_validation_error_tips_backreference_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('/\\2/', 'file.php', 1, 'php:preg_match()', '\\2');
+        $pattern = new PatternOccurrence('/\\2/', 'file.php', 1, 'php:preg_match()', '\\2');
 
         $issues = $service->lint([$pattern]);
 
@@ -290,7 +290,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_validation_error_tips_lookbehind_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        $pattern = new RegexPatternOccurrence('/(?<=a*)/', 'file.php', 1, 'php:preg_match()', '(?<=a*)');
+        $pattern = new PatternOccurrence('/(?<=a*)/', 'file.php', 1, 'php:preg_match()', '(?<=a*)');
 
         $issues = $service->lint([$pattern]);
 
@@ -303,7 +303,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_redos_hints_with_nested_quantifiers(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new RegexPatternOccurrence('/(a+)+/', 'file.php', 1, 'php:preg_match()');
+        $pattern = new PatternOccurrence('/(a+)+/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -317,7 +317,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_redos_hints_with_dot_star(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new RegexPatternOccurrence('/.*a+/', 'file.php', 1, 'php:preg_match()');
+        $pattern = new PatternOccurrence('/.*a+/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -329,7 +329,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_trivially_safe_patterns_skip_analysis(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'low');
-        $pattern = new RegexPatternOccurrence('/^simple|word|list$/', 'file.php', 1, 'route:test', 'simple|word|list');
+        $pattern = new PatternOccurrence('/^simple|word|list$/', 'file.php', 1, 'route:test', 'simple|word|list');
 
         $issues = $service->lint([$pattern]);
 
@@ -344,7 +344,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
         $patterns = [
-            new RegexPatternOccurrence('/test/x', 'file.php', 1, 'php:preg_match()'),
+            new PatternOccurrence('/test/x', 'file.php', 1, 'php:preg_match()'),
         ];
 
         $optimizations = $service->suggestOptimizations($patterns, 1);
@@ -360,7 +360,7 @@ final class RegexAnalysisServiceTest extends TestCase
             redosThreshold: 'low',
             ignoredPatterns: ['(a+)+b'],
         );
-        $pattern = new RegexPatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()');
+        $pattern = new PatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -372,9 +372,9 @@ final class RegexAnalysisServiceTest extends TestCase
     /**
      * @param array<string> $ignoredPatterns
      */
-    private function createService(int $warningThreshold, string $redosThreshold, array $ignoredPatterns = []): RegexAnalysisService
+    private function createService(int $warningThreshold, string $redosThreshold, array $ignoredPatterns = []): AnalysisService
     {
-        return new RegexAnalysisService(
+        return new AnalysisService(
             RegexParser::create(),
             null,
             $warningThreshold,

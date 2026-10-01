@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Graph;
+namespace PhpRegex\Cli\Graph;
 
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Model\NfaState;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Model\NfaState;
 
 final class GraphvizDumper
 {

@@ -11,44 +11,43 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\KeepNode;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\KeepNode;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
 
 final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_sequence_flattens_nested_sequences(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $inner = new SequenceNode([new LiteralNode('a', 0, 1), new LiteralNode('b', 1, 2)], 0, 2);
         $outer = new SequenceNode([$inner], 0, 2);
 
@@ -60,7 +59,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_sequence_with_empty_literal_returns_empty_literal(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $sequence = new SequenceNode([new LiteralNode('', 0, 0)], 0, 0);
 
         $result = $sequence->accept($optimizer);
@@ -71,7 +70,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_sequence_flattens_nested_sequences_with_non_literal_children(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $inner = new SequenceNode([new CharTypeNode('d', 0, 0), new LiteralNode('a', 0, 0)], 0, 0);
         $outer = new SequenceNode([$inner, new LiteralNode('b', 0, 0)], 0, 0);
 
@@ -86,7 +85,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_conditional_rebuilds_when_child_optimized(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $condition = new SequenceNode([new LiteralNode('', 0, 0)], 0, 0);
         $node = new ConditionalNode($condition, new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0), 0, 0);
 
@@ -98,7 +97,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_define_and_limit_match_are_visited(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
         $defineResult = $define->accept($optimizer);
@@ -111,7 +110,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_normalize_char_class_parts_reverses_ranges_and_updates_scalar(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $parts = [
             new LiteralNode('b', 0, 1),
             new RangeNode(new LiteralNode('d', 1, 2), new LiteralNode('a', 2, 3), 1, 3),
@@ -119,7 +118,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
         $result = $this->invokePrivate($optimizer, 'normalizeCharClassParts', [$parts]);
         $this->assertIsArray($result);
-        /* @var array{0: array<\RegexParser\Node\NodeInterface>, 1: bool} $result */
+        /* @var array{0: array<\PhpRegex\Parser\Node\NodeInterface>, 1: bool} $result */
         [$normalized, $changed] = $result;
 
         $this->assertTrue($changed);
@@ -128,7 +127,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_alternation_deduplicates_after_change(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $alts = new AlternationNode([
             new SequenceNode([new LiteralNode('a', 0, 0), new LiteralNode('', 0, 0)], 0, 0),
             new LiteralNode('a', 0, 0),
@@ -143,7 +142,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_alternation_returns_prefix_only_when_suffixes_empty(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('ab', 0, 2)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeAlternation', [$alts]);
@@ -154,7 +153,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_suffix_all_suffix_only(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('ab', 0, 2)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeSuffix', [$alts]);
@@ -165,7 +164,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_suffix_single_prefix_branch(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('cab', 0, 3)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeSuffix', [$alts]);
@@ -176,7 +175,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_find_common_prefix_empty_returns_empty_string(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [[]]);
 
@@ -185,7 +184,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_merge_char_classes_and_char_types_merges_alternations(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $class = new CharClassNode(
             new AlternationNode([new LiteralNode('a', 0, 1), new LiteralNode('b', 1, 2)], 0, 2),
             false,
@@ -203,7 +202,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_try_convert_alternation_to_char_class_range_and_null(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $range = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [[
             new LiteralNode('a', 0, 1),
@@ -224,7 +223,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_regex_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $pattern = new SequenceNode([new LiteralNode('test', 0, 4)], 0, 4);
         $regex = new RegexNode($pattern, 'i', '/', 0, 4);
 
@@ -235,7 +234,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_group_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $child = new LiteralNode('test', 1, 5);
         $group = new GroupNode($child, GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 6);
 
@@ -247,7 +246,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_quantifier_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $child = new LiteralNode('a', 0, 1);
         $quantifier = new QuantifierNode($child, '+', QuantifierType::T_GREEDY, 0, 2);
 
@@ -258,7 +257,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_char_class_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $expression = new AlternationNode([new LiteralNode('a', 1, 2), new LiteralNode('b', 3, 4)], 1, 4);
         $charClass = new CharClassNode($expression, false, 0, 5);
 
@@ -269,7 +268,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_range_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $start = new LiteralNode('a', 1, 2);
         $end = new LiteralNode('z', 3, 4);
         $range = new RangeNode($start, $end, 1, 4);
@@ -281,7 +280,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_dot_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $dot = new DotNode(0, 1);
 
         $result = $dot->accept($optimizer);
@@ -291,7 +290,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_anchor_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $anchor = new AnchorNode('^', 0, 1);
 
         $result = $anchor->accept($optimizer);
@@ -301,7 +300,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_assertion_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $assertion = new AssertionNode('\\b', 0, 2);
 
         $result = $assertion->accept($optimizer);
@@ -311,7 +310,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_keep_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $keep = new KeepNode(0, 2);
 
         $result = $keep->accept($optimizer);
@@ -321,7 +320,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_backref_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $backref = new BackrefNode('1', 0, 2);
 
         $result = $backref->accept($optimizer);
@@ -331,7 +330,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_unicode_prop_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $unicodeProp = new UnicodePropNode('\\p{L}', false, 0, 4);
 
         $result = $unicodeProp->accept($optimizer);
@@ -341,7 +340,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_char_literal_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $charLiteral = new CharLiteralNode('\\n', 10, CharLiteralType::UNICODE, 0, 2);
 
         $result = $charLiteral->accept($optimizer);
@@ -351,7 +350,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_posix_class_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $posixClass = new PosixClassNode('alnum', 0, 7);
 
         $result = $posixClass->accept($optimizer);
@@ -361,7 +360,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_comment_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $comment = new CommentNode('test comment', 0, 14);
 
         $result = $comment->accept($optimizer);
@@ -371,7 +370,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_subroutine_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $subroutine = new SubroutineNode('1', '&', 0, 3);
 
         $result = $subroutine->accept($optimizer);
@@ -381,7 +380,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_pcre_verb_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $pcreVerb = new PcreVerbNode('ACCEPT', 0, 8);
 
         $result = $pcreVerb->accept($optimizer);
@@ -391,7 +390,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_visit_callout_is_covered(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $callout = new CalloutNode(1, false, 0, 4);
 
         $result = $callout->accept($optimizer);
@@ -401,7 +400,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_nullable_status_covers_all_branches(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test LiteralNode with empty string
         $emptyLiteral = new LiteralNode('', 0, 0);
@@ -460,7 +459,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_quantifier_allows_zero_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test quantifiers that allow zero
         $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['*']));
@@ -477,7 +476,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_char_from_code_point_covers_edge_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test regular ASCII character
         $result = $this->invokePrivate($optimizer, 'charFromCodePoint', [65]); // 'A'
@@ -494,7 +493,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_alternation_with_literal_nodes(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Create literal nodes for testing
         $abc = new LiteralNode('abc', 0, 3);
@@ -511,7 +510,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_alternation_no_common_prefix(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $abc = new LiteralNode('abc', 0, 3);
         $def = new LiteralNode('def', 0, 3);
@@ -525,7 +524,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_factorize_suffix_with_literal_nodes(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $cab = new LiteralNode('cab', 0, 3);
         $dab = new LiteralNode('dab', 0, 3);
@@ -541,7 +540,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_string_to_node_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test single character
         $result = $this->invokePrivate($optimizer, 'stringToNode', ['a', 0, 1]);
@@ -562,7 +561,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_find_common_prefix_covers_edge_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test empty array
         $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [[]]);
@@ -583,7 +582,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pattern_contains_dots_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with dot
         $dot = new DotNode(0, 1);
@@ -624,7 +623,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_pattern_contains_multiline_anchors_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with caret
         $caret = new AnchorNode('^', 0, 1);
@@ -669,7 +668,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_is_possessify_candidate_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with + quantifier
         $quantifier1 = new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::T_GREEDY, 0, 2);
@@ -704,7 +703,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_can_match_empty_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with nullable node (empty literal)
         $emptyLiteral = new LiteralNode('', 0, 0);
@@ -724,7 +723,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_is_full_word_class_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with complete word class parts
         $parts = [
@@ -748,7 +747,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_parse_quantifier_count_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test exact count {3}
         $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', ['{3}']);
@@ -769,7 +768,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_is_capture_sensitive_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test capturing group
         $capturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
@@ -809,7 +808,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_create_quantified_node_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with count > 1
         $node = new LiteralNode('a', 0, 1);
@@ -824,7 +823,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_normalize_quantifier_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $node = new LiteralNode('a', 0, 1);
 
@@ -860,7 +859,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_can_alternation_be_char_class_covers_all_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test empty alternation
         $result = $this->invokePrivate($optimizer, 'canAlternationBeCharClass', [[]]);
@@ -889,7 +888,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_deduplicate_alternation_covers_case(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with duplicates
         $alternatives = [
@@ -897,14 +896,14 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
             new LiteralNode('b', 1, 2),
             new LiteralNode('a', 2, 3), // duplicate
         ];
-        /** @var array<NodeInterface> $result */
+        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'deduplicateAlternation', [$alternatives]);
         $this->assertCount(2, $result);
     }
 
     public function test_compact_sequence_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test empty sequence
         $result = $this->invokePrivate($optimizer, 'compactSequence', [[]]);
@@ -918,7 +917,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
             new LiteralNode('a', 3, 4),
             new LiteralNode('a', 4, 5),
         ];
-        /** @var array<NodeInterface> $result */
+        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'compactSequence', [$children]);
         $this->assertCount(1, $result);
         $this->assertInstanceOf(QuantifierNode::class, $result[0]);
@@ -926,7 +925,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_are_nodes_equal_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test same type, same content
         $node1 = new LiteralNode('abc', 0, 3);
@@ -947,7 +946,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_remove_useless_flags_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test removing 's' flag when no dots
         $pattern = new LiteralNode('abc', 0, 3);
@@ -966,7 +965,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_merge_adjacent_char_classes_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test merging adjacent char classes
         $class1 = new CharClassNode(
@@ -979,7 +978,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         );
 
         $alternatives = [$class1, $class2];
-        /** @var array<NodeInterface> $result */
+        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'mergeAdjacentCharClasses', [$alternatives]);
         $this->assertCount(1, $result);
         $this->assertInstanceOf(CharClassNode::class, $result[0]);
@@ -987,7 +986,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_can_convert_char_type_to_char_class_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test \d in non-unicode mode (should be true)
         $digitType = new CharTypeNode('d', 0, 2);
@@ -995,7 +994,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($result);
 
         // Test \d in unicode mode (should be false)
-        $optimizerUnicode = new OptimizerNodeVisitor();
+        $optimizerUnicode = new Rewriter();
         // Set unicode mode
         $regex = new RegexNode(new LiteralNode('test', 0, 4), 'u', '/', 0, 4);
         $regex->accept($optimizerUnicode); // This sets unicode mode
@@ -1010,7 +1009,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_try_convert_alternation_to_char_class_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with too few literals
         $alternatives = [new LiteralNode('a', 0, 1)];
@@ -1036,7 +1035,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_should_build_range_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test with explicit range (should be true)
         $result = $this->invokePrivate($optimizer, 'shouldBuildRange', [97, 122, true]); // a-z
@@ -1053,7 +1052,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_get_char_category_covers_cases(): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         // Test digits
         $result = $this->invokePrivate($optimizer, 'getCharCategory', [48]); // '0'

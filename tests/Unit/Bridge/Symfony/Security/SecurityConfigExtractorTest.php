@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Security;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Security;
 
+use PhpRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor;
 
 final class SecurityConfigExtractorTest extends TestCase
 {

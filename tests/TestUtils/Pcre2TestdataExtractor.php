@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
 /**
  * Extracts one compilation case per pattern from a pair of vendored PCRE2

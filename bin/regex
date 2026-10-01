@@ -41,8 +41,8 @@ if (null === $autoloadPath) {
 
 require_once $autoloadPath;
 
-use RegexParser\Cli\ApplicationFactory;
-use RegexParser\Cli\Output;
+use PhpRegex\Cli\ApplicationFactory;
+use PhpRegex\Cli\Output;
 
 $progressBarFull = "\xE2\x96\x93";
 $progressBarEmpty = "\xE2\x96\x91";

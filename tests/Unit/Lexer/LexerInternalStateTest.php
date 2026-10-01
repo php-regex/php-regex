@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lexer;
-use RegexParser\Tests\TestUtils\LexerAccessor;
-use RegexParser\Token;
 
 final class LexerInternalStateTest extends TestCase
 {

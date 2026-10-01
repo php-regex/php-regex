@@ -11,28 +11,28 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Node\DefineNode;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\VersionConditionNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\DefineNode;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\Regex;
 
 final class ComplexityScoreVisitorTest extends TestCase
 {
     private Regex $regex;
 
-    private ComplexityScoreNodeVisitor $visitor;
+    private ComplexityScorer $visitor;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->visitor = new ComplexityScoreNodeVisitor();
+        $this->visitor = new ComplexityScorer();
     }
 
     public function test_simple_regex_score(): void
@@ -74,7 +74,7 @@ final class ComplexityScoreVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $output = $ast->accept($visitor);
         $this->assertStringContainsString($expectedQuantifierText, $output);
     }
@@ -85,22 +85,22 @@ final class ComplexityScoreVisitorTest extends TestCase
 
         $this->assertStringContainsString(
             'Positive lookbehind',
-            $regex->parse('/(?<=a)/')->accept(new ExplainNodeVisitor()),
+            $regex->parse('/(?<=a)/')->accept(new TextExplainer()),
         );
         $this->assertStringContainsString(
             'Atomic group (no backtracking)',
-            $regex->parse('/(?>a)/')->accept(new ExplainNodeVisitor()),
+            $regex->parse('/(?>a)/')->accept(new TextExplainer()),
         );
         $this->assertStringContainsString(
             "Capturing group (named: 'id')",
-            $regex->parse('/(?<id>a)/')->accept(new ExplainNodeVisitor()),
+            $regex->parse('/(?<id>a)/')->accept(new TextExplainer()),
         );
     }
 
     public function test_literal_special_character_explanations(): void
     {
         $regex = Regex::create();
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         $this->assertStringContainsString("' ' (space)", $regex->parse('/ /')->accept($visitor));
         $this->assertStringContainsString("'\\t' (tab)", $regex->parse('/\\t/')->accept($visitor));
@@ -140,8 +140,8 @@ final class ComplexityScoreVisitorTest extends TestCase
 
     public function test_score_version_define_and_limit_match_nodes(): void
     {
-        $visitor = new ComplexityScoreNodeVisitor();
-        $ref = new \ReflectionClass(ComplexityScoreNodeVisitor::class);
+        $visitor = new ComplexityScorer();
+        $ref = new \ReflectionClass(ComplexityScorer::class);
         $complexScore = $ref->getConstant('COMPLEX_CONSTRUCT_SCORE');
         $baseScore = $ref->getConstant('BASE_SCORE');
         $this->assertIsInt($complexScore);

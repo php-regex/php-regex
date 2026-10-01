@@ -65,72 +65,72 @@ registerArgumentsSet(
 registerArgumentsSet(
     'redos_thresholds',
     null,
-    \RegexParser\ReDoS\ReDoSSeverity::SAFE,
-    \RegexParser\ReDoS\ReDoSSeverity::LOW,
-    \RegexParser\ReDoS\ReDoSSeverity::MEDIUM,
-    \RegexParser\ReDoS\ReDoSSeverity::HIGH,
-    \RegexParser\ReDoS\ReDoSSeverity::CRITICAL,
-    \RegexParser\ReDoS\ReDoSSeverity::UNKNOWN
+    \PhpRegex\Redos\RedosSeverity::SAFE,
+    \PhpRegex\Redos\RedosSeverity::LOW,
+    \PhpRegex\Redos\RedosSeverity::MEDIUM,
+    \PhpRegex\Redos\RedosSeverity::HIGH,
+    \PhpRegex\Redos\RedosSeverity::CRITICAL,
+    \PhpRegex\Redos\RedosSeverity::UNKNOWN
 );
 
 expectedArguments(
-    \RegexParser\Regex::create(),
+    \PhpRegex\Toolkit\Regex::create(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \RegexParser\Regex::new(),
+    \PhpRegex\Toolkit\Regex::new(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \RegexParser\RegexOptions::fromArray(),
+    \PhpRegex\Parser\ParserOptions::fromArray(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \RegexParser\Regex::optimize(),
+    \PhpRegex\Toolkit\Regex::optimize(),
     1,
     argumentsSet('optimize_option_keys')
 );
 
 expectedArguments(
-    \RegexParser\Regex::explain(),
+    \PhpRegex\Toolkit\Regex::explain(),
     1,
     argumentsSet('explanation_formats')
 );
 
 expectedArguments(
-    \RegexParser\Regex::highlight(),
+    \PhpRegex\Toolkit\Regex::highlight(),
     1,
     argumentsSet('highlight_formats')
 );
 
 expectedArguments(
-    \RegexParser\Regex::redos(),
+    \PhpRegex\Toolkit\Regex::redos(),
     1,
     argumentsSet('redos_thresholds')
 );
 
 expectedArguments(
-    \RegexParser\Regex::parsePattern(),
+    \PhpRegex\Toolkit\Regex::parsePattern(),
     1,
     argumentsSet('regex_flags')
 );
 
 expectedArguments(
-    \RegexParser\Regex::parsePattern(),
+    \PhpRegex\Toolkit\Regex::parsePattern(),
     2,
     argumentsSet('regex_delimiters')
 );
 
 override(
-    \RegexParser\Regex::parse(1),
+    \PhpRegex\Toolkit\Regex::parse(1),
     map([
-        true => \RegexParser\TolerantParseResult::class,
-        false => \RegexParser\Node\RegexNode::class,
+        true => \PhpRegex\Parser\TolerantParseResult::class,
+        false => \PhpRegex\Parser\Node\RegexNode::class,
     ])
 );

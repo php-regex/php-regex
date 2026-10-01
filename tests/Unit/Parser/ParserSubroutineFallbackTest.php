@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Tests\TestUtils\ParserAccessor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\ParserException;
-use RegexParser\Parser;
-use RegexParser\Tests\TestUtils\ParserAccessor;
-use RegexParser\TokenType;
 
 final class ParserSubroutineFallbackTest extends TestCase
 {
@@ -27,7 +27,7 @@ final class ParserSubroutineFallbackTest extends TestCase
      */
     public function test_parse_subroutine_name_unexpected_token_type(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Simulates: (?& ( ... )
@@ -50,7 +50,7 @@ final class ParserSubroutineFallbackTest extends TestCase
      */
     public function test_parse_subroutine_name_empty(): void
     {
-        $parser = new Parser();
+        $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
         // Simulates: ) immediately (end of group)

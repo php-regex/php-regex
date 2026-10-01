@@ -11,27 +11,27 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\Extraction\ExtractorInterface;
+use PhpRegex\Linter\Internal\ForkedWorkerPool;
+use PhpRegex\Linter\LintException;
+use PhpRegex\Linter\PatternExtractor;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\ExtractorInterface;
-use RegexParser\Lint\ForkedWorkerPool;
-use RegexParser\Lint\LintException;
-use RegexParser\Lint\RegexPatternExtractor;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Tests\Support\LintFunctionOverrides;
 
 final class RegexPatternExtractorTest extends TestCase
 {
     private ExtractorInterface&Stub $extractor;
 
-    private RegexPatternExtractor $patternExtractor;
+    private PatternExtractor $patternExtractor;
 
     protected function setUp(): void
     {
         $this->extractor = $this->createStub(ExtractorInterface::class);
-        $this->patternExtractor = new RegexPatternExtractor($this->extractor);
+        $this->patternExtractor = new PatternExtractor($this->extractor);
     }
 
     protected function tearDown(): void
@@ -41,7 +41,7 @@ final class RegexPatternExtractorTest extends TestCase
 
     public function test_supports_parallel(): void
     {
-        $actual = RegexPatternExtractor::supportsParallel();
+        $actual = PatternExtractor::supportsParallel();
 
         $this->assertIsBool($actual);
     }
@@ -80,8 +80,8 @@ final class RegexPatternExtractorTest extends TestCase
 
         try {
             $occurrences = [
-                $file1 => new RegexPatternOccurrence('/test1/', 'file1.php', 1, 'source1'),
-                $file2 => new RegexPatternOccurrence('/test2/', 'file2.php', 2, 'source2'),
+                $file1 => new PatternOccurrence('/test1/', 'file1.php', 1, 'source1'),
+                $file2 => new PatternOccurrence('/test2/', 'file2.php', 2, 'source2'),
             ];
 
             $this->extractor->method('extract')->willReturnCallback(
@@ -152,7 +152,7 @@ final class RegexPatternExtractorTest extends TestCase
 
     public function test_extract_with_workers_greater_than_one(): void
     {
-        $occurrence = new RegexPatternOccurrence('/test/', 'file.php', 1, 'source');
+        $occurrence = new PatternOccurrence('/test/', 'file.php', 1, 'source');
         $this->extractor->method('extract')->willReturn([$occurrence]);
 
         $file = $this->createTempPhpFile();
@@ -181,8 +181,8 @@ final class RegexPatternExtractorTest extends TestCase
 
         try {
             $occurrences = [
-                $file1 => new RegexPatternOccurrence('/test1/', $file1, 1, 'source1'),
-                $file2 => new RegexPatternOccurrence('/test2/', $file2, 2, 'source2'),
+                $file1 => new PatternOccurrence('/test1/', $file1, 1, 'source1'),
+                $file2 => new PatternOccurrence('/test2/', $file2, 2, 'source2'),
             ];
 
             $this->extractor->method('extract')->willReturnCallback(
@@ -224,7 +224,7 @@ final class RegexPatternExtractorTest extends TestCase
         $file = $this->createTempPhpFile('ignored_pattern.php');
 
         try {
-            $occurrence = new RegexPatternOccurrence('/(a+)+/', $file, 3, 'preg_match');
+            $occurrence = new PatternOccurrence('/(a+)+/', $file, 3, 'preg_match');
             $this->extractor->method('extract')->willReturn([$occurrence]);
 
             $result = $this->patternExtractor->extract([$file]);
@@ -260,7 +260,7 @@ final class RegexPatternExtractorTest extends TestCase
     public function test_worker_payload_round_trips_the_occurrences_a_child_writes(): void
     {
         $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
-        $occurrence = new RegexPatternOccurrence('/a+/', 'test.php', 3, 'preg_match');
+        $occurrence = new PatternOccurrence('/a+/', 'test.php', 3, 'preg_match');
 
         (new ForkedWorkerPool())->runChild(static fn (): array => [$occurrence], $tmpFile);
         $result = (new \ReflectionMethod($this->patternExtractor, 'readWorkerPayload'))->invoke($this->patternExtractor, $tmpFile);
@@ -466,8 +466,8 @@ final class RegexPatternExtractorTest extends TestCase
         $path1 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
         $path2 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
 
-        $occ1 = new RegexPatternOccurrence('/a+/', 'a.php', 1, 'preg_match');
-        $occ2 = new RegexPatternOccurrence('/b+/', 'b.php', 2, 'preg_match');
+        $occ1 = new PatternOccurrence('/a+/', 'a.php', 1, 'preg_match');
+        $occ2 = new PatternOccurrence('/b+/', 'b.php', 2, 'preg_match');
 
         copy(__DIR__.'/../../Fixtures/Lint/occ_a_payload.txt', $path1);
         copy(__DIR__.'/../../Fixtures/Lint/occ_b_payload.txt', $path2);

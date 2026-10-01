@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
-use RegexParser\Internal\GroupNameReader;
-use RegexParser\Parser;
-use RegexParser\Token;
-use RegexParser\TokenStream;
-use RegexParser\TokenType;
+use PhpRegex\Parser\Internal\GroupNameReader;
+use PhpRegex\Parser\Syntax\TokenParser;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenStream;
+use PhpRegex\Parser\Token\TokenType;
 
 /**
  * Reaches the private parts of the Parser, for the tests that have to.
@@ -28,11 +28,11 @@ use RegexParser\TokenType;
 final readonly class ParserAccessor
 {
     /**
-     * @var \ReflectionClass<Parser>
+     * @var \ReflectionClass<\PhpRegex\Parser\Syntax\TokenParser>
      */
     private \ReflectionClass $reflection;
 
-    public function __construct(private Parser $parser)
+    public function __construct(private TokenParser $parser)
     {
         $this->reflection = new \ReflectionClass($this->parser);
     }
@@ -52,7 +52,7 @@ final readonly class ParserAccessor
     /**
      * Sets the internal TokenStream by creating one from an array of tokens.
      *
-     * @param array<string|Token> $tokens
+     * @param array<string|\PhpRegex\Parser\Token\Token> $tokens
      */
     public function setTokens(array $tokens): void
     {

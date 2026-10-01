@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Internal\ForkedWorkerPool;
+use PhpRegex\Linter\LintException;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Lint\ForkedWorkerPool;
-use RegexParser\Lint\LintException;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
-use RegexParser\Tests\Support\LintFunctionOverrides;
-use RegexParser\ValidationResult;
 
 final class RegexAnalysisServiceTest extends TestCase
 {
-    private RegexAnalysisService $analysis;
+    private AnalysisService $analysis;
 
     protected function setUp(): void
     {
-        $this->analysis = new RegexAnalysisService(
+        $this->analysis = new AnalysisService(
             RegexParser::create(),
             null,
             50,
@@ -56,7 +56,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_analyze_redos_returns_empty_array_for_no_patterns(): void
     {
-        $result = $this->analysis->analyzeRedos([], ReDoSSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos([], RedosSeverity::MEDIUM);
 
         $this->assertSame([], $result);
     }
@@ -64,10 +64,10 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_returns_empty_array_for_invalid_pattern(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
 
         $this->assertSame([], $result);
     }
@@ -75,10 +75,10 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_detects_vulnerable_pattern(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::LOW);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW);
 
         $this->assertCount(1, $result);
         $this->assertSame('test.php', $result[0]['file']);
@@ -89,10 +89,10 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_filters_by_threshold(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/\w+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/\w+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::HIGH);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::HIGH);
 
         $this->assertSame([], $result);
     }
@@ -107,7 +107,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_returns_empty_array_for_invalid_pattern(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -118,7 +118,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_filters_by_min_savings(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/test/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/test/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 100);
@@ -129,7 +129,7 @@ final class RegexAnalysisServiceTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_construct_with_ignore_parse_errors(): void
     {
-        $analysis = new RegexAnalysisService(
+        $analysis = new AnalysisService(
             RegexParser::create(),
             null,
             50,
@@ -143,9 +143,9 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_continues_on_parse_error(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/[0-9]/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
-            new RegexPatternOccurrence('/another-valid/', 'test.php', 3, 'preg_match'),
+            new PatternOccurrence('/[0-9]/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/another-valid/', 'test.php', 3, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -156,19 +156,19 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_continues_on_parse_error(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/valid/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/valid/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
 
         $this->assertGreaterThanOrEqual(0, \count($result));
     }
 
     public function test_extract_fragment_with_empty_pattern(): void
     {
-        $patterns = [new RegexPatternOccurrence('', 'test.php', 1, 'preg_match')];
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::MEDIUM);
+        $patterns = [new PatternOccurrence('', 'test.php', 1, 'preg_match')];
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
 
         $this->assertSame([], $result);
     }
@@ -183,7 +183,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_filters_by_savings_with_zero(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/test/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/test/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 1000);
@@ -198,9 +198,9 @@ final class RegexAnalysisServiceTest extends TestCase
         }
 
         $patterns = [
-            new RegexPatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 2, 'preg_match'),
-            new RegexPatternOccurrence('/foo/', 'test.php', 3, 'preg_match'),
+            new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/foo/', 'test.php', 3, 'preg_match'),
         ];
 
         $sequential = $this->analysis->lint($patterns);
@@ -239,7 +239,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_with_sequential_processing(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/valid/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/valid/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->lint($patterns, null, 1);
@@ -250,7 +250,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_reports_progress_for_ignored_patterns(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/ignored/', 'test.php', 1, 'preg_match', null, null, true),
+            new PatternOccurrence('/ignored/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
         $calls = 0;
@@ -263,9 +263,9 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_lint_progress_with_ignore_parse_errors(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create(), null, 50, 'high', [], [], true);
+        $analysis = new AnalysisService(RegexParser::create(), null, 50, 'high', [], [], true);
         $patterns = [
-            new RegexPatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
         ];
 
         $calls = 0;
@@ -280,7 +280,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_progress_for_invalid_pattern(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
         ];
 
         $calls = 0;
@@ -295,10 +295,10 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_skips_ignored_patterns(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match', null, null, true),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::LOW);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW);
 
         $this->assertSame([], $result);
     }
@@ -306,7 +306,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_skips_ignored_patterns(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/a{2}/', 'test.php', 1, 'preg_match', null, null, true),
+            new PatternOccurrence('/a{2}/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -317,7 +317,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_with_extended_mode(): void
     {
         $patterns = [
-            new RegexPatternOccurrence('/a{1}/x', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/a{1}/x', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -330,7 +330,7 @@ final class RegexAnalysisServiceTest extends TestCase
     {
         $pattern = "/a{1}  # comment\n/x";
         $patterns = [
-            new RegexPatternOccurrence($pattern, 'test.php', 1, 'preg_match'),
+            new PatternOccurrence($pattern, 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -338,7 +338,7 @@ final class RegexAnalysisServiceTest extends TestCase
         $this->assertCount(1, $result);
 
         $ast = Regex::create()->parse($pattern);
-        $baseline = $ast->accept(new CompilerNodeVisitor(str_contains($ast->flags, 'x')));
+        $baseline = $ast->accept(new PatternPrinter(str_contains($ast->flags, 'x')));
 
         $this->assertSame($baseline, $result[0]['optimization']->original);
     }
@@ -366,9 +366,9 @@ final class RegexAnalysisServiceTest extends TestCase
             }
         };
 
-        $analysis = new RegexAnalysisService(RegexParser::create(['cache' => $cache]));
+        $analysis = new AnalysisService(RegexParser::create(['cache' => $cache]));
         $patterns = [
-            new RegexPatternOccurrence('/a/x', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/a/x', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $analysis->suggestOptimizations($patterns, 0);
@@ -383,12 +383,12 @@ final class RegexAnalysisServiceTest extends TestCase
         }
 
         $patterns = [
-            new RegexPatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/foo/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/foo/', 'test.php', 2, 'preg_match'),
         ];
 
-        $sequential = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::LOW, 1);
-        $parallel = $this->analysis->analyzeRedos($patterns, ReDoSSeverity::LOW, 2);
+        $sequential = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW, 1);
+        $parallel = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW, 2);
 
         $this->assertEquals($sequential, $parallel);
     }
@@ -400,8 +400,8 @@ final class RegexAnalysisServiceTest extends TestCase
         }
 
         $patterns = [
-            new RegexPatternOccurrence('/a{2}/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/b{3}/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/a{2}/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/b{3}/', 'test.php', 2, 'preg_match'),
         ];
 
         $sequential = $this->analysis->suggestOptimizations($patterns, 0, null, 1);
@@ -429,14 +429,14 @@ final class RegexAnalysisServiceTest extends TestCase
         LintFunctionOverrides::$pcntlWaitpidResult = 0;
 
         $patterns = [
-            new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
         ];
 
         $progressCalls = 0;
         $worker =
 
-            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof RegexPatternOccurrence ? $occurrence->pattern : '', $chunk);
+            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof PatternOccurrence ? $occurrence->pattern : '', $chunk);
 
         $result = $this->invokePrivate(
             'runInParallel',
@@ -459,14 +459,14 @@ final class RegexAnalysisServiceTest extends TestCase
         LintFunctionOverrides::queueTempnam(false);
 
         $patterns = [
-            new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
         ];
 
         $progressCalls = 0;
         $worker =
 
-            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof RegexPatternOccurrence ? $occurrence->pattern : '', $chunk);
+            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof PatternOccurrence ? $occurrence->pattern : '', $chunk);
 
         $result = $this->invokePrivate(
             'runInParallel',
@@ -496,7 +496,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
         $this->invokePrivate(
             'runInParallel',
-            [new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
+            [new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
             1,
             static fn (array $chunk): array => $chunk,
         );
@@ -519,8 +519,8 @@ final class RegexAnalysisServiceTest extends TestCase
         LintFunctionOverrides::$pcntlWaitpidResult = 0;
 
         $patterns = [
-            new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new RegexPatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
         ];
 
         $progressCalls = 0;
@@ -549,7 +549,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
         $result = $this->invokePrivate(
             'runInParallel',
-            [new RegexPatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
+            [new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
             1,
             static fn (array $chunk): array => $chunk,
         );
@@ -626,7 +626,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_skip_risk_analysis_helpers(): void
     {
-        $occurrence = new RegexPatternOccurrence('/foo|bar/', 'test.php', 1, 'preg_match');
+        $occurrence = new PatternOccurrence('/foo|bar/', 'test.php', 1, 'preg_match');
 
         $skip = $this->invokePrivate('shouldSkipRiskAnalysis', $occurrence);
         $this->assertTrue($skip);
@@ -720,7 +720,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_redos_hint_helpers(): void
     {
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::HIGH, 10);
+        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10);
         $hint = $this->invokePrivate('getReDoSHint', $analysis, '/abc/');
         $this->assertIsString($hint);
         $this->assertStringContainsString('Use possessive quantifiers', (string) $hint);
@@ -728,7 +728,7 @@ final class RegexAnalysisServiceTest extends TestCase
         $this->assertStringContainsString('++', (string) $hint);
         $this->assertStringContainsString('{m,n}+', (string) $hint);
 
-        $analysis = new ReDoSAnalysis(ReDoSSeverity::HIGH, 10, null, ['Keep it linear'], null, 'a+)+');
+        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10, null, ['Keep it linear'], null, 'a+)+');
         $hint = $this->invokePrivate('getReDoSHint', $analysis, '/(a+)+.*+/');
         $this->assertIsString($hint);
         $this->assertStringContainsString('Keep it linear', (string) $hint);

@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Redos\RedosAnalyzer;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\ReDoS\ReDoSAnalyzer;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\RegexParser;
-use RegexParser\Transpiler\RegexTranspiler;
 
 /**
  * What reads patterns beside the facade takes the core parser, and reads
@@ -34,17 +34,17 @@ final class ParserConsumersTest extends TestCase
     {
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.2']);
 
-        $this->assertSame(ReDoSSeverity::CRITICAL, (new ReDoSAnalyzer($parser))->analyze('/(a+)+$/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, (new RedosAnalyzer($parser))->analyze('/(a+)+$/')->severity);
         $this->assertTrue((new LanguageSolver($parser))->equivalent('/a|a/', '/a/')->isEquivalent);
         $this->assertTrue((new LanguageSolver($parser))->equivalent('/ab?/', '/a|ab/')->isEquivalent);
-        $this->assertSame('/a+/', (new RegexTranspiler($parser))->transpile('/a+/', 'javascript')->literal);
+        $this->assertSame('/a+/', (new Transpiler($parser))->transpile('/a+/', 'javascript')->literal);
     }
 
     #[Test]
     public function test_the_linter_reads_patterns_with_the_parser_it_is_given(): void
     {
         $parser = RegexParser::create(['cache' => null]);
-        $analysis = new RegexAnalysisService($parser);
+        $analysis = new AnalysisService($parser);
 
         $this->assertSame($parser, $analysis->getParser());
     }

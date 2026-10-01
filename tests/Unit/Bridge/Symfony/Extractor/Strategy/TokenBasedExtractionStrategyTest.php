@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Extractor\Strategy;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor\Strategy;
 
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
 
 final class TokenBasedExtractionStrategyTest extends TestCase
 {
@@ -75,7 +75,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $strategy = new TokenBasedExtractionStrategy();
 
         // Test that strategy doesn't handle exclude paths anymore
-        // This responsibility moved to RegexPatternExtractor
+        // This responsibility moved to PatternExtractor
         $fixtureFile = __DIR__.'/../../../../../Fixtures/Extractor/simple_preg_match.php';
 
         $result = $strategy->extract([$fixtureFile]);

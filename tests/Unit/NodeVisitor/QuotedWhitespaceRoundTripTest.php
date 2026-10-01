@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Whitespace, "#" and a trailing newline inside \Q...\E are literal, in
@@ -34,7 +34,7 @@ final class QuotedWhitespaceRoundTripTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_compiling_keeps_quoted_whitespace_literal(string $pattern, array $subjects): void
     {
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s on %s', json_encode($pattern), json_encode($compiled), json_encode($subject)));

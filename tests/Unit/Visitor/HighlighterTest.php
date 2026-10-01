@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Visitor;
+namespace PhpRegex\Tests\Unit\Visitor;
 
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\Regex;
 
 final class HighlighterTest extends TestCase
 {
@@ -151,8 +151,8 @@ final class HighlighterTest extends TestCase
     private function highlight(string $pattern, string $format): string
     {
         $visitor = match ($format) {
-            'cli' => new ConsoleHighlighterVisitor(),
-            'html' => new HtmlHighlighterVisitor(),
+            'cli' => new ConsoleHighlighter(),
+            'html' => new HtmlHighlighter(),
             default => throw new \InvalidArgumentException("Invalid format: $format"),
         };
 

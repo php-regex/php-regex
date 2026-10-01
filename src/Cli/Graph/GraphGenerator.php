@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Graph;
+namespace PhpRegex\Cli\Graph;
 
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Cli\CliException;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Cli\CliException;
 
 final class GraphGenerator
 {

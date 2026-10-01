@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Documentation;
+namespace PhpRegex\Tests\Documentation;
 
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\AbstractNodeVisitor;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
 
 final class ReadmeExamplesTest extends TestCase
 {
@@ -64,7 +64,7 @@ final class ReadmeExamplesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a+)+b/');
 
-        $this->assertSame(ReDoSSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
     }
 
@@ -138,9 +138,9 @@ final class ReadmeExamplesTest extends TestCase
     {
         $ast = $this->regex->parse('/(a|a)/');
 
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $optimizedAst = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $optimizedPattern = $optimizedAst->accept($compiler);
 
         $this->assertSame('/([a])/', $optimizedPattern);
@@ -151,8 +151,8 @@ final class ReadmeExamplesTest extends TestCase
     {
         $ast = $this->regex->parse('/[0-9]+\-[a-z]+\@(?:gmail)\.com/');
 
-        $modernizedAst = $ast->accept(new ModernizerNodeVisitor());
-        $modern = $modernizedAst->accept(new CompilerNodeVisitor());
+        $modernizedAst = $ast->accept(new Modernizer());
+        $modern = $modernizedAst->accept(new PatternPrinter());
 
         $this->assertSame('/\d+-[a-z]+@gmail\.com/', $modern);
     }
@@ -162,8 +162,8 @@ final class ReadmeExamplesTest extends TestCase
     {
         $ast = $this->regex->parse('/^[0-9]+(\w+)$/');
 
-        $console = $ast->accept(new ConsoleHighlighterVisitor());
-        $html = $ast->accept(new HtmlHighlighterVisitor());
+        $console = $ast->accept(new ConsoleHighlighter());
+        $html = $ast->accept(new HtmlHighlighter());
 
         $this->assertStringContainsString("\033[", $console);
         $this->assertStringContainsString('regex-anchor', $html);

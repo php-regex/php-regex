@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\Regex;
 
 final class MetricsNodeVisitorTest extends TestCase
 {
     public function test_it_collects_counts_and_depth(): void
     {
         $ast = Regex::create()->parse('/(a|b)c/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertSame(7, $metrics['total']);
         $this->assertSame(3, $metrics['counts']['LiteralNode'] ?? null);
@@ -33,7 +33,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_quantifier_nodes(): void
     {
         $ast = Regex::create()->parse('/a+/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('QuantifierNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['QuantifierNode']);
@@ -42,7 +42,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_char_type_nodes(): void
     {
         $ast = Regex::create()->parse('/\d+/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('CharTypeNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['CharTypeNode']);
@@ -51,7 +51,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_dot_nodes(): void
     {
         $ast = Regex::create()->parse('/./');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('DotNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['DotNode']);
@@ -60,7 +60,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_anchor_nodes(): void
     {
         $ast = Regex::create()->parse('/^a$/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('AnchorNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['AnchorNode']);
@@ -69,7 +69,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_assertion_nodes(): void
     {
         $ast = Regex::create()->parse('/\b/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('AssertionNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['AssertionNode']);
@@ -78,7 +78,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_keep_nodes(): void
     {
         $ast = Regex::create()->parse('/a\K/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('KeepNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['KeepNode']);
@@ -87,7 +87,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_char_class_nodes(): void
     {
         $ast = Regex::create()->parse('/[abc]/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('CharClassNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['CharClassNode']);
@@ -96,7 +96,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_range_nodes(): void
     {
         $ast = Regex::create()->parse('/[a-z]/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('RangeNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['RangeNode']);
@@ -105,7 +105,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_backreference_nodes(): void
     {
         $ast = Regex::create()->parse('/(a)\1/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('BackrefNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['BackrefNode']);
@@ -114,7 +114,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_unicode_nodes(): void
     {
         $ast = Regex::create()->parse('/\x{0041}/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('CharLiteralNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['CharLiteralNode']);
@@ -123,7 +123,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_unicode_prop_nodes(): void
     {
         $ast = Regex::create()->parse('/\p{L}/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('UnicodePropNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['UnicodePropNode']);
@@ -132,7 +132,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_posix_class_nodes(): void
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('PosixClassNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['PosixClassNode']);
@@ -141,7 +141,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_comment_nodes(): void
     {
         $ast = Regex::create()->parse('/(?#comment)a/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('CommentNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['CommentNode']);
@@ -150,7 +150,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_conditional_nodes(): void
     {
         $ast = Regex::create()->parse('/(?(condition)yes|no)/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('ConditionalNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['ConditionalNode']);
@@ -159,7 +159,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_subroutine_nodes(): void
     {
         $ast = Regex::create()->parse('/(?1)/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('SubroutineNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['SubroutineNode']);
@@ -168,7 +168,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_pcre_verb_nodes(): void
     {
         $ast = Regex::create()->parse('/(*VERB)a/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('PcreVerbNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['PcreVerbNode']);
@@ -177,7 +177,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_define_nodes(): void
     {
         $ast = Regex::create()->parse('/(?(DEFINE)...)/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('DefineNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['DefineNode']);
@@ -186,7 +186,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_limit_match_nodes(): void
     {
         $ast = Regex::create()->parse('/(*LIMIT_MATCH=100)a/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('LimitMatchNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['LimitMatchNode']);
@@ -195,7 +195,7 @@ final class MetricsNodeVisitorTest extends TestCase
     public function test_it_counts_callout_nodes(): void
     {
         $ast = Regex::create()->parse('/(?C)a/');
-        $metrics = $ast->accept(new MetricsNodeVisitor());
+        $metrics = $ast->accept(new MetricsCollector());
 
         $this->assertArrayHasKey('CalloutNode', $metrics['counts']);
         $this->assertGreaterThan(0, $metrics['counts']['CalloutNode']);

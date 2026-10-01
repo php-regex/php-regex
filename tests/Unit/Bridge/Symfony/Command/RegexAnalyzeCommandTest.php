@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Command;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
 
+use PhpRegex\Symfony\Analyzer\AnalysisContext;
+use PhpRegex\Symfony\Analyzer\AnalysisIssue;
+use PhpRegex\Symfony\Analyzer\AnalysisNotice;
+use PhpRegex\Symfony\Analyzer\AnalyzerInterface;
+use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PhpRegex\Symfony\Analyzer\CheckOutcome;
+use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PhpRegex\Symfony\Analyzer\IssueDetail;
+use PhpRegex\Symfony\Analyzer\ReportSection;
+use PhpRegex\Symfony\Command\AnalyzeCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Analyzer\AnalysisContext;
-use RegexParser\Bridge\Symfony\Analyzer\AnalysisIssue;
-use RegexParser\Bridge\Symfony\Analyzer\AnalysisNotice;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerInterface;
-use RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry;
-use RegexParser\Bridge\Symfony\Analyzer\CheckOutcome;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use RegexParser\Bridge\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use RegexParser\Bridge\Symfony\Analyzer\IssueDetail;
-use RegexParser\Bridge\Symfony\Analyzer\ReportSection;
-use RegexParser\Bridge\Symfony\Command\RegexAnalyzeCommand;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class RegexAnalyzeCommandTest extends TestCase
@@ -72,7 +72,7 @@ final class RegexAnalyzeCommandTest extends TestCase
             },
         ]);
 
-        $command = new RegexAnalyzeCommand(
+        $command = new AnalyzeCommand(
             $registry,
             new ConsoleReportFormatter(),
             new JsonReportFormatter(),
@@ -129,7 +129,7 @@ final class RegexAnalyzeCommandTest extends TestCase
             },
         ]);
 
-        $command = new RegexAnalyzeCommand(
+        $command = new AnalyzeCommand(
             $registry,
             new ConsoleReportFormatter(),
             new JsonReportFormatter(),
@@ -175,7 +175,7 @@ final class RegexAnalyzeCommandTest extends TestCase
             },
         ]);
 
-        $command = new RegexAnalyzeCommand(
+        $command = new AnalyzeCommand(
             $registry,
             new ConsoleReportFormatter(),
             new JsonReportFormatter(),

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
 /**
  * NFA fragment with a start state and accepting states.

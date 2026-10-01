@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\PHPStan;
+namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
+use PhpRegex\PHPStan\RegexPatternRule;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
 
 /**
- * Unit tests for RegexParserRule's optimization safety checks.
+ * Unit tests for RegexPatternRule's optimization safety checks.
  */
 final class RegexParserRuleOptimizationSafetyTest extends TestCase
 {
-    private RegexParserRule $rule;
+    private RegexPatternRule $rule;
 
     protected function setUp(): void
     {
-        $this->rule = new RegexParserRule(config: [
+        $this->rule = new RegexPatternRule(config: [
             'checks' => [
                 'redos' => ['enabled' => false, 'threshold' => 'high'],
                 'optimizations' => ['enabled' => true],

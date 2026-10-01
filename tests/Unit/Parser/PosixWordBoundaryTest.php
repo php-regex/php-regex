@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "[[:<:]]" and "[[:>:]]", exactly, are the start and end of a word: PCRE2
@@ -78,10 +78,10 @@ final class PosixWordBoundaryTest extends TestCase
         $this->assertTrue($regex->validate($pattern)->isValid, $pattern);
 
         // Compiled back as written.
-        $this->assertSame($pattern, $regex->parse($pattern)->accept(new CompilerNodeVisitor()));
+        $this->assertSame($pattern, $regex->parse($pattern)->accept(new PatternPrinter()));
 
         $optimized = $regex->optimize($pattern)->optimized;
-        [$min, $max] = $regex->parse($pattern)->accept(new LengthRangeNodeVisitor());
+        [$min, $max] = $regex->parse($pattern)->accept(new LengthRangeCalculator());
         foreach ($subjects as $subject) {
             preg_match($pattern, $subject, $expected);
             preg_match($optimized, $subject, $actual);

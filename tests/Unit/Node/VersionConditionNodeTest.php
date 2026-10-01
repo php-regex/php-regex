@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Node;
+namespace PhpRegex\Tests\Unit\Node;
 
+use PhpRegex\Parser\Node\VersionConditionNode;
+use PhpRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
 
 final class VersionConditionNodeTest extends TestCase
 {

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Runtime;
+namespace PhpRegex\Tests\Unit\Runtime;
 
+use PhpRegex\Cli\PcreRuntimeInfo;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Runtime\PcreRuntimeInfo;
 
 final class PcreRuntimeInfoTest extends TestCase
 {

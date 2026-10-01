@@ -38,7 +38,7 @@ parameters:
         - tests/Tools/extract_pcre_tests.php
         - tests/Tools/validate_library.php
         # Laravel bridge - requires illuminate/* packages which are optional
-        - src/Bridge/Laravel/*
+        - src/Laravel/*
         - tests/Integration/Bridge/Laravel/*
 
 

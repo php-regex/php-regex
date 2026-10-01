@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * An alternative that ends the subject, as "$" in "(\d+(?:\s|$))", leaves
@@ -33,7 +33,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     public function test_no_alternative_ends_the_subject_before_the_text_that_follows(string $pattern): void
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
             $generator->setSeed($seed);
@@ -66,7 +66,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     public function test_an_end_before_optional_text_is_still_drawn(): void
     {
         $tree = Regex::create(['cache' => null])->parse('/^(?:a|$)\n?$/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $samples = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -87,7 +87,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     public function test_a_branch_is_drawn_when_every_one_ends_the_subject(): void
     {
         $tree = Regex::create(['cache' => null])->parse('/(?:x$|y$)\n/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $samples = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -132,7 +132,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     {
         $pattern = '/(\w+)(*scs:(1)\d+(?:,|$))!/';
         $tree = Regex::create(['cache' => null, 'pcre_version' => '10.47'])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $compiles = false !== @preg_match($pattern, '');
 
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -151,7 +151,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     public function test_the_last_repeat_may_end_the_subject(): void
     {
         $tree = Regex::create(['cache' => null])->parse('/^(?:\d(?:,|$)){3}/');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $endings = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -171,7 +171,7 @@ final class SampleGeneratorEndAnchorTest extends TestCase
     public function test_a_line_end_is_drawn_before_more_text(): void
     {
         $tree = Regex::create(['cache' => null])->parse('/(?:a|$)b/m');
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $samples = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {

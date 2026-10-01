@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Optimizer;
+namespace PhpRegex\Optimizer;
 
-use RegexParser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 
 /**
  * What the optimizer may rewrite. As a PHP array it is keyed in snake_case,
@@ -79,7 +79,7 @@ final readonly class OptimizerOptions
      *                                         canonicalize_char_classes, possessive, factorize,
      *                                         min_quantifier_count, verify_with_automata
      *
-     * @throws InvalidRegexOptionException on a key it does not know or a value of the wrong type
+     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on a key it does not know or a value of the wrong type
      */
     public static function fromArray(array $options): self
     {
@@ -90,7 +90,7 @@ final readonly class OptimizerOptions
      * @param array<array-key, mixed> $options keyed in camelCase, as regex.json and the PHPStan
      *                                         parameters are
      *
-     * @throws InvalidRegexOptionException on a key it does not know or a value of the wrong type
+     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on a key it does not know or a value of the wrong type
      */
     public static function fromCamelCaseArray(array $options): self
     {

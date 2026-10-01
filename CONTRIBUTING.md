@@ -57,7 +57,7 @@ All contributions MUST include tests:
 <?php
 declare(strict_types=1);
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 

@@ -45,10 +45,10 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 Example PHP:
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSMode;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+$/', mode: ReDoSMode::CONFIRMED);
+$analysis = Regex::create()->redos('/(a+)+$/', mode: RedosMode::CONFIRMED);
 if ($analysis->isConfirmed()) {
     echo "Confirmed with bounded evidence\n";
 }
@@ -100,13 +100,13 @@ RegexParser analyzes the AST without executing the pattern:
 Lexer -> Parser -> RegexNode
                    |
                    v
-             ReDoSProfileNodeVisitor
+             RedosProfiler
                    |
                    v
-             ReDoSAnalysis (severity, findings, hints)
+             RedosAnalysis (severity, findings, hints)
 ```
 
-Key heuristics in `ReDoSProfileNodeVisitor` include:
+Key heuristics in `RedosProfiler` include:
 
 - Star-height detection (nested unbounded quantifiers)
 - Alternation overlap detection via `CharSetAnalyzer`
@@ -130,10 +130,10 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 ### PHP
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSMode;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+b/', mode: ReDoSMode::THEORETICAL);
+$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::THEORETICAL);
 echo $analysis->severity->value;
 ```
 

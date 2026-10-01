@@ -11,18 +11,27 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+use PhpRegex\Automata\Builder\DfaBuilder;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Transform\AstToNfaTransformer;
+use PhpRegex\Automata\Transform\RegularSubsetValidator;
+use PhpRegex\Toolkit\Regex;
 
-use RegexParser\Automata\Builder\DfaBuilder;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Transform\AstToNfaTransformer;
-use RegexParser\Automata\Transform\RegularSubsetValidator;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\Regex;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
 
 $patterns = [
     'Arabic block' => '/[\x{0600}-\x{06FF}]{2,}/u',
@@ -75,7 +84,7 @@ function measure(string $label, callable $callback): array
 }
 
 /**
- * @throws ComplexityException
+ * @throws \PhpRegex\Automata\Exception\ComplexityException
  */
 function determinizeNaive(Nfa $nfa, SolverOptions $options): Dfa
 {

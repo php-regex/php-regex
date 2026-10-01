@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Handler;
+namespace PhpRegex\Tests\Unit\Lsp\Handler;
 
+use PhpRegex\LanguageServer\Handler\InitializeHandler;
+use PhpRegex\LanguageServer\Protocol\Message;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Handler\InitializeHandler;
-use RegexParser\Lsp\Protocol\Message;
 
 final class InitializeHandlerTest extends TestCase
 {

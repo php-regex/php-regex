@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 final class LinterRulesTest extends TestCase
 {
@@ -91,7 +91,7 @@ final class LinterRulesTest extends TestCase
     public function test_suspicious_char_class_range_message_uses_ascii_order(): void
     {
         $regex = Regex::create()->parse('/[A-z]/');
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         $issues = array_values(array_filter(
@@ -189,7 +189,7 @@ final class LinterRulesTest extends TestCase
     private function lintMessages(string $pattern): array
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         return array_map(static fn ($issue) => $issue->message, $linter->getIssues());
@@ -201,7 +201,7 @@ final class LinterRulesTest extends TestCase
     private function lint(string $pattern): array
     {
         $regex = Regex::create()->parse($pattern);
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $regex->accept($linter);
 
         return array_map(static fn ($issue) => $issue->id, $linter->getIssues());

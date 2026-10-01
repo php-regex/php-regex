@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\RegexParser;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\Attributes\WithEnv;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 
 /**
  * config/regex-parser.php in 2.0: runtime validation off unless asked,
@@ -178,7 +178,7 @@ final class LaravelTargetConfigTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [RegexParserServiceProvider::class];
+        return [PhpRegexServiceProvider::class];
     }
 
     private function regexService(): Regex

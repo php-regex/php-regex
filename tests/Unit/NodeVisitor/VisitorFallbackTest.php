@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class VisitorFallbackTest extends TestCase
 {
@@ -35,7 +35,7 @@ final class VisitorFallbackTest extends TestCase
         $regex = Regex::create();
         $ast = $regex->parse('/\1/');
 
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         // Should return empty string (fallback)
         $this->assertSame('', $ast->accept($generator));
     }
@@ -44,7 +44,7 @@ final class VisitorFallbackTest extends TestCase
     {
         // Inject a CharLiteralNode with a bad value
         $node = new CharLiteralNode('BAD', -1, CharLiteralType::UNICODE, 0, 0);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         // Should hit the '?' fallback
         $this->assertSame('?', $node->accept($generator));
@@ -54,7 +54,7 @@ final class VisitorFallbackTest extends TestCase
     {
         // Inject CharLiteralNode with bad value
         $node = new CharLiteralNode('BAD', -1, CharLiteralType::OCTAL, 0, 0);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         // Should hit the '?' fallback
         $this->assertSame('?', $node->accept($generator));
@@ -65,7 +65,7 @@ final class VisitorFallbackTest extends TestCase
         // Inject BackrefNode with value that fails internal validator regex
         // Use a value with invalid characters that won't match any valid pattern
         $node = new BackrefNode('BAD-REF', 0, 0);
-        $validator = new ValidatorNodeVisitor();
+        $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Invalid backreference syntax');
@@ -75,7 +75,7 @@ final class VisitorFallbackTest extends TestCase
 
     public function test_optimizer_char_class_parts_change(): void
     {
-        // The OptimizerNodeVisitor::visitCharClass has logic: if ($optimizedPart !== $part) { $hasChanged = true; }
+        // The Rewriter::visitCharClass has logic: if ($optimizedPart !== $part) { $hasChanged = true; }
         // But currently, parts (Literals/Ranges) are never optimized, so this block is dead code.
         // We force it by mocking a NodeInterface that returns a DIFFERENT instance when visited.
 
@@ -85,7 +85,7 @@ final class VisitorFallbackTest extends TestCase
             ->willReturn(new LiteralNode('changed', 0, 0)); // Return different instance
 
         $node = new CharClassNode($mockPart, false, 0, 0);
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $result = $node->accept($optimizer);
 

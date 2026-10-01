@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\LintReport;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\RegexLintReport;
 
 final class ConsoleFormatterTest extends TestCase
 {
@@ -31,7 +31,7 @@ final class ConsoleFormatterTest extends TestCase
         );
         $formatter = new ConsoleFormatter(null, $config);
 
-        $report = new RegexLintReport(
+        $report = new LintReport(
             results: [[
                 'file' => './test.php',
                 'line' => 10,
@@ -54,7 +54,7 @@ final class ConsoleFormatterTest extends TestCase
         $config = OutputConfiguration::quiet();
         $formatter = new ConsoleFormatter(null, $config);
 
-        $report = new RegexLintReport(
+        $report = new LintReport(
             results: [],
             stats: ['errors' => 0, 'warnings' => 0, 'optimizations' => 0],
         );

@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
-use RegexParser\Lexer;
-use RegexParser\Token;
-use RegexParser\TokenType;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
 
 /**
  * Accessor class to expose and manipulate private methods/properties of the Lexer for unit testing.
@@ -23,7 +23,7 @@ use RegexParser\TokenType;
 final readonly class LexerAccessor
 {
     /**
-     * @var \ReflectionClass<Lexer>
+     * @var \ReflectionClass<\PhpRegex\Parser\Lexer>
      */
     private \ReflectionClass $reflection;
 

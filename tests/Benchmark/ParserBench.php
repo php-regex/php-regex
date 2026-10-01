@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Benchmark;
+namespace PhpRegex\Tests\Benchmark;
 
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\Regex;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 
 /**
  * Comprehensive performance benchmarks for RegexParser.
@@ -32,15 +32,15 @@ final class ParserBench
 {
     private Regex $regex;
 
-    private CompilerNodeVisitor $compiler;
+    private PatternPrinter $compiler;
 
-    private ExplainNodeVisitor $explainer;
+    private TextExplainer $explainer;
 
     public function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->compiler = new CompilerNodeVisitor();
-        $this->explainer = new ExplainNodeVisitor();
+        $this->compiler = new PatternPrinter();
+        $this->explainer = new TextExplainer();
     }
 
     /**

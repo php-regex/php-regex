@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\SemanticErrorException;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Tests\TestUtils\ValidatorErrorCodes;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\SemanticErrorException;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\ValidatorErrorCodes;
 
 /**
  * A pattern with two errors is reported at the one PCRE meets first, and PCRE
@@ -74,7 +74,7 @@ final class ErrorPrecedenceTest extends TestCase
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('more than one branch');
 
-        $define->accept(new ValidatorNodeVisitor());
+        $define->accept(new Validator());
     }
 
     #[Test]
@@ -83,14 +83,14 @@ final class ErrorPrecedenceTest extends TestCase
         // Only a walk from the pattern root waits for the late passes: a
         // lookbehind handed to the validator alone is judged where it stands.
         $bounded = Regex::create()->parse('/(?<=ab)/')->pattern;
-        $bounded->accept(new ValidatorNodeVisitor());
+        $bounded->accept(new Validator());
 
         $lookbehind = Regex::create()->parse('/(?<=a+)/')->pattern;
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Lookbehind is unbounded');
 
-        $lookbehind->accept(new ValidatorNodeVisitor());
+        $lookbehind->accept(new Validator());
     }
 
     /**

@@ -16,8 +16,8 @@ If you are new to the codebase, this short checklist helps you get oriented quic
 
 For first-time contributors, this is a good entry path:
 
-- Skim `src/Regex.php` to understand the public API and options flow.
-- Read `src/Lexer.php`, `src/Parser.php`, and `src/NodeVisitor/*` for the core pipeline.
+- Skim `src/Toolkit/Regex.php` to understand the public API and options flow.
+- Read `src/Parser/Lexer.php`, `src/Parser/Syntax/TokenParser.php`, and `src/Parser/Validation/Validator.php` for the core pipeline.
 - Use `tests/Fixtures/*` and `tests/Unit/*` to see real patterns and expected behavior.
 - Scan `tests/Fixtures/pcre_patterns.php` for real-world patterns to reuse in examples.
 - Run `bin/regex parse '/^hello$/'` and `bin/regex analyze '/(a+)+$/'` to connect CLI output with AST behavior.
@@ -68,8 +68,8 @@ Regex::create([options])
 ### Example
 
 ```php
-use RegexParser\Regex;
-use RegexParser\Cache\FilesystemCache;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Cache\FilesystemCache;
 
 $regex = Regex::create([
     'cache' => new FilesystemCache('/var/cache/regex-parser'),
@@ -137,10 +137,10 @@ Exception hierarchy (simplified):
       - `SemanticErrorException`
     - `RecursionLimitException`
     - `ResourceLimitException`
-- `RegexParserExceptionInterface` (implemented by parser/lexer exceptions)
+- `ExceptionInterface` (implemented by parser/lexer exceptions)
 
 Catch-all:
-- `RegexParserExceptionInterface`
+- `ExceptionInterface`
 
 Specific catches:
 - `LexerException`
@@ -149,11 +149,11 @@ Specific catches:
 ### Exception Handling Examples
 
 ```php
-use RegexParser\Regex;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Exception\RegexParserExceptionInterface;
-use RegexParser\Exception\InvalidRegexOptionException;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Exception\ExceptionInterface;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 
 try {
     $ast = Regex::create()->parse('/[a-z]+/');
@@ -166,7 +166,7 @@ try {
 } catch (ParserException $e) {
     // Grammar failed - invalid structure
     echo "Parse error: {$e->getMessage()}";
-} catch (RegexParserExceptionInterface $e) {
+} catch (ExceptionInterface $e) {
     // Any other parser/lexer error
     echo "RegexParser error: {$e->getMessage()}";
 }
@@ -325,7 +325,7 @@ jobs:
 ```php
 namespace MyApp\Regex;
 
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 class RegexValidator
 {
@@ -361,9 +361,9 @@ class RegexValidator
 ```php
 namespace MyApp\Regex;
 
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\AbstractTraversingVisitor;
-use RegexParser\Node;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\AbstractTraversingVisitor;
+use PhpRegex\Parser\Node;
 
 class LiteralCollector extends AbstractTraversingVisitor
 {
@@ -400,7 +400,7 @@ class PatternAnalyzer
 // src/Validator/RegexValidator.php
 namespace App\Validator;
 
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -456,7 +456,7 @@ class RegexConstraintValidator extends ConstraintValidator
 For long-running processes (daemons, workers), manage memory carefully:
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 class RegexProcessor
 {

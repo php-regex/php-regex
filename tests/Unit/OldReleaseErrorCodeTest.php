@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\RegexParser;
 
 /**
  * A code names what the judged release reports, not what the latest one
@@ -39,7 +39,7 @@ final class OldReleaseErrorCodeTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, release: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
      */
     public static function provideCodesByRelease(): iterable
     {

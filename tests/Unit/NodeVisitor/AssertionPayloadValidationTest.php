@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * The body of "(*pla:...)", "(?*...)" and "(*sr:...)" is checked like any
@@ -85,11 +85,11 @@ final class AssertionPayloadValidationTest extends TestCase
         // Built in code: a script run with no parsed body, a tree with no
         // source, or a source that is not the one the tree was read from.
         // The payload's letters cannot be read back, so nothing is refused.
-        $tree->accept(new ValidatorNodeVisitor());
+        $tree->accept(new Validator());
     }
 
     /**
-     * @return iterable<string, array{tree: RegexNode}>
+     * @return iterable<string, array{tree: \PhpRegex\Parser\Node\RegexNode}>
      */
     public static function provideBuiltTrees(): iterable
     {

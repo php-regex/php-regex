@@ -30,17 +30,17 @@ Every node implements an `accept()` method that receives a visitor. This is call
 2. The **runtime type** of the visitor (which visitor class it is)
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Explain\TextExplainer;
 
 $regex = Regex::create();
 $ast = $regex->parse('/foo|bar/');
 
 // Double dispatch in action:
-// 1. RegexNode::accept(ExplainNodeVisitor)
+// 1. RegexNode::accept(TextExplainer)
 // 2. Calls $visitor->visitRegex($this)
 // 3. Which recursively calls accept on children
-$result = $ast->accept(new ExplainNodeVisitor());
+$result = $ast->accept(new TextExplainer());
 
 echo $result;
 /*
@@ -73,8 +73,8 @@ RegexParser uses depth-first traversal with explicit control in the visitor. Typ
 ### Example: Tracking Depth
 
 ```php
-use RegexParser\Regex;
-use RegexParser\NodeVisitor\AbstractNodeVisitor;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Parser\AbstractNodeVisitor;
 
 $regex = Regex::create();
 $ast = $regex->parse('/(a(b(c)))+/');
@@ -116,23 +116,23 @@ Visitors typically follow one of two patterns:
 ### Pattern 1: Stateless (Returns a Value)
 
 ```php
-// CompilerNodeVisitor - returns a string
-$pattern = $ast->accept(new CompilerNodeVisitor());
+// PatternPrinter - returns a string
+$pattern = $ast->accept(new PatternPrinter());
 ```
 
 ### Pattern 2: Stateful (Accumulates and Returns Result)
 
 ```php
-// MetricsNodeVisitor - stores internal state
-$visitor = new MetricsNodeVisitor();
+// MetricsCollector - stores internal state
+$visitor = new MetricsCollector();
 $ast->accept($visitor);
 $metrics = $visitor->getMetrics(); // Get accumulated data
 ```
 
 | Pattern   | Use Case                       | Example Visitor                              |
 |-----------|--------------------------------|----------------------------------------------|
-| Stateless | Transformation, compilation    | `CompilerNodeVisitor`                        |
-| Stateful  | Metrics collection, validation | `MetricsNodeVisitor`, `ValidatorNodeVisitor` |
+| Stateless | Transformation, compilation    | `PatternPrinter`                        |
+| Stateful  | Metrics collection, validation | `MetricsCollector`, `Validator` |
 
 ### Choosing a base class
 
@@ -152,8 +152,8 @@ extends one keeps working when a minor release adds a node type:
   added later included.
 
 ```php
-use RegexParser\Node;
-use RegexParser\NodeVisitor\AbstractTraversingVisitor;
+use PhpRegex\Parser\Node;
+use PhpRegex\Parser\AbstractTraversingVisitor;
 
 class OnlyLiteralVisitor extends AbstractTraversingVisitor
 {

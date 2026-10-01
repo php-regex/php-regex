@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony;
 
+use PhpRegex\Symfony\PhpRegexBundle;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\RegexParserBundle;
 
 final class RegexParserBundleTest extends TestCase
 {
     public function test_get_path_returns_bundle_directory(): void
     {
-        $bundle = new RegexParserBundle();
+        $bundle = new PhpRegexBundle();
 
-        $this->assertSame(\dirname(__DIR__, 4).'/src/Bridge/Symfony', $bundle->getPath());
+        $this->assertSame(\dirname(__DIR__, 4).'/src/Symfony', $bundle->getPath());
     }
 }

@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\LintRequest;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Optimizer\OptimizerOptions;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\PHPStan\RegexPatternRule;
+use PhpRegex\Symfony\Command\LintCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\PHPStan\RegexParserRule;
-use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintRequest;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\Optimizer\OptimizerOptions;
-use RegexParser\RegexParser;
 
 /**
  * Every lint entry point hands the optimizer the options its configuration
@@ -36,14 +36,14 @@ final class OptimizerOptionsWiringTest extends TestCase
     #[Test]
     public function test_a_lint_request_checks_rewrites_with_the_automata_by_default(): void
     {
-        $this->assertEquals(new OptimizerOptions(verifyWithAutomata: true), (new RegexLintRequest([], [], 1))->optimizations);
+        $this->assertEquals(new OptimizerOptions(verifyWithAutomata: true), (new LintRequest([], [], 1))->optimizations);
     }
 
     #[Test]
     public function test_suggestions_follow_the_options_given(): void
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $occurrence = [new RegexPatternOccurrence('/[0-9]/', 'test.php', 1, 'preg_match')];
+        $analysis = new AnalysisService(RegexParser::create());
+        $occurrence = [new PatternOccurrence('/[0-9]/', 'test.php', 1, 'preg_match')];
 
         $suggestions = $analysis->suggestOptimizations($occurrence, 1);
         $this->assertCount(1, $suggestions);
@@ -77,9 +77,9 @@ final class OptimizerOptionsWiringTest extends TestCase
      */
     private function symfonyOptions(array $optimizations): OptimizerOptions
     {
-        $analysis = new RegexAnalysisService(RegexParser::create());
-        $command = new RegexLintCommand(
-            lint: new RegexLintService($analysis, new RegexPatternSourceCollection([])),
+        $analysis = new AnalysisService(RegexParser::create());
+        $command = new LintCommand(
+            lint: new LintService($analysis, new PatternSourceCollection([])),
             analysis: $analysis,
             formatterRegistry: new FormatterRegistry(),
             defaultOptimizations: $optimizations,
@@ -96,7 +96,7 @@ final class OptimizerOptionsWiringTest extends TestCase
      */
     private function phpstanOptions(array $options): OptimizerOptions
     {
-        $rule = new RegexParserRule(['checks' => ['optimizations' => ['enabled' => true, 'options' => $options]]]);
+        $rule = new RegexPatternRule(['checks' => ['optimizations' => ['enabled' => true, 'options' => $options]]]);
 
         $resolved = (new \ReflectionProperty($rule, 'optimizationOptions'))->getValue($rule);
         $this->assertInstanceOf(OptimizerOptions::class, $resolved);

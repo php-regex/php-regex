@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli;
+namespace PhpRegex\Cli;
 
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 final readonly class ConsoleStyle
 {

@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\Regex;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 
 final class ParseCommand extends AbstractCommand
 {
@@ -83,9 +83,9 @@ final class ParseCommand extends AbstractCommand
     private function executeParsing(Output $output, Regex $regex, ConsoleStyle $style, string $pattern, bool $validate): int
     {
         $ast = $regex->parse($pattern);
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
         $highlightedPattern = $output->isAnsi()
-            ? $ast->accept(new ConsoleHighlighterVisitor())
+            ? $ast->accept(new ConsoleHighlighter())
             : $pattern;
 
         $steps = $validate ? 2 : 1;

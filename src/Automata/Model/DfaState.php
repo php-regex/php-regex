@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
 /**
  * Immutable DFA state, as `Dfa` hands it out: read, never built by a caller.

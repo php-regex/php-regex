@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintConfigResult;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintConfigResult;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Tests\Support\LintFunctionOverrides;
-use RegexParser\Tests\Support\TemporaryProject;
 
 final class LintConfigLoaderEdgeCasesTest extends TestCase
 {

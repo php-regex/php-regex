@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cache;
+namespace PhpRegex\Tests\Unit\Cache;
 
+use PhpRegex\Parser\Cache\AstSerializer;
+use PhpRegex\Parser\Cache\PsrSimpleCacheAdapter;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Tests\TestUtils\InMemorySimpleCache;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\AstSerializer;
-use RegexParser\Cache\PsrSimpleCacheAdapter;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\InMemorySimpleCache;
 
 final class PsrSimpleCacheAdapterTest extends TestCase
 {

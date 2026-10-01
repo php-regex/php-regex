@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A (?#...) comment is transparent to a quantifier: "a(?#c)*" is "a*", and
@@ -52,14 +52,14 @@ final class QuantifierAfterCommentTest extends TestCase
     public function test_the_tree_repeats_the_item_before_the_comment(string $pattern, array $subjects): void
     {
         $ast = Regex::create()->parse($pattern);
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
 
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
         }
 
         // A sample built from the tree must be matched by the pattern itself.
-        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGeneratorNodeVisitor())));
+        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGenerator())));
     }
 
     /**

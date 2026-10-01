@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\JsonFormatter;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Optimizer\OptimizationResult;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\JsonFormatter;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\OptimizationResult;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class JsonFormatterTest extends TestCase
 {
@@ -39,7 +39,7 @@ final class JsonFormatterTest extends TestCase
 
     public function test_format_empty_report(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -52,7 +52,7 @@ final class JsonFormatterTest extends TestCase
     public function test_format_leads_with_the_target_when_given(): void
     {
         $target = ['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php'];
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $decoded = json_decode((new JsonFormatter(target: $target))->format($report), true);
 
@@ -63,7 +63,7 @@ final class JsonFormatterTest extends TestCase
 
     public function test_format_has_no_target_by_default(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $decoded = json_decode($this->formatter->format($report), true);
 
@@ -82,7 +82,7 @@ final class JsonFormatterTest extends TestCase
             'issues' => [['type' => 'error', 'message' => 'Error 1', 'file' => 'file1.php', 'line' => 10]],
             'optimizations' => [['file' => 'file1.php', 'line' => 10, 'optimization' => new OptimizationResult('/test1/', '/optimized/', ['test']), 'savings' => 5]],
             'problems' => [
-                new RegexProblem(ProblemType::Syntax, Severity::Error, 'Problem 1', null, null, null, null),
+                new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Problem 1', null, null, null, null),
             ],
         ];
 
@@ -95,7 +95,7 @@ final class JsonFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result1, $result2], ['errors' => 1, 'warnings' => 0, 'optimizations' => 1]);
+        $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 0, 'optimizations' => 1]);
 
         $output = $this->formatter->format($report);
 
@@ -132,7 +132,7 @@ final class JsonFormatterTest extends TestCase
             ['file' => 'valid.php', 'line' => 1, 'pattern' => '/test/', 'issues' => [], 'optimizations' => [], 'problems' => []],
         ];
 
-        $report = new RegexLintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -153,7 +153,7 @@ final class JsonFormatterTest extends TestCase
         ];
 
         /** @phpstan-ignore-next-line intentionally mixing invalid results for coverage */
-        $report = new RegexLintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -177,7 +177,7 @@ final class JsonFormatterTest extends TestCase
             ],
         ];
 
-        $report = new RegexLintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $decoded = json_decode($this->formatter->format($report), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($decoded);
@@ -213,7 +213,7 @@ final class JsonFormatterTest extends TestCase
 
     public function test_format_uses_pretty_print(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -232,7 +232,7 @@ final class JsonFormatterTest extends TestCase
             'problems' => [],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 

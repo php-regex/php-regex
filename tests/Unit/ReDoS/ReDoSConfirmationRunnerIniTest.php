@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Redos\ConfirmationOptions;
+use PhpRegex\Redos\ConfirmationRunner;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfirmationRunner;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 /**
  * The runner runs the pattern under the limits of its options, without the
@@ -64,10 +64,10 @@ final class ReDoSConfirmationRunnerIniTest extends TestCase
         }
         $found = \ini_get('pcre.backtrack_limit');
 
-        (new ReDoSConfirmationRunner())->confirm(
+        (new ConfirmationRunner())->confirm(
             '/(a+)+$/',
-            new ReDoSAnalysis(ReDoSSeverity::HIGH, 8),
-            new ReDoSConfirmOptions(steps: 1, iterations: 1, backtrackLimit: 10),
+            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new ConfirmationOptions(steps: 1, iterations: 1, backtrackLimit: 10),
         );
 
         $this->assertSame($found, \ini_get('pcre.backtrack_limit'));
@@ -107,10 +107,10 @@ final class ReDoSConfirmationRunnerIniTest extends TestCase
         \ini_set('pcre.backtrack_limit', $this->before['pcre.backtrack_limit']);
         \ini_set('pcre.jit', '1');
 
-        $confirmation = (new ReDoSConfirmationRunner())->confirm(
+        $confirmation = (new ConfirmationRunner())->confirm(
             '/(a+)+$/',
-            new ReDoSAnalysis(ReDoSSeverity::HIGH, 8),
-            new ReDoSConfirmOptions(steps: 1, iterations: 1, backtrackLimit: 10, recursionLimit: 500),
+            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new ConfirmationOptions(steps: 1, iterations: 1, backtrackLimit: 10, recursionLimit: 500),
         );
 
         $this->assertTrue($confirmation->confirmed);

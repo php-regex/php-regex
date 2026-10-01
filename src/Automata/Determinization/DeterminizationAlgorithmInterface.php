@@ -11,12 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Determinization;
+namespace PhpRegex\Automata\Determinization;
 
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Options\SolverOptions;
 
 /**
  * Defines an algorithm that determinizes an NFA into a DFA.
@@ -28,7 +27,7 @@ interface DeterminizationAlgorithmInterface
     /**
      * @param array<int, array{0:int, 1:int}> $alphabetRanges
      *
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options, array $alphabetRanges): Dfa;
 }

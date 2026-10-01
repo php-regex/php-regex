@@ -52,29 +52,29 @@ $ast->accept($visitor); // Start the traversal
 
 RegexParser includes several useful visitors:
 
-### 1. CompilerNodeVisitor
+### 1. PatternPrinter
 ```php
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
+use PhpRegex\Parser\Printer\PatternPrinter;
 
-$compiler = new CompilerNodeVisitor();
+$compiler = new PatternPrinter();
 $pattern = $ast->accept($compiler); // Regenerate the pattern
 ```
 
-### 2. ExplainNodeVisitor
+### 2. TextExplainer
 ```php
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
+use PhpRegex\Explain\TextExplainer;
 
-$explainer = new ExplainNodeVisitor();
+$explainer = new TextExplainer();
 $explanation = $ast->accept($explainer); // Get plain English explanation
 ```
 
 ### 3. Highlighting Visitors
 ```php
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
 
-$consoleHighlighter = new ConsoleHighlighterVisitor();
-$htmlHighlighter = new HtmlHighlighterVisitor();
+$consoleHighlighter = new ConsoleHighlighter();
+$htmlHighlighter = new HtmlHighlighter();
 
 $consoleOutput = $ast->accept($consoleHighlighter);
 $htmlOutput = $ast->accept($htmlHighlighter);
@@ -89,8 +89,8 @@ stand: every node you do not override has its children visited. Call the
 parent method to keep descending below a node you override.
 
 ```php
-use RegexParser\NodeVisitor\AbstractTraversingVisitor;
-use RegexParser\Node;
+use PhpRegex\Parser\AbstractTraversingVisitor;
+use PhpRegex\Parser\Node;
 
 class QuantifierCounter extends AbstractTraversingVisitor
 {

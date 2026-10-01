@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
 
 final class ModernizerNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_char_class_multiple_literals_builds_alternation(): void
     {
-        $visitor = new ModernizerNodeVisitor();
+        $visitor = new Modernizer();
         $expression = new AlternationNode([
             new LiteralNode('a', 0, 0),
             new LiteralNode('b', 0, 0),
@@ -39,7 +39,7 @@ final class ModernizerNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_literal_unescape_respects_custom_delimiter(): void
     {
-        $visitor = new ModernizerNodeVisitor();
+        $visitor = new Modernizer();
         $regex = new RegexNode(new LiteralNode('\\a', 0, 0), '', '#', 0, 0);
 
         $modernized = $regex->accept($visitor);

@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "s" lets a dot take a newline and "m" makes "$" the end of a line, set on
@@ -80,7 +80,7 @@ final class SampleGeneratorFlagsTest extends TestCase
     {
         $pattern = '/((?s)^a(.))((?m)^b$)/';
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $matching = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -106,7 +106,7 @@ final class SampleGeneratorFlagsTest extends TestCase
     public function test_a_line_end_leaves_room_where_m_holds(string $pattern, array $samples): void
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $drawn = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {
@@ -139,7 +139,7 @@ final class SampleGeneratorFlagsTest extends TestCase
     private function characters(string $pattern): array
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
 
         $characters = [];
         for ($seed = 0; $seed < self::SEEDS; $seed++) {

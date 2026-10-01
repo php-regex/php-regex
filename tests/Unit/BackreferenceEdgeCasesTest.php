@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\Regex;
 
 final class BackreferenceEdgeCasesTest extends TestCase
 {
@@ -204,7 +204,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $pattern = '/\R/';
         $ast = $this->regexService->parse($pattern);
 
-        $dumper = new DumperNodeVisitor();
+        $dumper = new NodeDumper();
         $dump = $ast->accept($dumper);
 
         $this->assertStringContainsString("CharType('\\R')", $dump);
@@ -252,7 +252,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
     private function roundTrip(string $pattern): string
     {
         $ast = $this->regexService->parse($pattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         return $ast->accept($compiler);
     }

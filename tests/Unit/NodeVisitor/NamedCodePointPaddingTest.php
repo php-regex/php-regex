@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Regex;
 
 /**
  * Spaces or tabs right after the "U+" of "\N{U+...}".
@@ -104,7 +104,7 @@ final class NamedCodePointPaddingTest extends TestCase
      * PHP 8.4 as a target, which bundles PCRE2 10.44, and the running PHP
      * when the PCRE2 it links is 10.43 or newer.
      *
-     * @return list<Regex>
+     * @return list<\PhpRegex\Toolkit\Regex>
      */
     private static function readersOfPcre1043(): array
     {

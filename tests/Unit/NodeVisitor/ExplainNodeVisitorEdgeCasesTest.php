@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\ControlCharNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\ControlCharNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
 
 final class ExplainNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_inline_flags_group_is_explained(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_INLINE_FLAGS, null, 'im', 0, 0);
 
         $this->assertStringContainsString("Inline flags 'im'", $group->accept($visitor));
@@ -34,7 +34,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_control_char_is_explained(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $control = new ControlCharNode('A', 1, 0, 0);
 
         $this->assertStringContainsString('\\cA', $control->accept($visitor));
@@ -42,7 +42,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_unicode_named_character_extracts_name(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $node = new CharLiteralNode('\\N{LATIN SMALL LETTER A}', 0, CharLiteralType::UNICODE_NAMED, 0, 0);
 
         $this->assertStringContainsString('LATIN SMALL LETTER A', $node->accept($visitor));
@@ -50,7 +50,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_unicode_named_character_falls_back_to_representation(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $node = new CharLiteralNode('\\N{', 0, CharLiteralType::UNICODE_NAMED, 0, 0);
 
         $this->assertStringContainsString('\\N{', $node->accept($visitor));

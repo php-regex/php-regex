@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
-use RegexParser\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Alphabet\CharSet;
 
 /**
  * Immutable DFA container.
@@ -21,8 +21,8 @@ use RegexParser\Automata\Alphabet\CharSet;
 final readonly class Dfa
 {
     /**
-     * @param array<int, DfaState>            $states
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, \PhpRegex\Automata\Model\DfaState> $states
+     * @param array<int, array{0:int, 1:int}>               $alphabetRanges
      */
     public function __construct(
         public int $startState,

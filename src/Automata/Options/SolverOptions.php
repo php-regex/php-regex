@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Options;
+namespace PhpRegex\Automata\Options;
 
-use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
-use RegexParser\Automata\Minimization\MinimizationAlgorithm;
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
 
 /**
  * Configuration for automata-based regex comparisons.
@@ -22,13 +22,13 @@ use RegexParser\Automata\Minimization\MinimizationAlgorithm;
 final readonly class SolverOptions
 {
     /**
-     * @param MatchMode                $matchMode                How to interpret matching semantics
-     * @param int                      $maxNfaStates             Maximum allowed NFA states
-     * @param int                      $maxDfaStates             Maximum allowed DFA states
-     * @param bool                     $minimizeDfa              Whether to minimize DFAs after determinization
-     * @param MinimizationAlgorithm    $minimizationAlgorithm    Strategy used for DFA minimization
-     * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
-     * @param DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
+     * @param \PhpRegex\Automata\Options\MatchMode                        $matchMode                How to interpret matching semantics
+     * @param int                                                         $maxNfaStates             Maximum allowed NFA states
+     * @param int                                                         $maxDfaStates             Maximum allowed DFA states
+     * @param bool                                                        $minimizeDfa              Whether to minimize DFAs after determinization
+     * @param \PhpRegex\Automata\Minimization\MinimizationAlgorithm       $minimizationAlgorithm    Strategy used for DFA minimization
+     * @param int|null                                                    $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
+     * @param \PhpRegex\Automata\Determinization\DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
      */
     public function __construct(
         public MatchMode $matchMode = MatchMode::FULL,

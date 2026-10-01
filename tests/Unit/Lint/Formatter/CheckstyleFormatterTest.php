@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\CheckstyleFormatter;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\CheckstyleFormatter;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class CheckstyleFormatterTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_empty_report(): void
     {
-        $report = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -50,9 +50,9 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_with_single_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Syntax,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
             'Invalid regex pattern',
             'regex.syntax.error',
             5,
@@ -71,7 +71,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -88,9 +88,9 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_with_multiple_problems(): void
     {
-        $problem1 = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Warning,
+        $problem1 = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Warning,
             'Nested quantifier',
             'regex.lint.quantifier.nested',
             null,
@@ -98,9 +98,9 @@ final class CheckstyleFormatterTest extends TestCase
             null,
         );
 
-        $problem2 = new RegexProblem(
-            ProblemType::Security,
-            Severity::Error,
+        $problem2 = new Diagnostic(
+            DiagnosticType::Security,
+            LintSeverity::Error,
             'ReDoS risk',
             'regex.redos',
             2,
@@ -126,7 +126,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem2],
         ];
 
-        $report = new RegexLintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -141,10 +141,10 @@ final class CheckstyleFormatterTest extends TestCase
     public function test_format_with_different_severities(): void
     {
         $problems = [
-            new RegexProblem(ProblemType::Lint, Severity::Info, 'Info message', null, null, null, null),
-            new RegexProblem(ProblemType::Lint, Severity::Warning, 'Warning message', null, null, null, null),
-            new RegexProblem(ProblemType::Syntax, Severity::Error, 'Error message', null, null, null, null),
-            new RegexProblem(ProblemType::Security, Severity::Critical, 'Critical message', null, null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Info, 'Info message', null, null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning message', null, null, null, null),
+            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error message', null, null, null, null),
+            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical message', null, null, null, null),
         ];
 
         $result = [
@@ -156,7 +156,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => $problems,
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 2, 'warnings' => 1, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 2, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -171,7 +171,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
@@ -182,7 +182,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -191,7 +191,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -202,7 +202,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -211,7 +211,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_column_positions(): void
     {
-        $problem = new RegexProblem(ProblemType::Lint, Severity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -222,7 +222,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -231,9 +231,9 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_escapes_xml(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Error,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Error,
             'Message with <tags> & "quotes"',
             null,
             null,
@@ -250,7 +250,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
@@ -272,9 +272,9 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_with_minimal_problem(): void
     {
-        $problem = new RegexProblem(
-            ProblemType::Lint,
-            Severity::Info,
+        $problem = new Diagnostic(
+            DiagnosticType::Lint,
+            LintSeverity::Info,
             'Simple message',
             null,
             null,
@@ -291,7 +291,7 @@ final class CheckstyleFormatterTest extends TestCase
             'problems' => [$problem],
         ];
 
-        $report = new RegexLintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 

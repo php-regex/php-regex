@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through SampleGenerator.
@@ -30,18 +30,18 @@ final class SampleGeneratorSweepTest extends TestCase
 
     private Regex $regexService;
 
-    private SampleGeneratorNodeVisitor $sampleVisitor;
+    private SampleGenerator $sampleVisitor;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
         $this->regexService = Regex::create();
-        $this->sampleVisitor = new SampleGeneratorNodeVisitor();
+        $this->sampleVisitor = new SampleGenerator();
     }
 
     public function test_sample_generator_with_seed(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $generator->setSeed(12345);
 
         $regex = Regex::create();
@@ -52,7 +52,7 @@ final class SampleGeneratorSweepTest extends TestCase
 
     public function test_sample_generator_reset_seed(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $generator->setSeed(12345);
         $generator->resetSeed();
 
@@ -64,7 +64,7 @@ final class SampleGeneratorSweepTest extends TestCase
 
     public function test_sample_generator_unicode_prop(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $regex = Regex::create();
 
         // Test \p{L}
@@ -75,7 +75,7 @@ final class SampleGeneratorSweepTest extends TestCase
 
     public function test_sample_generator_backref_named(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $regex = Regex::create();
 
         $ast = $regex->parse('/(?<name>abc)\k<name>/');
@@ -85,7 +85,7 @@ final class SampleGeneratorSweepTest extends TestCase
 
     public function test_sample_generator_group_non_capturing(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $regex = Regex::create();
 
         $ast = $regex->parse('/(?:abc)/');
@@ -414,7 +414,7 @@ final class SampleGeneratorSweepTest extends TestCase
         // Test SampleGeneratorVisitor with conditional
         $ast = $this->regexService->parse('/(x)(?(1)y|z)/');
 
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $sample = $ast->accept($visitor);
 
         $this->assertIsString($sample);
@@ -425,7 +425,7 @@ final class SampleGeneratorSweepTest extends TestCase
         // Test SampleGeneratorVisitor with PCRE verb
         $ast = $this->regexService->parse('/(*ACCEPT)test/');
 
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $sample = $ast->accept($visitor);
 
         $this->assertIsString($sample);
@@ -436,7 +436,7 @@ final class SampleGeneratorSweepTest extends TestCase
         // Test SampleGeneratorVisitor with \K
         $ast = $this->regexService->parse('/prefix\Ksuffix/');
 
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $sample = $ast->accept($visitor);
 
         $this->assertIsString($sample);
@@ -447,7 +447,7 @@ final class SampleGeneratorSweepTest extends TestCase
         // Test SampleGeneratorVisitor with octal legacy
         $ast = $this->regexService->parse('/\07/');
 
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $sample = $ast->accept($visitor);
 
         $this->assertIsString($sample);
@@ -458,7 +458,7 @@ final class SampleGeneratorSweepTest extends TestCase
         // Test SampleGeneratorVisitor with unicode sequences
         $ast = $this->regexService->parse('/\u{41}/');
 
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $sample = $ast->accept($visitor);
 
         $this->assertIsString($sample);
@@ -470,7 +470,7 @@ final class SampleGeneratorSweepTest extends TestCase
      */
     public function test_sample_generator_get_random_char_empty(): void
     {
-        $visitor = new SampleGeneratorNodeVisitor();
+        $visitor = new SampleGenerator();
         $reflection = new \ReflectionClass($visitor);
         $method = $reflection->getMethod('getRandomChar');
 

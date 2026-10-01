@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Internal\Ascii;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\Ascii;
 
 /**
  * PCRE reads digits, letters and spaces in ASCII whatever the locale of the

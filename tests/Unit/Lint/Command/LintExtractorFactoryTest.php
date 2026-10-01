@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintArguments;
+use PhpRegex\Linter\Config\LintExtractorFactory;
+use PhpRegex\Linter\Extraction\PatternFunction;
+use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintArguments;
-use RegexParser\Lint\Command\LintExtractorFactory;
-use RegexParser\Lint\Extraction\PatternFunction;
-use RegexParser\Lint\Extraction\PatternFunctionRegistry;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Tests\Support\LintFunctionOverrides;
 
 final class LintExtractorFactoryTest extends TestCase
 {

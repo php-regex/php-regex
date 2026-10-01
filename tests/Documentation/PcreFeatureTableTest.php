@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Documentation;
+namespace PhpRegex\Tests\Documentation;
 
+use PhpRegex\Parser\PcreFeature;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\PcreFeature;
 
 /**
  * The table of what changed in which release, in the PCRE concepts page,

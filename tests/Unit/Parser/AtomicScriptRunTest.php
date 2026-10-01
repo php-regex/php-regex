@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * "(*atomic_script_run:...)", short "(*asr:...)", is a script run whose body
@@ -109,12 +109,12 @@ final class AtomicScriptRunTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        $this->assertSame('/(*asr:a+)/', $regex->parse('/(*asr:a+)/')->accept(new CompilerNodeVisitor()));
-        $this->assertSame('/(*atomic_script_run:a+)/', $regex->parse('/(*atomic_script_run:a+)/')->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/(*asr:a+)/', $regex->parse('/(*asr:a+)/')->accept(new PatternPrinter()));
+        $this->assertSame('/(*atomic_script_run:a+)/', $regex->parse('/(*atomic_script_run:a+)/')->accept(new PatternPrinter()));
 
         // Without the text it was read from, the long spelling.
         $tree = new RegexNode(new ScriptRunNode('a+', 0, 10, null, true), '', '/', 0, 10);
-        $this->assertSame('/(*atomic_script_run:a+)/', $tree->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/(*atomic_script_run:a+)/', $tree->accept(new PatternPrinter()));
     }
 
     #[Test]
@@ -122,21 +122,21 @@ final class AtomicScriptRunTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        $this->assertSame(ReDoSSeverity::CRITICAL, $regex->redos('/(*sr:(a+)+b)/')->severity);
+        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/(*sr:(a+)+b)/')->severity);
         $this->assertSame($regex->redos('/(*sr:(?>(a+)+b))/')->severity, $regex->redos('/(*asr:(a+)+b)/')->severity);
-        $this->assertNotSame(ReDoSSeverity::CRITICAL, $regex->redos('/(*asr:(a+)+b)/')->severity);
+        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/(*asr:(a+)+b)/')->severity);
     }
 
     #[Test]
     public function test_redos_finds_nothing_in_an_empty_script_run(): void
     {
-        $this->assertSame(ReDoSSeverity::SAFE, (new ScriptRunNode('', 0, 6, null, true))->accept(new ReDoSProfileNodeVisitor()));
+        $this->assertSame(RedosSeverity::SAFE, (new ScriptRunNode('', 0, 6, null, true))->accept(new RedosProfiler()));
     }
 
     #[Test]
     public function test_highlight_names_the_atomic_script_run(): void
     {
-        $highlighted = (new ScriptRunNode('a', 0, 8, null, true))->accept(new HtmlHighlighterVisitor());
+        $highlighted = (new ScriptRunNode('a', 0, 8, null, true))->accept(new HtmlHighlighter());
 
         $this->assertStringContainsString('atomic_script_run', $highlighted);
     }

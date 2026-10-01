@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Rule;
+namespace PhpRegex\Tests\Unit\Lint\Rule;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\LintRuleRegistry;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Rule\LintRuleRegistry;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * One pattern that must trip each lint rule, and one that must not.
@@ -137,7 +137,7 @@ final class LintRuleExamplesTest extends TestCase
      */
     private function lint(string $pattern): array
     {
-        $visitor = new LinterNodeVisitor(self::ENABLE_ALL);
+        $visitor = new PatternLinter(self::ENABLE_ALL);
         Regex::create()->parse($pattern)->accept($visitor);
 
         return array_values(array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues()));

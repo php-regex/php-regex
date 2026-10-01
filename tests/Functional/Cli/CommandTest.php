@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\Command\AnalyzeCommand;
+use PhpRegex\Cli\Command\CompareCommand;
+use PhpRegex\Cli\Command\DebugCommand;
+use PhpRegex\Cli\Command\DiagramCommand;
+use PhpRegex\Cli\Command\ExplainCommand;
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Cli\Command\HighlightCommand;
+use PhpRegex\Cli\Command\ParseCommand;
+use PhpRegex\Cli\Command\RedosCommand;
+use PhpRegex\Cli\Command\SelfUpdateCommand;
+use PhpRegex\Cli\Command\ValidateCommand;
+use PhpRegex\Cli\Command\VersionCommand;
+use PhpRegex\Cli\GlobalOptions;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\AnalyzeCommand;
-use RegexParser\Cli\Command\CompareCommand;
-use RegexParser\Cli\Command\DebugCommand;
-use RegexParser\Cli\Command\DiagramCommand;
-use RegexParser\Cli\Command\ExplainCommand;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Cli\Command\HighlightCommand;
-use RegexParser\Cli\Command\ParseCommand;
-use RegexParser\Cli\Command\RedosCommand;
-use RegexParser\Cli\Command\SelfUpdateCommand;
-use RegexParser\Cli\Command\ValidateCommand;
-use RegexParser\Cli\Command\VersionCommand;
-use RegexParser\Cli\GlobalOptions;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Cli\SelfUpdate\SelfUpdater;
 
 final class CommandTest extends TestCase
 {

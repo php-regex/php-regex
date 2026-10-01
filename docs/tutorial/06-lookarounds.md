@@ -154,7 +154,7 @@ give each top-level branch a fixed length instead: `(?<=a|bc)` works everywhere,
 ### Variable-Length Lookbehind Detection
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create(['runtime_pcre_validation' => true]);
 $result = $regex->validate('/(?<=a+)b/');
@@ -237,7 +237,7 @@ $pattern3 = '/\w+(?!\d)/';
 ### Exercise 3: Validate Lookbehind
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create(['runtime_pcre_validation' => true]);
 

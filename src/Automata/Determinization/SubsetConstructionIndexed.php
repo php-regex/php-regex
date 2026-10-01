@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Determinization;
+namespace PhpRegex\Automata\Determinization;
 
-use RegexParser\Automata\Alphabet\CharSet;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Support\WorkBudget;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Support\WorkBudget;
 
 /**
  * Subset construction with indexed transition ranges for faster moves.
@@ -38,7 +38,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     /**
      * @param array<int, array{0:int, 1:int}> $alphabetRanges
      *
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options, array $alphabetRanges): Dfa
     {
@@ -137,7 +137,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             ];
         }
 
-        /** @var array<int, DfaState> $states */
+        /** @var array<int, \PhpRegex\Automata\Model\DfaState> $states */
         $states = [];
         foreach ($transitions as $stateId => $stateTransitions) {
             $states[$stateId] = new DfaState(

@@ -8,10 +8,10 @@ This directory contains performance benchmark scripts for various components of 
 - `benchmark_lexer.php` - Lexer performance tests
 - `benchmark_parser.php` - Parser performance tests
 - `benchmark_literalset.php` - LiteralSet performance tests
-- `benchmark_complexity.php` - ComplexityScoreNodeVisitor performance tests
-- `benchmark_validator.php` - ValidatorNodeVisitor performance tests
-- `benchmark_compiler.php` - CompilerNodeVisitor performance tests
-- `benchmark_regexoptions.php` - RegexOptions performance tests
+- `benchmark_complexity.php` - ComplexityScorer performance tests
+- `benchmark_validator.php` - Validator performance tests
+- `benchmark_compiler.php` - PatternPrinter performance tests
+- `benchmark_regexoptions.php` - ParserOptions performance tests
 - `benchmark_formatters.php` - Console, GitHub, and Symfony formatter output benchmarks
 - `benchmark_dfa_minimizer.php` - DFA minimization strategy benchmark
 - `benchmark_automata_transform.php` - AST-to-NFA transformation benchmark

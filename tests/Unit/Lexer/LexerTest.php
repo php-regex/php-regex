@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\LexerException;
-use RegexParser\Lexer;
-use RegexParser\TokenType;
 
 final class LexerTest extends TestCase
 {

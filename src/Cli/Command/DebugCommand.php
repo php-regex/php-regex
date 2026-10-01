@@ -11,28 +11,27 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Internal\DisplayEscaper;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
-use RegexParser\ReDoS\ReDoSHeatmap;
-use RegexParser\ReDoS\ReDoSHotspot;
-use RegexParser\ReDoS\ReDoSInputGenerator;
-use RegexParser\ReDoS\ReDoSMode;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
-use RegexParser\RegexPattern;
-use RegexParser\Runtime\PcreRuntimeInfo;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\PcreRuntimeInfo;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Parser\DelimitedPattern;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Internal\DisplayEscaper;
+use PhpRegex\Redos\Heatmap;
+use PhpRegex\Redos\Hotspot;
+use PhpRegex\Redos\Internal\InputGenerator;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosMode;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 
 final class DebugCommand extends AbstractCommand
 {
@@ -103,7 +102,7 @@ final class DebugCommand extends AbstractCommand
         $target = $regex->target();
 
         try {
-            $patternInfo = RegexPattern::fromDelimited($pattern, $target);
+            $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
             // The analysis reports a pattern it cannot parse as its error;
             // the exit code reports it as a problem of the pattern.
@@ -111,7 +110,7 @@ final class DebugCommand extends AbstractCommand
                 ? self::SUCCESS
                 : self::FAILURE;
             $steps = [] !== $analysis->findings ? 2 : 1;
-            $heatmap = new ReDoSHeatmap();
+            $heatmap = new Heatmap();
             $heatmapBody = $heatmap->highlight($patternInfo->pattern, $analysis->hotspots, $output->isAnsi());
             $heatmapPattern = $patternInfo->delimiter.$heatmapBody.$patternInfo->delimiter.$patternInfo->flags;
             $highlightedPattern = $pattern;
@@ -120,7 +119,7 @@ final class DebugCommand extends AbstractCommand
             if ($showSyntaxPattern) {
                 try {
                     $ast = $regex->parse($pattern);
-                    $highlightedBody = $ast->accept(new ConsoleHighlighterVisitor());
+                    $highlightedBody = $ast->accept(new ConsoleHighlighter());
                     $highlightedPattern = $patternInfo->delimiter.$highlightedBody.$patternInfo->delimiter.$patternInfo->flags;
                 } catch (LexerException|ParserException) {
                     $highlightedPattern = $pattern;
@@ -129,7 +128,7 @@ final class DebugCommand extends AbstractCommand
 
             $inputSource = '';
             if (null === $inputValue && null !== $analysis->getCulpritNode()) {
-                $inputValue = (new ReDoSInputGenerator())->generate(
+                $inputValue = (new InputGenerator())->generate(
                     $analysis->getCulpritNode(),
                     $patternInfo->flags,
                     $analysis->severity,
@@ -181,8 +180,8 @@ final class DebugCommand extends AbstractCommand
 
             $severityOutput = $this->formatRedosSeverity($analysis, $output);
             $status = match (true) {
-                ReDoSMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
-                \in_array($analysis->severity, [ReDoSSeverity::SAFE, ReDoSSeverity::LOW], true) => 'No significant ReDoS risk detected',
+                RedosMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
+                \in_array($analysis->severity, [RedosSeverity::SAFE, RedosSeverity::LOW], true) => 'No significant ReDoS risk detected',
                 $analysis->isConfirmed() => 'Confirmed ReDoS risk',
                 default => 'Potential ReDoS risk (theoretical)',
             };
@@ -209,7 +208,7 @@ final class DebugCommand extends AbstractCommand
                 $output->write('  Input:      "'.$escaped.'"'.$inputSource."\n");
             }
 
-            if (ReDoSMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
+            if (RedosMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
                 $confirmation = $analysis->confirmation;
                 $output->write("\n");
                 $style->renderSection('Confirmation', $steps, $steps);
@@ -238,16 +237,16 @@ final class DebugCommand extends AbstractCommand
             $hotspot = null;
             $hotspotRank = -1;
             foreach ($analysis->hotspots as $candidate) {
-                if (!$candidate instanceof ReDoSHotspot) {
+                if (!$candidate instanceof Hotspot) {
                     continue;
                 }
                 $rank = match ($candidate->severity) {
-                    ReDoSSeverity::SAFE => 0,
-                    ReDoSSeverity::LOW => 1,
-                    ReDoSSeverity::MEDIUM => 2,
-                    ReDoSSeverity::HIGH => 3,
-                    ReDoSSeverity::CRITICAL => 4,
-                    ReDoSSeverity::UNKNOWN => 1,
+                    RedosSeverity::SAFE => 0,
+                    RedosSeverity::LOW => 1,
+                    RedosSeverity::MEDIUM => 2,
+                    RedosSeverity::HIGH => 3,
+                    RedosSeverity::CRITICAL => 4,
+                    RedosSeverity::UNKNOWN => 1,
                 };
                 if ($rank > $hotspotRank) {
                     $hotspotRank = $rank;
@@ -261,10 +260,10 @@ final class DebugCommand extends AbstractCommand
                 $length = max(1, $hotspot->end - $hotspot->start);
                 $caret = str_repeat(' ', \strlen($prefix) + 1 + $start).str_repeat('^', $length);
                 $caretColor = match ($hotspot->severity) {
-                    ReDoSSeverity::SAFE, ReDoSSeverity::LOW => Output::GREEN,
-                    ReDoSSeverity::MEDIUM => Output::YELLOW,
-                    ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL => Output::RED,
-                    ReDoSSeverity::UNKNOWN => Output::GRAY,
+                    RedosSeverity::SAFE, RedosSeverity::LOW => Output::GREEN,
+                    RedosSeverity::MEDIUM => Output::YELLOW,
+                    RedosSeverity::HIGH, RedosSeverity::CRITICAL => Output::RED,
+                    RedosSeverity::UNKNOWN => Output::GRAY,
                 };
                 $output->write($output->color($caret, $caretColor)."\n");
             }
@@ -275,12 +274,12 @@ final class DebugCommand extends AbstractCommand
                 foreach ($analysis->findings as $finding) {
                     $label = strtoupper($finding->severity->value);
                     $findingSeverity = match ($finding->severity) {
-                        ReDoSSeverity::SAFE, ReDoSSeverity::LOW => $output->success($label),
-                        ReDoSSeverity::MEDIUM => $output->warning($label),
-                        ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL => $analysis->isConfirmed()
+                        RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
+                        RedosSeverity::MEDIUM => $output->warning($label),
+                        RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
                             ? $output->error($label)
                             : $output->warning($label),
-                        ReDoSSeverity::UNKNOWN => $output->info($label),
+                        RedosSeverity::UNKNOWN => $output->info($label),
                     };
                     $output->write('  - ['.$findingSeverity.'] '.$finding->message."\n");
                     if (null !== $finding->suggestedRewrite && '' !== $finding->suggestedRewrite) {
@@ -319,7 +318,7 @@ final class DebugCommand extends AbstractCommand
      * @param array<int, string>   $args
      * @param array<string, mixed> $defaults
      *
-     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: ReDoSMode, redosThreshold: ?ReDoSSeverity, confirmOptions: ?ReDoSConfirmOptions, error: ?string}
+     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: ?string}
      */
     private function parseArguments(array $args, array $defaults = []): array
     {
@@ -328,9 +327,9 @@ final class DebugCommand extends AbstractCommand
         $format = 'console';
 
         // Use config defaults for redosMode, falling back to THEORETICAL
-        $defaultMode = ReDoSMode::THEORETICAL;
+        $defaultMode = RedosMode::THEORETICAL;
         if (isset($defaults['redosMode']) && \is_string($defaults['redosMode'])) {
-            $defaultMode = ReDoSMode::tryFrom($defaults['redosMode']) ?? ReDoSMode::THEORETICAL;
+            $defaultMode = RedosMode::tryFrom($defaults['redosMode']) ?? RedosMode::THEORETICAL;
         }
         $redosMode = $defaultMode;
         $redosModeExplicit = false;
@@ -339,7 +338,7 @@ final class DebugCommand extends AbstractCommand
         $redosThreshold = null;
         if (isset($defaults['redosThreshold']) && \is_string($defaults['redosThreshold'])) {
             // regex.json was validated when it was loaded.
-            $redosThreshold = ReDoSSeverity::fromConfig($defaults['redosThreshold']);
+            $redosThreshold = RedosSeverity::fromConfig($defaults['redosThreshold']);
         }
 
         $confirmOptions = null;
@@ -396,7 +395,7 @@ final class DebugCommand extends AbstractCommand
 
             if (!$stopParsing && str_starts_with($arg, '--redos-mode=')) {
                 $value = strtolower(substr($arg, \strlen('--redos-mode=')));
-                $mode = ReDoSMode::tryFrom($value);
+                $mode = RedosMode::tryFrom($value);
                 if (null === $mode) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
                 }
@@ -410,7 +409,7 @@ final class DebugCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --redos-mode.'];
                 }
-                $mode = ReDoSMode::tryFrom(strtolower($value));
+                $mode = RedosMode::tryFrom(strtolower($value));
                 if (null === $mode) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
                 }
@@ -422,7 +421,7 @@ final class DebugCommand extends AbstractCommand
 
             if (!$stopParsing && str_starts_with($arg, '--redos-threshold=')) {
                 try {
-                    $redosThreshold = ReDoSSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
+                    $redosThreshold = RedosSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
                 } catch (InvalidRegexOptionException $e) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
@@ -437,7 +436,7 @@ final class DebugCommand extends AbstractCommand
                 }
 
                 try {
-                    $redosThreshold = ReDoSSeverity::fromConfig($value);
+                    $redosThreshold = RedosSeverity::fromConfig($value);
                 } catch (InvalidRegexOptionException $e) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
@@ -480,17 +479,17 @@ final class DebugCommand extends AbstractCommand
         ];
     }
 
-    private function formatRedosSeverity(ReDoSAnalysis $analysis, Output $output): string
+    private function formatRedosSeverity(RedosAnalysis $analysis, Output $output): string
     {
         $label = strtoupper($analysis->severity->value);
 
         $color = match ($analysis->severity) {
-            ReDoSSeverity::SAFE, ReDoSSeverity::LOW => $output->success($label),
-            ReDoSSeverity::MEDIUM => $output->warning($label),
-            ReDoSSeverity::HIGH, ReDoSSeverity::CRITICAL => $analysis->isConfirmed()
+            RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
+            RedosSeverity::MEDIUM => $output->warning($label),
+            RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
                 ? $output->error($label)
                 : $output->warning($label),
-            ReDoSSeverity::UNKNOWN => $output->info($label),
+            RedosSeverity::UNKNOWN => $output->info($label),
         };
 
         return $color;

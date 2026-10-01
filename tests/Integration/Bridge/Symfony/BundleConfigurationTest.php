@@ -11,15 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Symfony;
+namespace PhpRegex\Tests\Integration\Bridge\Symfony;
 
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\DependencyInjection\PhpRegexExtension;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
-use RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -191,7 +190,7 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile(['exclude' => ['var', 'vendor']]);
 
-        /** @var RegexLintCommand $command */
+        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
         $command = $container->get('regex_parser.command.lint');
 
         $this->assertSame(['var', 'vendor'], $command->getDefinition()->getOption('exclude')->getDefault());
@@ -207,7 +206,7 @@ final class BundleConfigurationTest extends TestCase
         $container->setParameter('kernel.cache_dir', $this->projectDir.'/var/cache');
         $container->setParameter('kernel.project_dir', $this->projectDir);
 
-        $extension = new RegexParserExtension();
+        $extension = new PhpRegexExtension();
         $container->registerExtension($extension);
         $container->loadFromExtension($extension->getAlias(), ['cache' => ['directory' => null]] + $config);
         $container->compile();
@@ -239,7 +238,7 @@ final class BundleConfigurationTest extends TestCase
      */
     private function lint(ContainerBuilder $container): array
     {
-        /** @var RegexLintCommand $command */
+        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
         $command = $container->get('regex_parser.command.lint');
 
         $tester = new CommandTester($command);

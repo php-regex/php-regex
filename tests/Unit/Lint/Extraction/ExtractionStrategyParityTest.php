@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Extraction;
+namespace PhpRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PhpRegex\Linter\Extraction\ExtractorInterface;
+use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
+use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\ExtractorInterface;
-use RegexParser\Lint\Extraction\PatternFunctionRegistry;
-use RegexParser\Lint\Extraction\PhpParserExtractionStrategy;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\RegexPatternOccurrence;
 
 /**
  * Both strategies must see the same patterns.
@@ -122,7 +122,7 @@ final class ExtractionStrategyParityTest extends TestCase
     private function patterns(ExtractorInterface $strategy, string $file): array
     {
         return array_values(array_map(
-            static fn (RegexPatternOccurrence $occurrence): string => $occurrence->pattern,
+            static fn (PatternOccurrence $occurrence): string => $occurrence->pattern,
             $strategy->extract([$file]),
         ));
     }
@@ -133,7 +133,7 @@ final class ExtractionStrategyParityTest extends TestCase
     private function sources(ExtractorInterface $strategy, string $file): array
     {
         return array_values(array_map(
-            static fn (RegexPatternOccurrence $occurrence): string => $occurrence->source,
+            static fn (PatternOccurrence $occurrence): string => $occurrence->source,
             $strategy->extract([$file]),
         ));
     }

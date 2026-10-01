@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Integration tests for v1.0 upgrade features.
@@ -75,7 +75,7 @@ final class FeaturesUpgradeTest extends TestCase
     }
 
     /**
-     * Test MermaidNodeVisitor integrates with parser.
+     * Test MermaidRenderer integrates with parser.
      */
     public function test_regex_visualize_integration(): void
     {
@@ -87,7 +87,7 @@ final class FeaturesUpgradeTest extends TestCase
     }
 
     /**
-     * Test MermaidNodeVisitor with multiple alternatives.
+     * Test MermaidRenderer with multiple alternatives.
      */
     public function test_regex_visualize_alternation(): void
     {
@@ -125,6 +125,6 @@ final class FeaturesUpgradeTest extends TestCase
 
     private function visualize(string $pattern): string
     {
-        return $this->regexService->parse($pattern)->accept(new MermaidNodeVisitor());
+        return $this->regexService->parse($pattern)->accept(new MermaidRenderer());
     }
 }

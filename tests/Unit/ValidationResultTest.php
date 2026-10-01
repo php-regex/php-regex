@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Validation\ValidationErrorCategory;
+use PhpRegex\Parser\Validation\ValidationResult;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\ValidationErrorCategory;
-use RegexParser\ValidationResult;
 
 final class ValidationResultTest extends TestCase
 {

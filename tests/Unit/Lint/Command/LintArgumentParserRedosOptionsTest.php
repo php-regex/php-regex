@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Command;
+namespace PhpRegex\Tests\Unit\Lint\Command;
 
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintArguments;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintArguments;
 
 /**
  * The ReDoS options of the lint command: --redos-mode takes theoretical or

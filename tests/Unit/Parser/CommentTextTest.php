@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A comment keeps the text it was written with.
@@ -38,7 +38,7 @@ final class CommentTextTest extends TestCase
         $ast = Regex::create()->parse($pattern);
 
         $this->assertSame($comment, $this->firstComment($ast->pattern));
-        $this->assertSame($pattern, $ast->accept(new CompilerNodeVisitor()));
+        $this->assertSame($pattern, $ast->accept(new PatternPrinter()));
     }
 
     /**

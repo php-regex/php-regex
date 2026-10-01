@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
 
 final class LengthRangeNodeVisitorEdgeCasesTest extends TestCase
 {
     public function test_alternation_with_infinite_branch_returns_null_max(): void
     {
-        $visitor = new LengthRangeNodeVisitor();
+        $visitor = new LengthRangeCalculator();
         $literal = new LiteralNode('a', 0, 0);
         $infinite = new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
         $alternation = new AlternationNode([$literal, $infinite], 0, 0);

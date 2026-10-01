@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Transpiler;
+namespace PhpRegex\Tests\Unit\Transpiler;
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\TranspileException;
-use RegexParser\Regex;
 
 final class JavaScriptTranspilerTest extends TestCase
 {

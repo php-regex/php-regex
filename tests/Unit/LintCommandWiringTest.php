@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Cli\Command\LintCommand;
+use PhpRegex\Cli\Command\LintOutputRenderer;
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Linter\Config\LintExtractorFactory;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Cli\Command\LintCommand;
-use RegexParser\Cli\Command\LintOutputRenderer;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Lint\Command\LintExtractorFactory;
 
 final class LintCommandWiringTest extends TestCase
 {

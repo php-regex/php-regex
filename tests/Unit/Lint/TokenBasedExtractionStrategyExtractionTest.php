@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\Extraction\NameResolutionContext;
+use PhpRegex\Linter\Extraction\PatternFunction;
+use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PhpRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\NameResolutionContext;
-use RegexParser\Lint\Extraction\PatternFunction;
-use RegexParser\Lint\Extraction\TokenBasedExtractionStrategy;
-use RegexParser\Lint\RegexPatternOccurrence;
 
 final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 {
@@ -134,7 +134,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
         $this->assertIsArray($occurrences);
         $this->assertCount(1, $occurrences);
-        $this->assertInstanceOf(RegexPatternOccurrence::class, $occurrences[0]);
+        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[0]);
         $this->assertSame('bar', $occurrences[0]->pattern);
         $this->assertSame('preg_replace()', $occurrences[0]->source);
     }
@@ -188,7 +188,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
         $this->assertIsArray($occurrences);
         $this->assertCount(1, $occurrences);
-        $this->assertInstanceOf(RegexPatternOccurrence::class, $occurrences[0]);
+        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[0]);
         $this->assertSame('/a/', $occurrences[0]->pattern);
     }
 
@@ -323,8 +323,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
         $this->assertIsArray($occurrences);
         $this->assertCount(2, $occurrences);
-        $this->assertInstanceOf(RegexPatternOccurrence::class, $occurrences[0]);
-        $this->assertInstanceOf(RegexPatternOccurrence::class, $occurrences[1]);
+        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[0]);
+        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[1]);
         $this->assertSame('/foo/', $occurrences[0]->pattern);
         $this->assertSame('/bar/', $occurrences[1]->pattern);
     }
@@ -417,7 +417,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
         $this->assertIsArray($occurrences);
         $this->assertCount(1, $occurrences);
-        $this->assertInstanceOf(RegexPatternOccurrence::class, $occurrences[0]);
+        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[0]);
         $this->assertSame('/foo/', $occurrences[0]->pattern);
     }
 

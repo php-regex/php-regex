@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Security;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Security;
 
+use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PhpRegex\Symfony\Security\SecurityAccessControlReport;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer;
-use RegexParser\Bridge\Symfony\Security\SecurityAccessControlReport;
-use RegexParser\Regex;
 
 /**
  * Tests that the security analyzer correctly detects conflicts

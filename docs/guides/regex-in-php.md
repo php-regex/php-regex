@@ -329,7 +329,7 @@ echo $m[0];  // "<p>Hello</p>"
 ### 1. Validate Patterns Before Use
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

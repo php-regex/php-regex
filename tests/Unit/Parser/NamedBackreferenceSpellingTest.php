@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * "\g{name}" is a back reference in PCRE, like "\k{name}"; only "\g<name>"
@@ -68,7 +68,7 @@ final class NamedBackreferenceSpellingTest extends TestCase
     #[DataProvider('provideNamedReferences')]
     public function test_compiling_a_named_reference_keeps_what_it_matches(string $regex, array $subjects): void
     {
-        $compiled = Regex::create()->parse($regex)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($regex)->accept(new PatternPrinter());
 
         foreach ($subjects as $subject) {
             $this->assertSame(

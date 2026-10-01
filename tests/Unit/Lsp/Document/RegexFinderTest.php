@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Document;
+namespace PhpRegex\Tests\Unit\Lsp\Document;
 
+use PhpRegex\LanguageServer\Document\RegexFinder;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Document\RegexFinder;
 
 final class RegexFinderTest extends TestCase
 {

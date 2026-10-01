@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\Output;
-use RegexParser\Regex;
-use RegexParser\Runtime\PcreRuntimeInfo;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\PcreRuntimeInfo;
+use PhpRegex\Toolkit\Regex;
 
 final readonly class LintOutputRenderer
 {

@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Transpiler\Target\JavaScript;
+namespace PhpRegex\Transpiler\Target\JavaScript;
 
-use RegexParser\Exception\TranspileException;
-use RegexParser\Node\RegexNode;
-use RegexParser\Transpiler\Target\TranspileTargetInterface;
-use RegexParser\Transpiler\TranspileContext;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Transpiler\Target\TargetInterface;
+use PhpRegex\Transpiler\TranspileContext;
+use PhpRegex\Transpiler\TranspileException;
 
 /**
  * Transpile target for JavaScript RegExp.
  */
-final readonly class JavaScriptTarget implements TranspileTargetInterface
+final readonly class JavaScriptTarget implements TargetInterface
 {
     private const SUPPORTED_FLAGS = ['i', 'm', 's', 'u'];
 
@@ -42,7 +42,7 @@ final readonly class JavaScriptTarget implements TranspileTargetInterface
 
     public function compile(RegexNode $ast, TranspileContext $context): string
     {
-        $visitor = new JavaScriptCompilerVisitor(
+        $visitor = new JavaScriptPrinter(
             $context,
             $context->options->allowLookbehind,
             $this->getDefaultDelimiter(),

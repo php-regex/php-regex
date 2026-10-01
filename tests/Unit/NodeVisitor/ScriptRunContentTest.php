@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\RuleViolation;
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LintIssue;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\RegexParser;
 
 /**
  * "(*sr:...)" still matches what it holds: a script run only asks that the
@@ -41,7 +41,7 @@ final class ScriptRunContentTest extends TestCase
     #[Test]
     public function test_the_metrics_count_what_a_script_run_holds(): void
     {
-        $counts = $this->tree('/(*sr:a+)/')->accept(new MetricsNodeVisitor())['counts'];
+        $counts = $this->tree('/(*sr:a+)/')->accept(new MetricsCollector())['counts'];
 
         $this->assertSame(1, $counts['QuantifierNode'] ?? 0);
         $this->assertSame(1, $counts['LiteralNode'] ?? 0);
@@ -50,8 +50,8 @@ final class ScriptRunContentTest extends TestCase
     #[Test]
     public function test_the_explanation_says_what_a_script_run_holds(): void
     {
-        $this->assertStringContainsString("'a' (one or more times)", $this->tree('/(*sr:a+)/')->accept(new ExplainNodeVisitor()));
-        $this->assertStringContainsString('one or more times', $this->tree('/(*sr:a+)/')->accept(new HtmlExplainNodeVisitor()));
+        $this->assertStringContainsString("'a' (one or more times)", $this->tree('/(*sr:a+)/')->accept(new TextExplainer()));
+        $this->assertStringContainsString('one or more times', $this->tree('/(*sr:a+)/')->accept(new HtmlExplainer()));
     }
 
     #[Test]
@@ -59,10 +59,10 @@ final class ScriptRunContentTest extends TestCase
     {
         $this->assertSame(
             "Regex matches\n  Atomic script run: every character from one script\n    'a'\n    'b'\n  End script run",
-            $this->tree('/(*asr:ab)/')->accept(new ExplainNodeVisitor()),
+            $this->tree('/(*asr:ab)/')->accept(new TextExplainer()),
         );
-        $this->assertStringContainsString('<strong>Atomic script run</strong>', $this->tree('/(*asr:ab)/')->accept(new HtmlExplainNodeVisitor()));
-        $this->assertStringContainsString('<strong>Script run</strong>', $this->tree('/(*sr:ab)/')->accept(new HtmlExplainNodeVisitor()));
+        $this->assertStringContainsString('<strong>Atomic script run</strong>', $this->tree('/(*asr:ab)/')->accept(new HtmlExplainer()));
+        $this->assertStringContainsString('<strong>Script run</strong>', $this->tree('/(*sr:ab)/')->accept(new HtmlExplainer()));
     }
 
     /**
@@ -74,14 +74,14 @@ final class ScriptRunContentTest extends TestCase
     {
         $node = new ScriptRunNode('', 0, 6);
 
-        $this->assertSame('Script run: every character from one script', $node->accept(new ExplainNodeVisitor()));
-        $this->assertSame('<li><strong>Script run</strong>: every character from one script</li>', $node->accept(new HtmlExplainNodeVisitor()));
+        $this->assertSame('Script run: every character from one script', $node->accept(new TextExplainer()));
+        $this->assertSame('<li><strong>Script run</strong>: every character from one script</li>', $node->accept(new HtmlExplainer()));
     }
 
     #[Test]
     public function test_the_literals_of_a_script_run_are_those_it_holds(): void
     {
-        $this->assertEquals($this->tree('/abc/')->accept(new LiteralExtractorNodeVisitor()), $this->tree('/(*sr:abc)/')->accept(new LiteralExtractorNodeVisitor()));
+        $this->assertEquals($this->tree('/abc/')->accept(new LiteralExtractor()), $this->tree('/(*sr:abc)/')->accept(new LiteralExtractor()));
     }
 
     private function tree(string $pattern): RegexNode
@@ -94,9 +94,9 @@ final class ScriptRunContentTest extends TestCase
      */
     private function issueIds(string $pattern): array
     {
-        $linter = new LinterNodeVisitor();
+        $linter = new PatternLinter();
         $this->tree($pattern)->accept($linter);
 
-        return array_values(array_map(static fn (LintIssue $issue): string => $issue->id, $linter->getIssues()));
+        return array_values(array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
     }
 }

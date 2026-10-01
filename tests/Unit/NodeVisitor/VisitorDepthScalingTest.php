@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\AsciiTreeRenderer;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Explain\RailroadSvgRenderer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\TestCaseGenerator;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PhpRegex\Parser\Analysis\MetricsCollector;
+use PhpRegex\Parser\NodeVisitorInterface;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Redos\RedosProfiler;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\AsciiTreeVisitor;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlHighlighterVisitor;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\NodeVisitor\LiteralExtractorNodeVisitor;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
-use RegexParser\NodeVisitor\MetricsNodeVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\NodeVisitor\NodeVisitorInterface;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\RailroadSvgVisitor;
-use RegexParser\NodeVisitor\ReDoSProfileNodeVisitor;
-use RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A visitor takes time in proportion to the tree: one that visits a child
@@ -46,7 +46,7 @@ use RegexParser\Regex;
 final class VisitorDepthScalingTest extends TestCase
 {
     /**
-     * @param NodeVisitorInterface<mixed> $visitor
+     * @param \PhpRegex\Parser\NodeVisitorInterface<mixed> $visitor
      */
     #[Test]
     #[DataProvider('provideVisitors')]
@@ -63,28 +63,28 @@ final class VisitorDepthScalingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{NodeVisitorInterface<mixed>}>
+     * @return iterable<string, array{\PhpRegex\Parser\NodeVisitorInterface<mixed>}>
      */
     public static function provideVisitors(): iterable
     {
-        yield 'AsciiTreeVisitor' => [new AsciiTreeVisitor()];
-        yield 'CompilerNodeVisitor' => [new CompilerNodeVisitor()];
-        yield 'ComplexityScoreNodeVisitor' => [new ComplexityScoreNodeVisitor()];
-        yield 'ConsoleHighlighterVisitor' => [new ConsoleHighlighterVisitor()];
-        yield 'DumperNodeVisitor' => [new DumperNodeVisitor()];
-        yield 'ExplainNodeVisitor' => [new ExplainNodeVisitor()];
-        yield 'HtmlExplainNodeVisitor' => [new HtmlExplainNodeVisitor()];
-        yield 'HtmlHighlighterVisitor' => [new HtmlHighlighterVisitor()];
-        yield 'LengthRangeNodeVisitor' => [new LengthRangeNodeVisitor()];
-        yield 'LinterNodeVisitor' => [new LinterNodeVisitor()];
-        yield 'LiteralExtractorNodeVisitor' => [new LiteralExtractorNodeVisitor()];
-        yield 'MermaidNodeVisitor' => [new MermaidNodeVisitor()];
-        yield 'MetricsNodeVisitor' => [new MetricsNodeVisitor()];
-        yield 'ModernizerNodeVisitor' => [new ModernizerNodeVisitor()];
-        yield 'OptimizerNodeVisitor' => [new OptimizerNodeVisitor()];
-        yield 'RailroadSvgVisitor' => [new RailroadSvgVisitor()];
-        yield 'ReDoSProfileNodeVisitor' => [new ReDoSProfileNodeVisitor()];
-        yield 'TestCaseGeneratorNodeVisitor' => [new TestCaseGeneratorNodeVisitor()];
+        yield 'AsciiTreeRenderer' => [new AsciiTreeRenderer()];
+        yield 'PatternPrinter' => [new PatternPrinter()];
+        yield 'ComplexityScorer' => [new ComplexityScorer()];
+        yield 'ConsoleHighlighter' => [new ConsoleHighlighter()];
+        yield 'NodeDumper' => [new NodeDumper()];
+        yield 'TextExplainer' => [new TextExplainer()];
+        yield 'HtmlExplainer' => [new HtmlExplainer()];
+        yield 'HtmlHighlighter' => [new HtmlHighlighter()];
+        yield 'LengthRangeCalculator' => [new LengthRangeCalculator()];
+        yield 'PatternLinter' => [new PatternLinter()];
+        yield 'LiteralExtractor' => [new LiteralExtractor()];
+        yield 'MermaidRenderer' => [new MermaidRenderer()];
+        yield 'MetricsCollector' => [new MetricsCollector()];
+        yield 'Modernizer' => [new Modernizer()];
+        yield 'Rewriter' => [new Rewriter()];
+        yield 'RailroadSvgRenderer' => [new RailroadSvgRenderer()];
+        yield 'RedosProfiler' => [new RedosProfiler()];
+        yield 'TestCaseGenerator' => [new TestCaseGenerator()];
     }
 
     /**
@@ -95,7 +95,7 @@ final class VisitorDepthScalingTest extends TestCase
     #[DataProvider('provideNestedExplanations')]
     public function test_a_nested_explanation_is_unchanged(string $pattern, string $explanation): void
     {
-        $this->assertSame($explanation, Regex::create(['cache' => null])->parse($pattern)->accept(new ExplainNodeVisitor()));
+        $this->assertSame($explanation, Regex::create(['cache' => null])->parse($pattern)->accept(new TextExplainer()));
     }
 
     /**

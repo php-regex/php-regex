@@ -30,7 +30,7 @@ With RegexParser:
 ### 1. Explain Patterns in Plain English
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -51,7 +51,7 @@ End of string
 ### 2. Validate Syntax
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -107,7 +107,7 @@ bin/regex highlight '/^(?<user>\w+)@(?<host>\w+)$/'
 ### 5. Generate Test Strings
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -130,7 +130,7 @@ $pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
 ### Step 2: Explain It
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -209,7 +209,7 @@ echo count($matches) > 0 ? "Match" : "No match";  // "No match"
 **Debug with RegexParser:**
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -293,7 +293,7 @@ $pattern = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/';
 ### Solution
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

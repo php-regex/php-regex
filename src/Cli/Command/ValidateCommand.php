@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\NodeVisitor\ConsoleHighlighterVisitor;
-use RegexParser\Regex;
-use RegexParser\ValidationResult;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Toolkit\Regex;
 
 final class ValidateCommand extends AbstractCommand
 {
@@ -89,7 +89,7 @@ final class ValidateCommand extends AbstractCommand
         try {
             $ast = $regex->parse($pattern);
 
-            return $ast->accept(new ConsoleHighlighterVisitor());
+            return $ast->accept(new ConsoleHighlighter());
         } catch (LexerException|ParserException) {
             return $pattern;
         }

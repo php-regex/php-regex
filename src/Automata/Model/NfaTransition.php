@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
-use RegexParser\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Alphabet\CharSet;
 
 /**
  * NFA transition labeled with a character set.
@@ -23,8 +23,8 @@ use RegexParser\Automata\Alphabet\CharSet;
 final readonly class NfaTransition
 {
     /**
-     * @param CharSet $charSet Transition label
-     * @param int     $target  Target state id
+     * @param \PhpRegex\Automata\Alphabet\CharSet $charSet Transition label
+     * @param int                                 $target  Target state id
      */
     public function __construct(public CharSet $charSet, public int $target) {}
 }

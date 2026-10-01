@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Transform;
+namespace PhpRegex\Automata\Transform;
 
-use RegexParser\Automata\Alphabet\CharSet;
-use RegexParser\Automata\Builder\NfaBuilder;
-use RegexParser\Automata\Model\Nfa;
-use RegexParser\Automata\Model\NfaFragment;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Unicode\CodePointHelper;
-use RegexParser\Exception\ComplexityException;
-use RegexParser\Internal\StaticCaches;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ControlCharNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\NodeInterface;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
+use PhpRegex\Automata\Alphabet\CharSet;
+use PhpRegex\Automata\Builder\NfaBuilder;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\Model\Nfa;
+use PhpRegex\Automata\Model\NfaFragment;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Unicode\CodePointHelper;
+use PhpRegex\Parser\Internal\StaticCaches;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\ControlCharNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
 
 /**
  * Builds an NFA from a regex AST using Thompson construction.
@@ -62,47 +62,47 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     private static ?array $caseFoldingTable = null;
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $fullCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $dotCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $dotAllCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $wordCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $spaceCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $digitCharSet = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $wordCharSetComplement = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $spaceCharSetComplement = [];
 
     /**
-     * @var array<string, CharSet>
+     * @var array<string, \PhpRegex\Automata\Alphabet\CharSet>
      */
     private static array $digitCharSetComplement = [];
 
@@ -122,7 +122,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     public function transform(RegexNode $regex, SolverOptions $options): Nfa
     {
@@ -148,7 +148,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildNode(NodeInterface $node, SolverOptions $options): NfaFragment
     {
@@ -204,7 +204,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildSequence(SequenceNode $node, SolverOptions $options): NfaFragment
     {
@@ -226,7 +226,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildAlternation(AlternationNode $node, SolverOptions $options): NfaFragment
     {
@@ -245,7 +245,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildQuantifier(QuantifierNode $node, SolverOptions $options): NfaFragment
     {
@@ -270,7 +270,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildLiteral(LiteralNode $node): NfaFragment
     {
@@ -306,7 +306,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildCharFromCodePoint(int $codePoint, int $position): NfaFragment
     {
@@ -323,7 +323,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildCharType(CharTypeNode $node): NfaFragment
     {
@@ -345,7 +345,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildCharClass(CharClassNode $node): NfaFragment
     {
@@ -362,7 +362,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildRange(RangeNode $node): NfaFragment
     {
@@ -391,7 +391,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildCharClassExpression(NodeInterface $node): CharSet
     {
@@ -470,7 +470,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildStar(NodeInterface $node, SolverOptions $options): NfaFragment
     {
@@ -489,7 +489,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function repeatNode(NodeInterface $node, SolverOptions $options, int $count): NfaFragment
     {
@@ -506,7 +506,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function buildBoundedRepeat(
         NodeInterface $node,
@@ -683,7 +683,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      */
     private function extractCodePoint(NodeInterface $node): int
     {
@@ -968,7 +968,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
      * dropping it would hand back a confidently wrong answer, so the pattern
      * is refused instead.
      *
-     * @throws ComplexityException
+     * @throws \PhpRegex\Automata\Exception\ComplexityException
      *
      * @return array{0: bool, 1: bool, 2: bool, 3: bool} start anchor seen, one
      *                                                   missing, end anchor

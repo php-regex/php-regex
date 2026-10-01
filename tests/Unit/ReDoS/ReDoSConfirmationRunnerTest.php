@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Redos\ConfirmationOptions;
+use PhpRegex\Redos\ConfirmationRunner;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfirmationRunner;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 final class ReDoSConfirmationRunnerTest extends TestCase
 {
@@ -41,10 +41,10 @@ final class ReDoSConfirmationRunnerTest extends TestCase
         }
         $this->assertSame(0, $oracle, 'The oracle matches, or gives up.');
 
-        $confirmation = (new ReDoSConfirmationRunner())->confirm(
+        $confirmation = (new ConfirmationRunner())->confirm(
             '/^(a+)+$/',
-            new ReDoSAnalysis(ReDoSSeverity::HIGH, 8),
-            new ReDoSConfirmOptions(
+            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new ConfirmationOptions(
                 minInputLength: 22,
                 maxInputLength: 23,
                 steps: 2,

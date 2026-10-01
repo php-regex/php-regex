@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\Regex;
 
 final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
 {
     private Regex $regex;
 
-    private OptimizerNodeVisitor $optimizer;
+    private Rewriter $optimizer;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->optimizer = new OptimizerNodeVisitor();
+        $this->optimizer = new Rewriter();
     }
 
     public function test_basic_adjacent_char_class_merging(): void
@@ -37,7 +37,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a-z]|[0-9]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-z0-9]/', $result);
@@ -49,7 +49,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a-z]|[A-Z]|[0-9]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-zA-Z0-9]/', $result);
@@ -61,7 +61,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a-z]|[^0-9]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-z]|\D/', $result);
@@ -72,7 +72,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/\d|[0-9]/u');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/\d|[0-9]/u', $result);
@@ -84,7 +84,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a-z]foo|[0-9]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         // The [0-9] gets optimized to \d, but [a-z]fo{2} remains unchanged
@@ -97,7 +97,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a]|[b]|[c]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[abc]/', $result);
@@ -109,7 +109,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[c]|[a]|[b]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[cab]/', $result);
@@ -121,7 +121,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a]|[0-9]/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a0-9]/', $result);
@@ -133,7 +133,7 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         $ast = $this->regex->parse('/[a-z]|[0-9]+/');
 
         $optimized = $ast->accept($this->optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         // The digit optimization should apply to the standalone [0-9]+
@@ -144,10 +144,10 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
     {
         // Test with digit optimization disabled to see pure merging behavior
         $ast = $this->regex->parse('/[a-z]|[0-9]/');
-        $optimizer = new OptimizerNodeVisitor(optimizeDigits: false);
+        $optimizer = new Rewriter(optimizeDigits: false);
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         // With digit optimization disabled, we should see [a-z0-9]
@@ -159,10 +159,10 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         // Test with disabled digit optimization to see pure merging behavior
         // Pattern: [a-z]|[0-9]|[A-Z] -> should become [a-z0-9A-Z]
         $ast = $this->regex->parse('/[a-z]|[0-9]|[A-Z]/');
-        $optimizer = new OptimizerNodeVisitor(optimizeDigits: false);
+        $optimizer = new Rewriter(optimizeDigits: false);
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         $this->assertSame('/[a-z0-9A-Z]/', $result);
@@ -173,10 +173,10 @@ final class OptimizerNodeVisitorCharClassMergingTest extends TestCase
         // Test that merged regex has same matching behavior
         $originalPattern = '/[a-z]|[0-9]/';
         $ast = $this->regex->parse($originalPattern);
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
 
         $optimized = $ast->accept($optimizer);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
         // Both patterns should match the same strings

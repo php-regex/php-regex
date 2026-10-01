@@ -190,7 +190,7 @@ valid. The interpreter answers "no match" without trouble.
 What this library does about it:
 
 - Every pattern the library is given and runs goes through
-  `RegexParser\Engine\PcreEngine`, which runs it with the interpreter: it
+  `PhpRegex\Parser\Engine\PcreEngine`, which runs it with the interpreter: it
   puts `(*NO_JIT)` at the start of the pattern, a start option that changes
   no result. That covers `generate()` and its samples, runtime validation,
   the ReDoS confirmation (`--redos-mode=confirmed`), the PHPStan extension

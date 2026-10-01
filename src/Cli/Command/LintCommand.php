@@ -11,32 +11,32 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Cli\Command;
+namespace PhpRegex\Cli\Command;
 
-use RegexParser\Cli\Input;
-use RegexParser\Cli\Output;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Lint\Command\LintArgumentParser;
-use RegexParser\Lint\Command\LintConfigLoader;
-use RegexParser\Lint\Command\LintDefaultsBuilder;
-use RegexParser\Lint\Command\LintExtractorFactory;
-use RegexParser\Lint\Command\ProjectTarget;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
-use RegexParser\Lint\Formatter\FormatterRegistry;
-use RegexParser\Lint\Formatter\JsonFormatter;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\Formatter\RelativePathHelper;
-use RegexParser\Lint\PhpRegexPatternSource;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\Lint\RegexLintRequest;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Lint\RegexPatternSourceCollection;
-use RegexParser\Optimizer\OptimizerOptions;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\Regex;
+use PhpRegex\Cli\Input;
+use PhpRegex\Cli\Output;
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Config\LintArgumentParser;
+use PhpRegex\Linter\Config\LintConfigLoader;
+use PhpRegex\Linter\Config\LintDefaultsBuilder;
+use PhpRegex\Linter\Config\LintExtractorFactory;
+use PhpRegex\Linter\Config\ProjectTarget;
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
+use PhpRegex\Linter\Formatter\FormatterRegistry;
+use PhpRegex\Linter\Formatter\JsonFormatter;
+use PhpRegex\Linter\Formatter\LinkFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\Formatter\RelativePathHelper;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintRequest;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Linter\Source\PatternSourceCollection;
+use PhpRegex\Linter\Source\PhpFilePatternSource;
+use PhpRegex\Optimizer\OptimizerOptions;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Redos\ConfirmationOptions;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Toolkit\Regex;
 
 final class LintCommand extends AbstractCommand implements CommandInterface
 {
@@ -156,11 +156,11 @@ final class LintCommand extends AbstractCommand implements CommandInterface
 
         // The confirmation always runs the interpreter, whose backtrack limit
         // is the one it measures against; there is no setting to turn JIT on.
-        $analysis = new RegexAnalysisService(
+        $analysis = new AnalysisService(
             $regex->parser(),
-            redosThreshold: $arguments->redosThreshold ?? ReDoSSeverity::HIGH->value,
+            redosThreshold: $arguments->redosThreshold ?? RedosSeverity::HIGH->value,
             redosMode: $arguments->redosMode,
-            redosConfirmOptions: new ReDoSConfirmOptions(),
+            redosConfirmOptions: new ConfirmationOptions(),
             lintEnabled: $arguments->checkLint,
             lintRules: $arguments->lintRules,
         );
@@ -175,10 +175,10 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         }
 
         $extractor = $this->extractorFactory->create($arguments);
-        $sources = new RegexPatternSourceCollection([
-            new PhpRegexPatternSource($extractor),
+        $sources = new PatternSourceCollection([
+            new PhpFilePatternSource($extractor),
         ]);
-        $lint = new RegexLintService($analysis, $sources);
+        $lint = new LintService($analysis, $sources);
 
         if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity) {
             $output->write($this->outputRenderer->renderBanner($output, $jobs, $lintConfigFiles));
@@ -218,7 +218,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         }
 
         try {
-            $request = new RegexLintRequest(
+            $request = new LintRequest(
                 paths: $paths,
                 excludePaths: $exclude,
                 minSavings: $minSavings,
@@ -239,7 +239,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             if ('console' === $format) {
                 $this->outputRenderer->renderSummary($output, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0], true);
             } else {
-                $emptyReport = new RegexLintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+                $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
                 $output->write($formatter->format($emptyReport));
             }
 
@@ -357,7 +357,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
     /**
      * @return array<array{file: string, line: int, message: string, type: string, pattern?: string|null}>
      */
-    private function generateBaseline(RegexLintReport $report): array
+    private function generateBaseline(LintReport $report): array
     {
         $baseline = [];
         foreach ($report->results as $result) {
@@ -397,7 +397,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
     /**
      * @param array<array{file: string, line: int, message: string, type: string, pattern?: string|null}> $baseline
      */
-    private function filterReportByBaseline(RegexLintReport $report, array $baseline): RegexLintReport
+    private function filterReportByBaseline(LintReport $report, array $baseline): LintReport
     {
         $baselineMap = [];
         foreach ($baseline as $item) {
@@ -440,7 +440,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             }
         }
 
-        return new RegexLintReport($filteredResults, [
+        return new LintReport($filteredResults, [
             'errors' => $errors,
             'warnings' => $warnings,
             'optimizations' => $optimizations,

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Formatter\GithubFormatter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\GithubFormatter;
 
 final class GithubFormatterEdgeCasesTest extends TestCase
 {

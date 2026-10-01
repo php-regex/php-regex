@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Symfony;
+namespace PhpRegex\Tests\Integration\Bridge\Symfony;
 
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\PcreTarget;
+use PhpRegex\Symfony\Command\LintCommand;
+use PhpRegex\Symfony\DependencyInjection\PhpRegexExtension;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Command\RegexLintCommand;
-use RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\PcreTarget;
-use RegexParser\Regex;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
@@ -37,7 +37,7 @@ final class RegexParserBundleTest extends TestCase
         ]);
         $container->compile();
 
-        /** @var Regex $regex */
+        /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $container->get('regex_parser.regex');
         $regex->parse('/abc/');
 
@@ -56,10 +56,10 @@ final class RegexParserBundleTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('regex_parser.command.lint'));
         $definition = $container->getDefinition('regex_parser.command.lint');
-        $this->assertSame(RegexLintCommand::class, $definition->getClass());
+        $this->assertSame(LintCommand::class, $definition->getClass());
         $this->assertArrayHasKey('console.command', $definition->getTags());
 
-        /** @var RegexLintCommand $command */
+        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
         $command = $container->get('regex_parser.command.lint');
         $this->assertSame('regex:lint', $command->getName());
     }
@@ -73,7 +73,7 @@ final class RegexParserBundleTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
 
-        $extension = new RegexParserExtension();
+        $extension = new PhpRegexExtension();
         $container->registerExtension($extension);
 
         if ($loadExtension) {

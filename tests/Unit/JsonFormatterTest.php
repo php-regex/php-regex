@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Diagnostic;
+use PhpRegex\Linter\DiagnosticType;
+use PhpRegex\Linter\Formatter\JsonFormatter;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Linter\LintSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\JsonFormatter;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\ProblemType;
-use RegexParser\RegexProblem;
-use RegexParser\Severity;
 
 final class JsonFormatterTest extends TestCase
 {
@@ -26,7 +26,7 @@ final class JsonFormatterTest extends TestCase
     {
         $formatter = new JsonFormatter();
 
-        $report = new RegexLintReport(
+        $report = new LintReport(
             results: [[
                 'file' => './test.php',
                 'line' => 10,
@@ -34,7 +34,7 @@ final class JsonFormatterTest extends TestCase
                 'issues' => [],
                 'optimizations' => [],
                 'problems' => [
-                    new RegexProblem(ProblemType::Lint, Severity::Warning, 'noise'),
+                    new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'noise'),
                 ],
             ]],
             stats: ['errors' => 0, 'warnings' => 0, 'optimizations' => 0],

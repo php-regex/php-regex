@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Bridge\Symfony\Extractor;
+namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
+use PhpRegex\Linter\Source\PatternSourceContext;
+use PhpRegex\Symfony\Extractor\RoutePatternSource;
+use PhpRegex\Symfony\Routing\RouteRequirementNormalizer;
+use PhpRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Extractor\RouteRegexPatternSource;
-use RegexParser\Bridge\Symfony\Routing\RouteRequirementNormalizer;
-use RegexParser\Lint\RegexPatternSourceContext;
-use RegexParser\Tests\Support\SymfonyExtractorFunctionOverrides;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ResourceInterface;
 use Symfony\Component\Routing\Route;
@@ -42,7 +42,7 @@ final class RouteRegexPatternSourceTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $source = new RouteRegexPatternSource($this->normalizer);
+        $source = new RoutePatternSource($this->normalizer);
         // Source created successfully
     }
 
@@ -50,32 +50,32 @@ final class RouteRegexPatternSourceTest extends TestCase
     public function test_construct_with_router(): void
     {
         $router = $this->createStub(RouterInterface::class);
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
+        $source = new RoutePatternSource($this->normalizer, $router);
     }
 
     public function test_get_name(): void
     {
-        $source = new RouteRegexPatternSource($this->normalizer);
+        $source = new RoutePatternSource($this->normalizer);
         $this->assertSame('routes', $source->getName());
     }
 
     public function test_is_supported_returns_false_when_no_router(): void
     {
-        $source = new RouteRegexPatternSource($this->normalizer);
+        $source = new RoutePatternSource($this->normalizer);
         $this->assertFalse($source->isSupported());
     }
 
     public function test_is_supported_returns_true_when_router_present(): void
     {
         $router = $this->createStub(RouterInterface::class);
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
+        $source = new RoutePatternSource($this->normalizer, $router);
         $this->assertTrue($source->isSupported());
     }
 
     public function test_extract_returns_empty_array_when_no_router(): void
     {
-        $source = new RouteRegexPatternSource($this->normalizer);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -88,8 +88,8 @@ final class RouteRegexPatternSourceTest extends TestCase
         $collection = new RouteCollection();
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -107,8 +107,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -132,8 +132,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -152,8 +152,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -175,8 +175,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -200,8 +200,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -228,8 +228,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -262,8 +262,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -296,8 +296,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -320,8 +320,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -340,8 +340,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $router->method('getRouteCollection')->willReturn($collection);
 
-        $source = new RouteRegexPatternSource($this->normalizer, $router);
-        $context = new RegexPatternSourceContext(['.'], []);
+        $source = new RoutePatternSource($this->normalizer, $router);
+        $context = new PatternSourceContext(['.'], []);
 
         $result = $source->extract($context);
 
@@ -375,8 +375,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -411,8 +411,8 @@ final class RouteRegexPatternSourceTest extends TestCase
             unlink($tempYaml);
         }
 
-        $source = new RouteRegexPatternSource($this->normalizer);
-        $method = new \ReflectionMethod(RouteRegexPatternSource::class, 'collectYamlResources');
+        $source = new RoutePatternSource($this->normalizer);
+        $method = new \ReflectionMethod(RoutePatternSource::class, 'collectYamlResources');
 
         $this->assertSame([], $method->invoke($source, $collection));
     }
@@ -421,8 +421,8 @@ final class RouteRegexPatternSourceTest extends TestCase
     {
         SymfonyExtractorFunctionOverrides::queueFileResult(false);
 
-        $source = new RouteRegexPatternSource($this->normalizer);
-        $method = new \ReflectionMethod(RouteRegexPatternSource::class, 'extractYamlRouteMetadata');
+        $source = new RoutePatternSource($this->normalizer);
+        $method = new \ReflectionMethod(RoutePatternSource::class, 'extractYamlRouteMetadata');
 
         $result = $method->invoke($source, 'missing.yaml', ['test_route' => true]);
 
@@ -435,8 +435,8 @@ final class RouteRegexPatternSourceTest extends TestCase
         copy(__DIR__.'/../../../../Fixtures/Symfony/foo_bar_routes.yaml', $tempYaml);
 
         try {
-            $source = new RouteRegexPatternSource($this->normalizer);
-            $method = new \ReflectionMethod(RouteRegexPatternSource::class, 'extractYamlRouteMetadata');
+            $source = new RoutePatternSource($this->normalizer);
+            $method = new \ReflectionMethod(RoutePatternSource::class, 'extractYamlRouteMetadata');
 
             $result = $method->invoke($source, $tempYaml, ['foo' => true, 'bar' => true]);
 
@@ -450,8 +450,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
     public function test_extract_key_from_line_supports_quoted_keys(): void
     {
-        $source = new RouteRegexPatternSource($this->normalizer);
-        $method = new \ReflectionMethod(RouteRegexPatternSource::class, 'extractKeyFromLine');
+        $source = new RoutePatternSource($this->normalizer);
+        $method = new \ReflectionMethod(RoutePatternSource::class, 'extractKeyFromLine');
 
         $this->assertSame('single', $method->invoke($source, "  'single': value"));
         $this->assertSame('double', $method->invoke($source, '  "double": value'));
@@ -483,8 +483,8 @@ final class RouteRegexPatternSourceTest extends TestCase
                 "    other: 'x'",
             ]);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -509,8 +509,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -539,8 +539,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $router->method('getRouteCollection')->willReturn($collection);
 
-            $source = new RouteRegexPatternSource($this->normalizer, $router);
-            $context = new RegexPatternSourceContext(['.'], []);
+            $source = new RoutePatternSource($this->normalizer, $router);
+            $context = new PatternSourceContext(['.'], []);
 
             $result = $source->extract($context);
 
@@ -560,7 +560,7 @@ final class RouteRegexPatternSourceTest extends TestCase
         }
 
         // This test will only run when Symfony is not available
-        $source = new RouteRegexPatternSource($this->normalizer);
+        $source = new RoutePatternSource($this->normalizer);
         $this->assertFalse($source->isSupported());
         $this->assertSame('routes', $source->getName());
     }

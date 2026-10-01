@@ -11,11 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenStream;
+use PhpRegex\Parser\Token\TokenType;
 
-use RegexParser\Token;
-use RegexParser\TokenStream;
-use RegexParser\TokenType;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
 
 // Create a large token array for benchmarking
 $tokens = [];

@@ -148,8 +148,8 @@ Often you can simplify:
 ### Strategy 1: Validate with RegexParser
 
 ```php
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSSeverity;
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosSeverity;
 
 $regex = Regex::create();
 
@@ -160,7 +160,7 @@ echo $analysis->severity->value;  // "critical"
 echo $analysis->score;            // 10
 
 // Block critical patterns
-if ($analysis->exceedsThreshold(ReDoSSeverity::HIGH)) {
+if ($analysis->exceedsThreshold(RedosSeverity::HIGH)) {
     throw new InvalidArgumentException("Pattern is unsafe");
 }
 ```
@@ -243,7 +243,7 @@ $safe2 = '/(aa|a)+$/';
 ### Exercise 3: Test with RegexParser
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

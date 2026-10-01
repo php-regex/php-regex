@@ -11,20 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Laravel\Output\LaravelConsoleFormatter;
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Formatter\LinkFormatter;
+use PhpRegex\Linter\Formatter\RelativePathHelper;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Optimizer\OptimizationResult;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Laravel\Output\LaravelConsoleFormatter;
-use RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter;
-use RegexParser\Lint\Formatter\AbstractConsoleTagFormatter;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\RelativePathHelper;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\OptimizationResult;
-use RegexParser\RegexParser;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
@@ -37,14 +36,14 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     private const FIXTURES = __DIR__.'/../../../Fixtures/Lint/';
 
     /**
-     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<\PhpRegex\Linter\Formatter\AbstractConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideRenderings')]
     public function test_the_report_renders_byte_for_byte(string $formatterClass, bool $decorated, string $fixture): void
     {
         $formatter = new $formatterClass(
-            new RegexAnalysisService(RegexParser::create(['cache' => null])),
+            new AnalysisService(RegexParser::create(['cache' => null])),
             new LinkFormatter(null, new RelativePathHelper('/project')),
             $decorated,
         );
@@ -68,10 +67,10 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     public function test_quoted_text_is_escaped_as_symfony_console_escapes_it(string $text): void
     {
         $formatter = new SymfonyConsoleFormatter(
-            new RegexAnalysisService(RegexParser::create(['cache' => null])),
+            new AnalysisService(RegexParser::create(['cache' => null])),
             new LinkFormatter(null, new RelativePathHelper('/project')),
         );
-        $report = new RegexLintReport([[
+        $report = new LintReport([[
             'file' => '/project/src/Foo.php',
             'line' => 1,
             'pattern' => '/a/',
@@ -110,10 +109,10 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     public function test_a_pattern_that_does_not_parse_is_quoted_escaped_without_highlighting(): void
     {
         $formatter = new LaravelConsoleFormatter(
-            new RegexAnalysisService(RegexParser::create(['cache' => null])),
+            new AnalysisService(RegexParser::create(['cache' => null])),
             new LinkFormatter(null, new RelativePathHelper('/project')),
         );
-        $report = new RegexLintReport([[
+        $report = new LintReport([[
             'file' => '/project/src/Foo.php',
             'line' => 1,
             'pattern' => '/(<a>/',
@@ -132,7 +131,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     public function test_the_linter_does_not_depend_on_symfony_console(): void
     {
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(
-            \dirname(__DIR__, 4).'/src/Lint',
+            \dirname(__DIR__, 4).'/src/Linter',
             \FilesystemIterator::SKIP_DOTS,
         ));
 
@@ -146,9 +145,9 @@ final class AbstractConsoleTagFormatterTest extends TestCase
         }
     }
 
-    private static function report(): RegexLintReport
+    private static function report(): LintReport
     {
-        return new RegexLintReport([
+        return new LintReport([
             [
                 'file' => '/project/src/Foo.php',
                 'line' => 12,

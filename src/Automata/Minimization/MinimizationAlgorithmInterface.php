@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Minimization;
+namespace PhpRegex\Automata\Minimization;
 
-use RegexParser\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\Dfa;
 
 /**
  * Strategy interface for DFA minimization algorithms.

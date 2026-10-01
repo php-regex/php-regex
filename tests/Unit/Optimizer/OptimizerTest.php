@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Optimizer;
+namespace PhpRegex\Tests\Unit\Optimizer;
 
+use PhpRegex\Optimizer\Optimizer;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Optimizer\Optimizer;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 
 final class OptimizerTest extends TestCase
 {

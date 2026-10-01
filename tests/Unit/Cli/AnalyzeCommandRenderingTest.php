@@ -11,39 +11,39 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cli;
+namespace PhpRegex\Tests\Unit\Cli;
 
+use PhpRegex\Cli\Command\AnalyzeCommand;
+use PhpRegex\Cli\ConsoleStyle;
+use PhpRegex\Cli\Output;
+use PhpRegex\Parser\Validation\ValidationResult;
+use PhpRegex\Redos\RedosAnalysis;
+use PhpRegex\Redos\RedosConfidence;
+use PhpRegex\Redos\RedosMode;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\AnalyzeCommand;
-use RegexParser\Cli\ConsoleStyle;
-use RegexParser\Cli\Output;
-use RegexParser\ReDoS\ReDoSAnalysis;
-use RegexParser\ReDoS\ReDoSConfidence;
-use RegexParser\ReDoS\ReDoSMode;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\ValidationResult;
 
 final class AnalyzeCommandRenderingTest extends TestCase
 {
     #[Test]
     public function test_analyze_command_reports_a_redos_analysis_that_could_not_finish(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::UNKNOWN,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::UNKNOWN,
             0,
             null,
             ['Analysis incomplete: out of steam'],
             'RuntimeException: out of steam',
             null,
             null,
-            ReDoSConfidence::LOW,
+            RedosConfidence::LOW,
             null,
             [],
             null,
             null,
             [],
-            ReDoSMode::THEORETICAL,
+            RedosMode::THEORETICAL,
             null,
         );
 
@@ -55,28 +55,28 @@ final class AnalyzeCommandRenderingTest extends TestCase
     #[Test]
     public function test_a_finished_analysis_reports_no_error(): void
     {
-        $analysis = new ReDoSAnalysis(
-            ReDoSSeverity::SAFE,
+        $analysis = new RedosAnalysis(
+            RedosSeverity::SAFE,
             0,
             null,
             [],
             null,
             null,
             null,
-            ReDoSConfidence::LOW,
+            RedosConfidence::LOW,
             null,
             [],
             null,
             null,
             [],
-            ReDoSMode::THEORETICAL,
+            RedosMode::THEORETICAL,
             null,
         );
 
         $this->assertStringNotContainsString('ReDoS error:', $this->render($analysis));
     }
 
-    private function render(ReDoSAnalysis $analysis): string
+    private function render(RedosAnalysis $analysis): string
     {
         $command = new AnalyzeCommand();
         $output = new Output(false, false);

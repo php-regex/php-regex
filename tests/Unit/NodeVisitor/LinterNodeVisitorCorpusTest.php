@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * What the linter says about the patterns of real projects.
@@ -38,7 +38,7 @@ final class LinterNodeVisitorCorpusTest extends TestCase
     #[DataProvider('provideCorpusPatterns')]
     public function test_a_corpus_pattern_raises_the_rules_it_used_to(string $pattern, array $issues): void
     {
-        $visitor = new LinterNodeVisitor();
+        $visitor = new PatternLinter();
         Regex::create(['max_recursion_depth' => 4096])->parse($pattern)->accept($visitor);
 
         $reported = array_values(array_unique(array_map(

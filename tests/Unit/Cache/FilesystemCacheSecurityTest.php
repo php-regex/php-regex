@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cache;
+namespace PhpRegex\Tests\Unit\Cache;
 
+use PhpRegex\Parser\Cache\ArrayCache;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\ArrayCache;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Regex;
 
 /**
  * A cache on disk is only used where it is asked for, keeps its files to

@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\NullCache;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 
 /**
  * The library's process-wide caches: each one bounded (a long-running
@@ -38,10 +38,10 @@ final class StaticCachesTest extends TestCase
         $parser = RegexParser::create(['cache' => new NullCache()]);
 
         $parser->validate('/\p{Latin}a{2,3}/u');
-        $parser->parse('/a+/')->accept(new ComplexityScoreNodeVisitor());
-        $parser->parse('/\p{Latin}/')->accept(new SampleGeneratorNodeVisitor());
-        $parser->parse('/\p{Linear_B}/u')->accept(new SampleGeneratorNodeVisitor());
-        $parser->parse('#a#')->accept(new CompilerNodeVisitor());
+        $parser->parse('/a+/')->accept(new ComplexityScorer());
+        $parser->parse('/\p{Latin}/')->accept(new SampleGenerator());
+        $parser->parse('/\p{Linear_B}/u')->accept(new SampleGenerator());
+        $parser->parse('#a#')->accept(new PatternPrinter());
 
         foreach (self::caches() as [$class, $property]) {
             $this->assertNotSame([], $this->read($class, $property), 'Not warmed: '.$class.'::$'.$property);
@@ -70,14 +70,14 @@ final class StaticCachesTest extends TestCase
     #[Test]
     public function test_the_complexity_cache_is_bounded(): void
     {
-        $this->write(ComplexityScoreNodeVisitor::class, 'unboundedQuantifierCache', []);
+        $this->write(ComplexityScorer::class, 'unboundedQuantifierCache', []);
         $parser = RegexParser::create(['cache' => new NullCache()]);
 
         for ($max = 0; $max < 1500; $max++) {
-            $parser->parse('/a{1,'.$max.'}/')->accept(new ComplexityScoreNodeVisitor());
+            $parser->parse('/a{1,'.$max.'}/')->accept(new ComplexityScorer());
         }
 
-        $count = \count($this->read(ComplexityScoreNodeVisitor::class, 'unboundedQuantifierCache'));
+        $count = \count($this->read(ComplexityScorer::class, 'unboundedQuantifierCache'));
         $this->assertGreaterThan(0, $count);
         $this->assertLessThanOrEqual(self::BOUND, $count);
     }
@@ -92,14 +92,14 @@ final class StaticCachesTest extends TestCase
     {
         $this->assertSame(1, preg_match('/\p{l A-t_in}/', 'a'), 'The oracle refuses a loose spelling.');
 
-        $this->write(SampleGeneratorNodeVisitor::class, 'propertySamples', []);
+        $this->write(SampleGenerator::class, 'propertySamples', []);
         $parser = RegexParser::create(['cache' => new NullCache()]);
 
         foreach (self::latinSpellings(1500) as $spelling) {
-            $parser->parse('/\p{'.$spelling.'}/')->accept(new SampleGeneratorNodeVisitor());
+            $parser->parse('/\p{'.$spelling.'}/')->accept(new SampleGenerator());
         }
 
-        $count = \count($this->read(SampleGeneratorNodeVisitor::class, 'propertySamples'));
+        $count = \count($this->read(SampleGenerator::class, 'propertySamples'));
         $this->assertGreaterThan(0, $count);
         $this->assertLessThanOrEqual(self::BOUND, $count);
     }
@@ -110,12 +110,12 @@ final class StaticCachesTest extends TestCase
     private static function caches(): array
     {
         return [
-            [ValidatorNodeVisitor::class, 'unicodePropCache'],
-            [ValidatorNodeVisitor::class, 'quantifierBoundsCache'],
-            [ComplexityScoreNodeVisitor::class, 'unboundedQuantifierCache'],
-            [SampleGeneratorNodeVisitor::class, 'propertySamples'],
-            [SampleGeneratorNodeVisitor::class, 'codePointChunks'],
-            [CompilerNodeVisitor::class, 'delimiterCache'],
+            [Validator::class, 'unicodePropCache'],
+            [Validator::class, 'quantifierBoundsCache'],
+            [ComplexityScorer::class, 'unboundedQuantifierCache'],
+            [SampleGenerator::class, 'propertySamples'],
+            [SampleGenerator::class, 'codePointChunks'],
+            [PatternPrinter::class, 'delimiterCache'],
         ];
     }
 

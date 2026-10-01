@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Regression;
+namespace PhpRegex\Tests\Functional\Regression;
 
+use PhpRegex\Cli\Command\HelpCommand;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\Command\HelpCommand;
-use RegexParser\Lexer;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\Token;
-use RegexParser\TokenType;
 
 final class ArchitecturalFixesTest extends TestCase
 {
@@ -92,7 +92,7 @@ final class ArchitecturalFixesTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
 
         return $ast->accept($visitor);
     }

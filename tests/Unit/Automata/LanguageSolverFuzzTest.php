@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
 
 final class LanguageSolverFuzzTest extends TestCase
 {

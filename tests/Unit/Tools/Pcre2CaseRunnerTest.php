@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Tools;
+namespace PhpRegex\Tests\Unit\Tools;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Exception\ParserException;
+use PhpRegex\Tests\TestUtils\Pcre2CaseRunner;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\LexerException;
-use RegexParser\Exception\ParserException;
-use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * Unit coverage for the per-case conformance runner.

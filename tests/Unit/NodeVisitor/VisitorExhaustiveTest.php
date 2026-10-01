@@ -11,42 +11,42 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\AnchorNode;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\DotNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\KeepNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\PcreVerbNode;
+use PhpRegex\Parser\Node\PosixClassNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\RangeNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\AnchorNode;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\DotNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\KeepNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\PcreVerbNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\RangeNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ComplexityScoreNodeVisitor;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
 
 final class VisitorExhaustiveTest extends TestCase
 {
@@ -55,16 +55,16 @@ final class VisitorExhaustiveTest extends TestCase
     {
         // Liste de tous les visiteurs
         $visitors = [
-            new CompilerNodeVisitor(),
-            new ComplexityScoreNodeVisitor(),
-            new DumperNodeVisitor(),
-            new ExplainNodeVisitor(),
-            new HtmlExplainNodeVisitor(),
-            new OptimizerNodeVisitor(),
+            new PatternPrinter(),
+            new ComplexityScorer(),
+            new NodeDumper(),
+            new TextExplainer(),
+            new HtmlExplainer(),
+            new Rewriter(),
             // Note: SampleGenerator and Validator have strict logics that can throw exceptions
             // on isolated nodes. We include them but will catch the errors.
-            new SampleGeneratorNodeVisitor(),
-            new ValidatorNodeVisitor(),
+            new SampleGenerator(),
+            new Validator(),
         ];
 
         // Liste exhaustive d'instances de chaque type de nœud
@@ -97,14 +97,14 @@ final class VisitorExhaustiveTest extends TestCase
         foreach ($visitors as $visitor) {
             foreach ($nodes as $node) {
                 // Specific cases to ignore for the Validator which needs context (existing groups)
-                if ($visitor instanceof ValidatorNodeVisitor) {
+                if ($visitor instanceof Validator) {
                     if ($node instanceof BackrefNode || $node instanceof SubroutineNode || ($node instanceof CharLiteralNode && CharLiteralType::OCTAL_LEGACY === $node->type)) {
                         continue;
                     }
                 }
 
                 // Specific case for SampleGenerator which does not support subroutines
-                if ($visitor instanceof SampleGeneratorNodeVisitor && $node instanceof SubroutineNode) {
+                if ($visitor instanceof SampleGenerator && $node instanceof SubroutineNode) {
                     continue;
                 }
 

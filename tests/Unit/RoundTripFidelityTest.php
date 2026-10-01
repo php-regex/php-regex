@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Recompiling a parsed pattern must give the exact same text back: neither the
@@ -31,7 +31,7 @@ final class RoundTripFidelityTest extends TestCase
     #[DataProvider('provideExtendedPatterns')]
     public function test_extended_patterns_recompile_unchanged(string $pattern): void
     {
-        $recompiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $recompiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $recompiled);
     }
@@ -47,7 +47,7 @@ final class RoundTripFidelityTest extends TestCase
     {
         $this->assertNotFalse(@preg_match($pattern, ''), 'PCRE must accept the pattern');
 
-        $recompiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $recompiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $recompiled);
     }
@@ -60,7 +60,7 @@ final class RoundTripFidelityTest extends TestCase
     #[DataProvider('provideQuotedPatterns')]
     public function test_quoted_literals_are_still_escaped(string $pattern, string $expected): void
     {
-        $recompiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $recompiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($expected, $recompiled);
         $this->assertNotFalse(@preg_match($recompiled, ''));
@@ -71,7 +71,7 @@ final class RoundTripFidelityTest extends TestCase
     {
         $ast = Regex::create()->parse('/a  b/x');
 
-        $this->assertNotSame('/a  b/x', $ast->accept(new CompilerNodeVisitor(pretty: true)));
+        $this->assertNotSame('/a  b/x', $ast->accept(new PatternPrinter(pretty: true)));
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class RoundTripFidelityTest extends TestCase
         $ast = Regex::create()->parse('/a b/x');
         $rebuilt = new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, 0, 3);
 
-        $this->assertSame('/ab/x', $rebuilt->accept(new CompilerNodeVisitor()));
+        $this->assertSame('/ab/x', $rebuilt->accept(new PatternPrinter()));
     }
 
     /**

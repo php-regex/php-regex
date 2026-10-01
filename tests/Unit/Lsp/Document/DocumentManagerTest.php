@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Document;
+namespace PhpRegex\Tests\Unit\Lsp\Document;
 
+use PhpRegex\LanguageServer\Document\DocumentManager;
+use PhpRegex\LanguageServer\Document\RegexFinder;
+use PhpRegex\LanguageServer\Document\RegexOccurrence;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Document\DocumentManager;
-use RegexParser\Lsp\Document\RegexFinder;
-use RegexParser\Lsp\Document\RegexOccurrence;
 
 final class DocumentManagerTest extends TestCase
 {

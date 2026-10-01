@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Extraction;
+namespace PhpRegex\Tests\Unit\Lint\Extraction;
 
+use PhpRegex\Linter\Extraction\InteropPresets;
+use PhpRegex\Linter\Extraction\PatternFunction;
+use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Extraction\InteropPresets;
-use RegexParser\Lint\Extraction\PatternFunction;
-use RegexParser\Lint\Extraction\PatternFunctionRegistry;
 
 final class PatternFunctionRegistryTest extends TestCase
 {

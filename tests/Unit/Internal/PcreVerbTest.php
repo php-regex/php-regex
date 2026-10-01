@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Internal;
+namespace PhpRegex\Tests\Unit\Internal;
 
+use PhpRegex\Parser\Internal\PcreVerb;
+use PhpRegex\Parser\Node\GroupType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Internal\PcreVerb;
-use RegexParser\Node\GroupType;
 
 /**
  * Telling apart the four things "(*...)" can hold.
@@ -66,7 +66,7 @@ final class PcreVerbTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{text: string, group: GroupType, payload: string}>
+     * @return iterable<string, array{text: string, group: \PhpRegex\Parser\Node\GroupType, payload: string}>
      */
     public static function provideAssertions(): iterable
     {

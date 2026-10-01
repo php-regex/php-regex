@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A lone \E or an empty \Q\E is transparent to a quantifier, like a
@@ -47,13 +47,13 @@ final class QuantifierAfterQuoteEndTest extends TestCase
         $this->assertTrue($result->isValid, \sprintf('%s compiles in PHP but was reported invalid: %s', $pattern, (string) $result->error));
 
         $ast = Regex::create()->parse($pattern);
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
         }
 
         // A sample built from the tree must be matched by the pattern itself.
-        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGeneratorNodeVisitor())), $pattern);
+        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGenerator())), $pattern);
     }
 
     /**

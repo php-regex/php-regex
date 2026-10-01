@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Transform\AstToNfaTransformer;
+use PhpRegex\Automata\Unicode\CodePointHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Transform\AstToNfaTransformer;
-use RegexParser\Automata\Unicode\CodePointHelper;
 
 /**
  * Scanning Unicode encodes a block of code points at a time.

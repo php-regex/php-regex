@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Engine;
+namespace PhpRegex\Tests\Unit\Engine;
 
+use PhpRegex\Parser\Engine\PcreEngine;
+use PhpRegex\Parser\Engine\PcreError;
+use PhpRegex\Parser\Engine\PcreLimits;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Engine\PcreEngine;
-use RegexParser\Engine\PcreError;
-use RegexParser\Engine\PcreLimits;
 
 /**
  * Where the verb goes when the body holds every spare delimiter: to a

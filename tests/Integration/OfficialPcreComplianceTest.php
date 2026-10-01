@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Validates that the library behaves identically to PHP's native PCRE engine.
@@ -78,7 +78,7 @@ final class OfficialPcreComplianceTest extends TestCase
         }
 
         // Scenario C: Pattern is valid, verify behavioral consistency
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         try {
             $compiledPattern = $ast->accept($compiler);

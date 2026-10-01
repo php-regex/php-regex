@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use PhpRegex\Toolkit\Regex;
+
 /**
  * Example: Parse and analyze a regex pattern with RegexParser
  *
@@ -13,8 +15,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
-use RegexParser\Regex;
 
 $pattern = '/^(?:(?<protocol>https?):\/\/)(?<domain>[a-zA-Z0-9.-]+)(?::(?<port>\d+))?$/';
 

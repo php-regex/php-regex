@@ -11,12 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Transform\AstToNfaTransformer;
+use PhpRegex\Toolkit\Regex;
 
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Transform\AstToNfaTransformer;
-use RegexParser\Regex;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
 
 $iterations = 200;
 $regex = Regex::create();

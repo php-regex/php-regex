@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\Internal\ForkedWorkerPool;
+use PhpRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\ForkedWorkerPool;
-use RegexParser\Tests\Support\LibrarySource;
 
 /**
  * Library code returns; the binaries exit. The one exception is the child
@@ -36,7 +36,7 @@ final class LibraryExitTest extends TestCase
             }
         }
 
-        $this->assertSame(['src/Lint/ForkedWorkerPool.php' => 1], $exits);
+        $this->assertSame(['src/Linter/Internal/ForkedWorkerPool.php' => 1], $exits);
     }
 
     /**
@@ -47,7 +47,7 @@ final class LibraryExitTest extends TestCase
     {
         $file = (string) (new \ReflectionClass(ForkedWorkerPool::class))->getFileName();
 
-        $this->assertStringEndsWith('src/Lint/ForkedWorkerPool.php', str_replace('\\', '/', $file));
+        $this->assertStringEndsWith('src/Linter/Internal/ForkedWorkerPool.php', str_replace('\\', '/', $file));
     }
 
     #[Test]

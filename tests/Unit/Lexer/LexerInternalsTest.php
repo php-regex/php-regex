@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\TokenType;
+use PhpRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lexer;
-use RegexParser\Tests\TestUtils\LexerAccessor;
-use RegexParser\TokenType;
 
 /**
  * White-box tests to force execution of defensive branches

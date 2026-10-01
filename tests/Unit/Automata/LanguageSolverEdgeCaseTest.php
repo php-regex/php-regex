@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Solver\InMemoryDfaCache;
+use PhpRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\RegexParser;
 
 final class LanguageSolverEdgeCaseTest extends TestCase
 {
@@ -218,7 +218,7 @@ final class LanguageSolverEdgeCaseTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{DeterminizationAlgorithm}>
+     * @return \Generator<string, array{\PhpRegex\Automata\Determinization\DeterminizationAlgorithm}>
      */
     public static function provideDeterminizationAlgorithms(): \Generator
     {

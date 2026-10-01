@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\Formatter\AbstractOutputFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\LintReport;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\Formatter\AbstractOutputFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\RegexLintReport;
 
 final class AbstractOutputFormatterTest extends TestCase
 {
@@ -359,7 +359,7 @@ final class AbstractOutputFormatterTest extends TestCase
  */
 final class TestableAbstractOutputFormatter extends AbstractOutputFormatter
 {
-    public function format(RegexLintReport $report): string
+    public function format(LintReport $report): string
     {
         return 'test';
     }

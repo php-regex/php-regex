@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Support;
+namespace PhpRegex\Tests\Support;
 
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;

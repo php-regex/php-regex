@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\Regex;
 
 final class LengthRangeNodeVisitorTest extends TestCase
 {
-    private LengthRangeNodeVisitor $visitor;
+    private LengthRangeCalculator $visitor;
 
     protected function setUp(): void
     {
-        $this->visitor = new LengthRangeNodeVisitor();
+        $this->visitor = new LengthRangeCalculator();
     }
 
     #[DataProvider('lengthRangeProvider')]

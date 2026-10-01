@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Visitor;
+namespace PhpRegex\Tests\Unit\Visitor;
 
+use PhpRegex\Optimizer\Modernizer;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ModernizerNodeVisitor;
-use RegexParser\Regex;
 
 final class ModernizerTest extends TestCase
 {
@@ -79,8 +79,8 @@ final class ModernizerTest extends TestCase
     private function modernize(string $pattern): string
     {
         $ast = $this->regexService->parse($pattern);
-        $modernized = $ast->accept(new ModernizerNodeVisitor());
+        $modernized = $ast->accept(new Modernizer());
 
-        return $modernized->accept(new CompilerNodeVisitor());
+        return $modernized->accept(new PatternPrinter());
     }
 }

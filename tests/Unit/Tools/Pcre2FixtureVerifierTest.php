@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Tools;
+namespace PhpRegex\Tests\Unit\Tools;
 
+use PhpRegex\Tests\TestUtils\Pcre2FixtureVerifier;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Tests\TestUtils\Pcre2FixtureVerifier;
 
 /**
  * Unit coverage for the fixture verifier: every floor observation in the

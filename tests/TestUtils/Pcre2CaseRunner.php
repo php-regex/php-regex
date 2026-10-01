@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\TestUtils;
+namespace PhpRegex\Tests\TestUtils;
 
-use RegexParser\Exception\RegexParserExceptionInterface;
-use RegexParser\Internal\PatternParser;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
+use PhpRegex\Parser\Exception\ExceptionInterface;
+use PhpRegex\Parser\Internal\PatternParser;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 
 /**
  * Runs one suite case through Regex::validate() on the product path
@@ -110,7 +110,7 @@ final readonly class Pcre2CaseRunner
      */
     public static function classifyThrowable(\Throwable $throwable): string
     {
-        return $throwable instanceof RegexParserExceptionInterface ? 'principled' : 'crash';
+        return $throwable instanceof ExceptionInterface ? 'principled' : 'crash';
     }
 
     /**
@@ -306,7 +306,7 @@ final readonly class Pcre2CaseRunner
                 throw new \RuntimeException(\sprintf('validate() rejected %s but parsing stayed tolerant.', $phpPattern));
             }
 
-            $ast->accept(new ValidatorNodeVisitor());
+            $ast->accept(new Validator());
         } catch (\Throwable $failure) {
             return $failure;
         }

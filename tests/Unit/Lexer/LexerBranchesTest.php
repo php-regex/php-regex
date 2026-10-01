@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\LexerException;
+use PhpRegex\Parser\Lexer;
+use PhpRegex\Parser\Token\Token;
+use PhpRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Exception\LexerException;
-use RegexParser\Lexer;
-use RegexParser\Token;
-use RegexParser\TokenType;
 
 /**
  * Comprehensive tests to improve Lexer coverage to 100%.

@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Visitor;
+namespace PhpRegex\Tests\Unit\Visitor;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\PosixClassNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\PosixClassNode;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class SampleGeneratorExhaustiveTest extends TestCase
 {
-    private SampleGeneratorNodeVisitor $generator;
+    private SampleGenerator $generator;
 
     protected function setUp(): void
     {
-        $this->generator = new SampleGeneratorNodeVisitor();
+        $this->generator = new SampleGenerator();
     }
 
     public function test_generate_all_char_types(): void

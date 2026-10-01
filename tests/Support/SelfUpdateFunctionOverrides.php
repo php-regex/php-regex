@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Support;
+namespace PhpRegex\Tests\Support;
 
 final class SelfUpdateFunctionOverrides
 {
@@ -245,9 +245,9 @@ final class SelfUpdateFunctionOverrides
     }
 }
 
-namespace RegexParser\Cli\SelfUpdate;
+namespace PhpRegex\Cli\SelfUpdate;
 
-use RegexParser\Tests\Support\SelfUpdateFunctionOverrides;
+use PhpRegex\Tests\Support\SelfUpdateFunctionOverrides;
 
 function is_writable(string $filename): bool
 {

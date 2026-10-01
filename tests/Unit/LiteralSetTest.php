@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Analysis\LiteralSet;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LiteralSet;
 
 final class LiteralSetTest extends TestCase
 {

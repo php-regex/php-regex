@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * The length range must hold every match PHP reports: its minimum is never
@@ -42,7 +42,7 @@ final class LengthRangeAgainstMatchesTest extends TestCase
             ? mb_strlen($matches[0], 'UTF-8')
             : \strlen($matches[0]);
 
-        $range = Regex::create(['cache' => null])->parse($pattern)->accept(new LengthRangeNodeVisitor());
+        $range = Regex::create(['cache' => null])->parse($pattern)->accept(new LengthRangeCalculator());
 
         $this->assertSame($expected, $range, $pattern);
         $this->assertGreaterThanOrEqual($range[0], $length, $pattern);

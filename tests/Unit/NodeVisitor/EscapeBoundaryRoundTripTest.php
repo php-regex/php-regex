@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\AlternationNode;
+use PhpRegex\Parser\Node\BackrefNode;
+use PhpRegex\Parser\Node\CharClassNode;
+use PhpRegex\Parser\Node\CharLiteralNode;
+use PhpRegex\Parser\Node\CharLiteralType;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AlternationNode;
-use RegexParser\Node\BackrefNode;
-use RegexParser\Node\CharClassNode;
-use RegexParser\Node\CharLiteralNode;
-use RegexParser\Node\CharLiteralType;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * An escape that takes a variable number of digits ("\1", "\0", "\g1",
@@ -48,7 +48,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
     #[DataProvider('provideQuoteEndBoundaries')]
     public function test_compiling_keeps_the_quote_end_between_two_items(string $pattern, array $subjects): void
     {
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $compiled);
         $this->assertSameMatches($pattern, $compiled, $subjects);
@@ -61,7 +61,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
     #[DataProvider('provideQuotedRunBoundaries')]
     public function test_compiling_keeps_a_quoted_run_apart_from_an_escape(string $pattern, string $expected, array $subjects): void
     {
-        $compiled = Regex::create()->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
 
         $this->assertSame($expected, $compiled);
         $this->assertSameMatches($pattern, $compiled, $subjects);
@@ -86,7 +86,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
         $group = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
         $sequence = new SequenceNode([$group, new BackrefNode('1', 3, 5), new LiteralNode('0', 5, 6)], 0, 6);
 
-        $compiled = (new RegexNode($sequence, '', '/', 0, 6))->accept(new CompilerNodeVisitor());
+        $compiled = (new RegexNode($sequence, '', '/', 0, 6))->accept(new PatternPrinter());
 
         $this->assertSame('/(a)\\1(?:)0/', $compiled);
         $this->assertSameMatches('/^(a)\\1\\E0$/', '/^'.substr($compiled, 1, -1).'$/', ['aa0', "a\x08"]);
@@ -103,7 +103,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
         [$group, $reference, , $digit] = $parsed->pattern->children;
         $sequence = new SequenceNode([$group, $reference, $digit], 0, 10);
 
-        $compiled = (new RegexNode($sequence, '', '/', 0, 10, $parsed->source))->accept(new CompilerNodeVisitor());
+        $compiled = (new RegexNode($sequence, '', '/', 0, 10, $parsed->source))->accept(new PatternPrinter());
 
         $this->assertSame('/(a)\\1(?:)0/', $compiled);
         $this->assertSameMatches('/^(a)\\1\\E0$/', '/^'.substr($compiled, 1, -1).'$/', ['aa0', "a\x08"]);
@@ -121,7 +121,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
         $expression = 'sequence' === $shape ? new SequenceNode($members, 1, 4) : new AlternationNode($members, 1, 4);
         $class = new CharClassNode($expression, false, 0, 5);
 
-        $compiled = (new RegexNode($class, '', '/', 0, 5))->accept(new CompilerNodeVisitor());
+        $compiled = (new RegexNode($class, '', '/', 0, 5))->accept(new PatternPrinter());
 
         $this->assertSame('/[\\0\\E1]/', $compiled);
         $this->assertSameMatches('/^[\\0\\E1]$/', '/^'.substr($compiled, 1, -1).'$/', ["\x00", '1', "\x01"]);

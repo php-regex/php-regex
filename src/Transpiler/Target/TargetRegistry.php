@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Transpiler\Target;
+namespace PhpRegex\Transpiler\Target;
 
-use RegexParser\Exception\TranspileException;
-use RegexParser\Transpiler\Target\JavaScript\JavaScriptTarget;
-use RegexParser\Transpiler\Target\Python\PythonTarget;
+use PhpRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
+use PhpRegex\Transpiler\Target\Python\PythonTarget;
+use PhpRegex\Transpiler\TranspileException;
 
 /**
  * Registry for available transpilation targets.
@@ -25,12 +25,12 @@ use RegexParser\Transpiler\Target\Python\PythonTarget;
 final class TargetRegistry
 {
     /**
-     * @var array<string, TranspileTargetInterface>
+     * @var array<string, \PhpRegex\Transpiler\Target\TargetInterface>
      */
     private array $targets = [];
 
     /**
-     * @param array<int, TranspileTargetInterface> $targets
+     * @param array<int, \PhpRegex\Transpiler\Target\TargetInterface> $targets
      */
     public function __construct(array $targets = [])
     {
@@ -42,7 +42,7 @@ final class TargetRegistry
         $this->register(new PythonTarget());
     }
 
-    public function register(TranspileTargetInterface $target): void
+    public function register(TargetInterface $target): void
     {
         $this->targets[$target->getName()] = $target;
 
@@ -51,7 +51,7 @@ final class TargetRegistry
         }
     }
 
-    public function get(string $name): TranspileTargetInterface
+    public function get(string $name): TargetInterface
     {
         $key = strtolower(trim($name));
 

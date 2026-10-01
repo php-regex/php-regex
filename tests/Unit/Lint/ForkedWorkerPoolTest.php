@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\Internal\ForkedWorkerPool;
+use PhpRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lint\ForkedWorkerPool;
-use RegexParser\Tests\Support\LintFunctionOverrides;
 
 /**
  * What a forked child does before it ends, run in this process: the fork

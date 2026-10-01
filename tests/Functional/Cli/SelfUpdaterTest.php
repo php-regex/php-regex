@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\CliException;
+use PhpRegex\Cli\Output;
+use PhpRegex\Cli\SelfUpdate\SelfUpdater;
+use PhpRegex\Tests\Support\SelfUpdateFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\CliException;
-use RegexParser\Cli\Output;
-use RegexParser\Cli\SelfUpdate\SelfUpdater;
-use RegexParser\Tests\Support\SelfUpdateFunctionOverrides;
 
 class TestableSelfUpdater extends SelfUpdater
 {

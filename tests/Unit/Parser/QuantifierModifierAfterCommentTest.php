@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Generator\SampleGenerator;
+use PhpRegex\Parser\Node\CommentNode;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\SequenceNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Tests\TestUtils\PhpErrorOffset;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CommentNode;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\SequenceNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\PhpErrorOffset;
 
 /**
  * PCRE skips a (?#...) comment, and a /x line comment, before it reads a
@@ -61,14 +61,14 @@ final class QuantifierModifierAfterCommentTest extends TestCase
     public function test_the_recompiled_pattern_matches_like_the_original(string $pattern, array $subjects): void
     {
         $ast = Regex::create()->parse($pattern);
-        $compiled = $ast->accept(new CompilerNodeVisitor());
+        $compiled = $ast->accept(new PatternPrinter());
 
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject, $expected), preg_match($compiled, $subject, $actual), \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
             $this->assertSame($expected, $actual, \sprintf('%s compiled to %s on "%s"', $pattern, $compiled, $subject));
         }
 
-        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGeneratorNodeVisitor())));
+        $this->assertSame(1, preg_match($pattern, $ast->accept(new SampleGenerator())));
     }
 
     #[Test]
@@ -89,7 +89,7 @@ final class QuantifierModifierAfterCommentTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, quantifier: string, type: QuantifierType}>
+     * @return iterable<string, array{pattern: string, quantifier: string, type: \PhpRegex\Parser\Node\QuantifierType}>
      */
     public static function provideQuantifiedItems(): iterable
     {

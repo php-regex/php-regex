@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\LintService;
+use PhpRegex\Laravel\PhpRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintService;
-use RegexParser\Regex;
 
 /**
  * A config/regex-parser.php published from an older release: sections the
@@ -90,8 +90,8 @@ final class PublishedConfigTest extends TestCase
     public function test_the_services_resolve_from_a_partial_config(): void
     {
         $this->assertInstanceOf(Regex::class, $this->app?->make(Regex::class));
-        $this->assertInstanceOf(RegexAnalysisService::class, $this->app?->make('regex-parser.analysis'));
-        $this->assertInstanceOf(RegexLintService::class, $this->app?->make('regex-parser.lint'));
+        $this->assertInstanceOf(AnalysisService::class, $this->app?->make('regex-parser.analysis'));
+        $this->assertInstanceOf(LintService::class, $this->app?->make('regex-parser.lint'));
     }
 
     #[Test]
@@ -134,6 +134,6 @@ final class PublishedConfigTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [RegexParserServiceProvider::class];
+        return [PhpRegexServiceProvider::class];
     }
 }

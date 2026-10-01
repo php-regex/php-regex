@@ -11,13 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+use PhpRegex\Automata\Minimization\DfaMinimizer;
+use PhpRegex\Automata\Minimization\HopcroftWorklist;
+use PhpRegex\Automata\Minimization\MoorePartitionRefinement;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
 
-use RegexParser\Automata\Minimization\DfaMinimizer;
-use RegexParser\Automata\Minimization\HopcroftWorklist;
-use RegexParser\Automata\Minimization\MoorePartitionRefinement;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
 
 $seed = 1337;
 $stateCount = 160;

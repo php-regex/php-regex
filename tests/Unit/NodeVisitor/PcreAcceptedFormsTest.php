@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Tests\TestUtils\Pcre2CaseRunner;
+use PhpRegex\Tests\TestUtils\Pcre2ConformanceTable;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\Pcre2CaseRunner;
-use RegexParser\Tests\TestUtils\Pcre2ConformanceTable;
 
 /**
  * Patterns PHP compiles that validate() must not refuse.

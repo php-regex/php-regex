@@ -11,23 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Automata;
+namespace PhpRegex\Tests\Unit\Automata;
 
+use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Automata\LanguageSolver;
+use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
+use PhpRegex\Automata\Model\Dfa;
+use PhpRegex\Automata\Model\DfaState;
+use PhpRegex\Automata\Options\MatchMode;
+use PhpRegex\Automata\Options\SolverOptions;
+use PhpRegex\Automata\Solver\DfaCacheInterface;
+use PhpRegex\Automata\Solver\EquivalenceResult;
+use PhpRegex\Automata\Solver\InMemoryDfaCache;
+use PhpRegex\Automata\Solver\IntersectionResult;
+use PhpRegex\Automata\Solver\SubsetResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Automata\Determinization\DeterminizationAlgorithm;
-use RegexParser\Automata\LanguageSolver;
-use RegexParser\Automata\Minimization\MinimizationAlgorithm;
-use RegexParser\Automata\Model\Dfa;
-use RegexParser\Automata\Model\DfaState;
-use RegexParser\Automata\Options\MatchMode;
-use RegexParser\Automata\Options\SolverOptions;
-use RegexParser\Automata\Solver\DfaCacheInterface;
-use RegexParser\Automata\Solver\EquivalenceResult;
-use RegexParser\Automata\Solver\InMemoryDfaCache;
-use RegexParser\Automata\Solver\IntersectionResult;
-use RegexParser\Automata\Solver\SubsetResult;
 
 /**
  * The automata package promises a short list of names; every other class in
@@ -48,6 +49,7 @@ final class PublicSurfaceTest extends TestCase
         DfaState::class,
         DfaCacheInterface::class,
         InMemoryDfaCache::class,
+        ComplexityException::class,
     ];
 
     #[Test]
@@ -92,7 +94,7 @@ final class PublicSurfaceTest extends TestCase
             }
 
             $relative = substr($file->getPathname(), \strlen($root) + 1, -4);
-            $classes[] = 'RegexParser\\Automata\\'.str_replace('/', '\\', $relative);
+            $classes[] = 'PhpRegex\\Automata\\'.str_replace('/', '\\', $relative);
         }
 
         sort($classes);

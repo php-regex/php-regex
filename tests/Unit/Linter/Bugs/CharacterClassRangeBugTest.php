@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Linter\Bugs;
+namespace PhpRegex\Tests\Unit\Linter\Bugs;
 
+use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\OptimizerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Regression tests for the character class range optimization bug.
@@ -45,12 +45,12 @@ final class CharacterClassRangeBugTest extends TestCase
 {
     private Regex $regex;
 
-    private CompilerNodeVisitor $compiler;
+    private PatternPrinter $compiler;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->compiler = new CompilerNodeVisitor();
+        $this->compiler = new PatternPrinter();
     }
 
     /**
@@ -59,7 +59,7 @@ final class CharacterClassRangeBugTest extends TestCase
     #[DataProvider('nonConsecutiveCharactersProvider')]
     public function test_optimizer_does_not_create_invalid_ranges(string $input, string $expectedPattern): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $ast = $this->regex->parse($input);
         $optimized = $ast->accept($optimizer);
         $result = $optimized->accept($this->compiler);
@@ -79,7 +79,7 @@ final class CharacterClassRangeBugTest extends TestCase
     #[DataProvider('consecutiveCharactersProvider')]
     public function test_optimizer_creates_valid_ranges(string $input, string $expectedPattern): void
     {
-        $optimizer = new OptimizerNodeVisitor();
+        $optimizer = new Rewriter();
         $ast = $this->regex->parse($input);
         $optimized = $ast->accept($optimizer);
         $result = $optimized->accept($this->compiler);

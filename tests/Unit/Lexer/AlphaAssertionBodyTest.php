@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lexer;
+namespace PhpRegex\Tests\Unit\Lexer;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * The body of "(*pla:...)" and the other alphabetic assertions is read like
@@ -40,7 +40,7 @@ final class AlphaAssertionBodyTest extends TestCase
         $result = $regex->validate($pattern);
         $this->assertTrue($result->isValid, \sprintf('%s compiles but was reported invalid: %s', $pattern, (string) $result->error));
 
-        $compiled = $regex->parse($pattern)->accept(new CompilerNodeVisitor());
+        $compiled = $regex->parse($pattern)->accept(new PatternPrinter());
         foreach ($subjects as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s, which disagrees on %s.', $pattern, $compiled, json_encode($subject)));
         }

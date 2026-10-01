@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Node\VersionConditionNode;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * A sweep of patterns through Explain.
@@ -29,7 +29,7 @@ use RegexParser\Regex;
  */
 final class ExplainSweepTest extends TestCase
 {
-    private ExplainNodeVisitor $explainVisitor;
+    private TextExplainer $explainVisitor;
 
     private Regex $regex;
 
@@ -37,7 +37,7 @@ final class ExplainSweepTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->explainVisitor = new ExplainNodeVisitor();
+        $this->explainVisitor = new TextExplainer();
         $this->regex = Regex::create();
         $this->regexService = Regex::create();
     }
@@ -45,7 +45,7 @@ final class ExplainSweepTest extends TestCase
     public function test_explain_visitor_range_special_chars(): void
     {
         $regex = Regex::create();
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         // Range with special characters
         $ast = $regex->parse('/[0-9]/');
@@ -56,7 +56,7 @@ final class ExplainSweepTest extends TestCase
     public function test_explain_visitor_quantifier_variations(): void
     {
         $regex = Regex::create();
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         // Test different quantifier types
         $patterns = [
@@ -78,7 +78,7 @@ final class ExplainSweepTest extends TestCase
     public function test_explain_visitor_literal_special_chars(): void
     {
         $regex = Regex::create();
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
 
         // Literal with special characters
         $ast = $regex->parse('/\//');
@@ -88,7 +88,7 @@ final class ExplainSweepTest extends TestCase
 
     public function test_explain_visitor_script_run(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $node = new ScriptRunNode('Latin', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -96,7 +96,7 @@ final class ExplainSweepTest extends TestCase
 
     public function test_explain_visitor_limit_match(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -104,7 +104,7 @@ final class ExplainSweepTest extends TestCase
 
     public function test_explain_visitor_version_condition(): void
     {
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $node = new VersionConditionNode('>=', '10.0', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -348,7 +348,7 @@ final class ExplainSweepTest extends TestCase
         // Test ExplainVisitor with negated unicode property
         $ast = $this->regexService->parse('/\P{L}/');
 
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $result = $ast->accept($visitor);
 
         $this->assertNotEmpty($result);
@@ -359,7 +359,7 @@ final class ExplainSweepTest extends TestCase
         // Test ExplainVisitor with octal legacy
         $ast = $this->regexService->parse('/\07/');
 
-        $visitor = new ExplainNodeVisitor();
+        $visitor = new TextExplainer();
         $result = $ast->accept($visitor);
 
         $this->assertNotEmpty($result);

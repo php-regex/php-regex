@@ -51,7 +51,7 @@ End of string (case-insensitive)
 ### Usage
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

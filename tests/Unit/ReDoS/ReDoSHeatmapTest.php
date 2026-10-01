@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\ReDoS;
+namespace PhpRegex\Tests\Unit\ReDoS;
 
+use PhpRegex\Redos\Heatmap;
+use PhpRegex\Redos\Hotspot;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ReDoS\ReDoSHeatmap;
-use RegexParser\ReDoS\ReDoSHotspot;
-use RegexParser\ReDoS\ReDoSSeverity;
 
 final class ReDoSHeatmapTest extends TestCase
 {
     public function test_highlight_returns_green_body_for_empty_hotspots(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
 
         $output = $heatmap->highlight('abc', [], true);
 
@@ -31,9 +31,9 @@ final class ReDoSHeatmapTest extends TestCase
 
     public function test_highlight_skips_invalid_and_empty_hotspots(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
         $hotspots = [
-            new ReDoSHotspot(2, 2, ReDoSSeverity::LOW, 'a', null),
+            new Hotspot(2, 2, RedosSeverity::LOW, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);
@@ -43,9 +43,9 @@ final class ReDoSHeatmapTest extends TestCase
 
     public function test_highlight_returns_empty_body_when_hotspots_present(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
         $hotspots = [
-            new ReDoSHotspot(0, 1, ReDoSSeverity::LOW, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::LOW, 'a', null),
         ];
 
         $output = $heatmap->highlight('', $hotspots, true);
@@ -55,9 +55,9 @@ final class ReDoSHeatmapTest extends TestCase
 
     public function test_highlight_uses_red_for_high_severity(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
         $hotspots = [
-            new ReDoSHotspot(0, 1, ReDoSSeverity::HIGH, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::HIGH, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);
@@ -67,10 +67,10 @@ final class ReDoSHeatmapTest extends TestCase
 
     public function test_highlight_skips_non_redos_hotspot(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
         $hotspots = [
             'invalid',
-            new ReDoSHotspot(0, 1, ReDoSSeverity::LOW, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::LOW, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);
@@ -82,7 +82,7 @@ final class ReDoSHeatmapTest extends TestCase
 
     public function test_color_for_level_default(): void
     {
-        $heatmap = new ReDoSHeatmap();
+        $heatmap = new Heatmap();
         $ref = new \ReflectionClass($heatmap);
         $method = $ref->getMethod('colorForLevel');
         $color = $method->invoke($heatmap, 5);

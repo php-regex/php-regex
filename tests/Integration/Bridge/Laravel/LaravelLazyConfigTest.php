@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Bridge\Laravel;
+namespace PhpRegex\Tests\Integration\Bridge\Laravel;
 
+use PhpRegex\Laravel\PhpRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
-use RegexParser\Bridge\Laravel\RegexParserServiceProvider;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -207,6 +207,6 @@ final class LaravelLazyConfigTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [RegexParserServiceProvider::class];
+        return [PhpRegexServiceProvider::class];
     }
 }

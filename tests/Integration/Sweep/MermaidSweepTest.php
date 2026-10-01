@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Explain\MermaidRenderer;
+use PhpRegex\Parser\Node\LimitMatchNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\NodeVisitor\MermaidNodeVisitor;
 
 /**
  * A sweep of patterns through Mermaid.
@@ -28,7 +28,7 @@ final class MermaidSweepTest extends TestCase
 {
     public function test_mermaid_visitor_limit_match(): void
     {
-        $visitor = new MermaidNodeVisitor();
+        $visitor = new MermaidRenderer();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);

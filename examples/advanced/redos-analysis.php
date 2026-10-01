@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use PhpRegex\Toolkit\Regex;
+use PhpRegex\Redos\RedosSeverity;
+use PhpRegex\Redos\RedosMode;
+use PhpRegex\Redos\ConfirmationOptions;
+
 /**
  * Example: Advanced ReDoS analysis and mitigation with RegexParser
  *
@@ -13,11 +18,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
-use RegexParser\Regex;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\ReDoS\ReDoSMode;
-use RegexParser\ReDoS\ReDoSConfirmOptions;
 
 // Risky pattern with nested quantifiers (classic ReDoS example)
 $riskyPattern = '/^(\w+)+$/';
@@ -33,7 +33,7 @@ $regex = Regex::create();
 
 // 1. Theoretical analysis (fast, conservative)
 echo "1. Theoretical Analysis:\n";
-$theoreticalResult = $regex->redos($riskyPattern, ReDoSSeverity::MEDIUM, ReDoSMode::THEORETICAL);
+$theoreticalResult = $regex->redos($riskyPattern, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
 
 echo "   Severity: {$theoreticalResult->severity->value}\n";
 echo "   Findings: " . count($theoreticalResult->findings) . " risk(s) found\n";
@@ -51,10 +51,10 @@ echo "\n";
 
 // 2. Confirmed analysis (slower, more accurate)
 echo "2. Confirmed Analysis (with test inputs):\n";
-$confirmedOptions = new ReDoSConfirmOptions(
+$confirmedOptions = new ConfirmationOptions(
     maxInputLength: 1000,
 );
-$confirmedResult = $regex->redos($riskyPattern, ReDoSSeverity::MEDIUM, ReDoSMode::CONFIRMED, $confirmedOptions);
+$confirmedResult = $regex->redos($riskyPattern, RedosSeverity::MEDIUM, RedosMode::CONFIRMED, $confirmedOptions);
 
 echo "   Severity: {$confirmedResult->severity->value}\n";
 echo "   Confirmed: " . ($confirmedResult->isConfirmed() ? 'Yes' : 'No') . "\n";
@@ -78,7 +78,7 @@ echo "  After:  {$safePattern1}\n";
 echo "  Why: Possessive quantifier (++) prevents backtracking\n\n";
 
 $validation1 = $regex->validate($safePattern1);
-$redos1 = $regex->redos($safePattern1, ReDoSSeverity::MEDIUM, ReDoSMode::THEORETICAL);
+$redos1 = $regex->redos($safePattern1, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
 
 echo "  Valid: " . ($validation1->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos1->severity->value}\n\n";
@@ -92,7 +92,7 @@ echo "  After:  {$safePattern2}\n";
 echo "  Why: Atomic group (?>) prevents backtracking once matched\n\n";
 
 $validation2 = $regex->validate($safePattern2);
-$redos2 = $regex->redos($safePattern2, ReDoSSeverity::MEDIUM, ReDoSMode::THEORETICAL);
+$redos2 = $regex->redos($safePattern2, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
 
 echo "  Valid: " . ($validation2->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos2->severity->value}\n\n";
@@ -106,7 +106,7 @@ echo "  After:  {$safePattern3}\n";
 echo "  Why: Remove redundant quantifier nesting\n\n";
 
 $validation3 = $regex->validate($safePattern3);
-$redos3 = $regex->redos($safePattern3, ReDoSSeverity::MEDIUM, ReDoSMode::THEORETICAL);
+$redos3 = $regex->redos($safePattern3, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
 
 echo "  Valid: " . ($validation3->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos3->severity->value}\n\n";

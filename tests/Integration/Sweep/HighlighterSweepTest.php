@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Explain\Highlighter\AbstractHighlighter;
+use PhpRegex\Parser\Node\CalloutNode;
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Node\VersionConditionNode;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\CalloutNode;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\HighlighterVisitor;
 
 /**
  * A sweep of patterns through Highlighter.
@@ -31,7 +31,7 @@ final class HighlighterSweepTest extends TestCase
 {
     public function test_highlighter_visitor_limit_match(): void
     {
-        $visitor = new class extends HighlighterVisitor {
+        $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
             {
                 return "<span class=\"{$type}\">{$content}</span>";
@@ -49,7 +49,7 @@ final class HighlighterSweepTest extends TestCase
 
     public function test_highlighter_visitor_callout(): void
     {
-        $visitor = new class extends HighlighterVisitor {
+        $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
             {
                 return "<span class=\"{$type}\">{$content}</span>";
@@ -67,7 +67,7 @@ final class HighlighterSweepTest extends TestCase
 
     public function test_highlighter_visitor_script_run(): void
     {
-        $visitor = new class extends HighlighterVisitor {
+        $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
             {
                 return "<span class=\"{$type}\">{$content}</span>";
@@ -85,7 +85,7 @@ final class HighlighterSweepTest extends TestCase
 
     public function test_highlighter_visitor_version_condition(): void
     {
-        $visitor = new class extends HighlighterVisitor {
+        $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
             {
                 return "<span class=\"{$type}\">{$content}</span>";

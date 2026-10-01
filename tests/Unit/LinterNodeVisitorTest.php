@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
 
 final class LinterNodeVisitorTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/abc/');
-        $visitor = new LinterNodeVisitor();
+        $visitor = new PatternLinter();
 
         $ast->accept($visitor);
 
@@ -35,7 +35,7 @@ final class LinterNodeVisitorTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
 
         foreach (['/(?[ [aa] ])/', '/(?[ \\d - [bb] ])/', '/(?[ [dd] - \\d ])/', '/(?[ ![cc] ])/'] as $pattern) {
-            $visitor = new LinterNodeVisitor();
+            $visitor = new PatternLinter();
             $regex->parse($pattern)->accept($visitor);
 
             $issueIds = array_map(static fn ($issue): string => $issue->id, $visitor->getIssues());
@@ -47,7 +47,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/^use [^;{]+;$\n?/m');
-        $visitor = new LinterNodeVisitor();
+        $visitor = new PatternLinter();
 
         $ast->accept($visitor);
 
@@ -59,7 +59,7 @@ final class LinterNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/^foo$bar/');
-        $visitor = new LinterNodeVisitor();
+        $visitor = new PatternLinter();
 
         $ast->accept($visitor);
 

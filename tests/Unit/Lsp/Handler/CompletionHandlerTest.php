@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lsp\Handler;
+namespace PhpRegex\Tests\Unit\Lsp\Handler;
 
+use PhpRegex\LanguageServer\Document\DocumentManager;
+use PhpRegex\LanguageServer\Document\RegexFinder;
+use PhpRegex\LanguageServer\Handler\CompletionHandler;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Lsp\Document\DocumentManager;
-use RegexParser\Lsp\Document\RegexFinder;
-use RegexParser\Lsp\Handler\CompletionHandler;
 
 final class CompletionHandlerTest extends TestCase
 {

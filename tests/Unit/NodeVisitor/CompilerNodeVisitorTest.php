@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 final class CompilerNodeVisitorTest extends TestCase
 {
@@ -160,7 +160,7 @@ final class CompilerNodeVisitorTest extends TestCase
 
     public function test_reset_state_clears_compiler_flags(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
         $regexNode = new RegexNode(new LiteralNode('a', 0, 1), 'x', '/', 0, 1);
 
         $regexNode->accept($visitor);
@@ -242,7 +242,7 @@ final class CompilerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
 
         return $ast->accept($visitor);
     }
@@ -251,7 +251,7 @@ final class CompilerNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse($pattern);
-        $visitor = new CompilerNodeVisitor(true);
+        $visitor = new PatternPrinter(true);
 
         return $ast->accept($visitor);
     }

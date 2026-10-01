@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Options;
+namespace PhpRegex\Automata\Options;
 
 /**
  * Defines how regex matching is interpreted for automata comparisons.

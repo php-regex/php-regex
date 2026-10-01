@@ -11,6 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Linter\Config\LintConfigSchema;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 /*
  * Writes regex.schema.json from LintConfigSchema::definition().
  *
@@ -25,8 +36,6 @@ declare(strict_types=1);
  */
 
 require_once __DIR__.'/../../vendor/autoload.php';
-
-use RegexParser\Lint\Command\LintConfigSchema;
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];

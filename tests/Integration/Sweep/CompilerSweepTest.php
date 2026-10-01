@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration\Sweep;
+namespace PhpRegex\Tests\Integration\Sweep;
 
+use PhpRegex\Parser\Node\LimitMatchNode;
+use PhpRegex\Parser\Node\ScriptRunNode;
+use PhpRegex\Parser\Node\VersionConditionNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\LimitMatchNode;
-use RegexParser\Node\ScriptRunNode;
-use RegexParser\Node\VersionConditionNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
 
 /**
  * A sweep of patterns through Compiler.
@@ -30,7 +30,7 @@ final class CompilerSweepTest extends TestCase
 {
     public function test_compiler_visitor_script_run(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
         $node = new ScriptRunNode('Latin', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -38,7 +38,7 @@ final class CompilerSweepTest extends TestCase
 
     public function test_compiler_visitor_limit_match(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
         $node = new LimitMatchNode(1000, 0, 16);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);
@@ -46,7 +46,7 @@ final class CompilerSweepTest extends TestCase
 
     public function test_compiler_visitor_version_condition(): void
     {
-        $visitor = new CompilerNodeVisitor();
+        $visitor = new PatternPrinter();
         $node = new VersionConditionNode('>=', '10.0', 0, 18);
         $result = $node->accept($visitor);
         $this->assertNotEmpty($result);

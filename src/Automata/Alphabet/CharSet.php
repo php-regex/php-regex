@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Alphabet;
+namespace PhpRegex\Automata\Alphabet;
 
-use RegexParser\Automata\Unicode\CodePointHelper;
+use PhpRegex\Automata\Unicode\CodePointHelper;
 
 /**
  * Immutable character set for automata alphabets.

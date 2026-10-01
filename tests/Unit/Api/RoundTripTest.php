@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Api;
+namespace PhpRegex\Tests\Unit\Api;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 final class RoundTripTest extends TestCase
 {
@@ -49,7 +49,7 @@ final class RoundTripTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_parse_and_compile_is_idempotent(string $pattern, ?string $expected = null): void
     {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         $ast = $this->regexService->parse($pattern);
         $compiled = $ast->accept($compiler);

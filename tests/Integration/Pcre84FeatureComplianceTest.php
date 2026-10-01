@@ -11,25 +11,25 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Integration;
+namespace PhpRegex\Tests\Integration;
 
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Parser\Printer\NodeDumper;
+use PhpRegex\Parser\Validation\Validator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\RegexNode;
-use RegexParser\NodeVisitor\DumperNodeVisitor;
-use RegexParser\NodeVisitor\ValidatorNodeVisitor;
-use RegexParser\Regex;
 
 final class Pcre84FeatureComplianceTest extends TestCase
 {
     private Regex $regex;
 
-    private ValidatorNodeVisitor $validator;
+    private Validator $validator;
 
     protected function setUp(): void
     {
         $this->regex = Regex::create();
-        $this->validator = new ValidatorNodeVisitor();
+        $this->validator = new Validator();
     }
 
     #[DataProvider('provideOpenLowerQuantifiers')]
@@ -111,7 +111,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $ast = $this->regex->parse('/\R/');
         $ast->accept($this->validator);
 
-        $dump = $ast->accept(new DumperNodeVisitor());
+        $dump = $ast->accept(new NodeDumper());
         $this->assertStringContainsString("CharType('\\R')", $dump);
         $this->assertStringNotContainsString('Backref', $dump);
     }
@@ -121,7 +121,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $ast = $this->regex->parse('/[ab]++c/');
         $ast->accept($this->validator);
 
-        $dump = $ast->accept(new DumperNodeVisitor());
+        $dump = $ast->accept(new NodeDumper());
         $this->assertStringContainsString('type: possessive', $dump);
     }
 
@@ -146,7 +146,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
 
-        $dump = $ast->accept(new DumperNodeVisitor());
+        $dump = $ast->accept(new NodeDumper());
         $this->assertStringContainsString('Callout', $dump);
     }
 

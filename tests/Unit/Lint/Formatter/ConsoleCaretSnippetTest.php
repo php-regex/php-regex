@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint\Formatter;
+namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Formatter\ConsoleFormatter;
+use PhpRegex\Linter\Formatter\LinkFormatter;
+use PhpRegex\Linter\Formatter\OutputConfiguration;
+use PhpRegex\Linter\Formatter\RelativePathHelper;
+use PhpRegex\Linter\LintReport;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\Output\SymfonyConsoleFormatter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter;
-use RegexParser\Lint\Formatter\ConsoleFormatter;
-use RegexParser\Lint\Formatter\LinkFormatter;
-use RegexParser\Lint\Formatter\OutputConfiguration;
-use RegexParser\Lint\Formatter\RelativePathHelper;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexLintReport;
-use RegexParser\Regex;
-use RegexParser\RegexParser;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
@@ -58,7 +58,7 @@ final class ConsoleCaretSnippetTest extends TestCase
         }
 
         $formatter = new SymfonyConsoleFormatter(
-            new RegexAnalysisService(RegexParser::create()),
+            new AnalysisService(RegexParser::create()),
             new LinkFormatter(null, new RelativePathHelper()),
             false,
         );
@@ -67,13 +67,13 @@ final class ConsoleCaretSnippetTest extends TestCase
         $this->assertCaretUnder('(', (string) (new OutputFormatter(false))->format($formatter->format($this->report('/(?<=a+)b/'))));
     }
 
-    private function report(string $pattern): RegexLintReport
+    private function report(string $pattern): LintReport
     {
         $validation = Regex::create(['cache' => null])->validate($pattern);
         $this->assertFalse($validation->isValid);
         $this->assertNotNull($validation->caretSnippet);
 
-        return new RegexLintReport([[
+        return new LintReport([[
             'file' => 'test.php',
             'line' => 3,
             'pattern' => $pattern,

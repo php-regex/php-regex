@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Printer\PatternPrinter;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\Regex;
 
 /**
  * Tests that the compiler correctly reconstructs the parsed AST back into a regex string
@@ -35,7 +35,7 @@ class ReverseCompilerTest extends TestCase
     public function test_round_trip_compilation(string $originalPattern): void
     {
         $ast = $this->regexService->parse($originalPattern);
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
         $recompiled = $ast->accept($compiler);
 
         // 1. The recompiled regex must be valid

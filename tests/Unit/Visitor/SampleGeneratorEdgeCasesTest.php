@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Visitor;
+namespace PhpRegex\Tests\Unit\Visitor;
 
+use PhpRegex\Generator\SampleGenerator;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\SampleGeneratorNodeVisitor;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
 {
@@ -24,7 +24,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
      */
     public function test_get_random_char_with_empty_array(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('getRandomChar');
 
@@ -39,7 +39,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
      */
     public function test_parse_quantifier_range_fallback(): void
     {
-        $generator = new SampleGeneratorNodeVisitor();
+        $generator = new SampleGenerator();
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('parseQuantifierRange');
 

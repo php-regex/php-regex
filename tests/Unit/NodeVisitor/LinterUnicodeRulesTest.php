@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\NodeVisitor;
+namespace PhpRegex\Tests\Unit\NodeVisitor;
 
+use PhpRegex\Linter\LintSeverity;
+use PhpRegex\Linter\PatternLinter;
+use PhpRegex\Linter\Rule\RuleViolation;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\LintIssue;
-use RegexParser\NodeVisitor\LinterNodeVisitor;
-use RegexParser\Regex;
-use RegexParser\Severity;
 
 final class LinterUnicodeRulesTest extends TestCase
 {
@@ -132,8 +132,8 @@ final class LinterUnicodeRulesTest extends TestCase
             }
         }
 
-        $this->assertInstanceOf(LintIssue::class, $shorthandIssue);
-        $this->assertSame(Severity::Style, $shorthandIssue->severity);
+        $this->assertInstanceOf(RuleViolation::class, $shorthandIssue);
+        $this->assertSame(LintSeverity::Style, $shorthandIssue->severity);
     }
 
     #[Test]
@@ -149,8 +149,8 @@ final class LinterUnicodeRulesTest extends TestCase
             }
         }
 
-        $this->assertInstanceOf(LintIssue::class, $propertyIssue);
-        $this->assertSame(Severity::Error, $propertyIssue->severity);
+        $this->assertInstanceOf(RuleViolation::class, $propertyIssue);
+        $this->assertSame(LintSeverity::Error, $propertyIssue->severity);
     }
 
     #[Test]
@@ -166,8 +166,8 @@ final class LinterUnicodeRulesTest extends TestCase
             }
         }
 
-        $this->assertInstanceOf(LintIssue::class, $bracedHexIssue);
-        $this->assertSame(Severity::Error, $bracedHexIssue->severity);
+        $this->assertInstanceOf(RuleViolation::class, $bracedHexIssue);
+        $this->assertSame(LintSeverity::Error, $bracedHexIssue->severity);
     }
 
     #[Test]
@@ -201,13 +201,13 @@ final class LinterUnicodeRulesTest extends TestCase
     }
 
     /**
-     * @return array<LintIssue>
+     * @return array<\PhpRegex\Linter\Rule\RuleViolation>
      */
     private function lint(string $pattern, bool $enableShorthandRule = false): array
     {
         $regex = Regex::create()->parse($pattern);
         $rules = $enableShorthandRule ? ['unicode.shorthandWithoutU' => true] : [];
-        $linter = new LinterNodeVisitor($rules);
+        $linter = new PatternLinter($rules);
         $regex->accept($linter);
 
         return $linter->getIssues();

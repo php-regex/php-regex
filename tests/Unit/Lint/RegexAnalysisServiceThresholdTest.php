@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Lint;
+namespace PhpRegex\Tests\Unit\Lint;
 
+use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Exception\InvalidRegexOptionException;
-use RegexParser\Lint\RegexAnalysisService;
-use RegexParser\Lint\RegexPatternOccurrence;
-use RegexParser\ReDoS\ReDoSSeverity;
-use RegexParser\RegexParser;
 
 /**
  * The analysis service reads its ReDoS threshold with the one threshold
@@ -47,15 +47,15 @@ final class RegexAnalysisServiceThresholdTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessage('"'.$threshold.'"');
 
-        new RegexAnalysisService(RegexParser::create(), redosThreshold: $threshold);
+        new AnalysisService(RegexParser::create(), redosThreshold: $threshold);
     }
 
     #[Test]
     public function test_the_service_reads_a_threshold_in_any_case(): void
     {
         // "(a+)+$" is critical: reported from CRITICAL up, whatever the case.
-        $upper = $this->redosIssues(new RegexAnalysisService(RegexParser::create(), redosThreshold: 'CRITICAL', redosEnabled: true));
-        $lower = $this->redosIssues(new RegexAnalysisService(RegexParser::create(), redosThreshold: ReDoSSeverity::CRITICAL->value, redosEnabled: true));
+        $upper = $this->redosIssues(new AnalysisService(RegexParser::create(), redosThreshold: 'CRITICAL', redosEnabled: true));
+        $lower = $this->redosIssues(new AnalysisService(RegexParser::create(), redosThreshold: RedosSeverity::CRITICAL->value, redosEnabled: true));
 
         $this->assertCount(1, $upper);
         $this->assertCount(\count($lower), $upper);
@@ -64,9 +64,9 @@ final class RegexAnalysisServiceThresholdTest extends TestCase
     /**
      * @return list<array<string, mixed>>
      */
-    private function redosIssues(RegexAnalysisService $service): array
+    private function redosIssues(AnalysisService $service): array
     {
-        $issues = $service->lint([new RegexPatternOccurrence('/(a+)+$/', 'file.php', 1, 'php:preg_match()')]);
+        $issues = $service->lint([new PatternOccurrence('/(a+)+$/', 'file.php', 1, 'php:preg_match()')]);
 
         return array_values(array_filter($issues, static fn (array $issue): bool => 'regex.lint.redos' === ($issue['issueId'] ?? null)));
     }

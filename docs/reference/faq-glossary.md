@@ -11,7 +11,7 @@ Short answers to common questions plus quick definitions of core terms used thro
 **No.** RegexParser parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // Static analysis - does NOT execute
 $analysis = Regex::create()->redos('/(a+)+b/');
@@ -63,14 +63,14 @@ $analysis = Regex::create()->redos('/(a+)+b/');
 Tolerant parsing returns a partial AST plus errors, allowing tools to continue even when patterns are partially invalid.
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // Strict parsing - throws on error
 $ast = Regex::create()->parse('/[broken/');  // Throws ParserException
 
 // Tolerant parsing - returns partial AST
 $result = Regex::create()->parse('/[broken/', true);
-echo $result->ast instanceof \RegexParser\Node\RegexNode;  // true (partial)
+echo $result->ast instanceof \PhpRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
 ```
 
@@ -133,7 +133,7 @@ $sequence = $ast->pattern;  // Exact structure known
 #### How do I check if a pattern is safe from ReDoS?
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 
@@ -147,7 +147,7 @@ echo $analysis->recommendations[0];   // Suggested fix
 #### How do I optimize a pattern?
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/');
 
@@ -161,7 +161,7 @@ echo $result->changes[0];  // 'Replaced [0-9] with \d'
 #### How do I explain a pattern to users?
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $explanation = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $explanation;
@@ -175,7 +175,7 @@ Match exactly 3 digits, then hyphen, then exactly 4 digits.
 #### How do I generate a matching sample?
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 $sample = Regex::create()->generate('/[A-Z][a-z]{3,5}\d{2}/');
 echo $sample;  // e.g., "Word12"
@@ -193,7 +193,7 @@ echo $sample;  // e.g., "Word12"
 | `validate()` | ValidationResult | Returns result with `isValid = false` |
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // parse() - throws
 try {
@@ -212,7 +212,7 @@ echo $result->isValid ? 'Valid' : "Invalid: {$result->error}";
 #### How does caching work?
 
 ```php
-use RegexParser\Regex;
+use PhpRegex\Toolkit\Regex;
 
 // Default: the latest 1024 trees in memory, nothing on disk
 $regex = Regex::create();

@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit;
+namespace PhpRegex\Tests\Unit;
 
+use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
-use RegexParser\NodeVisitor\LengthRangeNodeVisitor;
-use RegexParser\Regex;
 
 final class LengthRangeNodeVisitorTest extends TestCase
 {
@@ -23,7 +23,7 @@ final class LengthRangeNodeVisitorTest extends TestCase
     {
         $regex = Regex::create();
         $ast = $regex->parse('/a{2,3}/');
-        $visitor = new LengthRangeNodeVisitor();
+        $visitor = new LengthRangeCalculator();
 
         $range = $ast->accept($visitor);
 

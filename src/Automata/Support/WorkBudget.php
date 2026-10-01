@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Support;
+namespace PhpRegex\Automata\Support;
 
-use RegexParser\ErrorCode;
-use RegexParser\Exception\ComplexityException;
+use PhpRegex\Automata\Exception\ComplexityException;
+use PhpRegex\Parser\ErrorCode;
 
 /**
  * Tracks automata work and enforces a hard budget.

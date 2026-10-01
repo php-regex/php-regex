@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Parser;
+namespace PhpRegex\Tests\Unit\Parser;
 
+use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\RegexParser;
+use PhpRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\ErrorCode;
-use RegexParser\RegexParser;
-use RegexParser\Tests\TestUtils\PcreMessageCodes;
 
 /**
  * What stands where the condition of "(?(" is due, as PCRE2 10.40, 10.44
@@ -54,7 +54,7 @@ final class ConditionAssertionReadingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: ?ErrorCode, offset: ?int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ?\PhpRegex\Parser\ErrorCode, offset: ?int}>
      */
     public static function provideConditions(): iterable
     {
@@ -99,7 +99,7 @@ final class ConditionAssertionReadingTest extends TestCase
     /**
      * @param list<string> $releases
      *
-     * @return iterable<string, array{pattern: string, release: string, code: ?ErrorCode, offset: ?int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ?\PhpRegex\Parser\ErrorCode, offset: ?int}>
      */
     private static function rows(string $name, string $pattern, array $releases, ?ErrorCode $code, ?int $offset): iterable
     {

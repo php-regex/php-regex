@@ -11,23 +11,33 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PhpRegex\Parser\Cache\NullCache;
+use PhpRegex\Parser\ParserOptions;
+
+/*
+ * This file is part of the RegexParser package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 require_once __DIR__.'/../vendor/autoload.php';
 
-use RegexParser\RegexOptions;
-
-echo "Benchmarking RegexOptions performance improvements...\n\n";
+echo "Benchmarking ParserOptions performance improvements...\n\n";
 
 // Test different option configurations
 $testConfigurations = [
     'empty' => [],
     'simple' => ['max_pattern_length' => 10000],
     'cache_string' => ['cache' => '/tmp/cache'],
-    'cache_object' => ['cache' => new RegexParser\Cache\NullCache()],
+    'cache_object' => ['cache' => new NullCache()],
     'redos_simple' => ['redos_ignored_patterns' => ['/test/']],
     'redos_complex' => ['redos_ignored_patterns' => ['/test1/', '/test2/', '/test3/', '/test1/']], // with duplicate
     'full' => [
         'max_pattern_length' => 50000,
-        'cache' => new RegexParser\Cache\NullCache(),
+        'cache' => new NullCache(),
         'redos_ignored_patterns' => ['/user_/', '/admin_/', '/guest_/'],
     ],
 ];
@@ -41,7 +51,7 @@ foreach ($testConfigurations as $name => $config) {
     // Benchmark option creation
     $start = microtime(true);
     for ($i = 0; $i < $iterations; $i++) {
-        $options = RegexOptions::fromArray($config);
+        $options = ParserOptions::fromArray($config);
     }
     $creationTime = microtime(true) - $start;
 
@@ -49,7 +59,7 @@ foreach ($testConfigurations as $name => $config) {
     echo \sprintf("Average time per creation: %.6f seconds\n", $creationTime / $iterations);
 
     // Verify the result is correct
-    $options = RegexOptions::fromArray($config);
+    $options = ParserOptions::fromArray($config);
     $maxLength = $options->maxPatternLength;
     $cacheType = \get_class($options->cache);
     $redosCount = \count($options->redosIgnoredPatterns);
@@ -77,7 +87,7 @@ foreach ($invalidConfigs as $name => $config) {
     $errors = 0;
     for ($i = 0; $i < $errorIterations; $i++) {
         try {
-            RegexOptions::fromArray($config);
+            ParserOptions::fromArray($config);
         } catch (Exception) {
             $errors++;
         }

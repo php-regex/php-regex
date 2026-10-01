@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Functional\Cli;
+namespace PhpRegex\Tests\Functional\Cli;
 
+use PhpRegex\Cli\ApplicationFactory;
+use PhpRegex\Cli\Output;
+use PhpRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cli\ApplicationFactory;
-use RegexParser\Cli\Output;
-use RegexParser\Tests\Support\TemporaryProject;
 
 /**
  * Every command of the binary exits with one of three codes: 0 when it did

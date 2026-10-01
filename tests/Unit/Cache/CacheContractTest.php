@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Cache;
+namespace PhpRegex\Tests\Unit\Cache;
 
+use PhpRegex\Parser\Cache\ArrayCache;
+use PhpRegex\Parser\Cache\CacheInterface;
+use PhpRegex\Parser\Cache\FilesystemCache;
+use PhpRegex\Parser\Cache\PsrCacheAdapter;
+use PhpRegex\Parser\Cache\PsrSimpleCacheAdapter;
+use PhpRegex\Parser\Node\RegexNode;
+use PhpRegex\Tests\TestUtils\InMemoryCachePool;
+use PhpRegex\Tests\TestUtils\InMemorySimpleCache;
+use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Cache\ArrayCache;
-use RegexParser\Cache\CacheInterface;
-use RegexParser\Cache\FilesystemCache;
-use RegexParser\Cache\PsrCacheAdapter;
-use RegexParser\Cache\PsrSimpleCacheAdapter;
-use RegexParser\Node\RegexNode;
-use RegexParser\Regex;
-use RegexParser\Tests\TestUtils\InMemoryCachePool;
-use RegexParser\Tests\TestUtils\InMemorySimpleCache;
 
 /**
  * Every cache stores a tree and gives back an equal one, whatever the
@@ -47,7 +47,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string): CacheInterface $cache
+     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -68,7 +68,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string): CacheInterface $cache
+     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -80,7 +80,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string): CacheInterface $cache
+     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -99,7 +99,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\Closure(string): CacheInterface}>
+     * @return iterable<string, array{\Closure(string):\PhpRegex\Parser\Cache\CacheInterface}>
      */
     public static function provideCaches(): iterable
     {

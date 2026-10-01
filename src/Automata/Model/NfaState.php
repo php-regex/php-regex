@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Automata\Model;
+namespace PhpRegex\Automata\Model;
 
 /**
  * Immutable NFA state.
@@ -21,8 +21,8 @@ namespace RegexParser\Automata\Model;
 final readonly class NfaState
 {
     /**
-     * @param array<NfaTransition> $transitions
-     * @param array<int>           $epsilonTransitions
+     * @param array<\PhpRegex\Automata\Model\NfaTransition> $transitions
+     * @param array<int>                                    $epsilonTransitions
      */
     public function __construct(
         public int $id,

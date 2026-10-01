@@ -11,28 +11,28 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace RegexParser\Tests\Unit\Visitor;
+namespace PhpRegex\Tests\Unit\Visitor;
 
+use PhpRegex\Explain\HtmlExplainer;
+use PhpRegex\Explain\TextExplainer;
+use PhpRegex\Parser\Node\AssertionNode;
+use PhpRegex\Parser\Node\CharTypeNode;
+use PhpRegex\Parser\Node\ConditionalNode;
+use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\GroupType;
+use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\QuantifierNode;
+use PhpRegex\Parser\Node\QuantifierType;
+use PhpRegex\Parser\Node\SubroutineNode;
+use PhpRegex\Parser\Node\UnicodePropNode;
+use PhpRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
-use RegexParser\Node\AssertionNode;
-use RegexParser\Node\CharTypeNode;
-use RegexParser\Node\ConditionalNode;
-use RegexParser\Node\GroupNode;
-use RegexParser\Node\GroupType;
-use RegexParser\Node\LiteralNode;
-use RegexParser\Node\QuantifierNode;
-use RegexParser\Node\QuantifierType;
-use RegexParser\Node\SubroutineNode;
-use RegexParser\Node\UnicodePropNode;
-use RegexParser\NodeVisitor\CompilerNodeVisitor;
-use RegexParser\NodeVisitor\ExplainNodeVisitor;
-use RegexParser\NodeVisitor\HtmlExplainNodeVisitor;
 
 final class ExhaustiveVisitorTest extends TestCase
 {
     public function test_compiler_special_literals(): void
     {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // Special case: ']' is not escaped outside a char class
         $node = new LiteralNode(']', 0, 0);
@@ -45,7 +45,7 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_compiler_unicode_properties(): void
     {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // \p{L} (short)
         $node = new UnicodePropNode('L', 0, 0);
@@ -62,7 +62,7 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_compiler_subroutines_syntax(): void
     {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         // (?&name)
         $node = new SubroutineNode('name', '&', 0, 0);
@@ -83,7 +83,7 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_compiler_conditionals(): void
     {
-        $compiler = new CompilerNodeVisitor();
+        $compiler = new PatternPrinter();
 
         $condition = new LiteralNode('cond', 0, 0);
         $yes = new LiteralNode('yes', 0, 0);
@@ -101,8 +101,8 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_explain_all_char_types_and_assertions(): void
     {
-        $explainer = new ExplainNodeVisitor();
-        $htmlExplainer = new HtmlExplainNodeVisitor();
+        $explainer = new TextExplainer();
+        $htmlExplainer = new HtmlExplainer();
 
         // Char Types: d, D, s, S, w, W, h, H, v, V, R
         $types = ['d', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V', 'R'];
@@ -131,7 +131,7 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_explain_group_types(): void
     {
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
 
         // Lookbehind Positive
         $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKBEHIND_POSITIVE);
@@ -148,7 +148,7 @@ final class ExhaustiveVisitorTest extends TestCase
 
     public function test_explain_quantifiers(): void
     {
-        $explainer = new ExplainNodeVisitor();
+        $explainer = new TextExplainer();
         $node = new LiteralNode('a', 0, 0);
 
         // Range {1,3}
