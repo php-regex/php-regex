@@ -189,6 +189,55 @@ final class ReleaseScriptsTest extends TestCase
     }
 
     #[Test]
+    public function test_split_never_pushes_into_the_monorepo(): void
+    {
+        // The monorepo: a commit holding bin/split, pushed as 2.x to a bare
+        // repository named like a package, as a GitHub redirect would serve it.
+        mkdir($this->root.'/bin');
+        mkdir($this->root.'/src/Parser');
+        file_put_contents($this->root.'/bin/split', '#');
+        file_put_contents($this->root.'/src/Parser/Parser.php', '<?php');
+        $this->commit();
+        $remotes = $this->root.'/remotes';
+        mkdir($remotes);
+        foreach (['regex-parser', 'regex-explain'] as $name) {
+            exec('git init -q --bare '.escapeshellarg($remotes.'/'.$name.'.git'));
+        }
+        $this->git('push', '-q', $remotes.'/regex-parser.git', 'HEAD:refs/heads/2.x');
+        $monorepo = trim($this->git('rev-parse', 'HEAD'));
+
+        // A splitsh-lite that hands back a commit without bin/split.
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'split');
+        $split = trim($this->git('rev-parse', 'HEAD'));
+        $this->git('rm', '-q', 'bin/split');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'without split');
+        $split = trim($this->git('rev-parse', 'HEAD'));
+        $this->git('reset', '-q', '--hard', $monorepo);
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$split}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+
+        $process = proc_open(
+            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--only', 'regex-parser', '--only', 'regex-explain'],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            null,
+            ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
+        );
+        self::assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $code = proc_close($process);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('regex-parser', $output);
+        $this->assertStringContainsString('monorepo', $output);
+        $this->assertSame($monorepo, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-parser.git').' rev-parse 2.x')));
+        $this->assertSame($split, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-explain.git').' rev-parse 2.x')));
+    }
+
+    #[Test]
     public function test_status_offline_lists_every_package(): void
     {
         [$code, $output] = $this->script('status', '--offline');

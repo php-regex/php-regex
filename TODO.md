@@ -9,9 +9,13 @@ source still pointed there.
 1. ~~**GitHub** — rename `php-regex/regex-parser` to `php-regex/php-regex`~~ (done 2026-10-01)
    (Settings → General → Repository name). Stars, issues and history follow;
    GitHub redirects the old URL until a repository takes the old name back.
-2. **Packagist** — on `yoeunes/regex-parser`, change the repository URL to
-   `https://github.com/php-regex/php-regex`, then click *Update* and check the
-   1.x versions are still listed. Do this before step 3.
+2. **Packagist** — `yoeunes/regex-parser` must read
+   `https://github.com/php-regex/php-regex`. The URL cannot be edited on the
+   site for a popular package: write to contact@packagist.org from the account
+   that maintains it, and wait for their answer. Until then nothing breaks
+   (GitHub redirects the old URL), but `php-regex/regex-parser` must not be
+   created. `bin/split` refuses to push into a repository that serves the
+   monorepo. `bin/status` shows a ✓ once Packagist has switched.
 3. **GitHub** — create the 14 read-only repositories (13 done 2026-10-01; `regex-parser` only once step 2 is done: `gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki`), empty (no README, no
    license, no .gitignore), each with issues and pull requests pointing to
    `php-regex/php-regex`:

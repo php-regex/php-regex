@@ -42,18 +42,22 @@ SPLITS=(
 dry_run=0
 branch=""
 tag=""
+root="$(dirname "$0")/.."
+only=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -n|--dry-run) dry_run=1 ;;
         --branch) branch=${2:?--branch needs a name}; shift ;;
         --tag) tag=${2:?--tag needs a name}; shift ;;
+        --only) only+=("${2:?--only needs a repository name}"); shift ;;
+        --root) root=${2:?--root needs a directory}; shift ;;
         -h|--help) sed -n '12,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
     shift
 done
 
-cd "$(dirname "$0")/.."
+cd "$root"
 branch=${branch:-$(git rev-parse --abbrev-ref HEAD)}
 base=${SPLIT_REMOTE_BASE:-git@github.com:php-regex}
 
@@ -69,6 +73,9 @@ for split in "${SPLITS[@]}"; do
     prefix=${split%%:*}
     repository=${split##*:}
     remote="$base/$repository.git"
+    if [ "${#only[@]}" -gt 0 ] && ! printf '%s\n' "${only[@]}" | grep -qxF "$repository"; then
+        continue
+    fi
 
     if [ "$dry_run" -eq 1 ]; then
         echo "$prefix -> $remote ($branch${tag:+, tag $tag})"
@@ -79,6 +86,18 @@ for split in "${SPLITS[@]}"; do
         echo "✗ $repository: the split failed" >&2
         failed=$((failed + 1))
         continue
+    fi
+    # A repository that serves the monorepo is never overwritten: until a
+    # package's repository exists, GitHub may redirect its old name to the
+    # monorepo, and a forced push would replace the monorepo's branch.
+    current=$(git ls-remote "$remote" "refs/heads/$branch" 2>/dev/null | cut -f1)
+    if [ -n "$current" ]; then
+        git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$branch" 2>/dev/null || true
+        if git cat-file -e "$current:bin/split" 2>/dev/null; then
+            echo "✗ $repository: $remote serves the monorepo (its $branch holds bin/split); nothing pushed" >&2
+            failed=$((failed + 1))
+            continue
+        fi
     fi
     if ! git push -q "$remote" "$sha:refs/heads/$branch" -f; then
         echo "✗ $repository: the push failed" >&2
