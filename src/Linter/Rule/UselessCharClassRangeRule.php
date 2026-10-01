@@ -22,6 +22,8 @@ use PHPRegex\Parser\Node\RangeNode;
 /**
  * Detects two-element (or single-element) ranges that are clearer as an
  * explicit character list.
+ *
+ * @internal
  */
 final class UselessCharClassRangeRule extends AbstractLintRule
 {

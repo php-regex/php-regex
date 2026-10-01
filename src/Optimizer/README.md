@@ -1,7 +1,16 @@
-PHPRegex Optimizer
-==================
+PHPRegex regex-optimizer
+========================
 
 Rewrites regex patterns into shorter equivalents and modernizes old syntax, checked by language equivalence.
+
+```bash
+composer require php-regex/regex-optimizer
+```
+
+This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released
+with its siblings under one version number. Read
+[the guide](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) and
+[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
 
 Resources
 ---------

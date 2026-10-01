@@ -30,6 +30,8 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Detects duplicate alternation branches.
+ *
+ * @internal
  */
 final class DuplicateDisjunctionRule extends AbstractLintRule
 {

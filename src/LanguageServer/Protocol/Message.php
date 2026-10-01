@@ -15,6 +15,8 @@ namespace PHPRegex\LanguageServer\Protocol;
 
 /**
  * Represents a JSON-RPC message in the Language Server Protocol.
+ *
+ * @internal
  */
 final readonly class Message
 {

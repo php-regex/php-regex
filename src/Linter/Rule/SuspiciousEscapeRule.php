@@ -20,6 +20,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects out-of-range Unicode and octal escapes and unknown Unicode
  * character names.
+ *
+ * @internal
  */
 final class SuspiciousEscapeRule extends AbstractLintRule
 {

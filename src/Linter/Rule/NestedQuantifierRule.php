@@ -29,6 +29,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 /**
  * Detects nested variable quantifiers that can cause catastrophic
  * backtracking.
+ *
+ * @internal
  */
 final class NestedQuantifierRule extends AbstractLintRule
 {

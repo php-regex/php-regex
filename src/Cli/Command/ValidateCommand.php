@@ -22,6 +22,9 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final class ValidateCommand extends AbstractCommand
 {
     public function getName(): string

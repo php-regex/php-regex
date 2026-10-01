@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  *
  * The two rule IDs interleave per flag; keeping them in one rule preserves
  * the historical emission order.
+ *
+ * @internal
  */
 final class InlineFlagsRule extends AbstractLintRule
 {

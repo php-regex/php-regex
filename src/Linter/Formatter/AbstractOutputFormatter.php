@@ -17,6 +17,8 @@ use PHPRegex\Linter\LintReport;
 
 /**
  * Base class for output formatters.
+ *
+ * @internal
  */
 abstract class AbstractOutputFormatter implements OutputFormatterInterface
 {

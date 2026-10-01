@@ -17,11 +17,11 @@
     <a href="https://packagist.org/packages/yoeunes/regex-parser"><img src="https://img.shields.io/packagist/php-v/yoeunes/regex-parser.svg" alt="Supported PHP Version Badge"></a>
 </p>
 
-# RegexParser: Static Analysis, Linter & Logic Solver
+# PHPRegex: Static Analysis, Linter & Logic Solver
 
-RegexParser is a PHP 8.2+ library that treats regular expressions as code.
+PHPRegex is a PHP 8.2+ library that treats regular expressions as code.
 
-Unlike simple wrappers around `preg_match`, RegexParser implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (AST → NFA → DFA).
+Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (AST → NFA → DFA).
 
 This architecture allows for advanced static analysis:
 - **Linting:** Detect redundancy, useless flags, and common mistakes.
@@ -30,7 +30,7 @@ This architecture allows for advanced static analysis:
 
 Built for learning, validation, and robust tooling in PHP projects.
 
-> ⚠️ **What this is and is not.** RegexParser is a side project and a learning
+> ⚠️ **What this is and is not.** PHPRegex is a side project and a learning
 > exercise. It is **not** a hardened security product and should not be your
 > only line of defense. ReDoS detection is structural and conservative — treat
 > findings as *potential* risk to investigate, not as a guarantee of safety.
@@ -43,13 +43,37 @@ If you are new to regex, start with the [Regex Tutorial](docs/tutorial/README.md
 
 ```bash
 # Install the library
-composer require yoeunes/regex-parser
+composer require php-regex/regex-toolkit
 
-# Try the CLI
+# Install the command line tool, and try it
+composer require --dev php-regex/regex-cli
 vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 ```
 
-## What RegexParser provides
+PHPRegex is a family of packages, developed together in
+[php-regex/php-regex](https://github.com/php-regex/php-regex) and released
+with one version number. Install the one you need:
+
+| package | what it holds |
+|---|---|
+| [`php-regex/regex-toolkit`](src/Toolkit) | the `Regex` facade: every library below in one call |
+| [`php-regex/regex-parser`](src/Parser) | lexer, parser, immutable AST, validator, PCRE2 release targeting, AST cache |
+| [`php-regex/regex-explain`](src/Explain) | explanations, highlighting, ASCII tree, Mermaid and railroad diagrams |
+| [`php-regex/regex-optimizer`](src/Optimizer) | shorter equivalent patterns, modernized syntax |
+| [`php-regex/regex-generator`](src/Generator) | sample strings and test cases |
+| [`php-regex/regex-automata`](src/Automata) | language equivalence, intersection and subset |
+| [`php-regex/regex-redos`](src/Redos) | catastrophic backtracking (ReDoS) analysis |
+| [`php-regex/regex-transpiler`](src/Transpiler) | JavaScript and Python targets |
+| [`php-regex/regex-linter`](src/Linter) | lint rules and pattern extraction from PHP sources |
+| [`php-regex/regex-cli`](src/Cli) | the `regex` command |
+| [`php-regex/regex-language-server`](src/LanguageServer) | diagnostics in any LSP editor |
+| [`php-regex/regex-phpstan`](src/PHPStan) | the PHPStan extension |
+| [`php-regex/regex-symfony`](src/Symfony) | the Symfony bundle |
+| [`php-regex/regex-laravel`](src/Laravel) | the Laravel integration |
+
+Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
+
+## What PHPRegex provides
 
 - 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
 - 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](docs/ARCHITECTURE.md) it supports; falls back gracefully otherwise.
@@ -60,7 +84,7 @@ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 
 ## Philosophy & Accuracy
 
-RegexParser separates what it can guarantee from what is heuristic:
+PHPRegex separates what it can guarantee from what is heuristic:
 
 - Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
 - Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes how closely, case by case.
@@ -70,7 +94,7 @@ RegexParser separates what it can guarantee from what is heuristic:
 ### Tested against the real engine
 
 Round-trip correctness (`compile(parse(x))` behaves like the original) is
-verified in CI by differential tests that compare RegexParser's output against
+verified in CI by differential tests that compare PHPRegex's output against
 PHP's native `preg_match()`:
 
 - A fixture of **212 PCRE patterns** is checked for validity, match result,
@@ -214,7 +238,7 @@ echo $regex->explain('/\d{4}-\d{2}-\d{2}/');
 
 ## Integrations
 
-RegexParser integrates with common PHP tooling:
+PHPRegex integrates with common PHP tooling:
 
 - **Symfony bundle**: [the Symfony guide](docs/guides/symfony.md)
 - **Laravel**: [the Laravel guide](docs/guides/laravel.md)
@@ -227,7 +251,7 @@ RegexParser integrates with common PHP tooling:
 
 ## Performance
 
-RegexParser ships lightweight benchmark scripts in `benchmarks/` to track parser, compiler, and formatter throughput.
+PHPRegex ships lightweight benchmark scripts in `benchmarks/` to track parser, compiler, and formatter throughput.
 
 - Run formatter benchmarks: `php benchmarks/benchmark_formatters.php`
 - Run all benchmarks: `for file in benchmarks/benchmark_*.php; do echo "Running $file"; php "$file"; echo; done`
@@ -244,6 +268,7 @@ Key references:
 - [API Reference](docs/reference/api.md)
 - [Diagnostics](docs/reference/diagnostics.md)
 - [FAQ & Glossary](docs/reference/faq-glossary.md)
+- [Backward Compatibility Promise](docs/reference/backward-compatibility.md)
 
 ## Contributing
 

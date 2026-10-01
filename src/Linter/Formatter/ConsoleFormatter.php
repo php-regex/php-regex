@@ -28,6 +28,8 @@ use PHPRegex\Parser\Validation\ValidationResult;
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
+ *
+ * @internal
  */
 class ConsoleFormatter extends AbstractOutputFormatter
 {

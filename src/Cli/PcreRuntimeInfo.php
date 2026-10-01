@@ -15,6 +15,9 @@ namespace PHPRegex\Cli;
 
 use PHPRegex\Parser\Internal\Ascii;
 
+/**
+ * @internal
+ */
 final readonly class PcreRuntimeInfo implements \JsonSerializable
 {
     public function __construct(

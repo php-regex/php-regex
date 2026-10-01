@@ -31,6 +31,8 @@ use PHPRegex\Parser\Internal\DisplayEscaper;
  *     location?: string|null,
  *     problem: Diagnostic
  * }
+ *
+ * @internal
  */
 final class CheckstyleFormatter extends AbstractOutputFormatter
 {

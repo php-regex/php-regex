@@ -11,6 +11,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+namespace PHPRegex\Tests\Tools;
+
 use PHPRegex\Linter\Config\LintConfigSchema;
 
 /*

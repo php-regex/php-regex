@@ -54,6 +54,8 @@ use PHPRegex\Parser\Printer\PatternPrinter;
  * Analyzes the AST to detect ReDoS vulnerabilities.
  *
  * @extends AbstractNodeVisitor<RedosSeverity>
+ *
+ * @internal
  */
 final class RedosProfiler extends AbstractNodeVisitor
 {

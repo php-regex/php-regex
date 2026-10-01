@@ -32,6 +32,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 /**
  * Detects concatenated variable quantifiers where one character set is a
  * subset of the other and the quantifier can be tightened.
+ *
+ * @internal
  */
 final class QuantifierConcatenationRule extends AbstractLintRule
 {

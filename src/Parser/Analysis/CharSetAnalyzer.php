@@ -32,6 +32,8 @@ use PHPRegex\Parser\Node\SequenceNode;
  * Approximates leading/trailing character sets for AST nodes.
  *
  * Used to detect mutually exclusive boundaries that avoid catastrophic backtracking.
+ *
+ * @internal
  */
 final readonly class CharSetAnalyzer
 {

@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  * getNodeTypes(), and finish() is called once after the traversal completes.
  * Rules return their issues; enablement filtering and ordering are handled by
  * the engine.
+ *
+ * @internal
  */
 interface LintRuleInterface
 {

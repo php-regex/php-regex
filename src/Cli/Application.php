@@ -16,6 +16,9 @@ namespace PHPRegex\Cli;
 use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
 
+/**
+ * @internal
+ */
 final class Application
 {
     /**

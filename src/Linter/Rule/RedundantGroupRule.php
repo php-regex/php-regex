@@ -36,6 +36,8 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 
 /**
  * Detects non-capturing groups that wrap a single atom and can be removed.
+ *
+ * @internal
  */
 final class RedundantGroupRule extends AbstractLintRule
 {

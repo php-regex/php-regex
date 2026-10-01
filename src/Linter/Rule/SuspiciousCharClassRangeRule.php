@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\RangeNode;
 /**
  * Detects ASCII letter ranges like A-z that unintentionally include
  * non-letter characters.
+ *
+ * @internal
  */
 final class SuspiciousCharClassRangeRule extends AbstractLintRule
 {

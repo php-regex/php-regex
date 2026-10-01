@@ -18,6 +18,8 @@ use PHPRegex\Cli\Output;
 
 /**
  * A command of the binary. Every one exits with one of the three codes below.
+ *
+ * @internal
  */
 interface CommandInterface
 {

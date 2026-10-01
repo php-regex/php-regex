@@ -24,6 +24,9 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 
+/**
+ * @internal
+ */
 final class CompareCommand extends AbstractCommand
 {
     private const METHOD_INTERSECTION = 'intersection';

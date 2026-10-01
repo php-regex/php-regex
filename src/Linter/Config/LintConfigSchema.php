@@ -22,6 +22,8 @@ namespace PHPRegex\Linter\Config;
  * match whatever the case (editors still suggest the lower-case spelling),
  * "x-expected" is what an error message says the value should be, and
  * "x-item" names what a list holds, for the message about an item refused.
+ *
+ * @internal
  */
 final class LintConfigSchema
 {

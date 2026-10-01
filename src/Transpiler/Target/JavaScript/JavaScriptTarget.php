@@ -20,6 +20,8 @@ use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Transpile target for JavaScript RegExp.
+ *
+ * @internal
  */
 final readonly class JavaScriptTarget implements TargetInterface
 {

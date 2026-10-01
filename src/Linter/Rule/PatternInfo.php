@@ -17,6 +17,8 @@ use PHPRegex\Parser\Internal\PatternParser;
 
 /**
  * Immutable facts about the pattern being linted.
+ *
+ * @internal
  */
 final readonly class PatternInfo
 {

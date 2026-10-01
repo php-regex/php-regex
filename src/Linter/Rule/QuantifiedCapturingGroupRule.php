@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\QuantifierNode;
 /**
  * Detects quantified capturing groups, where only the last iteration's
  * capture is retained.
+ *
+ * @internal
  */
 final class QuantifiedCapturingGroupRule extends AbstractLintRule
 {

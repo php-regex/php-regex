@@ -21,6 +21,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  * Detects \w, \d, \s shorthands that match only ASCII without the /u flag.
  *
  * Disabled by default; enable via the 'unicode.shorthandWithoutU' rule ID.
+ *
+ * @internal
  */
 final class ShorthandWithoutURule extends AbstractLintRule
 {

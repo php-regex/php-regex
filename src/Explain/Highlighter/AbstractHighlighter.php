@@ -52,6 +52,8 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  * Base visitor for highlighting regex syntax.
  *
  * @extends AbstractNodeVisitor<string>
+ *
+ * @internal
  */
 abstract class AbstractHighlighter extends AbstractNodeVisitor
 {

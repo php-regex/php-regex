@@ -20,6 +20,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  * Detects a useless 'm' flag: the pattern contains no ^ or $ anchors.
  *
  * Stateful: tracks anchors during traversal and emits in finish().
+ *
+ * @internal
  */
 final class UselessMFlagRule extends AbstractLintRule
 {

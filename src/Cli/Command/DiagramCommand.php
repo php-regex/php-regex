@@ -22,6 +22,9 @@ use PHPRegex\Explain\RailroadSvgRenderer;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 
+/**
+ * @internal
+ */
 final class DiagramCommand extends AbstractCommand
 {
     public function getName(): string

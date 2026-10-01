@@ -17,6 +17,9 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final readonly class LintOutputRenderer
 {
     /**

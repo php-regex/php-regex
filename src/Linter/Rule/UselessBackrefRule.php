@@ -20,6 +20,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects backreferences that can never capture useful text: references to
  * unclosed groups, groups in a different alternative, or always-empty groups.
+ *
+ * @internal
  */
 final class UselessBackrefRule extends AbstractLintRule
 {

@@ -24,6 +24,8 @@ use PHPRegex\Parser\Node\SequenceNode;
  *
  * The two rule IDs interleave per child index; keeping them in one rule
  * preserves the historical emission order.
+ *
+ * @internal
  */
 final class ImpossibleAnchorRule extends AbstractLintRule
 {

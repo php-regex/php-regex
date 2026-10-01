@@ -15,6 +15,8 @@ namespace PHPRegex\Parser\Exception;
 
 /**
  * Provides common visual context helpers for parser-related exceptions.
+ *
+ * @internal
  */
 trait VisualContextTrait
 {

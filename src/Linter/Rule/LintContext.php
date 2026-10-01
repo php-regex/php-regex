@@ -27,6 +27,8 @@ use PHPRegex\Parser\Node\QuantifierType;
  *
  * Rules read from this context; only the traversal engine mutates it via the
  * {@internal}-tagged mutators.
+ *
+ * @internal
  */
 final class LintContext
 {

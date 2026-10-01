@@ -42,6 +42,8 @@ use PHPRegex\Linter\Config\LintExtractorFactory;
  *
  * The binary is one line long because of this: the wiring belongs where it
  * can be read, and where a test can ask the application what it knows.
+ *
+ * @internal
  */
 final class ApplicationFactory
 {

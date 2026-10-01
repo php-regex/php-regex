@@ -19,6 +19,9 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\PatternParser;
 
+/**
+ * @internal
+ */
 final readonly class HelpCommand implements CommandInterface
 {
     /**

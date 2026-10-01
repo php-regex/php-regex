@@ -21,6 +21,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects character-class elements whose matches are fully covered by the
  * other elements of the same class.
+ *
+ * @internal
  */
 final class DuplicateCharClassElementsRule extends AbstractLintRule
 {

@@ -19,6 +19,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Handles the LSP initialize request.
+ *
+ * @internal
  */
 final class InitializeHandler
 {

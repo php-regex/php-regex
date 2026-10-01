@@ -15,6 +15,8 @@ namespace PHPRegex\Linter\Rule;
 
 /**
  * Base class for lint rules that only need node-enter checks.
+ *
+ * @internal
  */
 abstract class AbstractLintRule implements LintRuleInterface
 {

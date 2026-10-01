@@ -37,6 +37,7 @@ Start here:
 - [Diagnostics Cheat Sheet](reference/diagnostics-cheatsheet.md) - Quick error reference.
 - [Feature Support Matrix](reference/feature-support-matrix.md) - PCRE construct coverage by component.
 - [Correctness Contracts](reference/correctness-contracts.md) - Soundness/completeness guarantees by feature.
+- [Backward Compatibility Promise](reference/backward-compatibility.md) - What each release may change.
 - [FAQ and Glossary](reference/faq-glossary.md) - Common terms and questions.
 - [Maintainers Guide](MAINTAINERS_GUIDE.md) - Project maintenance notes.
 

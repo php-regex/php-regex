@@ -19,5 +19,7 @@ use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
  * Symfony-specific console output formatter.
  *
  * Renders the classic Nuno-style layout with Symfony console tags.
+ *
+ * @internal
  */
 final readonly class SymfonyConsoleFormatter extends AbstractConsoleTagFormatter {}

@@ -22,6 +22,9 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final class ParseCommand extends AbstractCommand
 {
     public function getName(): string

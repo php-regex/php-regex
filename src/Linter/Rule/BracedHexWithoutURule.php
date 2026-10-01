@@ -22,6 +22,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects braced Unicode escapes (e.g. \x{100}) that require the /u flag
  * for code points above U+FF.
+ *
+ * @internal
  */
 final class BracedHexWithoutURule extends AbstractLintRule
 {

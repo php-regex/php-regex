@@ -19,6 +19,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Detects backreferences to non-existent capturing groups.
+ *
+ * @internal
  */
 final class UndefinedBackrefRule extends AbstractLintRule
 {

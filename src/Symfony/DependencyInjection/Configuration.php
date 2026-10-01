@@ -23,6 +23,8 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * Defines the configuration schema for the PHPRegex bundle.
+ *
+ * @internal
  */
 final readonly class Configuration implements ConfigurationInterface
 {

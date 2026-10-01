@@ -20,6 +20,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  * Detects a useless 's' flag: the pattern contains no dots.
  *
  * Stateful: tracks dots during traversal and emits in finish().
+ *
+ * @internal
  */
 final class UselessSFlagRule extends AbstractLintRule
 {

@@ -75,6 +75,8 @@ use PHPRegex\Parser\Validation\Validator;
  * This parser uses intelligent caching, reduced method calls, and
  * streamlined parsing logic for efficiency while maintaining full
  * compatibility with PCRE syntax.
+ *
+ * @internal
  */
 final class TokenParser
 {

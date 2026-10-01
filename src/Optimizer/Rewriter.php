@@ -56,6 +56,8 @@ use PHPRegex\Parser\Printer\PatternPrinter;
  * Transforms the AST to apply optimizations, returning a new, simplified AST.
  *
  * @extends AbstractNodeVisitor<Node\NodeInterface>
+ *
+ * @internal
  */
 final class Rewriter extends AbstractNodeVisitor
 {

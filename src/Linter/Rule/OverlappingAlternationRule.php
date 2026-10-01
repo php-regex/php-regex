@@ -30,6 +30,8 @@ use PHPRegex\Parser\Node\SequenceNode;
  * The three rule IDs stay in one rule because a literal-overlap finding
  * suppresses the semantic charset check, preserving the historical
  * emission behavior.
+ *
+ * @internal
  */
 final class OverlappingAlternationRule extends AbstractLintRule
 {

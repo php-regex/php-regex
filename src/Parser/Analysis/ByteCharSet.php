@@ -15,6 +15,8 @@ namespace PHPRegex\Parser\Analysis;
 
 /**
  * Lightweight character set representation with basic set operations.
+ *
+ * @internal
  */
 final readonly class ByteCharSet
 {

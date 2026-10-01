@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
+/**
+ * @internal
+ */
 final readonly class GlobalOptions
 {
     public function __construct(

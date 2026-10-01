@@ -15,6 +15,8 @@ namespace PHPRegex\LanguageServer\Protocol;
 
 /**
  * Handles sending JSON-RPC responses to stdout.
+ *
+ * @internal
  */
 final class Response
 {

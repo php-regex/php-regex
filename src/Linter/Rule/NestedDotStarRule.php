@@ -28,6 +28,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 /**
  * Detects an unbounded quantifier wrapping a dot-star, which can cause
  * severe backtracking.
+ *
+ * @internal
  */
 final class NestedDotStarRule extends AbstractLintRule
 {

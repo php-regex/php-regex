@@ -34,6 +34,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Lint regex patterns in PHP source code.
  *
  * @phpstan-import-type LintResult from LintReport
+ *
+ * @internal
  */
 final class LintCommand extends Command
 {

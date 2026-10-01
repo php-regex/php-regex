@@ -20,6 +20,9 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 abstract class AbstractCommand implements CommandInterface
 {
     /**

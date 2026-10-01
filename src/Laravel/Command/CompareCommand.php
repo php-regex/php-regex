@@ -23,6 +23,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Compare two regex patterns for equivalence.
+ *
+ * @internal
  */
 final class CompareCommand extends Command
 {

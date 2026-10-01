@@ -18,6 +18,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Explain a regular expression in human-readable format.
+ *
+ * @internal
  */
 final class ExplainCommand extends Command
 {

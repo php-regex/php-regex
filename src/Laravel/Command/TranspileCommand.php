@@ -19,6 +19,8 @@ use PHPRegex\Transpiler\TranspileOptions;
 
 /**
  * Transpile a PCRE regex to another dialect.
+ *
+ * @internal
  */
 final class TranspileCommand extends Command
 {

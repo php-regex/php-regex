@@ -71,6 +71,8 @@ use PHPRegex\Parser\Token\TokenType;
  * computational overhead through caching and streamlined validation logic.
  *
  * @extends AbstractNodeVisitor<void>
+ *
+ * @internal
  */
 final class Validator extends AbstractNodeVisitor
 {

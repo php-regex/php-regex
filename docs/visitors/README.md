@@ -231,7 +231,9 @@ echo $pattern;  // Modernized version
 
 ### Validator
 
-**Purpose:** Performs semantic validation of the pattern. Used internally by `Regex::validate()`.
+**Purpose:** Performs semantic validation of the pattern. It is internal: call
+`Regex::validate()` (or `RegexParser::validate()`), which runs it and returns a
+`ValidationResult`.
 
 **Checks Performed:**
 - Valid backreference targets
@@ -241,13 +243,11 @@ echo $pattern;  // Modernized version
 
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\Validation\Validator;
 
-$ast = Regex::create()->parse('/\1(foo)/');  // Invalid: \1 before capture
-$result = $ast->accept(new Validator());
+$result = Regex::create()->validate('/(?<n>a)\k<m>/');  // Invalid: no group "m"
 
-echo $result->isValid();      // false
-echo count($result->getProblems());
+var_dump($result->isValid);       // bool(false)
+echo $result->errorCode?->value;  // regex.backref.missing_named_group
 ```
 
 ---

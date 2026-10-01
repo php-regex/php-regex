@@ -1,7 +1,16 @@
-PHPRegex Automata
-=================
+PHPRegex regex-automata
+=======================
 
 Compiles the regular subset of PCRE to automata to compare languages: equivalence, intersection, subset and example strings.
+
+```bash
+composer require php-regex/regex-automata
+```
+
+This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released
+with its siblings under one version number. Read
+[the guide](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/logic-solver.md) and
+[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
 
 Resources
 ---------

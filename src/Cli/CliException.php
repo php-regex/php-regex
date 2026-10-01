@@ -18,5 +18,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 /**
  * The command line tool could not do what it was asked: a format it does not
  * write, a self-update that cannot proceed.
+ *
+ * @internal
  */
 final class CliException extends \RuntimeException implements ExceptionInterface {}

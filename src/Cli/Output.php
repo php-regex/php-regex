@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
+/**
+ * @internal
+ */
 final class Output
 {
     public const RESET = "\033[0m";

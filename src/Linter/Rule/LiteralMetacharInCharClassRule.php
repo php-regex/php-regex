@@ -22,6 +22,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects quantifier metacharacters (+, *, ?) used as literals inside
  * character classes, which is a common source of confusion.
+ *
+ * @internal
  */
 final class LiteralMetacharInCharClassRule extends AbstractLintRule
 {

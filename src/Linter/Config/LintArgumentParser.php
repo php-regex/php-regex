@@ -19,6 +19,9 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 
+/**
+ * @internal
+ */
 final class LintArgumentParser
 {
     /**

@@ -28,6 +28,9 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 
+/**
+ * @internal
+ */
 final class AnalyzeCommand extends AbstractCommand
 {
     public function getName(): string

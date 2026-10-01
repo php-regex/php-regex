@@ -21,6 +21,9 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 
+/**
+ * @internal
+ */
 final class GraphCommand extends AbstractCommand
 {
     public function getName(): string

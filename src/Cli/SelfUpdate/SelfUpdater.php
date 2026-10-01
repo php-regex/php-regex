@@ -16,6 +16,9 @@ namespace PHPRegex\Cli\SelfUpdate;
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Output;
 
+/**
+ * @internal
+ */
 class SelfUpdater
 {
     /**

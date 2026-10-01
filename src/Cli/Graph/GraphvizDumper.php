@@ -16,6 +16,9 @@ namespace PHPRegex\Cli\Graph;
 use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaState;
 
+/**
+ * @internal
+ */
 final class GraphvizDumper
 {
     public function dump(Nfa $nfa): string

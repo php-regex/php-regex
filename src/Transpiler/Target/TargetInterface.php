@@ -18,6 +18,8 @@ use PHPRegex\Transpiler\TranspileContext;
 
 /**
  * Contract for transpiling a Regex AST into a target dialect.
+ *
+ * @internal
  */
 interface TargetInterface
 {

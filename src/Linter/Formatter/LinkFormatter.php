@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
+/**
+ * @internal
+ */
 final readonly class LinkFormatter
 {
     private const IDE_LINK_FORMATS = [

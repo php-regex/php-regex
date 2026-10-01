@@ -17,6 +17,8 @@ namespace PHPRegex\Linter\Config;
  * The lint command's defaults from a loaded regex.json, which the command
  * line then overrides. A check is switched on or off by its "enabled" key
  * only: setting one of its other keys never enables it.
+ *
+ * @internal
  */
 final class LintDefaultsBuilder
 {

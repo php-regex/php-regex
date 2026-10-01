@@ -30,6 +30,8 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  *
  * Stateful: aggregates case-sensitivity facts during traversal and emits
  * in finish().
+ *
+ * @internal
  */
 final class UselessIFlagRule extends AbstractLintRule
 {

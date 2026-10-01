@@ -25,6 +25,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Handles text document notifications and requests.
+ *
+ * @internal
  */
 final readonly class TextDocumentHandler
 {

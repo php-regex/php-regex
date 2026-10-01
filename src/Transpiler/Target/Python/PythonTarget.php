@@ -20,6 +20,8 @@ use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Transpile target for Python 're' module.
+ *
+ * @internal
  */
 final readonly class PythonTarget implements TargetInterface
 {

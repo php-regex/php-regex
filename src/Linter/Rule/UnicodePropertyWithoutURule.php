@@ -19,6 +19,8 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 
 /**
  * Detects Unicode properties used without the /u flag.
+ *
+ * @internal
  */
 final class UnicodePropertyWithoutURule extends AbstractLintRule
 {

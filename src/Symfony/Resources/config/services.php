@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+namespace PHPRegex\Symfony\Resources\config;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
@@ -45,6 +45,11 @@ use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
 use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
 /*
  * Base services for the PHPRegex library.

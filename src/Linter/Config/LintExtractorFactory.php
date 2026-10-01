@@ -19,6 +19,9 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternExtractor;
 
+/**
+ * @internal
+ */
 final class LintExtractorFactory
 {
     public function create(?LintArguments $arguments = null): PatternExtractor

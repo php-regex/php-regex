@@ -20,6 +20,8 @@ use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Generates a heuristic input string to demonstrate potential backtracking.
+ *
+ * @internal
  */
 final class InputGenerator
 {

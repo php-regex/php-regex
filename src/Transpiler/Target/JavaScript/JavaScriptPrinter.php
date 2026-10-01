@@ -50,6 +50,8 @@ use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Compiles PCRE AST nodes into JavaScript-compatible regex source.
+ *
+ * @internal
  */
 final class JavaScriptPrinter extends AbstractTargetPrinter
 {

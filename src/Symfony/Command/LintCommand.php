@@ -41,6 +41,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
+ *
+ * @internal
  */
 #[AsCommand(
     name: 'regex:lint',

@@ -21,6 +21,8 @@ use PHPRegex\Parser\Node\RangeNode;
 
 /**
  * Detects duplicate characters and overlapping ranges inside a character class.
+ *
+ * @internal
  */
 final class RedundantCharClassRule extends AbstractLintRule
 {

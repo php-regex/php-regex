@@ -21,6 +21,9 @@ use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 
+/**
+ * @internal
+ */
 final class HighlightCommand extends AbstractCommand
 {
     public function getName(): string

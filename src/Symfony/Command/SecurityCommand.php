@@ -39,6 +39,8 @@ use Symfony\Component\HttpKernel\KernelInterface;
  * @phpstan-import-type AccessSkip from SecurityAccessControlReport
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
  * @phpstan-import-type FirewallSkip from SecurityFirewallReport
+ *
+ * @internal
  */
 #[AsCommand(
     name: 'regex:security',

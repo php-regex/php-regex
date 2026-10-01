@@ -24,6 +24,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Handles textDocument/codeAction requests.
+ *
+ * @internal
  */
 final readonly class CodeActionHandler
 {

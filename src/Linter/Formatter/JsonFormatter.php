@@ -19,6 +19,8 @@ use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * JSON output formatter for machine-readable output.
+ *
+ * @internal
  */
 final class JsonFormatter extends AbstractOutputFormatter
 {

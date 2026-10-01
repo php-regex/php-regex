@@ -28,6 +28,8 @@ use PHPRegex\Transpiler\TranspileException;
  * refuse a construct, and the whitespace a quantifier may carry under /x.
  *
  * @extends AbstractNodeVisitor<string>
+ *
+ * @internal
  */
 abstract class AbstractTargetPrinter extends AbstractNodeVisitor
 {

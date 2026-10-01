@@ -20,6 +20,9 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 
+/**
+ * @internal
+ */
 final class ExplainCommand extends AbstractCommand
 {
     public function getName(): string

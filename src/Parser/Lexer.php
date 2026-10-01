@@ -27,6 +27,8 @@ use PHPRegex\Parser\Token\TokenType;
  *
  * Uses precompiled regex patterns and priority-based matching
  * for efficiency while maintaining compatibility with PCRE syntax.
+ *
+ * @internal
  */
 final class Lexer
 {

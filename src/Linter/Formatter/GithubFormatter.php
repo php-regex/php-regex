@@ -30,6 +30,8 @@ use PHPRegex\Linter\LintSeverity;
  *     location?: string|null,
  *     problem: Diagnostic
  * }
+ *
+ * @internal
  */
 final class GithubFormatter extends AbstractOutputFormatter
 {

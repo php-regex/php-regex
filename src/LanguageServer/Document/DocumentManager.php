@@ -15,6 +15,8 @@ namespace PHPRegex\LanguageServer\Document;
 
 /**
  * Manages open documents and their cached regex patterns.
+ *
+ * @internal
  */
 final class DocumentManager
 {

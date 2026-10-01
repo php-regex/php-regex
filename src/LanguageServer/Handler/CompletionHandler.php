@@ -20,6 +20,8 @@ use PHPRegex\LanguageServer\Protocol\Response;
 
 /**
  * Handles textDocument/completion requests for regex patterns.
+ *
+ * @internal
  */
 final readonly class CompletionHandler
 {

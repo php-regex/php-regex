@@ -28,6 +28,9 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\Internal\InputGenerator;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final class RedosCommand extends AbstractCommand
 {
     private const PREVIEW_LIMIT = 120;

@@ -47,6 +47,8 @@ use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Handles regex-related analysis and transformations.
+ *
+ * @internal
  */
 final readonly class AnalysisService
 {

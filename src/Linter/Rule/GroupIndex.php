@@ -17,6 +17,8 @@ use PHPRegex\Parser\Node\GroupNode;
 
 /**
  * Immutable capturing-group facts collected in a pre-pass over the pattern.
+ *
+ * @internal
  */
 final readonly class GroupIndex
 {

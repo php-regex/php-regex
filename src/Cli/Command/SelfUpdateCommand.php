@@ -18,6 +18,9 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 
+/**
+ * @internal
+ */
 final readonly class SelfUpdateCommand implements CommandInterface
 {
     public function __construct(private SelfUpdater $updater) {}

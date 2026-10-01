@@ -19,5 +19,7 @@ use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
  * Laravel-specific console output formatter.
  *
  * Renders the classic Nuno-style layout with console tags.
+ *
+ * @internal
  */
 final readonly class LaravelConsoleFormatter extends AbstractConsoleTagFormatter {}

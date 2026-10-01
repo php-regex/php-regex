@@ -31,6 +31,8 @@ use PHPRegex\Parser\PcreTarget;
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
+ *
+ * @internal
  */
 final readonly class ProjectTarget
 {

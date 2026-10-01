@@ -1,7 +1,16 @@
-PHPRegex Transpiler
-===================
+PHPRegex regex-transpiler
+=========================
 
 Transpiles PCRE patterns to JavaScript and Python regular expressions, with the losses reported.
+
+```bash
+composer require php-regex/regex-transpiler
+```
+
+This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released
+with its siblings under one version number. Read
+[the guide](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) and
+[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
 
 Resources
 ---------

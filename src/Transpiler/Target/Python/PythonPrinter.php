@@ -49,6 +49,8 @@ use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Compiles PCRE AST nodes into Python 're' compatible regex source.
+ *
+ * @internal
  */
 final class PythonPrinter extends AbstractTargetPrinter
 {

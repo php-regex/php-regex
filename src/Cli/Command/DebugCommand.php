@@ -34,6 +34,9 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final class DebugCommand extends AbstractCommand
 {
     public function __construct(private readonly ?LintConfigLoader $configLoader = null, private readonly ?LintDefaultsBuilder $defaultsBuilder = null) {}

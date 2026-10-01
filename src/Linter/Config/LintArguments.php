@@ -17,6 +17,9 @@ use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Parser\Internal\Ascii;
 
+/**
+ * @internal
+ */
 final readonly class LintArguments
 {
     /**

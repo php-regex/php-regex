@@ -19,6 +19,8 @@ namespace PHPRegex\Linter\Rule;
  * The registration order is load-bearing: for each node type, rules run in
  * registry order, and finish() hooks run in registry order after traversal.
  * The default set reproduces the historical PatternLinter emission order.
+ *
+ * @internal
  */
 final class LintRuleRegistry
 {

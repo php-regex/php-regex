@@ -19,6 +19,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Detects empty alternatives in alternations.
+ *
+ * @internal
  */
 final class EmptyAlternationRule extends AbstractLintRule
 {

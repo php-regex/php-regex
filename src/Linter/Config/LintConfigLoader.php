@@ -20,6 +20,8 @@ namespace PHPRegex\Linter\Config;
  * files is reported at once. regex.json overrides regex.dist.json: objects
  * merge key by key, anything else (a list included) is replaced whole. The
  * result keeps the shape of the file.
+ *
+ * @internal
  */
 final readonly class LintConfigLoader
 {

@@ -15,6 +15,8 @@ namespace PHPRegex\Linter\Formatter;
 
 /**
  * Configuration for output formatting options.
+ *
+ * @internal
  */
 final class OutputConfiguration
 {

@@ -19,6 +19,8 @@ use PHPRegex\Parser\Node\QuantifierNode;
 
 /**
  * Detects {0} quantifiers, which always repeat zero times.
+ *
+ * @internal
  */
 final class ZeroQuantifierRule extends AbstractLintRule
 {

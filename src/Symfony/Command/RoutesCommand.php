@@ -29,6 +29,8 @@ use Symfony\Component\Routing\RouterInterface;
 /**
  * @phpstan-import-type RouteDescriptor from RouteConflictReport
  * @phpstan-import-type RouteConflict from RouteConflictReport
+ *
+ * @internal
  */
 #[AsCommand(
     name: 'regex:routes',

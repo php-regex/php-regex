@@ -23,6 +23,9 @@ use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileResult;
 
+/**
+ * @internal
+ */
 final class TranspileCommand extends AbstractCommand
 {
     public function getName(): string

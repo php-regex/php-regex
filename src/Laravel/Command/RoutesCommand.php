@@ -20,6 +20,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Analyze Laravel route patterns for conflicts and issues.
+ *
+ * @internal
  */
 final class RoutesCommand extends Command
 {

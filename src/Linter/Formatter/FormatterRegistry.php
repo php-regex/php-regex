@@ -17,6 +17,8 @@ use PHPRegex\Linter\LintException;
 
 /**
  * Registry for managing output formatters.
+ *
+ * @internal
  */
 final class FormatterRegistry
 {

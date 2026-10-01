@@ -20,6 +20,9 @@ use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 
+/**
+ * @internal
+ */
 final class ClearCacheCommand extends AbstractCommand implements CommandInterface
 {
     public function getName(): string

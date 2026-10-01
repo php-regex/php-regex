@@ -21,6 +21,8 @@ namespace PHPRegex\LanguageServer\Converter;
  * every diagnostic after that point lands on the wrong characters. Lines
  * that are not valid UTF-8 fall back to bytes, which is the best that can
  * be said about them.
+ *
+ * @internal
  */
 final class PositionConverter
 {

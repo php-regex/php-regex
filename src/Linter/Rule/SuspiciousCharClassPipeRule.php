@@ -21,6 +21,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Detects character classes that look like alternation typos, e.g. [foo|bar].
+ *
+ * @internal
  */
 final class SuspiciousCharClassPipeRule extends AbstractLintRule
 {

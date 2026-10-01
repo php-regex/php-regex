@@ -22,6 +22,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Detects \1-\9 inside character classes where they are treated as
  * octal escapes rather than backreferences.
+ *
+ * @internal
  */
 final class BackrefAsOctalInCharClassRule extends AbstractLintRule
 {

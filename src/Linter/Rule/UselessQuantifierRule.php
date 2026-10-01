@@ -19,6 +19,8 @@ use PHPRegex\Parser\Node\QuantifierNode;
 
 /**
  * Detects {1} quantifiers, which match exactly once and can be removed.
+ *
+ * @internal
  */
 final class UselessQuantifierRule extends AbstractLintRule
 {

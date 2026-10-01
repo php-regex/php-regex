@@ -17,6 +17,8 @@ use PHPRegex\LanguageServer\Converter\PositionConverter;
 
 /**
  * Finds regex patterns in PHP source code.
+ *
+ * @internal
  */
 final class RegexFinder
 {

@@ -15,6 +15,8 @@ namespace PHPRegex\LanguageServer\Document;
 
 /**
  * Represents a regex pattern occurrence in a document.
+ *
+ * @internal
  */
 final readonly class RegexOccurrence
 {

@@ -38,6 +38,8 @@ use PHPRegex\Toolkit\Regex;
  * initializationOptions.phpVersion / pcreVersion, then regex.json there, then
  * composer.json there, then the running PHP. A Regex handed to the
  * constructor is used as it is.
+ *
+ * @internal
  */
 final class Server
 {

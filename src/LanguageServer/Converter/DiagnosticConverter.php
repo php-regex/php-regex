@@ -19,6 +19,8 @@ use PHPRegex\Parser\ErrorCode;
 
 /**
  * Converts PHPRegex diagnostics to LSP diagnostic format.
+ *
+ * @internal
  */
 final class DiagnosticConverter
 {

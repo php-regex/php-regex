@@ -15,6 +15,9 @@ namespace PHPRegex\Cli;
 
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final readonly class ConsoleStyle
 {
     private const INDENT = '  ';

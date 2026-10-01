@@ -18,6 +18,9 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Toolkit\Regex;
 
+/**
+ * @internal
+ */
 final readonly class VersionCommand implements CommandInterface
 {
     public function getName(): string
