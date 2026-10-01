@@ -87,4 +87,5 @@ The wordmark paths are generated from Inter Display (Black 900 / Bold 700) with
 fontTools (SVGPathPen + TransformPen, real advance widths, slight negative
 tracking). Left stems are aligned by compensating each row's first-glyph
 side-bearing in the generator, never by hand. If the wording ever changes,
-regenerate the paths with a font-to-path tool — do not hand-edit path data.
+run `art/wordmark.py` with the two Inter Display TTFs — it emits the exact
+group strings for the banner and social card — do not hand-edit path data.
