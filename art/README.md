@@ -92,11 +92,13 @@ $ rsvg-convert -w 1024 -h 1024 art/org-icon.svg -o art/org-icon.png
 $ rsvg-convert -w 1024 -h 1024 art/org-icon-dark.svg -o art/org-icon-dark.png
 ```
 
-The package banners are SVG-only (served by URL, never uploaded), so they
-carry no PNG twins; regenerate all 28 with:
+The package banners follow the four-file rule too (SVG + PNG, light +
+dark, 1000×200); regenerate everything with:
 
 ```console
 $ python3 art/package-banners.py --black InterDisplay-Black.ttf --bold InterDisplay-Bold.ttf
+$ for d in src/*/art; do rsvg-convert -w 1000 -h 200 $d/banner.svg -o $d/banner.png; \
+      rsvg-convert -w 1000 -h 200 $d/banner-dark.svg -o $d/banner-dark.png; done
 ```
 
 The wordmark paths are generated from Inter Display (Black 900 / Bold 700) with
