@@ -46,3 +46,4 @@
 
 # Local split tool (bin/split uses it when it is not on $PATH)
 /bin/splitsh-lite
+__pycache__/
