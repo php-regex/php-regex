@@ -1,4 +1,10 @@
-<p align="center"><img src="https://raw.githubusercontent.com/php-regex/php-regex/2.x/art/org-icon-dark.svg?v=1" width="96" alt="PHPRegex"></p>
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=1">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=1">
+        <img src="art/banner.svg?v=1" alt="PHPRegex Linter" width="100%">
+    </picture>
+</p>
 
 PHPRegex Linter
 ===============
