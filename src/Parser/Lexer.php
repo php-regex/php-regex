@@ -359,7 +359,7 @@ final class Lexer
             $this->tokensRead = $tokens;
         }
 
-        $tokens[] = new Token(TokenType::T_EOF, '', $this->position);
+        $tokens[] = new Token(TokenType::Eof, '', $this->position);
 
         return new TokenStream($tokens, $pattern);
     }
@@ -534,7 +534,7 @@ final class Lexer
 
         $this->position = min($at, $this->length);
 
-        return new Token(TokenType::T_EXTENDED_CLASS, substr($this->pattern, $start, $this->position - $start), $start);
+        return new Token(TokenType::ExtendedClass, substr($this->pattern, $start, $this->position - $start), $start);
     }
 
     /**
@@ -547,7 +547,7 @@ final class Lexer
      */
     private function consumeExtendedComment(array &$tokens): void
     {
-        $tokens[] = new Token(TokenType::T_LITERAL, '#', $this->position);
+        $tokens[] = new Token(TokenType::Literal, '#', $this->position);
         $this->position++;
 
         $end = strpos($this->pattern, "\n", $this->position);
@@ -555,12 +555,12 @@ final class Lexer
 
         if ($bodyEnd > $this->position) {
             $body = substr($this->pattern, $this->position, $bodyEnd - $this->position);
-            $tokens[] = new Token(TokenType::T_LITERAL, $body, $this->position);
+            $tokens[] = new Token(TokenType::Literal, $body, $this->position);
             $this->position = $bodyEnd;
         }
 
         if (false !== $end) {
-            $tokens[] = new Token(TokenType::T_LITERAL, "\n", $this->position);
+            $tokens[] = new Token(TokenType::Literal, "\n", $this->position);
             $this->position++;
         }
     }
@@ -647,7 +647,7 @@ final class Lexer
                 return $token;
             }
 
-            if (TokenType::T_LITERAL_ESCAPED === $type) {
+            if (TokenType::LiteralEscaped === $type) {
                 // "\c" only falls through to an escaped literal when no
                 // printable ASCII character follows it; PCRE rejects that.
                 if ('\\c' === $matchedValue) {
@@ -703,7 +703,7 @@ final class Lexer
         // "(*pla:" read as a plain "(": its body never closes, and PCRE runs
         // to the end of the pattern looking for the ")". A name PCRE does
         // not know is refused where it ends.
-        if (TokenType::T_GROUP_OPEN === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+        if (TokenType::GroupOpen === $type && 1 === preg_match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
             // "(?(*atomic:" is no condition: PCRE takes a lookaround there,
             // and refuses any other name it knows at the colon.
             $known = PcreVerb::takesArgument($opener[1]) || ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true));
@@ -746,19 +746,19 @@ final class Lexer
         // Before PCRE2 10.43, "{,2}" and "{ 2 }" are text: only the "{" is
         // read here, and what follows it is read again as text. A "\N" right
         // before keeps its count, which the validator refuses there.
-        if (TokenType::T_QUANTIFIER === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
+        if (TokenType::Quantifier === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
             && 1 !== preg_match('/^\{\d++(?:,\d*+)?\}/', $matchedValue)
             && !$this->followsNamedCharacterEscape($currentTokens, $startPos)) {
             $this->position = $startPos + 1;
 
-            return new Token(TokenType::T_LITERAL, '{', $startPos);
+            return new Token(TokenType::Literal, '{', $startPos);
         }
 
         return match ($type) {
-            TokenType::T_CHAR_CLASS_OPEN => $this->handleCharClassOpen($startPos),
-            TokenType::T_CHAR_CLASS_CLOSE => $this->closeCharClass($startPos, $currentTokens),
-            TokenType::T_COMMENT_OPEN => $this->openComment($startPos),
-            TokenType::T_QUOTE_MODE_START => $this->openQuoteMode($startPos),
+            TokenType::CharClassOpen => $this->handleCharClassOpen($startPos),
+            TokenType::CharClassClose => $this->closeCharClass($startPos, $currentTokens),
+            TokenType::CommentOpen => $this->openComment($startPos),
+            TokenType::QuoteModeStart => $this->openQuoteMode($startPos),
             default => $this->handleContextualLiteral($type, $matchedValue, $startPos, $currentTokens),
         };
     }
@@ -771,7 +771,7 @@ final class Lexer
         $previous = end($currentTokens);
 
         return false !== $previous
-            && TokenType::T_CHAR_TYPE === $previous->type
+            && TokenType::CharType === $previous->type
             && 'N' === $previous->value
             && $previous->end() === $position;
     }
@@ -783,20 +783,20 @@ final class Lexer
      */
     private function trackExtendedModeScope(TokenType $type): void
     {
-        if (TokenType::T_GROUP_CLOSE === $type) {
+        if (TokenType::GroupClose === $type) {
             [$this->extendedMode, $this->extendedMoreMode] = array_pop($this->extendedModeStack)
                 ?? [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
 
-        if (TokenType::T_GROUP_OPEN === $type) {
+        if (TokenType::GroupOpen === $type) {
             $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
 
-        if (TokenType::T_GROUP_MODIFIER_OPEN !== $type) {
+        if (TokenType::GroupModifierOpen !== $type) {
             return;
         }
 
@@ -848,7 +848,7 @@ final class Lexer
         // PHP compiles without PCRE2's extended class syntax, so a "[" inside
         // a class is a member: nothing nests.
         if ($this->inCharClass) {
-            return new Token(TokenType::T_LITERAL, '[', $startPos);
+            return new Token(TokenType::Literal, '[', $startPos);
         }
 
         return $this->openCharClass($startPos);
@@ -859,7 +859,7 @@ final class Lexer
         $this->inCharClass = true;
         $this->charClassStartPositions[] = $startPos;
 
-        return new Token(TokenType::T_CHAR_CLASS_OPEN, '[', $startPos);
+        return new Token(TokenType::CharClassOpen, '[', $startPos);
     }
 
     /**
@@ -868,7 +868,7 @@ final class Lexer
     private function closeCharClass(int $startPos, array $currentTokens): Token
     {
         if ($this->isAtCharClassStart($currentTokens)) {
-            return new Token(TokenType::T_LITERAL, ']', $startPos);
+            return new Token(TokenType::Literal, ']', $startPos);
         }
 
         array_pop($this->charClassStartPositions);
@@ -876,21 +876,21 @@ final class Lexer
             $this->inCharClass = false;
         }
 
-        return new Token(TokenType::T_CHAR_CLASS_CLOSE, ']', $startPos);
+        return new Token(TokenType::CharClassClose, ']', $startPos);
     }
 
     private function openComment(int $startPos): Token
     {
         $this->inCommentMode = true;
 
-        return new Token(TokenType::T_COMMENT_OPEN, '(?#', $startPos);
+        return new Token(TokenType::CommentOpen, '(?#', $startPos);
     }
 
     private function openQuoteMode(int $startPos): Token
     {
         $this->inQuoteMode = true;
 
-        return new Token(TokenType::T_QUOTE_MODE_START, '\Q', $startPos);
+        return new Token(TokenType::QuoteModeStart, '\Q', $startPos);
     }
 
     /**
@@ -902,7 +902,7 @@ final class Lexer
         int $startPos,
         array $currentTokens
     ): ?Token {
-        if (!$this->inCharClass || TokenType::T_LITERAL !== $type) {
+        if (!$this->inCharClass || TokenType::Literal !== $type) {
             return null;
         }
 
@@ -910,11 +910,11 @@ final class Lexer
 
         // Only the first "^" negates: in "[^^]" the second one is a member.
         if (false === $prefix && '^' === $matchedValue) {
-            return new Token(TokenType::T_NEGATION, '^', $startPos);
+            return new Token(TokenType::Negation, '^', $startPos);
         }
 
         if (null === $prefix && '-' === $matchedValue) {
-            return new Token(TokenType::T_RANGE, '-', $startPos);
+            return new Token(TokenType::Range, '-', $startPos);
         }
 
         return null;
@@ -954,11 +954,11 @@ final class Lexer
         for ($index = \count($currentTokens) - 1; $index >= 0; $index--) {
             $token = $currentTokens[$index];
 
-            if (TokenType::T_CHAR_CLASS_OPEN === $token->type && $classStart === $token->position) {
+            if (TokenType::CharClassOpen === $token->type && $classStart === $token->position) {
                 return $negated;
             }
 
-            if (TokenType::T_NEGATION === $token->type) {
+            if (TokenType::Negation === $token->type) {
                 $negated = true;
 
                 continue;
@@ -967,7 +967,7 @@ final class Lexer
             // Quote mode is closed by the time a member is read here, so a
             // "\Q" in the prefix is the start of an empty "\Q\E": anything it
             // quoted would be a literal token, which ends the prefix.
-            if (TokenType::T_QUOTE_MODE_END !== $token->type && TokenType::T_QUOTE_MODE_START !== $token->type) {
+            if (TokenType::QuoteModeEnd !== $token->type && TokenType::QuoteModeStart !== $token->type) {
                 return null;
             }
         }
@@ -1009,12 +1009,12 @@ final class Lexer
 
             $this->position += \strlen($literalText);
 
-            return new Token(TokenType::T_LITERAL, $literalText, $startPos);
+            return new Token(TokenType::Literal, $literalText, $startPos);
         }
 
         if (self::PATTERN_QUOTE_END === $endSequence) {
             $this->inQuoteMode = false;
-            $token = new Token(TokenType::T_QUOTE_MODE_END, self::PATTERN_QUOTE_END, $this->position);
+            $token = new Token(TokenType::QuoteModeEnd, self::PATTERN_QUOTE_END, $this->position);
             $this->position += \strlen(self::PATTERN_QUOTE_END);
 
             return $token;
@@ -1045,12 +1045,12 @@ final class Lexer
         if ('' !== $commentText) {
             $this->position += \strlen($commentText);
 
-            return new Token(TokenType::T_LITERAL, $commentText, $startPos);
+            return new Token(TokenType::Literal, $commentText, $startPos);
         }
 
         if (self::PATTERN_COMMENT_CLOSE === $endSequence) {
             $this->inCommentMode = false;
-            $token = new Token(TokenType::T_GROUP_CLOSE, self::PATTERN_COMMENT_CLOSE, $this->position);
+            $token = new Token(TokenType::GroupClose, self::PATTERN_COMMENT_CLOSE, $this->position);
             $this->position += \strlen(self::PATTERN_COMMENT_CLOSE);
 
             return $token;
@@ -1092,18 +1092,18 @@ final class Lexer
     private function extractTokenValue(TokenType $type, string $matchedValue, array $matches): string
     {
         return match ($type) {
-            TokenType::T_LITERAL_ESCAPED => $this->extractEscapedLiteralValue($matchedValue),
-            TokenType::T_PCRE_VERB => substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END),
-            TokenType::T_CALLOUT => substr($matchedValue, self::OFFSET_CALLOUT_START, self::OFFSET_CALLOUT_END),
-            TokenType::T_ASSERTION, TokenType::T_CHAR_TYPE, TokenType::T_KEEP => substr($matchedValue, self::OFFSET_BACKSLASH),
-            TokenType::T_BACKREF => $matchedValue,
-            TokenType::T_OCTAL_LEGACY => substr($matchedValue, self::OFFSET_BACKSLASH),
+            TokenType::LiteralEscaped => $this->extractEscapedLiteralValue($matchedValue),
+            TokenType::PcreVerb => substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END),
+            TokenType::Callout => substr($matchedValue, self::OFFSET_CALLOUT_START, self::OFFSET_CALLOUT_END),
+            TokenType::Assertion, TokenType::CharType, TokenType::Keep => substr($matchedValue, self::OFFSET_BACKSLASH),
+            TokenType::Backref => $matchedValue,
+            TokenType::OctalLegacy => substr($matchedValue, self::OFFSET_BACKSLASH),
             /* @phpstan-ignore cast.string */
-            TokenType::T_POSIX_CLASS => (string) ($matches['v_posix'] ?? ''),
-            TokenType::T_UNICODE => $this->parseUnicodeEscape($matchedValue),
-            TokenType::T_UNICODE_PROP => $this->normalizeUnicodeProp($matchedValue),
-            TokenType::T_UNICODE_NAMED => substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END),
-            TokenType::T_CONTROL_CHAR => substr($matchedValue, self::OFFSET_CONTROL_CHAR),
+            TokenType::PosixClass => (string) ($matches['v_posix'] ?? ''),
+            TokenType::Unicode => $this->parseUnicodeEscape($matchedValue),
+            TokenType::UnicodeProp => $this->normalizeUnicodeProp($matchedValue),
+            TokenType::UnicodeNamed => substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END),
+            TokenType::ControlChar => substr($matchedValue, self::OFFSET_CONTROL_CHAR),
             default => $matchedValue,
         };
     }
@@ -1173,12 +1173,12 @@ final class Lexer
     private function opensCondition(array $tokens, int $position): bool
     {
         $previous = array_pop($tokens);
-        if (null !== $previous && TokenType::T_CALLOUT === $previous->type && $previous->end() === $position) {
+        if (null !== $previous && TokenType::Callout === $previous->type && $previous->end() === $position) {
             $position = $previous->position;
             $previous = array_pop($tokens);
         }
 
-        return null !== $previous && TokenType::T_GROUP_MODIFIER_OPEN === $previous->type && $previous->end() === $position;
+        return null !== $previous && TokenType::GroupModifierOpen === $previous->type && $previous->end() === $position;
     }
 
     /**

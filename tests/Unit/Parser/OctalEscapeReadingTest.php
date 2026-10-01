@@ -45,7 +45,7 @@ final class OctalEscapeReadingTest extends TestCase
 
         $escape = $this->nodesOf($pattern)[1];
         $this->assertInstanceOf(CharLiteralNode::class, $escape);
-        $this->assertSame(CharLiteralType::OCTAL_LEGACY, $escape->type);
+        $this->assertSame(CharLiteralType::OctalLegacy, $escape->type);
         $this->assertSame(9, $escape->codePoint);
     }
 

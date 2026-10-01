@@ -18,7 +18,7 @@ namespace PhpRegex\Toolkit;
  */
 enum OutputFormat: string
 {
-    case TEXT = 'text';
-    case HTML = 'html';
-    case CONSOLE = 'console';
+    case Text = 'text';
+    case Html = 'html';
+    case Console = 'console';
 }

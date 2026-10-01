@@ -34,7 +34,7 @@ final class ParserConsumersTest extends TestCase
     {
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.2']);
 
-        $this->assertSame(RedosSeverity::CRITICAL, (new RedosAnalyzer($parser))->analyze('/(a+)+$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, (new RedosAnalyzer($parser))->analyze('/(a+)+$/')->severity);
         $this->assertTrue((new LanguageSolver($parser))->equivalent('/a|a/', '/a/')->isEquivalent);
         $this->assertTrue((new LanguageSolver($parser))->equivalent('/ab?/', '/a|ab/')->isEquivalent);
         $this->assertSame('/a+/', (new Transpiler($parser))->transpile('/a+/', 'javascript')->literal);

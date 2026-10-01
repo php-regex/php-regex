@@ -42,156 +42,156 @@ final class LexerTokensTest extends TestCase
     {
         yield 'quote mode' => [
             'pattern' => '\\Qhello world\\E',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_LITERAL(hello world) T_QUOTE_MODE_END(\\E) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) Literal(hello world) QuoteModeEnd(\\E) Eof',
         ];
 
         yield 'quote mode with metacharacters' => [
             'pattern' => '\\Q.*+?[]{}()\\E',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_LITERAL(.*+?[]{}()) T_QUOTE_MODE_END(\\E) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) Literal(.*+?[]{}()) QuoteModeEnd(\\E) Eof',
         ];
 
         yield 'quote mode left open' => [
             'pattern' => '\\Qhello world',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_LITERAL(hello world) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) Literal(hello world) Eof',
         ];
 
         yield 'empty quote mode' => [
             'pattern' => '\\Q\\E',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_QUOTE_MODE_END(\\E) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) QuoteModeEnd(\\E) Eof',
         ];
 
         yield 'quote mode holding escapes' => [
             'pattern' => '\\Q\\n\\t\\E',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_LITERAL(\\n\\t) T_QUOTE_MODE_END(\\E) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) Literal(\\n\\t) QuoteModeEnd(\\E) Eof',
         ];
 
         yield 'tab escape' => [
             'pattern' => '\\t',
-            'tokens' => 'T_LITERAL_ESCAPED(\\t) T_EOF',
+            'tokens' => 'LiteralEscaped(\\t) Eof',
         ];
 
         yield 'newline escape' => [
             'pattern' => '\\n',
-            'tokens' => 'T_LITERAL_ESCAPED(\\n) T_EOF',
+            'tokens' => 'LiteralEscaped(\\n) Eof',
         ];
 
         yield 'carriage return escape' => [
             'pattern' => '\\r',
-            'tokens' => 'T_LITERAL_ESCAPED(\\r) T_EOF',
+            'tokens' => 'LiteralEscaped(\\r) Eof',
         ];
 
         yield 'form feed escape' => [
             'pattern' => '\\f',
-            'tokens' => 'T_LITERAL_ESCAPED(\\f) T_EOF',
+            'tokens' => 'LiteralEscaped(\\f) Eof',
         ];
 
         yield 'vertical tab escape' => [
             'pattern' => '\\v',
-            'tokens' => 'T_CHAR_TYPE(v) T_EOF',
+            'tokens' => 'CharType(v) Eof',
         ];
 
         yield 'escape escape' => [
             'pattern' => '\\e',
-            'tokens' => 'T_LITERAL_ESCAPED(\\033) T_EOF',
+            'tokens' => 'LiteralEscaped(\\033) Eof',
         ];
 
         yield 'every control escape' => [
             'pattern' => '\\t\\n\\r\\f\\e',
-            'tokens' => 'T_LITERAL_ESCAPED(\\t) T_LITERAL_ESCAPED(\\n) T_LITERAL_ESCAPED(\\r) T_LITERAL_ESCAPED(\\f) T_LITERAL_ESCAPED(\\033) T_EOF',
+            'tokens' => 'LiteralEscaped(\\t) LiteralEscaped(\\n) LiteralEscaped(\\r) LiteralEscaped(\\f) LiteralEscaped(\\033) Eof',
         ];
 
         yield 'unicode property' => [
             'pattern' => '\\p{L}',
-            'tokens' => 'T_UNICODE_PROP({L}) T_EOF',
+            'tokens' => 'UnicodeProp({L}) Eof',
         ];
 
         yield 'negated unicode property' => [
             'pattern' => '\\P{L}',
-            'tokens' => 'T_UNICODE_PROP({^L}) T_EOF',
+            'tokens' => 'UnicodeProp({^L}) Eof',
         ];
 
         yield 'unicode property negated inside' => [
             'pattern' => '\\p{^L}',
-            'tokens' => 'T_UNICODE_PROP({^L}) T_EOF',
+            'tokens' => 'UnicodeProp({^L}) Eof',
         ];
 
         yield 'unicode property negated twice' => [
             'pattern' => '\\P{^L}',
-            'tokens' => 'T_UNICODE_PROP({L}) T_EOF',
+            'tokens' => 'UnicodeProp({L}) Eof',
         ];
 
         yield 'short unicode property' => [
             'pattern' => '\\pL',
-            'tokens' => 'T_UNICODE_PROP(L) T_EOF',
+            'tokens' => 'UnicodeProp(L) Eof',
         ];
 
         yield 'short negated unicode property' => [
             'pattern' => '\\PL',
-            'tokens' => 'T_UNICODE_PROP(^L) T_EOF',
+            'tokens' => 'UnicodeProp(^L) Eof',
         ];
 
         yield 'quote mode twice' => [
             'pattern' => '\\Qabc\\Edef\\Qghi\\E',
-            'tokens' => 'T_QUOTE_MODE_START(\\Q) T_LITERAL(abc) T_QUOTE_MODE_END(\\E) T_LITERAL(d) T_LITERAL(e) T_LITERAL(f) T_QUOTE_MODE_START(\\Q) T_LITERAL(ghi) T_QUOTE_MODE_END(\\E) T_EOF',
+            'tokens' => 'QuoteModeStart(\\Q) Literal(abc) QuoteModeEnd(\\E) Literal(d) Literal(e) Literal(f) QuoteModeStart(\\Q) Literal(ghi) QuoteModeEnd(\\E) Eof',
         ];
 
         yield 'escaped metacharacters' => [
             'pattern' => '\\.\\*\\+\\?',
-            'tokens' => 'T_LITERAL_ESCAPED(.) T_LITERAL_ESCAPED(*) T_LITERAL_ESCAPED(+) T_LITERAL_ESCAPED(?) T_EOF',
+            'tokens' => 'LiteralEscaped(.) LiteralEscaped(*) LiteralEscaped(+) LiteralEscaped(?) Eof',
         ];
 
         yield 'pcre verb' => [
             'pattern' => '(*FAIL)',
-            'tokens' => 'T_PCRE_VERB(FAIL) T_EOF',
+            'tokens' => 'PcreVerb(FAIL) Eof',
         ];
 
         yield 'pcre verb with an argument' => [
             'pattern' => '(*MARK:foo)',
-            'tokens' => 'T_PCRE_VERB(MARK:foo) T_EOF',
+            'tokens' => 'PcreVerb(MARK:foo) Eof',
         ];
 
         yield 'uppercase letter property' => [
             'pattern' => '\\p{Lu}',
-            'tokens' => 'T_UNICODE_PROP({Lu}) T_EOF',
+            'tokens' => 'UnicodeProp({Lu}) Eof',
         ];
 
         yield 'negated uppercase letter property' => [
             'pattern' => '\\P{Lu}',
-            'tokens' => 'T_UNICODE_PROP({^Lu}) T_EOF',
+            'tokens' => 'UnicodeProp({^Lu}) Eof',
         ];
 
         yield 'decimal digit property' => [
             'pattern' => '\\p{Nd}',
-            'tokens' => 'T_UNICODE_PROP({Nd}) T_EOF',
+            'tokens' => 'UnicodeProp({Nd}) Eof',
         ];
 
         yield 'negated decimal digit property' => [
             'pattern' => '\\P{Nd}',
-            'tokens' => 'T_UNICODE_PROP({^Nd}) T_EOF',
+            'tokens' => 'UnicodeProp({^Nd}) Eof',
         ];
 
         yield 'currency symbol property' => [
             'pattern' => '\\p{Sc}',
-            'tokens' => 'T_UNICODE_PROP({Sc}) T_EOF',
+            'tokens' => 'UnicodeProp({Sc}) Eof',
         ];
 
         yield 'negated currency symbol property' => [
             'pattern' => '\\P{Sc}',
-            'tokens' => 'T_UNICODE_PROP({^Sc}) T_EOF',
+            'tokens' => 'UnicodeProp({^Sc}) Eof',
         ];
         yield 'a verb wrapping a group' => [
             'pattern' => '(*atomic:(a))',
-            'tokens' => 'T_PCRE_VERB(atomic:(a)) T_EOF',
+            'tokens' => 'PcreVerb(atomic:(a)) Eof',
         ];
 
         yield 'a verb wrapping nested groups' => [
             'pattern' => '(*atomic:((a)))',
-            'tokens' => 'T_PCRE_VERB(atomic:((a))) T_EOF',
+            'tokens' => 'PcreVerb(atomic:((a))) Eof',
         ];
 
         yield 'a verb wrapping several groups' => [
             'pattern' => '(*pla:((a)b(c)))',
-            'tokens' => 'T_PCRE_VERB(pla:((a)b(c))) T_EOF',
+            'tokens' => 'PcreVerb(pla:((a)b(c))) Eof',
         ];
     }
 

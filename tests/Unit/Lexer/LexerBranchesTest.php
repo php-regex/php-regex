@@ -35,7 +35,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\t')->getTokens();
 
         $this->assertCount(2, $tokens); // T_LITERAL_ESCAPED + EOF
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type);
         $this->assertSame("\t", $tokens[0]->value);
     }
 
@@ -44,7 +44,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\n')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type);
         $this->assertSame("\n", $tokens[0]->value);
     }
 
@@ -53,7 +53,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\r')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type);
         $this->assertSame("\r", $tokens[0]->value);
     }
 
@@ -62,7 +62,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\f')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type);
         $this->assertSame("\f", $tokens[0]->value);
     }
 
@@ -72,7 +72,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\v')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[0]->type);
+        $this->assertSame(TokenType::CharType, $tokens[0]->type);
         $this->assertSame('v', $tokens[0]->value);
     }
 
@@ -81,7 +81,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\e')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type);
         $this->assertSame("\e", $tokens[0]->value);
     }
 
@@ -118,7 +118,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\p{L}')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('{L}', $tokens[0]->value);
     }
 
@@ -127,7 +127,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\P{L}')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('{^L}', $tokens[0]->value); // Negated
     }
 
@@ -136,7 +136,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\p{^L}')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('{^L}', $tokens[0]->value);
     }
 
@@ -146,7 +146,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\P{^L}')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('{L}', $tokens[0]->value); // Double negation removed
     }
 
@@ -156,7 +156,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\pL')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('L', $tokens[0]->value);
     }
 
@@ -166,7 +166,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\PL')->getTokens();
 
         $this->assertCount(2, $tokens);
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('^L', $tokens[0]->value);
     }
 
@@ -205,7 +205,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_PCRE_VERB, $tokens[0]->type);
+            $this->assertSame(TokenType::PcreVerb, $tokens[0]->type);
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -224,7 +224,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_ASSERTION, $tokens[0]->type);
+            $this->assertSame(TokenType::Assertion, $tokens[0]->type);
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -249,8 +249,8 @@ final class LexerBranchesTest extends TestCase
 
             // \v can be either T_CHAR_TYPE or T_LITERAL_ESCAPED depending on context
             $this->assertTrue(
-                TokenType::T_CHAR_TYPE === $tokens[0]->type
-                || TokenType::T_LITERAL_ESCAPED === $tokens[0]->type,
+                TokenType::CharType === $tokens[0]->type
+                || TokenType::LiteralEscaped === $tokens[0]->type,
                 "Failed type check for: {$pattern}",
             );
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
@@ -261,7 +261,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\K')->getTokens();
 
-        $this->assertSame(TokenType::T_KEEP, $tokens[0]->type);
+        $this->assertSame(TokenType::Keep, $tokens[0]->type);
         $this->assertSame('K', $tokens[0]->value);
     }
 
@@ -278,7 +278,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_BACKREF, $tokens[0]->type);
+            $this->assertSame(TokenType::Backref, $tokens[0]->type);
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -293,7 +293,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_BACKREF, $tokens[0]->type);
+            $this->assertSame(TokenType::Backref, $tokens[0]->type);
             $this->assertSame($pattern, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -311,7 +311,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_OCTAL_LEGACY, $tokens[0]->type);
+            $this->assertSame(TokenType::OctalLegacy, $tokens[0]->type);
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -332,7 +332,7 @@ final class LexerBranchesTest extends TestCase
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
             $posixToken = null;
             foreach ($tokens as $token) {
-                if (TokenType::T_POSIX_CLASS === $token->type) {
+                if (TokenType::PosixClass === $token->type) {
                     $posixToken = $token;
 
                     break;
@@ -349,7 +349,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('a\Q*+?\Eb\Q[]\Ec')->getTokens();
 
         // Should have: a, *+?, b, [], c, EOF
-        $values = array_map(static fn ($t) => $t->value, array_filter($tokens, static fn ($t) => TokenType::T_EOF !== $t->type));
+        $values = array_map(static fn ($t) => $t->value, array_filter($tokens, static fn ($t) => TokenType::Eof !== $t->type));
 
         $this->assertContains('a', $values);
         $this->assertContains('*+?', $values);
@@ -363,11 +363,11 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('\Q*+?\Eabc')->getTokens();
 
         // Now emits T_QUOTE_MODE_START first, then literal content
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
         $this->assertSame('\Q', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('*+?', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
     public function test_quote_mode_at_end(): void
@@ -375,12 +375,12 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('abc\Q*+?')->getTokens();
 
         // Last token before EOF should be the quoted literal
-        $nonEofTokens = array_filter($tokens, static fn ($t) => TokenType::T_EOF !== $t->type);
+        $nonEofTokens = array_filter($tokens, static fn ($t) => TokenType::Eof !== $t->type);
         $lastToken = end($nonEofTokens);
 
         $this->assertNotFalse($lastToken);
         $this->assertSame('*+?', $lastToken->value);
-        $this->assertSame(TokenType::T_LITERAL, $lastToken->type);
+        $this->assertSame(TokenType::Literal, $lastToken->type);
     }
 
     public function test_quote_mode_with_special_chars(): void
@@ -389,10 +389,10 @@ final class LexerBranchesTest extends TestCase
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL, T_QUOTE_MODE_END, T_EOF
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('()[]{}^$|.?*+', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
     public function test_quote_mode_with_backslashes(): void
@@ -401,10 +401,10 @@ final class LexerBranchesTest extends TestCase
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL, T_QUOTE_MODE_END, T_EOF
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('\d\s\w', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
     public function test_nested_quote_mode_markers(): void
@@ -415,11 +415,11 @@ final class LexerBranchesTest extends TestCase
 
         // Now emits: T_QUOTE_MODE_START, T_LITERAL('\Q'), T_QUOTE_MODE_END, T_QUOTE_MODE_END, T_EOF
         $this->assertCount(5, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('\Q', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[3]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[3]->type);
     }
 
     public function test_g_reference_variations(): void
@@ -435,7 +435,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_G_REFERENCE, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::GReference, $tokens[0]->type, "Failed for: {$pattern}");
         }
     }
 
@@ -443,7 +443,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\o{123}')->getTokens();
 
-        $this->assertSame(TokenType::T_OCTAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Octal, $tokens[0]->type);
         $this->assertSame('\o{123}', $tokens[0]->value);
     }
 
@@ -459,7 +459,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($testCases as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_UNICODE, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::Unicode, $tokens[0]->type, "Failed for: {$pattern}");
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -482,7 +482,7 @@ final class LexerBranchesTest extends TestCase
 
         // Should have: [, \t, \n, \r, \f, \e, ], EOF
         $this->assertSame('[', $tokens[0]->value);
-        $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[0]->type);
+        $this->assertSame(TokenType::CharClassOpen, $tokens[0]->type);
 
         // Check escape sequences are present
         $values = array_map(static fn ($t) => $t->value, $tokens);
@@ -517,7 +517,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type, "Failed for: {$pattern}");
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -547,10 +547,10 @@ final class LexerBranchesTest extends TestCase
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL, T_QUOTE_MODE_END, T_EOF
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame("\n\t\r", $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
     public function test_backref_edge_cases(): void
@@ -565,7 +565,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_BACKREF, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::Backref, $tokens[0]->type, "Failed for: {$pattern}");
         }
     }
 
@@ -584,7 +584,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_G_REFERENCE, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::GReference, $tokens[0]->type, "Failed for: {$pattern}");
         }
     }
 
@@ -593,14 +593,14 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('(?#comment here)')->getTokens();
 
         // Should have comment open token
-        $this->assertSame(TokenType::T_COMMENT_OPEN, $tokens[0]->type);
+        $this->assertSame(TokenType::CommentOpen, $tokens[0]->type);
     }
 
     public function test_group_modifier_open(): void
     {
         $tokens = (new Lexer())->tokenize('(?i)')->getTokens();
 
-        $this->assertSame(TokenType::T_GROUP_MODIFIER_OPEN, $tokens[0]->type);
+        $this->assertSame(TokenType::GroupModifierOpen, $tokens[0]->type);
     }
 
     public function test_complex_pattern_with_all_token_types(): void
@@ -613,7 +613,7 @@ final class LexerBranchesTest extends TestCase
 
         // Verify we have various token types
         $types = array_map(static fn ($t) => $t->type, $tokens);
-        $this->assertContains(TokenType::T_GROUP_MODIFIER_OPEN, $types);
+        $this->assertContains(TokenType::GroupModifierOpen, $types);
     }
 
     public function test_octal_legacy_all_variants(): void
@@ -627,7 +627,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern => $expectedValue) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_OCTAL_LEGACY, $tokens[0]->type);
+            $this->assertSame(TokenType::OctalLegacy, $tokens[0]->type);
             $this->assertSame($expectedValue, $tokens[0]->value, "Failed for: {$pattern}");
         }
     }
@@ -638,7 +638,7 @@ final class LexerBranchesTest extends TestCase
         $tokens = (new Lexer())->tokenize('a\Q\Eb\Q\Ec')->getTokens();
 
         // Should have: a, b, c, EOF (no tokens from empty \Q\E)
-        $values = array_map(static fn ($t) => $t->value, array_filter($tokens, static fn ($t) => TokenType::T_EOF !== $t->type));
+        $values = array_map(static fn ($t) => $t->value, array_filter($tokens, static fn ($t) => TokenType::Eof !== $t->type));
 
         $this->assertContains('a', $values);
         $this->assertContains('b', $values);
@@ -657,7 +657,7 @@ final class LexerBranchesTest extends TestCase
         foreach ($patterns as $pattern) {
             $tokens = (new Lexer())->tokenize($pattern)->getTokens();
 
-            $this->assertSame(TokenType::T_PCRE_VERB, $tokens[0]->type, "Failed for: {$pattern}");
+            $this->assertSame(TokenType::PcreVerb, $tokens[0]->type, "Failed for: {$pattern}");
             $this->assertNotEmpty($tokens[0]->value);
         }
     }
@@ -666,7 +666,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('(?C some content )')->getTokens();
 
-        $this->assertSame(TokenType::T_CALLOUT, $tokens[0]->type);
+        $this->assertSame(TokenType::Callout, $tokens[0]->type);
         $this->assertSame(' some content ', $tokens[0]->value);
     }
 
@@ -674,7 +674,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\N{LATIN CAPITAL LETTER A}')->getTokens();
 
-        $this->assertSame(TokenType::T_UNICODE_NAMED, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeNamed, $tokens[0]->type);
         $this->assertSame('LATIN CAPITAL LETTER A', $tokens[0]->value);
     }
 
@@ -682,7 +682,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\cA')->getTokens();
 
-        $this->assertSame(TokenType::T_CONTROL_CHAR, $tokens[0]->type);
+        $this->assertSame(TokenType::ControlChar, $tokens[0]->type);
         $this->assertSame('A', $tokens[0]->value);
     }
 
@@ -694,8 +694,8 @@ final class LexerBranchesTest extends TestCase
         $ampersands = array_values(array_filter($tokens, static fn (Token $token): bool => '&' === $token->value));
 
         $this->assertCount(2, $ampersands);
-        $this->assertSame(TokenType::T_LITERAL, $ampersands[0]->type);
-        $this->assertSame(TokenType::T_LITERAL, $ampersands[1]->type);
+        $this->assertSame(TokenType::Literal, $ampersands[0]->type);
+        $this->assertSame(TokenType::Literal, $ampersands[1]->type);
     }
 
     public function test_char_class_double_hyphen_is_two_range_tokens(): void
@@ -707,8 +707,8 @@ final class LexerBranchesTest extends TestCase
         $hyphens = array_values(array_filter($tokens, static fn (Token $token): bool => '-' === $token->value));
 
         $this->assertCount(2, $hyphens);
-        $this->assertSame(TokenType::T_RANGE, $hyphens[0]->type);
-        $this->assertSame(TokenType::T_RANGE, $hyphens[1]->type);
+        $this->assertSame(TokenType::Range, $hyphens[0]->type);
+        $this->assertSame(TokenType::Range, $hyphens[1]->type);
     }
 
     public function test_nested_char_class_tokens(): void
@@ -719,13 +719,13 @@ final class LexerBranchesTest extends TestCase
         $closeCount = 0;
         $hasLiteralOpen = false;
         foreach ($tokens as $token) {
-            if (TokenType::T_CHAR_CLASS_OPEN === $token->type) {
+            if (TokenType::CharClassOpen === $token->type) {
                 $openCount++;
             }
-            if (TokenType::T_CHAR_CLASS_CLOSE === $token->type) {
+            if (TokenType::CharClassClose === $token->type) {
                 $closeCount++;
             }
-            if (TokenType::T_LITERAL === $token->type && '[' === $token->value) {
+            if (TokenType::Literal === $token->type && '[' === $token->value) {
                 $hasLiteralOpen = true;
             }
         }
@@ -739,7 +739,7 @@ final class LexerBranchesTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\p{^}')->getTokens();
 
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('', $tokens[0]->value);
     }
 

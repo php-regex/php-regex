@@ -57,7 +57,7 @@ final class QuantifiedQuotedRunTest extends TestCase
 
         $this->assertInstanceOf(QuantifierNode::class, $quantified);
         $this->assertSame('*', $quantified->quantifier);
-        $this->assertSame(QuantifierType::T_POSSESSIVE, $quantified->type);
+        $this->assertSame(QuantifierType::Possessive, $quantified->type);
     }
 
     #[Test]

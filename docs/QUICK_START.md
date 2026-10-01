@@ -158,7 +158,7 @@ $analysis = $regex->redos('/a+b/');
 echo "ReDoS Severity: " . $analysis->severity->value;  // "safe"
 
 // Optional: attempt bounded confirmation
-$confirmed = $regex->redos('/(a+)+b/', mode: RedosMode::CONFIRMED);
+$confirmed = $regex->redos('/(a+)+b/', mode: RedosMode::Confirmed);
 echo $confirmed->isConfirmed() ? "confirmed\n" : "theoretical\n";
 ```
 

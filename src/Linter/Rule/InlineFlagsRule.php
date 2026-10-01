@@ -42,7 +42,7 @@ final class InlineFlagsRule extends AbstractLintRule
             return [];
         }
 
-        if (GroupType::T_GROUP_INLINE_FLAGS !== $node->type || null === $node->flags) {
+        if (GroupType::InlineFlags !== $node->type || null === $node->flags) {
             return [];
         }
 

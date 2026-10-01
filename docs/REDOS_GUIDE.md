@@ -48,7 +48,7 @@ Example PHP:
 use PhpRegex\Toolkit\Regex;
 use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+$/', mode: RedosMode::CONFIRMED);
+$analysis = Regex::create()->redos('/(a+)+$/', mode: RedosMode::Confirmed);
 if ($analysis->isConfirmed()) {
     echo "Confirmed with bounded evidence\n";
 }
@@ -133,7 +133,7 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 use PhpRegex\Toolkit\Regex;
 use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::THEORETICAL);
+$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
 echo $analysis->severity->value;
 ```
 

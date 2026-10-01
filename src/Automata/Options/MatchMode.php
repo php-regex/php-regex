@@ -21,10 +21,10 @@ enum MatchMode: string
     /**
      * Match the full input (implicit ^...$).
      */
-    case FULL = 'full';
+    case Full = 'full';
 
     /**
      * Match a substring of the input (search semantics).
      */
-    case PARTIAL = 'partial';
+    case Partial = 'partial';
 }

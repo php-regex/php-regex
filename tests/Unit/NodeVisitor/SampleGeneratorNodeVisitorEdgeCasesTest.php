@@ -92,7 +92,7 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
     public function test_char_literal_out_of_range_returns_question(): void
     {
         $generator = new SampleGenerator();
-        $result = (new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::UNICODE, 0, 0))->accept($generator);
+        $result = (new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::Unicode, 0, 0))->accept($generator);
 
         $this->assertSame('?', $result);
     }
@@ -173,8 +173,8 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
 
         // A lookaround may hold or not, depending on the text around the
         // sample: over enough tries, both branches are taken.
-        $negative = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_NEGATIVE, null, null, 0, 0);
-        $positive = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
+        $negative = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookaheadNegative, null, null, 0, 0);
+        $positive = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookaheadPositive, null, null, 0, 0);
         $generator->setSeed(7);
         $taken = ['negative' => [], 'positive' => []];
         for ($try = 0; $try < 32; $try++) {
@@ -187,7 +187,7 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $this->assertCount(2, $taken['negative']);
         $this->assertCount(2, $taken['positive']);
 
-        $nonLookaround = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
+        $nonLookaround = new GroupNode(new LiteralNode('a', 0, 0), GroupType::NonCapturing, null, null, 0, 0);
         $this->assertTrue($this->invokePrivate($generator, 'isConditionSatisfied', [$nonLookaround]));
 
         $assertion = new AssertionNode('A', 0, 0);
@@ -228,7 +228,7 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
     public function test_collect_groups_handles_define(): void
     {
         $generator = new SampleGenerator();
-        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
+        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::Capturing, null, null, 0, 0);
         $define = new DefineNode($group, 0, 0);
 
         $this->invokePrivate($generator, 'collectGroups', [$define]);
@@ -244,9 +244,9 @@ final class SampleGeneratorNodeVisitorEdgeCasesTest extends TestCase
         $this->setPrivate($generator, 'rootPattern', $root);
 
         // "(x)(a)(b)(?-1)": a relative call counts the groups opened before it.
-        $groupFirst = new GroupNode(new LiteralNode('x', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
-        $groupOne = new GroupNode(new LiteralNode('a', 4, 5), GroupType::T_GROUP_CAPTURING, null, null, 3, 6);
-        $groupThree = new GroupNode(new LiteralNode('b', 7, 8), GroupType::T_GROUP_CAPTURING, null, null, 6, 9);
+        $groupFirst = new GroupNode(new LiteralNode('x', 1, 2), GroupType::Capturing, null, null, 0, 3);
+        $groupOne = new GroupNode(new LiteralNode('a', 4, 5), GroupType::Capturing, null, null, 3, 6);
+        $groupThree = new GroupNode(new LiteralNode('b', 7, 8), GroupType::Capturing, null, null, 6, 9);
         $this->setPrivate($generator, 'groupIndexMap', [1 => $groupFirst, 2 => $groupOne, 3 => $groupThree]);
 
         $numeric = $this->invokePrivate($generator, 'resolveSubroutineTarget', [new SubroutineNode('2', '2', 9, 13)]);

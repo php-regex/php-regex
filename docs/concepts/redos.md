@@ -74,7 +74,7 @@ $analysis = $regex->redos('/(a+)+b/');
 echo $analysis->severity->value; // 'critical', 'high', 'medium', 'low', 'safe'
 
 // Check against threshold
-if ($analysis->exceedsThreshold(RedosSeverity::HIGH)) {
+if ($analysis->exceedsThreshold(RedosSeverity::High)) {
     echo "Pattern is potentially dangerous!";
 }
 

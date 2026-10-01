@@ -30,10 +30,10 @@ require_once __DIR__.'/../vendor/autoload.php';
 $tokens = [];
 $pattern = '';
 for ($i = 0; $i < 10000; $i++) {
-    $tokens[] = new Token(TokenType::T_LITERAL, (string) $i, $i);
+    $tokens[] = new Token(TokenType::Literal, (string) $i, $i);
     $pattern .= (string) $i;
 }
-$tokens[] = new Token(TokenType::T_EOF, '', 10000);
+$tokens[] = new Token(TokenType::Eof, '', 10000);
 
 echo "Benchmarking TokenStream performance...\n";
 echo 'Token count: '.\count($tokens)."\n\n";

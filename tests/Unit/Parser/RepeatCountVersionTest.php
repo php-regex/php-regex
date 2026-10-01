@@ -112,9 +112,9 @@ final class RepeatCountVersionTest extends TestCase
         $old = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80300))->getTokens();
         $new = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80400))->getTokens();
 
-        $this->assertSame(TokenType::T_LITERAL, $old[1]->type);
+        $this->assertSame(TokenType::Literal, $old[1]->type);
         $this->assertSame('{', $old[1]->value);
-        $this->assertSame(TokenType::T_QUANTIFIER, $new[1]->type);
+        $this->assertSame(TokenType::Quantifier, $new[1]->type);
     }
 
     /**

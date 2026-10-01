@@ -18,7 +18,7 @@ namespace PhpRegex\Redos;
  */
 enum RedosConfidence: string
 {
-    case LOW = 'low';
-    case MEDIUM = 'medium';
-    case HIGH = 'high';
+    case Low = 'low';
+    case Medium = 'medium';
+    case High = 'high';
 }

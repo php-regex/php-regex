@@ -34,18 +34,18 @@ final class OctalNodeTest extends TestCase
     #[DataProvider('data_provider_octal')]
     public function test_constructor_and_getters(string $original, int $codePoint, int $start, int $end): void
     {
-        $node = new CharLiteralNode($original, $codePoint, CharLiteralType::OCTAL, $start, $end);
+        $node = new CharLiteralNode($original, $codePoint, CharLiteralType::Octal, $start, $end);
 
         $this->assertSame($original, $node->originalRepresentation);
         $this->assertSame($codePoint, $node->codePoint);
-        $this->assertSame(CharLiteralType::OCTAL, $node->type);
+        $this->assertSame(CharLiteralType::Octal, $node->type);
         $this->assertSame($start, $node->getStartPosition());
         $this->assertSame($end, $node->getEndPosition());
     }
 
     public function test_accept_visitor_calls_visit_char_literal(): void
     {
-        $node = new CharLiteralNode('\\o{77}', 0o77, CharLiteralType::OCTAL, 0, 6);
+        $node = new CharLiteralNode('\\o{77}', 0o77, CharLiteralType::Octal, 0, 6);
         $visitor = $this->createMock(NodeVisitorInterface::class);
 
         $visitor->expects($this->once())

@@ -31,7 +31,7 @@ final class TokenStreamCursorTest extends TestCase
     {
         $stream = $this->streamOf('a', 'b');
 
-        $this->assertTrue($stream->check(TokenType::T_LITERAL));
+        $this->assertTrue($stream->check(TokenType::Literal));
         $this->assertTrue($stream->checkLiteral('a'));
         $this->assertFalse($stream->checkLiteral('b'));
         $this->assertSame(0, $stream->getPosition());
@@ -42,7 +42,7 @@ final class TokenStreamCursorTest extends TestCase
     {
         $stream = $this->streamOf('a', 'b');
 
-        $this->assertTrue($stream->match(TokenType::T_LITERAL));
+        $this->assertTrue($stream->match(TokenType::Literal));
         $this->assertSame(1, $stream->getPosition());
 
         $this->assertFalse($stream->matchLiteral('a'));
@@ -58,8 +58,8 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf();
 
         $this->assertTrue($stream->isAtEnd());
-        $this->assertTrue($stream->check(TokenType::T_EOF));
-        $this->assertFalse($stream->check(TokenType::T_LITERAL));
+        $this->assertTrue($stream->check(TokenType::Eof));
+        $this->assertFalse($stream->check(TokenType::Literal));
         $this->assertFalse($stream->checkLiteral('a'));
 
         // Stepping past the end is a no-op rather than an error.
@@ -72,7 +72,7 @@ final class TokenStreamCursorTest extends TestCase
     {
         $stream = $this->streamOf('a', 'b');
 
-        $this->assertSame(TokenType::T_EOF, $stream->previous()->type);
+        $this->assertSame(TokenType::Eof, $stream->previous()->type);
 
         $stream->advance();
         $this->assertSame('a', $stream->previous()->value);
@@ -83,7 +83,7 @@ final class TokenStreamCursorTest extends TestCase
     {
         $stream = $this->streamOf('a');
 
-        $token = $stream->consume(TokenType::T_LITERAL, 'Expected a literal', ErrorCode::TokenUnexpected);
+        $token = $stream->consume(TokenType::Literal, 'Expected a literal', ErrorCode::TokenUnexpected);
 
         $this->assertSame('a', $token->value);
         $this->assertTrue($stream->isAtEnd());
@@ -97,7 +97,7 @@ final class TokenStreamCursorTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('Expected a dot at position 0 (found literal)');
 
-        $stream->consume(TokenType::T_DOT, 'Expected a dot', ErrorCode::TokenUnexpected);
+        $stream->consume(TokenType::Dot, 'Expected a dot', ErrorCode::TokenUnexpected);
     }
 
     #[Test]
@@ -108,7 +108,7 @@ final class TokenStreamCursorTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage('Expected something at end of input (found eof)');
 
-        $stream->consume(TokenType::T_LITERAL, 'Expected something', ErrorCode::TokenUnexpected);
+        $stream->consume(TokenType::Literal, 'Expected something', ErrorCode::TokenUnexpected);
     }
 
     #[Test]
@@ -128,11 +128,11 @@ final class TokenStreamCursorTest extends TestCase
         $position = 0;
 
         foreach ($literals as $literal) {
-            $tokens[] = new Token(TokenType::T_LITERAL, $literal, $position);
+            $tokens[] = new Token(TokenType::Literal, $literal, $position);
             $position += \strlen($literal);
         }
 
-        $tokens[] = new Token(TokenType::T_EOF, '', $position);
+        $tokens[] = new Token(TokenType::Eof, '', $position);
 
         return new TokenStream($tokens, implode('', $literals));
     }

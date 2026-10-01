@@ -30,7 +30,7 @@ final readonly class AnalysisContext
         public bool $includeOverlaps = false,
         public array $only = [],
         public array $securityConfigPaths = [],
-        public RedosSeverity $redosThreshold = RedosSeverity::HIGH,
+        public RedosSeverity $redosThreshold = RedosSeverity::High,
         public bool $skipFirewalls = false,
         public bool $debug = false,
     ) {}

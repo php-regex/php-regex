@@ -147,7 +147,7 @@ final class ScanSubstringTest extends TestCase
 
         $assertion = $pattern->children[2];
         $this->assertInstanceOf(GroupNode::class, $assertion);
-        $this->assertSame(GroupType::T_GROUP_SCAN_SUBSTRING, $assertion->type);
+        $this->assertSame(GroupType::ScanSubstring, $assertion->type);
         $this->assertSame(['1', '<n>', "'n'", '-1'], $assertion->scannedGroups);
     }
 

@@ -33,7 +33,7 @@ $regex = Regex::create();
 
 // 1. Theoretical analysis (fast, conservative)
 echo "1. Theoretical Analysis:\n";
-$theoreticalResult = $regex->redos($riskyPattern, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
+$theoreticalResult = $regex->redos($riskyPattern, RedosSeverity::Medium, RedosMode::Theoretical);
 
 echo "   Severity: {$theoreticalResult->severity->value}\n";
 echo "   Findings: " . count($theoreticalResult->findings) . " risk(s) found\n";
@@ -54,7 +54,7 @@ echo "2. Confirmed Analysis (with test inputs):\n";
 $confirmedOptions = new ConfirmationOptions(
     maxInputLength: 1000,
 );
-$confirmedResult = $regex->redos($riskyPattern, RedosSeverity::MEDIUM, RedosMode::CONFIRMED, $confirmedOptions);
+$confirmedResult = $regex->redos($riskyPattern, RedosSeverity::Medium, RedosMode::Confirmed, $confirmedOptions);
 
 echo "   Severity: {$confirmedResult->severity->value}\n";
 echo "   Confirmed: " . ($confirmedResult->isConfirmed() ? 'Yes' : 'No') . "\n";
@@ -78,7 +78,7 @@ echo "  After:  {$safePattern1}\n";
 echo "  Why: Possessive quantifier (++) prevents backtracking\n\n";
 
 $validation1 = $regex->validate($safePattern1);
-$redos1 = $regex->redos($safePattern1, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
+$redos1 = $regex->redos($safePattern1, RedosSeverity::Medium, RedosMode::Theoretical);
 
 echo "  Valid: " . ($validation1->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos1->severity->value}\n\n";
@@ -92,7 +92,7 @@ echo "  After:  {$safePattern2}\n";
 echo "  Why: Atomic group (?>) prevents backtracking once matched\n\n";
 
 $validation2 = $regex->validate($safePattern2);
-$redos2 = $regex->redos($safePattern2, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
+$redos2 = $regex->redos($safePattern2, RedosSeverity::Medium, RedosMode::Theoretical);
 
 echo "  Valid: " . ($validation2->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos2->severity->value}\n\n";
@@ -106,7 +106,7 @@ echo "  After:  {$safePattern3}\n";
 echo "  Why: Remove redundant quantifier nesting\n\n";
 
 $validation3 = $regex->validate($safePattern3);
-$redos3 = $regex->redos($safePattern3, RedosSeverity::MEDIUM, RedosMode::THEORETICAL);
+$redos3 = $regex->redos($safePattern3, RedosSeverity::Medium, RedosMode::Theoretical);
 
 echo "  Valid: " . ($validation3->isValid ? 'Yes' : 'No') . "\n";
 echo "  ReDoS Risk: {$redos3->severity->value}\n\n";

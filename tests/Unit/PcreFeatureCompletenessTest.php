@@ -51,7 +51,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         foreach ($patterns as $pattern) {
             try {
                 $ast = $this->regexService->parse($pattern);
-                $hasAtomic = $this->hasGroupType($ast, GroupType::T_GROUP_ATOMIC);
+                $hasAtomic = $this->hasGroupType($ast, GroupType::Atomic);
                 $this->assertTrue($hasAtomic, "Pattern should contain atomic group: {$pattern}");
             } catch (ParserException $e) {
                 $this->fail("Atomic group pattern should parse: {$pattern}. Error: {$e->getMessage()}");
@@ -79,7 +79,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         foreach ($patterns as $pattern) {
             try {
                 $ast = $this->regexService->parse($pattern);
-                $hasPossessive = $this->hasQuantifierType($ast, QuantifierType::T_POSSESSIVE);
+                $hasPossessive = $this->hasQuantifierType($ast, QuantifierType::Possessive);
                 $this->assertTrue($hasPossessive, "Pattern should contain possessive quantifier: {$pattern}");
             } catch (ParserException $e) {
                 $this->fail("Possessive quantifier pattern should parse: {$pattern}. Error: {$e->getMessage()}");
@@ -148,7 +148,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         foreach ($patterns as $pattern) {
             try {
                 $ast = $this->regexService->parse($pattern);
-                $hasNamed = $this->hasGroupType($ast, GroupType::T_GROUP_NAMED);
+                $hasNamed = $this->hasGroupType($ast, GroupType::Named);
                 $this->assertTrue($hasNamed, "Pattern should contain named group: {$pattern}");
             } catch (ParserException $e) {
                 $this->fail("Named group pattern should parse: {$pattern}. Error: {$e->getMessage()}");
@@ -258,10 +258,10 @@ final class PcreFeatureCompletenessTest extends TestCase
         foreach ($patterns as $pattern) {
             try {
                 $ast = $this->regexService->parse($pattern);
-                $hasLookaround = $this->hasGroupType($ast, GroupType::T_GROUP_LOOKAHEAD_POSITIVE)
-                    || $this->hasGroupType($ast, GroupType::T_GROUP_LOOKAHEAD_NEGATIVE)
-                    || $this->hasGroupType($ast, GroupType::T_GROUP_LOOKBEHIND_POSITIVE)
-                    || $this->hasGroupType($ast, GroupType::T_GROUP_LOOKBEHIND_NEGATIVE);
+                $hasLookaround = $this->hasGroupType($ast, GroupType::LookaheadPositive)
+                    || $this->hasGroupType($ast, GroupType::LookaheadNegative)
+                    || $this->hasGroupType($ast, GroupType::LookbehindPositive)
+                    || $this->hasGroupType($ast, GroupType::LookbehindNegative);
 
                 $this->assertTrue($hasLookaround, "Pattern should contain assertion: {$pattern}");
             } catch (ParserException $e) {

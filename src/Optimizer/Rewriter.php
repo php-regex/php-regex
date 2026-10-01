@@ -254,7 +254,7 @@ final class Rewriter extends AbstractNodeVisitor
                 // Only compact if count meets the configured minimum (avoids making output longer/less readable)
                 if ($count >= $this->minQuantifierCount) {
                     $baseNode = new LiteralNode($char, $child->startPosition, $child->endPosition);
-                    $optimizedChildren[$i] = new QuantifierNode($baseNode, '{'.$count.'}', QuantifierType::T_GREEDY, $child->startPosition, $child->endPosition);
+                    $optimizedChildren[$i] = new QuantifierNode($baseNode, '{'.$count.'}', QuantifierType::Greedy, $child->startPosition, $child->endPosition);
                     $hasChanged = true;
                 }
             }
@@ -267,7 +267,7 @@ final class Rewriter extends AbstractNodeVisitor
                 $current = $optimizedChildren[$i];
                 $suffix = array_slice($optimizedChildren, $i + 1);
 
-                if ($current instanceof QuantifierNode && QuantifierType::T_GREEDY === $current->type && $this->isPossessifyCandidate($current) && !empty($suffix)) {
+                if ($current instanceof QuantifierNode && QuantifierType::Greedy === $current->type && $this->isPossessifyCandidate($current) && !empty($suffix)) {
                     if ($this->isCaptureSensitive($current->node) || $this->canMatchEmpty($current->node)) {
                         continue;
                     }
@@ -281,7 +281,7 @@ final class Rewriter extends AbstractNodeVisitor
                             $optimizedChildren[$i] = new QuantifierNode(
                                 $current->node,
                                 $current->quantifier,
-                                QuantifierType::T_POSSESSIVE,
+                                QuantifierType::Possessive,
                                 $current->startPosition,
                                 $current->endPosition,
                             );
@@ -319,7 +319,7 @@ final class Rewriter extends AbstractNodeVisitor
         // But do not unwrap if we are inside a quantifier and the original child was a sequence or alternation,
         // as unwrapping changes semantics when the group has a quantifier.
         if (
-            GroupType::T_GROUP_NON_CAPTURING === $node->type
+            GroupType::NonCapturing === $node->type
             && !($this->isInsideQuantifier && ($node->child instanceof SequenceNode || $node->child instanceof AlternationNode))
             // A quantifier repeats one character only: "(?:)*", "(?:^)*" or
             // "(?:\b)+" keep their group.
@@ -745,11 +745,11 @@ final class Rewriter extends AbstractNodeVisitor
 
         if ($node instanceof GroupNode) {
             if (\in_array($node->type, [
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-                GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-                GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-                GroupType::T_GROUP_SCAN_SUBSTRING,
+                GroupType::LookaheadPositive,
+                GroupType::LookaheadNegative,
+                GroupType::LookbehindPositive,
+                GroupType::LookbehindNegative,
+                GroupType::ScanSubstring,
             ], true)) {
                 return true;
             }
@@ -1122,7 +1122,7 @@ final class Rewriter extends AbstractNodeVisitor
                 $parsedCount = $this->parseQuantifierCount($child->quantifier);
                 // A variable quantifier is not merged, nor a possessive one,
                 // which is atomic.
-                if (null === $parsedCount || QuantifierType::T_POSSESSIVE === $child->type) {
+                if (null === $parsedCount || QuantifierType::Possessive === $child->type) {
                     $this->flushCompactedSequence($compacted, $currentNode, $currentCount, $currentFromQuantifier);
                     $compacted[] = $child;
 
@@ -1203,9 +1203,9 @@ final class Rewriter extends AbstractNodeVisitor
     {
         // Never compact nodes that affect capture numbering, backreferences, or complex semantics
         if ($node instanceof GroupNode && \in_array($node->type, [
-            GroupType::T_GROUP_CAPTURING,
-            GroupType::T_GROUP_NAMED,
-            GroupType::T_GROUP_BRANCH_RESET,
+            GroupType::Capturing,
+            GroupType::Named,
+            GroupType::BranchReset,
         ], true)) {
             return true;
         }
@@ -1260,7 +1260,7 @@ final class Rewriter extends AbstractNodeVisitor
         return new QuantifierNode(
             $node,
             '{'.$count.'}',
-            QuantifierType::T_GREEDY,
+            QuantifierType::Greedy,
             $node->getStartPosition(),
             $node->getEndPosition(),
         );
@@ -1283,7 +1283,7 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         // "X{1}+" is possessive, as an atomic group is: it never gives back.
-        if (('{1}' === $quantifier || '{1,1}' === $quantifier) && QuantifierType::T_POSSESSIVE !== $node->type) {
+        if (('{1}' === $quantifier || '{1,1}' === $quantifier) && QuantifierType::Possessive !== $node->type) {
             return $node->node;
         }
 
@@ -1392,12 +1392,12 @@ final class Rewriter extends AbstractNodeVisitor
         $newAlt = 1 === \count($nonNullSuffixes)
             ? $firstSuffix
             : new AlternationNode($nonNullSuffixes, $firstSuffix->startPosition, $lastSuffix->endPosition);
-        $group = new GroupNode($newAlt, GroupType::T_GROUP_NON_CAPTURING);
+        $group = new GroupNode($newAlt, GroupType::NonCapturing);
         if ($hasEmptySuffix) {
             $group = new QuantifierNode(
                 $group,
                 '?',
-                QuantifierType::T_GREEDY,
+                QuantifierType::Greedy,
                 $firstSuffix->startPosition,
                 $lastSuffix->endPosition,
             );
@@ -1491,7 +1491,7 @@ final class Rewriter extends AbstractNodeVisitor
         $newAlt = 1 === \count($nonNullPrefixes)
             ? $firstPrefix
             : new AlternationNode($nonNullPrefixes, $firstPrefix->startPosition, $lastPrefix->endPosition);
-        $group = new GroupNode($newAlt, GroupType::T_GROUP_NON_CAPTURING);
+        $group = new GroupNode($newAlt, GroupType::NonCapturing);
         $firstAlt = $withSuffix[0];
         $suffixNode = $this->stringToNode($suffix, $firstAlt->endPosition - \strlen($suffix), $firstAlt->endPosition);
         $factored = new SequenceNode([$group, $suffixNode], $firstAlt->startPosition, $firstAlt->endPosition);

@@ -134,15 +134,15 @@ final class ExhaustiveVisitorTest extends TestCase
         $explainer = new TextExplainer();
 
         // Lookbehind Positive
-        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKBEHIND_POSITIVE);
+        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookbehindPositive);
         $this->assertStringContainsString('Positive lookbehind', $node->accept($explainer));
 
         // Lookbehind Negative
-        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKBEHIND_NEGATIVE);
+        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookbehindNegative);
         $this->assertStringContainsString('Negative lookbehind', $node->accept($explainer));
 
         // Atomic
-        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_ATOMIC);
+        $node = new GroupNode(new LiteralNode('a', 0, 0), GroupType::Atomic);
         $this->assertStringContainsString('Atomic', $node->accept($explainer));
     }
 
@@ -152,15 +152,15 @@ final class ExhaustiveVisitorTest extends TestCase
         $node = new LiteralNode('a', 0, 0);
 
         // Range {1,3}
-        $q = new QuantifierNode($node, '{1,3}', QuantifierType::T_GREEDY, 0, 0);
+        $q = new QuantifierNode($node, '{1,3}', QuantifierType::Greedy, 0, 0);
         $this->assertStringContainsString('at least 1 but not more than 3', $q->accept($explainer));
 
         // At least {1,}
-        $q = new QuantifierNode($node, '{1,}', QuantifierType::T_GREEDY, 0, 0);
+        $q = new QuantifierNode($node, '{1,}', QuantifierType::Greedy, 0, 0);
         $this->assertStringContainsString('at least 1', $q->accept($explainer));
 
         // Exact {5}
-        $q = new QuantifierNode($node, '{5}', QuantifierType::T_GREEDY, 0, 0);
+        $q = new QuantifierNode($node, '{5}', QuantifierType::Greedy, 0, 0);
         $this->assertStringContainsString('exactly 5', $q->accept($explainer));
     }
 }

@@ -63,7 +63,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            if ($left->type !== $right->type || QuantifierType::T_POSSESSIVE === $left->type) {
+            if ($left->type !== $right->type || QuantifierType::Possessive === $left->type) {
                 continue;
             }
 
@@ -142,9 +142,9 @@ final class QuantifierConcatenationRule extends AbstractLintRule
     private function nodeContainsCapturingGroup(NodeInterface $node): bool
     {
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_BRANCH_RESET === $node->type
-                || GroupType::T_GROUP_CAPTURING === $node->type
-                || GroupType::T_GROUP_NAMED === $node->type
+            if (GroupType::BranchReset === $node->type
+                || GroupType::Capturing === $node->type
+                || GroupType::Named === $node->type
             ) {
                 return true;
             }

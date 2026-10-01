@@ -30,7 +30,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_critical_severity(): void
     {
         $ast = Regex::create()->parse('/a+/');
-        $input = $this->generator->generate($ast, '', RedosSeverity::CRITICAL);
+        $input = $this->generator->generate($ast, '', RedosSeverity::Critical);
         $this->assertStringStartsWith(str_repeat('a', 50), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -38,7 +38,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_high_severity(): void
     {
         $ast = Regex::create()->parse('/b+/');
-        $input = $this->generator->generate($ast, '', RedosSeverity::HIGH);
+        $input = $this->generator->generate($ast, '', RedosSeverity::High);
         $this->assertStringStartsWith(str_repeat('b', 40), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -46,7 +46,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_medium_severity(): void
     {
         $ast = Regex::create()->parse('/c+/');
-        $input = $this->generator->generate($ast, '', RedosSeverity::MEDIUM);
+        $input = $this->generator->generate($ast, '', RedosSeverity::Medium);
         $this->assertStringStartsWith(str_repeat('c', 30), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -54,7 +54,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_low_severity(): void
     {
         $ast = Regex::create()->parse('/d+/');
-        $input = $this->generator->generate($ast, '', RedosSeverity::LOW);
+        $input = $this->generator->generate($ast, '', RedosSeverity::Low);
         $this->assertStringStartsWith(str_repeat('d', 20), $input);
         $this->assertStringEndsWith('!', $input);
     }
@@ -62,7 +62,7 @@ final class ReDoSInputGeneratorTest extends TestCase
     public function test_generate_with_safe_severity(): void
     {
         $ast = Regex::create()->parse('/e+/');
-        $input = $this->generator->generate($ast, '', RedosSeverity::SAFE);
+        $input = $this->generator->generate($ast, '', RedosSeverity::Safe);
         $this->assertStringStartsWith(str_repeat('e', 10), $input);
         $this->assertStringEndsWith('!', $input);
     }

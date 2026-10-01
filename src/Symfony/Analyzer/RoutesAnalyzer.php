@@ -59,7 +59,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
                     self::ID,
                     'Routes',
                     summary: [
-                        new AnalysisNotice(CheckOutcome::WARN, 'Router service is not available.'),
+                        new AnalysisNotice(CheckOutcome::Warn, 'Router service is not available.'),
                     ],
                 ),
             ];
@@ -76,7 +76,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
                     'Routes',
                     meta: ['Routes' => 0],
                     summary: [
-                        new AnalysisNotice(CheckOutcome::PASS, 'No routes found.'),
+                        new AnalysisNotice(CheckOutcome::Pass, 'No routes found.'),
                     ],
                 ),
             ];
@@ -143,14 +143,14 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->skippedRoutes) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf('%d routes skipped due to unsupported regex features.', \count($report->skippedRoutes)),
             );
         }
 
         if ([] !== $report->routesWithConditions) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d routes use conditions; conditions are not evaluated during analysis.',
                     \count(array_unique($report->routesWithConditions)),
@@ -160,7 +160,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->routesWithUnsupportedHosts) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d routes use host requirements that could not be analyzed.',
                     \count(array_unique($report->routesWithUnsupportedHosts)),
@@ -181,14 +181,14 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
         $overlaps = $report->stats['overlaps'];
 
         if (0 === $shadowed && 0 === $overlaps) {
-            $summary[] = new AnalysisNotice(CheckOutcome::PASS, 'No route conflicts detected.');
+            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'No route conflicts detected.');
 
             return $summary;
         }
 
         if ($shadowed > 0) {
             $summary[] = new AnalysisNotice(
-                CheckOutcome::FAIL,
+                CheckOutcome::Fail,
                 \sprintf('%d shadowed routes detected.', $shadowed),
             );
         }
@@ -196,7 +196,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
         if ($overlaps > 0) {
             $suffix = $includeOverlaps ? 'Listed below.' : 'Use --show-overlaps to include them.';
             $summary[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf('%d overlapping routes detected. %s', $overlaps, $suffix),
             );
         }
@@ -213,7 +213,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
         $other = $conflict['conflict'];
         $type = $conflict['type'];
 
-        $severity = 'shadowed' === $type ? CheckOutcome::FAIL : CheckOutcome::WARN;
+        $severity = 'shadowed' === $type ? CheckOutcome::Fail : CheckOutcome::Warn;
         $title = \sprintf(
             '%s (#%d) %s %s (#%d)',
             $route['name'],

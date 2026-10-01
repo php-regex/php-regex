@@ -64,8 +64,8 @@ if (strlen($pattern) > 100_000) {
 $regex = Regex::create();
 $result = $regex->redos(
     $pattern,
-    RedosSeverity::HIGH,
-    RedosMode::CONFIRMED,  // ← Test with real inputs
+    RedosSeverity::High,
+    RedosMode::Confirmed,  // ← Test with real inputs
     new ConfirmationOptions(
         maxTestStrings: 1000,
         maxStringLength: 1000,

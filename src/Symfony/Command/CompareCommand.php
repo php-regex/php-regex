@@ -41,8 +41,8 @@ final class CompareCommand extends Command
 
     public function __construct(
         private readonly Regex $regex,
-        private readonly string $defaultMinimizer = MinimizationAlgorithm::HOPCROFT->value,
-        private readonly string $defaultDeterminizer = DeterminizationAlgorithm::SUBSET_INDEXED->value,
+        private readonly string $defaultMinimizer = MinimizationAlgorithm::Hopcroft->value,
+        private readonly string $defaultDeterminizer = DeterminizationAlgorithm::SubsetIndexed->value,
     ) {
         parent::__construct();
     }
@@ -117,7 +117,7 @@ final class CompareCommand extends Command
 
         $solver = new LanguageSolver($this->regex->parser());
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             minimizationAlgorithm: $minimizer,
             determinizationAlgorithm: $determinizer,
         );

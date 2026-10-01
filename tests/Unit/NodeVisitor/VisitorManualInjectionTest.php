@@ -66,7 +66,7 @@ final class VisitorManualInjectionTest extends TestCase
             new LiteralNode('b', 0, 0)
         ], 0, 0);
 
-        $quantifier = new QuantifierNode($alt, '*', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode($alt, '*', QuantifierType::Greedy, 0, 0);
         $compiler = new PatternPrinter();
 
         // Must produce (?:a|b)*

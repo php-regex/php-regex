@@ -478,7 +478,7 @@ final class RegexPatternRule implements Rule
     private static function redosThreshold(mixed $threshold): string
     {
         if (null === $threshold) {
-            return RedosSeverity::CRITICAL->value;
+            return RedosSeverity::Critical->value;
         }
 
         if (!\is_string($threshold)) {
@@ -506,7 +506,7 @@ final class RegexPatternRule implements Rule
             $this->regex,
             null,
             redosThreshold: $this->redosThreshold,
-            redosMode: RedosMode::THEORETICAL,
+            redosMode: RedosMode::Theoretical,
             redosEnabled: $this->redosEnabled,
             lintEnabled: $this->lintEnabled,
         );

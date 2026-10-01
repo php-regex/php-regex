@@ -23,8 +23,8 @@ final class DeterminizationAlgorithmFactory
     public function create(DeterminizationAlgorithm $algorithm): DeterminizationAlgorithmInterface
     {
         return match ($algorithm) {
-            DeterminizationAlgorithm::SUBSET => new SubsetConstruction(),
-            DeterminizationAlgorithm::SUBSET_INDEXED => new SubsetConstructionIndexed(),
+            DeterminizationAlgorithm::Subset => new SubsetConstruction(),
+            DeterminizationAlgorithm::SubsetIndexed => new SubsetConstructionIndexed(),
         };
     }
 }

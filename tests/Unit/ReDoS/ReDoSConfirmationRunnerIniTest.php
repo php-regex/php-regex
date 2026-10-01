@@ -66,7 +66,7 @@ final class ReDoSConfirmationRunnerIniTest extends TestCase
 
         (new ConfirmationRunner())->confirm(
             '/(a+)+$/',
-            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new RedosAnalysis(RedosSeverity::High, 8),
             new ConfirmationOptions(steps: 1, iterations: 1, backtrackLimit: 10),
         );
 
@@ -109,7 +109,7 @@ final class ReDoSConfirmationRunnerIniTest extends TestCase
 
         $confirmation = (new ConfirmationRunner())->confirm(
             '/(a+)+$/',
-            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new RedosAnalysis(RedosSeverity::High, 8),
             new ConfirmationOptions(steps: 1, iterations: 1, backtrackLimit: 10, recursionLimit: 500),
         );
 

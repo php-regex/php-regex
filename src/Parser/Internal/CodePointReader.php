@@ -36,10 +36,10 @@ final class CodePointReader
     public static function fromLiteral(string $representation, CharLiteralType $type): int
     {
         return match ($type) {
-            CharLiteralType::UNICODE => self::fromHexEscape($representation),
-            CharLiteralType::UNICODE_NAMED => self::fromNamedEscape($representation),
-            CharLiteralType::OCTAL,
-            CharLiteralType::OCTAL_LEGACY => self::fromOctalEscape($representation),
+            CharLiteralType::Unicode => self::fromHexEscape($representation),
+            CharLiteralType::UnicodeNamed => self::fromNamedEscape($representation),
+            CharLiteralType::Octal,
+            CharLiteralType::OctalLegacy => self::fromOctalEscape($representation),
         };
     }
 

@@ -128,11 +128,11 @@ final class GroupNameReaderTest extends TestCase
         $position = 0;
 
         foreach ($literals as $literal) {
-            $tokens[] = new Token(TokenType::T_LITERAL, $literal, $position);
+            $tokens[] = new Token(TokenType::Literal, $literal, $position);
             $position += \strlen($literal);
         }
 
-        $tokens[] = new Token(TokenType::T_EOF, '', $position);
+        $tokens[] = new Token(TokenType::Eof, '', $position);
 
         return new TokenStream($tokens, implode('', $literals));
     }

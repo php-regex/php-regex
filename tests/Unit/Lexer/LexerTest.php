@@ -27,13 +27,13 @@ final class LexerTest extends TestCase
 
         // f o o EOF = 4 tokens
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[0]->type);
         $this->assertSame('f', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('o', $tokens[1]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type);
+        $this->assertSame(TokenType::Literal, $tokens[2]->type);
         $this->assertSame('o', $tokens[2]->value);
-        $this->assertSame(TokenType::T_EOF, $tokens[3]->type);
+        $this->assertSame(TokenType::Eof, $tokens[3]->type);
     }
 
     public function test_tokenize_multibyte_literal(): void
@@ -42,11 +42,11 @@ final class LexerTest extends TestCase
 
         // f ô ô EOF = 4 tokens
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[0]->type);
         $this->assertSame('f', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('ô', $tokens[1]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type);
+        $this->assertSame(TokenType::Literal, $tokens[2]->type);
         $this->assertSame('ô', $tokens[2]->value);
     }
 
@@ -55,13 +55,13 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('(bar)?')->getTokens();
 
         $expected = [
-            TokenType::T_GROUP_OPEN,
-            TokenType::T_LITERAL, // b
-            TokenType::T_LITERAL, // a
-            TokenType::T_LITERAL, // r
-            TokenType::T_GROUP_CLOSE,
-            TokenType::T_QUANTIFIER, // ?
-            TokenType::T_EOF,
+            TokenType::GroupOpen,
+            TokenType::Literal, // b
+            TokenType::Literal, // a
+            TokenType::Literal, // r
+            TokenType::GroupClose,
+            TokenType::Quantifier, // ?
+            TokenType::Eof,
         ];
         $this->assertCount(\count($expected), $tokens);
         $this->assertSame('?', $tokens[5]->value);
@@ -76,7 +76,7 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('foo|bar')->getTokens();
         // f o o | b a r EOF = 8 tokens
         $this->assertCount(8, $tokens);
-        $this->assertSame(TokenType::T_ALTERNATION, $tokens[3]->type);
+        $this->assertSame(TokenType::Alternation, $tokens[3]->type);
     }
 
     public function test_tokenize_custom_quantifier(): void
@@ -85,8 +85,8 @@ final class LexerTest extends TestCase
 
         // a {2,4} EOF = 3 tokens
         $this->assertCount(3, $tokens);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[0]->type);
-        $this->assertSame(TokenType::T_QUANTIFIER, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[0]->type);
+        $this->assertSame(TokenType::Quantifier, $tokens[1]->type);
         $this->assertSame('{2,4}', $tokens[1]->value);
     }
 
@@ -95,11 +95,11 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('a{b}')->getTokens();
         // a { b } EOF = 5 tokens
         $this->assertCount(5, $tokens);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('{', $tokens[1]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type);
+        $this->assertSame(TokenType::Literal, $tokens[2]->type);
         $this->assertSame('b', $tokens[2]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[3]->type);
+        $this->assertSame(TokenType::Literal, $tokens[3]->type);
         $this->assertSame('}', $tokens[3]->value);
     }
 
@@ -110,19 +110,19 @@ final class LexerTest extends TestCase
         // ( a * ) EOF = 5 tokens
         $this->assertCount(5, $tokens);
 
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[0]->type); // \(
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[0]->type); // \(
         $this->assertSame('(', $tokens[0]->value);
 
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type); // a
+        $this->assertSame(TokenType::Literal, $tokens[1]->type); // a
         $this->assertSame('a', $tokens[1]->value);
 
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[2]->type); // \*
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[2]->type); // \*
         $this->assertSame('*', $tokens[2]->value);
 
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[3]->type); // \)
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[3]->type); // \)
         $this->assertSame(')', $tokens[3]->value);
 
-        $this->assertSame(TokenType::T_EOF, $tokens[4]->type);
+        $this->assertSame(TokenType::Eof, $tokens[4]->type);
     }
 
     public function test_tokenize_char_types_and_dot(): void
@@ -130,14 +130,14 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('.\d\s\w\D\S\W')->getTokens();
 
         $expected = [
-            TokenType::T_DOT,
-            TokenType::T_CHAR_TYPE, // \d
-            TokenType::T_CHAR_TYPE, // \s
-            TokenType::T_CHAR_TYPE, // \w
-            TokenType::T_CHAR_TYPE, // \D
-            TokenType::T_CHAR_TYPE, // \S
-            TokenType::T_CHAR_TYPE, // \W
-            TokenType::T_EOF,
+            TokenType::Dot,
+            TokenType::CharType, // \d
+            TokenType::CharType, // \s
+            TokenType::CharType, // \w
+            TokenType::CharType, // \D
+            TokenType::CharType, // \S
+            TokenType::CharType, // \W
+            TokenType::Eof,
         ];
         $this->assertCount(\count($expected), $tokens);
 
@@ -155,9 +155,9 @@ final class LexerTest extends TestCase
 
         // ^ f o o $ EOF = 6 tokens
         $this->assertCount(6, $tokens);
-        $this->assertSame(TokenType::T_ANCHOR, $tokens[0]->type);
+        $this->assertSame(TokenType::Anchor, $tokens[0]->type);
         $this->assertSame('^', $tokens[0]->value);
-        $this->assertSame(TokenType::T_ANCHOR, $tokens[4]->type);
+        $this->assertSame(TokenType::Anchor, $tokens[4]->type);
         $this->assertSame('$', $tokens[4]->value);
     }
 
@@ -165,16 +165,16 @@ final class LexerTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\\Afoo\\z\\b\\G\\B')->getTokens();
 
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[0]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[0]->type);
         $this->assertSame('A', $tokens[0]->value);
         // ... f o o
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[4]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[4]->type);
         $this->assertSame('z', $tokens[4]->value);
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[5]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[5]->type);
         $this->assertSame('b', $tokens[5]->value);
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[6]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[6]->type);
         $this->assertSame('G', $tokens[6]->value);
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[7]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[7]->type);
         $this->assertSame('B', $tokens[7]->value);
     }
 
@@ -182,11 +182,11 @@ final class LexerTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\\p{L}\\P{^L}\\pL')->getTokens();
 
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[0]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[0]->type);
         $this->assertSame('{L}', $tokens[0]->value); // \p{L}
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[1]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[1]->type);
         $this->assertSame('{L}', $tokens[1]->value); // \P{^L} - double negation cancels out
-        $this->assertSame(TokenType::T_UNICODE_PROP, $tokens[2]->type);
+        $this->assertSame(TokenType::UnicodeProp, $tokens[2]->type);
         $this->assertSame('L', $tokens[2]->value); // \pL
     }
 
@@ -194,7 +194,7 @@ final class LexerTest extends TestCase
     {
         $tokens = (new Lexer())->tokenize('\\o{777}')->getTokens();
 
-        $this->assertSame(TokenType::T_OCTAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Octal, $tokens[0]->type);
         $this->assertSame('\\o{777}', $tokens[0]->value);
     }
 
@@ -208,7 +208,7 @@ final class LexerTest extends TestCase
 
         $octalTokens = array_values(array_filter(
             $tokens,
-            static fn ($token) => TokenType::T_OCTAL_LEGACY === $token->type,
+            static fn ($token) => TokenType::OctalLegacy === $token->type,
         ));
 
         $this->assertSame(
@@ -217,10 +217,10 @@ final class LexerTest extends TestCase
         );
 
         if ($expectRange) {
-            $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[0]->type);
-            $this->assertSame(TokenType::T_OCTAL_LEGACY, $tokens[1]->type);
-            $this->assertSame(TokenType::T_RANGE, $tokens[2]->type);
-            $this->assertSame(TokenType::T_OCTAL_LEGACY, $tokens[3]->type);
+            $this->assertSame(TokenType::CharClassOpen, $tokens[0]->type);
+            $this->assertSame(TokenType::OctalLegacy, $tokens[1]->type);
+            $this->assertSame(TokenType::Range, $tokens[2]->type);
+            $this->assertSame(TokenType::OctalLegacy, $tokens[3]->type);
         }
     }
 
@@ -272,14 +272,14 @@ final class LexerTest extends TestCase
         // Tests context-sensitive tokens: ^ (negation), - (range), and ] (literal)
         $tokens = (new Lexer())->tokenize('[^a-z-]]')->getTokens();
 
-        $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[0]->type);
-        $this->assertSame(TokenType::T_NEGATION, $tokens[1]->type); // ^ at start
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type); // a
-        $this->assertSame(TokenType::T_RANGE, $tokens[3]->type); // - in middle
-        $this->assertSame(TokenType::T_LITERAL, $tokens[4]->type); // z
-        $this->assertSame(TokenType::T_RANGE, $tokens[5]->type); // - in middle (literal if last, but here it's followed by ])
-        $this->assertSame(TokenType::T_CHAR_CLASS_CLOSE, $tokens[6]->type); // ] at end
-        $this->assertSame(TokenType::T_LITERAL, $tokens[7]->type); // Trailing ] (literal because of position logic)
+        $this->assertSame(TokenType::CharClassOpen, $tokens[0]->type);
+        $this->assertSame(TokenType::Negation, $tokens[1]->type); // ^ at start
+        $this->assertSame(TokenType::Literal, $tokens[2]->type); // a
+        $this->assertSame(TokenType::Range, $tokens[3]->type); // - in middle
+        $this->assertSame(TokenType::Literal, $tokens[4]->type); // z
+        $this->assertSame(TokenType::Range, $tokens[5]->type); // - in middle (literal if last, but here it's followed by ])
+        $this->assertSame(TokenType::CharClassClose, $tokens[6]->type); // ] at end
+        $this->assertSame(TokenType::Literal, $tokens[7]->type); // Trailing ] (literal because of position logic)
     }
 
     public function test_tokenize_char_class_literal_at_start(): void
@@ -287,15 +287,15 @@ final class LexerTest extends TestCase
         // [^]a] - literal ']' at start
         $tokens = (new Lexer())->tokenize('[^]a]')->getTokens();
 
-        $this->assertSame(TokenType::T_NEGATION, $tokens[1]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type); // ']' as literal
+        $this->assertSame(TokenType::Negation, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[2]->type); // ']' as literal
     }
 
     public function test_tokenize_posix_class(): void
     {
         $tokens = (new Lexer())->tokenize('[[:alnum:]]')->getTokens();
 
-        $this->assertSame(TokenType::T_POSIX_CLASS, $tokens[1]->type);
+        $this->assertSame(TokenType::PosixClass, $tokens[1]->type);
         $this->assertSame('alnum', $tokens[1]->value);
     }
 
@@ -311,13 +311,13 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('\Q*+.\Efoo')->getTokens();
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL (content), T_QUOTE_MODE_END for full fidelity
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
         $this->assertSame('\Q', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('*+.', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
         $this->assertSame('\E', $tokens[2]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[3]->type);
+        $this->assertSame(TokenType::Literal, $tokens[3]->type);
         $this->assertSame('f', $tokens[3]->value);
     }
 
@@ -326,16 +326,16 @@ final class LexerTest extends TestCase
         // Test \N (any char except newline), \H (not horizontal whitespace), \V (not vertical whitespace)
         $tokens = (new Lexer())->tokenize('\\N\\H\\V')->getTokens();
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[0]->type);
+        $this->assertSame(TokenType::CharType, $tokens[0]->type);
         $this->assertSame('N', $tokens[0]->value);
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[1]->type);
+        $this->assertSame(TokenType::CharType, $tokens[1]->type);
         $this->assertSame('H', $tokens[1]->value);
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[2]->type);
+        $this->assertSame(TokenType::CharType, $tokens[2]->type);
         $this->assertSame('V', $tokens[2]->value);
 
-        $this->assertSame(TokenType::T_EOF, $tokens[3]->type);
+        $this->assertSame(TokenType::Eof, $tokens[3]->type);
     }
 
     public function test_tokenize_char_type_n_h_v_inside_char_class(): void
@@ -343,18 +343,18 @@ final class LexerTest extends TestCase
         // Test \N, \H, \V inside character classes
         $tokens = (new Lexer())->tokenize('[\\N\\H\\V]')->getTokens();
 
-        $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[0]->type);
+        $this->assertSame(TokenType::CharClassOpen, $tokens[0]->type);
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[1]->type);
+        $this->assertSame(TokenType::CharType, $tokens[1]->type);
         $this->assertSame('N', $tokens[1]->value);
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[2]->type);
+        $this->assertSame(TokenType::CharType, $tokens[2]->type);
         $this->assertSame('H', $tokens[2]->value);
 
-        $this->assertSame(TokenType::T_CHAR_TYPE, $tokens[3]->type);
+        $this->assertSame(TokenType::CharType, $tokens[3]->type);
         $this->assertSame('V', $tokens[3]->value);
 
-        $this->assertSame(TokenType::T_CHAR_CLASS_CLOSE, $tokens[4]->type);
+        $this->assertSame(TokenType::CharClassClose, $tokens[4]->type);
     }
 
     public function test_tokenize_backslash_b_inside_char_class_is_backspace(): void
@@ -362,13 +362,13 @@ final class LexerTest extends TestCase
         // Inside character class, \b means backspace (0x08), not word boundary
         $tokens = (new Lexer())->tokenize('[\\b]')->getTokens();
 
-        $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[0]->type);
+        $this->assertSame(TokenType::CharClassOpen, $tokens[0]->type);
 
         // \b inside char class should be T_LITERAL_ESCAPED with value \x08 (backspace)
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[1]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[1]->type);
         $this->assertSame("\x08", $tokens[1]->value);
 
-        $this->assertSame(TokenType::T_CHAR_CLASS_CLOSE, $tokens[2]->type);
+        $this->assertSame(TokenType::CharClassClose, $tokens[2]->type);
     }
 
     public function test_tokenize_backslash_b_outside_char_class_is_assertion(): void
@@ -376,16 +376,16 @@ final class LexerTest extends TestCase
         // Outside character class, \b is word boundary assertion
         $tokens = (new Lexer())->tokenize('\\bword\\b')->getTokens();
 
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[0]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[0]->type);
         $this->assertSame('b', $tokens[0]->value);
 
         // w o r d
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[2]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[3]->type);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[4]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[2]->type);
+        $this->assertSame(TokenType::Literal, $tokens[3]->type);
+        $this->assertSame(TokenType::Literal, $tokens[4]->type);
 
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[5]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[5]->type);
         $this->assertSame('b', $tokens[5]->value);
     }
 
@@ -395,21 +395,21 @@ final class LexerTest extends TestCase
         $tokens = (new Lexer())->tokenize('\\b[\\b]\\b')->getTokens();
 
         // First \b - outside, word boundary assertion
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[0]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[0]->type);
         $this->assertSame('b', $tokens[0]->value);
 
         // [ - char class open
-        $this->assertSame(TokenType::T_CHAR_CLASS_OPEN, $tokens[1]->type);
+        $this->assertSame(TokenType::CharClassOpen, $tokens[1]->type);
 
         // \b inside char class - backspace
-        $this->assertSame(TokenType::T_LITERAL_ESCAPED, $tokens[2]->type);
+        $this->assertSame(TokenType::LiteralEscaped, $tokens[2]->type);
         $this->assertSame("\x08", $tokens[2]->value);
 
         // ] - char class close
-        $this->assertSame(TokenType::T_CHAR_CLASS_CLOSE, $tokens[3]->type);
+        $this->assertSame(TokenType::CharClassClose, $tokens[3]->type);
 
         // Last \b - outside, word boundary assertion
-        $this->assertSame(TokenType::T_ASSERTION, $tokens[4]->type);
+        $this->assertSame(TokenType::Assertion, $tokens[4]->type);
         $this->assertSame('b', $tokens[4]->value);
     }
 }

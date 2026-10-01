@@ -24,7 +24,7 @@ final class GroupNumberingCollectorEdgeCasesTest extends TestCase
     public function test_collect_branch_reset_handles_non_alternation_child(): void
     {
         $collector = new GroupNumberingCollector();
-        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_BRANCH_RESET, null, null, 0, 0);
+        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::BranchReset, null, null, 0, 0);
 
         $method = (new \ReflectionClass($collector))->getMethod('collectBranchReset');
         $result = $method->invoke($collector, $group);

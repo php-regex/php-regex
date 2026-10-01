@@ -102,7 +102,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     public function test_partial_match_intersection_uses_search_semantics(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
         $result = $solver->intersection('/admin/', '/admin\\/secure/', $options);
 
@@ -116,7 +116,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     public function test_partial_match_rejects_anchors(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
         $this->expectException(ComplexityException::class);
         $solver->intersection('/foo^bar/', '/foobar/', $options);
@@ -126,7 +126,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     public function test_partial_match_start_anchor_limits_language(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
         $anchoredSubset = $solver->subsetOf('/^a/', '/a/', $options);
         $this->assertTrue($anchoredSubset->isSubset);
@@ -140,7 +140,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     public function test_partial_match_end_anchor_limits_language(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
         $anchoredSubset = $solver->subsetOf('/a$/', '/a/', $options);
         $this->assertTrue($anchoredSubset->isSubset);
@@ -154,7 +154,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     public function test_partial_match_rejects_nested_anchor_alternation(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::PARTIAL);
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
         $this->expectException(ComplexityException::class);
         $solver->intersection('/(^a)|(^b)/', '/a|b/', $options);
@@ -219,6 +219,6 @@ final class LanguageSolverSemanticsTest extends TestCase
 
     private function fullMatchOptions(): SolverOptions
     {
-        return new SolverOptions(matchMode: MatchMode::FULL);
+        return new SolverOptions(matchMode: MatchMode::Full);
     }
 }

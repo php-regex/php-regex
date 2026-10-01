@@ -92,21 +92,21 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
         $flags = $node->flags ?? '';
 
         return match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => $open.$child.$close,
-            GroupType::T_GROUP_NON_CAPTURING => $open.$this->wrap('?:', 'group').$child.$close,
-            GroupType::T_GROUP_NAMED => $open
+            GroupType::Capturing => $open.$child.$close,
+            GroupType::NonCapturing => $open.$this->wrap('?:', 'group').$child.$close,
+            GroupType::Named => $open
                 .$this->wrap($this->escape('?<'), 'group')
                 .$this->wrapReference($node->name ?? '')
                 .$this->wrap($this->escape('>'), 'group')
                 .$child
                 .$close,
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => $open.$this->wrap('?=', 'group').$child.$close,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => $open.$this->wrap('?!', 'group').$child.$close,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => $open.$this->wrap($this->escape('?<='), 'group').$child.$close,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => $open.$this->wrap($this->escape('?<!'), 'group').$child.$close,
-            GroupType::T_GROUP_ATOMIC => $open.$this->wrap($this->escape('?>'), 'group').$child.$close,
-            GroupType::T_GROUP_BRANCH_RESET => $open.$this->wrap('?|', 'group').$child.$close,
-            GroupType::T_GROUP_SCAN_SUBSTRING => $open
+            GroupType::LookaheadPositive => $open.$this->wrap('?=', 'group').$child.$close,
+            GroupType::LookaheadNegative => $open.$this->wrap('?!', 'group').$child.$close,
+            GroupType::LookbehindPositive => $open.$this->wrap($this->escape('?<='), 'group').$child.$close,
+            GroupType::LookbehindNegative => $open.$this->wrap($this->escape('?<!'), 'group').$child.$close,
+            GroupType::Atomic => $open.$this->wrap($this->escape('?>'), 'group').$child.$close,
+            GroupType::BranchReset => $open.$this->wrap('?|', 'group').$child.$close,
+            GroupType::ScanSubstring => $open
                 .$this->wrap('*', 'group')
                 .$this->wrap($node->name ?? 'scan_substring', 'keyword')
                 .$this->wrap(':(', 'group')
@@ -114,7 +114,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
                 .$this->wrap(')', 'group')
                 .$child
                 .$close,
-            GroupType::T_GROUP_INLINE_FLAGS => $this->renderInlineFlagsGroup($flags, $child, $open, $close),
+            GroupType::InlineFlags => $this->renderInlineFlagsGroup($flags, $child, $open, $close),
         };
     }
 
@@ -123,9 +123,9 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
     {
         $inner = $node->node->accept($this);
         $quant = $node->quantifier;
-        if (QuantifierType::T_LAZY === $node->type) {
+        if (QuantifierType::Lazy === $node->type) {
             $quant .= '?';
-        } elseif (QuantifierType::T_POSSESSIVE === $node->type) {
+        } elseif (QuantifierType::Possessive === $node->type) {
             $quant .= '+';
         }
 

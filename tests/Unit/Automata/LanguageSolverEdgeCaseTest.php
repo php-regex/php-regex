@@ -127,7 +127,7 @@ final class LanguageSolverEdgeCaseTest extends TestCase
     {
         $solver = new LanguageSolver();
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             determinizationAlgorithm: $algorithm,
         );
 
@@ -144,7 +144,7 @@ final class LanguageSolverEdgeCaseTest extends TestCase
     {
         $solver = new LanguageSolver();
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             determinizationAlgorithm: $algorithm,
         );
 
@@ -222,12 +222,12 @@ final class LanguageSolverEdgeCaseTest extends TestCase
      */
     public static function provideDeterminizationAlgorithms(): \Generator
     {
-        yield 'subset' => [DeterminizationAlgorithm::SUBSET];
-        yield 'subset-indexed' => [DeterminizationAlgorithm::SUBSET_INDEXED];
+        yield 'subset' => [DeterminizationAlgorithm::Subset];
+        yield 'subset-indexed' => [DeterminizationAlgorithm::SubsetIndexed];
     }
 
     private function options(): SolverOptions
     {
-        return new SolverOptions(matchMode: MatchMode::FULL);
+        return new SolverOptions(matchMode: MatchMode::Full);
     }
 }

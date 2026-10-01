@@ -18,8 +18,8 @@ namespace PhpRegex\Symfony\Analyzer;
  */
 enum CheckOutcome: string
 {
-    case PASS = 'pass';
-    case WARN = 'warn';
-    case FAIL = 'fail';
-    case CRITICAL = 'critical';
+    case Pass = 'pass';
+    case Warn = 'warn';
+    case Fail = 'fail';
+    case Critical = 'critical';
 }

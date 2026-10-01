@@ -151,17 +151,17 @@ final class HtmlExplainer extends AbstractNodeVisitor
     {
         $childExplain = $node->child->accept($this);
         $type = match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => 'Start Capturing Group',
-            GroupType::T_GROUP_NON_CAPTURING => 'Start Non-Capturing Group',
-            GroupType::T_GROUP_NAMED => \sprintf("Start Capturing Group (named: '%s')", $this->e($node->name)),
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => 'Start Positive Lookahead',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => 'Start Negative Lookahead',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => 'Start Positive Lookbehind',
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => 'Start Negative Lookbehind',
-            GroupType::T_GROUP_ATOMIC => 'Start Atomic Group',
-            GroupType::T_GROUP_BRANCH_RESET => 'Start Branch Reset Group',
-            GroupType::T_GROUP_SCAN_SUBSTRING => \sprintf('Start Substring Scan (of groups %s)', $this->e(implode(', ', $node->scannedGroups))),
-            GroupType::T_GROUP_INLINE_FLAGS => \sprintf("Start Group (with flags: '%s')", $this->e($node->flags)),
+            GroupType::Capturing => 'Start Capturing Group',
+            GroupType::NonCapturing => 'Start Non-Capturing Group',
+            GroupType::Named => \sprintf("Start Capturing Group (named: '%s')", $this->e($node->name)),
+            GroupType::LookaheadPositive => 'Start Positive Lookahead',
+            GroupType::LookaheadNegative => 'Start Negative Lookahead',
+            GroupType::LookbehindPositive => 'Start Positive Lookbehind',
+            GroupType::LookbehindNegative => 'Start Negative Lookbehind',
+            GroupType::Atomic => 'Start Atomic Group',
+            GroupType::BranchReset => 'Start Branch Reset Group',
+            GroupType::ScanSubstring => \sprintf('Start Substring Scan (of groups %s)', $this->e(implode(', ', $node->scannedGroups))),
+            GroupType::InlineFlags => \sprintf("Start Group (with flags: '%s')", $this->e($node->flags)),
         };
 
         return \sprintf(
@@ -368,9 +368,9 @@ final class HtmlExplainer extends AbstractNodeVisitor
         }
 
         $word = match ($node->operator) {
-            ClassSetOperator::INTERSECTION => 'and',
-            ClassSetOperator::DIFFERENCE => 'but not',
-            ClassSetOperator::SYMMETRIC_DIFFERENCE => 'or else',
+            ClassSetOperator::Intersection => 'and',
+            ClassSetOperator::Difference => 'but not',
+            ClassSetOperator::SymmetricDifference => 'or else',
             default => 'or',
         };
 
@@ -507,10 +507,10 @@ final class HtmlExplainer extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $title = match ($node->type) {
-            CharLiteralType::UNICODE => 'Character with hexadecimal value 0x'.$this->formatUnicodeHexValue($node),
-            CharLiteralType::UNICODE_NAMED => 'Unicode named character',
-            CharLiteralType::OCTAL => 'Character with octal value '.$this->formatOctalValue($node),
-            CharLiteralType::OCTAL_LEGACY => 'Character with octal value '.$this->formatLegacyOctalValue($node->originalRepresentation),
+            CharLiteralType::Unicode => 'Character with hexadecimal value 0x'.$this->formatUnicodeHexValue($node),
+            CharLiteralType::UnicodeNamed => 'Unicode named character',
+            CharLiteralType::Octal => 'Character with octal value '.$this->formatOctalValue($node),
+            CharLiteralType::OctalLegacy => 'Character with octal value '.$this->formatLegacyOctalValue($node->originalRepresentation),
         };
 
         return \sprintf(
@@ -547,8 +547,8 @@ final class HtmlExplainer extends AbstractNodeVisitor
         };
 
         $desc .= match ($type) {
-            QuantifierType::T_LAZY => ' (as few as possible)',
-            QuantifierType::T_POSSESSIVE => ' (and do not backtrack)',
+            QuantifierType::Lazy => ' (as few as possible)',
+            QuantifierType::Possessive => ' (and do not backtrack)',
             default => '',
         };
 

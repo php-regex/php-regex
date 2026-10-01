@@ -48,8 +48,8 @@ final class NestedQuantifierRule extends AbstractLintRule
             return [];
         }
 
-        $isAtomicQuantifier = QuantifierType::T_POSSESSIVE === $node->type
-            || ($node->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->node->type);
+        $isAtomicQuantifier = QuantifierType::Possessive === $node->type
+            || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
 
         if (!QuantifierMath::isVariable($node->quantifier)) {
             return [];
@@ -79,7 +79,7 @@ final class NestedQuantifierRule extends AbstractLintRule
     private function findNestedQuantifier(NodeInterface $node): ?QuantifierNode
     {
         if ($node instanceof QuantifierNode) {
-            if (QuantifierType::T_POSSESSIVE === $node->type) {
+            if (QuantifierType::Possessive === $node->type) {
                 return null;
             }
 
@@ -87,7 +87,7 @@ final class NestedQuantifierRule extends AbstractLintRule
         }
 
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_ATOMIC === $node->type) {
+            if (GroupType::Atomic === $node->type) {
                 return null;
             }
 

@@ -164,10 +164,10 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_a_range_between_characters_utf8_cannot_hold_gives_nothing(): void
     {
         // Built by hand: PCRE refuses such ends.
-        $surrogates = new RangeNode(new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 1, 9), new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::UNICODE, 10, 18), 1, 18);
+        $surrogates = new RangeNode(new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::Unicode, 1, 9), new CharLiteralNode('\\x{D800}', 0xD800, CharLiteralType::Unicode, 10, 18), 1, 18);
         $this->assertSame('', (new RegexNode($surrogates, 'u', '/', 0, 19))->accept(new SampleGenerator()));
 
-        $beyond = new RangeNode(new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::UNICODE, 1, 11), new CharLiteralNode('\\x{110001}', 0x110001, CharLiteralType::UNICODE, 12, 22), 1, 22);
+        $beyond = new RangeNode(new CharLiteralNode('\\x{110000}', 0x110000, CharLiteralType::Unicode, 1, 11), new CharLiteralNode('\\x{110001}', 0x110001, CharLiteralType::Unicode, 12, 22), 1, 22);
         $this->assertSame('?', (new RegexNode($beyond, 'u', '/', 0, 23))->accept(new SampleGenerator()));
     }
 

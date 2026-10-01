@@ -43,14 +43,14 @@ final class ValidatorSuccessTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         // Valid Unicode
-        (new CharLiteralNode('\x41', 0x41, CharLiteralType::UNICODE, 0, 0))->accept($this->validator);
-        (new CharLiteralNode('\u{00E9}', 0xE9, CharLiteralType::UNICODE, 0, 0))->accept($this->validator);
+        (new CharLiteralNode('\x41', 0x41, CharLiteralType::Unicode, 0, 0))->accept($this->validator);
+        (new CharLiteralNode('\u{00E9}', 0xE9, CharLiteralType::Unicode, 0, 0))->accept($this->validator);
 
         // Valid Octal
-        (new CharLiteralNode('\o{77}', 0o77, CharLiteralType::OCTAL, 0, 0))->accept($this->validator);
+        (new CharLiteralNode('\o{77}', 0o77, CharLiteralType::Octal, 0, 0))->accept($this->validator);
 
         // Valid Legacy Octal
-        (new CharLiteralNode('012', 0o12, CharLiteralType::OCTAL_LEGACY, 0, 0))->accept($this->validator);
+        (new CharLiteralNode('012', 0o12, CharLiteralType::OctalLegacy, 0, 0))->accept($this->validator);
 
         // Valid Unicode Prop (cached)
         (new UnicodePropNode('L', 0, 0))->accept($this->validator);

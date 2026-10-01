@@ -21,15 +21,15 @@ enum QuantifierType: string
     /**
      * Greedy (e.g., "*", "+").
      */
-    case T_GREEDY = 'greedy';
+    case Greedy = 'greedy';
 
     /**
      * Lazy (non-greedy) (e.g., "*?", "+?").
      */
-    case T_LAZY = 'lazy';
+    case Lazy = 'lazy';
 
     /**
      * Possessive (e.g., "*+", "++").
      */
-    case T_POSSESSIVE = 'possessive';
+    case Possessive = 'possessive';
 }

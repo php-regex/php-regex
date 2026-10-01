@@ -121,9 +121,9 @@ final readonly class CharSetAnalyzer
             $left = $this->walk($node->left, $fromStart);
 
             return match ($node->operator) {
-                ClassSetOperator::INTERSECTION => $left->intersect($right),
-                ClassSetOperator::DIFFERENCE => $left->intersect($right->complement()),
-                ClassSetOperator::SYMMETRIC_DIFFERENCE => $left->union($right)->intersect($left->intersect($right)->complement()),
+                ClassSetOperator::Intersection => $left->intersect($right),
+                ClassSetOperator::Difference => $left->intersect($right->complement()),
+                ClassSetOperator::SymmetricDifference => $left->union($right)->intersect($left->intersect($right)->complement()),
                 default => $left->union($right),
             };
         }

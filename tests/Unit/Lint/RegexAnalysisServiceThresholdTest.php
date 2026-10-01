@@ -55,7 +55,7 @@ final class RegexAnalysisServiceThresholdTest extends TestCase
     {
         // "(a+)+$" is critical: reported from CRITICAL up, whatever the case.
         $upper = $this->redosIssues(new AnalysisService(RegexParser::create(), redosThreshold: 'CRITICAL', redosEnabled: true));
-        $lower = $this->redosIssues(new AnalysisService(RegexParser::create(), redosThreshold: RedosSeverity::CRITICAL->value, redosEnabled: true));
+        $lower = $this->redosIssues(new AnalysisService(RegexParser::create(), redosThreshold: RedosSeverity::Critical->value, redosEnabled: true));
 
         $this->assertCount(1, $upper);
         $this->assertCount(\count($lower), $upper);

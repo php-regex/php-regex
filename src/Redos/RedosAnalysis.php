@@ -43,7 +43,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public ?string $suggestedRewrite = null,
         private ?NodeInterface $culpritNode = null,
         public array $hotspots = [],
-        public RedosMode $mode = RedosMode::THEORETICAL,
+        public RedosMode $mode = RedosMode::Theoretical,
         public ?Confirmation $confirmation = null,
     ) {
         $this->vulnerableSubpattern = $vulnerableSubpattern ?? $vulnerablePart;
@@ -61,17 +61,17 @@ final readonly class RedosAnalysis implements \JsonSerializable
 
     public function isSafe(): bool
     {
-        return RedosSeverity::SAFE === $this->severity || RedosSeverity::LOW === $this->severity;
+        return RedosSeverity::Safe === $this->severity || RedosSeverity::Low === $this->severity;
     }
 
     public function isConfirmed(): bool
     {
-        return RedosMode::CONFIRMED === $this->mode && (null !== $this->confirmation && $this->confirmation->confirmed);
+        return RedosMode::Confirmed === $this->mode && (null !== $this->confirmation && $this->confirmation->confirmed);
     }
 
     public function confidenceLevel(): RedosConfidence
     {
-        return $this->confidence ?? RedosConfidence::LOW;
+        return $this->confidence ?? RedosConfidence::Low;
     }
 
     public function getPrimaryHotspot(): ?Hotspot
@@ -126,12 +126,12 @@ final readonly class RedosAnalysis implements \JsonSerializable
     private function severityScore(RedosSeverity $severity): int
     {
         return match ($severity) {
-            RedosSeverity::SAFE => 0,
-            RedosSeverity::LOW => 1,
-            RedosSeverity::UNKNOWN => 2,
-            RedosSeverity::MEDIUM => 3,
-            RedosSeverity::HIGH => 4,
-            RedosSeverity::CRITICAL => 5,
+            RedosSeverity::Safe => 0,
+            RedosSeverity::Low => 1,
+            RedosSeverity::Unknown => 2,
+            RedosSeverity::Medium => 3,
+            RedosSeverity::High => 4,
+            RedosSeverity::Critical => 5,
         };
     }
 }

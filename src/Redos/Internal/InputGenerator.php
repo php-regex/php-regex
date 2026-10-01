@@ -38,11 +38,11 @@ final class InputGenerator
     private function repeatForSeverity(?RedosSeverity $severity): int
     {
         return match ($severity) {
-            RedosSeverity::CRITICAL => 50,
-            RedosSeverity::HIGH => 40,
-            RedosSeverity::MEDIUM => 30,
-            RedosSeverity::LOW => 20,
-            RedosSeverity::SAFE => 10,
+            RedosSeverity::Critical => 50,
+            RedosSeverity::High => 40,
+            RedosSeverity::Medium => 30,
+            RedosSeverity::Low => 20,
+            RedosSeverity::Safe => 10,
             default => 25,
         };
     }

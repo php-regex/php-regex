@@ -43,7 +43,7 @@ final class ReDoSConfirmationRunnerTest extends TestCase
 
         $confirmation = (new ConfirmationRunner())->confirm(
             '/^(a+)+$/',
-            new RedosAnalysis(RedosSeverity::HIGH, 8),
+            new RedosAnalysis(RedosSeverity::High, 8),
             new ConfirmationOptions(
                 minInputLength: 22,
                 maxInputLength: 23,

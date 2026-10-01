@@ -68,7 +68,7 @@ final class BugFixTest extends TestCase
     {
         // (a|.)* should be CRITICAL
         $analysis = $this->regexService->redos('/(a|.)*/');
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 
     #[Test]
@@ -76,14 +76,14 @@ final class BugFixTest extends TestCase
     {
         // ([a-z]|[0-9])* -> disjoint branches, should not be critical
         $analysis = $this->regexService->redos('/([a-z]|[0-9])*/');
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
 
         // ([a-z]|[a-f])* -> Critical (overlap)
         // With overlap detection, this should remain critical.
         // Given the request to "fix bugs", false positive is acceptable for v1.0 safety.
 
         $analysis = $this->regexService->redos('/([a-z]|[a-f])*/');
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 }

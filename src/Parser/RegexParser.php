@@ -61,7 +61,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-c8ffee88c0cb4204250f29b991726fd6';
+    public const CACHE_VERSION = 'ast-e50a1270bcb76ac903d8162193813a41';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -338,9 +338,9 @@ final readonly class RegexParser
             // error that ending causes lies there, and is not taken. A "(?"
             // read last is read with what follows it, which is not read:
             // what is refused past it is refused for want of that.
-            $stream = new TokenStream([...$tokens, new Token(TokenType::T_EOF, '', $position)], $pattern);
+            $stream = new TokenStream([...$tokens, new Token(TokenType::Eof, '', $position)], $pattern);
             $last = [] === $tokens ? null : $tokens[array_key_last($tokens)];
-            $readUpTo = null !== $last && TokenType::T_GROUP_MODIFIER_OPEN === $last->type ? $last->end() : $position;
+            $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $position;
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, $position);
@@ -367,11 +367,11 @@ final readonly class RegexParser
         $opening = 0;
 
         foreach ($tokens as $index => $token) {
-            if (TokenType::T_CHAR_CLASS_OPEN === $token->type && 0 === $depth++) {
+            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
                 $opening = $index;
             }
 
-            if (TokenType::T_CHAR_CLASS_CLOSE !== $token->type || 0 !== --$depth) {
+            if (TokenType::CharClassClose !== $token->type || 0 !== --$depth) {
                 continue;
             }
 
@@ -379,7 +379,7 @@ final readonly class RegexParser
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream([...$class, new Token(TokenType::T_EOF, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
+                    ->parse(new TokenStream([...$class, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|ParserException) {
                 continue;
             }
@@ -403,13 +403,13 @@ final readonly class RegexParser
     private function firstExtendedClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?RegexException
     {
         foreach ($tokens as $token) {
-            if (TokenType::T_EXTENDED_CLASS !== $token->type || $token->end() > $position) {
+            if (TokenType::ExtendedClass !== $token->type || $token->end() > $position) {
                 continue;
             }
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream([$token, new Token(TokenType::T_EOF, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
+                    ->parse(new TokenStream([$token, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (RegexException $error) {
                 if (($error->getPosition() ?? $position) < $position) {
@@ -432,7 +432,7 @@ final readonly class RegexParser
     {
         foreach ($tokens as $index => $open) {
             $group = $tokens[$index + 1] ?? null;
-            if (TokenType::T_GROUP_MODIFIER_OPEN !== $open->type || null === $group || TokenType::T_GROUP_OPEN !== $group->type
+            if (TokenType::GroupModifierOpen !== $open->type || null === $group || TokenType::GroupOpen !== $group->type
                 || $group->position !== $open->end() || !str_starts_with(substr($pattern, $group->end(), 7), 'VERSION')) {
                 continue;
             }
@@ -441,19 +441,19 @@ final readonly class RegexParser
             $condition = [$open, $group];
             foreach (\array_slice($tokens, $index + 2) as $token) {
                 $condition[] = $token;
-                if (TokenType::T_GROUP_CLOSE === $token->type) {
+                if (TokenType::GroupClose === $token->type) {
                     break;
                 }
             }
 
             $close = $condition[\count($condition) - 1];
-            if (TokenType::T_GROUP_CLOSE !== $close->type || $close->end() > $position) {
+            if (TokenType::GroupClose !== $close->type || $close->end() > $position) {
                 continue;
             }
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(
-                    new TokenStream([...$condition, new Token(TokenType::T_GROUP_CLOSE, ')', $close->end()), new Token(TokenType::T_EOF, '', $close->end() + 1)], $pattern),
+                    new TokenStream([...$condition, new Token(TokenType::GroupClose, ')', $close->end()), new Token(TokenType::Eof, '', $close->end() + 1)], $pattern),
                     $flags,
                     $delimiter,
                     \strlen($pattern),
@@ -520,7 +520,7 @@ final readonly class RegexParser
             false,
             $fullMessage,
             $complexityScore,
-            ValidationErrorCategory::PCRE_RUNTIME,
+            ValidationErrorCategory::PcreRuntime,
             $offset,
             '' !== $snippet ? $snippet : null,
             null,
@@ -697,7 +697,7 @@ final readonly class RegexParser
                 false,
                 $errorMessage,
                 0,
-                ValidationErrorCategory::SEMANTIC,
+                ValidationErrorCategory::Semantic,
                 $position,
                 '' !== $visualSnippet ? $visualSnippet : null,
                 $hint,
@@ -709,7 +709,7 @@ final readonly class RegexParser
             false,
             $errorMessage,
             0,
-            ValidationErrorCategory::SYNTAX,
+            ValidationErrorCategory::Syntax,
             $position,
             '' !== $visualSnippet ? $visualSnippet : null,
             null,

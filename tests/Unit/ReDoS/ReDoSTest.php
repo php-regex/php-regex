@@ -29,7 +29,7 @@ final class ReDoSTest extends TestCase
         $result = $analyzer->analyze('/\{args\.((?:[^\{\}\}]++|(?R))*)\}/');
 
         // Should be MEDIUM, not CRITICAL, due to possessives and recursion handling
-        $this->assertSame(RedosSeverity::MEDIUM, $result->severity);
+        $this->assertSame(RedosSeverity::Medium, $result->severity);
     }
 
     public function test_redos_symfony_route_requirement_is_not_high(): void
@@ -40,7 +40,7 @@ final class ReDoSTest extends TestCase
 
         $this->assertContains(
             $result->severity,
-            [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM],
+            [RedosSeverity::Safe, RedosSeverity::Low, RedosSeverity::Medium],
             'Expected ReDoS severity to be SAFE, LOW, or MEDIUM for Symfony route requirements.',
         );
     }
@@ -53,6 +53,6 @@ final class ReDoSTest extends TestCase
         $analyzer = new RedosAnalyzer();
         $result = $analyzer->analyze('/(\\D+)*[12]/');
 
-        $this->assertSame(RedosSeverity::CRITICAL, $result->severity);
+        $this->assertSame(RedosSeverity::Critical, $result->severity);
     }
 }

@@ -40,7 +40,7 @@ final class ValidationResultTest extends TestCase
             isValid: false,
             error: 'Test error message',
             complexityScore: 42,
-            category: ValidationErrorCategory::SYNTAX,
+            category: ValidationErrorCategory::Syntax,
             offset: 10,
             caretSnippet: 'pattern with error',
             hint: 'Fix the syntax',
@@ -50,7 +50,7 @@ final class ValidationResultTest extends TestCase
         $this->assertFalse($result->isValid);
         $this->assertSame('Test error message', $result->error);
         $this->assertSame(42, $result->complexityScore);
-        $this->assertSame(ValidationErrorCategory::SYNTAX, $result->category);
+        $this->assertSame(ValidationErrorCategory::Syntax, $result->category);
         $this->assertSame(10, $result->offset);
         $this->assertSame('pattern with error', $result->caretSnippet);
         $this->assertSame('Fix the syntax', $result->hint);
@@ -74,11 +74,11 @@ final class ValidationResultTest extends TestCase
     {
         $result = new ValidationResult(
             isValid: false,
-            category: ValidationErrorCategory::SEMANTIC,
+            category: ValidationErrorCategory::Semantic,
         );
 
-        $this->assertSame(ValidationErrorCategory::SEMANTIC, $result->category);
-        $this->assertSame(ValidationErrorCategory::SEMANTIC, $result->getErrorCategory());
+        $this->assertSame(ValidationErrorCategory::Semantic, $result->category);
+        $this->assertSame(ValidationErrorCategory::Semantic, $result->getErrorCategory());
     }
 
     public function test_get_error_offset(): void
@@ -154,9 +154,9 @@ final class ValidationResultTest extends TestCase
     public function test_all_error_categories(): void
     {
         $categories = [
-            ValidationErrorCategory::SYNTAX,
-            ValidationErrorCategory::SEMANTIC,
-            ValidationErrorCategory::PCRE_RUNTIME,
+            ValidationErrorCategory::Syntax,
+            ValidationErrorCategory::Semantic,
+            ValidationErrorCategory::PcreRuntime,
         ];
 
         foreach ($categories as $category) {

@@ -347,7 +347,7 @@ final readonly class LintService
         $validation = $issue['validation'] ?? null;
         if ($validation instanceof ValidationResult) {
             $message = $issue['message'] ?? ($validation->error ?? 'Invalid regex.');
-            $type = ValidationErrorCategory::SEMANTIC === $validation->category ? DiagnosticType::Semantic : DiagnosticType::Syntax;
+            $type = ValidationErrorCategory::Semantic === $validation->category ? DiagnosticType::Semantic : DiagnosticType::Syntax;
 
             return new Diagnostic(
                 $type,
@@ -420,17 +420,17 @@ final readonly class LintService
     {
         if (!$analysis->isConfirmed()) {
             return match ($analysis->severity) {
-                RedosSeverity::LOW, RedosSeverity::SAFE => LintSeverity::Info,
+                RedosSeverity::Low, RedosSeverity::Safe => LintSeverity::Info,
                 default => LintSeverity::Warning,
             };
         }
 
         return match ($analysis->severity) {
-            RedosSeverity::CRITICAL => LintSeverity::Critical,
-            RedosSeverity::HIGH => LintSeverity::Error,
-            RedosSeverity::MEDIUM => LintSeverity::Warning,
-            RedosSeverity::UNKNOWN => LintSeverity::Warning,
-            RedosSeverity::LOW, RedosSeverity::SAFE => LintSeverity::Info,
+            RedosSeverity::Critical => LintSeverity::Critical,
+            RedosSeverity::High => LintSeverity::Error,
+            RedosSeverity::Medium => LintSeverity::Warning,
+            RedosSeverity::Unknown => LintSeverity::Warning,
+            RedosSeverity::Low, RedosSeverity::Safe => LintSeverity::Info,
         };
     }
 

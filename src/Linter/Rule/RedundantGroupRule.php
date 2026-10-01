@@ -55,7 +55,7 @@ final class RedundantGroupRule extends AbstractLintRule
             return [];
         }
 
-        if (GroupType::T_GROUP_NON_CAPTURING !== $node->type || !$this->isRedundantGroup($node->child)) {
+        if (GroupType::NonCapturing !== $node->type || !$this->isRedundantGroup($node->child)) {
             return [];
         }
 

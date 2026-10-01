@@ -39,7 +39,7 @@ $patterns = [
     'Mixed blocks' => '/[\x{0600}-\x{06FF}\x{1F600}-\x{1F64F}]{2,}/u',
 ];
 
-$options = new SolverOptions(matchMode: MatchMode::FULL, minimizeDfa: false);
+$options = new SolverOptions(matchMode: MatchMode::Full, minimizeDfa: false);
 $parser = Regex::create();
 $validator = new RegularSubsetValidator();
 

@@ -63,11 +63,11 @@ final readonly class ParserAccessor
                 $processedTokens[] = $token;
                 $pos += \strlen($token->value);
             } else {
-                $processedTokens[] = $this->createToken(TokenType::T_LITERAL, $token, $pos);
+                $processedTokens[] = $this->createToken(TokenType::Literal, $token, $pos);
                 $pos += \strlen($token);
             }
         }
-        $processedTokens[] = $this->createToken(TokenType::T_EOF, '', $pos);
+        $processedTokens[] = $this->createToken(TokenType::Eof, '', $pos);
 
         $stream = new TokenStream($processedTokens, '');
 

@@ -30,62 +30,62 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/a+b/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_safe_pattern_character_class_with_literal(): void
     {
         $analysis = $this->regex->redos('/[a-z]+test/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_safe_pattern_simple_alternation(): void
     {
         $analysis = $this->regex->redos('/(a|b)+c/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_safe_pattern_non_capturing_alternation(): void
     {
         $analysis = $this->regex->redos('/(?:foo|bar)*baz/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_safe_pattern_word_chars(): void
     {
         $analysis = $this->regex->redos('/\w+@\w+/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_safe_pattern_bounded_nested_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a{1,5})+/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
     }
 
     public function test_safe_pattern_anchored_quantifier(): void
     {
         $analysis = $this->regex->redos('/^[a-z]*$/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
-        $this->assertNotSame(RedosSeverity::HIGH, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
     public function test_dangerous_pattern_nested_plus_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a+)+b/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Nested quantifiers (a+)+ should be flagged as dangerous');
     }
 
@@ -93,7 +93,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a*)*b/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Nested quantifiers (a*)* should be flagged as dangerous');
     }
 
@@ -101,7 +101,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a|a)*/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Overlapping alternation (a|a)* should be flagged as dangerous');
     }
 
@@ -109,7 +109,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(?:a|ab)*c/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::MEDIUM, RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::Medium, RedosSeverity::High, RedosSeverity::Critical],
             'Overlapping alternation (?:a|ab)* should be flagged');
     }
 
@@ -117,7 +117,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(?:a+)+b/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Nested quantifiers (?:a+)+ should be flagged as dangerous');
     }
 
@@ -126,22 +126,22 @@ final class ReDoSEdgeCasesTest extends TestCase
         $withoutAnchors = $this->regex->redos('/(a+)+b/');
         $withAnchors = $this->regex->redos('/^(a+)+b$/');
 
-        $this->assertContains($withoutAnchors->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL]);
-        $this->assertContains($withAnchors->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL]);
+        $this->assertContains($withoutAnchors->severity, [RedosSeverity::High, RedosSeverity::Critical]);
+        $this->assertContains($withAnchors->severity, [RedosSeverity::High, RedosSeverity::Critical]);
     }
 
     public function test_edge_case_bounded_nested_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a{1,3})+b/');
 
-        $this->assertNotSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
     }
 
     public function test_edge_case_triple_nesting(): void
     {
         $analysis = $this->regex->redos('/(?:(?:a+)+)+b/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Triple nested quantifiers should be flagged as dangerous');
     }
 
@@ -149,7 +149,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a*|b*)+/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Alternation with quantifiers nested should be flagged');
     }
 
@@ -157,7 +157,7 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(x+x+)+y/');
 
-        $this->assertContains($analysis->severity, [RedosSeverity::HIGH, RedosSeverity::CRITICAL],
+        $this->assertContains($analysis->severity, [RedosSeverity::High, RedosSeverity::Critical],
             'Double nested quantifiers should be flagged');
     }
 
@@ -165,14 +165,14 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/((a+)\\1)+/');
 
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 
     public function test_unknown_severity_on_analysis_failure(): void
     {
         $analysis = $this->regex->redos('/[a-+/');
 
-        $this->assertSame(RedosSeverity::UNKNOWN, $analysis->severity);
+        $this->assertSame(RedosSeverity::Unknown, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
         $this->assertNotNull($analysis->error);
     }
@@ -181,10 +181,10 @@ final class ReDoSEdgeCasesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a+)+/');
 
-        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::HIGH));
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High));
         $this->assertSame(
-            RedosSeverity::CRITICAL === $analysis->severity,
-            $analysis->exceedsThreshold(RedosSeverity::CRITICAL),
+            RedosSeverity::Critical === $analysis->severity,
+            $analysis->exceedsThreshold(RedosSeverity::Critical),
         );
     }
 }

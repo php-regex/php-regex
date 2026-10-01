@@ -36,29 +36,29 @@ final class CodePointReaderTest extends TestCase
      */
     public static function provideEscapes(): iterable
     {
-        yield 'two hex digits' => ['escape' => '\xFF', 'type' => CharLiteralType::UNICODE, 'codePoint' => 255];
-        yield 'four hex digits' => ['escape' => '\\u0041', 'type' => CharLiteralType::UNICODE, 'codePoint' => 65];
-        yield 'braced hex' => ['escape' => '\x{1F600}', 'type' => CharLiteralType::UNICODE, 'codePoint' => 128512];
-        yield 'braced hex with u' => ['escape' => '\u{1F600}', 'type' => CharLiteralType::UNICODE, 'codePoint' => 128512];
-        yield 'braced octal' => ['escape' => '\o{101}', 'type' => CharLiteralType::OCTAL, 'codePoint' => 65];
-        yield 'legacy octal' => ['escape' => '\101', 'type' => CharLiteralType::OCTAL_LEGACY, 'codePoint' => 65];
+        yield 'two hex digits' => ['escape' => '\xFF', 'type' => CharLiteralType::Unicode, 'codePoint' => 255];
+        yield 'four hex digits' => ['escape' => '\\u0041', 'type' => CharLiteralType::Unicode, 'codePoint' => 65];
+        yield 'braced hex' => ['escape' => '\x{1F600}', 'type' => CharLiteralType::Unicode, 'codePoint' => 128512];
+        yield 'braced hex with u' => ['escape' => '\u{1F600}', 'type' => CharLiteralType::Unicode, 'codePoint' => 128512];
+        yield 'braced octal' => ['escape' => '\o{101}', 'type' => CharLiteralType::Octal, 'codePoint' => 65];
+        yield 'legacy octal' => ['escape' => '\101', 'type' => CharLiteralType::OctalLegacy, 'codePoint' => 65];
         yield 'a named code point' => [
             'escape' => '\N{U+0041}',
-            'type' => CharLiteralType::UNICODE_NAMED,
+            'type' => CharLiteralType::UnicodeNamed,
             'codePoint' => 65,
         ];
 
         // Nothing readable: the escape keeps its spelling in the tree and the
         // validator decides whether it is an error.
-        yield 'not an escape at all' => ['escape' => 'invalid', 'type' => CharLiteralType::UNICODE, 'codePoint' => -1];
+        yield 'not an escape at all' => ['escape' => 'invalid', 'type' => CharLiteralType::Unicode, 'codePoint' => -1];
         yield 'a name that is not one' => [
             'escape' => '\N{NOT A CHARACTER NAME}',
-            'type' => CharLiteralType::UNICODE_NAMED,
+            'type' => CharLiteralType::UnicodeNamed,
             'codePoint' => -1,
         ];
         yield 'octal digits out of range' => [
             'escape' => '\o{9}',
-            'type' => CharLiteralType::OCTAL,
+            'type' => CharLiteralType::Octal,
             'codePoint' => -1,
         ];
     }

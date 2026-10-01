@@ -33,18 +33,18 @@ final class UnicodeNamedNodeTest extends TestCase
     #[DataProvider('data_provider_unicode_named')]
     public function test_constructor_and_getters(string $original, int $codePoint, int $start, int $end): void
     {
-        $node = new CharLiteralNode($original, $codePoint, CharLiteralType::UNICODE_NAMED, $start, $end);
+        $node = new CharLiteralNode($original, $codePoint, CharLiteralType::UnicodeNamed, $start, $end);
 
         $this->assertSame($original, $node->originalRepresentation);
         $this->assertSame($codePoint, $node->codePoint);
-        $this->assertSame(CharLiteralType::UNICODE_NAMED, $node->type);
+        $this->assertSame(CharLiteralType::UnicodeNamed, $node->type);
         $this->assertSame($start, $node->getStartPosition());
         $this->assertSame($end, $node->getEndPosition());
     }
 
     public function test_accept_visitor_calls_visit_char_literal(): void
     {
-        $node = new CharLiteralNode('\\N{LATIN CAPITAL LETTER A}', 65, CharLiteralType::UNICODE_NAMED, 0, 25);
+        $node = new CharLiteralNode('\\N{LATIN CAPITAL LETTER A}', 65, CharLiteralType::UnicodeNamed, 0, 25);
         $visitor = $this->createMock(NodeVisitorInterface::class);
 
         $visitor->expects($this->once())

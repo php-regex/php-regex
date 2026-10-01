@@ -29,13 +29,13 @@ final class QuantifierNodeTest extends TestCase
     {
         $node = new LiteralNode('a', 0, 1);
 
-        yield 'greedy_star' => [$node, '*', QuantifierType::T_GREEDY];
-        yield 'lazy_plus' => [$node, '+', QuantifierType::T_LAZY];
-        yield 'possessive_optional' => [$node, '?', QuantifierType::T_POSSESSIVE];
-        yield 'greedy_fixed' => [$node, '{5}', QuantifierType::T_GREEDY];
-        yield 'lazy_range' => [$node, '{1,3}', QuantifierType::T_LAZY];
-        yield 'possessive_unbounded' => [$node, '{2,}', QuantifierType::T_POSSESSIVE];
-        yield 'missing_min_php84' => [$node, '{,3}', QuantifierType::T_GREEDY];
+        yield 'greedy_star' => [$node, '*', QuantifierType::Greedy];
+        yield 'lazy_plus' => [$node, '+', QuantifierType::Lazy];
+        yield 'possessive_optional' => [$node, '?', QuantifierType::Possessive];
+        yield 'greedy_fixed' => [$node, '{5}', QuantifierType::Greedy];
+        yield 'lazy_range' => [$node, '{1,3}', QuantifierType::Lazy];
+        yield 'possessive_unbounded' => [$node, '{2,}', QuantifierType::Possessive];
+        yield 'missing_min_php84' => [$node, '{,3}', QuantifierType::Greedy];
     }
 
     #[DataProvider('data_provider_quantifiers')]
@@ -57,7 +57,7 @@ final class QuantifierNodeTest extends TestCase
     public function test_accept_visitor_calls_visit_quantifier(): void
     {
         $quantifiedNode = new LiteralNode('a', 0, 1);
-        $node = new QuantifierNode($quantifiedNode, '*', QuantifierType::T_GREEDY, 0, 2);
+        $node = new QuantifierNode($quantifiedNode, '*', QuantifierType::Greedy, 0, 2);
         $visitor = $this->createMock(NodeVisitorInterface::class);
 
         $visitor->expects($this->once())

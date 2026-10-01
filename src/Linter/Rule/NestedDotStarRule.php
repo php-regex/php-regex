@@ -51,8 +51,8 @@ final class NestedDotStarRule extends AbstractLintRule
             return [];
         }
 
-        $isAtomicQuantifier = QuantifierType::T_POSSESSIVE === $node->type
-            || ($node->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->node->type);
+        $isAtomicQuantifier = QuantifierType::Possessive === $node->type
+            || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
 
         if ($isAtomicQuantifier
             || !QuantifierMath::isUnbounded($node->quantifier)

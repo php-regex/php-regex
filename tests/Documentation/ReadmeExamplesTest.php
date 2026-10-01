@@ -64,7 +64,7 @@ final class ReadmeExamplesTest extends TestCase
     {
         $analysis = $this->regex->redos('/(a+)+b/');
 
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
     }
 

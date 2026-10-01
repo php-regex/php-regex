@@ -135,7 +135,7 @@ final class Modernizer extends AbstractNodeVisitor
     {
         // Unwrap redundant non-capturing groups: (?:expr) -> expr if not quantified
         // Assume safe for non-capturing groups without name or flags
-        if (GroupType::T_GROUP_NON_CAPTURING === $node->type && null === $node->name && null === $node->flags) {
+        if (GroupType::NonCapturing === $node->type && null === $node->name && null === $node->flags) {
             return $node->child->accept($this);
         }
 

@@ -289,12 +289,12 @@ final class GroupNameReader
                 break;
             }
 
-            if ($this->stream->check(TokenType::T_GROUP_CLOSE)) {
+            if ($this->stream->check(TokenType::GroupClose)) {
                 break;
             }
 
             // A name holds no escape: PCRE stops on the backslash.
-            if (!$this->stream->check(TokenType::T_LITERAL)) {
+            if (!$this->stream->check(TokenType::Literal)) {
                 $token = $this->stream->current();
                 $written = substr($this->stream->getPattern(), $token->position, max(1, $token->end() - $token->position));
 

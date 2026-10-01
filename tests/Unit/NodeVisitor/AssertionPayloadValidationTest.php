@@ -94,7 +94,7 @@ final class AssertionPayloadValidationTest extends TestCase
     public static function provideBuiltTrees(): iterable
     {
         // The payload "y" at position 0 of its own text, under "(*pla:" at 0.
-        $lookahead = new GroupNode(new LiteralNode('y', 0, 1), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 9);
+        $lookahead = new GroupNode(new LiteralNode('y', 0, 1), GroupType::LookaheadPositive, null, null, 0, 9);
 
         yield 'script run without a body' => ['tree' => new RegexNode(new ScriptRunNode('\\y', 0, 8), '', '/', 0, 8, '(*sr:\\y)')];
         yield 'no source' => ['tree' => new RegexNode($lookahead, '', '/', 0, 9)];

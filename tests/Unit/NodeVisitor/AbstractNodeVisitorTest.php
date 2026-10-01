@@ -90,14 +90,14 @@ final class AbstractNodeVisitorTest extends TestCase
 
     public function test_visit_group(): void
     {
-        $node = new GroupNode(new SequenceNode([], 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
+        $node = new GroupNode(new SequenceNode([], 0, 0), GroupType::Capturing, null, null, 0, 0);
         $result = $this->visitor->visitGroup($node);
         $this->assertSame('default', $result);
     }
 
     public function test_visit_quantifier(): void
     {
-        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
+        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
         $result = $this->visitor->visitQuantifier($node);
         $this->assertSame('default', $result);
     }
@@ -111,7 +111,7 @@ final class AbstractNodeVisitorTest extends TestCase
 
     public function test_visit_char_literal(): void
     {
-        $node = new CharLiteralNode('a', 97, CharLiteralType::UNICODE, 0, 0);
+        $node = new CharLiteralNode('a', 97, CharLiteralType::Unicode, 0, 0);
         $result = $this->visitor->visitCharLiteral($node);
         $this->assertSame('default', $result);
     }

@@ -25,7 +25,7 @@ final class LanguageSolverFuzzTest extends TestCase
     public function test_intersection_examples_match_literal_patterns(): void
     {
         $solver = new LanguageSolver();
-        $options = new SolverOptions(matchMode: MatchMode::FULL);
+        $options = new SolverOptions(matchMode: MatchMode::Full);
 
         for ($i = 0; $i < 50; $i++) {
             $left = $this->randomLiteral();

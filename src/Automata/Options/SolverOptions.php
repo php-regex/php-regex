@@ -31,14 +31,14 @@ final readonly class SolverOptions
      * @param \PhpRegex\Automata\Determinization\DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
      */
     public function __construct(
-        public MatchMode $matchMode = MatchMode::FULL,
+        public MatchMode $matchMode = MatchMode::Full,
         public int $maxNfaStates = 5000,
         public int $maxDfaStates = 10000,
         public bool $minimizeDfa = true,
-        public MinimizationAlgorithm $minimizationAlgorithm = MinimizationAlgorithm::HOPCROFT,
+        public MinimizationAlgorithm $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft,
         // A finite default: with no cap, pathological real-world patterns can
         // spin the determinization loop for tens of minutes.
         public ?int $maxTransitionsProcessed = 1_000_000,
-        public DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SUBSET_INDEXED,
+        public DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed,
     ) {}
 }

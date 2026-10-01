@@ -186,7 +186,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
     public function test_conditional_accepts_lookaround_condition(): void
     {
         $validator = new Validator();
-        $lookahead = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
+        $lookahead = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookaheadPositive, null, null, 0, 0);
         $node = new ConditionalNode(
             $lookahead,
             new LiteralNode('b', 0, 0),
@@ -313,7 +313,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
     public function test_octal_legacy_out_of_range_is_rejected(): void
     {
         $validator = new Validator();
-        $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OCTAL_LEGACY, 0, 0);
+        $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OctalLegacy, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Invalid legacy octal codepoint');
@@ -334,10 +334,10 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $sequence = new SequenceNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
         $this->assertSame(2, $method->invoke($validator, $sequence));
 
-        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
+        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::Capturing, null, null, 0, 0);
         $this->assertSame(1, $method->invoke($validator, $group));
 
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{2}', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{2}', QuantifierType::Greedy, 0, 0);
         $this->assertSame(2, $method->invoke($validator, $quantifier));
 
         $charClass = new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0);
@@ -357,7 +357,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
 
         $sequence = new SequenceNode([
             new LiteralNode('a', 0, 0),
-            new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0),
+            new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::Greedy, 0, 0),
         ], 0, 0);
 
         $this->assertNull($method->invoke($validator, $sequence));
@@ -368,7 +368,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
         $this->assertNull($method->invoke($validator, $quantifier));
     }
 
@@ -378,7 +378,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
         $child = new AlternationNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
-        $quantifier = new QuantifierNode($child, '{2}', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode($child, '{2}', QuantifierType::Greedy, 0, 0);
 
         $this->assertNull($method->invoke($validator, $quantifier));
     }
@@ -388,7 +388,7 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
 
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{3}', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{3}', QuantifierType::Greedy, 0, 0);
         $this->assertSame(3, $method->invoke($validator, $quantifier));
     }
 
@@ -414,12 +414,12 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $validator = new Validator();
         $method = (new \ReflectionClass($validator))->getMethod('findUnboundedLookbehindNode');
 
-        $group = new GroupNode(new BackrefNode('1', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0);
+        $group = new GroupNode(new BackrefNode('1', 0, 0), GroupType::Capturing, null, null, 0, 0);
         $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $group));
 
         $alternation = new AlternationNode([
             new LiteralNode('a', 0, 0),
-            new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0),
+            new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::Greedy, 0, 0),
         ], 0, 0);
         $this->assertInstanceOf(QuantifierNode::class, $method->invoke($validator, $alternation));
 

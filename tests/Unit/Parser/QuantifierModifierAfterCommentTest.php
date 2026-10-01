@@ -93,15 +93,15 @@ final class QuantifierModifierAfterCommentTest extends TestCase
      */
     public static function provideQuantifiedItems(): iterable
     {
-        yield 'star after a comment' => ['pattern' => '/a(?#c)*/', 'quantifier' => '*', 'type' => QuantifierType::T_GREEDY];
-        yield 'plus after a quantifier and a comment is possessive' => ['pattern' => '/a*(?#c)+/', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
-        yield 'question mark after a quantifier and a comment is lazy' => ['pattern' => '/a*(?#c)?/', 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
-        yield 'plus after a braced quantifier and a comment' => ['pattern' => '/a{2}(?#c)+/', 'quantifier' => '{2}', 'type' => QuantifierType::T_POSSESSIVE];
-        yield 'modifier after two comments' => ['pattern' => '/a*(?#c)(?#d)?/', 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
-        yield 'modifier after a quantifier that followed a comment' => ['pattern' => '/a(?#c)*(?#d)+/', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
-        yield 'extended: modifier after spaces' => ['pattern' => '/a(?#c) * +/x', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
-        yield 'extended: line comments before a lazy star' => ['pattern' => "/a (?#c)\n #d\n *?/x", 'quantifier' => '*', 'type' => QuantifierType::T_LAZY];
-        yield 'extended: modifier after a comment and a space' => ['pattern' => '/a*(?#c) +/x', 'quantifier' => '*', 'type' => QuantifierType::T_POSSESSIVE];
+        yield 'star after a comment' => ['pattern' => '/a(?#c)*/', 'quantifier' => '*', 'type' => QuantifierType::Greedy];
+        yield 'plus after a quantifier and a comment is possessive' => ['pattern' => '/a*(?#c)+/', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
+        yield 'question mark after a quantifier and a comment is lazy' => ['pattern' => '/a*(?#c)?/', 'quantifier' => '*', 'type' => QuantifierType::Lazy];
+        yield 'plus after a braced quantifier and a comment' => ['pattern' => '/a{2}(?#c)+/', 'quantifier' => '{2}', 'type' => QuantifierType::Possessive];
+        yield 'modifier after two comments' => ['pattern' => '/a*(?#c)(?#d)?/', 'quantifier' => '*', 'type' => QuantifierType::Lazy];
+        yield 'modifier after a quantifier that followed a comment' => ['pattern' => '/a(?#c)*(?#d)+/', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
+        yield 'extended: modifier after spaces' => ['pattern' => '/a(?#c) * +/x', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
+        yield 'extended: line comments before a lazy star' => ['pattern' => "/a (?#c)\n #d\n *?/x", 'quantifier' => '*', 'type' => QuantifierType::Lazy];
+        yield 'extended: modifier after a comment and a space' => ['pattern' => '/a*(?#c) +/x', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
     }
 
     /**

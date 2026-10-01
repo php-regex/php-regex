@@ -54,9 +54,9 @@ final class AdvancedFeaturesComplianceTest extends TestCase
 
     public static function provideControlVerbPatterns(): \Iterator
     {
-        yield 'commit' => ['/(a+(*COMMIT))+/', RedosSeverity::SAFE];
-        yield 'prune' => ['/(a+(*PRUNE))+/', RedosSeverity::SAFE];
-        yield 'skip' => ['/(a+(*SKIP))+/', RedosSeverity::SAFE];
+        yield 'commit' => ['/(a+(*COMMIT))+/', RedosSeverity::Safe];
+        yield 'prune' => ['/(a+(*PRUNE))+/', RedosSeverity::Safe];
+        yield 'skip' => ['/(a+(*SKIP))+/', RedosSeverity::Safe];
     }
 
     #[DataProvider('provideRecursiveConditionPatterns')]

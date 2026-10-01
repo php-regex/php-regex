@@ -60,11 +60,11 @@ final class LiteralExtractor extends AbstractNodeVisitor
     private const MAX_LITERALS_COUNT = 128;
 
     private const LOOKAROUNDS = [
-        GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-        GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-        GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-        GroupType::T_GROUP_SCAN_SUBSTRING,
+        GroupType::LookaheadPositive,
+        GroupType::LookaheadNegative,
+        GroupType::LookbehindPositive,
+        GroupType::LookbehindNegative,
+        GroupType::ScanSubstring,
     ];
 
     private bool $caseInsensitive = false;
@@ -141,7 +141,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         // "(?i)" holds to the end of the group it stands in, so it is not
         // undone here; "(?i:...)" holds for its own body. Reading an empty
         // "(?i:)" as the first is only ever more cautious.
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
+        if (GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
             $this->caseInsensitive = $caseInsensitive;
 
             return LiteralSet::fromString('');

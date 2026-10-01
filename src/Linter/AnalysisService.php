@@ -79,11 +79,11 @@ final readonly class AnalysisService
         private RegexParser $regex,
         private ?PatternExtractor $extractor = null,
         private int $warningThreshold = 50,
-        string $redosThreshold = RedosSeverity::HIGH->value,
+        string $redosThreshold = RedosSeverity::High->value,
         array $ignoredPatterns = [],
         array $redosIgnoredPatterns = [],
         private bool $ignoreParseErrors = false,
-        RedosMode|string $redosMode = RedosMode::THEORETICAL,
+        RedosMode|string $redosMode = RedosMode::Theoretical,
         private ?ConfirmationOptions $redosConfirmOptions = null,
         bool $redosEnabled = false,
         private bool $lintEnabled = true,
@@ -94,11 +94,11 @@ final readonly class AnalysisService
 
         // When redosEnabled is false, force mode to OFF
         if (!$redosEnabled) {
-            $this->redosMode = RedosMode::OFF;
+            $this->redosMode = RedosMode::Off;
         } else {
             $this->redosMode = $redosMode instanceof RedosMode
                 ? $redosMode
-                : (RedosMode::tryFrom(strtolower((string) $redosMode)) ?? RedosMode::THEORETICAL);
+                : (RedosMode::tryFrom(strtolower((string) $redosMode)) ?? RedosMode::Theoretical);
         }
     }
 
@@ -127,7 +127,7 @@ final readonly class AnalysisService
             $this->ignoreParseErrors,
             $this->redosMode,
             $this->redosConfirmOptions,
-            RedosMode::OFF !== $this->redosMode,
+            RedosMode::Off !== $this->redosMode,
             $this->lintEnabled,
             $this->lintRules,
         );
@@ -333,7 +333,7 @@ final readonly class AnalysisService
 
                 // When mode is CONFIRMED, only report findings that were actually confirmed
                 $shouldReport = $redos->exceedsThreshold($this->redosSeverityThreshold)
-                    && (RedosMode::CONFIRMED !== $this->redosMode || $redos->isConfirmed());
+                    && (RedosMode::Confirmed !== $this->redosMode || $redos->isConfirmed());
 
                 if ($shouldReport) {
                     $issues[] = [
@@ -371,11 +371,11 @@ final readonly class AnalysisService
             return null;
         }
 
-        if (QuantifierType::T_POSSESSIVE === $quantifier->type) {
+        if (QuantifierType::Possessive === $quantifier->type) {
             return null;
         }
 
-        if ($quantifier->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $quantifier->node->type) {
+        if ($quantifier->node instanceof GroupNode && GroupType::Atomic === $quantifier->node->type) {
             return null;
         }
 
@@ -506,7 +506,7 @@ final readonly class AnalysisService
 
             // When mode is CONFIRMED, only report findings that were actually confirmed
             $shouldReport = $analysis->exceedsThreshold($threshold)
-                && (RedosMode::CONFIRMED !== $this->redosMode || $analysis->isConfirmed());
+                && (RedosMode::Confirmed !== $this->redosMode || $analysis->isConfirmed());
 
             if (!$shouldReport) {
                 continue;
@@ -1141,7 +1141,7 @@ final readonly class AnalysisService
             $hints[] = 'Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS.';
         }
 
-        if (RedosMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
+        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
             if ($analysis->confirmation->confirmed) {
                 $hints[] = 'Confirmation: bounded runtime checks observed evidence of excessive backtracking.';
             } else {
@@ -1203,7 +1203,7 @@ final readonly class AnalysisService
 
     private function resolveRedosIssueType(RedosAnalysis $analysis): string
     {
-        if ($analysis->isConfirmed() && $analysis->exceedsThreshold(RedosSeverity::HIGH)) {
+        if ($analysis->isConfirmed() && $analysis->exceedsThreshold(RedosSeverity::High)) {
             return 'error';
         }
 

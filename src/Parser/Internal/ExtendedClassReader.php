@@ -41,10 +41,10 @@ final class ExtendedClassReader
     private const MAX_DEPTH = 15;
 
     private const OPERATORS = [
-        '+' => ClassSetOperator::UNION,
-        '|' => ClassSetOperator::UNION,
-        '-' => ClassSetOperator::DIFFERENCE,
-        '^' => ClassSetOperator::SYMMETRIC_DIFFERENCE,
+        '+' => ClassSetOperator::Union,
+        '|' => ClassSetOperator::Union,
+        '-' => ClassSetOperator::Difference,
+        '^' => ClassSetOperator::SymmetricDifference,
     ];
 
     private int $at = 0;
@@ -278,7 +278,7 @@ final class ExtendedClassReader
             $this->countOperation();
             $this->at++;
             $right = $this->readUnary(true);
-            $left = new ClassSetOperationNode(ClassSetOperator::INTERSECTION, $left, $right, '&', $left->getStartPosition(), $right->getEndPosition());
+            $left = new ClassSetOperationNode(ClassSetOperator::Intersection, $left, $right, '&', $left->getStartPosition(), $right->getEndPosition());
         }
     }
 
@@ -298,7 +298,7 @@ final class ExtendedClassReader
 
         $operand = $this->readPrimary($afterOperator || [] !== $complements);
         foreach (array_reverse($complements) as $start) {
-            $operand = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $operand, '!', $start, $operand->getEndPosition());
+            $operand = new ClassSetOperationNode(ClassSetOperator::Complement, null, $operand, '!', $start, $operand->getEndPosition());
         }
 
         return $operand;

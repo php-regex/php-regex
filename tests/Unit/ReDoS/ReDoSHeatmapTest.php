@@ -33,7 +33,7 @@ final class ReDoSHeatmapTest extends TestCase
     {
         $heatmap = new Heatmap();
         $hotspots = [
-            new Hotspot(2, 2, RedosSeverity::LOW, 'a', null),
+            new Hotspot(2, 2, RedosSeverity::Low, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);
@@ -45,7 +45,7 @@ final class ReDoSHeatmapTest extends TestCase
     {
         $heatmap = new Heatmap();
         $hotspots = [
-            new Hotspot(0, 1, RedosSeverity::LOW, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::Low, 'a', null),
         ];
 
         $output = $heatmap->highlight('', $hotspots, true);
@@ -57,7 +57,7 @@ final class ReDoSHeatmapTest extends TestCase
     {
         $heatmap = new Heatmap();
         $hotspots = [
-            new Hotspot(0, 1, RedosSeverity::HIGH, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::High, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);
@@ -70,7 +70,7 @@ final class ReDoSHeatmapTest extends TestCase
         $heatmap = new Heatmap();
         $hotspots = [
             'invalid',
-            new Hotspot(0, 1, RedosSeverity::LOW, 'a', null),
+            new Hotspot(0, 1, RedosSeverity::Low, 'a', null),
         ];
 
         $output = $heatmap->highlight('abc', $hotspots, true);

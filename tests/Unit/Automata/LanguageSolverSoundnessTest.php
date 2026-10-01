@@ -29,7 +29,7 @@ final class LanguageSolverSoundnessTest extends TestCase
     {
         $solver = new LanguageSolver();
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             determinizationAlgorithm: $determinization,
         );
         $patterns = $this->supportedPatterns();
@@ -66,8 +66,8 @@ final class LanguageSolverSoundnessTest extends TestCase
 
     public static function provideDeterminizationAlgorithms(): \Generator
     {
-        yield 'subset' => [DeterminizationAlgorithm::SUBSET];
-        yield 'subset-indexed' => [DeterminizationAlgorithm::SUBSET_INDEXED];
+        yield 'subset' => [DeterminizationAlgorithm::Subset];
+        yield 'subset-indexed' => [DeterminizationAlgorithm::SubsetIndexed];
     }
 
     /**

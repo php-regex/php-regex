@@ -107,7 +107,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()'),
         ];
 
-        $issues = $service->analyzeRedos($patterns, RedosSeverity::LOW);
+        $issues = $service->analyzeRedos($patterns, RedosSeverity::Low);
 
         $this->assertIsArray($issues);
         $this->assertNotEmpty($issues);

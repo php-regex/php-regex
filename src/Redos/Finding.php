@@ -24,7 +24,7 @@ final readonly class Finding implements \JsonSerializable
         public string $pattern,
         public ?string $trigger = null,
         public ?string $suggestedRewrite = null,
-        public RedosConfidence $confidence = RedosConfidence::MEDIUM,
+        public RedosConfidence $confidence = RedosConfidence::Medium,
         public ?string $falsePositiveRisk = null,
     ) {}
 

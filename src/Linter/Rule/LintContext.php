@@ -76,12 +76,12 @@ final class LintContext
         foreach ($this->parentStack as $parent) {
             if ($parent instanceof QuantifierNode) {
                 // Skip possessive quantifiers - they don't backtrack
-                if (QuantifierType::T_POSSESSIVE === $parent->type) {
+                if (QuantifierType::Possessive === $parent->type) {
                     continue;
                 }
 
                 // Check if the quantifier's child is an atomic group - atomic groups don't backtrack
-                if ($parent->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $parent->node->type) {
+                if ($parent->node instanceof GroupNode && GroupType::Atomic === $parent->node->type) {
                     continue;
                 }
 

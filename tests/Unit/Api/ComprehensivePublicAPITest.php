@@ -469,7 +469,7 @@ final class ComprehensivePublicAPITest extends TestCase
     public function test_analyze_redos_safe_pattern(): void
     {
         $analysis = $this->regexService->redos('/^hello$/');
-        $this->assertSame(RedosSeverity::SAFE, $analysis->severity);
+        $this->assertSame(RedosSeverity::Safe, $analysis->severity);
         $this->assertTrue($analysis->isSafe());
         $this->assertSame(0, $analysis->score);
     }
@@ -477,7 +477,7 @@ final class ComprehensivePublicAPITest extends TestCase
     public function test_analyze_redos_critical_nested_quantifiers(): void
     {
         $analysis = $this->regexService->redos('/(a+)+b/');
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
         $this->assertSame(10, $analysis->score);
     }
@@ -485,7 +485,7 @@ final class ComprehensivePublicAPITest extends TestCase
     public function test_analyze_redos_critical_alternation(): void
     {
         $analysis = $this->regexService->redos('/(a|a)*/');
-        $this->assertSame(RedosSeverity::CRITICAL, $analysis->severity);
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
         $this->assertSame(10, $analysis->score);
     }
@@ -494,7 +494,7 @@ final class ComprehensivePublicAPITest extends TestCase
     {
         $analysis = $this->regexService->redos('/(a{1,5}){1,5}/');
         // Bounded quantifiers are considered safe in current implementation
-        $this->assertContains($analysis->severity, [RedosSeverity::SAFE, RedosSeverity::LOW]);
+        $this->assertContains($analysis->severity, [RedosSeverity::Safe, RedosSeverity::Low]);
         $this->assertGreaterThanOrEqual(0, $analysis->score);
         $this->assertLessThanOrEqual(10, $analysis->score);
     }
@@ -504,7 +504,7 @@ final class ComprehensivePublicAPITest extends TestCase
         $analysis = $this->regexService->redos('/a+b/');
         $this->assertContains(
             $analysis->severity,
-            [RedosSeverity::SAFE, RedosSeverity::MEDIUM],
+            [RedosSeverity::Safe, RedosSeverity::Medium],
             'Single quantifier should be safe or medium (linear backtracking only)',
         );
     }
@@ -521,7 +521,7 @@ final class ComprehensivePublicAPITest extends TestCase
         $analysis = $this->regexService->redos('/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i');
         $this->assertContains(
             $analysis->severity,
-            [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM],
+            [RedosSeverity::Safe, RedosSeverity::Low, RedosSeverity::Medium],
             'Email pattern should not be flagged as high/critical risk',
         );
     }
@@ -531,7 +531,7 @@ final class ComprehensivePublicAPITest extends TestCase
         $analysis = $this->regexService->redos('/[a-z]+/');
         $this->assertContains(
             $analysis->severity,
-            [RedosSeverity::SAFE, RedosSeverity::MEDIUM],
+            [RedosSeverity::Safe, RedosSeverity::Medium],
             'Character class with + should be safe or medium (linear backtracking only)',
         );
     }
@@ -625,9 +625,9 @@ final class ComprehensivePublicAPITest extends TestCase
         $analysis = $this->regexService->redos($pattern);
 
         $this->assertContains($analysis->severity, [
-            RedosSeverity::SAFE,
-            RedosSeverity::LOW,
-            RedosSeverity::MEDIUM
+            RedosSeverity::Safe,
+            RedosSeverity::Low,
+            RedosSeverity::Medium
         ]);
     }
 

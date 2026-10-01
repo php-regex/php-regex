@@ -180,8 +180,8 @@ final class DebugCommand extends AbstractCommand
 
             $severityOutput = $this->formatRedosSeverity($analysis, $output);
             $status = match (true) {
-                RedosMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
-                \in_array($analysis->severity, [RedosSeverity::SAFE, RedosSeverity::LOW], true) => 'No significant ReDoS risk detected',
+                RedosMode::Off === $analysis->mode => 'ReDoS analysis disabled',
+                \in_array($analysis->severity, [RedosSeverity::Safe, RedosSeverity::Low], true) => 'No significant ReDoS risk detected',
                 $analysis->isConfirmed() => 'Confirmed ReDoS risk',
                 default => 'Potential ReDoS risk (theoretical)',
             };
@@ -208,7 +208,7 @@ final class DebugCommand extends AbstractCommand
                 $output->write('  Input:      "'.$escaped.'"'.$inputSource."\n");
             }
 
-            if (RedosMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
+            if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
                 $confirmation = $analysis->confirmation;
                 $output->write("\n");
                 $style->renderSection('Confirmation', $steps, $steps);
@@ -241,12 +241,12 @@ final class DebugCommand extends AbstractCommand
                     continue;
                 }
                 $rank = match ($candidate->severity) {
-                    RedosSeverity::SAFE => 0,
-                    RedosSeverity::LOW => 1,
-                    RedosSeverity::MEDIUM => 2,
-                    RedosSeverity::HIGH => 3,
-                    RedosSeverity::CRITICAL => 4,
-                    RedosSeverity::UNKNOWN => 1,
+                    RedosSeverity::Safe => 0,
+                    RedosSeverity::Low => 1,
+                    RedosSeverity::Medium => 2,
+                    RedosSeverity::High => 3,
+                    RedosSeverity::Critical => 4,
+                    RedosSeverity::Unknown => 1,
                 };
                 if ($rank > $hotspotRank) {
                     $hotspotRank = $rank;
@@ -260,10 +260,10 @@ final class DebugCommand extends AbstractCommand
                 $length = max(1, $hotspot->end - $hotspot->start);
                 $caret = str_repeat(' ', \strlen($prefix) + 1 + $start).str_repeat('^', $length);
                 $caretColor = match ($hotspot->severity) {
-                    RedosSeverity::SAFE, RedosSeverity::LOW => Output::GREEN,
-                    RedosSeverity::MEDIUM => Output::YELLOW,
-                    RedosSeverity::HIGH, RedosSeverity::CRITICAL => Output::RED,
-                    RedosSeverity::UNKNOWN => Output::GRAY,
+                    RedosSeverity::Safe, RedosSeverity::Low => Output::GREEN,
+                    RedosSeverity::Medium => Output::YELLOW,
+                    RedosSeverity::High, RedosSeverity::Critical => Output::RED,
+                    RedosSeverity::Unknown => Output::GRAY,
                 };
                 $output->write($output->color($caret, $caretColor)."\n");
             }
@@ -274,12 +274,12 @@ final class DebugCommand extends AbstractCommand
                 foreach ($analysis->findings as $finding) {
                     $label = strtoupper($finding->severity->value);
                     $findingSeverity = match ($finding->severity) {
-                        RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
-                        RedosSeverity::MEDIUM => $output->warning($label),
-                        RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
+                        RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
+                        RedosSeverity::Medium => $output->warning($label),
+                        RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
                             ? $output->error($label)
                             : $output->warning($label),
-                        RedosSeverity::UNKNOWN => $output->info($label),
+                        RedosSeverity::Unknown => $output->info($label),
                     };
                     $output->write('  - ['.$findingSeverity.'] '.$finding->message."\n");
                     if (null !== $finding->suggestedRewrite && '' !== $finding->suggestedRewrite) {
@@ -327,9 +327,9 @@ final class DebugCommand extends AbstractCommand
         $format = 'console';
 
         // Use config defaults for redosMode, falling back to THEORETICAL
-        $defaultMode = RedosMode::THEORETICAL;
+        $defaultMode = RedosMode::Theoretical;
         if (isset($defaults['redosMode']) && \is_string($defaults['redosMode'])) {
-            $defaultMode = RedosMode::tryFrom($defaults['redosMode']) ?? RedosMode::THEORETICAL;
+            $defaultMode = RedosMode::tryFrom($defaults['redosMode']) ?? RedosMode::Theoretical;
         }
         $redosMode = $defaultMode;
         $redosModeExplicit = false;
@@ -484,12 +484,12 @@ final class DebugCommand extends AbstractCommand
         $label = strtoupper($analysis->severity->value);
 
         $color = match ($analysis->severity) {
-            RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
-            RedosSeverity::MEDIUM => $output->warning($label),
-            RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
+            RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
+            RedosSeverity::Medium => $output->warning($label),
+            RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
                 ? $output->error($label)
                 : $output->warning($label),
-            RedosSeverity::UNKNOWN => $output->info($label),
+            RedosSeverity::Unknown => $output->info($label),
         };
 
         return $color;

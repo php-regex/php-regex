@@ -123,7 +123,7 @@ final class ModernizerNodeVisitorTest extends TestCase
         $quantifier = new QuantifierNode(
             new LiteralNode('a', 0, 1),
             '*',
-            QuantifierType::T_GREEDY,
+            QuantifierType::Greedy,
             1,
             2,
         );
@@ -187,7 +187,7 @@ final class ModernizerNodeVisitorTest extends TestCase
 
     public function test_preserves_char_literal(): void
     {
-        $charLiteral = new CharLiteralNode('a', 65, CharLiteralType::UNICODE, 0, 1);
+        $charLiteral = new CharLiteralNode('a', 65, CharLiteralType::Unicode, 0, 1);
         $result = $charLiteral->accept($this->visitor);
 
         $this->assertSame($charLiteral, $result);

@@ -51,7 +51,7 @@ final class BackrefAsOctalInCharClassRule extends AbstractLintRule
                 continue;
             }
 
-            if (CharLiteralType::OCTAL_LEGACY !== $part->type) {
+            if (CharLiteralType::OctalLegacy !== $part->type) {
                 continue;
             }
 

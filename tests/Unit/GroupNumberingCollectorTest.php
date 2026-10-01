@@ -33,7 +33,7 @@ final class GroupNumberingCollectorTest extends TestCase
     public function test_collect_basic_capturing_groups(): void
     {
         $literal = new LiteralNode('test', 0, 4);
-        $group = new GroupNode($literal, GroupType::T_GROUP_CAPTURING, null, null, 0, 4);
+        $group = new GroupNode($literal, GroupType::Capturing, null, null, 0, 4);
         $sequence = new SequenceNode([$group], 0, 4);
         $root = new RegexNode($sequence, '', '/', 0, 4);
 
@@ -48,7 +48,7 @@ final class GroupNumberingCollectorTest extends TestCase
     public function test_collect_named_groups(): void
     {
         $literal = new LiteralNode('test', 0, 4);
-        $group = new GroupNode($literal, GroupType::T_GROUP_NAMED, 'name', null, 0, 4);
+        $group = new GroupNode($literal, GroupType::Named, 'name', null, 0, 4);
         $sequence = new SequenceNode([$group], 0, 4);
         $root = new RegexNode($sequence, '', '/', 0, 4);
 
@@ -65,8 +65,8 @@ final class GroupNumberingCollectorTest extends TestCase
     {
         $literal1 = new LiteralNode('a', 0, 1);
         $literal2 = new LiteralNode('b', 1, 2);
-        $group1 = new GroupNode($literal1, GroupType::T_GROUP_CAPTURING, null, null, 0, 1);
-        $group2 = new GroupNode($literal2, GroupType::T_GROUP_CAPTURING, null, null, 1, 2);
+        $group1 = new GroupNode($literal1, GroupType::Capturing, null, null, 0, 1);
+        $group2 = new GroupNode($literal2, GroupType::Capturing, null, null, 1, 2);
         $sequence = new SequenceNode([$group1, $group2], 0, 2);
         $root = new RegexNode($sequence, '', '/', 0, 2);
 
@@ -82,11 +82,11 @@ final class GroupNumberingCollectorTest extends TestCase
     {
         $literal1 = new LiteralNode('a', 0, 1);
         $literal2 = new LiteralNode('b', 1, 2);
-        $group1 = new GroupNode($literal1, GroupType::T_GROUP_CAPTURING, null, null, 0, 1);
-        $group2 = new GroupNode($literal2, GroupType::T_GROUP_CAPTURING, null, null, 1, 2);
+        $group1 = new GroupNode($literal1, GroupType::Capturing, null, null, 0, 1);
+        $group2 = new GroupNode($literal2, GroupType::Capturing, null, null, 1, 2);
 
         $alternation = new AlternationNode([$group1, $group2], 0, 2);
-        $branchReset = new GroupNode($alternation, GroupType::T_GROUP_BRANCH_RESET, null, null, 0, 2);
+        $branchReset = new GroupNode($alternation, GroupType::BranchReset, null, null, 0, 2);
         $sequence = new SequenceNode([$branchReset], 0, 2);
         $root = new RegexNode($sequence, '', '/', 0, 2);
 
@@ -102,8 +102,8 @@ final class GroupNumberingCollectorTest extends TestCase
     {
         $literal1 = new LiteralNode('a', 0, 1);
         $literal2 = new LiteralNode('b', 1, 2);
-        $group1 = new GroupNode($literal1, GroupType::T_GROUP_CAPTURING, null, null, 0, 1);
-        $group2 = new GroupNode($literal2, GroupType::T_GROUP_CAPTURING, null, null, 1, 2);
+        $group1 = new GroupNode($literal1, GroupType::Capturing, null, null, 0, 1);
+        $group2 = new GroupNode($literal2, GroupType::Capturing, null, null, 1, 2);
 
         $alternation = new AlternationNode([$group1, $group2], 0, 2);
         $sequence = new SequenceNode([$alternation], 0, 2);
@@ -120,8 +120,8 @@ final class GroupNumberingCollectorTest extends TestCase
     public function test_collect_with_quantifier(): void
     {
         $literal = new LiteralNode('a', 0, 1);
-        $quantifier = new QuantifierNode($literal, '+', QuantifierType::T_GREEDY, 0, 1);
-        $group = new GroupNode($quantifier, GroupType::T_GROUP_CAPTURING, null, null, 0, 1);
+        $quantifier = new QuantifierNode($literal, '+', QuantifierType::Greedy, 0, 1);
+        $group = new GroupNode($quantifier, GroupType::Capturing, null, null, 0, 1);
         $sequence = new SequenceNode([$group], 0, 1);
         $root = new RegexNode($sequence, '', '/', 0, 1);
 
@@ -140,7 +140,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $no = new LiteralNode('z', 2, 3);
         $conditional = new ConditionalNode($condition, $yes, $no, 0, 3);
 
-        $group = new GroupNode($conditional, GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
+        $group = new GroupNode($conditional, GroupType::Capturing, null, null, 0, 3);
         $sequence = new SequenceNode([$group], 0, 3);
         $root = new RegexNode($sequence, '', '/', 0, 3);
 
@@ -206,18 +206,18 @@ final class GroupNumberingCollectorTest extends TestCase
         $range = new RangeNode($literalA, $literalB, 0, 2);
         $charClass = new CharClassNode($range, false, 0, 2);
 
-        $capturedInDefine = new GroupNode($charClass, GroupType::T_GROUP_CAPTURING, null, null, 0, 2);
+        $capturedInDefine = new GroupNode($charClass, GroupType::Capturing, null, null, 0, 2);
         $define = new DefineNode($capturedInDefine, 0, 2);
 
         $conditional = new ConditionalNode($literalA, $capturedInDefine, $literalB, 0, 2);
         $sequence = new SequenceNode([$define, $conditional], 0, 2);
 
-        $namedGroup = new GroupNode($sequence, GroupType::T_GROUP_NAMED, 'foo', null, 0, 2);
-        $capturing = new GroupNode($literalA, GroupType::T_GROUP_CAPTURING, null, null, 0, 1);
+        $namedGroup = new GroupNode($sequence, GroupType::Named, 'foo', null, 0, 2);
+        $capturing = new GroupNode($literalA, GroupType::Capturing, null, null, 0, 1);
 
         $branchReset = new GroupNode(
             new AlternationNode([$capturing, $namedGroup], 0, 2),
-            GroupType::T_GROUP_BRANCH_RESET,
+            GroupType::BranchReset,
             null,
             null,
             0,
@@ -239,8 +239,8 @@ final class GroupNumberingCollectorTest extends TestCase
     {
         $literal1 = new LiteralNode('a', 0, 1);
         $literal2 = new LiteralNode('b', 1, 2);
-        $group1 = new GroupNode($literal1, GroupType::T_GROUP_NAMED, 'name', null, 0, 1);
-        $group2 = new GroupNode($literal2, GroupType::T_GROUP_NAMED, 'name', null, 1, 2);
+        $group1 = new GroupNode($literal1, GroupType::Named, 'name', null, 0, 1);
+        $group2 = new GroupNode($literal2, GroupType::Named, 'name', null, 1, 2);
         $sequence = new SequenceNode([$group1, $group2], 0, 2);
         $root = new RegexNode($sequence, '', '/', 0, 2);
 

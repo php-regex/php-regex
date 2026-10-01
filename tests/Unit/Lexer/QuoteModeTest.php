@@ -26,11 +26,11 @@ final class QuoteModeTest extends TestCase
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL, T_QUOTE_MODE_END, T_EOF
         $this->assertCount(4, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
         $this->assertSame('\Q', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('*+?', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
         $this->assertSame('\E', $tokens[2]->value);
     }
 
@@ -41,9 +41,9 @@ final class QuoteModeTest extends TestCase
 
         // Now emits T_QUOTE_MODE_START, T_LITERAL, T_EOF (no T_QUOTE_MODE_END since no \E)
         $this->assertCount(3, $tokens);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[0]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[0]->type);
         $this->assertSame('\Q', $tokens[0]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[1]->type);
+        $this->assertSame(TokenType::Literal, $tokens[1]->type);
         $this->assertSame('*+?', $tokens[1]->value);
     }
 
@@ -53,13 +53,13 @@ final class QuoteModeTest extends TestCase
         $tokens = (new Lexer())->tokenize('a\Q\Eb')->getTokens();
 
         // Now emits: T_LITERAL('a'), T_QUOTE_MODE_START, T_QUOTE_MODE_END, T_LITERAL('b'), T_EOF
-        $this->assertSame(TokenType::T_LITERAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[0]->type);
         $this->assertSame('a', $tokens[0]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_START, $tokens[1]->type);
+        $this->assertSame(TokenType::QuoteModeStart, $tokens[1]->type);
         $this->assertSame('\Q', $tokens[1]->value);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $tokens[2]->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
         $this->assertSame('\E', $tokens[2]->value);
-        $this->assertSame(TokenType::T_LITERAL, $tokens[3]->type);
+        $this->assertSame(TokenType::Literal, $tokens[3]->type);
         $this->assertSame('b', $tokens[3]->value);
     }
 }

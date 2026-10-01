@@ -210,7 +210,7 @@ final class LexerSweepTest extends TestCase
         $method = $reflection->getMethod('extractTokenValue');
 
         // Simulates an unknown escaped character, e.g. '\@' -> '@'
-        $result = $method->invoke($lexer, TokenType::T_LITERAL_ESCAPED, '\@', []);
+        $result = $method->invoke($lexer, TokenType::LiteralEscaped, '\@', []);
 
         $this->assertSame('@', $result);
     }
@@ -227,7 +227,7 @@ final class LexerSweepTest extends TestCase
         $method = $reflection->getMethod('extractTokenValue');
 
         // T_LITERAL falls into the default
-        $result = $method->invoke($lexer, TokenType::T_LITERAL, 'A', []);
+        $result = $method->invoke($lexer, TokenType::Literal, 'A', []);
 
         $this->assertSame('A', $result);
     }

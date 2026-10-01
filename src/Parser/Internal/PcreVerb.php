@@ -32,15 +32,15 @@ final readonly class PcreVerb
      * PCRE2 10.32+ alphabetic assertion verbs and their group equivalents.
      */
     private const ASSERTIONS = [
-        'positive_lookahead' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        'pla' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        'negative_lookahead' => GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-        'nla' => GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-        'positive_lookbehind' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-        'plb' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-        'negative_lookbehind' => GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-        'nlb' => GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-        'atomic' => GroupType::T_GROUP_ATOMIC,
+        'positive_lookahead' => GroupType::LookaheadPositive,
+        'pla' => GroupType::LookaheadPositive,
+        'negative_lookahead' => GroupType::LookaheadNegative,
+        'nla' => GroupType::LookaheadNegative,
+        'positive_lookbehind' => GroupType::LookbehindPositive,
+        'plb' => GroupType::LookbehindPositive,
+        'negative_lookbehind' => GroupType::LookbehindNegative,
+        'nlb' => GroupType::LookbehindNegative,
+        'atomic' => GroupType::Atomic,
     ];
 
     /**
@@ -48,10 +48,10 @@ final readonly class PcreVerb
      * the positive ones exist.
      */
     private const NON_ATOMIC_ASSERTIONS = [
-        'non_atomic_positive_lookahead' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        'napla' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        'non_atomic_positive_lookbehind' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-        'naplb' => GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
+        'non_atomic_positive_lookahead' => GroupType::LookaheadPositive,
+        'napla' => GroupType::LookaheadPositive,
+        'non_atomic_positive_lookbehind' => GroupType::LookbehindPositive,
+        'naplb' => GroupType::LookbehindPositive,
     ];
 
     /**
@@ -106,7 +106,7 @@ final readonly class PcreVerb
         // "(?*...)" is the short spelling of "(*napla:...)"; the lexer hands
         // it over as the text after "(?".
         if (str_starts_with($verb, '*')) {
-            return new self($verb, GroupType::T_GROUP_LOOKAHEAD_POSITIVE, substr($verb, 1), null, 1, true);
+            return new self($verb, GroupType::LookaheadPositive, substr($verb, 1), null, 1, true);
         }
 
         // "(*:name)" and "(*=name)" are shorthands for a mark.
@@ -232,7 +232,7 @@ final readonly class PcreVerb
      */
     public static function isLookaround(string $name): bool
     {
-        return GroupType::T_GROUP_ATOMIC !== (self::ASSERTIONS[$name] ?? GroupType::T_GROUP_ATOMIC);
+        return GroupType::Atomic !== (self::ASSERTIONS[$name] ?? GroupType::Atomic);
     }
 
     /**

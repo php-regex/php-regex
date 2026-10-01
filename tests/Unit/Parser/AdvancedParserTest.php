@@ -29,7 +29,7 @@ final class AdvancedParserTest extends TestCase
         $ast = $regex->parse('/(?<name>a)/');
 
         $this->assertInstanceOf(GroupNode::class, $ast->pattern);
-        $this->assertSame(GroupType::T_GROUP_NAMED, $ast->pattern->type);
+        $this->assertSame(GroupType::Named, $ast->pattern->type);
         $this->assertSame('name', $ast->pattern->name);
     }
 
@@ -40,7 +40,7 @@ final class AdvancedParserTest extends TestCase
 
         $this->assertInstanceOf(QuantifierNode::class, $ast->pattern);
         $this->assertSame('+', $ast->pattern->quantifier);
-        $this->assertSame(QuantifierType::T_LAZY, $ast->pattern->type);
+        $this->assertSame(QuantifierType::Lazy, $ast->pattern->type);
     }
 
     public function test_parse_possessive_quantifier(): void
@@ -50,7 +50,7 @@ final class AdvancedParserTest extends TestCase
 
         $this->assertInstanceOf(QuantifierNode::class, $ast->pattern);
         $this->assertSame('{2,3}', $ast->pattern->quantifier);
-        $this->assertSame(QuantifierType::T_POSSESSIVE, $ast->pattern->type);
+        $this->assertSame(QuantifierType::Possessive, $ast->pattern->type);
     }
 
     public function test_parse_lookahead(): void
@@ -63,7 +63,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertCount(2, $ast->pattern->children);
         $group = $ast->pattern->children[1];
         $this->assertInstanceOf(GroupNode::class, $group);
-        $this->assertSame(GroupType::T_GROUP_LOOKAHEAD_POSITIVE, $group->type);
+        $this->assertSame(GroupType::LookaheadPositive, $group->type);
     }
 
     public function test_parse_alternative_delimiter(): void

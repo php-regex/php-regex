@@ -83,7 +83,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
     public function test_compiling_a_built_tree_keeps_a_reference_apart_from_a_digit(): void
     {
         // (a)\1 then "0", built in code: no source says where "\1" ended.
-        $group = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
+        $group = new GroupNode(new LiteralNode('a', 1, 2), GroupType::Capturing, null, null, 0, 3);
         $sequence = new SequenceNode([$group, new BackrefNode('1', 3, 5), new LiteralNode('0', 5, 6)], 0, 6);
 
         $compiled = (new RegexNode($sequence, '', '/', 0, 6))->accept(new PatternPrinter());
@@ -115,7 +115,7 @@ final class EscapeBoundaryRoundTripTest extends TestCase
     {
         // [\0 then "1"], built in code: inside a class only "\E" separates.
         $members = [
-            new CharLiteralNode('\\0', 0, CharLiteralType::OCTAL_LEGACY, 1, 3),
+            new CharLiteralNode('\\0', 0, CharLiteralType::OctalLegacy, 1, 3),
             new LiteralNode('1', 3, 4),
         ];
         $expression = 'sequence' === $shape ? new SequenceNode($members, 1, 4) : new AlternationNode($members, 1, 4);

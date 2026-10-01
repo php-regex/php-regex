@@ -107,7 +107,7 @@ final class AnalyzeCommand extends AbstractCommand
     {
         $pattern = '';
         $format = 'console';
-        $redosMode = RedosMode::THEORETICAL;
+        $redosMode = RedosMode::Theoretical;
         $redosThreshold = null;
         $confirmOptions = null;
         $stopParsing = false;
@@ -344,7 +344,7 @@ final class AnalyzeCommand extends AbstractCommand
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }
 
-        if (RedosMode::CONFIRMED === $analysis->mode && null !== $analysis->confirmation) {
+        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
             $this->renderConfirmationSection($output, $style, $analysis->confirmation);
         }
 
@@ -394,8 +394,8 @@ final class AnalyzeCommand extends AbstractCommand
     private function getRedosStatus(RedosAnalysis $analysis): string
     {
         return match (true) {
-            RedosMode::OFF === $analysis->mode => 'ReDoS analysis disabled',
-            \in_array($analysis->severity, [RedosSeverity::SAFE, RedosSeverity::LOW], true) => 'No significant ReDoS risk detected',
+            RedosMode::Off === $analysis->mode => 'ReDoS analysis disabled',
+            \in_array($analysis->severity, [RedosSeverity::Safe, RedosSeverity::Low], true) => 'No significant ReDoS risk detected',
             $analysis->isConfirmed() => 'Confirmed ReDoS risk',
             default => 'Potential ReDoS risk (theoretical)',
         };
@@ -420,12 +420,12 @@ final class AnalyzeCommand extends AbstractCommand
         $label = strtoupper($analysis->severity->value);
 
         $color = match ($analysis->severity) {
-            RedosSeverity::SAFE, RedosSeverity::LOW => $output->success($label),
-            RedosSeverity::MEDIUM => $output->warning($label),
-            RedosSeverity::HIGH, RedosSeverity::CRITICAL => $analysis->isConfirmed()
+            RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
+            RedosSeverity::Medium => $output->warning($label),
+            RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
                 ? $output->error($label)
                 : $output->warning($label),
-            RedosSeverity::UNKNOWN => $output->info($label),
+            RedosSeverity::Unknown => $output->info($label),
         };
 
         return $color;

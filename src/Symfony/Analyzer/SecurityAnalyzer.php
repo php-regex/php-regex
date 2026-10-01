@@ -71,7 +71,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
                     self::ID.'_access',
                     'Security Access Control',
                     summary: [
-                        new AnalysisNotice(CheckOutcome::WARN, 'No security config files found.'),
+                        new AnalysisNotice(CheckOutcome::Warn, 'No security config files found.'),
                     ],
                 ),
             ];
@@ -182,14 +182,14 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if ([] !== $skippedFiles) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf('%d security config files were skipped.', \count($skippedFiles)),
             );
         }
 
         if ([] !== $report->skippedRules) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d access_control rules skipped due to unsupported regex features.',
                     \count($report->skippedRules),
@@ -199,7 +199,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->rulesWithAllowIf) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d rules use allow_if; conditions are not evaluated during analysis.',
                     \count(array_unique($report->rulesWithAllowIf)),
@@ -209,7 +209,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->rulesWithIps) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d rules use IP restrictions; IPs are not evaluated during analysis.',
                     \count(array_unique($report->rulesWithIps)),
@@ -219,7 +219,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->rulesWithNoPath) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d rules have no path and match all requests.',
                     \count(array_unique($report->rulesWithNoPath)),
@@ -229,7 +229,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
 
         if ([] !== $report->rulesWithUnsupportedHosts) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf(
                     '%d rules use host restrictions that could not be analyzed.',
                     \count(array_unique($report->rulesWithUnsupportedHosts)),
@@ -251,21 +251,21 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
         $critical = $report->stats['critical'];
 
         if (0 === $shadowed && 0 === $overlaps) {
-            $summary[] = new AnalysisNotice(CheckOutcome::PASS, 'No access_control conflicts detected.');
+            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'No access_control conflicts detected.');
 
             return $summary;
         }
 
         if ($critical > 0) {
             $summary[] = new AnalysisNotice(
-                CheckOutcome::CRITICAL,
+                CheckOutcome::Critical,
                 \sprintf('%d critical shadowing conflicts detected.', $critical),
             );
         }
 
         if ($shadowed > 0) {
             $summary[] = new AnalysisNotice(
-                CheckOutcome::FAIL,
+                CheckOutcome::Fail,
                 \sprintf('%d shadowed rules detected.', $shadowed),
             );
         }
@@ -273,7 +273,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
         if ($overlaps > 0) {
             $suffix = $includeOverlaps ? 'Listed below.' : 'Use --show-overlaps to include them.';
             $summary[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf('%d overlapping rules detected. %s', $overlaps, $suffix),
             );
         }
@@ -291,9 +291,9 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
         $type = $conflict['type'];
 
         $severity = match (true) {
-            'critical' === $conflict['severity'] => CheckOutcome::CRITICAL,
-            'shadowed' === $type => CheckOutcome::FAIL,
-            default => CheckOutcome::WARN,
+            'critical' === $conflict['severity'] => CheckOutcome::Critical,
+            'shadowed' === $type => CheckOutcome::Fail,
+            default => CheckOutcome::Warn,
         };
 
         $title = \sprintf(
@@ -337,17 +337,17 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
         $warnings = [];
         if ([] !== $report->skippedFirewalls) {
             $warnings[] = new AnalysisNotice(
-                CheckOutcome::WARN,
+                CheckOutcome::Warn,
                 \sprintf('%d firewalls skipped during ReDoS analysis.', \count($report->skippedFirewalls)),
             );
         }
 
         $summary = [];
         if ([] === $report->findings) {
-            $summary[] = new AnalysisNotice(CheckOutcome::PASS, 'No risky firewall regex detected.');
+            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'No risky firewall regex detected.');
         } else {
             $summary[] = new AnalysisNotice(
-                CheckOutcome::FAIL,
+                CheckOutcome::Fail,
                 \sprintf('%d firewall regex patterns exceed the ReDoS threshold.', $report->stats['flagged']),
             );
         }
@@ -373,9 +373,9 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
     private function buildFirewallIssue(array $finding, RelativePathHelper $pathHelper): AnalysisIssue
     {
         $severity = match ($finding['severity']) {
-            'critical' => CheckOutcome::CRITICAL,
-            'high' => CheckOutcome::FAIL,
-            default => CheckOutcome::WARN,
+            'critical' => CheckOutcome::Critical,
+            'high' => CheckOutcome::Fail,
+            default => CheckOutcome::Warn,
         };
 
         $location = $this->formatLocation($pathHelper, $finding['file'], $finding['line']);

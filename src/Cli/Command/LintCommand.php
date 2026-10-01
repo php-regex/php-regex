@@ -158,7 +158,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         // is the one it measures against; there is no setting to turn JIT on.
         $analysis = new AnalysisService(
             $regex->parser(),
-            redosThreshold: $arguments->redosThreshold ?? RedosSeverity::HIGH->value,
+            redosThreshold: $arguments->redosThreshold ?? RedosSeverity::High->value,
             redosMode: $arguments->redosMode,
             redosConfirmOptions: new ConfirmationOptions(),
             lintEnabled: $arguments->checkLint,

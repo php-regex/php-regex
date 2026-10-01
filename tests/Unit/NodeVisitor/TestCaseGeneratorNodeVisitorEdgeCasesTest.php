@@ -61,7 +61,7 @@ final class TestCaseGeneratorNodeVisitorEdgeCasesTest extends TestCase
     public function test_quantifier_with_max_adds_non_matching_sample(): void
     {
         $visitor = new TestCaseGenerator();
-        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{1,2}', QuantifierType::T_GREEDY, 0, 0);
+        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{1,2}', QuantifierType::Greedy, 0, 0);
 
         $cases = $node->accept($visitor);
 

@@ -44,11 +44,11 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new RedosProfiler();
         $this->invokePrivate($visitor, 'addVulnerability', [
-            RedosSeverity::LOW,
+            RedosSeverity::Low,
             'Test risk',
             new LiteralNode('a', 0, 0),
             null,
-            RedosConfidence::LOW,
+            RedosConfidence::Low,
             null,
         ]);
 
@@ -61,11 +61,11 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new RedosProfiler();
         $this->invokePrivate($visitor, 'addVulnerability', [
-            RedosSeverity::MEDIUM,
+            RedosSeverity::Medium,
             'Test risk with suggestion',
             new LiteralNode('a', 0, 0),
             'Use possessive quantifiers',
-            RedosConfidence::MEDIUM,
+            RedosConfidence::Medium,
             null,
         ]);
 
@@ -77,11 +77,11 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
     public function test_large_bounded_quantifier_adds_low_risk(): void
     {
         $visitor = new RedosProfiler();
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{1,2001}', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{1,2001}', QuantifierType::Greedy, 0, 0);
 
         $severity = $quantifier->accept($visitor);
 
-        $this->assertSame(RedosSeverity::LOW, $severity);
+        $this->assertSame(RedosSeverity::Low, $severity);
     }
 
     public function test_star_height_critical_when_child_returns_high(): void
@@ -96,7 +96,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
             public function accept(NodeVisitorInterface $visitor): RedosSeverity|string
             {
                 if ($visitor instanceof RedosProfiler) {
-                    return RedosSeverity::HIGH;
+                    return RedosSeverity::High;
                 }
 
                 return '';
@@ -113,10 +113,10 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
             }
         };
 
-        $quantifier = new QuantifierNode($highNode, '*', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode($highNode, '*', QuantifierType::Greedy, 0, 0);
         $severity = $quantifier->accept($visitor);
 
-        $this->assertSame(RedosSeverity::CRITICAL, $severity);
+        $this->assertSame(RedosSeverity::Critical, $severity);
     }
 
     public function test_safe_nodes_return_safe_severity(): void
@@ -134,7 +134,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
         ];
 
         foreach ($nodes as $node) {
-            $this->assertSame(RedosSeverity::SAFE, $node->accept($visitor));
+            $this->assertSame(RedosSeverity::Safe, $node->accept($visitor));
         }
     }
 
@@ -144,8 +144,8 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
         $conditional = new ConditionalNode(new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0), new LiteralNode('c', 0, 0), 0, 0);
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
 
-        $this->assertSame(RedosSeverity::SAFE, $conditional->accept($visitor));
-        $this->assertSame(RedosSeverity::SAFE, $define->accept($visitor));
+        $this->assertSame(RedosSeverity::Safe, $conditional->accept($visitor));
+        $this->assertSame(RedosSeverity::Safe, $define->accept($visitor));
     }
 
     public function test_overlapping_alternatives_handles_unknown_sets(): void
@@ -176,7 +176,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
     public function test_prefix_signature_recurses_through_group(): void
     {
         $visitor = new RedosProfiler();
-        $group = new GroupNode(new DotNode(0, 0), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
+        $group = new GroupNode(new DotNode(0, 0), GroupType::NonCapturing, null, null, 0, 0);
 
         $signature = $this->invokePrivate($visitor, 'getPrefixSignature', [$group]);
 
@@ -198,7 +198,7 @@ final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase
 
             public function accept(NodeVisitorInterface $visitor): RedosSeverity
             {
-                return RedosSeverity::SAFE;
+                return RedosSeverity::Safe;
             }
 
             public function getStartPosition(): int

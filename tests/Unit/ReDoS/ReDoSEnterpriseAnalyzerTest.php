@@ -40,8 +40,8 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::MEDIUM), "Expected at least MEDIUM for pattern: {$pattern}");
-        $this->assertFalse($analysis->exceedsThreshold(RedosSeverity::HIGH), "Expected below HIGH for pattern: {$pattern}");
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::Medium), "Expected at least MEDIUM for pattern: {$pattern}");
+        $this->assertFalse($analysis->exceedsThreshold(RedosSeverity::High), "Expected below HIGH for pattern: {$pattern}");
     }
 
     #[DataProvider('provideHighPatterns')]
@@ -49,14 +49,14 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::HIGH), "Expected HIGH+ severity for pattern: {$pattern}");
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High), "Expected HIGH+ severity for pattern: {$pattern}");
     }
 
     public function test_empty_match_quantifier_is_reported(): void
     {
         $analysis = $this->analyzer->analyze('/(a?)+/');
 
-        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::HIGH));
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High));
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'match empty'));
     }
 
@@ -65,7 +65,7 @@ final class ReDoSEnterpriseAnalyzerTest extends TestCase
     {
         $analysis = $this->analyzer->analyze($pattern);
 
-        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::MEDIUM));
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::Medium));
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'Adjacent quantified tokens'));
     }
 

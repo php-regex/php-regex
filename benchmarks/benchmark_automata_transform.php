@@ -29,7 +29,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 $iterations = 200;
 $regex = Regex::create();
-$options = new SolverOptions(matchMode: MatchMode::FULL);
+$options = new SolverOptions(matchMode: MatchMode::Full);
 
 $patterns = [
     'long_literal' => '/'.str_repeat('a', 200).'/',

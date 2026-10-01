@@ -83,6 +83,6 @@ final class RegexValidateFailureTest extends TestCase
         $result = Regex::create(['cache' => null])->validate('/a(/');
 
         $this->assertFalse($result->isValid);
-        $this->assertSame(ValidationErrorCategory::SYNTAX, $result->category);
+        $this->assertSame(ValidationErrorCategory::Syntax, $result->category);
     }
 }

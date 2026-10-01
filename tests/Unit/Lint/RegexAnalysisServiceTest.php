@@ -56,7 +56,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_analyze_redos_returns_empty_array_for_no_patterns(): void
     {
-        $result = $this->analysis->analyzeRedos([], RedosSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos([], RedosSeverity::Medium);
 
         $this->assertSame([], $result);
     }
@@ -67,7 +67,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
 
         $this->assertSame([], $result);
     }
@@ -78,7 +78,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low);
 
         $this->assertCount(1, $result);
         $this->assertSame('test.php', $result[0]['file']);
@@ -92,7 +92,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/\w+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::HIGH);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::High);
 
         $this->assertSame([], $result);
     }
@@ -160,7 +160,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
 
         $this->assertGreaterThanOrEqual(0, \count($result));
     }
@@ -168,7 +168,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_extract_fragment_with_empty_pattern(): void
     {
         $patterns = [new PatternOccurrence('', 'test.php', 1, 'preg_match')];
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::MEDIUM);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
 
         $this->assertSame([], $result);
     }
@@ -298,7 +298,7 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW);
+        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low);
 
         $this->assertSame([], $result);
     }
@@ -387,8 +387,8 @@ final class RegexAnalysisServiceTest extends TestCase
             new PatternOccurrence('/foo/', 'test.php', 2, 'preg_match'),
         ];
 
-        $sequential = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW, 1);
-        $parallel = $this->analysis->analyzeRedos($patterns, RedosSeverity::LOW, 2);
+        $sequential = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 1);
+        $parallel = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 2);
 
         $this->assertEquals($sequential, $parallel);
     }
@@ -720,7 +720,7 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_redos_hint_helpers(): void
     {
-        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10);
+        $analysis = new RedosAnalysis(RedosSeverity::High, 10);
         $hint = $this->invokePrivate('getReDoSHint', $analysis, '/abc/');
         $this->assertIsString($hint);
         $this->assertStringContainsString('Use possessive quantifiers', (string) $hint);
@@ -728,7 +728,7 @@ final class RegexAnalysisServiceTest extends TestCase
         $this->assertStringContainsString('++', (string) $hint);
         $this->assertStringContainsString('{m,n}+', (string) $hint);
 
-        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10, null, ['Keep it linear'], null, 'a+)+');
+        $analysis = new RedosAnalysis(RedosSeverity::High, 10, null, ['Keep it linear'], null, 'a+)+');
         $hint = $this->invokePrivate('getReDoSHint', $analysis, '/(a+)+.*+/');
         $this->assertIsString($hint);
         $this->assertStringContainsString('Keep it linear', (string) $hint);

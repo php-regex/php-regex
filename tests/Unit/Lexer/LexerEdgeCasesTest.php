@@ -70,9 +70,9 @@ final class LexerEdgeCasesTest extends TestCase
         $tokens = $tokenStream->getTokens();
 
         $this->assertSame('test', $tokenStream->getPattern());
-        $this->assertSame(TokenType::T_LITERAL, $tokens[0]->type);
+        $this->assertSame(TokenType::Literal, $tokens[0]->type);
         $this->assertSame('t', $tokens[0]->value);
-        $this->assertSame(TokenType::T_EOF, $tokens[\count($tokens) - 1]->type);
+        $this->assertSame(TokenType::Eof, $tokens[\count($tokens) - 1]->type);
     }
 
     /**
@@ -89,7 +89,7 @@ final class LexerEdgeCasesTest extends TestCase
         // Force a token that has no specific extraction logic
         // (e.g. T_LITERAL goes to the default)
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_LITERAL,
+            TokenType::Literal,
             'X',
             []
         ]);
@@ -98,7 +98,7 @@ final class LexerEdgeCasesTest extends TestCase
         // Test empty array fallback (null coalescing) in Lexer
         // Case: T_POSIX_CLASS without 'v_posix' key in matches
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_POSIX_CLASS,
+            TokenType::PosixClass,
             '[[:alnum:]]',
             [] // Empty array to simulate partial match
         ]);
@@ -184,7 +184,7 @@ final class LexerEdgeCasesTest extends TestCase
 
         $endToken = $accessor->callPrivateMethod('consumeQuoteMode');
         $this->assertInstanceOf(Token::class, $endToken);
-        $this->assertSame(TokenType::T_QUOTE_MODE_END, $endToken->type);
+        $this->assertSame(TokenType::QuoteModeEnd, $endToken->type);
         $this->assertFalse($accessor->getInQuoteMode());
     }
 
@@ -244,7 +244,7 @@ final class LexerEdgeCasesTest extends TestCase
 
         $closing = $accessor->callPrivateMethod('consumeCommentMode');
         $this->assertInstanceOf(Token::class, $closing);
-        $this->assertSame(TokenType::T_GROUP_CLOSE, $closing->type);
+        $this->assertSame(TokenType::GroupClose, $closing->type);
         $this->assertFalse($this->getPrivateBool($lexer, 'inCommentMode'));
     }
 
@@ -253,7 +253,7 @@ final class LexerEdgeCasesTest extends TestCase
         $lexer = new Lexer();
         $accessor = new LexerAccessor($lexer);
 
-        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::T_LITERAL_ESCAPED, '\\a', []]);
+        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::LiteralEscaped, '\\a', []]);
 
         $this->assertSame("\x07", $value);
     }
@@ -263,7 +263,7 @@ final class LexerEdgeCasesTest extends TestCase
         $lexer = new Lexer();
         $accessor = new LexerAccessor($lexer);
 
-        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::T_LITERAL, 'X', []]);
+        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::Literal, 'X', []]);
 
         $this->assertSame('X', $value);
     }

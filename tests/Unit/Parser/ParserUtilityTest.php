@@ -167,7 +167,7 @@ final class ParserUtilityTest extends TestCase
         // and the next token is T_QUANTIFIER, it raises the error.
         // Simulate: Token T_QUANTIFIER at the beginning.
         $tokens = [
-            $this->accessor->createToken(TokenType::T_QUANTIFIER, '*', 0),
+            $this->accessor->createToken(TokenType::Quantifier, '*', 0),
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0);
@@ -184,8 +184,8 @@ final class ParserUtilityTest extends TestCase
     {
         // Simuler un jeton de fermeture de groupe inattendu dans un contexte atomique
         $tokens = [
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 0),
-            $this->accessor->createToken(TokenType::T_EOF, '', 1),
+            $this->accessor->createToken(TokenType::GroupClose, ')', 0),
+            $this->accessor->createToken(TokenType::Eof, '', 1),
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0);
@@ -201,9 +201,9 @@ final class ParserUtilityTest extends TestCase
         // Regex: /?(im)/. Le parser consomme '('. Puis il consomme '?' (dans parseGroupModifier).
         // Il doit consommer les flags 'i', 'm', puis ')'
         $tokens = [
-            $this->accessor->createToken(TokenType::T_LITERAL, 'i', 2),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'm', 3),
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 4),
+            $this->accessor->createToken(TokenType::Literal, 'i', 2),
+            $this->accessor->createToken(TokenType::Literal, 'm', 3),
+            $this->accessor->createToken(TokenType::GroupClose, ')', 4),
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0); // Position 0 -> Token 'i'
@@ -213,7 +213,7 @@ final class ParserUtilityTest extends TestCase
         $node = $this->accessor->callPrivateMethod('parseGroupModifier');
 
         $this->assertInstanceOf(GroupNode::class, $node);
-        $this->assertSame(GroupType::T_GROUP_INLINE_FLAGS, $node->type);
+        $this->assertSame(GroupType::InlineFlags, $node->type);
         $this->assertSame('im', $node->flags);
         $this->assertInstanceOf(LiteralNode::class, $node->child);
         $this->assertSame('', $node->child->value, 'Child should be an empty node.');
@@ -224,10 +224,10 @@ final class ParserUtilityTest extends TestCase
         // Simulate (?P[invalid]) - parseGroupModifier is called after consuming (?
         // Position 0 = '/', 1 = '(', 2 = '?', 3 = 'P', 4 = '['
         $tokens = [
-            $this->accessor->createToken(TokenType::T_LITERAL, 'P', 2), // P at position 2
-            $this->accessor->createToken(TokenType::T_LITERAL, '[', 3), // [ at position 3
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 4),
-            $this->accessor->createToken(TokenType::T_EOF, '', 5),
+            $this->accessor->createToken(TokenType::Literal, 'P', 2), // P at position 2
+            $this->accessor->createToken(TokenType::Literal, '[', 3), // [ at position 3
+            $this->accessor->createToken(TokenType::GroupClose, ')', 4),
+            $this->accessor->createToken(TokenType::Eof, '', 5),
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0); // Start at 'P'
@@ -252,21 +252,21 @@ final class ParserUtilityTest extends TestCase
 
         $condition = $conditional->condition;
         $this->assertInstanceOf(GroupNode::class, $condition);
-        $this->assertSame(GroupType::T_GROUP_LOOKAHEAD_POSITIVE, $condition->type);
+        $this->assertSame(GroupType::LookaheadPositive, $condition->type);
     }
 
     public function test_parse_conditional_assertion(): void
     {
         // Simuler (?(DEFINE)...)
         $tokens = [
-            $this->accessor->createToken(TokenType::T_LITERAL, 'D', 2),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'E', 3),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'F', 4),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'I', 5),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'N', 6),
-            $this->accessor->createToken(TokenType::T_LITERAL, 'E', 7),
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 8),
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 9), // Fermeture externe
+            $this->accessor->createToken(TokenType::Literal, 'D', 2),
+            $this->accessor->createToken(TokenType::Literal, 'E', 3),
+            $this->accessor->createToken(TokenType::Literal, 'F', 4),
+            $this->accessor->createToken(TokenType::Literal, 'I', 5),
+            $this->accessor->createToken(TokenType::Literal, 'N', 6),
+            $this->accessor->createToken(TokenType::Literal, 'E', 7),
+            $this->accessor->createToken(TokenType::GroupClose, ')', 8),
+            $this->accessor->createToken(TokenType::GroupClose, ')', 9), // Fermeture externe
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0);
@@ -282,8 +282,8 @@ final class ParserUtilityTest extends TestCase
     {
         // Simulate (?(.)...) where T_DOT is not a valid condition (should be Backref or Group)
         $tokens = [
-            $this->accessor->createToken(TokenType::T_DOT, '.', 2), // Jeton T_DOT
-            $this->accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 3),
+            $this->accessor->createToken(TokenType::Dot, '.', 2), // Jeton T_DOT
+            $this->accessor->createToken(TokenType::GroupClose, ')', 3),
         ];
         $this->accessor->setTokens($tokens);
         $this->accessor->setPosition(0);

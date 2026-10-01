@@ -23,32 +23,32 @@ enum RedosSeverity: string
     /**
      * No significant ReDoS risk detected.
      */
-    case SAFE = 'safe';
+    case Safe = 'safe';
 
     /**
      * Low risk.
      */
-    case LOW = 'low';
+    case Low = 'low';
 
     /**
      * Medium risk.
      */
-    case MEDIUM = 'medium';
+    case Medium = 'medium';
 
     /**
      * Analysis could not determine the risk.
      */
-    case UNKNOWN = 'unknown';
+    case Unknown = 'unknown';
 
     /**
      * High risk.
      */
-    case HIGH = 'high';
+    case High = 'high';
 
     /**
      * Critical risk.
      */
-    case CRITICAL = 'critical';
+    case Critical = 'critical';
 
     /**
      * The severity a configured threshold names: low, medium, high or
@@ -61,7 +61,7 @@ enum RedosSeverity: string
     {
         $severity = self::tryFrom(strtolower($value));
 
-        if (null === $severity || self::SAFE === $severity || self::UNKNOWN === $severity) {
+        if (null === $severity || self::Safe === $severity || self::Unknown === $severity) {
             throw new InvalidRegexOptionException(\sprintf(
                 '"%s" is not a ReDoS threshold; expected low, medium, high or critical.',
                 $value,

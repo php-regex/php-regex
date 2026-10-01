@@ -64,13 +64,13 @@ final class GroupNumberingCollector
     private function collectNode(NodeInterface $node): void
     {
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_BRANCH_RESET === $node->type) {
+            if (GroupType::BranchReset === $node->type) {
                 $this->collectBranchReset($node);
 
                 return;
             }
 
-            if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+            if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
                 $this->registerCapturingGroup($node);
             }
 
@@ -141,7 +141,7 @@ final class GroupNumberingCollector
         $this->captureSequence[] = $number;
         $this->maxGroupNumber = max($this->maxGroupNumber, $number);
 
-        if (GroupType::T_GROUP_NAMED === $node->type && null !== $node->name) {
+        if (GroupType::Named === $node->type && null !== $node->name) {
             $this->namedGroups[$node->name][] = $number;
         }
     }

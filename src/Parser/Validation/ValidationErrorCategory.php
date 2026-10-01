@@ -18,7 +18,7 @@ namespace PhpRegex\Parser\Validation;
  */
 enum ValidationErrorCategory: string
 {
-    case SYNTAX = 'syntax';
-    case SEMANTIC = 'semantic';
-    case PCRE_RUNTIME = 'pcre-runtime';
+    case Syntax = 'syntax';
+    case Semantic = 'semantic';
+    case PcreRuntime = 'pcre-runtime';
 }

@@ -30,20 +30,20 @@ final class AnalyzeCommandRenderingTest extends TestCase
     public function test_analyze_command_reports_a_redos_analysis_that_could_not_finish(): void
     {
         $analysis = new RedosAnalysis(
-            RedosSeverity::UNKNOWN,
+            RedosSeverity::Unknown,
             0,
             null,
             ['Analysis incomplete: out of steam'],
             'RuntimeException: out of steam',
             null,
             null,
-            RedosConfidence::LOW,
+            RedosConfidence::Low,
             null,
             [],
             null,
             null,
             [],
-            RedosMode::THEORETICAL,
+            RedosMode::Theoretical,
             null,
         );
 
@@ -56,20 +56,20 @@ final class AnalyzeCommandRenderingTest extends TestCase
     public function test_a_finished_analysis_reports_no_error(): void
     {
         $analysis = new RedosAnalysis(
-            RedosSeverity::SAFE,
+            RedosSeverity::Safe,
             0,
             null,
             [],
             null,
             null,
             null,
-            RedosConfidence::LOW,
+            RedosConfidence::Low,
             null,
             [],
             null,
             null,
             [],
-            RedosMode::THEORETICAL,
+            RedosMode::Theoretical,
             null,
         );
 

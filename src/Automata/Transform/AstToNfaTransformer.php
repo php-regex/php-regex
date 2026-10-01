@@ -132,14 +132,14 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         $this->caseInsensitive = \str_contains($regex->flags, 'i');
         $this->dotAll = \str_contains($regex->flags, 's');
 
-        if (MatchMode::FULL === $options->matchMode) {
+        if (MatchMode::Full === $options->matchMode) {
             // A whole-string match makes an anchor at the edge of an
             // alternative redundant, and only there.
             $this->analyzeAnchors($regex->pattern, 'full');
         }
 
         $fragment = $this->buildNode($regex->pattern, $options);
-        if (MatchMode::PARTIAL === $options->matchMode) {
+        if (MatchMode::Partial === $options->matchMode) {
             [$startAnchored, $endAnchored] = $this->analyzePartialAnchors($regex->pattern);
             $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $endAnchored);
         }

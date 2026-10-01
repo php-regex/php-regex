@@ -96,7 +96,7 @@ final class FacadeTest extends TestCase
         // Use isSafe() method - vulnerable patterns are NOT safe
         $this->assertFalse($analysis->isSafe());
         // Or check severity is not SAFE or LOW
-        $this->assertNotSame(RedosSeverity::SAFE, $analysis->severity);
+        $this->assertNotSame(RedosSeverity::Safe, $analysis->severity);
     }
 
     public function test_optimize_returns_optimization_result(): void

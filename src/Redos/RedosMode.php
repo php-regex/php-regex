@@ -21,15 +21,15 @@ enum RedosMode: string
     /**
      * Skip ReDoS analysis entirely.
      */
-    case OFF = 'off';
+    case Off = 'off';
 
     /**
      * Structural (static) analysis only.
      */
-    case THEORETICAL = 'theoretical';
+    case Theoretical = 'theoretical';
 
     /**
      * Attempt to confirm findings with bounded runtime evidence.
      */
-    case CONFIRMED = 'confirmed';
+    case Confirmed = 'confirmed';
 }

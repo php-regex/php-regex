@@ -29,7 +29,7 @@ final class LexerExtendedModeTest extends TestCase
         $tokens = (new Lexer())->tokenize("a # [ x\nb", 'x')->getTokens();
 
         $types = array_map(static fn ($token) => $token->type, $tokens);
-        $this->assertNotContains(TokenType::T_CHAR_CLASS_OPEN, $types);
+        $this->assertNotContains(TokenType::CharClassOpen, $types);
 
         $reconstructed = implode('', array_map(static fn ($token) => $token->value, $tokens));
         $this->assertSame("a # [ x\nb", $reconstructed);
@@ -41,7 +41,7 @@ final class LexerExtendedModeTest extends TestCase
         $tokens = (new Lexer())->tokenize('a # [ unterminated', 'x')->getTokens();
 
         $types = array_map(static fn ($token) => $token->type, $tokens);
-        $this->assertNotContains(TokenType::T_CHAR_CLASS_OPEN, $types);
+        $this->assertNotContains(TokenType::CharClassOpen, $types);
     }
 
     #[Test]
@@ -50,7 +50,7 @@ final class LexerExtendedModeTest extends TestCase
         $tokens = (new Lexer())->tokenize('a#[b]', '')->getTokens();
 
         $types = array_map(static fn ($token) => $token->type, $tokens);
-        $this->assertContains(TokenType::T_CHAR_CLASS_OPEN, $types);
+        $this->assertContains(TokenType::CharClassOpen, $types);
     }
 
     #[Test]
@@ -59,7 +59,7 @@ final class LexerExtendedModeTest extends TestCase
         $tokens = (new Lexer())->tokenize('[a#b]c', 'x')->getTokens();
 
         $types = array_map(static fn ($token) => $token->type, $tokens);
-        $this->assertContains(TokenType::T_CHAR_CLASS_CLOSE, $types);
+        $this->assertContains(TokenType::CharClassClose, $types);
     }
 
     /**

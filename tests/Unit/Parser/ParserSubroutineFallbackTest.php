@@ -32,8 +32,8 @@ final class ParserSubroutineFallbackTest extends TestCase
 
         // Simulates: (?& ( ... )
         $tokens = [
-            $accessor->createToken(TokenType::T_GROUP_OPEN, '(', 0),
-            $accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 1),
+            $accessor->createToken(TokenType::GroupOpen, '(', 0),
+            $accessor->createToken(TokenType::GroupClose, ')', 1),
         ];
         $accessor->setTokens($tokens);
         $accessor->setPosition(0);
@@ -55,7 +55,7 @@ final class ParserSubroutineFallbackTest extends TestCase
 
         // Simulates: ) immediately (end of group)
         $tokens = [
-            $accessor->createToken(TokenType::T_GROUP_CLOSE, ')', 0),
+            $accessor->createToken(TokenType::GroupClose, ')', 0),
         ];
         $accessor->setTokens($tokens);
         $accessor->setPosition(0);

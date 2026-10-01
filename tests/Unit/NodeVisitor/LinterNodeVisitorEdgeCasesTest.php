@@ -55,7 +55,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     {
         $linter = new PatternLinter();
 
-        $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OCTAL, 0, 0);
+        $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::Octal, 0, 0);
         $node->accept($linter);
 
         $warnings = $linter->getWarnings();
@@ -82,7 +82,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $linter = new PatternLinter();
         $conditional = new ConditionalNode(
             new LiteralNode('a', 0, 0),
-            new GroupNode(new LiteralNode('b', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0),
+            new GroupNode(new LiteralNode('b', 0, 0), GroupType::Capturing, null, null, 0, 0),
             new LiteralNode('c', 0, 0),
             0,
             0,
@@ -99,11 +99,11 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue(NodePredicates::isConsuming(new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0)));
         $this->assertTrue(NodePredicates::isConsuming(new CharTypeNode('d', 0, 0)));
         $this->assertTrue(NodePredicates::isConsuming(new DotNode(0, 0)));
-        $this->assertTrue(NodePredicates::isConsuming(new CharLiteralNode('\\x41', 0x41, CharLiteralType::UNICODE, 0, 0)));
+        $this->assertTrue(NodePredicates::isConsuming(new CharLiteralNode('\\x41', 0x41, CharLiteralType::Unicode, 0, 0)));
         $this->assertTrue(NodePredicates::isConsuming(new UnicodePropNode('L', true, 0, 0)));
         $this->assertTrue(NodePredicates::isConsuming(new PosixClassNode('alpha', 0, 0)));
-        $this->assertTrue(NodePredicates::isConsuming(new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0)));
-        $this->assertFalse(NodePredicates::isConsuming(new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0)));
+        $this->assertTrue(NodePredicates::isConsuming(new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::Greedy, 0, 0)));
+        $this->assertFalse(NodePredicates::isConsuming(new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookaheadPositive, null, null, 0, 0)));
 
         $alternation = new AlternationNode([
             new AnchorNode('^', 0, 0),
@@ -182,13 +182,13 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $rule = new InlineFlagsRule();
         $context = $this->createRuleContext();
 
-        $emptyFlags = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_INLINE_FLAGS, null, '', 0, 0);
+        $emptyFlags = new GroupNode(new LiteralNode('a', 0, 0), GroupType::InlineFlags, null, '', 0, 0);
         $this->assertSame([], $rule->check($emptyFlags, $context));
 
-        $resetFlags = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_INLINE_FLAGS, null, '^im', 0, 0);
+        $resetFlags = new GroupNode(new LiteralNode('a', 0, 0), GroupType::InlineFlags, null, '^im', 0, 0);
         $this->assertSame([], $rule->check($resetFlags, $context));
 
-        $unsetFlag = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_INLINE_FLAGS, null, '-i', 0, 0);
+        $unsetFlag = new GroupNode(new LiteralNode('a', 0, 0), GroupType::InlineFlags, null, '-i', 0, 0);
         $this->assertNotEmpty($rule->check($unsetFlag, $context));
     }
 
@@ -205,9 +205,9 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     public function test_find_nested_quantifier_handles_conditional_define_and_atomic_group(): void
     {
         $rule = new NestedQuantifierRule();
-        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0);
+        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::Greedy, 0, 0);
 
-        $atomic = new GroupNode($quant, GroupType::T_GROUP_ATOMIC, null, null, 0, 0);
+        $atomic = new GroupNode($quant, GroupType::Atomic, null, null, 0, 0);
         $this->assertNull($this->invokePrivate($rule, 'findNestedQuantifier', [$atomic]));
 
         $conditional = new ConditionalNode(new LiteralNode('a', 0, 0), $quant, new LiteralNode('b', 0, 0), 0, 0);
@@ -220,7 +220,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     public function test_find_sequence_for_nested_quantifier_returns_null_for_non_sequence(): void
     {
         $rule = new NestedQuantifierRule();
-        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0);
+        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::Greedy, 0, 0);
 
         $result = $this->invokePrivate($rule, 'findSequenceForNestedQuantifier', [new LiteralNode('a', 0, 0), $quant]);
 
@@ -230,7 +230,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     public function test_unwrap_transparent_node_unwraps_group_and_sequence(): void
     {
         $inner = new LiteralNode('a', 0, 0);
-        $group = new GroupNode($inner, GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
+        $group = new GroupNode($inner, GroupType::NonCapturing, null, null, 0, 0);
         $sequence = new SequenceNode([$group], 0, 0);
 
         $this->assertSame($inner, NodePredicates::unwrapTransparentNode($sequence));
@@ -238,7 +238,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_is_transparent_group_false_for_lookaround(): void
     {
-        $this->assertFalse(NodePredicates::isTransparentGroup(GroupType::T_GROUP_LOOKAHEAD_NEGATIVE));
+        $this->assertFalse(NodePredicates::isTransparentGroup(GroupType::LookaheadNegative));
     }
 
     public function test_is_exclusive_separator_returns_false_for_optional_or_unknown(): void
@@ -256,13 +256,13 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_is_optional_node_branches(): void
     {
-        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
+        $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
         $this->assertTrue(NodePredicates::isOptionalNode($quant));
 
-        $transparentGroup = new GroupNode(new LiteralNode('', 0, 0), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 0);
+        $transparentGroup = new GroupNode(new LiteralNode('', 0, 0), GroupType::NonCapturing, null, null, 0, 0);
         $this->assertTrue(NodePredicates::isOptionalNode($transparentGroup));
 
-        $nonTransparentGroup = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
+        $nonTransparentGroup = new GroupNode(new LiteralNode('a', 0, 0), GroupType::LookaheadPositive, null, null, 0, 0);
         $this->assertTrue(NodePredicates::isOptionalNode($nonTransparentGroup));
 
         $sequence = new SequenceNode([new LiteralNode('', 0, 0)], 0, 0);
@@ -297,9 +297,9 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $rule = new NestedQuantifierRule();
         $context = $this->createRuleContext('u');
 
-        $nested = new QuantifierNode(new CharTypeNode('d', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0);
+        $nested = new QuantifierNode(new CharTypeNode('d', 0, 0), '+', QuantifierType::Greedy, 0, 0);
         $sequence = new SequenceNode([$nested], 0, 0);
-        $outer = new QuantifierNode($sequence, '+', QuantifierType::T_GREEDY, 0, 0);
+        $outer = new QuantifierNode($sequence, '+', QuantifierType::Greedy, 0, 0);
 
         $result = $this->invokePrivate($rule, 'isSafelySeparatedNestedQuantifier', [$outer, $nested, $context]);
 
@@ -310,9 +310,9 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     {
         $rule = new NestedQuantifierRule();
         $context = $this->createRuleContext();
-        $nested = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0);
+        $nested = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::Greedy, 0, 0);
         $sequence = new SequenceNode([$nested, new LiteralNode('b', 0, 0)], 0, 0);
-        $outer = new QuantifierNode($sequence, '+', QuantifierType::T_GREEDY, 0, 0);
+        $outer = new QuantifierNode($sequence, '+', QuantifierType::Greedy, 0, 0);
 
         $result = $this->invokePrivate($rule, 'isSafelySeparatedNestedQuantifier', [$outer, $nested, $context]);
 
@@ -322,7 +322,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     public function test_find_sequence_for_nested_quantifier_returns_null_when_not_found(): void
     {
         $rule = new NestedQuantifierRule();
-        $nested = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::T_GREEDY, 0, 0);
+        $nested = new QuantifierNode(new LiteralNode('a', 0, 0), '+', QuantifierType::Greedy, 0, 0);
         $sequence = new SequenceNode([new LiteralNode('b', 0, 0)], 0, 0);
 
         $result = $this->invokePrivate($rule, 'findSequenceForNestedQuantifier', [$sequence, $nested]);
@@ -333,7 +333,7 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
     public function test_contains_dot_star_branches(): void
     {
         $rule = new NestedDotStarRule();
-        $dotStar = new QuantifierNode(new DotNode(0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
+        $dotStar = new QuantifierNode(new DotNode(0, 0), '*', QuantifierType::Greedy, 0, 0);
 
         $sequence = new SequenceNode([$dotStar], 0, 0);
         $this->assertTrue($this->invokePrivate($rule, 'containsDotStar', [$sequence]));

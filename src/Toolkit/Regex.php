@@ -238,7 +238,7 @@ final readonly class Regex
     public function redos(
         string $regex,
         ?RedosSeverity $threshold = null,
-        RedosMode $mode = RedosMode::THEORETICAL,
+        RedosMode $mode = RedosMode::Theoretical,
         ?ConfirmationOptions $confirmOptions = null,
     ): RedosAnalysis {
         $analyzer = new RedosAnalyzer($this->parser, $this->redosIgnoredPatterns);
@@ -273,11 +273,11 @@ final readonly class Regex
      * Generate a human-readable explanation of the regular expression.
      *
      * @param string                                $regex  The regular expression to explain
-     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::TEXT or OutputFormat::HTML)
+     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::Text or OutputFormat::Html)
      *
      * @return string Formatted explanation
      */
-    public function explain(string $regex, string|OutputFormat $format = OutputFormat::TEXT): string
+    public function explain(string $regex, string|OutputFormat $format = OutputFormat::Text): string
     {
         $format = \is_string($format) ? $format : $format->value;
         $explanationVisitor = $this->createExplanationVisitor($format);
@@ -291,9 +291,9 @@ final readonly class Regex
      * Highlight a regex for console or HTML output.
      *
      * @param string                                $regex  The regular expression to highlight
-     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::CONSOLE or OutputFormat::HTML)
+     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::Console or OutputFormat::Html)
      */
-    public function highlight(string $regex, string|OutputFormat $format = OutputFormat::CONSOLE): string
+    public function highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
     {
         $format = \is_string($format) ? $format : $format->value;
         $ast = $this->parse($regex, false);

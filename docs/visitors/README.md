@@ -89,7 +89,7 @@ class LiteralCollector extends AbstractTraversingVisitor
     public function visitGroup(Node\GroupNode $node)
     {
         // Skip what lookaheads hold; descend into every other group.
-        if (Node\GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
+        if (Node\GroupType::LookaheadPositive === $node->type) {
             return null;
         }
 

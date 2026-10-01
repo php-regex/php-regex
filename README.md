@@ -205,7 +205,7 @@ $analysis = $regex->redos('/(a+)+$/');
 echo $analysis->severity->value; // 'critical', 'safe', etc.
 
 // Optional: attempt bounded confirmation
-$confirmed = $regex->redos('/(a+)+$/', mode: RedosMode::CONFIRMED);
+$confirmed = $regex->redos('/(a+)+$/', mode: RedosMode::Confirmed);
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 
 // Get human-readable explanation

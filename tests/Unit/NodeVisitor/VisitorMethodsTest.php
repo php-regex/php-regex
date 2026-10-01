@@ -50,10 +50,10 @@ final class VisitorMethodsTest extends TestCase
             new AssertionNode('b', 0, 0),
             new KeepNode(0, 0),
             new BackrefNode('1', 0, 0),
-            new CharLiteralNode('\x00', 0, CharLiteralType::UNICODE, 0, 0),
+            new CharLiteralNode('\x00', 0, CharLiteralType::Unicode, 0, 0),
             new UnicodePropNode('L', 0, 0),
-            new CharLiteralNode('\o{10}', 0o10, CharLiteralType::OCTAL, 0, 0),
-            new CharLiteralNode('10', 0o10, CharLiteralType::OCTAL_LEGACY, 0, 0),
+            new CharLiteralNode('\o{10}', 0o10, CharLiteralType::Octal, 0, 0),
+            new CharLiteralNode('10', 0o10, CharLiteralType::OctalLegacy, 0, 0),
             new PosixClassNode('alnum', 0, 0),
             new CommentNode('foo', 0, 0),
             new SubroutineNode('1', '', 0, 0),
@@ -96,10 +96,10 @@ final class VisitorMethodsTest extends TestCase
             new AnchorNode('^', 0, 0),
             new AssertionNode('b', 0, 0),
             new KeepNode(0, 0),
-            new CharLiteralNode('x', 0, CharLiteralType::UNICODE, 0, 0),
+            new CharLiteralNode('x', 0, CharLiteralType::Unicode, 0, 0),
             new UnicodePropNode('L', 0, 0),
-            new CharLiteralNode('1', 1, CharLiteralType::OCTAL, 0, 0),
-            new CharLiteralNode('1', 1, CharLiteralType::OCTAL_LEGACY, 0, 0),
+            new CharLiteralNode('1', 1, CharLiteralType::Octal, 0, 0),
+            new CharLiteralNode('1', 1, CharLiteralType::OctalLegacy, 0, 0),
             new PosixClassNode('digit', 0, 0),
         ];
 
@@ -150,12 +150,12 @@ final class VisitorMethodsTest extends TestCase
             new DotNode(0, 0),
             new KeepNode(0, 0),
             new LiteralNode('a', 0, 0),
-            new CharLiteralNode('0', 0, CharLiteralType::OCTAL_LEGACY, 0, 0),
-            new CharLiteralNode('123', 0o123, CharLiteralType::OCTAL, 0, 0),
+            new CharLiteralNode('0', 0, CharLiteralType::OctalLegacy, 0, 0),
+            new CharLiteralNode('123', 0o123, CharLiteralType::Octal, 0, 0),
             new PcreVerbNode('FAIL', 0, 0),
             new PosixClassNode('alnum', 0, 0),
             new SubroutineNode('1', '', 0, 0),
-            new CharLiteralNode('FFFF', 0xFFFF, CharLiteralType::UNICODE, 0, 0),
+            new CharLiteralNode('FFFF', 0xFFFF, CharLiteralType::Unicode, 0, 0),
             new UnicodePropNode('L', 0, 0),
         ];
 
@@ -181,7 +181,7 @@ final class VisitorMethodsTest extends TestCase
                 }
 
                 // Validator treats CharLiteralNode with OCTAL_LEGACY '0' as invalid backreference \0
-                if ($visitor instanceof Validator && $node instanceof CharLiteralNode && CharLiteralType::OCTAL_LEGACY === $node->type && 0 === $node->codePoint) {
+                if ($visitor instanceof Validator && $node instanceof CharLiteralNode && CharLiteralType::OctalLegacy === $node->type && 0 === $node->codePoint) {
                     continue;
                 }
 

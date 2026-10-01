@@ -135,6 +135,6 @@ final class UnicodeSupportTest extends TestCase
 
     private function fullMatchOptions(): SolverOptions
     {
-        return new SolverOptions(matchMode: MatchMode::FULL);
+        return new SolverOptions(matchMode: MatchMode::Full);
     }
 }

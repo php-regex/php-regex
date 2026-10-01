@@ -176,7 +176,7 @@ use PhpRegex\Parser\Node\GroupType;
 $ast = Regex::create()->parse('/(?<year>\d{4})-(?<month>\d{2})/');
 $group = $ast->pattern->children[0];  // First child is GroupNode
 
-echo $group->type === GroupType::T_GROUP_NAMED;  // true
+echo $group->type === GroupType::Named;  // true
 echo $group->name;  // 'year'
 echo $group->child->children[0]->value;  // '4 digits'
 ```
@@ -187,7 +187,7 @@ echo $group->child->children[0]->value;  // '4 digits'
 // Pattern: /(?=foo)bar/ matches "bar" at position where "foo" follows
 // It does NOT match "foobar"!
 $lookahead = $ast->pattern->children[0];
-echo $lookahead->type === GroupType::T_GROUP_LOOKAHEAD_POSITIVE;  // true
+echo $lookahead->type === GroupType::LookaheadPositive;  // true
 
 // RIGHT: Lookarounds are zero-width assertions
 // They match a POSITION, not characters
@@ -228,7 +228,7 @@ $quantifier = $ast->pattern;
 
 echo $quantifier->min;      // 2
 echo $quantifier->max;      // 4
-echo $quantifier->type === QuantifierType::T_LAZY;  // true
+echo $quantifier->type === QuantifierType::Lazy;  // true
 ```
 
 **Common Errors:**
@@ -627,11 +627,11 @@ where spaces and tabs are skipped. A plain character is no operand.
 
 | Operator                                | Syntax       |
 |-----------------------------------------|--------------|
-| `ClassSetOperator::COMPLEMENT`          | `!a`         |
-| `ClassSetOperator::INTERSECTION`        | `a & b`      |
-| `ClassSetOperator::UNION`               | `a + b`, `a \| b` |
-| `ClassSetOperator::DIFFERENCE`          | `a - b`      |
-| `ClassSetOperator::SYMMETRIC_DIFFERENCE`| `a ^ b`      |
+| `ClassSetOperator::Complement`          | `!a`         |
+| `ClassSetOperator::Intersection`        | `a & b`      |
+| `ClassSetOperator::Union`               | `a + b`, `a \| b` |
+| `ClassSetOperator::Difference`          | `a - b`      |
+| `ClassSetOperator::SymmetricDifference`| `a ^ b`      |
 
 **Example:**
 ```php

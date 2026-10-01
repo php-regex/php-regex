@@ -181,10 +181,10 @@ final class NodeDumper extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $type = match ($node->type) {
-            CharLiteralType::OCTAL => 'Octal',
-            CharLiteralType::OCTAL_LEGACY => 'OctalLegacy',
-            CharLiteralType::UNICODE => 'Unicode',
-            CharLiteralType::UNICODE_NAMED => 'UnicodeNamed',
+            CharLiteralType::Octal => 'Octal',
+            CharLiteralType::OctalLegacy => 'OctalLegacy',
+            CharLiteralType::Unicode => 'Unicode',
+            CharLiteralType::UnicodeNamed => 'UnicodeNamed',
         };
 
         return "{$type}({$node->originalRepresentation})";

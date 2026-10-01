@@ -113,11 +113,11 @@ final class ComplexityScorer extends AbstractNodeVisitor
 
         // Lookarounds are considered complex - optimized enum check
         return match ($node->type) {
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-            GroupType::T_GROUP_SCAN_SUBSTRING => self::COMPLEX_CONSTRUCT_SCORE + $childScore,
+            GroupType::LookaheadPositive,
+            GroupType::LookaheadNegative,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
+            GroupType::ScanSubstring => self::COMPLEX_CONSTRUCT_SCORE + $childScore,
             default => self::BASE_SCORE + $childScore,
         };
     }

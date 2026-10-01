@@ -62,7 +62,7 @@ final class CompareCommand extends AbstractCommand
 
         $solver = new LanguageSolver($regex->parser());
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             minimizationAlgorithm: MinimizationAlgorithm::from($parsed['minimizer']),
             determinizationAlgorithm: DeterminizationAlgorithm::from($parsed['determinizer']),
         );
@@ -186,8 +186,8 @@ final class CompareCommand extends AbstractCommand
     private function parseArguments(array $args): array
     {
         $method = self::METHOD_INTERSECTION;
-        $minimizer = MinimizationAlgorithm::HOPCROFT->value;
-        $determinizer = DeterminizationAlgorithm::SUBSET_INDEXED->value;
+        $minimizer = MinimizationAlgorithm::Hopcroft->value;
+        $determinizer = DeterminizationAlgorithm::SubsetIndexed->value;
         $patterns = [];
         $stopParsing = false;
 
@@ -262,11 +262,11 @@ final class CompareCommand extends AbstractCommand
             return $this->errorResult('Invalid value for --method.');
         }
 
-        if (!\in_array($minimizer, [MinimizationAlgorithm::HOPCROFT->value, MinimizationAlgorithm::MOORE->value], true)) {
+        if (!\in_array($minimizer, [MinimizationAlgorithm::Hopcroft->value, MinimizationAlgorithm::Moore->value], true)) {
             return $this->errorResult('Invalid value for --minimizer. Use hopcroft or moore.');
         }
 
-        if (!\in_array($determinizer, [DeterminizationAlgorithm::SUBSET->value, DeterminizationAlgorithm::SUBSET_INDEXED->value], true)) {
+        if (!\in_array($determinizer, [DeterminizationAlgorithm::Subset->value, DeterminizationAlgorithm::SubsetIndexed->value], true)) {
             return $this->errorResult('Invalid value for --determinizer. Use subset or subset-indexed.');
         }
 
@@ -297,8 +297,8 @@ final class CompareCommand extends AbstractCommand
             'pattern1' => '',
             'pattern2' => '',
             'method' => self::METHOD_INTERSECTION,
-            'minimizer' => MinimizationAlgorithm::HOPCROFT->value,
-            'determinizer' => DeterminizationAlgorithm::SUBSET_INDEXED->value,
+            'minimizer' => MinimizationAlgorithm::Hopcroft->value,
+            'determinizer' => DeterminizationAlgorithm::SubsetIndexed->value,
             'error' => $error,
         ];
     }

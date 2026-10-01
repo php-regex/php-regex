@@ -28,16 +28,16 @@ final class GroupNodeTest extends TestCase
      */
     public static function data_provider_group_types(): \Iterator
     {
-        yield 'capturing_default' => [GroupType::T_GROUP_CAPTURING, null, null];
-        yield 'non_capturing' => [GroupType::T_GROUP_NON_CAPTURING, null, null];
-        yield 'named_simple' => [GroupType::T_GROUP_NAMED, 'id', null];
-        yield 'lookahead_positive' => [GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null];
-        yield 'lookahead_negative' => [GroupType::T_GROUP_LOOKAHEAD_NEGATIVE, null, null];
-        yield 'lookbehind_positive' => [GroupType::T_GROUP_LOOKBEHIND_POSITIVE, null, null];
-        yield 'lookbehind_negative' => [GroupType::T_GROUP_LOOKBEHIND_NEGATIVE, null, null];
-        yield 'atomic' => [GroupType::T_GROUP_ATOMIC, null, null];
-        yield 'inline_flags_simple' => [GroupType::T_GROUP_INLINE_FLAGS, null, 'i'];
-        yield 'inline_flags_complex' => [GroupType::T_GROUP_INLINE_FLAGS, null, 'imsx'];
+        yield 'capturing_default' => [GroupType::Capturing, null, null];
+        yield 'non_capturing' => [GroupType::NonCapturing, null, null];
+        yield 'named_simple' => [GroupType::Named, 'id', null];
+        yield 'lookahead_positive' => [GroupType::LookaheadPositive, null, null];
+        yield 'lookahead_negative' => [GroupType::LookaheadNegative, null, null];
+        yield 'lookbehind_positive' => [GroupType::LookbehindPositive, null, null];
+        yield 'lookbehind_negative' => [GroupType::LookbehindNegative, null, null];
+        yield 'atomic' => [GroupType::Atomic, null, null];
+        yield 'inline_flags_simple' => [GroupType::InlineFlags, null, 'i'];
+        yield 'inline_flags_complex' => [GroupType::InlineFlags, null, 'imsx'];
     }
 
     #[DataProvider('data_provider_group_types')]
@@ -58,7 +58,7 @@ final class GroupNodeTest extends TestCase
     {
         // T_GROUP_CAPTURING ne devrait pas avoir de flags, mais la structure le permet.
         $child = new LiteralNode('a', 1, 2);
-        $node = new GroupNode($child, GroupType::T_GROUP_CAPTURING, null, 'i', 0, 5);
+        $node = new GroupNode($child, GroupType::Capturing, null, 'i', 0, 5);
 
         $this->assertNull($node->name);
         $this->assertSame('i', $node->flags);
@@ -67,7 +67,7 @@ final class GroupNodeTest extends TestCase
     public function test_accept_visitor_calls_visit_group(): void
     {
         $child = $this->createStub(NodeInterface::class);
-        $node = new GroupNode($child, GroupType::T_GROUP_CAPTURING, null, null, 0, 5);
+        $node = new GroupNode($child, GroupType::Capturing, null, null, 0, 5);
         $visitor = $this->createMock(NodeVisitorInterface::class);
 
         $visitor->expects($this->once())

@@ -57,11 +57,11 @@ final class RegexAnalyzeCommandTest extends TestCase
                             'routes',
                             'Routes',
                             meta: ['Routes' => 1],
-                            summary: [new AnalysisNotice(CheckOutcome::FAIL, '1 shadowed route detected.')],
+                            summary: [new AnalysisNotice(CheckOutcome::Fail, '1 shadowed route detected.')],
                             issues: [
                                 new AnalysisIssue(
                                     'shadowed',
-                                    CheckOutcome::FAIL,
+                                    CheckOutcome::Fail,
                                     'demo (#1) -> demo (#2)',
                                     [new IssueDetail('Example', '/demo', 'example')],
                                 ),
@@ -121,8 +121,8 @@ final class RegexAnalyzeCommandTest extends TestCase
                         new ReportSection(
                             'security',
                             'Security',
-                            summary: [new AnalysisNotice(CheckOutcome::FAIL, '1 finding.')],
-                            issues: [new AnalysisIssue('redos', CheckOutcome::FAIL, 'Firewall')],
+                            summary: [new AnalysisNotice(CheckOutcome::Fail, '1 finding.')],
+                            issues: [new AnalysisIssue('redos', CheckOutcome::Fail, 'Firewall')],
                         ),
                     ];
                 }

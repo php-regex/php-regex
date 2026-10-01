@@ -40,7 +40,7 @@ final class ByteModeTest extends TestCase
         $types = array_map(static fn (object $token): string => $token->type->name, $tokens->getTokens());
 
         $this->assertSame(
-            ['T_QUOTE_MODE_START', 'T_LITERAL', 'T_QUOTE_MODE_END', 'T_LITERAL', 'T_EOF'],
+            ['QuoteModeStart', 'Literal', 'QuoteModeEnd', 'Literal', 'Eof'],
             $types,
             'The quoted run swallowed the rest of the pattern.',
         );
@@ -54,7 +54,7 @@ final class ByteModeTest extends TestCase
 
         $last = $tokens->getTokens()[\count($tokens->getTokens()) - 2];
 
-        $this->assertSame(TokenType::T_LITERAL, $last->type);
+        $this->assertSame(TokenType::Literal, $last->type);
         $this->assertSame('a', $last->value, 'The comment swallowed the rest of the pattern.');
     }
 

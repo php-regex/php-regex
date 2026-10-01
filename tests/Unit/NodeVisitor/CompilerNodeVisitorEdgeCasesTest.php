@@ -33,22 +33,22 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
         $visitor = new PatternPrinter(true);
         $child = new LiteralNode('a', 0, 0);
 
-        $named = new GroupNode($child, GroupType::T_GROUP_NAMED, 'name', null, 0, 0);
+        $named = new GroupNode($child, GroupType::Named, 'name', null, 0, 0);
         $this->assertStringContainsString('<name>', $named->accept($visitor));
 
-        $lookahead = new GroupNode($child, GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 0);
+        $lookahead = new GroupNode($child, GroupType::LookaheadPositive, null, null, 0, 0);
         $this->assertStringContainsString('(?=', $lookahead->accept($visitor));
 
-        $lookbehind = new GroupNode($child, GroupType::T_GROUP_LOOKBEHIND_NEGATIVE, null, null, 0, 0);
+        $lookbehind = new GroupNode($child, GroupType::LookbehindNegative, null, null, 0, 0);
         $this->assertStringContainsString('(?<!', $lookbehind->accept($visitor));
 
-        $atomic = new GroupNode($child, GroupType::T_GROUP_ATOMIC, null, null, 0, 0);
+        $atomic = new GroupNode($child, GroupType::Atomic, null, null, 0, 0);
         $this->assertStringContainsString('(?>', $atomic->accept($visitor));
 
-        $branchReset = new GroupNode($child, GroupType::T_GROUP_BRANCH_RESET, null, null, 0, 0);
+        $branchReset = new GroupNode($child, GroupType::BranchReset, null, null, 0, 0);
         $this->assertStringContainsString('(?|', $branchReset->accept($visitor));
 
-        $inlineFlags = new GroupNode($child, GroupType::T_GROUP_INLINE_FLAGS, null, 'im', 0, 0);
+        $inlineFlags = new GroupNode($child, GroupType::InlineFlags, null, 'im', 0, 0);
         $this->assertStringContainsString('(?im:', $inlineFlags->accept($visitor));
     }
 
@@ -56,10 +56,10 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new PatternPrinter();
 
-        $formFeed = new CharLiteralNode("\x0C", 12, CharLiteralType::UNICODE, 0, 0);
+        $formFeed = new CharLiteralNode("\x0C", 12, CharLiteralType::Unicode, 0, 0);
         $this->assertSame('\\f', $formFeed->accept($visitor));
 
-        $escape = new CharLiteralNode("\x1B", 27, CharLiteralType::UNICODE, 0, 0);
+        $escape = new CharLiteralNode("\x1B", 27, CharLiteralType::Unicode, 0, 0);
         $this->assertSame('\\e', $escape->accept($visitor));
     }
 

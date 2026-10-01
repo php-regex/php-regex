@@ -39,7 +39,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
             return [];
         }
 
-        if (CharLiteralType::UNICODE === $node->type && $node->codePoint > 0x10FFFF) {
+        if (CharLiteralType::Unicode === $node->type && $node->codePoint > 0x10FFFF) {
             return [new RuleViolation(
                 'regex.lint.escape.suspicious',
                 \sprintf('Suspicious Unicode escape "%s" (out of range).', $node->originalRepresentation),
@@ -48,7 +48,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
         }
 
         // Past "\377", an octal escape is a code point in UTF mode only.
-        if (\in_array($node->type, [CharLiteralType::OCTAL, CharLiteralType::OCTAL_LEGACY], true) && $node->codePoint > 0xFF && !$context->pattern->unicodeMode) {
+        if (\in_array($node->type, [CharLiteralType::Octal, CharLiteralType::OctalLegacy], true) && $node->codePoint > 0xFF && !$context->pattern->unicodeMode) {
             return [new RuleViolation(
                 'regex.lint.escape.suspicious',
                 \sprintf('Suspicious octal escape "%s" (out of range).', $node->originalRepresentation),
@@ -56,7 +56,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
             )];
         }
 
-        if (CharLiteralType::UNICODE_NAMED === $node->type && class_exists(\IntlChar::class)) {
+        if (CharLiteralType::UnicodeNamed === $node->type && class_exists(\IntlChar::class)) {
             $name = $node->originalRepresentation;
             if (preg_match('/^\\\\N\\{(.+)}$/', $name, $matches)) {
                 $char = \IntlChar::charFromName($matches[1]);

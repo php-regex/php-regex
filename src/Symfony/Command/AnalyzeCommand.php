@@ -334,7 +334,7 @@ final class AnalyzeCommand extends Command
             return true;
         }
 
-        if (\in_array('critical', $failOn, true) && $report->hasSeverity(CheckOutcome::CRITICAL)) {
+        if (\in_array('critical', $failOn, true) && $report->hasSeverity(CheckOutcome::Critical)) {
             return true;
         }
 

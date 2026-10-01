@@ -65,7 +65,7 @@ final class DefineNodeTest extends TestCase
         // The content of the DefineNode should contain the named group
         $firstNamedGroup = $this->findFirstNamedGroup($defineNode->content);
         $this->assertInstanceOf(GroupNode::class, $firstNamedGroup);
-        $this->assertSame(GroupType::T_GROUP_NAMED, $firstNamedGroup->type);
+        $this->assertSame(GroupType::Named, $firstNamedGroup->type);
         $this->assertSame($expectedFirstGroupName, $firstNamedGroup->name);
     }
 
@@ -145,7 +145,7 @@ final class DefineNodeTest extends TestCase
      */
     private function findFirstNamedGroup(mixed $node): ?GroupNode
     {
-        if ($node instanceof GroupNode && GroupType::T_GROUP_NAMED === $node->type) {
+        if ($node instanceof GroupNode && GroupType::Named === $node->type) {
             return $node;
         }
 

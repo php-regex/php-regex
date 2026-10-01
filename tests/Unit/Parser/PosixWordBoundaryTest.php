@@ -41,14 +41,14 @@ final class PosixWordBoundaryTest extends TestCase
         $this->assertInstanceOf(SequenceNode::class, $pattern);
         $group = $pattern->children[0];
         $this->assertInstanceOf(GroupNode::class, $group);
-        $this->assertSame(GroupType::T_GROUP_NON_CAPTURING, $group->type);
+        $this->assertSame(GroupType::NonCapturing, $group->type);
         $this->assertInstanceOf(SequenceNode::class, $group->child);
 
         [$boundary, $lookaround] = $group->child->children;
         $this->assertInstanceOf(AssertionNode::class, $boundary);
         $this->assertSame('b', $boundary->value);
         $this->assertInstanceOf(GroupNode::class, $lookaround);
-        $this->assertSame(GroupType::T_GROUP_LOOKAHEAD_POSITIVE, $lookaround->type);
+        $this->assertSame(GroupType::LookaheadPositive, $lookaround->type);
         $this->assertInstanceOf(CharTypeNode::class, $lookaround->child);
         $this->assertSame('w', $lookaround->child->value);
     }
@@ -64,7 +64,7 @@ final class PosixWordBoundaryTest extends TestCase
         $this->assertInstanceOf(SequenceNode::class, $group->child);
         $lookaround = $group->child->children[1];
         $this->assertInstanceOf(GroupNode::class, $lookaround);
-        $this->assertSame(GroupType::T_GROUP_LOOKBEHIND_POSITIVE, $lookaround->type);
+        $this->assertSame(GroupType::LookbehindPositive, $lookaround->type);
     }
 
     /**

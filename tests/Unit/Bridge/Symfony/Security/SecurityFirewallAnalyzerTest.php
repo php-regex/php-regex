@@ -35,7 +35,7 @@ final class SecurityFirewallAnalyzerTest extends TestCase
         ];
 
         $analyzer = new SecurityFirewallAnalyzer(Regex::create());
-        $report = $analyzer->analyze($firewalls, RedosSeverity::HIGH);
+        $report = $analyzer->analyze($firewalls, RedosSeverity::High);
 
         $this->assertSame(1, $report->stats['flagged']);
         $this->assertSame('main', $report->findings[0]['name']);

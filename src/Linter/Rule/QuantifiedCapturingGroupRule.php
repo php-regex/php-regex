@@ -48,8 +48,8 @@ final class QuantifiedCapturingGroupRule extends AbstractLintRule
         }
 
         $isCapturing = \in_array($inner->type, [
-            GroupType::T_GROUP_CAPTURING,
-            GroupType::T_GROUP_NAMED,
+            GroupType::Capturing,
+            GroupType::Named,
         ], true);
 
         if (!$isCapturing) {

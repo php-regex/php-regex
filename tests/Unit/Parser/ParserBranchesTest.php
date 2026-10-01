@@ -39,8 +39,8 @@ final class ParserBranchesTest extends TestCase
 
         // Create tokens with T_CALLOUT having invalid value
         $tokens = [
-            new Token(TokenType::T_CALLOUT, '@invalid', 0),
-            new Token(TokenType::T_EOF, '', 8),
+            new Token(TokenType::Callout, '@invalid', 0),
+            new Token(TokenType::Eof, '', 8),
         ];
         $accessor->setTokens($tokens);
 
@@ -63,13 +63,13 @@ final class ParserBranchesTest extends TestCase
         $parser = new TokenParser();
         $accessor = new ParserAccessor($parser);
 
-        $token = new Token(TokenType::T_LITERAL, 'test', 0);
+        $token = new Token(TokenType::Literal, 'test', 0);
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Unsupported character literal token type.');
 
         // Call createCharLiteralNodeFromToken with unsupported type
-        $accessor->callPrivateMethod('createCharLiteralNodeFromToken', [$token, TokenType::T_LITERAL, 0]);
+        $accessor->callPrivateMethod('createCharLiteralNodeFromToken', [$token, TokenType::Literal, 0]);
     }
 
     /**
@@ -101,10 +101,10 @@ final class ParserBranchesTest extends TestCase
         // Create tokens with an unexpected token in char class
         // T_CHAR_CLASS_OPEN, T_ANCHOR('^'), T_CHAR_CLASS_CLOSE, T_EOF
         $tokens = [
-            new Token(TokenType::T_CHAR_CLASS_OPEN, '[', 0),
-            new Token(TokenType::T_ANCHOR, '^', 1),
-            new Token(TokenType::T_CHAR_CLASS_CLOSE, ']', 2),
-            new Token(TokenType::T_EOF, '', 3),
+            new Token(TokenType::CharClassOpen, '[', 0),
+            new Token(TokenType::Anchor, '^', 1),
+            new Token(TokenType::CharClassClose, ']', 2),
+            new Token(TokenType::Eof, '', 3),
         ];
         $accessor->setTokens($tokens);
 
@@ -130,10 +130,10 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for [a-\pL]
         // T_LITERAL('a'), T_RANGE, T_UNICODE_PROP('L'), T_EOF
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_RANGE, '-', 1),
-            new Token(TokenType::T_UNICODE_PROP, 'L', 2),
-            new Token(TokenType::T_EOF, '', 4),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Range, '-', 1),
+            new Token(TokenType::UnicodeProp, 'L', 2),
+            new Token(TokenType::Eof, '', 4),
         ];
         $accessor->setTokens($tokens);
 
@@ -154,10 +154,10 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for [a-[:alnum:]]
         // T_LITERAL('a'), T_RANGE, T_POSIX_CLASS('alnum'), T_EOF
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_RANGE, '-', 1),
-            new Token(TokenType::T_POSIX_CLASS, 'alnum', 2),
-            new Token(TokenType::T_EOF, '', 9),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Range, '-', 1),
+            new Token(TokenType::PosixClass, 'alnum', 2),
+            new Token(TokenType::Eof, '', 9),
         ];
         $accessor->setTokens($tokens);
 
@@ -178,10 +178,10 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for [a-^] (invalid range end)
         // T_LITERAL('a'), T_RANGE, T_ANCHOR('^'), T_EOF
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_RANGE, '-', 1),
-            new Token(TokenType::T_ANCHOR, '^', 2),
-            new Token(TokenType::T_EOF, '', 3),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Range, '-', 1),
+            new Token(TokenType::Anchor, '^', 2),
+            new Token(TokenType::Eof, '', 3),
         ];
         $accessor->setTokens($tokens);
 
@@ -204,13 +204,13 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for (?Rabc) invalid
         // T_GROUP_MODIFIER_OPEN, T_LITERAL('R'), T_LITERAL('a'), T_LITERAL('b'), T_LITERAL('c'), T_GROUP_CLOSE, T_EOF
         $tokens = [
-            new Token(TokenType::T_GROUP_MODIFIER_OPEN, '(?', 0),
-            new Token(TokenType::T_LITERAL, 'R', 2),
-            new Token(TokenType::T_LITERAL, 'a', 3),
-            new Token(TokenType::T_LITERAL, 'b', 4),
-            new Token(TokenType::T_LITERAL, 'c', 5),
-            new Token(TokenType::T_GROUP_CLOSE, ')', 6),
-            new Token(TokenType::T_EOF, '', 7),
+            new Token(TokenType::GroupModifierOpen, '(?', 0),
+            new Token(TokenType::Literal, 'R', 2),
+            new Token(TokenType::Literal, 'a', 3),
+            new Token(TokenType::Literal, 'b', 4),
+            new Token(TokenType::Literal, 'c', 5),
+            new Token(TokenType::GroupClose, ')', 6),
+            new Token(TokenType::Eof, '', 7),
         ];
         $accessor->setTokens($tokens);
 
@@ -237,16 +237,16 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for (?(*TEST^)expr) where ^ breaks verb collection
         // T_GROUP_MODIFIER_OPEN, T_LITERAL('*'), T_LITERAL('T'), T_LITERAL('E'), T_LITERAL('S'), T_LITERAL('T'), T_ANCHOR('^'), T_GROUP_CLOSE, T_LITERAL('e'), T_EOF
         $tokens = [
-            new Token(TokenType::T_GROUP_MODIFIER_OPEN, '(?', 0),
-            new Token(TokenType::T_LITERAL, '*', 2),
-            new Token(TokenType::T_LITERAL, 'T', 3),
-            new Token(TokenType::T_LITERAL, 'E', 4),
-            new Token(TokenType::T_LITERAL, 'S', 5),
-            new Token(TokenType::T_LITERAL, 'T', 6),
-            new Token(TokenType::T_ANCHOR, '^', 7),  // Non-literal token breaks verb collection
-            new Token(TokenType::T_GROUP_CLOSE, ')', 8),
-            new Token(TokenType::T_LITERAL, 'e', 9),
-            new Token(TokenType::T_EOF, '', 10),
+            new Token(TokenType::GroupModifierOpen, '(?', 0),
+            new Token(TokenType::Literal, '*', 2),
+            new Token(TokenType::Literal, 'T', 3),
+            new Token(TokenType::Literal, 'E', 4),
+            new Token(TokenType::Literal, 'S', 5),
+            new Token(TokenType::Literal, 'T', 6),
+            new Token(TokenType::Anchor, '^', 7),  // Non-literal token breaks verb collection
+            new Token(TokenType::GroupClose, ')', 8),
+            new Token(TokenType::Literal, 'e', 9),
+            new Token(TokenType::Eof, '', 10),
         ];
         $accessor->setTokens($tokens);
 
@@ -273,21 +273,21 @@ final class ParserBranchesTest extends TestCase
         // Create tokens for (?(*MARK:name^)expr) where ^ breaks argument collection
         // T_GROUP_MODIFIER_OPEN, T_LITERAL('*'), T_LITERAL('M'), T_LITERAL('A'), T_LITERAL('R'), T_LITERAL('K'), T_LITERAL(':'), T_LITERAL('n'), T_LITERAL('a'), T_LITERAL('m'), T_LITERAL('e'), T_ANCHOR('^'), T_GROUP_CLOSE, T_LITERAL('e'), T_EOF
         $tokens = [
-            new Token(TokenType::T_GROUP_MODIFIER_OPEN, '(?', 0),
-            new Token(TokenType::T_LITERAL, '*', 2),
-            new Token(TokenType::T_LITERAL, 'M', 3),
-            new Token(TokenType::T_LITERAL, 'A', 4),
-            new Token(TokenType::T_LITERAL, 'R', 5),
-            new Token(TokenType::T_LITERAL, 'K', 6),
-            new Token(TokenType::T_LITERAL, ':', 7),
-            new Token(TokenType::T_LITERAL, 'n', 8),
-            new Token(TokenType::T_LITERAL, 'a', 9),
-            new Token(TokenType::T_LITERAL, 'm', 10),
-            new Token(TokenType::T_LITERAL, 'e', 11),
-            new Token(TokenType::T_ANCHOR, '^', 12),  // Non-literal token breaks argument collection
-            new Token(TokenType::T_GROUP_CLOSE, ')', 13),
-            new Token(TokenType::T_LITERAL, 'e', 14),
-            new Token(TokenType::T_EOF, '', 15),
+            new Token(TokenType::GroupModifierOpen, '(?', 0),
+            new Token(TokenType::Literal, '*', 2),
+            new Token(TokenType::Literal, 'M', 3),
+            new Token(TokenType::Literal, 'A', 4),
+            new Token(TokenType::Literal, 'R', 5),
+            new Token(TokenType::Literal, 'K', 6),
+            new Token(TokenType::Literal, ':', 7),
+            new Token(TokenType::Literal, 'n', 8),
+            new Token(TokenType::Literal, 'a', 9),
+            new Token(TokenType::Literal, 'm', 10),
+            new Token(TokenType::Literal, 'e', 11),
+            new Token(TokenType::Anchor, '^', 12),  // Non-literal token breaks argument collection
+            new Token(TokenType::GroupClose, ')', 13),
+            new Token(TokenType::Literal, 'e', 14),
+            new Token(TokenType::Eof, '', 15),
         ];
         $accessor->setTokens($tokens);
 

@@ -44,9 +44,9 @@ final readonly class RouteConflictAnalyzer
 
     public function __construct(
         private Regex $regex,
-        private string $minimizationAlgorithm = MinimizationAlgorithm::HOPCROFT->value,
+        private string $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft->value,
         ?LanguageSolver $solver = null,
-        private string $determinizationAlgorithm = DeterminizationAlgorithm::SUBSET_INDEXED->value,
+        private string $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed->value,
     ) {
         $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
     }
@@ -61,7 +61,7 @@ final readonly class RouteConflictAnalyzer
         $index = 0;
 
         $options = new SolverOptions(
-            matchMode: MatchMode::FULL,
+            matchMode: MatchMode::Full,
             minimizeDfa: false,
             minimizationAlgorithm: $this->resolveMinimizationAlgorithm(),
             determinizationAlgorithm: $this->resolveDeterminizationAlgorithm(),
@@ -664,7 +664,7 @@ final readonly class RouteConflictAnalyzer
         $normalized = \strtolower(\trim($this->minimizationAlgorithm));
         $algorithm = MinimizationAlgorithm::tryFrom($normalized);
 
-        return $algorithm ?? MinimizationAlgorithm::HOPCROFT;
+        return $algorithm ?? MinimizationAlgorithm::Hopcroft;
     }
 
     private function resolveDeterminizationAlgorithm(): DeterminizationAlgorithm
@@ -672,6 +672,6 @@ final readonly class RouteConflictAnalyzer
         $normalized = \strtolower(\trim($this->determinizationAlgorithm));
         $algorithm = DeterminizationAlgorithm::tryFrom($normalized);
 
-        return $algorithm ?? DeterminizationAlgorithm::SUBSET_INDEXED;
+        return $algorithm ?? DeterminizationAlgorithm::SubsetIndexed;
     }
 }

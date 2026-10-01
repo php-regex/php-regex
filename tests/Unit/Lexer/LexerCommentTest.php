@@ -29,8 +29,8 @@ final class LexerCommentTest extends TestCase
 
         // Must contain: /, (?#, ), /, EOF
         $this->assertCount(5, $tokens);
-        $this->assertSame(TokenType::T_COMMENT_OPEN, $tokens[1]->type);
-        $this->assertSame(TokenType::T_GROUP_CLOSE, $tokens[2]->type);
+        $this->assertSame(TokenType::CommentOpen, $tokens[1]->type);
+        $this->assertSame(TokenType::GroupClose, $tokens[2]->type);
     }
 
     /**

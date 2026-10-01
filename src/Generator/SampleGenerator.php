@@ -308,14 +308,14 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         // "(?s)" sets its flags for the rest of the group it stands in,
         // "(?s:...)" for its own content: the group around them ends them.
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
+        if (GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
             $this->applyFlags($node->flags ?? '');
 
             return '';
         }
 
         $modes = [$this->dotAll, $this->dollarEndsLine];
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type) {
+        if (GroupType::InlineFlags === $node->type) {
             $this->applyFlags($node->flags ?? '');
         }
 
@@ -696,18 +696,18 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         // Lookarounds are zero-width assertions and should not generate text
         if (\in_array($node->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-            GroupType::T_GROUP_SCAN_SUBSTRING,
+            GroupType::LookaheadPositive,
+            GroupType::LookaheadNegative,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
+            GroupType::ScanSubstring,
         ], true)) {
-            if (GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $node->type) {
+            if (GroupType::LookbehindPositive === $node->type) {
                 $prefix = $this->acceptedIn($node->child);
                 if ('' !== $prefix) {
                     $this->requiredPrefixes[] = $prefix;
                 }
-            } elseif (GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $node->type) {
+            } elseif (GroupType::LookaheadPositive === $node->type) {
                 $suffix = $this->acceptedIn($node->child);
                 if ('' !== $suffix) {
                     $this->requiredSuffixes[] = $suffix;
@@ -720,12 +720,12 @@ final class SampleGenerator extends AbstractNodeVisitor
         $result = $node->child->accept($this);
 
         // Store the result if it's a capturing group
-        if (GroupType::T_GROUP_CAPTURING === $node->type) {
+        if (GroupType::Capturing === $node->type) {
             $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
             $result = $this->fitScans($groupIndex, $node, $result);
             $this->captures[$groupIndex] = $result;
             $this->groupCounter = max($this->groupCounter, $groupIndex + 1);
-        } elseif (GroupType::T_GROUP_NAMED === $node->type) {
+        } elseif (GroupType::Named === $node->type) {
             $groupIndex = $this->groupNumbers[spl_object_id($node)] ?? $this->groupCounter++;
             $result = $this->fitScans($groupIndex, $node, $result);
             $this->captures[$groupIndex] = $result;
@@ -925,7 +925,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         foreach ($children as $index => $child) {
             $this->textAhead = $ahead;
-            if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKAHEAD_POSITIVE === $child->type) {
+            if ($child instanceof GroupNode && GroupType::LookaheadPositive === $child->type) {
                 // Its text laid over what follows, or before it, or after it:
                 // the first that what is left of the sequence matches, as
                 // lookaheads in a row each ask something of the same text.
@@ -959,7 +959,7 @@ final class SampleGenerator extends AbstractNodeVisitor
                 return $text;
             }
 
-            if ($child instanceof GroupNode && GroupType::T_GROUP_LOOKBEHIND_POSITIVE === $child->type) {
+            if ($child instanceof GroupNode && GroupType::LookbehindPositive === $child->type) {
                 // What the groups around hold before this one counts too.
                 if ($this->holds($child->child, implode('', $this->textsBefore), '', '\\z')) {
                     continue;
@@ -1133,7 +1133,7 @@ final class SampleGenerator extends AbstractNodeVisitor
                 continue;
             }
 
-            if ($child instanceof GroupNode && GroupType::T_GROUP_NON_CAPTURING === $child->type && null === $child->flags
+            if ($child instanceof GroupNode && GroupType::NonCapturing === $child->type && null === $child->flags
                 && !$this->setsFlags($child->child)) {
                 $inner = $child->child instanceof SequenceNode ? $child->child->children : [$child->child];
                 array_push($opened, ...$this->withPlainGroupsOpened($inner));
@@ -1154,7 +1154,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     private function setsFlags(NodeInterface $node): bool
     {
         foreach ($node instanceof SequenceNode ? $node->children : [$node] as $child) {
-            if ($child instanceof GroupNode && GroupType::T_GROUP_INLINE_FLAGS === $child->type
+            if ($child instanceof GroupNode && GroupType::InlineFlags === $child->type
                 && $child->child instanceof LiteralNode && '' === $child->child->value) {
                 return true;
             }
@@ -1247,10 +1247,10 @@ final class SampleGenerator extends AbstractNodeVisitor
             // sample: either branch may be the one that matches, so each
             // attempt takes one at random.
             if (\in_array($condition->type, [
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-                GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-                GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+                GroupType::LookaheadPositive,
+                GroupType::LookbehindPositive,
+                GroupType::LookaheadNegative,
+                GroupType::LookbehindNegative,
             ], true)) {
                 return 1 === $this->randomInt(0, 1);
             }
@@ -1341,11 +1341,11 @@ final class SampleGenerator extends AbstractNodeVisitor
     private function collectGroups(NodeInterface $node): void
     {
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+            if (GroupType::ScanSubstring === $node->type) {
                 $this->scans[] = $node;
             }
 
-            if (\in_array($node->type, [GroupType::T_GROUP_CAPTURING, GroupType::T_GROUP_NAMED], true)) {
+            if (\in_array($node->type, [GroupType::Capturing, GroupType::Named], true)) {
                 $index = $this->groupDefinitionCounter++;
                 $this->groupIndexMap[$index] = $node;
                 $this->groupNumbers[spl_object_id($node)] = $index;

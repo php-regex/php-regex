@@ -33,7 +33,7 @@ final class RedosAnalyzer
          * @var array<string>
          */
         private array $ignoredPatterns = [],
-        private readonly RedosSeverity $threshold = RedosSeverity::HIGH,
+        private readonly RedosSeverity $threshold = RedosSeverity::High,
         private readonly ?ConfirmationRunnerInterface $confirmationRunner = null,
     ) {
         $this->ignoredPatterns = array_values(array_unique($this->ignoredPatterns));
@@ -43,41 +43,41 @@ final class RedosAnalyzer
     public function analyze(
         string $regex,
         ?RedosSeverity $threshold = null,
-        RedosMode $mode = RedosMode::THEORETICAL,
+        RedosMode $mode = RedosMode::Theoretical,
         ?ConfirmationOptions $confirmOptions = null,
     ): RedosAnalysis {
         $threshold ??= $this->threshold;
 
-        if (RedosMode::OFF === $mode) {
+        if (RedosMode::Off === $mode) {
             return new RedosAnalysis(
-                RedosSeverity::SAFE,
+                RedosSeverity::Safe,
                 0,
                 null,
                 [],
                 null,
                 null,
                 null,
-                RedosConfidence::LOW,
+                RedosConfidence::Low,
                 null,
                 [],
                 null,
                 null,
                 [],
-                RedosMode::OFF,
+                RedosMode::Off,
                 null,
             );
         }
 
         if ($this->shouldIgnore($regex)) {
             return new RedosAnalysis(
-                RedosSeverity::SAFE,
+                RedosSeverity::Safe,
                 0,
                 null,
                 [],
                 null,
                 null,
                 null,
-                RedosConfidence::LOW,
+                RedosConfidence::Low,
                 null,
                 [],
                 null,
@@ -94,17 +94,17 @@ final class RedosAnalyzer
             $ast->accept($visitor);
 
             $result = $visitor->getResult();
-            $confidence = $result['confidence'] ?? RedosConfidence::LOW;
+            $confidence = $result['confidence'] ?? RedosConfidence::Low;
 
             $analysis = new RedosAnalysis(
                 $result['severity'],
                 match ($result['severity']) {
-                    RedosSeverity::SAFE => 0,
-                    RedosSeverity::LOW => 2,
-                    RedosSeverity::MEDIUM => 5,
-                    RedosSeverity::HIGH => 8,
-                    RedosSeverity::CRITICAL => 10,
-                    RedosSeverity::UNKNOWN => 5,
+                    RedosSeverity::Safe => 0,
+                    RedosSeverity::Low => 2,
+                    RedosSeverity::Medium => 5,
+                    RedosSeverity::High => 8,
+                    RedosSeverity::Critical => 10,
+                    RedosSeverity::Unknown => 5,
                 },
                 $result['vulnerablePattern'],
                 array_values($result['recommendations']),
@@ -121,12 +121,12 @@ final class RedosAnalyzer
                 confirmation: null,
             );
 
-            if (RedosMode::CONFIRMED === $mode && $analysis->exceedsThreshold($threshold)) {
+            if (RedosMode::Confirmed === $mode && $analysis->exceedsThreshold($threshold)) {
                 $runner = $this->confirmationRunner ?? new ConfirmationRunner();
                 $confirmation = $runner->confirm($regex, $analysis, $confirmOptions);
                 $confirmedConfidence = $analysis->confidenceLevel();
-                if ($confirmation->confirmed && RedosConfidence::HIGH !== $confirmedConfidence) {
-                    $confirmedConfidence = RedosConfidence::HIGH;
+                if ($confirmation->confirmed && RedosConfidence::High !== $confirmedConfidence) {
+                    $confirmedConfidence = RedosConfidence::High;
                 }
 
                 return new RedosAnalysis(
@@ -151,14 +151,14 @@ final class RedosAnalyzer
             return $analysis;
         } catch (\Throwable $e) {
             return new RedosAnalysis(
-                RedosSeverity::UNKNOWN,
+                RedosSeverity::Unknown,
                 0,
                 null,
                 ['Analysis incomplete: '.$e->getMessage()],
                 $e::class.': '.$e->getMessage(),
                 null,
                 null,
-                RedosConfidence::LOW,
+                RedosConfidence::Low,
                 null,
                 [],
                 null,

@@ -18,6 +18,6 @@ namespace PhpRegex\Automata\Determinization;
  */
 enum DeterminizationAlgorithm: string
 {
-    case SUBSET = 'subset';
-    case SUBSET_INDEXED = 'subset-indexed';
+    case Subset = 'subset';
+    case SubsetIndexed = 'subset-indexed';
 }

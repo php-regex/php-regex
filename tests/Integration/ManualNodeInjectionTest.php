@@ -35,11 +35,11 @@ final class ManualNodeInjectionTest extends TestCase
 
         // 2. CharLiteralNode with invalid format
         // Parser ensures format. We force garbage to hit the fallback.
-        $node = new CharLiteralNode('invalid', -1, CharLiteralType::UNICODE, 0, 0);
+        $node = new CharLiteralNode('invalid', -1, CharLiteralType::Unicode, 0, 0);
         $this->assertSame('?', $node->accept($generator));
 
         // 3. CharLiteralNode with invalid format
-        $node = new CharLiteralNode('invalid', -1, CharLiteralType::OCTAL, 0, 0);
+        $node = new CharLiteralNode('invalid', -1, CharLiteralType::Octal, 0, 0);
         $this->assertSame('?', $node->accept($generator));
 
         // 4. Alternation with no alternatives (Parser prevents this usually)

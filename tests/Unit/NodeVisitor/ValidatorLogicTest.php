@@ -29,7 +29,7 @@ final class ValidatorLogicTest extends TestCase
         $validator = new Validator();
 
         // \o{8} contains invalid octal digit, but use large codePoint for test
-        $node = new CharLiteralNode('\o{8}', 0x100, CharLiteralType::OCTAL, 0, 0);
+        $node = new CharLiteralNode('\o{8}', 0x100, CharLiteralType::Octal, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessage('Invalid octal codepoint');
@@ -45,7 +45,7 @@ final class ValidatorLogicTest extends TestCase
         $validator = new Validator();
 
         // {n} case
-        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5}', QuantifierType::T_GREEDY, 0, 0);
+        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5}', QuantifierType::Greedy, 0, 0);
         $node->accept($validator); // Should not throw
     }
 
@@ -56,11 +56,11 @@ final class ValidatorLogicTest extends TestCase
         // Testing the "default" match in parseQuantifierBounds
         // {5,}
         $validator = new Validator();
-        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5,}', QuantifierType::T_GREEDY, 0, 0);
+        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5,}', QuantifierType::Greedy, 0, 0);
         $node->accept($validator);
 
         // {5,10}
-        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5,10}', QuantifierType::T_GREEDY, 0, 0);
+        $node = new QuantifierNode(new LiteralNode('a', 0, 0), '{5,10}', QuantifierType::Greedy, 0, 0);
         $node->accept($validator);
     }
 }

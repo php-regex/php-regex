@@ -236,7 +236,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
     {
         $optimizer = new Rewriter();
         $child = new LiteralNode('test', 1, 5);
-        $group = new GroupNode($child, GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 6);
+        $group = new GroupNode($child, GroupType::NonCapturing, null, null, 0, 6);
 
         $result = $group->accept($optimizer);
 
@@ -248,7 +248,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
     {
         $optimizer = new Rewriter();
         $child = new LiteralNode('a', 0, 1);
-        $quantifier = new QuantifierNode($child, '+', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier = new QuantifierNode($child, '+', QuantifierType::Greedy, 0, 2);
 
         $result = $quantifier->accept($optimizer);
 
@@ -341,7 +341,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
     public function test_visit_char_literal_is_covered(): void
     {
         $optimizer = new Rewriter();
-        $charLiteral = new CharLiteralNode('\\n', 10, CharLiteralType::UNICODE, 0, 2);
+        $charLiteral = new CharLiteralNode('\\n', 10, CharLiteralType::Unicode, 0, 2);
 
         $result = $charLiteral->accept($optimizer);
 
@@ -432,12 +432,12 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
 
         // Test GroupNode with lookahead (should return true)
         $child = new LiteralNode('a', 1, 2);
-        $group = new GroupNode($child, GroupType::T_GROUP_LOOKAHEAD_POSITIVE, null, null, 0, 3);
+        $group = new GroupNode($child, GroupType::LookaheadPositive, null, null, 0, 3);
         $result = $this->invokePrivate($optimizer, 'nullableStatus', [$group]);
         $this->assertTrue($result);
 
         // Test QuantifierNode with zero-allowed quantifier
-        $quantifier = new QuantifierNode($child, '*', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier = new QuantifierNode($child, '*', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'nullableStatus', [$quantifier]);
         $this->assertTrue($result);
 
@@ -600,12 +600,12 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($result);
 
         // Test with group containing dot
-        $group = new GroupNode(new DotNode(1, 2), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 3);
+        $group = new GroupNode(new DotNode(1, 2), GroupType::NonCapturing, null, null, 0, 3);
         $result = $this->invokePrivate($optimizer, 'patternContainsDots', [$group]);
         $this->assertTrue($result);
 
         // Test with quantifier containing dot
-        $quantifier = new QuantifierNode(new DotNode(0, 1), '+', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier = new QuantifierNode(new DotNode(0, 1), '+', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'patternContainsDots', [$quantifier]);
         $this->assertTrue($result);
 
@@ -646,12 +646,12 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($result);
 
         // Test group with anchor
-        $group = new GroupNode(new AnchorNode('^', 1, 2), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 3);
+        $group = new GroupNode(new AnchorNode('^', 1, 2), GroupType::NonCapturing, null, null, 0, 3);
         $result = $this->invokePrivate($optimizer, 'patternContainsMultilineAnchors', [$group]);
         $this->assertTrue($result);
 
         // Test quantifier with anchor
-        $quantifier = new QuantifierNode(new AnchorNode('$', 0, 1), '+', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier = new QuantifierNode(new AnchorNode('$', 0, 1), '+', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'patternContainsMultilineAnchors', [$quantifier]);
         $this->assertTrue($result);
 
@@ -671,32 +671,32 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $optimizer = new Rewriter();
 
         // Test with + quantifier
-        $quantifier1 = new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier1 = new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier1]);
         $this->assertTrue($result);
 
         // Test with * quantifier
-        $quantifier2 = new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier2 = new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier2]);
         $this->assertTrue($result);
 
         // Test with {0,} quantifier
-        $quantifier3 = new QuantifierNode(new LiteralNode('a', 0, 1), '{0,}', QuantifierType::T_GREEDY, 0, 4);
+        $quantifier3 = new QuantifierNode(new LiteralNode('a', 0, 1), '{0,}', QuantifierType::Greedy, 0, 4);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier3]);
         $this->assertTrue($result);
 
         // Test with {5,} quantifier
-        $quantifier4 = new QuantifierNode(new LiteralNode('a', 0, 1), '{5,}', QuantifierType::T_GREEDY, 0, 5);
+        $quantifier4 = new QuantifierNode(new LiteralNode('a', 0, 1), '{5,}', QuantifierType::Greedy, 0, 5);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier4]);
         $this->assertTrue($result);
 
         // Test with {1} quantifier (should be false)
-        $quantifier5 = new QuantifierNode(new LiteralNode('a', 0, 1), '{1}', QuantifierType::T_GREEDY, 0, 4);
+        $quantifier5 = new QuantifierNode(new LiteralNode('a', 0, 1), '{1}', QuantifierType::Greedy, 0, 4);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier5]);
         $this->assertFalse($result);
 
         // Test with ? quantifier (should be false)
-        $quantifier6 = new QuantifierNode(new LiteralNode('a', 0, 1), '?', QuantifierType::T_GREEDY, 0, 2);
+        $quantifier6 = new QuantifierNode(new LiteralNode('a', 0, 1), '?', QuantifierType::Greedy, 0, 2);
         $result = $this->invokePrivate($optimizer, 'isPossessifyCandidate', [$quantifier6]);
         $this->assertFalse($result);
     }
@@ -771,17 +771,17 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $optimizer = new Rewriter();
 
         // Test capturing group
-        $capturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_CAPTURING, null, null, 0, 3);
+        $capturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::Capturing, null, null, 0, 3);
         $result = $this->invokePrivate($optimizer, 'isCaptureSensitive', [$capturingGroup]);
         $this->assertTrue($result);
 
         // Test named group
-        $namedGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_NAMED, 'name', null, 0, 8);
+        $namedGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::Named, 'name', null, 0, 8);
         $result = $this->invokePrivate($optimizer, 'isCaptureSensitive', [$namedGroup]);
         $this->assertTrue($result);
 
         // Test branch reset group
-        $branchResetGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_BRANCH_RESET, null, null, 0, 5);
+        $branchResetGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::BranchReset, null, null, 0, 5);
         $result = $this->invokePrivate($optimizer, 'isCaptureSensitive', [$branchResetGroup]);
         $this->assertTrue($result);
 
@@ -801,7 +801,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($result);
 
         // Test non-capturing group with literal (should be false)
-        $nonCapturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::T_GROUP_NON_CAPTURING, null, null, 0, 3);
+        $nonCapturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::NonCapturing, null, null, 0, 3);
         $result = $this->invokePrivate($optimizer, 'isCaptureSensitive', [$nonCapturingGroup]);
         $this->assertFalse($result);
     }
@@ -828,30 +828,30 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $node = new LiteralNode('a', 0, 1);
 
         // Test {0,} -> *
-        $quantifier1 = new QuantifierNode($node, '{0,}', QuantifierType::T_GREEDY, 0, 5);
+        $quantifier1 = new QuantifierNode($node, '{0,}', QuantifierType::Greedy, 0, 5);
         $result = $this->invokePrivate($optimizer, 'normalizeQuantifier', [$quantifier1]);
         $this->assertInstanceOf(QuantifierNode::class, $result);
         $this->assertSame('*', $result->quantifier);
 
         // Test {1,} -> +
-        $quantifier2 = new QuantifierNode($node, '{1,}', QuantifierType::T_GREEDY, 0, 5);
+        $quantifier2 = new QuantifierNode($node, '{1,}', QuantifierType::Greedy, 0, 5);
         $result = $this->invokePrivate($optimizer, 'normalizeQuantifier', [$quantifier2]);
         $this->assertInstanceOf(QuantifierNode::class, $result);
         $this->assertSame('+', $result->quantifier);
 
         // Test {0,1} -> ?
-        $quantifier3 = new QuantifierNode($node, '{0,1}', QuantifierType::T_GREEDY, 0, 6);
+        $quantifier3 = new QuantifierNode($node, '{0,1}', QuantifierType::Greedy, 0, 6);
         $result = $this->invokePrivate($optimizer, 'normalizeQuantifier', [$quantifier3]);
         $this->assertInstanceOf(QuantifierNode::class, $result);
         $this->assertSame('?', $result->quantifier);
 
         // Test {1} -> remove quantifier
-        $quantifier4 = new QuantifierNode($node, '{1}', QuantifierType::T_GREEDY, 0, 4);
+        $quantifier4 = new QuantifierNode($node, '{1}', QuantifierType::Greedy, 0, 4);
         $result = $this->invokePrivate($optimizer, 'normalizeQuantifier', [$quantifier4]);
         $this->assertSame($node, $result);
 
         // Test {0} -> empty literal
-        $quantifier5 = new QuantifierNode($node, '{0}', QuantifierType::T_GREEDY, 0, 4);
+        $quantifier5 = new QuantifierNode($node, '{0}', QuantifierType::Greedy, 0, 4);
         $result = $this->invokePrivate($optimizer, 'normalizeQuantifier', [$quantifier5]);
         $this->assertInstanceOf(LiteralNode::class, $result);
         $this->assertSame('', $result->value);

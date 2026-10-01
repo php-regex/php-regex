@@ -173,7 +173,7 @@ use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
 use PhpRegex\Automata\Options\SolverOptions;
 
 $options = new SolverOptions(
-    determinizationAlgorithm: DeterminizationAlgorithm::SUBSET_INDEXED,
+    determinizationAlgorithm: DeterminizationAlgorithm::SubsetIndexed,
 );
 ```
 

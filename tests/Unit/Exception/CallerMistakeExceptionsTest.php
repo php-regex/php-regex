@@ -83,7 +83,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     public function test_a_report_json_cannot_encode_is_a_lint_exception(): void
     {
         $confirmation = new Confirmation(false, [], null, null, null, 0, \INF);
-        $analysis = new RedosAnalysis(RedosSeverity::SAFE, 0, confirmation: $confirmation);
+        $analysis = new RedosAnalysis(RedosSeverity::Safe, 0, confirmation: $confirmation);
         $report = new LintReport([[
             'file' => 'a.php',
             'line' => 1,
@@ -185,8 +185,8 @@ final class CallerMistakeExceptionsTest extends TestCase
     public function test_a_token_stream_walked_past_its_bounds_is_a_logic_exception(\Closure $walk): void
     {
         $stream = new TokenStream([
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ], 'a');
 
         try {

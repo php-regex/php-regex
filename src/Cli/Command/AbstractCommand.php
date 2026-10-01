@@ -122,8 +122,8 @@ abstract class AbstractCommand implements CommandInterface
     protected function isConfirmedRedos(RedosAnalysis $analysis, ?RedosSeverity $threshold): bool
     {
         return $analysis->isConfirmed()
-            && $analysis->exceedsThreshold($threshold ?? RedosSeverity::HIGH)
-            && $analysis->exceedsThreshold(RedosSeverity::HIGH);
+            && $analysis->exceedsThreshold($threshold ?? RedosSeverity::High)
+            && $analysis->exceedsThreshold(RedosSeverity::High);
     }
 
     /**

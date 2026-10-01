@@ -40,7 +40,7 @@ foreach ($routes as $route) {
 
     $redos = $regex->redos($route);
 
-    $severityOrder = [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM, RedosSeverity::HIGH, RedosSeverity::CRITICAL];
+    $severityOrder = [RedosSeverity::Safe, RedosSeverity::Low, RedosSeverity::Medium, RedosSeverity::High, RedosSeverity::Critical];
     $riskLevel = array_search($redos->severity, $severityOrder, true);
 
     if ($riskLevel >= 2) {  // MEDIUM or worse

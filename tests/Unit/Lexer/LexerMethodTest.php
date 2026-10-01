@@ -34,7 +34,7 @@ final class LexerMethodTest extends TestCase
         // Force a token that has no specific extraction logic
         // (e.g. T_LITERAL goes to the default)
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_LITERAL, // Cas default
+            TokenType::Literal, // Cas default
             'TEST_VALUE',
             []
         ]);
@@ -51,7 +51,7 @@ final class LexerMethodTest extends TestCase
         $accessor = new LexerAccessor($lexer);
 
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_BACKREF,
+            TokenType::Backref,
             '\99',
             []         // Empty array -> force the ?? null
         ]);

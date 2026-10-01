@@ -34,7 +34,7 @@ final class LexerInternalsTest extends TestCase
 
         // Simulates an incomplete match to force the `?? ''`
         $result = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_POSIX_CLASS,
+            TokenType::PosixClass,
             '[[:alnum:]]',
             [] // No 'v_posix' key
         ]);
@@ -68,7 +68,7 @@ final class LexerInternalsTest extends TestCase
         // Tests an escaped character that is not special (e.g. \@)
         // This forces the `default => substr(...)`
         $result = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_LITERAL_ESCAPED,
+            TokenType::LiteralEscaped,
             '\@',
             []
         ]);
@@ -85,7 +85,7 @@ final class LexerInternalsTest extends TestCase
 
         // Forces the `??` for the backref number
         $result = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_BACKREF,
+            TokenType::Backref,
             '\1',
             [] // No 'v_backref_num' key
         ]);
@@ -99,7 +99,7 @@ final class LexerInternalsTest extends TestCase
 
         // Case where type is T_LITERAL (the global switch default)
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_LITERAL,
+            TokenType::Literal,
             'X',
             []
         ]);
@@ -107,7 +107,7 @@ final class LexerInternalsTest extends TestCase
 
         // Case where type is T_LITERAL_ESCAPED but char is not special (the internal match default)
         $val = $accessor->callPrivateMethod('extractTokenValue', [
-            TokenType::T_LITERAL_ESCAPED,
+            TokenType::LiteralEscaped,
             '\@', // @ is not t, n, r, etc.
             []
         ]);

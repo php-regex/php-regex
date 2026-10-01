@@ -27,7 +27,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
     public function test_inline_flags_group_is_explained(): void
     {
         $visitor = new TextExplainer();
-        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_INLINE_FLAGS, null, 'im', 0, 0);
+        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::InlineFlags, null, 'im', 0, 0);
 
         $this->assertStringContainsString("Inline flags 'im'", $group->accept($visitor));
     }
@@ -43,7 +43,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
     public function test_unicode_named_character_extracts_name(): void
     {
         $visitor = new TextExplainer();
-        $node = new CharLiteralNode('\\N{LATIN SMALL LETTER A}', 0, CharLiteralType::UNICODE_NAMED, 0, 0);
+        $node = new CharLiteralNode('\\N{LATIN SMALL LETTER A}', 0, CharLiteralType::UnicodeNamed, 0, 0);
 
         $this->assertStringContainsString('LATIN SMALL LETTER A', $node->accept($visitor));
     }
@@ -51,7 +51,7 @@ final class ExplainNodeVisitorEdgeCasesTest extends TestCase
     public function test_unicode_named_character_falls_back_to_representation(): void
     {
         $visitor = new TextExplainer();
-        $node = new CharLiteralNode('\\N{', 0, CharLiteralType::UNICODE_NAMED, 0, 0);
+        $node = new CharLiteralNode('\\N{', 0, CharLiteralType::UnicodeNamed, 0, 0);
 
         $this->assertStringContainsString('\\N{', $node->accept($visitor));
     }

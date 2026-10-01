@@ -89,17 +89,17 @@ final class RegexLintServiceEdgeCasesTest extends TestCase
 
         $mapRedosSeverity = $this->getPrivateMethod($service, 'mapRedosSeverity');
 
-        $analysis = new RedosAnalysis(RedosSeverity::HIGH, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::High, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
         $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
-        $analysis = new RedosAnalysis(RedosSeverity::MEDIUM, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::Medium, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
         $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);
 
-        $analysis = new RedosAnalysis(RedosSeverity::UNKNOWN, 10, null, [], null, null);
+        $analysis = new RedosAnalysis(RedosSeverity::Unknown, 10, null, [], null, null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
         $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);

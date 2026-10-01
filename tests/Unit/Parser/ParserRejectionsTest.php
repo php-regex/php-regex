@@ -169,11 +169,11 @@ final class ParserRejectionsTest extends TestCase
     {
         $parser = new TokenParser();
         $tokens = [
-            new Token(TokenType::T_LITERAL, '?', 0),
-            new Token(TokenType::T_LITERAL, '=', 1),
-            new Token(TokenType::T_LITERAL, 'a', 2),
-            new Token(TokenType::T_GROUP_CLOSE, ')', 3),
-            new Token(TokenType::T_EOF, '', 4),
+            new Token(TokenType::Literal, '?', 0),
+            new Token(TokenType::Literal, '=', 1),
+            new Token(TokenType::Literal, 'a', 2),
+            new Token(TokenType::GroupClose, ')', 3),
+            new Token(TokenType::Eof, '', 4),
         ];
         $stream = new TokenStream($tokens, '?=a)');
 
@@ -189,7 +189,7 @@ final class ParserRejectionsTest extends TestCase
         $node = $method->invoke($parser);
 
         $this->assertInstanceOf(GroupNode::class, $node);
-        $this->assertSame(GroupType::T_GROUP_LOOKAHEAD_POSITIVE, $node->type);
+        $this->assertSame(GroupType::LookaheadPositive, $node->type);
     }
 
     #[Test]

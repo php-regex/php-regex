@@ -23,9 +23,9 @@ final class TokenStreamTest extends TestCase
     public function test_iteration_and_positions(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_LITERAL, 'b', 1),
-            new Token(TokenType::T_EOF, '', 2),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Literal, 'b', 1),
+            new Token(TokenType::Eof, '', 2),
         ];
 
         $stream = new TokenStream($tokens, 'ab');
@@ -38,16 +38,16 @@ final class TokenStreamTest extends TestCase
         $this->assertSame('b', $stream->current()->value);
 
         $peek = $stream->peek();
-        $this->assertSame(TokenType::T_EOF, $peek->type);
+        $this->assertSame(TokenType::Eof, $peek->type);
         $this->assertSame(2, $peek->position);
     }
 
     public function test_peek_and_rewind(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'x', 0),
-            new Token(TokenType::T_LITERAL, 'y', 1),
-            new Token(TokenType::T_EOF, '', 2),
+            new Token(TokenType::Literal, 'x', 0),
+            new Token(TokenType::Literal, 'y', 1),
+            new Token(TokenType::Eof, '', 2),
         ];
 
         $stream = new TokenStream($tokens, 'xy');
@@ -57,7 +57,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame('x', $peekBack->value);
 
         $stream->next(); // consume y
-        $this->assertSame(TokenType::T_EOF, $stream->current()->type);
+        $this->assertSame(TokenType::Eof, $stream->current()->type);
 
         $stream->rewind(2);
         $this->assertSame(0, $stream->getPosition());
@@ -67,8 +67,8 @@ final class TokenStreamTest extends TestCase
     public function test_rewind_throws_on_invalid_count(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
 
         $stream = new TokenStream($tokens, 'a');
@@ -82,8 +82,8 @@ final class TokenStreamTest extends TestCase
     public function test_next_and_current_throw_when_exhausted(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
@@ -98,10 +98,10 @@ final class TokenStreamTest extends TestCase
     public function test_set_position_forward_and_backward(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_LITERAL, 'b', 1),
-            new Token(TokenType::T_LITERAL, 'c', 2),
-            new Token(TokenType::T_EOF, '', 3),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Literal, 'b', 1),
+            new Token(TokenType::Literal, 'c', 2),
+            new Token(TokenType::Eof, '', 3),
         ];
 
         $stream = new TokenStream($tokens, 'abc');
@@ -115,24 +115,24 @@ final class TokenStreamTest extends TestCase
     public function test_peek_out_of_bounds_returns_eof(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
         $peekFar = $stream->peek(5);
-        $this->assertSame(TokenType::T_EOF, $peekFar->type);
+        $this->assertSame(TokenType::Eof, $peekFar->type);
         $this->assertSame(5, $peekFar->position);
 
         $peekBack = $stream->peek(-5);
-        $this->assertSame(TokenType::T_EOF, $peekBack->type);
+        $this->assertSame(TokenType::Eof, $peekBack->type);
     }
 
     public function test_getters_expose_pattern_and_tokens(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
@@ -144,8 +144,8 @@ final class TokenStreamTest extends TestCase
     public function test_set_position_throws_on_out_of_bounds(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
@@ -157,8 +157,8 @@ final class TokenStreamTest extends TestCase
     public function test_set_position_throws_on_too_high(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
@@ -170,8 +170,8 @@ final class TokenStreamTest extends TestCase
     public function test_is_at_end(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
         $stream = new TokenStream($tokens, 'a');
 
@@ -187,8 +187,8 @@ final class TokenStreamTest extends TestCase
     public function test_rewind_zero_does_nothing(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
 
         $stream = new TokenStream($tokens, 'a');
@@ -201,8 +201,8 @@ final class TokenStreamTest extends TestCase
     public function test_current_throws_when_exhausted(): void
     {
         $tokens = [
-            new Token(TokenType::T_LITERAL, 'a', 0),
-            new Token(TokenType::T_EOF, '', 1),
+            new Token(TokenType::Literal, 'a', 0),
+            new Token(TokenType::Eof, '', 1),
         ];
 
         $stream = new TokenStream($tokens, 'a');

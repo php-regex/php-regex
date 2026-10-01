@@ -294,7 +294,7 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 
 ---
 
-### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::THEORETICAL, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
+### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
 
 Analyzes ReDoS risk without an analysis report. Default mode is **theoretical** (structural). Use **confirmed** mode to attempt bounded evidence collection.
 
@@ -302,7 +302,7 @@ Analyzes ReDoS risk without an analysis report. Default mode is **theoretical** 
 use PhpRegex\Toolkit\Regex;
 use PhpRegex\Redos\RedosMode;
 
-$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::THEORETICAL);
+$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
 
 echo $analysis->severity->value;       // 'critical', 'safe', etc.
 echo $analysis->score;                 // int (0-10)
@@ -311,7 +311,7 @@ echo $analysis->vulnerablePart;        // Subpattern causing risk
 echo $analysis->recommendations[0];    // Suggested fix
 
 // Optional: bounded confirmation
-$confirmed = Regex::create()->redos('/(a+)+b/', mode: RedosMode::CONFIRMED);
+$confirmed = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Confirmed);
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
 ```
 

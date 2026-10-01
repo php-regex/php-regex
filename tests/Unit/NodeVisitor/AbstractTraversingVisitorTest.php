@@ -257,23 +257,23 @@ final class AbstractTraversingVisitorTest extends TestCase
             $marker(),
             new CalloutNode(1, false, 0, 5),
             new CharClassNode($marker(), false, 0, 4),
-            new CharLiteralNode('\x41', 0x41, CharLiteralType::UNICODE, 0, 4),
+            new CharLiteralNode('\x41', 0x41, CharLiteralType::Unicode, 0, 4),
             new CharTypeNode('d', 0, 2),
-            new ClassSetOperationNode(ClassSetOperator::UNION, $marker(), $marker(), '|', 0, 5),
-            new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $marker(), '!', 0, 3),
+            new ClassSetOperationNode(ClassSetOperator::Union, $marker(), $marker(), '|', 0, 5),
+            new ClassSetOperationNode(ClassSetOperator::Complement, null, $marker(), '!', 0, 3),
             new CommentNode('note', 0, 8),
             new ConditionalNode($marker(), $marker(), $marker(), 0, 9),
             new ControlCharNode('M', 13, 0, 3),
             new DefineNode($marker(), 0, 12),
             new DotNode(0, 1),
             new ExtendedCharClassNode($marker(), 0, 6),
-            new GroupNode($marker(), GroupType::T_GROUP_CAPTURING, null, null, 0, 4),
+            new GroupNode($marker(), GroupType::Capturing, null, null, 0, 4),
             new KeepNode(0, 2),
             new LimitMatchNode(10, 0, 15),
             new LiteralNode('a', 0, 1),
             new PcreVerbNode('FAIL', 0, 7),
             new PosixClassNode('alpha', 0, 9),
-            new QuantifierNode($marker(), '+', QuantifierType::T_GREEDY, 0, 3),
+            new QuantifierNode($marker(), '+', QuantifierType::Greedy, 0, 3),
             new RangeNode($marker(), $marker(), 0, 3),
             new RegexNode($marker(), '', '/', 0, 4),
             new ScriptRunNode('sr', 0, 7, $marker()),
@@ -348,7 +348,7 @@ final class GroupCountingBackrefCollector extends AbstractTraversingVisitor
     {
         $this->groups++;
 
-        if ($this->prune && GroupType::T_GROUP_NON_CAPTURING === $node->type) {
+        if ($this->prune && GroupType::NonCapturing === $node->type) {
             return null;
         }
 

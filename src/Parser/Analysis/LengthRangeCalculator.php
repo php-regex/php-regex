@@ -58,11 +58,11 @@ use PhpRegex\Parser\Node\VersionConditionNode;
 final class LengthRangeCalculator extends AbstractNodeVisitor
 {
     private const LOOKAROUNDS = [
-        GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-        GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-        GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-        GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-        GroupType::T_GROUP_SCAN_SUBSTRING,
+        GroupType::LookaheadPositive,
+        GroupType::LookaheadNegative,
+        GroupType::LookbehindPositive,
+        GroupType::LookbehindNegative,
+        GroupType::ScanSubstring,
     ];
 
     /**

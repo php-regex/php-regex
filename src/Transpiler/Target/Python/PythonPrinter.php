@@ -128,24 +128,24 @@ final class PythonPrinter extends AbstractTargetPrinter
         $child = $node->child->accept($this);
 
         return match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => '('.$child.')',
-            GroupType::T_GROUP_NON_CAPTURING => '(?:'.$child.')',
-            GroupType::T_GROUP_NAMED => '(?P<'.$node->name.'>'.$child.')',
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => '(?='.$child.')',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!'.$child.')',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => '(?<='.$child.')',
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => '(?<!'.$child.')',
-            GroupType::T_GROUP_ATOMIC => '(?=(?P<tmp>'.$child.'))(?P=tmp)', // Atomic group emulation in Python
-            GroupType::T_GROUP_INLINE_FLAGS => '(?'.$node->flags.')', // Partially supported if simple
-            GroupType::T_GROUP_BRANCH_RESET => $this->unsupported('Branch reset groups are not supported in Python re.', $node),
-            GroupType::T_GROUP_SCAN_SUBSTRING => $this->unsupported('Substring scans are not supported in Python re.', $node),
+            GroupType::Capturing => '('.$child.')',
+            GroupType::NonCapturing => '(?:'.$child.')',
+            GroupType::Named => '(?P<'.$node->name.'>'.$child.')',
+            GroupType::LookaheadPositive => '(?='.$child.')',
+            GroupType::LookaheadNegative => '(?!'.$child.')',
+            GroupType::LookbehindPositive => '(?<='.$child.')',
+            GroupType::LookbehindNegative => '(?<!'.$child.')',
+            GroupType::Atomic => '(?=(?P<tmp>'.$child.'))(?P=tmp)', // Atomic group emulation in Python
+            GroupType::InlineFlags => '(?'.$node->flags.')', // Partially supported if simple
+            GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in Python re.', $node),
+            GroupType::ScanSubstring => $this->unsupported('Substring scans are not supported in Python re.', $node),
         };
     }
 
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        if (QuantifierType::T_POSSESSIVE === $node->type) {
+        if (QuantifierType::Possessive === $node->type) {
             return $this->unsupported('Possessive quantifiers are not supported in Python standard re module.', $node);
         }
 
@@ -155,7 +155,7 @@ final class PythonPrinter extends AbstractTargetPrinter
             $nodeCompiled = '(?:'.$nodeCompiled.')';
         }
 
-        $suffix = QuantifierType::T_LAZY === $node->type ? '?' : '';
+        $suffix = QuantifierType::Lazy === $node->type ? '?' : '';
         $quantifier = $this->normalizeQuantifier($node->quantifier);
 
         return $nodeCompiled.$quantifier.$suffix;
@@ -180,7 +180,7 @@ final class PythonPrinter extends AbstractTargetPrinter
     {
         $codePoint = $node->codePoint;
 
-        if (CharLiteralType::UNICODE_NAMED === $node->type) {
+        if (CharLiteralType::UnicodeNamed === $node->type) {
             $this->context->addWarning('Converted Unicode named character to code point escape.');
         }
 

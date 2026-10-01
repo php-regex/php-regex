@@ -41,7 +41,7 @@ if ($result->isValid) {
 
 $redosResult = $regex->redos($pattern);
 
-$severityOrder = [RedosSeverity::SAFE, RedosSeverity::LOW, RedosSeverity::MEDIUM, RedosSeverity::HIGH, RedosSeverity::CRITICAL];
+$severityOrder = [RedosSeverity::Safe, RedosSeverity::Low, RedosSeverity::Medium, RedosSeverity::High, RedosSeverity::Critical];
 $riskLevel = array_search($redosResult->severity, $severityOrder, true);
 
 if ($riskLevel >= 2) {  // MEDIUM or worse

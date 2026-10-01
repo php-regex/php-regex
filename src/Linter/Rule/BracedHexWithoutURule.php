@@ -45,7 +45,7 @@ final class BracedHexWithoutURule extends AbstractLintRule
             return [];
         }
 
-        if (CharLiteralType::UNICODE === $node->type
+        if (CharLiteralType::Unicode === $node->type
             && CodePoints::isBracedUnicodeEscape($node->originalRepresentation)
             && $node->codePoint > 0xFF
         ) {

@@ -43,7 +43,7 @@ final class VisitorFallbackTest extends TestCase
     public function test_sample_generator_bad_unicode_node(): void
     {
         // Inject a CharLiteralNode with a bad value
-        $node = new CharLiteralNode('BAD', -1, CharLiteralType::UNICODE, 0, 0);
+        $node = new CharLiteralNode('BAD', -1, CharLiteralType::Unicode, 0, 0);
         $generator = new SampleGenerator();
 
         // Should hit the '?' fallback
@@ -53,7 +53,7 @@ final class VisitorFallbackTest extends TestCase
     public function test_sample_generator_bad_octal_node(): void
     {
         // Inject CharLiteralNode with bad value
-        $node = new CharLiteralNode('BAD', -1, CharLiteralType::OCTAL, 0, 0);
+        $node = new CharLiteralNode('BAD', -1, CharLiteralType::Octal, 0, 0);
         $generator = new SampleGenerator();
 
         // Should hit the '?' fallback

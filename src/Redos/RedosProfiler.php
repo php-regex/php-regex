@@ -86,7 +86,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private ?NodeInterface $culpritNode = null;
 
-    private RedosSeverity $culpritSeverity = RedosSeverity::SAFE;
+    private RedosSeverity $culpritSeverity = RedosSeverity::Safe;
 
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer()) {}
 
@@ -95,7 +95,7 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     public function getResult(): array
     {
-        $maxSeverity = RedosSeverity::SAFE;
+        $maxSeverity = RedosSeverity::Safe;
         $recommendations = [];
         $pattern = null;
         $trigger = null;
@@ -120,7 +120,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         if ($this->backrefLoopDetected) {
-            $maxSeverity = $this->maxSeverity($maxSeverity, RedosSeverity::CRITICAL);
+            $maxSeverity = $this->maxSeverity($maxSeverity, RedosSeverity::Critical);
         }
 
         return [
@@ -160,7 +160,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->nextNode = null;
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
-        $this->culpritSeverity = RedosSeverity::SAFE;
+        $this->culpritSeverity = RedosSeverity::Safe;
 
         return $node->pattern->accept($this);
     }
@@ -175,7 +175,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
-        $isPossessive = QuantifierType::T_POSSESSIVE === $node->type;
+        $isPossessive = QuantifierType::Possessive === $node->type;
 
         // If the quantifier is possessive (*+, ++), its content is implicitly atomic.
         // This means it does not backtrack, preventing ReDoS in nested structures.
@@ -190,7 +190,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             $result = $node->node->accept($this);
             $this->inAtomicGroup = $wasAtomic; // Restore state is crucial here!
 
-            return $this->reduceSeverity($result, RedosSeverity::LOW);
+            return $this->reduceSeverity($result, RedosSeverity::Low);
         }
 
         // --- Standard ReDoS logic for non-atomic quantifiers ---
@@ -200,9 +200,9 @@ final class RedosProfiler extends AbstractNodeVisitor
         $isUnbounded = $this->isUnbounded($node->quantifier);
 
         // Check if the immediate target is an atomic group (e.g., (? >...)+)
-        $isTargetAtomic = $node->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->node->type;
+        $isTargetAtomic = $node->node instanceof GroupNode && GroupType::Atomic === $node->node->type;
 
-        $severity = RedosSeverity::SAFE;
+        $severity = RedosSeverity::Safe;
         $entersUnbounded = $isUnbounded && !$isTargetAtomic;
         $isNestedUnbounded = $entersUnbounded && $this->unboundedQuantifierDepth > 0;
 
@@ -211,63 +211,63 @@ final class RedosProfiler extends AbstractNodeVisitor
 
             if ($this->hasBackrefLoop($node->node)) {
                 $this->backrefLoopDetected = true;
-                $severity = RedosSeverity::CRITICAL;
+                $severity = RedosSeverity::Critical;
                 $this->addVulnerability(
-                    RedosSeverity::CRITICAL,
+                    RedosSeverity::Critical,
                     'Unbounded quantifier combined with backreferences to variable-length captures can cause catastrophic backtracking.',
                     $node,
                     'Use atomic groups (?>...) or possessive quantifiers around the quantified token.',
-                    RedosConfidence::HIGH,
+                    RedosConfidence::High,
                     'Low false-positive risk; nested backtracking with backreferences is a known hotspot.',
                 );
             }
 
             if ($isNestedUnbounded) {
                 $hasRecursion = $this->hasRecursion($node->node);
-                $severity = $boundarySeparated ? RedosSeverity::LOW : ($hasRecursion ? RedosSeverity::MEDIUM : RedosSeverity::CRITICAL);
+                $severity = $boundarySeparated ? RedosSeverity::Low : ($hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical);
                 if (!$boundarySeparated) {
-                    $vulnSeverity = $hasRecursion ? RedosSeverity::MEDIUM : RedosSeverity::CRITICAL;
+                    $vulnSeverity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
                     $this->addVulnerability(
                         $vulnSeverity,
                         'Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).',
                         $node,
                         'Replace inner quantifiers with possessive variants or wrap them in (?>...).',
-                        RedosConfidence::HIGH,
+                        RedosConfidence::High,
                         'Low false-positive risk; nested unbounded quantifiers are a classic ReDoS pattern.',
                     );
                 }
             } else {
-                $severity = $boundarySeparated ? RedosSeverity::LOW : RedosSeverity::MEDIUM;
+                $severity = $boundarySeparated ? RedosSeverity::Low : RedosSeverity::Medium;
                 if (!$boundarySeparated) {
                     $this->addVulnerability(
-                        RedosSeverity::MEDIUM,
+                        RedosSeverity::Medium,
                         'Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...).',
                         $node,
                         'Consider using possessive quantifiers or atomic groups to limit backtracking.',
-                        RedosConfidence::MEDIUM,
+                        RedosConfidence::Medium,
                         'Medium false-positive risk; depends on input distribution and surrounding tokens.',
                     );
                 }
             }
         } else {
             if ($this->isLargeBounded($node->quantifier)) {
-                $severity = RedosSeverity::LOW;
+                $severity = RedosSeverity::Low;
                 $this->addVulnerability(
-                    RedosSeverity::LOW,
+                    RedosSeverity::Low,
                     'Large bounded quantifier detected (>1000). May cause slow matching. Consider reducing the upper bound.',
                     $node,
                     'Reduce the upper bound or pre-validate input length.',
-                    RedosConfidence::LOW,
+                    RedosConfidence::Low,
                     'High false-positive risk; bounded quantifiers may still be safe in context.',
                 );
             } elseif ($this->totalQuantifierDepth > 1 && 0 === $this->unboundedQuantifierDepth) {
-                $severity = RedosSeverity::LOW;
+                $severity = RedosSeverity::Low;
                 $this->addVulnerability(
-                    RedosSeverity::LOW,
+                    RedosSeverity::Low,
                     'Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...).',
                     $node,
                     'Flatten nested quantifiers or introduce atomic groups.',
-                    RedosConfidence::LOW,
+                    RedosConfidence::Low,
                     'Medium false-positive risk; bounded quantifiers are often acceptable.',
                 );
             }
@@ -276,14 +276,14 @@ final class RedosProfiler extends AbstractNodeVisitor
         if ($this->shouldFlagEmptyRepeat($node->node, $qMax)) {
             $repeatEmptySeverity = $this->emptyRepeatSeverity($isUnbounded, $qMax);
             if ($this->unboundedQuantifierDepth > 1) {
-                $repeatEmptySeverity = RedosSeverity::CRITICAL;
+                $repeatEmptySeverity = RedosSeverity::Critical;
             }
 
-            $repeatConfidence = RedosConfidence::HIGH;
+            $repeatConfidence = RedosConfidence::High;
             $repeatFalsePositiveRisk = 'Low false-positive risk; repeated empty matches are a known backtracking hotspot.';
             if ($this->shouldDowngradeEmptyRepeat($node->node)) {
-                $repeatEmptySeverity = $this->reduceSeverity($repeatEmptySeverity, RedosSeverity::MEDIUM);
-                $repeatConfidence = RedosConfidence::MEDIUM;
+                $repeatEmptySeverity = $this->reduceSeverity($repeatEmptySeverity, RedosSeverity::Medium);
+                $repeatConfidence = RedosConfidence::Medium;
                 $repeatFalsePositiveRisk = 'Medium false-positive risk; possessive or atomic branches with recursion can reduce backtracking.';
             }
 
@@ -307,16 +307,16 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->previousNode = $childPrevious;
         $this->nextNode = $childNext;
 
-        if ($entersUnbounded && !$boundarySeparated && RedosSeverity::HIGH === $childSeverity) {
+        if ($entersUnbounded && !$boundarySeparated && RedosSeverity::High === $childSeverity) {
             $hasRecursion = $this->hasRecursion($node->node);
-            $vulnSeverity = $hasRecursion ? RedosSeverity::MEDIUM : RedosSeverity::CRITICAL;
-            $severity = $hasRecursion ? RedosSeverity::MEDIUM : RedosSeverity::CRITICAL;
+            $vulnSeverity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
+            $severity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
             $this->addVulnerability(
                 $vulnSeverity,
                 'Critical nesting of quantifiers detected (Star Height > 1). This is a classic ReDoS risk. Refactor the pattern to avoid nested unbounded quantifiers over the same subpattern.',
                 $node,
                 'Use atomic groups or restructure the repetition to be deterministic.',
-                RedosConfidence::HIGH,
+                RedosConfidence::High,
                 $hasRecursion ? 'Medium false-positive risk; recursion may mitigate some backtracking.' : 'Low false-positive risk; star-height > 1 patterns are highly suspect.',
             );
         }
@@ -335,20 +335,20 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitAlternation(AlternationNode $node): RedosSeverity
     {
-        $max = RedosSeverity::SAFE;
+        $max = RedosSeverity::Safe;
         $previous = $this->previousNode;
         $next = $this->nextNode;
 
         if ($this->unboundedQuantifierDepth > 0 && $this->hasOverlappingAlternatives($node)) {
             $this->addVulnerability(
-                RedosSeverity::CRITICAL,
+                RedosSeverity::Critical,
                 'Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking.',
                 $node,
                 'Make alternatives mutually exclusive or order longer alternatives first.',
-                RedosConfidence::HIGH,
+                RedosConfidence::High,
                 'Low false-positive risk; overlapping alternations are a known backtracking trigger.',
             );
-            $max = RedosSeverity::CRITICAL;
+            $max = RedosSeverity::Critical;
         }
 
         foreach ($node->alternatives as $alt) {
@@ -369,7 +369,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $wasAtomic = $this->inAtomicGroup;
         $previous = $this->previousNode;
         $next = $this->nextNode;
-        $isAtomicGroup = GroupType::T_GROUP_ATOMIC === $node->type;
+        $isAtomicGroup = GroupType::Atomic === $node->type;
         if ($isAtomicGroup) {
             $this->inAtomicGroup = true;
         }
@@ -382,13 +382,13 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $this->inAtomicGroup = $wasAtomic;
 
-        return $isAtomicGroup ? $this->reduceSeverity($severity, RedosSeverity::LOW) : $severity;
+        return $isAtomicGroup ? $this->reduceSeverity($severity, RedosSeverity::Low) : $severity;
     }
 
     #[\Override]
     public function visitSequence(SequenceNode $node): RedosSeverity
     {
-        $max = RedosSeverity::SAFE;
+        $max = RedosSeverity::Safe;
         $previous = $this->previousNode;
         $next = $this->nextNode;
         $last = null;
@@ -414,80 +414,80 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitCharType(CharTypeNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitDot(DotNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitAnchor(AnchorNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitAssertion(AssertionNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitKeep(KeepNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitCharClass(CharClassNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitRange(RangeNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitControlChar(ControlCharNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): RedosSeverity
     {
         if (null === $node->content) {
-            return RedosSeverity::SAFE;
+            return RedosSeverity::Safe;
         }
 
         if (!$node->atomic) {
@@ -500,43 +500,43 @@ final class RedosProfiler extends AbstractNodeVisitor
         $severity = $node->content->accept($this);
         $this->inAtomicGroup = $wasAtomic;
 
-        return $this->reduceSeverity($severity, RedosSeverity::LOW);
+        return $this->reduceSeverity($severity, RedosSeverity::Low);
     }
 
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitBackref(BackrefNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitPosixClass(PosixClassNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitComment(CommentNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     #[\Override]
@@ -556,15 +556,15 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function visitSubroutine(SubroutineNode $node): RedosSeverity
     {
         $this->addVulnerability(
-            RedosSeverity::LOW,
+            RedosSeverity::Low,
             'Subroutines can lead to complex backtracking and potential ReDoS if not used carefully, especially with recursion. Review the referenced pattern.',
             $node,
             'Avoid excessive recursion or add atomic groups around recursive parts.',
-            RedosConfidence::MEDIUM,
+            RedosConfidence::Medium,
             'Medium false-positive risk; recursion depth and input shape matter.',
         );
 
-        return RedosSeverity::LOW;
+        return RedosSeverity::Low;
     }
 
     #[\Override]
@@ -577,7 +577,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitLimitMatch(LimitMatchNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     /**
@@ -586,7 +586,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitCallout(CalloutNode $node): RedosSeverity
     {
-        return RedosSeverity::SAFE;
+        return RedosSeverity::Safe;
     }
 
     /**
@@ -749,7 +749,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         string $message,
         NodeInterface $triggerNode,
         ?string $suggestedRewrite = null,
-        RedosConfidence $confidence = RedosConfidence::MEDIUM,
+        RedosConfidence $confidence = RedosConfidence::Medium,
         ?string $falsePositiveRisk = null,
         ?string $triggerOverride = null,
     ): void {
@@ -802,12 +802,12 @@ final class RedosProfiler extends AbstractNodeVisitor
     private function severityGreaterThan(RedosSeverity $a, RedosSeverity $b): bool
     {
         $levels = [
-            RedosSeverity::SAFE->value => 0,
-            RedosSeverity::LOW->value => 1,
-            RedosSeverity::UNKNOWN->value => 2,
-            RedosSeverity::MEDIUM->value => 3,
-            RedosSeverity::HIGH->value => 4,
-            RedosSeverity::CRITICAL->value => 5,
+            RedosSeverity::Safe->value => 0,
+            RedosSeverity::Low->value => 1,
+            RedosSeverity::Unknown->value => 2,
+            RedosSeverity::Medium->value => 3,
+            RedosSeverity::High->value => 4,
+            RedosSeverity::Critical->value => 5,
         ];
 
         return $levels[$a->value] > $levels[$b->value];
@@ -987,11 +987,11 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         if ($node instanceof GroupNode) {
             if (\in_array($node->type, [
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-                GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-                GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
-                GroupType::T_GROUP_SCAN_SUBSTRING,
+                GroupType::LookaheadPositive,
+                GroupType::LookaheadNegative,
+                GroupType::LookbehindPositive,
+                GroupType::LookbehindNegative,
+                GroupType::ScanSubstring,
             ], true)) {
                 return true;
             }
@@ -1129,14 +1129,14 @@ final class RedosProfiler extends AbstractNodeVisitor
                 return false;
             }
 
-            if (QuantifierType::T_POSSESSIVE === $node->type) {
+            if (QuantifierType::Possessive === $node->type) {
                 return true;
             }
 
-            return $node->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->node->type;
+            return $node->node instanceof GroupNode && GroupType::Atomic === $node->node->type;
         }
 
-        if ($node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->type) {
+        if ($node instanceof GroupNode && GroupType::Atomic === $node->type) {
             return true === $this->nullableStatus($node->child);
         }
 
@@ -1151,19 +1151,19 @@ final class RedosProfiler extends AbstractNodeVisitor
     private function emptyRepeatSeverity(bool $isUnbounded, ?int $max): RedosSeverity
     {
         if ($isUnbounded) {
-            return RedosSeverity::HIGH;
+            return RedosSeverity::High;
         }
 
         if (null !== $max && $max <= 3) {
-            return RedosSeverity::LOW;
+            return RedosSeverity::Low;
         }
 
-        return RedosSeverity::MEDIUM;
+        return RedosSeverity::Medium;
     }
 
     private function analyzeAdjacentQuantifiers(SequenceNode $node): RedosSeverity
     {
-        $max = RedosSeverity::SAFE;
+        $max = RedosSeverity::Safe;
         $children = $node->children;
         $count = \count($children);
 
@@ -1206,12 +1206,12 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            $severity = ($leftUnbounded || $rightUnbounded) ? RedosSeverity::MEDIUM : RedosSeverity::LOW;
+            $severity = ($leftUnbounded || $rightUnbounded) ? RedosSeverity::Medium : RedosSeverity::Low;
             if ($this->unboundedQuantifierDepth > 0) {
-                $severity = $this->maxSeverity($severity, RedosSeverity::HIGH);
+                $severity = $this->maxSeverity($severity, RedosSeverity::High);
             }
 
-            $confidence = $overlapKnown ? RedosConfidence::MEDIUM : RedosConfidence::LOW;
+            $confidence = $overlapKnown ? RedosConfidence::Medium : RedosConfidence::Low;
             $falsePositiveRisk = $overlapKnown
                 ? 'Medium false-positive risk; overlap is inferred from boundary character sets.'
                 : 'High false-positive risk; overlap could not be determined precisely.';
@@ -1237,7 +1237,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     private function unwrapAdjacentQuantifier(NodeInterface $node): ?QuantifierNode
     {
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_ATOMIC === $node->type) {
+            if (GroupType::Atomic === $node->type) {
                 return null;
             }
 
@@ -1253,17 +1253,17 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private function isQuantifierShielded(QuantifierNode $node): bool
     {
-        return QuantifierType::T_POSSESSIVE === $node->type
+        return QuantifierType::Possessive === $node->type
             || $this->hasTrailingBacktrackingControl($node->node)
-            || ($node->node instanceof GroupNode && GroupType::T_GROUP_ATOMIC === $node->node->type);
+            || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
     }
 
     private function isCapturingGroup(GroupNode $group): bool
     {
         return \in_array($group->type, [
-            GroupType::T_GROUP_CAPTURING,
-            GroupType::T_GROUP_NAMED,
-            GroupType::T_GROUP_BRANCH_RESET,
+            GroupType::Capturing,
+            GroupType::Named,
+            GroupType::BranchReset,
         ], true);
     }
 

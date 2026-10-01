@@ -88,12 +88,12 @@ final class Heatmap
     private function severityRank(RedosSeverity $severity): int
     {
         return match ($severity) {
-            RedosSeverity::SAFE => 0,
-            RedosSeverity::LOW => 1,
-            RedosSeverity::MEDIUM => 2,
-            RedosSeverity::HIGH => 3,
-            RedosSeverity::CRITICAL => 4,
-            RedosSeverity::UNKNOWN => 1,
+            RedosSeverity::Safe => 0,
+            RedosSeverity::Low => 1,
+            RedosSeverity::Medium => 2,
+            RedosSeverity::High => 3,
+            RedosSeverity::Critical => 4,
+            RedosSeverity::Unknown => 1,
         };
     }
 

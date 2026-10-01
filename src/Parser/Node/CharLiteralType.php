@@ -18,18 +18,18 @@ namespace PhpRegex\Parser\Node;
  */
 enum CharLiteralType: string
 {
-    case UNICODE = 'unicode';
-    case UNICODE_NAMED = 'unicode_named';
-    case OCTAL = 'octal';
-    case OCTAL_LEGACY = 'octal_legacy';
+    case Unicode = 'unicode';
+    case UnicodeNamed = 'unicode_named';
+    case Octal = 'octal';
+    case OctalLegacy = 'octal_legacy';
 
     public function label(): string
     {
         return match ($this) {
-            self::UNICODE => 'Unicode',
-            self::UNICODE_NAMED => 'Unicode named',
-            self::OCTAL => 'Octal',
-            self::OCTAL_LEGACY => 'Legacy Octal',
+            self::Unicode => 'Unicode',
+            self::UnicodeNamed => 'Unicode named',
+            self::Octal => 'Octal',
+            self::OctalLegacy => 'Legacy Octal',
         };
     }
 }

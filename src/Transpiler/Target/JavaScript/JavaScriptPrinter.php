@@ -145,24 +145,24 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         $child = $node->child->accept($this);
 
         return match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => '('.$child.')',
-            GroupType::T_GROUP_NON_CAPTURING => '(?:'.$child.')',
-            GroupType::T_GROUP_NAMED => '(?<'.$node->name.'>'.$child.')',
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => '(?='.$child.')',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!'.$child.')',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => $this->compileLookbehind('(?<=', $child, $node),
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => $this->compileLookbehind('(?<!', $child, $node),
-            GroupType::T_GROUP_INLINE_FLAGS => $this->unsupported('Inline flags groups are not supported in JavaScript.', $node),
-            GroupType::T_GROUP_ATOMIC => $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
-            GroupType::T_GROUP_BRANCH_RESET => $this->unsupported('Branch reset groups are not supported in JavaScript.', $node),
-            GroupType::T_GROUP_SCAN_SUBSTRING => $this->unsupported('Substring scans are not supported in JavaScript.', $node),
+            GroupType::Capturing => '('.$child.')',
+            GroupType::NonCapturing => '(?:'.$child.')',
+            GroupType::Named => '(?<'.$node->name.'>'.$child.')',
+            GroupType::LookaheadPositive => '(?='.$child.')',
+            GroupType::LookaheadNegative => '(?!'.$child.')',
+            GroupType::LookbehindPositive => $this->compileLookbehind('(?<=', $child, $node),
+            GroupType::LookbehindNegative => $this->compileLookbehind('(?<!', $child, $node),
+            GroupType::InlineFlags => $this->unsupported('Inline flags groups are not supported in JavaScript.', $node),
+            GroupType::Atomic => $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
+            GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in JavaScript.', $node),
+            GroupType::ScanSubstring => $this->unsupported('Substring scans are not supported in JavaScript.', $node),
         };
     }
 
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        if (QuantifierType::T_POSSESSIVE === $node->type) {
+        if (QuantifierType::Possessive === $node->type) {
             return $this->unsupported('Possessive quantifiers are not supported in JavaScript.', $node);
         }
 
@@ -172,7 +172,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $nodeCompiled = '(?:'.$nodeCompiled.')';
         }
 
-        $suffix = QuantifierType::T_LAZY === $node->type ? '?' : '';
+        $suffix = QuantifierType::Lazy === $node->type ? '?' : '';
         $quantifier = $this->normalizeQuantifier($node->quantifier);
 
         return $nodeCompiled.$quantifier.$suffix;
@@ -197,11 +197,11 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     {
         $codePoint = $node->codePoint;
 
-        if (CharLiteralType::UNICODE_NAMED === $node->type) {
+        if (CharLiteralType::UnicodeNamed === $node->type) {
             $this->context->addWarning('Converted Unicode named character to code point escape.');
         }
 
-        if (CharLiteralType::OCTAL === $node->type || CharLiteralType::OCTAL_LEGACY === $node->type) {
+        if (CharLiteralType::Octal === $node->type || CharLiteralType::OctalLegacy === $node->type) {
             $this->context->addWarning('Converted octal escape to hex/Unicode escape for JavaScript.');
         }
 

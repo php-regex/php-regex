@@ -33,7 +33,7 @@ use PhpRegex\Transpiler\TranspileResult;
  * @method static RegexNode|TolerantParseResult parse(string $regex, bool $tolerant = false)
  * @method static AnalysisReport                analyze(string $regex)
  * @method static ValidationResult              validate(string $regex)
- * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::THEORETICAL, ?ConfirmationOptions $confirmOptions = null)
+ * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static OptimizationResult            optimize(string $regex, array $options = [])
  * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)
  * @method static string                        explain(string $regex, string $format = 'text')

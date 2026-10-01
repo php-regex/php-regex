@@ -39,7 +39,7 @@ final class ExplainNodeVisitorTest extends TestCase
 {
     public function test_visit_octal_legacy_node(): void
     {
-        $node = new CharLiteralNode('077', 0o77, CharLiteralType::OCTAL_LEGACY, 0, 3);
+        $node = new CharLiteralNode('077', 0o77, CharLiteralType::OctalLegacy, 0, 3);
         $visitor = new TextExplainer();
 
         $this->assertSame('Character with octal value 077', $node->accept($visitor));
@@ -71,7 +71,7 @@ final class ExplainNodeVisitorTest extends TestCase
     {
         $node = new GroupNode(
             new LiteralNode('a', 1, 2),
-            GroupType::T_GROUP_CAPTURING,
+            GroupType::Capturing,
             null,
             null,
             0,
@@ -87,7 +87,7 @@ final class ExplainNodeVisitorTest extends TestCase
         $node = new QuantifierNode(
             new LiteralNode('a', 0, 1),
             '*',
-            QuantifierType::T_GREEDY,
+            QuantifierType::Greedy,
             0,
             2,
         );
@@ -132,7 +132,7 @@ final class ExplainNodeVisitorTest extends TestCase
 
     public function test_visit_unicode_node(): void
     {
-        $node = new CharLiteralNode('\x{2603}', 0x2603, CharLiteralType::UNICODE, 0, 7);
+        $node = new CharLiteralNode('\x{2603}', 0x2603, CharLiteralType::Unicode, 0, 7);
         $visitor = new TextExplainer();
 
         $this->assertSame('Character with hexadecimal value 0x2603', $node->accept($visitor));

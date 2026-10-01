@@ -160,7 +160,7 @@ echo $analysis->severity->value;  // "critical"
 echo $analysis->score;            // 10
 
 // Block critical patterns
-if ($analysis->exceedsThreshold(RedosSeverity::HIGH)) {
+if ($analysis->exceedsThreshold(RedosSeverity::High)) {
     throw new InvalidArgumentException("Pattern is unsafe");
 }
 ```

@@ -138,10 +138,10 @@ final readonly class ConsoleReportFormatter
     private function badge(CheckOutcome $severity): string
     {
         return match ($severity) {
-            CheckOutcome::CRITICAL => self::BADGE_CRIT,
-            CheckOutcome::FAIL => self::BADGE_FAIL,
-            CheckOutcome::WARN => self::BADGE_WARN,
-            CheckOutcome::PASS => self::BADGE_PASS,
+            CheckOutcome::Critical => self::BADGE_CRIT,
+            CheckOutcome::Fail => self::BADGE_FAIL,
+            CheckOutcome::Warn => self::BADGE_WARN,
+            CheckOutcome::Pass => self::BADGE_PASS,
         };
     }
 

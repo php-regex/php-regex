@@ -309,7 +309,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->dispatch($node);
         $previousFlags = $this->context->activeFlags();
 
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && null !== $node->flags) {
+        if (GroupType::InlineFlags === $node->type && null !== $node->flags) {
             if (!$this->isStandaloneInlineFlagsGroup($node)) {
                 $this->context->setActiveFlags($this->applyInlineFlags($this->context->activeFlags(), (string) $node->flags));
             }
@@ -438,7 +438,7 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private function countCapturingGroups(NodeInterface $node): void
     {
-        if ($node instanceof GroupNode && (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type)) {
+        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
             $this->maxCapturingGroup++;
             if (null !== $node->name) {
                 $this->definedNamedGroups[$node->name] = true;
@@ -478,13 +478,13 @@ final class PatternLinter extends AbstractNodeVisitor
         }
 
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_BRANCH_RESET === $node->type) {
+            if (GroupType::BranchReset === $node->type) {
                 $this->skipUselessBackref = true;
 
                 return;
             }
 
-            if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+            if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
                 $number = $this->nextCapturingGroupNumber++;
                 $info = [
                     'node' => $node,
@@ -496,7 +496,7 @@ final class PatternLinter extends AbstractNodeVisitor
 
                 $this->capturingGroups[$number] = $info;
 
-                if (GroupType::T_GROUP_NAMED === $node->type && null !== $node->name) {
+                if (GroupType::Named === $node->type && null !== $node->name) {
                     $this->capturingGroupsByName[$node->name][] = $info;
                 }
             }
@@ -571,7 +571,7 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private function isStandaloneInlineFlagsGroup(GroupNode $node): bool
     {
-        if (GroupType::T_GROUP_INLINE_FLAGS !== $node->type || null === $node->flags) {
+        if (GroupType::InlineFlags !== $node->type || null === $node->flags) {
             return false;
         }
 

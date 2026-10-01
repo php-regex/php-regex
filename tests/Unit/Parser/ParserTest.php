@@ -307,7 +307,7 @@ final class ParserTest extends TestCase
         $pattern = $ast->pattern;
 
         $this->assertInstanceOf(CharLiteralNode::class, $pattern);
-        $this->assertSame(CharLiteralType::UNICODE, $pattern->type);
+        $this->assertSame(CharLiteralType::Unicode, $pattern->type);
         $this->assertSame('\u0041', $pattern->originalRepresentation);
     }
 
@@ -390,7 +390,7 @@ final class ParserTest extends TestCase
         $pattern = $ast->pattern;
 
         $this->assertInstanceOf(CharLiteralNode::class, $pattern);
-        $this->assertSame(CharLiteralType::UNICODE_NAMED, $pattern->type);
+        $this->assertSame(CharLiteralType::UnicodeNamed, $pattern->type);
         $this->assertSame('\N{LATIN CAPITAL LETTER A}', $pattern->originalRepresentation);
         // A character name is resolved with intl; without it, it stays unknown.
         $this->assertSame(\extension_loaded('intl') ? 65 : -1, $pattern->codePoint);
@@ -461,7 +461,7 @@ final class ParserTest extends TestCase
         $pattern = $ast->pattern;
 
         $this->assertInstanceOf(GroupNode::class, $pattern);
-        $this->assertSame(GroupType::T_GROUP_INLINE_FLAGS, $pattern->type);
+        $this->assertSame(GroupType::InlineFlags, $pattern->type);
         $this->assertSame('i', $pattern->flags);
     }
 
@@ -472,7 +472,7 @@ final class ParserTest extends TestCase
         $pattern = $ast->pattern;
 
         $this->assertInstanceOf(GroupNode::class, $pattern);
-        $this->assertSame(GroupType::T_GROUP_INLINE_FLAGS, $pattern->type);
+        $this->assertSame(GroupType::InlineFlags, $pattern->type);
         $this->assertSame('^i', $pattern->flags);
     }
 
@@ -964,11 +964,11 @@ final class ParserTest extends TestCase
         // PCRE reads "a* +" under /x as "a*+", and "a* ?" as "a*?".
         $possessive = $this->parse('/a* +/x')->pattern;
         $this->assertInstanceOf(QuantifierNode::class, $possessive);
-        $this->assertSame(QuantifierType::T_POSSESSIVE, $possessive->type);
+        $this->assertSame(QuantifierType::Possessive, $possessive->type);
 
         $lazy = $this->parse('/a* ?/x')->pattern;
         $this->assertInstanceOf(QuantifierNode::class, $lazy);
-        $this->assertSame(QuantifierType::T_LAZY, $lazy->type);
+        $this->assertSame(QuantifierType::Lazy, $lazy->type);
     }
 
     #[Test]

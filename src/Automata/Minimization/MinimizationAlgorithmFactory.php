@@ -23,8 +23,8 @@ final class MinimizationAlgorithmFactory
     public function create(MinimizationAlgorithm $algorithm): MinimizationAlgorithmInterface
     {
         return match ($algorithm) {
-            MinimizationAlgorithm::MOORE => new MoorePartitionRefinement(),
-            MinimizationAlgorithm::HOPCROFT => new HopcroftWorklist(),
+            MinimizationAlgorithm::Moore => new MoorePartitionRefinement(),
+            MinimizationAlgorithm::Hopcroft => new HopcroftWorklist(),
         };
     }
 }

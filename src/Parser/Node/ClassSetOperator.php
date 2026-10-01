@@ -22,25 +22,25 @@ enum ClassSetOperator: string
     /**
      * "+" or "|": the characters of either operand.
      */
-    case UNION = 'union';
+    case Union = 'union';
 
     /**
      * "&": the characters of both operands.
      */
-    case INTERSECTION = 'intersection';
+    case Intersection = 'intersection';
 
     /**
      * "-": the characters of the left operand not in the right one.
      */
-    case DIFFERENCE = 'difference';
+    case Difference = 'difference';
 
     /**
      * "^": the characters of exactly one operand.
      */
-    case SYMMETRIC_DIFFERENCE = 'symmetric_difference';
+    case SymmetricDifference = 'symmetric_difference';
 
     /**
      * "!", before its only operand: every character not in it.
      */
-    case COMPLEMENT = 'complement';
+    case Complement = 'complement';
 }

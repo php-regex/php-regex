@@ -31,13 +31,13 @@ final class ReDoSSeverityFromConfigTest extends TestCase
      */
     public static function provideThresholds(): iterable
     {
-        yield 'low' => ['low', RedosSeverity::LOW];
-        yield 'medium' => ['medium', RedosSeverity::MEDIUM];
-        yield 'high' => ['high', RedosSeverity::HIGH];
-        yield 'critical' => ['critical', RedosSeverity::CRITICAL];
-        yield 'upper case' => ['HIGH', RedosSeverity::HIGH];
-        yield 'mixed case' => ['Critical', RedosSeverity::CRITICAL];
-        yield 'mixed case inside the word' => ['mEdIuM', RedosSeverity::MEDIUM];
+        yield 'low' => ['low', RedosSeverity::Low];
+        yield 'medium' => ['medium', RedosSeverity::Medium];
+        yield 'high' => ['high', RedosSeverity::High];
+        yield 'critical' => ['critical', RedosSeverity::Critical];
+        yield 'upper case' => ['HIGH', RedosSeverity::High];
+        yield 'mixed case' => ['Critical', RedosSeverity::Critical];
+        yield 'mixed case inside the word' => ['mEdIuM', RedosSeverity::Medium];
     }
 
     #[Test]

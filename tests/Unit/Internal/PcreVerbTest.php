@@ -72,22 +72,22 @@ final class PcreVerbTest extends TestCase
     {
         yield 'a lookahead, short' => [
             'text' => 'pla:foo',
-            'group' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+            'group' => GroupType::LookaheadPositive,
             'payload' => 'foo',
         ];
         yield 'a lookahead, spelled out' => [
             'text' => 'positive_lookahead:foo',
-            'group' => GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
+            'group' => GroupType::LookaheadPositive,
             'payload' => 'foo',
         ];
         yield 'a negative lookbehind' => [
             'text' => 'nlb:foo',
-            'group' => GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            'group' => GroupType::LookbehindNegative,
             'payload' => 'foo',
         ];
         yield 'an atomic group' => [
             'text' => 'atomic:a+',
-            'group' => GroupType::T_GROUP_ATOMIC,
+            'group' => GroupType::Atomic,
             'payload' => 'a+',
         ];
     }

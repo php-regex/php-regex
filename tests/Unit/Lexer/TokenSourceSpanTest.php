@@ -109,7 +109,7 @@ final class TokenSourceSpanTest extends TestCase
 
         $covered = '';
         foreach ((new Lexer())->tokenize($body, $flags)->getTokens() as $token) {
-            if (TokenType::T_EOF === $token->type) {
+            if (TokenType::Eof === $token->type) {
                 continue;
             }
 

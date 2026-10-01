@@ -102,10 +102,10 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): string
     {
         $label = 'Group ('.$this->describeGroupType($node).')';
-        if (GroupType::T_GROUP_NAMED === $node->type && null !== $node->name) {
+        if (GroupType::Named === $node->type && null !== $node->name) {
             $label .= ' name="'.$node->name.'"';
         }
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type && null !== $node->flags && '' !== $node->flags) {
+        if (GroupType::InlineFlags === $node->type && null !== $node->flags && '' !== $node->flags) {
             $label .= ' flags="'.$node->flags.'"';
         }
 
@@ -368,17 +368,17 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     private function describeGroupType(GroupNode $node): string
     {
         return match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => 'capturing',
-            GroupType::T_GROUP_NON_CAPTURING => 'non-capturing',
-            GroupType::T_GROUP_NAMED => 'named',
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => 'positive lookahead',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => 'negative lookahead',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => 'positive lookbehind',
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => 'negative lookbehind',
-            GroupType::T_GROUP_INLINE_FLAGS => 'inline flags',
-            GroupType::T_GROUP_ATOMIC => 'atomic',
-            GroupType::T_GROUP_BRANCH_RESET => 'branch reset',
-            GroupType::T_GROUP_SCAN_SUBSTRING => 'scan of groups '.implode(', ', $node->scannedGroups),
+            GroupType::Capturing => 'capturing',
+            GroupType::NonCapturing => 'non-capturing',
+            GroupType::Named => 'named',
+            GroupType::LookaheadPositive => 'positive lookahead',
+            GroupType::LookaheadNegative => 'negative lookahead',
+            GroupType::LookbehindPositive => 'positive lookbehind',
+            GroupType::LookbehindNegative => 'negative lookbehind',
+            GroupType::InlineFlags => 'inline flags',
+            GroupType::Atomic => 'atomic',
+            GroupType::BranchReset => 'branch reset',
+            GroupType::ScanSubstring => 'scan of groups '.implode(', ', $node->scannedGroups),
         };
     }
 }

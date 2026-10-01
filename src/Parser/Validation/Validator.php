@@ -485,12 +485,12 @@ final class Validator extends AbstractNodeVisitor
                     break;
                 }
 
-                if ($nEndsRange && $afterRange && TokenType::T_CHAR_TYPE === $token->type && 'N' === $token->value) {
+                if ($nEndsRange && $afterRange && TokenType::CharType === $token->type && 'N' === $token->value) {
                     continue;
                 }
 
-                $afterRange = TokenType::T_RANGE === $token->type
-                    || ($afterRange && \in_array($token->type, [TokenType::T_QUOTE_MODE_START, TokenType::T_QUOTE_MODE_END], true));
+                $afterRange = TokenType::Range === $token->type
+                    || ($afterRange && \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true));
 
                 $this->validateEscapeToken($token, $source);
             }
@@ -615,7 +615,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $this->ensureGroupNumberingInitialized();
 
-        if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+        if (GroupType::ScanSubstring === $node->type) {
             $this->validateListedGroups($node, $node->scannedGroups, $node->startPosition + 2);
         }
 
@@ -624,14 +624,14 @@ final class Validator extends AbstractNodeVisitor
 
         $isLookbehind = \in_array(
             $node->type,
-            [GroupType::T_GROUP_LOOKBEHIND_POSITIVE, GroupType::T_GROUP_LOOKBEHIND_NEGATIVE],
+            [GroupType::LookbehindPositive, GroupType::LookbehindNegative],
             true,
         );
         if ($isLookbehind) {
             $this->measureLookbehind($node);
         }
 
-        if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
             $this->captureIndex++;
         }
 
@@ -645,7 +645,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $enclosingGroups = $this->enclosingGroups;
-        if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
             $this->enclosingGroups[spl_object_id($node)] = true;
         }
 
@@ -1150,14 +1150,14 @@ final class Validator extends AbstractNodeVisitor
     {
         // "\N{name}": PCRE2 refuses a character name, whatever it names, on
         // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point.
-        if (CharLiteralType::UNICODE_NAMED === $node->type
+        if (CharLiteralType::UnicodeNamed === $node->type
             && 1 !== preg_match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
             $this->raiseUnsupportedEscape('N{', $this->pastTheFault($node->startPosition + 3));
         }
 
         // "\N{U+...}" outside UTF mode is refused before its braces are read:
         // "\N{U+1 }" fails on the mode on every release, padding or not.
-        if (CharLiteralType::UNICODE_NAMED === $node->type) {
+        if (CharLiteralType::UnicodeNamed === $node->type) {
             $this->validateUnicodeNamed($node);
         }
 
@@ -1171,10 +1171,10 @@ final class Validator extends AbstractNodeVisitor
         // The Lexer/Parser combination already ensures these are
         // syntactically valid. We validate the *value*.
         match ($node->type) {
-            CharLiteralType::UNICODE => $this->validateUnicode($node),
-            CharLiteralType::OCTAL => $this->validateOctal($node),
-            CharLiteralType::OCTAL_LEGACY => $this->validateOctalLegacy($node),
-            CharLiteralType::UNICODE_NAMED => null,
+            CharLiteralType::Unicode => $this->validateUnicode($node),
+            CharLiteralType::Octal => $this->validateOctal($node),
+            CharLiteralType::OctalLegacy => $this->validateOctalLegacy($node),
+            CharLiteralType::UnicodeNamed => null,
         };
 
         // UTF-8 cannot encode the UTF-16 surrogates. PCRE reports it at the
@@ -1341,10 +1341,10 @@ final class Validator extends AbstractNodeVisitor
                 $node->condition->accept($this);
             }
         } elseif ($node->condition instanceof GroupNode && \in_array($node->condition->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::LookaheadPositive,
+            GroupType::LookaheadNegative,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
         ], true)) {
             // This is (?(?=...)...) etc. This is valid.
             $node->condition->accept($this);
@@ -1743,7 +1743,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function setsOptionsOnly(GroupNode $node): bool
     {
-        if (GroupType::T_GROUP_INLINE_FLAGS !== $node->type || null === $this->source) {
+        if (GroupType::InlineFlags !== $node->type || null === $this->source) {
             return false;
         }
 
@@ -1803,7 +1803,7 @@ final class Validator extends AbstractNodeVisitor
     private function quantifierNumberEnds(QuantifierNode $node): array
     {
         // A lazy or possessive quantifier ends with one more character.
-        $suffix = QuantifierType::T_GREEDY === $node->type ? 0 : 1;
+        $suffix = QuantifierType::Greedy === $node->type ? 0 : 1;
         $braceStart = $node->getEndPosition() - $suffix - \strlen($node->quantifier);
 
         if (1 !== preg_match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
@@ -2404,8 +2404,8 @@ final class Validator extends AbstractNodeVisitor
             // repeated lookbehind, a lookahead inside another group, or a
             // repeated "(*ACCEPT)" has no bound, as PCRE measures them.
             if ($node->node instanceof GroupNode && \in_array($node->node->type, [
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
+                GroupType::LookaheadPositive,
+                GroupType::LookaheadNegative,
             ], true)) {
                 return [0, 0];
             }
@@ -2446,8 +2446,8 @@ final class Validator extends AbstractNodeVisitor
     private function validateNestedLookbehinds(NodeInterface $node, array $expanding): void
     {
         if ($node instanceof GroupNode && \in_array($node->type, [
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
         ], true)) {
             $this->validateLookbehindLength($node, $expanding);
 
@@ -2608,7 +2608,7 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        if ($node instanceof GroupNode && GroupType::T_GROUP_BRANCH_RESET === $node->type) {
+        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
             $this->hasBranchReset = true;
             $base = $nextGroupNumber;
             $highest = $base;
@@ -2625,11 +2625,11 @@ final class Validator extends AbstractNodeVisitor
 
         if ($node instanceof GroupNode) {
             // "(*scs:(+1)...)" counts groups from where it stands.
-            if (GroupType::T_GROUP_SCAN_SUBSTRING === $node->type) {
+            if (GroupType::ScanSubstring === $node->type) {
                 $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
             }
 
-            if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+            if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
                 $this->capturesIndexed++;
                 $this->groupsByNumber[$nextGroupNumber++][] = $node;
                 if (null !== $node->name) {
@@ -2692,11 +2692,11 @@ final class Validator extends AbstractNodeVisitor
 
         // A space before "U+" makes "\N{" a name, which PCRE2 refuses past
         // the "\N", as "\N{foo}".
-        $name = CharLiteralType::UNICODE_NAMED === $node->type && 1 === preg_match('/^\\\\N\{[ \t]/', $representation);
+        $name = CharLiteralType::UnicodeNamed === $node->type && 1 === preg_match('/^\\\\N\{[ \t]/', $representation);
         [$code, $escape] = match (true) {
-            CharLiteralType::OCTAL === $node->type => [ErrorCode::OctalInvalidDigit, '\o{}'],
+            CharLiteralType::Octal === $node->type => [ErrorCode::OctalInvalidDigit, '\o{}'],
             $name => [ErrorCode::EscapeUnsupported, '\N{U+}'],
-            CharLiteralType::UNICODE_NAMED === $node->type => [ErrorCode::UnicodeInvalidDigit, '\N{U+}'],
+            CharLiteralType::UnicodeNamed === $node->type => [ErrorCode::UnicodeInvalidDigit, '\N{U+}'],
             default => [ErrorCode::UnicodeInvalidDigit, '\x{}'],
         };
 
@@ -3050,17 +3050,17 @@ final class Validator extends AbstractNodeVisitor
     private function validateEscapeToken(Token $token, string $source): void
     {
         match ($token->type) {
-            TokenType::T_CHAR_CLASS_OPEN => $this->charClassDepth = 1,
-            TokenType::T_CHAR_CLASS_CLOSE => $this->charClassDepth = 0,
-            TokenType::T_UNICODE_NAMED => $this->validateNamedCharacterBraces($source, $token->position + 2),
+            TokenType::CharClassOpen => $this->charClassDepth = 1,
+            TokenType::CharClassClose => $this->charClassDepth = 0,
+            TokenType::UnicodeNamed => $this->validateNamedCharacterBraces($source, $token->position + 2),
             default => null,
         };
 
-        if (TokenType::T_CHAR_TYPE === $token->type) {
+        if (TokenType::CharType === $token->type) {
             $this->visitCharType(new CharTypeNode($token->value, $token->position, $token->end()));
         }
 
-        if (TokenType::T_UNICODE_PROP === $token->type) {
+        if (TokenType::UnicodeProp === $token->type) {
             $this->visitUnicodeProp(new UnicodePropNode(
                 $token->value,
                 str_starts_with($token->value, '{'),
@@ -3071,7 +3071,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $letter = $token->value;
-        if (TokenType::T_LITERAL_ESCAPED === $token->type && 1 === \strlen($letter) && Ascii::isAlpha($letter)
+        if (TokenType::LiteralEscaped === $token->type && 1 === \strlen($letter) && Ascii::isAlpha($letter)
             && '\\'.$letter === substr($source, $token->position, 2)) {
             $this->validateEscapedLetter($source, $letter, $token->position);
         }
@@ -3609,10 +3609,10 @@ final class Validator extends AbstractNodeVisitor
     private function isLookaround(GroupNode $node): bool
     {
         return \in_array($node->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::LookaheadPositive,
+            GroupType::LookaheadNegative,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
         ], true);
     }
 
@@ -3859,8 +3859,8 @@ final class Validator extends AbstractNodeVisitor
             // A lookaround that holds nothing compiles to at most one unit:
             // "(?!)" is a plain failure.
             $this->isLookaround($node) && 0 === $body => 0,
-            GroupType::T_GROUP_INLINE_FLAGS === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
-            GroupType::T_GROUP_CAPTURING === $node->type, GroupType::T_GROUP_NAMED === $node->type => self::COMPILED_GROUP_SIZE + 2,
+            GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
+            GroupType::Capturing === $node->type, GroupType::Named === $node->type => self::COMPILED_GROUP_SIZE + 2,
             default => self::COMPILED_GROUP_SIZE,
         };
     }

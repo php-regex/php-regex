@@ -82,14 +82,14 @@ final class RegexTest extends TestCase
 
     public function test_explain_and_highlight_accept_output_format_enum(): void
     {
-        $text = $this->regexService->explain('/a+/', OutputFormat::TEXT);
-        $html = $this->regexService->explain('/a+/', OutputFormat::HTML);
+        $text = $this->regexService->explain('/a+/', OutputFormat::Text);
+        $html = $this->regexService->explain('/a+/', OutputFormat::Html);
         $this->assertStringContainsString('one or more', $text);
         $this->assertStringContainsString('<', $html);
 
-        $console = $this->regexService->highlight('/a+/', OutputFormat::CONSOLE);
+        $console = $this->regexService->highlight('/a+/', OutputFormat::Console);
         $this->assertNotSame('', $console);
-        $this->assertStringContainsString('<', $this->regexService->highlight('/a+/', OutputFormat::HTML));
+        $this->assertStringContainsString('<', $this->regexService->highlight('/a+/', OutputFormat::Html));
     }
 
     #[DataProvider('provideRegexForOptimization')]
@@ -328,7 +328,7 @@ final class RegexTest extends TestCase
         $this->assertSame('ab', $stream->getPattern());
 
         $types = array_map(static fn (Token $token): string => $token->type->name, $stream->getTokens());
-        $this->assertSame(['T_LITERAL', 'T_LITERAL', 'T_EOF'], $types);
+        $this->assertSame(['Literal', 'Literal', 'Eof'], $types);
     }
 
     public function test_build_visual_snippet_truncates_and_marks_caret(): void

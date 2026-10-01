@@ -98,11 +98,11 @@ final class TokenStream
         $targetPos = $this->position + $offset;
 
         if ($targetPos < 0) {
-            return new Token(TokenType::T_EOF, '', 0);
+            return new Token(TokenType::Eof, '', 0);
         }
 
         if ($targetPos > $this->maxPosition) {
-            return new Token(TokenType::T_EOF, '', $targetPos);
+            return new Token(TokenType::Eof, '', $targetPos);
         }
 
         return $this->tokens[$targetPos];
@@ -143,7 +143,7 @@ final class TokenStream
     public function check(TokenType $type): bool
     {
         if ($this->isAtEnd()) {
-            return TokenType::T_EOF === $type;
+            return TokenType::Eof === $type;
         }
 
         return $this->current()->type === $type;
@@ -160,7 +160,7 @@ final class TokenStream
 
         $token = $this->current();
 
-        return TokenType::T_LITERAL === $token->type && $token->value === $value;
+        return TokenType::Literal === $token->type && $token->value === $value;
     }
 
     /**
@@ -207,7 +207,7 @@ final class TokenStream
     public function previous(): Token
     {
         if (0 === $this->position) {
-            return new Token(TokenType::T_EOF, '', 0);
+            return new Token(TokenType::Eof, '', 0);
         }
 
         return $this->tokens[$this->position - 1];
@@ -258,7 +258,7 @@ final class TokenStream
     public function isAtEnd(): bool
     {
         return $this->position > $this->maxPosition
-               || TokenType::T_EOF === $this->tokens[$this->position]->type;
+               || TokenType::Eof === $this->tokens[$this->position]->type;
     }
 
     private function unexpected(string $error, string $found, ErrorCode $code): SyntaxErrorException

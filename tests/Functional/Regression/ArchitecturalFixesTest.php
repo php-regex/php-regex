@@ -36,7 +36,7 @@ final class ArchitecturalFixesTest extends TestCase
         $unicodeToken = null;
 
         foreach ($stream->getTokens() as $token) {
-            if (TokenType::T_UNICODE === $token->type) {
+            if (TokenType::Unicode === $token->type) {
                 $unicodeToken = $token;
 
                 break;

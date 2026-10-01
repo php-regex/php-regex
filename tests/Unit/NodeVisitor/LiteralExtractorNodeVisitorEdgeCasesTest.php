@@ -63,7 +63,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
     public function test_visit_char_literal_returns_empty_literal_set(): void
     {
         $visitor = new LiteralExtractor();
-        $literal = new CharLiteralNode('\\x41', 0x41, CharLiteralType::UNICODE, 0, 0);
+        $literal = new CharLiteralNode('\\x41', 0x41, CharLiteralType::Unicode, 0, 0);
 
         $this->assertTrue($visitor->visitCharLiteral($literal)->isVoid());
     }
@@ -140,7 +140,7 @@ final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase
             }
         };
 
-        $quantifier = new QuantifierNode($node, '{2}', QuantifierType::T_GREEDY, 0, 0);
+        $quantifier = new QuantifierNode($node, '{2}', QuantifierType::Greedy, 0, 0);
         $result = $visitor->visitQuantifier($quantifier);
 
         // 200 prefixes, repeated, fit nowhere: nothing is claimed.

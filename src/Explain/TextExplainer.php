@@ -169,17 +169,17 @@ final class TextExplainer extends AbstractNodeVisitor
         $this->indentLevel--;
 
         $type = match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => 'Capturing group',
-            GroupType::T_GROUP_NON_CAPTURING => 'Non-capturing group',
-            GroupType::T_GROUP_NAMED => \sprintf("Capturing group (named: '%s')", $node->name),
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => 'Positive lookahead',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => 'Negative lookahead',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => 'Positive lookbehind',
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => 'Negative lookbehind',
-            GroupType::T_GROUP_ATOMIC => 'Atomic group (no backtracking)',
-            GroupType::T_GROUP_BRANCH_RESET => 'Branch reset group',
-            GroupType::T_GROUP_SCAN_SUBSTRING => \sprintf('Substring scan of groups %s', implode(', ', $node->scannedGroups)),
-            GroupType::T_GROUP_INLINE_FLAGS => \sprintf("Inline flags '%s'", $node->flags),
+            GroupType::Capturing => 'Capturing group',
+            GroupType::NonCapturing => 'Non-capturing group',
+            GroupType::Named => \sprintf("Capturing group (named: '%s')", $node->name),
+            GroupType::LookaheadPositive => 'Positive lookahead',
+            GroupType::LookaheadNegative => 'Negative lookahead',
+            GroupType::LookbehindPositive => 'Positive lookbehind',
+            GroupType::LookbehindNegative => 'Negative lookbehind',
+            GroupType::Atomic => 'Atomic group (no backtracking)',
+            GroupType::BranchReset => 'Branch reset group',
+            GroupType::ScanSubstring => \sprintf('Substring scan of groups %s', implode(', ', $node->scannedGroups)),
+            GroupType::InlineFlags => \sprintf("Inline flags '%s'", $node->flags),
         };
 
         return implode("\n", [
@@ -294,9 +294,9 @@ final class TextExplainer extends AbstractNodeVisitor
         }
 
         $word = match ($node->operator) {
-            ClassSetOperator::INTERSECTION => 'and',
-            ClassSetOperator::DIFFERENCE => 'but not',
-            ClassSetOperator::SYMMETRIC_DIFFERENCE => 'or else',
+            ClassSetOperator::Intersection => 'and',
+            ClassSetOperator::Difference => 'but not',
+            ClassSetOperator::SymmetricDifference => 'or else',
             default => 'or',
         };
 
@@ -363,10 +363,10 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         return match ($node->type) {
-            CharLiteralType::UNICODE => $this->line('Character with hexadecimal value 0x'.$this->formatUnicodeHexValue($node)),
-            CharLiteralType::UNICODE_NAMED => $this->line('Unicode named character: '.$this->extractCharLiteralDetail($node)),
-            CharLiteralType::OCTAL => $this->line('Character with octal value '.$this->formatOctalValue($node)),
-            CharLiteralType::OCTAL_LEGACY => $this->line('Character with octal value '.$this->formatLegacyOctalValue($node->originalRepresentation)),
+            CharLiteralType::Unicode => $this->line('Character with hexadecimal value 0x'.$this->formatUnicodeHexValue($node)),
+            CharLiteralType::UnicodeNamed => $this->line('Unicode named character: '.$this->extractCharLiteralDetail($node)),
+            CharLiteralType::Octal => $this->line('Character with octal value '.$this->formatOctalValue($node)),
+            CharLiteralType::OctalLegacy => $this->line('Character with octal value '.$this->formatLegacyOctalValue($node->originalRepresentation)),
         };
     }
 
@@ -558,7 +558,7 @@ final class TextExplainer extends AbstractNodeVisitor
 
     private function extractCharLiteralDetail(CharLiteralNode $node): string
     {
-        if (CharLiteralType::UNICODE_NAMED === $node->type) {
+        if (CharLiteralType::UnicodeNamed === $node->type) {
             if (preg_match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
                 return $matches[1];
             }

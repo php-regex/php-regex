@@ -261,7 +261,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $written;
         }
 
-        if (GroupType::T_GROUP_CAPTURING === $node->type || GroupType::T_GROUP_NAMED === $node->type) {
+        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
             $this->capturesOpened++;
         }
 
@@ -269,19 +269,19 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         if ($this->pretty) {
             $opening = match ($node->type) {
-                GroupType::T_GROUP_CAPTURING => '(',
-                GroupType::T_GROUP_NON_CAPTURING => '(?:',
-                GroupType::T_GROUP_NAMED => $node->usePythonSyntax
+                GroupType::Capturing => '(',
+                GroupType::NonCapturing => '(?:',
+                GroupType::Named => $node->usePythonSyntax
                     ? '(?P<'.$node->name.'>'
                     : '(?<'.$node->name.'>',
-                GroupType::T_GROUP_LOOKAHEAD_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
-                GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!',
-                GroupType::T_GROUP_LOOKBEHIND_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
-                GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => '(?<!',
-                GroupType::T_GROUP_ATOMIC => '(?>',
-                GroupType::T_GROUP_BRANCH_RESET => '(?|',
-                GroupType::T_GROUP_INLINE_FLAGS => '(?'.$flags.':',
-                GroupType::T_GROUP_SCAN_SUBSTRING => $this->scanSubstringOpening($node),
+                GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
+                GroupType::LookaheadNegative => '(?!',
+                GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
+                GroupType::LookbehindNegative => '(?<!',
+                GroupType::Atomic => '(?>',
+                GroupType::BranchReset => '(?|',
+                GroupType::InlineFlags => '(?'.$flags.':',
+                GroupType::ScanSubstring => $this->scanSubstringOpening($node),
             };
             $closing = ')';
             $this->indentLevel++;
@@ -304,19 +304,19 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $opening = match ($node->type) {
-            GroupType::T_GROUP_CAPTURING => '(',
-            GroupType::T_GROUP_NON_CAPTURING => '(?:',
-            GroupType::T_GROUP_NAMED => $node->usePythonSyntax
+            GroupType::Capturing => '(',
+            GroupType::NonCapturing => '(?:',
+            GroupType::Named => $node->usePythonSyntax
                 ? '(?P<'.$node->name.'>'
                 : '(?<'.$node->name.'>',
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE => '(?!',
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE => '(?<!',
-            GroupType::T_GROUP_ATOMIC => '(?>',
-            GroupType::T_GROUP_BRANCH_RESET => '(?|',
-            GroupType::T_GROUP_INLINE_FLAGS => '(?'.$flags.':',
-            GroupType::T_GROUP_SCAN_SUBSTRING => $this->scanSubstringOpening($node),
+            GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
+            GroupType::LookaheadNegative => '(?!',
+            GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
+            GroupType::LookbehindNegative => '(?<!',
+            GroupType::Atomic => '(?>',
+            GroupType::BranchReset => '(?|',
+            GroupType::InlineFlags => '(?'.$flags.':',
+            GroupType::ScanSubstring => $this->scanSubstringOpening($node),
         };
 
         $opening = $this->openingAsWritten($node, $opening);
@@ -342,8 +342,8 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $suffix = match ($node->type) {
-            QuantifierType::T_LAZY => '?',
-            QuantifierType::T_POSSESSIVE => '+',
+            QuantifierType::Lazy => '?',
+            QuantifierType::Possessive => '+',
             default => '',
         };
 
@@ -490,7 +490,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // "\101" is an octal escape only while fewer than 101 groups open
         // before it; where more have, "\o{101}" still is one. In a class,
         // "\101" is always octal.
-        if (!$this->inCharClass && CharLiteralType::OCTAL_LEGACY === $node->type
+        if (!$this->inCharClass && CharLiteralType::OctalLegacy === $node->type
             && 1 === preg_match('/^\\\\([1-7][0-7]*+)$/', $rep, $digits)
             && (\strlen($digits[1]) < 2 || (int) $digits[1] <= $this->capturesOpened)) {
             return '\\o{'.$digits[1].'}';
@@ -835,14 +835,14 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         // Under "n", "(...)" does not capture: it is read as "(?:...)" and
         // written back with the "(" the pattern used.
-        if (GroupType::T_GROUP_NON_CAPTURING === $node->type && null !== $this->source
+        if (GroupType::NonCapturing === $node->type && null !== $this->source
             && str_contains($this->flags, 'n')
             && '(' === ($this->source[$node->getStartPosition()] ?? '')
             && !\in_array($this->source[$node->getStartPosition() + 1] ?? '', ['?', '*'], true)) {
             return '(';
         }
 
-        if (null === $this->source || GroupType::T_GROUP_NAMED !== $node->type || null === $node->name) {
+        if (null === $this->source || GroupType::Named !== $node->type || null === $node->name) {
             return $opening;
         }
 
@@ -1033,10 +1033,10 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return $condition instanceof GroupNode && \in_array($condition->type, [
-            GroupType::T_GROUP_LOOKAHEAD_POSITIVE,
-            GroupType::T_GROUP_LOOKAHEAD_NEGATIVE,
-            GroupType::T_GROUP_LOOKBEHIND_POSITIVE,
-            GroupType::T_GROUP_LOOKBEHIND_NEGATIVE,
+            GroupType::LookaheadPositive,
+            GroupType::LookaheadNegative,
+            GroupType::LookbehindPositive,
+            GroupType::LookbehindNegative,
         ], true);
     }
 
@@ -1180,7 +1180,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function isUnscopedSetting(GroupNode $node, string $flags, string $child): bool
     {
-        return GroupType::T_GROUP_INLINE_FLAGS === $node->type
+        return GroupType::InlineFlags === $node->type
             && '' === $child
             && $node->getEndPosition() - $node->getStartPosition() === \strlen($flags) + 3;
     }
@@ -1194,13 +1194,13 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         $previousFlags = $this->flags;
 
-        if (GroupType::T_GROUP_INLINE_FLAGS === $node->type) {
+        if (GroupType::InlineFlags === $node->type) {
             $this->flags = $this->withInlineFlags($previousFlags, $flags);
         }
 
         $child = $node->child->accept($this);
 
-        if (GroupType::T_GROUP_INLINE_FLAGS !== $node->type || '' !== $child) {
+        if (GroupType::InlineFlags !== $node->type || '' !== $child) {
             $this->flags = $previousFlags;
         }
 

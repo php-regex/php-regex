@@ -86,9 +86,9 @@ final class DuplicateDisjunctionRule extends AbstractLintRule
         }
 
         if ($node instanceof GroupNode) {
-            if (GroupType::T_GROUP_BRANCH_RESET === $node->type
-                || GroupType::T_GROUP_CAPTURING === $node->type
-                || GroupType::T_GROUP_NAMED === $node->type
+            if (GroupType::BranchReset === $node->type
+                || GroupType::Capturing === $node->type
+                || GroupType::Named === $node->type
             ) {
                 return true;
             }

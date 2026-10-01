@@ -18,6 +18,6 @@ namespace PhpRegex\Automata\Minimization;
  */
 enum MinimizationAlgorithm: string
 {
-    case HOPCROFT = 'hopcroft';
-    case MOORE = 'moore';
+    case Hopcroft = 'hopcroft';
+    case Moore = 'moore';
 }

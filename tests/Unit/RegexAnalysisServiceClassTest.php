@@ -36,7 +36,7 @@ final class RegexAnalysisServiceClassTest extends TestCase
             $regex->parser(),
             null,  // extractor
             50,    // warningThreshold
-            RedosSeverity::HIGH->value,
+            RedosSeverity::High->value,
             [],     // ignoredPatterns
             [],     // redosIgnoredPatterns
             false,    // ignoreParseErrors

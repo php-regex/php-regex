@@ -811,7 +811,7 @@ final class LintArgumentParser
 
         return match ($mode) {
             null => 'Invalid value for --redos-mode: expected theoretical or confirmed.',
-            RedosMode::OFF => 'The --redos-mode=off value was removed in 2.0: use --no-redos.',
+            RedosMode::Off => 'The --redos-mode=off value was removed in 2.0: use --no-redos.',
             default => $mode,
         };
     }

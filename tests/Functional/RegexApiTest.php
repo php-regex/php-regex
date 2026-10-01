@@ -64,7 +64,7 @@ final class RegexApiTest extends TestCase
         $result = $regex->validate('/(?:\ba){8000}/');
 
         $this->assertFalse($result->isValid);
-        $this->assertSame(ValidationErrorCategory::PCRE_RUNTIME, $result->category);
+        $this->assertSame(ValidationErrorCategory::PcreRuntime, $result->category);
         $this->assertSame(ErrorCode::PcreRuntime, $result->errorCode);
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
         // PCRE2 10.48 reports "regular expression is too large" at offset 0,

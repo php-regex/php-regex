@@ -26,7 +26,7 @@ final class LengthRangeNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new LengthRangeCalculator();
         $literal = new LiteralNode('a', 0, 0);
-        $infinite = new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0);
+        $infinite = new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::Greedy, 0, 0);
         $alternation = new AlternationNode([$literal, $infinite], 0, 0);
 
         $range = $alternation->accept($visitor);

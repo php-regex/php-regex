@@ -122,15 +122,15 @@ final class AtomicScriptRunTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/(*sr:(a+)+b)/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/(*sr:(a+)+b)/')->severity);
         $this->assertSame($regex->redos('/(*sr:(?>(a+)+b))/')->severity, $regex->redos('/(*asr:(a+)+b)/')->severity);
-        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/(*asr:(a+)+b)/')->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/(*asr:(a+)+b)/')->severity);
     }
 
     #[Test]
     public function test_redos_finds_nothing_in_an_empty_script_run(): void
     {
-        $this->assertSame(RedosSeverity::SAFE, (new ScriptRunNode('', 0, 6, null, true))->accept(new RedosProfiler()));
+        $this->assertSame(RedosSeverity::Safe, (new ScriptRunNode('', 0, 6, null, true))->accept(new RedosProfiler()));
     }
 
     #[Test]

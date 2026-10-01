@@ -78,19 +78,19 @@ final class VisitorExhaustiveTest extends TestCase
             new CommentNode('comment', 0, 0),
             new ConditionalNode(new BackrefNode('1', 0, 0), new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0), 0, 0),
             new DotNode(0, 0),
-            new GroupNode(new LiteralNode('a', 0, 0), GroupType::T_GROUP_CAPTURING, null, null, 0, 0),
+            new GroupNode(new LiteralNode('a', 0, 0), GroupType::Capturing, null, null, 0, 0),
             new KeepNode(0, 0),
             new LiteralNode('a', 0, 0),
-            new CharLiteralNode('01', 0o1, CharLiteralType::OCTAL_LEGACY, 0, 0),
-            new CharLiteralNode('\o{123}', 0o123, CharLiteralType::OCTAL, 0, 0),
+            new CharLiteralNode('01', 0o1, CharLiteralType::OctalLegacy, 0, 0),
+            new CharLiteralNode('\o{123}', 0o123, CharLiteralType::Octal, 0, 0),
             new PcreVerbNode('FAIL', 0, 0),
             new PosixClassNode('alnum', 0, 0),
-            new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::T_GREEDY, 0, 0),
+            new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0),
             new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('z', 0, 0), 0, 0),
             new RegexNode(new LiteralNode('a', 0, 0), 'i', '/', 0, 0),
             new SequenceNode([], 0, 0),
             new SubroutineNode('1', '', 0, 0),
-            new CharLiteralNode('\x41', 0x41, CharLiteralType::UNICODE, 0, 0),
+            new CharLiteralNode('\x41', 0x41, CharLiteralType::Unicode, 0, 0),
             new UnicodePropNode('L', 0, 0),
         ];
 
@@ -98,7 +98,7 @@ final class VisitorExhaustiveTest extends TestCase
             foreach ($nodes as $node) {
                 // Specific cases to ignore for the Validator which needs context (existing groups)
                 if ($visitor instanceof Validator) {
-                    if ($node instanceof BackrefNode || $node instanceof SubroutineNode || ($node instanceof CharLiteralNode && CharLiteralType::OCTAL_LEGACY === $node->type)) {
+                    if ($node instanceof BackrefNode || $node instanceof SubroutineNode || ($node instanceof CharLiteralNode && CharLiteralType::OctalLegacy === $node->type)) {
                         continue;
                     }
                 }

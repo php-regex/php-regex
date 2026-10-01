@@ -105,22 +105,22 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertInstanceOf(ExtendedCharClassNode::class, $class);
         $union = $class->expression;
         $this->assertInstanceOf(ClassSetOperationNode::class, $union);
-        $this->assertSame(ClassSetOperator::UNION, $union->operator);
+        $this->assertSame(ClassSetOperator::Union, $union->operator);
         $this->assertInstanceOf(CharClassNode::class, $union->right);
 
         $difference = $union->left;
         $this->assertInstanceOf(ClassSetOperationNode::class, $difference);
-        $this->assertSame(ClassSetOperator::DIFFERENCE, $difference->operator);
+        $this->assertSame(ClassSetOperator::Difference, $difference->operator);
         $this->assertInstanceOf(CharTypeNode::class, $difference->left);
 
         $intersection = $difference->right;
         $this->assertInstanceOf(ClassSetOperationNode::class, $intersection);
-        $this->assertSame(ClassSetOperator::INTERSECTION, $intersection->operator);
+        $this->assertSame(ClassSetOperator::Intersection, $intersection->operator);
         $this->assertInstanceOf(CharClassNode::class, $intersection->left);
 
         $complement = $intersection->right;
         $this->assertInstanceOf(ClassSetOperationNode::class, $complement);
-        $this->assertSame(ClassSetOperator::COMPLEMENT, $complement->operator);
+        $this->assertSame(ClassSetOperator::Complement, $complement->operator);
         $this->assertNull($complement->left);
         $this->assertInstanceOf(PosixClassNode::class, $complement->right);
     }
@@ -191,14 +191,14 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertInstanceOf(ExtendedCharClassNode::class, $operation);
         $operation = $operation->expression;
         $this->assertInstanceOf(ClassSetOperationNode::class, $operation);
-        $complement = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, new CharTypeNode('d', 0, 2), '!', 0, 3);
+        $complement = new ClassSetOperationNode(ClassSetOperator::Complement, null, new CharTypeNode('d', 0, 2), '!', 0, 3);
         $this->assertSame(['matching' => [], 'non_matching' => ['0']], $complement->accept(new TestCaseGenerator()));
         $this->assertSame([1, 1], $operation->accept(new LengthRangeCalculator()));
         $this->assertTrue($operation->accept(new LiteralExtractor())->isVoid());
         $this->assertSame($operation, $operation->accept(new Rewriter()));
         $this->assertSame($operation, $operation->accept(new Modernizer()));
         $this->assertSame($operation, $operation->accept(new PatternLinter()));
-        $this->assertSame(RedosSeverity::SAFE, $operation->accept(new RedosProfiler()));
+        $this->assertSame(RedosSeverity::Safe, $operation->accept(new RedosProfiler()));
         $this->assertNull($operation->accept(new class extends AbstractNodeVisitor {}));
         $this->assertNull($quantified->node->accept(new class extends AbstractNodeVisitor {}));
     }
@@ -217,7 +217,7 @@ final class ExtendedCharClassTest extends TestCase
         // Only a member a class reads alone is judged alone.
         $parser = new TokenParser();
         (new \ReflectionProperty($parser, 'pattern'))->setValue($parser, '(?[[)\\N]])');
-        $members = [new Token(TokenType::T_GROUP_CLOSE, ')', 4), new Token(TokenType::T_CHAR_TYPE, 'N', 5, 2)];
+        $members = [new Token(TokenType::GroupClose, ')', 4), new Token(TokenType::CharType, 'N', 5, 2)];
 
         $error = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, $members, 8);
         $this->assertInstanceOf(ParserException::class, $error);
@@ -259,10 +259,10 @@ final class ExtendedCharClassTest extends TestCase
 
         // Each set leaves out [5-9], so the branches never overlap.
         foreach (['(?[ [0-4] & [0-9] ])', '(?[ [0-9] ^ [5-9] ])', '(?[ [0-9] - [5-9] ])'] as $set) {
-            $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^('.$set.'|[5-9])+$/')->severity, $set);
+            $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/^('.$set.'|[5-9])+$/')->severity, $set);
         }
 
-        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-4] + [5-6] ])|[5-9])+$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/^((?[ [0-4] + [5-6] ])|[5-9])+$/')->severity);
     }
 
     #[Test]
@@ -380,12 +380,12 @@ final class ExtendedCharClassTest extends TestCase
             $regex->redos('/^(\\d|\\d)+$/')->severity,
             $regex->redos('/^((?[\\d])|(?[ \\d - [5] ]))+$/')->severity,
         );
-        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] & [0-4] ])|(?[ [0-9] ^ [5-9] ]))+$/')->severity);
-        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ [0-9] - [5-9] ])|(?[ [5-9] ]))+$/')->severity);
-        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|b)+$/')->severity);
-        $this->assertNotSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ ![a] ])|a)+$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/^((?[ [0-9] & [0-4] ])|(?[ [0-9] ^ [5-9] ]))+$/')->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/^((?[ [0-9] - [5-9] ])|(?[ [5-9] ]))+$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/^((?[ ![a] ])|b)+$/')->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/^((?[ ![a] ])|a)+$/')->severity);
         // A property is no set of known characters: the overlap is assumed.
-        $this->assertSame(RedosSeverity::CRITICAL, $regex->redos('/^((?[ \\p{L} & [a] ])|a)+$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/^((?[ \\p{L} & [a] ])|a)+$/')->severity);
     }
 
     #[Test]
@@ -395,7 +395,7 @@ final class ExtendedCharClassTest extends TestCase
 
         $result = $regex->validate('/(?[\\j\\t])/');
         $this->assertSame(ErrorCode::EscapeUnrecognized, $result->errorCode);
-        $this->assertSame(ValidationErrorCategory::SEMANTIC, $result->category);
+        $this->assertSame(ValidationErrorCategory::Semantic, $result->category);
         $this->assertSame(5, $result->offset);
 
         // Reading alone, the error is a parse error, as every other one.
@@ -479,7 +479,7 @@ final class ExtendedCharClassTest extends TestCase
         $generator = new SampleGenerator();
 
         $this->assertSame('b', $class->expression->accept($generator));
-        $complement = new ClassSetOperationNode(ClassSetOperator::COMPLEMENT, null, $class->expression, '!', 0, 0);
+        $complement = new ClassSetOperationNode(ClassSetOperator::Complement, null, $class->expression, '!', 0, 0);
         $this->assertSame('!', $complement->accept($generator));
     }
 
