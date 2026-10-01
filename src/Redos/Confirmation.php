@@ -19,7 +19,7 @@ namespace PhpRegex\Redos;
 final readonly class Confirmation implements \JsonSerializable
 {
     /**
-     * @param array<\PhpRegex\Redos\ConfirmationSample> $samples
+     * @param array<ConfirmationSample> $samples
      */
     public function __construct(
         public bool $confirmed,
@@ -36,7 +36,7 @@ final readonly class Confirmation implements \JsonSerializable
     ) {}
 
     /**
-     * @return array{confirmed: bool, samples: array<int|string, \PhpRegex\Redos\ConfirmationSample>, jit_setting: string|null, backtrack_limit: int|null, recursion_limit: int|null, iterations: int, timeout_ms: float, timed_out: bool, evidence: string|null, note: string|null, error: string|null}
+     * @return array{confirmed: bool, samples: array<int|string, ConfirmationSample>, jit_setting: string|null, backtrack_limit: int|null, recursion_limit: int|null, iterations: int, timeout_ms: float, timed_out: bool, evidence: string|null, note: string|null, error: string|null}
      */
     public function jsonSerialize(): array
     {

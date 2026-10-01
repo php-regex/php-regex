@@ -21,7 +21,7 @@ use PhpRegex\Linter\LintException;
 final class FormatterRegistry
 {
     /**
-     * @var array<string, \PhpRegex\Linter\Formatter\OutputFormatterInterface>
+     * @var array<string, OutputFormatterInterface>
      */
     private array $formatters = [];
 

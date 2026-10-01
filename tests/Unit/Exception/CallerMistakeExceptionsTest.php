@@ -178,7 +178,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     }
 
     /**
-     * @param \Closure(\PhpRegex\Parser\Token\TokenStream):mixed $walk
+     * @param \Closure(TokenStream):mixed $walk
      */
     #[Test]
     #[DataProvider('provideWalksPastTheBounds')]
@@ -201,7 +201,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\Closure(\PhpRegex\Parser\Token\TokenStream):mixed}>
+     * @return iterable<string, array{\Closure(TokenStream):mixed}>
      */
     public static function provideWalksPastTheBounds(): iterable
     {

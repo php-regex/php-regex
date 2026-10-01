@@ -109,7 +109,7 @@ final class DiagnosticConverterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\PhpRegex\Linter\LintSeverity, int}>
+     * @return iterable<string, array{LintSeverity, int}>
      */
     public static function provideSeverityMapping(): iterable
     {

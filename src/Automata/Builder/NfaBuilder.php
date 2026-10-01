@@ -28,7 +28,7 @@ use PhpRegex\Automata\Model\NfaTransition;
 final class NfaBuilder
 {
     /**
-     * @var array<int, array<\PhpRegex\Automata\Model\NfaTransition>>
+     * @var array<int, array<NfaTransition>>
      */
     private array $transitions = [];
 
@@ -51,7 +51,7 @@ final class NfaBuilder
     ) {}
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     public function createState(bool $accepting = false): int
     {

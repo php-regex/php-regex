@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PhpRegex\Linter\Config;
 
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 use PhpRegex\Parser\ParserOptions;
 use PhpRegex\Parser\PcreTarget;
 
@@ -56,7 +57,7 @@ final readonly class ProjectTarget
      * @param string                $projectDir where composer.json is read, never a parent of it
      * @param array<string, string> $env        the environment, for COMPOSER
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when an option or regex.json names no version
+     * @throws InvalidRegexOptionException when an option or regex.json names no version
      */
     public static function resolve(?string $phpFlag, ?string $pcreFlag, array $config, string $projectDir, array $env): self
     {
@@ -82,7 +83,7 @@ final readonly class ProjectTarget
      * @param string|null                    $projectDir where composer.json is read, never a parent of it; null reads none
      * @param array<string, string>          $env        the environment, for COMPOSER
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when a source that is set names no version
+     * @throws InvalidRegexOptionException when a source that is set names no version
      */
     public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env): self
     {
@@ -187,7 +188,7 @@ final readonly class ProjectTarget
     }
 
     /**
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException
+     * @throws InvalidRegexOptionException
      */
     private static function phpVersionId(string|int $version): int
     {

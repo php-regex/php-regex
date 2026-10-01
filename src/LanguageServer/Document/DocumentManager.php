@@ -24,7 +24,7 @@ final class DocumentManager
     private array $documents = [];
 
     /**
-     * @var array<string, array<\PhpRegex\LanguageServer\Document\RegexOccurrence>> URI => occurrences
+     * @var array<string, array<RegexOccurrence>> URI => occurrences
      */
     private array $occurrences = [];
 
@@ -67,7 +67,7 @@ final class DocumentManager
     /**
      * Get all regex occurrences in a document.
      *
-     * @return array<\PhpRegex\LanguageServer\Document\RegexOccurrence>
+     * @return array<RegexOccurrence>
      */
     public function getOccurrences(string $uri): array
     {

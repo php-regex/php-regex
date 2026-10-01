@@ -126,7 +126,7 @@ final class GroupNameReader
      *                           in "(?'name'" and "(?('name')": elsewhere a
      *                           quote starts no name
      *
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     public function read(bool $register = true, ?int $number = null, bool $quoted = false): string
     {
@@ -234,7 +234,7 @@ final class GroupNameReader
      *                         reset may give the same name to groups that
      *                         share a number, which is not a duplicate
      *
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     public function register(string $name, int $position, ?int $number = null): void
     {
@@ -278,7 +278,7 @@ final class GroupNameReader
     }
 
     /**
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     private function readName(?string $quote, int $nameStart): string
     {
@@ -309,7 +309,7 @@ final class GroupNameReader
     }
 
     /**
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     private function closeQuote(string $quote): void
     {

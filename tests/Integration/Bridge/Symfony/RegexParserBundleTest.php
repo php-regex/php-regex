@@ -37,7 +37,7 @@ final class RegexParserBundleTest extends TestCase
         ]);
         $container->compile();
 
-        /** @var \PhpRegex\Toolkit\Regex $regex */
+        /** @var Regex $regex */
         $regex = $container->get('php_regex.regex');
         $regex->parse('/abc/');
 
@@ -59,7 +59,7 @@ final class RegexParserBundleTest extends TestCase
         $this->assertSame(LintCommand::class, $definition->getClass());
         $this->assertArrayHasKey('console.command', $definition->getTags());
 
-        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
+        /** @var LintCommand $command */
         $command = $container->get('php_regex.command.lint');
         $this->assertSame('regex:lint', $command->getName());
     }

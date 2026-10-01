@@ -50,14 +50,14 @@ final readonly class ParserOptions
     /**
      * Create new configuration options.
      *
-     * @param int                                   $maxPatternLength      Maximum allowed regex pattern length
-     * @param int                                   $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
-     *                                                                     fixed-length one is only limited by PCRE's 65535
-     * @param \PhpRegex\Parser\Cache\CacheInterface $cache                 Cache implementation to use
-     * @param array<string>                         $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
-     * @param bool                                  $runtimePcreValidation Whether to validate against the PCRE runtime
-     * @param int                                   $maxRecursionDepth     Maximum recursion depth during parsing
-     * @param \PhpRegex\Parser\PcreTarget|null      $target                The PHP and PCRE2 judged; the running ones when null
+     * @param int             $maxPatternLength      Maximum allowed regex pattern length
+     * @param int             $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
+     *                                               fixed-length one is only limited by PCRE's 65535
+     * @param CacheInterface  $cache                 Cache implementation to use
+     * @param array<string>   $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
+     * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
+     * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
+     * @param PcreTarget|null $target                The PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(
         public int $maxPatternLength,
@@ -315,7 +315,7 @@ final readonly class ParserOptions
      *
      * @param array<string, mixed> $options Configuration options
      *
-     * @return \PhpRegex\Parser\Cache\CacheInterface Cache implementation
+     * @return CacheInterface Cache implementation
      */
     private static function createCache(array $options): CacheInterface
     {
@@ -348,7 +348,7 @@ final readonly class ParserOptions
      *
      * @param string $path Cache directory path
      *
-     * @return \PhpRegex\Parser\Cache\FilesystemCache Filesystem cache instance
+     * @return FilesystemCache Filesystem cache instance
      */
     private static function createFilesystemCache(string $path): FilesystemCache
     {

@@ -85,7 +85,7 @@ final readonly class CodeActionHandler
      *
      * @param array{start: array{line: int, character: int}, end: array{line: int, character: int}} $range
      *
-     * @return array<\PhpRegex\LanguageServer\Document\RegexOccurrence>
+     * @return array<RegexOccurrence>
      */
     private function findOccurrencesInRange(string $uri, array $range): array
     {

@@ -25,12 +25,12 @@ use PhpRegex\Transpiler\TranspileException;
 final class TargetRegistry
 {
     /**
-     * @var array<string, \PhpRegex\Transpiler\Target\TargetInterface>
+     * @var array<string, TargetInterface>
      */
     private array $targets = [];
 
     /**
-     * @param array<int, \PhpRegex\Transpiler\Target\TargetInterface> $targets
+     * @param array<int, TargetInterface> $targets
      */
     public function __construct(array $targets = [])
     {

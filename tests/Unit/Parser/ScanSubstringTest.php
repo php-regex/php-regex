@@ -281,7 +281,7 @@ final class ScanSubstringTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
      */
     public static function provideGroupListFaults(): iterable
     {

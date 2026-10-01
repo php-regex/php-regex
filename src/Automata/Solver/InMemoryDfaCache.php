@@ -21,7 +21,7 @@ use PhpRegex\Automata\Model\Dfa;
 final class InMemoryDfaCache implements DfaCacheInterface
 {
     /**
-     * @var array<string, \PhpRegex\Automata\Model\Dfa>
+     * @var array<string, Dfa>
      */
     private array $cache = [];
 

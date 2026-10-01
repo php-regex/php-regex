@@ -63,7 +63,7 @@ final readonly class PatternExtractor
      * @param callable(int, int): void|null $progress     Reports collection progress as (current, total)
      * @param int                           $workers      Number of worker processes to use when supported
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1): array
     {
@@ -90,7 +90,7 @@ final readonly class PatternExtractor
      * @param array<string>                 $phpFiles
      * @param callable(int, int): void|null $progress
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractSerial(array $phpFiles, ?callable $progress = null): array
     {
@@ -119,7 +119,7 @@ final readonly class PatternExtractor
      * @param array<string>                 $phpFiles
      * @param callable(int, int): void|null $progress
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractParallel(array $phpFiles, int $workers, ?callable $progress = null): array
     {
@@ -192,7 +192,7 @@ final readonly class PatternExtractor
         }
 
         ksort($resultsByIndex);
-        /** @var array<\PhpRegex\Linter\PatternOccurrence> $results */
+        /** @var array<PatternOccurrence> $results */
         $results = [];
         foreach ($resultsByIndex as $chunkResults) {
             if (!\is_array($chunkResults)) {
@@ -331,9 +331,9 @@ final readonly class PatternExtractor
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $occurrences
+     * @param array<PatternOccurrence> $occurrences
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function applyInlineIgnores(array $occurrences): array
     {

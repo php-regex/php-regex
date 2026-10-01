@@ -104,7 +104,7 @@ final class NamedCodePointPaddingTest extends TestCase
      * PHP 8.4 as a target, which bundles PCRE2 10.44, and the running PHP
      * when the PCRE2 it links is 10.43 or newer.
      *
-     * @return list<\PhpRegex\Toolkit\Regex>
+     * @return list<Regex>
      */
     private static function readersOfPcre1043(): array
     {

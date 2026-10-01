@@ -25,6 +25,7 @@ use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 use PhpRegex\Parser\Exception\LexerException;
 use PhpRegex\Parser\Exception\ParserException;
 use PhpRegex\Parser\Internal\DisplayEscaper;
+use PhpRegex\Redos\ConfirmationOptions;
 use PhpRegex\Redos\Heatmap;
 use PhpRegex\Redos\Hotspot;
 use PhpRegex\Redos\Internal\InputGenerator;
@@ -318,7 +319,7 @@ final class DebugCommand extends AbstractCommand
      * @param array<int, string>   $args
      * @param array<string, mixed> $defaults
      *
-     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: ?string}
+     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
      */
     private function parseArguments(array $args, array $defaults = []): array
     {

@@ -61,7 +61,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromFile(string $file): array
     {
@@ -329,7 +329,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     /**
      * @param array<int, array{int, string, int}|string> $tokens
      *
-     * @return array{\PhpRegex\Linter\Extraction\PatternFunction, int}|null
+     * @return array{PatternFunction, int}|null
      */
     private function matchFunctionCall(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): ?array
     {
@@ -368,7 +368,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     /**
      * @param array<int, array{int, string, int}|string> $tokens
      *
-     * @return array{\PhpRegex\Linter\Extraction\PatternFunction, int}|null
+     * @return array{PatternFunction, int}|null
      */
     private function matchStaticMethodCall(array $tokens, int $classIndex, int $doubleColonIndex, int $totalTokens, NameResolutionContext $context): ?array
     {
@@ -404,7 +404,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $tokenOffsets
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromCall(
         array $tokens,
@@ -533,7 +533,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      * @param array<int, int>                            $tokenIndexes
      * @param array<int, int>                            $tokenOffsets
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromArgumentTokens(
         array $tokens,
@@ -574,7 +574,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      * @param array<int, int>                            $tokenIndexes
      * @param array<int, int>                            $tokenOffsets
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromArrayLiteral(
         array $tokens,
@@ -690,7 +690,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence>  $occurrences
+     * @param array<PatternOccurrence>                   $occurrences
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $tokenIndexes
      * @param array<int, int>                            $tokenOffsets
@@ -1182,8 +1182,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $occurrences
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $items
+     * @param array<PatternOccurrence> $occurrences
+     * @param array<PatternOccurrence> $items
      */
     private function appendOccurrences(array &$occurrences, array $items): void
     {

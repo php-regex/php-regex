@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PhpRegex\Linter\Source;
 
+use PhpRegex\Linter\PatternOccurrence;
+
 /**
  * Provides regex pattern occurrences from a specific source.
  *
@@ -25,7 +27,7 @@ interface PatternSourceInterface
     public function isSupported(): bool;
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function extract(PatternSourceContext $context): array;
 }

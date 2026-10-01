@@ -39,7 +39,7 @@ final class OldReleaseErrorCodeTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ErrorCode, offset: int}>
      */
     public static function provideCodesByRelease(): iterable
     {

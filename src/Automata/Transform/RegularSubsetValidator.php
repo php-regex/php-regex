@@ -57,7 +57,7 @@ final class RegularSubsetValidator
     private bool $unicode = false;
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options): void
     {
@@ -69,7 +69,7 @@ final class RegularSubsetValidator
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function assertSupportedFlags(string $flags): void
     {
@@ -87,7 +87,7 @@ final class RegularSubsetValidator
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function assertNode(NodeInterface $node, bool $inCharClass): void
     {
@@ -197,7 +197,7 @@ final class RegularSubsetValidator
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function assertCharType(CharTypeNode $node): void
     {
@@ -208,7 +208,7 @@ final class RegularSubsetValidator
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function assertRangeEndpoint(NodeInterface $node): void
     {
@@ -228,7 +228,7 @@ final class RegularSubsetValidator
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function unsupported(NodeInterface $node, string $message): never
     {

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PhpRegex\Linter\Source;
 
+use PhpRegex\Linter\PatternOccurrence;
+
 /**
  * Aggregates pattern sources into a single extractor.
  *
@@ -21,12 +23,12 @@ namespace PhpRegex\Linter\Source;
 final readonly class PatternSourceCollection
 {
     /**
-     * @param iterable<\PhpRegex\Linter\Source\PatternSourceInterface> $sources
+     * @param iterable<PatternSourceInterface> $sources
      */
     public function __construct(private iterable $sources) {}
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function collect(PatternSourceContext $context): array
     {

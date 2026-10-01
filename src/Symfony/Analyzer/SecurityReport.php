@@ -19,7 +19,7 @@ namespace PhpRegex\Symfony\Analyzer;
 final readonly class SecurityReport
 {
     /**
-     * @param array<int, \PhpRegex\Symfony\Analyzer\ReportSection> $sections
+     * @param array<int, ReportSection> $sections
      */
     public function __construct(public array $sections) {}
 

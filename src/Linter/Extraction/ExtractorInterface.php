@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PhpRegex\Linter\Extraction;
 
+use PhpRegex\Linter\PatternOccurrence;
+
 /**
  * Interface for regex pattern extraction implementations.
  *
@@ -25,7 +27,7 @@ interface ExtractorInterface
      *
      * @param array<string> $files List of PHP file paths to analyze
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function extract(array $files): array;
 }

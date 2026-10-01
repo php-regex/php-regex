@@ -294,7 +294,7 @@ final class MetricsCollector extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      */
     private function visitChildren(array $children): void
     {

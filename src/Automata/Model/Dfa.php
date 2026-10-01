@@ -21,8 +21,8 @@ use PhpRegex\Automata\Alphabet\CharSet;
 final readonly class Dfa
 {
     /**
-     * @param array<int, \PhpRegex\Automata\Model\DfaState> $states
-     * @param array<int, array{0:int, 1:int}>               $alphabetRanges
+     * @param array<int, DfaState>            $states
+     * @param array<int, array{0:int, 1:int}> $alphabetRanges
      */
     public function __construct(
         public int $startState,

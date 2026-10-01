@@ -89,7 +89,7 @@ final class AssertionPayloadValidationTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{tree: \PhpRegex\Parser\Node\RegexNode}>
+     * @return iterable<string, array{tree: RegexNode}>
      */
     public static function provideBuiltTrees(): iterable
     {

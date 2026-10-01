@@ -66,7 +66,7 @@ final class PcreVerbTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{text: string, group: \PhpRegex\Parser\Node\GroupType, payload: string}>
+     * @return iterable<string, array{text: string, group: GroupType, payload: string}>
      */
     public static function provideAssertions(): iterable
     {

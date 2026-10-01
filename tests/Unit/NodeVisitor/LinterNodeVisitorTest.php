@@ -653,7 +653,7 @@ final class LinterNodeVisitorTest extends TestCase
     }
 
     /**
-     * @param array<\PhpRegex\Linter\Rule\RuleViolation> $issues
+     * @param array<RuleViolation> $issues
      */
     private function findIssueById(array $issues, string $id): ?RuleViolation
     {

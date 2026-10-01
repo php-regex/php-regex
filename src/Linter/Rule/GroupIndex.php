@@ -13,15 +13,17 @@ declare(strict_types=1);
 
 namespace PhpRegex\Linter\Rule;
 
+use PhpRegex\Parser\Node\GroupNode;
+
 /**
  * Immutable capturing-group facts collected in a pre-pass over the pattern.
  */
 final readonly class GroupIndex
 {
     /**
-     * @param array<string, bool>                                                                                                                               $definedNamedGroups
-     * @param array<int, array{node: \PhpRegex\Parser\Node\GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>                $capturingGroups
-     * @param array<string, array<int, array{node: \PhpRegex\Parser\Node\GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>> $capturingGroupsByName
+     * @param array<string, bool>                                                                                                         $definedNamedGroups
+     * @param array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>                $capturingGroups
+     * @param array<string, array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>> $capturingGroupsByName
      */
     public function __construct(
         public int $maxCapturingGroup,

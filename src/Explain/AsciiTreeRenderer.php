@@ -35,6 +35,7 @@ use PhpRegex\Parser\Node\GroupType;
 use PhpRegex\Parser\Node\KeepNode;
 use PhpRegex\Parser\Node\LimitMatchNode;
 use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
 use PhpRegex\Parser\Node\PcreVerbNode;
 use PhpRegex\Parser\Node\PosixClassNode;
 use PhpRegex\Parser\Node\QuantifierNode;
@@ -338,7 +339,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      */
     private function visitChildren(array $children): void
     {

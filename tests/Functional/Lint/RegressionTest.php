@@ -15,6 +15,7 @@ namespace PhpRegex\Tests\Functional\Lint;
 
 use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PhpRegex\Linter\PatternExtractor;
+use PhpRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -255,7 +256,7 @@ final class RegressionTest extends TestCase
     /**
      * Helper method to extract patterns from fixture file.
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromFixture(string $fixtureName): array
     {

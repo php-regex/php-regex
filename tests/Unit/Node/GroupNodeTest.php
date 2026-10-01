@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
 final class GroupNodeTest extends TestCase
 {
     /**
-     * @return \Iterator<string, array{\PhpRegex\Parser\Node\GroupType, ?string, ?string}>
+     * @return \Iterator<string, array{GroupType, ?string, ?string}>
      */
     public static function data_provider_group_types(): \Iterator
     {

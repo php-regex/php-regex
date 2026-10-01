@@ -303,12 +303,12 @@ final class Validator extends AbstractNodeVisitor
      * The groups each number and each name points to, for the length of a
      * call or a reference inside a lookbehind.
      *
-     * @var array<int, list<\PhpRegex\Parser\Node\GroupNode>>
+     * @var array<int, list<GroupNode>>
      */
     private array $groupsByNumber = [];
 
     /**
-     * @var array<string, list<\PhpRegex\Parser\Node\GroupNode>>
+     * @var array<string, list<GroupNode>>
      */
     private array $groupsByName = [];
 
@@ -371,7 +371,7 @@ final class Validator extends AbstractNodeVisitor
     private int $lookbehindDepth = 0;
 
     /**
-     * @var list<\PhpRegex\Parser\Node\GroupNode> the lookbehinds around the node visited, innermost last
+     * @var list<GroupNode> the lookbehinds around the node visited, innermost last
      */
     private array $lookbehinds = [];
 
@@ -404,7 +404,7 @@ final class Validator extends AbstractNodeVisitor
      * of conditionals. PCRE runs them only once it has read the whole
      * pattern, so any other error comes first.
      *
-     * @var array<int, \PhpRegex\Parser\Exception\SemanticErrorException>
+     * @var array<int, SemanticErrorException>
      */
     private array $lateErrors = [];
 
@@ -434,8 +434,8 @@ final class Validator extends AbstractNodeVisitor
     private readonly PcreTarget $target;
 
     /**
-     * @param \PhpRegex\Parser\PcreTarget|null   $target the PHP and PCRE2 judged; the running ones when null
-     * @param \PhpRegex\Parser\Engine\PcreEngine $engine asks the running engine which property names it knows
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @param PcreEngine      $engine asks the running engine which property names it knows
      */
     public function __construct(
         private readonly int $maxLookbehindLength = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
@@ -463,7 +463,7 @@ final class Validator extends AbstractNodeVisitor
      *
      * @internal
      *
-     * @param array<\PhpRegex\Parser\Token\Token> $tokens the tokens read from $source
+     * @param array<Token> $tokens the tokens read from $source
      */
     public function firstEscapeErrorBefore(array $tokens, string $source, string $flags, int $limit): ?SemanticErrorException
     {
@@ -2533,7 +2533,7 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @return list<\PhpRegex\Parser\Node\GroupNode>
+     * @return list<GroupNode>
      */
     private function groupsCalledBy(SubroutineNode $node): array
     {
@@ -2564,7 +2564,7 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @return list<\PhpRegex\Parser\Node\GroupNode>
+     * @return list<GroupNode>
      */
     private function groupsReferencedBy(BackrefNode $node): array
     {
@@ -3617,7 +3617,7 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $nodes
+     * @param array<NodeInterface> $nodes
      */
     private function anyContainsGraphemeCluster(array $nodes): bool
     {

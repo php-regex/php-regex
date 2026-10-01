@@ -25,7 +25,7 @@ interface AnalyzerInterface
     public function getPriority(): int;
 
     /**
-     * @return array<int, \PhpRegex\Symfony\Analyzer\ReportSection>
+     * @return array<int, ReportSection>
      */
     public function analyze(AnalysisContext $context): array;
 }

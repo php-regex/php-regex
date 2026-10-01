@@ -104,12 +104,12 @@ final class SampleGenerator extends AbstractNodeVisitor
     private ?NodeInterface $rootPattern = null;
 
     /**
-     * @var array<int, \PhpRegex\Parser\Node\GroupNode>
+     * @var array<int, GroupNode>
      */
     private array $groupIndexMap = [];
 
     /**
-     * @var array<string, \PhpRegex\Parser\Node\GroupNode>
+     * @var array<string, GroupNode>
      */
     private array $namedGroupMap = [];
 
@@ -124,7 +124,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     private array $groupNumbersByName = [];
 
     /**
-     * @var list<\PhpRegex\Parser\Node\GroupNode> the substring scans of the pattern
+     * @var list<GroupNode> the substring scans of the pattern
      */
     private array $scans = [];
 
@@ -142,7 +142,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     private array $fitting = [];
 
     /**
-     * @var array<int, list<\PhpRegex\Parser\Node\NodeInterface>> the bodies each group's capture is scanned with, by group number
+     * @var array<int, list<NodeInterface>> the bodies each group's capture is scanned with, by group number
      */
     private array $scansByGroup = [];
 
@@ -215,8 +215,8 @@ final class SampleGenerator extends AbstractNodeVisitor
     private array $requiredSuffixes = [];
 
     /**
-     * @param int                                $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
-     * @param \PhpRegex\Parser\Engine\PcreEngine $engine        Asks the running engine what a class or a property holds
+     * @param int        $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
+     * @param PcreEngine $engine        Asks the running engine what a class or a property holds
      */
     public function __construct(private readonly int $maxRepetition = 3, private readonly PcreEngine $engine = new PcreEngine())
     {
@@ -892,7 +892,7 @@ final class SampleGenerator extends AbstractNodeVisitor
      * and a positive lookbehind the text before it: what either generates is
      * laid over that text, not added at the ends of the sample.
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      */
     private function generateSequence(array $children): string
     {
@@ -918,8 +918,8 @@ final class SampleGenerator extends AbstractNodeVisitor
     }
 
     /**
-     * @param list<\PhpRegex\Parser\Node\NodeInterface> $children
-     * @param array<int, int>                           $after    the fewest characters the children after each one add
+     * @param list<NodeInterface> $children
+     * @param array<int, int>     $after    the fewest characters the children after each one add
      */
     private function generateChildren(array $children, array $after, int $ahead, string &$text): string
     {
@@ -1116,9 +1116,9 @@ final class SampleGenerator extends AbstractNodeVisitor
      * A plain "(?:...)" in a sequence is laid out inside it, so a lookahead
      * that closes the group holds the text after it: "(?:\b(?=\w))red".
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      *
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     private function withPlainGroupsOpened(array $children): array
     {

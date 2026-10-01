@@ -23,7 +23,7 @@ use PhpRegex\Parser\Token\TokenType;
 final readonly class LexerAccessor
 {
     /**
-     * @var \ReflectionClass<\PhpRegex\Parser\Lexer>
+     * @var \ReflectionClass<Lexer>
      */
     private \ReflectionClass $reflection;
 

@@ -60,7 +60,7 @@ final class PcreDivergenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: \PhpRegex\Parser\ErrorCode}>
+     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: ErrorCode}>
      */
     public static function provideDivergences(): iterable
     {
@@ -243,7 +243,7 @@ final class PcreDivergenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: \PhpRegex\Parser\ErrorCode, offset: int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ErrorCode, offset: int}>
      */
     public static function provideErrorsBeforeAnUnclosedGroup(): iterable
     {
@@ -266,7 +266,7 @@ final class PcreDivergenceTest extends TestCase
     /**
      * @param list<string> $releases
      *
-     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: \PhpRegex\Parser\ErrorCode}>
+     * @return iterable<string, array{pattern: string, release: string, message: string, offset: int, code: ErrorCode}>
      */
     private static function rows(string $name, string $pattern, array $releases, string $message, int $offset, ErrorCode $code): iterable
     {

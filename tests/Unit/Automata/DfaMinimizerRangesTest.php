@@ -101,7 +101,7 @@ final class DfaMinimizerRangesTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{\PhpRegex\Automata\Minimization\MinimizationAlgorithmInterface}>
+     * @return \Generator<string, array{MinimizationAlgorithmInterface}>
      */
     public static function provideAlgorithms(): \Generator
     {

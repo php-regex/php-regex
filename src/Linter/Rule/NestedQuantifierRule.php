@@ -155,7 +155,7 @@ final class NestedQuantifierRule extends AbstractLintRule
     }
 
     /**
-     * @return array{sequence: \PhpRegex\Parser\Node\SequenceNode, index: int}|null
+     * @return array{sequence: SequenceNode, index: int}|null
      */
     private function findSequenceForNestedQuantifier(NodeInterface $node, QuantifierNode $nested): ?array
     {

@@ -32,6 +32,7 @@ use PhpRegex\Parser\Node\GroupType;
 use PhpRegex\Parser\Node\KeepNode;
 use PhpRegex\Parser\Node\LimitMatchNode;
 use PhpRegex\Parser\Node\LiteralNode;
+use PhpRegex\Parser\Node\NodeInterface;
 use PhpRegex\Parser\Node\PcreVerbNode;
 use PhpRegex\Parser\Node\PosixClassNode;
 use PhpRegex\Parser\Node\QuantifierNode;
@@ -896,7 +897,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
             new LiteralNode('b', 1, 2),
             new LiteralNode('a', 2, 3), // duplicate
         ];
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
+        /** @var array<NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'deduplicateAlternation', [$alternatives]);
         $this->assertCount(2, $result);
     }
@@ -917,7 +918,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
             new LiteralNode('a', 3, 4),
             new LiteralNode('a', 4, 5),
         ];
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
+        /** @var array<NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'compactSequence', [$children]);
         $this->assertCount(1, $result);
         $this->assertInstanceOf(QuantifierNode::class, $result[0]);
@@ -978,7 +979,7 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         );
 
         $alternatives = [$class1, $class2];
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $result */
+        /** @var array<NodeInterface> $result */
         $result = $this->invokePrivate($optimizer, 'mergeAdjacentCharClasses', [$alternatives]);
         $this->assertCount(1, $result);
         $this->assertInstanceOf(CharClassNode::class, $result[0]);

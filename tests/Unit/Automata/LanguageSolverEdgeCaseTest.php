@@ -218,7 +218,7 @@ final class LanguageSolverEdgeCaseTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{\PhpRegex\Automata\Determinization\DeterminizationAlgorithm}>
+     * @return \Generator<string, array{DeterminizationAlgorithm}>
      */
     public static function provideDeterminizationAlgorithms(): \Generator
     {

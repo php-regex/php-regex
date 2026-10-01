@@ -54,7 +54,7 @@ final class ExtendedClassReader
     private int $parentheses = 0;
 
     /**
-     * @var list<\PhpRegex\Parser\Node\NodeInterface> the operands read so far, which PCRE judges as it reads them
+     * @var list<NodeInterface> the operands read so far, which PCRE judges as it reads them
      */
     private array $operands = [];
 
@@ -63,19 +63,19 @@ final class ExtendedClassReader
     private readonly int $length;
 
     /**
-     * @param \Closure(string, int):\PhpRegex\Parser\Node\NodeInterface                                                                                            $escape        reads an escape written at an offset
-     * @param \Closure(string, int):\PhpRegex\Parser\Node\NodeInterface                                                                                            $class         reads a nested class written at an offset
-     * @param \Closure(\PhpRegex\Parser\Exception\LexerException|\PhpRegex\Parser\Exception\ParserException, int, list<\PhpRegex\Parser\Node\NodeInterface>):never $fail          refuses
-     *                                                                                                                                                                            the pattern at an offset, or for an error in an
-     *                                                                                                                                                                            operand, given the operands read before
-     * @param bool                                                                                                                                                 $pastTheFault  whether the nesting limit is reported
-     *                                                                                                                                                                            on the character, as PCRE2 10.47 does
-     * @param bool                                                                                                                                                 $utf           whether the pattern is read by UTF-8 character
-     * @param int                                                                                                                                                  $maxOperations the most operations read, so the tree stays
-     *                                                                                                                                                                            one the visitors can walk
-     * @param \Closure(int, int): void|null                                                                                                                        $nest          told where each "(" is read and how
-     *                                                                                                                                                                            many are open with it, for a limit on
-     *                                                                                                                                                                            nesting other than PCRE's
+     * @param \Closure(string, int):NodeInterface                                      $escape        reads an escape written at an offset
+     * @param \Closure(string, int):NodeInterface                                      $class         reads a nested class written at an offset
+     * @param \Closure(LexerException|ParserException, int, list<NodeInterface>):never $fail          refuses
+     *                                                                                                the pattern at an offset, or for an error in an
+     *                                                                                                operand, given the operands read before
+     * @param bool                                                                     $pastTheFault  whether the nesting limit is reported
+     *                                                                                                on the character, as PCRE2 10.47 does
+     * @param bool                                                                     $utf           whether the pattern is read by UTF-8 character
+     * @param int                                                                      $maxOperations the most operations read, so the tree stays
+     *                                                                                                one the visitors can walk
+     * @param \Closure(int, int): void|null                                            $nest          told where each "(" is read and how
+     *                                                                                                many are open with it, for a limit on
+     *                                                                                                nesting other than PCRE's
      */
     public function __construct(
         private readonly string $pattern,
@@ -93,7 +93,7 @@ final class ExtendedClassReader
     /**
      * @param int $start the offset of the "(" of "(?["
      *
-     * @return array{0: \PhpRegex\Parser\Node\NodeInterface, 1: int} the expression, and the offset past the "])"
+     * @return array{0: NodeInterface, 1: int} the expression, and the offset past the "])"
      */
     public function read(int $start): array
     {
@@ -481,7 +481,7 @@ final class ExtendedClassReader
      * An operand read by the parser; what it refuses comes after what PCRE
      * refuses in the operands before.
      *
-     * @param \Closure(string, int):\PhpRegex\Parser\Node\NodeInterface $read
+     * @param \Closure(string, int):NodeInterface $read
      */
     private function readApart(\Closure $read, string $text, int $at): NodeInterface
     {

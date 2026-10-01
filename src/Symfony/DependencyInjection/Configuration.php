@@ -229,7 +229,7 @@ final readonly class Configuration implements ConfigurationInterface
     /**
      * The threshold, lower-cased, read with the one threshold parser.
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when it names no threshold
+     * @throws InvalidRegexOptionException when it names no threshold
      */
     private static function redosThreshold(mixed $value): string
     {
@@ -243,7 +243,7 @@ final readonly class Configuration implements ConfigurationInterface
     /**
      * The version as given, once Regex::create() could read it.
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when it names no version
+     * @throws InvalidRegexOptionException when it names no version
      */
     private static function targetVersion(string $key, mixed $version): string|int|null
     {

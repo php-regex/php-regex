@@ -80,9 +80,9 @@ final readonly class Regex
     public const DEFAULT_MAX_RECURSION_DEPTH = RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
 
     /**
-     * @param \PhpRegex\Parser\RegexParser       $parser               Reads and judges every pattern
-     * @param array<string>                      $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
-     * @param \PhpRegex\Parser\Engine\PcreEngine $engine               Runs the pattern to check the samples
+     * @param RegexParser   $parser               Reads and judges every pattern
+     * @param array<string> $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
+     * @param PcreEngine    $engine               Runs the pattern to check the samples
      */
     private function __construct(
         private RegexParser $parser,
@@ -112,7 +112,7 @@ final readonly class Regex
      * @param string $regex    The regular expression to parse
      * @param bool   $tolerant Whether to return a tolerant result on parse errors
      *
-     * @return ($tolerant is true ? \PhpRegex\Parser\TolerantParseResult : \PhpRegex\Parser\Node\RegexNode) Parsed AST or tolerant result
+     * @return ($tolerant is true ? TolerantParseResult : RegexNode) Parsed AST or tolerant result
      */
     public function parse(string $regex, bool $tolerant = false): RegexNode|TolerantParseResult
     {
@@ -158,7 +158,7 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to analyze
      *
-     * @return \PhpRegex\Toolkit\AnalysisReport Complete analysis report
+     * @return AnalysisReport Complete analysis report
      */
     public function analyze(string $regex): AnalysisReport
     {
@@ -230,10 +230,10 @@ final readonly class Regex
     /**
      * Analyze a regular expression for potential ReDoS (Regular Expression Denial of Service) vulnerabilities.
      *
-     * @param string                             $regex     The regular expression to analyze
-     * @param \PhpRegex\Redos\RedosSeverity|null $threshold Minimum severity level to report
+     * @param string             $regex     The regular expression to analyze
+     * @param RedosSeverity|null $threshold Minimum severity level to report
      *
-     * @return \PhpRegex\Redos\RedosAnalysis Detailed ReDoS analysis results
+     * @return RedosAnalysis Detailed ReDoS analysis results
      */
     public function redos(
         string $regex,
@@ -249,10 +249,10 @@ final readonly class Regex
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                                       $regex   The regular expression to optimize
-     * @param \PhpRegex\Optimizer\OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
+     * @param string                                   $regex   The regular expression to optimize
+     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
      *
-     * @return \PhpRegex\Optimizer\OptimizationResult Optimization results with changes applied
+     * @return OptimizationResult Optimization results with changes applied
      */
     public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {
@@ -272,8 +272,8 @@ final readonly class Regex
     /**
      * Generate a human-readable explanation of the regular expression.
      *
-     * @param string                                $regex  The regular expression to explain
-     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::Text or OutputFormat::Html)
+     * @param string              $regex  The regular expression to explain
+     * @param string|OutputFormat $format Output format (OutputFormat::Text or OutputFormat::Html)
      *
      * @return string Formatted explanation
      */
@@ -290,8 +290,8 @@ final readonly class Regex
     /**
      * Highlight a regex for console or HTML output.
      *
-     * @param string                                $regex  The regular expression to highlight
-     * @param string|\PhpRegex\Toolkit\OutputFormat $format Output format (OutputFormat::Console or OutputFormat::Html)
+     * @param string              $regex  The regular expression to highlight
+     * @param string|OutputFormat $format Output format (OutputFormat::Console or OutputFormat::Html)
      */
     public function highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
     {
@@ -310,7 +310,7 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to analyze
      *
-     * @return \PhpRegex\Parser\Analysis\LiteralExtractionResult Extracted literals and search patterns
+     * @return LiteralExtractionResult Extracted literals and search patterns
      */
     public function literals(string $regex): LiteralExtractionResult
     {
@@ -330,7 +330,7 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to generate a sample for
      *
-     * @throws \PhpRegex\Generator\SampleGenerationException when the pattern is invalid, or no sample the running engine matches was found
+     * @throws SampleGenerationException when the pattern is invalid, or no sample the running engine matches was found
      *
      * @return string Generated sample string
      */
@@ -409,7 +409,7 @@ final readonly class Regex
      * flags extracted via PatternParser, this allows reconstructing the
      * original pattern and mapping nodes back to their exact locations.
      *
-     * @param \PhpRegex\Parser\PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public static function tokenize(string $regex, ?PcreTarget $target = null): TokenStream
     {
@@ -572,7 +572,7 @@ final readonly class Regex
      *
      * @param string $format The desired output format
      *
-     * @return \PhpRegex\Explain\TextExplainer|\PhpRegex\Explain\HtmlExplainer The explanation visitor
+     * @return TextExplainer|HtmlExplainer The explanation visitor
      */
     private function createExplanationVisitor(string $format): TextExplainer|HtmlExplainer
     {

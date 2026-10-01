@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 final class ReDoSSeverityFromConfigTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, \PhpRegex\Redos\RedosSeverity}>
+     * @return iterable<string, array{string, RedosSeverity}>
      */
     public static function provideThresholds(): iterable
     {

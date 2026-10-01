@@ -28,7 +28,7 @@ use PhpRegex\Parser\Token\TokenType;
 final readonly class ParserAccessor
 {
     /**
-     * @var \ReflectionClass<\PhpRegex\Parser\Syntax\TokenParser>
+     * @var \ReflectionClass<TokenParser>
      */
     private \ReflectionClass $reflection;
 
@@ -52,7 +52,7 @@ final readonly class ParserAccessor
     /**
      * Sets the internal TokenStream by creating one from an array of tokens.
      *
-     * @param array<string|\PhpRegex\Parser\Token\Token> $tokens
+     * @param array<string|Token> $tokens
      */
     public function setTokens(array $tokens): void
     {

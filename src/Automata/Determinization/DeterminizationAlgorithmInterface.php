@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PhpRegex\Automata\Determinization;
 
+use PhpRegex\Automata\Exception\ComplexityException;
 use PhpRegex\Automata\Model\Dfa;
 use PhpRegex\Automata\Model\Nfa;
 use PhpRegex\Automata\Options\SolverOptions;
@@ -27,7 +28,7 @@ interface DeterminizationAlgorithmInterface
     /**
      * @param array<int, array{0:int, 1:int}> $alphabetRanges
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options, array $alphabetRanges): Dfa;
 }

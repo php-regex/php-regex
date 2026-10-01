@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 final class QuantifierNodeTest extends TestCase
 {
     /**
-     * @return \Iterator<string, array{\PhpRegex\Parser\Node\LiteralNode, string, \PhpRegex\Parser\Node\QuantifierType}>
+     * @return \Iterator<string, array{LiteralNode, string, QuantifierType}>
      */
     public static function data_provider_quantifiers(): \Iterator
     {

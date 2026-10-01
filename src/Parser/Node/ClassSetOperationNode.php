@@ -22,8 +22,8 @@ use PhpRegex\Parser\NodeVisitorInterface;
 final readonly class ClassSetOperationNode extends AbstractNode
 {
     /**
-     * @param \PhpRegex\Parser\Node\NodeInterface|null $left   the left operand; null for the complement
-     * @param string                                   $symbol the operator as written: "+", "|", "&", "-", "^" or "!"
+     * @param NodeInterface|null $left   the left operand; null for the complement
+     * @param string             $symbol the operator as written: "+", "|", "&", "-", "^" or "!"
      */
     public function __construct(
         public ClassSetOperator $operator,

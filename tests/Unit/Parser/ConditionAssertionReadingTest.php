@@ -54,7 +54,7 @@ final class ConditionAssertionReadingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, release: string, code: ?\PhpRegex\Parser\ErrorCode, offset: ?int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ?ErrorCode, offset: ?int}>
      */
     public static function provideConditions(): iterable
     {
@@ -99,7 +99,7 @@ final class ConditionAssertionReadingTest extends TestCase
     /**
      * @param list<string> $releases
      *
-     * @return iterable<string, array{pattern: string, release: string, code: ?\PhpRegex\Parser\ErrorCode, offset: ?int}>
+     * @return iterable<string, array{pattern: string, release: string, code: ?ErrorCode, offset: ?int}>
      */
     private static function rows(string $name, string $pattern, array $releases, ?ErrorCode $code, ?int $offset): iterable
     {

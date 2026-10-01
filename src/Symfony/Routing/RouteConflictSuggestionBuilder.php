@@ -24,7 +24,7 @@ use PhpRegex\Parser\Engine\PcreEngine;
 final readonly class RouteConflictSuggestionBuilder
 {
     /**
-     * @param \PhpRegex\Parser\Engine\PcreEngine $engine Runs a route's pattern on the example that conflicts
+     * @param PcreEngine $engine Runs a route's pattern on the example that conflicts
      */
     public function __construct(private PcreEngine $engine = new PcreEngine()) {}
 

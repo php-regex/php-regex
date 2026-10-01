@@ -29,7 +29,7 @@ final class TokenStream
     private int $maxPosition = 0;
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $tokens
+     * @param array<Token> $tokens
      */
     public function __construct(private readonly array $tokens, private readonly string $pattern)
     {
@@ -124,7 +124,7 @@ final class TokenStream
     }
 
     /**
-     * @return array<\PhpRegex\Parser\Token\Token>
+     * @return array<Token>
      */
     public function getTokens(): array
     {
@@ -216,9 +216,9 @@ final class TokenStream
     /**
      * Step over a token of this type, or say what was found instead.
      *
-     * @param \PhpRegex\Parser\ErrorCode $code what is wrong with the pattern when the token is missing
+     * @param ErrorCode $code what is wrong with the pattern when the token is missing
      *
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     public function consume(TokenType $type, string $error, ErrorCode $code): Token
     {
@@ -235,9 +235,9 @@ final class TokenStream
     /**
      * Step over this literal, or say what was found instead.
      *
-     * @param \PhpRegex\Parser\ErrorCode $code what is wrong with the pattern when the literal is missing
+     * @param ErrorCode $code what is wrong with the pattern when the literal is missing
      *
-     * @throws \PhpRegex\Parser\Exception\SyntaxErrorException
+     * @throws SyntaxErrorException
      */
     public function consumeLiteral(string $value, string $error, ErrorCode $code): Token
     {

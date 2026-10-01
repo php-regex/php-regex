@@ -16,6 +16,7 @@ namespace PhpRegex\Optimizer;
 use PhpRegex\Automata\LanguageSolver;
 use PhpRegex\Automata\Options\SolverOptions;
 use PhpRegex\Parser\ErrorCode;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 use PhpRegex\Parser\Exception\RegexException;
 use PhpRegex\Parser\Internal\PatternParser;
 use PhpRegex\Parser\Node\RegexNode;
@@ -34,13 +35,13 @@ final readonly class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                                       $regex   The regular expression to optimize
-     * @param \PhpRegex\Optimizer\OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
-     *                                                                              the array OptimizerOptions::fromArray() reads
+     * @param string                                   $regex   The regular expression to optimize
+     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
+     *                                                          the array OptimizerOptions::fromArray() reads
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on an option it does not know or a value of the wrong type
+     * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
      *
-     * @return \PhpRegex\Optimizer\OptimizationResult Optimization results with changes applied
+     * @return OptimizationResult Optimization results with changes applied
      */
     public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {

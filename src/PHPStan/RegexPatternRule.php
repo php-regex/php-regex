@@ -21,6 +21,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpRegex\Linter\AnalysisService;
 use PhpRegex\Linter\PatternOccurrence;
+use PhpRegex\Optimizer\OptimizationResult;
 use PhpRegex\Optimizer\OptimizerOptions;
 use PhpRegex\Parser\Engine\PcreEngine;
 use PhpRegex\Parser\Exception\InvalidRegexOptionException;
@@ -141,7 +142,7 @@ final class RegexPatternRule implements Rule
      *                                         judged for it, with the PCRE2 it bundles, unless "phpVersion"
      *                                         is "runtime" or names a version, and "pcreVersion" a release
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
+     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null)
     {
@@ -367,7 +368,7 @@ final class RegexPatternRule implements Rule
         }
 
         if ($this->optimizationsEnabled) {
-            /** @var array<array{file: string, line: int, optimization: \PhpRegex\Optimizer\OptimizationResult, savings: int, source?: string}> $optimizations */
+            /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
             $optimizations = $this->getAnalysisService()->suggestOptimizations(
                 [$occurrence],
                 $this->optimizationMinSavings,
@@ -473,7 +474,7 @@ final class RegexPatternRule implements Rule
      * "checks.redos.threshold", critical when unset. It is read even while
      * the section is off: a typo there would bite the day it is switched on.
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when the value names no threshold
+     * @throws InvalidRegexOptionException when the value names no threshold
      */
     private static function redosThreshold(mixed $threshold): string
     {

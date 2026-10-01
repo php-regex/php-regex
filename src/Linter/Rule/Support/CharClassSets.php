@@ -34,7 +34,7 @@ final class CharClassSets
     private function __construct() {}
 
     /**
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     public static function collectParts(NodeInterface $node): array
     {

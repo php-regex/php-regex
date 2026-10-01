@@ -42,7 +42,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     private const PATTERN = '/(?[ \d - ( [3] & ![a] ) ^ \x61 | [b] ])/';
 
     /**
-     * @param \PhpRegex\Parser\NodeVisitorInterface<string> $visitor
+     * @param NodeVisitorInterface<string> $visitor
      */
     #[Test]
     #[DataProvider('provideDisplays')]
@@ -55,7 +55,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, \PhpRegex\Parser\NodeVisitorInterface<string>}>
+     * @return iterable<string, array{string, NodeVisitorInterface<string>}>
      */
     public static function provideDisplays(): iterable
     {

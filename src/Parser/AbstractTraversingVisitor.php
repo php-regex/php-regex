@@ -55,7 +55,7 @@ use PhpRegex\Parser\Node\VersionConditionNode;
  *
  * @template-covariant TReturn
  *
- * @extends \PhpRegex\Parser\AbstractNodeVisitor<TReturn>
+ * @extends AbstractNodeVisitor<TReturn>
  */
 abstract class AbstractTraversingVisitor extends AbstractNodeVisitor
 {

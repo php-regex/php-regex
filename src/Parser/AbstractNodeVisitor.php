@@ -48,7 +48,7 @@ use PhpRegex\Parser\Node\VersionConditionNode;
  *
  * @template-covariant TReturn
  *
- * @implements \PhpRegex\Parser\NodeVisitorInterface<TReturn>
+ * @implements NodeVisitorInterface<TReturn>
  */
 abstract class AbstractNodeVisitor implements NodeVisitorInterface
 {

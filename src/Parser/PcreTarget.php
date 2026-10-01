@@ -37,7 +37,7 @@ final readonly class PcreTarget
      * @param string $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION
      *                             spells it or without its date
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when $pcreVersion names no release
+     * @throws InvalidRegexOptionException when $pcreVersion names no release
      */
     public function __construct(public int $phpVersionId, string $pcreVersion)
     {

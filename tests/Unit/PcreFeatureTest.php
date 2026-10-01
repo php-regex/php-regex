@@ -43,7 +43,7 @@ final class PcreFeatureTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\PhpRegex\Parser\PcreFeature, string, string}>
+     * @return iterable<string, array{PcreFeature, string, string}>
      */
     public static function provideReleases(): iterable
     {

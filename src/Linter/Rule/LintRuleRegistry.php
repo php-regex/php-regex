@@ -23,7 +23,7 @@ namespace PhpRegex\Linter\Rule;
 final class LintRuleRegistry
 {
     /**
-     * @var list<\PhpRegex\Linter\Rule\LintRuleInterface>
+     * @var list<LintRuleInterface>
      */
     private array $rules = [];
 
@@ -66,7 +66,7 @@ final class LintRuleRegistry
     }
 
     /**
-     * @return list<\PhpRegex\Linter\Rule\LintRuleInterface>
+     * @return list<LintRuleInterface>
      */
     public function all(): array
     {

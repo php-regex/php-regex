@@ -16,6 +16,7 @@ namespace PhpRegex\Automata\Builder;
 use PhpRegex\Automata\Determinization\DeterminizationAlgorithmFactory;
 use PhpRegex\Automata\Determinization\DeterminizationAlgorithmInterface;
 use PhpRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
+use PhpRegex\Automata\Exception\ComplexityException;
 use PhpRegex\Automata\Minimization\DfaMinimizer;
 use PhpRegex\Automata\Minimization\MinimizationAlgorithmFactory;
 use PhpRegex\Automata\Model\Dfa;
@@ -38,7 +39,7 @@ final readonly class DfaBuilder
     ) {}
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options): Dfa
     {

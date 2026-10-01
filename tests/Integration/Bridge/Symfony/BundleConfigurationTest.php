@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PhpRegex\Tests\Integration\Bridge\Symfony;
 
 use PhpRegex\Parser\RegexParser;
+use PhpRegex\Symfony\Command\LintCommand;
 use PhpRegex\Symfony\DependencyInjection\PhpRegexExtension;
 use PhpRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -190,7 +191,7 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile(['exclude' => ['var', 'vendor']]);
 
-        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
+        /** @var LintCommand $command */
         $command = $container->get('php_regex.command.lint');
 
         $this->assertSame(['var', 'vendor'], $command->getDefinition()->getOption('exclude')->getDefault());
@@ -238,7 +239,7 @@ final class BundleConfigurationTest extends TestCase
      */
     private function lint(ContainerBuilder $container): array
     {
-        /** @var \PhpRegex\Symfony\Command\LintCommand $command */
+        /** @var LintCommand $command */
         $command = $container->get('php_regex.command.lint');
 
         $tester = new CommandTester($command);

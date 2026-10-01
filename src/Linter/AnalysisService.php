@@ -21,6 +21,7 @@ use PhpRegex\Optimizer\OptimizationResult;
 use PhpRegex\Optimizer\Optimizer;
 use PhpRegex\Optimizer\OptimizerOptions;
 use PhpRegex\Optimizer\Rewriter;
+use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 use PhpRegex\Parser\Internal\PatternParser;
 use PhpRegex\Parser\Node\AlternationNode;
 use PhpRegex\Parser\Node\CharClassNode;
@@ -73,7 +74,7 @@ final readonly class AnalysisService
      * @param array<string>       $redosIgnoredPatterns
      * @param array<string, bool> $lintRules
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when the threshold names no severity
+     * @throws InvalidRegexOptionException when the threshold names no severity
      */
     public function __construct(
         private RegexParser $regex,
@@ -137,7 +138,7 @@ final readonly class AnalysisService
      * @param array<string> $paths
      * @param array<string> $excludePaths
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function scan(array $paths, array $excludePaths): array
     {
@@ -149,9 +150,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: \PhpRegex\Redos\RedosAnalysis, validation?: \PhpRegex\Parser\Validation\ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
     {
@@ -168,9 +169,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: \PhpRegex\Redos\RedosAnalysis}>
+     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     public function analyzeRedos(array $patterns, RedosSeverity $threshold, int $workers = 1): array
     {
@@ -186,11 +187,11 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
-     * @param \PhpRegex\Optimizer\OptimizerOptions|null $options  what an optimization may rewrite; by default, what lint
-     *                                                            allows, every rewrite checked with the automata
+     * @param array<PatternOccurrence> $patterns
+     * @param OptimizerOptions|null    $options  what an optimization may rewrite; by default, what lint
+     *                                           allows, every rewrite checked with the automata
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: \PhpRegex\Optimizer\OptimizationResult, savings: int, source?: string}>
+     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
      */
     public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1): array
     {
@@ -222,9 +223,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: \PhpRegex\Redos\RedosAnalysis, validation?: \PhpRegex\Parser\Validation\ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     private function lintChunk(array $patterns, ?callable $progress = null): array
     {
@@ -479,9 +480,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: \PhpRegex\Redos\RedosAnalysis}>
+     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     private function analyzeRedosChunk(array $patterns, RedosSeverity $threshold): array
     {
@@ -525,9 +526,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: \PhpRegex\Optimizer\OptimizationResult, savings: int, source?: string}>
+     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
      */
     private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options): array
     {
@@ -613,8 +614,8 @@ final readonly class AnalysisService
     /**
      * @template T
      *
-     * @param array<\PhpRegex\Linter\PatternOccurrence>                    $patterns
-     * @param callable(array<\PhpRegex\Linter\PatternOccurrence>):array<T> $worker
+     * @param array<PatternOccurrence>                    $patterns
+     * @param callable(array<PatternOccurrence>):array<T> $worker
      *
      * @return array<T>
      */

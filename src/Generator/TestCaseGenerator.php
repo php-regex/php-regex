@@ -57,14 +57,14 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     private const MAX_SAMPLES = 3;
 
     /**
-     * @param \PhpRegex\Parser\Engine\PcreEngine $engine Asks the running engine which characters a class holds
+     * @param PcreEngine $engine Asks the running engine which characters a class holds
      */
     public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     /**
      * Visits a RegexNode and generates test cases for its pattern.
      *
-     * @param \PhpRegex\Parser\Node\RegexNode $node the `RegexNode` representing the entire regular expression
+     * @param RegexNode $node the `RegexNode` representing the entire regular expression
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -77,7 +77,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits an AlternationNode and generates test cases from one of its alternatives.
      *
-     * @param \PhpRegex\Parser\Node\AlternationNode $node the `AlternationNode` representing a choice between patterns
+     * @param AlternationNode $node the `AlternationNode` representing a choice between patterns
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -103,7 +103,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a SequenceNode and concatenates test cases from its children.
      *
-     * @param \PhpRegex\Parser\Node\SequenceNode $node the `SequenceNode` representing a series of regex components
+     * @param SequenceNode $node the `SequenceNode` representing a series of regex components
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -143,7 +143,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a GroupNode and generates test cases from its child.
      *
-     * @param \PhpRegex\Parser\Node\GroupNode $node the `GroupNode` representing a grouping construct
+     * @param GroupNode $node the `GroupNode` representing a grouping construct
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -156,7 +156,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a QuantifierNode and generates test cases based on repetition.
      *
-     * @param \PhpRegex\Parser\Node\QuantifierNode $node the `QuantifierNode` representing a repetition operator
+     * @param QuantifierNode $node the `QuantifierNode` representing a repetition operator
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -193,7 +193,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a LiteralNode and generates test cases.
      *
-     * @param \PhpRegex\Parser\Node\LiteralNode $node the `LiteralNode` representing a literal character
+     * @param LiteralNode $node the `LiteralNode` representing a literal character
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -223,7 +223,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a CharTypeNode and generates test cases.
      *
-     * @param \PhpRegex\Parser\Node\CharTypeNode $node the `CharTypeNode` representing a character type
+     * @param CharTypeNode $node the `CharTypeNode` representing a character type
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -243,7 +243,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a DotNode and generates test cases.
      *
-     * @param \PhpRegex\Parser\Node\DotNode $node the `DotNode` representing the wildcard dot
+     * @param DotNode $node the `DotNode` representing the wildcard dot
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -259,7 +259,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits an AnchorNode and returns empty test cases (anchors don't consume).
      *
-     * @param \PhpRegex\Parser\Node\AnchorNode $node the `AnchorNode` representing a positional anchor
+     * @param AnchorNode $node the `AnchorNode` representing a positional anchor
      *
      * @return array{matching: array<string>, non_matching: array<string>} empty test cases
      */
@@ -275,7 +275,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits an AssertionNode and returns empty test cases.
      *
-     * @param \PhpRegex\Parser\Node\AssertionNode $node the `AssertionNode` representing a zero-width assertion
+     * @param AssertionNode $node the `AssertionNode` representing a zero-width assertion
      *
      * @return array{matching: array<string>, non_matching: array<string>} empty test cases
      */
@@ -291,7 +291,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a CharClassNode and generates test cases.
      *
-     * @param \PhpRegex\Parser\Node\CharClassNode $node the `CharClassNode` representing a character class
+     * @param CharClassNode $node the `CharClassNode` representing a character class
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */
@@ -319,7 +319,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     /**
      * Visits a RangeNode and generates test cases.
      *
-     * @param \PhpRegex\Parser\Node\RangeNode $node the `RangeNode` representing a character range
+     * @param RangeNode $node the `RangeNode` representing a character range
      *
      * @return array{matching: array<string>, non_matching: array<string>} test cases
      */

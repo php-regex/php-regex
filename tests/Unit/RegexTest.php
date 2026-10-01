@@ -27,6 +27,7 @@ use PhpRegex\Parser\Node\AlternationNode;
 use PhpRegex\Parser\Node\CharClassNode;
 use PhpRegex\Parser\Node\ConditionalNode;
 use PhpRegex\Parser\Node\GroupNode;
+use PhpRegex\Parser\Node\NodeInterface;
 use PhpRegex\Parser\Node\QuantifierNode;
 use PhpRegex\Parser\Node\RegexNode;
 use PhpRegex\Parser\Node\SequenceNode;
@@ -50,7 +51,7 @@ final class RegexTest extends TestCase
     }
 
     /**
-     * @param class-string<\PhpRegex\Parser\Node\NodeInterface> $expectedPatternClass
+     * @param class-string<NodeInterface> $expectedPatternClass
      */
     #[DataProvider('provideValidRegexForParsing')]
     public function test_parse_method_with_valid_regex(
@@ -518,7 +519,7 @@ final class RegexTest extends TestCase
     {
         $cache = new class implements CacheInterface {
             /**
-             * @var array<string, \PhpRegex\Parser\Node\RegexNode>
+             * @var array<string, RegexNode>
              */
             public array $written = [];
 

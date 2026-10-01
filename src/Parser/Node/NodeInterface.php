@@ -25,7 +25,7 @@ interface NodeInterface
      *
      * @phpstan-template  T
      *
-     * @param \PhpRegex\Parser\NodeVisitorInterface<T> $visitor
+     * @param NodeVisitorInterface<T> $visitor
      *
      * @return T
      */

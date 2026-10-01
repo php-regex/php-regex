@@ -19,12 +19,12 @@ namespace PhpRegex\Symfony\Analyzer;
 final readonly class ReportSection
 {
     /**
-     * @param array<string, int|string>                             $meta
-     * @param array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice> $summary
-     * @param array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice> $warnings
-     * @param array<int, \PhpRegex\Symfony\Analyzer\AnalysisIssue>  $issues
-     * @param array<int, string>                                    $suggestions
-     * @param array<string, int|string>                             $debug
+     * @param array<string, int|string>  $meta
+     * @param array<int, AnalysisNotice> $summary
+     * @param array<int, AnalysisNotice> $warnings
+     * @param array<int, AnalysisIssue>  $issues
+     * @param array<int, string>         $suggestions
+     * @param array<string, int|string>  $debug
      */
     public function __construct(
         public string $id,

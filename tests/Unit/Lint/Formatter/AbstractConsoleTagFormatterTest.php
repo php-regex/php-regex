@@ -15,6 +15,7 @@ namespace PhpRegex\Tests\Unit\Lint\Formatter;
 
 use PhpRegex\Laravel\Output\LaravelConsoleFormatter;
 use PhpRegex\Linter\AnalysisService;
+use PhpRegex\Linter\Formatter\AbstractConsoleTagFormatter;
 use PhpRegex\Linter\Formatter\LinkFormatter;
 use PhpRegex\Linter\Formatter\RelativePathHelper;
 use PhpRegex\Linter\LintReport;
@@ -36,7 +37,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     private const FIXTURES = __DIR__.'/../../../Fixtures/Lint/';
 
     /**
-     * @param class-string<\PhpRegex\Linter\Formatter\AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideRenderings')]

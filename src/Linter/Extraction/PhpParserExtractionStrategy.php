@@ -87,7 +87,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     /**
      * @param array<string> $files
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function analyzeFilesWithPhpStan(array $files): array
     {
@@ -102,7 +102,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function analyzeFileWithPhpStan(string $file): array
     {
@@ -147,7 +147,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     /**
      * @param array<Node> $tokens
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromTokens(array $tokens, string $file, string $content): array
     {
@@ -162,7 +162,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromNode(Node $node, string $file, string $content): array
     {
@@ -192,7 +192,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromFuncCall(FuncCall $funcCall, string $file, string $content): array
     {
@@ -209,7 +209,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromStaticCall(StaticCall $staticCall, string $file, string $content): array
     {
@@ -228,7 +228,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     /**
      * @param array<Arg> $args
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromArgs(array $args, PatternFunction $patternFunction, string $file, string $content): array
     {
@@ -280,7 +280,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractPatternFromArg(Arg $arg, PatternFunction $patternFunction, string $file, string $content): array
     {
@@ -302,7 +302,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractPatternsFromArray(Array_ $array, PatternFunction $patternFunction, string $file, string $content): array
     {
@@ -391,8 +391,8 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $occurrences
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $items
+     * @param array<PatternOccurrence> $occurrences
+     * @param array<PatternOccurrence> $items
      */
     private function appendOccurrences(array &$occurrences, array $items): void
     {

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PhpRegex\Automata\Transform;
 
+use PhpRegex\Automata\Exception\ComplexityException;
 use PhpRegex\Automata\Model\Nfa;
 use PhpRegex\Automata\Options\SolverOptions;
 use PhpRegex\Parser\Node\RegexNode;
@@ -25,7 +26,7 @@ use PhpRegex\Parser\Node\RegexNode;
 interface AstToNfaTransformerInterface
 {
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException When regex exceeds supported subset
+     * @throws ComplexityException When regex exceeds supported subset
      */
     public function transform(RegexNode $regex, SolverOptions $options): Nfa;
 }

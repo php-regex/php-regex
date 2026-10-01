@@ -22,9 +22,9 @@ use PhpRegex\Parser\Node\NodeInterface;
 final class NodeFinder
 {
     /**
-     * @param \Closure(\PhpRegex\Parser\Node\NodeInterface):bool $filter
+     * @param \Closure(NodeInterface):bool $filter
      *
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     public static function find(NodeInterface $root, \Closure $filter): array
     {
@@ -56,7 +56,7 @@ final class NodeFinder
     }
 
     /**
-     * @param \Closure(\PhpRegex\Parser\Node\NodeInterface):bool $filter
+     * @param \Closure(NodeInterface):bool $filter
      */
     public static function findFirst(NodeInterface $root, \Closure $filter): ?NodeInterface
     {

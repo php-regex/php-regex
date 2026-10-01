@@ -21,7 +21,7 @@ use PhpRegex\Parser\NodeVisitorInterface;
 final readonly class AlternationNode extends AbstractNode
 {
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alternatives
+     * @param array<NodeInterface> $alternatives
      */
     public function __construct(
         public array $alternatives,

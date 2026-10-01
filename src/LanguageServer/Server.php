@@ -72,10 +72,10 @@ final class Server
     private readonly CompletionHandler $completionHandler;
 
     /**
-     * @param \PhpRegex\Toolkit\Regex|null $givenRegex judges every pattern; null judges for the
-     *                                                 workspace's target
-     * @param resource|null                $input      stream the messages are read from, or null
-     *                                                 for stdin
+     * @param Regex|null    $givenRegex judges every pattern; null judges for the
+     *                                  workspace's target
+     * @param resource|null $input      stream the messages are read from, or null
+     *                                  for stdin
      */
     public function __construct(private readonly ?Regex $givenRegex = null, private $input = null)
     {

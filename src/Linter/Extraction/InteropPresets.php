@@ -61,7 +61,7 @@ final class InteropPresets
     /**
      * Static methods contributed by a preset, keyed by "Fqcn::method".
      *
-     * @return array<string, \PhpRegex\Linter\Extraction\PatternFunction>
+     * @return array<string, PatternFunction>
      */
     public static function methods(string $name): array
     {
@@ -128,7 +128,7 @@ final class InteropPresets
     /**
      * @param array<int, string> $methods
      *
-     * @return array<string, \PhpRegex\Linter\Extraction\PatternFunction>
+     * @return array<string, PatternFunction>
      */
     private static function composerPcre(string $class, string $shortClass, array $methods): array
     {

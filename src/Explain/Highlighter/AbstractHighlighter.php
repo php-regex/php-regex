@@ -417,7 +417,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
     abstract protected function escape(string $string): string;
 
     /**
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     private function operandsOf(NodeInterface $node): array
     {

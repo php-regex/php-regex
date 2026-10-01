@@ -41,10 +41,10 @@ final readonly class PatternFunctionRegistry
     ];
 
     /**
-     * @param array<string, \PhpRegex\Linter\Extraction\PatternFunction> $functions keyed by lowercase function name
-     * @param array<string, \PhpRegex\Linter\Extraction\PatternFunction> $methods   keyed by lowercase "fqcn::method"
-     * @param array<int, string>                                         $needles   lowercase substrings gating file reads
-     * @param array<string, true>                                        $dropIns   functions a namespaced copy may stand in for
+     * @param array<string, PatternFunction> $functions keyed by lowercase function name
+     * @param array<string, PatternFunction> $methods   keyed by lowercase "fqcn::method"
+     * @param array<int, string>             $needles   lowercase substrings gating file reads
+     * @param array<string, true>            $dropIns   functions a namespaced copy may stand in for
      */
     private function __construct(
         private array $functions,
@@ -190,7 +190,7 @@ final readonly class PatternFunctionRegistry
     }
 
     /**
-     * @return array{0: string, 1: bool, 2: \PhpRegex\Linter\Extraction\PatternFunction, 3: string}|null
+     * @return array{0: string, 1: bool, 2: PatternFunction, 3: string}|null
      */
     private static function parseSpec(string $spec): ?array
     {

@@ -89,7 +89,7 @@ final class QuantifierModifierAfterCommentTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, quantifier: string, type: \PhpRegex\Parser\Node\QuantifierType}>
+     * @return iterable<string, array{pattern: string, quantifier: string, type: QuantifierType}>
      */
     public static function provideQuantifiedItems(): iterable
     {

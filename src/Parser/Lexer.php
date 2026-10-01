@@ -258,7 +258,7 @@ final class Lexer
     private array $charClassStartPositions = [];
 
     /**
-     * @var list<\PhpRegex\Parser\Token\Token>
+     * @var list<Token>
      */
     private array $tokensRead = [];
 
@@ -292,7 +292,7 @@ final class Lexer
     private readonly bool $emptyQuoteOpeningClassIsUnclosed;
 
     /**
-     * @param \PhpRegex\Parser\PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
     {
@@ -310,7 +310,7 @@ final class Lexer
      *
      * @internal
      *
-     * @return list<\PhpRegex\Parser\Token\Token>
+     * @return list<Token>
      */
     public function tokensRead(): array
     {
@@ -340,7 +340,7 @@ final class Lexer
         $this->extendedMoreMode = $extendedMore;
         $this->resetState();
 
-        /** @var list<\PhpRegex\Parser\Token\Token> $tokens */
+        /** @var list<Token> $tokens */
         $tokens = [];
 
         try {
@@ -447,7 +447,7 @@ final class Lexer
     }
 
     /**
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function handleTunnelModes(array &$tokens): bool
     {
@@ -543,7 +543,7 @@ final class Lexer
      * syntax. The comment is emitted as literals — '#', the body and the
      * closing newline — which is what the parser turns into a CommentNode.
      *
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function consumeExtendedComment(array &$tokens): void
     {
@@ -624,9 +624,9 @@ final class Lexer
     }
 
     /**
-     * @param array<string>                       $tokenMap
-     * @param array<int|string, mixed>            $matches
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<string>            $tokenMap
+     * @param array<int|string, mixed> $matches
+     * @param array<Token>             $currentTokens
      */
     private function createToken(
         array $tokenMap,
@@ -688,7 +688,7 @@ final class Lexer
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      */
     private function handleStatefulToken(
         TokenType $type,
@@ -764,7 +764,7 @@ final class Lexer
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      */
     private function followsNamedCharacterEscape(array $currentTokens, int $position): bool
     {
@@ -828,8 +828,8 @@ final class Lexer
     /**
      * Read the modifiers that follow "(?", if the group carries any at all.
      *
-     * @return array{0: \PhpRegex\Parser\Internal\InlineFlags, 1: bool} the modifiers, and whether the
-     *                                                                  group is scoped with ':'
+     * @return array{0: InlineFlags, 1: bool} the modifiers, and whether the
+     *                                        group is scoped with ':'
      */
     private function readInlineFlags(): ?array
     {
@@ -863,7 +863,7 @@ final class Lexer
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      */
     private function closeCharClass(int $startPos, array $currentTokens): Token
     {
@@ -894,7 +894,7 @@ final class Lexer
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      */
     private function handleContextualLiteral(
         TokenType $type,
@@ -921,7 +921,7 @@ final class Lexer
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      */
     private function isAtCharClassStart(array $currentTokens): bool
     {
@@ -935,7 +935,7 @@ final class Lexer
      * reads the first member of a class, so a "]" that follows only those is
      * a member and does not close the class: "[\E]a]" holds "]" and "a".
      *
-     * @param array<\PhpRegex\Parser\Token\Token> $currentTokens
+     * @param array<Token> $currentTokens
      *
      * @return bool|null null when a member has already been read; otherwise
      *                   whether the prefix holds the negating "^"
@@ -1168,7 +1168,7 @@ final class Lexer
      * Whether what starts at $position is where the condition of "(?(" is
      * due, the assertion, after the callout "(?(?C1)" may run first.
      *
-     * @param array<\PhpRegex\Parser\Token\Token> $tokens the tokens read before $position
+     * @param array<Token> $tokens the tokens read before $position
      */
     private function opensCondition(array $tokens, int $position): bool
     {

@@ -26,12 +26,12 @@ use PhpRegex\Parser\Node\NodeInterface;
 final class NodeWalker
 {
     /**
-     * @param \Closure(\PhpRegex\Parser\Node\NodeInterface, list<\PhpRegex\Parser\Node\NodeInterface>):((\PhpRegex\Parser\TraversalAction|null))      $enter called before the node's children
-     * @param \Closure(\PhpRegex\Parser\Node\NodeInterface, list<\PhpRegex\Parser\Node\NodeInterface>):((\PhpRegex\Parser\TraversalAction|null))|null $leave called after them
+     * @param \Closure(NodeInterface, list<NodeInterface>):((TraversalAction|null))      $enter called before the node's children
+     * @param \Closure(NodeInterface, list<NodeInterface>):((TraversalAction|null))|null $leave called after them
      */
     public static function walk(NodeInterface $root, \Closure $enter, ?\Closure $leave = null): void
     {
-        /** @var list<array{\PhpRegex\Parser\Node\NodeInterface, list<\PhpRegex\Parser\Node\NodeInterface>, bool}> $stack a node, its ancestors, and whether it was entered */
+        /** @var list<array{NodeInterface, list<NodeInterface>, bool}> $stack a node, its ancestors, and whether it was entered */
         $stack = [[$root, [], false]];
 
         while ([] !== $stack) {

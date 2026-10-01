@@ -16,6 +16,7 @@ namespace PhpRegex\Optimizer;
 use PhpRegex\Parser\AbstractNodeVisitor;
 use PhpRegex\Parser\Analysis\CharSetAnalyzer;
 use PhpRegex\Parser\Node;
+use PhpRegex\Parser\Node\AbstractNode;
 use PhpRegex\Parser\Node\AlternationNode;
 use PhpRegex\Parser\Node\AnchorNode;
 use PhpRegex\Parser\Node\AssertionNode;
@@ -219,7 +220,7 @@ final class Rewriter extends AbstractNodeVisitor
 
         // Sequence compaction (before merging adjacent literals)
         $originalCount = \count($optimizedChildren);
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $optimizedChildren */
+        /** @var array<NodeInterface> $optimizedChildren */
         $optimizedChildren = $this->compactSequence($optimizedChildren);
         if (\count($optimizedChildren) !== $originalCount) {
             $hasChanged = true;
@@ -824,7 +825,7 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alternatives
+     * @param array<NodeInterface> $alternatives
      */
     private function canAlternationBeCharClass(array $alternatives): bool
     {
@@ -848,7 +849,7 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $parts
+     * @param array<NodeInterface> $parts
      */
     private function isFullWordClass(array $parts): bool
     {
@@ -890,9 +891,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $parts
+     * @param array<NodeInterface> $parts
      *
-     * @return array{0: array<\PhpRegex\Parser\Node\NodeInterface>, 1: bool}
+     * @return array{0: array<NodeInterface>, 1: bool}
      */
     private function normalizeCharClassParts(array $parts): array
     {
@@ -1030,7 +1031,7 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function buildRangeOrLiteral(int $startOrd, int $endOrd, int $startPos, int $endPos, bool $allowRange = true): array
     {
@@ -1059,7 +1060,7 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function buildLiteralSequence(int $startOrd, int $endOrd, int $startPos): array
     {
@@ -1097,9 +1098,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      *
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function compactSequence(array $children): array
     {
@@ -1157,7 +1158,7 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $compacted
+     * @param array<NodeInterface> $compacted
      *
      * @param-out null $currentNode
      */
@@ -1297,9 +1298,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alts
+     * @param array<NodeInterface> $alts
      *
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function deduplicateAlternation(array $alts): array
     {
@@ -1318,9 +1319,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alts
+     * @param array<NodeInterface> $alts
      *
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function factorizeAlternation(array $alts): array
     {
@@ -1376,7 +1377,7 @@ final class Rewriter extends AbstractNodeVisitor
             }
         }
 
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $nonNullSuffixes */
+        /** @var array<NodeInterface> $nonNullSuffixes */
         $nonNullSuffixes = array_values(array_filter($suffixes, static fn ($suffix): bool => null !== $suffix));
         if (empty($nonNullSuffixes)) {
             // All are just the prefix
@@ -1385,9 +1386,9 @@ final class Rewriter extends AbstractNodeVisitor
             return [$this->stringToNode($prefix, $firstAlt->startPosition, $firstAlt->startPosition + \strlen($prefix))];
         }
 
-        /** @var \PhpRegex\Parser\Node\AbstractNode $firstSuffix */
+        /** @var AbstractNode $firstSuffix */
         $firstSuffix = $nonNullSuffixes[0];
-        /** @var \PhpRegex\Parser\Node\AbstractNode $lastSuffix */
+        /** @var AbstractNode $lastSuffix */
         $lastSuffix = $nonNullSuffixes[\count($nonNullSuffixes) - 1];
         $newAlt = 1 === \count($nonNullSuffixes)
             ? $firstSuffix
@@ -1415,9 +1416,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alts
+     * @param array<NodeInterface> $alts
      *
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function factorizeSuffix(array $alts): array
     {
@@ -1475,7 +1476,7 @@ final class Rewriter extends AbstractNodeVisitor
             }
         }
 
-        /** @var array<\PhpRegex\Parser\Node\NodeInterface> $nonNullPrefixes */
+        /** @var array<NodeInterface> $nonNullPrefixes */
         $nonNullPrefixes = array_values(array_filter($prefixes, static fn ($prefix): bool => null !== $prefix));
         if (empty($nonNullPrefixes)) {
             // All are just the suffix
@@ -1484,9 +1485,9 @@ final class Rewriter extends AbstractNodeVisitor
             return [$this->stringToNode($suffix, $firstAlt->endPosition - \strlen($suffix), $firstAlt->endPosition)];
         }
 
-        /** @var \PhpRegex\Parser\Node\AbstractNode $firstPrefix */
+        /** @var AbstractNode $firstPrefix */
         $firstPrefix = $nonNullPrefixes[0];
-        /** @var \PhpRegex\Parser\Node\AbstractNode $lastPrefix */
+        /** @var AbstractNode $lastPrefix */
         $lastPrefix = $nonNullPrefixes[\count($nonNullPrefixes) - 1];
         $newAlt = 1 === \count($nonNullPrefixes)
             ? $firstPrefix
@@ -1622,9 +1623,9 @@ final class Rewriter extends AbstractNodeVisitor
      * Merges adjacent character class nodes in an alternation.
      * For example: [a-z]|[0-9] becomes [a-z0-9]
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alternatives
+     * @param array<NodeInterface> $alternatives
      *
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function mergeAdjacentCharClasses(array $alternatives): array
     {
@@ -1723,7 +1724,7 @@ final class Rewriter extends AbstractNodeVisitor
     /**
      * Merges character classes and char types into a single character class.
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $nodes
+     * @param array<NodeInterface> $nodes
      */
     private function mergeCharClassesAndCharTypes(array $nodes): CharClassNode
     {
@@ -1759,7 +1760,7 @@ final class Rewriter extends AbstractNodeVisitor
      * Tries to convert an alternation to a character class if it's beneficial.
      * Only converts when it's clearly safe (no special char class metacharacters).
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $alternatives
+     * @param array<NodeInterface> $alternatives
      */
     private function tryConvertAlternationToCharClass(array $alternatives, int $startPos, int $endPos): ?CharClassNode
     {

@@ -71,7 +71,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\AlternationNode $newAst */
+        /** @var AlternationNode $newAst */
         $newAst = $rootAlt->accept($optimizer);
 
         // The optimizer should have "lifted" beta and gamma to the root level -> 4 alternatives
@@ -220,7 +220,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $optimized);
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
-        /** @var \PhpRegex\Parser\Node\CharClassNode $charClass */
+        /** @var CharClassNode $charClass */
         $charClass = $optimized->pattern;
         $this->assertInstanceOf(RangeNode::class, $charClass->expression);
         $range = $charClass->expression;
@@ -237,7 +237,7 @@ final class OptimizerNodeVisitorTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $optimized);
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
-        /** @var \PhpRegex\Parser\Node\CharClassNode $charClass */
+        /** @var CharClassNode $charClass */
         $charClass = $optimized->pattern;
         $this->assertInstanceOf(AlternationNode::class, $charClass->expression);
         $this->assertCount(2, $charClass->expression->alternatives);
@@ -298,7 +298,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/[a-zA-Z0-9_]/');
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
+        /** @var RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharTypeNode::class, $newAst->pattern);
@@ -312,7 +312,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/[a-zA-Z0-9_]/u');
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
+        /** @var RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
@@ -345,7 +345,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/a|b|c/');
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
+        /** @var RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
@@ -360,7 +360,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse('/a|^|c/'); // ^ is anchor here
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\RegexNode $newAst */
+        /** @var RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
         // Should remain alternation because ^ was an AnchorNode in parse,
@@ -658,7 +658,7 @@ final class OptimizerNodeVisitorTest extends TestCase
         $ast = $regex->parse($pattern);
         $optimizer = new Rewriter();
 
-        /** @var \PhpRegex\Parser\Node\RegexNode $optimized */
+        /** @var RegexNode $optimized */
         $optimized = $ast->accept($optimizer);
 
         if (null !== $expectedCharType) {

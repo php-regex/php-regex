@@ -36,7 +36,7 @@ interface LintRuleInterface
     /**
      * Node classes this rule wants to inspect on node-enter.
      *
-     * @return non-empty-list<class-string<\PhpRegex\Parser\Node\NodeInterface>>
+     * @return non-empty-list<class-string<NodeInterface>>
      */
     public function getNodeTypes(): array;
 
@@ -48,14 +48,14 @@ interface LintRuleInterface
     /**
      * Inspect a node the rule subscribed to.
      *
-     * @return list<\PhpRegex\Linter\Rule\RuleViolation>
+     * @return list<RuleViolation>
      */
     public function check(NodeInterface $node, LintContext $context): array;
 
     /**
      * Emit issues that depend on state aggregated across the whole traversal.
      *
-     * @return list<\PhpRegex\Linter\Rule\RuleViolation>
+     * @return list<RuleViolation>
      */
     public function finish(LintContext $context): array;
 }

@@ -180,7 +180,7 @@ final class OctalEscapeReadingTest extends TestCase
     }
 
     /**
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function nodesOf(string $pattern): array
     {

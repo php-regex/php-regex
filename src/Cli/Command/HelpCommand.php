@@ -32,15 +32,15 @@ final readonly class HelpCommand implements CommandInterface
     ];
 
     /**
-     * @param array<int, \PhpRegex\Cli\Command\CommandInterface> $commands the commands the
-     *                                                                     application knows, so
-     *                                                                     that the summary cannot
-     *                                                                     drift from what it runs
+     * @param array<int, CommandInterface> $commands the commands the
+     *                                               application knows, so
+     *                                               that the summary cannot
+     *                                               drift from what it runs
      */
     public function __construct(private array $commands = []) {}
 
     /**
-     * @param array<int, \PhpRegex\Cli\Command\CommandInterface> $commands
+     * @param array<int, CommandInterface> $commands
      */
     public function withCommands(array $commands): self
     {

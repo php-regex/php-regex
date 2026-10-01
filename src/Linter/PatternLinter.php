@@ -15,6 +15,7 @@ namespace PhpRegex\Linter;
 
 use PhpRegex\Linter\Rule\GroupIndex;
 use PhpRegex\Linter\Rule\LintContext;
+use PhpRegex\Linter\Rule\LintRuleInterface;
 use PhpRegex\Linter\Rule\LintRuleRegistry;
 use PhpRegex\Linter\Rule\PatternInfo;
 use PhpRegex\Linter\Rule\RuleViolation;
@@ -61,7 +62,7 @@ final class PatternLinter extends AbstractNodeVisitor
     ];
 
     /**
-     * @var array<\PhpRegex\Linter\Rule\RuleViolation>
+     * @var array<RuleViolation>
      */
     private array $issues = [];
 
@@ -79,12 +80,12 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $definedNamedGroups = [];
 
     /**
-     * @var array<int, array{node: \PhpRegex\Parser\Node\GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>
+     * @var array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>
      */
     private array $capturingGroups = [];
 
     /**
-     * @var array<string, array<int, array{node: \PhpRegex\Parser\Node\GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>>
+     * @var array<string, array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>>
      */
     private array $capturingGroupsByName = [];
 
@@ -104,18 +105,18 @@ final class PatternLinter extends AbstractNodeVisitor
     private LintContext $context;
 
     /**
-     * @var list<\PhpRegex\Linter\Rule\LintRuleInterface>
+     * @var list<LintRuleInterface>
      */
     private readonly array $rules;
 
     /**
-     * @var array<class-string<\PhpRegex\Parser\Node\NodeInterface>, list<\PhpRegex\Linter\Rule\LintRuleInterface>>
+     * @var array<class-string<NodeInterface>, list<LintRuleInterface>>
      */
     private array $dispatchMap = [];
 
     /**
-     * @param array<string, bool>                         $enabledRules
-     * @param \PhpRegex\Linter\Rule\LintRuleRegistry|null $registry     @internal custom registries are not yet a public extension point
+     * @param array<string, bool>   $enabledRules
+     * @param LintRuleRegistry|null $registry     @internal custom registries are not yet a public extension point
      */
     public function __construct(/**
      * Configuration for which lint rules are enabled.
@@ -155,7 +156,7 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<\PhpRegex\Linter\Rule\RuleViolation>
+     * @return array<RuleViolation>
      */
     public function getIssues(): array
     {
@@ -401,7 +402,7 @@ final class PatternLinter extends AbstractNodeVisitor
      * Single append point: enablement filtering happens here, exactly as the
      * historical addIssue() did.
      *
-     * @param list<\PhpRegex\Linter\Rule\RuleViolation> $issues
+     * @param list<RuleViolation> $issues
      */
     private function append(array $issues): void
     {

@@ -46,7 +46,7 @@ use PHPUnit\Framework\TestCase;
 final class VisitorDepthScalingTest extends TestCase
 {
     /**
-     * @param \PhpRegex\Parser\NodeVisitorInterface<mixed> $visitor
+     * @param NodeVisitorInterface<mixed> $visitor
      */
     #[Test]
     #[DataProvider('provideVisitors')]
@@ -63,7 +63,7 @@ final class VisitorDepthScalingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\PhpRegex\Parser\NodeVisitorInterface<mixed>}>
+     * @return iterable<string, array{NodeVisitorInterface<mixed>}>
      */
     public static function provideVisitors(): iterable
     {

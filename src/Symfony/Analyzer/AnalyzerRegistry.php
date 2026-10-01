@@ -19,12 +19,12 @@ namespace PhpRegex\Symfony\Analyzer;
 final readonly class AnalyzerRegistry
 {
     /**
-     * @var array<int, \PhpRegex\Symfony\Analyzer\AnalyzerInterface>
+     * @var array<int, AnalyzerInterface>
      */
     private array $analyzers;
 
     /**
-     * @param iterable<\PhpRegex\Symfony\Analyzer\AnalyzerInterface> $analyzers
+     * @param iterable<AnalyzerInterface> $analyzers
      */
     public function __construct(iterable $analyzers)
     {
@@ -41,7 +41,7 @@ final readonly class AnalyzerRegistry
     }
 
     /**
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalyzerInterface>
+     * @return array<int, AnalyzerInterface>
      */
     public function all(): array
     {
@@ -51,7 +51,7 @@ final readonly class AnalyzerRegistry
     /**
      * @param array<int, string> $ids
      *
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalyzerInterface>
+     * @return array<int, AnalyzerInterface>
      */
     public function filter(array $ids): array
     {

@@ -23,8 +23,8 @@ use PhpRegex\Automata\Alphabet\CharSet;
 final readonly class NfaTransition
 {
     /**
-     * @param \PhpRegex\Automata\Alphabet\CharSet $charSet Transition label
-     * @param int                                 $target  Target state id
+     * @param CharSet $charSet Transition label
+     * @param int     $target  Target state id
      */
     public function __construct(public CharSet $charSet, public int $target) {}
 }

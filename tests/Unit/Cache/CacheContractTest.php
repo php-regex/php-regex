@@ -47,7 +47,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
+     * @param \Closure(string):CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -68,7 +68,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
+     * @param \Closure(string):CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -80,7 +80,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @param \Closure(string):\PhpRegex\Parser\Cache\CacheInterface $cache
+     * @param \Closure(string):CacheInterface $cache
      */
     #[Test]
     #[DataProvider('provideCaches')]
@@ -99,7 +99,7 @@ final class CacheContractTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\Closure(string):\PhpRegex\Parser\Cache\CacheInterface}>
+     * @return iterable<string, array{\Closure(string):CacheInterface}>
      */
     public static function provideCaches(): iterable
     {

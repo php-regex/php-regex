@@ -21,7 +21,7 @@ use PhpRegex\Parser\NodeVisitorInterface;
 final readonly class SequenceNode extends AbstractNode
 {
     /**
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $children
+     * @param array<NodeInterface> $children
      */
     public function __construct(
         public array $children,

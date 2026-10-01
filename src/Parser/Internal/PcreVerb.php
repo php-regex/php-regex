@@ -163,8 +163,8 @@ final readonly class PcreVerb
      *                           refused past the digit, as from PCRE2 10.47
      * @param bool $unicode      whether names are read in UTF mode
      *
-     * @return array{0: int, 1: \PhpRegex\Parser\ErrorCode, 2: string}|null the offset, the
-     *                                                                      code and the message
+     * @return array{0: int, 1: ErrorCode, 2: string}|null the offset, the
+     *                                                     code and the message
      */
     public static function groupListFault(string $pattern, int $open, bool $pastTheDigit = true, bool $unicode = false): ?array
     {

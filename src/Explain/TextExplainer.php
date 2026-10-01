@@ -118,7 +118,7 @@ final class TextExplainer extends AbstractNodeVisitor
      *
      * Keyed by the node itself, so an entry goes with its tree.
      *
-     * @var \WeakMap<\PhpRegex\Parser\Node\NodeInterface, array<int, string>>|null
+     * @var \WeakMap<NodeInterface, array<int, string>>|null
      */
     private ?\WeakMap $explained = null;
 

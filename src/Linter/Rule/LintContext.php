@@ -31,7 +31,7 @@ use PhpRegex\Parser\Node\QuantifierType;
 final class LintContext
 {
     /**
-     * @var list<\PhpRegex\Parser\Node\NodeInterface>
+     * @var list<NodeInterface>
      */
     private array $parentStack = [];
 
@@ -60,7 +60,7 @@ final class LintContext
     }
 
     /**
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     public function parents(): array
     {

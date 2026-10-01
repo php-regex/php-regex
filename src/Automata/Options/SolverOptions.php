@@ -22,13 +22,13 @@ use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
 final readonly class SolverOptions
 {
     /**
-     * @param \PhpRegex\Automata\Options\MatchMode                        $matchMode                How to interpret matching semantics
-     * @param int                                                         $maxNfaStates             Maximum allowed NFA states
-     * @param int                                                         $maxDfaStates             Maximum allowed DFA states
-     * @param bool                                                        $minimizeDfa              Whether to minimize DFAs after determinization
-     * @param \PhpRegex\Automata\Minimization\MinimizationAlgorithm       $minimizationAlgorithm    Strategy used for DFA minimization
-     * @param int|null                                                    $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
-     * @param \PhpRegex\Automata\Determinization\DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
+     * @param MatchMode                $matchMode                How to interpret matching semantics
+     * @param int                      $maxNfaStates             Maximum allowed NFA states
+     * @param int                      $maxDfaStates             Maximum allowed DFA states
+     * @param bool                     $minimizeDfa              Whether to minimize DFAs after determinization
+     * @param MinimizationAlgorithm    $minimizationAlgorithm    Strategy used for DFA minimization
+     * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
+     * @param DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
      */
     public function __construct(
         public MatchMode $matchMode = MatchMode::Full,

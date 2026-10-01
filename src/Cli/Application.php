@@ -19,14 +19,14 @@ use PhpRegex\Cli\Command\HelpCommand;
 final class Application
 {
     /**
-     * @var array<string, \PhpRegex\Cli\Command\CommandInterface>
+     * @var array<string, CommandInterface>
      */
     private array $commands = [];
 
     /**
      * The commands as they were registered, without their aliases.
      *
-     * @var array<int, \PhpRegex\Cli\Command\CommandInterface>
+     * @var array<int, CommandInterface>
      */
     private array $registered = [];
 
@@ -86,7 +86,7 @@ final class Application
     }
 
     /**
-     * @return array<int, \PhpRegex\Cli\Command\CommandInterface>
+     * @return array<int, CommandInterface>
      */
     public function registeredCommands(): array
     {

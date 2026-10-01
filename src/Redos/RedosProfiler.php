@@ -67,12 +67,12 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * Stores all detected ReDoS vulnerabilities during the AST traversal.
      *
-     * @var array<\PhpRegex\Redos\Finding>
+     * @var array<Finding>
      */
     private array $vulnerabilities = [];
 
     /**
-     * @var array<\PhpRegex\Redos\Hotspot>
+     * @var array<Hotspot>
      */
     private array $hotspots = [];
 
@@ -91,7 +91,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer()) {}
 
     /**
-     * @return array{severity: \PhpRegex\Redos\RedosSeverity, recommendations: array<string>, vulnerablePattern: ?string, trigger: ?string, confidence: ?\PhpRegex\Redos\RedosConfidence, falsePositiveRisk: ?string, suggestedRewrite: ?string, findings: array<\PhpRegex\Redos\Finding>}
+     * @return array{severity: RedosSeverity, recommendations: array<string>, vulnerablePattern: ?string, trigger: ?string, confidence: ?RedosConfidence, falsePositiveRisk: ?string, suggestedRewrite: ?string, findings: array<Finding>}
      */
     public function getResult(): array
     {
@@ -136,7 +136,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<\PhpRegex\Redos\Hotspot>
+     * @return array<Hotspot>
      */
     public function getHotspots(): array
     {
@@ -1283,7 +1283,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<\PhpRegex\Parser\Node\NodeInterface>
+     * @return array<NodeInterface>
      */
     private function getChildren(NodeInterface $node): array
     {

@@ -366,7 +366,7 @@ final class RegexLintCommandTest extends TestCase
     }
 
     /**
-     * @param array<int, \PhpRegex\Linter\Source\PatternSourceInterface> $sources
+     * @param array<int, PatternSourceInterface> $sources
      */
     private function createCommandWithSources(array $sources): LintCommand
     {

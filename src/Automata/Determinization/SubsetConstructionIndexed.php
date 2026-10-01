@@ -38,7 +38,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     /**
      * @param array<int, array{0:int, 1:int}> $alphabetRanges
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     public function determinize(Nfa $nfa, SolverOptions $options, array $alphabetRanges): Dfa
     {
@@ -137,7 +137,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             ];
         }
 
-        /** @var array<int, \PhpRegex\Automata\Model\DfaState> $states */
+        /** @var array<int, DfaState> $states */
         $states = [];
         foreach ($transitions as $stateId => $stateTransitions) {
             $states[$stateId] = new DfaState(

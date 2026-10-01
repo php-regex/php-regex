@@ -1316,7 +1316,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * @param non-empty-array<\PhpRegex\Parser\Node\NodeInterface> $members
+     * @param non-empty-array<NodeInterface> $members
      */
     private function compileCharClassMembers(array $members): string
     {

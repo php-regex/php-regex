@@ -27,7 +27,7 @@ final class ArrayCache implements RemovableCacheInterface
     private int $misses = 0;
 
     /**
-     * @var array<string, \PhpRegex\Parser\Node\RegexNode>
+     * @var array<string, RegexNode>
      */
     private array $trees = [];
 

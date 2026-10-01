@@ -15,6 +15,7 @@ namespace PhpRegex\Cli;
 
 use PhpRegex\Cli\Command\AnalyzeCommand;
 use PhpRegex\Cli\Command\ClearCacheCommand;
+use PhpRegex\Cli\Command\CommandInterface;
 use PhpRegex\Cli\Command\CompareCommand;
 use PhpRegex\Cli\Command\DebugCommand;
 use PhpRegex\Cli\Command\DiagramCommand;
@@ -57,7 +58,7 @@ final class ApplicationFactory
     }
 
     /**
-     * @return array<int, \PhpRegex\Cli\Command\CommandInterface>
+     * @return array<int, CommandInterface>
      */
     public static function commands(HelpCommand $help): array
     {

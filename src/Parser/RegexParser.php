@@ -89,13 +89,13 @@ final readonly class RegexParser
     private const TARGET_PREFIX = '#target=';
 
     /**
-     * @param int                                   $maxPatternLength      Maximum allowed pattern length
-     * @param int                                   $maxLookbehindLength   Maximum length of a variable-length lookbehind
-     * @param \PhpRegex\Parser\Cache\CacheInterface $cache                 Cache for parsed trees
-     * @param bool                                  $runtimePcreValidation Whether to also compile the pattern with the running PHP
-     * @param int                                   $maxRecursionDepth     Maximum recursion depth during parsing
-     * @param \PhpRegex\Parser\PcreTarget           $target                The PHP and PCRE2 judged
-     * @param \PhpRegex\Parser\Engine\PcreEngine    $engine                Compiles the pattern with the running PHP
+     * @param int            $maxPatternLength      Maximum allowed pattern length
+     * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind
+     * @param CacheInterface $cache                 Cache for parsed trees
+     * @param bool           $runtimePcreValidation Whether to also compile the pattern with the running PHP
+     * @param int            $maxRecursionDepth     Maximum recursion depth during parsing
+     * @param PcreTarget     $target                The PHP and PCRE2 judged
+     * @param PcreEngine     $engine                Compiles the pattern with the running PHP
      */
     private function __construct(
         private int $maxPatternLength,
@@ -158,7 +158,7 @@ final readonly class RegexParser
      *
      * @param string $regex The regular expression to validate
      *
-     * @return \PhpRegex\Parser\Validation\ValidationResult Detailed validation result
+     * @return ValidationResult Detailed validation result
      */
     public function validate(string $regex): ValidationResult
     {
@@ -196,7 +196,7 @@ final readonly class RegexParser
      * @param string $flags     The regex flags
      * @param string $delimiter The regex delimiter
      *
-     * @return \PhpRegex\Parser\Node\RegexNode Parsed AST
+     * @return RegexNode Parsed AST
      */
     public function parsePattern(string $pattern, string $flags = '', string $delimiter = '/'): RegexNode
     {
@@ -261,9 +261,9 @@ final readonly class RegexParser
      * that need to predict where an entry lands share one implementation
      * with the cache itself.
      *
-     * @param string                      $regex             The regex as written, delimiters included
-     * @param \PhpRegex\Parser\PcreTarget $target            The PHP and PCRE2 judged
-     * @param int                         $maxRecursionDepth The parse recursion limit in force
+     * @param string     $regex             The regex as written, delimiters included
+     * @param PcreTarget $target            The PHP and PCRE2 judged
+     * @param int        $maxRecursionDepth The parse recursion limit in force
      */
     public static function cacheSeed(string $regex, PcreTarget $target, int $maxRecursionDepth): string
     {
@@ -359,7 +359,7 @@ final readonly class RegexParser
      * The first error in a character class the tokens close before $position,
      * where parsing failed: each such class is parsed alone and judged.
      *
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function firstClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
     {
@@ -398,7 +398,7 @@ final readonly class RegexParser
      * The first error in an extended class "(?[...])" before $position: each
      * is read alone and judged, as PCRE judges it when it reads it.
      *
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function firstExtendedClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?RegexException
     {
@@ -426,7 +426,7 @@ final readonly class RegexParser
      * close before $position, where parsing failed: PCRE judges the version
      * as it reads it. Each such condition is parsed alone and judged.
      *
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function firstVersionConditionErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
     {
@@ -482,7 +482,7 @@ final readonly class RegexParser
      *
      * @param string $regex The regex to parse
      *
-     * @return \PhpRegex\Parser\Node\RegexNode The parsed AST
+     * @return RegexNode The parsed AST
      */
     private function doParse(string $regex): RegexNode
     {
@@ -575,7 +575,7 @@ final readonly class RegexParser
      *
      * @param string $regex The regex pattern to look up
      *
-     * @return array{0: \PhpRegex\Parser\Node\RegexNode|null, 1: string|null} Cached AST and cache key
+     * @return array{0: RegexNode|null, 1: string|null} Cached AST and cache key
      */
     private function loadFromCache(string $regex): array
     {
@@ -604,8 +604,8 @@ final readonly class RegexParser
     /**
      * Store a parsed regex AST in cache.
      *
-     * @param string|null                     $cacheKey The cache key to store under
-     * @param \PhpRegex\Parser\Node\RegexNode $ast      The AST to cache
+     * @param string|null $cacheKey The cache key to store under
+     * @param RegexNode   $ast      The AST to cache
      */
     private function storeInCache(?string $cacheKey, RegexNode $ast): void
     {
@@ -641,8 +641,8 @@ final readonly class RegexParser
     /**
      * Validate an AST with the appropriate validators.
      *
-     * @param \PhpRegex\Parser\Node\RegexNode $ast     The AST to validate
-     * @param string|null                     $pattern The original pattern for context
+     * @param RegexNode   $ast     The AST to validate
+     * @param string|null $pattern The original pattern for context
      */
     private function validateAst(RegexNode $ast, ?string $pattern): void
     {
@@ -653,7 +653,7 @@ final readonly class RegexParser
     /**
      * Calculate complexity score for an AST.
      *
-     * @param \PhpRegex\Parser\Node\RegexNode $ast The AST to score
+     * @param RegexNode $ast The AST to score
      *
      * @return int Complexity score
      */
@@ -667,9 +667,9 @@ final readonly class RegexParser
     /**
      * Build a validation failure result from an exception.
      *
-     * @param \PhpRegex\Parser\Exception\ExceptionInterface $exception The judgement on the pattern
+     * @param ExceptionInterface $exception The judgement on the pattern
      *
-     * @return \PhpRegex\Parser\Validation\ValidationResult Validation failure result
+     * @return ValidationResult Validation failure result
      */
     private function buildValidationFailure(ExceptionInterface $exception): ValidationResult
     {
@@ -720,10 +720,10 @@ final readonly class RegexParser
     /**
      * Build a fallback AST when parsing fails.
      *
-     * @param \PhpRegex\Parser\Exception\LexerException|\PhpRegex\Parser\Exception\ParserException $exception The parse exception
-     * @param string                                                                               $regex     The original regex
+     * @param LexerException|ParserException $exception The parse exception
+     * @param string                         $regex     The original regex
      *
-     * @return \PhpRegex\Parser\Node\RegexNode Fallback AST
+     * @return RegexNode Fallback AST
      */
     private function buildFallbackAstFromException(LexerException|ParserException $exception, string $regex): RegexNode
     {
@@ -761,7 +761,7 @@ final readonly class RegexParser
      * @param int      $patternLength Length of the pattern
      * @param int|null $errorPosition Position where error occurred
      *
-     * @return \PhpRegex\Parser\Node\RegexNode Fallback AST
+     * @return RegexNode Fallback AST
      */
     private function buildFallbackAst(
         string $pattern,
@@ -811,7 +811,7 @@ final readonly class RegexParser
      *
      * @param string $regex The regex to parse
      *
-     * @return \PhpRegex\Parser\Node\RegexNode The parsed AST
+     * @return RegexNode The parsed AST
      */
     private function parseFromScratch(string $regex): RegexNode
     {

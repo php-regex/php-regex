@@ -235,7 +235,7 @@ final class VisitorExhaustivenessTest extends TestCase
     }
 
     /**
-     * @return iterable<class-string, \PhpRegex\Parser\NodeVisitorInterface<mixed>>
+     * @return iterable<class-string, NodeVisitorInterface<mixed>>
      */
     private static function instantiableVisitors(): iterable
     {

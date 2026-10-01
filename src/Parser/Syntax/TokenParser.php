@@ -190,7 +190,7 @@ final class TokenParser
     private int $capturesBefore = 0;
 
     /**
-     * @param \PhpRegex\Parser\PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
     {
@@ -341,7 +341,7 @@ final class TokenParser
      * provided node list. This is used at the sequence level so that /x
      * comments are preserved in the AST with accurate positions.
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $nodes
+     * @param array<NodeInterface> $nodes
      */
     private function consumeExtendedModeContent(array &$nodes): bool
     {
@@ -465,8 +465,8 @@ final class TokenParser
      * expects to find right under it, and the comments follow it. With no
      * item before it, the atom parser reports the quantifier.
      *
-     * @param array<\PhpRegex\Parser\Node\NodeInterface> $nodes
-     * @param \PhpRegex\Parser\Node\LiteralNode|null     $quotedRun the last run of text read between \Q and \E
+     * @param array<NodeInterface> $nodes
+     * @param LiteralNode|null     $quotedRun the last run of text read between \Q and \E
      */
     private function quantifyPreviousItem(array &$nodes, ?LiteralNode $quotedRun): bool
     {
@@ -646,7 +646,7 @@ final class TokenParser
     }
 
     /**
-     * @return array{0: string, 1: \PhpRegex\Parser\Node\QuantifierType}
+     * @return array{0: string, 1: QuantifierType}
      */
     private function parseQuantifierValue(string $value): array
     {
@@ -830,7 +830,7 @@ final class TokenParser
      * where it stopped reading: on the opener's absence, where a name should
      * start, past a leading digit, or where the closer should be.
      *
-     * @throws \PhpRegex\Parser\Exception\ParserException
+     * @throws ParserException
      */
     private function guardNamedReferenceEscape(): void
     {
@@ -888,7 +888,7 @@ final class TokenParser
      * range — and that is handled by the callers.
      */
     /**
-     * @param list<\PhpRegex\Parser\Token\TokenType> $extraTypes atoms the calling context also accepts
+     * @param list<TokenType> $extraTypes atoms the calling context also accepts
      */
     private function matchAtom(int $startPosition, array $extraTypes = []): ?NodeInterface
     {
@@ -1816,7 +1816,7 @@ final class TokenParser
      * The first operand of an extended class PCRE refuses: it reads and judges
      * each one before it meets what is wrong further on.
      *
-     * @param list<\PhpRegex\Parser\Node\NodeInterface> $operands
+     * @param list<NodeInterface> $operands
      */
     private function firstOperandError(array $operands, int $start): ?ParserException
     {
@@ -1876,9 +1876,9 @@ final class TokenParser
      * Tokens read apart, moved to where they stand in the whole pattern.
      * Under "xx", a class skips its blanks, but not those "\Q...\E" quotes.
      *
-     * @param array<\PhpRegex\Parser\Token\Token> $read
+     * @param array<Token> $read
      *
-     * @return list<\PhpRegex\Parser\Token\Token>
+     * @return list<Token>
      */
     private function movedTokens(array $read, int $at, bool $class = true): array
     {
@@ -1904,7 +1904,7 @@ final class TokenParser
      * A member of a class PCRE refuses before $position, where reading the
      * class failed: PCRE judges each member as it reads it.
      *
-     * @param list<\PhpRegex\Parser\Token\Token> $tokens
+     * @param list<Token> $tokens
      */
     private function firstMemberErrorBefore(array $tokens, int $position): ?ParserException
     {
@@ -2187,7 +2187,7 @@ final class TokenParser
     }
 
     /**
-     * @param array{0: int, 1: \PhpRegex\Parser\ErrorCode, 2: string} $fault
+     * @param array{0: int, 1: ErrorCode, 2: string} $fault
      */
     private function groupListError(array $fault): ParserException
     {
@@ -2962,7 +2962,7 @@ final class TokenParser
     /**
      * PCRE takes a range between two characters; "[\d-z]" names no range.
      *
-     * @throws \PhpRegex\Parser\Exception\ParserException
+     * @throws ParserException
      */
     private function guardRangeEndpoint(NodeInterface $node, int $position, bool $isEnd): void
     {
@@ -3058,7 +3058,7 @@ final class TokenParser
     /**
      * Parses a single character class atom (literal, char type, unicode, etc).
      *
-     * @return array{0: \PhpRegex\Parser\Node\NodeInterface, 1: int} The node and its end position
+     * @return array{0: NodeInterface, 1: int} The node and its end position
      */
     private function parseCharClassAtom(int $startPosition): array
     {
@@ -3338,9 +3338,9 @@ final class TokenParser
      *
      * @param int $start the offset of the "("
      *
-     * @return array{0: int, 1: \PhpRegex\Parser\ErrorCode, 2: string} the offset, the code,
-     *                                                                 and the message, whose
-     *                                                                 "%d" is the offset
+     * @return array{0: int, 1: ErrorCode, 2: string} the offset, the code,
+     *                                                and the message, whose
+     *                                                "%d" is the offset
      */
     private function unreadableGroupFault(int $start): array
     {
@@ -3462,7 +3462,7 @@ final class TokenParser
      *
      * @param int $start the offset of the "(" of "(?C"
      *
-     * @return array{0: int, 1: \PhpRegex\Parser\ErrorCode}|null
+     * @return array{0: int, 1: ErrorCode}|null
      */
     private function calloutFault(int $start): ?array
     {
@@ -3571,7 +3571,7 @@ final class TokenParser
      * item before it can repeat: "{2,1}" is out of order and "{65536}" too
      * big wherever they stand.
      *
-     * @throws \PhpRegex\Parser\Exception\ParserException
+     * @throws ParserException
      */
     private function guardQuantifierCount(Token $token): void
     {
@@ -3722,7 +3722,7 @@ final class TokenParser
      * Read a lookaround, given the characters that introduce the ones this
      * position accepts.
      *
-     * @param array<string, \PhpRegex\Parser\Node\GroupType> $kinds
+     * @param array<string, GroupType> $kinds
      */
     private function matchLookaround(int $startPosition, array $kinds): ?GroupNode
     {

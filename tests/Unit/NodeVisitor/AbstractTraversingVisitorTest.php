@@ -191,7 +191,7 @@ final class AbstractTraversingVisitorTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{\PhpRegex\Parser\Node\NodeInterface}>
+     * @return iterable<string, array{NodeInterface}>
      */
     public static function provideEveryNodeClass(): iterable
     {
@@ -241,7 +241,7 @@ final class AbstractTraversingVisitorTest extends TestCase
     }
 
     /**
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     private static function everyNodeClass(): array
     {
@@ -289,7 +289,7 @@ final class AbstractTraversingVisitorTest extends TestCase
      * The backreferences a node holds, read from its properties rather than
      * from getChildren(): a node that hides a child from both is caught.
      *
-     * @return list<\PhpRegex\Parser\Node\BackrefNode>
+     * @return list<BackrefNode>
      */
     private static function heldBackrefs(NodeInterface $node): array
     {

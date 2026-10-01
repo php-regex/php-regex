@@ -21,8 +21,8 @@ namespace PhpRegex\Automata\Model;
 final readonly class NfaState
 {
     /**
-     * @param array<\PhpRegex\Automata\Model\NfaTransition> $transitions
-     * @param array<int>                                    $epsilonTransitions
+     * @param array<NfaTransition> $transitions
+     * @param array<int>           $epsilonTransitions
      */
     public function __construct(
         public int $id,

@@ -174,7 +174,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
     /**
      * @param array<int, array{file: string, reason: string}> $skippedFiles
      *
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice>
+     * @return array<int, AnalysisNotice>
      */
     private function buildAccessWarnings(SecurityAccessControlReport $report, array $skippedFiles): array
     {
@@ -241,7 +241,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice>
+     * @return array<int, AnalysisNotice>
      */
     private function buildAccessSummary(SecurityAccessControlReport $report, bool $includeOverlaps): array
     {

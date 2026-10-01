@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PhpRegex\Tests\Unit\Cli;
 
 use PhpRegex\Cli\ApplicationFactory;
+use PhpRegex\Cli\Command\CommandInterface;
 use PhpRegex\Cli\Command\HelpCommand;
 use PhpRegex\Cli\GlobalOptions;
 use PhpRegex\Cli\Input;
@@ -54,7 +55,7 @@ final class HelpCoversEveryCommandTest extends TestCase
     }
 
     /**
-     * @return array<int, \PhpRegex\Cli\Command\CommandInterface>
+     * @return array<int, CommandInterface>
      */
     private function commands(): array
     {

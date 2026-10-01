@@ -23,6 +23,7 @@ use PhpRegex\Parser\Exception\LexerException;
 use PhpRegex\Parser\Exception\ParserException;
 use PhpRegex\Parser\Validation\ValidationResult;
 use PhpRegex\Redos\Confirmation;
+use PhpRegex\Redos\ConfirmationOptions;
 use PhpRegex\Redos\RedosAnalysis;
 use PhpRegex\Redos\RedosMode;
 use PhpRegex\Redos\RedosSeverity;
@@ -101,7 +102,7 @@ final class AnalyzeCommand extends AbstractCommand
     /**
      * @param array<int, string> $args
      *
-     * @return array{pattern: string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: ?string}
+     * @return array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
      */
     private function parseArguments(array $args): array
     {
@@ -230,7 +231,7 @@ final class AnalyzeCommand extends AbstractCommand
     }
 
     /**
-     * @return array{pattern: string, format: string, redosMode: \PhpRegex\Redos\RedosMode, redosThreshold: ?\PhpRegex\Redos\RedosSeverity, confirmOptions: ?\PhpRegex\Redos\ConfirmationOptions, error: string}
+     * @return array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: string}
      */
     private function errorResult(string $format, RedosMode $redosMode, ?RedosSeverity $redosThreshold, string $error): array
     {

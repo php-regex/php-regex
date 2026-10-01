@@ -31,7 +31,7 @@ abstract readonly class AbstractNode implements NodeInterface
     }
 
     /**
-     * @return list<\PhpRegex\Parser\Node\NodeInterface>
+     * @return list<NodeInterface>
      */
     public function getChildren(): array
     {

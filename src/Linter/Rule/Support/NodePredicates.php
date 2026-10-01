@@ -109,7 +109,7 @@ final class NodePredicates
     /**
      * Determine if the given sequence can match an empty string.
      *
-     * @param array<int, \PhpRegex\Parser\Node\NodeInterface> $nodes
+     * @param array<int, NodeInterface> $nodes
      */
     public static function sequenceCanBeEmpty(array $nodes): bool
     {

@@ -32,7 +32,7 @@ final class CodePointReaderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{escape: string, type: \PhpRegex\Parser\Node\CharLiteralType, codePoint: int}>
+     * @return iterable<string, array{escape: string, type: CharLiteralType, codePoint: int}>
      */
     public static function provideEscapes(): iterable
     {

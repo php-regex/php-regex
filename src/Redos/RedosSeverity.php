@@ -55,7 +55,7 @@ enum RedosSeverity: string
      * critical, in any case. "safe" and "unknown" are verdicts a pattern
      * gets, not levels to report from, and are refused like any other word.
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException when the value names no threshold
+     * @throws InvalidRegexOptionException when the value names no threshold
      */
     public static function fromConfig(string $value): self
     {

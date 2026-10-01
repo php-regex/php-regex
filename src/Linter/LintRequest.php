@@ -23,12 +23,12 @@ use PhpRegex\Optimizer\OptimizerOptions;
 final readonly class LintRequest
 {
     /**
-     * @param array<string>                        $paths
-     * @param array<string>                        $excludePaths
-     * @param array<string>                        $disabledSources
-     * @param \PhpRegex\Optimizer\OptimizerOptions $optimizations   what an optimization may rewrite; lint checks every
-     *                                                              rewrite with the automata unless told otherwise
-     * @param array<string, bool>                  $lintRules
+     * @param array<string>       $paths
+     * @param array<string>       $excludePaths
+     * @param array<string>       $disabledSources
+     * @param OptimizerOptions    $optimizations   what an optimization may rewrite; lint checks every
+     *                                             rewrite with the automata unless told otherwise
+     * @param array<string, bool> $lintRules
      */
     public function __construct(
         public array $paths,

@@ -79,7 +79,7 @@ final readonly class OptimizerOptions
      *                                         canonicalize_char_classes, possessive, factorize,
      *                                         min_quantifier_count, verify_with_automata
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on a key it does not know or a value of the wrong type
+     * @throws InvalidRegexOptionException on a key it does not know or a value of the wrong type
      */
     public static function fromArray(array $options): self
     {
@@ -90,7 +90,7 @@ final readonly class OptimizerOptions
      * @param array<array-key, mixed> $options keyed in camelCase, as regex.json and the PHPStan
      *                                         parameters are
      *
-     * @throws \PhpRegex\Parser\Exception\InvalidRegexOptionException on a key it does not know or a value of the wrong type
+     * @throws InvalidRegexOptionException on a key it does not know or a value of the wrong type
      */
     public static function fromCamelCaseArray(array $options): self
     {

@@ -87,7 +87,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         $result = null;
 
         foreach ($node->alternatives as $alt) {
-            /** @var \PhpRegex\Parser\Analysis\LiteralSet $altSet */
+            /** @var LiteralSet $altSet */
             $altSet = $alt->accept($this);
 
             if (null === $result) {
@@ -112,7 +112,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         $accepted = false;
 
         foreach ($node->children as $child) {
-            /** @var \PhpRegex\Parser\Analysis\LiteralSet $childSet */
+            /** @var LiteralSet $childSet */
             $childSet = $child->accept($this);
             $result = $result->concat($childSet);
             $accepted = $accepted || $this->mayAccept($child);
@@ -149,7 +149,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
 
         $this->caseInsensitive = $caseInsensitive;
 
-        /** @var \PhpRegex\Parser\Analysis\LiteralSet $result */
+        /** @var LiteralSet $result */
         $result = $node->child->accept($this);
 
         // Restore state
@@ -170,7 +170,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
                 return LiteralSet::fromString(''); // Matches empty string
             }
 
-            /** @var \PhpRegex\Parser\Analysis\LiteralSet $childSet */
+            /** @var LiteralSet $childSet */
             $childSet = $node->node->accept($this);
 
             // Repeat concatenation
@@ -188,7 +188,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         // Case 2: + or {n,} or {n,m} with n >= 1 (At least 1)
         // We can extract the literal from the node, but it's not complete anymore because of the tail
         if (null !== $bounds && $bounds->min >= 1) {
-            /** @var \PhpRegex\Parser\Analysis\LiteralSet $childSet */
+            /** @var LiteralSet $childSet */
             $childSet = $node->node->accept($this);
 
             // The literal is present at least once, but followed by unknown quantity.

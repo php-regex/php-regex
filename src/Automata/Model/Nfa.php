@@ -23,7 +23,7 @@ use PhpRegex\Automata\Alphabet\CharSet;
 final readonly class Nfa
 {
     /**
-     * @param array<int, \PhpRegex\Automata\Model\NfaState> $states
+     * @param array<int, NfaState> $states
      */
     public function __construct(
         public int $startState,

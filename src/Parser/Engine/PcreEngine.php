@@ -163,7 +163,7 @@ final readonly class PcreEngine
      *
      * @param \Closure(string): (int|false) $call
      *
-     * @return array{result: int|false, error: \PhpRegex\Parser\Engine\PcreError|null, lastError: int, lastErrorMessage: string}
+     * @return array{result: int|false, error: PcreError|null, lastError: int, lastErrorMessage: string}
      */
     private function run(string $pattern, \Closure $call, ?PcreLimits $limits = null): array
     {

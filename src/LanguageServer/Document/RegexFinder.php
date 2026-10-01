@@ -66,7 +66,7 @@ final class RegexFinder
     /**
      * Find all regex patterns in PHP content.
      *
-     * @return array<\PhpRegex\LanguageServer\Document\RegexOccurrence>
+     * @return array<RegexOccurrence>
      */
     public function find(string $content): array
     {

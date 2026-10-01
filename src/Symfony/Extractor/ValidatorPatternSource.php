@@ -102,7 +102,7 @@ final readonly class ValidatorPatternSource implements PatternSourceInterface
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromMetadata(MetadataInterface $metadata, string $className, string $file, int &$line): array
     {
@@ -135,7 +135,7 @@ final readonly class ValidatorPatternSource implements PatternSourceInterface
     /**
      * @param array<Constraint> $constraints
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     private function extractFromConstraints(array $constraints, string $source, string $file, int &$line): array
     {

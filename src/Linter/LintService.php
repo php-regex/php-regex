@@ -59,7 +59,7 @@ final readonly class LintService
     /**
      * @param callable(int, int): void|null $progress
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<PatternOccurrence>
      */
     public function collectPatterns(LintRequest $request, ?callable $progress = null): array
     {
@@ -75,7 +75,7 @@ final readonly class LintService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $patterns
+     * @param array<PatternOccurrence> $patterns
      */
     public function analyze(array $patterns, LintRequest $request, ?callable $progress = null): LintReport
     {
@@ -84,7 +84,7 @@ final readonly class LintService
         $issues = $this->filterIssuesByRequest($issues, $request);
         $issues = $this->deduplicateIssues($issues);
 
-        /** @var array<array{file: string, line: int, optimization: \PhpRegex\Optimizer\OptimizationResult, savings: int, source?: string}> $optimizations */
+        /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
         $optimizations = $request->checkOptimizations
             ? array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers))
             : [];
@@ -180,7 +180,7 @@ final readonly class LintService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $originalPatterns
+     * @param array<PatternOccurrence> $originalPatterns
      *
      * @phpstan-param array<LintIssue> $issues
      * @phpstan-param array<OptimizationEntry> $optimizations
@@ -200,7 +200,7 @@ final readonly class LintService
     }
 
     /**
-     * @param array<\PhpRegex\Linter\PatternOccurrence> $originalPatterns
+     * @param array<PatternOccurrence> $originalPatterns
      *
      * @return array<string, array{pattern: string, location: string|null}>
      */

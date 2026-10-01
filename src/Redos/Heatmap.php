@@ -26,7 +26,7 @@ final class Heatmap
     private const GRAY = "\033[90m";
 
     /**
-     * @param array<\PhpRegex\Redos\Hotspot|mixed> $hotspots
+     * @param array<Hotspot|mixed> $hotspots
      */
     public function highlight(string $body, array $hotspots, bool $ansi = true): string
     {

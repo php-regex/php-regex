@@ -135,7 +135,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice>
+     * @return array<int, AnalysisNotice>
      */
     private function buildWarnings(RouteConflictReport $report): array
     {
@@ -172,7 +172,7 @@ final readonly class RoutesAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @return array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice>
+     * @return array<int, AnalysisNotice>
      */
     private function buildSummary(RouteConflictReport $report, bool $includeOverlaps): array
     {

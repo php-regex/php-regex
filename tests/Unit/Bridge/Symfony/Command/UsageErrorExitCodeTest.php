@@ -97,7 +97,7 @@ final class UsageErrorExitCodeTest extends TestCase
     }
 
     /**
-     * @param list<\PhpRegex\Symfony\Analyzer\AnalyzerInterface>|null $analyzers
+     * @param list<AnalyzerInterface>|null $analyzers
      */
     private static function analyzeCommand(?array $analyzers = null): AnalyzeCommand
     {

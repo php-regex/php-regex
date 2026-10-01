@@ -54,7 +54,7 @@ final class BodyRelativeOffsetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, options: array<string, mixed>, code: \PhpRegex\Parser\ErrorCode, offset: int, underCaret: string}>
+     * @return iterable<string, array{pattern: string, options: array<string, mixed>, code: ErrorCode, offset: int, underCaret: string}>
      */
     public static function provideFaultsOutsideTheBody(): iterable
     {
@@ -120,7 +120,7 @@ final class BodyRelativeOffsetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, code: \PhpRegex\Parser\ErrorCode}>
+     * @return iterable<string, array{pattern: string, code: ErrorCode}>
      */
     public static function provideFaultsWithNoBody(): iterable
     {

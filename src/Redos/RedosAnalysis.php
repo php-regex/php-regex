@@ -25,9 +25,9 @@ final readonly class RedosAnalysis implements \JsonSerializable
     public ?string $vulnerableSubpattern;
 
     /**
-     * @param array<string>                  $recommendations
-     * @param array<\PhpRegex\Redos\Finding> $findings
-     * @param array<\PhpRegex\Redos\Hotspot> $hotspots
+     * @param array<string>  $recommendations
+     * @param array<Finding> $findings
+     * @param array<Hotspot> $hotspots
      */
     public function __construct(
         public RedosSeverity $severity,
@@ -100,7 +100,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, \PhpRegex\Redos\Finding>, hotspots: array<int|string, \PhpRegex\Redos\Hotspot>, confirmation: \PhpRegex\Redos\Confirmation|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null}
      */
     public function jsonSerialize(): array
     {

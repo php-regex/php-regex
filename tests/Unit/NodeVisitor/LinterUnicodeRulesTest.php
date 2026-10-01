@@ -201,7 +201,7 @@ final class LinterUnicodeRulesTest extends TestCase
     }
 
     /**
-     * @return array<\PhpRegex\Linter\Rule\RuleViolation>
+     * @return array<RuleViolation>
      */
     private function lint(string $pattern, bool $enableShorthandRule = false): array
     {

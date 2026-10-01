@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PhpRegex\Automata;
 
 use PhpRegex\Automata\Builder\DfaBuilder;
+use PhpRegex\Automata\Exception\ComplexityException;
 use PhpRegex\Automata\Model\Dfa;
 use PhpRegex\Automata\Options\SolverOptions;
 use PhpRegex\Automata\Solver\DfaCacheInterface;
@@ -36,15 +37,15 @@ use PhpRegex\Parser\RegexParser;
 final readonly class LanguageSolver
 {
     /**
-     * @param \PhpRegex\Parser\RegexParser|null                $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
-     * @param \PhpRegex\Automata\Solver\DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
+     * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
+     * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
      */
     public function __construct(private ?RegexParser $parser = null, private ?DfaCacheInterface $dfaCache = null) {}
 
     /**
      * Whether some string matches both patterns, and the shortest such string.
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
@@ -64,7 +65,7 @@ final readonly class LanguageSolver
      * Whether every string the left pattern matches is matched by the right one,
      * and the shortest string that is not.
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
@@ -84,7 +85,7 @@ final readonly class LanguageSolver
      * Whether both patterns match exactly the same strings, and the shortest
      * string only one side matches, for each side.
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
@@ -110,7 +111,7 @@ final readonly class LanguageSolver
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *
-     * @throws \PhpRegex\Automata\Exception\ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $pattern, ?SolverOptions $options = null): Dfa
     {
@@ -123,9 +124,9 @@ final readonly class LanguageSolver
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      *
-     * @return array{0: \PhpRegex\Automata\Model\Dfa, 1: \PhpRegex\Automata\Model\Dfa}
+     * @return array{0: Dfa, 1: Dfa}
      */
     private function buildDfas(string $left, string $right, SolverOptions $options): array
     {
@@ -142,7 +143,7 @@ final readonly class LanguageSolver
     }
 
     /**
-     * @throws \PhpRegex\Automata\Exception\ComplexityException
+     * @throws ComplexityException
      */
     private function buildDfa(string $pattern, SolverOptions $options): Dfa
     {

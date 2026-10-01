@@ -671,7 +671,7 @@ final class ParserTest extends TestCase
         $ast = $this->parse('/'.$pattern.'/');
 
         $this->assertInstanceOf(ConditionalNode::class, $ast->pattern);
-        /** @var \PhpRegex\Parser\Node\ConditionalNode $conditional */
+        /** @var ConditionalNode $conditional */
         $conditional = $ast->pattern;
         $condition = $conditional->condition;
         $this->assertInstanceOf(GroupNode::class, $condition);
@@ -689,7 +689,7 @@ final class ParserTest extends TestCase
     {
         $ast = $this->parse('/(?(R)a|b)/');
         $this->assertInstanceOf(ConditionalNode::class, $ast->pattern);
-        /** @var \PhpRegex\Parser\Node\ConditionalNode $cond */
+        /** @var ConditionalNode $cond */
         $cond = $ast->pattern;
         $this->assertInstanceOf(SubroutineNode::class, $cond->condition);
         $this->assertSame('R', $cond->condition->reference);

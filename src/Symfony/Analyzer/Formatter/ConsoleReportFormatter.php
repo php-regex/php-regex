@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PhpRegex\Symfony\Analyzer\Formatter;
 
 use PhpRegex\Parser\Internal\DisplayEscaper;
+use PhpRegex\Symfony\Analyzer\AnalysisNotice;
 use PhpRegex\Symfony\Analyzer\CheckOutcome;
 use PhpRegex\Symfony\Analyzer\IssueDetail;
 use PhpRegex\Symfony\Analyzer\ReportSection;
@@ -101,7 +102,7 @@ final readonly class ConsoleReportFormatter
     }
 
     /**
-     * @param array<int, \PhpRegex\Symfony\Analyzer\AnalysisNotice> $notices
+     * @param array<int, AnalysisNotice> $notices
      */
     private function renderNotices(SymfonyStyle $io, array $notices): void
     {

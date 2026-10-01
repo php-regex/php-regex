@@ -48,7 +48,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     /**
      * Refuse a construct the target has no way to express.
      *
-     * @throws \PhpRegex\Transpiler\TranspileException
+     * @throws TranspileException
      */
     protected function unsupported(string $message, NodeInterface $node): string
     {
