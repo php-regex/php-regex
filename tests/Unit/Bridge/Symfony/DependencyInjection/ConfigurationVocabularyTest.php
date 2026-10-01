@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -106,7 +106,7 @@ final class ConfigurationVocabularyTest extends TestCase
     public function test_redos_threshold_refuses_what_is_no_threshold(string $value): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('regex_parser.redos.threshold');
+        $this->expectExceptionMessage('php_regex.redos.threshold');
 
         $this->process(['redos' => ['threshold' => $value]]);
     }

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -79,7 +79,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('line="10"', $output);
         $this->assertStringContainsString('column="5"', $output);
         $this->assertStringContainsString('severity="error"', $output);
-        $this->assertStringContainsString('source="regex-parser.regex.syntax.error"', $output);
+        $this->assertStringContainsString('source="php-regex.regex.syntax.error"', $output);
         $this->assertStringContainsString('Invalid regex pattern', $output);
         $this->assertStringContainsString('Location: in function call', $output);
         $this->assertStringContainsString('some &gt; snippet', $output);
@@ -134,8 +134,8 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('<file name="file2.php">', $output);
         $this->assertStringContainsString('severity="warning"', $output);
         $this->assertStringContainsString('severity="error"', $output);
-        $this->assertStringContainsString('regex-parser.regex.lint.quantifier.nested', $output);
-        $this->assertStringContainsString('regex-parser.regex.redos', $output);
+        $this->assertStringContainsString('php-regex.regex.lint.quantifier.nested', $output);
+        $this->assertStringContainsString('php-regex.regex.redos', $output);
     }
 
     public function test_format_with_different_severities(): void
@@ -265,7 +265,7 @@ final class CheckstyleFormatterTest extends TestCase
 
         $this->assertStringContainsString('<?xml version="1.0" encoding="UTF-8"?>', $output);
         $this->assertStringContainsString('<checkstyle version="4.3">', $output);
-        $this->assertStringContainsString('<file name="regex-parser">', $output);
+        $this->assertStringContainsString('<file name="php-regex">', $output);
         $this->assertStringContainsString('Test error message with &lt;tags&gt; &amp; &quot;quotes&quot;', $output);
         $this->assertStringContainsString('</checkstyle>', $output);
     }
@@ -295,7 +295,7 @@ final class CheckstyleFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('source="regex-parser"', $output);
+        $this->assertStringContainsString('source="php-regex"', $output);
         $this->assertStringContainsString('Simple message', $output);
     }
 }

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -54,15 +54,15 @@ final class RegexParserExtensionTest extends TestCase
             ],
         ]], $container);
 
-        $this->assertSame(42, $container->getParameter('regex_parser.max_pattern_length'));
-        $cacheConfig = (array) $container->getParameter('regex_parser.cache');
+        $this->assertSame(42, $container->getParameter('php_regex.max_pattern_length'));
+        $cacheConfig = (array) $container->getParameter('php_regex.cache');
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
-        $this->assertSame(1, $container->getParameter('regex_parser.analysis.warning_threshold'));
+        $this->assertSame(1, $container->getParameter('php_regex.analysis.warning_threshold'));
         // 2.0 has one ignore list, and no complexity score named after ReDoS.
-        $this->assertFalse($container->hasParameter('regex_parser.analysis.redos_threshold'));
-        $this->assertSame(['foo'], $container->getParameter('regex_parser.redos.ignored_patterns'));
-        $this->assertSame('hopcroft', $container->getParameter('regex_parser.automata.minimization_algorithm'));
-        $this->assertSame('subset-indexed', $container->getParameter('regex_parser.automata.determinization_algorithm'));
+        $this->assertFalse($container->hasParameter('php_regex.analysis.redos_threshold'));
+        $this->assertSame(['foo'], $container->getParameter('php_regex.redos.ignored_patterns'));
+        $this->assertSame('hopcroft', $container->getParameter('php_regex.automata.minimization_algorithm'));
+        $this->assertSame('subset-indexed', $container->getParameter('php_regex.automata.determinization_algorithm'));
         $this->assertSame([
             'digits' => true,
             'word' => true,
@@ -71,11 +71,11 @@ final class RegexParserExtensionTest extends TestCase
             'possessive' => false,
             'factorize' => false,
             'min_quantifier_count' => 4,
-        ], $container->getParameter('regex_parser.optimizations'));
+        ], $container->getParameter('php_regex.optimizations'));
 
-        $this->assertTrue($container->hasDefinition('regex_parser.regex'));
-        $this->assertTrue($container->hasDefinition('regex_parser.extractor'));
-        $this->assertTrue($container->hasDefinition('regex_parser.command.lint'));
+        $this->assertTrue($container->hasDefinition('php_regex.regex'));
+        $this->assertTrue($container->hasDefinition('php_regex.extractor'));
+        $this->assertTrue($container->hasDefinition('php_regex.command.lint'));
     }
 
     public function test_load_sets_custom_extractor_alias(): void

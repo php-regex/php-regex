@@ -1,6 +1,6 @@
 # External References
 
-This curated list of external resources provides authoritative information about regex syntax, engine behavior, and performance. These are the sources RegexParser uses when verifying diagnostics and documenting edge cases.
+This curated list of external resources provides authoritative information about regex syntax, engine behavior, and performance. These are the sources PhpRegex uses when verifying diagnostics and documenting edge cases.
 
 ## Table of Contents
 

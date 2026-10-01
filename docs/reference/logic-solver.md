@@ -2,7 +2,7 @@
 
 ## The Concept
 
-RegexParser can transform a regex into a deterministic finite automaton (DFA). That means a pattern becomes a **set of strings**, and comparisons become precise set operations instead of guesswork.
+PhpRegex can transform a regex into a deterministic finite automaton (DFA). That means a pattern becomes a **set of strings**, and comparisons become precise set operations instead of guesswork.
 
 Verified example (intersection):
 
@@ -132,7 +132,7 @@ The public classes of `PhpRegex\Automata` are `LanguageSolver`, `Options\SolverO
 
 ## How it Works (Under the Hood)
 
-RegexParser follows a formal pipeline:
+PhpRegex follows a formal pipeline:
 
 1. AST -> NFA (Thompson construction)
 2. NFA -> DFA (powerset construction)
@@ -142,7 +142,7 @@ The BFS step guarantees the **shortest possible counter-example** when one exist
 
 ## Determinization Strategies
 
-RegexParser determinizes NFAs using a selectable strategy:
+PhpRegex determinizes NFAs using a selectable strategy:
 
 - **subset**: classic powerset construction.
 - **subset-indexed** (default): pre-indexes transition ranges to reduce move checks on large alphabets.
@@ -160,8 +160,8 @@ bin/regex compare '/foo/' '/bar/' --determinizer=subset-indexed
 Symfony bundle:
 
 ```yaml
-# config/packages/regex_parser.yaml
-regex_parser:
+# config/packages/php_regex.yaml
+php_regex:
   automata:
     determinization_algorithm: subset-indexed
 ```
@@ -179,7 +179,7 @@ $options = new SolverOptions(
 
 ## Minimization Strategies and Complexity
 
-RegexParser minimizes DFAs before comparison to shrink the product graph and keep searches fast.
+PhpRegex minimizes DFAs before comparison to shrink the product graph and keep searches fast.
 
 - **Hopcroft worklist** (default): `O(|Σ_eff| · n log n)`
 - **Moore partition refinement**: `O(|Σ_eff| · n^2)`
@@ -199,8 +199,8 @@ bin/regex compare '/foo/' '/bar/' --minimizer=moore
 Symfony bundle:
 
 ```yaml
-# config/packages/regex_parser.yaml
-regex_parser:
+# config/packages/php_regex.yaml
+php_regex:
   automata:
     minimization_algorithm: hopcroft
 ```

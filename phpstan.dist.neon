@@ -20,7 +20,7 @@ parameters:
 
     # The tests probe the running engine behind version guards: judge their
     # patterns for the PHP running the analysis, not for the 8.2 floor.
-    regexParser:
+    phpRegex:
         phpVersion: runtime
 
     paths:

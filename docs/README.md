@@ -1,6 +1,6 @@
-# RegexParser Documentation
+# PhpRegex Documentation
 
-This documentation covers regex fundamentals and how to use RegexParser in PHP projects. It is written for both newcomers and experienced developers.
+This documentation covers regex fundamentals and how to use PhpRegex in PHP projects. It is written for both newcomers and experienced developers.
 
 Start here:
 - [Regex Tutorial](tutorial/README.md)
@@ -15,7 +15,7 @@ Start here:
 - [Quick Start](QUICK_START.md) - Short, practical overview.
 - [Regex in PHP](guides/regex-in-php.md) - PHP-specific behavior.
 
-### Using RegexParser
+### Using PhpRegex
 
 - [CLI Guide](guides/cli.md) - Command reference.
 - [LSP Integration](guides/lsp.md) - IDE integration via Language Server Protocol.
@@ -40,16 +40,16 @@ Start here:
 - [FAQ and Glossary](reference/faq-glossary.md) - Common terms and questions.
 - [Maintainers Guide](MAINTAINERS_GUIDE.md) - Project maintenance notes.
 
-## How RegexParser works in brief
+## How PhpRegex works in brief
 
-RegexParser treats a regex literal as structured input:
+PhpRegex treats a regex literal as structured input:
 
 - The literal is split into pattern and flags.
 - The lexer emits a token stream.
 - The parser builds an AST.
 - Visitors walk the AST to validate, explain, analyze, or transform.
 
-Every example in these docs uses RegexParser as the reference implementation.
+Every example in these docs uses PhpRegex as the reference implementation.
 
 ## Tips for newcomers
 

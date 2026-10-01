@@ -1,6 +1,6 @@
-# Regex Tutorial (RegexParser Edition)
+# Regex Tutorial (PhpRegex Edition)
 
-This tutorial takes you from your first pattern to PCRE features used in production. It uses the RegexParser CLI and API throughout, so you learn regex and the parser at the same time.
+This tutorial takes you from your first pattern to PCRE features used in production. It uses the PhpRegex CLI and API throughout, so you learn regex and the parser at the same time.
 
 ## What You'll Learn
 
@@ -98,7 +98,7 @@ Imagine you're in a library looking for a specific book:
 
 ## Tools You Will Use
 
-### RegexParser CLI
+### PhpRegex CLI
 
 Throughout this tutorial, use the CLI to visualize patterns:
 
@@ -148,7 +148,7 @@ $sample = $regex->generate('/your-pattern/');
 
 1. Skim chapters to find what you need
 2. Focus on the "Good vs Bad" sections
-3. Learn how RegexParser can validate and explain patterns
+3. Learn how PhpRegex can validate and explain patterns
 4. Pay special attention to the [Performance chapter](08-performance-redos.md)
 
 ---

@@ -1,12 +1,12 @@
 # LSP Integration Guide
 
-This guide covers RegexParser's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
+This guide covers PhpRegex's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
 
 ---
 
 ## Overview
 
-The RegexParser LSP server provides:
+The PhpRegex LSP server provides:
 
 - **Real-time diagnostics** - Parse errors, validation issues, and lint warnings
 - **Hover information** - Pattern explanation on mouse hover
@@ -17,7 +17,7 @@ The RegexParser LSP server provides:
 
 ## Quick Start
 
-### 1. Install RegexParser
+### 1. Install PhpRegex
 
 ```bash
 composer require --dev yoeunes/regex-parser
@@ -171,7 +171,7 @@ server.
 ```json
 {
   "lsp.servers": {
-    "regex-parser": {
+    "php-regex": {
       "command": ["vendor/bin/regex-lsp"],
       "filetypes": ["php"]
     }
@@ -199,7 +199,7 @@ Use the [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin by Re
 2. Go to **Settings → Languages & Frameworks → Language Servers**
 
 3. Click **+** to add a new server definition:
-   - **Name:** RegexParser
+   - **Name:** PhpRegex
    - **Command:** `vendor/bin/regex-lsp`
    - **File Mappings:** `*.php`
 
@@ -207,7 +207,7 @@ Use the [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin by Re
 
 **Alternative: PHPStan Integration**
 
-RegexParser also integrates with PHPStan (see [the PHPStan guide](phpstan.md)):
+PhpRegex also integrates with PHPStan (see [the PHPStan guide](phpstan.md)):
 
 1. Install the [PHPStan plugin](https://plugins.jetbrains.com/plugin/12754-phpstan) for PhpStorm
 2. Configure PHPStan in **Settings → PHP → Quality Tools → PHPStan**
@@ -225,9 +225,9 @@ Add to your `init.lua`:
 local lspconfig = require('lspconfig')
 local configs = require('lspconfig.configs')
 
--- Define the regex-parser LSP server
-if not configs.regex_parser then
-  configs.regex_parser = {
+-- Define the php-regex LSP server
+if not configs.php_regex then
+  configs.php_regex = {
     default_config = {
       cmd = { 'vendor/bin/regex-lsp' },
       filetypes = { 'php' },
@@ -238,7 +238,7 @@ if not configs.regex_parser then
 end
 
 -- Enable the server
-lspconfig.regex_parser.setup({
+lspconfig.php_regex.setup({
   on_attach = function(client, bufnr)
     -- Your on_attach function
   end,
@@ -252,7 +252,7 @@ Add to `coc-settings.json`:
 ```json
 {
   "languageserver": {
-    "regex-parser": {
+    "php-regex": {
       "command": "vendor/bin/regex-lsp",
       "filetypes": ["php"],
       "rootPatterns": ["composer.json", ".git"]
@@ -268,7 +268,7 @@ Add to your `.vimrc`:
 ```vim
 if executable('vendor/bin/regex-lsp')
     au User lsp_setup call lsp#register_server({
-        \ 'name': 'regex-parser',
+        \ 'name': 'php-regex',
         \ 'cmd': {server_info->['vendor/bin/regex-lsp']},
         \ 'allowlist': ['php'],
         \ })
@@ -288,7 +288,7 @@ Add to your Emacs config:
  (make-lsp-client
   :new-connection (lsp-stdio-connection '("vendor/bin/regex-lsp"))
   :major-modes '(php-mode)
-  :server-id 'regex-parser))
+  :server-id 'php-regex))
 ```
 
 ### Sublime Text (with LSP package)
@@ -300,7 +300,7 @@ Add to your Emacs config:
 ```json
 {
   "clients": {
-    "regex-parser": {
+    "php-regex": {
       "enabled": true,
       "command": ["vendor/bin/regex-lsp"],
       "selector": "source.php"
@@ -316,9 +316,9 @@ Add to `~/.config/helix/languages.toml`:
 ```toml
 [[language]]
 name = "php"
-language-servers = ["intelephense", "regex-parser"]
+language-servers = ["intelephense", "php-regex"]
 
-[language-server.regex-parser]
+[language-server.php-regex]
 command = "vendor/bin/regex-lsp"
 ```
 
@@ -329,7 +329,7 @@ Add to your settings:
 ```json
 {
   "lsp": {
-    "regex-parser": {
+    "php-regex": {
       "binary": {
         "path": "vendor/bin/regex-lsp"
       }
@@ -337,7 +337,7 @@ Add to your settings:
   },
   "languages": {
     "PHP": {
-      "language_servers": ["intelephense", "regex-parser"]
+      "language_servers": ["intelephense", "php-regex"]
     }
   }
 }

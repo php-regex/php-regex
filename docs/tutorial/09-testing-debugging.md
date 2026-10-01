@@ -1,12 +1,12 @@
-# Chapter 9: Testing and Debugging with RegexParser
+# Chapter 9: Testing and Debugging with PhpRegex
 
-> **Goal:** Use RegexParser to understand, validate, and test your patterns.
+> **Goal:** Use PhpRegex to understand, validate, and test your patterns.
 
 ---
 
-## Why Use RegexParser for Testing?
+## Why Use PhpRegex for Testing?
 
-RegexParser turns cryptic patterns into **readable explanations** and helps you find issues **before** they reach production:
+PhpRegex turns cryptic patterns into **readable explanations** and helps you find issues **before** they reach production:
 
 ```
 Pattern: /^(?<user>\w+)@(?<host>\w+)$/
@@ -233,7 +233,7 @@ $pattern = '/[0-9]+/';  // Remove anchors
 // Suspicious pattern
 $pattern = '/(a+)+$/';
 
-// Test with RegexParser
+// Test with PhpRegex
 $analysis = $regex->redos($pattern);
 
 echo "Severity: " . $analysis->severity->value . "\n";
@@ -272,7 +272,7 @@ Use a bounded quantifier instead of "+".
 Before using a pattern in production:
 
 - [ ] **Explain** - Can you understand what it does?
-- [ ] **Validate** - Does RegexParser report any errors?
+- [ ] **Validate** - Does PhpRegex report any errors?
 - [ ] **Security** - Does ReDoS analysis show "safe"?
 - [ ] **Coverage** - Does it match all expected cases?
 - [ ] **Edge cases** - Does it handle empty strings, special characters?

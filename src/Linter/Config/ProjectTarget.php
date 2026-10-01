@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -77,7 +77,7 @@ final readonly class ProjectTarget
      * the PHP version, composer.json and the running PHP, and for the PCRE2
      * release, the one the PHP version bundles.
      *
-     * @param array<string, string|int|null> $php        source name => version, e.g. "regex_parser.php_version" => "8.2"
+     * @param array<string, string|int|null> $php        source name => version, e.g. "php_regex.php_version" => "8.2"
      * @param array<string, string|null>     $pcre       source name => PCRE2 release
      * @param string|null                    $projectDir where composer.json is read, never a parent of it; null reads none
      * @param array<string, string>          $env        the environment, for COMPOSER

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report an issue to help improve regex-parser
+about: Report an issue to help improve php-regex
 title: '[BUG] '
 labels: bug
 ---
@@ -21,7 +21,7 @@ labels: bug
 
 ## Environment
 - PHP Version: 
-- regex-parser Version: 
+- php-regex Version: 
 - OS: 
 
 ## Code Example

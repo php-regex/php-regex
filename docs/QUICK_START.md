@@ -6,7 +6,7 @@ If you are new to regex, start here and follow the examples. If you already know
 
 ## What this guide covers
 
-- Install RegexParser.
+- Install PhpRegex.
 - Use the CLI for quick analysis.
 - Parse and validate patterns in PHP.
 - Explain patterns in plain English.
@@ -23,7 +23,7 @@ No additional dependencies are required.
 
 If you want to experiment without installing, use <https://regex101.com> in PCRE2 mode.
 
-## How RegexParser works (short version)
+## How PhpRegex works (short version)
 
 - The literal is split into pattern and flags.
 - The lexer emits a token stream.
@@ -62,7 +62,7 @@ then hyphen, then exactly 2 digits.
 
 ## Comparing Patterns
 
-RegexParser can compare two patterns as mathematical sets of strings.
+PhpRegex can compare two patterns as mathematical sets of strings.
 
 ```bash
 # Intersection: do the patterns overlap?
@@ -382,7 +382,7 @@ $result = $regex->validate($pattern);
 
 ## Next steps
 
-Now that you've seen what RegexParser can do, here's where to go next:
+Now that you've seen what PhpRegex can do, here's where to go next:
 
 For beginners:
 - [Learn Regex from Scratch](../tutorial/README.md)

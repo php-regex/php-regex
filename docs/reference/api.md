@@ -363,7 +363,7 @@ echo $result->optimized;   // '/\d+/'
 echo $result->changes[0];  // 'Optimized pattern.'
 ```
 
-When `verifyWithAutomata` is enabled, RegexParser validates that the optimization is language-equivalent for the
+When `verifyWithAutomata` is enabled, PhpRegex validates that the optimization is language-equivalent for the
 supported regular subset. Unsupported patterns fall back to the original behavior.
 
 ---
@@ -598,7 +598,7 @@ foreach ($result->literals as $literal) {
 
 ## Exception Map
 
-RegexParser uses a focused exception hierarchy for precise error handling:
+PhpRegex uses a focused exception hierarchy for precise error handling:
 
 Exception hierarchy (simplified):
 - `ExceptionInterface`
@@ -639,7 +639,7 @@ try {
 try {
     $result = Regex::create()->validate('/test/');
 } catch (\PhpRegex\Parser\Exception\ExceptionInterface $e) {
-    echo "RegexParser error: {$e->getMessage()}";
+    echo "PhpRegex error: {$e->getMessage()}";
 }
 ```
 

@@ -1,6 +1,6 @@
 # Regex Cookbook: Practical Patterns for PHP
 
-This cookbook collects patterns for common validation and parsing tasks. Each pattern is checked with RegexParser's ReDoS analyzer, but you should still review and adapt them for your context.
+This cookbook collects patterns for common validation and parsing tasks. Each pattern is checked with PhpRegex's ReDoS analyzer, but you should still review and adapt them for your context.
 
 > These recipes include a short explanation and a quick validation call so you can use them in tooling or code reviews.
 >

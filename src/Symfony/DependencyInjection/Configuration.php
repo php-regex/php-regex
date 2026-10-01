@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -22,7 +22,7 @@ use Symfony\Component\Config\Definition\Builder\VariableNodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * Defines the configuration schema for the RegexParser bundle.
+ * Defines the configuration schema for the PhpRegex bundle.
  */
 final readonly class Configuration implements ConfigurationInterface
 {
@@ -40,7 +40,7 @@ final readonly class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('regex_parser');
+        $treeBuilder = new TreeBuilder('php_regex');
 
         $treeBuilder->getRootNode()
             ->children()
@@ -55,11 +55,11 @@ final readonly class Configuration implements ConfigurationInterface
                 ->end()
                 ->booleanNode('runtime_pcre_validation')
                     ->defaultFalse()
-                    ->info('Whether the regex_parser.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version.')
+                    ->info('Whether the php_regex.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version.')
                 ->end()
                 ->scalarNode('php_version')
                     ->defaultNull()
-                    ->info('The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The regex_parser.regex service always judges for the running PHP.')
+                    ->info('The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.')
                     ->validate()
                         ->always(static fn (mixed $version): string|int|null => self::targetVersion('php_version', $version))
                     ->end()
@@ -80,7 +80,7 @@ final readonly class Configuration implements ConfigurationInterface
                             ->info('Symfony cache pool service id (PSR-6). Takes precedence over "directory" when set.')
                         ->end()
                          ->scalarNode('directory')
-                             ->defaultValue('%kernel.cache_dir%/regex_parser')
+                             ->defaultValue('%kernel.cache_dir%/php_regex')
                              ->info('Directory path for cached AST files. Set to null to disable caching.')
                         ->end()
                         ->scalarNode('prefix')
@@ -138,7 +138,7 @@ final readonly class Configuration implements ConfigurationInterface
                             ->end()
                             ->validate()
                                 ->ifNotInArray(['hopcroft', 'moore'])
-                                ->thenInvalid('Invalid "regex_parser.automata.minimization_algorithm" value "%s". Allowed: hopcroft, moore.')
+                                ->thenInvalid('Invalid "php_regex.automata.minimization_algorithm" value "%s". Allowed: hopcroft, moore.')
                             ->end()
                         ->end()
                         ->scalarNode('determinization_algorithm')
@@ -150,7 +150,7 @@ final readonly class Configuration implements ConfigurationInterface
                             ->end()
                             ->validate()
                                 ->ifNotInArray(['subset', 'subset-indexed'])
-                                ->thenInvalid('Invalid "regex_parser.automata.determinization_algorithm" value "%s". Allowed: subset, subset-indexed.')
+                                ->thenInvalid('Invalid "php_regex.automata.determinization_algorithm" value "%s". Allowed: subset, subset-indexed.')
                             ->end()
                         ->end()
                     ->end()

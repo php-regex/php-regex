@@ -325,7 +325,7 @@ echo $regex->explain('/\$\d+\.\d{2}/');
 3. **Flags** (`i`, `m`, etc.) modify behavior
 4. **Escape** special characters with `\` to match literally
 5. **Anchors** (`^` and `$`) control where matches occur
-6. **Use RegexParser** to validate and explain your patterns!
+6. **Use PhpRegex** to validate and explain your patterns!
 
 ---
 

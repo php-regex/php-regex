@@ -1,6 +1,6 @@
 # Understanding Visitors
 
-The **Visitor Pattern** is a common design pattern that allows you to add new operations to objects without changing their structure. In RegexParser, visitors process the AST to perform analyses and transformations.
+The **Visitor Pattern** is a common design pattern that allows you to add new operations to objects without changing their structure. In PhpRegex, visitors process the AST to perform analyses and transformations.
 
 ## Simple explanation
 
@@ -50,7 +50,7 @@ $ast->accept($visitor); // Start the traversal
 
 ## Built-in visitors
 
-RegexParser includes several useful visitors:
+PhpRegex includes several useful visitors:
 
 ### 1. PatternPrinter
 ```php
@@ -187,7 +187,7 @@ class GroupNameCollector extends AbstractNodeVisitor
 ## Further reading
 
 - [Visitor Pattern (Wikipedia)](https://en.wikipedia.org/wiki/Visitor_pattern) - Design pattern explanation
-- [RegexParser Architecture](../ARCHITECTURE.md) - Technical implementation details
+- [PhpRegex Architecture](../ARCHITECTURE.md) - Technical implementation details
 - [Extending Guide](../EXTENDING_GUIDE.md) - Building custom tools
 
 ---

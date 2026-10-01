@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -16,7 +16,7 @@ namespace PhpRegex\Symfony;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * Symfony Bundle for the RegexParser library.
+ * Symfony Bundle for the PhpRegex library.
  */
 final class PhpRegexBundle extends Bundle
 {

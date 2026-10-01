@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -82,7 +82,7 @@ return [
     */
     'cache' => [
         'store' => null,
-        'directory' => '{storage_path}/framework/cache/regex-parser',
+        'directory' => '{storage_path}/framework/cache/php-regex',
         'prefix' => 'regex_',
     ],
 

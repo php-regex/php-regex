@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -77,7 +77,7 @@ final class DiagnosticConverterTest extends TestCase
         $issue = new RuleViolation('test', 'message');
         $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
 
-        $this->assertSame('regex-parser', $diagnostic['source']);
+        $this->assertSame('php-regex', $diagnostic['source']);
     }
 
     #[Test]

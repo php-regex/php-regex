@@ -1,6 +1,6 @@
-# Contributing to RegexParser
+# Contributing to PhpRegex
 
-🎉 **Thank you for your interest in contributing to RegexParser!**
+🎉 **Thank you for your interest in contributing to PhpRegex!**
 
 ## Code of Conduct
 
@@ -16,7 +16,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 ```bash
 # 1. Fork & clone
 git clone https://github.com/YOUR-USERNAME/regex-parser.git
-cd regex-parser
+cd php-regex
 
 # 2. Set up environment
 composer install
@@ -125,4 +125,4 @@ Contributors will be:
 - Listed in the project's CONTRIBUTORS file
 - Mentioned in release notes
 
-**Thank you for contributing to RegexParser and helping make regex parsing better for everyone!** 🚀✨
+**Thank you for contributing to PhpRegex and helping make regex parsing better for everyone!** 🚀✨

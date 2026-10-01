@@ -88,7 +88,7 @@ Its parameters name another target:
 
 ```neon
 parameters:
-    regexParser:
+    phpRegex:
         phpVersion: runtime   # the PHP running PHPStan and the PCRE2 it links
         pcreVersion: '10.42'  # or: PHPStan's PHP version with this PCRE2 release
 ```
@@ -290,7 +290,7 @@ $pattern = "/\d{3}-\d{4}/"; // Also works but harder to read
 ## Related concepts
 
 - **[ReDoS Deep Dive](redos.md)** - PCRE's backtracking vulnerabilities
-- **[Architecture](../ARCHITECTURE.md)** - How RegexParser handles PCRE
+- **[Architecture](../ARCHITECTURE.md)** - How PhpRegex handles PCRE
 - **[Regex in PHP Guide](../guides/regex-in-php.md)** - PHP-specific regex details
 
 ## Further reading

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -24,8 +24,8 @@ use PHPUnit\Framework\Attributes\Test;
  * The Artisan commands exit with 2 when the command line or the
  * configuration cannot be used, and keep 1 for the patterns they judged.
  */
-#[WithConfig('regex-parser.cache.directory', null)]
-#[WithConfig('regex-parser.cache.store', null)]
+#[WithConfig('php-regex.cache.directory', null)]
+#[WithConfig('php-regex.cache.store', null)]
 final class UsageErrorExitCodeTest extends TestCase
 {
     /**
@@ -52,7 +52,7 @@ final class UsageErrorExitCodeTest extends TestCase
 
     #[Test]
     #[DataProvider('provideFormats')]
-    #[WithConfig('regex-parser.php_version', 'eight')]
+    #[WithConfig('php-regex.php_version', 'eight')]
     public function test_a_configuration_the_lint_cannot_use_exits_2(string $format): void
     {
         $this->assertSame(2, Artisan::call('regex:lint', ['paths' => ['.'], '--format' => $format, '--no-routes' => true, '--no-validators' => true, '--jobs' => '1']));

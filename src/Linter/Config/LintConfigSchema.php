@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -128,7 +128,7 @@ final class LintConfigSchema
         return [
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
             '$id' => 'https://raw.githubusercontent.com/php-regex/regex-parser/main/regex.schema.json',
-            'title' => 'RegexParser Lint Configuration',
+            'title' => 'PhpRegex Lint Configuration',
             'description' => 'Configuration of the regex lint command (regex.json or regex.dist.json). Keys regex.json sets replace the ones regex.dist.json sets: objects key by key, lists whole.',
             'type' => 'object',
             'additionalProperties' => false,

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -70,7 +70,7 @@ final class ExplainCommand extends Command
             return self::FAILURE;
         }
 
-        $this->line('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Explanation');
+        $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Explanation');
         $this->newLine();
 
         // Show the pattern

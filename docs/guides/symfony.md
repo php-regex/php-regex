@@ -2,7 +2,7 @@
 
 The bundle registers a `Regex` service for your application and the
 `bin/console regex:*` commands. Its configuration lives under the
-`regex_parser` key.
+`php_regex` key.
 
 ## Installation
 
@@ -23,11 +23,11 @@ return [
 Every key is optional; the values below are the defaults.
 
 ```yaml
-# config/packages/regex_parser.yaml
-regex_parser:
+# config/packages/php_regex.yaml
+php_regex:
     max_pattern_length: 100000
     max_lookbehind_length: 255
-    # Whether the regex_parser.regex service also compiles every pattern
+    # Whether the php_regex.regex service also compiles every pattern
     # with the running PHP. regex:lint never does.
     runtime_pcre_validation: false
     # The PHP version and PCRE2 release regex:lint judges patterns for.
@@ -35,7 +35,7 @@ regex_parser:
     pcre_version: null     # "10.42"
     cache:
         pool: null         # a PSR-6 pool service id, used before "directory"
-        directory: '%kernel.cache_dir%/regex_parser'
+        directory: '%kernel.cache_dir%/php_regex'
         prefix: regex_
     extractor_service: null
     redos:
@@ -71,14 +71,14 @@ Symfony routes.
 
 ## The service and the lint judge for different targets
 
-The `regex_parser.regex` service (autowired as `PhpRegex\Toolkit\Regex`) runs in
+The `php_regex.regex` service (autowired as `PhpRegex\Toolkit\Regex`) runs in
 your application: it judges patterns for the PHP running it, and
 `php_version` / `pcre_version` do not change that.
 
 `regex:lint` judges the patterns of your code for the PHP your project
 supports. It picks the target in this order:
 
-1. `regex_parser.php_version` and `regex_parser.pcre_version`;
+1. `php_regex.php_version` and `php_regex.pcre_version`;
 2. `composer.json` in `%kernel.project_dir%`: `config.platform.php` if set,
    else the lowest version `require.php` allows;
 3. the PHP running the command.
@@ -93,15 +93,15 @@ as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "regex_parser.php_version"},
+    "target": {"php": "8.2", "pcre": "10.40", "source": "php_regex.php_version"},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0},
     "results": []
 }
 ```
 
-`source` names where each version came from: `regex_parser.php_version`,
+`source` names where each version came from: `php_regex.php_version`,
 `composer.json require.php`, `composer.json config.platform.php` or
-`running PHP`, followed by `regex_parser.pcre_version` when the PCRE2 release
+`running PHP`, followed by `php_regex.pcre_version` when the PCRE2 release
 came from there.
 
 `runtime_pcre_validation` compiles with the PHP that runs, which cannot tell

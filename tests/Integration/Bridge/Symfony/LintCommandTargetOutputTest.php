@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -66,7 +66,7 @@ final class LintCommandTargetOutputTest extends TestCase
         );
 
         $this->assertIsArray(json_decode($tester->getDisplay(), true), 'stdout is not JSON: '.$tester->getDisplay());
-        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (regex_parser.php_version)', $tester->getErrorOutput());
+        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (php_regex.php_version)', $tester->getErrorOutput());
     }
 
     #[Test]

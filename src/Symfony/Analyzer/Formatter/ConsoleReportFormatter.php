@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -51,13 +51,13 @@ final readonly class ConsoleReportFormatter
 
     public function renderBanner(SymfonyStyle $io): void
     {
-        $io->writeln('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
+        $io->writeln('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
         $io->newLine();
     }
 
     public function renderFooter(SymfonyStyle $io): void
     {
-        $message = 'If RegexParser helps, a GitHub star is appreciated: ';
+        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
         $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $io->newLine();
     }

@@ -1,6 +1,6 @@
 # AST Node Reference
 
-This reference documents every node type in the RegexParser AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
+This reference documents every node type in the PhpRegex AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
 
 ## How to Read This Reference
 

@@ -1,6 +1,6 @@
 # Opt-in checks, on top of extension.neon: lint and ReDoS risks.
 parameters:
-    regexParser:
+    phpRegex:
         checks:
             lint:
                 enabled: true

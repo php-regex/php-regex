@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -42,7 +42,7 @@ final class LintCommand extends Command
     private const FORMAT_CONSOLE = 'console';
 
     /**
-     * Keys of config/regex-parser.php that 2.0 no longer reads, with what
+     * Keys of config/php-regex.php that 2.0 no longer reads, with what
      * to write instead. A config published by 1.x may still hold them.
      */
     private const STALE_KEYS = [
@@ -89,19 +89,19 @@ final class LintCommand extends Command
     {
         $workingDir = base_path();
         $pathHelper = new RelativePathHelper($workingDir);
-        $editorUrl = config('regex-parser.ide');
+        $editorUrl = config('php-regex.ide');
         $linkFormatter = new LinkFormatter(\is_string($editorUrl) ? $editorUrl : null, $pathHelper);
 
         /** @var array<string>|null $pathsArg */
         $pathsArg = $this->argument('paths');
         /** @var array<string> $defaultPaths */
-        $defaultPaths = config('regex-parser.paths', ['app']);
+        $defaultPaths = config('php-regex.paths', ['app']);
         $paths = !empty($pathsArg) ? $pathsArg : $defaultPaths;
 
         /** @var array<string>|null $excludeOption */
         $excludeOption = $this->option('exclude');
         /** @var array<string> $defaultExclude */
-        $defaultExclude = config('regex-parser.exclude', ['vendor', 'node_modules', 'storage']);
+        $defaultExclude = config('php-regex.exclude', ['vendor', 'node_modules', 'storage']);
         $exclude = !empty($excludeOption) ? $excludeOption : $defaultExclude;
 
         $minSavings = (int) $this->option('min-savings');
@@ -128,18 +128,18 @@ final class LintCommand extends Command
         // the project's target, and never compiles with the running PHP.
         try {
             $target = ProjectTarget::fromSources(
-                ['config regex-parser.php_version' => $this->configVersion('php_version')],
-                ['config regex-parser.pcre_version' => $this->configRelease('pcre_version')],
+                ['config php-regex.php_version' => $this->configVersion('php_version')],
+                ['config php-regex.pcre_version' => $this->configRelease('pcre_version')],
                 base_path(),
                 getenv(),
             );
             $parser = Regex::create(PhpRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
             /** @var \PhpRegex\Linter\AnalysisService $appAnalysis */
-            $appAnalysis = $this->laravel->make('regex-parser.analysis');
+            $appAnalysis = $this->laravel->make('php-regex.analysis');
             /** @var \PhpRegex\Linter\LintService $appLint */
-            $appLint = $this->laravel->make('regex-parser.lint');
+            $appLint = $this->laravel->make('php-regex.lint');
         } catch (InvalidRegexOptionException $e) {
-            return $this->renderFailure($format, 'Invalid config/regex-parser.php: '.$e->getMessage());
+            return $this->renderFailure($format, 'Invalid config/php-regex.php: '.$e->getMessage());
         }
         $analysis = $appAnalysis->withParser($parser);
         $lint = $appLint->withAnalysis($analysis);
@@ -194,7 +194,7 @@ final class LintCommand extends Command
             $collectionProgress = null;
         }
 
-        $defaultOptimizations = $this->normalizeOptimizations(config('regex-parser.optimizations', []));
+        $defaultOptimizations = $this->normalizeOptimizations(config('php-regex.optimizations', []));
 
         try {
             $request = new LintRequest(
@@ -273,7 +273,7 @@ final class LintCommand extends Command
     {
         $version = Regex::VERSION;
 
-        $this->line('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
+        $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
         $this->newLine();
 
         $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
@@ -328,7 +328,7 @@ final class LintCommand extends Command
     }
 
     /**
-     * The keys of config/regex-parser.php 2.0 ignores, each with what
+     * The keys of config/php-regex.php 2.0 ignores, each with what
      * replaces it.
      *
      * @return list<string>
@@ -337,9 +337,9 @@ final class LintCommand extends Command
     {
         $warnings = [];
         foreach (self::STALE_KEYS as $key => $replacement) {
-            if (config()->has('regex-parser.'.$key)) {
+            if (config()->has('php-regex.'.$key)) {
                 $warnings[] = \sprintf(
-                    'config/regex-parser.php: "%s" is ignored since 2.0: %s. Re-publish the config (php artisan vendor:publish --tag=regex-parser-config --force) or edit the key.',
+                    'config/php-regex.php: "%s" is ignored since 2.0: %s. Re-publish the config (php artisan vendor:publish --tag=php-regex-config --force) or edit the key.',
                     $key,
                     $replacement,
                 );
@@ -350,11 +350,11 @@ final class LintCommand extends Command
     }
 
     /**
-     * A version of config/regex-parser.php, as written: an int or a string.
+     * A version of config/php-regex.php, as written: an int or a string.
      */
     private function configVersion(string $key): string|int|null
     {
-        $value = config('regex-parser.'.$key);
+        $value = config('php-regex.'.$key);
         if (null === $value || \is_string($value) || \is_int($value)) {
             return $value;
         }
@@ -364,7 +364,7 @@ final class LintCommand extends Command
 
     private function configRelease(string $key): ?string
     {
-        $value = config('regex-parser.'.$key);
+        $value = config('php-regex.'.$key);
         if (null === $value || \is_string($value)) {
             return $value;
         }
@@ -409,7 +409,7 @@ final class LintCommand extends Command
     private function showFooter(): void
     {
         $this->newLine();
-        $message = 'If RegexParser helps, a GitHub star is appreciated: ';
+        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
         $this->line('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $this->newLine();
     }
@@ -475,7 +475,7 @@ final class LintCommand extends Command
     }
 
     /**
-     * The optimizations of config/regex-parser.php, keyed in snake_case as
+     * The optimizations of config/php-regex.php, keyed in snake_case as
      * the optimizer reads them. Lint checks every rewrite with the automata
      * unless the config says otherwise.
      */

@@ -1,11 +1,11 @@
 # ReDoS Guide
 
-ReDoS (Regular Expression Denial of Service) happens when a regex takes exponential time to match certain inputs. This guide explains the risky shapes, how RegexParser detects them, and how to mitigate them.
+ReDoS (Regular Expression Denial of Service) happens when a regex takes exponential time to match certain inputs. This guide explains the risky shapes, how PhpRegex detects them, and how to mitigate them.
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it explicitly:
 > - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
-> - PHPStan: include `rules.neon`, or set `regexParser.checks.redos.enabled: true` (see [the PHPStan guide](guides/phpstan.md))
-> - Symfony: `regex_parser.redos.enabled: true` in bundle configuration
+> - PHPStan: include `rules.neon`, or set `phpRegex.checks.redos.enabled: true` (see [the PHPStan guide](guides/phpstan.md))
+> - Symfony: `php_regex.redos.enabled: true` in bundle configuration
 
 ## What Is ReDoS?
 
@@ -22,7 +22,7 @@ Input:   "aaaaa!"
 
 ## Philosophy & Accuracy
 
-RegexParser separates what is guaranteed from what is heuristic:
+PhpRegex separates what is guaranteed from what is heuristic:
 
 - **Guaranteed:** parsing, AST structure, error offsets, and syntax validation for the targeted PHP/PCRE version.
 - **Heuristic:** ReDoS analysis is structural and conservative; treat findings as potential risk unless confirmed.
@@ -64,7 +64,7 @@ Practical risk depends on runtime settings:
 - **JIT** can drastically change performance characteristics.
 - **Backtrack/recursion limits** cap how much work the engine can do before failing.
 
-RegexParser reports these values in the CLI so you can interpret findings in context.
+PhpRegex reports these values in the CLI so you can interpret findings in context.
 
 ## How to Report a Vulnerability Responsibly
 
@@ -78,7 +78,7 @@ See [SECURITY.md](../SECURITY.md) for reporting channels.
 
 ## Risky Pattern Shapes
 
-RegexParser focuses on structural patterns that cause backtracking blowups:
+PhpRegex focuses on structural patterns that cause backtracking blowups:
 
 - Nested unbounded quantifiers: `(a+)+`, `(.*)*`
 - Overlapping alternation inside repetition: `(a|aa)+`
@@ -89,9 +89,9 @@ RegexParser focuses on structural patterns that cause backtracking blowups:
 
 These are not always unsafe, but they are the common sources of catastrophic backtracking.
 
-## How RegexParser Detects ReDoS
+## How PhpRegex Detects ReDoS
 
-RegexParser analyzes the AST without executing the pattern:
+PhpRegex analyzes the AST without executing the pattern:
 
 ```
 /pattern/flags
@@ -115,7 +115,7 @@ Key heuristics in `RedosProfiler` include:
 - Ambiguous adjacent quantifiers with overlapping character sets
 - Atomic groups and possessive quantifiers reducing severity
 
-## Using RegexParser
+## Using PhpRegex
 
 ### CLI
 

@@ -1,6 +1,6 @@
 # AST Traversal Design
 
-Understanding how RegexParser walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
+Understanding how PhpRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
 
 ## The Tour Guide Analogy
 
@@ -8,7 +8,7 @@ Think of the AST as a museum floor plan and the visitor as a tour guide. The vis
 
 ## Why Use the Visitor Pattern?
 
-RegexParser separates **data** (nodes) from **behavior** (visitors). This separation provides three key benefits:
+PhpRegex separates **data** (nodes) from **behavior** (visitors). This separation provides three key benefits:
 
 | Concern         | Without Visitor Pattern | With Visitor Pattern   |
 |-----------------|-------------------------|------------------------|
@@ -62,7 +62,7 @@ AlternationNode
 
 ## Traversal strategies
 
-RegexParser uses depth-first traversal with explicit control in the visitor. Typical delegation:
+PhpRegex uses depth-first traversal with explicit control in the visitor. Typical delegation:
 
 - `RegexNode` delegates to `pattern`.
 - `SequenceNode` iterates children left-to-right.

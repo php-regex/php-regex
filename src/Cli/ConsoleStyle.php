@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -91,7 +91,7 @@ final readonly class ConsoleStyle
     {
         $version = Regex::VERSION;
         $this->output->write(
-            $this->output->color('RegexParser', Output::CYAN.Output::BOLD)
+            $this->output->color('PhpRegex', Output::CYAN.Output::BOLD)
             .' '
             .$this->output->warning($version)
             ." by Younes ENNAJI\n",

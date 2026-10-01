@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -14,6 +14,6 @@ declare(strict_types=1);
 namespace PhpRegex\Parser\Exception;
 
 /**
- * Defines a common contract for all exceptions thrown by the regex-parser library.
+ * Defines a common contract for all exceptions thrown by the php-regex library.
  */
 interface ExceptionInterface extends \Throwable {}

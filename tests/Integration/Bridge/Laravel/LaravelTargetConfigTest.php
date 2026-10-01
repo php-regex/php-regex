@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -24,13 +24,13 @@ use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * config/regex-parser.php in 2.0: runtime validation off unless asked,
+ * config/php-regex.php in 2.0: runtime validation off unless asked,
  * whatever APP_DEBUG says; php_version / pcre_version judge the lint command
  * only, the Regex service keeps the running engine; one threshold reading;
  * the automata settings reach regex:compare.
  */
-#[WithConfig('regex-parser.cache.directory', null)]
-#[WithConfig('regex-parser.cache.store', null)]
+#[WithConfig('php-regex.cache.directory', null)]
+#[WithConfig('php-regex.cache.store', null)]
 final class LaravelTargetConfigTest extends TestCase
 {
     /**
@@ -68,29 +68,29 @@ final class LaravelTargetConfigTest extends TestCase
         // 1.x read APP_DEBUG: a debug app compiled every pattern twice.
         $this->assertTrue((bool) config('app.debug'), 'The test needs a debug app to mean anything.');
 
-        $this->assertFalse(config('regex-parser.runtime_pcre_validation'));
+        $this->assertFalse(config('php-regex.runtime_pcre_validation'));
         $this->assertFalse($this->runtimeValidationOf($this->regexService()->parser()));
     }
 
     #[Test]
     public function test_php_and_pcre_versions_default_to_null(): void
     {
-        $this->assertTrue(config()->has('regex-parser.php_version'));
-        $this->assertTrue(config()->has('regex-parser.pcre_version'));
-        $this->assertNull(config('regex-parser.php_version'));
-        $this->assertNull(config('regex-parser.pcre_version'));
+        $this->assertTrue(config()->has('php-regex.php_version'));
+        $this->assertTrue(config()->has('php-regex.pcre_version'));
+        $this->assertNull(config('php-regex.php_version'));
+        $this->assertNull(config('php-regex.pcre_version'));
     }
 
     #[Test]
-    #[WithConfig('regex-parser.php_version', '8.2')]
-    #[WithConfig('regex-parser.pcre_version', '10.40')]
+    #[WithConfig('php-regex.php_version', '8.2')]
+    #[WithConfig('php-regex.pcre_version', '10.40')]
     public function test_php_version_leaves_the_regex_service_on_the_running_engine(): void
     {
         $this->assertTrue($this->regexService()->target()->isRunningEngine());
     }
 
     #[Test]
-    #[WithConfig('regex-parser.php_version', '8.2')]
+    #[WithConfig('php-regex.php_version', '8.2')]
     public function test_php_version_drives_the_lint_command_target(): void
     {
         [$status, $json] = $this->lintJson();
@@ -102,7 +102,7 @@ final class LaravelTargetConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.pcre_version', '10.42')]
+    #[WithConfig('php-regex.pcre_version', '10.42')]
     public function test_pcre_version_alone_drives_the_lint_command_target(): void
     {
         [, $json] = $this->lintJson();
@@ -112,8 +112,8 @@ final class LaravelTargetConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.runtime_pcre_validation', true)]
-    #[WithConfig('regex-parser.php_version', '8.2')]
+    #[WithConfig('php-regex.runtime_pcre_validation', true)]
+    #[WithConfig('php-regex.php_version', '8.2')]
     public function test_the_lint_command_does_not_inherit_runtime_validation(): void
     {
         // Runtime validation compiles with the running PHP, which cannot
@@ -128,41 +128,41 @@ final class LaravelTargetConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'severe')]
+    #[WithConfig('php-regex.redos.threshold', 'severe')]
     public function test_an_unknown_threshold_is_refused(): void
     {
         // 1.x read it as "high".
         $this->expectException(InvalidRegexOptionException::class);
 
-        $this->app?->make('regex-parser.analysis');
+        $this->app?->make('php-regex.analysis');
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'safe')]
+    #[WithConfig('php-regex.redos.threshold', 'safe')]
     public function test_safe_is_refused_as_threshold(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        $this->app?->make('regex-parser.analysis');
+        $this->app?->make('php-regex.analysis');
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'CRITICAL')]
+    #[WithConfig('php-regex.redos.threshold', 'CRITICAL')]
     public function test_an_upper_case_threshold_is_read(): void
     {
-        $this->assertNotNull($this->app?->make('regex-parser.analysis'));
+        $this->assertNotNull($this->app?->make('php-regex.analysis'));
     }
 
     #[Test]
     public function test_analysis_redos_threshold_is_gone_from_the_config(): void
     {
-        $this->assertFalse(config()->has('regex-parser.analysis.redos_threshold'));
-        $this->assertSame(50, config('regex-parser.analysis.warning_threshold'));
+        $this->assertFalse(config()->has('php-regex.analysis.redos_threshold'));
+        $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
     }
 
     #[Test]
-    #[WithConfig('regex-parser.automata.minimization_algorithm', 'moore')]
-    #[WithConfig('regex-parser.automata.determinization_algorithm', 'subset')]
+    #[WithConfig('php-regex.automata.minimization_algorithm', 'moore')]
+    #[WithConfig('php-regex.automata.determinization_algorithm', 'subset')]
     public function test_the_automata_settings_are_the_compare_command_defaults(): void
     {
         $status = Artisan::call('regex:compare', ['pattern1' => '/[0-9]+/', 'pattern2' => '/\d+/', '--format' => 'json']);

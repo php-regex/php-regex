@@ -99,12 +99,12 @@ $analysis = Regex::create()->redos('/(a+)+$/');
 ## Related concepts
 
 - **[Understanding Visitors](visitors.md)** - How visitors process ASTs
-- **[Architecture](../ARCHITECTURE.md)** - How RegexParser builds ASTs
+- **[Architecture](../ARCHITECTURE.md)** - How PhpRegex builds ASTs
 - **[Nodes Reference](../nodes/README.md)** - Node type reference
 
 ## Further reading
 
-- [RegexParser Architecture](../ARCHITECTURE.md) - Technical deep dive
+- [PhpRegex Architecture](../ARCHITECTURE.md) - Technical deep dive
 - [AST Traversal Design](../design/AST_TRAVERSAL.md) - How trees are processed
 - [Nodes Reference](../nodes/README.md) - All available node types
 

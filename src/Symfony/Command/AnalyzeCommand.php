@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -32,7 +32,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 #[AsCommand(
     name: 'regex:analyze',
-    description: 'Run RegexParser Symfony bridge analyzers (routes, security).',
+    description: 'Run PhpRegex Symfony bridge analyzers (routes, security).',
 )]
 final class AnalyzeCommand extends Command
 {

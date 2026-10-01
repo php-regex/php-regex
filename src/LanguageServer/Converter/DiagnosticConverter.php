@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -18,7 +18,7 @@ use PhpRegex\Linter\Rule\RuleViolation;
 use PhpRegex\Parser\ErrorCode;
 
 /**
- * Converts RegexParser diagnostics to LSP diagnostic format.
+ * Converts PhpRegex diagnostics to LSP diagnostic format.
  */
 final class DiagnosticConverter
 {
@@ -61,7 +61,7 @@ final class DiagnosticConverter
             ],
             'severity' => $this->mapSeverity($issue->severity),
             'code' => $issue->id,
-            'source' => 'regex-parser',
+            'source' => 'php-regex',
             'message' => $issue->message,
         ];
     }
@@ -90,7 +90,7 @@ final class DiagnosticConverter
             ],
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
-            'source' => 'regex-parser',
+            'source' => 'php-regex',
             'message' => $message,
         ];
     }
@@ -119,7 +119,7 @@ final class DiagnosticConverter
             ],
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
-            'source' => 'regex-parser',
+            'source' => 'php-regex',
             'message' => $message,
         ];
     }

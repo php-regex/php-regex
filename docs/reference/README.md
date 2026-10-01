@@ -1,6 +1,6 @@
 # Reference Index
 
-This section contains the reference material for RegexParser. Use it when you need specific details, error codes, or API behavior.
+This section contains the reference material for PhpRegex. Use it when you need specific details, error codes, or API behavior.
 
 ## Core Reference
 

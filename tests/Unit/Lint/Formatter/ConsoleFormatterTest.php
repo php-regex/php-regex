@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -130,7 +130,7 @@ final class ConsoleFormatterTest extends TestCase
     {
         $output = $this->formatter->formatFooter();
 
-        $this->assertStringContainsString('If RegexParser helps, a GitHub star is appreciated:', $output);
+        $this->assertStringContainsString('If PhpRegex helps, a GitHub star is appreciated:', $output);
         $this->assertStringContainsString('github.com/php-regex/regex-parser', $output);
     }
 

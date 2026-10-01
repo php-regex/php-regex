@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -97,7 +97,7 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
     #[Test]
     public function test_rules_neon_turns_lint_and_redos_on_and_nothing_else(): void
     {
-        $parameters = self::getContainer()->getParameter('regexParser');
+        $parameters = self::getContainer()->getParameter('phpRegex');
 
         $this->assertSame([
             'phpVersion' => null,

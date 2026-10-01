@@ -1,14 +1,14 @@
 # FAQ and Glossary
 
-Short answers to common questions plus quick definitions of core terms used throughout RegexParser documentation.
+Short answers to common questions plus quick definitions of core terms used throughout PhpRegex documentation.
 
 ## Frequently Asked Questions
 
 ### General Questions
 
-#### Does RegexParser execute regexes?
+#### Does PhpRegex execute regexes?
 
-**No.** RegexParser parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
+**No.** PhpRegex parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
 
 ```php
 use PhpRegex\Toolkit\Regex;
@@ -26,7 +26,7 @@ $result = $regex->validate('/test/');
 
 #### Is this PCRE2-only?
 
-**Yes.** RegexParser targets PHP's `preg_*` engine, which uses PCRE2. Patterns are validated against PCRE2 semantics.
+**Yes.** PhpRegex targets PHP's `preg_*` engine, which uses PCRE2. Patterns are validated against PCRE2 semantics.
 
 ```php
 // PCRE2-specific features work
@@ -40,13 +40,13 @@ preg_match('/\p{L}/u', $text);  // Unicode properties
 
 #### Does this guarantee ReDoS safety?
 
-**No.** RegexParser detects known risky structures and suggests safer alternatives, but safety depends on:
+**No.** PhpRegex detects known risky structures and suggests safer alternatives, but safety depends on:
 - Input patterns
 - Flags used
 - Runtime limits set by PHP or the application
 
 ```php
-// RegexParser will warn about this:
+// PhpRegex will warn about this:
 $analysis = Regex::create()->redos('/(a+)+b/');
 // severity: 'critical'
 
@@ -78,7 +78,7 @@ echo count($result->errors);  // 1
 
 #### Can I use this in CI?
 
-**Yes.** RegexParser is designed for CI/CD integration.
+**Yes.** PhpRegex is designed for CI/CD integration.
 
 ```bash
 # CLI linting
@@ -95,7 +95,7 @@ fi
 
 ```yaml
 # GitHub Actions example
-- name: Run RegexParser
+- name: Run PhpRegex
   run: vendor/bin/regex lint src/ --format=json > regex-report.json
 - name: Check report
   uses: dawidd6/action-json-to-coverage@v1

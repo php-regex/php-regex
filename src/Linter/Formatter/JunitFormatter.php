@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -55,7 +55,7 @@ final class JunitFormatter extends AbstractOutputFormatter
         $lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             \sprintf(
-                '<testsuite name="regex-parser" tests="%d" failures="%d" errors="%d" skipped="0">',
+                '<testsuite name="php-regex" tests="%d" failures="%d" errors="%d" skipped="0">',
                 $tests,
                 $failures,
                 $errors,
@@ -110,7 +110,7 @@ final class JunitFormatter extends AbstractOutputFormatter
     {
         $lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<testsuite name="regex-parser" tests="1" failures="1" errors="0" skipped="0">',
+            '<testsuite name="php-regex" tests="1" failures="1" errors="0" skipped="0">',
             '  <testcase name="pattern-collection">',
             \sprintf(
                 '    <failure message="%s">%s</failure>',

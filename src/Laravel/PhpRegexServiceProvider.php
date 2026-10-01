@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -41,7 +41,7 @@ use PhpRegex\Parser\Exception\InvalidRegexOptionException;
 use PhpRegex\Toolkit\Regex;
 
 /**
- * Laravel Service Provider for the RegexParser library.
+ * Laravel Service Provider for the PhpRegex library.
  */
 final class PhpRegexServiceProvider extends ServiceProvider
 {
@@ -67,8 +67,8 @@ final class PhpRegexServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                $this->configPath() => config_path('regex-parser.php'),
-            ], 'regex-parser-config');
+                $this->configPath() => config_path('php-regex.php'),
+            ], 'php-regex-config');
 
             $this->commands([
                 LintCommand::class,
@@ -89,13 +89,13 @@ final class PhpRegexServiceProvider extends ServiceProvider
     {
         return [
             Regex::class,
-            'regex-parser',
-            'regex-parser.cache',
-            'regex-parser.extractor',
-            'regex-parser.analysis',
-            'regex-parser.lint',
-            'regex-parser.formatter-registry',
-            'regex-parser.pattern-sources',
+            'php-regex',
+            'php-regex.cache',
+            'php-regex.extractor',
+            'php-regex.analysis',
+            'php-regex.lint',
+            'php-regex.formatter-registry',
+            'php-regex.pattern-sources',
             RoutePatternSource::class,
             ValidationRulePatternSource::class,
         ];
@@ -132,7 +132,7 @@ final class PhpRegexServiceProvider extends ServiceProvider
     }
 
     /**
-     * What Regex::create() takes from config/regex-parser.php, the target
+     * What Regex::create() takes from config/php-regex.php, the target
      * and the runtime validation left out: the settings patterns are read
      * with, by the Regex service and by regex:lint alike.
      *
@@ -143,19 +143,19 @@ final class PhpRegexServiceProvider extends ServiceProvider
     public static function regexOptions(Application $app): array
     {
         /** @var array{max_pattern_length: int, max_lookbehind_length: int, redos: array{ignored_patterns: array<string>}} $config */
-        $config = $app['config']['regex-parser'];
+        $config = $app['config']['php-regex'];
 
         return [
             'max_pattern_length' => $config['max_pattern_length'],
             'max_lookbehind_length' => $config['max_lookbehind_length'],
-            'cache' => $app->make('regex-parser.cache'),
+            'cache' => $app->make('php-regex.cache'),
             'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
         ];
     }
 
     private function configPath(): string
     {
-        return __DIR__.'/config/regex-parser.php';
+        return __DIR__.'/config/php-regex.php';
     }
 
     private function mergeConfigWithNestedDefaults(): void
@@ -165,17 +165,23 @@ final class PhpRegexServiceProvider extends ServiceProvider
             $config = $this->app->make('config');
             /** @var array<string, mixed> $defaults */
             $defaults = require $this->configPath();
-            $current = $config->get('regex-parser', []);
+            $current = $config->get('php-regex', []);
 
-            $config->set('regex-parser', self::withDefaults($defaults, \is_array($current) ? $current : []));
+            $config->set('php-regex', self::withDefaults($defaults, \is_array($current) ? $current : []));
+
+            // 1.x published config/regex-parser.php: Laravel still loads it,
+            // nothing reads it any more.
+            if ($config->has('regex-parser')) {
+                @trigger_error('config/regex-parser.php is no longer read since 2.0: move its settings to config/php-regex.php (php artisan vendor:publish --tag=php-regex-config).', \E_USER_DEPRECATED);
+            }
         }
     }
 
     private function registerCache(): void
     {
-        $this->app->singleton('regex-parser.cache', static function (Application $app): CacheInterface {
+        $this->app->singleton('php-regex.cache', static function (Application $app): CacheInterface {
             /** @var array{cache: array{store: string|null, directory: string|null, prefix: string}} $config */
-            $config = $app['config']['regex-parser'];
+            $config = $app['config']['php-regex'];
             $cacheConfig = $config['cache'];
 
             // Use Laravel cache store if specified
@@ -203,7 +209,7 @@ final class PhpRegexServiceProvider extends ServiceProvider
 
     private function registerExtractor(): void
     {
-        $this->app->singleton('regex-parser.extractor.strategy', static function (): ExtractorInterface {
+        $this->app->singleton('php-regex.extractor.strategy', static function (): ExtractorInterface {
             // Prefer PhpParser-based extraction when available
             if (class_exists(ParserFactory::class)) {
                 return new PhpParserExtractionStrategy();
@@ -213,14 +219,14 @@ final class PhpRegexServiceProvider extends ServiceProvider
             return new TokenBasedExtractionStrategy();
         });
 
-        $this->app->singleton('regex-parser.extractor', static function (Application $app): PatternExtractor {
+        $this->app->singleton('php-regex.extractor', static function (Application $app): PatternExtractor {
             /** @var \PhpRegex\Linter\Extraction\ExtractorInterface $strategy */
-            $strategy = $app->make('regex-parser.extractor.strategy');
+            $strategy = $app->make('php-regex.extractor.strategy');
 
             return new PatternExtractor($strategy);
         });
 
-        $this->app->alias('regex-parser.extractor.strategy', ExtractorInterface::class);
+        $this->app->alias('php-regex.extractor.strategy', ExtractorInterface::class);
     }
 
     private function registerRegex(): void
@@ -228,10 +234,10 @@ final class PhpRegexServiceProvider extends ServiceProvider
         // The application's own service: it judges for the running PHP,
         // whatever php_version / pcre_version say (they drive regex:lint).
         $this->app->singleton(Regex::class, static fn (Application $app): Regex => Regex::create(self::regexOptions($app) + [
-            'runtime_pcre_validation' => true === $app['config']['regex-parser.runtime_pcre_validation'],
+            'runtime_pcre_validation' => true === $app['config']['php-regex.runtime_pcre_validation'],
         ]));
 
-        $this->app->alias(Regex::class, 'regex-parser');
+        $this->app->alias(Regex::class, 'php-regex');
     }
 
     private function registerAnalysisServices(): void
@@ -239,13 +245,13 @@ final class PhpRegexServiceProvider extends ServiceProvider
         // Resolved when first used, never while the application boots: an
         // unknown ReDoS threshold stops the command that analyses, not every
         // artisan command.
-        $this->app->singleton('regex-parser.analysis', static function (Application $app): AnalysisService {
+        $this->app->singleton('php-regex.analysis', static function (Application $app): AnalysisService {
             /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, analysis: array{warning_threshold: int}} $config */
-            $config = $app['config']['regex-parser'];
+            $config = $app['config']['php-regex'];
             /** @var \PhpRegex\Toolkit\Regex $regex */
             $regex = $app->make(Regex::class);
             /** @var \PhpRegex\Linter\PatternExtractor $extractor */
-            $extractor = $app->make('regex-parser.extractor');
+            $extractor = $app->make('php-regex.extractor');
             $threshold = $config['redos']['threshold'];
 
             return new AnalysisService(
@@ -258,10 +264,10 @@ final class PhpRegexServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->alias('regex-parser.analysis', AnalysisService::class);
+        $this->app->alias('php-regex.analysis', AnalysisService::class);
 
-        $this->app->singleton('regex-parser.formatter-registry', static fn (): FormatterRegistry => new FormatterRegistry());
-        $this->app->alias('regex-parser.formatter-registry', FormatterRegistry::class);
+        $this->app->singleton('php-regex.formatter-registry', static fn (): FormatterRegistry => new FormatterRegistry());
+        $this->app->alias('php-regex.formatter-registry', FormatterRegistry::class);
     }
 
     private function registerPatternSources(): void
@@ -275,9 +281,9 @@ final class PhpRegexServiceProvider extends ServiceProvider
 
         $this->app->singleton(ValidationRulePatternSource::class, static fn (): ValidationRulePatternSource => new ValidationRulePatternSource());
 
-        $this->app->singleton('regex-parser.pattern-sources', static function (Application $app): PatternSourceCollection {
+        $this->app->singleton('php-regex.pattern-sources', static function (Application $app): PatternSourceCollection {
             /** @var \PhpRegex\Linter\PatternExtractor $extractor */
-            $extractor = $app->make('regex-parser.extractor');
+            $extractor = $app->make('php-regex.extractor');
 
             return new PatternSourceCollection([
                 new PhpFilePatternSource($extractor),
@@ -286,20 +292,20 @@ final class PhpRegexServiceProvider extends ServiceProvider
             ]);
         });
 
-        $this->app->alias('regex-parser.pattern-sources', PatternSourceCollection::class);
+        $this->app->alias('php-regex.pattern-sources', PatternSourceCollection::class);
     }
 
     private function registerLintService(): void
     {
-        $this->app->singleton('regex-parser.lint', static function (Application $app): LintService {
+        $this->app->singleton('php-regex.lint', static function (Application $app): LintService {
             /** @var \PhpRegex\Linter\AnalysisService $analysis */
-            $analysis = $app->make('regex-parser.analysis');
+            $analysis = $app->make('php-regex.analysis');
             /** @var \PhpRegex\Linter\Source\PatternSourceCollection $sources */
-            $sources = $app->make('regex-parser.pattern-sources');
+            $sources = $app->make('php-regex.pattern-sources');
 
             return new LintService($analysis, $sources);
         });
 
-        $this->app->alias('regex-parser.lint', LintService::class);
+        $this->app->alias('php-regex.lint', LintService::class);
     }
 }

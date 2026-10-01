@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -20,7 +20,7 @@ use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * The shipped extension.neon with "regexParser.phpVersion: '8.2'": a project
+ * The shipped extension.neon with "phpRegex.phpVersion: '8.2'": a project
  * judged for PHP 8.2 and the PCRE2 10.40 it bundles.
  *
  * @extends RuleTestCase<RegexPatternRule>

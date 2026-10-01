@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -34,8 +34,8 @@ final class CompareCommand extends Command
     protected $signature = 'regex:compare
         {pattern1 : The first regex pattern}
         {pattern2 : The second regex pattern}
-        {--minimizer= : DFA minimization algorithm (hopcroft, moore); config regex-parser.automata.minimization_algorithm by default}
-        {--determinizer= : NFA determinization algorithm (subset, subset-indexed); config regex-parser.automata.determinization_algorithm by default}
+        {--minimizer= : DFA minimization algorithm (hopcroft, moore); config php-regex.automata.minimization_algorithm by default}
+        {--determinizer= : NFA determinization algorithm (subset, subset-indexed); config php-regex.automata.determinization_algorithm by default}
         {--format=console : Output format (console, json)}';
 
     /**
@@ -123,7 +123,7 @@ final class CompareCommand extends Command
             }
 
             // Console output
-            $this->line('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Comparison');
+            $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Comparison');
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 1:</>');
@@ -177,7 +177,7 @@ final class CompareCommand extends Command
 
     /**
      * The option when given, else the automata setting of
-     * config/regex-parser.php, else the package default.
+     * config/php-regex.php, else the package default.
      */
     private function optionOrConfig(string $option, string $setting, string $default): string
     {
@@ -186,7 +186,7 @@ final class CompareCommand extends Command
             return $value;
         }
 
-        $configured = config('regex-parser.automata.'.$setting);
+        $configured = config('php-regex.automata.'.$setting);
 
         return \is_string($configured) && '' !== $configured ? $configured : $default;
     }

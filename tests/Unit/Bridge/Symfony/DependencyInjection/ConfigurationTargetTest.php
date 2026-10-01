@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -53,7 +53,7 @@ final class ConfigurationTargetTest extends TestCase
     public function test_a_threshold_that_is_no_string_is_refused(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('regex_parser.redos.threshold');
+        $this->expectExceptionMessage('php_regex.redos.threshold');
 
         $this->process(['redos' => ['threshold' => 3]]);
     }
@@ -63,9 +63,9 @@ final class ConfigurationTargetTest extends TestCase
      */
     public static function provideUnreadableVersions(): iterable
     {
-        yield 'php version that is no version' => [['php_version' => 'eight'], 'regex_parser.php_version'];
-        yield 'php version as a list' => [['php_version' => ['8.2']], 'regex_parser.php_version'];
-        yield 'pcre release that is no release' => [['pcre_version' => 'ten'], 'regex_parser.pcre_version'];
+        yield 'php version that is no version' => [['php_version' => 'eight'], 'php_regex.php_version'];
+        yield 'php version as a list' => [['php_version' => ['8.2']], 'php_regex.php_version'];
+        yield 'pcre release that is no release' => [['pcre_version' => 'ten'], 'php_regex.pcre_version'];
     }
 
     /**

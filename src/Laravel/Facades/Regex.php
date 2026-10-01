@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -28,7 +28,7 @@ use PhpRegex\Transpiler\TranspileOptions;
 use PhpRegex\Transpiler\TranspileResult;
 
 /**
- * Laravel Facade for the RegexParser library.
+ * Laravel Facade for the PhpRegex library.
  *
  * @method static RegexNode|TolerantParseResult parse(string $regex, bool $tolerant = false)
  * @method static AnalysisReport                analyze(string $regex)

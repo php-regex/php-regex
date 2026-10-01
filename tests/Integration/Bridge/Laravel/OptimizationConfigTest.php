@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -21,7 +21,7 @@ use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * The optimization settings of config/regex-parser.php reach the optimizer
+ * The optimization settings of config/php-regex.php reach the optimizer
  * under the names the config gives them: in 1.x only digits, word and
  * ranges did, the snake_case ones were dropped on the way.
  */

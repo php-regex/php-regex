@@ -1,10 +1,10 @@
-# RegexParser Architecture
+# PhpRegex Architecture
 
-This document explains how RegexParser works under the hood. It is written for future maintainers and contributors who want to understand the AST, the parsing pipeline, and the analysis algorithms.
+This document explains how PhpRegex works under the hood. It is written for future maintainers and contributors who want to understand the AST, the parsing pipeline, and the analysis algorithms.
 
 ## Pipeline Overview
 
-RegexParser treats a regex literal as structured input:
+PhpRegex treats a regex literal as structured input:
 
 - `PatternParser` splits the literal into pattern and flags.
 - The lexer builds a `TokenStream` with byte offsets.
@@ -204,7 +204,7 @@ gives the one a facade uses.
 
 ## Caching and Limits
 
-RegexParser can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
+PhpRegex can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
 
 Limits are enforced in `ParserOptions`:
 

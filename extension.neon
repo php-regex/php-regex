@@ -1,5 +1,5 @@
 parametersSchema:
-    regexParser: structure([
+    phpRegex: structure([
         # PHP version patterns are judged for: null for PHPStan's phpVersion
         # (the PHP running PHPStan unless configured), 'runtime' for the PHP
         # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like 80200
@@ -34,7 +34,7 @@ parametersSchema:
     ])
 
 parameters:
-    regexParser:
+    phpRegex:
         # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles.
         # A pattern is reported only when the running engine compiles it and
         # the target refuses it: PHPStan itself reports what the running
@@ -66,6 +66,6 @@ services:
     -
         class: PhpRegex\PHPStan\RegexPatternRule
         arguments:
-            config: %regexParser%
+            config: %phpRegex%
         tags:
             - phpstan.rules.rule

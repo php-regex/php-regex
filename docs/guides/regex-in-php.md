@@ -1,6 +1,6 @@
 # Regex in PHP
 
-This guide explains how PCRE works in PHP and how RegexParser interprets the same syntax. Examples use full regex literals (`/pattern/flags`).
+This guide explains how PCRE works in PHP and how PhpRegex interprets the same syntax. Examples use full regex literals (`/pattern/flags`).
 
 ---
 
@@ -324,7 +324,7 @@ echo $m[0];  // "<p>Hello</p>"
 
 ---
 
-## Where RegexParser Helps
+## Where PhpRegex Helps
 
 ### 1. Validate Patterns Before Use
 
@@ -428,7 +428,7 @@ echo $email;  // Example: "user@example.com"
 | Error "unknown modifier" | Check your delimiters              |
 | Unicode not working      | Add `u` flag                       |
 | Performance issues       | Check for ReDoS, set limits        |
-| Complex pattern          | Use RegexParser to explain it      |
+| Complex pattern          | Use PhpRegex to explain it      |
 
 ---
 

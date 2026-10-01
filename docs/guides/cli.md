@@ -1,6 +1,6 @@
 # CLI Guide
 
-This guide covers RegexParser's command-line tool and the workflows it enables.
+This guide covers PhpRegex's command-line tool and the workflows it enables.
 
 ---
 
@@ -33,7 +33,7 @@ regex --help
 
 ## Command Overview
 
-RegexParser CLI provides these commands:
+PhpRegex CLI provides these commands:
 
 | Command       | Description                                              |
 |---------------|----------------------------------------------------------|
@@ -380,7 +380,7 @@ without any configuration.
 
 **Console Output:**
 ```
-RegexParser 1.0.0 by Younes ENNAJI
+PhpRegex 1.0.0 by Younes ENNAJI
 
 Runtime       : PHP 8.2.30
 Processes     : 10

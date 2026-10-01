@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -61,7 +61,7 @@ final readonly class LintOutputRenderer
     {
         $version = Regex::VERSION;
 
-        $banner = $output->color('RegexParser', Output::CYAN.Output::BOLD).' '.$output->warning($version)." by Younes ENNAJI\n\n";
+        $banner = $output->color('PhpRegex', Output::CYAN.Output::BOLD).' '.$output->warning($version)." by Younes ENNAJI\n\n";
 
         $lines = [
             'Runtime' => 'PHP '.$output->warning(\PHP_VERSION),
@@ -91,7 +91,7 @@ final readonly class LintOutputRenderer
     private function showFooter(Output $output): void
     {
         $output->write("\n");
-        $message = 'If RegexParser helps, a GitHub star is appreciated: ';
+        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
         $output->write('  '.$output->dim($message.'https://github.com/php-regex/regex-parser')."\n");
         $output->write('  '.$output->dim('Cache: 0 hits, 0 misses')."\n\n");
     }

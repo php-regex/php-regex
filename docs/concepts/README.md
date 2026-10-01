@@ -1,6 +1,6 @@
 # Key Concepts
 
-This section explains the fundamental concepts behind RegexParser and regular expressions. These pages provide deeper explanations for topics that might be challenging for beginners.
+This section explains the fundamental concepts behind PhpRegex and regular expressions. These pages provide deeper explanations for topics that might be challenging for beginners.
 
 ## Available concept guides
 

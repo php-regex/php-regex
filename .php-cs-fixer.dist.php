@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 
 $header = <<<'EOF'
-This file is part of the RegexParser package.
+This file is part of the PhpRegex package.
 
 (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
 

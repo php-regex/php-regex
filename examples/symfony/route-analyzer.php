@@ -9,7 +9,7 @@ use PhpRegex\Redos\RedosSeverity;
  * Example: Symfony bundle route conflict analysis
  *
  * This example demonstrates:
- * - Using RegexParser bundle with Symfony
+ * - Using PhpRegex bundle with Symfony
  * - Analyzing route conflicts
  * - Getting suggestions for route ordering
  */

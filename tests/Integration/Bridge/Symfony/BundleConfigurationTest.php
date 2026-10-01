@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -61,7 +61,7 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile([], debug: true);
 
-        $this->assertFalse($container->getParameter('regex_parser.runtime_pcre_validation'));
+        $this->assertFalse($container->getParameter('php_regex.runtime_pcre_validation'));
         $this->assertFalse($this->runtimeValidationOf($this->regexService($container)->parser()));
     }
 
@@ -182,7 +182,7 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile(['redos' => ['threshold' => 'CRITICAL']]);
 
-        $this->assertSame('critical', $container->getParameter('regex_parser.redos.threshold'));
+        $this->assertSame('critical', $container->getParameter('php_regex.redos.threshold'));
     }
 
     #[Test]
@@ -191,7 +191,7 @@ final class BundleConfigurationTest extends TestCase
         $container = $this->compile(['exclude' => ['var', 'vendor']]);
 
         /** @var \PhpRegex\Symfony\Command\LintCommand $command */
-        $command = $container->get('regex_parser.command.lint');
+        $command = $container->get('php_regex.command.lint');
 
         $this->assertSame(['var', 'vendor'], $command->getDefinition()->getOption('exclude')->getDefault());
     }
@@ -216,7 +216,7 @@ final class BundleConfigurationTest extends TestCase
 
     private function regexService(ContainerBuilder $container): Regex
     {
-        $regex = $container->get('regex_parser.regex');
+        $regex = $container->get('php_regex.regex');
         $this->assertInstanceOf(Regex::class, $regex);
 
         return $regex;
@@ -239,7 +239,7 @@ final class BundleConfigurationTest extends TestCase
     private function lint(ContainerBuilder $container): array
     {
         /** @var \PhpRegex\Symfony\Command\LintCommand $command */
-        $command = $container->get('regex_parser.command.lint');
+        $command = $container->get('php_regex.command.lint');
 
         $tester = new CommandTester($command);
         $status = $tester->execute([

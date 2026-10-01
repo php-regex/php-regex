@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -38,7 +38,7 @@ use PhpRegex\Toolkit\Regex;
 // Handle --help and --version
 if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {
     echo <<<'HELP'
-RegexParser Language Server
+PhpRegex Language Server
 
 Usage: regex-lsp [options]
 
@@ -50,14 +50,14 @@ The language server communicates via stdin/stdout using the
 Language Server Protocol (LSP) over JSON-RPC.
 
 For VS Code integration, add to your settings.json:
-  "regex-parser.lsp.path": "/path/to/bin/regex-lsp"
+  "php-regex.lsp.path": "/path/to/bin/regex-lsp"
 
 HELP;
     exit(0);
 }
 
 if (in_array('--version', $argv, true) || in_array('-v', $argv, true)) {
-    echo 'regex-parser-lsp '.Regex::VERSION."\n";
+    echo 'php-regex-lsp '.Regex::VERSION."\n";
     exit(0);
 }
 

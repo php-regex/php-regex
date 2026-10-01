@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -23,7 +23,7 @@ use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * A config/regex-parser.php published from an older release: sections the
+ * A config/php-regex.php published from an older release: sections the
  * app kept but that lack keys added since, and a key 2.0 removed. The
  * provider falls back to the package default for every missing nested key
  * (Laravel's mergeConfigFrom() only fills top-level keys), and the stale key
@@ -32,7 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
  * The attribute is not deferred: the config is in place before the provider
  * registers, as a published file is.
  */
-#[WithConfig('regex-parser', [
+#[WithConfig('php-regex', [
     'max_pattern_length' => 1000,
     'runtime_pcre_validation' => false,
     'cache' => ['store' => null, 'directory' => null],
@@ -69,29 +69,29 @@ final class PublishedConfigTest extends TestCase
     public function test_every_missing_nested_key_falls_back_to_its_default(): void
     {
         // What the app wrote stays.
-        $this->assertSame(1000, config('regex-parser.max_pattern_length'));
-        $this->assertTrue(config('regex-parser.redos.enabled'));
-        $this->assertSame('moore', config('regex-parser.automata.minimization_algorithm'));
-        $this->assertFalse(config('regex-parser.optimizations.digits'));
+        $this->assertSame(1000, config('php-regex.max_pattern_length'));
+        $this->assertTrue(config('php-regex.redos.enabled'));
+        $this->assertSame('moore', config('php-regex.automata.minimization_algorithm'));
+        $this->assertFalse(config('php-regex.optimizations.digits'));
 
         // What it lacks comes from the package.
-        $this->assertSame('high', config('regex-parser.redos.threshold'));
-        $this->assertSame([], config('regex-parser.redos.ignored_patterns'));
-        $this->assertSame(50, config('regex-parser.analysis.warning_threshold'));
-        $this->assertSame('subset-indexed', config('regex-parser.automata.determinization_algorithm'));
-        $this->assertSame('regex_', config('regex-parser.cache.prefix'));
-        $this->assertTrue(config('regex-parser.optimizations.word'));
-        $this->assertSame(4, config('regex-parser.optimizations.min_quantifier_count'));
-        $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, config('regex-parser.max_lookbehind_length'));
-        $this->assertNull(config('regex-parser.php_version'));
+        $this->assertSame('high', config('php-regex.redos.threshold'));
+        $this->assertSame([], config('php-regex.redos.ignored_patterns'));
+        $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
+        $this->assertSame('subset-indexed', config('php-regex.automata.determinization_algorithm'));
+        $this->assertSame('regex_', config('php-regex.cache.prefix'));
+        $this->assertTrue(config('php-regex.optimizations.word'));
+        $this->assertSame(4, config('php-regex.optimizations.min_quantifier_count'));
+        $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, config('php-regex.max_lookbehind_length'));
+        $this->assertNull(config('php-regex.php_version'));
     }
 
     #[Test]
     public function test_the_services_resolve_from_a_partial_config(): void
     {
         $this->assertInstanceOf(Regex::class, $this->app?->make(Regex::class));
-        $this->assertInstanceOf(AnalysisService::class, $this->app?->make('regex-parser.analysis'));
-        $this->assertInstanceOf(LintService::class, $this->app?->make('regex-parser.lint'));
+        $this->assertInstanceOf(AnalysisService::class, $this->app?->make('php-regex.analysis'));
+        $this->assertInstanceOf(LintService::class, $this->app?->make('php-regex.lint'));
     }
 
     #[Test]

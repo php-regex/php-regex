@@ -16,7 +16,7 @@ if [ -z "${BOX_BIN}" ]; then
   exit 1
 fi
 
-TMP_DIR="$(mktemp -d -t regex-parser-phar.XXXXXX)"
+TMP_DIR="$(mktemp -d -t php-regex-phar.XXXXXX)"
 cleanup() {
   rm -rf "${TMP_DIR}"
 }

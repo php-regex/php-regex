@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -50,28 +50,28 @@ final class ProjectTargetSourcesTest extends TestCase
     public function test_a_bridge_setting_is_named_as_the_bridge_names_it(): void
     {
         $resolved = ProjectTarget::fromSources(
-            ['regex_parser.php_version' => 80300],
-            ['regex_parser.pcre_version' => null],
+            ['php_regex.php_version' => 80300],
+            ['php_regex.pcre_version' => null],
             $this->makeProject(),
             [],
         );
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'regex_parser.php_version'], $resolved->toArray());
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'php_regex.php_version'], $resolved->toArray());
     }
 
     #[Test]
     public function test_a_pcre_release_alone_is_named_after_the_php_source(): void
     {
         $resolved = ProjectTarget::fromSources(
-            ['config regex-parser.php_version' => null],
-            ['config regex-parser.pcre_version' => '10.42'],
+            ['config php-regex.php_version' => null],
+            ['config php-regex.pcre_version' => '10.42'],
             null,
             [],
         );
 
         $this->assertSame(\PHP_VERSION_ID, $resolved->target()->phpVersionId);
         $this->assertSame('10.42', $resolved->target()->pcreVersion);
-        $this->assertSame('running PHP; config regex-parser.pcre_version', $resolved->source());
+        $this->assertSame('running PHP; config php-regex.pcre_version', $resolved->source());
     }
 
     #[Test]
@@ -89,6 +89,6 @@ final class ProjectTargetSourcesTest extends TestCase
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        ProjectTarget::fromSources(['regex_parser.php_version' => 'eight'], [], null, []);
+        ProjectTarget::fromSources(['php_regex.php_version' => 'eight'], [], null, []);
     }
 }

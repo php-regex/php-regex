@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps you resolve common issues when using RegexParser.
+This guide helps you resolve common issues when using PhpRegex.
 
 ## Common Error Messages
 

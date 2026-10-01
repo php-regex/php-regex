@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -719,7 +719,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('version', []), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('RegexParser', $buffer);
+        $this->assertStringContainsString('PhpRegex', $buffer);
         $this->assertStringContainsString('github.com/php-regex/regex-parser', $buffer);
     }
 

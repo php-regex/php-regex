@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
 
 /**
- * Reads one setting out of the "regexParser" parameter a PHPStan container
+ * Reads one setting out of the "phpRegex" parameter a PHPStan container
  * resolved, without assuming the keys exist.
  */
 final class NeonParameters

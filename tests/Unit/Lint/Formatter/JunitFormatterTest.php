@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -43,7 +43,7 @@ final class JunitFormatterTest extends TestCase
         $output = $this->formatter->format($report);
 
         $this->assertStringContainsString('<?xml version="1.0" encoding="UTF-8"?>', $output);
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="0" failures="0" errors="0" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="0" failures="0" errors="0" skipped="0">', $output);
         $this->assertStringContainsString('</testsuite>', $output);
     }
 
@@ -74,7 +74,7 @@ final class JunitFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="1" failures="0" errors="1" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="1" failures="0" errors="1" skipped="0">', $output);
         $this->assertStringContainsString('<testcase name="Security (regex.redos)" classname="/path/to/file.php:10">', $output);
         $this->assertStringContainsString('<error message="Critical security issue">', $output);
         $this->assertStringContainsString('Critical security issue', $output);
@@ -108,7 +108,7 @@ final class JunitFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="1" failures="1" errors="0" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="1" failures="1" errors="0" skipped="0">', $output);
         $this->assertStringContainsString('<testcase name="Syntax (regex.syntax)" classname="test.php:5">', $output);
         $this->assertStringContainsString('<failure message="Syntax error">', $output);
     }
@@ -138,7 +138,7 @@ final class JunitFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="1" failures="0" errors="0" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="1" failures="0" errors="0" skipped="0">', $output);
         $this->assertStringContainsString('<testcase name="Lint (regex.lint)" classname="file.php:1">', $output);
         $this->assertStringContainsString('<system-out>Lint warning</system-out>', $output);
     }
@@ -193,7 +193,7 @@ final class JunitFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="3" failures="1" errors="1" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="3" failures="1" errors="1" skipped="0">', $output);
         $this->assertStringContainsString('<testcase name="Syntax"', $output);
         $this->assertStringContainsString('<testcase name="Lint"', $output);
         $this->assertStringContainsString('<testcase name="Security"', $output);
@@ -356,7 +356,7 @@ final class JunitFormatterTest extends TestCase
         $output = $this->formatter->formatError($message);
 
         $this->assertStringContainsString('<?xml version="1.0" encoding="UTF-8"?>', $output);
-        $this->assertStringContainsString('<testsuite name="regex-parser" tests="1" failures="1" errors="0" skipped="0">', $output);
+        $this->assertStringContainsString('<testsuite name="php-regex" tests="1" failures="1" errors="0" skipped="0">', $output);
         $this->assertStringContainsString('<testcase name="pattern-collection">', $output);
         $this->assertStringContainsString('Test error message with &lt;tags&gt; &amp; &quot;quotes&quot;', $output);
         $this->assertStringContainsString('</testsuite>', $output);

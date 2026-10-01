@@ -53,7 +53,7 @@ it inside PHPStan.
 
 ```neon
 parameters:
-    regexParser:
+    phpRegex:
         # The PHP patterns are judged for: null for PHPStan's phpVersion,
         # 'runtime' for the PHP running PHPStan, a version like '8.2', or a
         # PHP_VERSION_ID like 80200.

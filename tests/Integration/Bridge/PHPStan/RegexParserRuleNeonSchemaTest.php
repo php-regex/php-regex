@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The "regexParser" schema of extension.neon, checked by PHPStan itself while
+ * The "phpRegex" schema of extension.neon, checked by PHPStan itself while
  * it loads a configuration: a key outside the schema stops the analysis
  * before any file is read.
  */
@@ -47,14 +47,14 @@ final class RegexParserRuleNeonSchemaTest extends TestCase
      */
     public static function provideRemovedKeys(): iterable
     {
-        yield 'ignoreParseErrors' => ['ignoreParseErrors: true', "regexParser\u{A0}›\u{A0}ignoreParseErrors"];
-        yield 'reportRedos' => ['reportRedos: true', "regexParser\u{A0}›\u{A0}reportRedos"];
-        yield 'redosMode' => ['redosMode: theoretical', "regexParser\u{A0}›\u{A0}redosMode"];
-        yield 'redosThreshold' => ['redosThreshold: low', "regexParser\u{A0}›\u{A0}redosThreshold"];
-        yield 'suggestOptimizations' => ['suggestOptimizations: true', "regexParser\u{A0}›\u{A0}suggestOptimizations"];
-        yield 'optimizationConfig' => ["optimizationConfig:\n            digits: true", "regexParser\u{A0}›\u{A0}optimizationConfig"];
-        yield 'checks.redos.mode' => ["checks:\n            redos:\n                mode: confirmed", "regexParser\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}mode"];
-        yield 'checks.redos.noJit' => ["checks:\n            redos:\n                noJit: false", "regexParser\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}noJit"];
+        yield 'ignoreParseErrors' => ['ignoreParseErrors: true', "phpRegex\u{A0}›\u{A0}ignoreParseErrors"];
+        yield 'reportRedos' => ['reportRedos: true', "phpRegex\u{A0}›\u{A0}reportRedos"];
+        yield 'redosMode' => ['redosMode: theoretical', "phpRegex\u{A0}›\u{A0}redosMode"];
+        yield 'redosThreshold' => ['redosThreshold: low', "phpRegex\u{A0}›\u{A0}redosThreshold"];
+        yield 'suggestOptimizations' => ['suggestOptimizations: true', "phpRegex\u{A0}›\u{A0}suggestOptimizations"];
+        yield 'optimizationConfig' => ["optimizationConfig:\n            digits: true", "phpRegex\u{A0}›\u{A0}optimizationConfig"];
+        yield 'checks.redos.mode' => ["checks:\n            redos:\n                mode: confirmed", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}mode"];
+        yield 'checks.redos.noJit' => ["checks:\n            redos:\n                noJit: false", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}noJit"];
     }
 
     #[Test]
@@ -71,7 +71,7 @@ final class RegexParserRuleNeonSchemaTest extends TestCase
     public function test_schema_refuses_a_threshold_outside_the_severities(): void
     {
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}regexParser\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}threshold'");
+        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}threshold'");
 
         $this->loadExtensionWith("checks:\n            redos:\n                threshold: severe");
     }
@@ -98,18 +98,18 @@ final class RegexParserRuleNeonSchemaTest extends TestCase
     #[DataProvider('provideAcceptedSettings')]
     public function test_schema_accepts_the_documented_settings(string $neon, array $path, mixed $expected): void
     {
-        $parameters = $this->loadExtensionWith($neon)->getParameter('regexParser');
+        $parameters = $this->loadExtensionWith($neon)->getParameter('phpRegex');
 
         $this->assertSame($expected, NeonParameters::read($parameters, ...$path));
     }
 
-    private function loadExtensionWith(string $regexParserNeon): Container
+    private function loadExtensionWith(string $phpRegexNeon): Container
     {
         $config = $this->configDirectory.'/phpstan.neon';
         file_put_contents($config, \sprintf(
-            "includes:\n    - %s\n\nparameters:\n    regexParser:\n        %s\n",
+            "includes:\n    - %s\n\nparameters:\n    phpRegex:\n        %s\n",
             \dirname(__DIR__, 4).'/extension.neon',
-            $regexParserNeon,
+            $phpRegexNeon,
         ));
 
         $containerFactory = new ContainerFactory(\dirname((string) (new \ReflectionClass(ContainerFactory::class))->getFileName(), 3));

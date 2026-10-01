@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -164,7 +164,7 @@ final class RegexLintCommandTest extends TestCase
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->exactly(2))->method('newLine');
         $io->expects($this->once())->method('writeln')
-            ->with('  <fg=gray>If RegexParser helps, a GitHub star is appreciated: https://github.com/php-regex/regex-parser</>');
+            ->with('  <fg=gray>If PhpRegex helps, a GitHub star is appreciated: https://github.com/php-regex/regex-parser</>');
 
         $method->invoke($command, $io);
     }

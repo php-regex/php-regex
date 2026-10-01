@@ -8,12 +8,15 @@ enables it on install.
 
 ```bash
 composer require --dev yoeunes/regex-parser
-php artisan vendor:publish --tag=regex-parser-config
+php artisan vendor:publish --tag=php-regex-config
 ```
 
 ## Configuration
 
-`config/regex-parser.php`, with its defaults:
+`config/php-regex.php`, with its defaults. A `config/regex-parser.php` published
+by 1.x is no longer read: publish the new file, move your settings to it and
+delete the old one (the provider raises a deprecation while the old one is
+there).
 
 ```php
 return [
@@ -27,7 +30,7 @@ return [
     'pcre_version' => null,  // "10.42"
     'cache' => [
         'store' => null,     // a Laravel cache store, used before "directory"
-        'directory' => '{storage_path}/framework/cache/regex-parser',
+        'directory' => '{storage_path}/framework/cache/php-regex',
         'prefix' => 'regex_',
     ],
     'redos' => [
@@ -75,7 +78,7 @@ running it, and `php_version` / `pcre_version` do not change that.
 `regex:lint` judges the patterns of your code for the PHP your project
 supports. It picks the target in this order:
 
-1. `php_version` and `pcre_version` in `config/regex-parser.php`;
+1. `php_version` and `pcre_version` in `config/php-regex.php`;
 2. `composer.json` at `base_path()`: `config.platform.php` if set, else the
    lowest version `require.php` allows;
 3. the PHP running the command.
@@ -87,7 +90,7 @@ report carries it as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "config regex-parser.php_version"},
+    "target": {"php": "8.2", "pcre": "10.40", "source": "config php-regex.php_version"},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0},
     "results": []
 }
@@ -130,7 +133,7 @@ finds in your file, with the key to use instead:
 Re-publish the file to pick up the new keys and comments:
 
 ```bash
-php artisan vendor:publish --tag=regex-parser-config --force
+php artisan vendor:publish --tag=php-regex-config --force
 ```
 
 See [UPGRADE-2.0.md](../../UPGRADE-2.0.md) for the rest.

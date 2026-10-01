@@ -2,5 +2,5 @@ includes:
     - ../../../../../extension.neon
 
 parameters:
-    regexParser:
+    phpRegex:
         phpVersion: '8.2'

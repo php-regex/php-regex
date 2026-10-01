@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -257,7 +257,7 @@ final class LintCommandComponentsTest extends TestCase
 
         $configPath = getcwd();
         $banner = $renderer->renderBanner($output, 2, [$configPath.'/regex.json']);
-        $this->assertStringContainsString('RegexParser', $banner);
+        $this->assertStringContainsString('PhpRegex', $banner);
         $this->assertStringContainsString('Configuration : ', $banner);
     }
 

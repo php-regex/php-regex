@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -46,7 +46,7 @@ final readonly class VersionCommand implements CommandInterface
         }
 
         $version = Regex::VERSION;
-        $output->write('RegexParser '.$output->color($version, Output::GREEN)." by Younes ENNAJI\n");
+        $output->write('PhpRegex '.$output->color($version, Output::GREEN)." by Younes ENNAJI\n");
         $output->write("https://github.com/php-regex/regex-parser\n");
 
         return self::SUCCESS;

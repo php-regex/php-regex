@@ -1,6 +1,6 @@
 # Maintainers Guide
 
-This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate RegexParser as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
+This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PhpRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
 
 ## Contributor Checklist
 
@@ -24,7 +24,7 @@ For first-time contributors, this is a good entry path:
 
 ## The Integration Landscape
 
-**RegexParser** is typically embedded in:
+**PhpRegex** is typically embedded in:
 
 - PHPStan rules and custom static analyzers
 - Symfony bundles and validators
@@ -33,7 +33,7 @@ For first-time contributors, this is a good entry path:
 Integration flow:
 
 ```
-Your app -> RegexParser -> AST + visitors -> results
+Your app -> PhpRegex -> AST + visitors -> results
 ```
 
 ---
@@ -72,7 +72,7 @@ use PhpRegex\Toolkit\Regex;
 use PhpRegex\Parser\Cache\FilesystemCache;
 
 $regex = Regex::create([
-    'cache' => new FilesystemCache('/var/cache/regex-parser'),
+    'cache' => new FilesystemCache('/var/cache/php-regex'),
     'max_pattern_length' => 100_000,
     'max_lookbehind_length' => 255,
     'runtime_pcre_validation' => true,
@@ -126,7 +126,7 @@ $regex = Regex::create(['php_version' => '8.2']);   // $regex = Regex::create(['
 
 ## Exception Hierarchy
 
-RegexParser exposes a stable exception surface for precise error handling:
+PhpRegex exposes a stable exception surface for precise error handling:
 
 Exception hierarchy (simplified):
 - `Throwable`
@@ -168,7 +168,7 @@ try {
     echo "Parse error: {$e->getMessage()}";
 } catch (ExceptionInterface $e) {
     // Any other parser/lexer error
-    echo "RegexParser error: {$e->getMessage()}";
+    echo "PhpRegex error: {$e->getMessage()}";
 }
 
 // Handling specific error codes
@@ -304,7 +304,7 @@ jobs:
           php-version: '8.2'
       - name: Install dependencies
         run: composer install --no-progress
-      - name: Run RegexParser linter
+      - name: Run PhpRegex linter
         run: vendor/bin/regex lint src/ --format=json > regex-issues.json
       - name: Check for critical issues
         run: |

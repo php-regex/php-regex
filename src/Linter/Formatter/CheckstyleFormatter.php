@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -80,9 +80,9 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
         $lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<checkstyle version="4.3">',
-            '  <file name="regex-parser">',
+            '  <file name="php-regex">',
             \sprintf(
-                '    <error line="1" column="1" severity="error" message="%s" source="regex-parser"/>',
+                '    <error line="1" column="1" severity="error" message="%s" source="php-regex"/>',
                 $this->escapeXml($message),
             ),
             '  </file>',
@@ -170,7 +170,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
 
     private function formatCheckstyleSource(Diagnostic $problem): string
     {
-        $source = 'regex-parser';
+        $source = 'php-regex';
 
         if (null !== $problem->code && '' !== $problem->code) {
             $source .= '.'.$problem->code;

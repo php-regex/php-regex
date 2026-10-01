@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -51,7 +51,7 @@ final class InitializeHandler
         ];
 
         $serverInfo = [
-            'name' => 'regex-parser-lsp',
+            'name' => 'php-regex-lsp',
             'version' => Regex::VERSION,
         ];
 

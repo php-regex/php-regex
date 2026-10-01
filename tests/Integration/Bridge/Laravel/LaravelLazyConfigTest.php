@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -30,8 +30,8 @@ use Symfony\Component\Console\Output\StreamOutput;
  * named by regex:lint with the key that replaces it. The automata settings
  * are the defaults of regex:compare, whose options win.
  */
-#[WithConfig('regex-parser.cache.directory', null)]
-#[WithConfig('regex-parser.cache.store', null)]
+#[WithConfig('php-regex.cache.directory', null)]
+#[WithConfig('php-regex.cache.store', null)]
 final class LaravelLazyConfigTest extends TestCase
 {
     private string $sourceDir;
@@ -56,7 +56,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'severe')]
+    #[WithConfig('php-regex.redos.threshold', 'severe')]
     public function test_an_unknown_threshold_leaves_artisan_list_working(): void
     {
         $status = Artisan::call('list');
@@ -66,7 +66,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'severe')]
+    #[WithConfig('php-regex.redos.threshold', 'severe')]
     public function test_an_unknown_threshold_leaves_other_regex_commands_working(): void
     {
         $status = Artisan::call('regex:explain', ['pattern' => '/^[a-z]+$/']);
@@ -75,7 +75,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.redos.threshold', 'severe')]
+    #[WithConfig('php-regex.redos.threshold', 'severe')]
     public function test_the_lint_command_refuses_an_unknown_threshold(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments());
@@ -85,7 +85,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.exclude_paths', ['vendor'])]
+    #[WithConfig('php-regex.exclude_paths', ['vendor'])]
     public function test_the_lint_command_names_the_replacement_of_a_stale_key(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments());
@@ -97,7 +97,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.analysis.ignore_patterns', ['foo'])]
+    #[WithConfig('php-regex.analysis.ignore_patterns', ['foo'])]
     public function test_a_stale_key_keeps_the_json_report_parseable(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments() + ['--format' => 'json']);
@@ -108,8 +108,8 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.analysis.ignore_patterns', ['foo'])]
-    #[WithConfig('regex-parser.php_version', '8.2')]
+    #[WithConfig('php-regex.analysis.ignore_patterns', ['foo'])]
+    #[WithConfig('php-regex.php_version', '8.2')]
     public function test_other_formats_say_the_target_and_the_stale_keys_on_stderr(): void
     {
         $stdout = fopen('php://memory', 'r+');
@@ -150,12 +150,12 @@ final class LaravelLazyConfigTest extends TestCase
 
         $this->assertSame(0, $status, $report.$errors);
         $this->assertIsArray(json_decode($report, true), 'stdout is not JSON: '.$report);
-        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (config regex-parser.php_version)', $errors);
+        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (config php-regex.php_version)', $errors);
         $this->assertStringContainsString('analysis.ignore_patterns', $errors);
     }
 
     #[Test]
-    #[WithConfig('regex-parser.php_version', 8.2)]
+    #[WithConfig('php-regex.php_version', 8.2)]
     public function test_a_php_version_that_is_no_string_or_int_stops_the_lint(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments());
@@ -165,7 +165,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.pcre_version', 10.42)]
+    #[WithConfig('php-regex.pcre_version', 10.42)]
     public function test_a_pcre_release_that_is_no_string_stops_the_lint(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments() + ['--format' => 'json']);
@@ -178,7 +178,7 @@ final class LaravelLazyConfigTest extends TestCase
     }
 
     #[Test]
-    #[WithConfig('regex-parser.automata.minimization_algorithm', 'moore')]
+    #[WithConfig('php-regex.automata.minimization_algorithm', 'moore')]
     public function test_the_compare_option_wins_over_the_config(): void
     {
         $status = Artisan::call('regex:compare', ['pattern1' => '/a/', 'pattern2' => '/a/', '--minimizer' => 'hopcroft', '--format' => 'json']);

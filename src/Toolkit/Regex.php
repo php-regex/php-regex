@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -49,7 +49,7 @@ use PhpRegex\Transpiler\Transpiler;
 use PhpRegex\Transpiler\TranspileResult;
 
 /**
- * Entry point for the RegexParser library.
+ * Entry point for the PhpRegex library.
  *
  * Provides methods for parsing, validating, optimizing, and analyzing
  * regular expressions. Supports caching and runtime PCRE validation.

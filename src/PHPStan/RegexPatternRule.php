@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -135,7 +135,7 @@ final class RegexPatternRule implements Rule
     private ?AnalysisService $analysis = null;
 
     /**
-     * @param array<string, mixed> $config     the "regexParser" parameter: "phpVersion", "pcreVersion" and
+     * @param array<string, mixed> $config     the "phpRegex" parameter: "phpVersion", "pcreVersion" and
      *                                         "checks" ("lint", "redos", "optimizations"), every key optional
      * @param PhpVersion|null      $phpVersion the PHP version PHPStan analyses the project for: patterns are
      *                                         judged for it, with the PCRE2 it bundles, unless "phpVersion"

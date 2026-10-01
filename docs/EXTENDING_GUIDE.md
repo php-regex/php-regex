@@ -1,12 +1,12 @@
-# Extending RegexParser
+# Extending PhpRegex
 
-This guide shows how to add new PCRE features, build custom visitors, and integrate RegexParser into tools.
+This guide shows how to add new PCRE features, build custom visitors, and integrate PhpRegex into tools.
 
 ---
 
 ## What You Can Extend
 
-**RegexParser** is designed for extensibility:
+**PhpRegex** is designed for extensibility:
 
 - New AST nodes for new syntax
 - New visitors for analysis or transformation
@@ -18,7 +18,7 @@ This guide shows how to add new PCRE features, build custom visitors, and integr
 
 ## Extension Architecture
 
-RegexParser core extension points:
+PhpRegex core extension points:
 - Nodes (`src/Parser/Node/`) for new node types.
 - Visitors (`src/Parser/AbstractNodeVisitor.php` and its subclasses in each package) for new analyses or transforms.
 - Parser (`src/Parser/Syntax/TokenParser.php`) to recognize new syntax.

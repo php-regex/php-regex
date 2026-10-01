@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -48,7 +48,7 @@ class SelfUpdater
 
         $this->replacePhar($pharPath, $tempPath);
 
-        $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('RegexParser updated successfully.')."\n");
+        $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PhpRegex updated successfully.')."\n");
     }
 
     protected function getPharPath(): string
@@ -248,12 +248,12 @@ class SelfUpdater
             'http' => [
                 'follow_location' => 1,
                 'timeout' => self::TRANSFER_TIMEOUT_SECONDS,
-                'user_agent' => 'regex-parser-cli',
+                'user_agent' => 'php-regex-cli',
             ],
             'https' => [
                 'follow_location' => 1,
                 'timeout' => self::TRANSFER_TIMEOUT_SECONDS,
-                'user_agent' => 'regex-parser-cli',
+                'user_agent' => 'php-regex-cli',
             ],
         ]);
     }

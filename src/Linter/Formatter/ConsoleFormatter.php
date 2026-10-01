@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -98,7 +98,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
      */
     public function formatFooter(): string
     {
-        $message = 'If RegexParser helps, a GitHub star is appreciated: ';
+        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
 
         return '  '.$this->dim($message.'https://github.com/php-regex/regex-parser').\PHP_EOL.\PHP_EOL;
     }

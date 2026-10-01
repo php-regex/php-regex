@@ -1,6 +1,6 @@
-# RegexParser Examples
+# PhpRegex Examples
 
-This directory contains ready-to-use examples demonstrating RegexParser's features.
+This directory contains ready-to-use examples demonstrating PhpRegex's features.
 
 ## Basic Examples
 
@@ -41,7 +41,7 @@ php examples/real-world/email-validator.php
 ## Requirements
 
 - PHP 8.2 or higher
-- RegexParser installed via Composer
+- PhpRegex installed via Composer
 
 ```bash
 composer install

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -28,7 +28,7 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Loads and manages configuration for the RegexParser bundle.
+ * Loads and manages configuration for the PhpRegex bundle.
  *
  * @internal
  */
@@ -90,22 +90,22 @@ final class PhpRegexExtension extends Extension
         $editorFormat = $this->resolveEditorFormat($config, $container);
 
         // Set parameters
-        $container->setParameter('regex_parser.max_pattern_length', $config['max_pattern_length']);
-        $container->setParameter('regex_parser.max_lookbehind_length', $config['max_lookbehind_length']);
-        $container->setParameter('regex_parser.runtime_pcre_validation', $config['runtime_pcre_validation']);
-        $container->setParameter('regex_parser.php_version', $config['php_version']);
-        $container->setParameter('regex_parser.pcre_version', $config['pcre_version']);
+        $container->setParameter('php_regex.max_pattern_length', $config['max_pattern_length']);
+        $container->setParameter('php_regex.max_lookbehind_length', $config['max_lookbehind_length']);
+        $container->setParameter('php_regex.runtime_pcre_validation', $config['runtime_pcre_validation']);
+        $container->setParameter('php_regex.php_version', $config['php_version']);
+        $container->setParameter('php_regex.pcre_version', $config['pcre_version']);
         // Where regex:lint reads composer.json; never the working directory.
-        $container->setParameter('regex_parser.project_dir', $container->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null);
-        $container->setParameter('regex_parser.cache', $config['cache']);
-        $container->setParameter('regex_parser.extractor_service', $config['extractor_service']);
-        $container->setParameter('regex_parser.redos.enabled', $config['redos']['enabled']);
-        $container->setParameter('regex_parser.redos.threshold', $config['redos']['threshold']);
-        $container->setParameter('regex_parser.redos.ignored_patterns', $ignoredPatterns);
-        $container->setParameter('regex_parser.analysis.warning_threshold', $config['analysis']['warning_threshold']);
-        $container->setParameter('regex_parser.automata.minimization_algorithm', $config['automata']['minimization_algorithm']);
-        $container->setParameter('regex_parser.automata.determinization_algorithm', $config['automata']['determinization_algorithm']);
-        $container->setParameter('regex_parser.optimizations', [
+        $container->setParameter('php_regex.project_dir', $container->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null);
+        $container->setParameter('php_regex.cache', $config['cache']);
+        $container->setParameter('php_regex.extractor_service', $config['extractor_service']);
+        $container->setParameter('php_regex.redos.enabled', $config['redos']['enabled']);
+        $container->setParameter('php_regex.redos.threshold', $config['redos']['threshold']);
+        $container->setParameter('php_regex.redos.ignored_patterns', $ignoredPatterns);
+        $container->setParameter('php_regex.analysis.warning_threshold', $config['analysis']['warning_threshold']);
+        $container->setParameter('php_regex.automata.minimization_algorithm', $config['automata']['minimization_algorithm']);
+        $container->setParameter('php_regex.automata.determinization_algorithm', $config['automata']['determinization_algorithm']);
+        $container->setParameter('php_regex.optimizations', [
             'digits' => $config['optimizations']['digits'],
             'word' => $config['optimizations']['word'],
             'ranges' => $config['optimizations']['ranges'],
@@ -114,24 +114,24 @@ final class PhpRegexExtension extends Extension
             'factorize' => $config['optimizations']['factorize'],
             'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
         ]);
-        $container->setParameter('regex_parser.paths', $config['paths']);
-        $container->setParameter('regex_parser.exclude', $config['exclude']);
-        $container->setParameter('regex_parser.editor_format', $editorFormat);
+        $container->setParameter('php_regex.paths', $config['paths']);
+        $container->setParameter('php_regex.exclude', $config['exclude']);
+        $container->setParameter('php_regex.editor_format', $editorFormat);
 
-        $container->setDefinition('regex_parser.cache', $this->buildCacheDefinition($config));
+        $container->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
         // Configure extractor service or default implementation.
         $extractorService = $config['extractor_service'];
         if ($this->isNotNullOrEmpty($extractorService)) {
             if (\is_string($extractorService)) {
                 $container->setAlias(ExtractorInterface::class, $extractorService);
-                $container->setAlias('regex_parser.extractor.instance', $extractorService);
+                $container->setAlias('php_regex.extractor.instance', $extractorService);
             }
         } else {
             // Determine and register appropriate extractor.
             $extractorDefinition = $this->createExtractorDefinition();
-            $container->setDefinition('regex_parser.extractor.instance', $extractorDefinition);
-            $container->setAlias(ExtractorInterface::class, 'regex_parser.extractor.instance');
+            $container->setDefinition('php_regex.extractor.instance', $extractorDefinition);
+            $container->setAlias(ExtractorInterface::class, 'php_regex.extractor.instance');
         }
 
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
@@ -144,7 +144,7 @@ final class PhpRegexExtension extends Extension
     #[\Override]
     public function getAlias(): string
     {
-        return 'regex_parser';
+        return 'php_regex';
     }
 
     /**
@@ -203,7 +203,7 @@ final class PhpRegexExtension extends Extension
     {
         $editorFormat = $config['ide'];
 
-        // Fallback to framework.ide if regex_parser.ide is not set
+        // Fallback to framework.ide if php_regex.ide is not set
         if (!$this->isNotNullOrEmpty($editorFormat) && $container->hasParameter('framework.ide')) {
             $frameworkIde = $container->getParameter('framework.ide');
             if (\is_string($frameworkIde) && '' !== $frameworkIde) {

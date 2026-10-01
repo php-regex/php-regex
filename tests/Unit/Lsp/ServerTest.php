@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -54,7 +54,7 @@ final class ServerTest extends TestCase
 
         $this->assertIsArray($answer['result']);
         $this->assertSame(
-            ['name' => 'regex-parser-lsp', 'version' => Regex::VERSION],
+            ['name' => 'php-regex-lsp', 'version' => Regex::VERSION],
             $answer['result']['serverInfo'],
         );
     }

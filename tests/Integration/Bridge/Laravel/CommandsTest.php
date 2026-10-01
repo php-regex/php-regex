@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -265,8 +265,8 @@ final class CommandsTest extends TestCase
      */
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('regex-parser.cache.directory', null);
-        $app['config']->set('regex-parser.cache.store', null);
-        $app['config']->set('regex-parser.runtime_pcre_validation', false);
+        $app['config']->set('php-regex.cache.directory', null);
+        $app['config']->set('php-regex.cache.store', null);
+        $app['config']->set('php-regex.runtime_pcre_validation', false);
     }
 }

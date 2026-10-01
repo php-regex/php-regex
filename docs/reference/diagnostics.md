@@ -1,6 +1,6 @@
 # Diagnostics and Error Messages
 
-This comprehensive guide explains how RegexParser reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
+This comprehensive guide explains how PhpRegex reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This comprehensive guide explains how RegexParser reports errors and warnings, h
 
 ## Validation Layers
 
-RegexParser validates patterns through four layers, each catching different types of issues:
+PhpRegex validates patterns through four layers, each catching different types of issues:
 
 ```
 Pattern literal

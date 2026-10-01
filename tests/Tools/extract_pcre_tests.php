@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -16,7 +16,7 @@ declare(strict_types=1);
  * PCRE Test Extractor
  *
  * This script extracts test cases from PHP's official PCRE .phpt test files
- * and generates a comprehensive fixture file for the regex-parser project.
+ * and generates a comprehensive fixture file for the php-regex project.
  */
 $testsDir = __DIR__.'/../yoeunes/tests';
 $outputFile = __DIR__.'/Fixtures/php_pcre_comprehensive.php';

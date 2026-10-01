@@ -334,7 +334,7 @@ $pattern = '/^[a-zA-Z][a-zA-Z0-9-]{0,38}[a-zA-Z0-9]$/';
 // [a-zA-Z0-9]     Must end with letter or number
 // $                End of string
 
-// Test with RegexParser
+// Test with PhpRegex
 $regex = Regex::create();
 echo $regex->explain($pattern);
 ```

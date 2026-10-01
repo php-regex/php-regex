@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -117,7 +117,7 @@ final class TranspileCommand extends Command
             }
 
             // Console output
-            $this->line('<fg=cyan;options=bold>RegexParser</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Transpilation');
+            $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Transpilation');
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Source (PCRE):</>');

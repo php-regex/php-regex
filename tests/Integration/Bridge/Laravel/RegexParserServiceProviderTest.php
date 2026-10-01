@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the RegexParser package.
+ * This file is part of the PhpRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -41,7 +41,7 @@ final class RegexParserServiceProviderTest extends TestCase
     public function test_regex_service_is_registered(): void
     {
         $this->assertTrue($this->app->bound(Regex::class));
-        $this->assertTrue($this->app->bound('regex-parser'));
+        $this->assertTrue($this->app->bound('php-regex'));
 
         /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
@@ -71,17 +71,17 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_cache_service_is_registered(): void
     {
-        $this->assertTrue($this->app->bound('regex-parser.cache'));
+        $this->assertTrue($this->app->bound('php-regex.cache'));
 
         /** @var \PhpRegex\Parser\Cache\CacheInterface $cache */
-        $cache = $this->app->make('regex-parser.cache');
+        $cache = $this->app->make('php-regex.cache');
         $this->assertInstanceOf(CacheInterface::class, $cache);
     }
 
     public function test_filesystem_cache_works(): void
     {
         /** @var string $cacheDir */
-        $cacheDir = $this->app['config']->get('regex-parser.cache.directory');
+        $cacheDir = $this->app['config']->get('php-regex.cache.directory');
 
         /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
@@ -100,37 +100,37 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_analysis_service_is_registered(): void
     {
-        $this->assertTrue($this->app->bound('regex-parser.analysis'));
+        $this->assertTrue($this->app->bound('php-regex.analysis'));
 
         /** @var \PhpRegex\Linter\AnalysisService $analysis */
-        $analysis = $this->app->make('regex-parser.analysis');
+        $analysis = $this->app->make('php-regex.analysis');
         $this->assertInstanceOf(AnalysisService::class, $analysis);
     }
 
     public function test_lint_service_is_registered(): void
     {
-        $this->assertTrue($this->app->bound('regex-parser.lint'));
+        $this->assertTrue($this->app->bound('php-regex.lint'));
 
         /** @var \PhpRegex\Linter\LintService $lint */
-        $lint = $this->app->make('regex-parser.lint');
+        $lint = $this->app->make('php-regex.lint');
         $this->assertInstanceOf(LintService::class, $lint);
     }
 
     public function test_formatter_registry_is_registered(): void
     {
-        $this->assertTrue($this->app->bound('regex-parser.formatter-registry'));
+        $this->assertTrue($this->app->bound('php-regex.formatter-registry'));
 
         /** @var \PhpRegex\Linter\Formatter\FormatterRegistry $registry */
-        $registry = $this->app->make('regex-parser.formatter-registry');
+        $registry = $this->app->make('php-regex.formatter-registry');
         $this->assertInstanceOf(FormatterRegistry::class, $registry);
     }
 
     public function test_pattern_sources_are_registered(): void
     {
-        $this->assertTrue($this->app->bound('regex-parser.pattern-sources'));
+        $this->assertTrue($this->app->bound('php-regex.pattern-sources'));
 
         /** @var \PhpRegex\Linter\Source\PatternSourceCollection $sources */
-        $sources = $this->app->make('regex-parser.pattern-sources');
+        $sources = $this->app->make('php-regex.pattern-sources');
         $this->assertInstanceOf(PatternSourceCollection::class, $sources);
     }
 
@@ -175,7 +175,7 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_config_is_published(): void
     {
-        $config = $this->app['config']->get('regex-parser');
+        $config = $this->app['config']->get('php-regex');
 
         $this->assertIsArray($config);
         $this->assertArrayHasKey('max_pattern_length', $config);
@@ -194,12 +194,12 @@ final class RegexParserServiceProviderTest extends TestCase
      */
     public function test_a_laravel_cache_store_holds_the_trees(): void
     {
-        $this->app['config']->set('regex-parser.cache.store', 'array');
+        $this->app['config']->set('php-regex.cache.store', 'array');
         $this->app->forgetInstance(Regex::class);
-        $this->app->forgetInstance('regex-parser.cache');
+        $this->app->forgetInstance('php-regex.cache');
 
         /** @var \PhpRegex\Parser\Cache\CacheInterface $cache */
-        $cache = $this->app->make('regex-parser.cache');
+        $cache = $this->app->make('php-regex.cache');
         /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
         $tree = $regex->parse('/a{2,3}/');
@@ -209,11 +209,11 @@ final class RegexParserServiceProviderTest extends TestCase
 
     public function test_config_values_are_applied(): void
     {
-        $this->app['config']->set('regex-parser.max_pattern_length', 5000);
+        $this->app['config']->set('php-regex.max_pattern_length', 5000);
 
         // Re-register the service with new config
         $this->app->forgetInstance(Regex::class);
-        $this->app->forgetInstance('regex-parser.cache');
+        $this->app->forgetInstance('php-regex.cache');
 
         /** @var \PhpRegex\Toolkit\Regex $regex */
         $regex = $this->app->make(Regex::class);
@@ -232,10 +232,10 @@ final class RegexParserServiceProviderTest extends TestCase
         $provides = $provider->provides();
 
         $this->assertContains(Regex::class, $provides);
-        $this->assertContains('regex-parser', $provides);
-        $this->assertContains('regex-parser.cache', $provides);
-        $this->assertContains('regex-parser.analysis', $provides);
-        $this->assertContains('regex-parser.lint', $provides);
+        $this->assertContains('php-regex', $provides);
+        $this->assertContains('php-regex.cache', $provides);
+        $this->assertContains('php-regex.analysis', $provides);
+        $this->assertContains('php-regex.lint', $provides);
     }
 
     /**
@@ -273,10 +273,10 @@ final class RegexParserServiceProviderTest extends TestCase
      */
     protected function defineEnvironment($app): void
     {
-        $cacheDir = sys_get_temp_dir().'/regex_parser_laravel_'.uniqid();
+        $cacheDir = sys_get_temp_dir().'/php_regex_laravel_'.uniqid();
 
-        $app['config']->set('regex-parser.cache.directory', $cacheDir);
-        $app['config']->set('regex-parser.cache.store', null);
-        $app['config']->set('regex-parser.runtime_pcre_validation', false);
+        $app['config']->set('php-regex.cache.directory', $cacheDir);
+        $app['config']->set('php-regex.cache.store', null);
+        $app['config']->set('php-regex.runtime_pcre_validation', false);
     }
 }
