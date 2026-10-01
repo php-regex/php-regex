@@ -94,6 +94,15 @@ final class UpgradeMapTest extends TestCase
     }
 
     #[Test]
+    public function test_the_map_names_classes_without_depending_on_them(): void
+    {
+        // The toolkit depends on no bridge: a ::class constant would make it.
+        $source = (string) file_get_contents(\dirname(__DIR__, 3).'/src/Toolkit/Upgrade/UpgradeMap.php');
+
+        $this->assertStringNotContainsString('::class', $source);
+    }
+
+    #[Test]
     public function test_the_rector_set_reads_the_map(): void
     {
         $set = (string) file_get_contents(\dirname(__DIR__, 3).'/src/Toolkit/Resources/rector/upgrade-2.0.php');
