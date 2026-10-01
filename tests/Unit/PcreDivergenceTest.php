@@ -203,7 +203,7 @@ final class PcreDivergenceTest extends TestCase
         $pattern = '/(?[ (((((( [a] )))))) ])/';
 
         if ('10.49' === self::runtimePin()) {
-            $this->assertSame(0, @preg_match($pattern, ''), \sprintf('%s must compile in PHP: only the library limits it.', $pattern));
+            $this->assertSame(0, self::engineMatch($pattern, ''), \sprintf('%s must compile in PHP: only the library limits it.', $pattern));
         }
 
         $result = RegexParser::create(['cache' => null, 'pcre_version' => '10.49', 'max_recursion_depth' => 5])->validate($pattern);
@@ -281,5 +281,14 @@ final class PcreDivergenceTest extends TestCase
     private static function runtimePin(): string
     {
         return implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+    }
+
+    /**
+     * The running engine on a pattern a static analyser, running another
+     * PCRE2, must not judge from the literal.
+     */
+    private static function engineMatch(string $pattern, string $subject): int|false
+    {
+        return @preg_match($pattern, $subject);
     }
 }

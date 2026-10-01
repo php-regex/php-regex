@@ -160,7 +160,7 @@ final class AbstractTraversingVisitorTest extends TestCase
     {
         // PCRE2 reads "(?[" from 10.45 on; the tree is the one it builds there.
         if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.45', '>=')) {
-            $this->assertSame(1, preg_match('/(?[ [a-c] - [b] ])/', 'c'));
+            $this->assertSame(1, self::engineMatch('/(?[ [a-c] - [b] ])/', 'c'));
         }
 
         $visitor = new LiteralCountingVisitor();
@@ -309,6 +309,15 @@ final class AbstractTraversingVisitorTest extends TestCase
     private function parse(string $pattern): RegexNode
     {
         return RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse($pattern);
+    }
+
+    /**
+     * The running engine on a pattern a static analyser, running another
+     * PCRE2, must not judge from the literal.
+     */
+    private static function engineMatch(string $pattern, string $subject): int|false
+    {
+        return preg_match($pattern, $subject);
     }
 }
 
