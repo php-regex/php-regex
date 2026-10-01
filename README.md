@@ -288,10 +288,16 @@ composer phpcs
 composer phpstan
 ```
 
-## License
+## Sponsors
 
-Released under the [MIT License](LICENSE).
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=github)](https://github.com/sponsors/yoeunes)
+
+If PHPRegex saves you time, consider [sponsoring its maintenance](https://github.com/sponsors/yoeunes).
 
 ## Support
 
 If you run into issues or have questions, please open an issue on GitHub: <https://github.com/php-regex/php-regex/issues>.
+
+## License
+
+Released under the [MIT License](LICENSE).
