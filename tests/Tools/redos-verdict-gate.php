@@ -30,9 +30,10 @@ use PHPRegex\Redos\RedosProof;
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
+$argv = $_SERVER['argv'] ?? [];
 $limit = 5.0;
-foreach (array_slice($argv, 1) as $argument) {
-    if (1 === preg_match('/^--max-p99=(\d+(?:\.\d+)?)$/', $argument, $match)) {
+foreach (\is_array($argv) ? \array_slice($argv, 1) : [] as $argument) {
+    if (\is_string($argument) && 1 === preg_match('/^--max-p99=(\d+(?:\.\d+)?)$/', $argument, $match)) {
         $limit = (float) $match[1];
     }
 }
