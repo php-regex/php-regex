@@ -1,6 +1,6 @@
 # API Reference
 
-This reference documents the public API surface of RegexParser: entry points, configuration options, return objects, and the exception hierarchy.
+This reference documents the public API surface of PHPRegex: entry points, configuration options, return objects, and the exception hierarchy.
 
 ## Entry Points
 

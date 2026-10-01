@@ -11,12 +11,12 @@ PHPRegex turns cryptic patterns into **readable explanations** and helps you fin
 ```
 Pattern: /^(?<user>\w+)@(?<host>\w+)$/
 
-Without RegexParser:
+Without PHPRegex:
   - Stare at the pattern
   - Guess what it does
   - Hope it's correct
 
-With RegexParser:
+With PHPRegex:
   - See plain English explanation
   - Validate syntax automatically
   - Detect potential ReDoS risk
@@ -206,7 +206,7 @@ preg_match($pattern, $input, $matches);
 echo count($matches) > 0 ? "Match" : "No match";  // "No match"
 ```
 
-**Debug with RegexParser:**
+**Debug with PHPRegex:**
 
 ```php
 use PHPRegex\Toolkit\Regex;

@@ -1,6 +1,6 @@
 # Art assets
 
-Brand assets for RegexParser. Every asset is authored as SVG first; PNG files
+Brand assets for PHPRegex. Every asset is authored as SVG first; PNG files
 are rendered snapshots kept in sync with their SVG source.
 
 ## System
@@ -12,8 +12,9 @@ small formats:
   `#182B45`, rust amber `#A84A08`.
 - **Small formats** (org icon, favicon) — navy tile `#0F1B2E`, light ink
   `#EDF1F7`, ember amber `#E97625` (the paper system's dark tokens).
-- **Corner radii** — card = h/6.4 (rx28); favicon tile = c/4.57 (rx112
-  squircle, own canvas); org-icon = full-bleed square (rx0) because GitHub
+- **Corner radii** — none, square corners everywhere: banner card = square
+  (no rx, keeps its 10px transparent margin + border); favicon tile =
+  full-bleed square (no rx); org-icon = full-bleed square because GitHub
   circle-crops avatars — a pre-rounded tile leaves transparent bites at
   the mask diagonals, a square fills the circle everywhere.
 - **Dark theme** — swap to `#0F1B2E` paper, `#EDF1F7` ink, `#E97625` amber.
@@ -45,7 +46,7 @@ small formats:
   optical nudge is exact for the r30 family; the r34/r44 icon families sit
   within ±2 units of perfect centering — below perception, accepted.
 - **No text glyphs in brand marks.** The wordmark is vectorized paths (Inter
-  Display Black for "Regex", Bold for "Parser") generated with real font
+  Display Black for "PHP", Bold for "Regex") generated with real font
   advances — hand-placed glyph paths collide; font-derived advances cannot.
   The social card carries only the wordmark and the mark — no captions.
 - **Contrast gates** (measured, never eyeballed): text ≥ 4.5:1, meaningful
