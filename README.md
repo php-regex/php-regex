@@ -184,8 +184,8 @@ vendor/bin/regex lint src/
 ## PHP API at a glance
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosMode;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosMode;
 
 $regex = Regex::create([
     'runtime_pcre_validation' => true,

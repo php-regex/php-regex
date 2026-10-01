@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\LanguageServer;
+namespace PHPRegex\LanguageServer;
 
-use PhpRegex\LanguageServer\Document\DocumentManager;
-use PhpRegex\LanguageServer\Document\RegexFinder;
-use PhpRegex\LanguageServer\Handler\CodeActionHandler;
-use PhpRegex\LanguageServer\Handler\CompletionHandler;
-use PhpRegex\LanguageServer\Handler\InitializeHandler;
-use PhpRegex\LanguageServer\Handler\TextDocumentHandler;
-use PhpRegex\LanguageServer\Protocol\Message;
-use PhpRegex\LanguageServer\Protocol\Response;
-use PhpRegex\Linter\Config\LintConfigLoader;
-use PhpRegex\Linter\Config\ProjectTarget;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\ParserOptions;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\LanguageServer\Document\DocumentManager;
+use PHPRegex\LanguageServer\Document\RegexFinder;
+use PHPRegex\LanguageServer\Handler\CodeActionHandler;
+use PHPRegex\LanguageServer\Handler\CompletionHandler;
+use PHPRegex\LanguageServer\Handler\InitializeHandler;
+use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
+use PHPRegex\LanguageServer\Protocol\Message;
+use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Language Server Protocol server for regex analysis.

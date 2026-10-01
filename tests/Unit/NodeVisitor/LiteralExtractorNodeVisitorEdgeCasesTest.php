@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Parser\Analysis\LiteralExtractor;
-use PhpRegex\Parser\Analysis\LiteralSet;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\NodeVisitorInterface;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Parser\Analysis\LiteralSet;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralExtractorNodeVisitorEdgeCasesTest extends TestCase

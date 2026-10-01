@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser\Internal;
+namespace PHPRegex\Parser\Internal;
 
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\RecursionLimitException;
-use PhpRegex\Parser\Exception\SyntaxErrorException;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ClassSetOperator;
-use PhpRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ClassSetOperator;
+use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Reads the expression of a Perl extended class "(?[...])", PCRE2 10.45,

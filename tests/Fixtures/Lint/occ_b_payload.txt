@@ -1,1 +1,1 @@
-a:2:{s:2:"ok";b:1;s:6:"result";a:1:{i:0;O:33:"PhpRegex\Linter\PatternOccurrence":7:{s:7:"pattern";s:4:"/b+/";s:4:"file";s:5:"b.php";s:4:"line";i:2;s:6:"source";s:10:"preg_match";s:14:"displayPattern";N;s:8:"location";N;s:9:"isIgnored";b:0;}}}
+a:2:{s:2:"ok";b:1;s:6:"result";a:1:{i:0;O:33:"PHPRegex\Linter\PatternOccurrence":7:{s:7:"pattern";s:4:"/b+/";s:4:"file";s:5:"b.php";s:4:"line";i:2;s:6:"source";s:10:"preg_match";s:14:"displayPattern";N;s:8:"location";N;s:9:"isIgnored";b:0;}}}

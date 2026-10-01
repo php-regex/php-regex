@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli;
+namespace PHPRegex\Cli;
 
-use PhpRegex\Cli\Command\AnalyzeCommand;
-use PhpRegex\Cli\Command\ClearCacheCommand;
-use PhpRegex\Cli\Command\CommandInterface;
-use PhpRegex\Cli\Command\CompareCommand;
-use PhpRegex\Cli\Command\DebugCommand;
-use PhpRegex\Cli\Command\DiagramCommand;
-use PhpRegex\Cli\Command\ExplainCommand;
-use PhpRegex\Cli\Command\GraphCommand;
-use PhpRegex\Cli\Command\HelpCommand;
-use PhpRegex\Cli\Command\HighlightCommand;
-use PhpRegex\Cli\Command\LintCommand;
-use PhpRegex\Cli\Command\LintOutputRenderer;
-use PhpRegex\Cli\Command\ParseCommand;
-use PhpRegex\Cli\Command\RedosCommand;
-use PhpRegex\Cli\Command\SelfUpdateCommand;
-use PhpRegex\Cli\Command\TranspileCommand;
-use PhpRegex\Cli\Command\ValidateCommand;
-use PhpRegex\Cli\Command\VersionCommand;
-use PhpRegex\Cli\SelfUpdate\SelfUpdater;
-use PhpRegex\Linter\Config\LintArgumentParser;
-use PhpRegex\Linter\Config\LintConfigLoader;
-use PhpRegex\Linter\Config\LintDefaultsBuilder;
-use PhpRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Cli\Command\AnalyzeCommand;
+use PHPRegex\Cli\Command\ClearCacheCommand;
+use PHPRegex\Cli\Command\CommandInterface;
+use PHPRegex\Cli\Command\CompareCommand;
+use PHPRegex\Cli\Command\DebugCommand;
+use PHPRegex\Cli\Command\DiagramCommand;
+use PHPRegex\Cli\Command\ExplainCommand;
+use PHPRegex\Cli\Command\GraphCommand;
+use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\HighlightCommand;
+use PHPRegex\Cli\Command\LintCommand;
+use PHPRegex\Cli\Command\LintOutputRenderer;
+use PHPRegex\Cli\Command\ParseCommand;
+use PHPRegex\Cli\Command\RedosCommand;
+use PHPRegex\Cli\Command\SelfUpdateCommand;
+use PHPRegex\Cli\Command\TranspileCommand;
+use PHPRegex\Cli\Command\ValidateCommand;
+use PHPRegex\Cli\Command\VersionCommand;
+use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Linter\Config\LintArgumentParser;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Config\LintExtractorFactory;
 
 /**
  * Builds the CLI with every command it ships.

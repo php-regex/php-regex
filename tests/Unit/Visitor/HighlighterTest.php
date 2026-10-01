@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Visitor;
+namespace PHPRegex\Tests\Unit\Visitor;
 
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Explain\Highlighter\HtmlHighlighter;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class HighlighterTest extends TestCase

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
-use PhpRegex\Linter\Source\PatternSourceContext;
-use PhpRegex\Symfony\Extractor\RoutePatternSource;
-use PhpRegex\Symfony\Routing\RouteRequirementNormalizer;
-use PhpRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Symfony\Extractor\RoutePatternSource;
+use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
+use PHPRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\FileResource;

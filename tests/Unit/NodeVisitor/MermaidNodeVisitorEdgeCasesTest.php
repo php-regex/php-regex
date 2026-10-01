@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Explain\MermaidRenderer;
-use PhpRegex\Parser\Node\CalloutNode;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\RegexNode;
+use PHPRegex\Explain\MermaidRenderer;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPUnit\Framework\TestCase;
 
 final class MermaidNodeVisitorEdgeCasesTest extends TestCase

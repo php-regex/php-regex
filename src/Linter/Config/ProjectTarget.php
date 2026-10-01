@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Config;
+namespace PHPRegex\Linter\Config;
 
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\ParserOptions;
-use PhpRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * The PHP and PCRE2 a project's patterns are judged for, and where each

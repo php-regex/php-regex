@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser;
+namespace PHPRegex\Parser;
 
-use PhpRegex\Parser\Cache\ArrayCache;
-use PhpRegex\Parser\Cache\CacheInterface;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * Configuration options for Regex parser.

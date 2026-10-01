@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Determinization;
+namespace PHPRegex\Automata\Determinization;
 
-use PhpRegex\Automata\Alphabet\CharSet;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Model\DfaState;
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Support\WorkBudget;
+use PHPRegex\Automata\Alphabet\CharSet;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\DfaState;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Support\WorkBudget;
 
 /**
  * NFA determinization using classic subset (powerset) construction.

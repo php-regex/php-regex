@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,39 +11,39 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter;
+namespace PHPRegex\Linter;
 
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\Internal\ForkedWorkerPool;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Optimizer\Optimizer;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Printer\PatternPrinter;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\Validation\ValidationErrorCategory;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Redos\ConfirmationOptions;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosAnalyzer;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Handles regex-related analysis and transformations.
@@ -791,8 +791,8 @@ final readonly class AnalysisService
 
         $allowed = array_merge(
             $allowed,
-            self::classNamesFromDir(__DIR__.'/../Parser/Node', 'PhpRegex\\Parser\\Node\\'),
-            self::classNamesFromDir(__DIR__.'/../Redos', 'PhpRegex\\Redos\\'),
+            self::classNamesFromDir(__DIR__.'/../Parser/Node', 'PHPRegex\\Parser\\Node\\'),
+            self::classNamesFromDir(__DIR__.'/../Redos', 'PHPRegex\\Redos\\'),
         );
 
         $allowed = array_values(array_unique($allowed));

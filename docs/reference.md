@@ -1,12 +1,12 @@
-# PhpRegex Rule Reference
+# PHPRegex Rule Reference
 
-This comprehensive reference documents every diagnostic, lint rule, and optimization that PhpRegex produces. It serves as the authoritative guide for understanding what PhpRegex checks and how to fix issues.
+This comprehensive reference documents every diagnostic, lint rule, and optimization that PHPRegex produces. It serves as the authoritative guide for understanding what PHPRegex checks and how to fix issues.
 
 ## Table of Contents
 
 | Section                                      | Description                       |
 |----------------------------------------------|-----------------------------------|
-| [Validation Layers](#validation-layers)      | How PhpRegex analyzes patterns |
+| [Validation Layers](#validation-layers)      | How PHPRegex analyzes patterns |
 | [Flags](#flags)                              | Flag-related diagnostics          |
 | [Anchors](#anchors)                          | Anchor positioning issues         |
 | [Quantifiers](#quantifiers)                  | Quantifier-related patterns       |
@@ -24,7 +24,7 @@ This comprehensive reference documents every diagnostic, lint rule, and optimiza
 
 ## Validation Layers
 
-PhpRegex validates patterns through four layers, each catching different types of issues:
+PHPRegex validates patterns through four layers, each catching different types of issues:
 
 ```
 Pattern literal
@@ -43,7 +43,7 @@ Examples by layer:
 
 ### PCRE2 Compatibility Contract
 
-PhpRegex targets **PHP's PCRE2 engine** (`preg_*`). Key behaviors that may surprise users:
+PHPRegex targets **PHP's PCRE2 engine** (`preg_*`). Key behaviors that may surprise users:
 
 | Behavior           | Description               | Example                         |
 |--------------------|---------------------------|---------------------------------|
@@ -676,7 +676,7 @@ preg_match('/(?<=ID-)\d+/', $input);
 
 ## Real-World Patterns (from Fixtures)
 
-These examples are copied from `tests/Fixtures/pcre_patterns.php` to show the kinds of patterns PhpRegex parses in tests.
+These examples are copied from `tests/Fixtures/pcre_patterns.php` to show the kinds of patterns PHPRegex parses in tests.
 
 ### HTML Hex Entities
 

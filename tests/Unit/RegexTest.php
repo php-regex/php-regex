@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,32 +11,32 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit;
 
-use PhpRegex\Explain\HtmlExplainer;
-use PhpRegex\Parser\Cache\CacheInterface;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\RecursionLimitException;
-use PhpRegex\Parser\Exception\ResourceLimitException;
-use PhpRegex\Parser\Exception\SyntaxErrorException;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\TolerantParseResult;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Tests\TestUtils\PhpErrorOffset;
-use PhpRegex\Toolkit\OutputFormat;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
+use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\TolerantParseResult;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
+use PHPRegex\Toolkit\OutputFormat;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

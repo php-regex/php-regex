@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Traversal;
+namespace PHPRegex\Tests\Unit\Traversal;
 
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\NodeFinder;
-use PhpRegex\Parser\NodeWalker;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\TraversalAction;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\NodeFinder;
+use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\TraversalAction;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

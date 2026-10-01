@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,39 +11,39 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel;
+namespace PHPRegex\Laravel;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\ServiceProvider;
 use PhpParser\ParserFactory;
-use PhpRegex\Laravel\Command\CompareCommand;
-use PhpRegex\Laravel\Command\ExplainCommand;
-use PhpRegex\Laravel\Command\LintCommand;
-use PhpRegex\Laravel\Command\RoutesCommand;
-use PhpRegex\Laravel\Command\TranspileCommand;
-use PhpRegex\Laravel\Extractor\RoutePatternSource;
-use PhpRegex\Laravel\Extractor\ValidationRulePatternSource;
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Extraction\ExtractorInterface;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\PatternExtractor;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Linter\Source\PhpFilePatternSource;
-use PhpRegex\Parser\Cache\CacheInterface;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Cache\PsrSimpleCacheAdapter;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Laravel\Command\CompareCommand;
+use PHPRegex\Laravel\Command\ExplainCommand;
+use PHPRegex\Laravel\Command\LintCommand;
+use PHPRegex\Laravel\Command\RoutesCommand;
+use PHPRegex\Laravel\Command\TranspileCommand;
+use PHPRegex\Laravel\Extractor\RoutePatternSource;
+use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Toolkit\Regex;
 
 /**
- * Laravel Service Provider for the PhpRegex library.
+ * Laravel Service Provider for the PHPRegex library.
  */
-final class PhpRegexServiceProvider extends ServiceProvider
+final class PHPRegexServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
@@ -220,7 +220,7 @@ final class PhpRegexServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton('php-regex.extractor', static function (Application $app): PatternExtractor {
-            /** @var \PhpRegex\Linter\Extraction\ExtractorInterface $strategy */
+            /** @var \PHPRegex\Linter\Extraction\ExtractorInterface $strategy */
             $strategy = $app->make('php-regex.extractor.strategy');
 
             return new PatternExtractor($strategy);
@@ -248,9 +248,9 @@ final class PhpRegexServiceProvider extends ServiceProvider
         $this->app->singleton('php-regex.analysis', static function (Application $app): AnalysisService {
             /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, analysis: array{warning_threshold: int}} $config */
             $config = $app['config']['php-regex'];
-            /** @var \PhpRegex\Toolkit\Regex $regex */
+            /** @var \PHPRegex\Toolkit\Regex $regex */
             $regex = $app->make(Regex::class);
-            /** @var \PhpRegex\Linter\PatternExtractor $extractor */
+            /** @var \PHPRegex\Linter\PatternExtractor $extractor */
             $extractor = $app->make('php-regex.extractor');
             $threshold = $config['redos']['threshold'];
 
@@ -282,7 +282,7 @@ final class PhpRegexServiceProvider extends ServiceProvider
         $this->app->singleton(ValidationRulePatternSource::class, static fn (): ValidationRulePatternSource => new ValidationRulePatternSource());
 
         $this->app->singleton('php-regex.pattern-sources', static function (Application $app): PatternSourceCollection {
-            /** @var \PhpRegex\Linter\PatternExtractor $extractor */
+            /** @var \PHPRegex\Linter\PatternExtractor $extractor */
             $extractor = $app->make('php-regex.extractor');
 
             return new PatternSourceCollection([
@@ -298,9 +298,9 @@ final class PhpRegexServiceProvider extends ServiceProvider
     private function registerLintService(): void
     {
         $this->app->singleton('php-regex.lint', static function (Application $app): LintService {
-            /** @var \PhpRegex\Linter\AnalysisService $analysis */
+            /** @var \PHPRegex\Linter\AnalysisService $analysis */
             $analysis = $app->make('php-regex.analysis');
-            /** @var \PhpRegex\Linter\Source\PatternSourceCollection $sources */
+            /** @var \PHPRegex\Linter\Source\PatternSourceCollection $sources */
             $sources = $app->make('php-regex.pattern-sources');
 
             return new LintService($analysis, $sources);

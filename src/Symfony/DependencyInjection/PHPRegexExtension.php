@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\DependencyInjection;
+namespace PHPRegex\Symfony\DependencyInjection;
 
 use PhpParser\ParserFactory;
-use PhpRegex\Linter\Extraction\ExtractorInterface;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Cache\PsrCacheAdapter;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -28,11 +28,11 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Loads and manages configuration for the PhpRegex bundle.
+ * Loads and manages configuration for the PHPRegex bundle.
  *
  * @internal
  */
-final class PhpRegexExtension extends Extension
+final class PHPRegexExtension extends Extension
 {
     /**
      * @param array<array<string, mixed>> $configs   an array of configuration values from the application's config files

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration;
+namespace PHPRegex\Tests\Integration;
 
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\LiteralNode;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPUnit\Framework\TestCase;
 
 final class ManualNodeInjectionTest extends TestCase

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,26 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CalloutNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ControlCharNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LimitMatchNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\SubroutineNode;
-use PhpRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPUnit\Framework\TestCase;
 use Random\Engine;
 use Random\Randomizer;

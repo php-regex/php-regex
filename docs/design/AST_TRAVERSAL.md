@@ -1,6 +1,6 @@
 # AST Traversal Design
 
-Understanding how PhpRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
+Understanding how PHPRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
 
 ## The Tour Guide Analogy
 
@@ -8,7 +8,7 @@ Think of the AST as a museum floor plan and the visitor as a tour guide. The vis
 
 ## Why Use the Visitor Pattern?
 
-PhpRegex separates **data** (nodes) from **behavior** (visitors). This separation provides three key benefits:
+PHPRegex separates **data** (nodes) from **behavior** (visitors). This separation provides three key benefits:
 
 | Concern         | Without Visitor Pattern | With Visitor Pattern   |
 |-----------------|-------------------------|------------------------|
@@ -30,8 +30,8 @@ Every node implements an `accept()` method that receives a visitor. This is call
 2. The **runtime type** of the visitor (which visitor class it is)
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\TextExplainer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\TextExplainer;
 
 $regex = Regex::create();
 $ast = $regex->parse('/foo|bar/');
@@ -62,7 +62,7 @@ AlternationNode
 
 ## Traversal strategies
 
-PhpRegex uses depth-first traversal with explicit control in the visitor. Typical delegation:
+PHPRegex uses depth-first traversal with explicit control in the visitor. Typical delegation:
 
 - `RegexNode` delegates to `pattern`.
 - `SequenceNode` iterates children left-to-right.
@@ -73,8 +73,8 @@ PhpRegex uses depth-first traversal with explicit control in the visitor. Typica
 ### Example: Tracking Depth
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\AbstractNodeVisitor;
 
 $regex = Regex::create();
 $ast = $regex->parse('/(a(b(c)))+/');
@@ -152,8 +152,8 @@ extends one keeps working when a minor release adds a node type:
   added later included.
 
 ```php
-use PhpRegex\Parser\Node;
-use PhpRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\Node;
+use PHPRegex\Parser\AbstractTraversingVisitor;
 
 class OnlyLiteralVisitor extends AbstractTraversingVisitor
 {

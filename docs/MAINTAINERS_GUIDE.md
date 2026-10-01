@@ -1,6 +1,6 @@
 # Maintainers Guide
 
-This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PhpRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
+This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PHPRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
 
 ## Contributor Checklist
 
@@ -24,7 +24,7 @@ For first-time contributors, this is a good entry path:
 
 ## The Integration Landscape
 
-**PhpRegex** is typically embedded in:
+**PHPRegex** is typically embedded in:
 
 - PHPStan rules and custom static analyzers
 - Symfony bundles and validators
@@ -33,7 +33,7 @@ For first-time contributors, this is a good entry path:
 Integration flow:
 
 ```
-Your app -> PhpRegex -> AST + visitors -> results
+Your app -> PHPRegex -> AST + visitors -> results
 ```
 
 ---
@@ -68,8 +68,8 @@ Regex::create([options])
 ### Example
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Cache\FilesystemCache;
 
 $regex = Regex::create([
     'cache' => new FilesystemCache('/var/cache/php-regex'),
@@ -126,7 +126,7 @@ $regex = Regex::create(['php_version' => '8.2']);   // $regex = Regex::create(['
 
 ## Exception Hierarchy
 
-PhpRegex exposes a stable exception surface for precise error handling:
+PHPRegex exposes a stable exception surface for precise error handling:
 
 Exception hierarchy (simplified):
 - `Throwable`
@@ -149,11 +149,11 @@ Specific catches:
 ### Exception Handling Examples
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\ExceptionInterface;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 
 try {
     $ast = Regex::create()->parse('/[a-z]+/');
@@ -168,7 +168,7 @@ try {
     echo "Parse error: {$e->getMessage()}";
 } catch (ExceptionInterface $e) {
     // Any other parser/lexer error
-    echo "PhpRegex error: {$e->getMessage()}";
+    echo "PHPRegex error: {$e->getMessage()}";
 }
 
 // Handling specific error codes
@@ -304,7 +304,7 @@ jobs:
           php-version: '8.2'
       - name: Install dependencies
         run: composer install --no-progress
-      - name: Run PhpRegex linter
+      - name: Run PHPRegex linter
         run: vendor/bin/regex lint src/ --format=json > regex-issues.json
       - name: Check for critical issues
         run: |
@@ -325,7 +325,7 @@ jobs:
 ```php
 namespace MyApp\Regex;
 
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 class RegexValidator
 {
@@ -361,9 +361,9 @@ class RegexValidator
 ```php
 namespace MyApp\Regex;
 
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\AbstractTraversingVisitor;
-use PhpRegex\Parser\Node;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\Node;
 
 class LiteralCollector extends AbstractTraversingVisitor
 {
@@ -400,7 +400,7 @@ class PatternAnalyzer
 // src/Validator/RegexValidator.php
 namespace App\Validator;
 
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -456,7 +456,7 @@ class RegexConstraintValidator extends ConstraintValidator
 For long-running processes (daemons, workers), manage memory carefully:
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 class RegexProcessor
 {

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser\Validation;
+namespace PHPRegex\Parser\Validation;
 
-use PhpRegex\Parser\ErrorCode;
+use PHPRegex\Parser\ErrorCode;
 
 /**
  * Outcome of a regex validation check.

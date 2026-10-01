@@ -1,12 +1,12 @@
-# Extending PhpRegex
+# Extending PHPRegex
 
-This guide shows how to add new PCRE features, build custom visitors, and integrate PhpRegex into tools.
+This guide shows how to add new PCRE features, build custom visitors, and integrate PHPRegex into tools.
 
 ---
 
 ## What You Can Extend
 
-**PhpRegex** is designed for extensibility:
+**PHPRegex** is designed for extensibility:
 
 - New AST nodes for new syntax
 - New visitors for analysis or transformation
@@ -18,7 +18,7 @@ This guide shows how to add new PCRE features, build custom visitors, and integr
 
 ## Extension Architecture
 
-PhpRegex core extension points:
+PHPRegex core extension points:
 - Nodes (`src/Parser/Node/`) for new node types.
 - Visitors (`src/Parser/AbstractNodeVisitor.php` and its subclasses in each package) for new analyses or transforms.
 - Parser (`src/Parser/Syntax/TokenParser.php`) to recognize new syntax.
@@ -37,9 +37,9 @@ Create a node class for your new PCRE feature:
 
 declare(strict_types=1);
 
-namespace PhpRegex\Parser\Node;
+namespace PHPRegex\Parser\Node;
 
-use PhpRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\NodeVisitorInterface;
 
 /**
  * Represents your new PCRE feature.
@@ -187,19 +187,19 @@ declare(strict_types=1);
 
 namespace App\Regex;
 
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\AbstractNodeVisitor;
 
 /**
  * Calculates pattern complexity score.
@@ -284,7 +284,7 @@ final class ComplexityVisitor extends AbstractNodeVisitor
 
 ```php
 use App\Regex\ComplexityVisitor;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $ast = $regex->parse('/^(?:[a-z]+|\d{3,})+$/');
@@ -308,10 +308,10 @@ Create tests for your extension:
 
 declare(strict_types=1);
 
-namespace PhpRegex\Tests\Unit\Node;
+namespace PHPRegex\Tests\Unit\Node;
 
 use PHPUnit\Framework\TestCase;
-use PhpRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CalloutNode;
 
 class CalloutNodeTest extends TestCase
 {

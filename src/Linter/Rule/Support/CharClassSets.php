@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule\Support;
+namespace PHPRegex\Linter\Rule\Support;
 
-use PhpRegex\Parser\Analysis\ByteCharSet;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
 
 /**
  * Character-class decomposition and CharSet construction helpers shared by

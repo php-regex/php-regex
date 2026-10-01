@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\SequenceNode;
 
 /**
  * Detects (.|\n) anti-patterns, overlapping literal alternatives, and

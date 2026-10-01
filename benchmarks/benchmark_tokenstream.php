@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\Token\TokenType;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *

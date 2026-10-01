@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\PHPStan;
+namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;

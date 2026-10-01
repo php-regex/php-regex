@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Support;
+namespace PHPRegex\Tests\Support;
 
-use PhpRegex\Toolkit\Upgrade\UpgradeMap;
+use PHPRegex\Toolkit\Upgrade\UpgradeMap;
 
 /**
  * The tables of UPGRADE-2.0.md that UpgradeMap holds, between two markers.
@@ -65,6 +65,6 @@ final class UpgradeGuide
      */
     private static function code(string $text): string
     {
-        return (string) preg_replace('~PhpRegex\\\\[\w\\\\]+~', '`$0`', $text);
+        return (string) preg_replace('~PHPRegex\\\\[\w\\\\]+~', '`$0`', $text);
     }
 }

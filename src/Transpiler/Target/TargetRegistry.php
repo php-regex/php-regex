@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Transpiler\Target;
+namespace PHPRegex\Transpiler\Target;
 
-use PhpRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
-use PhpRegex\Transpiler\Target\Python\PythonTarget;
-use PhpRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
+use PHPRegex\Transpiler\Target\Python\PythonTarget;
+use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Registry for available transpilation targets.

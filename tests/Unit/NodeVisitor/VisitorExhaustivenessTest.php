@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,45 +11,45 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Parser\Exception\RegexException;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CalloutNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ClassSetOperator;
-use PhpRegex\Parser\Node\CommentNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\ControlCharNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\KeepNode;
-use PhpRegex\Parser\Node\LimitMatchNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\ScriptRunNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Node\SubroutineNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\Node\VersionConditionNode;
-use PhpRegex\Parser\NodeVisitorInterface;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ClassSetOperator;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -179,7 +179,7 @@ final class VisitorExhaustivenessTest extends TestCase
         // Every concrete node type must appear above.
         $covered = array_map(static fn (NodeInterface $n): string => $n::class, $nodes);
         foreach (glob(__DIR__.'/../../../src/Parser/Node/*Node.php') ?: [] as $file) {
-            $class = 'PhpRegex\Parser\Node\\'.basename($file, '.php');
+            $class = 'PHPRegex\Parser\Node\\'.basename($file, '.php');
             if (!is_subclass_of($class, NodeInterface::class) || (new \ReflectionClass($class))->isAbstract()) {
                 continue;
             }
@@ -212,7 +212,7 @@ final class VisitorExhaustivenessTest extends TestCase
         $missing = [];
         $deprecatedSeen = [];
         foreach (glob(__DIR__.'/../../../src/Parser/Node/*Node.php') ?: [] as $file) {
-            $class = 'PhpRegex\Parser\Node\\'.basename($file, '.php');
+            $class = 'PHPRegex\Parser\Node\\'.basename($file, '.php');
             if (!is_subclass_of($class, NodeInterface::class) || (new \ReflectionClass($class))->isAbstract()) {
                 continue;
             }
@@ -252,7 +252,7 @@ final class VisitorExhaustivenessTest extends TestCase
         sort($files);
 
         foreach ($files as $file) {
-            $class = 'PhpRegex\\'.str_replace('/', '\\', substr($file, \strlen($src), -4));
+            $class = 'PHPRegex\\'.str_replace('/', '\\', substr($file, \strlen($src), -4));
             if (!class_exists($class)) {
                 continue;
             }

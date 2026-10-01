@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps you resolve common issues when using PhpRegex.
+This guide helps you resolve common issues when using PHPRegex.
 
 ## Common Error Messages
 
@@ -8,7 +8,7 @@ This guide helps you resolve common issues when using PhpRegex.
 
 **Problem:**
 ```
-PhpRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
+PHPRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
 ```
 
 **Causes:**
@@ -37,7 +37,7 @@ if (!$validation->isValid) {
 3. Use cache to skip parsing:
 ```php
 $regex = Regex::create([
-    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
     // Pattern parsed once, cached for all workers
 ]);
 ```
@@ -111,7 +111,7 @@ $realisticInputs = [
 
 **Problem:**
 ```
-PhpRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at position 5
+PHPRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at position 5
 ```
 
 **Causes:**
@@ -157,7 +157,7 @@ $pattern = '\x{41}';        // Hexadecimal with braces
 
 **Problem:**
 ```
-PhpRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position 15. Context: "abc..."
+PHPRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position 15. Context: "abc..."
 ```
 
 **Causes:**
@@ -233,7 +233,7 @@ echo "Time: " . ($elapsed * 1000) . " ms\n";
 4. Use caching:
 ```php
 $regex = Regex::create([
-    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Parse once, reuse across requests
@@ -253,7 +253,7 @@ $ast = $regex->parse($pattern);
 1. Verify cache is configured:
 ```php
 $regex = Regex::create([
-    'cache' => new \PhpRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
+    'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
 ]);
 
 // Test
@@ -361,7 +361,7 @@ composer show yoeunes/regex-parser
 ```yaml
 # config/bundles.php
 return [
-    PhpRegex\Symfony\PhpRegexBundle::class => ['all' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
 ];
 ```
 

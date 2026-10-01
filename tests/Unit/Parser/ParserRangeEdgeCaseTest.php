@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Parser;
+namespace PHPRegex\Tests\Unit\Parser;
 
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserRangeEdgeCaseTest extends TestCase

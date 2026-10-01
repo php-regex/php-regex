@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Linter\Rule\Support\CodePoints;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\NodeInterface;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Detects braced Unicode escapes (e.g. \x{100}) that require the /u flag

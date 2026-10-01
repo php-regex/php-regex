@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorManualInjectionTest extends TestCase

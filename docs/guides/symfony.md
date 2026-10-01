@@ -14,7 +14,7 @@ composer require --dev yoeunes/regex-parser
 // config/bundles.php
 return [
     // ...
-    PhpRegex\Symfony\PhpRegexBundle::class => ['dev' => true, 'test' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['dev' => true, 'test' => true],
 ];
 ```
 
@@ -71,7 +71,7 @@ Symfony routes.
 
 ## The service and the lint judge for different targets
 
-The `php_regex.regex` service (autowired as `PhpRegex\Toolkit\Regex`) runs in
+The `php_regex.regex` service (autowired as `PHPRegex\Toolkit\Regex`) runs in
 your application: it judges patterns for the PHP running it, and
 `php_version` / `pcre_version` do not change that.
 

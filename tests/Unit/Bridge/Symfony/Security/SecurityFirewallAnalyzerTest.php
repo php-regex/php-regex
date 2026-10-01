@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Security;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Functional\Cli;
+namespace PHPRegex\Tests\Functional\Cli;
 
-use PhpRegex\Cli\Command\AnalyzeCommand;
-use PhpRegex\Cli\Command\CompareCommand;
-use PhpRegex\Cli\Command\DebugCommand;
-use PhpRegex\Cli\Command\DiagramCommand;
-use PhpRegex\Cli\Command\ExplainCommand;
-use PhpRegex\Cli\Command\HelpCommand;
-use PhpRegex\Cli\Command\HighlightCommand;
-use PhpRegex\Cli\Command\ParseCommand;
-use PhpRegex\Cli\Command\RedosCommand;
-use PhpRegex\Cli\Command\SelfUpdateCommand;
-use PhpRegex\Cli\Command\ValidateCommand;
-use PhpRegex\Cli\Command\VersionCommand;
-use PhpRegex\Cli\GlobalOptions;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Cli\Command\AnalyzeCommand;
+use PHPRegex\Cli\Command\CompareCommand;
+use PHPRegex\Cli\Command\DebugCommand;
+use PHPRegex\Cli\Command\DiagramCommand;
+use PHPRegex\Cli\Command\ExplainCommand;
+use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\HighlightCommand;
+use PHPRegex\Cli\Command\ParseCommand;
+use PHPRegex\Cli\Command\RedosCommand;
+use PHPRegex\Cli\Command\SelfUpdateCommand;
+use PHPRegex\Cli\Command\ValidateCommand;
+use PHPRegex\Cli\Command\VersionCommand;
+use PHPRegex\Cli\GlobalOptions;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -719,7 +719,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('version', []), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('PhpRegex', $buffer);
+        $this->assertStringContainsString('PHPRegex', $buffer);
         $this->assertStringContainsString('github.com/php-regex/regex-parser', $buffer);
     }
 

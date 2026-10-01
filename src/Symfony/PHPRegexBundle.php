@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony;
+namespace PHPRegex\Symfony;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * Symfony Bundle for the PhpRegex library.
+ * Symfony Bundle for the PHPRegex library.
  */
-final class PhpRegexBundle extends Bundle
+final class PHPRegexBundle extends Bundle
 {
     /**
      * @return string the absolute path to the bundle's root directory

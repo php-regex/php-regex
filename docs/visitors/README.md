@@ -17,12 +17,12 @@ quantifier, the groups around a node. `NodeFinder` and `NodeWalker` do that
 for any tree, without a method for each kind of node:
 
 ```php
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\NodeFinder;
-use PhpRegex\Parser\NodeWalker;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\TraversalAction;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\NodeFinder;
+use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\TraversalAction;
 
 $tree = RegexParser::create()->parse('/(a)(b)\\2\\1/');
 
@@ -71,9 +71,9 @@ keep descending below the node; return without calling it to skip the
 subtree.
 
 ```php
-use PhpRegex\Parser\Node;
-use PhpRegex\Parser\AbstractTraversingVisitor;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node;
+use PHPRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Toolkit\Regex;
 
 class LiteralCollector extends AbstractTraversingVisitor
 {
@@ -119,9 +119,9 @@ unless you override `defaultReturn()`, and visits no children.
 decide which children to visit, as the compiler and the explainer do.
 
 ```php
-use PhpRegex\Parser\Node;
-use PhpRegex\Parser\AbstractNodeVisitor;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node;
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Toolkit\Regex;
 
 /** @extends AbstractNodeVisitor<bool> */
 class StartsWithCaret extends AbstractNodeVisitor
@@ -159,8 +159,8 @@ var_dump(Regex::create()->parse('/^abc/')->accept(new StartsWithCaret())); // bo
 **Purpose:** Converts the AST back into a PCRE string. Useful for round-tripping or pattern normalization.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 $ast = Regex::create()->parse('/foo/i');
 
@@ -190,8 +190,8 @@ echo $pattern;  // '/foo/i'
 | `\x{61}` | `a`   | Unnecessary escape   |
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Optimizer\Rewriter;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Optimizer\Rewriter;
 
 $ast = Regex::create()->parse('/(?:foo)/');
 $optimized = $ast->accept(new Rewriter());
@@ -215,8 +215,8 @@ echo $pattern;  // '/foo/'
 | `\0`           | `\x{00}`          |
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Optimizer\Modernizer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Optimizer\Modernizer;
 
 $ast = Regex::create()->parse('/(?i)foo/');
 $modernized = $ast->accept(new Modernizer());
@@ -240,8 +240,8 @@ echo $pattern;  // Modernized version
 - Valid group numbers and names
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Validation\Validator;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Validation\Validator;
 
 $ast = Regex::create()->parse('/\1(foo)/');  // Invalid: \1 before capture
 $result = $ast->accept(new Validator());
@@ -266,8 +266,8 @@ echo count($result->getProblems());
 | `ComplexPattern`       | Pattern is complex        | info     |
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Linter\PatternLinter;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Linter\PatternLinter;
 
 $ast = Regex::create()->parse('/(a+)+b/');  // Potential ReDoS risk
 $result = $ast->accept(new PatternLinter());
@@ -294,7 +294,7 @@ foreach ($result->getIssues() as $issue) {
 | `critical` | High structural risk        | Review and refactor    |
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 echo $analysis->severity->value;     // 'critical'
@@ -308,8 +308,8 @@ echo $analysis->confidence->value;   // 'high'
 **Purpose:** Returns a numeric complexity score for a pattern. Useful for CI quality gates.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Analysis\ComplexityScorer;
 
 $ast = Regex::create()->parse('/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/');
 $score = $ast->accept(new ComplexityScorer());
@@ -333,8 +333,8 @@ echo $score;  // e.g., 42
 **Purpose:** Collects various metrics about the pattern structure.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Analysis\MetricsCollector;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Analysis\MetricsCollector;
 
 $ast = Regex::create()->parse('/\d{4}-\d{2}-\d{2}/');
 $metrics = $ast->accept(new MetricsCollector());
@@ -363,8 +363,8 @@ no upper bound. Lengths count bytes, or UTF-8 characters when the pattern is in 
 early and lowers the minimum; `\K` only moves the start of the reported match and does not change the range.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 
 $ast = Regex::create()->parse('/a{2,4}b*/');
 [$min, $max] = $ast->accept(new LengthRangeCalculator());
@@ -382,8 +382,8 @@ var_dump($max);   // NULL (unbounded)
 **Purpose:** Extracts fixed literals from the pattern, useful for optimization or indexing.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Analysis\LiteralExtractor;
 
 $ast = Regex::create()->parse('/user-\d{4}/');
 $literals = $ast->accept(new LiteralExtractor());
@@ -400,8 +400,8 @@ echo $literals->getSuffix();       // ''
 **Purpose:** Generates a sample string that matches the pattern. Used by `Regex::generate()`.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Generator\SampleGenerator;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Generator\SampleGenerator;
 
 $ast = Regex::create()->parse('/[A-Z][a-z]{3,5}\d{2}/');
 $sample = $ast->accept(new SampleGenerator());
@@ -416,8 +416,8 @@ echo $sample;  // e.g., "Word12"
 **Purpose:** Generates test cases for the pattern, useful for QA tooling.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Generator\TestCaseGenerator;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Generator\TestCaseGenerator;
 
 $ast = Regex::create()->parse('/\d{3}-\d{4}/');
 $cases = $ast->accept(new TestCaseGenerator());
@@ -446,8 +446,8 @@ Array (
 **Purpose:** Generates a plain-text explanation of what the pattern does. Used by `Regex::explain()`.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\TextExplainer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\TextExplainer;
 
 $ast = Regex::create()->parse('/\d{3}-\d{4}/');
 $explanation = $ast->accept(new TextExplainer());
@@ -465,8 +465,8 @@ Match exactly 3 digits, then hyphen, then exactly 4 digits.
 **Purpose:** Generates HTML explanation for use in documentation or web UIs.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\HtmlExplainer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\HtmlExplainer;
 
 $ast = Regex::create()->parse('/\w+@\w+\.\w+/');
 $html = $ast->accept(new HtmlExplainer());
@@ -482,8 +482,8 @@ echo $html;
 **Purpose:** Generates a debug-friendly AST dump. Useful for development and debugging.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Printer\NodeDumper;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Printer\NodeDumper;
 
 $ast = Regex::create()->parse('/foo/');
 $dump = $ast->accept(new NodeDumper());
@@ -511,8 +511,8 @@ RegexNode {
 **Purpose:** Renders the AST as a Mermaid diagram for documentation or visualization.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\MermaidRenderer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\MermaidRenderer;
 
 $ast = Regex::create()->parse('/a|b/');
 $mermaid = $ast->accept(new MermaidRenderer());
@@ -535,8 +535,8 @@ graph TD
 **Purpose:** Renders a text-based tree of the AST for quick inspection.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\AsciiTreeRenderer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\AsciiTreeRenderer;
 
 $ast = Regex::create()->parse('/^a+$/');
 $tree = $ast->accept(new AsciiTreeRenderer());
@@ -559,8 +559,8 @@ Regex
 **Purpose:** Renders a railroad-style SVG diagram suitable for graphical output.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\RailroadSvgRenderer;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\RailroadSvgRenderer;
 
 $ast = Regex::create()->parse('/a|b/');
 $svg = $ast->accept(new RailroadSvgRenderer());
@@ -583,8 +583,8 @@ Base classes for syntax highlighting:
 HTML spans include a base `regex-token` class plus semantic classes like `regex-escape`, `regex-group`, `regex-comment`, and `regex-backref` so themes can style them distinctly.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 
 $ast = Regex::create()->parse('/\d+/');
 $highlighted = $ast->accept(new ConsoleHighlighter());
@@ -600,7 +600,7 @@ echo $highlighted;
 ### Pattern 1: Stateless Visitor (Returns a Value)
 
 ```php
-use PhpRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\AbstractNodeVisitor;
 
 class LiteralCountVisitor extends AbstractNodeVisitor
 {
@@ -635,7 +635,7 @@ echo $count;  // 11, one literal per character
 ### Pattern 2: Stateful Visitor (Accumulates State)
 
 ```php
-use PhpRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\AbstractTraversingVisitor;
 
 class GroupCollectorVisitor extends AbstractTraversingVisitor
 {
@@ -670,7 +670,7 @@ print_r($visitor->getGroupNames());
 ### Pattern 3: Transforming Visitor
 
 ```php
-use PhpRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\AbstractNodeVisitor;
 
 class UppercaserVisitor extends AbstractNodeVisitor
 {

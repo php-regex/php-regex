@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit;
 
-use PhpRegex\Parser\Analysis\GroupNumberingCollector;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPUnit\Framework\TestCase;
 
 final class GroupNumberingCollectorEdgeCasesTest extends TestCase

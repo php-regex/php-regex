@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor\Strategy;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Extractor\Strategy;
 
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyTest extends TestCase

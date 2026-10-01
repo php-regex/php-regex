@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Linter\Rule\Support\CharClassSets;
-use PhpRegex\Linter\Rule\Support\CodePoints;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\RangeNode;
+use PHPRegex\Linter\Rule\Support\CharClassSets;
+use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RangeNode;
 
 /**
  * Detects ASCII letter ranges like A-z that unintentionally include

@@ -1,12 +1,12 @@
 # LSP Integration Guide
 
-This guide covers PhpRegex's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
+This guide covers PHPRegex's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
 
 ---
 
 ## Overview
 
-The PhpRegex LSP server provides:
+The PHPRegex LSP server provides:
 
 - **Real-time diagnostics** - Parse errors, validation issues, and lint warnings
 - **Hover information** - Pattern explanation on mouse hover
@@ -17,7 +17,7 @@ The PhpRegex LSP server provides:
 
 ## Quick Start
 
-### 1. Install PhpRegex
+### 1. Install PHPRegex
 
 ```bash
 composer require --dev yoeunes/regex-parser
@@ -199,7 +199,7 @@ Use the [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin by Re
 2. Go to **Settings → Languages & Frameworks → Language Servers**
 
 3. Click **+** to add a new server definition:
-   - **Name:** PhpRegex
+   - **Name:** PHPRegex
    - **Command:** `vendor/bin/regex-lsp`
    - **File Mappings:** `*.php`
 
@@ -207,7 +207,7 @@ Use the [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin by Re
 
 **Alternative: PHPStan Integration**
 
-PhpRegex also integrates with PHPStan (see [the PHPStan guide](phpstan.md)):
+PHPRegex also integrates with PHPStan (see [the PHPStan guide](phpstan.md)):
 
 1. Install the [PHPStan plugin](https://plugins.jetbrains.com/plugin/12754-phpstan) for PhpStorm
 2. Configure PHPStan in **Settings → PHP → Quality Tools → PHPStan**

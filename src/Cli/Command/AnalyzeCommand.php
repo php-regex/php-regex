@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Command;
+namespace PHPRegex\Cli\Command;
 
-use PhpRegex\Cli\ConsoleStyle;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Cli\PcreRuntimeInfo;
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Redos\Confirmation;
-use PhpRegex\Redos\ConfirmationOptions;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Cli\PcreRuntimeInfo;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\Confirmation;
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 
 final class AnalyzeCommand extends AbstractCommand
 {

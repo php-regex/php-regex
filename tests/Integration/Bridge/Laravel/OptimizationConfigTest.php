@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
-use PhpRegex\Laravel\Command\LintCommand;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Laravel\Command\LintCommand;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -62,7 +62,7 @@ final class OptimizationConfigTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            PhpRegexServiceProvider::class,
+            PHPRegexServiceProvider::class,
         ];
     }
 

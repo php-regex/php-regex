@@ -64,7 +64,7 @@ parameters:
 
 services:
     -
-        class: PhpRegex\PHPStan\RegexPatternRule
+        class: PHPRegex\PHPStan\RegexPatternRule
         arguments:
             config: %phpRegex%
         tags:

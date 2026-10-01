@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Linter\Rule\Support\CodePoints;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no case-sensitive

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Formatter;
+namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PhpRegex\Linter\Diagnostic;
-use PhpRegex\Linter\DiagnosticType;
-use PhpRegex\Linter\Formatter\JsonFormatter;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Optimizer\OptimizationResult;
+use PHPRegex\Linter\Diagnostic;
+use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Optimizer\OptimizationResult;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 

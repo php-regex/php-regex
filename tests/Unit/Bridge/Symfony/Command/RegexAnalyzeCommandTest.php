@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
-use PhpRegex\Symfony\Analyzer\AnalysisContext;
-use PhpRegex\Symfony\Analyzer\AnalysisIssue;
-use PhpRegex\Symfony\Analyzer\AnalysisNotice;
-use PhpRegex\Symfony\Analyzer\AnalyzerInterface;
-use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
-use PhpRegex\Symfony\Analyzer\CheckOutcome;
-use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use PhpRegex\Symfony\Analyzer\IssueDetail;
-use PhpRegex\Symfony\Analyzer\ReportSection;
-use PhpRegex\Symfony\Command\AnalyzeCommand;
+use PHPRegex\Symfony\Analyzer\AnalysisContext;
+use PHPRegex\Symfony\Analyzer\AnalysisIssue;
+use PHPRegex\Symfony\Analyzer\AnalysisNotice;
+use PHPRegex\Symfony\Analyzer\AnalyzerInterface;
+use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PHPRegex\Symfony\Analyzer\CheckOutcome;
+use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PHPRegex\Symfony\Analyzer\IssueDetail;
+use PHPRegex\Symfony\Analyzer\ReportSection;
+use PHPRegex\Symfony\Command\AnalyzeCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use PhpRegex\Tests\TestUtils\Pcre2ConformanceTable;
+use PHPRegex\Tests\TestUtils\Pcre2ConformanceTable;
 
 $argv = $_SERVER['argv'] ?? [];
 $arguments = [];

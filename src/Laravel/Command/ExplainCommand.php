@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Command;
+namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Explain a regular expression in human-readable format.
@@ -70,7 +70,7 @@ final class ExplainCommand extends Command
             return self::FAILURE;
         }
 
-        $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Explanation');
+        $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Explanation');
         $this->newLine();
 
         // Show the pattern

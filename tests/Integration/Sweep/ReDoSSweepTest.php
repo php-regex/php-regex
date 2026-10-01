@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Sweep;
+namespace PHPRegex\Tests\Integration\Sweep;
 
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Redos\Finding;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosConfidence;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\AnalysisReport;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Redos\Finding;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosConfidence;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\AnalysisReport;
 use PHPUnit\Framework\TestCase;
 
 /**

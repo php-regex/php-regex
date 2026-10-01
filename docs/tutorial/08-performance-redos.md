@@ -145,11 +145,11 @@ Often you can simplify:
 
 ## Prevention Strategies
 
-### Strategy 1: Validate with PhpRegex
+### Strategy 1: Validate with PHPRegex
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
 
 $regex = Regex::create();
 
@@ -240,10 +240,10 @@ $safe1b = '/a+$/';
 $safe2 = '/(aa|a)+$/';
 ```
 
-### Exercise 3: Test with PhpRegex
+### Exercise 3: Test with PHPRegex
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -273,7 +273,7 @@ foreach ($patterns as $pattern) {
 3. **Atomic groups** `(?>...)` prevent backtracking
 4. **Possessive quantifiers** `++`, `*+` prevent backtracking
 5. **Longer alternatives first** reduces backtracking
-6. **Validate patterns** with PhpRegex before production
+6. **Validate patterns** with PHPRegex before production
 
 ---
 
@@ -317,7 +317,7 @@ You now understand:
 - What ReDoS is and why it's dangerous
 - Common risk patterns
 - How to write safe patterns
-- Using PhpRegex to detect issues
+- Using PHPRegex to detect issues
 
 **Next:** [Chapter 9: Testing and Debugging](09-testing-debugging.md)
 

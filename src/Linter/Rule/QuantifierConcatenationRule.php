@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,23 +11,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Linter\Rule\Support\CharClassSets;
-use PhpRegex\Linter\Rule\Support\NodePredicates;
-use PhpRegex\Linter\Rule\Support\QuantifierMath;
-use PhpRegex\Parser\Analysis\ByteCharSet;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\SequenceNode;
+use PHPRegex\Linter\Rule\Support\CharClassSets;
+use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\QuantifierMath;
+use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
 
 /**
  * Detects concatenated variable quantifiers where one character set is a

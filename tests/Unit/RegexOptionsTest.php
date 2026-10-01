@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit;
 
-use PhpRegex\Parser\Cache\ArrayCache;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\ParserOptions;
-use PhpRegex\Parser\PcreTarget;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class RegexOptionsTest extends TestCase

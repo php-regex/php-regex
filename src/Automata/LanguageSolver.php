@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata;
+namespace PHPRegex\Automata;
 
-use PhpRegex\Automata\Builder\DfaBuilder;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Solver\DfaCacheInterface;
-use PhpRegex\Automata\Solver\EquivalenceResult;
-use PhpRegex\Automata\Solver\IntersectionResult;
-use PhpRegex\Automata\Solver\SubsetResult;
-use PhpRegex\Automata\Transform\AstToNfaTransformer;
-use PhpRegex\Automata\Transform\RegularSubsetValidator;
-use PhpRegex\Automata\Unicode\CodePointHelper;
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Automata\Builder\DfaBuilder;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\EquivalenceResult;
+use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\RegularSubsetValidator;
+use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\RegexParser;
 
 /**
  * Answers questions about the languages regexes match: whether two overlap,

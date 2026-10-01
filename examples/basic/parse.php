@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Example: Parse and analyze a regex pattern with RegexParser

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Parser;
+namespace PHPRegex\Tests\Unit\Parser;
 
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Internal\GroupNameReader;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\ScriptRunNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Syntax\TokenParser;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\GroupNameReader;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\TokenParser;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

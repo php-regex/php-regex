@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
-use PhpRegex\Automata\Options\MatchMode;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

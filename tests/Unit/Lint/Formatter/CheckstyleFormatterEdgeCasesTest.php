@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Formatter;
+namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PhpRegex\Linter\Formatter\CheckstyleFormatter;
+use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPUnit\Framework\TestCase;
 
 final class CheckstyleFormatterEdgeCasesTest extends TestCase

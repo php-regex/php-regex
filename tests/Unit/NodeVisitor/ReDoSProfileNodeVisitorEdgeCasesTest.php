@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\CalloutNode;
-use PhpRegex\Parser\Node\CommentNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\KeepNode;
-use PhpRegex\Parser\Node\LimitMatchNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\NodeVisitorInterface;
-use PhpRegex\Redos\RedosConfidence;
-use PhpRegex\Redos\RedosProfiler;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Redos\RedosConfidence;
+use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
 
 final class ReDoSProfileNodeVisitorEdgeCasesTest extends TestCase

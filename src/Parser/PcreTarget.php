@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser;
+namespace PHPRegex\Parser;
 
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * The PHP version and the PCRE2 release a pattern is judged for.

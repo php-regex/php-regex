@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser\Cache;
+namespace PHPRegex\Parser\Cache;
 
-use PhpRegex\Parser\Exception\CacheException;
-use PhpRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Exception\CacheException;
+use PHPRegex\Parser\Node\RegexNode;
 
 /**
  * Trees kept in files under a directory the caller names, as data read

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Analyzer;
+namespace PHPRegex\Symfony\Analyzer;
 
-use PhpRegex\Symfony\Routing\RouteConflictAnalyzer;
-use PhpRegex\Symfony\Routing\RouteConflictReport;
-use PhpRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
+use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Routing\RouteConflictReport;
+use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
 use Symfony\Component\Routing\RouterInterface;
 
 /**

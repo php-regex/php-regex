@@ -1,17 +1,17 @@
 # FAQ and Glossary
 
-Short answers to common questions plus quick definitions of core terms used throughout PhpRegex documentation.
+Short answers to common questions plus quick definitions of core terms used throughout PHPRegex documentation.
 
 ## Frequently Asked Questions
 
 ### General Questions
 
-#### Does PhpRegex execute regexes?
+#### Does PHPRegex execute regexes?
 
-**No.** PhpRegex parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
+**No.** PHPRegex parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // Static analysis - does NOT execute
 $analysis = Regex::create()->redos('/(a+)+b/');
@@ -26,7 +26,7 @@ $result = $regex->validate('/test/');
 
 #### Is this PCRE2-only?
 
-**Yes.** PhpRegex targets PHP's `preg_*` engine, which uses PCRE2. Patterns are validated against PCRE2 semantics.
+**Yes.** PHPRegex targets PHP's `preg_*` engine, which uses PCRE2. Patterns are validated against PCRE2 semantics.
 
 ```php
 // PCRE2-specific features work
@@ -40,13 +40,13 @@ preg_match('/\p{L}/u', $text);  // Unicode properties
 
 #### Does this guarantee ReDoS safety?
 
-**No.** PhpRegex detects known risky structures and suggests safer alternatives, but safety depends on:
+**No.** PHPRegex detects known risky structures and suggests safer alternatives, but safety depends on:
 - Input patterns
 - Flags used
 - Runtime limits set by PHP or the application
 
 ```php
-// PhpRegex will warn about this:
+// PHPRegex will warn about this:
 $analysis = Regex::create()->redos('/(a+)+b/');
 // severity: 'critical'
 
@@ -63,14 +63,14 @@ $analysis = Regex::create()->redos('/(a+)+b/');
 Tolerant parsing returns a partial AST plus errors, allowing tools to continue even when patterns are partially invalid.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // Strict parsing - throws on error
 $ast = Regex::create()->parse('/[broken/');  // Throws ParserException
 
 // Tolerant parsing - returns partial AST
 $result = Regex::create()->parse('/[broken/', true);
-echo $result->ast instanceof \PhpRegex\Parser\Node\RegexNode;  // true (partial)
+echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
 ```
 
@@ -78,7 +78,7 @@ echo count($result->errors);  // 1
 
 #### Can I use this in CI?
 
-**Yes.** PhpRegex is designed for CI/CD integration.
+**Yes.** PHPRegex is designed for CI/CD integration.
 
 ```bash
 # CLI linting
@@ -95,7 +95,7 @@ fi
 
 ```yaml
 # GitHub Actions example
-- name: Run PhpRegex
+- name: Run PHPRegex
   run: vendor/bin/regex lint src/ --format=json > regex-report.json
 - name: Check report
   uses: dawidd6/action-json-to-coverage@v1
@@ -133,7 +133,7 @@ $sequence = $ast->pattern;  // Exact structure known
 #### How do I check if a pattern is safe from ReDoS?
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 
@@ -147,7 +147,7 @@ echo $analysis->recommendations[0];   // Suggested fix
 #### How do I optimize a pattern?
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/');
 
@@ -161,7 +161,7 @@ echo $result->changes[0];  // 'Replaced [0-9] with \d'
 #### How do I explain a pattern to users?
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $explanation = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $explanation;
@@ -175,7 +175,7 @@ Match exactly 3 digits, then hyphen, then exactly 4 digits.
 #### How do I generate a matching sample?
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $sample = Regex::create()->generate('/[A-Z][a-z]{3,5}\d{2}/');
 echo $sample;  // e.g., "Word12"
@@ -193,7 +193,7 @@ echo $sample;  // e.g., "Word12"
 | `validate()` | ValidationResult | Returns result with `isValid = false` |
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // parse() - throws
 try {
@@ -212,7 +212,7 @@ echo $result->isValid ? 'Valid' : "Invalid: {$result->error}";
 #### How does caching work?
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // Default: the latest 1024 trees in memory, nothing on disk
 $regex = Regex::create();

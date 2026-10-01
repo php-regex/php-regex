@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Extraction;
+namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
-use PhpRegex\Linter\Extraction\ExtractorInterface;
-use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\ConfirmationOptions;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\ConfirmationOptions;
 
 /**
  * Example: Advanced ReDoS analysis and mitigation with RegexParser

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Cli;
+namespace PHPRegex\Tests\Unit\Cli;
 
-use PhpRegex\Cli\GlobalOptionsParser;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPUnit\Framework\TestCase;
 
 final class GlobalOptionsParserTest extends TestCase

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Visitor;
+namespace PHPRegex\Tests\Unit\Visitor;
 
-use PhpRegex\Explain\HtmlExplainer;
-use PhpRegex\Explain\TextExplainer;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\SubroutineNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
 
 final class ExhaustiveVisitorTest extends TestCase

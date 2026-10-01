@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Transpiler\Target;
+namespace PHPRegex\Transpiler\Target;
 
-use PhpRegex\Parser\AbstractNodeVisitor;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Transpiler\TranspileContext;
-use PhpRegex\Transpiler\TranspileException;
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Transpiler\TranspileContext;
+use PHPRegex\Transpiler\TranspileException;
 
 /**
  * What every target's compiler needs, whatever dialect it writes.

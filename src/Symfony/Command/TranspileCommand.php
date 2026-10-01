@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Transpiler\Target\TargetRegistry;
-use PhpRegex\Transpiler\TranspileException;
-use PhpRegex\Transpiler\Transpiler;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

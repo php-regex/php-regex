@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Exception;
+namespace PHPRegex\Tests\Unit\Exception;
 
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Cli\CliException;
-use PhpRegex\Cli\Graph\GraphGenerator;
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\Formatter\JsonFormatter;
-use PhpRegex\Linter\LintException;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Exception\ExceptionInterface;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\PcreTarget;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Redos\Confirmation;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Graph\GraphGenerator;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Redos\Confirmation;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

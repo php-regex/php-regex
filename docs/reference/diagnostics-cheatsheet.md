@@ -1,6 +1,6 @@
 # Diagnostics Cheat Sheet
 
-Fast fixes for the most common PhpRegex diagnostics. Use this as a quick reference when you encounter an issue.
+Fast fixes for the most common PHPRegex diagnostics. Use this as a quick reference when you encounter an issue.
 
 ## Quick Fix Index
 

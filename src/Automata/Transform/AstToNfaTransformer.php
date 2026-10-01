@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,31 +11,31 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Transform;
+namespace PHPRegex\Automata\Transform;
 
-use PhpRegex\Automata\Alphabet\CharSet;
-use PhpRegex\Automata\Builder\NfaBuilder;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Model\NfaFragment;
-use PhpRegex\Automata\Options\MatchMode;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Unicode\CodePointHelper;
-use PhpRegex\Parser\Internal\StaticCaches;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ControlCharNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
+use PHPRegex\Automata\Alphabet\CharSet;
+use PHPRegex\Automata\Builder\NfaBuilder;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Model\NfaFragment;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 
 /**
  * Builds an NFA from a regex AST using Thompson construction.

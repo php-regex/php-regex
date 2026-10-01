@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,32 +11,32 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Command;
+namespace PHPRegex\Cli\Command;
 
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Config\LintArgumentParser;
-use PhpRegex\Linter\Config\LintConfigLoader;
-use PhpRegex\Linter\Config\LintDefaultsBuilder;
-use PhpRegex\Linter\Config\LintExtractorFactory;
-use PhpRegex\Linter\Config\ProjectTarget;
-use PhpRegex\Linter\Formatter\ConsoleFormatter;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\Formatter\JsonFormatter;
-use PhpRegex\Linter\Formatter\LinkFormatter;
-use PhpRegex\Linter\Formatter\OutputConfiguration;
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintRequest;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Linter\Source\PhpFilePatternSource;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Redos\ConfirmationOptions;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Config\LintArgumentParser;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 
 final class LintCommand extends AbstractCommand implements CommandInterface
 {

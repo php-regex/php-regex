@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Command;
+namespace PHPRegex\Cli\Command;
 
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 
 abstract class AbstractCommand implements CommandInterface
 {

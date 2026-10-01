@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Extraction;
+namespace PHPRegex\Linter\Extraction;
 
-use PhpRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * The set of calls an extractor treats as carrying a regex pattern.

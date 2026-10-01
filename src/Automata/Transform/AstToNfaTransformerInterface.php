@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Transform;
+namespace PHPRegex\Automata\Transform;
 
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Parser\Node\RegexNode;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Node\RegexNode;
 
 /**
  * Transforms a regex AST into an NFA.

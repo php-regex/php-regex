@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Parser;
+namespace PHPRegex\Tests\Unit\Parser;
 
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Syntax\TokenParser;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Tests\TestUtils\ParserAccessor;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Syntax\TokenParser;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPUnit\Framework\TestCase;
 
 final class ParserSubroutineFallbackTest extends TestCase

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,29 +11,29 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Explain\HtmlExplainer;
-use PhpRegex\Explain\TextExplainer;
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\Analysis\ComplexityScorer;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\CommentNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\KeepNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\SubroutineNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\Validation\Validator;
+use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorMethodsTest extends TestCase

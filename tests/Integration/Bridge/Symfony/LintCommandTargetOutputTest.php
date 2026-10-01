@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Symfony;
+namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\PatternExtractor;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Linter\Source\PhpFilePatternSource;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Symfony\Command\LintCommand;
-use PhpRegex\Tests\Support\TemporaryProject;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;

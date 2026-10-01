@@ -1,6 +1,6 @@
 # Regex Cookbook: Practical Patterns for PHP
 
-This cookbook collects patterns for common validation and parsing tasks. Each pattern is checked with PhpRegex's ReDoS analyzer, but you should still review and adapt them for your context.
+This cookbook collects patterns for common validation and parsing tasks. Each pattern is checked with PHPRegex's ReDoS analyzer, but you should still review and adapt them for your context.
 
 > These recipes include a short explanation and a quick validation call so you can use them in tooling or code reviews.
 >
@@ -83,7 +83,7 @@ Each pattern includes:
 ### PHP Example
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $email = 'user@example.com';
 $pattern = '/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i';
@@ -135,7 +135,7 @@ echo $analysis->severity->value;  // Output: safe
 ### PHP Example
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $url = 'https://example.com/path?query=1';
 $pattern = '/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\/[^\s]*)?$/i';
@@ -566,7 +566,7 @@ function luhnCheck(string $number): bool
 ### Validation Workflow
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

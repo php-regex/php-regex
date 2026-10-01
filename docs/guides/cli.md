@@ -1,6 +1,6 @@
 # CLI Guide
 
-This guide covers PhpRegex's command-line tool and the workflows it enables.
+This guide covers PHPRegex's command-line tool and the workflows it enables.
 
 ---
 
@@ -33,7 +33,7 @@ regex --help
 
 ## Command Overview
 
-PhpRegex CLI provides these commands:
+PHPRegex CLI provides these commands:
 
 | Command       | Description                                              |
 |---------------|----------------------------------------------------------|
@@ -380,7 +380,7 @@ without any configuration.
 
 **Console Output:**
 ```
-PhpRegex 1.0.0 by Younes ENNAJI
+PHPRegex 1.0.0 by Younes ENNAJI
 
 Runtime       : PHP 8.2.30
 Processes     : 10

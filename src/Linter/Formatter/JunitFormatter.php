@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Formatter;
+namespace PHPRegex\Linter\Formatter;
 
-use PhpRegex\Linter\Diagnostic;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Linter\Diagnostic;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * JUnit XML output formatter.

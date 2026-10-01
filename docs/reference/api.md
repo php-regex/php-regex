@@ -15,7 +15,7 @@ Factory steps:
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create([
     'cache' => '/var/cache/regex',
@@ -51,7 +51,7 @@ $regex = Regex::new();
 Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $stream = Regex::tokenize('/foo|bar/i');
 
@@ -71,12 +71,12 @@ options as `Regex::create()` and gives the same answers; `Regex` hands its own
 to anything else that reads patterns, through `parser()`:
 
 ```php
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Parser\RegexParser;
 
 $parser = RegexParser::create(['php_version' => '8.2']);
 $parser->validate('/(?[ \d ])/')->isValid;  // false: PHP 8.2 bundles PCRE2 10.40
 
-$regex = \PhpRegex\Toolkit\Regex::create(['cache' => null]);
+$regex = \PHPRegex\Toolkit\Regex::create(['cache' => null]);
 $regex->parser()->parse('/a+/');              // the tree $regex->parse() gives
 ```
 
@@ -87,7 +87,7 @@ A library that only reads and validates patterns needs nothing else.
 Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. `RegexParser::clearCaches()` does the same.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -102,14 +102,14 @@ $regex->clearCaches();
 
 ### PcreEngine
 
-`PhpRegex\Parser\Engine\PcreEngine` runs a pattern on the running PHP the way the
+`PHPRegex\Parser\Engine\PcreEngine` runs a pattern on the running PHP the way the
 library runs every pattern it is given: without the JIT (`(*NO_JIT)` leads the
 pattern), with its warning captured instead of raised, and with limits set for
 the one call and put back after it.
 
 ```php
-use PhpRegex\Parser\Engine\PcreEngine;
-use PhpRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreLimits;
 
 $engine = new PcreEngine();
 
@@ -125,13 +125,13 @@ the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
 
 ### LanguageSolver
 
-`PhpRegex\Automata\LanguageSolver` compares the languages of two patterns of
+`PHPRegex\Automata\LanguageSolver` compares the languages of two patterns of
 the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
 return a result carrying the shortest string that proves the answer, and
 `compile()` returns a pattern's DFA.
 
 ```php
-use PhpRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\LanguageSolver;
 
 $solver = new LanguageSolver();
 
@@ -179,8 +179,8 @@ A rule that depends on the release asks the target for a behaviour, named in
 `PcreFeature`, rather than for a release written by hand:
 
 ```php
-use PhpRegex\Parser\PcreFeature;
-use PhpRegex\Parser\PcreTarget;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 
 (new PcreTarget(80400, '10.44'))->supports(PcreFeature::ScanSubstring);  // false: it arrived in 10.45
 PcreFeature::ScanSubstring->release();                                   // '10.45'
@@ -196,7 +196,7 @@ release spelled short, as `'10.4'`, which would read as 10.04.
 Parses a pattern body plus flags/delimiter into a `RegexNode`. Use this when you have separate pattern components.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $pattern = 'foo|bar';
 $flags = 'i';
@@ -216,7 +216,7 @@ echo $ast->pattern;    // SequenceNode or AlternationNode
 Parses a full PCRE string (`/pattern/flags`).
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // Strict parsing (default)
 $ast = Regex::create()->parse('/foo|bar/i');
@@ -239,7 +239,7 @@ echo $result->errors[0]->getMessage();  // First error
 Returns a structured validation result without throwing exceptions.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/foo|bar/');
 
@@ -268,7 +268,7 @@ echo $result->category->value;     // ValidationErrorCategory enum
 Aggregates validation, lint, ReDoS analysis, optimization, and explanation into a single report.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $report = Regex::create()->analyze('/(a+)+b/');
 
@@ -299,8 +299,8 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 Analyzes ReDoS risk without an analysis report. Default mode is **theoretical** (structural). Use **confirmed** mode to attempt bounded evidence collection.
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosMode;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosMode;
 
 $analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
 
@@ -340,8 +340,8 @@ snake_case as `Regex::create()`'s are; an unknown key or a value of the wrong ty
 `InvalidRegexOptionException`.
 
 ```php
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/', [
     'digits' => true,                    // [0-9] -> \d
@@ -363,7 +363,7 @@ echo $result->optimized;   // '/\d+/'
 echo $result->changes[0];  // 'Optimized pattern.'
 ```
 
-When `verifyWithAutomata` is enabled, PhpRegex validates that the optimization is language-equivalent for the
+When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization is language-equivalent for the
 supported regular subset. Unsupported patterns fall back to the original behavior.
 
 ---
@@ -373,7 +373,7 @@ supported regular subset. Unsupported patterns fall back to the original behavio
 Transpiles a PCRE literal to another regex dialect (starting with JavaScript).
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
 
@@ -399,7 +399,7 @@ an empty list says nothing about that end. Lookarounds add nothing, `(*ACCEPT)` 
 to keep is dropped rather than cut.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->literals('/user-\d{4}/');
 
@@ -428,7 +428,7 @@ gave up on and the error it gave, as `Backtrack limit exhausted`. A pattern
 the running PHP cannot compile gets a sample nothing checked.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $sample = Regex::create()->generate('/[A-Z][a-z]{3,5}\d{2}/');
 echo $sample;  // e.g., "Word12"
@@ -441,7 +441,7 @@ echo $sample;  // e.g., "Word12"
 Generates a human-readable explanation of the pattern.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // Plain text explanation
 $text = Regex::create()->explain('/\d{3}-\d{4}/');
@@ -463,7 +463,7 @@ echo $html;
 Generates syntax-highlighted output.
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 // ANSI colors for console
 $highlighted = Regex::create()->highlight('/\d+/', 'console');
@@ -505,7 +505,7 @@ Returned by `parse($regex, true)`. Contains partial AST plus errors.
 ```php
 $result = Regex::create()->parse('/[broken/i', true);
 
-echo $result->ast instanceof \PhpRegex\Parser\Node\RegexNode;  // true (partial)
+echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
 echo $result->errors[0]->getMessage();  // "Unterminated character class"
 ```
@@ -598,7 +598,7 @@ foreach ($result->literals as $literal) {
 
 ## Exception Map
 
-PhpRegex uses a focused exception hierarchy for precise error handling:
+PHPRegex uses a focused exception hierarchy for precise error handling:
 
 Exception hierarchy (simplified):
 - `ExceptionInterface`
@@ -616,10 +616,10 @@ Exception hierarchy (simplified):
 **Usage Examples:**
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 
 try {
     $regex = Regex::create(['invalid_key' => 'value']);
@@ -638,8 +638,8 @@ try {
 // Catch-all for any library error
 try {
     $result = Regex::create()->validate('/test/');
-} catch (\PhpRegex\Parser\Exception\ExceptionInterface $e) {
-    echo "PhpRegex error: {$e->getMessage()}";
+} catch (\PHPRegex\Parser\Exception\ExceptionInterface $e) {
+    echo "PHPRegex error: {$e->getMessage()}";
 }
 ```
 

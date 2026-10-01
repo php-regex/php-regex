@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli;
+namespace PHPRegex\Cli;
 
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 final readonly class ConsoleStyle
 {
@@ -91,7 +91,7 @@ final readonly class ConsoleStyle
     {
         $version = Regex::VERSION;
         $this->output->write(
-            $this->output->color('PhpRegex', Output::CYAN.Output::BOLD)
+            $this->output->color('PHPRegex', Output::CYAN.Output::BOLD)
             .' '
             .$this->output->warning($version)
             ." by Younes ENNAJI\n",

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\LintRequest;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
 
 final class RegexLintServiceEdgeCasesTest extends TestCase

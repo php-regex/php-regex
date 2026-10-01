@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\TestUtils;
+namespace PHPRegex\Tests\TestUtils;
 
-use PhpRegex\Parser\Lexer;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenType;
+use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenType;
 
 /**
  * Accessor class to expose and manipulate private methods/properties of the Lexer for unit testing.

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Config\ProjectTarget;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\PatternOccurrence;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Linter\Source\PatternSourceContext;
-use PhpRegex\Linter\Source\PatternSourceInterface;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Symfony\Command\LintCommand;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Linter\Source\PatternSourceInterface;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Symfony\Command\LintCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -164,7 +164,7 @@ final class RegexLintCommandTest extends TestCase
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->exactly(2))->method('newLine');
         $io->expects($this->once())->method('writeln')
-            ->with('  <fg=gray>If PhpRegex helps, a GitHub star is appreciated: https://github.com/php-regex/regex-parser</>');
+            ->with('  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/regex-parser</>');
 
         $method->invoke($command, $io);
     }

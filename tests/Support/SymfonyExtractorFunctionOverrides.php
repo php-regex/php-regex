@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Support;
+namespace PHPRegex\Tests\Support;
 
 final class SymfonyExtractorFunctionOverrides
 {
@@ -48,9 +48,9 @@ final class SymfonyExtractorFunctionOverrides
     }
 }
 
-namespace PhpRegex\Symfony\Extractor;
+namespace PHPRegex\Symfony\Extractor;
 
-use PhpRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
+use PHPRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
 
 /**
  * @param 0|1|2|3|4|5|6|7|16|17|18|19|20|21|22|23 $flags

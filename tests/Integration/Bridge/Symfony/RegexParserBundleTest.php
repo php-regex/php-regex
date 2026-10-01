@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Symfony;
+namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\PcreTarget;
-use PhpRegex\Symfony\Command\LintCommand;
-use PhpRegex\Symfony\DependencyInjection\PhpRegexExtension;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RequestContext;
@@ -73,7 +73,7 @@ final class RegexParserBundleTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
 
-        $extension = new PhpRegexExtension();
+        $extension = new PHPRegexExtension();
         $container->registerExtension($extension);
 
         if ($loadExtension) {

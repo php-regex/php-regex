@@ -1,6 +1,6 @@
 # Diagnostics and Error Messages
 
-This comprehensive guide explains how PhpRegex reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
+This comprehensive guide explains how PHPRegex reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This comprehensive guide explains how PhpRegex reports errors and warnings, how 
 
 ## Validation Layers
 
-PhpRegex validates patterns through four layers, each catching different types of issues:
+PHPRegex validates patterns through four layers, each catching different types of issues:
 
 ```
 Pattern literal
@@ -44,7 +44,7 @@ Examples by layer:
 When you call `Regex::validate()`, you get a `ValidationResult` object:
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/[unclosed/');
 
@@ -391,8 +391,8 @@ on the enum case, or on its string value when the code crosses a process boundar
 JSON output and the lint problems carry the string).
 
 ```php
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/(?<=a+)b/');
 

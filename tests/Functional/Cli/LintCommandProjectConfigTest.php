@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Functional\Cli;
+namespace PHPRegex\Tests\Functional\Cli;
 
-use PhpRegex\Cli\Command\HelpCommand;
-use PhpRegex\Cli\Command\LintCommand;
-use PhpRegex\Cli\Command\LintOutputRenderer;
-use PhpRegex\Cli\GlobalOptions;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Linter\Config\LintArgumentParser;
-use PhpRegex\Linter\Config\LintConfigLoader;
-use PhpRegex\Linter\Config\LintDefaultsBuilder;
-use PhpRegex\Linter\Config\LintExtractorFactory;
-use PhpRegex\Tests\Support\TemporaryProject;
+use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\LintCommand;
+use PHPRegex\Cli\Command\LintOutputRenderer;
+use PHPRegex\Cli\GlobalOptions;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Config\LintArgumentParser;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -2,7 +2,7 @@
 
 ## The Concept
 
-PhpRegex can transform a regex into a deterministic finite automaton (DFA). That means a pattern becomes a **set of strings**, and comparisons become precise set operations instead of guesswork.
+PHPRegex can transform a regex into a deterministic finite automaton (DFA). That means a pattern becomes a **set of strings**, and comparisons become precise set operations instead of guesswork.
 
 Verified example (intersection):
 
@@ -80,11 +80,11 @@ Educational value: **Equivalence** asks "do these patterns accept the exact same
 
 ## PHP API
 
-`PhpRegex\Automata\LanguageSolver` is the one entry point. Each method takes two patterns (with delimiters and
+`PHPRegex\Automata\LanguageSolver` is the one entry point. Each method takes two patterns (with delimiters and
 flags) and optional `SolverOptions`, and returns a result object that carries the shortest string proving the answer:
 
 ```php
-use PhpRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\LanguageSolver;
 
 $solver = new LanguageSolver();
 
@@ -101,7 +101,7 @@ $equivalence->isEquivalent;         // true
 $equivalence->leftOnlyExample;      // null: no string only the left pattern matches
 $equivalence->rightOnlyExample;     // null: no string only the right pattern matches
 
-$dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PhpRegex\Automata\Model\Dfa)
+$dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Model\Dfa)
 ```
 
 | method                                        | result               | answer            | witness                                  |
@@ -115,9 +115,9 @@ The constructor takes the parser that reads the patterns, so they are read for i
 that keeps compiled patterns between questions:
 
 ```php
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Solver\InMemoryDfaCache;
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
+use PHPRegex\Parser\RegexParser;
 
 $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), new InMemoryDfaCache());
 ```
@@ -125,14 +125,14 @@ $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), n
 A pattern outside the regular subset (backreferences, lookarounds, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong.
 
-The public classes of `PhpRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
+The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the three result classes in
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`. Every other class of the namespace is
 `@internal` and may change in any release.
 
 ## How it Works (Under the Hood)
 
-PhpRegex follows a formal pipeline:
+PHPRegex follows a formal pipeline:
 
 1. AST -> NFA (Thompson construction)
 2. NFA -> DFA (powerset construction)
@@ -142,7 +142,7 @@ The BFS step guarantees the **shortest possible counter-example** when one exist
 
 ## Determinization Strategies
 
-PhpRegex determinizes NFAs using a selectable strategy:
+PHPRegex determinizes NFAs using a selectable strategy:
 
 - **subset**: classic powerset construction.
 - **subset-indexed** (default): pre-indexes transition ranges to reduce move checks on large alphabets.
@@ -169,8 +169,8 @@ php_regex:
 You can also set it programmatically:
 
 ```php
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
-use PhpRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Options\SolverOptions;
 
 $options = new SolverOptions(
     determinizationAlgorithm: DeterminizationAlgorithm::SubsetIndexed,
@@ -179,7 +179,7 @@ $options = new SolverOptions(
 
 ## Minimization Strategies and Complexity
 
-PhpRegex minimizes DFAs before comparison to shrink the product graph and keep searches fast.
+PHPRegex minimizes DFAs before comparison to shrink the product graph and keep searches fast.
 
 - **Hopcroft worklist** (default): `O(|Σ_eff| · n log n)`
 - **Moore partition refinement**: `O(|Σ_eff| · n^2)`
@@ -217,9 +217,9 @@ Large patterns can cause determinization or minimization to grow quickly. You ca
 `SolverOptions::maxTransitionsProcessed`.
 
 ```php
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Exception\ComplexityException;
 
 $solver = new LanguageSolver();
 $options = new SolverOptions(maxTransitionsProcessed: 200000);

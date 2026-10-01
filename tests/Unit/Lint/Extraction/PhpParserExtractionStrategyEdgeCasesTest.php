@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Extraction;
+namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ErrorHandler;
 use PhpParser\Node\Expr\BinaryOp\Concat;
@@ -20,9 +20,9 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Parser;
-use PhpRegex\Linter\Extraction\PatternFunction;
-use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\PatternFunction;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPUnit\Framework\TestCase;
 
 final class PhpParserExtractionStrategyEdgeCasesTest extends TestCase

@@ -1,6 +1,6 @@
-# PhpRegex Examples
+# PHPRegex Examples
 
-This directory contains ready-to-use examples demonstrating PhpRegex's features.
+This directory contains ready-to-use examples demonstrating PHPRegex's features.
 
 ## Basic Examples
 
@@ -41,7 +41,7 @@ php examples/real-world/email-validator.php
 ## Requirements
 
 - PHP 8.2 or higher
-- PhpRegex installed via Composer
+- PHPRegex installed via Composer
 
 ```bash
 composer install

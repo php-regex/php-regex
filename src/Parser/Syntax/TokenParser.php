@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,63 +11,63 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser\Syntax;
+namespace PHPRegex\Parser\Syntax;
 
-use PhpRegex\Parser\Analysis\GroupNumberingCollector;
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\RecursionLimitException;
-use PhpRegex\Parser\Exception\RegexException;
-use PhpRegex\Parser\Exception\SyntaxErrorException;
-use PhpRegex\Parser\Internal\Ascii;
-use PhpRegex\Parser\Internal\CodePointReader;
-use PhpRegex\Parser\Internal\ExtendedClassReader;
-use PhpRegex\Parser\Internal\GroupNameReader;
-use PhpRegex\Parser\Internal\InlineFlags;
-use PhpRegex\Parser\Internal\PcreVerb;
-use PhpRegex\Parser\Internal\VersionCondition;
-use PhpRegex\Parser\Lexer;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CalloutNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ClassSetOperator;
-use PhpRegex\Parser\Node\CommentNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\ControlCharNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\KeepNode;
-use PhpRegex\Parser\Node\LimitMatchNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\PcreVerbNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\ScriptRunNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Node\SubroutineNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\Node\VersionConditionNode;
-use PhpRegex\Parser\PcreFeature;
-use PhpRegex\Parser\PcreTarget;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Parser\Validation\Validator;
+use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
+use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\CodePointReader;
+use PHPRegex\Parser\Internal\ExtendedClassReader;
+use PHPRegex\Parser\Internal\GroupNameReader;
+use PHPRegex\Parser\Internal\InlineFlags;
+use PHPRegex\Parser\Internal\PcreVerb;
+use PHPRegex\Parser\Internal\VersionCondition;
+use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ClassSetOperator;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Parser\Validation\Validator;
 
 /**
  * Recursive descent parser for regex patterns.

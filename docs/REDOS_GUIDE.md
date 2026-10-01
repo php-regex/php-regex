@@ -1,6 +1,6 @@
 # ReDoS Guide
 
-ReDoS (Regular Expression Denial of Service) happens when a regex takes exponential time to match certain inputs. This guide explains the risky shapes, how PhpRegex detects them, and how to mitigate them.
+ReDoS (Regular Expression Denial of Service) happens when a regex takes exponential time to match certain inputs. This guide explains the risky shapes, how PHPRegex detects them, and how to mitigate them.
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it explicitly:
 > - CLI: `--redos` flag or `checks.redos.enabled: true` in `regex.json`
@@ -22,7 +22,7 @@ Input:   "aaaaa!"
 
 ## Philosophy & Accuracy
 
-PhpRegex separates what is guaranteed from what is heuristic:
+PHPRegex separates what is guaranteed from what is heuristic:
 
 - **Guaranteed:** parsing, AST structure, error offsets, and syntax validation for the targeted PHP/PCRE version.
 - **Heuristic:** ReDoS analysis is structural and conservative; treat findings as potential risk unless confirmed.
@@ -45,8 +45,8 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 Example PHP:
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosMode;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosMode;
 
 $analysis = Regex::create()->redos('/(a+)+$/', mode: RedosMode::Confirmed);
 if ($analysis->isConfirmed()) {
@@ -64,7 +64,7 @@ Practical risk depends on runtime settings:
 - **JIT** can drastically change performance characteristics.
 - **Backtrack/recursion limits** cap how much work the engine can do before failing.
 
-PhpRegex reports these values in the CLI so you can interpret findings in context.
+PHPRegex reports these values in the CLI so you can interpret findings in context.
 
 ## How to Report a Vulnerability Responsibly
 
@@ -78,7 +78,7 @@ See [SECURITY.md](../SECURITY.md) for reporting channels.
 
 ## Risky Pattern Shapes
 
-PhpRegex focuses on structural patterns that cause backtracking blowups:
+PHPRegex focuses on structural patterns that cause backtracking blowups:
 
 - Nested unbounded quantifiers: `(a+)+`, `(.*)*`
 - Overlapping alternation inside repetition: `(a|aa)+`
@@ -89,9 +89,9 @@ PhpRegex focuses on structural patterns that cause backtracking blowups:
 
 These are not always unsafe, but they are the common sources of catastrophic backtracking.
 
-## How PhpRegex Detects ReDoS
+## How PHPRegex Detects ReDoS
 
-PhpRegex analyzes the AST without executing the pattern:
+PHPRegex analyzes the AST without executing the pattern:
 
 ```
 /pattern/flags
@@ -115,7 +115,7 @@ Key heuristics in `RedosProfiler` include:
 - Ambiguous adjacent quantifiers with overlapping character sets
 - Atomic groups and possessive quantifiers reducing severity
 
-## Using PhpRegex
+## Using PHPRegex
 
 ### CLI
 
@@ -130,8 +130,8 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 ### PHP
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosMode;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosMode;
 
 $analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
 echo $analysis->severity->value;

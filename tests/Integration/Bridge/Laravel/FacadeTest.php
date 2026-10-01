@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PhpRegex\Laravel\Facades\Regex;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\TolerantParseResult;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Toolkit\AnalysisReport;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Transpiler\TranspileResult;
-use PhpRegex\Parser\Analysis\LiteralExtractionResult;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PHPRegex\Laravel\Facades\Regex;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\TolerantParseResult;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Toolkit\AnalysisReport;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Transpiler\TranspileResult;
+use PHPRegex\Parser\Analysis\LiteralExtractionResult;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Orchestra\Testbench\TestCase;
 
 /**
@@ -189,7 +189,7 @@ final class FacadeTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            PhpRegexServiceProvider::class,
+            PHPRegexServiceProvider::class,
         ];
     }
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Functional\Lint;
+namespace PHPRegex\Tests\Functional\Lint;
 
 use PhpParser\ParserFactory;
-use PhpRegex\Cli\Command\LintOutputRenderer;
-use PhpRegex\Cli\Output;
-use PhpRegex\Linter\Config\LintArgumentParser;
-use PhpRegex\Linter\Config\LintArguments;
-use PhpRegex\Linter\Config\LintConfigLoader;
-use PhpRegex\Linter\Config\LintDefaultsBuilder;
-use PhpRegex\Linter\Config\LintExtractorFactory;
-use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\Formatter\OutputConfiguration;
-use PhpRegex\Linter\PatternExtractor;
+use PHPRegex\Cli\Command\LintOutputRenderer;
+use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Config\LintArgumentParser;
+use PHPRegex\Linter\Config\LintArguments;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\PatternExtractor;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandComponentsTest extends TestCase
@@ -257,7 +257,7 @@ final class LintCommandComponentsTest extends TestCase
 
         $configPath = getcwd();
         $banner = $renderer->renderBanner($output, 2, [$configPath.'/regex.json']);
-        $this->assertStringContainsString('PhpRegex', $banner);
+        $this->assertStringContainsString('PHPRegex', $banner);
         $this->assertStringContainsString('Configuration : ', $banner);
     }
 

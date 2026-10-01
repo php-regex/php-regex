@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -29,9 +29,9 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use PhpRegex\Tests\TestUtils\Pcre2FixtureVerifier;
-use PhpRegex\Tests\TestUtils\Pcre2FloorOracle;
-use PhpRegex\Tests\TestUtils\Pcre2TestdataExtractor;
+use PHPRegex\Tests\TestUtils\Pcre2FixtureVerifier;
+use PHPRegex\Tests\TestUtils\Pcre2FloorOracle;
+use PHPRegex\Tests\TestUtils\Pcre2TestdataExtractor;
 
 $argv = $_SERVER['argv'] ?? [];
 $binaries = ['floor' => null, 'pin' => null];

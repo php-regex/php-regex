@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Output;
+namespace PHPRegex\Laravel\Output;
 
-use PhpRegex\Linter\Formatter\AbstractConsoleTagFormatter;
+use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
 
 /**
  * Laravel-specific console output formatter.

@@ -190,7 +190,7 @@ valid. The interpreter answers "no match" without trouble.
 What this library does about it:
 
 - Every pattern the library is given and runs goes through
-  `PhpRegex\Parser\Engine\PcreEngine`, which runs it with the interpreter: it
+  `PHPRegex\Parser\Engine\PcreEngine`, which runs it with the interpreter: it
   puts `(*NO_JIT)` at the start of the pattern, a start option that changes
   no result. That covers `generate()` and its samples, runtime validation,
   the ReDoS confirmation (`--redos-mode=confirmed`), the PHPStan extension
@@ -290,7 +290,7 @@ $pattern = "/\d{3}-\d{4}/"; // Also works but harder to read
 ## Related concepts
 
 - **[ReDoS Deep Dive](redos.md)** - PCRE's backtracking vulnerabilities
-- **[Architecture](../ARCHITECTURE.md)** - How PhpRegex handles PCRE
+- **[Architecture](../ARCHITECTURE.md)** - How PHPRegex handles PCRE
 - **[Regex in PHP Guide](../guides/regex-in-php.md)** - PHP-specific regex details
 
 ## Further reading

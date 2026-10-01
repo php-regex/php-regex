@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Console;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Console;
 
-use PhpRegex\Linter\Formatter\LinkFormatter;
-use PhpRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPUnit\Framework\TestCase;
 
 final class LinkFormatterTest extends TestCase

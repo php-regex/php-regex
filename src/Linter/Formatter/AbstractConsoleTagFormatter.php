@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Formatter;
+namespace PHPRegex\Linter\Formatter;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * Console output formatter shared by the framework bridges.

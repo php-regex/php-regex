@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Support;
+namespace PHPRegex\Automata\Support;
 
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Parser\ErrorCode;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Parser\ErrorCode;
 
 /**
  * Tracks automata work and enforces a hard budget.

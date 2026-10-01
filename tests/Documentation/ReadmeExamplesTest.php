@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Documentation;
+namespace PHPRegex\Tests\Documentation;
 
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Explain\Highlighter\HtmlHighlighter;
-use PhpRegex\Optimizer\Modernizer;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\AbstractNodeVisitor;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Printer\PatternPrinter;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Optimizer\Modernizer;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

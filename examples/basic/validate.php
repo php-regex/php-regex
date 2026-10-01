@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Example: Validate a regex pattern with RegexParser

@@ -8,7 +8,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within PhpRegex (e.g., a pattern that crashes the parser or causes an infinite loop in the parser itself), please send an e-mail to **younes.ennaji.pro@gmail.com**.
+If you discover a security vulnerability within PHPRegex (e.g., a pattern that crashes the parser or causes an infinite loop in the parser itself), please send an e-mail to **younes.ennaji.pro@gmail.com**.
 
 **Do not open a public issue** for security vulnerabilities.
 

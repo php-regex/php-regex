@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,41 +11,41 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter;
+namespace PHPRegex\Linter;
 
-use PhpRegex\Linter\Rule\GroupIndex;
-use PhpRegex\Linter\Rule\LintContext;
-use PhpRegex\Linter\Rule\LintRuleInterface;
-use PhpRegex\Linter\Rule\LintRuleRegistry;
-use PhpRegex\Linter\Rule\PatternInfo;
-use PhpRegex\Linter\Rule\RuleViolation;
-use PhpRegex\Parser\AbstractNodeVisitor;
-use PhpRegex\Parser\Analysis\CharSetAnalyzer;
-use PhpRegex\Parser\Analysis\LengthRangeCalculator;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Node;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\ScriptRunNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Linter\Rule\GroupIndex;
+use PHPRegex\Linter\Rule\LintContext;
+use PHPRegex\Linter\Rule\LintRuleInterface;
+use PHPRegex\Linter\Rule\LintRuleRegistry;
+use PHPRegex\Linter\Rule\PatternInfo;
+use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Lints regex patterns for semantic issues like useless flags.

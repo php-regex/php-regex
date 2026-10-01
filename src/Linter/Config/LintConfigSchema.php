@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Config;
+namespace PHPRegex\Linter\Config;
 
 /**
  * What regex.json and regex.dist.json may hold, as one JSON Schema.
@@ -128,7 +128,7 @@ final class LintConfigSchema
         return [
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
             '$id' => 'https://raw.githubusercontent.com/php-regex/regex-parser/main/regex.schema.json',
-            'title' => 'PhpRegex Lint Configuration',
+            'title' => 'PHPRegex Lint Configuration',
             'description' => 'Configuration of the regex lint command (regex.json or regex.dist.json). Keys regex.json sets replace the ones regex.dist.json sets: objects key by key, lists whole.',
             'type' => 'object',
             'additionalProperties' => false,

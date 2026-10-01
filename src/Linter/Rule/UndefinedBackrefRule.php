@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Rule;
+namespace PHPRegex\Linter\Rule;
 
-use PhpRegex\Linter\Rule\Support\BackrefTarget;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\NodeInterface;
+use PHPRegex\Linter\Rule\Support\BackrefTarget;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\NodeInterface;
 
 /**
  * Detects backreferences to non-existent capturing groups.

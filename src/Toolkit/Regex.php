@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,45 +11,45 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Toolkit;
+namespace PHPRegex\Toolkit;
 
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Explain\Highlighter\HtmlHighlighter;
-use PhpRegex\Explain\HtmlExplainer;
-use PhpRegex\Explain\TextExplainer;
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Linter\PatternLinter;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Optimizer\Optimizer;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Analysis\LiteralExtractionResult;
-use PhpRegex\Parser\Analysis\LiteralExtractor;
-use PhpRegex\Parser\Cache\CacheInterface;
-use PhpRegex\Parser\Engine\PcreEngine;
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\ExceptionInterface;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Lexer;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\ParserOptions;
-use PhpRegex\Parser\PcreTarget;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\TolerantParseResult;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Redos\ConfirmationOptions;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosAnalyzer;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Transpiler\TranspileOptions;
-use PhpRegex\Transpiler\Transpiler;
-use PhpRegex\Transpiler\TranspileResult;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Analysis\LiteralExtractionResult;
+use PHPRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\TolerantParseResult;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Transpiler\TranspileOptions;
+use PHPRegex\Transpiler\Transpiler;
+use PHPRegex\Transpiler\TranspileResult;
 
 /**
- * Entry point for the PhpRegex library.
+ * Entry point for the PHPRegex library.
  *
  * Provides methods for parsing, validating, optimizing, and analyzing
  * regular expressions. Supports caching and runtime PCRE validation.

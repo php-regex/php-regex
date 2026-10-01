@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Functional\Cli;
+namespace PHPRegex\Tests\Functional\Cli;
 
-use PhpRegex\Cli\CliException;
-use PhpRegex\Cli\Output;
-use PhpRegex\Cli\SelfUpdate\SelfUpdater;
-use PhpRegex\Tests\Support\SelfUpdateFunctionOverrides;
+use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Output;
+use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
 use PHPUnit\Framework\TestCase;
 
 class TestableSelfUpdater extends SelfUpdater

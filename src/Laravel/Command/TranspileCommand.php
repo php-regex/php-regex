@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Command;
+namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Transpiler\TranspileOptions;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\TranspileOptions;
 
 /**
  * Transpile a PCRE regex to another dialect.
@@ -117,7 +117,7 @@ final class TranspileCommand extends Command
             }
 
             // Console output
-            $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Transpilation');
+            $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Transpilation');
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Source (PCRE):</>');

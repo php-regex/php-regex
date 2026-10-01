@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Automata;
+namespace PHPRegex\Tests\Unit\Automata;
 
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Options\MatchMode;
-use PhpRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

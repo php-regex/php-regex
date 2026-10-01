@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Minimization;
+namespace PHPRegex\Automata\Minimization;
 
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Model\DfaState;
-use PhpRegex\Automata\Support\WorkBudget;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\DfaState;
+use PHPRegex\Automata\Support\WorkBudget;
 
 /**
  * Hopcroft's DFA minimization using a worklist and inverse transitions.

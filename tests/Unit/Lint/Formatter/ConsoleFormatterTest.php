@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Formatter;
+namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Formatter\ConsoleFormatter;
-use PhpRegex\Linter\Formatter\OutputConfiguration;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
@@ -130,7 +130,7 @@ final class ConsoleFormatterTest extends TestCase
     {
         $output = $this->formatter->formatFooter();
 
-        $this->assertStringContainsString('If PhpRegex helps, a GitHub star is appreciated:', $output);
+        $this->assertStringContainsString('If PHPRegex helps, a GitHub star is appreciated:', $output);
         $this->assertStringContainsString('github.com/php-regex/regex-parser', $output);
     }
 

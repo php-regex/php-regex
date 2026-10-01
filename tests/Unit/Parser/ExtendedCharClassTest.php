@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,52 +11,52 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Parser;
+namespace PHPRegex\Tests\Unit\Parser;
 
-use PhpRegex\Explain\AsciiTreeRenderer;
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Explain\Highlighter\HtmlHighlighter;
-use PhpRegex\Explain\HtmlExplainer;
-use PhpRegex\Explain\MermaidRenderer;
-use PhpRegex\Explain\RailroadSvgRenderer;
-use PhpRegex\Explain\TextExplainer;
-use PhpRegex\Generator\SampleGenerationException;
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Generator\TestCaseGenerator;
-use PhpRegex\Linter\PatternLinter;
-use PhpRegex\Optimizer\Modernizer;
-use PhpRegex\Optimizer\Rewriter;
-use PhpRegex\Parser\AbstractNodeVisitor;
-use PhpRegex\Parser\Analysis\ComplexityScorer;
-use PhpRegex\Parser\Analysis\LengthRangeCalculator;
-use PhpRegex\Parser\Analysis\LiteralExtractor;
-use PhpRegex\Parser\Analysis\MetricsCollector;
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Internal\ExtendedClassReader;
-use PhpRegex\Parser\Node\AssertionNode;
-use PhpRegex\Parser\Node\BackrefNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ClassSetOperator;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Printer\NodeDumper;
-use PhpRegex\Parser\Printer\PatternPrinter;
-use PhpRegex\Parser\Syntax\TokenParser;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Parser\Validation\ValidationErrorCategory;
-use PhpRegex\Redos\RedosProfiler;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
-use PhpRegex\Transpiler\TranspileContext;
-use PhpRegex\Transpiler\TranspileException;
-use PhpRegex\Transpiler\TranspileOptions;
+use PHPRegex\Explain\AsciiTreeRenderer;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Explain\MermaidRenderer;
+use PHPRegex\Explain\RailroadSvgRenderer;
+use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Generator\TestCaseGenerator;
+use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Optimizer\Modernizer;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Parser\Analysis\MetricsCollector;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\ExtendedClassReader;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ClassSetOperator;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Printer\NodeDumper;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Syntax\TokenParser;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
+use PHPRegex\Transpiler\TranspileContext;
+use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

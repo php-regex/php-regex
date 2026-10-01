@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Command;
+namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Analyze Laravel route patterns for conflicts and issues.
@@ -121,7 +121,7 @@ final class RoutesCommand extends Command
         }
 
         // Console output
-        $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Route Analysis');
+        $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> - Route Analysis');
         $this->newLine();
 
         $routesWithConstraints = array_filter($routeData, static fn (array $r): bool => !empty($r['constraints']));

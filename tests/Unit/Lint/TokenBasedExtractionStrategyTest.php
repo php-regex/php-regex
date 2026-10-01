@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PhpRegex\Tests\Unit\Lint;
+namespace PHPRegex\Tests\Unit\Lint;
 
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyTest extends TestCase

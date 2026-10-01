@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\SelfUpdate;
+namespace PHPRegex\Cli\SelfUpdate;
 
-use PhpRegex\Cli\CliException;
-use PhpRegex\Cli\Output;
+use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Output;
 
 class SelfUpdater
 {
@@ -48,7 +48,7 @@ class SelfUpdater
 
         $this->replacePhar($pharPath, $tempPath);
 
-        $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PhpRegex updated successfully.')."\n");
+        $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PHPRegex updated successfully.')."\n");
     }
 
     protected function getPharPath(): string

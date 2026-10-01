@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Formatter;
+namespace PHPRegex\Linter\Formatter;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Parser\Internal\Ascii;
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * Console output formatter with ANSI colors and verbosity levels.
@@ -98,7 +98,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
      */
     public function formatFooter(): string
     {
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
 
         return '  '.$this->dim($message.'https://github.com/php-regex/regex-parser').\PHP_EOL.\PHP_EOL;
     }

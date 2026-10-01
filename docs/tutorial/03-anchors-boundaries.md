@@ -251,7 +251,7 @@ $pattern4 = '/^[A-Za-z ]+$/';
 ### Exercise 3: Validate and Explain
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

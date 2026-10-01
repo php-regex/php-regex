@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser\Engine;
+namespace PHPRegex\Parser\Engine;
 
-use PhpRegex\Parser\Internal\NoJit;
+use PHPRegex\Parser\Internal\NoJit;
 
 /**
  * The one door a pattern the library was given goes through to the running

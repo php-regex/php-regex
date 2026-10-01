@@ -1,10 +1,10 @@
-# PhpRegex Architecture
+# PHPRegex Architecture
 
-This document explains how PhpRegex works under the hood. It is written for future maintainers and contributors who want to understand the AST, the parsing pipeline, and the analysis algorithms.
+This document explains how PHPRegex works under the hood. It is written for future maintainers and contributors who want to understand the AST, the parsing pipeline, and the analysis algorithms.
 
 ## Pipeline Overview
 
-PhpRegex treats a regex literal as structured input:
+PHPRegex treats a regex literal as structured input:
 
 - `PatternParser` splits the literal into pattern and flags.
 - The lexer builds a `TokenStream` with byte offsets.
@@ -19,7 +19,7 @@ PhpRegex treats a regex literal as structured input:
 - Delimiter (the chosen boundary character)
 - Flags (`i`, `m`, `s`, `u`, `x`, and more)
 
-This happens in `PhpRegex\Parser\Internal\PatternParser`. The output is then passed to the lexer.
+This happens in `PHPRegex\Parser\Internal\PatternParser`. The output is then passed to the lexer.
 
 ## Step 2: Lexer (Tokenization)
 
@@ -204,7 +204,7 @@ gives the one a facade uses.
 
 ## Caching and Limits
 
-PhpRegex can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
+PHPRegex can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
 
 Limits are enforced in `ParserOptions`:
 

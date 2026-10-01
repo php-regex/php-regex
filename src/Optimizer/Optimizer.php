@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Optimizer;
+namespace PHPRegex\Optimizer;
 
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Parser\ErrorCode;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Exception\RegexException;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Printer\PatternPrinter;
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\RegexParser;
 
 /**
  * Rewrites a pattern into a shorter or faster one that matches the same

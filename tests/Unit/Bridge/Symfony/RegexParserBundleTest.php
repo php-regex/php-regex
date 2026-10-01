@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony;
 
-use PhpRegex\Symfony\PhpRegexBundle;
+use PHPRegex\Symfony\PHPRegexBundle;
 use PHPUnit\Framework\TestCase;
 
 final class RegexParserBundleTest extends TestCase
 {
     public function test_get_path_returns_bundle_directory(): void
     {
-        $bundle = new PhpRegexBundle();
+        $bundle = new PHPRegexBundle();
 
         $this->assertSame(\dirname(__DIR__, 4).'/src/Symfony', $bundle->getPath());
     }

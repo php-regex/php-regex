@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PhpRegex\Laravel\Extractor\RoutePatternSource;
-use PhpRegex\Linter\Source\PatternSourceContext;
-use PhpRegex\Linter\PatternOccurrence;
-use PhpRegex\Laravel\Extractor\ValidationRulePatternSource;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
-use PhpRegex\Laravel\Facades\Regex;
+use PHPRegex\Laravel\Extractor\RoutePatternSource;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
@@ -322,7 +322,7 @@ final class ExtractorsTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            PhpRegexServiceProvider::class,
+            PHPRegexServiceProvider::class,
         ];
     }
 

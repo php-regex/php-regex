@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -13,7 +13,7 @@ declare(strict_types=1);
  */
 
 if (version_compare('8.2.0', \PHP_VERSION, '>')) {
-    fwrite(\STDERR, \sprintf('This version of PhpRegex requires PHP >= 8.2.0.'.\PHP_EOL.'You are using PHP %s (%s).'.\PHP_EOL, \PHP_VERSION, \PHP_BINARY));
+    fwrite(\STDERR, \sprintf('This version of PHPRegex requires PHP >= 8.2.0.'.\PHP_EOL.'You are using PHP %s (%s).'.\PHP_EOL, \PHP_VERSION, \PHP_BINARY));
 
     exit(1);
 }
@@ -41,8 +41,8 @@ if (null === $autoloadPath) {
 
 require_once $autoloadPath;
 
-use PhpRegex\Cli\ApplicationFactory;
-use PhpRegex\Cli\Output;
+use PHPRegex\Cli\ApplicationFactory;
+use PHPRegex\Cli\Output;
 
 $progressBarFull = "\xE2\x96\x93";
 $progressBarEmpty = "\xE2\x96\x91";

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,34 +11,34 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Parser;
+namespace PHPRegex\Parser;
 
-use PhpRegex\Parser\Analysis\ComplexityScorer;
-use PhpRegex\Parser\Cache\CacheInterface;
-use PhpRegex\Parser\Cache\NullCache;
-use PhpRegex\Parser\Cache\RemovableCacheInterface;
-use PhpRegex\Parser\Engine\PcreEngine;
-use PhpRegex\Parser\Exception\ExceptionInterface;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Exception\RecursionLimitException;
-use PhpRegex\Parser\Exception\RegexException;
-use PhpRegex\Parser\Exception\ResourceLimitException;
-use PhpRegex\Parser\Exception\SemanticErrorException;
-use PhpRegex\Parser\Internal\PatternParser;
-use PhpRegex\Parser\Internal\StaticCaches;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Node\VersionConditionNode;
-use PhpRegex\Parser\Syntax\TokenParser;
-use PhpRegex\Parser\Token\Token;
-use PhpRegex\Parser\Token\TokenStream;
-use PhpRegex\Parser\Token\TokenType;
-use PhpRegex\Parser\Validation\ValidationErrorCategory;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Parser\Validation\Validator;
+use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\RemovableCacheInterface;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
+use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\TokenParser;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Parser\Validation\Validator;
 
 /**
  * Reads a delimited pattern into a tree and judges it for a PHP version and
@@ -61,7 +61,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-e50a1270bcb76ac903d8162193813a41';
+    public const CACHE_VERSION = 'ast-02917423b6954f1f2b98e2a300f217bf';
 
     /**
      * Default maximum allowed regex pattern length.

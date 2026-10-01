@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Command;
+namespace PHPRegex\Cli\Command;
 
-use PhpRegex\Cli\ConsoleStyle;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Toolkit\Regex;
 
 final readonly class VersionCommand implements CommandInterface
 {
@@ -46,7 +46,7 @@ final readonly class VersionCommand implements CommandInterface
         }
 
         $version = Regex::VERSION;
-        $output->write('PhpRegex '.$output->color($version, Output::GREEN)." by Younes ENNAJI\n");
+        $output->write('PHPRegex '.$output->color($version, Output::GREEN)." by Younes ENNAJI\n");
         $output->write("https://github.com/php-regex/regex-parser\n");
 
         return self::SUCCESS;

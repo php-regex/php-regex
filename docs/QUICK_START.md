@@ -6,7 +6,7 @@ If you are new to regex, start here and follow the examples. If you already know
 
 ## What this guide covers
 
-- Install PhpRegex.
+- Install PHPRegex.
 - Use the CLI for quick analysis.
 - Parse and validate patterns in PHP.
 - Explain patterns in plain English.
@@ -23,7 +23,7 @@ No additional dependencies are required.
 
 If you want to experiment without installing, use <https://regex101.com> in PCRE2 mode.
 
-## How PhpRegex works (short version)
+## How PHPRegex works (short version)
 
 - The literal is split into pattern and flags.
 - The lexer emits a token stream.
@@ -62,7 +62,7 @@ then hyphen, then exactly 2 digits.
 
 ## Comparing Patterns
 
-PhpRegex can compare two patterns as mathematical sets of strings.
+PHPRegex can compare two patterns as mathematical sets of strings.
 
 ```bash
 # Intersection: do the patterns overlap?
@@ -80,7 +80,7 @@ bin/regex compare '/[0-9]+/' '/\d+/' --method=equivalence
 ### 1. Parse a pattern (turn regex into structured data)
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $ast = $regex->parse('/\d{3}-\d{4}/');
@@ -96,7 +96,7 @@ Learn more: [What is an AST?](concepts/ast.md)
 ### 2. Validate a pattern (check for errors)
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $result = $regex->validate('/(?<year>\d{4})-(?<month>\d{2})/');
@@ -120,7 +120,7 @@ Checks performed:
 ### 3. Explain a pattern (get a plain English description)
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 $explanation = $regex->explain('/(?<email>\w+@\w+\.\w+)/');
@@ -143,9 +143,9 @@ Use when documenting patterns, doing code reviews, or teaching regex.
 ### 4. Check for ReDoS risk (theoretical by default)
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Redos\RedosMode;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosMode;
 
 $regex = Regex::create();
 
@@ -169,8 +169,8 @@ Learn more: [ReDoS Deep Dive](concepts/redos.md)
 ### 5. Highlight patterns (make regex readable)
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 
 $regex = Regex::create();
 $ast = $regex->parse('/^[0-9]+(\w+)$/');
@@ -251,11 +251,11 @@ $suffix = $literals->literalSet->getLongestSuffix();
 ```php
 // Create a visitor to count quantifiers
 // AbstractTraversingVisitor visits the children of every node you do not override
-class QuantifierCounter extends \PhpRegex\Parser\AbstractTraversingVisitor
+class QuantifierCounter extends \PHPRegex\Parser\AbstractTraversingVisitor
 {
     private int $count = 0;
 
-    public function visitQuantifier(\PhpRegex\Parser\Node\QuantifierNode $node)
+    public function visitQuantifier(\PHPRegex\Parser\Node\QuantifierNode $node)
     {
         $this->count++;
 
@@ -311,8 +311,8 @@ $result = $regex->validate($pattern);
 ## ⚠️ Error Handling
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Exception\ParserException;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Exception\ParserException;
 
 $regex = Regex::create();
 
@@ -382,7 +382,7 @@ $result = $regex->validate($pattern);
 
 ## Next steps
 
-Now that you've seen what PhpRegex can do, here's where to go next:
+Now that you've seen what PHPRegex can do, here's where to go next:
 
 For beginners:
 - [Learn Regex from Scratch](../tutorial/README.md)

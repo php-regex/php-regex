@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-use PhpRegex\Parser\RegexParser;
+use PHPRegex\Parser\RegexParser;
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -36,7 +36,7 @@ use PhpRegex\Parser\RegexParser;
  */
 
 require_once __DIR__.'/../../vendor/autoload.php';
-use PhpRegex\Tests\Support\AstFingerprint;
+use PHPRegex\Tests\Support\AstFingerprint;
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];

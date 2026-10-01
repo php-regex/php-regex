@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Optimizer;
+namespace PHPRegex\Optimizer;
 
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 
 /**
  * What the optimizer may rewrite. As a PHP array it is keyed in snake_case,

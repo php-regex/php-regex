@@ -1,6 +1,6 @@
-# Contributing to PhpRegex
+# Contributing to PHPRegex
 
-🎉 **Thank you for your interest in contributing to PhpRegex!**
+🎉 **Thank you for your interest in contributing to PHPRegex!**
 
 ## Code of Conduct
 
@@ -57,7 +57,7 @@ All contributions MUST include tests:
 <?php
 declare(strict_types=1);
 
-namespace PhpRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -125,4 +125,4 @@ Contributors will be:
 - Listed in the project's CONTRIBUTORS file
 - Mentioned in release notes
 
-**Thank you for contributing to PhpRegex and helping make regex parsing better for everyone!** 🚀✨
+**Thank you for contributing to PHPRegex and helping make regex parsing better for everyone!** 🚀✨

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
-use PhpRegex\Symfony\Security\SecurityAccessControlReport;
-use PhpRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
-use PhpRegex\Symfony\Security\SecurityConfigExtractor;
-use PhpRegex\Symfony\Security\SecurityConfigLocator;
-use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
-use PhpRegex\Symfony\Security\SecurityFirewallReport;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessControlReport;
+use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPRegex\Symfony\Security\SecurityConfigLocator;
+use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Symfony\Security\SecurityFirewallReport;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -237,7 +237,7 @@ final class SecurityCommand extends Command
 
     private function showBanner(SymfonyStyle $io): void
     {
-        $io->writeln('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
+        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
         $io->newLine();
     }
 
@@ -629,7 +629,7 @@ final class SecurityCommand extends Command
 
     private function showFooter(SymfonyStyle $io): void
     {
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $io->newLine();
     }

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Lint\Command;
+namespace PHPRegex\Tests\Unit\Lint\Command;
 
-use PhpRegex\Linter\Config\LintArguments;
-use PhpRegex\Linter\Config\LintExtractorFactory;
-use PhpRegex\Linter\Extraction\PatternFunction;
-use PhpRegex\Linter\Extraction\PatternFunctionRegistry;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Linter\Config\LintArguments;
+use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Extraction\PatternFunction;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\TestCase;
 
 final class LintExtractorFactoryTest extends TestCase

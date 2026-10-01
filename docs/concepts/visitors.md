@@ -1,6 +1,6 @@
 # Understanding Visitors
 
-The **Visitor Pattern** is a common design pattern that allows you to add new operations to objects without changing their structure. In PhpRegex, visitors process the AST to perform analyses and transformations.
+The **Visitor Pattern** is a common design pattern that allows you to add new operations to objects without changing their structure. In PHPRegex, visitors process the AST to perform analyses and transformations.
 
 ## Simple explanation
 
@@ -50,11 +50,11 @@ $ast->accept($visitor); // Start the traversal
 
 ## Built-in visitors
 
-PhpRegex includes several useful visitors:
+PHPRegex includes several useful visitors:
 
 ### 1. PatternPrinter
 ```php
-use PhpRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 $compiler = new PatternPrinter();
 $pattern = $ast->accept($compiler); // Regenerate the pattern
@@ -62,7 +62,7 @@ $pattern = $ast->accept($compiler); // Regenerate the pattern
 
 ### 2. TextExplainer
 ```php
-use PhpRegex\Explain\TextExplainer;
+use PHPRegex\Explain\TextExplainer;
 
 $explainer = new TextExplainer();
 $explanation = $ast->accept($explainer); // Get plain English explanation
@@ -70,8 +70,8 @@ $explanation = $ast->accept($explainer); // Get plain English explanation
 
 ### 3. Highlighting Visitors
 ```php
-use PhpRegex\Explain\Highlighter\ConsoleHighlighter;
-use PhpRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 
 $consoleHighlighter = new ConsoleHighlighter();
 $htmlHighlighter = new HtmlHighlighter();
@@ -89,8 +89,8 @@ stand: every node you do not override has its children visited. Call the
 parent method to keep descending below a node you override.
 
 ```php
-use PhpRegex\Parser\AbstractTraversingVisitor;
-use PhpRegex\Parser\Node;
+use PHPRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\Node;
 
 class QuantifierCounter extends AbstractTraversingVisitor
 {
@@ -187,7 +187,7 @@ class GroupNameCollector extends AbstractNodeVisitor
 ## Further reading
 
 - [Visitor Pattern (Wikipedia)](https://en.wikipedia.org/wiki/Visitor_pattern) - Design pattern explanation
-- [PhpRegex Architecture](../ARCHITECTURE.md) - Technical implementation details
+- [PHPRegex Architecture](../ARCHITECTURE.md) - Technical implementation details
 - [Extending Guide](../EXTENDING_GUIDE.md) - Building custom tools
 
 ---

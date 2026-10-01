@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Extractor;
+namespace PHPRegex\Laravel\Extractor;
 
-use PhpRegex\Linter\PatternOccurrence;
-use PhpRegex\Linter\Source\PatternSourceContext;
-use PhpRegex\Linter\Source\PatternSourceInterface;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Linter\Source\PatternSourceInterface;
 
 /**
  * Extracts regex patterns from Laravel validation rules.
@@ -38,7 +38,7 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<\PHPRegex\Linter\PatternOccurrence>
      */
     public function extract(PatternSourceContext $context): array
     {
@@ -58,7 +58,7 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
     /**
      * @param array<string> $excludePaths
      *
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<\PHPRegex\Linter\PatternOccurrence>
      */
     private function extractFromDirectory(string $directory, array $excludePaths): array
     {
@@ -89,7 +89,7 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
     }
 
     /**
-     * @return array<\PhpRegex\Linter\PatternOccurrence>
+     * @return array<\PHPRegex\Linter\PatternOccurrence>
      */
     private function extractFromFile(string $filePath): array
     {

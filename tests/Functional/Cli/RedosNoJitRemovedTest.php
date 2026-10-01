@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Functional\Cli;
+namespace PHPRegex\Tests\Functional\Cli;
 
-use PhpRegex\Cli\Command\AnalyzeCommand;
-use PhpRegex\Cli\Command\DebugCommand;
-use PhpRegex\Cli\GlobalOptions;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Redos\Confirmation;
-use PhpRegex\Redos\ConfirmationOptions;
+use PHPRegex\Cli\Command\AnalyzeCommand;
+use PHPRegex\Cli\Command\DebugCommand;
+use PHPRegex\Cli\GlobalOptions;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Redos\Confirmation;
+use PHPRegex\Redos\ConfirmationOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

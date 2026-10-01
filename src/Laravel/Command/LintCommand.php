@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Command;
+namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
-use PhpRegex\Laravel\Output\LaravelConsoleFormatter;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
-use PhpRegex\Linter\Config\ProjectTarget;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\Formatter\JsonFormatter;
-use PhpRegex\Linter\Formatter\LinkFormatter;
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintRequest;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintRequest;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -133,10 +133,10 @@ final class LintCommand extends Command
                 base_path(),
                 getenv(),
             );
-            $parser = Regex::create(PhpRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
-            /** @var \PhpRegex\Linter\AnalysisService $appAnalysis */
+            $parser = Regex::create(PHPRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
+            /** @var \PHPRegex\Linter\AnalysisService $appAnalysis */
             $appAnalysis = $this->laravel->make('php-regex.analysis');
-            /** @var \PhpRegex\Linter\LintService $appLint */
+            /** @var \PHPRegex\Linter\LintService $appLint */
             $appLint = $this->laravel->make('php-regex.lint');
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, 'Invalid config/php-regex.php: '.$e->getMessage());
@@ -273,7 +273,7 @@ final class LintCommand extends Command
     {
         $version = Regex::VERSION;
 
-        $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
+        $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
         $this->newLine();
 
         $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
@@ -409,7 +409,7 @@ final class LintCommand extends Command
     private function showFooter(): void
     {
         $this->newLine();
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $this->line('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $this->newLine();
     }

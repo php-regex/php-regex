@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Automata\Builder;
+namespace PHPRegex\Automata\Builder;
 
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithmFactory;
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithmInterface;
-use PhpRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Minimization\DfaMinimizer;
-use PhpRegex\Automata\Minimization\MinimizationAlgorithmFactory;
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Support\WorkBudget;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithmFactory;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithmInterface;
+use PHPRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Minimization\DfaMinimizer;
+use PHPRegex\Automata\Minimization\MinimizationAlgorithmFactory;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Support\WorkBudget;
 
 /**
  * Determinizes NFAs into DFAs using a configured strategy.

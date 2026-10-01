@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Support;
+namespace PHPRegex\Tests\Support;
 
 final class SelfUpdateFunctionOverrides
 {
@@ -245,9 +245,9 @@ final class SelfUpdateFunctionOverrides
     }
 }
 
-namespace PhpRegex\Cli\SelfUpdate;
+namespace PHPRegex\Cli\SelfUpdate;
 
-use PhpRegex\Tests\Support\SelfUpdateFunctionOverrides;
+use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
 
 function is_writable(string $filename): bool
 {

@@ -25,7 +25,7 @@ The engine tries:
 
 ### Risky Pattern Shapes
 
-PhpRegex detects these common problematic patterns:
+PHPRegex detects these common problematic patterns:
 
 1. **Nested unbounded quantifiers**: `(a+)+`, `(.*)*`
 2. **Overlapping alternation**: `(a|aa)+`, `(a|ab)+`
@@ -33,9 +33,9 @@ PhpRegex detects these common problematic patterns:
 4. **Empty-match repetition**: `(a?)+`, `(a*)*`
 5. **Ambiguous adjacent quantifiers**: `a+a+`, `(\w+)(\w+)`
 
-## How PhpRegex detects ReDoS
+## How PHPRegex detects ReDoS
 
-PhpRegex analyzes the AST without executing the pattern:
+PHPRegex analyzes the AST without executing the pattern:
 
 - The lexer and parser build a `RegexNode` AST.
 - `RedosProfiler` walks the tree.
@@ -49,7 +49,7 @@ PhpRegex analyzes the AST without executing the pattern:
 4. **Empty-match detection**: Finds quantifiers over optional patterns
 5. **Atomic group mitigation**: Reduces severity for patterns using `(?>...)`
 
-## Using PhpRegex for ReDoS protection
+## Using PHPRegex for ReDoS protection
 
 ### CLI Usage
 
@@ -64,8 +64,8 @@ bin/regex lint src/ --redos-only
 ### PHP API
 
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
 
 $regex = Regex::create();
 
@@ -163,7 +163,7 @@ a+a+         -> a+         or a++a+
 2. **Use input limits**: Set reasonable length limits for regex inputs
 3. **Prefer deterministic patterns**: Use atomic groups and possessive quantifiers
 4. **Monitor performance**: Watch for slow regex operations in production
-5. **Use PhpRegex in CI**: Add `bin/regex lint` to your build pipeline
+5. **Use PHPRegex in CI**: Add `bin/regex lint` to your build pipeline
 
 ## Related concepts
 

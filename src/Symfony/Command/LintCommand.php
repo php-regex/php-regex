@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Config\ProjectTarget;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\Formatter\JsonFormatter;
-use PhpRegex\Linter\Formatter\LinkFormatter;
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintRequest;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Symfony\Output\SymfonyConsoleFormatter;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -332,7 +332,7 @@ final class LintCommand extends Command
     {
         $version = Regex::VERSION;
 
-        $io->writeln('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
+        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
         $io->newLine();
 
         $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
@@ -412,7 +412,7 @@ final class LintCommand extends Command
     private function showFooter(SymfonyStyle $io): void
     {
         $io->newLine();
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $io->newLine();
     }

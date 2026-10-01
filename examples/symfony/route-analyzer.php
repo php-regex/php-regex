@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Example: Symfony bundle route conflict analysis
  *
  * This example demonstrates:
- * - Using PhpRegex bundle with Symfony
+ * - Using PHPRegex bundle with Symfony
  * - Analyzing route conflicts
  * - Getting suggestions for route ordering
  */

@@ -43,7 +43,7 @@ The pattern `/hello/` will match:
 ### Try It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -206,7 +206,7 @@ echo $regex->explain('/./');
 ### Validate an Email (Simple Version)
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -325,7 +325,7 @@ echo $regex->explain('/\$\d+\.\d{2}/');
 3. **Flags** (`i`, `m`, etc.) modify behavior
 4. **Escape** special characters with `\` to match literally
 5. **Anchors** (`^` and `$`) control where matches occur
-6. **Use PhpRegex** to validate and explain your patterns!
+6. **Use PHPRegex** to validate and explain your patterns!
 
 ---
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Analyzer;
+namespace PHPRegex\Symfony\Analyzer;
 
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
-use PhpRegex\Symfony\Security\SecurityAccessControlReport;
-use PhpRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
-use PhpRegex\Symfony\Security\SecurityConfigExtractor;
-use PhpRegex\Symfony\Security\SecurityConfigLocator;
-use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
-use PhpRegex\Symfony\Security\SecurityFirewallReport;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessControlReport;
+use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPRegex\Symfony\Security\SecurityConfigLocator;
+use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Symfony\Security\SecurityFirewallReport;
 
 /**
  * @internal

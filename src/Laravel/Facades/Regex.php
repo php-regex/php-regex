@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Facades;
+namespace PHPRegex\Laravel\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Parser\Analysis\LiteralExtractionResult;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\TolerantParseResult;
-use PhpRegex\Parser\Validation\ValidationResult;
-use PhpRegex\Redos\ConfirmationOptions;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Toolkit\AnalysisReport;
-use PhpRegex\Transpiler\TranspileOptions;
-use PhpRegex\Transpiler\TranspileResult;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Analysis\LiteralExtractionResult;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\TolerantParseResult;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\AnalysisReport;
+use PHPRegex\Transpiler\TranspileOptions;
+use PHPRegex\Transpiler\TranspileResult;
 
 /**
- * Laravel Facade for the PhpRegex library.
+ * Laravel Facade for the PHPRegex library.
  *
  * @method static RegexNode|TolerantParseResult parse(string $regex, bool $tolerant = false)
  * @method static AnalysisReport                analyze(string $regex)
@@ -42,7 +42,7 @@ use PhpRegex\Transpiler\TranspileResult;
  * @method static string                        generate(string $regex)
  * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
  *
- * @see \PhpRegex\Toolkit\Regex
+ * @see \PHPRegex\Toolkit\Regex
  */
 final class Regex extends Facade
 {
@@ -51,6 +51,6 @@ final class Regex extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return \PhpRegex\Toolkit\Regex::class;
+        return \PHPRegex\Toolkit\Regex::class;
     }
 }

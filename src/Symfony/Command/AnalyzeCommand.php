@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Redos\RedosSeverity;
-use PhpRegex\Symfony\Analyzer\AnalysisContext;
-use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
-use PhpRegex\Symfony\Analyzer\CheckOutcome;
-use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use PhpRegex\Symfony\Analyzer\ReportSection;
-use PhpRegex\Symfony\Analyzer\SecurityReport;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Symfony\Analyzer\AnalysisContext;
+use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PHPRegex\Symfony\Analyzer\CheckOutcome;
+use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PHPRegex\Symfony\Analyzer\ReportSection;
+use PHPRegex\Symfony\Analyzer\SecurityReport;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,7 +32,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 #[AsCommand(
     name: 'regex:analyze',
-    description: 'Run PhpRegex Symfony bridge analyzers (routes, security).',
+    description: 'Run PHPRegex Symfony bridge analyzers (routes, security).',
 )]
 final class AnalyzeCommand extends Command
 {

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Diagnostic;
-use PhpRegex\Linter\DiagnosticType;
-use PhpRegex\Linter\Formatter\ConsoleFormatter;
-use PhpRegex\Linter\Formatter\GithubFormatter;
-use PhpRegex\Linter\Formatter\LinkFormatter;
-use PhpRegex\Linter\Formatter\OutputConfiguration;
-use PhpRegex\Linter\Formatter\RelativePathHelper;
-use PhpRegex\Linter\LintReport;
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Symfony\Output\SymfonyConsoleFormatter;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Diagnostic;
+use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\GithubFormatter;
+use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
+use PHPRegex\Toolkit\Regex;
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *

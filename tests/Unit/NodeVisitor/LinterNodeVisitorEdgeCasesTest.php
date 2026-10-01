@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,42 +11,42 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Linter\PatternLinter;
-use PhpRegex\Linter\Rule\GroupIndex;
-use PhpRegex\Linter\Rule\InlineFlagsRule;
-use PhpRegex\Linter\Rule\LintContext;
-use PhpRegex\Linter\Rule\NestedDotStarRule;
-use PhpRegex\Linter\Rule\NestedQuantifierRule;
-use PhpRegex\Linter\Rule\OverlappingAlternationRule;
-use PhpRegex\Linter\Rule\PatternInfo;
-use PhpRegex\Linter\Rule\RedundantCharClassRule;
-use PhpRegex\Linter\Rule\RedundantGroupRule;
-use PhpRegex\Linter\Rule\Support\CharClassSets;
-use PhpRegex\Linter\Rule\Support\NodePredicates;
-use PhpRegex\Linter\Rule\UselessIFlagRule;
-use PhpRegex\Parser\Analysis\CharSetAnalyzer;
-use PhpRegex\Parser\Node\AlternationNode;
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\CharClassNode;
-use PhpRegex\Parser\Node\CharLiteralNode;
-use PhpRegex\Parser\Node\CharLiteralType;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\ConditionalNode;
-use PhpRegex\Parser\Node\DefineNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\GroupNode;
-use PhpRegex\Parser\Node\GroupType;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\PosixClassNode;
-use PhpRegex\Parser\Node\QuantifierNode;
-use PhpRegex\Parser\Node\QuantifierType;
-use PhpRegex\Parser\Node\RangeNode;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Parser\Node\SequenceNode;
-use PhpRegex\Parser\Node\UnicodePropNode;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\GroupIndex;
+use PHPRegex\Linter\Rule\InlineFlagsRule;
+use PHPRegex\Linter\Rule\LintContext;
+use PHPRegex\Linter\Rule\NestedDotStarRule;
+use PHPRegex\Linter\Rule\NestedQuantifierRule;
+use PHPRegex\Linter\Rule\OverlappingAlternationRule;
+use PHPRegex\Linter\Rule\PatternInfo;
+use PHPRegex\Linter\Rule\RedundantCharClassRule;
+use PHPRegex\Linter\Rule\RedundantGroupRule;
+use PHPRegex\Linter\Rule\Support\CharClassSets;
+use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\UselessIFlagRule;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class LinterNodeVisitorEdgeCasesTest extends TestCase

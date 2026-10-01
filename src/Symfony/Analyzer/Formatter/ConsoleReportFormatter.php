@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Analyzer\Formatter;
+namespace PHPRegex\Symfony\Analyzer\Formatter;
 
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Symfony\Analyzer\AnalysisNotice;
-use PhpRegex\Symfony\Analyzer\CheckOutcome;
-use PhpRegex\Symfony\Analyzer\IssueDetail;
-use PhpRegex\Symfony\Analyzer\ReportSection;
-use PhpRegex\Symfony\Analyzer\SecurityReport;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Symfony\Analyzer\AnalysisNotice;
+use PHPRegex\Symfony\Analyzer\CheckOutcome;
+use PHPRegex\Symfony\Analyzer\IssueDetail;
+use PHPRegex\Symfony\Analyzer\ReportSection;
+use PHPRegex\Symfony\Analyzer\SecurityReport;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -52,13 +52,13 @@ final readonly class ConsoleReportFormatter
 
     public function renderBanner(SymfonyStyle $io): void
     {
-        $io->writeln('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
+        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
         $io->newLine();
     }
 
     public function renderFooter(SymfonyStyle $io): void
     {
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $io->newLine();
     }

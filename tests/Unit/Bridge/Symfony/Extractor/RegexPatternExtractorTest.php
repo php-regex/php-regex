@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Extractor;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
-use PhpRegex\Linter\Extraction\ExtractorInterface;
-use PhpRegex\Linter\Extraction\PhpParserExtractionStrategy;
-use PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PhpRegex\Linter\PatternExtractor;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\PatternExtractor;
 use PHPUnit\Framework\TestCase;
 
 final class RegexPatternExtractorTest extends TestCase

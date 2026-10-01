@@ -7,59 +7,59 @@ deptrac:
     - name: Parser
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Parser\\'
+          value: '^PHPRegex\\Parser\\'
     - name: Explain
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Explain\\'
+          value: '^PHPRegex\\Explain\\'
     - name: Optimizer
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Optimizer\\'
+          value: '^PHPRegex\\Optimizer\\'
     - name: Generator
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Generator\\'
+          value: '^PHPRegex\\Generator\\'
     - name: Automata
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Automata\\'
+          value: '^PHPRegex\\Automata\\'
     - name: ReDoS
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Redos\\'
+          value: '^PHPRegex\\Redos\\'
     - name: Transpiler
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Transpiler\\'
+          value: '^PHPRegex\\Transpiler\\'
     - name: Linter
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Linter\\'
+          value: '^PHPRegex\\Linter\\'
     - name: Toolkit
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Toolkit\\'
+          value: '^PHPRegex\\Toolkit\\'
     - name: Cli
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Cli\\'
+          value: '^PHPRegex\\Cli\\'
     - name: LanguageServer
       collectors:
         - type: classLike
-          value: '^PhpRegex\\LanguageServer\\'
+          value: '^PHPRegex\\LanguageServer\\'
     - name: PHPStan
       collectors:
         - type: classLike
-          value: '^PhpRegex\\PHPStan\\'
+          value: '^PHPRegex\\PHPStan\\'
     - name: Symfony
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Symfony\\'
+          value: '^PHPRegex\\Symfony\\'
     - name: Laravel
       collectors:
         - type: classLike
-          value: '^PhpRegex\\Laravel\\'
+          value: '^PHPRegex\\Laravel\\'
   ruleset:
     Parser: ~
     Explain: [Parser]

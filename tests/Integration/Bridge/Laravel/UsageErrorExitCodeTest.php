@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
@@ -92,6 +92,6 @@ final class UsageErrorExitCodeTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [PhpRegexServiceProvider::class];
+        return [PHPRegexServiceProvider::class];
     }
 }

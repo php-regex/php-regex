@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter\Extraction;
+namespace PHPRegex\Linter\Extraction;
 
 use PhpParser\Node;
 use PhpParser\Node\Arg;
@@ -28,7 +28,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
-use PhpRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\PatternOccurrence;
 
 /**
  * PhpParser-based regex pattern extraction strategy.

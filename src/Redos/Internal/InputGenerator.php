@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Redos\Internal;
+namespace PHPRegex\Redos\Internal;
 
-use PhpRegex\Parser\Analysis\ByteCharSet;
-use PhpRegex\Parser\Analysis\CharSetAnalyzer;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Generates a heuristic input string to demonstrate potential backtracking.

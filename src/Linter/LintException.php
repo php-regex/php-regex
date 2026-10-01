@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Linter;
+namespace PHPRegex\Linter;
 
-use PhpRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 
 /**
  * The linter could not do what it was asked: a formatter it does not know,

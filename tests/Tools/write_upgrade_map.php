@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -16,7 +16,7 @@ declare(strict_types=1);
  * markers.
  */
 
-use PhpRegex\Tests\Support\UpgradeGuide;
+use PHPRegex\Tests\Support\UpgradeGuide;
 
 require \dirname(__DIR__, 2).'/vendor/autoload.php';
 

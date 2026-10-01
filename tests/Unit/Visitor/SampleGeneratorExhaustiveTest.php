@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Visitor;
+namespace PHPRegex\Tests\Unit\Visitor;
 
-use PhpRegex\Generator\SampleGenerator;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\PosixClassNode;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorExhaustiveTest extends TestCase

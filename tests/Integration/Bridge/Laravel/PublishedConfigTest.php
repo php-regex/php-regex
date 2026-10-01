@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
@@ -134,6 +134,6 @@ final class PublishedConfigTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [PhpRegexServiceProvider::class];
+        return [PHPRegexServiceProvider::class];
     }
 }

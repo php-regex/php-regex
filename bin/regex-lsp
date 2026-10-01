@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -32,13 +32,13 @@ if (!$autoloaded) {
     exit(1);
 }
 
-use PhpRegex\LanguageServer\Server;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\LanguageServer\Server;
+use PHPRegex\Toolkit\Regex;
 
 // Handle --help and --version
 if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {
     echo <<<'HELP'
-PhpRegex Language Server
+PHPRegex Language Server
 
 Usage: regex-lsp [options]
 

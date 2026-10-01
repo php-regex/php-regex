@@ -1,12 +1,12 @@
-# Chapter 9: Testing and Debugging with PhpRegex
+# Chapter 9: Testing and Debugging with PHPRegex
 
-> **Goal:** Use PhpRegex to understand, validate, and test your patterns.
+> **Goal:** Use PHPRegex to understand, validate, and test your patterns.
 
 ---
 
-## Why Use PhpRegex for Testing?
+## Why Use PHPRegex for Testing?
 
-PhpRegex turns cryptic patterns into **readable explanations** and helps you find issues **before** they reach production:
+PHPRegex turns cryptic patterns into **readable explanations** and helps you find issues **before** they reach production:
 
 ```
 Pattern: /^(?<user>\w+)@(?<host>\w+)$/
@@ -30,7 +30,7 @@ With RegexParser:
 ### 1. Explain Patterns in Plain English
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -51,7 +51,7 @@ End of string
 ### 2. Validate Syntax
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -107,7 +107,7 @@ bin/regex highlight '/^(?<user>\w+)@(?<host>\w+)$/'
 ### 5. Generate Test Strings
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -130,7 +130,7 @@ $pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
 ### Step 2: Explain It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -209,7 +209,7 @@ echo count($matches) > 0 ? "Match" : "No match";  // "No match"
 **Debug with RegexParser:**
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -233,7 +233,7 @@ $pattern = '/[0-9]+/';  // Remove anchors
 // Suspicious pattern
 $pattern = '/(a+)+$/';
 
-// Test with PhpRegex
+// Test with PHPRegex
 $analysis = $regex->redos($pattern);
 
 echo "Severity: " . $analysis->severity->value . "\n";
@@ -272,7 +272,7 @@ Use a bounded quantifier instead of "+".
 Before using a pattern in production:
 
 - [ ] **Explain** - Can you understand what it does?
-- [ ] **Validate** - Does PhpRegex report any errors?
+- [ ] **Validate** - Does PHPRegex report any errors?
 - [ ] **Security** - Does ReDoS analysis show "safe"?
 - [ ] **Coverage** - Does it match all expected cases?
 - [ ] **Edge cases** - Does it handle empty strings, special characters?
@@ -293,7 +293,7 @@ $pattern = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/';
 ### Solution
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

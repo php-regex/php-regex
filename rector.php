@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -57,5 +57,7 @@ return static function (RectorConfig $rectorConfig): void {
         // Laravel bridge tests use facades which must be called statically
         __DIR__.'/tests/Integration/Bridge/Laravel',
         __DIR__.'/src/Laravel',
+        // The upgrade map names classes in full: imported, two CharSet would collide
+        __DIR__.'/src/Toolkit/Upgrade/UpgradeMap.php',
     ]);
 };

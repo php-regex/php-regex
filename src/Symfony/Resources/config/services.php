@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -13,41 +13,41 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\Extraction\ExtractorInterface;
-use PhpRegex\Linter\Formatter\FormatterRegistry;
-use PhpRegex\Linter\LintService;
-use PhpRegex\Linter\PatternExtractor;
-use PhpRegex\Linter\Source\PatternSourceCollection;
-use PhpRegex\Linter\Source\PhpFilePatternSource;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
-use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use PhpRegex\Symfony\Analyzer\RoutesAnalyzer;
-use PhpRegex\Symfony\Analyzer\SecurityAnalyzer;
-use PhpRegex\Symfony\Command\AnalyzeCommand;
-use PhpRegex\Symfony\Command\CompareCommand;
-use PhpRegex\Symfony\Command\LintCommand;
-use PhpRegex\Symfony\Command\RoutesCommand;
-use PhpRegex\Symfony\Command\SecurityCommand;
-use PhpRegex\Symfony\Command\TranspileCommand;
-use PhpRegex\Symfony\Extractor\RoutePatternSource;
-use PhpRegex\Symfony\Extractor\ValidatorPatternSource;
-use PhpRegex\Symfony\Routing\RouteConflictAnalyzer;
-use PhpRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
-use PhpRegex\Symfony\Routing\RouteControllerFileResolver;
-use PhpRegex\Symfony\Routing\RouteRequirementNormalizer;
-use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
-use PhpRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
-use PhpRegex\Symfony\Security\SecurityConfigExtractor;
-use PhpRegex\Symfony\Security\SecurityConfigLocator;
-use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
-use PhpRegex\Symfony\Security\SecurityPatternNormalizer;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
+use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
+use PHPRegex\Symfony\Command\AnalyzeCommand;
+use PHPRegex\Symfony\Command\CompareCommand;
+use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Symfony\Command\RoutesCommand;
+use PHPRegex\Symfony\Command\SecurityCommand;
+use PHPRegex\Symfony\Command\TranspileCommand;
+use PHPRegex\Symfony\Extractor\RoutePatternSource;
+use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
+use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
+use PHPRegex\Symfony\Routing\RouteControllerFileResolver;
+use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
+use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPRegex\Symfony\Security\SecurityConfigLocator;
+use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
+use PHPRegex\Toolkit\Regex;
 
 /*
- * Base services for the PhpRegex library.
+ * Base services for the PHPRegex library.
  *
  * These services are always loaded when the bundle is enabled.
  */

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Symfony\Command;
+namespace PHPRegex\Symfony\Command;
 
-use PhpRegex\Parser\Internal\DisplayEscaper;
-use PhpRegex\Symfony\Routing\RouteConflictAnalyzer;
-use PhpRegex\Symfony\Routing\RouteConflictReport;
-use PhpRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Routing\RouteConflictReport;
+use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
+use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -126,7 +126,7 @@ final class RoutesCommand extends Command
 
     private function showBanner(SymfonyStyle $io): void
     {
-        $io->writeln('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
+        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
         $io->newLine();
     }
 
@@ -297,7 +297,7 @@ final class RoutesCommand extends Command
 
     private function showFooter(SymfonyStyle $io): void
     {
-        $message = 'If PhpRegex helps, a GitHub star is appreciated: ';
+        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/regex-parser</>');
         $io->newLine();
     }

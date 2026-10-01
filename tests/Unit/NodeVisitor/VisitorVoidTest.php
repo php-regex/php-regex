@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\NodeVisitor;
+namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PhpRegex\Parser\Node\AnchorNode;
-use PhpRegex\Parser\Node\CharTypeNode;
-use PhpRegex\Parser\Node\CommentNode;
-use PhpRegex\Parser\Node\DotNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Validation\Validator;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 

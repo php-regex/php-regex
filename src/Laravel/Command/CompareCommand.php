@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Laravel\Command;
+namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Parser\Engine\PcreEngine;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Compare two regex patterns for equivalence.
@@ -123,7 +123,7 @@ final class CompareCommand extends Command
             }
 
             // Console output
-            $this->line('<fg=cyan;options=bold>PhpRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Comparison');
+            $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> - Pattern Comparison');
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 1:</>');

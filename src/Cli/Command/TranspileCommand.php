@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Command;
+namespace PHPRegex\Cli\Command;
 
-use PhpRegex\Cli\ConsoleStyle;
-use PhpRegex\Cli\Input;
-use PhpRegex\Cli\Output;
-use PhpRegex\Parser\Exception\LexerException;
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Transpiler\Target\TargetRegistry;
-use PhpRegex\Transpiler\TranspileException;
-use PhpRegex\Transpiler\Transpiler;
-use PhpRegex\Transpiler\TranspileResult;
+use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Transpiler;
+use PHPRegex\Transpiler\TranspileResult;
 
 final class TranspileCommand extends AbstractCommand
 {

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\LanguageServer\Converter;
+namespace PHPRegex\LanguageServer\Converter;
 
-use PhpRegex\Linter\LintSeverity;
-use PhpRegex\Linter\Rule\RuleViolation;
-use PhpRegex\Parser\ErrorCode;
+use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\ErrorCode;
 
 /**
- * Converts PhpRegex diagnostics to LSP diagnostic format.
+ * Converts PHPRegex diagnostics to LSP diagnostic format.
  */
 final class DiagnosticConverter
 {

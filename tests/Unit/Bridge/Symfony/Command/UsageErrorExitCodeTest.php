@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Bridge\Symfony\Command;
+namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
-use PhpRegex\Symfony\Analyzer\AnalysisContext;
-use PhpRegex\Symfony\Analyzer\AnalyzerInterface;
-use PhpRegex\Symfony\Analyzer\AnalyzerRegistry;
-use PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
-use PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
-use PhpRegex\Symfony\Command\AnalyzeCommand;
-use PhpRegex\Symfony\Command\CompareCommand;
-use PhpRegex\Symfony\Command\SecurityCommand;
-use PhpRegex\Symfony\Command\TranspileCommand;
-use PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer;
-use PhpRegex\Symfony\Security\SecurityConfigExtractor;
-use PhpRegex\Symfony\Security\SecurityFirewallAnalyzer;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Symfony\Analyzer\AnalysisContext;
+use PHPRegex\Symfony\Analyzer\AnalyzerInterface;
+use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
+use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
+use PHPRegex\Symfony\Command\AnalyzeCommand;
+use PHPRegex\Symfony\Command\CompareCommand;
+use PHPRegex\Symfony\Command\SecurityCommand;
+use PHPRegex\Symfony\Command\TranspileCommand;
+use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

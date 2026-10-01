@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Support;
+namespace PHPRegex\Tests\Support;
 
 final class LintFunctionOverrides
 {
@@ -188,18 +188,18 @@ final class LintFunctionOverrides
     }
 }
 
-namespace PhpRegex\Linter\Internal;
+namespace PHPRegex\Linter\Internal;
 
-use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 
 function pcntl_fork(): int
 {
     return LintFunctionOverrides::pcntlFork();
 }
 
-namespace PhpRegex\Linter;
+namespace PHPRegex\Linter;
 
-use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 
 /**
  * @param ?array<int|string, mixed> $rusage
@@ -226,9 +226,9 @@ function mb_convert_encoding(string $string, string $toEncoding, string $fromEnc
     return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
 }
 
-namespace PhpRegex\Linter\Extraction;
+namespace PHPRegex\Linter\Extraction;
 
-use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 
 function pcntl_fork(): int
 {
@@ -260,9 +260,9 @@ function mb_convert_encoding(string $string, string $toEncoding, string $fromEnc
     return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
 }
 
-namespace PhpRegex\Linter\Config;
+namespace PHPRegex\Linter\Config;
 
-use PhpRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 
 function getcwd(): string|false
 {

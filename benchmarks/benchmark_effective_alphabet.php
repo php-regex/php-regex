@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-use PhpRegex\Automata\Builder\DfaBuilder;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Model\DfaState;
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Options\MatchMode;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Transform\AstToNfaTransformer;
-use PhpRegex\Automata\Transform\RegularSubsetValidator;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Automata\Builder\DfaBuilder;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\DfaState;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\RegularSubsetValidator;
+use PHPRegex\Toolkit\Regex;
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -84,7 +84,7 @@ function measure(string $label, callable $callback): array
 }
 
 /**
- * @throws \PhpRegex\Automata\Exception\ComplexityException
+ * @throws \PHPRegex\Automata\Exception\ComplexityException
  */
 function determinizeNaive(Nfa $nfa, SolverOptions $options): Dfa
 {

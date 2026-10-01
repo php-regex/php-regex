@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Cli\Graph;
+namespace PHPRegex\Cli\Graph;
 
-use PhpRegex\Automata\Model\Nfa;
-use PhpRegex\Automata\Model\NfaState;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Model\NfaState;
 
 final class GraphvizDumper
 {

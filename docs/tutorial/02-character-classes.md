@@ -54,7 +54,7 @@ Use `-` to specify a range of characters:
 ### Try It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -90,7 +90,7 @@ preg_match('/[^abc]/', 'def');   // Match: yes ('d', 'e', 'f')
 ### Try It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -130,7 +130,7 @@ preg_match('/\s/', "hello world");  // Match: yes (the space)
 ### Try It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -175,7 +175,7 @@ preg_match('/\p{Emoji}/u', 'Hello 👋');  // Match: yes ('👋')
 ### Try It
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -268,7 +268,7 @@ $pattern4 = '/\p{Emoji}/u';
 ### Exercise 2: Validate Your Patterns
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
@@ -288,7 +288,7 @@ foreach ($tests as $pattern => $description) {
 ### Exercise 3: Explain Each Pattern
 
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 

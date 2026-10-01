@@ -1,6 +1,6 @@
 # AST Node Reference
 
-This reference documents every node type in the PhpRegex AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
+This reference documents every node type in the PHPRegex AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
 
 ## How to Read This Reference
 
@@ -33,7 +33,7 @@ These nodes form the backbone of every parsed pattern.
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo/i');
 
@@ -65,7 +65,7 @@ $newFlags = $ast->flags . 's';
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo/');
 $sequence = $ast->pattern;
@@ -101,7 +101,7 @@ $newSequence = new SequenceNode($newChildren, $sequence->startPosition, $sequenc
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo|bar|baz/');
 $alternation = $ast->pattern;
@@ -170,8 +170,8 @@ foreach ($alternation->alternatives as $alt) {
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Node\GroupType;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node\GroupType;
 
 $ast = Regex::create()->parse('/(?<year>\d{4})-(?<month>\d{2})/');
 $group = $ast->pattern->children[0];  // First child is GroupNode
@@ -220,8 +220,8 @@ echo $lookahead->type === GroupType::LookaheadPositive;  // true
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
-use PhpRegex\Parser\Node\QuantifierType;
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node\QuantifierType;
 
 $ast = Regex::create()->parse('/a{2,4}?/');  // Lazy quantifier
 $quantifier = $ast->pattern;
@@ -260,7 +260,7 @@ echo $quantifier->node->value;  // 'a'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/hello/');
 $literal = $ast->pattern->children[0];
@@ -304,7 +304,7 @@ echo count($ast->pattern->children);  // 1 (one literal for "hello")
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/\x{1F600}/');  // Grinning face emoji
 $char = $ast->pattern;
@@ -337,7 +337,7 @@ echo $char->originalRepresentation;  // '\x{1F600}'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/\d+/');
 $digitClass = $ast->pattern;
@@ -354,12 +354,12 @@ echo $digitClass->value;  // 'd'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/./');
 $dot = $ast->pattern;
 
-echo $dot instanceof \PhpRegex\Parser\Node\DotNode;  // true
+echo $dot instanceof \PHPRegex\Parser\Node\DotNode;  // true
 ```
 
 **Common Errors:**
@@ -397,7 +397,7 @@ preg_match('/./s', "\n", $matches);  // Match: yes
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/^foo$/');
 $startAnchor = $ast->pattern->children[0];
@@ -435,7 +435,7 @@ echo $endAnchor->value;    // '$'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/\bword\b/');
 $assertion = $ast->pattern->children[0];
@@ -471,13 +471,13 @@ preg_match('/[a-z]/', 'word', $matches);  // Match: yes ('w')
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/[a-z]/');
 $class = $ast->pattern;
 
 echo $class->isNegated;  // false
-echo $class->expression instanceof \PhpRegex\Parser\Node\RangeNode;  // true
+echo $class->expression instanceof \PHPRegex\Parser\Node\RangeNode;  // true
 ```
 
 **Common Errors:**
@@ -506,7 +506,7 @@ preg_match('/[A-Za-z]/', '_', $matches);  // Match: no (no underscore)
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/[a-z]/');
 $range = $ast->pattern->expression;
@@ -542,7 +542,7 @@ echo $range->end->value;    // 'z'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/[[:digit:]]/');
 $posix = $ast->pattern;
@@ -579,7 +579,7 @@ echo $posix->class;  // 'digit'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/^\p{L}+$/u');  // Unicode letters only
 $prop = $ast->pattern->children[0];
@@ -635,7 +635,7 @@ where spaces and tabs are skipped. A plain character is no operand.
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create(['pcre_version' => '10.45'])->parse('/(?[ \p{L} - [aeiou] ])/u');
 $difference = $ast->pattern->expression;
@@ -660,7 +660,7 @@ echo $difference->operator->name;  // 'DIFFERENCE'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(\w+)\1/');  // Match doubled word
 $backref = $ast->pattern->children[1];
@@ -695,12 +695,12 @@ preg_match('/(\w)\1/', 'aa', $matches);  // Match: yes
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(a)?(?(1)b|c)/');  // If 'a' captured, expect 'b'; else expect 'c'
 $conditional = $ast->pattern;
 
-echo $conditional->condition instanceof \PhpRegex\Parser\Node\BackrefNode;  // true
+echo $conditional->condition instanceof \PHPRegex\Parser\Node\BackrefNode;  // true
 echo $conditional->condition->ref;  // '1'
 ```
 
@@ -720,7 +720,7 @@ echo $conditional->condition->ref;  // '1'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(?<paren>\((?:[^()]++|(?&paren))*\))/');
 // Match balanced parentheses using recursion
@@ -745,12 +745,12 @@ echo $subroutine->syntax;     // '?&paren'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(?(DEFINE)(?<digit>\d+)(?<number>\g<digit>))/');
 $define = $ast->pattern;
 
-echo $define->content instanceof \PhpRegex\Parser\Node\SequenceNode;  // true
+echo $define->content instanceof \PHPRegex\Parser\Node\SequenceNode;  // true
 ```
 
 ---
@@ -781,7 +781,7 @@ echo $define->content instanceof \PhpRegex\Parser\Node\SequenceNode;  // true
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo(*FAIL)bar/');
 $verb = $ast->pattern->children[1];
@@ -804,7 +804,7 @@ echo $verb->verb;  // 'FAIL'
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(*LIMIT_MATCH=1000)foo/');
 $limit = $ast->pattern->children[0];
@@ -829,7 +829,7 @@ echo $limit->limit;  // 1000
 
 **Example:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(*asr:\d+)/');
 $run = $ast->pattern;
@@ -868,7 +868,7 @@ interface NodeInterface
 
 **Position Reference:**
 ```php
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo/');
 $literal = $ast->pattern->children[0];

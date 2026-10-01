@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,21 +11,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Automata;
+namespace PHPRegex\Tests\Unit\Automata;
 
-use PhpRegex\Automata\Determinization\DeterminizationAlgorithm;
-use PhpRegex\Automata\Exception\ComplexityException;
-use PhpRegex\Automata\LanguageSolver;
-use PhpRegex\Automata\Minimization\MinimizationAlgorithm;
-use PhpRegex\Automata\Model\Dfa;
-use PhpRegex\Automata\Model\DfaState;
-use PhpRegex\Automata\Options\MatchMode;
-use PhpRegex\Automata\Options\SolverOptions;
-use PhpRegex\Automata\Solver\DfaCacheInterface;
-use PhpRegex\Automata\Solver\EquivalenceResult;
-use PhpRegex\Automata\Solver\InMemoryDfaCache;
-use PhpRegex\Automata\Solver\IntersectionResult;
-use PhpRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\DfaState;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\EquivalenceResult;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
+use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\SubsetResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -94,7 +94,7 @@ final class PublicSurfaceTest extends TestCase
             }
 
             $relative = substr($file->getPathname(), \strlen($root) + 1, -4);
-            $classes[] = 'PhpRegex\\Automata\\'.str_replace('/', '\\', $relative);
+            $classes[] = 'PHPRegex\\Automata\\'.str_replace('/', '\\', $relative);
         }
 
         sort($classes);

@@ -65,72 +65,72 @@ registerArgumentsSet(
 registerArgumentsSet(
     'redos_thresholds',
     null,
-    \PhpRegex\Redos\RedosSeverity::SAFE,
-    \PhpRegex\Redos\RedosSeverity::LOW,
-    \PhpRegex\Redos\RedosSeverity::MEDIUM,
-    \PhpRegex\Redos\RedosSeverity::HIGH,
-    \PhpRegex\Redos\RedosSeverity::CRITICAL,
-    \PhpRegex\Redos\RedosSeverity::UNKNOWN
+    \PHPRegex\Redos\RedosSeverity::SAFE,
+    \PHPRegex\Redos\RedosSeverity::LOW,
+    \PHPRegex\Redos\RedosSeverity::MEDIUM,
+    \PHPRegex\Redos\RedosSeverity::HIGH,
+    \PHPRegex\Redos\RedosSeverity::CRITICAL,
+    \PHPRegex\Redos\RedosSeverity::UNKNOWN
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::create(),
+    \PHPRegex\Toolkit\Regex::create(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::new(),
+    \PHPRegex\Toolkit\Regex::new(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \PhpRegex\Parser\ParserOptions::fromArray(),
+    \PHPRegex\Parser\ParserOptions::fromArray(),
     0,
     argumentsSet('regex_option_keys')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::optimize(),
+    \PHPRegex\Toolkit\Regex::optimize(),
     1,
     argumentsSet('optimize_option_keys')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::explain(),
+    \PHPRegex\Toolkit\Regex::explain(),
     1,
     argumentsSet('explanation_formats')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::highlight(),
+    \PHPRegex\Toolkit\Regex::highlight(),
     1,
     argumentsSet('highlight_formats')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::redos(),
+    \PHPRegex\Toolkit\Regex::redos(),
     1,
     argumentsSet('redos_thresholds')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::parsePattern(),
+    \PHPRegex\Toolkit\Regex::parsePattern(),
     1,
     argumentsSet('regex_flags')
 );
 
 expectedArguments(
-    \PhpRegex\Toolkit\Regex::parsePattern(),
+    \PHPRegex\Toolkit\Regex::parsePattern(),
     2,
     argumentsSet('regex_delimiters')
 );
 
 override(
-    \PhpRegex\Toolkit\Regex::parse(1),
+    \PHPRegex\Toolkit\Regex::parse(1),
     map([
-        true => \PhpRegex\Parser\TolerantParseResult::class,
-        false => \PhpRegex\Parser\Node\RegexNode::class,
+        true => \PHPRegex\Parser\TolerantParseResult::class,
+        false => \PHPRegex\Parser\Node\RegexNode::class,
     ])
 );

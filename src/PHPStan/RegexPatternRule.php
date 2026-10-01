@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\PHPStan;
+namespace PHPRegex\PHPStan;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
@@ -19,16 +19,16 @@ use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
-use PhpRegex\Linter\AnalysisService;
-use PhpRegex\Linter\PatternOccurrence;
-use PhpRegex\Optimizer\OptimizationResult;
-use PhpRegex\Optimizer\OptimizerOptions;
-use PhpRegex\Parser\Engine\PcreEngine;
-use PhpRegex\Parser\Exception\InvalidRegexOptionException;
-use PhpRegex\Parser\RegexParser;
-use PhpRegex\Redos\RedosAnalysis;
-use PhpRegex\Redos\RedosMode;
-use PhpRegex\Redos\RedosSeverity;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\IdentifierRuleError;

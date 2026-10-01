@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -21,7 +21,7 @@ declare(strict_types=1);
  * classes) is listed in UPGRADE-2.0.md.
  */
 
-use PhpRegex\Toolkit\Upgrade\UpgradeMap;
+use PHPRegex\Toolkit\Upgrade\UpgradeMap;
 use Rector\Config\RectorConfig;
 use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
 use Rector\Renaming\Rector\MethodCall\RenameMethodRector;

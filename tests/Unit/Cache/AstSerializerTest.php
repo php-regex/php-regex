@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Cache;
+namespace PHPRegex\Tests\Unit\Cache;
 
-use PhpRegex\Parser\Cache\ArrayCache;
-use PhpRegex\Parser\Cache\AstSerializer;
-use PhpRegex\Parser\Cache\FilesystemCache;
-use PhpRegex\Parser\Node\ClassSetOperationNode;
-use PhpRegex\Parser\Node\ExtendedCharClassNode;
-use PhpRegex\Parser\Node\LiteralNode;
-use PhpRegex\Parser\Node\NodeInterface;
-use PhpRegex\Parser\Node\RegexNode;
-use PhpRegex\Tests\Support\AstFingerprint;
-use PhpRegex\Toolkit\Regex;
+use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\Cache\AstSerializer;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Tests\Support\AstFingerprint;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -143,7 +143,7 @@ final class AstSerializerTest extends TestCase
     public function test_every_node_class_may_be_read_back(): void
     {
         foreach ((array) glob(\dirname(__DIR__, 3).'/src/Parser/Node/*.php') as $file) {
-            $class = 'PhpRegex\\Parser\\Node\\'.basename((string) $file, '.php');
+            $class = 'PHPRegex\\Parser\\Node\\'.basename((string) $file, '.php');
             if (class_exists($class) && is_subclass_of($class, NodeInterface::class)
                 && !(new \ReflectionClass($class))->isAbstract()) {
                 $this->assertContains($class, AstSerializer::NODE_CLASSES, $class);
@@ -190,7 +190,7 @@ final class AstSerializerTest extends TestCase
     public function test_a_tree_holding_a_foreign_object_is_rejected(): void
     {
         $data = AstSerializer::serialize(Regex::create(['cache' => null])->parse('/a{2,3}/'));
-        $planted = preg_replace('/O:\\d++:"PhpRegex\\\\Parser\\\\Node\\\\QuantifierNode"/', 'O:8:"stdClass"', $data, 1, $count);
+        $planted = preg_replace('/O:\\d++:"PHPRegex\\\\Parser\\\\Node\\\\QuantifierNode"/', 'O:8:"stdClass"', $data, 1, $count);
         $this->assertSame(1, $count);
 
         $this->assertNull(AstSerializer::unserialize((string) $planted));

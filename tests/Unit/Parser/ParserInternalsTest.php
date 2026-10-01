@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Unit\Parser;
+namespace PHPRegex\Tests\Unit\Parser;
 
-use PhpRegex\Parser\Exception\ParserException;
-use PhpRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\PatternParser;
 use PHPUnit\Framework\TestCase;
 
 final class ParserInternalsTest extends TestCase

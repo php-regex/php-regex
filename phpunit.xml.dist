@@ -23,7 +23,7 @@
         <ini name="serialize_precision" value="-1"/>
     </php>
     <testsuites>
-        <testsuite name="PhpRegex Test Suite">
+        <testsuite name="PHPRegex Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

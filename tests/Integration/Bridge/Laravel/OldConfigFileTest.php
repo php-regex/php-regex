@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the PhpRegex package.
+ * This file is part of the PHPRegex package.
  *
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PhpRegex\Tests\Integration\Bridge\Laravel;
+namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Orchestra\Testbench\TestCase;
-use PhpRegex\Laravel\PhpRegexServiceProvider;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
 
 /**
  * A config/regex-parser.php published by 1.x is no longer read: the provider
@@ -26,7 +26,7 @@ final class OldConfigFileTest extends TestCase
     {
         $this->app['config']->set('regex-parser', ['max_pattern_length' => 10]);
 
-        $deprecations = $this->deprecationsWhile(fn () => (new PhpRegexServiceProvider($this->app))->register());
+        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->app))->register());
 
         $this->assertSame(
             ['config/regex-parser.php is no longer read since 2.0: move its settings to config/php-regex.php (php artisan vendor:publish --tag=php-regex-config).'],
@@ -37,7 +37,7 @@ final class OldConfigFileTest extends TestCase
 
     public function test_no_old_config_file_reports_nothing(): void
     {
-        $deprecations = $this->deprecationsWhile(fn () => (new PhpRegexServiceProvider($this->app))->register());
+        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->app))->register());
 
         $this->assertSame([], $deprecations);
     }
@@ -49,7 +49,7 @@ final class OldConfigFileTest extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [PhpRegexServiceProvider::class];
+        return [PHPRegexServiceProvider::class];
     }
 
     /**
