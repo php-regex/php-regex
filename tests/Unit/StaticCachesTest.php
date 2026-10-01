@@ -19,6 +19,9 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Redos\Internal\Backtrack\CharSet;
+use PHPRegex\Redos\Internal\Backtrack\ClassSetProvider;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -42,6 +45,9 @@ final class StaticCachesTest extends TestCase
         $parser->parse('/\p{Latin}/')->accept(new SampleGenerator());
         $parser->parse('/\p{Linear_B}/u')->accept(new SampleGenerator());
         $parser->parse('#a#')->accept(new PatternPrinter());
+        // \w, not a class of ranges: the model builds those itself and
+        // never asks the class-set cache.
+        (new RedosAnalyzer())->analyze('/(\w+)+$/');
 
         foreach (self::caches() as [$class, $property]) {
             $this->assertNotSame([], $this->read($class, $property), 'Not warmed: '.$class.'::$'.$property);
@@ -105,6 +111,28 @@ final class StaticCachesTest extends TestCase
     }
 
     /**
+     * The ReDoS model's class sets, one per atom and modifiers: "[\x00-\x00]",
+     * "[\x00-\x01]" ... fifteen hundred byte ranges, each its own key.
+     */
+    #[Test]
+    public function test_the_class_set_cache_is_bounded(): void
+    {
+        $this->write(ClassSetProvider::class, 'sets', []);
+
+        $queried = 0;
+        for ($low = 0; $low < 256 && $queried < 1500; $low++) {
+            for ($high = $low; $high < 256 && $queried < 1500; $high++) {
+                $this->assertInstanceOf(CharSet::class, ClassSetProvider::query(\sprintf('[\x%02X-\x%02X]', $low, $high), false, ''));
+                $queried++;
+            }
+        }
+
+        $count = \count($this->read(ClassSetProvider::class, 'sets'));
+        $this->assertGreaterThan(0, $count);
+        $this->assertLessThanOrEqual(self::BOUND, $count);
+    }
+
+    /**
      * @return list<array{class-string, string}>
      */
     private static function caches(): array
@@ -116,6 +144,7 @@ final class StaticCachesTest extends TestCase
             [SampleGenerator::class, 'propertySamples'],
             [SampleGenerator::class, 'codePointChunks'],
             [PatternPrinter::class, 'delimiterCache'],
+            [ClassSetProvider::class, 'sets'],
         ];
     }
 

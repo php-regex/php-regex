@@ -303,7 +303,8 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_redos_hints_with_nested_quantifiers(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new PatternOccurrence('/(a+)+/', 'file.php', 1, 'php:preg_match()');
+        // (a+)+ alone matches a…a! at once; before the end it fails at n=19 (PCRE2 10.49).
+        $pattern = new PatternOccurrence('/(a+)+$/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 
@@ -317,7 +318,8 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_redos_hints_with_dot_star(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
-        $pattern = new PatternOccurrence('/.*a+/', 'file.php', 1, 'php:preg_match()');
+        // .*a+ alone matches at once; repeated before the end, 20 "a" then "!" fail (PCRE2 10.49).
+        $pattern = new PatternOccurrence('/(.*a)+$/', 'file.php', 1, 'php:preg_match()');
 
         $issues = $service->lint([$pattern]);
 

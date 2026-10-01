@@ -298,7 +298,9 @@ final class AnalyzeCommand extends AbstractCommand
 
     private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, RedosAnalysis $analysis, string $explain): int
     {
-        $steps = 4;
+        $confirmation = RedosMode::Confirmed === $analysis->mode ? $analysis->confirmation : null;
+        // One number per section printed: Confirmation only when there is one.
+        $steps = null !== $confirmation ? 5 : 4;
 
         $style->renderSection('Parsing pattern', 1, $steps);
         $style->renderPattern($highlightedPattern);
@@ -330,7 +332,7 @@ final class AnalyzeCommand extends AbstractCommand
 
         $style->renderSection('ReDoS analysis', 3, $steps);
         $severityOutput = $this->formatRedosSeverity($analysis, $output);
-        $status = $this->getRedosStatus($analysis);
+        $status = $this->redosHeadline($analysis);
 
         $style->renderKeyValueBlock([
             'Status' => $status,
@@ -338,6 +340,10 @@ final class AnalyzeCommand extends AbstractCommand
             'Mode' => strtoupper($analysis->mode->value),
             'Confidence' => strtoupper($analysis->confidenceLevel()->value),
         ]);
+
+        foreach ($this->redosVerdictLines($analysis) as $line) {
+            $output->write('  '.$line."\n");
+        }
 
         if ($analysis->error) {
             $output->write('  '.$output->error('ReDoS error: '.$analysis->error)."\n");
@@ -348,24 +354,24 @@ final class AnalyzeCommand extends AbstractCommand
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }
 
-        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation) {
-            $this->renderConfirmationSection($output, $style, $analysis->confirmation);
+        if (null !== $confirmation) {
+            $this->renderConfirmationSection($output, $style, $confirmation, $steps);
         }
 
         if ($style->visualsEnabled()) {
             $output->write("\n");
         }
 
-        $style->renderSection('Explanation', 4, $steps);
+        $style->renderSection('Explanation', $steps, $steps);
         $output->write($explain."\n");
 
         return self::SUCCESS;
     }
 
-    private function renderConfirmationSection(Output $output, ConsoleStyle $style, Confirmation $confirmation): void
+    private function renderConfirmationSection(Output $output, ConsoleStyle $style, Confirmation $confirmation, int $steps): void
     {
         $output->write("\n");
-        $style->renderSection('Confirmation', 3, 4);
+        $style->renderSection('Confirmation', 4, $steps);
 
         $sampleParts = [];
         foreach ($confirmation->samples as $sample) {
@@ -393,16 +399,6 @@ final class AnalyzeCommand extends AbstractCommand
         if (null !== $confirmation->note) {
             $output->write('  Note:      '.$confirmation->note."\n");
         }
-    }
-
-    private function getRedosStatus(RedosAnalysis $analysis): string
-    {
-        return match (true) {
-            RedosMode::Off === $analysis->mode => 'ReDoS analysis disabled',
-            \in_array($analysis->severity, [RedosSeverity::Safe, RedosSeverity::Low], true) => 'No significant ReDoS risk detected',
-            $analysis->isConfirmed() => 'Confirmed ReDoS risk',
-            default => 'Potential ReDoS risk (theoretical)',
-        };
     }
 
     private function handleAnalysisError(Output $output, string $format, string $errorMessage): int

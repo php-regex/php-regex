@@ -1,174 +1,198 @@
 # ReDoS Deep Dive
 
-**ReDoS** (Regular Expression Denial of Service) is a security vulnerability where specially crafted input can cause a regex engine to take exponential time to process, potentially crashing your application.
+**ReDoS** (Regular Expression Denial of Service) is a vulnerability where a crafted input makes a backtracking regex engine do exponential or high polynomial work before it gives up. In PHP, that work usually ends in a silent failure: `preg_match()` returns `false` once PCRE's backtrack limit is exhausted.
 
 ## Simple explanation
 
-Imagine you have a regex pattern like `/(a+)+b/` and someone gives you this input: `"aaaaa!"`. The regex engine tries many different ways to match this pattern, and with certain inputs it can take a very long time to conclude there is no match.
+Take `/(a+)+$/` and the input `"aaaaaaaaaaaaaaaaaaa!"`. The `!` means the pattern cannot match, but the engine only learns that after trying every way of splitting the `a`s between the inner `+` and the outer `+`. Each extra `a` doubles the number of ways. With PHP's default limits, 19 `a` and a `!` are enough for `preg_match()` to fail with "Backtrack limit exhausted".
 
 ## How ReDoS happens
 
-### The Problem: Backtracking
+### The problem: ambiguity under backtracking
 
-PCRE engines use **backtracking** to try different matching paths. When a pattern has multiple ways to match the same input, the engine explores all possibilities.
+PCRE tries the alternatives of a pattern in a fixed order: the left alternative first, a greedy quantifier's next iteration before its exit, a lazy one the other way round. When an attempt fails, it backtracks to the last choice and tries the next one. That costs nothing when there is only one way to match each part of the input. It costs a lot when there are many:
 
 ```
-Pattern: /(a+)+b/
-Input:   "aaaaa!"
+Pattern: /(a+)+$/
+Input:   "aaaa!"
 
 The engine tries:
-- (a+)+ matches "a" 5 times, then fails on "b"
-- Backtrack: (a+)+ matches "a" 4 times, then "a" 1 time, then fails on "b"
-- Backtrack: (a+)+ matches "a" 3 times, then "a" 2 times, then fails on "b"
-- ... and so on, trying many combinations
+- (a+) takes "aaaa", the outer + stops, $ fails on "!"
+- (a+) takes "aaa", the outer + repeats with "a", $ fails
+- (a+) takes "aa", then "aa", $ fails
+- (a+) takes "aa", then "a", then "a", $ fails
+- ... every composition of 4: 2^3 ways, then 2^(n-1) for n characters
 ```
 
-### Risky Pattern Shapes
+### Two classes of cost
 
-PHPRegex detects these common problematic patterns:
+- **Exponential**: a loop that can read the same text in two different ways, as `(a+)+`, `(a|aa)*` or `(a|a)*`. Each repetition of that text doubles the work: 2ⁿ steps.
+- **Polynomial**: two or more quantifiers in a row that can read the same text, as `a*a*` (n² steps) or `a*a*a*` (n³). The backtrack limit does not stop it in time: `/a*a*$/` matches 200,000 `a` and a `!` without an error, after 6.5 seconds.
 
-1. **Nested unbounded quantifiers**: `(a+)+`, `(.*)*`
-2. **Overlapping alternation**: `(a|aa)+`, `(a|ab)+`
-3. **Backreference loops**: `(\w+)\1+`
-4. **Empty-match repetition**: `(a?)+`, `(a*)*`
-5. **Ambiguous adjacent quantifiers**: `a+a+`, `(\w+)(\w+)`
+### Vulnerable shapes
+
+Each pattern below was run through `RedosAnalyzer` and, for the vulnerable ones, its attack replayed on PCRE2:
+
+| pattern | verdict |
+|---|---|
+| `(a+)+$`, `(.*)*$`, `(\d+)+$` | exponential: nested unbounded quantifiers |
+| `(a\|aa)+$`, `(a\|a)*$` | exponential: alternatives that read the same text |
+| `(a*)*$` | exponential: a repeated group that can match nothing and something |
+| `a+a+$`, `(\w+)(\w+)$`, `\d+\d+$` | polynomial, degree 2: adjacent quantifiers over the same characters |
+| `a*a*a*$` | polynomial, degree 3 |
+| `(a\|b)+c`, `(a\|ab)+$`, `(a?)+$` | linear: proven safe, though they look alike |
+| `(\w+)\1+$` | outside the model (backreference): the heuristics decide |
 
 ## How PHPRegex detects ReDoS
 
-PHPRegex analyzes the AST without executing the pattern:
+PHPRegex reads the pattern, never runs it (unless you ask for [confirmed mode](../REDOS_GUIDE.md#confirmed-mode)):
 
-- The lexer and parser build a `RegexNode` AST.
-- `RedosProfiler` walks the tree.
-- The result is a `RedosAnalysis` with severity, findings, and hints.
+1. The lexer and parser build a `RegexNode` AST.
+2. `RedosAnalyzer` builds from it a **prioritized NFA**: an automaton whose ε-transitions are ordered as PCRE tries them. Atomic groups, possessive quantifiers and atomic lookaround bodies are separate automata, analysed on their own and seen from outside as one step.
+3. It looks for **ambiguity** in that automaton, after the method of Weideman et al. ("Analyzing Matching Time Behavior of Backtracking Regular Expression Matchers by Using Ambiguous NFA", 2016):
+   - a state with two different loops reading the same word means **exponential** cost;
+   - a chain of k states, each looping on a word and reaching the next on that same word, means **polynomial** cost of degree k.
+4. From the ambiguous loop it builds the **witness**: a prefix that reaches it, the word to pump, and the shortest suffix that makes the attempt fail. Characters are chosen deterministically: the smallest printable ASCII character of each set, then the other sets of the loop, before giving up.
+5. The pattern's class is the worst class over the pattern and its sub-searches.
 
-### Detection Methods
+A pattern is `safe (proven)` only when the automaton holds no ambiguity at all. An ambiguity for which no witness can be built is not taken as safe: the heuristics decide, and `abstractions` lists `ambiguity without witness at offset N`.
 
-1. **Star-height detection**: Counts nested unbounded quantifiers
-2. **Alternation overlap**: Uses `CharSetAnalyzer` to find overlapping choices
-3. **Backreference loops**: Detects self-referencing groups in repetition
-4. **Empty-match detection**: Finds quantifiers over optional patterns
-5. **Atomic group mitigation**: Reduces severity for patterns using `(?>...)`
+The model covers characters and classes (exact sets under `/u` and `/i`, computed from the running PCRE2), alternation, groups, every quantifier, atomic groups, possessive quantifiers, atomic lookarounds, anchors and word boundaries. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, the `xx` option, and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../REDOS_GUIDE.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide, as in 1.x:
+
+- star height: nested unbounded quantifiers;
+- overlapping alternatives inside a repetition, through `CharSetAnalyzer`;
+- backreference loops inside a repetition;
+- quantifiers over sub-patterns that can match nothing;
+- adjacent quantifiers over overlapping character sets;
+- atomic groups and possessive quantifiers lowering the severity.
+
+The result says which of the two decided: `proof` is `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`. The [ReDoS guide](../REDOS_GUIDE.md#the-guarantee) states what a proof guarantees, and its limits.
 
 ## Using PHPRegex for ReDoS protection
 
-### CLI Usage
+### CLI usage
 
 ```bash
 # Check a single pattern
-bin/regex analyze '/(a+)+$/'
+vendor/bin/regex analyze '/(a+)+$/'
+
+# Replay the attack on the running PCRE
+vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 
 # Scan your entire codebase for ReDoS risk
-bin/regex lint src/ --redos --no-lint --no-optimize
+vendor/bin/regex lint src/ --redos --no-lint --no-optimize
 ```
 
 ### PHP API
 
 ```php
-use PHPRegex\Toolkit\Regex;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
-// Basic analysis
 $analysis = $regex->redos('/(a+)+b/');
-echo $analysis->severity->value; // 'critical', 'high', 'medium', 'low', 'safe'
+echo $analysis->severity->value, "\n";   // critical
+echo $analysis->complexity->value, "\n"; // exponential
+echo $analysis->proof->value, "\n";      // proven
+echo $analysis->witness->render(), "\n"; // "a" x n . "!b"
 
-// Check against threshold
+// Check against a threshold
 if ($analysis->exceedsThreshold(RedosSeverity::High)) {
-    echo "Pattern is potentially dangerous!";
+    echo "Pattern is vulnerable\n";
 }
 
-// Get recommendations
+// Proven safe, not just "nothing found"
+var_dump($regex->redos('/a+b/')->isProvenSafe()); // bool(true)
+
+// Recommendations from the structural analysis
 foreach ($analysis->recommendations as $recommendation) {
-    echo "Suggestion: " . $recommendation . "\n";
+    echo 'Suggestion: ', $recommendation, "\n";
 }
 ```
 
 ## Fixing vulnerable patterns
 
-### 1. Use Possessive Quantifiers
+Each rewrite below is proven safe by the analyzer. Verify that it still matches and captures what you need.
+
+### 1. Use possessive quantifiers
 
 ```
 Vulnerable: /(a+)+b/
 Safer:      /a++b/
 ```
 
-Possessive quantifiers (`*+`, `++`, `?+`, `{m,n}+`) don't backtrack.
+Possessive quantifiers (`*+`, `++`, `?+`, `{m,n}+`) never give back what they matched.
 
-### 2. Use Atomic Groups
+### 2. Use atomic groups
 
 ```
 Vulnerable: /(a+)+b/
 Safer:      /(?>a+)b/
 ```
 
-Atomic groups `(?>...)` commit to the first successful match.
+An atomic group `(?>...)` commits to the first way its body matched.
 
-### 3. Simplify Nested Repeats
+### 3. Simplify nested repeats
 
 ```
 Vulnerable: /(a+)+b/
 Equivalent: /a+b/
 ```
 
-Often, nested quantifiers can be simplified.
-
-### 4. Avoid Empty-Match Repetition
+### 4. Remove overlapping alternatives
 
 ```
-Vulnerable: /(a?)+/
-Safer:      /a*/
-Safer:      /a+/   (if empty should not match)
+Vulnerable: /(a|aa)+$/
+Safer:      /a+$/
 ```
 
-### 5. Avoid Ambiguous Adjacent Quantifiers
+### 5. Avoid repeating a group that can match nothing
 
 ```
-Vulnerable: /a+a+/
-Safer:      /a+/
-Safer:      /a++a+/   (if the split must be preserved)
+Vulnerable: /(a*)*$/
+Safer:      /a*$/
 ```
 
-### 6. Prefer Character Classes Over Alternation
+### 6. Separate adjacent quantifiers
 
 ```
-Vulnerable: /(a|b)+c/
-Safer:      /[ab]+c/
+Vulnerable: /a+a+$/
+Safer:      /a+$/
+Safer:      /a++a+$/   (if the split must be preserved)
 ```
 
-### 7. Bound Your Repeats
+### 7. Bound your repeats
 
 ```
-Vulnerable: /(\d+)+/
-Safer:      /\d{1,10}/   (limit to reasonable bounds)
+Vulnerable: /(\d+)+$/
+Safer:      /\d{1,10}$/
 ```
 
-## Quick reference: risky vs safer patterns
+## Quick reference: vulnerable vs safer patterns
 
 ```
 (a+)+        -> a++        or (?>a+)
 (a|aa)+      -> a+
 (\d+)+       -> \d++       or \d{1,10}
 (.+)+        -> .++        or .{1,100}
-(a?)+        -> a*         or a+
 (a*)*        -> a*
 a+a+         -> a+         or a++a+
-(a|b)+       -> [ab]+
 (\w+\d+)+    -> (?>\w+\d+)+
 ```
 
 ## Defense in depth
 
-1. **Validate patterns early**: Check patterns before deployment
-2. **Use input limits**: Set reasonable length limits for regex inputs
-3. **Prefer deterministic patterns**: Use atomic groups and possessive quantifiers
-4. **Monitor performance**: Watch for slow regex operations in production
-5. **Use PHPRegex in CI**: Add `bin/regex lint` to your build pipeline
+1. **Analyze patterns early**: run `regex lint --redos` or PHPStan in CI.
+2. **Check for `false`**: a vulnerable pattern makes `preg_*` fail silently; read `preg_last_error()`.
+3. **Limit input length**: bound what reaches a regex from outside.
+4. **Prefer deterministic patterns**: possessive quantifiers and atomic groups.
+5. **Mind every-match functions**: the guarantee covers one match attempt; `preg_match_all()`, `preg_replace()` and `preg_split()` make many.
 
 ## Related concepts
 
-- **[ReDoS Guide](../REDOS_GUIDE.md)** - Practical guide to fixing ReDoS
-- **[Architecture](../ARCHITECTURE.md)** - How ReDoS detection works
+- **[ReDoS Guide](../REDOS_GUIDE.md)** - The verdict, the witness, confirmed mode and the guarantee
+- **[Architecture](../ARCHITECTURE.md)** - Where the analysis sits in the library
 - **[FAQ & Glossary](../reference/faq-glossary.md)** - Common ReDoS questions
 
 ## Further reading

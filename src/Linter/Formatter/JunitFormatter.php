@@ -85,18 +85,18 @@ final class JunitFormatter extends AbstractOutputFormatter
                 $lines[] = \sprintf(
                     '    <error message="%s">%s</error>',
                     $this->escapeXml($problem->message),
-                    $this->escapeXml($message),
+                    $this->escapeXmlLines($message),
                 );
             } elseif (LintSeverity::Error === $problem->severity) {
                 $lines[] = \sprintf(
                     '    <failure message="%s">%s</failure>',
                     $this->escapeXml($problem->message),
-                    $this->escapeXml($message),
+                    $this->escapeXmlLines($message),
                 );
             } else {
                 $lines[] = \sprintf(
                     '    <system-out>%s</system-out>',
-                    $this->escapeXml($message),
+                    $this->escapeXmlLines($message),
                 );
             }
 
@@ -206,5 +206,15 @@ final class JunitFormatter extends AbstractOutputFormatter
     private function escapeXml(string $value): string
     {
         return htmlspecialchars(DisplayEscaper::escape($value), \ENT_XML1 | \ENT_QUOTES);
+    }
+
+    /**
+     * Each line escaped on its own, so that the line breaks between the
+     * parts of a message stay line breaks instead of the two characters
+     * "\n".
+     */
+    private function escapeXmlLines(string $value): string
+    {
+        return implode("\n", array_map($this->escapeXml(...), explode("\n", $value)));
     }
 }

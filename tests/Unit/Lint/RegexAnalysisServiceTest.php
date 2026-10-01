@@ -75,7 +75,8 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_analyze_redos_detects_vulnerable_pattern(): void
     {
         $patterns = [
-            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            // (a+)+ alone matches a…a! at once; before the end it fails at n=19 (PCRE2 10.49).
+            new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low);

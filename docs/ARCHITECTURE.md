@@ -146,9 +146,12 @@ Diagnostics codes and explanations are documented in [docs/reference/diagnostics
 
 ## ReDoS Analysis (Static)
 
-ReDoS analysis uses the AST and never executes the regex. `RedosAnalyzer` builds a `RedosProfiler` with a `CharSetAnalyzer`, then walks the tree.
+ReDoS analysis uses the AST and never executes the regex (unless confirmed mode is asked for). `RedosAnalyzer` does two things with the tree:
 
-Core heuristics include:
+1. It builds a prioritized NFA of PCRE's backtracking (`Redos\Internal\Backtrack`): ε-transitions ordered as PCRE tries them, character sets exact (computed from the running PCRE2 under `/u` and `/i`), atomic groups, possessive quantifiers and lookaround bodies as separate sub-automata. Ambiguity in that automaton proves the complexity class of one match attempt, linear, polynomial of degree k or exponential, and yields the witness `prefix . pump x n . suffix`. The work is bounded by `RedosOptions`, in states and steps.
+2. It runs `RedosProfiler`, the structural heuristics, with a `CharSetAnalyzer`. They decide when the pattern holds a construct outside the model (backreferences, conditionals, recursion, verbs, callouts) or the model runs out of budget, and they provide the findings, hotspots and recommendations of every result.
+
+`RedosAnalysis::$proof` says which one decided. Core heuristics include:
 
 - Nested unbounded quantifiers (star height > 1)
 - Overlapping alternation branches inside repetition
@@ -158,7 +161,7 @@ Core heuristics include:
 - Large bounded quantifiers (low risk, but flagged)
 - Atomic groups and possessive quantifiers lowering severity
 
-Analysis results are wrapped in `RedosAnalysis` and include severity, findings, and suggested rewrites. See [docs/REDOS_GUIDE.md](REDOS_GUIDE.md) for user-facing guidance.
+Analysis results are wrapped in `RedosAnalysis` and include the severity, the complexity class, the proof, the witness, findings and suggested rewrites. See [docs/REDOS_GUIDE.md](REDOS_GUIDE.md) for user-facing guidance.
 
 ### ReDoS Heuristics in Practice
 

@@ -21,7 +21,7 @@ final class MyClass
         preg_match('/foo', 'bar'); // Missing delimiter
         preg_match('/a{2,1}/', 'bar'); // Invalid quantifier
         preg_match('/(a+)+$/', 'bar'); // ReDoS (critical) -> regex.redos
-        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', 'bar'); // ReDoS (medium) -> regex.redos
+        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', 'bar'); // ReDoS (proven polynomial, degree 60: high) -> regex.redos
 
         // Valid
         preg_match('/a/i', 'bar');

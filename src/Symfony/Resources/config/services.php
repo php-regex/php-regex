@@ -147,6 +147,7 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$phpVersion', param('php_regex.php_version'))
         ->arg('$pcreVersion', param('php_regex.pcre_version'))
         ->arg('$projectDir', param('php_regex.project_dir'))
+        ->arg('$checkRedos', param('php_regex.redos.enabled'))
         ->tag('console.command')
         ->public();
 

@@ -49,6 +49,77 @@ Each check can also be switched on its own (see below).
 ReDoS analysis in PHPStan is theoretical: it reads the pattern and never runs
 it inside PHPStan.
 
+## ReDoS findings
+
+A pattern at or above `checks.redos.threshold` (`critical` by default) is
+reported under `regex.redos`, with one of three messages:
+
+| message | verdict |
+|---|---|
+| `Exponential backtracking (ReDoS): <pattern>` | proven exponential |
+| `Polynomial backtracking (ReDoS): <pattern>` | proven polynomial |
+| `Potential backtracking (ReDoS): <pattern>` | judged by the structural heuristics |
+
+The message holds the verdict class and the pattern only, and stays the same
+for all of 2.x. The severity, how the verdict was reached and the attack are in
+the tip: a better verdict changes the tip, never the message, and your baseline
+keeps working.
+
+```php
+preg_match('/^(\w+\s?)+$/', $value);
+preg_match('/\d*\d*\d*$/', $value);
+preg_match('/^(a+)+\1$/', $value);
+```
+
+With `threshold: high`:
+
+```
+ ------ -----------------------------------------------------------------------
+  Line   src/Validator.php
+ ------ -----------------------------------------------------------------------
+  7      Exponential backtracking (ReDoS): /^(\w+\s?)+$/
+         🪪  regex.redos
+         💡  Severity: critical, exponential (proven).
+         💡  Attack: "0" x n . "!"
+         💡  Unbounded quantifier detected. May cause backtracking on
+         non-matching input. Consider making it possessive (*+) or using
+         atomic groups (?>...). Suggested (verify behavior): Consider using
+         possessive quantifiers or atomic groups to limit backtracking.
+         💡
+         💡  Read more about possessive quantifiers: …
+         💡  Read more about atomic groups: …
+         💡  Read more about catastrophic backtracking: …
+  12     Polynomial backtracking (ReDoS): /\d*\d*\d*$/
+         🪪  regex.redos
+         💡  Severity: high, polynomial degree 3 (proven).
+         💡  Attack: "0" x n . "!"
+         …
+  17     Potential backtracking (ReDoS): /^(a+)+\1$/
+         🪪  regex.redos
+         💡  Severity: critical, heuristic.
+         …
+```
+
+The tip starts with the severity and how it was reached: `exponential
+(proven)`, `polynomial degree N (proven)`, `heuristic`, or `heuristic (budget
+exceeded)`. A proven verdict adds the attack, `"0" x n . "!"`: the input
+`str_repeat("0", $n) . "!"` that drives the worst case. The recommendations and
+the documentation links follow. The [ReDoS guide](../REDOS_GUIDE.md) explains
+each part of the verdict.
+
+The attack is a PHP expression that pastes back into code. A `<` in it is
+written `\x3C`, the same byte, so that no output format reads it as markup:
+
+```
+  5      Exponential backtracking (ReDoS): /^(<b>|<b>\s?)+$/
+         🪪  regex.redos
+         💡  Severity: critical, exponential (proven).
+         💡  Attack: "\x3Cb>\x3Cb>" x n . "!"
+```
+
+A proven quadratic pattern is `medium`, below the default threshold; set
+`threshold: medium` to see it.
+
 ## Configuration
 
 ```neon
@@ -85,8 +156,14 @@ custom wiring, reads them in any case.
 | identifier | reported for |
 |---|---|
 | `regex.invalidForTarget` | a pattern the target refuses and the running PHP compiles |
-| `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the message |
+| `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the tip |
 | `regex.optimization` | a pattern with a shorter equivalent |
 | `regex.lint.<rule>` | a lint rule, as `regex.lint.flag.useless.i` |
 
 Use them in `ignoreErrors` or a baseline as with any PHPStan identifier.
+
+A baseline written before 2.0 holds a 1.x ReDoS message, `Potential ReDoS
+risk (theoretical) (severity: …, confidence: …): …` or `Confirmed ReDoS risk
+(…): …`, which no longer matches:
+regenerate it with `vendor/bin/phpstan analyse --generate-baseline` (see
+[UPGRADE-2.0.md](../../UPGRADE-2.0.md)).

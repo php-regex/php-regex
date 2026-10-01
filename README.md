@@ -25,17 +25,17 @@ Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **com
 
 This architecture allows for advanced static analysis:
 - **Linting:** Detect redundancy, useless flags, and common mistakes.
-- **Safety:** Statically detect *potential* catastrophic backtracking (ReDoS).
+- **Safety:** Prove a pattern safe from catastrophic backtracking (ReDoS), or hand you the input that triggers it.
 - **Logic:** Compare patterns via NFA/DFA (Intersection, Equivalence, Subset) for the regular subset it supports.
 
 Built for learning, validation, and robust tooling in PHP projects.
 
 > ⚠️ **What this is and is not.** PHPRegex is a side project and a learning
 > exercise. It is **not** a hardened security product and should not be your
-> only line of defense. ReDoS detection is structural and conservative — treat
-> findings as *potential* risk to investigate, not as a guarantee of safety.
-> The parser aims for PCRE compatibility but does not cover every edge case of
-> the PCRE engine.
+> only line of defense. A ReDoS verdict is proven only for the subset of PCRE
+> the analysis models, one match attempt at a time; outside it, structural
+> heuristics decide, and the verdict says so. The parser aims for PCRE
+> compatibility but does not cover every edge case of the PCRE engine.
 
 If you are new to regex, start with the [Regex Tutorial](docs/tutorial/README.md). If you want a short overview, see the [Quick Start Guide](docs/QUICK_START.md).
 
@@ -77,7 +77,7 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 - 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
 - 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](docs/ARCHITECTURE.md) it supports; falls back gracefully otherwise.
-- 🛡️ **ReDoS Analysis:** Detect *potential* catastrophic backtracking risks structure-wise. Findings are heuristic — treat them as risk to investigate, not a guarantee.
+- 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
 - 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
 - 📖 **Explanation:** Explain patterns in plain English.
 - 🔧 **Visitor API:** A flexible API for building custom regex tooling.
@@ -88,7 +88,8 @@ PHPRegex separates what it can guarantee from what is heuristic:
 
 - Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
 - Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes how closely, case by case.
-- Heuristic: ReDoS analysis is structural and conservative; treat it as potential risk unless confirmed.
+- Proven: a ReDoS verdict marked `(proven)` holds for one match attempt on a model of PCRE's backtracking; `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The [ReDoS guide](docs/REDOS_GUIDE.md#the-guarantee) lists its limits.
+- Heuristic: patterns outside that model (backreferences, conditionals, recursion, …) are judged by structural rules, marked `(heuristic)`; treat those as potential risk unless confirmed.
 - Context matters: PCRE version, JIT, and backtrack/recursion limits change practical impact.
 
 ### Tested against the real engine
@@ -158,7 +159,7 @@ tracked file.
 
 If you believe a pattern is exploitable:
 
-1. Run confirmed mode and capture a bounded, reproducible PoC.
+1. Run confirmed mode: it replays the attack on your PCRE and prints the input length that makes `preg_match()` fail.
 2. Include the pattern, input lengths, timings, JIT setting, and PCRE limits.
 3. Verify impact in the real code path before filing a security issue.
 
@@ -193,7 +194,7 @@ vendor/bin/regex parse '/^hello world$/'
 # Get plain English explanation
 vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 
-# Check for potential ReDoS risk (theoretical by default)
+# Check for ReDoS: a proven verdict, and the attack when vulnerable
 vendor/bin/regex analyze '/(a+)+$/'
 
 # Colorize pattern for better readability
@@ -224,13 +225,15 @@ if (!$result->isValid) {
     echo $result->error;
 }
 
-// Check for ReDoS risk (theoretical by default)
+// Check for ReDoS (theoretical by default)
 $analysis = $regex->redos('/(a+)+$/');
-echo $analysis->severity->value; // 'critical', 'safe', etc.
+echo $analysis->severity->value;   // 'critical'
+echo $analysis->headline();        // 'Exponential backtracking (proven)'
+echo $analysis->witness->render(); // '"a" x n . "!"': the input that triggers it
 
-// Optional: attempt bounded confirmation
+// Optional: replay the attack on the running PCRE
 $confirmed = $regex->redos('/(a+)+$/', mode: RedosMode::Confirmed);
-echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical';
+echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical'; // 'confirmed'
 
 // Get human-readable explanation
 echo $regex->explain('/\d{4}-\d{2}-\d{2}/');

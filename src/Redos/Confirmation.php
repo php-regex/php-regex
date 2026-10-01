@@ -19,6 +19,12 @@ namespace PHPRegex\Redos;
 final readonly class Confirmation implements \JsonSerializable
 {
     /**
+     * The note of a replay made with preg_match() without $matches: PHP
+     * retries an empty match there, and the witness needs that call.
+     */
+    public const WITHOUT_MATCHES = 'preg_match() without $matches';
+
+    /**
      * @param array<ConfirmationSample> $samples
      */
     public function __construct(

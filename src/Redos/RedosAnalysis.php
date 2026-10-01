@@ -25,9 +25,19 @@ final readonly class RedosAnalysis implements \JsonSerializable
     public ?string $vulnerableSubpattern;
 
     /**
+     * The PCRE2 release the verdict was computed with: verdicts are
+     * deterministic per release and analysis version.
+     */
+    public string $pcreVersion;
+
+    /**
      * @param array<string>  $recommendations
      * @param array<Finding> $findings
      * @param array<Hotspot> $hotspots
+     * @param int|null       $degree          the degree of a polynomial verdict, 2 or more; null otherwise
+     * @param bool|null      $replayed        whether the witness made the running engine fail; null when no replay was attempted
+     * @param list<string>   $abstractions    what the model analysed differently from the pattern as written
+     * @param string|null    $pcreVersion     the PCRE2 release; the running one when null
      */
     public function __construct(
         public RedosSeverity $severity,
@@ -45,8 +55,17 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public array $hotspots = [],
         public RedosMode $mode = RedosMode::Theoretical,
         public ?Confirmation $confirmation = null,
+        public RedosComplexity $complexity = RedosComplexity::Unknown,
+        public ?int $degree = null,
+        public RedosProof $proof = RedosProof::Heuristic,
+        public ?RedosWitness $witness = null,
+        public ?bool $replayed = null,
+        public array $abstractions = [],
+        ?string $pcreVersion = null,
+        public string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
     ) {
         $this->vulnerableSubpattern = $vulnerableSubpattern ?? $vulnerablePart;
+        $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
     }
 
     public function getVulnerableSubpattern(): ?string
@@ -62,6 +81,48 @@ final readonly class RedosAnalysis implements \JsonSerializable
     public function isSafe(): bool
     {
         return RedosSeverity::Safe === $this->severity || RedosSeverity::Low === $this->severity;
+    }
+
+    /**
+     * Whether the model proved that no input drives one match attempt
+     * beyond a linear number of steps.
+     */
+    public function isProvenSafe(): bool
+    {
+        return RedosProof::Proven === $this->proof && RedosComplexity::Linear === $this->complexity;
+    }
+
+    /**
+     * The verdict in a few words, the same for every consumer: whether it
+     * was proven, the class, or why there is none.
+     */
+    public function headline(): string
+    {
+        if (RedosProof::NotAnalyzed === $this->proof) {
+            return null === $this->error ? 'not analyzed' : 'not analyzed (analysis error)';
+        }
+
+        if (RedosProof::Proven === $this->proof) {
+            switch ($this->complexity) {
+                case RedosComplexity::Linear:
+                    return 'safe (proven)';
+                case RedosComplexity::Exponential:
+                    return 'Exponential backtracking (proven)';
+                case RedosComplexity::Polynomial:
+                    return null === $this->degree
+                        ? 'Polynomial backtracking (proven)'
+                        : \sprintf('Polynomial backtracking, degree %d (proven)', $this->degree);
+                case RedosComplexity::Unknown:
+                    // A proof without a class never says safe: the heuristics speak.
+                    break;
+            }
+        }
+
+        if (RedosSeverity::Safe !== $this->severity) {
+            return 'Potential backtracking (heuristic)';
+        }
+
+        return RedosProof::BudgetExceeded === $this->proof ? 'not analyzed (budget exceeded)' : 'no risk found (heuristic)';
     }
 
     public function isConfirmed(): bool
@@ -84,7 +145,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
                 continue;
             }
 
-            $rank = $this->severityScore($hotspot->severity);
+            $rank = $hotspot->severity->rank();
             if ($rank > $bestRank) {
                 $bestRank = $rank;
                 $best = $hotspot;
@@ -96,11 +157,11 @@ final readonly class RedosAnalysis implements \JsonSerializable
 
     public function exceedsThreshold(RedosSeverity $threshold): bool
     {
-        return $this->severityScore($this->severity) >= $this->severityScore($threshold);
+        return $this->severity->rank() >= $threshold->rank();
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: array{prefix: string, pump: string, suffix: string}|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string}
      */
     public function jsonSerialize(): array
     {
@@ -120,18 +181,14 @@ final readonly class RedosAnalysis implements \JsonSerializable
             'findings' => $this->findings,
             'hotspots' => $this->hotspots,
             'confirmation' => $this->confirmation,
+            'complexity' => $this->complexity->value,
+            'degree' => $this->degree,
+            'proof' => $this->proof->value,
+            'witness' => $this->witness?->toArray(),
+            'replayed' => $this->replayed,
+            'abstractions' => $this->abstractions,
+            'pcre_version' => $this->pcreVersion,
+            'analysis_version' => $this->analysisVersion,
         ];
-    }
-
-    private function severityScore(RedosSeverity $severity): int
-    {
-        return match ($severity) {
-            RedosSeverity::Safe => 0,
-            RedosSeverity::Low => 1,
-            RedosSeverity::Unknown => 2,
-            RedosSeverity::Medium => 3,
-            RedosSeverity::High => 4,
-            RedosSeverity::Critical => 5,
-        };
     }
 }

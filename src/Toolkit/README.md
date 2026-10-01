@@ -19,7 +19,7 @@ Features
 * One facade, `Regex::create()`, over the seven analysis packages it installs: parser, explain, generator, linter, optimizer, redos, transpiler.
 * Parse strictly (errors throw) or tolerantly (errors come back in the result), with byte-offset tokens; validation reports the error offset, a caret snippet and a hint.
 * Explain a pattern in plain English, as text or HTML; highlight it for console or HTML output.
-* Check for ReDoS: theoretical mode by default, or confirmed by a bounded run; four severity levels.
+* Check for ReDoS: a verdict proven on a model of PCRE's backtracking, with the attack input when the pattern is vulnerable; theoretical by default, or replayed on the running PCRE.
 * Optimize with rewrites proven equivalent to the original, generate a sample the running engine has verified to match, transpile to JavaScript or Python.
 
 Installation
@@ -78,17 +78,21 @@ Line 1: (?<year>\d{4})-(\k<month>
                                  ^
 ```
 
-Check a pattern for ReDoS, theoretically by default, or confirmed by a bounded run:
+Check a pattern for ReDoS, theoretically by default, or with the attack replayed on the running PCRE:
 
 ```php
 use PHPRegex\Redos\RedosMode;
 
 $analysis = $regex->redos('/(a+)+$/', mode: RedosMode::Confirmed);
 echo $analysis->severity->value, "\n";
+echo $analysis->headline(), "\n";
+echo $analysis->witness->render(), "\n";
 echo $analysis->isConfirmed() ? "confirmed\n" : "theoretical\n";
 ```
 ```
 critical
+Exponential backtracking (proven)
+"a" x n . "!"
 confirmed
 ```
 

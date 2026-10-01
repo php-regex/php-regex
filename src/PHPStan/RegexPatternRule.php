@@ -27,7 +27,9 @@ use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
@@ -356,13 +358,11 @@ final class RegexPatternRule implements Rule
             }
 
             $errors[] = RuleErrorBuilder::message(\sprintf(
-                'Potential ReDoS risk (theoretical) (severity: %s, confidence: %s): %s',
-                strtoupper($analysis->severity->value),
-                strtoupper($analysis->confidenceLevel()->value),
+                self::redosMessageFormat($analysis),
                 $this->truncatePattern($pattern),
             ))
                 ->line($lineNumber)
-                ->tip($this->getTipForReDoS($analysis->recommendations))
+                ->tip($this->getTipForReDoS($analysis))
                 ->identifier(self::IDENTIFIER_REDOS)
                 ->build();
         }
@@ -514,26 +514,74 @@ final class RegexPatternRule implements Rule
     }
 
     /**
-     * @param array<string> $recommendations
+     * The message of a ReDoS error, frozen for 2.x so that a verdict fix never
+     * breaks a baseline: the class only when the model proved it.
      */
-    private function getTipForReDoS(array $recommendations): string
+    private static function redosMessageFormat(RedosAnalysis $analysis): string
     {
-        $tip = implode("\n", $recommendations);
+        if (RedosProof::Proven === $analysis->proof) {
+            if (RedosComplexity::Exponential === $analysis->complexity) {
+                return 'Exponential backtracking (ReDoS): %s';
+            }
+
+            if (RedosComplexity::Polynomial === $analysis->complexity) {
+                return 'Polynomial backtracking (ReDoS): %s';
+            }
+        }
+
+        return 'Potential backtracking (ReDoS): %s';
+    }
+
+    /**
+     * "critical, exponential (proven)", "high, polynomial degree 3 (proven)",
+     * "medium, heuristic": the severity, then how the verdict was reached.
+     */
+    private static function redosVerdict(RedosAnalysis $analysis): string
+    {
+        $how = match ($analysis->proof) {
+            // The degree is only set on a polynomial.
+            RedosProof::Proven => $analysis->complexity->value
+                .(null === $analysis->degree ? '' : ' degree '.$analysis->degree)
+                .' (proven)',
+            RedosProof::Heuristic => 'heuristic',
+            RedosProof::BudgetExceeded => 'heuristic (budget exceeded)',
+            RedosProof::NotAnalyzed => 'not analyzed',
+        };
+
+        return $analysis->severity->value.', '.$how;
+    }
+
+    /**
+     * The verdict, the attack when there is a witness, the recommendations,
+     * a blank line, then the documentation links.
+     */
+    private function getTipForReDoS(RedosAnalysis $analysis): string
+    {
+        $lines = ['Severity: '.self::redosVerdict($analysis).'.'];
+        if (null !== $analysis->witness) {
+            // A "<" would open console markup in PHPStan's table output: written
+            // "\x3C", the literal stays valid PHP for the same bytes. The renderer
+            // prints "<" raw and never inside one of its escape sequences.
+            $lines[] = 'Attack: '.str_replace('<', '\x3C', $analysis->witness->render());
+        }
+
+        $recommendations = implode("\n", $analysis->recommendations);
+        if ('' !== $recommendations) {
+            $lines[] = $recommendations;
+        }
 
         // Append links for relevant recommendations
         $additionalLinks = [];
-        if (str_contains($tip, 'possessive quantifiers') || str_contains($tip, 'possessive')) {
+        if (str_contains($recommendations, 'possessive')) {
             $additionalLinks[] = 'Read more about possessive quantifiers: '.self::DOC_LINKS['possessive quantifiers'];
         }
-        if (str_contains($tip, 'atomic groups')) {
+        if (str_contains($recommendations, 'atomic groups')) {
             $additionalLinks[] = 'Read more about atomic groups: '.self::DOC_LINKS['atomic groups'];
         }
 
         // Always append catastrophic backtracking link for ReDoS
         $additionalLinks[] = 'Read more about catastrophic backtracking: '.self::DOC_LINKS['catastrophic backtracking'];
 
-        $tip .= "\n\n".implode("\n", $additionalLinks);
-
-        return $tip;
+        return implode("\n", $lines)."\n\n".implode("\n", $additionalLinks);
     }
 }

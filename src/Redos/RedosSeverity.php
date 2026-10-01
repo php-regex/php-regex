@@ -51,6 +51,23 @@ enum RedosSeverity: string
     case Critical = 'critical';
 
     /**
+     * The one order of severities: safe 0, low 1, unknown 2, medium 3,
+     * high 4, critical 5. A verdict the analysis could not reach ranks
+     * above a low risk and below a medium one.
+     */
+    public function rank(): int
+    {
+        return match ($this) {
+            self::Safe => 0,
+            self::Low => 1,
+            self::Unknown => 2,
+            self::Medium => 3,
+            self::High => 4,
+            self::Critical => 5,
+        };
+    }
+
+    /**
      * The severity a configured threshold names: low, medium, high or
      * critical, in any case. "safe" and "unknown" are verdicts a pattern
      * gets, not levels to report from, and are refused like any other word.

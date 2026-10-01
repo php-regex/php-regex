@@ -484,7 +484,9 @@ final class ComprehensivePublicAPITest extends TestCase
 
     public function test_analyze_redos_critical_alternation(): void
     {
-        $analysis = $this->regexService->redos('/(a|a)*/');
+        // (a|a)* alone accepts after the first run (a…a! matches at once); before the end,
+        // a…a! makes preg_match() fail at n=19 (PCRE2 10.49).
+        $analysis = $this->regexService->redos('/(a|a)*$/');
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertFalse($analysis->isSafe());
         $this->assertSame(10, $analysis->score);

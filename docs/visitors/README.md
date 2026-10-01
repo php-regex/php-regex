@@ -269,36 +269,42 @@ echo $result->errorCode?->value;  // regex.backref.missing_named_group
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Linter\PatternLinter;
 
-$ast = Regex::create()->parse('/(a+)+b/');  // Potential ReDoS risk
-$result = $ast->accept(new PatternLinter());
+$linter = new PatternLinter();
+Regex::create()->parse('/(a+)+b/')->accept($linter);
 
-foreach ($result->getIssues() as $issue) {
-    echo $issue->getMessage() . "\n";
-    // "Potential ReDoS risk (theoretical)"
+foreach ($linter->getIssues() as $issue) {
+    echo $issue->message, "\n";
 }
+// Nested quantifiers can cause catastrophic backtracking.
+// Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
 ```
+
+The lint rules read the shape of the pattern. The ReDoS verdict comes from `Regex::redos()`, below.
 
 ---
 
-### ReDoSAnalyzerNodeVisitor (Internal)
+### RedosProfiler (Internal)
 
-**Purpose:** Internal visitor used by `Regex::redos()` to classify ReDoS risk.
+**Purpose:** Internal visitor behind the structural heuristics of `Regex::redos()`. The verdict itself comes from a model of PCRE's backtracking built from the AST; the heuristics decide for the constructs outside that model (see [the ReDoS guide](../REDOS_GUIDE.md)).
 
-**Risk Levels:**
+**Severities:**
 
-| Level      | Meaning                     | Action                 |
-|------------|-----------------------------|------------------------|
-| `safe`     | No exponential backtracking | Accept pattern         |
-| `low`      | Minimal risk                | Accept with monitoring |
-| `medium`   | Requires specific input     | Consider refactoring   |
-| `critical` | High structural risk        | Review and refactor    |
+| Severity   | Proven verdict                       | Action                 |
+|------------|--------------------------------------|------------------------|
+| `safe`     | linear: no input blows up an attempt | Accept pattern         |
+| `low`      | (heuristics only) minimal risk       | Accept with monitoring |
+| `medium`   | polynomial, degree 2                 | Consider refactoring   |
+| `high`     | polynomial, degree 3 or more         | Refactor               |
+| `critical` | exponential                          | Refactor               |
+| `unknown`  | the analysis failed                  | Check the error        |
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
-echo $analysis->severity->value;     // 'critical'
-echo $analysis->confidence->value;   // 'high'
+echo $analysis->severity->value;            // 'critical'
+echo $analysis->proof->value;               // 'proven'
+echo $analysis->confidenceLevel()->value;   // 'medium': not replayed on the engine yet
 ```
 
 ---

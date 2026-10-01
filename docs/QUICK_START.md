@@ -10,7 +10,7 @@ This is the fast hands-on tour: every step is a command or snippet you can run a
 - Use the CLI for quick analysis.
 - Parse and validate patterns in PHP.
 - Explain patterns in plain English.
-- Check for potential ReDoS risk.
+- Check a pattern for ReDoS, and get the input that triggers it.
 - Build custom analysis tools.
 
 ## Installation
@@ -44,7 +44,7 @@ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 # 2. Visualize the pattern structure
 vendor/bin/regex diagram '/\d{4}-\d{2}-\d{2}/'
 
-# 3. Check for potential ReDoS risk (theoretical)
+# 3. Check for ReDoS: a proven verdict and, when vulnerable, the attack
 vendor/bin/regex analyze '/(a+)+$/'
 
 # 4. Colorize the pattern for better readability
@@ -117,7 +117,6 @@ if ($result->isValid) {
 
 Checks performed:
 - Syntax errors (missing brackets, invalid escapes)
-- Potential ReDoS risk (heuristic, structural)
 - Invalid backreferences
 - Variable-length lookbehinds
 - Invalid Unicode properties
@@ -147,29 +146,30 @@ Regex matches
 
 Use when documenting patterns, doing code reviews, or teaching regex.
 
-### 4. Check for ReDoS risk (theoretical by default)
+### 4. Check for ReDoS (theoretical by default)
 
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosMode;
 
 $regex = Regex::create();
 
-// Check a potentially risky pattern (theoretical)
+// A vulnerable pattern: the verdict is proven, and comes with the attack
 $analysis = $regex->redos('/(a+)+b/');
-echo "ReDoS Severity: " . $analysis->severity->value;  // "critical"
+echo $analysis->severity->value, "\n";   // critical
+echo $analysis->headline(), "\n";        // Exponential backtracking (proven)
+echo $analysis->witness->render(), "\n"; // "a" x n . "!b"
 
-// Check a safe pattern
+// A safe pattern, proven safe
 $analysis = $regex->redos('/a+b/');
-echo "ReDoS Severity: " . $analysis->severity->value;  // "safe"
+echo $analysis->headline(), "\n";        // safe (proven)
 
-// Optional: attempt bounded confirmation
+// Optional: replay the attack on the running PCRE
 $confirmed = $regex->redos('/(a+)+b/', mode: RedosMode::Confirmed);
-echo $confirmed->isConfirmed() ? "confirmed\n" : "theoretical\n";
+echo $confirmed->isConfirmed() ? "confirmed\n" : "theoretical\n"; // confirmed
 ```
 
-ReDoS (Regular Expression Denial of Service) is a performance risk where certain inputs can make a backtracking engine take a very long time.
+ReDoS (Regular Expression Denial of Service) is a performance risk where certain inputs can make a backtracking engine take a very long time; in PHP, `preg_match()` then gives up and returns `false`. `validate()` does not check for it: call `redos()`. The [ReDoS guide](REDOS_GUIDE.md) explains the verdicts.
 
 Learn more: [ReDoS Deep Dive](concepts/redos.md)
 
@@ -227,7 +227,7 @@ function documentPattern(string $pattern, string $description): void
 documentPattern('/\d{4}-\d{2}-\d{2}/', 'Date format');
 ```
 
-### 4. Find Potential ReDoS Risk in Your Codebase
+### 4. Find ReDoS in Your Codebase
 
 ```bash
 # Scan your entire project

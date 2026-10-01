@@ -1,6 +1,6 @@
 # Regex Cookbook: Practical Patterns for PHP
 
-This cookbook collects patterns for common validation and parsing tasks. Each pattern is checked with PHPRegex's ReDoS analyzer, but you should still review and adapt them for your context.
+This cookbook collects patterns for common validation and parsing tasks. PHPRegex's ReDoS analyzer proves every pattern here safe (`safe (proven)`: no input makes one match attempt backtrack beyond a linear number of steps), but you should still review and adapt them for your context.
 
 > These recipes include a short explanation and a quick validation call so you can use them in tooling or code reviews.
 >
@@ -97,7 +97,7 @@ echo $isMatch ? 'Matches' : 'Does not match';
 
 // ReDoS check
 $analysis = Regex::create()->redos($pattern);
-echo $analysis->severity->value;  // Output: safe
+echo $analysis->headline();  // Output: safe (proven)
 ```
 
 ---
@@ -570,10 +570,10 @@ use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
-// Step 1: Check for potential ReDoS risk (theoretical)
+// Step 1: Require a pattern proven safe from ReDoS
 $analysis = $regex->redos($pattern);
-if ($analysis->severity->value !== 'safe') {
-    throw new \InvalidArgumentException('Potential ReDoS risk detected');
+if (!$analysis->isProvenSafe()) {
+    throw new \InvalidArgumentException('ReDoS: '.$analysis->headline());
 }
 
 // Step 2: Validate the pattern itself

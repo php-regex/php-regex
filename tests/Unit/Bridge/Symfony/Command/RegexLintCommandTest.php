@@ -83,7 +83,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertIsArray($data);
         $this->assertArrayHasKey('stats', $data);
         $this->assertArrayHasKey('results', $data);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $data['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0], $data['stats']);
         $this->assertSame([], $data['results']);
     }
 

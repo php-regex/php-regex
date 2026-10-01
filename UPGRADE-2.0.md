@@ -591,6 +591,44 @@ their severity, instead of `regex.redos.critical` and the like. Update
 its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 `IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
 
+#### ReDoS verdicts are proven, and the PHPStan ReDoS message changed
+
+The ReDoS analysis proves the complexity class of a pattern where its model
+covers it, and falls back to the 1.x heuristics elsewhere (see
+[the ReDoS guide](docs/REDOS_GUIDE.md)). Three things move on your side:
+
+- **PHPStan baselines.** The ReDoS message is now one of
+  `Exponential backtracking (ReDoS): <pattern>`,
+  `Polynomial backtracking (ReDoS): <pattern>` and
+  `Potential backtracking (ReDoS): <pattern>`, where 1.x said
+  `Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: HIGH): <pattern>`
+  or `Confirmed ReDoS risk (…): <pattern>`. The severity, how the verdict was
+  reached and the attack moved to the tip. Regenerate the baseline once:
+
+  ```bash
+  vendor/bin/phpstan analyse --generate-baseline
+  ```
+
+  The new messages stay the same for all of 2.x: a better verdict changes the
+  tip, never the message. An `ignoreErrors` entry on the identifier
+  `regex.redos` keeps working; one matching the 1.x message text does not.
+- **Severities.** A pattern the model proves gets the severity of its class:
+  exponential `critical`, polynomial of degree 3 or more `high`, of degree 2
+  `medium`, linear `safe`. Many unanchored patterns the heuristics rated
+  `medium` are now `safe (proven)`, and a few patterns rate higher, each with
+  the attack that reproduces it. Thresholds are unchanged; a check that
+  compared severities may see different findings on the first run.
+- **`regex lint` with ReDoS on reports ReDoS findings.** `regex lint --redos`,
+  `checks.redos.enabled` in `regex.json`, Symfony's `regex:lint` with
+  `php_regex.redos.enabled` and Laravel's `regex:lint` with `redos.enabled`
+  never ran the analysis in 1.x. They do now: expect `regex.lint.redos`
+  warnings, and, in confirmed mode, errors for the verdicts PCRE reproduced.
+
+Code that builds a `RedosAnalysis` by hand keeps working: the new constructor
+parameters are trailing and defaulted, and such a result says
+`proof: heuristic`. `isSafe()` keeps its meaning; use `isProvenSafe()` to
+require a proof.
+
 #### The pattern extractors moved, and one is renamed
 
 The two ways of finding regex patterns in PHP source now sit together under
@@ -869,9 +907,9 @@ Every CLI command now uses the codes of the lint command:
   written. `regex` without a command and `regex help <unknown>` exit with 2.
 - Some results that exited with 0 exit with 1: `analyze` and `parse --validate`
   on an invalid pattern, `debug` on a pattern that does not parse, `analyze`
-  and `debug` on a ReDoS risk that `--redos-mode=confirmed` confirms at high
-  severity or more, `redos` on a pattern PHP refuses. A theoretical ReDoS
-  finding still exits with 0.
+  and `debug` on a ReDoS verdict that `--redos-mode=confirmed` reproduces on
+  the running PCRE at high severity or more, `redos` on a pattern PHP refuses.
+  A theoretical ReDoS verdict still exits with 0, proven or not.
 - `debug` stops with 2 on a `regex.json` it cannot read, where it ignored it.
 - `parse`, `validate`, `explain`, `diagram`, `highlight` and `graph` refuse an
   option they do not know, and accept options before the pattern; `--` ends

@@ -19,7 +19,7 @@ Features
 * Reports the patterns your target PHP refuses while the engine running PHPStan compiles them; what that engine refuses stays with PHPStan core, never reported twice.
 * Reads the eight `preg_*` functions, patterns held in constants and constant expressions, and the array keys of `preg_replace_callback_array`.
 * Opt-in lint: the 28 lint rules of [php-regex/regex-linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter), each finding carrying its rule identifier and a tip.
-* Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds.
+* Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds: a proven exponential or polynomial verdict, or a heuristic one, with the attack input in the tip.
 * Opt-in optimization suggestions behind a minimum-savings setting; every rewrite is proven equivalent by the automata solver before it is reported.
 * Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regex.redos`, `regex.optimization`, `regex.lint.<rule>`.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
@@ -98,7 +98,11 @@ Nested quantifiers can cause catastrophic backtracking.
 💡 Consider using atomic groups (?>...) or possessive quantifiers.
 Exponential backtracking (ReDoS): /(a+)+$/
 🪪 regex.redos
+💡 Severity: critical, exponential (proven).
+💡 Attack: "a" x n . "!"
 ```
+
+A ReDoS message is `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`, then the pattern, and stays the same for all of 2.x; the severity, how the verdict was reached and the attack (`str_repeat("a", $n) . "!"`) are in the tip. A baseline written with 1.x must be regenerated once.
 
 Optimizations, once enabled, suggest the shorter equivalent as a tip:
 

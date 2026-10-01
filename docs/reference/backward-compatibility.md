@@ -26,7 +26,7 @@ In short, the public surface is:
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
 | `regex-automata` | `LanguageSolver`, `SolverOptions`, `MatchMode`, the two algorithm enums, the three result classes, `Dfa`, `DfaState`, `DfaCacheInterface`, `InMemoryDfaCache`, `Exception\ComplexityException` |
-| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosSeverity`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
+| `regex-redos` | `RedosAnalyzer` (with `ANALYSIS_VERSION`), `RedosAnalysis` (with `isProvenSafe()` and `headline()`), `RedosOptions`, `RedosSeverity` (with `rank()`), `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `TranspileException` |
 | `regex-linter` | `PatternLinter`, `Diagnostic`, `DiagnosticType`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
@@ -70,6 +70,13 @@ add one to yet.
   says so. Match on the error code, not on the message.
 - **Support for a new PCRE2 release**, as `PcreFeature` cases and the targets
   that use them.
+- **A wider ReDoS model**: a construct the structural heuristics judge today
+  (a backreference, a conditional, a non-atomic lookaround, …) may become
+  proven, and an ambiguity listed as without witness may get one, with
+  `RedosAnalyzer::ANALYSIS_VERSION` raised. Their patterns move from
+  `proof: heuristic` to `proof: proven`, and their severity may move with them.
+- **New ReDoS options**: a configuration key for the analysis budget may be
+  added; none is removed.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
   with the replacement named.
 
@@ -78,6 +85,11 @@ add one to yet.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, …): baselines and ignore lists keep working.
+- The **messages of the PHPStan ReDoS errors**: `Exponential backtracking
+  (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
+  backtracking (ReDoS): %s`, followed by the pattern. The severity, the proof
+  and the attack are in the tip, which may change, so a verdict fix never
+  breaks a baseline.
 - The **configuration keys** of `regex.json`, of the Symfony bundle, of the
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
@@ -89,6 +101,12 @@ add one to yet.
 A patch release fixes bugs. A pattern the library judged differently from
 PHP's PCRE2 for the same release is a bug: its fix ships in a patch even though
 it changes a verdict, an error code or an offset, and the CHANGELOG lists it.
+
+The same holds for the ReDoS model. `safe (proven)` promises that the model
+holds no ambiguity; a pattern given that verdict on which the running engine
+exhausts its backtrack limit in one match attempt is a soundness bug. Its fix
+ships in a patch, with `RedosAnalyzer::ANALYSIS_VERSION` raised, even though
+it changes a severity, and may move the pattern to `proof: heuristic`.
 
 ## Caches
 

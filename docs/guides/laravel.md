@@ -119,6 +119,50 @@ Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
+## ReDoS findings
+
+With `'redos' => ['enabled' => true]`, `regex:lint` adds the ReDoS issue,
+`regex.lint.redos`, to the findings of each pattern at or above
+`redos.threshold`:
+
+```
+  ./app/Validator.php:7:33
+      → /^(\w+\s?)+$/
+     ...
+     WARN  Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
+         ↳ Attack: "0" x n . "!" Unbounded quantifier detected. May cause backtracking on non-matching input. ...
+
+  ./app/Validator.php:12:33
+      → /\d*\d*\d*$/
+     ...
+     WARN  Polynomial backtracking, degree 3 (proven). Severity: HIGH, confidence: MEDIUM.
+         ↳ Attack: "0" x n . "!" Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking ...
+```
+
+`regex:explain` ends its explanation with a security warning when the pattern
+is at risk, and prints nothing more for a safe one:
+
+```bash
+php artisan regex:explain '/(a+)+$/'
+```
+
+```
+Security Warning:
+  Exponential backtracking (proven)
+  Severity: critical
+  Attack: "a" x n . "!"
+  Vulnerable part: a+
+  Recommendations:
+    - Unbounded quantifier detected. May cause backtracking on non-matching input. ...
+    - Nested unbounded quantifiers detected. This allows exponential backtracking. ...
+```
+
+The first line is the verdict's headline, then its severity; `Attack` is the input that drives
+the worst case, as PHP: `str_repeat("a", $n) . "!"`. A pattern the structural
+heuristics judge, such as one with a backreference, shows `Potential
+backtracking (heuristic)` and no attack. The [ReDoS guide](../REDOS_GUIDE.md)
+explains each verdict.
+
 ## Upgrading from 1.x
 
 2.0 renames or removes three keys. `regex:lint` warns about each one it still
@@ -129,6 +173,9 @@ finds in your file, with the key to use instead:
 | `exclude_paths`             | `exclude`                             |
 | `analysis.ignore_patterns`  | merged into `redos.ignored_patterns`  |
 | `analysis.redos_threshold`  | removed (it was never read)           |
+
+`redos.enabled` now makes `regex:lint` report ReDoS findings: 1.x never ran
+the analysis, whatever the setting. Expect new warnings on the first run.
 
 Re-publish the file to pick up the new keys and comments:
 

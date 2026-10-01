@@ -171,11 +171,17 @@ if ($analysis->exceedsThreshold(RedosSeverity::High)) {
 # Analyze a pattern
 bin/regex debug '/(a+)+$/'
 
-# Output:
-# ReDoS: CRITICAL (score 10)
-# Culprit: a+
-# Trigger: quantifier +
-# Hotspots: 2
+# Output (excerpt):
+#   Status:    Exponential backtracking (proven)
+#   Severity:  CRITICAL (score 10)
+#   Mode:      THEORETICAL
+#   Confidence: MEDIUM
+#   Culprit:    a+
+#   Trigger:    quantifier +
+#   Hotspots:   2
+#   Attack: "a" x n . "!"
+#
+# The attack is the input that triggers the blow-up: str_repeat("a", $n) . "!".
 ```
 
 ### Strategy 3: Set Engine Limits

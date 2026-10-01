@@ -65,7 +65,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                     $line,
                     $column,
                     $this->escapeXml($severity),
-                    $this->escapeXml($message),
+                    $this->escapeXmlLines($message),
                     $this->escapeXml($source),
                 );
             }
@@ -184,5 +184,15 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
     private function escapeXml(string $value): string
     {
         return htmlspecialchars(DisplayEscaper::escape($value), \ENT_XML1 | \ENT_QUOTES);
+    }
+
+    /**
+     * Each line escaped on its own, so that the line breaks between the
+     * parts of a message stay line breaks instead of the two characters
+     * "\n"; written as a character reference, which an attribute keeps.
+     */
+    private function escapeXmlLines(string $value): string
+    {
+        return implode('&#10;', array_map($this->escapeXml(...), explode("\n", $value)));
     }
 }

@@ -53,28 +53,34 @@ if (strlen($pattern) > 100_000) {
 
 ## ReDoS False Positives
 
-**Problem:** Your ReDoS analyzer reports `HIGH` but pattern works fine.
+**Problem:** The ReDoS analyzer reports a pattern that works fine on your inputs.
 
-**Cause:** ReDoS analysis is structural and conservative by design.
+**Cause:** Read the headline of the verdict first:
+
+- `Exponential backtracking (proven)` or `Polynomial backtracking, degree N (proven)`: the analysis built an input that makes one match attempt blow up, printed as `Attack:`. Your inputs may never look like it; an attacker's can. The verdict is about a model of PCRE's backtracking: a lookaround it cannot evaluate, or an abstraction listed on the `Model:` line, can make it stricter than PCRE.
+- `Potential backtracking (heuristic)`: the pattern holds a construct outside the model (a backreference, a conditional, recursion, …), and structural rules decided. They are conservative by design.
 
 **Solutions:**
 
-1. Run confirmed mode:
+1. Run confirmed mode: the attack is replayed on your PCRE, without the JIT.
 ```php
-$regex = Regex::create();
-$result = $regex->redos(
+use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
+
+$result = Regex::create()->redos(
     $pattern,
     RedosSeverity::High,
-    RedosMode::Confirmed,  // ← Test with real inputs
-    new ConfirmationOptions(
-        maxTestStrings: 1000,
-        maxStringLength: 1000,
-    )
+    RedosMode::Confirmed,
+    new ConfirmationOptions(backtrackLimit: 100_000),
 );
 
-echo "Confirmed: " . ($result->isConfirmed ? 'Yes' : 'No') . "\n";
-echo "Confidence: {$result->confidence->value}\n";
+echo 'Confirmed: ', $result->isConfirmed() ? 'yes' : 'no', "\n";
+echo 'Confidence: ', $result->confidenceLevel()->value, "\n";
 ```
+
+A proven verdict PCRE does not reproduce keeps `medium` confidence, and the CLI says `Not reproduced on PCRE2 …`. It is never an error in confirmed mode.
 
 2. Add to ignore list:
 ```php
@@ -86,23 +92,12 @@ $regex = Regex::create([
 ]);
 ```
 
-3. Understand structural analysis:
-```php
-// Theoretical mode finds POTENTIAL risks
-// It's designed to be conservative and catch more
-
-// These patterns are flagged because they COULD be dangerous
-$riskyPatterns = [
-    '/(a+)+$/',           // Classic ReDoS example
-    '/^(\d+)+$/',         // Nested quantifiers
-    '/(a+)+b+/',         // Alternation in quantifiers
-];
-
-// In practice, with realistic input, these might be safe
-$realisticInputs = [
-    'hello',  // No backtracking
-    'test123',  // No backtracking
-];
+3. Check what the verdict is about:
+```bash
+bin/regex analyze '/(a{1,20})+$/'
+#   Status     : Exponential backtracking (proven)
+#   Model: {1,20} at offset 1 analysed as {1,}
+#   Attack: "a" x n . "!"
 ```
 
 ---
@@ -207,8 +202,8 @@ if ($openParens !== $closeParens) {
 ```bash
 bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 
-# If confirmed mode takes > 10ms per test,
-# you likely have a ReDoS issue
+# A "Replayed on PCRE2 …: preg_match fails from length N" line means the
+# attack printed on the "Attack:" line makes PCRE give up: a ReDoS issue
 ```
 
 2. Check for unnecessary backtracking:
