@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Splits the monorepo into the read-only repositories of its packages, with
+# splitsh-lite: each src/<Package> becomes the root of php-regex/<repository>.
+#
+# Usage:
+#   bin/split [--dry-run] [--branch <name>] [--tag <name>]
+#
+#   --dry-run        show what would be pushed, push nothing
+#   --branch <name>  the branch to split and push (default: the current one)
+#   --tag <name>     also push this tag, made on the split of the tagged commit
+#
+# The repositories are reached at $SPLIT_REMOTE_BASE/<repository>.git
+# (default: git@github.com:php-regex). splitsh-lite is taken from $PATH, or
+# from bin/splitsh-lite.
+set -euo pipefail
+
+SPLITS=(
+    "src/Parser:regex-parser"
+    "src/Explain:regex-explain"
+    "src/Optimizer:regex-optimizer"
+    "src/Generator:regex-generator"
+    "src/Automata:regex-automata"
+    "src/Redos:regex-redos"
+    "src/Transpiler:regex-transpiler"
+    "src/Linter:regex-linter"
+    "src/Toolkit:regex-toolkit"
+    "src/Cli:regex-cli"
+    "src/LanguageServer:regex-language-server"
+    "src/PHPStan:regex-phpstan"
+    "src/Symfony:regex-symfony"
+    "src/Laravel:regex-laravel"
+)
+
+dry_run=0
+branch=""
+tag=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run) dry_run=1 ;;
+        --branch) branch=${2:?--branch needs a name}; shift ;;
+        --tag) tag=${2:?--tag needs a name}; shift ;;
+        -h|--help) sed -n '12,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+cd "$(dirname "$0")/.."
+branch=${branch:-$(git rev-parse --abbrev-ref HEAD)}
+base=${SPLIT_REMOTE_BASE:-git@github.com:php-regex}
+
+splitsh=$(command -v splitsh-lite || true)
+[ -z "$splitsh" ] && [ -x bin/splitsh-lite ] && splitsh=bin/splitsh-lite
+if [ -z "$splitsh" ] && [ "$dry_run" -eq 0 ]; then
+    echo "splitsh-lite not found: install it from https://github.com/splitsh/lite/releases" >&2
+    exit 2
+fi
+
+failed=0
+for split in "${SPLITS[@]}"; do
+    prefix=${split%%:*}
+    repository=${split##*:}
+    remote="$base/$repository.git"
+
+    if [ "$dry_run" -eq 1 ]; then
+        echo "$prefix -> $remote ($branch${tag:+, tag $tag})"
+        continue
+    fi
+
+    if ! sha=$("$splitsh" --prefix="$prefix" --target="refs/heads/split-$repository" --origin="refs/heads/$branch" 2>/dev/null); then
+        echo "✗ $repository: the split failed" >&2
+        failed=$((failed + 1))
+        continue
+    fi
+    if ! git push -q "$remote" "$sha:refs/heads/$branch" -f; then
+        echo "✗ $repository: the push failed" >&2
+        failed=$((failed + 1))
+        continue
+    fi
+    if [ -n "$tag" ]; then
+        tag_sha=$("$splitsh" --prefix="$prefix" --origin="refs/tags/$tag" 2>/dev/null) || { echo "✗ $repository: the tag split failed" >&2; failed=$((failed + 1)); continue; }
+        git push -q "$remote" "$tag_sha:refs/tags/$tag" || { echo "✗ $repository: the tag push failed" >&2; failed=$((failed + 1)); continue; }
+    fi
+    echo "✓ $repository ${sha:0:8}"
+done
+
+[ "$failed" -eq 0 ] || { echo "$failed split(s) failed." >&2; exit 1; }

@@ -1,0 +1,46 @@
+name: Split
+
+# Pushes each src/<Package> to its read-only repository on every push to 2.x
+# and on every tag. Off until the repository variable SPLIT_ENABLED is "true"
+# and the secret SPLIT_TOKEN holds a token with write access to the
+# php-regex/regex-* repositories.
+
+on:
+  push:
+    branches: ['2.x']
+    tags: ['v2.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: split-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  split:
+    name: Split the packages
+    if: vars.SPLIT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install splitsh-lite
+        run: |
+          mkdir -p "$RUNNER_TEMP/splitsh"
+          curl -sSfL https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz | tar -xz -C "$RUNNER_TEMP/splitsh" ./splitsh-lite
+          echo "$RUNNER_TEMP/splitsh" >> "$GITHUB_PATH"
+
+      - name: Split and push
+        env:
+          SPLIT_REMOTE_BASE: https://x-access-token:${{ secrets.SPLIT_TOKEN }}@github.com/php-regex
+        run: |
+          git fetch --tags --quiet
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            bin/split --branch 2.x --tag "${GITHUB_REF_NAME}"
+          else
+            bin/split --branch "${GITHUB_REF_NAME}"
+          fi

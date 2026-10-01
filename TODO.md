@@ -19,11 +19,14 @@ source still pointed there.
    `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`,
    `regex-toolkit`, `regex-cli`, `regex-language-server`, `regex-phpstan`,
    `regex-symfony`, `regex-laravel`.
-4. **GitHub** — create a fine-grained token (or one deploy key per repository)
-   with *Contents: read and write* on those 14 repositories only, and store it
-   as a secret of `php-regex/php-regex` for the split workflow.
-5. **Split** — enable the split workflow, then check each repository received
-   `2.x` and its tags.
+4. **GitHub** — create a fine-grained token with *Contents: read and write* on
+   those 14 repositories only, and store it as the secret `SPLIT_TOKEN` of
+   `php-regex/php-regex` (Settings → Secrets and variables → Actions).
+5. **Split** — first run `bin/split --dry-run` locally to read the plan, then
+   set the repository variable `SPLIT_ENABLED` to `true` (same page, tab
+   *Variables*): `.github/workflows/split.yml` then splits on every push to
+   `2.x` and every `v2.*` tag. Push once (or run `bin/split` locally with
+   splitsh-lite installed) and check each repository received `2.x`.
 6. **Packagist** — submit the 14 packages (`php-regex/regex-*`), from their
    repositories, and `php-regex/php-regex` from the monorepo if the whole
    library should be installable in one package.
