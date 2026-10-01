@@ -546,6 +546,11 @@ refuses while the PHP running PHPStan compiles it, under
 `regex.invalidForTarget`. Lint rules and ReDoS analysis are opt-in: include
 `vendor/php-regex/phpstan/rules.neon`, or switch each on under `checks`.
 
+The extension is its own package, `php-regex/phpstan`: an include written by
+hand moves from `vendor/yoeunes/regex-parser/extension.neon` to
+`vendor/php-regex/phpstan/extension.neon` (extension-installer finds it on its
+own).
+
 The configuration is `phpVersion`, `pcreVersion` and `checks` only:
 
 | removed | use instead |

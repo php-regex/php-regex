@@ -108,7 +108,7 @@ final class RegexParserRuleNeonSchemaTest extends TestCase
         $config = $this->configDirectory.'/phpstan.neon';
         file_put_contents($config, \sprintf(
             "includes:\n    - %s\n\nparameters:\n    phpRegex:\n        %s\n",
-            \dirname(__DIR__, 4).'/extension.neon',
+            \dirname(__DIR__, 4).'/src/PHPStan/extension.neon',
             $phpRegexNeon,
         ));
 

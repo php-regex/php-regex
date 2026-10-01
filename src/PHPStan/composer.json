@@ -32,6 +32,11 @@
     "extra": {
         "branch-alias": {
             "dev-2.x": "2.x-dev"
+        },
+        "phpstan": {
+            "includes": [
+                "extension.neon"
+            ]
         }
     }
 }

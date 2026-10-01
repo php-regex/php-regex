@@ -32,7 +32,7 @@ final class RegexParserRuleExtensionNeonTest extends RuleTestCase
     {
         return [
             ...parent::getAdditionalConfigFiles(),
-            __DIR__.'/../../../../extension.neon',
+            __DIR__.'/../../../../src/PHPStan/extension.neon',
         ];
     }
 

@@ -128,6 +128,20 @@ final class PackageManifestTest extends TestCase
     }
 
     #[Test]
+    public function test_a_package_ships_the_files_its_manifest_names(): void
+    {
+        $this->assertSame(['extension.neon'], self::dig(self::manifest('PHPStan'), 'extra', 'phpstan', 'includes'));
+        $this->assertFileExists(self::root().'/src/PHPStan/extension.neon');
+        $this->assertFileExists(self::root().'/src/PHPStan/rules.neon');
+
+        foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
+            $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
+            $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
+            $this->assertTrue(is_executable(self::root().'/src/'.$directory.'/'.$script), $script);
+        }
+    }
+
+    #[Test]
     public function test_the_root_package_replaces_every_package(): void
     {
         $root = self::decode(self::root().'/composer.json');

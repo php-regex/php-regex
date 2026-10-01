@@ -60,8 +60,8 @@
         ]
     },
     "bin": [
-        "bin/regex",
-        "bin/regex-lsp"
+        "src/Cli/bin/regex",
+        "src/LanguageServer/bin/regex-lsp"
     ],
     "scripts": {
         "phpunit": "tools/phpunit/vendor/bin/phpunit",
@@ -102,7 +102,7 @@
         },
         "phpstan": {
             "includes": [
-                "extension.neon"
+                "src/PHPStan/extension.neon"
             ]
         },
         "ide": {

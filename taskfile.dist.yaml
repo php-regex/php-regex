@@ -41,7 +41,7 @@ tasks:
     sources:
       - phpstan.dist.neon
       - phpstan-baseline.neon
-      - extension.neon
+      - src/PHPStan/extension.neon
       - bin/**/*.php
       - src/**/*.php
       - tests/**/*.php

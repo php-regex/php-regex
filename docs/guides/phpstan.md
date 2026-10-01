@@ -14,7 +14,7 @@ Without it, include the extension in your `phpstan.neon`:
 
 ```neon
 includes:
-    - vendor/yoeunes/regex-parser/extension.neon
+    - vendor/php-regex/phpstan/extension.neon
 ```
 
 ## What it reports by default
@@ -40,7 +40,7 @@ there is nothing PHPStan misses, and the extension reports no invalid pattern.
 
 ```neon
 includes:
-    - vendor/yoeunes/regex-parser/rules.neon
+    - vendor/php-regex/phpstan/rules.neon
 ```
 
 Without extension-installer, include both `extension.neon` and `rules.neon`.

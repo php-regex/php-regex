@@ -1,5 +1,5 @@
 includes:
-    - ../../../../../extension.neon
+    - ../../../../../src/PHPStan/extension.neon
 
 parameters:
     phpRegex:

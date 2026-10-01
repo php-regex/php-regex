@@ -32,6 +32,8 @@
 /bin/phpunit            export-ignore
 /bin/infection          export-ignore
 /bin/redos-bench        export-ignore
+/bin/regex              export-ignore
+/bin/regex-lsp          export-ignore
 /phpbench.yml           export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore
