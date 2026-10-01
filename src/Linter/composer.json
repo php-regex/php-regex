@@ -1,0 +1,40 @@
+{
+    "name": "php-regex/linter",
+    "type": "library",
+    "description": "Lints the regex patterns of a PHP code base: extraction from PHP sources, lint rules, ReDoS and validity checks, reports in console, JSON, GitHub, Checkstyle and JUnit formats.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "linter",
+        "static-analysis"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "php-regex/automata": "^2.0",
+        "php-regex/explain": "^2.0",
+        "php-regex/optimizer": "^2.0",
+        "php-regex/parser": "^2.0",
+        "php-regex/redos": "^2.0"
+    },
+    "suggest": {
+        "nikic/php-parser": "To extract patterns with a full PHP parser instead of the tokenizer."
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Linter\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}

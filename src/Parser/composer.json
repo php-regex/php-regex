@@ -1,0 +1,41 @@
+{
+    "name": "php-regex/parser",
+    "type": "library",
+    "description": "The PCRE2 regex parser: lexer, immutable AST, validator that answers as PHP's PCRE2 would for a chosen release, AST cache and the small AST analyses.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "pcre2",
+        "parser",
+        "ast",
+        "lexer",
+        "validation"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-mbstring": "*"
+    },
+    "suggest": {
+        "psr/cache": "To share the AST cache through a PSR-6 pool.",
+        "psr/simple-cache": "To share the AST cache through a PSR-16 cache.",
+        "ext-intl": "To resolve \\N{name} escapes by Unicode name."
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Parser\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}

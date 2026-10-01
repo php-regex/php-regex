@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Toolkit;
 
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,7 +37,7 @@ final class FacadeSurfaceTest extends TestCase
         $parse = new \ReflectionMethod(Regex::class, 'parse');
 
         $this->assertSame(1, $parse->getNumberOfParameters());
-        $this->assertSame('PHPRegex\Parser\Node\RegexNode', (string) $parse->getReturnType());
+        $this->assertSame(RegexNode::class, (string) $parse->getReturnType());
     }
 
     #[Test]

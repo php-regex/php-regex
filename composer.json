@@ -30,6 +30,22 @@
         "php": ">=8.2",
         "ext-mbstring": "*"
     },
+    "replace": {
+        "php-regex/automata": "self.version",
+        "php-regex/cli": "self.version",
+        "php-regex/explain": "self.version",
+        "php-regex/generator": "self.version",
+        "php-regex/language-server": "self.version",
+        "php-regex/laravel": "self.version",
+        "php-regex/linter": "self.version",
+        "php-regex/optimizer": "self.version",
+        "php-regex/parser": "self.version",
+        "php-regex/phpstan": "self.version",
+        "php-regex/redos": "self.version",
+        "php-regex/symfony": "self.version",
+        "php-regex/toolkit": "self.version",
+        "php-regex/transpiler": "self.version"
+    },
     "autoload": {
         "psr-4": {
             "PHPRegex\\": "src/"

@@ -1,0 +1,40 @@
+{
+    "name": "php-regex/cli",
+    "type": "library",
+    "description": "The regex command: validate, explain, analyze, lint and compare patterns from the terminal.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "cli",
+        "console"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "php-regex/automata": "^2.0",
+        "php-regex/explain": "^2.0",
+        "php-regex/linter": "^2.0",
+        "php-regex/optimizer": "^2.0",
+        "php-regex/parser": "^2.0",
+        "php-regex/redos": "^2.0",
+        "php-regex/toolkit": "^2.0",
+        "php-regex/transpiler": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Cli\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}

@@ -1,0 +1,48 @@
+{
+    "name": "php-regex/symfony",
+    "type": "symfony-bundle",
+    "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:compare and regex:transpile commands.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "symfony",
+        "bundle"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/config": "^7.4|^8.0",
+        "symfony/console": "^7.4|^8.0",
+        "symfony/dependency-injection": "^7.4|^8.0",
+        "symfony/http-kernel": "^7.4|^8.0",
+        "php-regex/automata": "^2.0",
+        "php-regex/linter": "^2.0",
+        "php-regex/optimizer": "^2.0",
+        "php-regex/parser": "^2.0",
+        "php-regex/redos": "^2.0",
+        "php-regex/toolkit": "^2.0",
+        "php-regex/transpiler": "^2.0"
+    },
+    "suggest": {
+        "symfony/routing": "To analyze route requirements with regex:routes.",
+        "symfony/validator": "To lint the patterns of Regex constraints.",
+        "nikic/php-parser": "To extract patterns with a full PHP parser."
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Symfony\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}
