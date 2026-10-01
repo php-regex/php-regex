@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Where the release stands: the version, the last tag, CI on HEAD, and for the
+# split, the monorepo, its secrets, each php-regex/regex-* repository and each
+# package on Packagist. Reads only.
+#
+# Usage:
+#   bin/status [--offline]
+#
+#   --offline   the local part only: version, tag, branch and the packages
+set -uo pipefail
+
+offline=0
+here="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --offline) offline=1 ;;
+        --root) root=${2:?--root needs a directory}; shift ;;
+        -h|--help) sed -n '10,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+ok() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+ko() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+na() { printf '  \033[2m·\033[0m %s\n' "$1"; }
+
+# The packages, as bin/split pushes them.
+repositories=$(sed -nE 's/^[[:space:]]+"src\/[A-Za-z]+:([a-z-]+)"$/\1/p' "$here/split")
+
+version=$(sed -nE "s/.*public const VERSION = '([^']+)';.*/\1/p" "$root/src/Toolkit/Regex.php")
+echo "PHPRegex $version"
+echo
+echo "Repository"
+branch=$(git -C "$root" rev-parse --abbrev-ref HEAD 2>/dev/null) && na "branch $branch" || na "not a git checkout"
+last_tag=$(git -C "$root" describe --tags --abbrev=0 2>/dev/null) && na "last tag $last_tag" || na "no tag yet"
+if [ -z "$(git -C "$root" status --porcelain 2>/dev/null)" ]; then ok "working tree clean"; else ko "working tree has changes"; fi
+
+if [ "$offline" -eq 1 ]; then
+    echo
+    echo "Packages"
+    for repository in $repositories; do na "php-regex/$repository"; done
+    exit 0
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+    echo
+    ko "gh is not installed: run with --offline, or install the GitHub CLI"
+    exit 1
+fi
+
+head=$(git -C "$root" rev-parse HEAD)
+ci=$(gh run list --commit "$head" --workflow ci.yml --json conclusion,status --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null)
+case "$ci" in
+    "completed success") ok "CI passed on $(git -C "$root" rev-parse --short HEAD)" ;;
+    "") ko "no CI run on $(git -C "$root" rev-parse --short HEAD)" ;;
+    *) ko "CI on $(git -C "$root" rev-parse --short HEAD): $ci" ;;
+esac
+
+echo
+echo "Monorepo"
+if gh api repos/php-regex/php-regex --jq .full_name >/dev/null 2>&1; then
+    ok "github.com/php-regex/php-regex exists"
+    if gh variable list -R php-regex/php-regex 2>/dev/null | grep -qE '^SPLIT_ENABLED[[:space:]]+true'; then ok "SPLIT_ENABLED is true"; else ko "SPLIT_ENABLED is not true: the split workflow is off"; fi
+    if gh secret list -R php-regex/php-regex 2>/dev/null | grep -q '^SPLIT_TOKEN'; then ok "SPLIT_TOKEN is set"; else ko "SPLIT_TOKEN is not set (or not readable with this token)"; fi
+else
+    ko "github.com/php-regex/php-regex does not exist yet: rename php-regex/regex-parser"
+fi
+source_url=$(curl -sf https://packagist.org/packages/yoeunes/regex-parser.json 2>/dev/null | php -r '$d = json_decode(stream_get_contents(STDIN), true); echo $d["package"]["repository"] ?? "";')
+case "$source_url" in
+    *php-regex/php-regex*) ok "yoeunes/regex-parser on Packagist reads php-regex/php-regex" ;;
+    "") na "yoeunes/regex-parser: Packagist did not answer" ;;
+    *) ko "yoeunes/regex-parser on Packagist reads $source_url: point it at php-regex/php-regex before creating regex-parser" ;;
+esac
+
+echo
+echo "Packages"
+for repository in $repositories; do
+    github="✗ repository"
+    # Until the rename, php-regex/regex-parser is the monorepo itself.
+    if gh api "repos/php-regex/$repository/contents/bin/split?ref=2.x" --jq .name >/dev/null 2>&1; then
+        github="✗ still the monorepo"
+    elif pushed=$(gh api "repos/php-regex/$repository/branches/2.x" --jq '.commit.sha[0:8]' 2>/dev/null); then
+        github="✓ 2.x at $pushed"
+    elif gh api "repos/php-regex/$repository" --jq .name >/dev/null 2>&1; then
+        github="· repository, no 2.x yet"
+    fi
+    if curl -sf -o /dev/null "https://repo.packagist.org/p2/php-regex/$repository.json"; then packagist="✓ Packagist"; else packagist="✗ Packagist"; fi
+    printf '  %-34s %-26s %s\n' "php-regex/$repository" "$github" "$packagist"
+done

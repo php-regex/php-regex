@@ -1,4 +1,6 @@
 {
+    "main": "src/Cli/bin/regex",
+    "output": "bin/regex.phar",
     "compression": "GZ",
     "compactors": [
         "KevinGH\\Box\\Compactor\\Json",

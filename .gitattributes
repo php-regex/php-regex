@@ -35,6 +35,9 @@
 /bin/regex              export-ignore
 /bin/regex-lsp          export-ignore
 /bin/split              export-ignore
+/bin/bump               export-ignore
+/bin/release            export-ignore
+/bin/status             export-ignore
 /phpbench.yml           export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore

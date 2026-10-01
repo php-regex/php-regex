@@ -119,6 +119,25 @@ git commit -m "test: add behavioral compliance tests for lookarounds"
 3. Address review feedback
 4. Maintainers will squash and merge
 
+## Releasing (maintainers)
+
+Every package is released together, from the monorepo:
+
+```bash
+bin/status                     # CI, the split repositories, Packagist
+bin/bump 2.1.0                 # Regex::VERSION, and the CHANGELOG section dated
+git commit -am "Release 2.1.0"
+git push origin 2.x            # wait for CI to pass
+bin/release --dry-run 2.1.0    # every check, nothing tagged
+bin/release 2.1.0              # the phar, the tag, the GitHub release
+bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
+```
+
+The tag triggers the split workflow, which tags every `php-regex/regex-*`
+repository; Packagist picks the versions up from there. A pre-release
+(`2.1.0-BETA1`, `2.1.0-RC1`) leaves the CHANGELOG alone and is published as a
+GitHub pre-release.
+
 ## 🎉 Recognition
 
 Contributors will be:

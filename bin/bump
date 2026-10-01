@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Sets the version every package reports, before a release or after one.
+#
+# Usage:
+#   bin/bump [--dry-run] [--date YYYY-MM-DD] <version>
+#   bin/bump [--dry-run] --next <version>
+#
+#   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION, and for a
+#               final version dates the CHANGELOG's Unreleased section as it
+#   --next      after a release: sets Regex::VERSION to <version>-DEV and opens
+#               a "## [<version>] - Unreleased" section in the CHANGELOG
+#   --date      the release date written in the CHANGELOG (default: today)
+#   --dry-run   say what would change, change nothing
+#
+# The packages' composer.json files carry no version: Composer reads it from
+# the tag.
+set -euo pipefail
+
+dry_run=0
+next=0
+date=$(date +%Y-%m-%d)
+root="$(cd "$(dirname "$0")/.." && pwd)"
+version=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run) dry_run=1 ;;
+        --next) next=1 ;;
+        --date) date=${2:?--date needs YYYY-MM-DD}; shift ;;
+        --root) root=${2:?--root needs a directory}; shift ;;
+        -h|--help) sed -n '12,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -*) echo "Unknown option: $1" >&2; exit 2 ;;
+        *) version=$1 ;;
+    esac
+    shift
+done
+
+if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-(BETA|RC)[0-9]+)?$'; then
+    echo "\"$version\" is not a version: use 2.1.0, 2.1.0-BETA1 or 2.1.0-RC1." >&2
+    exit 2
+fi
+if [ "$next" -eq 1 ] && printf '%s' "$version" | grep -q -- '-'; then
+    echo "--next takes the next final version, as 2.1.1." >&2
+    exit 2
+fi
+printf '%s' "$date" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || { echo "\"$date\" is not a date: use YYYY-MM-DD." >&2; exit 2; }
+
+regex="$root/src/Toolkit/Regex.php"
+changelog="$root/CHANGELOG.md"
+current=$(sed -nE "s/.*public const VERSION = '([^']+)';.*/\1/p" "$regex")
+[ -z "$current" ] && { echo "No VERSION constant in src/Toolkit/Regex.php." >&2; exit 1; }
+
+target=$version
+[ "$next" -eq 1 ] && target="$version-DEV"
+
+# PHP orders DEV < BETA < RC < final, as Composer does.
+if [ "$(php -r 'echo version_compare($argv[1], $argv[2]);' "$target" "$current")" != "1" ]; then
+    echo "$target does not come after the current version, $current." >&2
+    exit 1
+fi
+
+echo "$current -> $target"
+
+new_changelog=""
+if [ "$next" -eq 1 ]; then
+    if grep -qE '^## \[[^]]+\] - Unreleased$' "$changelog"; then
+        echo "CHANGELOG.md already has an Unreleased section: left as it is"
+    else
+        new_changelog=$(awk -v v="$version" 'done == 0 && /^## \[/ { print "## [" v "] - Unreleased\n"; done = 1 } { print }' "$changelog")
+        echo "CHANGELOG.md: opens ## [$version] - Unreleased"
+    fi
+elif printf '%s' "$version" | grep -q -- '-'; then
+    echo "CHANGELOG.md: unchanged for a pre-release"
+else
+    if ! grep -qE '^## \[[^]]+\] - Unreleased$' "$changelog"; then
+        echo "CHANGELOG.md has no Unreleased section to release as $version." >&2
+        exit 1
+    fi
+    new_changelog=$(awk -v v="$version" -v d="$date" 'done == 0 && /^## \[[^]]+\] - Unreleased$/ { print "## [" v "] - " d; done = 1; next } { print }' "$changelog")
+    echo "CHANGELOG.md: ## [$version] - $date"
+fi
+echo "src/Toolkit/Regex.php: VERSION = '$target'"
+
+if [ "$dry_run" -eq 1 ]; then
+    echo "(dry run: nothing written)"
+    exit 0
+fi
+
+tmp=$(mktemp)
+sed -E "s/(public const VERSION = ')[^']+(';)/\1$target\2/" "$regex" > "$tmp" && cat "$tmp" > "$regex"
+rm -f "$tmp"
+if [ -n "$new_changelog" ]; then
+    printf '%s\n' "$new_changelog" > "$changelog"
+fi
