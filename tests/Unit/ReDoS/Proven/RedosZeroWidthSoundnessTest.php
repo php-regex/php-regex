@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,7 @@ final class RedosZeroWidthSoundnessTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertSame(RedosSeverity::Critical, $analysis->severity, $pattern);
-        $this->assertNotNull($analysis->witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness, $pattern);
         $this->assertFalse($analysis->isProvenSafe(), $pattern);
     }
 
@@ -83,7 +84,7 @@ final class RedosZeroWidthSoundnessTest extends TestCase
         $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel(), $pattern);
 
         $witness = $analysis->witness;
-        $this->assertNotNull($witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
         $reproduced = false;
         for ($n = 1; !$reproduced && \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
             $reproduced = false === @preg_match($pattern, $witness->build($n));

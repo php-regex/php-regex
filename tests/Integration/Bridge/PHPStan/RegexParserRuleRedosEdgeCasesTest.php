@@ -18,6 +18,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Redos\RedosWitness;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -99,7 +100,7 @@ final class RegexParserRuleRedosEdgeCasesTest extends RuleTestCase
         $this->assertStringNotContainsString('<', $match[1]);
 
         $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertSame(
             ['prefix' => $witness->prefix, 'pump' => $witness->pump, 'suffix' => $witness->suffix],
             self::decodeAttack($match[1]),

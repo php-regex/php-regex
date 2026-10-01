@@ -85,7 +85,7 @@ final class RedosVerdictConsoleTest extends TestCase
     public function test_console_verdict_attack_line(string $command): void
     {
         $witness = (new RedosAnalyzer())->analyze('/(a+)+$/')->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
 
         [, $buffer] = $this->runCommand($command, ['/(a+)+$/']);
 
@@ -110,7 +110,7 @@ final class RedosVerdictConsoleTest extends TestCase
         // published witness that fails with the JIT off at the replay's backtrack limit
         // (17 bytes, a…a!, at the default 100,000 on 10.49; 20 bytes at PHP's 1,000,000).
         $witness = (new RedosAnalyzer())->analyze('/(a+)+$/', null, RedosMode::Confirmed)->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertSame((int) $line[1], self::firstFailingLength('/(*NO_JIT)(a+)+$/', $witness, $line[2]));
     }
 

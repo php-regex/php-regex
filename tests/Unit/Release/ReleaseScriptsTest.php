@@ -225,7 +225,7 @@ final class ReleaseScriptsTest extends TestCase
             null,
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
         );
-        self::assertIsResource($process);
+        $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
@@ -263,7 +263,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $command = [\dirname(__DIR__, 3).'/bin/'.$script, '--root', $this->root, ...array_values($arguments)];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        self::assertIsResource($process);
+        $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
@@ -274,7 +274,7 @@ final class ReleaseScriptsTest extends TestCase
     private function git(string ...$arguments): string
     {
         $output = [];
-        exec('git -C '.escapeshellarg($this->root).' '.implode(' ', array_map('escapeshellarg', $arguments)).' 2>&1', $output);
+        exec('git -C '.escapeshellarg($this->root).' '.implode(' ', array_map(escapeshellarg(...), $arguments)).' 2>&1', $output);
 
         return implode("\n", $output);
     }

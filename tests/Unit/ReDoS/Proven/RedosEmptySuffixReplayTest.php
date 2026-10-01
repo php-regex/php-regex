@@ -18,6 +18,7 @@ use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -70,7 +71,7 @@ final class RedosEmptySuffixReplayTest extends TestCase
 
         // The published witness is the one replayed: built and re-run as it stands.
         $witness = $analysis->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $reproduced = false;
         for ($n = 1; !$reproduced && \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
             $reproduced = false === @preg_match(self::PATTERN, $witness->build($n));

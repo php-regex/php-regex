@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -54,7 +55,7 @@ final class RedosWitnessReplayTest extends TestCase
     public function test_witness_replay_fails_preg_match_before_the_length_bound(string $pattern): void
     {
         $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
-        $this->assertNotNull($witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
 
         $failingLength = null;
         for ($n = 1; \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
@@ -105,7 +106,7 @@ final class RedosWitnessReplayTest extends TestCase
 
         // The published witness is the one replayed: it reproduces as it stands.
         $witness = $analysis->witness;
-        $this->assertNotNull($witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
         $reproduced = false;
         for ($n = 1; !$reproduced && \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
             $reproduced = false === @preg_match($pattern, $witness->build($n));
@@ -124,7 +125,7 @@ final class RedosWitnessReplayTest extends TestCase
         $analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', RedosSeverity::Low, RedosMode::Confirmed);
 
         $this->assertTrue($analysis->replayed);
-        $this->assertNotNull($analysis->witness);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness);
         $this->assertMatchesRegularExpression('/^a+$/', $analysis->witness->pump);
         $this->assertSame('!b', $analysis->witness->suffix);
     }

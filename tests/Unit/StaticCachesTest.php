@@ -19,6 +19,7 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Redos\Internal\Backtrack\CharSet;
 use PHPRegex\Redos\Internal\Backtrack\ClassSetProvider;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Toolkit\Regex;
@@ -119,7 +120,7 @@ final class StaticCachesTest extends TestCase
         $queried = 0;
         for ($low = 0; $low < 256 && $queried < 1500; $low++) {
             for ($high = $low; $high < 256 && $queried < 1500; $high++) {
-                $this->assertNotNull(ClassSetProvider::query(\sprintf('[\x%02X-\x%02X]', $low, $high), false, ''));
+                $this->assertInstanceOf(CharSet::class, ClassSetProvider::query(\sprintf('[\x%02X-\x%02X]', $low, $high), false, ''));
                 $queried++;
             }
         }

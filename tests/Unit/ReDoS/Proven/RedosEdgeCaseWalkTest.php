@@ -18,6 +18,7 @@ use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -106,7 +107,7 @@ final class RedosEdgeCaseWalkTest extends TestCase
     public function test_unicode_witness_is_valid_utf8_and_fails_on_backtracking(string $pattern): void
     {
         $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
-        $this->assertNotNull($witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
         $this->assertTrue($witness->unicode, $pattern);
 
         $error = null;
@@ -141,7 +142,7 @@ final class RedosEdgeCaseWalkTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertSame(RedosSeverity::Critical, $analysis->severity, $pattern);
-        $this->assertNotNull($analysis->witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness, $pattern);
         $this->assertSame($pump, $analysis->witness->pump, $pattern);
 
         // The witness reproduces on the engine as published.

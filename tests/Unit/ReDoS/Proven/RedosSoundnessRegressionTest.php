@@ -241,12 +241,20 @@ final class RedosSoundnessRegressionTest extends TestCase
     }
 
     /**
+     * The lookbehind rows need PCRE2 10.43 or later: before it, a
+     * lookbehind of variable length does not compile.
+     *
      * @return iterable<string, array{pattern: string}>
      */
     public static function provideBoundedRepeatAbstractions(): iterable
     {
         yield 'four digit groups before a colon' => ['pattern' => '/^(\d{1,3}){4}:\d+$/'];
         yield 'four digit groups' => ['pattern' => '/^(?:\d{1,3}){4}$/'];
+
+        if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<')) {
+            return;
+        }
+
         yield 'ambiguous bounded repeat in a lookbehind before a literal' => ['pattern' => '/(?<=(?:a|a){1,12}c)d/'];
         yield 'ambiguous bounded repeat in a lookbehind between literals' => ['pattern' => '/x(?<=(?:\w|\w){1,14}x)y/'];
         yield 'ambiguous bounded repeat in a lookbehind inside a loop' => ['pattern' => '/(?:x(?<=(?:a|a){1,8}x))+$/'];
@@ -389,7 +397,9 @@ final class RedosSoundnessRegressionTest extends TestCase
         // already).
         yield 'A5 bounded repeat of an optional separator' => ['pattern' => '/^(?:[a-z0-9]{1,8}-?){10}$/', 'input' => str_repeat('a', 40).'!', 'withMatches' => true];
         yield 'A5 bounded repeat of an ambiguous alternation' => ['pattern' => '/^(?:(?:a|a){4}){5}$/', 'input' => str_repeat('a', 20).'!', 'withMatches' => true];
-        yield 'A5 bounded repeat of a nullable bounded repeat' => ['pattern' => '/^(?:a{0,16}){6}A/', 'input' => str_repeat('a', 48), 'withMatches' => true];
+        // The "!A" keeps the required "A" in the subject: without it PCRE2
+        // before 10.43 rejects the subject at once.
+        yield 'A5 bounded repeat of a nullable bounded repeat' => ['pattern' => '/^(?:a{0,16}){6}A/', 'input' => str_repeat('a', 48).'!A', 'withMatches' => true];
         yield 'A5 exact count above the unroll cutoff of a nullable body' => ['pattern' => '/((a?){22}{)?/', 'input' => str_repeat('a', 10), 'withMatches' => true];
         yield 'A5 upper-bound-only repeat of a nullable alternation' => ['pattern' => '/(|\W?){,17}\B/', 'input' => str_repeat('a!', 10).'b', 'withMatches' => true];
 

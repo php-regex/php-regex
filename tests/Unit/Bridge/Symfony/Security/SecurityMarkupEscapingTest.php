@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Symfony\Analyzer\AnalysisIssue;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
@@ -66,7 +67,7 @@ final class SecurityMarkupEscapingTest extends TestCase
     public function test_security_command_prints_a_markup_witness_literally(): void
     {
         $witness = Regex::create()->redos('#'.self::FIREWALL_PATTERN.'#')->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertStringContainsString('<info>', $witness->render());
 
         // A plain YAML scalar: the extractor keeps the quotes of a quoted one as part of the pattern.

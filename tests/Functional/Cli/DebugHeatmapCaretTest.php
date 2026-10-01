@@ -17,6 +17,7 @@ use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,7 +39,7 @@ final class DebugHeatmapCaretTest extends TestCase
     public function test_debug_caret_sits_under_the_hotspot_it_marks(string $pattern, RedosMode $mode, array $arguments): void
     {
         $hotspot = (new RedosAnalyzer())->analyze($pattern, null, $mode)->getPrimaryHotspot();
-        $this->assertNotNull($hotspot);
+        $this->assertInstanceOf(Hotspot::class, $hotspot);
         $marked = substr($pattern, 1 + $hotspot->start, max(1, $hotspot->end - $hotspot->start));
 
         $lines = explode("\n", $this->runDebug([$pattern, ...$arguments]));

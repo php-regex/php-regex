@@ -198,7 +198,7 @@ final class ClassSetProvider
 
     private static function byteSubject(): string
     {
-        return self::$byteSubject ??= implode('', array_map('chr', range(0, 0xFF)));
+        return self::$byteSubject ??= implode('', array_map(chr(...), range(0, 0xFF)));
     }
 
     /**

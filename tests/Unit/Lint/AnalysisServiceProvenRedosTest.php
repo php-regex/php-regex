@@ -19,6 +19,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,7 +69,7 @@ final class AnalysisServiceProvenRedosTest extends TestCase
         $issue = $this->redosIssue(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true), '/(a+)+$/');
 
         $witness = (new RedosAnalyzer())->analyze('/(a+)+$/')->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertStringContainsString('Attack: '.$witness->render(), $issue['hint']);
     }
 

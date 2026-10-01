@@ -159,7 +159,7 @@ final class RedosWitnessRenderingTest extends TestCase
         $this->assertIsArray($decoded['witness']);
         $this->assertSame(['prefix', 'pump', 'suffix'], array_keys($decoded['witness']));
         $this->assertIsString($decoded['witness']['pump']);
-        $this->assertStringNotContainsString($rawPump, $decoded['witness']['pump']);
+        $this->assertStringNotContainsString($rawPump, (string) $decoded['witness']['pump']);
         $this->assertStringStartsWith($escapedPump, $decoded['witness']['pump']);
     }
 
@@ -172,7 +172,7 @@ final class RedosWitnessRenderingTest extends TestCase
         $first = $this->witnessOf('/(\w+\s?)+$/');
         $second = (new RedosAnalyzer())->analyze('/(\w+\s?)+$/')->witness;
 
-        $this->assertNotNull($second);
+        $this->assertInstanceOf(RedosWitness::class, $second);
         $this->assertSame($first->toArray(), $second->toArray());
         $this->assertSame($first->unicode, $second->unicode);
     }
@@ -232,7 +232,7 @@ final class RedosWitnessRenderingTest extends TestCase
     private function witnessOf(string $pattern): RedosWitness
     {
         $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
-        $this->assertNotNull($witness, $pattern.' has no witness');
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern.' has no witness');
 
         return $witness;
     }

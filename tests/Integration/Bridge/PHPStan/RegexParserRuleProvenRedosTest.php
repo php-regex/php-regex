@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosWitness;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -122,7 +123,7 @@ final class RegexParserRuleProvenRedosTest extends RuleTestCase
     private function renderedWitness(string $pattern): string
     {
         $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
-        $this->assertNotNull($witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
 
         return $witness->render();
     }

@@ -61,7 +61,7 @@ final class Utf8
     public static function decode(string $text, bool $unicode): ?array
     {
         if (!$unicode) {
-            return '' === $text ? [] : array_values(array_map('ord', str_split($text)));
+            return '' === $text ? [] : array_values(array_map(ord(...), str_split($text)));
         }
 
         if (!mb_check_encoding($text, 'UTF-8')) {

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Internal;
 
+use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
@@ -81,7 +82,8 @@ final class RedosVerdict
 
     /**
      * "Replayed on PCRE2 10.49: preg_match fails from length 17
-     * (backtrack_limit 100000, JIT off)": the length is the byte length of
+     * (backtrack_limit 100000, JIT off)", or "preg_match() without $matches
+     * fails" when the replay ran that call: the length is the byte length of
      * the build that failed, and the limit is the one that build actually
      * hit (the backtrack limit, the recursion limit or the JIT stack), with
      * the JIT setting the confirmation reports.
@@ -114,8 +116,9 @@ final class RedosVerdict
         }
 
         return \sprintf(
-            'Replayed on PCRE2 %s: preg_match fails%s%s.',
+            'Replayed on PCRE2 %s: %s fails%s%s.',
             $analysis->pcreVersion,
+            Confirmation::WITHOUT_MATCHES === $confirmation?->note ? Confirmation::WITHOUT_MATCHES : 'preg_match',
             null !== $failure ? ' from length '.$failure->inputLength : '',
             [] !== $settings ? ' ('.implode(', ', $settings).')' : '',
         );

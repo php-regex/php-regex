@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -44,7 +45,7 @@ final class RedosVerdictClassTest extends TestCase
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertNull($analysis->degree, $pattern);
         $this->assertSame(RedosSeverity::Critical, $analysis->severity, $pattern);
-        $this->assertNotNull($analysis->witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness, $pattern);
         $this->assertNotSame('', $analysis->witness->pump, $pattern);
         $this->assertFalse($analysis->isProvenSafe(), $pattern);
     }
@@ -100,7 +101,7 @@ final class RedosVerdictClassTest extends TestCase
         $this->assertSame(RedosComplexity::Polynomial, $analysis->complexity, $pattern);
         $this->assertSame($degree, $analysis->degree, $pattern);
         $this->assertSame($severity, $analysis->severity, $pattern);
-        $this->assertNotNull($analysis->witness, $pattern);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness, $pattern);
         $this->assertFalse($analysis->isProvenSafe(), $pattern);
     }
 

@@ -40,7 +40,7 @@ final readonly class WitnessReplayer
      * The note a replay made without $matches carries: PHP retries an empty
      * match there, and the witness needs that call.
      */
-    public const WITHOUT_MATCHES = 'preg_match() without $matches';
+    public const WITHOUT_MATCHES = Confirmation::WITHOUT_MATCHES;
 
     private const MAX_PUMPS = 64;
 

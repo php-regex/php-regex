@@ -373,6 +373,8 @@ final class AmbiguityFinder
      *
      * @param array<int, int> $cyclic
      * @param array<int, int> $paths  the counts found so far
+     *
+     * @param-out array<int, int> $paths
      */
     private function pathsFrom(int $item, array $cyclic, array &$paths): int
     {
@@ -382,6 +384,7 @@ final class AmbiguityFinder
 
         // The item and every item after it; a cycle never meets here, as the
         // cyclic items are left out.
+        /** @var list<array{int, bool}> $stack */
         $stack = [[$item, false]];
         while ([] !== $stack) {
             [$current, $expanded] = array_pop($stack);

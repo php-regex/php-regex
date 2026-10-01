@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Toolkit;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +38,7 @@ final class AnalysisReportRedosTest extends TestCase
         $this->assertSame(RedosProof::Proven, $redos->proof);
         $this->assertSame(RedosComplexity::Exponential, $redos->complexity);
         $this->assertSame(RedosSeverity::Critical, $redos->severity);
-        $this->assertNotNull($redos->witness);
+        $this->assertInstanceOf(RedosWitness::class, $redos->witness);
         $this->assertSame('a', $redos->witness->pump);
     }
 
