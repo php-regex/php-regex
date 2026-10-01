@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -90,7 +91,7 @@ final class RegexParserServiceProviderTest extends TestCase
         $regex->parse('/abc/');
 
         $cache = new FilesystemCache($cacheDir);
-        $cacheFile = $cache->generateKey(Regex::cacheSeed('/abc/', PcreTarget::runtime(), 1024));
+        $cacheFile = $cache->generateKey(RegexParser::cacheSeed('/abc/', PcreTarget::runtime(), 1024));
 
         $this->assertFileExists($cacheFile);
 
@@ -204,7 +205,7 @@ final class RegexParserServiceProviderTest extends TestCase
         $regex = $this->app->make(Regex::class);
         $tree = $regex->parse('/a{2,3}/');
 
-        $this->assertEquals($tree, $cache->load($cache->generateKey(Regex::cacheSeed('/a{2,3}/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH))));
+        $this->assertEquals($tree, $cache->load($cache->generateKey(RegexParser::cacheSeed('/a{2,3}/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH))));
     }
 
     public function test_config_values_are_applied(): void

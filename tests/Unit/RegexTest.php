@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -541,7 +542,7 @@ final class RegexTest extends TestCase
 
         $regex = Regex::create(['cache' => $cache]);
         $ast = $regex->parse('/a/');
-        $key = 'key_'.Regex::cacheSeed('/a/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH);
+        $key = 'key_'.RegexParser::cacheSeed('/a/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH);
 
         // No payload is built any more: the cache receives the tree the
         // parse returns, and encodes it its own way.
@@ -586,7 +587,7 @@ final class RegexTest extends TestCase
 
     public function test_parse_with_tolerant_mode(): void
     {
-        $result = $this->regexService->parse('/a(/', true);
+        $result = $this->regexService->parseTolerant('/a(/');
         $this->assertInstanceOf(TolerantParseResult::class, $result);
         $this->assertTrue($result->hasErrors());
     }

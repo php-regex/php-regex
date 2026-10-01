@@ -23,7 +23,7 @@ final class RealWorldCasesTest extends TestCase
     #[DataProvider('provideRealWorldRegex')]
     public function test_real_world_cases(string $pattern, string $expectedIssueMessage): void
     {
-        $report = Regex::new()->analyze($pattern);
+        $report = Regex::create()->analyze($pattern);
 
         $issueMessages = [];
         foreach ($report->lintIssues as $issue) {

@@ -19,6 +19,7 @@ use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\TestUtils\InMemoryCachePool;
 use PHPRegex\Tests\TestUtils\InMemorySimpleCache;
 use PHPRegex\Toolkit\Regex;
@@ -91,7 +92,7 @@ final class CacheContractTest extends TestCase
 
         foreach (self::PATTERNS as $pattern) {
             $first = $regex->parse($pattern);
-            $key = $store->generateKey(Regex::cacheSeed($pattern, $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
+            $key = $store->generateKey(RegexParser::cacheSeed($pattern, $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
 
             $this->assertEquals($first, $store->load($key), $pattern);
             $this->assertEquals($first, $regex->parse($pattern), $pattern);

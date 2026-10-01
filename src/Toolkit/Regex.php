@@ -107,16 +107,14 @@ final readonly class Regex
     }
 
     /**
-     * Parse a regular expression into an Abstract Syntax Tree (AST).
+     * Parse a regular expression into an Abstract Syntax Tree (AST); see
+     * parseTolerant() for a result that holds the errors instead.
      *
-     * @param string $regex    The regular expression to parse
-     * @param bool   $tolerant Whether to return a tolerant result on parse errors
-     *
-     * @return ($tolerant is true ? TolerantParseResult : RegexNode) Parsed AST or tolerant result
+     * @param string $regex The regular expression to parse
      */
-    public function parse(string $regex, bool $tolerant = false): RegexNode|TolerantParseResult
+    public function parse(string $regex): RegexNode
     {
-        return $tolerant ? $this->parser->parseTolerant($regex) : $this->parser->parse($regex);
+        return $this->parser->parse($regex);
     }
 
     /**
@@ -185,7 +183,7 @@ final readonly class Regex
             // a failure of any other kind is a bug in the library, and a
             // report saying "invalid pattern" would bury it.
             try {
-                $ast = $this->parse($regex, false);
+                $ast = $this->parse($regex);
                 $linter = new PatternLinter();
                 $ast->accept($linter);
                 $lintIssues = $linter->getIssues();
@@ -282,7 +280,7 @@ final readonly class Regex
         $format = \is_string($format) ? $format : $format->value;
         $explanationVisitor = $this->createExplanationVisitor($format);
 
-        $ast = $this->parse($regex, false);
+        $ast = $this->parse($regex);
 
         return $ast->accept($explanationVisitor);
     }
@@ -296,7 +294,7 @@ final readonly class Regex
     public function highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
     {
         $format = \is_string($format) ? $format : $format->value;
-        $ast = $this->parse($regex, false);
+        $ast = $this->parse($regex);
 
         $visitor = 'html' === $format
             ? new HtmlHighlighter()
@@ -314,7 +312,7 @@ final readonly class Regex
      */
     public function literals(string $regex): LiteralExtractionResult
     {
-        $ast = $this->parse($regex, false);
+        $ast = $this->parse($regex);
 
         $literalSet = $ast->accept(new LiteralExtractor());
 
@@ -336,7 +334,7 @@ final readonly class Regex
      */
     public function generate(string $regex): string
     {
-        $ast = $this->parse($regex, false);
+        $ast = $this->parse($regex);
         // A pattern PCRE refuses, as a call to a group that does not exist,
         // has no sample to draw.
         $validation = $this->parser->validate($regex);
@@ -428,20 +426,6 @@ final readonly class Regex
     }
 
     /**
-     * Create a new Regex instance.
-     *
-     * @deprecated use Regex::create() instead; both behave identically
-     *
-     * @param array<string, mixed> $options Configuration options
-     *
-     * @return self New Regex instance
-     */
-    public static function new(array $options = []): self
-    {
-        return self::create($options);
-    }
-
-    /**
      * Get the cache instance.
      */
     public function getCache(): CacheInterface
@@ -464,14 +448,6 @@ final readonly class Regex
     public function clearCaches(): void
     {
         $this->parser->clearCaches();
-    }
-
-    /**
-     * The seed a pattern's cache key is hashed from; see RegexParser::cacheSeed().
-     */
-    public static function cacheSeed(string $regex, PcreTarget $target, int $maxRecursionDepth): string
-    {
-        return RegexParser::cacheSeed($regex, $target, $maxRecursionDepth);
     }
 
     /**

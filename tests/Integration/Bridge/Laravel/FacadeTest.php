@@ -41,7 +41,7 @@ final class FacadeTest extends TestCase
 
     public function test_parse_with_tolerant_mode_returns_tolerant_result(): void
     {
-        $result = Regex::parse('/^[a-z]+$/', tolerant: true);
+        $result = Regex::parseTolerant('/^[a-z]+$/');
 
         $this->assertInstanceOf(TolerantParseResult::class, $result);
         $this->assertInstanceOf(RegexNode::class, $result->ast);
@@ -50,7 +50,7 @@ final class FacadeTest extends TestCase
 
     public function test_parse_tolerant_mode_with_invalid_pattern(): void
     {
-        $result = Regex::parse('/^(unclosed/', tolerant: true);
+        $result = Regex::parseTolerant('/^(unclosed/');
 
         $this->assertInstanceOf(TolerantParseResult::class, $result);
         $this->assertNotEmpty($result->errors);

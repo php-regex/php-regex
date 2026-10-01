@@ -259,7 +259,10 @@ final readonly class RegexParser
     /**
      * The seed a pattern's cache key is hashed from, spelled out so callers
      * that need to predict where an entry lands share one implementation
-     * with the cache itself.
+     * with the cache itself. The seed's shape follows the cache version and
+     * may change in any release.
+     *
+     * @internal
      *
      * @param string     $regex             The regex as written, delimiters included
      * @param PcreTarget $target            The PHP and PCRE2 judged

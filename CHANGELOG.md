@@ -136,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The PHP version id taken by `Lexer`, `Parser`, `ValidatorNodeVisitor`, `Regex::tokenize()`, `Regex::cacheSeed()`, `RegexPattern::fromDelimited()` and `PatternParser::extractPatternAndFlags()`, and `RegexOptions::$phpVersionId`/`$phpVersionExplicit`: each takes or holds a `PcreTarget` instead. `Lexer::readsWideRepeatCounts()` is gone. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `(*LIMIT_LOOKBEHIND=n)` is no longer read as a per-pattern override of `max_lookbehind_length`: PHP refuses the verb, so a pattern using it is now reported invalid (`regex.verb.invalid`). Raise `max_lookbehind_length` instead.
 - Dead `HelpfulExceptionTrait` (~430 lines, referenced nowhere).
+- `Regex::new()`, a second name for `Regex::create()`; the `$tolerant` argument of `Regex::parse()`, which now returns a `RegexNode` only (`parseTolerant()` returns the errors); and `Regex::cacheSeed()`. `RegexParser::cacheSeed()` is internal. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ### Fixed
 

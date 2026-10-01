@@ -908,7 +908,7 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_regex_new(): void
     {
-        $regex = Regex::new();
+        $regex = Regex::create();
         $this->assertNotSame($this->regex, $regex);
     }
 

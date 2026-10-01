@@ -34,18 +34,6 @@ echo $result->isValid() ? 'Valid' : 'Invalid';
 
 ---
 
-### Regex::new(array $options = []): Regex
-
-Alias for `Regex::create()`. Use whichever reads better in your code.
-
-```php
-// These are equivalent
-$regex = Regex::create();
-$regex = Regex::new();
-```
-
----
-
 ### Regex::tokenize(string $regex, ?PcreTarget $target = null): TokenStream
 
 Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging.
@@ -171,7 +159,7 @@ The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
 instance judges for. `PcreTarget::runtime()` is the running engine,
 `PcreTarget::bundledWith(80400)` a PHP version with its bundled PCRE2, and
 `new PcreTarget(80400, '10.42')` any pair; `Lexer`, `Parser`,
-`Validator` and `Regex::cacheSeed()` take one.
+and `Validator` take one.
 
 ---
 
@@ -211,20 +199,21 @@ echo $ast->pattern;    // SequenceNode or AlternationNode
 
 ---
 
-### parse(string $regex, bool $tolerant = false): RegexNode|TolerantParseResult
+### parse(string $regex): RegexNode
 
-Parses a full PCRE string (`/pattern/flags`).
+Parses a full PCRE string (`/pattern/flags`); `parseTolerant()` returns the
+errors with a best-effort tree instead of throwing.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
-// Strict parsing (default)
+// Strict parsing
 $ast = Regex::create()->parse('/foo|bar/i');
 echo $ast->flags;      // 'i'
 echo $ast->delimiter;  // '/'
 
 // Tolerant parsing - returns AST even with errors
-$result = Regex::create()->parse('/[unclosed/i', true);
+$result = Regex::create()->parseTolerant('/[unclosed/i');
 
 echo $result->ast;          // Partial AST
 echo $result->errors[0]->getMessage();  // First error
@@ -500,10 +489,10 @@ if (!$result->isValid()) {
 
 ### TolerantParseResult
 
-Returned by `parse($regex, true)`. Contains partial AST plus errors.
+Returned by `parseTolerant($regex)`. Contains partial AST plus errors.
 
 ```php
-$result = Regex::create()->parse('/[broken/i', true);
+$result = Regex::create()->parseTolerant('/[broken/i');
 
 echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
@@ -651,7 +640,7 @@ try {
 |-------------------------|-------------------------|-------------------|
 | `create($options)`      | Regex                   | Factory method    |
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
-| `parse($pattern, true)` | TolerantParseResult     | Parse with errors |
+| `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
 | `analyze($regex)`       | AnalysisReport          | Analysis report   |
 | `redos($regex)`         | RedosAnalysis           | ReDoS check       |

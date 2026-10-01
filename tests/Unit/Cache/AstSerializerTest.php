@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\AstFingerprint;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -208,7 +209,7 @@ final class AstSerializerTest extends TestCase
     {
         $pattern = '/abc/';
         $regex = Regex::create(['cache' => new FilesystemCache($this->cacheDir)]);
-        $seed = Regex::cacheSeed($pattern, $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH);
+        $seed = RegexParser::cacheSeed($pattern, $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH);
 
         // A tree for another pattern, planted where an older version of the
         // code would have stored the tree for this one.

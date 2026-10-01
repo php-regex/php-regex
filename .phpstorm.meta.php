@@ -80,12 +80,6 @@ expectedArguments(
 );
 
 expectedArguments(
-    \PHPRegex\Toolkit\Regex::new(),
-    0,
-    argumentsSet('regex_option_keys')
-);
-
-expectedArguments(
     \PHPRegex\Parser\ParserOptions::fromArray(),
     0,
     argumentsSet('regex_option_keys')

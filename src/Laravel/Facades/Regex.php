@@ -30,17 +30,18 @@ use PHPRegex\Transpiler\TranspileResult;
 /**
  * Laravel Facade for the PHPRegex library.
  *
- * @method static RegexNode|TolerantParseResult parse(string $regex, bool $tolerant = false)
- * @method static AnalysisReport                analyze(string $regex)
- * @method static ValidationResult              validate(string $regex)
- * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
- * @method static OptimizationResult            optimize(string $regex, array $options = [])
- * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)
- * @method static string                        explain(string $regex, string $format = 'text')
- * @method static string                        highlight(string $regex, string $format = 'console')
- * @method static LiteralExtractionResult       literals(string $regex)
- * @method static string                        generate(string $regex)
- * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
+ * @method static RegexNode               parse(string $regex)
+ * @method static TolerantParseResult     parseTolerant(string $regex)
+ * @method static AnalysisReport          analyze(string $regex)
+ * @method static ValidationResult        validate(string $regex)
+ * @method static RedosAnalysis           redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
+ * @method static OptimizationResult      optimize(string $regex, array $options = [])
+ * @method static TranspileResult         transpile(string $regex, string $target, ?TranspileOptions $options = null)
+ * @method static string                  explain(string $regex, string $format = 'text')
+ * @method static string                  highlight(string $regex, string $format = 'console')
+ * @method static LiteralExtractionResult literals(string $regex)
+ * @method static string                  generate(string $regex)
+ * @method static RegexNode               parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
  *
  * @see \PHPRegex\Toolkit\Regex
  */

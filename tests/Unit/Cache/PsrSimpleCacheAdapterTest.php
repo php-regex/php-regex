@@ -17,6 +17,7 @@ use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\TestUtils\InMemorySimpleCache;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -94,7 +95,7 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $regex = Regex::create(['cache' => $adapter]);
         $ast = $regex->parse('/test/');
 
-        $key = $adapter->generateKey(Regex::cacheSeed('/test/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
+        $key = $adapter->generateKey(RegexParser::cacheSeed('/test/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
         $loaded = $adapter->load($key);
 
         $this->assertInstanceOf(RegexNode::class, $loaded);

@@ -69,7 +69,7 @@ use PHPRegex\Toolkit\Regex;
 $ast = Regex::create()->parse('/[broken/');  // Throws ParserException
 
 // Tolerant parsing - returns partial AST
-$result = Regex::create()->parse('/[broken/', true);
+$result = Regex::create()->parseTolerant('/[broken/');
 echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
 ```

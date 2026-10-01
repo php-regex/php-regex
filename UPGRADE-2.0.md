@@ -13,13 +13,14 @@ PascalCase, and a few methods are renamed. The sections after this one name
 classes as 1.3 did; the tables at the end of this one give each 2.0 name.
 
 A Rector set makes these changes in your code. Add it to your `rector.php`
-and run Rector once:
+and run Rector twice:
 
 ```php
 $rectorConfig->sets([__DIR__.'/vendor/php-regex/toolkit/Resources/rector/upgrade-2.0.php']);
 ```
 
-It renames classes, enum cases and the renamed methods. It does not change
+It renames classes, enum cases and the renamed methods; the second run catches
+the methods called on an object whose class the first run renamed. It does not change
 what the tables mark as removed, the configuration keys below, the error codes
 (see "Error codes are an `ErrorCode` enum") or the offsets (see "Every offset
 counts from the pattern body").
@@ -418,10 +419,22 @@ move your settings to it, and delete the old one.
 | `RegexLanguageSolver::intersectionEmpty()` | `LanguageSolver::intersection()` |
 | `RegexLanguageSolver::prepare()` | `LanguageSolver::compile()` |
 | `Regex::clearValidatorCaches()` | `Regex::clearCaches()` |
+| `Regex::new()` | `Regex::create()` |
 
 <!-- upgrade-map:end -->
 
 ### Breaking Changes
+
+#### One way to do each thing on the facade
+
+- `Regex::new()` is gone: it was `Regex::create()` under another name. The
+  Rector set renames the calls.
+- `Regex::parse()` takes the pattern only and returns a `RegexNode`. Replace
+  `parse($pattern, true)` with `parseTolerant($pattern)`; Rector cannot, and
+  PHP accepts the extra argument without a word, so search for the calls (or
+  let PHPStan report them).
+- `Regex::cacheSeed()` is gone, and `RegexParser::cacheSeed()` is internal: the
+  seed's shape follows the cache version and may change in any release.
 
 #### `UnicodeNode` and `visitUnicode()` are gone
 

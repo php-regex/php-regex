@@ -435,5 +435,6 @@ final class UpgradeMap
         ['RegexParser\\Automata\\Api\\RegexLanguageSolver', 'intersectionEmpty', 'intersection'],
         ['RegexParser\\Automata\\Api\\RegexLanguageSolver', 'prepare', 'compile'],
         ['RegexParser\\Regex', 'clearValidatorCaches', 'clearCaches'],
+        ['RegexParser\\Regex', 'new', 'create'],
     ];
 }

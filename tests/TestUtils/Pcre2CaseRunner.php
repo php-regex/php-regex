@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\TestUtils;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
 
@@ -46,7 +45,7 @@ final readonly class Pcre2CaseRunner
     {
         // No cache: every case is parsed afresh, never read back from a
         // cached AST of an earlier library build.
-        $this->regex = Regex::new(['cache' => null]);
+        $this->regex = Regex::create(['cache' => null]);
     }
 
     /**
@@ -300,13 +299,7 @@ final readonly class Pcre2CaseRunner
         }
 
         try {
-            $ast = $this->regex->parse($phpPattern);
-
-            if (!$ast instanceof RegexNode) {
-                throw new \RuntimeException(\sprintf('validate() rejected %s but parsing stayed tolerant.', $phpPattern));
-            }
-
-            $ast->accept(new Validator());
+            $this->regex->parse($phpPattern)->accept(new Validator());
         } catch (\Throwable $failure) {
             return $failure;
         }
