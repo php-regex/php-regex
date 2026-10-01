@@ -1,20 +1,20 @@
 <p align="center">
     <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=5">
-        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=5">
-        <img src="art/banner.svg?v=5" alt="PHPRegex" width="100%">
+        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=6">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=6">
+        <img src="art/banner.svg?v=6" alt="PHPRegex" width="100%">
     </picture>
 </p>
 
 <p align="center">
-    <a href="https://github.com/php-regex/regex-parser/actions/workflows/ci.yml"><img src="https://github.com/php-regex/regex-parser/actions/workflows/ci.yml/badge.svg?branch=2.x" alt="CI Status Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/actions/workflows/ci.yml"><img src="https://github.com/php-regex/php-regex/actions/workflows/ci.yml/badge.svg?branch=2.x" alt="CI Status Badge"></a>
     <a href="https://phpstan.org/"><img src="https://img.shields.io/badge/PHPStan-level%20max-brightgreen.svg" alt="PHPStan Level Badge"></a>
     <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
-    <a href="https://github.com/php-regex/regex-parser/releases"><img src="https://img.shields.io/github/tag/php-regex/regex-parser.svg" alt="GitHub Release Badge"></a>
-    <a href="https://github.com/php-regex/regex-parser/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
-    <a href="https://packagist.org/packages/yoeunes/regex-parser"><img src="https://img.shields.io/packagist/dt/yoeunes/regex-parser.svg" alt="Packagist Downloads Badge"></a>
-    <a href="https://github.com/php-regex/regex-parser"><img src="https://img.shields.io/github/stars/php-regex/regex-parser.svg" alt="GitHub Stars Badge"></a>
-    <a href="https://packagist.org/packages/yoeunes/regex-parser"><img src="https://img.shields.io/packagist/php-v/yoeunes/regex-parser.svg" alt="Supported PHP Version Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/php-regex"><img src="https://img.shields.io/packagist/dt/php-regex/php-regex.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/php-regex"><img src="https://img.shields.io/packagist/php-v/php-regex/php-regex.svg" alt="Supported PHP Version Badge"></a>
 </p>
 
 # PHPRegex: Static Analysis, Linter & Logic Solver
