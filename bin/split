@@ -90,7 +90,13 @@ for split in "${SPLITS[@]}"; do
     # A repository that serves the monorepo is never overwritten: until a
     # package's repository exists, GitHub may redirect its old name to the
     # monorepo, and a forced push would replace the monorepo's branch.
-    current=$(git ls-remote "$remote" "refs/heads/$branch" 2>/dev/null | cut -f1)
+    # A repository that cannot be read is not pushed: the check above needs it.
+    if ! listing=$(git ls-remote "$remote" "refs/heads/$branch" 2>&1); then
+        echo "✗ $repository: cannot read $remote ($(printf '%s' "$listing" | tail -1)); nothing pushed" >&2
+        failed=$((failed + 1))
+        continue
+    fi
+    current=$(printf '%s' "$listing" | cut -f1)
     if [ -n "$current" ]; then
         git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$branch" 2>/dev/null || true
         if git cat-file -e "$current:bin/split" 2>/dev/null; then

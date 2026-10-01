@@ -200,6 +200,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->commit();
         $remotes = $this->root.'/remotes';
         mkdir($remotes);
+        // regex-automata is missing: reading it fails, as a refused connection does.
         foreach (['regex-parser', 'regex-explain'] as $name) {
             exec('git init -q --bare '.escapeshellarg($remotes.'/'.$name.'.git'));
         }
@@ -218,7 +219,7 @@ final class ReleaseScriptsTest extends TestCase
         chmod($this->root.'/fake/splitsh-lite', 0o755);
 
         $process = proc_open(
-            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--only', 'regex-parser', '--only', 'regex-explain'],
+            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--only', 'regex-automata', '--only', 'regex-parser', '--only', 'regex-explain'],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             null,
@@ -233,6 +234,8 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(1, $code, $output);
         $this->assertStringContainsString('regex-parser', $output);
         $this->assertStringContainsString('monorepo', $output);
+        // A repository that cannot be read is skipped, and the run goes on.
+        $this->assertStringContainsString('✓ regex-explain', $output);
         $this->assertSame($monorepo, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-parser.git').' rev-parse 2.x')));
         $this->assertSame($split, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-explain.git').' rev-parse 2.x')));
     }
