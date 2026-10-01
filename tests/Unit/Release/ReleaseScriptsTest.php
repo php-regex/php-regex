@@ -234,6 +234,10 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(1, $code, $output);
         $this->assertStringContainsString('regex-parser', $output);
         $this->assertStringContainsString('monorepo', $output);
+        // Serving the monorepo means the repository is not created yet: a
+        // skip, not a failure. Only the unreadable regex-automata fails.
+        $this->assertStringContainsString('1 split(s) failed', $output);
+        $this->assertStringContainsString('skipped', $output);
         // A repository that cannot be read is skipped, and the run goes on.
         $this->assertStringContainsString('✓ regex-explain', $output);
         $this->assertSame($monorepo, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-parser.git').' rev-parse 2.x')));

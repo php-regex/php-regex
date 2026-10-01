@@ -100,8 +100,8 @@ for split in "${SPLITS[@]}"; do
     if [ -n "$current" ]; then
         git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$branch" 2>/dev/null || true
         if git cat-file -e "$current:bin/split" 2>/dev/null; then
-            echo "✗ $repository: $remote serves the monorepo (its $branch holds bin/split); nothing pushed" >&2
-            failed=$((failed + 1))
+            # Only a repository not created yet does that: skipped, not failed.
+            echo "⚠ $repository: $remote serves the monorepo (its $branch holds bin/split), so the repository does not exist yet; skipped" >&2
             continue
         fi
     fi
