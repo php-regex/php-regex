@@ -19,7 +19,7 @@ Features
 * A `Regex` service and a `Regex` facade, registered by package discovery on install
 * Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass
-* Reports in console, JSON, GitHub, checkstyle and JUnit formats, with clickable editor links
+* Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
 
 Installation
@@ -94,7 +94,7 @@ Or transpile it for another engine:
 ```php
 $result = Regex::transpile('/^[a-z]+(?=\d)$/i', 'javascript');
 
-$result->constructor; // 'new RegExp("^[a-z]+(?=\d)$", "i")'
+$result->constructor; // 'new RegExp("^[a-z]+(?=\\d)$", "i")'
 ```
 
 The facade also exposes `parse`, `parseTolerant`, `analyze`, `optimize`, `highlight`, `literals`, `generate` and `parsePattern`.

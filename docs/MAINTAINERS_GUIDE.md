@@ -86,7 +86,7 @@ $regex = Regex::create([
 
 // Now use $regex for parsing, validation, or analysis
 $result = $regex->validate('/foo|bar/');
-echo $result->isValid() ? 'Valid' : 'Invalid';
+echo $result->isValid ? 'Valid' : 'Invalid';
 ```
 
 ### Common Configuration Pitfalls
@@ -174,7 +174,7 @@ try {
 // Handling specific error codes
 try {
     $result = Regex::create()->validate('/(?<=a+)b/');
-    if (!$result->isValid()) {
+    if (!$result->isValid) {
         echo "Error {$result->errorCode?->value}: {$result->error}";
         echo "Hint: {$result->hint}";
     }
@@ -270,8 +270,8 @@ Notes:
 ### CLI Examples
 
 ```bash
-# Lint a single pattern
-vendor/bin/regex lint --pattern '/(a+)+b/'
+# Analyze a single pattern
+vendor/bin/regex analyze '/(a+)+b/'
 
 # Lint with JSON output
 vendor/bin/regex lint --format=json src/
@@ -279,10 +279,7 @@ vendor/bin/regex lint --format=json src/
 # Lint with minimum savings threshold
 vendor/bin/regex lint --min-savings 5 src/
 
-# Lint with optimization suggestions
-vendor/bin/regex lint --optimize src/
-
-# Lint without optimization
+# Lint without optimization suggestions (they are on by default)
 vendor/bin/regex lint --no-optimize src/
 ```
 
@@ -342,7 +339,7 @@ class RegexValidator
     public function validatePattern(string $pattern): bool
     {
         $result = $this->regex->validate($pattern);
-        return $result->isValid();
+        return $result->isValid;
     }
 
     public function checkReDoS(string $pattern): array
@@ -418,7 +415,7 @@ class RegexConstraintValidator extends ConstraintValidator
 
         $result = $regex->validate($constraint->pattern);
 
-        if (!$result->isValid()) {
+        if (!$result->isValid) {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ error }}', $result->error)
                 ->addViolation();
@@ -493,8 +490,8 @@ class RegexProcessor
 |-----------------|--------------------------------------------|
 | API Reference   | [api.md](reference/api.md)                 |
 | Diagnostics     | [diagnostics.md](reference/diagnostics.md) |
-| ReDoS Guide     | [REDOS_GUIDE.md](../REDOS_GUIDE.md)        |
-| Architecture    | [ARCHITECTURE.md](../ARCHITECTURE.md)      |
+| ReDoS Guide     | [REDOS_GUIDE.md](REDOS_GUIDE.md)           |
+| Architecture    | [ARCHITECTURE.md](ARCHITECTURE.md)         |
 | Extending Guide | [EXTENDING_GUIDE.md](EXTENDING_GUIDE.md)   |
 
 ---

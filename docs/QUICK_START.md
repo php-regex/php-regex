@@ -2,9 +2,9 @@
 
 This guide gets you from installation to a first analysis in a few steps. It is intentionally brief; the tutorial covers concepts in depth.
 
-If you are new to regex, start here and follow the examples. If you already know regex, you can jump to [Advanced Features](#advanced-features).
+This is the fast hands-on tour: every step is a command or snippet you can run as-is. If you are completely new to regex, the [tutorial](tutorial/README.md) is the place to start; it assumes nothing. If you already know regex, you can jump to [Advanced Features](#advanced-features).
 
-## What this guide covers
+## What This Guide Covers
 
 - Install PHPRegex.
 - Use the CLI for quick analysis.
@@ -17,13 +17,14 @@ If you are new to regex, start here and follow the examples. If you already know
 
 ```bash
 composer require php-regex/regex-toolkit
+composer require --dev php-regex/regex-cli
 ```
 
-No additional dependencies are required.
+`regex-toolkit` is the parser and the PHP API. `regex-cli` is optional and installs the `vendor/bin/regex` binary used throughout this guide.
 
 If you want to experiment without installing, use <https://regex101.com> in PCRE2 mode.
 
-## How PHPRegex works (short version)
+## How PHPRegex Works (Short Version)
 
 - The literal is split into pattern and flags.
 - The lexer emits a token stream.
@@ -32,32 +33,36 @@ If you want to experiment without installing, use <https://regex101.com> in PCRE
 
 You do not need these details to use the API. For background, see [What is an AST?](concepts/ast.md).
 
-## CLI quick start
+## CLI Quick Start
 
 The CLI gives you direct feedback. Try these commands:
 
 ```bash
 # 1. Explain a pattern in plain English
-bin/regex explain '/\d{4}-\d{2}-\d{2}/'
+vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 
 # 2. Visualize the pattern structure
-bin/regex diagram '/\d{4}-\d{2}-\d{2}/'
+vendor/bin/regex diagram '/\d{4}-\d{2}-\d{2}/'
 
 # 3. Check for potential ReDoS risk (theoretical)
-bin/regex analyze '/(a+)+$/'
+vendor/bin/regex analyze '/(a+)+$/'
 
 # 4. Colorize the pattern for better readability
-bin/regex highlight '/\d{4}-\d{2}-\d{2}/'
+vendor/bin/regex highlight '/\d{4}-\d{2}-\d{2}/'
 
 # 5. Lint your entire codebase
-bin/regex lint src/
+vendor/bin/regex lint src/
 ```
 
 Example output:
 ```
-$ bin/regex explain '/\d{4}-\d{2}-\d{2}/'
-Match exactly 4 digits, then hyphen, then exactly 2 digits, 
-then hyphen, then exactly 2 digits.
+$ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/' --no-visuals
+Regex matches
+    Character Type: A digit: [0-9] (exactly 4 times)
+  '-'
+    Character Type: A digit: [0-9] (exactly 2 times)
+  '-'
+    Character Type: A digit: [0-9] (exactly 2 times)
 ```
 
 ## Comparing Patterns
@@ -66,16 +71,16 @@ PHPRegex can compare two patterns as mathematical sets of strings.
 
 ```bash
 # Intersection: do the patterns overlap?
-bin/regex compare '/edit/' '/[a-z]+/'
+vendor/bin/regex compare '/edit/' '/[a-z]+/'
 
 # Subset: is pattern 1 fully contained in pattern 2?
-bin/regex compare '/edit/' '/[a-z]+/' --method=subset
+vendor/bin/regex compare '/edit/' '/[a-z]+/' --method=subset
 
 # Equivalence: do both patterns accept the same strings?
-bin/regex compare '/[0-9]+/' '/\d+/' --method=equivalence
+vendor/bin/regex compare '/[0-9]+/' '/\d+/' --method=equivalence
 ```
 
-## PHP API: five essential operations
+## PHP API: Five Essential Operations
 
 ### 1. Parse a pattern (turn regex into structured data)
 
@@ -130,12 +135,14 @@ echo $explanation;
 
 **Example output:**
 ```
-A named group 'email' containing:
-  - One or more word characters
-  - Literal '@'
-  - One or more word characters
-  - Literal '.'
-  - One or more word characters
+Regex matches
+  Capturing group (named: 'email')
+        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+    '@'
+        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+    '.'
+        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+  End group
 ```
 
 Use when documenting patterns, doing code reviews, or teaching regex.
@@ -181,7 +188,7 @@ echo $consoleOutput;
 
 This is useful for documentation and reviews.
 
-## Practical use cases
+## Practical Use Cases
 
 ### 1. Parse and Understand Complex Patterns
 
@@ -224,7 +231,7 @@ documentPattern('/\d{4}-\d{2}-\d{2}/', 'Date format');
 
 ```bash
 # Scan your entire project
-bin/regex lint src/ --redos --no-lint --no-optimize
+vendor/bin/regex lint src/ --redos --no-lint --no-optimize
 ```
 
 ### 5. Generate Test Data
@@ -276,7 +283,7 @@ Learn more: [Understanding Visitors](concepts/visitors.md)
 
 ---
 
-## Common pattern examples
+## Common Pattern Examples
 
 ### Email Validation
 
@@ -337,7 +344,7 @@ try {
 
 ---
 
-## Advanced features
+## Advanced Features
 
 ### Working with Named Groups
 
@@ -380,31 +387,31 @@ $result = $regex->validate($pattern);
 
 ---
 
-## Next steps
+## Next Steps
 
 Now that you've seen what PHPRegex can do, here's where to go next:
 
 For beginners:
-- [Learn Regex from Scratch](../tutorial/README.md)
-- [Regex in PHP Guide](../guides/regex-in-php.md)
+- [Learn Regex from Scratch](tutorial/README.md)
+- [Regex in PHP Guide](guides/regex-in-php.md)
 
 For users:
-- [CLI Guide](../guides/cli.md)
-- [Cookbook](../COOKBOOK.md)
-- [ReDoS Guide](../REDOS_GUIDE.md)
+- [CLI Guide](guides/cli.md)
+- [Cookbook](COOKBOOK.md)
+- [ReDoS Guide](REDOS_GUIDE.md)
 
 For developers:
-- [Architecture](../ARCHITECTURE.md)
-- [AST Reference](../nodes/README.md)
-- [Visitors Guide](../visitors/README.md)
-- [Extending Guide](../EXTENDING_GUIDE.md)
+- [Architecture](ARCHITECTURE.md)
+- [AST Reference](nodes/README.md)
+- [Visitors Guide](visitors/README.md)
+- [Extending Guide](EXTENDING_GUIDE.md)
 
 Reference:
-- [API Reference](../reference/api.md)
-- [Diagnostics](../reference/diagnostics.md)
-- [FAQ & Glossary](../reference/faq-glossary.md)
+- [API Reference](reference/api.md)
+- [Diagnostics](reference/diagnostics.md)
+- [FAQ & Glossary](reference/faq-glossary.md)
 
-## Getting help
+## Getting Help
 
 - Issues and bug reports: <https://github.com/php-regex/php-regex/issues>
 - Real-world examples: see `tests/Integration/`
@@ -412,4 +419,4 @@ Reference:
 
 ---
 
-Previous: [Docs Home](README.md) | Next: [Regex Tutorial](../tutorial/README.md)
+Previous: [Docs Home](README.md) | Next: [Regex Tutorial](tutorial/README.md)

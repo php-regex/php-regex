@@ -9,7 +9,7 @@
 PHPRegex Language Server
 ========================
 
-A Language Server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.
+A language server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.
 
 The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls and of wrapper calls such as `Preg::match()` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
 

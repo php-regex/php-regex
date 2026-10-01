@@ -144,9 +144,7 @@ class ComplexityAnalyzer extends AbstractNodeVisitor
     public function visitGroup(Node\GroupNode $node): void
     {
         $this->complexityScore += 3; // Groups are more complex
-        foreach ($node->children as $child) {
-            $child->accept($this);
-        }
+        $node->child->accept($this);
     }
 
     public function getComplexityScore(): int

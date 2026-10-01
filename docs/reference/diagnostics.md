@@ -48,9 +48,9 @@ use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/[unclosed/');
 
-if (!$result->isValid()) {
+if (!$result->isValid) {
     // Access all diagnostic information
-    echo $result->isValid();        // false
+    echo $result->isValid;          // false
     echo $result->error;            // "Unclosed character class "]" at end of input."
     echo $result->errorCode->value; // "regex.charclass.unclosed"
     echo $result->offset;           // 9

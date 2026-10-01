@@ -256,7 +256,7 @@ $regex = Regex::create([
 | **Lookaround**            | Zero-width assertion like `(?=...)` or `(?<=...)`              |
 | **Atomic group**          | `(?>...)` - prevents backtracking inside the group             |
 | **Possessive quantifier** | `*+`, `++`, `{m,n}+` - no backtracking                         |
-| **Branch reset**          | `(?|...)` - resets capture numbering per branch |
+| **Branch reset**          | `(?\|...)` - resets capture numbering per branch |
 | **Subroutine**            | `(?1)` or `(?&uses a group definition                          |
 | **Lexer**                 | Tokenizesname)` - re the pattern string into tokens            |
 | **Parser**                | Builds the AST from tokens                                     |

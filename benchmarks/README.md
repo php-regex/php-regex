@@ -1,6 +1,6 @@
-# Regex Parser Benchmarks
+# PHPRegex Benchmarks
 
-This directory contains performance benchmark scripts for various components of the Regex Parser library.
+This directory contains performance benchmark scripts for various components of the PHPRegex library.
 
 ## Available Benchmarks
 

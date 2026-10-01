@@ -48,7 +48,7 @@ PHPRegex targets **PHP's PCRE2 engine** (`preg_*`). Key behaviors that may surpr
 | Behavior           | Description               | Example                         |
 |--------------------|---------------------------|---------------------------------|
 | Forward references | Backreference before capture compiles, but the group is unset and the match will fail until it has captured | `/\1(a)/` compiles, but `\1` fails |
-| Branch reset       | `(?|...)` changes capture numbering | `\2` can be invalid in branches |
+| Branch reset       | `(?\|...)` changes capture numbering | `\2` can be invalid in branches |
 | `\g{0}`            | Invalid in PHP            | Use `\g<0>` or `(?R)`           |
 | Lookbehind         | Must have bounded length  | `(?<=a+)` is invalid            |
 
@@ -715,7 +715,7 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 |-------------------|--------------|-----------------------|
 | `\p{...}` Unicode | Supported    |                       |
 | `\g{0}`           | Invalid      | Use `\g<0>` or `(?R)` |
-| Branch reset `(?|...)` | Supported    | |
+| Branch reset `(?\|...)` | Supported    | |
 
 ---
 

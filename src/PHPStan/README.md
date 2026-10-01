@@ -96,7 +96,7 @@ Flag 's' is useless: the pattern contains no dots.
 Nested quantifiers can cause catastrophic backtracking.
 🪪 regex.lint.quantifier.nested
 💡 Consider using atomic groups (?>...) or possessive quantifiers.
-Potential ReDoS risk (theoretical) (severity: CRITICAL, confidence: MEDIUM): /(a+)+$/
+Exponential backtracking (ReDoS): /(a+)+$/
 🪪 regex.redos
 ```
 

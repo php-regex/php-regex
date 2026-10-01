@@ -198,8 +198,8 @@ ini_set('pcre.recursion_limit', '100000');
 | `/a*$/`       | None        | ~0ms              | -                       |
 | `/(a+)+$/`    | CRITICAL    | Minutes!          | `/(?>a+)+$/` or `/a+$/` |
 | `/a{1,100}$/` | None        | ~0ms              | -                       |
-| `/(a          | b)+$/`      | LOW               | ~1ms                    | `/(?:a|b)+$/` |
-| `/((a         | b){2,})+$/` | HIGH              | Seconds!                | `/(?:a{2,}|(?:ab){2,})+$/` |
+| `/(a\|b)+$/`   | LOW        | ~1ms              | `/(?:a\|b)+$/`          |
+| `/((a\|b){2,})+$/` | HIGH    | Seconds!          | `/(?:a{2,}\|(?:ab){2,})+$/` |
 
 ---
 
@@ -216,10 +216,10 @@ Which patterns are dangerous?
 
 ```php
 // Answers:
-// 1. Yes Safe
-// 2. No CRITICAL - nested quantifiers
-// 3. Yes Safe
-// 4. No HIGH - overlapping alternations
+// 1. No - Safe
+// 2. Yes - CRITICAL - nested quantifiers
+// 3. No - Safe
+// 4. Yes - HIGH - overlapping alternations
 ```
 
 ### Exercise 2: Fix Dangerous Patterns

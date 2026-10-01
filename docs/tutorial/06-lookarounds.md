@@ -159,8 +159,8 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create(['runtime_pcre_validation' => true]);
 $result = $regex->validate('/(?<=a+)b/');
 
-if (!$result->isValid()) {
-    echo $result->getErrorMessage();
+if (!$result->isValid) {
+    echo $result->error;
     // Output: "Lookbehind is unbounded. PCRE requires a bounded maximum length."
 }
 ```
@@ -193,7 +193,7 @@ if (!$result->isValid()) {
 /(?<=bar)foo/
 
 // Match "bar" before "foo" - lookahead is clearer
-/(?=bar)foo/
+/bar(?=foo)/
 ```
 
 ---
@@ -241,11 +241,13 @@ use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-$result = $regex->validate('/(?<=a{1,3})b/');
-echo $pattern . ": " . ($result->isValid() ? "Valid" : "Invalid") . "\n";
+$pattern = '/(?<=a{1,3})b/';
+$result = $regex->validate($pattern);
+echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 
-$result = $regex->validate('/(?<=a+)b/');
-echo $pattern . ": " . ($result->isValid() ? "Valid" : "Invalid") . "\n";
+$pattern = '/(?<=a+)b/';
+$result = $regex->validate($pattern);
+echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 ```
 
 ---
@@ -289,11 +291,11 @@ echo $matches[0];  // "5" (same position checked twice!)
 
 ```php
 // Checking if "foo" comes after "bar"
-// Unnatural: Lookbehind reads backward
+// Unnatural: Lookbehind reads backward (matches "foo")
 /(?<=bar)foo/
 
-// Better: Lookahead reads forward
-/(?=bar)foo/
+// Better: Lookahead reads forward (matches "bar")
+/bar(?=foo)/
 ```
 
 ---

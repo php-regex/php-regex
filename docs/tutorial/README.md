@@ -28,12 +28,16 @@ bin/regex explain '/^cat.*dog$/'
 ```
 
 ```
-Match:
-  Anchor: start of string
-  Literal: "cat"
-  Any character, zero or more times
-  Literal: "dog"
-  Anchor: end of string
+Regex matches
+  Anchor: the beginning of a line
+  'c'
+  'a'
+  't'
+    Wildcard: any character (may or may not match line terminators) (zero or more times)
+  'd'
+  'o'
+  'g'
+  Anchor: the end of a line
 ```
 
 ```bash
@@ -41,14 +45,18 @@ bin/regex diagram '/^cat.*dog$/'
 ```
 
 ```
-RegexNode
-+-- SequenceNode
-    |-- AnchorNode("^")
-    |-- LiteralNode("cat")
-    |-- QuantifierNode("*")
-    |   +-- DotNode(".")
-    |-- LiteralNode("dog")
-    +-- AnchorNode("$")
+Regex
+\-- Sequence
+    |-- Anchor (^)
+    |-- Literal ('c')
+    |-- Literal ('a')
+    |-- Literal ('t')
+    |-- Quantifier (*, greedy)
+    |   \-- Dot (.)
+    |-- Literal ('d')
+    |-- Literal ('o')
+    |-- Literal ('g')
+    \-- Anchor ($)
 ```
 
 ### PHP API
@@ -195,7 +203,7 @@ To match a literal dollar sign: `/\$/`
 1. **Use the explain command**: `bin/regex explain '/your-pattern/'`
 2. **Visualize it**: `bin/regex diagram '/your-pattern/'`
 3. **Check for errors**: `bin/regex validate '/your-pattern/'`
-4. **Read the FAQ**: [docs/reference/faq-glossary.md](reference/faq-glossary.md)
+4. **Read the FAQ**: [docs/reference/faq-glossary.md](../reference/faq-glossary.md)
 5. **Ask questions**: [GitHub Issues](https://github.com/php-regex/php-regex/issues)
 
 ---

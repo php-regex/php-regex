@@ -211,8 +211,8 @@ When referencing these sources in documentation or code comments:
 |---------------|-------------------------------------|
 | ReDoS Guide   | [REDOS_GUIDE.md](../REDOS_GUIDE.md) |
 | Cookbook      | [COOKBOOK.md](../COOKBOOK.md)       |
-| API Reference | [api.md](api.md)                    |
-| Diagnostics   | [diagnostics.md](diagnostics.md)    |
+| API Reference | [api.md](../reference/api.md)                    |
+| Diagnostics   | [diagnostics.md](../reference/diagnostics.md)    |
 
 ---
 

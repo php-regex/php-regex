@@ -29,7 +29,7 @@ $regex = Regex::create([
 ]);
 
 $result = $regex->validate('/foo|bar/');
-echo $result->isValid() ? 'Valid' : 'Invalid';
+echo $result->isValid ? 'Valid' : 'Invalid';
 ```
 
 ---
@@ -232,7 +232,7 @@ use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/foo|bar/');
 
-echo $result->isValid();           // true
+echo $result->isValid;             // true
 echo $result->complexityScore;     // int
 echo $result->category->value;     // ValidationErrorCategory enum
 ```
@@ -345,7 +345,6 @@ $result = Regex::create()->optimize('/[0-9]+/', [
 
 // The same, as a value:
 $result = Regex::create()->optimize('/[0-9]+/', new OptimizerOptions(possessive: false));
-```
 
 echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'
@@ -475,7 +474,7 @@ Returned by `validate()`. Provides structured validation feedback.
 ```php
 $result = Regex::create()->validate('/[unclosed/');
 
-if (!$result->isValid()) {
+if (!$result->isValid) {
     echo $result->error;              // "Unclosed character class..."
     echo $result->errorCode->value;   // "regex.charclass.unclosed"
     echo $result->offset;             // 9

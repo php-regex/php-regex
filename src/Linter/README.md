@@ -9,7 +9,7 @@
 PHPRegex Linter
 ===============
 
-Lints the regex patterns of a PHP code base: extraction from PHP sources, lint rules, ReDoS and validity checks, reports in console, JSON, GitHub, Checkstyle and JUnit formats.
+Lints the regex patterns of a PHP codebase: extraction from PHP sources, lint rules, ReDoS and validity checks, reports in console, JSON, GitHub, Checkstyle and JUnit formats.
 
 Features
 --------
@@ -30,7 +30,7 @@ composer require php-regex/regex-linter
 
 Requires PHP 8.2+. The extractor runs on the PHP tokenizer by default; install `nikic/php-parser` to extract from a full PHP parser instead.
 
-To lint a whole code base from the terminal, add the console package:
+To lint a whole codebase from the terminal, add the console package:
 
 ```bash
 composer require --dev php-regex/regex-cli
@@ -101,7 +101,7 @@ regex.lint.unicode.shorthandWithoutU: Shorthand "\w" matches only ASCII without 
 regex.lint.unicode.shorthandWithoutU: Shorthand "\d" matches only ASCII without /u flag.
 ```
 
-A whole code base, from the terminal — exits non-zero when at least one error is found, `--format=github` fits CI:
+A whole codebase, from the terminal — exits non-zero when at least one error is found, `--format=github` fits CI:
 
 ```bash
 vendor/bin/regex lint src/

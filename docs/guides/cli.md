@@ -39,11 +39,18 @@ PHPRegex CLI provides these commands:
 |---------------|----------------------------------------------------------|
 | `parse`       | Parse and recompile a pattern                            |
 | `analyze`     | Pattern analysis (validation + ReDoS + explanation)      |
+| `compare`     | Compare two regex patterns using automata logic          |
+| `explain`     | Explain a regex pattern in plain language                |
 | `debug`       | Detailed ReDoS analysis with heatmap                     |
+| `redos`       | Benchmark regex patterns for ReDoS behavior              |
 | `diagram`     | Render AST diagram                                       |
+| `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA        |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
+| `transpile`   | Transpile PCRE regex to other dialects (js, python, etc.) |
 | `lint`        | Lint entire codebase for regex issues                    |
+| `clear-cache` | Clear the regex parser cache                             |
+| `version`     | Display version information                              |
 | `self-update` | Update PHAR to latest version                            |
 | `help`        | Show help message                                        |
 

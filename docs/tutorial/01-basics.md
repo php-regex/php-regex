@@ -50,7 +50,7 @@ $regex = Regex::create();
 // Test a pattern
 $result = $regex->validate('/hello/');
 
-if ($result->isValid()) {
+if ($result->isValid) {
     echo "Pattern is valid!\n";
 
     // See what it means
@@ -107,7 +107,7 @@ preg_match($pattern, 'heLLo');        // Match: yes
 $regex = Regex::create();
 
 echo $regex->explain('/hello/i');
-# Output: "Literal 'hello' (case-insensitive)"
+// Output: "Literal 'hello' (case-insensitive)"
 ```
 
 ---
@@ -144,7 +144,7 @@ Every PHP regex pattern needs **delimiters** - characters that mark the beginnin
 
 // Solution: Use different delimiter
 '#https://example\.com#'
-# Note: We escape the . with \.
+// Note: We escape the . with \.
 ```
 
 ### Try It
@@ -153,7 +153,7 @@ Every PHP regex pattern needs **delimiters** - characters that mark the beginnin
 $regex = Regex::create();
 
 echo $regex->explain('#https://example\.com#');
-# Output: "Literal 'https://example.com'"
+// Output: "Literal 'https://example.com'"
 ```
 
 ---
@@ -193,10 +193,10 @@ $regex = Regex::create();
 
 // Literal dot vs any character
 echo $regex->explain('/\./');
-# Output: "Literal '.'"
+// Output: "Literal '.'"
 
 echo $regex->explain('/./');
-# Output: "Any single character"
+// Output: "Any single character"
 ```
 
 ---
@@ -215,11 +215,11 @@ $pattern = '/^[a-z]+@[a-z]+\.[a-z]+$/';
 
 $result = $regex->validate($pattern);
 
-if ($result->isValid()) {
+if ($result->isValid) {
     echo "Valid email pattern!\n";
     echo "Explanation: " . $regex->explain($pattern) . "\n";
 } else {
-    echo "Error: " . $result->getErrorMessage() . "\n";
+    echo "Error: " . $result->error . "\n";
 }
 ```
 
@@ -249,7 +249,7 @@ Pattern components:
 '/^[a-z]+@[a-z]+\.[a-z]+$/'
 
 // Match phone numbers (US format)
-/^\d{3}-\d{4}$/
+'/^\d{3}-\d{4}$/'
 ```
 
 ### Bad: Too Broad or Wrong
@@ -302,7 +302,7 @@ $patterns = [
 
 foreach ($patterns as $pattern) {
     $result = $regex->validate($pattern);
-    echo "$pattern: " . ($result->isValid() ? "Valid" : "Invalid") . "\n";
+    echo "$pattern: " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 }
 ```
 

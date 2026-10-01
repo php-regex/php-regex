@@ -17,7 +17,7 @@ Features
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
 * Six console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare` and `regex:transpile`
 * `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
-* Reports in console, JSON, GitHub, checkstyle and JUnit formats, with clickable editor links
+* Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
 * `regex:routes` and `regex:security` analyze route conflicts, `access_control` ordering and firewall regexes, including their ReDoS risk
 
@@ -56,10 +56,10 @@ Inject `PHPRegex\Toolkit\Regex` where you need it — the container builds it fr
 
 ```php
 $regex = Regex::create(); // what the container injects
-$regex->validate('/^[a-z0-9-]{3,}$/')->isValid(); // true
+$regex->validate('/^[a-z0-9-]{3,}$/')->isValid; // true
 
 $invalid = $regex->validate('/^(unclosed/');
-$invalid->getErrorMessage(); // "Expected ) at end of input (found eof)"
+$invalid->error; // "Expected ) at end of input (found eof)"
 ```
 
 Check one for ReDoS:

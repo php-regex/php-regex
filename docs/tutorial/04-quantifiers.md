@@ -158,7 +158,7 @@ echo $matches[0];  // Output: "<p>" (first tag only)
 | Pattern   | Text       | Match      | Why                                    |
 |-----------|------------|------------|----------------------------------------|
 | `/.+/`    | "abc"      | "abc"      | Greedy: all characters                 |
-| `/.+?/`   | "abc"      | "abc"      | Lazy: minimal (still all in this case) |
+| `/.+?/`   | "abc"      | "a"        | Lazy: one character is enough          |
 | `/<.+>/`  | "<p>x</p>" | "<p>x</p>" | Greedy: everything                     |
 | `/<.+?>/` | "<p>x</p>" | "<p>"      | Lazy: stops at first `>`               |
 
@@ -182,7 +182,7 @@ Add `++`, `*+`, `?+` to prevent backtracking (great for ReDoS prevention):
 
 ```php
 // Regular quantifier (can backtrack)
-preg_match('/a++b/', 'aaab');  // Match: yes (but may cause ReDoS)
+preg_match('/a+b/', 'aaab');  // Match: yes (but may cause ReDoS)
 
 // Possessive (never backtracks - faster, safer)
 preg_match('/a++b/', 'aaab');  // Match: yes (no backtracking)
@@ -310,20 +310,20 @@ echo "Lazy: " . $m[0] . "\n";
 ```php
 $text = "123 456 789";
 
-// Wrong: Gets everything!
+// Greedy by default: each \d+ takes a whole run of digits
 preg_match('/\d+\s+\d+/', $text, $m);
-echo $m[0];  // "123 456 789" (all of it)
+echo $m[0];  // "123 456" (two full runs - the match ends once the pattern is satisfied)
 
-// Correct: Lazy for minimal match
+// Lazy: each quantifier stops as soon as it can
 preg_match('/\d+?\s+\d+?/', $text, $m);
-echo $m[0];  // "123 456" (first pair)
+echo $m[0];  // "123 4" (the trailing \d+? stops after one digit)
 ```
 
 ### Error: Nested Quantifiers (ReDoS Risk)
 
 ```php
 // Dangerous: Can cause exponential backtracking
-'/ (a+)+ $ /'  // DO NOT USE!
+'/(a+)+$/'  // DO NOT USE!
 
 // Safe: Use possessive quantifiers
 '/(a++)+$/'   // Better

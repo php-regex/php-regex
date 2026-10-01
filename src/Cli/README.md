@@ -14,7 +14,7 @@ The regex console: sixteen subcommands to parse, explain, validate, lint, hunt R
 Features
 --------
 
-- Lints a whole code base: patterns extracted from `preg_*` calls and four wrapper libraries, judged by 28 rules.
+- Lints a whole codebase: patterns extracted from `preg_*` calls and four wrapper libraries, judged by 28 rules.
 - ReDoS analysis in two modes — theoretical (structural) and confirmed (witness input) — plus a benchmark command.
 - Automata comparison of two patterns: intersection, subset, equivalence, with counter-examples.
 - Transpiles PCRE patterns to JavaScript and Python; renders the AST as text or SVG and the NFA as DOT or Mermaid.
@@ -92,10 +92,11 @@ vendor/bin/regex analyze '/(a+)+$/' --no-visuals
 #   Pattern: /(a+)+$/
 #   Parse: OK
 #   Status: OK
-#   Status: Potential ReDoS risk (theoretical)
+#   Status: Exponential backtracking (proven)
 #   Severity: CRITICAL (score 10)
 #   Mode: THEORETICAL
 #   Confidence: MEDIUM
+#   Attack: "a" x n . "!"
 #   Hotspot:   1-3
 ```
 

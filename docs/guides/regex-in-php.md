@@ -335,8 +335,8 @@ $regex = Regex::create();
 
 $result = $regex->validate($userPattern);
 
-if (!$result->isValid()) {
-    echo "Invalid pattern: " . $result->getErrorMessage();
+if (!$result->isValid) {
+    echo "Invalid pattern: " . $result->error;
     echo "Hint: " . $result->getHint();
     return;
 }
@@ -396,7 +396,7 @@ echo $email;  // Example: "user@example.com"
 | Zero or more    | `*`         |
 | Optional        | `?`         |
 | Group           | `(...)`     |
-| Alternation     | `           |` |
+| Alternation     | `\|`        |
 
 ### Common Patterns
 

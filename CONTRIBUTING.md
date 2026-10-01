@@ -15,7 +15,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ```bash
 # 1. Fork & clone
-git clone https://github.com/YOUR-USERNAME/regex-parser.git
+git clone https://github.com/YOUR-USERNAME/php-regex.git
 cd php-regex
 
 # 2. Set up environment
@@ -141,7 +141,6 @@ GitHub pre-release.
 ## 🎉 Recognition
 
 Contributors will be:
-- Listed in the project's CONTRIBUTORS file
 - Mentioned in release notes
 
 **Thank you for contributing to PHPRegex and helping make regex parsing better for everyone!** 🚀✨

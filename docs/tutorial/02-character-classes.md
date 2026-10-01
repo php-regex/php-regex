@@ -59,13 +59,13 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/[aeiou]/');
-# Output: "Any one character in: a, e, i, o, u"
+// Output: "Any one character in: a, e, i, o, u"
 
 echo $regex->explain('/[0-9]/');
-# Output: "Any digit from 0 to 9"
+// Output: "Any digit from 0 to 9"
 
 echo $regex->explain('/[a-zA-Z]/');
-# Output: "Any letter from a-z or A-Z"
+// Output: "Any letter from a-z or A-Z"
 ```
 
 ---
@@ -95,7 +95,7 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/[^0-9]/');
-# Output: "Any character that is NOT a digit from 0 to 9"
+// Output: "Any character that is NOT a digit from 0 to 9"
 ```
 
 ---
@@ -135,13 +135,13 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/\d+/');
-# Output: "One or more digits"
+// Output: "One or more digits"
 
 echo $regex->explain('/\w+/');
-# Output: "One or more word characters (letters, digits, underscore)"
+// Output: "One or more word characters (letters, digits, underscore)"
 
 echo $regex->explain('/\s+/');
-# Output: "One or more whitespace characters"
+// Output: "One or more whitespace characters"
 ```
 
 ---
@@ -167,7 +167,7 @@ preg_match('/\p{Emoji}/u', 'Hello 👋');  // Match: yes ('👋')
 |----------|-----------------------|---------------------|
 | `\p{L}`  | Any letter            | `a`, `Z`, `ç`, `Ω`  |
 | `\p{N}`  | Any number            | `1`, `５`, `Ⅶ`       |
-| `\{P}`   | Any punctuation       | `!`, `,`, `。`       |
+| `\p{P}`  | Any punctuation       | `!`, `,`, `。`       |
 | `\p{S}`  | Any symbol            | `$`, `€`, `©`       |
 | `\p{Z}`  | Any separator         | space, tab, newline |
 | `\p{C}`  | Any control character | NULL, BELL          |
@@ -180,7 +180,7 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/^\p{L}+$/u');
-# Output: "Start of string, one or more Unicode letters, end of string"
+// Output: "Start of string, one or more Unicode letters, end of string"
 ```
 
 ---
@@ -281,7 +281,7 @@ $tests = [
 
 foreach ($tests as $pattern => $description) {
     $result = $regex->validate($pattern);
-    echo "$pattern: " . ($result->isValid() ? "Valid" : "Invalid") . " - $description\n";
+    echo "$pattern: " . ($result->isValid ? "Valid" : "Invalid") . " - $description\n";
 }
 ```
 

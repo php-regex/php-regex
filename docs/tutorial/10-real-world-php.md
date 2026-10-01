@@ -7,11 +7,11 @@
 ## Why Real-World Patterns Are Different
 
 Tutorial patterns are simple. Production patterns must:
-- Yes Validate user input
-- Yes Handle edge cases
-- Yes Be secure (no ReDoS)
-- Yes Be maintainable
-- Yes Be documented
+- Validate user input
+- Handle edge cases
+- Be secure (no ReDoS)
+- Be maintainable
+- Be documented
 
 This chapter shows **battle-tested patterns** with explanations.
 
@@ -57,8 +57,8 @@ $regex = Regex::create();
 
 // Validate
 $result = $regex->validate($pattern);
-if (!$result->isValid()) {
-    echo "Invalid email: " . $result->getErrorMessage();
+if (!$result->isValid) {
+    echo "Invalid email: " . $result->error;
     return;
 }
 
@@ -224,7 +224,7 @@ End of string
 ### Usage
 
 ```php
-$logLine = '2024-01-15 10:30:45 User logged in successfully';
+$logLine = 'INFO 2024-01-15 10:30:45 User logged in successfully';
 
 preg_match($pattern, $logLine, $matches);
 
@@ -305,7 +305,7 @@ if (preg_match($pattern, $password)) {
 | Use Case | Pattern                                                                                                           | Anchored          | ReDoS Safe | Named Groups |
 |----------|-------------------------------------------------------------------------------------------------------------------|-------------------|------------|--------------|
 | Email    | `/^[a-z0-9]+(?:[._%+-][a-z0-9]+)*+@[a-z0-9-]+(?:\.[a-z0-9-]+)*+$/i`                                               | Yes                 | Yes          | No            |
-| Date     | `/^\d{4}-(?:0[1-9]                                                                                                | 1[0-2])-(?:0[1-9] | [12]\d     | 3[01])$/`    | Yes | Yes | No |
+| Date     | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12]\d\|3[01])$/`                                                          | Yes                 | Yes          | No            |
 | URL      | `/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/` | Yes                 | Yes          | No            |
 | Phone    | `/^\+?1?\s*\(?[0-9]{3}\)?\s*-?[0-9]{3}\s*-?[0-9]{4}$/`                                                            | Yes                 | Yes          | No            |
 | Password | `/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/`                                          | Yes                 | Yes          | No            |
@@ -325,12 +325,13 @@ Create a pattern to validate a **GitHub username**:
 ### Solution
 
 ```php
-$pattern = '/^[a-zA-Z][a-zA-Z0-9-]{0,38}[a-zA-Z0-9]$/';
+$pattern = '/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/';
 
 // Explanation
 // ^                Start of string
-// [a-zA-Z]        Must start with letter
-// [a-zA-Z0-9-]{0,38} Middle: 0-38 chars
+// [a-zA-Z0-9]     Must start with letter or number
+// (?:...)?        Optional tail (allows a single character)
+// [a-zA-Z0-9-]{0,37} Middle: 0-37 chars
 // [a-zA-Z0-9]     Must end with letter or number
 // $                End of string
 
@@ -355,7 +356,7 @@ echo $regex->explain($pattern);
 
 Tutorial summary:
 
-1. Yes Basics - Your first patterns
+1. Basics - Your first patterns
 2. Character Classes - Matching sets
 3. Anchors - Controlling position
 4. Quantifiers - Controlling repetition

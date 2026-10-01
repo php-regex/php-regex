@@ -264,7 +264,7 @@ $patterns = [
 
 foreach ($patterns as $pattern) {
     $result = $regex->validate($pattern);
-    echo "$pattern: " . ($result->isValid() ? "Valid" : "Invalid") . "\n";
+    echo "$pattern: " . ($result->isValid ? "Valid" : "Invalid") . "\n";
     echo "  Explanation: " . $regex->explain($pattern) . "\n\n";
 }
 ```
@@ -311,11 +311,13 @@ preg_match('/line2\z/m', $text); // Match: no (line2 is not at end)
 ### Error: Word Boundary Confusion
 
 ```php
-// \b at start and end of underscores
-preg_match('/\b_\w+_\b/', '_hello_');  // Match: no (_ is part of \w)
+// Underscore IS a word character, and the string edge next to a
+// word character counts as a boundary: the whole "_hello_" matches
+preg_match('/\b_\w+_\b/', '_hello_');  // Match: yes (the whole "_hello_")
 
-// Underscores are word characters!
-preg_match('/__\w+__/', '__hello__');  // Match: yes
+// The flip side: \b cannot split "_" from "h", because no boundary
+// exists between two word characters
+preg_match('/\bhello\b/', '_hello_');  // Match: no (no boundary beside "hello")
 ```
 
 ---

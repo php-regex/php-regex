@@ -13,9 +13,9 @@ This cookbook collects patterns for common validation and parsing tasks. Each pa
 | `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` | Email (basic) |
 | `/^\d{4}-\d{2}-\d{2}$/` | ISO Date |
 | `/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i` | UUID v4 |
-| `/^(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/` | IPv4 |
+| `/^(?:25[0-5]\|2[0-4]\d\|[01]?\d\d?)(?:\.(?:25[0-5]\|2[0-4]\d\|[01]?\d\d?)){3}$/` | IPv4 |
 | `/^[a-z0-9-]+$/` | URL Slug |
-| `/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i` | Hex Color |
+| `/^#(?:[0-9a-f]{3}\|[0-9a-f]{6})$/i` | Hex Color |
 
 ## How to Use This Cookbook
 
@@ -90,7 +90,7 @@ $pattern = '/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a
 
 $regex = Regex::create();
 $result = $regex->validate($pattern);
-echo $result->isValid() ? 'Valid pattern' : 'Invalid pattern';
+echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';
 
 $isMatch = preg_match($pattern, $email) === 1;
 echo $isMatch ? 'Matches' : 'Does not match';
@@ -142,7 +142,7 @@ $pattern = '/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\/[^\s]*)?$/i';
 
 $regex = Regex::create();
 $result = $regex->validate($pattern);
-echo $result->isValid() ? 'Valid pattern' : 'Invalid pattern';
+echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';
 
 $isMatch = preg_match($pattern, $url) === 1;
 echo $isMatch ? 'Matches' : 'Does not match';
@@ -371,7 +371,7 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 | System  | Pattern                      | Max Length       |
 |---------|------------------------------|------------------|
 | Linux   | `/^[a-z_][a-z0-9_-]*$/i`     | 32               |
-| GitHub  | `/^[a-zA-Z0-9](?:[a-zA-Z0-9] | -(?!-)){0,38}$/` | 39 |
+| GitHub  | `/^[a-zA-Z0-9](?:[a-zA-Z0-9]\|-(?!-)){0,38}$/` | 39 |
 | Twitter | `/^[a-zA-Z0-9_]{1,15}$/`     | 15               |
 
 ---
@@ -466,7 +466,7 @@ Phone number validation is complex due to varying international formats. Conside
 | Visa       | `/^4[0-9]{12}(?:[0-9]{3})?$/` |
 | Mastercard | `/^5[1-5][0-9]{14}$/`         |
 | Amex       | `/^3[47][0-9]{13}$/`          |
-| Discover   | `/^6(?:011                    |5[0-9]{2})[0-9]{12}$/` |
+| Discover   | `/^6(?:011\|5[0-9]{2})[0-9]{12}$/` |
 
 ### What It Matches
 
@@ -578,7 +578,7 @@ if ($analysis->severity->value !== 'safe') {
 
 // Step 2: Validate the pattern itself
 $result = $regex->validate($pattern);
-if (!$result->isValid()) {
+if (!$result->isValid) {
     throw new \InvalidArgumentException('Invalid pattern');
 }
 

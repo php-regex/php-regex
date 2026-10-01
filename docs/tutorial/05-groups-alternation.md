@@ -125,7 +125,7 @@ echo $m['day'];    // "15"
 
 ```php
 // Group without capturing
-preg_match('/(?:get|post|put|delete) \/api/', 'POST /api', $m);
+preg_match('/(?:get|post|put|delete) \/api/i', 'POST /api', $m);
 echo $m[0];  // "POST /api" (full match)
 // No captured group for HTTP method!
 ```
@@ -247,9 +247,9 @@ echo "With grouping: " . $m[0] . "\n";     // "foobar"
 ### Error: Forgetting Grouping with Alternation
 
 ```php
-// Wrong: Matches "html" or "css/api"
-preg_match('/html|css\/api/', 'css/api', $m);
-echo $m[0];  // "css" (first alternative!)
+// Wrong: "html" matches on its own, without the "/api" part
+preg_match('/html|css\/api/', 'html/api', $m);
+echo $m[0];  // "html" (left alternative wins, "/api" never checked)
 
 // Correct: Group the alternatives
 preg_match('/(?:html|css)\/api/', 'css/api', $m);

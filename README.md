@@ -45,7 +45,7 @@ If you are new to regex, start with the [Regex Tutorial](docs/tutorial/README.md
 # Install the library
 composer require php-regex/regex-toolkit
 
-# Install the command line tool, and try it
+# Install the command-line tool, and try it
 composer require --dev php-regex/regex-cli
 vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 ```

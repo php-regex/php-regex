@@ -205,7 +205,7 @@ if ($openParens !== $closeParens) {
 
 1. Check for catastrophic backtracking:
 ```bash
-bin/regex analyze '/(a+)+$/' --mode=confirmed
+bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 
 # If confirmed mode takes > 10ms per test,
 # you likely have a ReDoS issue
@@ -213,7 +213,7 @@ bin/regex analyze '/(a+)+$/' --mode=confirmed
 
 2. Check for unnecessary backtracking:
 ```bash
-bin/regex debug '/.*a.*b.*a.*/' --heatmap
+bin/regex debug '/.*a.*b.*a.*/'
 
 # Heatmap will show where backtracking occurs
 ```
@@ -468,7 +468,7 @@ https://stackoverflow.com/questions/tagged/regexparser
 - [API Reference](reference.md)
 - [ReDoS Guide](REDOS_GUIDE.md)
 - [Architecture Documentation](ARCHITECTURE.md)
-- [Contributing Guide](CONTRIBUTING.md)
+- [Contributing Guide](../CONTRIBUTING.md)
 - [Upgrading to 2.0](../UPGRADE-2.0.md)
 
 ## Still Need Help?

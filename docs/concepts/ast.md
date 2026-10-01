@@ -7,7 +7,7 @@
 Imagine you have a regex pattern like `/^hello\d+$/`. To a computer, this is just a string. But to understand what it means, we need to break it down:
 
 ```
-String: "/^hello\d+$"
+String: "/^hello\d+$/"
 
 AST structure:
 RegexNode
@@ -65,8 +65,8 @@ Use the CLI to see the AST structure:
 # Show AST diagram
 bin/regex diagram '/^hello\d+$/'
 
-# Parse and analyze
-bin/regex parse '/^hello\d+$/' --ast
+# Parse and recompile
+bin/regex parse '/^hello\d+$/'
 ```
 
 ## Real-world benefits

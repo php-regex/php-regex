@@ -57,8 +57,8 @@ PHPRegex analyzes the AST without executing the pattern:
 # Check a single pattern
 bin/regex analyze '/(a+)+$/'
 
-# Lint your entire codebase
-bin/regex lint src/ --redos-only
+# Scan your entire codebase for ReDoS risk
+bin/regex lint src/ --redos --no-lint --no-optimize
 ```
 
 ### PHP API

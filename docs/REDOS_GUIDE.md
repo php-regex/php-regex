@@ -39,7 +39,7 @@ ReDoS analysis defaults to **theoretical** mode. You can opt into **confirmed** 
 Example CLI:
 
 ```bash
-bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
+vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 ```
 
 Example PHP:
@@ -121,10 +121,10 @@ Key heuristics in `RedosProfiler` include:
 
 ```bash
 # Theoretical mode (default)
-bin/regex analyze '/(a+)+$/'
+vendor/bin/regex analyze '/(a+)+$/'
 
 # Confirmed mode (bounded evidence)
-bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
+vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 ```
 
 ### PHP

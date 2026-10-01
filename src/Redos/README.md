@@ -1,8 +1,8 @@
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.png?v=2">
-        <source media="(prefers-color-scheme: light)" srcset="art/banner.png?v=2">
-        <img src="art/banner.png?v=2" alt="PHPRegex Redos" width="100%">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.png?v=3">
+        <img src="art/banner.png?v=3" alt="PHPRegex ReDoS" width="100%">
     </picture>
 </p>
 
@@ -41,14 +41,18 @@ patterns skipped by value, with or without their delimiters) and `threshold`
 (`RedosSeverity::High`, the lowest severity that triggers a confirmation run).
 
 `RedosOptions` is the budget of the backtracking model, counted in states and
-steps, never in time — the same pattern gets the same verdict on every machine.
-`ConfirmationOptions` drives the runtime probe:
+steps, never in time — the same pattern gets the same verdict on every machine:
 
 | Option | Default | Role |
 | --- | --- | --- |
 | `maxStates` | `2000` | states the pattern's automata may hold |
 | `maxSteps` | `250_000` | states created and product pairs visited |
-| `boundedRepeatCutoff` | `16` | largest bounded-repeat maximum unrolled; past it, `{m,n}` is analysed as `{m,}` |
+| `boundedRepeatCutoff` | `16` | largest bounded-repeat maximum unrolled; past it, `{m,n}` is analyzed as `{m,}` |
+
+`ConfirmationOptions` drives the runtime probe:
+
+| Option | Default | Role |
+| --- | --- | --- |
 | `minInputLength`, `maxInputLength`, `steps` | `16`, `128`, `3` | subject lengths probed, doubling up to the maximum |
 | `iterations`, `timeoutMs` | `3`, `50.0` | runs per length, and the average duration that stops one |
 | `backtrackLimit`, `recursionLimit` | `100_000`, `10_000` | engine limits during the probe |

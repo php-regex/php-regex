@@ -16,7 +16,7 @@ Legend:
 | Character class ranges (`a-z`)                | Yes    | Yes              | Yes   | Yes             |
 | Class ops (`&&`, `--`)                        | Yes    | Partial          | Partial | Yes           |
 | Dot (`.`)                                     | Yes    | Yes              | Yes   | Yes             |
-| Alternation (`|`)                             | Yes    | Yes              | Yes   | Yes             |
+| Alternation (`\|`)                            | Yes    | Yes              | Yes   | Yes             |
 | Quantifiers (`* + ? {m,n}`)                   | Yes    | Yes              | Yes   | Yes             |
 | Lazy / possessive quantifiers                 | Yes    | Partial          | Partial | Yes           |
 | Capturing groups                              | Yes    | Yes              | Yes   | Yes             |

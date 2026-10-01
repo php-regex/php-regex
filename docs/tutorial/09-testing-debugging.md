@@ -57,8 +57,8 @@ $regex = Regex::create();
 
 $result = $regex->validate('/(?<=a+)b/');
 
-if (!$result->isValid()) {
-    echo "Error: " . $result->getErrorMessage() . "\n";
+if (!$result->isValid) {
+    echo "Error: " . $result->error . "\n";
     echo "Hint: " . $result->getHint() . "\n";
     echo "Snippet:\n" . $result->getCaretSnippet() . "\n";
 }
@@ -239,7 +239,7 @@ $analysis = $regex->redos($pattern);
 echo "Severity: " . $analysis->severity->value . "\n";
 // Output: "critical" (structural severity)
 
-echo "Suggestion (verify behavior): " . $analysis->getRecommendations()[0] . "\n";
+echo "Suggestion (verify behavior): " . $analysis->recommendations[0] . "\n";
 ```
 
 **Fix:**
@@ -255,7 +255,7 @@ $pattern = '/(?<=a+)b/';
 
 $result = $regex->validate($pattern);
 
-echo $result->getErrorMessage() . "\n";
+echo $result->error . "\n";
 echo $result->getHint() . "\n";
 ```
 
@@ -304,7 +304,7 @@ echo $regex->explain($pattern) . "\n\n";
 // 2. Validate syntax
 echo "=== Syntax Validation ===\n";
 $result = $regex->validate($pattern);
-echo $result->isValid() ? "Valid\n\n" : "Invalid: " . $result->getErrorMessage() . "\n\n";
+echo $result->isValid ? "Valid\n\n" : "Invalid: " . $result->error . "\n\n";
 
 // 3. Check for ReDoS
 echo "=== ReDoS Analysis ===\n";

@@ -19,8 +19,12 @@ Start here:
 
 - [CLI Guide](guides/cli.md) - Command reference.
 - [LSP Integration](guides/lsp.md) - IDE integration via Language Server Protocol.
+- [PHPStan Guide](guides/phpstan.md) - Regex checks in static analysis.
+- [Laravel Guide](guides/laravel.md) - Service, facade, and artisan commands.
+- [Symfony Guide](guides/symfony.md) - Bundle, service, and console commands.
 - [Cookbook](COOKBOOK.md) - Practical patterns and examples.
 - [ReDoS Guide](REDOS_GUIDE.md) - Security and performance guidance.
+- [Troubleshooting](TROUBLESHOOTING.md) - Common errors and how to fix them.
 
 ### For developers and contributors
 
@@ -56,8 +60,8 @@ Every example in these docs uses PHPRegex as the reference implementation.
 
 - Always include delimiters and flags: `/pattern/flags` (for example, `/hello/i`).
 - Build patterns step by step, then add constraints.
-- Validate early: `bin/regex validate` catches errors quickly.
-- Explain patterns with `bin/regex explain` when reviewing code.
+- Validate early: `vendor/bin/regex validate` catches errors quickly.
+- Explain patterns with `vendor/bin/regex explain` when reviewing code.
 
 ## Getting help
 

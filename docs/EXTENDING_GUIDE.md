@@ -339,8 +339,8 @@ class CalloutNodeTest extends TestCase
 
 Add your new feature to:
 
-1. **[AST Nodes](../nodes/README.md)** - Document the node
-2. **[Visitor Reference](../visitors/README.md)** - Document the visitor method
+1. **[AST Nodes](nodes/README.md)** - Document the node
+2. **[Visitor Reference](visitors/README.md)** - Document the visitor method
 3. **Tutorial** - Add examples if it's a user-facing feature
 4. **README** - Update feature list
 
@@ -449,9 +449,9 @@ Verify parser logic:
 
 ## Learning Resources
 
-- **[AST Nodes](../nodes/README.md)** - Node reference
-- **[Visitors](../visitors/README.md)** - Visitor patterns
-- **[AST Traversal](../design/AST_TRAVERSAL.md)** - Traversal design
+- **[AST Nodes](nodes/README.md)** - Node reference
+- **[Visitors](visitors/README.md)** - Visitor patterns
+- **[AST Traversal](design/AST_TRAVERSAL.md)** - Traversal design
 - **Source code** - Learn from existing implementations
 
 ---
@@ -470,4 +470,4 @@ End of extending guide.
 
 ---
 
-Previous: [Architecture](../ARCHITECTURE.md) | Next: [Maintainers Guide](MAINTAINERS_GUIDE.md)
+Previous: [Architecture](ARCHITECTURE.md) | Next: [Maintainers Guide](MAINTAINERS_GUIDE.md)

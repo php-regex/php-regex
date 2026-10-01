@@ -61,11 +61,11 @@ echo $matches['content']; // "hello"
 
 Subroutines let you **reuse a group's pattern** without capturing:
 
-### Numbered Subroutine `\1`, `\2`, ...
+### Numbered Subroutine `(?1)`, `(?2)`, ...
 
 ```php
 // Match balanced parentheses
-$pattern = '/\((?:[^()]|(?1))*\)/';
+$pattern = '/(\((?:[^()]|(?1))*\))/';
 preg_match($pattern, '(a(b)c)', $matches);
 echo $matches[0];  // "(a(b)c)"
 ```
@@ -74,8 +74,7 @@ echo $matches[0];  // "(a(b)c)"
 
 ```php
 // Match balanced brackets with named subroutine
-$pattern = '/\[(?:[^\[\]]|(?&brackets))*\]/';
-$pattern .= '(?(DEFINE)(?<brackets>\[(?:[^\[\]]|(?&brackets))*\]))/';
+$pattern = '/(?(DEFINE)(?<brackets>\[(?:[^\[\]]|(?&brackets))*\]))(?&brackets)/';
 
 preg_match($pattern, '[a[b]c]', $matches);
 echo $matches[0];  // "[a[b]c]"
@@ -116,7 +115,7 @@ Text: `"(a(b)c)"`
 
 ```php
 // If group 1 matched, require 'X', else require 'Y'
-$pattern = '/(a)?(?(1)b|c)/';
+$pattern = '/^(a)?(?(1)b|c)/';
 
 preg_match($pattern, 'ab', $matches);  // Match: yes (group 1=a, so 'b')
 preg_match($pattern, 'c', $matches);   // Match: yes (no group 1, so 'c')
@@ -144,7 +143,7 @@ preg_match($pattern, 'c', $matches);   // Match: yes
 $pattern = '/\b(?<word>\w+)\s+\k<word>\b/i';
 
 preg_match_all($pattern, 'the the quick brown fox ran run', $matches);
-// $matches[0] = ["the the", "ran run"]
+// $matches[0] = ["the the"]
 ```
 
 ### 2. Match HTML Tags
