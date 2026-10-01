@@ -40,6 +40,8 @@ parameters:
         # Laravel bridge - requires illuminate/* packages which are optional
         - src/Laravel/*
         - tests/Integration/Bridge/Laravel/*
+        # The Rector set is read by Rector, whose classes live in its own vendor
+        - src/Toolkit/Resources/rector/*
 
 
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'

@@ -5,6 +5,422 @@
 upgrade notes; this guide covers moving from 1.3 to 2.0. For every change, see
 [CHANGELOG.md](CHANGELOG.md).
 
+### Names
+
+Every class moved from `RegexParser\` to `PhpRegex\`, under the package it
+ships in, and many took a name that says what they are. Enum cases are in
+PascalCase, and a few methods are renamed. The sections after this one name
+classes as 1.3 did; the tables at the end of this one give each 2.0 name.
+
+A Rector set makes these changes in your code. Add it to your `rector.php`
+and run Rector once:
+
+```php
+$rectorConfig->sets([__DIR__.'/vendor/php-regex/toolkit/Resources/rector/upgrade-2.0.php']);
+```
+
+It renames classes, enum cases and the renamed methods. It does not change
+what the tables mark as removed, the configuration keys below, the error codes
+(see "Error codes are an `ErrorCode` enum") or the offsets (see "Every offset
+counts from the pattern body").
+
+The configuration takes the PhpRegex name:
+
+| 1.3 | 2.0 |
+|---|---|
+| Symfony: `RegexParserBundle`, configured under `regex_parser:` | `PhpRegex\Symfony\PhpRegexBundle`, configured under `php_regex:` |
+| Symfony: services and parameters `regex_parser.*` | `php_regex.*` |
+| PHPStan: parameter `regexParser` | `phpRegex` |
+| PHPStan: rule `RegexParserRule` | `PhpRegex\PHPStan\RegexPatternRule` |
+| Laravel: `RegexParserServiceProvider` | `PhpRegex\Laravel\PhpRegexServiceProvider` |
+| Laravel: `config/regex-parser.php`, key `regex-parser` | `config/php-regex.php`, key `php-regex` |
+| Laravel: publish tag `regex-parser-config` | `php-regex-config` |
+| Laravel: container entries `regex-parser.*` | `php-regex.*` |
+
+Laravel loads a `config/regex-parser.php` left from 1.3 but nothing reads it;
+the provider raises a deprecation while it is there. Publish the new file,
+move your settings to it, and delete the old one.
+
+<!-- upgrade-map:start (php tests/Tools/write_upgrade_map.php) -->
+
+| 1.3 | 2.0 |
+|---|---|
+| `RegexParser\AnalysisReport` | `PhpRegex\Toolkit\AnalysisReport` |
+| `RegexParser\Automata\Alphabet\CharSet` | `PhpRegex\Automata\Alphabet\CharSet` |
+| `RegexParser\Automata\Api\RegexLanguageSolver` | `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\AstToNfaTransformer` | `PhpRegex\Automata\Transform\AstToNfaTransformer` |
+| `RegexParser\Automata\AstToNfaTransformerInterface` | `PhpRegex\Automata\Transform\AstToNfaTransformerInterface` |
+| `RegexParser\Automata\Builder\DfaBuilder` | `PhpRegex\Automata\Builder\DfaBuilder` |
+| `RegexParser\Automata\Builder\NfaBuilder` | `PhpRegex\Automata\Builder\NfaBuilder` |
+| `RegexParser\Automata\CharSet` | `PhpRegex\Automata\Alphabet\CharSet` |
+| `RegexParser\Automata\Determinization\DeterminizationAlgorithm` | `PhpRegex\Automata\Determinization\DeterminizationAlgorithm` |
+| `RegexParser\Automata\Determinization\DeterminizationAlgorithmFactory` | `PhpRegex\Automata\Determinization\DeterminizationAlgorithmFactory` |
+| `RegexParser\Automata\Determinization\DeterminizationAlgorithmInterface` | `PhpRegex\Automata\Determinization\DeterminizationAlgorithmInterface` |
+| `RegexParser\Automata\Determinization\SubsetConstruction` | `PhpRegex\Automata\Determinization\SubsetConstruction` |
+| `RegexParser\Automata\Determinization\SubsetConstructionIndexed` | `PhpRegex\Automata\Determinization\SubsetConstructionIndexed` |
+| `RegexParser\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface` | `PhpRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface` |
+| `RegexParser\Automata\Dfa` | `PhpRegex\Automata\Model\Dfa` |
+| `RegexParser\Automata\DfaBuilder` | `PhpRegex\Automata\Builder\DfaBuilder` |
+| `RegexParser\Automata\DfaMinimizer` | `PhpRegex\Automata\Minimization\DfaMinimizer` |
+| `RegexParser\Automata\DfaState` | `PhpRegex\Automata\Model\DfaState` |
+| `RegexParser\Automata\EquivalenceResult` | `PhpRegex\Automata\Solver\EquivalenceResult` |
+| `RegexParser\Automata\HopcroftWorklist` | `PhpRegex\Automata\Minimization\HopcroftWorklist` |
+| `RegexParser\Automata\IntersectionResult` | `PhpRegex\Automata\Solver\IntersectionResult` |
+| `RegexParser\Automata\MatchMode` | `PhpRegex\Automata\Options\MatchMode` |
+| `RegexParser\Automata\MinimizationAlgorithm` | `PhpRegex\Automata\Minimization\MinimizationAlgorithm` |
+| `RegexParser\Automata\MinimizationAlgorithmFactory` | `PhpRegex\Automata\Minimization\MinimizationAlgorithmFactory` |
+| `RegexParser\Automata\MinimizationAlgorithmInterface` | `PhpRegex\Automata\Minimization\MinimizationAlgorithmInterface` |
+| `RegexParser\Automata\Minimization\DfaMinimizer` | `PhpRegex\Automata\Minimization\DfaMinimizer` |
+| `RegexParser\Automata\Minimization\HopcroftWorklist` | `PhpRegex\Automata\Minimization\HopcroftWorklist` |
+| `RegexParser\Automata\Minimization\MinimizationAlgorithm` | `PhpRegex\Automata\Minimization\MinimizationAlgorithm` |
+| `RegexParser\Automata\Minimization\MinimizationAlgorithmFactory` | `PhpRegex\Automata\Minimization\MinimizationAlgorithmFactory` |
+| `RegexParser\Automata\Minimization\MinimizationAlgorithmInterface` | `PhpRegex\Automata\Minimization\MinimizationAlgorithmInterface` |
+| `RegexParser\Automata\Minimization\MoorePartitionRefinement` | `PhpRegex\Automata\Minimization\MoorePartitionRefinement` |
+| `RegexParser\Automata\Minimization\WorkBudgetAwareMinimizationAlgorithmInterface` | `PhpRegex\Automata\Minimization\WorkBudgetAwareMinimizationAlgorithmInterface` |
+| `RegexParser\Automata\Model\Dfa` | `PhpRegex\Automata\Model\Dfa` |
+| `RegexParser\Automata\Model\DfaState` | `PhpRegex\Automata\Model\DfaState` |
+| `RegexParser\Automata\Model\Nfa` | `PhpRegex\Automata\Model\Nfa` |
+| `RegexParser\Automata\Model\NfaFragment` | `PhpRegex\Automata\Model\NfaFragment` |
+| `RegexParser\Automata\Model\NfaState` | `PhpRegex\Automata\Model\NfaState` |
+| `RegexParser\Automata\Model\NfaTransition` | `PhpRegex\Automata\Model\NfaTransition` |
+| `RegexParser\Automata\MoorePartitionRefinement` | `PhpRegex\Automata\Minimization\MoorePartitionRefinement` |
+| `RegexParser\Automata\Nfa` | `PhpRegex\Automata\Model\Nfa` |
+| `RegexParser\Automata\NfaBuilder` | `PhpRegex\Automata\Builder\NfaBuilder` |
+| `RegexParser\Automata\NfaFragment` | `PhpRegex\Automata\Model\NfaFragment` |
+| `RegexParser\Automata\NfaState` | `PhpRegex\Automata\Model\NfaState` |
+| `RegexParser\Automata\NfaTransition` | `PhpRegex\Automata\Model\NfaTransition` |
+| `RegexParser\Automata\Options\MatchMode` | `PhpRegex\Automata\Options\MatchMode` |
+| `RegexParser\Automata\Options\SolverOptions` | `PhpRegex\Automata\Options\SolverOptions` |
+| `RegexParser\Automata\RegexSolver` | `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\RegularSubsetValidator` | `PhpRegex\Automata\Transform\RegularSubsetValidator` |
+| `RegexParser\Automata\SolverOptions` | `PhpRegex\Automata\Options\SolverOptions` |
+| `RegexParser\Automata\Solver\DfaCacheInterface` | `PhpRegex\Automata\Solver\DfaCacheInterface` |
+| `RegexParser\Automata\Solver\EquivalenceResult` | `PhpRegex\Automata\Solver\EquivalenceResult` |
+| `RegexParser\Automata\Solver\InMemoryDfaCache` | `PhpRegex\Automata\Solver\InMemoryDfaCache` |
+| `RegexParser\Automata\Solver\IntersectionResult` | `PhpRegex\Automata\Solver\IntersectionResult` |
+| `RegexParser\Automata\Solver\RegexSolver` | `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\Solver\SubsetResult` | `PhpRegex\Automata\Solver\SubsetResult` |
+| `RegexParser\Automata\SubsetResult` | `PhpRegex\Automata\Solver\SubsetResult` |
+| `RegexParser\Automata\Support\WorkBudget` | `PhpRegex\Automata\Support\WorkBudget` |
+| `RegexParser\Automata\Transform\AstToNfaTransformer` | `PhpRegex\Automata\Transform\AstToNfaTransformer` |
+| `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | `PhpRegex\Automata\Transform\AstToNfaTransformerInterface` |
+| `RegexParser\Automata\Transform\RegularSubsetValidator` | `PhpRegex\Automata\Transform\RegularSubsetValidator` |
+| `RegexParser\Automata\Unicode\CodePointHelper` | `PhpRegex\Automata\Unicode\CodePointHelper` |
+| `RegexParser\Bridge\PHPStan\RegexParserRule` | `PhpRegex\PHPStan\RegexPatternRule` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalysisContext` | `PhpRegex\Symfony\Analyzer\AnalysisContext` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalysisIssue` | `PhpRegex\Symfony\Analyzer\AnalysisIssue` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalysisNotice` | `PhpRegex\Symfony\Analyzer\AnalysisNotice` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalysisReport` | `PhpRegex\Symfony\Analyzer\SecurityReport` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalyzerInterface` | `PhpRegex\Symfony\Analyzer\AnalyzerInterface` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry` | `PhpRegex\Symfony\Analyzer\AnalyzerRegistry` |
+| `RegexParser\Bridge\Symfony\Analyzer\Formatter\ConsoleReportFormatter` | `PhpRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter` |
+| `RegexParser\Bridge\Symfony\Analyzer\Formatter\JsonReportFormatter` | `PhpRegex\Symfony\Analyzer\Formatter\JsonReportFormatter` |
+| `RegexParser\Bridge\Symfony\Analyzer\IssueDetail` | `PhpRegex\Symfony\Analyzer\IssueDetail` |
+| `RegexParser\Bridge\Symfony\Analyzer\ReportSection` | `PhpRegex\Symfony\Analyzer\ReportSection` |
+| `RegexParser\Bridge\Symfony\Analyzer\RoutesAnalyzer` | `PhpRegex\Symfony\Analyzer\RoutesAnalyzer` |
+| `RegexParser\Bridge\Symfony\Analyzer\SecurityAnalyzer` | `PhpRegex\Symfony\Analyzer\SecurityAnalyzer` |
+| `RegexParser\Bridge\Symfony\Analyzer\Severity` | `PhpRegex\Symfony\Analyzer\CheckOutcome` |
+| `RegexParser\Bridge\Symfony\Command\CompareCommand` | `PhpRegex\Symfony\Command\CompareCommand` |
+| `RegexParser\Bridge\Symfony\Command\RegexAnalyzeCommand` | `PhpRegex\Symfony\Command\AnalyzeCommand` |
+| `RegexParser\Bridge\Symfony\Command\RegexLintCommand` | `PhpRegex\Symfony\Command\LintCommand` |
+| `RegexParser\Bridge\Symfony\Command\RegexRoutesCommand` | `PhpRegex\Symfony\Command\RoutesCommand` |
+| `RegexParser\Bridge\Symfony\Command\RegexSecurityCommand` | `PhpRegex\Symfony\Command\SecurityCommand` |
+| `RegexParser\Bridge\Symfony\Command\RegexTranspileCommand` | `PhpRegex\Symfony\Command\TranspileCommand` |
+| `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | `PhpRegex\Symfony\DependencyInjection\Configuration` |
+| `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | `PhpRegex\Symfony\DependencyInjection\PhpRegexExtension` |
+| `RegexParser\Bridge\Symfony\Extractor\RouteRegexPatternSource` | `PhpRegex\Symfony\Extractor\RoutePatternSource` |
+| `RegexParser\Bridge\Symfony\Extractor\ValidatorRegexPatternSource` | `PhpRegex\Symfony\Extractor\ValidatorPatternSource` |
+| `RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter` | `PhpRegex\Symfony\Output\SymfonyConsoleFormatter` |
+| `RegexParser\Bridge\Symfony\RegexParserBundle` | `PhpRegex\Symfony\PhpRegexBundle` |
+| `RegexParser\Bridge\Symfony\Routing\RouteConflictAnalyzer` | `PhpRegex\Symfony\Routing\RouteConflictAnalyzer` |
+| `RegexParser\Bridge\Symfony\Routing\RouteConflictReport` | `PhpRegex\Symfony\Routing\RouteConflictReport` |
+| `RegexParser\Bridge\Symfony\Routing\RouteConflictSuggestionBuilder` | `PhpRegex\Symfony\Routing\RouteConflictSuggestionBuilder` |
+| `RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver` | `PhpRegex\Symfony\Routing\RouteControllerFileResolver` |
+| `RegexParser\Bridge\Symfony\Routing\RouteRequirementNormalizer` | `PhpRegex\Symfony\Routing\RouteRequirementNormalizer` |
+| `RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer` | `PhpRegex\Symfony\Security\SecurityAccessControlAnalyzer` |
+| `RegexParser\Bridge\Symfony\Security\SecurityAccessControlReport` | `PhpRegex\Symfony\Security\SecurityAccessControlReport` |
+| `RegexParser\Bridge\Symfony\Security\SecurityAccessSuggestionBuilder` | `PhpRegex\Symfony\Security\SecurityAccessSuggestionBuilder` |
+| `RegexParser\Bridge\Symfony\Security\SecurityConfigExtractor` | `PhpRegex\Symfony\Security\SecurityConfigExtractor` |
+| `RegexParser\Bridge\Symfony\Security\SecurityConfigLocator` | `PhpRegex\Symfony\Security\SecurityConfigLocator` |
+| `RegexParser\Bridge\Symfony\Security\SecurityFirewallAnalyzer` | `PhpRegex\Symfony\Security\SecurityFirewallAnalyzer` |
+| `RegexParser\Bridge\Symfony\Security\SecurityFirewallReport` | `PhpRegex\Symfony\Security\SecurityFirewallReport` |
+| `RegexParser\Bridge\Symfony\Security\SecurityPatternNormalizer` | `PhpRegex\Symfony\Security\SecurityPatternNormalizer` |
+| `RegexParser\Cache\ArrayCache` | `PhpRegex\Parser\Cache\ArrayCache` |
+| `RegexParser\Cache\CacheInterface` | `PhpRegex\Parser\Cache\CacheInterface` |
+| `RegexParser\Cache\FilesystemCache` | `PhpRegex\Parser\Cache\FilesystemCache` |
+| `RegexParser\Cache\NullCache` | `PhpRegex\Parser\Cache\NullCache` |
+| `RegexParser\Cache\PsrCacheAdapter` | `PhpRegex\Parser\Cache\PsrCacheAdapter` |
+| `RegexParser\Cache\PsrSimpleCacheAdapter` | `PhpRegex\Parser\Cache\PsrSimpleCacheAdapter` |
+| `RegexParser\Cache\RemovableCacheInterface` | `PhpRegex\Parser\Cache\RemovableCacheInterface` |
+| `RegexParser\Cli\Application` | `PhpRegex\Cli\Application` |
+| `RegexParser\Cli\Command\AbstractCommand` | `PhpRegex\Cli\Command\AbstractCommand` |
+| `RegexParser\Cli\Command\AnalyzeCommand` | `PhpRegex\Cli\Command\AnalyzeCommand` |
+| `RegexParser\Cli\Command\ClearCacheCommand` | `PhpRegex\Cli\Command\ClearCacheCommand` |
+| `RegexParser\Cli\Command\CommandInterface` | `PhpRegex\Cli\Command\CommandInterface` |
+| `RegexParser\Cli\Command\CompareCommand` | `PhpRegex\Cli\Command\CompareCommand` |
+| `RegexParser\Cli\Command\DebugCommand` | `PhpRegex\Cli\Command\DebugCommand` |
+| `RegexParser\Cli\Command\DiagramCommand` | `PhpRegex\Cli\Command\DiagramCommand` |
+| `RegexParser\Cli\Command\ExplainCommand` | `PhpRegex\Cli\Command\ExplainCommand` |
+| `RegexParser\Cli\Command\GraphCommand` | `PhpRegex\Cli\Command\GraphCommand` |
+| `RegexParser\Cli\Command\HelpCommand` | `PhpRegex\Cli\Command\HelpCommand` |
+| `RegexParser\Cli\Command\HighlightCommand` | `PhpRegex\Cli\Command\HighlightCommand` |
+| `RegexParser\Cli\Command\ParseCommand` | `PhpRegex\Cli\Command\ParseCommand` |
+| `RegexParser\Cli\Command\RedosCommand` | `PhpRegex\Cli\Command\RedosCommand` |
+| `RegexParser\Cli\Command\SelfUpdateCommand` | `PhpRegex\Cli\Command\SelfUpdateCommand` |
+| `RegexParser\Cli\Command\TranspileCommand` | `PhpRegex\Cli\Command\TranspileCommand` |
+| `RegexParser\Cli\Command\ValidateCommand` | `PhpRegex\Cli\Command\ValidateCommand` |
+| `RegexParser\Cli\Command\VersionCommand` | `PhpRegex\Cli\Command\VersionCommand` |
+| `RegexParser\Cli\ConsoleStyle` | `PhpRegex\Cli\ConsoleStyle` |
+| `RegexParser\Cli\GlobalOptions` | `PhpRegex\Cli\GlobalOptions` |
+| `RegexParser\Cli\GlobalOptionsParser` | `PhpRegex\Cli\GlobalOptionsParser` |
+| `RegexParser\Cli\Graph\GraphGenerator` | `PhpRegex\Cli\Graph\GraphGenerator` |
+| `RegexParser\Cli\Graph\GraphvizDumper` | `PhpRegex\Cli\Graph\GraphvizDumper` |
+| `RegexParser\Cli\Graph\MermaidDumper` | `PhpRegex\Cli\Graph\MermaidDumper` |
+| `RegexParser\Cli\Input` | `PhpRegex\Cli\Input` |
+| `RegexParser\Cli\Output` | `PhpRegex\Cli\Output` |
+| `RegexParser\Cli\ParsedGlobalOptions` | `PhpRegex\Cli\ParsedGlobalOptions` |
+| `RegexParser\Cli\SelfUpdate\SelfUpdater` | `PhpRegex\Cli\SelfUpdate\SelfUpdater` |
+| `RegexParser\Exception\ComplexityException` | `PhpRegex\Automata\Exception\ComplexityException` |
+| `RegexParser\Exception\InvalidRegexOptionException` | `PhpRegex\Parser\Exception\InvalidRegexOptionException` |
+| `RegexParser\Exception\LexerException` | `PhpRegex\Parser\Exception\LexerException` |
+| `RegexParser\Exception\ParserException` | `PhpRegex\Parser\Exception\ParserException` |
+| `RegexParser\Exception\RecursionLimitException` | `PhpRegex\Parser\Exception\RecursionLimitException` |
+| `RegexParser\Exception\RegexException` | `PhpRegex\Parser\Exception\RegexException` |
+| `RegexParser\Exception\RegexParserExceptionInterface` | `PhpRegex\Parser\Exception\ExceptionInterface` |
+| `RegexParser\Exception\ResourceLimitException` | `PhpRegex\Parser\Exception\ResourceLimitException` |
+| `RegexParser\Exception\SemanticErrorException` | `PhpRegex\Parser\Exception\SemanticErrorException` |
+| `RegexParser\Exception\SyntaxErrorException` | `PhpRegex\Parser\Exception\SyntaxErrorException` |
+| `RegexParser\Exception\TranspileException` | `PhpRegex\Transpiler\TranspileException` |
+| `RegexParser\Exception\VisualContextTrait` | `PhpRegex\Parser\Exception\VisualContextTrait` |
+| `RegexParser\GroupNumbering` | `PhpRegex\Parser\Analysis\GroupNumbering` |
+| `RegexParser\GroupNumberingCollector` | `PhpRegex\Parser\Analysis\GroupNumberingCollector` |
+| `RegexParser\Internal\PatternParser` | `PhpRegex\Parser\Internal\PatternParser` |
+| `RegexParser\Lexer` | `PhpRegex\Parser\Lexer` |
+| `RegexParser\LintIssue` | `PhpRegex\Linter\Rule\RuleViolation` |
+| `RegexParser\Lint\Command\LintArgumentParser` | `PhpRegex\Linter\Config\LintArgumentParser` |
+| `RegexParser\Lint\Command\LintArguments` | `PhpRegex\Linter\Config\LintArguments` |
+| `RegexParser\Lint\Command\LintCommand` | `PhpRegex\Cli\Command\LintCommand` |
+| `RegexParser\Lint\Command\LintConfigLoader` | `PhpRegex\Linter\Config\LintConfigLoader` |
+| `RegexParser\Lint\Command\LintConfigResult` | `PhpRegex\Linter\Config\LintConfigResult` |
+| `RegexParser\Lint\Command\LintDefaultsBuilder` | `PhpRegex\Linter\Config\LintDefaultsBuilder` |
+| `RegexParser\Lint\Command\LintExtractorFactory` | `PhpRegex\Linter\Config\LintExtractorFactory` |
+| `RegexParser\Lint\Command\LintOutputRenderer` | `PhpRegex\Cli\Command\LintOutputRenderer` |
+| `RegexParser\Lint\Command\LintParseResult` | `PhpRegex\Linter\Config\LintParseResult` |
+| `RegexParser\Lint\ExtractorInterface` | `PhpRegex\Linter\Extraction\ExtractorInterface` |
+| `RegexParser\Lint\Formatter\AbstractOutputFormatter` | `PhpRegex\Linter\Formatter\AbstractOutputFormatter` |
+| `RegexParser\Lint\Formatter\CheckstyleFormatter` | `PhpRegex\Linter\Formatter\CheckstyleFormatter` |
+| `RegexParser\Lint\Formatter\ConsoleFormatter` | `PhpRegex\Linter\Formatter\ConsoleFormatter` |
+| `RegexParser\Lint\Formatter\FormatterRegistry` | `PhpRegex\Linter\Formatter\FormatterRegistry` |
+| `RegexParser\Lint\Formatter\GithubFormatter` | `PhpRegex\Linter\Formatter\GithubFormatter` |
+| `RegexParser\Lint\Formatter\JsonFormatter` | `PhpRegex\Linter\Formatter\JsonFormatter` |
+| `RegexParser\Lint\Formatter\JunitFormatter` | `PhpRegex\Linter\Formatter\JunitFormatter` |
+| `RegexParser\Lint\Formatter\LinkFormatter` | `PhpRegex\Linter\Formatter\LinkFormatter` |
+| `RegexParser\Lint\Formatter\OutputConfiguration` | `PhpRegex\Linter\Formatter\OutputConfiguration` |
+| `RegexParser\Lint\Formatter\OutputFormatterInterface` | `PhpRegex\Linter\Formatter\OutputFormatterInterface` |
+| `RegexParser\Lint\Formatter\RelativePathHelper` | `PhpRegex\Linter\Formatter\RelativePathHelper` |
+| `RegexParser\Lint\PhpRegexPatternSource` | `PhpRegex\Linter\Source\PhpFilePatternSource` |
+| `RegexParser\Lint\PhpStanExtractionStrategy` | `PhpRegex\Linter\Extraction\PhpParserExtractionStrategy` |
+| `RegexParser\Lint\RegexAnalysisService` | `PhpRegex\Linter\AnalysisService` |
+| `RegexParser\Lint\RegexLintReport` | `PhpRegex\Linter\LintReport` |
+| `RegexParser\Lint\RegexLintRequest` | `PhpRegex\Linter\LintRequest` |
+| `RegexParser\Lint\RegexLintService` | `PhpRegex\Linter\LintService` |
+| `RegexParser\Lint\RegexPatternExtractor` | `PhpRegex\Linter\PatternExtractor` |
+| `RegexParser\Lint\RegexPatternOccurrence` | `PhpRegex\Linter\PatternOccurrence` |
+| `RegexParser\Lint\RegexPatternSourceCollection` | `PhpRegex\Linter\Source\PatternSourceCollection` |
+| `RegexParser\Lint\RegexPatternSourceContext` | `PhpRegex\Linter\Source\PatternSourceContext` |
+| `RegexParser\Lint\RegexPatternSourceInterface` | `PhpRegex\Linter\Source\PatternSourceInterface` |
+| `RegexParser\Lint\TokenBasedExtractionStrategy` | `PhpRegex\Linter\Extraction\TokenBasedExtractionStrategy` |
+| `RegexParser\LiteralExtractionResult` | `PhpRegex\Parser\Analysis\LiteralExtractionResult` |
+| `RegexParser\LiteralSet` | `PhpRegex\Parser\Analysis\LiteralSet` |
+| `RegexParser\NodeVisitor\AbstractNodeVisitor` | `PhpRegex\Parser\AbstractNodeVisitor` |
+| `RegexParser\NodeVisitor\AsciiTreeVisitor` | `PhpRegex\Explain\AsciiTreeRenderer` |
+| `RegexParser\NodeVisitor\CompilerNodeVisitor` | `PhpRegex\Parser\Printer\PatternPrinter` |
+| `RegexParser\NodeVisitor\ComplexityScoreNodeVisitor` | `PhpRegex\Parser\Analysis\ComplexityScorer` |
+| `RegexParser\NodeVisitor\ConsoleHighlighterVisitor` | `PhpRegex\Explain\Highlighter\ConsoleHighlighter` |
+| `RegexParser\NodeVisitor\DumperNodeVisitor` | `PhpRegex\Parser\Printer\NodeDumper` |
+| `RegexParser\NodeVisitor\ExplainNodeVisitor` | `PhpRegex\Explain\TextExplainer` |
+| `RegexParser\NodeVisitor\HighlighterVisitor` | `PhpRegex\Explain\Highlighter\AbstractHighlighter` |
+| `RegexParser\NodeVisitor\HtmlExplainNodeVisitor` | `PhpRegex\Explain\HtmlExplainer` |
+| `RegexParser\NodeVisitor\HtmlHighlighterVisitor` | `PhpRegex\Explain\Highlighter\HtmlHighlighter` |
+| `RegexParser\NodeVisitor\LengthRangeNodeVisitor` | `PhpRegex\Parser\Analysis\LengthRangeCalculator` |
+| `RegexParser\NodeVisitor\LinterNodeVisitor` | `PhpRegex\Linter\PatternLinter` |
+| `RegexParser\NodeVisitor\LiteralExtractorNodeVisitor` | `PhpRegex\Parser\Analysis\LiteralExtractor` |
+| `RegexParser\NodeVisitor\MermaidNodeVisitor` | `PhpRegex\Explain\MermaidRenderer` |
+| `RegexParser\NodeVisitor\MetricsNodeVisitor` | `PhpRegex\Parser\Analysis\MetricsCollector` |
+| `RegexParser\NodeVisitor\ModernizerNodeVisitor` | `PhpRegex\Optimizer\Modernizer` |
+| `RegexParser\NodeVisitor\NodeVisitorInterface` | `PhpRegex\Parser\NodeVisitorInterface` |
+| `RegexParser\NodeVisitor\OptimizerNodeVisitor` | `PhpRegex\Optimizer\Rewriter` |
+| `RegexParser\NodeVisitor\RailroadSvgVisitor` | `PhpRegex\Explain\RailroadSvgRenderer` |
+| `RegexParser\NodeVisitor\ReDoSProfileNodeVisitor` | `PhpRegex\Redos\RedosProfiler` |
+| `RegexParser\NodeVisitor\SampleGeneratorNodeVisitor` | `PhpRegex\Generator\SampleGenerator` |
+| `RegexParser\NodeVisitor\TestCaseGeneratorNodeVisitor` | `PhpRegex\Generator\TestCaseGenerator` |
+| `RegexParser\NodeVisitor\ValidatorNodeVisitor` | `PhpRegex\Parser\Validation\Validator` |
+| `RegexParser\Node\AbstractNode` | `PhpRegex\Parser\Node\AbstractNode` |
+| `RegexParser\Node\AlternationNode` | `PhpRegex\Parser\Node\AlternationNode` |
+| `RegexParser\Node\AnchorNode` | `PhpRegex\Parser\Node\AnchorNode` |
+| `RegexParser\Node\AssertionNode` | `PhpRegex\Parser\Node\AssertionNode` |
+| `RegexParser\Node\BackrefNode` | `PhpRegex\Parser\Node\BackrefNode` |
+| `RegexParser\Node\CalloutNode` | `PhpRegex\Parser\Node\CalloutNode` |
+| `RegexParser\Node\CharClassNode` | `PhpRegex\Parser\Node\CharClassNode` |
+| `RegexParser\Node\CharLiteralNode` | `PhpRegex\Parser\Node\CharLiteralNode` |
+| `RegexParser\Node\CharLiteralType` | `PhpRegex\Parser\Node\CharLiteralType` |
+| `RegexParser\Node\CharTypeNode` | `PhpRegex\Parser\Node\CharTypeNode` |
+| `RegexParser\Node\CommentNode` | `PhpRegex\Parser\Node\CommentNode` |
+| `RegexParser\Node\ConditionalNode` | `PhpRegex\Parser\Node\ConditionalNode` |
+| `RegexParser\Node\ControlCharNode` | `PhpRegex\Parser\Node\ControlCharNode` |
+| `RegexParser\Node\DefineNode` | `PhpRegex\Parser\Node\DefineNode` |
+| `RegexParser\Node\DotNode` | `PhpRegex\Parser\Node\DotNode` |
+| `RegexParser\Node\GroupNode` | `PhpRegex\Parser\Node\GroupNode` |
+| `RegexParser\Node\GroupType` | `PhpRegex\Parser\Node\GroupType` |
+| `RegexParser\Node\KeepNode` | `PhpRegex\Parser\Node\KeepNode` |
+| `RegexParser\Node\LimitMatchNode` | `PhpRegex\Parser\Node\LimitMatchNode` |
+| `RegexParser\Node\LiteralNode` | `PhpRegex\Parser\Node\LiteralNode` |
+| `RegexParser\Node\NodeInterface` | `PhpRegex\Parser\Node\NodeInterface` |
+| `RegexParser\Node\PcreVerbNode` | `PhpRegex\Parser\Node\PcreVerbNode` |
+| `RegexParser\Node\PosixClassNode` | `PhpRegex\Parser\Node\PosixClassNode` |
+| `RegexParser\Node\QuantifierNode` | `PhpRegex\Parser\Node\QuantifierNode` |
+| `RegexParser\Node\QuantifierType` | `PhpRegex\Parser\Node\QuantifierType` |
+| `RegexParser\Node\RangeNode` | `PhpRegex\Parser\Node\RangeNode` |
+| `RegexParser\Node\RegexNode` | `PhpRegex\Parser\Node\RegexNode` |
+| `RegexParser\Node\ScriptRunNode` | `PhpRegex\Parser\Node\ScriptRunNode` |
+| `RegexParser\Node\SequenceNode` | `PhpRegex\Parser\Node\SequenceNode` |
+| `RegexParser\Node\SubroutineNode` | `PhpRegex\Parser\Node\SubroutineNode` |
+| `RegexParser\Node\UnicodePropNode` | `PhpRegex\Parser\Node\UnicodePropNode` |
+| `RegexParser\Node\VersionConditionNode` | `PhpRegex\Parser\Node\VersionConditionNode` |
+| `RegexParser\OptimizationResult` | `PhpRegex\Optimizer\OptimizationResult` |
+| `RegexParser\Parser` | `PhpRegex\Parser\Syntax\TokenParser` |
+| `RegexParser\ProblemType` | `PhpRegex\Linter\DiagnosticType` |
+| `RegexParser\ReDoS\CharSet` | `PhpRegex\Parser\Analysis\ByteCharSet` |
+| `RegexParser\ReDoS\CharSetAnalyzer` | `PhpRegex\Parser\Analysis\CharSetAnalyzer` |
+| `RegexParser\ReDoS\ReDoSAnalysis` | `PhpRegex\Redos\RedosAnalysis` |
+| `RegexParser\ReDoS\ReDoSAnalyzer` | `PhpRegex\Redos\RedosAnalyzer` |
+| `RegexParser\ReDoS\ReDoSConfidence` | `PhpRegex\Redos\RedosConfidence` |
+| `RegexParser\ReDoS\ReDoSConfirmOptions` | `PhpRegex\Redos\ConfirmationOptions` |
+| `RegexParser\ReDoS\ReDoSConfirmation` | `PhpRegex\Redos\Confirmation` |
+| `RegexParser\ReDoS\ReDoSConfirmationRunner` | `PhpRegex\Redos\ConfirmationRunner` |
+| `RegexParser\ReDoS\ReDoSConfirmationRunnerInterface` | `PhpRegex\Redos\ConfirmationRunnerInterface` |
+| `RegexParser\ReDoS\ReDoSConfirmationSample` | `PhpRegex\Redos\ConfirmationSample` |
+| `RegexParser\ReDoS\ReDoSFinding` | `PhpRegex\Redos\Finding` |
+| `RegexParser\ReDoS\ReDoSHeatmap` | `PhpRegex\Redos\Heatmap` |
+| `RegexParser\ReDoS\ReDoSHotspot` | `PhpRegex\Redos\Hotspot` |
+| `RegexParser\ReDoS\ReDoSInputGenerator` | `PhpRegex\Redos\Internal\InputGenerator` |
+| `RegexParser\ReDoS\ReDoSMode` | `PhpRegex\Redos\RedosMode` |
+| `RegexParser\ReDoS\ReDoSSeverity` | `PhpRegex\Redos\RedosSeverity` |
+| `RegexParser\Regex` | `PhpRegex\Toolkit\Regex` |
+| `RegexParser\RegexOptions` | `PhpRegex\Parser\ParserOptions` |
+| `RegexParser\RegexPattern` | `PhpRegex\Parser\DelimitedPattern` |
+| `RegexParser\RegexProblem` | `PhpRegex\Linter\Diagnostic` |
+| `RegexParser\Runtime\PcreRuntimeInfo` | `PhpRegex\Cli\PcreRuntimeInfo` |
+| `RegexParser\Severity` | `PhpRegex\Linter\LintSeverity` |
+| `RegexParser\Token` | `PhpRegex\Parser\Token\Token` |
+| `RegexParser\TokenStream` | `PhpRegex\Parser\Token\TokenStream` |
+| `RegexParser\TokenType` | `PhpRegex\Parser\Token\TokenType` |
+| `RegexParser\TolerantParseResult` | `PhpRegex\Parser\TolerantParseResult` |
+| `RegexParser\Transpiler\RegexTranspiler` | `PhpRegex\Transpiler\Transpiler` |
+| `RegexParser\Transpiler\Target\JavaScript\JavaScriptCompilerVisitor` | `PhpRegex\Transpiler\Target\JavaScript\JavaScriptPrinter` |
+| `RegexParser\Transpiler\Target\JavaScript\JavaScriptTarget` | `PhpRegex\Transpiler\Target\JavaScript\JavaScriptTarget` |
+| `RegexParser\Transpiler\Target\Python\PythonCompilerVisitor` | `PhpRegex\Transpiler\Target\Python\PythonPrinter` |
+| `RegexParser\Transpiler\Target\Python\PythonTarget` | `PhpRegex\Transpiler\Target\Python\PythonTarget` |
+| `RegexParser\Transpiler\Target\TargetRegistry` | `PhpRegex\Transpiler\Target\TargetRegistry` |
+| `RegexParser\Transpiler\Target\TranspileTargetInterface` | `PhpRegex\Transpiler\Target\TargetInterface` |
+| `RegexParser\Transpiler\TranspileContext` | `PhpRegex\Transpiler\TranspileContext` |
+| `RegexParser\Transpiler\TranspileOptions` | `PhpRegex\Transpiler\TranspileOptions` |
+| `RegexParser\Transpiler\TranspileResult` | `PhpRegex\Transpiler\TranspileResult` |
+| `RegexParser\ValidationErrorCategory` | `PhpRegex\Parser\Validation\ValidationErrorCategory` |
+| `RegexParser\ValidationResult` | `PhpRegex\Parser\Validation\ValidationResult` |
+| `RegexParser\Automata\RegexSolverInterface` | removed: type against `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PhpRegex\Automata\LanguageSolver` |
+| `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |
+| `RegexParser\Node\ClassOperationType` | removed: no replacement: it only typed ClassOperationNode |
+| `RegexParser\Node\UnicodeNode` | removed: use `PhpRegex\Parser\Node\CharLiteralNode`, which every \x{...} and \u{...} escape already became |
+| `RegexParser\ReDoS\ReDoSAnalyzerInterface` | removed: type against `PhpRegex\Redos\RedosAnalyzer` |
+
+| 1.3 enum case | 2.0 |
+|---|---|
+| `TokenType::T_LITERAL` | `TokenType::Literal` |
+| `TokenType::T_CHAR_TYPE` | `TokenType::CharType` |
+| `TokenType::T_GROUP_OPEN` | `TokenType::GroupOpen` |
+| `TokenType::T_GROUP_CLOSE` | `TokenType::GroupClose` |
+| `TokenType::T_GROUP_MODIFIER_OPEN` | `TokenType::GroupModifierOpen` |
+| `TokenType::T_CHAR_CLASS_OPEN` | `TokenType::CharClassOpen` |
+| `TokenType::T_CHAR_CLASS_CLOSE` | `TokenType::CharClassClose` |
+| `TokenType::T_QUANTIFIER` | `TokenType::Quantifier` |
+| `TokenType::T_ALTERNATION` | `TokenType::Alternation` |
+| `TokenType::T_DOT` | `TokenType::Dot` |
+| `TokenType::T_ANCHOR` | `TokenType::Anchor` |
+| `TokenType::T_EOF` | `TokenType::Eof` |
+| `TokenType::T_RANGE` | `TokenType::Range` |
+| `TokenType::T_NEGATION` | `TokenType::Negation` |
+| `TokenType::T_BACKREF` | `TokenType::Backref` |
+| `TokenType::T_UNICODE` | `TokenType::Unicode` |
+| `TokenType::T_POSIX_CLASS` | `TokenType::PosixClass` |
+| `TokenType::T_ASSERTION` | `TokenType::Assertion` |
+| `TokenType::T_UNICODE_PROP` | `TokenType::UnicodeProp` |
+| `TokenType::T_OCTAL` | `TokenType::Octal` |
+| `TokenType::T_OCTAL_LEGACY` | `TokenType::OctalLegacy` |
+| `TokenType::T_COMMENT_OPEN` | `TokenType::CommentOpen` |
+| `TokenType::T_PCRE_VERB` | `TokenType::PcreVerb` |
+| `TokenType::T_G_REFERENCE` | `TokenType::GReference` |
+| `TokenType::T_KEEP` | `TokenType::Keep` |
+| `TokenType::T_LITERAL_ESCAPED` | `TokenType::LiteralEscaped` |
+| `TokenType::T_QUOTE_MODE_START` | `TokenType::QuoteModeStart` |
+| `TokenType::T_QUOTE_MODE_END` | `TokenType::QuoteModeEnd` |
+| `TokenType::T_CALLOUT` | `TokenType::Callout` |
+| `TokenType::T_UNICODE_NAMED` | `TokenType::UnicodeNamed` |
+| `TokenType::T_CONTROL_CHAR` | `TokenType::ControlChar` |
+| `GroupType::T_GROUP_CAPTURING` | `GroupType::Capturing` |
+| `GroupType::T_GROUP_NON_CAPTURING` | `GroupType::NonCapturing` |
+| `GroupType::T_GROUP_NAMED` | `GroupType::Named` |
+| `GroupType::T_GROUP_LOOKAHEAD_POSITIVE` | `GroupType::LookaheadPositive` |
+| `GroupType::T_GROUP_LOOKAHEAD_NEGATIVE` | `GroupType::LookaheadNegative` |
+| `GroupType::T_GROUP_LOOKBEHIND_POSITIVE` | `GroupType::LookbehindPositive` |
+| `GroupType::T_GROUP_LOOKBEHIND_NEGATIVE` | `GroupType::LookbehindNegative` |
+| `GroupType::T_GROUP_INLINE_FLAGS` | `GroupType::InlineFlags` |
+| `GroupType::T_GROUP_ATOMIC` | `GroupType::Atomic` |
+| `GroupType::T_GROUP_BRANCH_RESET` | `GroupType::BranchReset` |
+| `QuantifierType::T_GREEDY` | `QuantifierType::Greedy` |
+| `QuantifierType::T_LAZY` | `QuantifierType::Lazy` |
+| `QuantifierType::T_POSSESSIVE` | `QuantifierType::Possessive` |
+| `CharLiteralType::UNICODE` | `CharLiteralType::Unicode` |
+| `CharLiteralType::UNICODE_NAMED` | `CharLiteralType::UnicodeNamed` |
+| `CharLiteralType::OCTAL` | `CharLiteralType::Octal` |
+| `CharLiteralType::OCTAL_LEGACY` | `CharLiteralType::OctalLegacy` |
+| `ValidationErrorCategory::SYNTAX` | `ValidationErrorCategory::Syntax` |
+| `ValidationErrorCategory::SEMANTIC` | `ValidationErrorCategory::Semantic` |
+| `ValidationErrorCategory::PCRE_RUNTIME` | `ValidationErrorCategory::PcreRuntime` |
+| `ReDoSSeverity::SAFE` | `RedosSeverity::Safe` |
+| `ReDoSSeverity::LOW` | `RedosSeverity::Low` |
+| `ReDoSSeverity::MEDIUM` | `RedosSeverity::Medium` |
+| `ReDoSSeverity::UNKNOWN` | `RedosSeverity::Unknown` |
+| `ReDoSSeverity::HIGH` | `RedosSeverity::High` |
+| `ReDoSSeverity::CRITICAL` | `RedosSeverity::Critical` |
+| `ReDoSMode::OFF` | `RedosMode::Off` |
+| `ReDoSMode::THEORETICAL` | `RedosMode::Theoretical` |
+| `ReDoSMode::CONFIRMED` | `RedosMode::Confirmed` |
+| `ReDoSConfidence::LOW` | `RedosConfidence::Low` |
+| `ReDoSConfidence::MEDIUM` | `RedosConfidence::Medium` |
+| `ReDoSConfidence::HIGH` | `RedosConfidence::High` |
+| `MatchMode::FULL` | `MatchMode::Full` |
+| `MatchMode::PARTIAL` | `MatchMode::Partial` |
+| `MinimizationAlgorithm::HOPCROFT` | `MinimizationAlgorithm::Hopcroft` |
+| `MinimizationAlgorithm::MOORE` | `MinimizationAlgorithm::Moore` |
+| `DeterminizationAlgorithm::SUBSET` | `DeterminizationAlgorithm::Subset` |
+| `DeterminizationAlgorithm::SUBSET_INDEXED` | `DeterminizationAlgorithm::SubsetIndexed` |
+| `Severity::PASS` | `CheckOutcome::Pass` |
+| `Severity::WARN` | `CheckOutcome::Warn` |
+| `Severity::FAIL` | `CheckOutcome::Fail` |
+| `Severity::CRITICAL` | `CheckOutcome::Critical` |
+
+| 1.3 method | 2.0 |
+|---|---|
+| `RegexAnalysisService::getRegex()` | `AnalysisService::getParser()` |
+| `RegexLanguageSolver::intersectionEmpty()` | `LanguageSolver::intersection()` |
+| `RegexLanguageSolver::prepare()` | `LanguageSolver::compile()` |
+| `Regex::clearValidatorCaches()` | `Regex::clearCaches()` |
+
+<!-- upgrade-map:end -->
+
 ### Breaking Changes
 
 #### `UnicodeNode` and `visitUnicode()` are gone
