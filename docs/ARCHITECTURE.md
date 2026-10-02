@@ -134,6 +134,32 @@ Built-in visitors live in the package that owns their concern, and include:
 
 Traversal details are in [docs/design/AST_TRAVERSAL.md](design/AST_TRAVERSAL.md).
 
+## The Normalized Form (HIR)
+
+Next to the AST, `HirTranslator` (`src/Parser/Hir/`) builds a second form of
+a pattern that says **what it matches, with the syntax gone**:
+
+- options are applied where they hold: a character, a class, a dot or a
+  caseless letter becomes one `CharSet`, asked from the PCRE2 that runs, so
+  `\w` under `u`, `\p{L}` and `k` under `iu` — which also matches the Kelvin
+  sign U+212A — are exact for the running PHP;
+- groups that only group are removed: `(?:a)|(?:bc)` is an alternation of
+  two literals;
+- every quantifier is a repetition with its bounds and its greed;
+- what PCRE does in order stays in order: alternatives, greed, atomic
+  groups. Backreferences, subroutine calls and verbs stay as opaque nodes.
+
+Each node carries `Properties`, worked out once when it is built: minimum
+and maximum length, nullability, the sets of first and last characters, the
+literal prefix and suffix, the capture count, and whether the node is a
+regular expression in the textbook sense. An analysis reads them instead of
+re-deriving them from the AST.
+
+`CharSet`, `ClassSetProvider` and `Utf8` live here so that every library
+shares one set of characters and one engine oracle. The ReDoS engine builds
+its automaton from this form. The layer is internal while the analyses move
+onto it.
+
 ## Diagnostics and Validation
 
 Validation runs against the AST and produces structured errors. `Regex::validate()` returns a `ValidationResult` containing:
@@ -191,7 +217,7 @@ The code falls into layers, each allowed to use only those below it, and
 
 | layer | what it holds | may use |
 |---|---|---|
-| core | lexer, parser, nodes, validation, `RegexParser`, `PcreTarget`, cache, the shared tree analyses | nothing |
+| core | lexer, parser, nodes, validation, `RegexParser`, `PcreTarget`, cache, the shared tree analyses, the normalized form (`Hir`) | nothing |
 | explain | explanations, highlighting, diagrams | core |
 | optimizer | `Optimizer` and the optimizing visitors | core, automata |
 | generator | sample and test-case generation | core |
