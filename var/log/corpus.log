@@ -10314,12 +10314,12 @@
          ---
          + )}x
 
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3098:70
+  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3105:70
       → /custom\-[0-1]+/i
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '0' and '1' explicitly instead of a range.
 
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3141:70
+  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3148:70
       → /^@?\w{1,15}$/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -12698,7 +12698,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
-  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2242:20
+  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2279:20
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider using atomic groups (?>...) or possessive quantifiers.
