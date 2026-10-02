@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Model;
 
-use PHPRegex\Automata\Alphabet\CharSet;
+use PHPRegex\Parser\Hir\CharSet;
 
 /**
  * NFA transition labeled with a character set.

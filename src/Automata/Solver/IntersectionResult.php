@@ -18,9 +18,18 @@ namespace PHPRegex\Automata\Solver;
  */
 final readonly class IntersectionResult
 {
+    public string $pcreVersion;
+
     /**
-     * @param bool        $isEmpty Whether the intersection is empty
-     * @param string|null $example Example string found in the intersection
+     * @param bool        $isEmpty     Whether the intersection is empty
+     * @param string|null $example     Example string found in the intersection
+     * @param string|null $pcreVersion The PCRE2 release the answer was computed with
      */
-    public function __construct(public bool $isEmpty, public ?string $example = null) {}
+    public function __construct(
+        public bool $isEmpty,
+        public ?string $example = null,
+        ?string $pcreVersion = null,
+    ) {
+        $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
+    }
 }

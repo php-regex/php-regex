@@ -77,7 +77,7 @@ final class DebugHeatmapCaretTest extends TestCase
         ob_start();
 
         try {
-            (new DebugCommand())->run($input, new Output(false, false));
+            (new DebugCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
         } finally {
             $buffer = (string) ob_get_clean();
             while (ob_get_level() > $level) {

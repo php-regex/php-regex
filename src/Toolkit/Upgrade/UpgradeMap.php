@@ -27,13 +27,10 @@ final class UpgradeMap
      */
     public const RENAMED = [
         'RegexParser\\AnalysisReport' => 'PHPRegex\\Toolkit\\AnalysisReport',
-        'RegexParser\\Automata\\Alphabet\\CharSet' => 'PHPRegex\\Automata\\Alphabet\\CharSet',
         'RegexParser\\Automata\\Api\\RegexLanguageSolver' => 'PHPRegex\\Automata\\LanguageSolver',
-        'RegexParser\\Automata\\AstToNfaTransformer' => 'PHPRegex\\Automata\\Transform\\AstToNfaTransformer',
-        'RegexParser\\Automata\\AstToNfaTransformerInterface' => 'PHPRegex\\Automata\\Transform\\AstToNfaTransformerInterface',
+        'RegexParser\\Automata\\AstToNfaTransformer' => 'PHPRegex\\Automata\\Transform\\HirToNfaTransformer',
         'RegexParser\\Automata\\Builder\\DfaBuilder' => 'PHPRegex\\Automata\\Builder\\DfaBuilder',
         'RegexParser\\Automata\\Builder\\NfaBuilder' => 'PHPRegex\\Automata\\Builder\\NfaBuilder',
-        'RegexParser\\Automata\\CharSet' => 'PHPRegex\\Automata\\Alphabet\\CharSet',
         'RegexParser\\Automata\\Determinization\\DeterminizationAlgorithm' => 'PHPRegex\\Automata\\Determinization\\DeterminizationAlgorithm',
         'RegexParser\\Automata\\Determinization\\DeterminizationAlgorithmFactory' => 'PHPRegex\\Automata\\Determinization\\DeterminizationAlgorithmFactory',
         'RegexParser\\Automata\\Determinization\\DeterminizationAlgorithmInterface' => 'PHPRegex\\Automata\\Determinization\\DeterminizationAlgorithmInterface',
@@ -83,8 +80,7 @@ final class UpgradeMap
         'RegexParser\\Automata\\Solver\\SubsetResult' => 'PHPRegex\\Automata\\Solver\\SubsetResult',
         'RegexParser\\Automata\\SubsetResult' => 'PHPRegex\\Automata\\Solver\\SubsetResult',
         'RegexParser\\Automata\\Support\\WorkBudget' => 'PHPRegex\\Automata\\Support\\WorkBudget',
-        'RegexParser\\Automata\\Transform\\AstToNfaTransformer' => 'PHPRegex\\Automata\\Transform\\AstToNfaTransformer',
-        'RegexParser\\Automata\\Transform\\AstToNfaTransformerInterface' => 'PHPRegex\\Automata\\Transform\\AstToNfaTransformerInterface',
+        'RegexParser\\Automata\\Transform\\AstToNfaTransformer' => 'PHPRegex\\Automata\\Transform\\HirToNfaTransformer',
         'RegexParser\\Automata\\Transform\\RegularSubsetValidator' => 'PHPRegex\\Automata\\Transform\\RegularSubsetValidator',
         'RegexParser\\Automata\\Unicode\\CodePointHelper' => 'PHPRegex\\Automata\\Unicode\\CodePointHelper',
         'RegexParser\\Bridge\\PHPStan\\RegexParserRule' => 'PHPRegex\\PHPStan\\RegexPatternRule',
@@ -315,7 +311,11 @@ final class UpgradeMap
      * A 1.3 class gone in 2.0 => what to use instead.
      */
     public const REMOVED = [
+        'RegexParser\\Automata\\Alphabet\\CharSet' => 'use PHPRegex\\Parser\\Hir\\CharSet',
+        'RegexParser\\Automata\\AstToNfaTransformerInterface' => 'type against PHPRegex\\Automata\\Transform\\HirToNfaTransformer, one concrete class',
+        'RegexParser\\Automata\\CharSet' => 'use PHPRegex\\Parser\\Hir\\CharSet',
         'RegexParser\\Automata\\RegexSolverInterface' => 'type against PHPRegex\\Automata\\LanguageSolver',
+        'RegexParser\\Automata\\Transform\\AstToNfaTransformerInterface' => 'type against PHPRegex\\Automata\\Transform\\HirToNfaTransformer, one concrete class',
         'RegexParser\\Automata\\Solver\\RegexSolverCompilerInterface' => 'type against PHPRegex\\Automata\\LanguageSolver',
         'RegexParser\\Automata\\Solver\\RegexSolverInterface' => 'type against PHPRegex\\Automata\\LanguageSolver',
         'RegexParser\\Node\\ClassOperationNode' => 'no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it',

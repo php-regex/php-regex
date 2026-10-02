@@ -233,7 +233,7 @@ final class LintCommandComponentsTest extends TestCase
     public function test_output_renderer_renders_summary_and_banner(): void
     {
         $renderer = new LintOutputRenderer();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $emptyBuffer = $this->captureOutput(static function () use ($renderer, $output): void {
             $renderer->renderSummary($output, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0], true);

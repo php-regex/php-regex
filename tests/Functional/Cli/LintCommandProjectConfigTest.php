@@ -215,7 +215,9 @@ final class LintCommandProjectConfigTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = $command->run($input, new Output(false, false));
+            // The error stream is captured: a usage dump must not leak to the
+            // real STDERR of the test runner.
+            $exitCode = $command->run($input, new Output(false, false, errorStream: \fopen('php://memory', 'w+')));
         } finally {
             $stdout = (string) ob_get_clean();
         }

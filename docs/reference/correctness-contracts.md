@@ -53,13 +53,25 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## Automata Solver
 
 **Compare / Equivalence / Subset / Intersection**
-- **Semantics:** For supported regexes, the solver builds an NFA and DFA and compares languages using BFS over the
+- **Semantics:** The solver builds its NFA from the pattern's normalized form, where every character set — classes,
+  `\w\s\d`, dot, POSIX classes, `\p{...}` properties, extended classes and case-insensitive folds — has already been
+  asked from the PCRE2 that runs in the PHP process, then determinizes and compares languages using BFS over the
   product automaton. Counter-examples are shortest strings in the modeled language.
-- **Guarantee:** **Sound and complete** for the supported regular subset **under byte-based semantics**.
-- **Limitations:** Unicode-aware semantics beyond case are not modeled. Case-insensitive matching folds Unicode case
-  exactly, as single-code-point classes: under `/iu`, `k` matches the Kelvin sign U+212A, `s` the long s U+017F and `å`
-  the angstrom sign U+212B, while the Turkish dotless `i` stays apart, as in PCRE.
-- **Fallbacks:** Unsupported constructs raise `ComplexityException`. Atomic groups and possessive quantifiers commit to
+- **Guarantee:** **Sound and complete** for the supported regular subset, **relative to the running PCRE2**: what a
+  class, property or fold matches is what that engine matches, never a table the library maintains. Verdicts are
+  deterministic for one PCRE2 release, and every result carries it in `pcreVersion`. Without `/u` the alphabet is the
+  256 bytes; with `/u` it is the code points `U+0000`-`U+10FFFF` minus the surrogate block `U+D800`-`U+DFFF`, which
+  no valid subject contains. POSIX classes (`[[:alpha:]]`, negated included), Unicode properties (`\p{L}`, `\P{L}`,
+  scripts such as `\p{Greek}`), Perl extended classes (`(?[ \p{L} - [aeiou] ])`) with their set operations, and `\C`
+  are answered, asked of the engine like every other atom.
+- **Limitations:** Case-insensitive matching folds single code points, as the engine folds them: under `/iu`, `k`
+  matches the Kelvin sign U+212A, `s` the long s U+017F and `å` the angstrom sign U+212B, while the Turkish dotless
+  `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
+  modeled. The flags `i`, `s` and `u` are read; `m`, `x` and `r` are refused.
+- **Fallbacks:** None — there is no approximation. A construct outside the subset raises `ComplexityException` with
+  one message per reason (backreferences and other match state, conditionals, lookarounds, atomic groups, zero-width
+  conditions, unsafe possessives, unsupported flags); the list is in
+  [the logic solver reference](logic-solver.md#what-the-solver-refuses). Atomic groups and possessive quantifiers commit to
   what they first matched and never retry — ordered behaviour the solver cannot read as a pure language
   (`/^a*+a$/` matches nothing at all), so they are refused — except a possessive quantifier nothing that follows can
   take back from: the first characters of everything after it, through the followers that may be skipped, share none
@@ -72,7 +84,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **PARTIAL:** Models search semantics `Σ* L(P) Σ*`. If a pattern is start-anchored (`^`) the leading `Σ*` is removed;
   if it is end-anchored (`$`) the trailing `Σ*` is removed.
 - **Anchor rules in PARTIAL:** Anchors must appear only at the outer boundary of each alternative (first/last token) and
-  must be consistent across alternatives. Nested anchors (e.g., inside a group) are rejected with `ComplexityException`.
+  must be consistent across alternatives. `^`/`$` and `\A`/`\z`/`\Z` are read at those edges; an anchor anywhere else,
+  or nested (e.g., inside a group), is rejected with `ComplexityException`, as are `\b`, `\B`, `\G` and `\K` in any
+  position.
 
 ## Symfony Bridge Analyzers
 

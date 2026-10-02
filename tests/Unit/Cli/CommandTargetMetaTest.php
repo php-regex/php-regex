@@ -75,6 +75,6 @@ final class CommandTargetMetaTest extends TestCase
             }
         };
 
-        return $command->meta(new Input('probe', [], $options, []), new Output(false, false));
+        return $command->meta(new Input('probe', [], $options, []), new Output(false, false, errorStream: fopen('php://memory', 'w+')));
     }
 }

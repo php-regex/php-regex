@@ -45,7 +45,7 @@ final class GraphvizDumper
 
         // Define edges
         foreach ($nfa->states as $id => $state) {
-            $this->dumpTransitions($id, $state, $output);
+            $this->dumpTransitions($id, $state, $output, $nfa->maxCodePoint > 255);
         }
 
         $output .= "}\n";
@@ -53,7 +53,7 @@ final class GraphvizDumper
         return $output;
     }
 
-    private function dumpTransitions(int $sourceId, NfaState $state, string &$output): void
+    private function dumpTransitions(int $sourceId, NfaState $state, string &$output, bool $unicode): void
     {
         // Epsilon transitions
         foreach ($state->epsilonTransitions as $targetId) {
@@ -69,7 +69,7 @@ final class GraphvizDumper
         foreach ($transitionsByTarget as $targetId => $charSets) {
             $labels = [];
             foreach ($charSets as $charSet) {
-                $labels[] = $charSet->toString();
+                $labels[] = CharSetLabel::render($charSet, $unicode);
             }
             $label = implode(', ', $labels);
             $label = str_replace(['"', '\\'], ['\\"', '\\\\'], $label);

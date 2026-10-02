@@ -21,9 +21,10 @@ use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
 use PHPRegex\Automata\Solver\SubsetResult;
-use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 
 /**
@@ -36,6 +37,16 @@ use PHPRegex\Parser\RegexParser;
  */
 final readonly class LanguageSolver
 {
+    private const MAX_BYTE = 255;
+
+    /**
+     * The state a DFA falls into on a character it has no transition for:
+     * it stays there and never accepts, so both DFAs are total over the
+     * merged alphabet and a character only one side can take is still
+     * observed.
+     */
+    private const DEAD = -1;
+
     /**
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
      * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
@@ -157,10 +168,10 @@ final readonly class LanguageSolver
         }
 
         $ast = $this->parser()->parse($pattern);
-        (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options);
+        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options);
 
-        $transformer = new AstToNfaTransformer($pattern);
-        $nfa = $transformer->transform($ast, $options);
+        $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
+        $nfa = $transformer->transform($hir, $options);
 
         $dfa = (new DfaBuilder())->determinize($nfa, $options);
 
@@ -198,8 +209,12 @@ final readonly class LanguageSolver
         $startLeft = $left->startState;
         $startRight = $right->startState;
         $rightStateCount = \count($right->states);
-        $startKey = $startLeft * $rightStateCount + $startRight;
+        $startKey = $this->pairKey($startLeft, $startRight, $rightStateCount);
         $alphabetRanges = $this->mergeAlphabetRanges($left, $right);
+
+        // Both alphabets the bytes: a witness is a byte, not the UTF-8 of
+        // its value; with a code point alphabet anywhere it is a character.
+        $byteExample = $left->maxCodePoint <= self::MAX_BYTE && $right->maxCodePoint <= self::MAX_BYTE;
 
         if ($acceptPredicate($left->getState($startLeft)->isAccepting, $right->getState($startRight)->isAccepting)) {
             return '';
@@ -217,19 +232,17 @@ final readonly class LanguageSolver
         while (!$queue->isEmpty()) {
             $item = $queue->dequeue();
             [$leftStateId, $rightStateId, $currentKey] = $item;
-            $leftState = $left->getState($leftStateId);
-            $rightState = $right->getState($rightStateId);
+            $leftState = self::DEAD === $leftStateId ? null : $left->getState($leftStateId);
+            $rightState = self::DEAD === $rightStateId ? null : $right->getState($rightStateId);
 
             foreach ($alphabetRanges as [$start]) {
                 $symbol = $start;
-                $nextLeft = $leftState->transitionFor($symbol);
-                $nextRight = $rightState->transitionFor($symbol);
+                $nextLeft = null === $leftState ? self::DEAD : $leftState->transitionFor($symbol);
+                $nextLeft = null === $nextLeft ? self::DEAD : $nextLeft;
+                $nextRight = null === $rightState ? self::DEAD : $rightState->transitionFor($symbol);
+                $nextRight = null === $nextRight ? self::DEAD : $nextRight;
 
-                if (null === $nextLeft || null === $nextRight) {
-                    continue;
-                }
-
-                $nextKey = $nextLeft * $rightStateCount + $nextRight;
+                $nextKey = $this->pairKey($nextLeft, $nextRight, $rightStateCount);
 
                 if (isset($visited[$nextKey])) {
                     continue;
@@ -238,10 +251,10 @@ final readonly class LanguageSolver
                 $visited[$nextKey] = true;
                 $previous[$nextKey] = [$currentKey, $symbol];
 
-                $nextLeftState = $left->getState($nextLeft);
-                $nextRightState = $right->getState($nextRight);
-                if ($acceptPredicate($nextLeftState->isAccepting, $nextRightState->isAccepting)) {
-                    return $this->buildExample($nextKey, $previous);
+                $nextLeftState = self::DEAD === $nextLeft ? null : $left->getState($nextLeft);
+                $nextRightState = self::DEAD === $nextRight ? null : $right->getState($nextRight);
+                if ($acceptPredicate(null !== $nextLeftState && $nextLeftState->isAccepting, null !== $nextRightState && $nextRightState->isAccepting)) {
+                    return $this->buildExample($nextKey, $previous, $byteExample);
                 }
 
                 $queue->enqueue([$nextLeft, $nextRight, $nextKey]);
@@ -252,15 +265,24 @@ final readonly class LanguageSolver
     }
 
     /**
+     * One number per pair of states, the dead one counted in: it never
+     * collides, the way a plain product would.
+     */
+    private function pairKey(int $left, int $right, int $rightStateCount): int
+    {
+        return ($left + 1) * ($rightStateCount + 1) + ($right + 1);
+    }
+
+    /**
      * @param array<int, array{0:int, 1:int}|null> $previous
      */
-    private function buildExample(int $key, array $previous): string
+    private function buildExample(int $key, array $previous, bool $byteExample): string
     {
         $chars = [];
         $current = $key;
         while (null !== $previous[$current]) {
             [$prevKey, $char] = $previous[$current];
-            $chars[] = CodePointHelper::toString($char) ?? '';
+            $chars[] = $byteExample ? \chr($char) : (CodePointHelper::toString($char) ?? '');
             $current = $prevKey;
         }
 
@@ -312,7 +334,23 @@ final readonly class LanguageSolver
                 break;
             }
 
-            $ranges[] = [$start, \min($end, $max)];
+            $end = \min($end, $max);
+            if ($start > $end) {
+                continue;
+            }
+
+            // The Unicode alphabet has a hole where the surrogates would
+            // be: a partition range may fall inside it, or start there and
+            // run past it, and the probe of a range must name a character
+            // a real subject can hold.
+            if ($start >= 0xD800 && $end <= 0xDFFF) {
+                continue;
+            }
+            if ($start >= 0xD800 && $start <= 0xDFFF) {
+                $start = 0xE000;
+            }
+
+            $ranges[] = [$start, $end];
         }
 
         if ([] === $ranges) {

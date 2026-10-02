@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Automata;
+namespace PHPRegex\Tests\Unit\Hir;
 
-use PHPRegex\Automata\Alphabet\CharSet;
+use PHPRegex\Parser\Hir\CharSet;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +23,7 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_single_codepoint(): void
     {
-        $set = CharSet::fromCodePoint(65);
+        $set = CharSet::single(65);
 
         $this->assertTrue($set->contains(65));
         $this->assertFalse($set->contains(64));
@@ -33,7 +33,7 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_single_range(): void
     {
-        $set = CharSet::fromRange(48, 57);
+        $set = CharSet::range(48, 57);
 
         $this->assertTrue($set->contains(48));
         $this->assertTrue($set->contains(57));
@@ -74,7 +74,7 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_full_set(): void
     {
-        $set = CharSet::full();
+        $set = CharSet::universe(false);
 
         $this->assertTrue($set->contains(0));
         $this->assertTrue($set->contains(127));
@@ -102,7 +102,7 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_after_complement(): void
     {
-        $set = CharSet::fromRange(65, 90)->complement();
+        $set = CharSet::universe(false)->subtract(CharSet::range(65, 90));
 
         $this->assertFalse($set->contains(65));
         $this->assertFalse($set->contains(90));
@@ -115,8 +115,8 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_after_union(): void
     {
-        $letters = CharSet::fromRange(65, 90);
-        $digits = CharSet::fromRange(48, 57);
+        $letters = CharSet::range(65, 90);
+        $digits = CharSet::range(48, 57);
         $set = $letters->union($digits);
 
         $this->assertTrue($set->contains(65));
@@ -127,8 +127,8 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_after_intersection(): void
     {
-        $wide = CharSet::fromRange(40, 80);
-        $narrow = CharSet::fromRange(60, 100);
+        $wide = CharSet::range(40, 80);
+        $narrow = CharSet::range(60, 100);
         $set = $wide->intersect($narrow);
 
         $this->assertTrue($set->contains(60));
@@ -140,8 +140,8 @@ final class CharSetContainsTest extends TestCase
     #[Test]
     public function test_contains_after_subtraction(): void
     {
-        $full = CharSet::fromRange(0, 255);
-        $exclude = CharSet::fromRange(65, 90);
+        $full = CharSet::range(0, 255);
+        $exclude = CharSet::range(65, 90);
         $set = $full->subtract($exclude);
 
         $this->assertTrue($set->contains(0));
@@ -156,7 +156,7 @@ final class CharSetContainsTest extends TestCase
     #[DataProvider('provideUnicodeContainsCases')]
     public function test_contains_unicode_codepoints(int $codePoint, bool $expected): void
     {
-        $set = CharSet::fromRange(0x2600, 0x26FF, CharSet::UNICODE_MAX_CODEPOINT);
+        $set = CharSet::range(0x2600, 0x26FF);
 
         $this->assertSame($expected, $set->contains($codePoint));
     }
@@ -184,7 +184,7 @@ final class CharSetContainsTest extends TestCase
             $ranges[] = [$start, $end];
         }
 
-        $set = CharSet::fromRanges($ranges, 500);
+        $set = CharSet::fromRanges($ranges);
 
         for ($i = 0; $i < 50; $i++) {
             $start = $i * 10;

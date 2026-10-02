@@ -79,7 +79,7 @@ final class AnalyzeCommandRenderingTest extends TestCase
     private function render(RedosAnalysis $analysis): string
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
         $style = new ConsoleStyle($output, false);
 
         $method = (new \ReflectionClass($command))->getMethod('renderConsoleOutput');

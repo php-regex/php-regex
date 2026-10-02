@@ -152,8 +152,16 @@ final class PackageManifestTest extends TestCase
         // Parser\Hir is watched the same way: it stays @internal while the
         // analyses move onto the normalized form.
         $allowed = [
-            'Automata' => ['Parser\Internal\StaticCaches'],
-            'Cli' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+            // The solver reads the whole normalized form: every class of
+            // it, and the translator that builds the tree.
+            'Automata' => [
+                'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
+                'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
+                'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
+                'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\OpaqueHir',
+                'Parser\Hir\RepetitionHir',
+            ],
+            'Cli' => ['Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
             'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper'],
             'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\StaticCaches'],
             'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser'],

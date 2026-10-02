@@ -21,7 +21,7 @@
 
 PHPRegex is a PHP 8.2+ library that treats regular expressions as code.
 
-Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (AST → NFA → DFA).
+Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (normalized form → NFA → DFA).
 
 This architecture allows for advanced static analysis:
 - **Linting:** Detect redundancy, useless flags, and common mistakes.
@@ -76,7 +76,7 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 ## What PHPRegex provides
 
 - 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
-- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](docs/ARCHITECTURE.md) it supports; falls back gracefully otherwise.
+- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](docs/ARCHITECTURE.md) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
 - 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
 - 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
 - 📖 **Explanation:** Explain patterns in plain English.

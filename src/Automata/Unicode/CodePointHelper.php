@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Unicode;
 
-use PHPRegex\Automata\Alphabet\CharSet;
-
 /**
  * UTF-8 code point helpers for automata output and decoding.
  *
@@ -24,7 +22,7 @@ final class CodePointHelper
 {
     public static function toString(int $codePoint): ?string
     {
-        if ($codePoint < CharSet::MIN_CODEPOINT || $codePoint > CharSet::UNICODE_MAX_CODEPOINT) {
+        if ($codePoint < 0 || $codePoint > 0x10FFFF) {
             return null;
         }
 

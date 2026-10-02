@@ -66,13 +66,10 @@ move your settings to it, and delete the old one.
 | 1.3 | 2.0 |
 |---|---|
 | `RegexParser\AnalysisReport` | `PHPRegex\Toolkit\AnalysisReport` |
-| `RegexParser\Automata\Alphabet\CharSet` | `PHPRegex\Automata\Alphabet\CharSet` |
 | `RegexParser\Automata\Api\RegexLanguageSolver` | `PHPRegex\Automata\LanguageSolver` |
-| `RegexParser\Automata\AstToNfaTransformer` | `PHPRegex\Automata\Transform\AstToNfaTransformer` |
-| `RegexParser\Automata\AstToNfaTransformerInterface` | `PHPRegex\Automata\Transform\AstToNfaTransformerInterface` |
+| `RegexParser\Automata\AstToNfaTransformer` | `PHPRegex\Automata\Transform\HirToNfaTransformer` |
 | `RegexParser\Automata\Builder\DfaBuilder` | `PHPRegex\Automata\Builder\DfaBuilder` |
 | `RegexParser\Automata\Builder\NfaBuilder` | `PHPRegex\Automata\Builder\NfaBuilder` |
-| `RegexParser\Automata\CharSet` | `PHPRegex\Automata\Alphabet\CharSet` |
 | `RegexParser\Automata\Determinization\DeterminizationAlgorithm` | `PHPRegex\Automata\Determinization\DeterminizationAlgorithm` |
 | `RegexParser\Automata\Determinization\DeterminizationAlgorithmFactory` | `PHPRegex\Automata\Determinization\DeterminizationAlgorithmFactory` |
 | `RegexParser\Automata\Determinization\DeterminizationAlgorithmInterface` | `PHPRegex\Automata\Determinization\DeterminizationAlgorithmInterface` |
@@ -122,8 +119,7 @@ move your settings to it, and delete the old one.
 | `RegexParser\Automata\Solver\SubsetResult` | `PHPRegex\Automata\Solver\SubsetResult` |
 | `RegexParser\Automata\SubsetResult` | `PHPRegex\Automata\Solver\SubsetResult` |
 | `RegexParser\Automata\Support\WorkBudget` | `PHPRegex\Automata\Support\WorkBudget` |
-| `RegexParser\Automata\Transform\AstToNfaTransformer` | `PHPRegex\Automata\Transform\AstToNfaTransformer` |
-| `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | `PHPRegex\Automata\Transform\AstToNfaTransformerInterface` |
+| `RegexParser\Automata\Transform\AstToNfaTransformer` | `PHPRegex\Automata\Transform\HirToNfaTransformer` |
 | `RegexParser\Automata\Transform\RegularSubsetValidator` | `PHPRegex\Automata\Transform\RegularSubsetValidator` |
 | `RegexParser\Automata\Unicode\CodePointHelper` | `PHPRegex\Automata\Unicode\CodePointHelper` |
 | `RegexParser\Bridge\PHPStan\RegexParserRule` | `PHPRegex\PHPStan\RegexPatternRule` |
@@ -348,7 +344,11 @@ move your settings to it, and delete the old one.
 | `RegexParser\Transpiler\TranspileResult` | `PHPRegex\Transpiler\TranspileResult` |
 | `RegexParser\ValidationErrorCategory` | `PHPRegex\Parser\Validation\ValidationErrorCategory` |
 | `RegexParser\ValidationResult` | `PHPRegex\Parser\Validation\ValidationResult` |
+| `RegexParser\Automata\Alphabet\CharSet` | removed: use `PHPRegex\Parser\Hir\CharSet` |
+| `RegexParser\Automata\AstToNfaTransformerInterface` | removed: type against `PHPRegex\Automata\Transform\HirToNfaTransformer`, one concrete class |
+| `RegexParser\Automata\CharSet` | removed: use `PHPRegex\Parser\Hir\CharSet` |
 | `RegexParser\Automata\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
+| `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | removed: type against `PHPRegex\Automata\Transform\HirToNfaTransformer`, one concrete class |
 | `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |

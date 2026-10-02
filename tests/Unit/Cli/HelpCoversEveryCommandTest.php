@@ -59,7 +59,7 @@ final class HelpCoversEveryCommandTest extends TestCase
      */
     private function commands(): array
     {
-        return ApplicationFactory::create(new Output(false, false))->registeredCommands();
+        return ApplicationFactory::create(new Output(false, false, errorStream: fopen('php://memory', 'w+')))->registeredCommands();
     }
 
     /**
@@ -68,7 +68,7 @@ final class HelpCoversEveryCommandTest extends TestCase
     private function render(array $args): string
     {
         $help = (new HelpCommand())->withCommands($this->commands());
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         ob_start();
         $help->run(new Input('help', $args, new GlobalOptions(false, null, false, false, null, null), []), $output);

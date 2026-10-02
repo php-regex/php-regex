@@ -130,7 +130,7 @@ final class RedosThresholdOptionTest extends TestCase
     private function runCommand(CommandInterface $command, string $name, array $args): array
     {
         $input = new Input($name, $args, new GlobalOptions(false, false, false, true, null, null), []);
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         ob_start();
         $exitCode = $command->run($input, $output);

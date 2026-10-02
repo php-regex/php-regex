@@ -13,24 +13,33 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Cli;
 
-use PHPRegex\Cli\Command\DebugCommand;
+use PHPRegex\Cli\Command\GraphCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class DebugCommandEdgeCasesTest extends TestCase
+/**
+ * A pattern the parser refuses is a pattern the reader wrote: the graph
+ * command answers with the parser's own words, not with the catch-all
+ * failure of a graph that could not be drawn.
+ */
+final class GraphCommandParseErrorTest extends TestCase
 {
-    public function test_debug_command_renders_unknown_severity_details(): void
+    #[Test]
+    public function test_a_parse_error_is_reported_as_a_parse_error(): void
     {
-        $command = new DebugCommand();
+        $command = new GraphCommand();
         $input = new Input(
-            'debug',
+            'graph',
             ['/(a/'],
             new GlobalOptions(false, false, false, true, null, null),
             [],
         );
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $errorStream = \fopen('php://memory', 'w+');
+        $this->assertNotFalse($errorStream);
+        $output = new Output(false, false, errorStream: $errorStream);
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static function () use ($command, $input, $output, &$exitCode): void {
@@ -38,8 +47,8 @@ final class DebugCommandEdgeCasesTest extends TestCase
         });
 
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('Error:', $buffer);
-        $this->assertStringContainsString('UNKNOWN', $buffer);
+        $this->assertStringContainsString('Error: Expected ) at end of input', $buffer);
+        $this->assertStringNotContainsString('Graph generation failed', $buffer);
     }
 
     /**
@@ -47,9 +56,9 @@ final class DebugCommandEdgeCasesTest extends TestCase
      */
     private function captureOutput(callable $callback): string
     {
-        ob_start();
+        \ob_start();
         $callback();
 
-        return (string) ob_get_clean();
+        return (string) \ob_get_clean();
     }
 }

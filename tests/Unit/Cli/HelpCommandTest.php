@@ -30,7 +30,7 @@ final class HelpCommandTest extends TestCase
             $command = new HelpCommand();
             $options = new GlobalOptions(false, null, false, false, null, null);
             $input = new Input('help', [], $options, []);
-            $output = new Output(false, false);
+            $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
             ob_start();
             $command->run($input, $output);
@@ -51,7 +51,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_returns_zero_for_valid_command(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -69,7 +69,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_returns_two_for_invalid_command(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -86,7 +86,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_includes_options(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -104,7 +104,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_includes_notes(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -119,7 +119,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_includes_examples(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -135,7 +135,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_diagram(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -154,7 +154,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_highlight(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -174,7 +174,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_validate(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -194,7 +194,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_lint(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -214,7 +214,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_self_update(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -233,7 +233,7 @@ final class HelpCommandTest extends TestCase
     public function test_render_command_help_for_help(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('renderCommandHelp');
@@ -329,7 +329,7 @@ final class HelpCommandTest extends TestCase
     public function test_format_command_usage_for_lint(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
@@ -353,7 +353,7 @@ final class HelpCommandTest extends TestCase
     public function test_format_command_usage_for_parse_analyze_and_commands_with_pattern(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
@@ -377,7 +377,7 @@ final class HelpCommandTest extends TestCase
     public function test_format_command_usage_for_help(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
@@ -415,7 +415,7 @@ final class HelpCommandTest extends TestCase
     public function test_format_option_with_ansi_disabled(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatOption');
@@ -476,7 +476,7 @@ final class HelpCommandTest extends TestCase
     public function test_format_example_command_formats_command_and_tokens(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false);
+        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
 
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatExampleCommand');

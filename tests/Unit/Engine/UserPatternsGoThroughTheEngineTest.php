@@ -34,7 +34,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      */
     private const OWN_REGEX_FILES = [
         'src/Parser/Analysis/CharSetAnalyzer.php',
-        'src/Automata/Transform/AstToNfaTransformer.php',
+        'src/Automata/Transform/HirToNfaTransformer.php',
         'src/Automata/Transform/RegularSubsetValidator.php',
         'src/Automata/Unicode/CodePointHelper.php',
         'src/Laravel/Command/LintCommand.php',

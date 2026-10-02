@@ -156,9 +156,11 @@ regular expression in the textbook sense. An analysis reads them instead of
 re-deriving them from the AST.
 
 `CharSet`, `ClassSetProvider` and `Utf8` live here so that every library
-shares one set of characters and one engine oracle. The ReDoS engine builds
-its automaton from this form. The layer is internal while the analyses move
-onto it.
+shares one set of characters and one engine oracle. The automata solver builds
+its NFA from this form — the first analysis to consume the tree itself — while
+the ReDoS engine still walks the AST and borrows the primitives (`CharSet`,
+`ClassSetProvider`, `Utf8`) from this layer. The layer is internal while the
+analyses move onto it.
 
 ## Diagnostics and Validation
 

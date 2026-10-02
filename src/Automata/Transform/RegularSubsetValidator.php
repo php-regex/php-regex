@@ -14,39 +14,21 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Hir\Hir;
+use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
-use PHPRegex\Parser\Node\BackrefNode;
-use PHPRegex\Parser\Node\CalloutNode;
-use PHPRegex\Parser\Node\CharClassNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
-use PHPRegex\Parser\Node\CharTypeNode;
-use PHPRegex\Parser\Node\ConditionalNode;
-use PHPRegex\Parser\Node\ControlCharNode;
-use PHPRegex\Parser\Node\DefineNode;
-use PHPRegex\Parser\Node\DotNode;
-use PHPRegex\Parser\Node\GroupNode;
-use PHPRegex\Parser\Node\GroupType;
-use PHPRegex\Parser\Node\KeepNode;
-use PHPRegex\Parser\Node\LimitMatchNode;
-use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\PcreVerbNode;
-use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierNode;
-use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\Node\SubroutineNode;
-use PHPRegex\Parser\Node\UnicodePropNode;
-use PHPRegex\Parser\Node\VersionConditionNode;
 
 /**
- * Validates that a regex AST stays within the supported regular subset.
+ * The gate in front of the automata solver: the flags it reads, the
+ * anchors where they still carry a meaning, and the constructs the
+ * normalized form carries that a pure language cannot say.
  *
  * @internal
  */
@@ -54,18 +36,23 @@ final class RegularSubsetValidator
 {
     private string $pattern = '';
 
-    private bool $unicode = false;
-
     /**
+     * Whether the solver can answer for the pattern, and the normalized
+     * form it can answer from.
+     *
      * @throws ComplexityException
      */
-    public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options): void
+    public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options): Hir
     {
         $this->pattern = $pattern;
-        $this->unicode = \str_contains($regex->flags, 'u');
-
         $this->assertSupportedFlags($regex->flags);
-        $this->assertNode($regex->pattern, false);
+        $this->assertAnchorsReadable($regex->pattern, $options);
+
+        $hir = (new HirTranslator())->translate($regex);
+        (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex)))
+            ->assertTranslatable($hir, $options);
+
+        return $hir;
     }
 
     /**
@@ -87,169 +74,114 @@ final class RegularSubsetValidator
     }
 
     /**
+     * Anchors compile to nothing, which only tells the truth where they
+     * carry no meaning: at the edges of an alternative. A whole-string
+     * match starts at the start of the subject and ends at its end, so an
+     * anchor at an edge says nothing; anywhere else it changes what the
+     * pattern matches — "/a^b/" matches nothing at all — and dropping it
+     * would hand back a confidently wrong answer, so the pattern is
+     * refused instead.
+     *
      * @throws ComplexityException
      */
-    private function assertNode(NodeInterface $node, bool $inCharClass): void
+    private function assertAnchorsReadable(NodeInterface $node, SolverOptions $options): void
     {
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $this->assertNode($child, $inCharClass);
+        $mode = MatchMode::Full === $options->matchMode ? 'full' : 'partial';
+        $alternatives = $node instanceof AlternationNode ? $node->alternatives : [$node];
+
+        foreach ($alternatives as $alternative) {
+            $sequence = $alternative instanceof SequenceNode ? $alternative->children : [$alternative];
+            if ([] === $sequence) {
+                continue;
             }
 
-            return;
-        }
+            $lastIndex = \count($sequence) - 1;
+            foreach ($sequence as $index => $child) {
+                if ($child instanceof AnchorNode || $child instanceof AssertionNode) {
+                    $this->assertAnchorReadable($child, 0 === $index, $lastIndex === $index, $mode);
 
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alternative) {
-                $this->assertNode($alternative, $inCharClass);
+                    continue;
+                }
+
+                $this->assertNoAnchorInside($child, $mode);
             }
-
-            return;
-        }
-
-        if ($node instanceof GroupNode) {
-            if (GroupType::LookaheadPositive === $node->type
-                || GroupType::LookaheadNegative === $node->type
-                || GroupType::LookbehindPositive === $node->type
-                || GroupType::LookbehindNegative === $node->type
-                || GroupType::ScanSubstring === $node->type
-                || GroupType::InlineFlags === $node->type
-            ) {
-                $this->unsupported($node, 'Unsupported group type: '.$node->type->value.'.');
-            }
-
-            $this->assertNode($node->child, $inCharClass);
-
-            return;
-        }
-
-        if ($node instanceof QuantifierNode) {
-            $this->assertNode($node->node, $inCharClass);
-
-            return;
-        }
-
-        if ($node instanceof LiteralNode) {
-            if ($inCharClass && 1 !== $this->literalLength($node->value, $node)) {
-                $this->unsupported($node, 'Multi-character literals are not supported in character classes.');
-            }
-
-            return;
-        }
-
-        if ($node instanceof CharLiteralNode) {
-            return;
-        }
-
-        if ($node instanceof ControlCharNode) {
-            return;
-        }
-
-        if ($node instanceof CharTypeNode) {
-            $this->assertCharType($node);
-
-            return;
-        }
-
-        if ($node instanceof CharClassNode) {
-            $this->assertNode($node->expression, true);
-
-            return;
-        }
-
-        if ($node instanceof RangeNode) {
-            $this->assertRangeEndpoint($node->start);
-            $this->assertRangeEndpoint($node->end);
-
-            return;
-        }
-
-        if ($node instanceof AnchorNode) {
-            if (!\in_array($node->value, ['^', '$'], true)) {
-                $this->unsupported($node, 'Unsupported anchor: '.$node->value.'.');
-            }
-
-            return;
-        }
-
-        if ($node instanceof DotNode) {
-            return;
-        }
-
-        if ($node instanceof PosixClassNode
-            || $node instanceof UnicodePropNode
-            || $node instanceof AssertionNode
-            || $node instanceof BackrefNode
-            || $node instanceof ConditionalNode
-            || $node instanceof SubroutineNode
-            || $node instanceof ScriptRunNode
-            || $node instanceof VersionConditionNode
-            || $node instanceof PcreVerbNode
-            || $node instanceof DefineNode
-            || $node instanceof LimitMatchNode
-            || $node instanceof CalloutNode
-            || $node instanceof KeepNode
-        ) {
-            $this->unsupported($node, 'Unsupported regex feature in automata conversion.');
-        }
-
-        $this->unsupported($node, 'Unsupported regex node in automata conversion.');
-    }
-
-    /**
-     * @throws ComplexityException
-     */
-    private function assertCharType(CharTypeNode $node): void
-    {
-        $supported = ['d', 'D', 'w', 'W', 's', 'S'];
-        if (!\in_array($node->value, $supported, true)) {
-            $this->unsupported($node, 'Unsupported character type: '.$node->value.'.');
         }
     }
 
     /**
      * @throws ComplexityException
      */
-    private function assertRangeEndpoint(NodeInterface $node): void
+    private function assertAnchorReadable(AnchorNode|AssertionNode $node, bool $atStart, bool $atEnd, string $mode): void
     {
-        if ($node instanceof LiteralNode) {
-            if (1 !== $this->literalLength($node->value, $node)) {
-                $this->unsupported($node, 'Invalid range endpoint in character class.');
+        $value = $node->value;
+
+        if ('^' === $value || '$' === $value) {
+            $readable = '^' === $value ? $atStart : $atEnd;
+            if (!$readable) {
+                throw new ComplexityException(
+                    \sprintf('Anchors in %s match mode must appear at the start or end of each alternative.', $mode),
+                    $node->getStartPosition(),
+                    $this->pattern,
+                );
             }
 
             return;
         }
 
-        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
-            return;
-        }
+        // "\A" reads as "^" at the start, "\z" and "\Z" as "$" at the end:
+        // the same edges, refused with the ladder's one message elsewhere.
+        // Every other condition — "\b", "\B", "\G" — reads where the match
+        // stands, wherever it is written.
+        $readable = match ($value) {
+            'A' => $atStart,
+            'z', 'Z' => $atEnd,
+            default => false,
+        };
 
-        $this->unsupported($node, 'Unsupported range endpoint in character class.');
+        if (!$readable) {
+            throw new ComplexityException(
+                HirToNfaTransformer::ASSERTION_MESSAGE,
+                $node->getStartPosition(),
+                $this->pattern,
+            );
+        }
     }
 
     /**
+     * An anchor inside a group or under a quantifier follows what the
+     * group matched, not the subject: the normalized form flattens the
+     * group away, so the check runs before the translation, where the
+     * barrier still stands.
+     *
      * @throws ComplexityException
      */
-    private function unsupported(NodeInterface $node, string $message): never
+    private function assertNoAnchorInside(NodeInterface $node, string $mode): void
     {
-        throw new ComplexityException($message, $node->getStartPosition(), $this->pattern);
+        $anchor = $this->anchorInside($node);
+        if (null === $anchor) {
+            return;
+        }
+
+        $message = $anchor instanceof AnchorNode && ('^' === $anchor->value || '$' === $anchor->value)
+            ? \sprintf('Nested anchors are not supported in %s match mode.', $mode)
+            : HirToNfaTransformer::ASSERTION_MESSAGE;
+
+        throw new ComplexityException($message, $anchor->getStartPosition(), $this->pattern);
     }
 
-    private function literalLength(string $value, NodeInterface $node): int
+    private function anchorInside(NodeInterface $node): AnchorNode|AssertionNode|null
     {
-        if (!$this->unicode) {
-            return \strlen($value);
+        if ($node instanceof AnchorNode || $node instanceof AssertionNode) {
+            return $node;
         }
 
-        if (!CodePointHelper::isValidUtf8($value)) {
-            $this->unsupported($node, 'Invalid UTF-8 literal in /u pattern.');
+        foreach ($node->getChildren() as $child) {
+            $anchor = $this->anchorInside($child);
+            if (null !== $anchor) {
+                return $anchor;
+            }
         }
 
-        $chars = \preg_split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
-        if (false === $chars) {
-            $this->unsupported($node, 'Invalid UTF-8 literal in /u pattern.');
-        }
-
-        return \count($chars);
+        return null;
     }
 }

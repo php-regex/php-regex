@@ -13,7 +13,8 @@ declare(strict_types=1);
 
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\HirToNfaTransformer;
+use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Toolkit\Regex;
 
 /*
@@ -43,12 +44,14 @@ echo \sprintf("Iterations: %d\n\n", $iterations);
 
 foreach ($patterns as $name => $pattern) {
     $ast = $regex->parse($pattern);
+    $hir = (new HirTranslator())->translate($ast);
+    $unicode = HirTranslator::unicodeOf($ast);
     $startMemory = memory_get_usage(true);
     $start = hrtime(true);
 
     for ($i = 0; $i < $iterations; $i++) {
-        $transformer = new AstToNfaTransformer($pattern);
-        $transformer->transform($ast, $options);
+        $transformer = new HirToNfaTransformer($pattern, $unicode);
+        $transformer->transform($hir, $options);
     }
 
     $elapsed = hrtime(true) - $start;

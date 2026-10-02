@@ -18,8 +18,9 @@ use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
+use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Toolkit\Regex;
 
 /*
@@ -50,10 +51,10 @@ $rows = [];
 
 foreach ($patterns as $label => $pattern) {
     $ast = $parser->parse($pattern);
-    $validator->assertSupported($ast, $pattern, $options);
+    $hir = $validator->assertSupported($ast, $pattern, $options);
 
-    $transformer = new AstToNfaTransformer($pattern);
-    $nfa = $transformer->transform($ast, $options);
+    $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
+    $nfa = $transformer->transform($hir, $options);
 
     $optimized = measure('Effective alphabet', static fn () => (new DfaBuilder())->determinize($nfa, $options));
     $naive = measure('Naive full alphabet', static fn () => determinizeNaive($nfa, $options));

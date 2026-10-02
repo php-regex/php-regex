@@ -18,9 +18,18 @@ namespace PHPRegex\Automata\Solver;
  */
 final readonly class SubsetResult
 {
+    public string $pcreVersion;
+
     /**
      * @param bool        $isSubset       Whether the left language is subset of the right
      * @param string|null $counterExample Example string accepted by left but not right
+     * @param string|null $pcreVersion    The PCRE2 release the answer was computed with
      */
-    public function __construct(public bool $isSubset, public ?string $counterExample = null) {}
+    public function __construct(
+        public bool $isSubset,
+        public ?string $counterExample = null,
+        ?string $pcreVersion = null,
+    ) {
+        $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
+    }
 }

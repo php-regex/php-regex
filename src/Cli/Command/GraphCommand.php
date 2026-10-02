@@ -14,12 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Transform\AstToNfaTransformer;
+use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Cli\Graph\GraphGenerator;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Hir\HirTranslator;
 
 /**
  * @internal
@@ -65,10 +66,10 @@ final class GraphCommand extends AbstractCommand
         try {
             $ast = $regex->parse($pattern);
 
-            // We need to transform AST to NFA manually here as it's not exposed via Facade directly for just dumping
-            // Assuming AstToNfaTransformer is the way
-            $transformer = new AstToNfaTransformer($pattern);
-            $nfa = $transformer->transform($ast, new SolverOptions());
+            // We need to transform the pattern to an NFA manually here as
+            // it's not exposed via the facade for just dumping.
+            $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
+            $nfa = $transformer->transform((new HirTranslator())->translate($ast), new SolverOptions());
 
             $generator = new GraphGenerator();
             $content = $generator->generate($nfa, $format);

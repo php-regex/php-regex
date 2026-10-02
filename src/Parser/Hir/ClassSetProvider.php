@@ -65,12 +65,16 @@ final class ClassSetProvider
      *                                 between ASCII and non-ASCII characters
      * @param string $startVerbs       the options the pattern opens with, such as "(*UCP)"
      *                                 or "(*CR)": they change what a class or a dot matches
+     * @param bool   $unicodeFlag      whether the pattern's own /u flag is set: this PHP
+     *                                 passes PCRE2_UCP with it, so the probe carries the flag
+     *                                 only when the pattern does — a lone "(*UTF)" reads
+     *                                 UTF-8 without the Unicode properties
      */
-    public static function query(string $atom, bool $unicode, string $modifiers, bool $caselessRestrict = false, string $startVerbs = ''): ?CharSet
+    public static function query(string $atom, bool $unicode, string $modifiers, bool $caselessRestrict = false, string $startVerbs = '', bool $unicodeFlag = true): ?CharSet
     {
         StaticCaches::register(self::class, self::clear(...));
 
-        $global = ($unicode ? 'u' : '').($caselessRestrict ? 'r' : '');
+        $global = ($unicodeFlag && $unicode ? 'u' : '').($caselessRestrict ? 'r' : '');
         $key = $startVerbs.$global.'|'.$modifiers.':'.$atom;
         if (!isset(self::$sets[$key])) {
             self::$sets = StaticCaches::makeRoom(self::$sets);

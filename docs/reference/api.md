@@ -116,7 +116,9 @@ the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
 `PHPRegex\Automata\LanguageSolver` compares the languages of two patterns of
 the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
 return a result carrying the shortest string that proves the answer, and
-`compile()` returns a pattern's DFA.
+`compile()` returns a pattern's DFA. Every character set is asked from the
+running PCRE2, so the three results also carry the release that answered, in
+`pcreVersion`.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;

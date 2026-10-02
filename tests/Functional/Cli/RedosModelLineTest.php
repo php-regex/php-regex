@@ -191,7 +191,7 @@ final class RedosModelLineTest extends TestCase
         ob_start();
 
         try {
-            $handler->run($input, new Output(false, false));
+            $handler->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
         } finally {
             $buffer = (string) ob_get_clean();
             while (ob_get_level() > $level) {

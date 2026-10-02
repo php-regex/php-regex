@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Builder;
 
-use PHPRegex\Automata\Alphabet\CharSet;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaFragment;
 use PHPRegex\Automata\Model\NfaState;
 use PHPRegex\Automata\Model\NfaTransition;
+use PHPRegex\Parser\Hir\CharSet;
 
 /**
  * Mutable builder for NFA graphs.
@@ -46,8 +46,8 @@ final class NfaBuilder
 
     public function __construct(
         private readonly int $maxStates,
-        private readonly int $minCodePoint = CharSet::MIN_CODEPOINT,
-        private readonly int $maxCodePoint = CharSet::MAX_CODEPOINT,
+        private readonly int $minCodePoint = 0,
+        private readonly int $maxCodePoint = 255,
     ) {}
 
     /**

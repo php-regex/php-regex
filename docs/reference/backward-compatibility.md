@@ -17,6 +17,19 @@ are used across packages; those keep their signatures within 2.x because the
 packages are released together, but code outside this project must not rely on
 them.
 
+One of those cross-package dependencies is named as an exception, because two
+packages build on it: `regex-parser` does not change the `PHPRegex\Parser\Hir`
+classes that `regex-automata` (the whole normalized form and the translator
+that builds it) and `regex-redos` (`CharSet`, `ClassSetProvider`, `Utf8`)
+consume without a coordinated patch to both. The layer stays `@internal` — it
+is not yours to build on — and the repository's cross-package test suite holds
+the three sides to that list.
+
+`@internal` still means removable. The 2.0.0 release removed `Automata\Alphabet\CharSet`
+(use `Parser\Hir\CharSet`) and the AST-walking transformer behind the solver
+(now `Transform\HirToNfaTransformer`); [UPGRADE-2.0.md](../../UPGRADE-2.0.md)
+maps every removed name.
+
 In short, the public surface is:
 
 | package | public |
@@ -63,7 +76,10 @@ add one to yet.
   and the others. A `match` over one of these enums needs a `default` arm.
 - **New optional parameters**: a node constructor or a method may gain a
   trailing parameter with a default value. Pass arguments by position for the
-  ones you set, or by name.
+  ones you set, or by name. 2.0.0 adds one: `Optimizer::__construct()` takes an
+  optional trailing `?DfaCacheInterface $dfaCache = null` — with it, one
+  instance reuses the DFAs its equivalence checks compiled, and without it a
+  fresh in-memory cache is used, as before.
 - **New classes, methods and options**, and new keys in a JSON report or a
   configuration file.
 - **Message texts**: an error or lint message may be reworded; the CHANGELOG

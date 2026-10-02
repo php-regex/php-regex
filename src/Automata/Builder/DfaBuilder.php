@@ -97,7 +97,7 @@ final readonly class DfaBuilder
 
         foreach ($nfa->states as $state) {
             foreach ($state->transitions as $transition) {
-                foreach ($transition->charSet->ranges() as [$start, $end]) {
+                foreach ($transition->charSet->ranges as [$start, $end]) {
                     $boundaries[$start] = true;
                     if ($end + 1 <= $max + 1) {
                         $boundaries[$end + 1] = true;
@@ -121,6 +121,14 @@ final readonly class DfaBuilder
             }
 
             if ($end < $min) {
+                continue;
+            }
+
+            // The Unicode alphabet has no surrogates: D800-DFFF is a hole
+            // in it, not characters, so no partition of the alphabet falls
+            // inside. A range that straddles the hole belongs to a set that
+            // covers it and keeps its partition.
+            if ($max > 255 && $start >= 0xD800 && $end <= 0xDFFF) {
                 continue;
             }
 

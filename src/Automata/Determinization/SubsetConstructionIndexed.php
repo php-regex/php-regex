@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Determinization;
 
-use PHPRegex\Automata\Alphabet\CharSet;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
@@ -121,7 +120,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
                 }
 
                 $targetId = $stateMap[$targetKey];
-                if ($nfa->maxCodePoint <= CharSet::MAX_CODEPOINT) {
+                if ($nfa->maxCodePoint <= 255) {
                     for ($char = $start; $char <= $end; $char++) {
                         $stateTransitions[$char] = $targetId;
                     }
@@ -232,7 +231,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
 
         foreach ($nfa->states as $stateId => $state) {
             foreach ($state->transitions as $transition) {
-                foreach ($transition->charSet->ranges() as [$start, $end]) {
+                foreach ($transition->charSet->ranges as [$start, $end]) {
                     $startIndex = $this->rangeIndexForCodePoint($start, $rangeStarts);
                     $endIndex = $this->rangeIndexForCodePoint($end, $rangeStarts);
 

@@ -71,6 +71,12 @@ final class HirTranslator
 
     private const UNGREEDY = 32;
 
+    private const RESTRICT = 64;
+
+    private const SURROGATE_FIRST = 0xD800;
+
+    private const SURROGATE_LAST = 0xDFFF;
+
     /**
      * The options a pattern may open with, "(*UTF)" or "(*CR)" among them:
      * they match nothing, and change what a class, a dot or "\R" matches.
@@ -94,6 +100,8 @@ final class HirTranslator
 
     private bool $unicode = false;
 
+    private bool $unicodeFlag = false;
+
     private bool $dollarEndOnly = false;
 
     private bool $caselessRestrict = false;
@@ -111,7 +119,8 @@ final class HirTranslator
     {
         $this->source = $regex->source ?? '';
         $this->startVerbs = self::startOptions($this->source);
-        $this->unicode = str_contains($regex->flags, 'u') || str_contains($this->startVerbs, '(*UTF)');
+        $this->unicode = self::unicodeOf($regex);
+        $this->unicodeFlag = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->caselessRestrict = str_contains($regex->flags, 'r');
         $this->groupNumbers = $this->numberGroups($regex);
@@ -124,6 +133,15 @@ final class HirTranslator
         }
 
         return $this->node($regex->pattern, $flags);
+    }
+
+    /**
+     * Whether the pattern reads its subject as code points: the /u flag,
+     * or a "(*UTF)" option the source opens with.
+     */
+    public static function unicodeOf(RegexNode $regex): bool
+    {
+        return str_contains($regex->flags, 'u') || str_contains(self::startOptions($regex->source ?? ''), '(*UTF)');
     }
 
     /**
@@ -281,6 +299,10 @@ final class HirTranslator
             return $this->opaque($node, Properties::unknown());
         }
 
+        if ($this->unicode && self::isSurrogate($codePoint)) {
+            return $this->surrogateHir($node);
+        }
+
         if (0 === ($flags & self::CASELESS)) {
             return new LiteralHir([$codePoint], $node->getStartPosition(), $node->getEndPosition());
         }
@@ -309,10 +331,16 @@ final class HirTranslator
 
     private function characterClass(NodeInterface $node, int $flags): Hir
     {
-        if ($node instanceof CharClassNode && 0 === ($flags & self::CASELESS)) {
-            $set = $this->directClass($node);
-            if (null !== $set) {
-                return new ClassHir($set, $node->getStartPosition(), $node->getEndPosition());
+        if ($node instanceof CharClassNode) {
+            if ($this->unicode && $this->namesSurrogate($node)) {
+                return $this->surrogateHir($node);
+            }
+
+            if (0 === ($flags & self::CASELESS)) {
+                $set = $this->directClass($node);
+                if (null !== $set) {
+                    return new ClassHir($set, $node->getStartPosition(), $node->getEndPosition());
+                }
             }
         }
 
@@ -328,7 +356,14 @@ final class HirTranslator
             .(0 !== ($flags & self::DOT_ALL) ? 's' : '')
             .(0 !== ($flags & self::EXTENDED_MORE) ? 'xx' : (0 !== ($flags & self::EXTENDED) ? 'x' : ''));
 
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->caselessRestrict, $this->startVerbs);
+        $set = ClassSetProvider::query(
+            $atom,
+            $this->unicode,
+            $modifiers,
+            $this->caselessRestrict || 0 !== ($flags & self::RESTRICT),
+            $this->startVerbs,
+            $this->unicodeFlag,
+        );
         if (null === $set) {
             // PCRE refused the atom on its own: one character, of a set unknown.
             return $this->opaque($node, new Properties(1, 1, false, null, null, null, [], [], 0, false, false));
@@ -441,7 +476,50 @@ final class HirTranslator
             $set = $set->union(CharSet::single($codePoint));
         }
 
-        return $node->isNegated ? CharSet::universe($this->unicode)->subtract($set) : $set;
+        // A range may straddle the surrogate block, which no subject holds:
+        // the set keeps the real characters and leaves the hole out.
+        return $node->isNegated ? CharSet::universe($this->unicode)->subtract($set) : $set->intersect(CharSet::universe($this->unicode));
+    }
+
+    /**
+     * Whether a member of the class names a surrogate code point, as a
+     * single character or as the endpoint of a range: the engine refuses to
+     * compile the pattern at all then. A range that straddles the block
+     * with both endpoints outside it is legal.
+     */
+    private function namesSurrogate(CharClassNode $node): bool
+    {
+        $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+        foreach ($members as $member) {
+            if ($member instanceof RangeNode) {
+                if (self::isSurrogate($this->singleCodePoint($member->start)) || self::isSurrogate($this->singleCodePoint($member->end))) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (self::isSurrogate($this->singleCodePoint($member))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The stand-in for an atom that names a surrogate: its set holds the
+     * forbidden block, which the automata ladder refuses before anything is
+     * built, so no wrong language is ever read from it.
+     */
+    private function surrogateHir(NodeInterface $node): Hir
+    {
+        return new ClassHir(CharSet::range(self::SURROGATE_FIRST, self::SURROGATE_LAST), $node->getStartPosition(), $node->getEndPosition());
+    }
+
+    private static function isSurrogate(?int $codePoint): bool
+    {
+        return null !== $codePoint && $codePoint >= self::SURROGATE_FIRST && $codePoint <= self::SURROGATE_LAST;
     }
 
     private function singleCodePoint(NodeInterface $node): ?int
@@ -542,9 +620,11 @@ final class HirTranslator
 
     private function applyOptions(int $flags, string $options): int
     {
-        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'U' => self::UNGREEDY];
+        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'U' => self::UNGREEDY, 'r' => self::RESTRICT];
         if (str_starts_with($options, '^')) {
-            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::EXTENDED_MORE);
+            // "(?^" takes every letter it may set back off, the restrict
+            // with them: "(?ri)(?^i)k" folds to the Kelvin sign again.
+            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::EXTENDED_MORE | self::RESTRICT);
             $options = substr($options, 1);
         }
 

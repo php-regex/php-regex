@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Model;
 
-use PHPRegex\Automata\Alphabet\CharSet;
-
 /**
  * Immutable NFA container.
  *
@@ -28,8 +26,8 @@ final readonly class Nfa
     public function __construct(
         public int $startState,
         public array $states,
-        public int $minCodePoint = CharSet::MIN_CODEPOINT,
-        public int $maxCodePoint = CharSet::MAX_CODEPOINT,
+        public int $minCodePoint = 0,
+        public int $maxCodePoint = 255,
     ) {}
 
     public function getState(int $stateId): NfaState

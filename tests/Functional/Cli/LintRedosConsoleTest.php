@@ -258,7 +258,7 @@ final class LintRedosConsoleTest extends TestCase
         ob_start();
 
         try {
-            (new HelpCommand())->run($input, new Output(false, false));
+            (new HelpCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
         } finally {
             $stdout = (string) ob_get_clean();
         }
@@ -286,7 +286,7 @@ final class LintRedosConsoleTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = $command->run($input, new Output(false, false));
+            $exitCode = $command->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
         } finally {
             $stdout = (string) ob_get_clean();
         }

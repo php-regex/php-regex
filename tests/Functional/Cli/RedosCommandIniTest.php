@@ -124,7 +124,7 @@ final class RedosCommandIniTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = (new RedosCommand())->run($input, new Output(false, false));
+            $exitCode = (new RedosCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
             $buffer = (string) ob_get_clean();
         } finally {
             while (ob_get_level() > $level) {

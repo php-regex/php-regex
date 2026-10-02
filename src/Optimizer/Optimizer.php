@@ -15,6 +15,8 @@ namespace PHPRegex\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -34,10 +36,19 @@ use PHPRegex\Parser\TraversalAction;
  * Rewrites a pattern into a shorter or faster one that matches the same
  * strings, read with the parser it is given; the automata can confirm the
  * two are equivalent before the rewrite is offered.
+ *
+ * The solver answering those confirmations is kept for the instance's
+ * lifetime, with a DFA cache, so a later run — another pattern of the same
+ * batch, the same pattern again — reuses the automata already built.
  */
 final readonly class Optimizer
 {
-    public function __construct(private RegexParser $parser) {}
+    private readonly LanguageSolver $solver;
+
+    public function __construct(private RegexParser $parser, private ?DfaCacheInterface $dfaCache = null)
+    {
+        $this->solver = new LanguageSolver($parser, $dfaCache ?? new InMemoryDfaCache());
+    }
 
     /**
      * Optimize a regular expression for better performance.
@@ -161,8 +172,7 @@ final readonly class Optimizer
     private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new LanguageSolver($this->parser);
-            $result = $solver->equivalent($original, $optimized, new SolverOptions());
+            $result = $this->solver->equivalent($original, $optimized, new SolverOptions());
 
             return $result->isEquivalent;
         } catch (\Throwable) {

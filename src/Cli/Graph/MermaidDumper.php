@@ -39,13 +39,13 @@ final class MermaidDumper
 
         // Define transitions
         foreach ($nfa->states as $id => $state) {
-            $this->dumpTransitions($id, $state, $output);
+            $this->dumpTransitions($id, $state, $output, $nfa->maxCodePoint > 255);
         }
 
         return $output;
     }
 
-    private function dumpTransitions(int $sourceId, NfaState $state, string &$output): void
+    private function dumpTransitions(int $sourceId, NfaState $state, string &$output, bool $unicode): void
     {
         foreach ($state->epsilonTransitions as $targetId) {
             $output .= "    {$sourceId} --> {$targetId} : ε\n";
@@ -59,7 +59,7 @@ final class MermaidDumper
         foreach ($transitionsByTarget as $targetId => $charSets) {
             $labels = [];
             foreach ($charSets as $charSet) {
-                $labels[] = $charSet->toString();
+                $labels[] = CharSetLabel::render($charSet, $unicode);
             }
             $label = implode(', ', $labels);
             // Escape special characters for Mermaid labels

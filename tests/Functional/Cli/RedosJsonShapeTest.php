@@ -64,7 +64,7 @@ final class RedosJsonShapeTest extends TestCase
         ob_start();
 
         try {
-            (new AnalyzeCommand())->run($input, new Output(false, false));
+            (new AnalyzeCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
         } finally {
             $buffer = (string) ob_get_clean();
         }
