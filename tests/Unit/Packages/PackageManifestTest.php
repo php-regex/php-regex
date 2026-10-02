@@ -149,6 +149,8 @@ final class PackageManifestTest extends TestCase
         // The uses 2.0 ships with: these classes keep their signatures for all
         // of 2.x. A new entry here is a new cross-package dependency on code
         // that promises nothing; make the class public instead, or keep it.
+        // Parser\Hir is watched the same way: it stays @internal while the
+        // analyses move onto the normalized form.
         $allowed = [
             'Automata' => ['Parser\Internal\StaticCaches'],
             'Cli' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
@@ -156,7 +158,7 @@ final class PackageManifestTest extends TestCase
             'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\StaticCaches'],
             'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser'],
             'Optimizer' => ['Parser\Internal\PatternParser'],
-            'Redos' => ['Parser\Internal\PatternParser'],
+            'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\PatternParser'],
             'Symfony' => ['Parser\Internal\DisplayEscaper'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
         ];
@@ -167,10 +169,17 @@ final class PackageManifestTest extends TestCase
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::root().'/src/'.$directory, \FilesystemIterator::SKIP_DOTS));
             foreach ($files as $file) {
                 if ($file instanceof \SplFileInfo && 'php' === $file->getExtension()) {
-                    preg_match_all('~PHPRegex\\\\((\w+)\\\\Internal\\\\\w+)~', (string) file_get_contents($file->getPathname()), $matches, \PREG_SET_ORDER);
+                    // Parser\Hir counts as internal: its shape may change
+                    // while the analyses migrate onto it.
+                    preg_match_all('~PHPRegex\\\\(Parser\\\\Hir\\\\\w+)|PHPRegex\\\\((\w+)\\\\Internal\\\\\w+)~', (string) file_get_contents($file->getPathname()), $matches, \PREG_SET_ORDER);
                     foreach ($matches as $match) {
-                        if ($match[2] !== $directory) {
-                            $uses[] = $match[1];
+                        // The first alternative catches Parser\Hir uses (its
+                        // package is Parser), the second the Internal ones.
+                        $isHir = '' !== ($match[1] ?? '');
+                        $use = $isHir ? $match[1] : ($match[2] ?? '');
+                        $package = $isHir ? 'Parser' : ($match[3] ?? '');
+                        if ($package !== $directory) {
+                            $uses[] = $use;
                         }
                     }
                 }
