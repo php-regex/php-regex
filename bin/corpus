@@ -3,12 +3,13 @@
 
 declare(strict_types=1);
 
-/**
- * Corpus Update Script
+/*
+ * This file is part of the PHPRegex package.
  *
- * Updates git repositories under corpus/ with parallel processing and timeouts,
- * records the commit each checkout sits on in corpus/corpus.json, and removes
- * the checkouts whose entry was deleted from the manifest.
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 final class ConsoleStyle
@@ -23,8 +24,8 @@ final class ConsoleStyle
     public function header(string $title): void
     {
         $line = str_repeat('=', \strlen($title));
-        echo $this->bold($title).PHP_EOL;
-        echo $this->dim($line).PHP_EOL;
+        echo $this->bold($title).\PHP_EOL;
+        echo $this->dim($line).\PHP_EOL;
     }
 
     public function status(string $label, string $message, ?string $detail = null): void
@@ -32,8 +33,8 @@ final class ConsoleStyle
         $plainLabel = preg_replace('/\e\[[\d;]*m/', '', $label);
         $plainLabel ??= $label;
         $pad = max(0, 9 - \strlen($plainLabel));
-        $label = $label.str_repeat(' ', $pad);
-        echo '  '.$label.' '.$message.PHP_EOL;
+        $label .= str_repeat(' ', $pad);
+        echo '  '.$label.' '.$message.\PHP_EOL;
         if (null !== $detail && '' !== $detail) {
             echo $this->indent($detail, '            ');
         }
@@ -41,17 +42,17 @@ final class ConsoleStyle
 
     public function info(string $message): void
     {
-        echo $message.PHP_EOL;
+        echo $message.\PHP_EOL;
     }
 
     public function warn(string $message): void
     {
-        echo $this->yellow('Warning: ').$message.PHP_EOL;
+        echo $this->yellow('Warning: ').$message.\PHP_EOL;
     }
 
     public function error(string $message): void
     {
-        fwrite(\STDERR, $this->red('Error: ').$message.PHP_EOL);
+        fwrite(\STDERR, $this->red('Error: ').$message.\PHP_EOL);
     }
 
     public function dim(string $text): string
@@ -90,7 +91,7 @@ final class ConsoleStyle
             return $text;
         }
 
-        return "\033[".$code."m".$text."\033[0m";
+        return "\033[".$code.'m'.$text."\033[0m";
     }
 
     private function supportsColor(): bool
@@ -108,14 +109,14 @@ final class ConsoleStyle
 
     private function indent(string $text, string $prefix): string
     {
-        $lines = preg_split("/\\r?\\n/", trim($text));
+        $lines = preg_split('/\\r?\\n/', trim($text));
         if (!\is_array($lines)) {
             return '';
         }
 
         $indented = array_map(static fn (string $line): string => $prefix.$line, $lines);
 
-        return implode(PHP_EOL, $indented).PHP_EOL;
+        return implode(\PHP_EOL, $indented).\PHP_EOL;
     }
 }
 
@@ -124,11 +125,15 @@ final class ConsoleStyle
 // ---------------------------------------------------------------------------
 
 /**
- * @return array<string, mixed>
+ * @param list<string> $argv
+ *
+ * @return array{command: ?string, root: ?string, jobs: ?string, timeout: ?string, force: bool, debug: bool, help: bool, clone: bool, clone-only: bool, prune: bool, write-manifest: bool, add: list<string>, as: ?string, branch: ?string, depth: ?string}
  */
 function parseArgs(array $argv): array
 {
     $options = [
+        'command' => null,
+        'root' => null,
         'jobs' => null,
         'timeout' => null,
         'force' => false,
@@ -148,30 +153,57 @@ function parseArgs(array $argv): array
         $arg = $argv[$i];
         if ('--help' === $arg || '-h' === $arg) {
             $options['help'] = true;
+
+            continue;
+        }
+        if ('--root' === $arg) {
+            $next = $argv[$i + 1] ?? null;
+            if (null === $next || str_starts_with($next, '-')) {
+                throw new InvalidArgumentException('The --root option requires a directory path.');
+            }
+            $options['root'] = $next;
+            $i++;
+
+            continue;
+        }
+        if (str_starts_with($arg, '--root=')) {
+            $options['root'] = substr($arg, \strlen('--root='));
+
+            continue;
+        }
+        if (!str_starts_with($arg, '-') && null === $options['command']) {
+            $options['command'] = $arg;
+
             continue;
         }
         if ('--force' === $arg) {
             $options['force'] = true;
+
             continue;
         }
         if ('--debug' === $arg) {
             $options['debug'] = true;
+
             continue;
         }
         if ('--no-clone' === $arg) {
             $options['clone'] = false;
+
             continue;
         }
         if ('--no-prune' === $arg) {
             $options['prune'] = false;
+
             continue;
         }
         if ('--clone-only' === $arg) {
             $options['clone-only'] = true;
+
             continue;
         }
         if ('--write-manifest' === $arg) {
             $options['write-manifest'] = true;
+
             continue;
         }
         if ('--add' === $arg) {
@@ -181,10 +213,12 @@ function parseArgs(array $argv): array
             }
             $options['add'][] = $next;
             $i++;
+
             continue;
         }
         if (str_starts_with($arg, '--add=')) {
             $options['add'][] = substr($arg, \strlen('--add='));
+
             continue;
         }
         foreach (['as', 'branch', 'depth'] as $name) {
@@ -195,10 +229,12 @@ function parseArgs(array $argv): array
                 }
                 $options[$name] = $next;
                 $i++;
+
                 continue 2;
             }
             if (str_starts_with($arg, '--'.$name.'=')) {
                 $options[$name] = substr($arg, \strlen('--'.$name.'='));
+
                 continue 2;
             }
         }
@@ -206,14 +242,17 @@ function parseArgs(array $argv): array
             $next = $argv[$i + 1] ?? null;
             if (null === $next || str_starts_with($next, '-')) {
                 $options['jobs'] = null;
+
                 continue;
             }
             $options['jobs'] = $next;
             $i++;
+
             continue;
         }
         if (str_starts_with($arg, '--jobs=')) {
             $options['jobs'] = substr($arg, \strlen('--jobs='));
+
             continue;
         }
         if ('--timeout' === $arg || '-t' === $arg) {
@@ -223,10 +262,12 @@ function parseArgs(array $argv): array
             }
             $options['timeout'] = $next;
             $i++;
+
             continue;
         }
         if (str_starts_with($arg, '--timeout=')) {
             $options['timeout'] = substr($arg, \strlen('--timeout='));
+
             continue;
         }
 
@@ -239,33 +280,43 @@ function parseArgs(array $argv): array
 function printUsage(): void
 {
     echo <<<'TXT'
-Usage: corpus/update [--jobs[=<n>|auto]] [--timeout=<sec>] [--force] [--debug] [--help]
-       corpus/update --add <url> [--as <path>] [--branch <name>] [--depth <n>]
-       corpus/update --write-manifest
+        Usage: bin/corpus <command> [options]
 
-Removes the checkouts whose entry is no longer in corpus/corpus.json, clones
-every listed repository that is missing on disk, then updates the ones that
-are already there, switching each to the branch recorded in the manifest
-before pulling. The commit each checkout ends on is written back to the
-manifest, so the output shows which repositories moved since the last run.
+        Commands:
+          install           Rebuild corpus/ exactly at the commits corpus.json pins:
+                            clone what is missing at its pinned commit, move what is
+                            already there back to it, remove what is no longer listed.
+                            corpus.json is never written to.
+          update            Refresh every checkout (switch to the recorded branch and
+                            pull), then write the commit each one ends on back to
+                            corpus.json, so the diff shows what moved since last time.
 
-Options:
-  --jobs, -j        Number of parallel workers (default: auto, 2x CPUs)
-  --timeout, -t     Per-repo timeout in seconds (default: 120)
-  --force           Reset tracked changes and remove untracked files before pulling,
-                    and remove unlisted checkouts even when they have local changes
-  --debug           Show git commands and detailed diagnostics per repo
-  --no-clone        Do not clone missing repositories, only pull existing ones
-  --clone-only      Only clone missing repositories, do not pull existing ones
-  --no-prune        Keep checkouts on disk that are no longer in the manifest
-  --add <url>       Add a repository to the manifest and clone it (repeatable)
-  --as <path>       Target path under corpus/ for --add (default: derived from the URL)
-  --branch <name>   Branch to record for --add (default: the remote default branch)
-  --depth <n>       Clone depth for --add, 0 for a full clone (default: manifest default)
-  --write-manifest  Rewrite corpus/corpus.json from the repositories found on disk
-  --help, -h        Show this help message
+        Options:
+          --root <dir>      Repository root holding corpus.json and corpus/
+                            (default: the directory above this script)
+          --jobs, -j        Number of parallel workers (default: auto, 2x CPUs)
+          --timeout, -t     Per-repo timeout in seconds (default: 120)
+          --force           install: reset a dirty checkout instead of failing; update:
+                            also remove unlisted checkouts that have local changes
+          --debug           Show git commands and detailed diagnostics per repo
+          --no-prune        Keep checkouts on disk that are no longer in the manifest
+          --help, -h        Show this help message
 
-TXT;
+        update only:
+          --no-clone        Do not clone missing repositories, only pull existing ones
+          --clone-only      Only clone missing repositories, do not pull existing ones
+          --add <url>       Add a repository to the manifest and clone it (repeatable)
+          --as <path>       Target path under corpus/ for --add (default: derived from the URL)
+          --branch <name>   Branch to record for --add (default: the remote default branch)
+          --depth <n>       Clone depth for --add, 0 for a full clone (default: manifest default)
+          --write-manifest  Rewrite corpus.json from the repositories found on disk
+
+        Examples:
+          bin/corpus install          # rebuild corpus/ exactly as corpus.json pins it
+          bin/corpus update           # refresh every checkout, then rewrite corpus.json
+          bin/corpus update --add https://github.com/vendor/repo.git
+
+        TXT;
 }
 
 // ---------------------------------------------------------------------------
@@ -339,7 +390,7 @@ function findGitRepos(string $dir): array
  */
 function findGitReposRecursive(string $dir, array &$repos): void
 {
-    $subdirs = glob($dir.'/*', GLOB_ONLYDIR);
+    $subdirs = glob($dir.'/*', \GLOB_ONLYDIR);
     if (false === $subdirs) {
         return;
     }
@@ -347,6 +398,7 @@ function findGitReposRecursive(string $dir, array &$repos): void
     foreach ($subdirs as $subdir) {
         if (is_dir($subdir.'/.git')) {
             $repos[] = $subdir;
+
             continue;
         }
 
@@ -366,7 +418,7 @@ function isSafeRepo(string $repoPath, string $corpusDir): bool
         return false;
     }
 
-    $prefix = rtrim($corpusReal, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    $prefix = rtrim($corpusReal, \DIRECTORY_SEPARATOR).\DIRECTORY_SEPARATOR;
 
     return str_starts_with($repoReal, $prefix) && is_dir($repoReal.'/.git');
 }
@@ -375,7 +427,7 @@ function formatRepoLabel(string $repoPath, string $corpusDir): string
 {
     $repoReal = realpath($repoPath) ?: $repoPath;
     $corpusReal = realpath($corpusDir) ?: $corpusDir;
-    $prefix = rtrim($corpusReal, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    $prefix = rtrim($corpusReal, \DIRECTORY_SEPARATOR).\DIRECTORY_SEPARATOR;
 
     if (str_starts_with($repoReal, $prefix)) {
         return substr($repoReal, \strlen($prefix));
@@ -385,23 +437,23 @@ function formatRepoLabel(string $repoPath, string $corpusDir): string
 }
 
 // ---------------------------------------------------------------------------
-// Manifest (corpus/corpus.json)
+// Manifest (<root>/corpus.json)
 // ---------------------------------------------------------------------------
 
 const MANIFEST_DEFAULTS = ['remote' => 'origin', 'depth' => 1, 'protocol' => 'https'];
 
 const MANIFEST_PROTOCOLS = ['https', 'ssh', 'preserve'];
 
-function manifestPath(string $corpusDir): string
+function manifestPath(string $root): string
 {
-    return $corpusDir.\DIRECTORY_SEPARATOR.'corpus.json';
+    return $root.\DIRECTORY_SEPARATOR.'corpus.json';
 }
 
 /**
  * A manifest entry is either a URL string or an object with url/branch/depth,
  * plus the commit the checkout was on at the last run (written by this script).
  *
- * @return array{defaults: array{remote: string, depth: int}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>}
+ * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>}
  */
 function loadManifest(string $path): array
 {
@@ -458,7 +510,7 @@ function loadManifest(string $path): array
 }
 
 /**
- * @param array{remote: string, depth: int} $defaults
+ * @param array{remote: string, depth: int, protocol: string} $defaults
  *
  * @return array{url: string, branch: ?string, depth: int, commit: ?string}
  */
@@ -516,7 +568,8 @@ function isCommitHash(string $hash): bool
 
 function isValidRepoUrl(string $url): bool
 {
-    return 1 === preg_match('~^(?:https://|ssh://|git://|[\w.-]+@[\w.-]+:)[^\s]+$~', $url);
+    // file:// points at a local mirror, for tests and offline installs.
+    return 1 === preg_match('~^(?:https://|ssh://|git://|file://|[\w.-]+@[\w.-]+:)[^\s]+$~', $url);
 }
 
 /**
@@ -551,23 +604,28 @@ function normalizeCloneUrl(string $url, string $protocol): string
 function normalizeManifestPath(string $relPath): string
 {
     $relPath = trim(str_replace('\\', '/', $relPath));
-    $relPath = trim($relPath, '/');
 
     if ('' === $relPath) {
         throw new RuntimeException('Manifest repository paths must not be empty.');
     }
 
-    foreach (explode('/', $relPath) as $segment) {
-        if ('' === $segment || '.' === $segment || '..' === $segment) {
+    if (str_starts_with($relPath, '/')) {
+        throw new RuntimeException(sprintf('Manifest repository paths must be relative to corpus/: %s', $relPath));
+    }
+
+    foreach (explode('/', trim($relPath, '/')) as $segment) {
+        // Dot-prefixed segments are invisible to the scanner: a repo there
+        // would be listed but never pulled again.
+        if ('' === $segment || str_starts_with($segment, '.')) {
             throw new RuntimeException(sprintf('Unsafe manifest repository path: %s', $relPath));
         }
     }
 
-    return $relPath;
+    return trim($relPath, '/');
 }
 
 /**
- * @param array{defaults: array{remote: string, depth: int}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
  */
 function encodeManifest(array $manifest): string
 {
@@ -602,15 +660,15 @@ function encodeManifest(array $manifest): string
         $entries[] = '        '.$encode($relPath).': { '.implode(', ', $parts).' }';
     }
 
-    $lines[] = implode(','.PHP_EOL, $entries);
+    $lines[] = implode(','.\PHP_EOL, $entries);
     $lines[] = '    }';
     $lines[] = '}';
 
-    return implode(PHP_EOL, $lines).PHP_EOL;
+    return implode(\PHP_EOL, $lines).\PHP_EOL;
 }
 
 /**
- * @param array{defaults: array{remote: string, depth: int}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
  */
 function saveManifest(string $path, array $manifest): void
 {
@@ -622,10 +680,10 @@ function saveManifest(string $path, array $manifest): void
 }
 
 /**
- * @param array<string>                       $repos
- * @param array{remote: string, depth: int}   $defaults
+ * @param array<string>                                       $repos
+ * @param array{remote: string, depth: int, protocol: string} $defaults
  *
- * @return array{defaults: array{remote: string, depth: int}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>, skipped: array<string>}
+ * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>, skipped: array<string>}
  */
 function buildManifestFromDisk(string $corpusDir, array $repos, array $defaults, int $timeout): array
 {
@@ -634,9 +692,17 @@ function buildManifestFromDisk(string $corpusDir, array $repos, array $defaults,
 
     foreach ($repos as $repoPath) {
         $relPath = formatRepoLabel($repoPath, $corpusDir);
+        if (str_starts_with($relPath, '/') || !isSafeRepo($repoPath, $corpusDir)) {
+            // Reached through a symlink or living outside corpus/: writing
+            // its absolute path as a key would clone a duplicate next run.
+            $skipped[] = $relPath;
+
+            continue;
+        }
         $url = getRemoteUrl($repoPath, $defaults['remote'], $timeout);
         if (null === $url || !isValidRepoUrl($url)) {
             $skipped[] = $relPath;
+
             continue;
         }
 
@@ -667,6 +733,8 @@ function getRemoteUrl(string $repoPath, string $remote, int $timeout): ?string
 
 /**
  * Derive "vendor/repo" style target paths from a clone URL.
+ *
+ * @param array<string, mixed> $taken Paths already in use, keyed by target path
  */
 function deriveTargetPath(string $url, array $taken): string
 {
@@ -696,9 +764,72 @@ function deriveTargetPath(string $url, array $taken): string
 }
 
 /**
+ * Adapter between the worker pool's untyped items and cloneRepo(): an item
+ * the pool could not type is reported, not run.
+ *
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
+ */
+function cloneMissingTask(mixed $item, string $corpusDir, bool $debug, int $timeout): array
+{
+    if (\is_array($item) && \is_string($item['path'] ?? null) && \is_array($item['entry'] ?? null)) {
+        $entry = $item['entry'];
+        $branch = $entry['branch'] ?? null;
+        $commit = $entry['commit'] ?? null;
+        $depth = $entry['depth'] ?? null;
+        if (\is_string($entry['url'] ?? null)
+            && (null === $branch || \is_string($branch))
+            && \is_int($depth)
+            && (null === $commit || \is_string($commit))) {
+            return cloneRepo($item['path'], [
+                'url' => $entry['url'],
+                'branch' => $branch,
+                'depth' => $depth,
+                'commit' => $commit,
+            ], $corpusDir, $debug, $timeout);
+        }
+    }
+
+    return [
+        'path' => \is_array($item) && \is_string($item['path'] ?? null) ? $item['path'] : 'unknown',
+        'status' => 'FAIL',
+        'output' => 'The worker received an item it cannot clone.',
+        'command' => 'N/A',
+        'code' => 1,
+        'log' => [],
+    ];
+}
+
+/**
+ * Adapter between the worker pool's untyped items and installRepo().
+ *
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
+ */
+function installRepoTask(mixed $item, string $corpusDir, bool $force, bool $debug, int $timeout): array
+{
+    if (\is_array($item) && \is_string($item['path'] ?? null) && \is_array($item['entry'] ?? null)) {
+        $entry = $item['entry'];
+
+        return installRepo($item['path'], [
+            'url' => \is_string($entry['url'] ?? null) ? $entry['url'] : null,
+            'branch' => \is_string($entry['branch'] ?? null) ? $entry['branch'] : null,
+            'commit' => \is_string($entry['commit'] ?? null) ? $entry['commit'] : null,
+        ], $corpusDir, $force, $debug, $timeout);
+    }
+
+    return [
+        'path' => \is_array($item) && \is_string($item['path'] ?? null) ? $item['path'] : 'unknown',
+        'status' => 'FAIL',
+        'output' => 'The worker received an item it cannot install.',
+        'command' => 'N/A',
+        'code' => 1,
+        'log' => [],
+    ];
+}
+
+/**
  * @param array{url: string, branch: ?string, depth: int, commit: ?string} $entry
  *
- * @return array{path: string, status: string, output: string, command: string, code: int, log: array<string>}
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
  */
 function cloneRepo(string $relPath, array $entry, string $corpusDir, bool $debug, int $timeout): array
 {
@@ -756,11 +887,15 @@ function cloneRepo(string $relPath, array $entry, string $corpusDir, bool $debug
 }
 
 /**
- * Generic worker pool used for cloning; falls back to sequential execution.
+ * Worker pool; falls back to sequential execution. What a task returns is
+ * normalized on the way out, so a worker that died or sent garbage becomes
+ * a readable failure instead of leaking a mixed shape.
  *
- * @param array<int, mixed> $items
+ * @param array<int, mixed>        $items
+ * @param callable(mixed): mixed   $task
+ * @param callable(int, int): void $onComplete
  *
- * @return array<int, array<string, mixed>>
+ * @return list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}>
  */
 function runJobsParallel(array $items, int $jobs, callable $task, callable $onComplete): array
 {
@@ -781,9 +916,10 @@ function runJobsParallel(array $items, int $jobs, callable $task, callable $onCo
                 if (false !== $tmp) {
                     @unlink($tmp);
                 }
-                $results[] = $task($item);
+                $results[] = normalizeWorkerResult($task($item), $item);
                 $completed++;
                 $onComplete($completed, $total);
+
                 continue;
             }
 
@@ -808,14 +944,7 @@ function runJobsParallel(array $items, int $jobs, callable $task, callable $onCo
             @unlink($info['tmp']);
             $decoded = false === $data ? false : @unserialize($data);
 
-            $results[] = \is_array($decoded) ? $decoded : [
-                'path' => \is_string($info['item']) ? $info['item'] : 'unknown',
-                'status' => 'FAIL',
-                'output' => 'Worker produced no result.',
-                'command' => 'N/A',
-                'code' => 1,
-                'log' => [],
-            ];
+            $results[] = normalizeWorkerResult($decoded, $info['item']);
 
             $completed++;
             $onComplete($completed, $total);
@@ -823,6 +952,62 @@ function runJobsParallel(array $items, int $jobs, callable $task, callable $onCo
     }
 
     return $results;
+}
+
+/**
+ * What a worker process sent back, as a result the summaries can read: a
+ * decodable result keeps its fields, anything else becomes a failure that
+ * names the item the worker was given.
+ *
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
+ */
+function normalizeWorkerResult(mixed $decoded, mixed $item): array
+{
+    $path = 'unknown';
+    if (\is_string($item)) {
+        $path = $item;
+    } elseif (\is_array($item) && \is_string($item['path'] ?? null)) {
+        $path = $item['path'];
+    }
+
+    if (!\is_array($decoded)) {
+        return [
+            'path' => $path,
+            'status' => 'FAIL',
+            'output' => 'Worker produced no result.',
+            'command' => 'N/A',
+            'code' => 1,
+            'log' => [],
+        ];
+    }
+
+    $string = static fn (mixed $value, ?string $fallback): string => \is_string($value) ? $value : (string) $fallback;
+    $stringList = static function (mixed $value): array {
+        $lines = [];
+        if (\is_array($value)) {
+            foreach ($value as $line) {
+                if (\is_string($line)) {
+                    $lines[] = $line;
+                }
+            }
+        }
+
+        return $lines;
+    };
+
+    return [
+        'path' => $string($decoded['path'] ?? null, $path),
+        'status' => $string($decoded['status'] ?? null, 'FAIL'),
+        'output' => $string($decoded['output'] ?? null, 'Worker produced no result.'),
+        'command' => $string($decoded['command'] ?? null, 'N/A'),
+        'code' => \is_int($decoded['code'] ?? null) ? $decoded['code'] : 1,
+        'log' => $stringList($decoded['log'] ?? null),
+        'change' => \is_string($decoded['change'] ?? null) ? $decoded['change'] : null,
+        'commit' => \is_string($decoded['commit'] ?? null) ? $decoded['commit'] : null,
+        'previous' => \is_string($decoded['previous'] ?? null) ? $decoded['previous'] : null,
+        'count' => \is_int($decoded['count'] ?? null) ? $decoded['count'] : null,
+        'notes' => $stringList($decoded['notes'] ?? null),
+    ];
 }
 
 // ---------------------------------------------------------------------------
@@ -1072,6 +1257,26 @@ function resolvePullCommand(string $repoPath, int $timeout): array
     ];
 }
 
+/**
+ * runGit(), with the command and its outcome recorded when debug is on.
+ *
+ * @param array<int, string> $args
+ * @param list<string>       $log  Collected diagnostics, appended in place
+ *
+ * @return array{code: int, output: string}
+ */
+function runGitLogged(string $repoPath, array $args, int $timeout, bool $debug, array &$log): array
+{
+    $result = runGit($repoPath, $args, $timeout);
+    if ($debug) {
+        $cmdStr = 'git '.implode(' ', array_map(escapeshellarg(...), $args));
+        $detail = 0 === $result['code'] && '' === $result['output'] ? '(no output)' : $result['output'];
+        $log[] = $cmdStr.' → exit '.$result['code'].': '.$detail;
+    }
+
+    return $result;
+}
+
 // ---------------------------------------------------------------------------
 // Combined prepare + update per repo (runs inside worker)
 // ---------------------------------------------------------------------------
@@ -1079,7 +1284,7 @@ function resolvePullCommand(string $repoPath, int $timeout): array
 /**
  * @param array<string, ?string> $branches Map of manifest repository labels to their configured branch
  *
- * @return array{path: string, status: string, output: string, command: string, code: int, log: array<string>}
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
  */
 function processRepo(string $repoPath, bool $force, string $corpusDir, bool $debug, int $timeout, array $branches = []): array
 {
@@ -1092,17 +1297,6 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
         'code' => $code,
         'log' => $log,
     ];
-
-    $git = static function (array $args) use ($repoPath, $timeout, $debug, &$log): array {
-        $result = runGit($repoPath, $args, $timeout);
-        if ($debug) {
-            $cmdStr = 'git '.implode(' ', array_map('escapeshellarg', $args));
-            $detail = 0 === $result['code'] && '' === $result['output'] ? '(no output)' : $result['output'];
-            $log[] = $cmdStr.' → exit '.$result['code'].': '.$detail;
-        }
-
-        return $result;
-    };
 
     // Safety check
     if (!isSafeRepo($repoPath, $corpusDir)) {
@@ -1118,17 +1312,17 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
 
     // --- Prepare phase ---
     if ($force) {
-        $reset = $git(['reset', '--hard', 'HEAD']);
+        $reset = runGitLogged($repoPath, ['reset', '--hard', 'HEAD'], $timeout, $debug, $log);
         if (0 !== $reset['code']) {
             return $fail('Reset failed: '.$reset['output']);
         }
 
-        $clean = $git(['clean', '-fd']);
+        $clean = runGitLogged($repoPath, ['clean', '-fd'], $timeout, $debug, $log);
         if (0 !== $clean['code']) {
             return $fail('Clean failed: '.$clean['output']);
         }
     } else {
-        $status = $git(['status', '--porcelain']);
+        $status = runGitLogged($repoPath, ['status', '--porcelain'], $timeout, $debug, $log);
         if (0 !== $status['code']) {
             return $fail($status['output']);
         }
@@ -1152,15 +1346,15 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
     $branch = $branches[formatRepoLabel($repoPath, $corpusDir)] ?? null;
     $currentBranch = null !== $branch ? getCurrentBranch($repoPath, $timeout) : null;
 
-    if (null !== $branch && null !== $currentBranch && $currentBranch !== $branch) {
-        $remote = getBranchRemote($repoPath, $currentBranch, $timeout);
+    if (null !== $branch && $currentBranch !== $branch) {
+        $remote = null !== $currentBranch ? getBranchRemote($repoPath, $currentBranch, $timeout) : null;
         $remote ??= remoteExists($repoPath, 'origin', $timeout) ? 'origin' : null;
 
         if (null === $remote) {
             return $fail('No git remote found for branch '.$currentBranch.'.');
         }
 
-        $fetch = $git(['fetch', $remote, '+refs/heads/'.$branch.':refs/remotes/'.$remote.'/'.$branch]);
+        $fetch = runGitLogged($repoPath, ['fetch', $remote, '+refs/heads/'.$branch.':refs/remotes/'.$remote.'/'.$branch], $timeout, $debug, $log);
         if (0 !== $fetch['code']) {
             return $fail('Configured branch '.$branch.' not found on '.$remote.': '.$fetch['output']);
         }
@@ -1170,32 +1364,34 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
         // point that the remote's configured refspec does not cover.
         ensureFetchRefspec($repoPath, $remote, $branch, $timeout);
 
-        $checkout = $git(['checkout', '-B', $branch, $remote.'/'.$branch]);
+        $checkout = runGitLogged($repoPath, ['checkout', '-B', $branch, $remote.'/'.$branch], $timeout, $debug, $log);
         if (0 !== $checkout['code']) {
             return $fail('Branch switch failed: '.$checkout['output']);
         }
 
-        $git(['branch', '--set-upstream-to='.$remote.'/'.$branch, $branch]);
-        $branchNote = 'Switched '.$currentBranch.' to '.$branch.' (configured branch).';
+        runGitLogged($repoPath, ['branch', '--set-upstream-to='.$remote.'/'.$branch, $branch], $timeout, $debug, $log);
+        $branchNote = null !== $currentBranch
+            ? 'Switched '.$currentBranch.' to '.$branch.' (configured branch).'
+            : 'Reattached the detached checkout to '.$branch.' (configured branch).';
     }
 
     // --- Update phase ---
     $resolved = resolvePullCommand($repoPath, $timeout);
     if (!($resolved['ok'] ?? false)) {
-        return $fail($resolved['message'] ?? 'Unable to resolve pull command.');
+        return $fail(isset($resolved['message']) && \is_string($resolved['message']) ? $resolved['message'] : 'Unable to resolve pull command.');
     }
 
     /** @var array<int, string> $args */
     $args = $resolved['args'] ?? ['pull', '--rebase'];
     $command = $resolved['command'] ?? 'git pull --rebase';
 
-    $pull = $git($args);
+    $pull = runGitLogged($repoPath, $args, $timeout, $debug, $log);
     $output = $pull['output'];
     if (isset($resolved['note']) && '' !== $resolved['note']) {
-        $output = $resolved['note'].('' === $output ? '' : PHP_EOL.$output);
+        $output = $resolved['note'].('' === $output ? '' : \PHP_EOL.$output);
     }
     if ('' !== $branchNote) {
-        $output = $branchNote.('' === $output ? '' : PHP_EOL.$output);
+        $output = $branchNote.('' === $output ? '' : \PHP_EOL.$output);
     }
 
     // --- Self-heal phase ---
@@ -1211,14 +1407,14 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
         $default = null !== $remote ? getRemoteDefaultBranch($repoPath, $remote, $timeout) : null;
 
         if (null !== $remote && null !== $default) {
-            $fetch = $git(['fetch', $remote, '+refs/heads/'.$default.':refs/remotes/'.$remote.'/'.$default]);
+            $fetch = runGitLogged($repoPath, ['fetch', $remote, '+refs/heads/'.$default.':refs/remotes/'.$remote.'/'.$default], $timeout, $debug, $log);
             if (0 === $fetch['code']) {
                 // Same refspec dance as the branch phase: the checkout cannot
                 // set up tracking for a ref the remote's refspec ignores.
                 ensureFetchRefspec($repoPath, $remote, $default, $timeout);
-                $checkout = $git(['checkout', '-B', $default, $remote.'/'.$default]);
+                $checkout = runGitLogged($repoPath, ['checkout', '-B', $default, $remote.'/'.$default], $timeout, $debug, $log);
                 if (0 === $checkout['code']) {
-                    $git(['branch', '--set-upstream-to='.$remote.'/'.$default, $default]);
+                    runGitLogged($repoPath, ['branch', '--set-upstream-to='.$remote.'/'.$default, $default], $timeout, $debug, $log);
 
                     $note = 'Tracked branch no longer on remote; switched to default branch '.$remote.'/'.$default.'.';
 
@@ -1254,7 +1450,7 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
  * @param array<string, ?string> $branches Map of manifest repository labels to their configured branch
  * @param array<string, ?string> $locked   Map of manifest repository labels to their recorded commit
  *
- * @return array{path: string, status: string, output: string, command: string, code: int, log: array<string>, change: ?string, commit: ?string, previous: ?string, count: ?int}
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
  */
 function syncRepo(
     string $repoPath,
@@ -1291,7 +1487,7 @@ function syncRepo(
  * @param array<string, ?string> $branches Map of manifest repository labels to their configured branch
  * @param array<string, ?string> $locked   Map of manifest repository labels to their recorded commit
  *
- * @return array<int, array<string, mixed>>
+ * @return list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}>
  */
 function processReposParallel(
     array $repos,
@@ -1320,6 +1516,7 @@ function processReposParallel(
                 $results[] = syncRepo($repo, $force, $corpusDir, $debug, $timeout, $branches, $locked);
                 $completed++;
                 $onComplete($completed, $total);
+
                 continue;
             }
 
@@ -1329,6 +1526,7 @@ function processReposParallel(
                 $results[] = syncRepo($repo, $force, $corpusDir, $debug, $timeout, $branches, $locked);
                 $completed++;
                 $onComplete($completed, $total);
+
                 continue;
             }
 
@@ -1355,30 +1553,8 @@ function processReposParallel(
             $data = @file_get_contents($info['tmp']);
             @unlink($info['tmp']);
 
-            if (false !== $data) {
-                $decoded = @unserialize($data);
-                if (\is_array($decoded)) {
-                    $results[] = $decoded;
-                } else {
-                    $results[] = [
-                        'path' => $info['repo'],
-                        'status' => 'FAIL',
-                        'output' => 'Worker produced invalid result.',
-                        'command' => 'N/A',
-                        'code' => 1,
-                        'log' => [],
-                    ];
-                }
-            } else {
-                $results[] = [
-                    'path' => $info['repo'],
-                    'status' => 'FAIL',
-                    'output' => 'Worker result file missing.',
-                    'command' => 'N/A',
-                    'code' => 1,
-                    'log' => [],
-                ];
-            }
+            $decoded = false === $data ? false : @unserialize($data);
+            $results[] = normalizeWorkerResult($decoded, $info['repo']);
 
             $completed++;
             $onComplete($completed, $total);
@@ -1410,13 +1586,13 @@ function renderProgress(int $current, int $total, bool $dynamic, bool $final = f
     if ($dynamic) {
         echo "\r\033[2K".$line;
         if ($final) {
-            echo PHP_EOL;
+            echo \PHP_EOL;
         }
 
         return;
     }
 
-    echo $line.PHP_EOL;
+    echo $line.\PHP_EOL;
 }
 
 // ---------------------------------------------------------------------------
@@ -1430,6 +1606,8 @@ function shortCommit(?string $commit): string
 
 /**
  * One line saying where a checkout stands against the manifest.
+ *
+ * @param array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>} $result
  */
 function describeChange(array $result): string
 {
@@ -1441,11 +1619,15 @@ function describeChange(array $result): string
             null === ($result['count'] ?? null) ? '' : sprintf(' (%d commit%s)', $result['count'], 1 === $result['count'] ? '' : 's'),
         ),
         'cloned' => 'at '.shortCommit($result['commit'] ?? null),
+        'installed' => 'pinned at '.shortCommit($result['commit'] ?? null),
         'removed' => 'no longer in corpus.json',
         default => 'up to date at '.shortCommit($result['commit'] ?? null),
     };
 }
 
+/**
+ * @param array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>} $result
+ */
 function printResult(array $result, string $corpusDir, ConsoleStyle $io, bool $debug): void
 {
     $label = formatRepoLabel($result['path'], $corpusDir);
@@ -1456,10 +1638,10 @@ function printResult(array $result, string $corpusDir, ConsoleStyle $io, bool $d
         if ([] !== ($result['log'] ?? [])) {
             $lines = array_merge($lines, $result['log']);
         }
-        $detail = implode(PHP_EOL, $lines);
+        $detail = implode(\PHP_EOL, $lines);
     } elseif ('OK' === $result['status'] && isset($result['change'])) {
         // The commit range says what the pull did; keep only the notes.
-        $detail = implode(PHP_EOL, $result['notes'] ?? []);
+        $detail = implode(\PHP_EOL, $result['notes'] ?? []);
     } elseif ('' !== ($result['output'] ?? '')) {
         $detail = $result['output'];
     }
@@ -1475,14 +1657,17 @@ function printResult(array $result, string $corpusDir, ConsoleStyle $io, bool $d
             };
             $message = null === $change ? $label : $label.'  '.$io->dim(describeChange($result));
             $io->status($tag, $message, $detail);
+
             break;
         case 'SKIP':
             $io->status($io->yellow('[SKIP]'), $label, $detail);
+
             break;
         case 'FAIL':
         default:
             $statusTag = -1 === ($result['code'] ?? 0) ? '[TIMEOUT]' : '[FAIL]';
             $io->status($io->red($statusTag), $label, $detail);
+
             break;
     }
 }
@@ -1511,7 +1696,7 @@ function missingRepositories(array $repositories, string $corpusDir): array
 /**
  * @param array<string, array{url: string, branch: ?string, depth: int, commit: ?string}> $missing
  *
- * @return array<int, array<string, mixed>>
+ * @return list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}>
  */
 function cloneMissing(
     array $missing,
@@ -1526,13 +1711,7 @@ function cloneMissing(
         $items[] = ['path' => $relPath, 'entry' => $entry];
     }
 
-    $task = static fn (array $item): array => cloneRepo(
-        $item['path'],
-        $item['entry'],
-        $corpusDir,
-        $debug,
-        $timeout,
-    );
+    $task = static fn ($item): array => cloneMissingTask($item, $corpusDir, $debug, $timeout);
 
     $onComplete = static function (int $current, int $total) use ($dynamicProgress): void {
         renderProgress($current, $total, $dynamicProgress, $current >= $total);
@@ -1558,6 +1737,19 @@ function writeManifestCommand(string $manifestFile, string $corpusDir, int $time
     }
 
     $built = buildManifestFromDisk($corpusDir, $repos, $defaults, $timeout);
+    if (is_file($manifestFile)) {
+        $recorded = loadManifest($manifestFile)['repositories'];
+        foreach ($built['repositories'] as $relPath => $entry) {
+            if (!isset($recorded[$relPath])) {
+                continue;
+            }
+            // install() leaves checkouts detached: the branch on disk is
+            // null then, and dropping it would break every later update.
+            $entry['branch'] = $recorded[$relPath]['branch'] ?? $entry['branch'];
+            $entry['depth'] = $recorded[$relPath]['depth'] ?? $entry['depth'];
+            $built['repositories'][$relPath] = $entry;
+        }
+    }
     saveManifest($manifestFile, ['defaults' => $built['defaults'], 'repositories' => $built['repositories']]);
 
     $io->info(sprintf('Wrote %d repositories to %s.', \count($built['repositories']), $manifestFile));
@@ -1607,6 +1799,7 @@ function addCommand(
         if (!isValidRepoUrl($url)) {
             $io->error(sprintf('Unsupported repository URL: %s', $url));
             $failed++;
+
             continue;
         }
 
@@ -1615,6 +1808,7 @@ function addCommand(
         if (isset($manifest['repositories'][$relPath]) && $manifest['repositories'][$relPath]['url'] !== $url) {
             $io->error(sprintf('The manifest already maps %s to %s; pass --as to pick another path.', $relPath, $manifest['repositories'][$relPath]['url']));
             $failed++;
+
             continue;
         }
 
@@ -1630,6 +1824,7 @@ function addCommand(
 
         if ('FAIL' === $result['status']) {
             $failed++;
+
             continue;
         }
 
@@ -1646,7 +1841,7 @@ function addCommand(
 
 /**
  * @param array<string, array{url: string, branch: ?string, depth: int, commit: ?string}> $repositories
- * @param array<string>                                                  $repos
+ * @param array<string>                                                                   $repos
  */
 function printManifestDrift(array $repositories, array $repos, string $corpusDir, ConsoleStyle $io): void
 {
@@ -1663,7 +1858,7 @@ function printManifestDrift(array $repositories, array $repos, string $corpusDir
     }
 
     $io->info('');
-    $io->warn(sprintf('%d repositories on disk are not in the manifest; run corpus/update --write-manifest to list them.', \count($untracked)));
+    $io->warn(sprintf('%d repositories on disk are not in the manifest; run bin/corpus update --write-manifest to list them.', \count($untracked)));
     foreach (\array_slice($untracked, 0, 10) as $relPath) {
         $io->info('  - '.$relPath);
     }
@@ -1676,7 +1871,7 @@ function printManifestDrift(array $repositories, array $repos, string $corpusDir
  * The checkouts on disk that the manifest no longer lists.
  *
  * @param array<string, array{url: string, branch: ?string, depth: int, commit: ?string}> $repositories
- * @param array<string>                                                                  $repos
+ * @param array<string>                                                                   $repos
  *
  * @return array<string>
  */
@@ -1694,9 +1889,9 @@ function unlistedRepos(array $repositories, array $repos, string $corpusDir): ar
  * listed checkout below it.
  *
  * @param array<string, array{url: string, branch: ?string, depth: int, commit: ?string}> $repositories
- * @param array<string>                                                                  $unlisted
+ * @param array<string>                                                                   $unlisted
  *
- * @return array<int, array<string, mixed>>
+ * @return list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}>
  */
 function pruneUnlisted(array $repositories, array $unlisted, string $corpusDir, bool $force, int $timeout): array
 {
@@ -1716,12 +1911,14 @@ function pruneUnlisted(array $repositories, array $unlisted, string $corpusDir, 
 
         if (!isSafeRepo($repoPath, $corpusDir)) {
             $results[] = $result('SKIP', 'Outside corpus directory.');
+
             continue;
         }
 
         foreach (array_keys($repositories) as $listed) {
             if (str_starts_with($listed, $relPath.'/')) {
                 $results[] = $result('SKIP', sprintf('Not removed: it contains the listed checkout %s.', $listed));
+
                 continue 2;
             }
         }
@@ -1730,16 +1927,19 @@ function pruneUnlisted(array $repositories, array $unlisted, string $corpusDir, 
             $status = runGit($repoPath, ['status', '--porcelain'], $timeout);
             if (0 !== $status['code']) {
                 $results[] = $result('FAIL', $status['output'], $status['code']);
+
                 continue;
             }
             if ('' !== $status['output']) {
                 $results[] = $result('SKIP', 'Not removed: local changes (use --force to remove it anyway).');
+
                 continue;
             }
         }
 
         if (!removeTree($repoPath)) {
             $results[] = $result('FAIL', sprintf('Unable to remove %s.', $repoPath), 1);
+
             continue;
         }
 
@@ -1765,13 +1965,16 @@ function removeTree(string $path): bool
     );
 
     foreach ($iterator as $file) {
-        /** @var SplFileInfo $file */
+        if (!$file instanceof \SplFileInfo) {
+            continue;
+        }
         $pathname = $file->getPathname();
         if ($file->isLink() || !$file->isDir()) {
             // Git packs are read-only; Windows refuses to unlink those.
             if (!@unlink($pathname) && !(@chmod($pathname, 0o666) && @unlink($pathname))) {
                 return false;
             }
+
             continue;
         }
 
@@ -1810,14 +2013,19 @@ function removeEmptyParents(string $dir, string $corpusDir): void
  * Write the commit each checkout ended on back into the manifest, the way a
  * lock file pins what was installed.
  *
- * @param array{defaults: array{remote: string, depth: int}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
- * @param array<int, array<string, mixed>>                                                                                                                    $results
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>}                                                  $manifest
+ * @param list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}> $results
  */
 function recordCommits(string $manifestFile, array $manifest, array $results, string $corpusDir, ConsoleStyle $io): void
 {
     $changed = false;
 
     foreach ($results as $result) {
+        if ('OK' !== $result['status']) {
+            // A skipped or failed checkout is not where its remote stands:
+            // pinning it would break the next install.
+            continue;
+        }
         $commit = $result['commit'] ?? null;
         if (!\is_string($commit)) {
             continue;
@@ -1859,11 +2067,11 @@ function countFailures(array $results): int
 }
 
 /**
- * @param array<int, array<string, mixed>> $results
+ * @param list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}> $results
  */
 function printSummary(array $results, float $elapsed, ConsoleStyle $io): void
 {
-    $counts = ['cloned' => 0, 'updated' => 0, 'unchanged' => 0, 'removed' => 0];
+    $counts = ['cloned' => 0, 'installed' => 0, 'updated' => 0, 'unchanged' => 0, 'removed' => 0];
     $failed = 0;
     $skipped = 0;
     $timedOut = 0;
@@ -1873,15 +2081,18 @@ function printSummary(array $results, float $elapsed, ConsoleStyle $io): void
             case 'OK':
                 $change = $result['change'] ?? 'unchanged';
                 $counts[isset($counts[$change]) ? $change : 'unchanged']++;
+
                 break;
             case 'SKIP':
                 $skipped++;
+
                 break;
             default:
                 if (-1 === ($result['code'] ?? 0)) {
                     $timedOut++;
                 }
                 $failed++;
+
                 break;
         }
     }
@@ -1889,6 +2100,7 @@ function printSummary(array $results, float $elapsed, ConsoleStyle $io): void
     $io->info('');
     $io->info($io->bold('Summary'));
     $io->info('Cloned   : '.$counts['cloned']);
+    $io->info('Installed: '.$counts['installed']);
     $io->info('Updated  : '.$counts['updated']);
     $io->info('Unchanged: '.$counts['unchanged']);
     $io->info('Removed  : '.$counts['removed']);
@@ -1901,6 +2113,238 @@ function printSummary(array $results, float $elapsed, ConsoleStyle $io): void
 // Main
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Install command
+// ---------------------------------------------------------------------------
+
+/**
+ * Rebuilds corpus/ exactly at the commits corpus.json pins: unlisted
+ * checkouts are removed, missing ones are cloned at their pinned commit,
+ * present ones are moved back to it. The manifest is never written to.
+ *
+ * @param array<string, mixed> $options
+ */
+function installCommand(array $options, string $manifestFile, string $corpusDir, int $jobs, int $timeout, ConsoleStyle $io): int
+{
+    $debug = (bool) $options['debug'];
+    $force = (bool) $options['force'];
+
+    if (!is_file($manifestFile)) {
+        $io->error('No corpus.json at '.$manifestFile.'; run bin/corpus update --write-manifest to create it.');
+
+        return 1;
+    }
+
+    try {
+        $manifest = loadManifest($manifestFile);
+    } catch (RuntimeException $e) {
+        $io->error($e->getMessage());
+
+        return 1;
+    }
+
+    $repositories = $manifest['repositories'];
+    $repos = findGitRepos($corpusDir);
+    $unlisted = [];
+    if ($options['prune'] && [] !== $repositories) {
+        $unlisted = unlistedRepos($repositories, $repos, $corpusDir);
+    }
+
+    $io->header('Corpus Installer');
+    $io->info('Runtime : PHP '.\PHP_VERSION);
+    $io->info('Corpus  : '.$corpusDir);
+    $io->info('Jobs    : '.$jobs);
+    $io->info('Timeout : '.$timeout.'s per repo');
+    $io->info('Force   : '.($force ? 'yes' : 'no'));
+    $io->info('Debug   : '.($debug ? 'on' : 'off'));
+    $io->info('Manifest: '.\count($repositories).' entries'
+        .([] === $unlisted ? '' : ', '.\count($unlisted).' to remove'));
+    $io->info('');
+
+    $startTime = microtime(true);
+    $dynamicProgress = canUseDynamicProgress() && !$debug;
+
+    $pruneResults = [];
+    $results = [];
+    if ([] !== $unlisted) {
+        $io->info($io->bold('Removing '.\count($unlisted).' repositories no longer in corpus.json'));
+        // --force resets a listed checkout; deleting unlisted work belongs
+        // to update alone.
+        $pruneResults = pruneUnlisted($repositories, $unlisted, $corpusDir, false, $timeout);
+        foreach ($pruneResults as $result) {
+            printResult($result, $corpusDir, $io, $debug);
+        }
+        $io->info('');
+    }
+
+    $io->info($io->bold('Installing '.\count($repositories).' repositories at their pinned commits'));
+
+    $items = [];
+    foreach ($repositories as $relPath => $entry) {
+        $items[] = ['path' => $relPath, 'entry' => $entry];
+    }
+
+    $task =
+        /** @param array{path: string, entry: array{url: string, branch: ?string, depth: int, commit: ?string}} $item */
+        static fn ($item): array => installRepoTask($item, $corpusDir, $force, $debug, $timeout);
+
+    if (1 === $jobs) {
+        $total = \count($items);
+        renderProgress(0, $total, $dynamicProgress);
+        foreach ($items as $i => $item) {
+            $results[] = $task($item);
+            renderProgress($i + 1, $total, $dynamicProgress, $i + 1 >= $total);
+        }
+    } else {
+        $onComplete = static function (int $current, int $total) use ($dynamicProgress): void {
+            renderProgress($current, $total, $dynamicProgress, $current >= $total);
+        };
+        renderProgress(0, \count($items), $dynamicProgress);
+        $results = array_merge($results, runJobsParallel($items, $jobs, $task, $onComplete));
+    }
+
+    $io->info('');
+    usort($results, static fn (array $a, array $b): int => strcmp($a['path'] ?? '', $b['path'] ?? ''));
+    foreach ($results as $result) {
+        printResult($result, $corpusDir, $io, $debug);
+    }
+
+    $all = array_merge($pruneResults, $results);
+    printSummary($all, microtime(true) - $startTime, $io);
+
+    return countFailures($all) > 0 ? 1 : 0;
+}
+
+/**
+ * Brings one checkout exactly to the commit corpus.json pins: clones it at
+ * that commit when it is missing, moves it back when it is present. A plain
+ * clone is not enough — the branch may have moved past the pin — so the
+ * commit itself is fetched.
+ *
+ * @param array{url?: ?string, branch?: ?string, commit?: ?string} $entry
+ *
+ * @return array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}
+ */
+function installRepo(string $relPath, array $entry, string $corpusDir, bool $force, bool $debug, int $timeout): array
+{
+    $repoPath = $corpusDir.\DIRECTORY_SEPARATOR.trim($relPath, '/');
+    $log = [];
+    $pinned = $entry['commit'] ?? null;
+    $pinned = \is_string($pinned) && isCommitHash($pinned) ? strtolower($pinned) : null;
+
+    // By reference: the log grows with every git call, and the result is
+    // built when a branch returns, not when the closure is created.
+    $result = static function (string $status, string $output, ?string $change = null, ?string $commit = null, int $code = 0) use ($repoPath, &$log): array {
+        return [
+            'path' => $repoPath,
+            'status' => $status,
+            'output' => $output,
+            'command' => 'N/A',
+            'code' => $code,
+            'log' => $log,
+            'change' => $change,
+            'commit' => $commit,
+        ];
+    };
+
+    if (null === $pinned) {
+        return $result('FAIL', 'No commit pinned in corpus.json; run bin/corpus update first.');
+    }
+
+    $success = static fn (?string $change, string $head): array => $result('OK', '', $change, $head);
+
+    if (!is_dir($repoPath.\DIRECTORY_SEPARATOR.'.git')) {
+        if (!is_dir($repoPath) && !mkdir($repoPath, 0o777, true) && !is_dir($repoPath)) {
+            return $result('FAIL', 'Unable to create the directory.');
+        }
+        $existing = array_diff(scandir($repoPath) ?: [], ['.', '..']);
+        if ([] !== $existing) {
+            return $result('FAIL', 'Target directory exists and is not empty.');
+        }
+
+        if (0 !== runGitLogged($repoPath, ['init'], $timeout, $debug, $log)['code']) {
+            return $result('FAIL', 'git init failed.');
+        }
+
+        $url = $entry['url'] ?? null;
+        if (!\is_string($url) || '' === $url) {
+            return $result('FAIL', 'No url recorded in corpus.json for this repository.');
+        }
+
+        if (0 !== runGitLogged($repoPath, ['remote', 'add', 'origin', $url], $timeout, $debug, $log)['code']) {
+            return $result('FAIL', 'git remote add failed.');
+        }
+
+        $fetch = runGitLogged($repoPath, ['fetch', '--depth', '1', 'origin', $pinned], $timeout, $debug, $log);
+        if (0 !== $fetch['code']) {
+            // The pin may predate what a direct fetch can reach; a branch
+            // fetch still helps when the commit is an ancestor of its tip.
+            $fetch = runGitLogged($repoPath, ['fetch', 'origin'], $timeout, $debug, $log);
+            if (0 !== $fetch['code']) {
+                return $result('FAIL', 'Cannot fetch commit '.$pinned.' from origin.', null, null, $fetch['code']);
+            }
+        }
+
+        if (0 !== runGitLogged($repoPath, ['checkout', '--detach', $pinned], $timeout, $debug, $log)['code']) {
+            return $result('FAIL', 'Commit '.$pinned.' did not come down from origin.');
+        }
+
+        $head = getHeadCommit($repoPath, $timeout);
+
+        return null === $head
+            ? $result('FAIL', 'Unable to read the checked-out commit.')
+            : $success('installed', $head);
+    }
+
+    if (!isSafeRepo($repoPath, $corpusDir)) {
+        return $result('SKIP', 'Outside corpus directory.');
+    }
+
+    $dirty = runGitLogged($repoPath, ['status', '--porcelain'], $timeout, $debug, $log);
+    $isDirty = 0 === $dirty['code'] && '' !== trim($dirty['output']);
+    if ($isDirty && !$force) {
+        return $result('FAIL', 'The checkout has local changes; run again with --force to discard them.');
+    }
+
+    $head = getHeadCommit($repoPath, $timeout);
+    if (null !== $head && $head === $pinned) {
+        if ($isDirty) {
+            runGitLogged($repoPath, ['reset', '--hard'], $timeout, $debug, $log);
+            runGitLogged($repoPath, ['clean', '-fd'], $timeout, $debug, $log);
+        }
+
+        return $success(null, $head);
+    }
+
+    if ($isDirty) {
+        runGitLogged($repoPath, ['reset', '--hard'], $timeout, $debug, $log);
+        runGitLogged($repoPath, ['clean', '-fd'], $timeout, $debug, $log);
+    }
+
+    if (0 !== runGitLogged($repoPath, ['cat-file', '-e', $pinned.'^{commit}'], $timeout, $debug, $log)['code']) {
+        $fetch = runGitLogged($repoPath, ['fetch', '--depth', '1', 'origin', $pinned], $timeout, $debug, $log);
+        if (0 !== $fetch['code']) {
+            $fetch = runGitLogged($repoPath, ['fetch', 'origin'], $timeout, $debug, $log);
+            if (0 !== $fetch['code']) {
+                return $result('FAIL', 'Cannot fetch commit '.$pinned.' from origin.', null, null, $fetch['code']);
+            }
+        }
+    }
+
+    if (0 !== runGitLogged($repoPath, ['checkout', '--detach', $pinned], $timeout, $debug, $log)['code']) {
+        return $result('FAIL', 'Commit '.$pinned.' did not come down from origin.');
+    }
+
+    $head = getHeadCommit($repoPath, $timeout);
+
+    return null === $head
+        ? $result('FAIL', 'Unable to read the checked-out commit.')
+        : $success('installed', $head);
+}
+
+/**
+ * @param list<string> $argv
+ */
 function main(array $argv): int
 {
     $io = new ConsoleStyle();
@@ -1920,9 +2364,31 @@ function main(array $argv): int
         return 0;
     }
 
-    $corpusDir = realpath(__DIR__);
-    if (false === $corpusDir) {
-        $io->error('Unable to resolve corpus directory.');
+    $command = $options['command'];
+    if (null === $command) {
+        printUsage();
+
+        return 1;
+    }
+
+    if (!\in_array($command, ['update', 'install'], true)) {
+        $io->error(sprintf('Unknown command: %s', $command));
+        printUsage();
+
+        return 1;
+    }
+
+    $root = realpath($options['root'] ?? dirname(__DIR__));
+    if (false === $root) {
+        $io->error('Unable to resolve the --root directory.');
+
+        return 1;
+    }
+    $root = rtrim($root, \DIRECTORY_SEPARATOR);
+
+    $corpusDir = $root.\DIRECTORY_SEPARATOR.'corpus';
+    if (!is_dir($corpusDir) && !mkdir($corpusDir, 0o777, true) && !is_dir($corpusDir)) {
+        $io->error('Unable to create the corpus directory: '.$corpusDir);
 
         return 1;
     }
@@ -1964,11 +2430,37 @@ function main(array $argv): int
             return 1;
         }
         $timeout = (int) $timeout;
+        if ($timeout < 1) {
+            $io->error('The --timeout value must be a positive integer.');
+
+            return 1;
+        }
     }
 
     $debug = (bool) $options['debug'];
     $force = (bool) $options['force'];
-    $manifestFile = manifestPath($corpusDir);
+    $manifestFile = manifestPath($root);
+
+    // --- Install: rebuild corpus/ at the pinned commits, never write the manifest ---
+    if ('install' === $command) {
+        $updateOnly = [
+            '--write-manifest' => $options['write-manifest'],
+            '--add' => [] !== $options['add'],
+            '--clone-only' => $options['clone-only'],
+            '--no-clone' => !$options['clone'],
+            '--as' => null !== $options['as'],
+            '--branch' => null !== $options['branch'],
+            '--depth' => null !== $options['depth'],
+        ];
+        $used = array_keys(array_filter($updateOnly));
+        if ([] !== $used) {
+            $io->error('The '.implode(', ', $used).' option(s) belong to the update command.');
+
+            return 1;
+        }
+
+        return installCommand($options, $manifestFile, $corpusDir, $jobs, $timeout, $io);
+    }
 
     // --- Manifest-only commands ---
     try {
@@ -2006,7 +2498,7 @@ function main(array $argv): int
     }
 
     $io->header('Corpus Updater');
-    $io->info('Runtime : PHP '.PHP_VERSION);
+    $io->info('Runtime : PHP '.\PHP_VERSION);
     $io->info('Corpus  : '.$corpusDir);
     $io->info('Jobs    : '.$jobs);
     $io->info('Timeout : '.$timeout.'s per repo');
@@ -2016,7 +2508,7 @@ function main(array $argv): int
         ? \count($manifest['repositories']).' entries'
             .([] === $missing ? '' : ', '.\count($missing).' missing on disk')
             .([] === $unlisted ? '' : ', '.\count($unlisted).' to remove')
-        : 'not found (run corpus/update --write-manifest)'));
+        : 'not found (run bin/corpus update --write-manifest)'));
     $io->info('Repos   : '.\count($repos));
     $io->info('');
 

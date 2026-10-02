@@ -25,7 +25,7 @@ use PHPRegex\Toolkit\Regex;
  */
 
 /*
- * Rebuilds the corpus lint expectations from corpus/corpus.log.
+ * Rebuilds the corpus lint expectations from var/log/corpus.log.
  *
  * The log is a rendered report: reading a pattern back out of it is lossy,
  * and the linter's own rules would have to be re-implemented to decide which
@@ -43,7 +43,7 @@ require_once __DIR__.'/../../vendor/autoload.php';
 
 const ARROW = "\xE2\x86\x92";
 
-$logPath = \dirname(__DIR__, 2).'/corpus/corpus.log';
+$logPath = \dirname(__DIR__, 2).'/var/log/corpus.log';
 $fixturePath = \dirname(__DIR__).'/Fixtures/Corpus/lint-expectations.json';
 
 $patterns = readPatterns($logPath);

@@ -116,35 +116,36 @@ be edge cases that the test suite does not yet cover.
 Separately, the linter and ReDoS analyzer have been run over a corpus of
 **over 1,700 unique patterns collected from around 200 real-world PHP
 projects** (Symfony,
-Laravel, Composer, PHPUnit, …). The lint results are in `corpus/corpus.log`.
+Laravel, Composer, PHPUnit, …). The lint results are in `var/log/corpus.log`.
 This corpus run is **not** part of the automated CI differential test — it is
 a snapshot used to validate that the lint and ReDoS rules produce sensible
 output on real code.
 
-The corpus checkouts themselves are not committed. `corpus/corpus.json` lists
-every repository with its URL, branch and the commit it was last updated to,
-much like a lock file. `php corpus/update` removes the checkouts whose entry
-was deleted from the manifest, clones the missing ones, then pulls the rest
-(switching each checkout to the branch recorded in the manifest) and writes the
-new commits back. Its output shows which repositories moved, and by how many
-commits, since the manifest was last written:
+The corpus checkouts themselves are not committed. `corpus.json`, at the root
+next to `composer.json`, lists every repository with its URL, branch and the
+commit it was pinned to, much like a lock file. `bin/corpus` manages the
+checkouts, composer-style:
 
 ```bash
-php corpus/update                      # prune, clone what is missing, then pull everything
-php corpus/update --clone-only         # first run on a fresh machine
-php corpus/update --no-prune           # keep checkouts that are no longer listed
-php corpus/update --add https://github.com/vendor/repo.git [--as path] [--branch main]
-php corpus/update --write-manifest     # rewrite corpus.json from what is on disk
+php bin/corpus install                 # rebuild corpus/ exactly at the pinned commits
+php bin/corpus update                  # prune, clone what is missing, then pull everything,
+                                       # and write the new commits back to corpus.json
+php bin/corpus update --no-prune       # keep checkouts that are no longer listed
+php bin/corpus update --add https://github.com/vendor/repo.git [--as path] [--branch main]
+php bin/corpus update --write-manifest # rewrite corpus.json from what is on disk
 ```
 
-A checkout with local changes is never removed unless `--force` is given, and
-a repository cloned by hand is removed on the next run unless it is added with
+`install` never writes to `corpus.json`: delete `corpus/` at any time and one
+command rebuilds it, repository by repository, at the exact commits the
+manifest pins. `update` is the only command that moves the pins. A checkout
+with local changes is never reset or removed unless `--force` is given, and a
+repository cloned by hand is removed on the next run unless it is added with
 `--add` or listed with `--write-manifest` first.
 
-Regenerate `corpus/corpus.log` after updating the corpus, from a terminal:
+Regenerate `var/log/corpus.log` after updating the corpus, from a terminal:
 
 ```bash
-php bin/regex lint corpus/ --php-version=runtime --output=corpus/corpus.log
+php bin/regex lint corpus/ --php-version=runtime --output=var/log/corpus.log
 ```
 
 `--php-version=runtime` judges the corpus for the PHP running the command and

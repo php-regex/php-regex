@@ -35,10 +35,11 @@
 /corpus/*
 !/corpus/
 !/corpus/.gitkeep
-!/corpus/corpus.log
-!/corpus/corpus-redos.log
-!/corpus/corpus.json
-!/corpus/update
+/var/*
+!/var/log/
+/var/log/*
+!/var/log/corpus.log
+!/var/log/corpus-redos.log
 
 # Mutation testing reports
 /infection-mutations.log

@@ -38,6 +38,7 @@
 /bin/bump               export-ignore
 /bin/release            export-ignore
 /bin/status             export-ignore
+/bin/corpus             export-ignore
 /phpbench.yml           export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore
@@ -59,6 +60,8 @@
 /art                    export-ignore
 /benchmarks             export-ignore
 /corpus                 export-ignore
+/corpus.json            export-ignore
+/var                    export-ignore
 /docs                   export-ignore
 /tests                  export-ignore
 /tools                  export-ignore
