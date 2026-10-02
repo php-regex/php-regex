@@ -155,6 +155,13 @@ vendor/bin/regex analyze '/(a+)+b/' --redos-mode=confirmed
 
 The length counts the bytes of the replayed input, here 17 `a`, the `!` and the `b`. The suffix `!b` is what makes PCRE run the loop: without the `b` it would give up at once, and without the `!` the pattern would match.
 
+The line names the call form the replay ran: `preg_match fails` when the
+witness reproduces with `$matches`, and `preg_match() without $matches fails`
+for the patterns that only blow up on PHP's second try — an empty first match
+makes `preg_match()` retry the offset with `NOTEMPTY_ATSTART | ANCHORED` when
+no `$matches` was passed. The analysis models both forms; a verdict is only
+replayed the way it was proven.
+
 When the replay never fails, the verdict stays and its confidence stays `medium`:
 
 ```bash
