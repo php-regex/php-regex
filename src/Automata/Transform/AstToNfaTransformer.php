@@ -368,11 +368,11 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
             $current = array_pop($stack);
             $seen[$current] = true;
             $nfaState = $this->builderStateView($current);
-            if (\in_array($current, $acceptStates, true)) {
+            if (\in_array($current, $acceptStates, true) && !$nullableIsSafe) {
                 // A follower that may be skipped lets a shorter possessive
-                // match matter — unless it is the last thing in the sequence,
-                // where nothing follows to consume what it would give back.
-                return $nullableIsSafe ? $set : null;
+                // match matter — something after it may take what it gives
+                // back, and this one-step look cannot see that far.
+                return null;
             }
             foreach ($nfaState['transitions'] as $transition) {
                 $set = $set->union($transition->charSet);

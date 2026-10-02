@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
@@ -73,11 +74,30 @@ final class LanguageSolverSoundnessTest extends TestCase
     /**
      * @return array<int, string>
      */
+    /**
+     * Oracle: PCRE's full-match language of "/a++(?:ab)?/" is plain "a+" —
+     * "aaab" is rejected while "/a+(?:ab)?/" accepts it. The greedy spelling
+     * would answer a language PCRE does not match, so the pattern is refused.
+     */
+    #[Test]
+    public function test_a_possessive_before_a_nullable_last_follower_is_refused(): void
+    {
+        $this->assertFalse((bool) @preg_match('/^(?:a++(?:ab)?)$/', 'aaab'));
+        $this->assertTrue((bool) @preg_match('/^(?:a+(?:ab)?)$/', 'aaab'));
+
+        $this->expectException(ComplexityException::class);
+        (new LanguageSolver())->intersection('/a++(?:ab)?/', '/aaab/');
+    }
+
+    /**
+     * @return list<string>
+     */
     private function supportedPatterns(): array
     {
         return [
             '/a/',
             '/b/',
+            '/a*ab/',
             '/ab/',
             '/ba/',
             '/a*/',

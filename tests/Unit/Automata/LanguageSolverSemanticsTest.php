@@ -117,7 +117,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        foreach (['/^a*+a$/', '/a*+b?c/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/'] as $pattern) {
+        foreach (['/^a*+a$/', '/a*+b?c/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/', '/a++(?:ab)?/', '/a*+(?:ab)?/', '/k++(?:kx)?/iu', '/a++(?:ab|)/'] as $pattern) {
             try {
                 $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
                 $this->fail(sprintf('%s was answered; the solver must refuse it.', $pattern));

@@ -62,7 +62,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Fallbacks:** Unsupported constructs raise `ComplexityException`. Atomic groups and possessive quantifiers commit to
   what they first matched and never retry — ordered behaviour the solver cannot read as a pure language
   (`/^a*+a$/` matches nothing at all), so they are refused — except a possessive quantifier nothing that follows can
-  take back from: disjoint first characters, or an anchor, read the same language as the greedy spelling, so Symfony's
+  take back from: a follower whose first characters are disjoint from the atom's, counting a nullable follower's own
+  consuming arm (`a++` before `(?:ab)?` stays refused — PCRE rejects `aaab` there), or a pure anchor. Symfony's
   `[^/]++` route requirements keep being analyzed.
 
 **Match modes**
