@@ -97,6 +97,9 @@ final class LanguageSolverSemanticsTest extends TestCase
         $this->assertFalse($solver->intersection('/(?:ab*+)c/', '/abbc/', $this->fullMatchOptions())->isEmpty);
         // A follower made of several alternatives joins its first characters.
         $this->assertFalse($solver->intersection('/a*+(?:[bc]|d)e/', '/ade/', $this->fullMatchOptions())->isEmpty);
+        // Through a skippable follower: the set is {b, c}, disjoint from {a}
+        // (oracle: "/^a*+b?c$/" matches "ac", "abc" and "aaabc" alike).
+        $this->assertFalse($solver->intersection('/a*+b?c/', '/ac/', $this->fullMatchOptions())->isEmpty);
     }
 
     /**
@@ -117,7 +120,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        foreach (['/^a*+a$/', '/a*+b?c/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/', '/a++(?:ab)?/', '/a*+(?:ab)?/', '/k++(?:kx)?/iu', '/a++(?:ab|)/'] as $pattern) {
+        foreach (['/^a*+a$/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/', '/a++(?:ab)?/', '/a*+(?:ab)?/', '/k++(?:kx)?/iu', '/a++(?:ab|)/'] as $pattern) {
             try {
                 $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
                 $this->fail(sprintf('%s was answered; the solver must refuse it.', $pattern));

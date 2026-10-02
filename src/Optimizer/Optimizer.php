@@ -19,9 +19,16 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\TraversalAction;
 
 /**
  * Rewrites a pattern into a shorter or faster one that matches the same
@@ -87,7 +94,17 @@ final readonly class Optimizer
             $optimizedPattern = $optimizedCompiled;
         }
 
-        if ($optimizedPattern !== $regex && $verifyWithAutomata) {
+        if ($optimizedPattern !== $regex && $this->introducesAtomicity($regex, $optimizedPattern)) {
+            // A rewrite that adds a possessive quantifier or an atomic group
+            // ships only when the solver verifies it: the solver refuses the
+            // possessive forms it cannot prove safe, and an unverified one can
+            // change the language PCRE matches. This gate runs on its own, not
+            // only under verifyWithAutomata, because the rewrite rules that
+            // possessify are on by default.
+            if (true !== $this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
+                return new OptimizationResult($regex, $regex, []);
+            }
+        } elseif ($optimizedPattern !== $regex && $verifyWithAutomata) {
             $isEquivalent = $this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern);
             // A safety net: only a wrong rewrite fails the check, and none is known.
             if (false === $isEquivalent) {
@@ -98,6 +115,44 @@ final readonly class Optimizer
         $appliedChanges = $optimizedPattern === $regex ? [] : ['Optimized pattern.'];
 
         return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+    }
+
+    /**
+     * Whether the rewrite added an atomic group or a possessive quantifier
+     * the original did not have, read from both ASTs.
+     */
+    private function introducesAtomicity(string $original, string $optimized): bool
+    {
+        return $this->atomicityMarkers($optimized) > $this->atomicityMarkers($original);
+    }
+
+    private function atomicityMarkers(string $pattern): int
+    {
+        try {
+            $ast = $this->parser->parse($pattern);
+        } catch (RegexException) {
+            return \PHP_INT_MAX;
+        }
+
+        $markers = 0;
+        NodeWalker::walk(
+            $ast,
+            /**
+             * @param list<NodeInterface> $ancestors
+             */
+            static function (NodeInterface $node, array $ancestors) use (&$markers): ?TraversalAction {
+                if ($node instanceof GroupNode && GroupType::Atomic === $node->type) {
+                    $markers++;
+                }
+                if ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type) {
+                    $markers++;
+                }
+
+                return null;
+            },
+        );
+
+        return $markers;
     }
 
     /**

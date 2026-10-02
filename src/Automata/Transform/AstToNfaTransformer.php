@@ -233,27 +233,17 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
             return $this->epsilonFragment();
         }
 
+        // The follower set of a child is the first characters of everything
+        // after it, through the followers that may be skipped — judged before
+        // any fragment is concatenated, so a possessive child can be checked
+        // against what really follows it.
         $fragments = [];
+        $followSets = $this->followSetsOf($node, $options);
+
         foreach ($node->children as $index => $child) {
             $possessive = $this->possessiveAtEnd($child);
             if (null !== $possessive) {
-                $follower = $node->children[$index + 1] ?? null;
-                $followerIsLast = \count($node->children) === $index + 2;
-                if (null === $follower) {
-                    // No follower here: an enclosing sequence already proved
-                    // this subtree safe, or nothing vouches for it at all.
-                    if (!$this->possessiveAsGreedy) {
-                        throw new ComplexityException(
-                            'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.',
-                            $possessive->getStartPosition(),
-                            $this->pattern,
-                        );
-                    }
-                    $fragments[] = $this->buildNode($child, $options);
-
-                    continue;
-                }
-                if (!$this->possessiveIsSafe($possessive, $follower, $options, $followerIsLast)) {
+                if (!$this->possessiveIsSafe($possessive, $followSets[$index + 1] ?? null, $options)) {
                     throw new ComplexityException(
                         'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.',
                         $possessive->getStartPosition(),
@@ -319,29 +309,72 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         }
     }
 
-    private function possessiveIsSafe(QuantifierNode $node, NodeInterface $follower, SolverOptions $options, bool $followerIsLast): bool
+    /**
+     * A possessive quantifier reads the same language as its greedy
+     * spelling when the follower set — the first characters of everything
+     * after it, through the followers that may be skipped — shares no
+     * character with its atom: nothing that follows can take back what it
+     * matched. An atom that is not one character set, or a follower set the
+     * sequence cannot see (null), stays refused.
+     */
+    private function possessiveIsSafe(QuantifierNode $node, ?CharSet $followSet, SolverOptions $options): bool
     {
+        if (null === $followSet) {
+            return false;
+        }
+
         $atom = $this->buildNode($node->node, $options);
         $atomStart = $this->builderStateView($atom->startState);
         if ([] !== $atomStart['epsilon'] || 1 !== \count($atomStart['transitions'])) {
             return false;
         }
 
-        $next = $this->buildNode($follower, $options);
-        $first = $this->firstConsumedSet($next->startState, $next->acceptStates, $followerIsLast);
-        if (null === $first) {
-            return false;
-        }
-
-        return $atomStart['transitions'][0]->charSet->intersect($first)->isEmpty();
+        return $atomStart['transitions'][0]->charSet->intersect($followSet)->isEmpty();
     }
 
     /**
-     * The characters the state can consume before anything else, through
-     * epsilon moves; an empty set for a pure zero-width follower such as an
-     * anchor, and null when the follower may be skipped — a shorter possessive
-     * match could then matter.
+     * For every position of the sequence, the first characters of what
+     * follows it: each follower's first set is unioned in, and the walk
+     * stops at the first follower that cannot be skipped. All followers
+     * skippable and the sequence ends: nothing follows under FULL, an empty
+     * set; under PARTIAL anything may still be matched around, null, which
+     * the possessive rule reads as a refusal.
+     *
+     * @return array<int, CharSet|null>
      */
+    private function followSetsOf(SequenceNode $node, SolverOptions $options): array
+    {
+        $children = array_values($node->children);
+        $count = \count($children);
+        $sets = [];
+        $rest = MatchMode::Full === $options->matchMode
+            ? CharSet::empty($this->alphabetMax)
+            : null;
+
+        // The fragments built here are thrown away: only each child's first
+        // set and nullability are read, so a possessive child may be built
+        // as its greedy spelling for the probe.
+        $this->possessiveAsGreedy = true;
+
+        try {
+            for ($index = $count - 1; $index >= 0; $index--) {
+                $sets[$index + 1] = $rest;
+                if (null === $rest) {
+                    continue;
+                }
+                $fragment = $this->buildNode($children[$index], $options);
+                $first = $this->firstAndNullable($fragment->startState, $fragment->acceptStates);
+                $rest = $first['nullable']
+                    ? $first['first']->union($rest)
+                    : $first['first'];
+            }
+        } finally {
+            $this->possessiveAsGreedy = false;
+        }
+
+        return $sets;
+    }
+
     /**
      * @return array{transitions: array<NfaTransition>, epsilon: array<int>, accepting: bool}
      */
@@ -355,24 +388,28 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     }
 
     /**
+     * The characters the state can consume before anything else, through
+     * epsilon moves, and whether an accepting state is reached without
+     * consuming anything — a follower that may be skipped.
+     *
      * @param array<int> $acceptStates the fragment's own accepting states —
      *                                 the builder flags them only once built
+     *
+     * @return array{first: CharSet, nullable: bool}
      */
-    private function firstConsumedSet(int $state, array $acceptStates, bool $nullableIsSafe): ?CharSet
+    private function firstAndNullable(int $state, array $acceptStates): array
     {
         $seen = [];
         $queued = [$state => true];
         $stack = [$state];
         $set = CharSet::empty($this->alphabetMax);
+        $nullable = false;
         while ([] !== $stack) {
             $current = array_pop($stack);
             $seen[$current] = true;
             $nfaState = $this->builderStateView($current);
-            if (\in_array($current, $acceptStates, true) && !$nullableIsSafe) {
-                // A follower that may be skipped lets a shorter possessive
-                // match matter — something after it may take what it gives
-                // back, and this one-step look cannot see that far.
-                return null;
+            if (\in_array($current, $acceptStates, true)) {
+                $nullable = true;
             }
             foreach ($nfaState['transitions'] as $transition) {
                 $set = $set->union($transition->charSet);
@@ -387,7 +424,7 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
             }
         }
 
-        return $set;
+        return ['first' => $set, 'nullable' => $nullable];
     }
 
     /**

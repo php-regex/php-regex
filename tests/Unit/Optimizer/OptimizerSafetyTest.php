@@ -13,8 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -31,6 +33,56 @@ final class OptimizerSafetyTest extends TestCase
         $optimized = Regex::create()->optimize($input, $options)->optimized;
 
         $this->assertSame($expected, $optimized);
+    }
+
+    /**
+     * An atomicity-introducing rewrite the solver cannot verify must not
+     * ship: the safety net answers null when the LanguageSolver refuses the
+     * possessive form — the atom of "(?:ab|a)++" is multi-character, out of
+     * the disjoint-follower rule — and an unverified possessive can change
+     * the language PCRE matches. Verified possessives still ship: "a++b"
+     * holds, its follower is disjoint.
+     */
+    #[Test]
+    public function test_an_unverifiable_atomic_rewrite_is_kept_back(): void
+    {
+        $options = ['possessive' => true];
+
+        $this->assertSame(
+            '/(?:ab|a)+c/',
+            Regex::create()->optimize('/(?:ab|a)+c/', $options)->optimized,
+            'the solver refuses this possessive; the rewrite must not ship unverified',
+        );
+        $this->assertSame(
+            '/(?:foo|bar)+!/',
+            Regex::create()->optimize('/(?:foo|bar)+!/', $options)->optimized,
+        );
+
+        $this->assertSame(
+            '/a++b/',
+            Regex::create()->optimize('/a+b/', $options)->optimized,
+            'the solver verifies this one; it ships',
+        );
+    }
+
+    /**
+     * The marker walk behind the gate: an atomic group counts like a
+     * possessive quantifier — no rule emits one today, the gate is ready
+     * for the one that will — and a pattern the parser refuses reads as
+     * maximally atomic: an unparseable rewrite never ships.
+     */
+    #[Test]
+    public function test_the_atomicity_marker_walk_counts_every_form(): void
+    {
+        $optimizer = new \ReflectionMethod(Optimizer::class, 'atomicityMarkers');
+        $on = Optimizer::class;
+        $instance = (new \ReflectionClass(Optimizer::class))->newInstance(Regex::create()->parser());
+
+        $this->assertSame(0, $optimizer->invoke($instance, '/(a+)b/'));
+        $this->assertSame(1, $optimizer->invoke($instance, '/(?>a+)b/'));
+        $this->assertSame(2, $optimizer->invoke($instance, '/(?>a+)b++/'));
+        $this->assertSame(2, $optimizer->invoke($instance, '/a++b++/'));
+        $this->assertSame(\PHP_INT_MAX, $optimizer->invoke($instance, '/['));
     }
 
     /**
