@@ -3168,7 +3168,7 @@
          - /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
          + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
 
-  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:3595:36
+  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:3601:36
       → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
@@ -5863,32 +5863,24 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:183:17
-      → /'(?:''|\\'|[^'])*'/s
+  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:191:17
+      → /'(?:\\.|''|[^'])*'/s
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-     WARN  Flag 's' is useless: the pattern contains no dots.
-     TIP 
-         - /'(?:''|\\'|[^'])*'/s
-         + /'(?:''|\\'|[^'])*'/
 
-  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:184:17
-      → /"(?:""|\\"|[^"])*"/s
+  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:192:17
+      → /"(?:\\.|""|[^"])*"/s
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-     WARN  Flag 's' is useless: the pattern contains no dots.
-     TIP 
-         - /"(?:""|\\"|[^"])*"/s
-         + /"(?:""|\\"|[^"])*"/
 
-  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:185:17
+  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:193:17
       → /`[^`]*`/s
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - /`[^`]*`/s
          + /`[^`]*`/
 
-  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:192:42
+  corpus/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:200:42
       → /\s+/s
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
@@ -9474,7 +9466,7 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/filament/packages/panels/src/Resources/Resource/Concerns/HasGlobalSearch.php:196:37
+  corpus/filament/packages/panels/src/Resources/Resource/Concerns/HasGlobalSearch.php:198:37
       → /(\s|\x{3164}|\x{1160})+/u
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10322,12 +10314,12 @@
          ---
          + )}x
 
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3091:70
+  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3098:70
       → /custom\-[0-1]+/i
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '0' and '1' explicitly instead of a range.
 
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3134:70
+  corpus/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3141:70
       → /^@?\w{1,15}$/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -10638,7 +10630,7 @@
          - #^http(s)?://i[\d]{1}.wp.com#
          + #^http(s)?://i[\d].wp.com#
 
-  corpus/jetpack/projects/packages/image-cdn/src/class-image-cdn.php:1217:20
+  corpus/jetpack/projects/packages/image-cdn/src/class-image-cdn.php:1221:20
       → #^i[\d]{1}.wp.com$#i
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
@@ -15212,7 +15204,7 @@
          - /\S{0,}\/(\S{1,}): ([0-9\.]+)/
          + /\S*\/(\S+): ([0-9.]+)/
 
-  corpus/composer/composer/src/Composer/Json/JsonFile.php:349:21
+  corpus/composer/composer/src/Composer/Json/JsonFile.php:352:21
       → {\r?\n<<<<<<< [^\r\n]+\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n(?:\|{7} [^\r\n]+\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n)?=======\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n>>>>>>> [^\r\n]+(\r?\n)}
      TIP 
          - {\r?\n<<<<<<< [^\r\n]+\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n(?:\|{7} [^\r\n]+\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n)?=======\r?\n\s+"content-hash": *"[0-9a-f]+", *\r?\n>>>>>>> [^\r\n]+(\r?\n)}
