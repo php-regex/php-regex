@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
+use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -24,18 +25,31 @@ use PHPUnit\Framework\TestCase;
 /**
  * The soundness net: small random patterns from a fixed seed, the same on
  * every PHP version (a hand-rolled linear congruential generator, not
- * mt_rand). Two properties hold for every one of them:
+ * mt_rand). Three properties hold for every pattern:
  *
  * - a pattern judged "safe (proven)" never exhausts the backtrack limit on
  *   a pump attack, with or without $matches;
+ * - a pattern outside the model (a backreference, recursion, a subroutine,
+ *   a verb, a conditional, \R, \X, a start-of-pattern verb) never carries
+ *   a proof at all: "heuristic by design", the day the model grows is the
+ *   day this net is re-pointed;
  * - a witness the confirmed replay reports as replayed fails the engine
  *   when built again.
  *
- * Besides the general grammar, three families aim at shapes the model got
- * wrong once: a loop whose higher-priority branch has its own loop and a
- * failing tail (attacked with long inputs, PCRE fails from ~1,400 bytes),
- * copies of one small atom written out side by side, and \G with a call
- * offset of 1.
+ * Besides the general grammar, families aim at shapes the model got wrong
+ * once or that an adversary pass exploited: a loop whose higher-priority
+ * branch has its own loop and a failing tail (attacked with long inputs,
+ * PCRE fails from ~1,400 bytes), copies of one small atom written out side
+ * by side, and \G with a call offset of 1. Later passes widened the grammar
+ * (branch reset, \K, POSIX classes, scoped and cancelled inline flags, and
+ * the unicode caseless folds) and the attacker with it: the fold pairs
+ * k/KELVIN SIGN, s/LONG S and a-ring/ANGSTROM SIGN fold under /iu while
+ * the Turkish DOTLESS I folds with nothing (premises pinned below on the
+ * engine, pcre.jit 0), the suffixes include ones that satisfy a
+ * lookbehind ("b", "ab") and those fold bytes, and the fold attacks run to
+ * 2,000 bytes of input. Every fifth pattern the analyzer proves safe in
+ * the repository corpus is attacked with the same pump machinery, so real
+ * shapes, not only generated ones, hold the guarantee.
  *
  * Engine: pcre.jit 0, pcre.backtrack_limit 1000000 for the attacks; the
  * replay's own limit (the confirmation's) for the witnesses. PHP has no
@@ -63,7 +77,11 @@ final class RedosSoundnessFuzzTest extends TestCase
 
     private const PUMPS = ['a', 'b', 'x', '0', ' ', "\n", '!', 'é', 'ab', 'a ', 'a!', "a\n", '0a', ' a', '!a'];
 
-    private const SUFFIXES = ['', '!', "\n", ' ', '0', 'b'];
+    /**
+     * "b" and "ab" satisfy a lookbehind over them; the KELVIN SIGN is a
+     * fold byte only under /u, two stray bytes otherwise.
+     */
+    private const SUFFIXES = ['', '!', "\n", ' ', '0', 'b', 'ab', 'é', self::KELVIN_SIGN];
 
     private const REPETITIONS = [12, 25, 40];
 
@@ -72,6 +90,39 @@ final class RedosSoundnessFuzzTest extends TestCase
     private const WRITTEN_OUT_PATTERNS = 60;
 
     private const OFFSET_PATTERNS = 100;
+
+    private const BACKREF_PATTERNS = 60;
+
+    private const OUT_OF_MODEL_PATTERNS = 80;
+
+    private const IN_MODEL_PATTERNS = 80;
+
+    private const FOLD_PATTERNS = 60;
+
+    /**
+     * Every Nth pattern the analyzer proves safe in the corpus is attacked.
+     */
+    private const CORPUS_STRIDE = 5;
+
+    /**
+     * U+212A KELVIN SIGN: folds to "k" under caseless /u (engine-verified).
+     */
+    private const KELVIN_SIGN = "\u{212A}";
+
+    /**
+     * U+017F LATIN SMALL LETTER LONG S: folds to "s" under caseless /u.
+     */
+    private const LONG_S = "\u{017F}";
+
+    /**
+     * U+212B ANGSTROM SIGN: folds to U+00E5 under caseless /u.
+     */
+    private const ANGSTROM_SIGN = "\u{212B}";
+
+    /**
+     * U+0131 LATIN SMALL LETTER DOTLESS I: folds to nothing, not to "i".
+     */
+    private const DOTLESS_I = "\u{0131}";
 
     private int $state = self::SEED;
 
@@ -137,9 +188,133 @@ final class RedosSoundnessFuzzTest extends TestCase
     {
         $this->assertNoFalseSafeVerdict(
             $this->offsetPatterns(),
-            static fn (string $pattern): ?string => self::attack($pattern, ['x', 'a', '-', ' ', '0'], ['a', 'b', '0', ' ', '!', 'ab', 'a!'], ['', '!', 'b'], self::REPETITIONS, offset: 1)
+            // The context before the attack: a word character, a non-word
+            // one, a newline, a space, a digit.
+            static fn (string $pattern): ?string => self::attack($pattern, ['a', 'x', '-', ' ', '0', "\n"], ['a', 'b', '0', ' ', '!', 'ab', 'a!'], ['', '!', 'b'], self::REPETITIONS, offset: 1)
                 ?? self::attack($pattern, [''], ['a', 'b', '0', ' ', '!', 'ab', 'a!'], ['', '!', 'b']),
         );
+    }
+
+    #[Test]
+    public function test_backreference_shapes_never_get_a_proven_verdict(): void
+    {
+        $analyzer = new RedosAnalyzer();
+        $patterns = $this->backrefPatterns();
+        $this->assertGreaterThan(self::BACKREF_PATTERNS / 2, \count($patterns));
+
+        $proven = [];
+        foreach ($patterns as $pattern) {
+            if (RedosProof::Proven === $analyzer->analyze($pattern)->proof) {
+                $proven[] = $pattern;
+            }
+        }
+
+        // A backreference is outside the model: heuristic by design, so no
+        // (x)\1+-style shape may carry "proven" until the day the model
+        // learns backrefs (verified on ~2,200 of them at build time).
+        $this->assertSame([], $proven, \sprintf("%d patterns with a backreference carry a proof:\n%s", \count($proven), implode("\n", $proven)));
+
+        // And the day it does, the pump attacks apply to them unchanged.
+        $this->assertNoFalseSafeVerdict($patterns, static fn (string $pattern): ?string => self::attack($pattern), false);
+    }
+
+    #[Test]
+    public function test_recursion_verb_conditional_and_escape_shapes_never_get_a_proven_verdict(): void
+    {
+        $analyzer = new RedosAnalyzer();
+        $patterns = $this->outOfModelPatterns();
+        $this->assertGreaterThan(self::OUT_OF_MODEL_PATTERNS / 2, \count($patterns));
+
+        $proven = [];
+        foreach ($patterns as $pattern) {
+            if (RedosProof::Proven === $analyzer->analyze($pattern)->proof) {
+                $proven[] = $pattern;
+            }
+        }
+
+        // Recursion (?R), subroutines (?1), the backtracking verbs, the
+        // start-of-pattern verbs, conditionals, \R and \X: all outside the
+        // model, all heuristic by design.
+        $this->assertSame([], $proven, \sprintf("%d out-of-model patterns carry a proof:\n%s", \count($proven), implode("\n", $proven)));
+
+        $this->assertNoFalseSafeVerdict($patterns, static fn (string $pattern): ?string => self::attack($pattern), false);
+    }
+
+    #[Test]
+    public function test_branch_reset_keep_posix_and_inline_flag_shapes_proven_safe_survive_pump_attacks(): void
+    {
+        $this->assertNoFalseSafeVerdict(
+            $this->inModelPatterns(),
+            static fn (string $pattern): ?string => self::attack($pattern, ['', 'a'], ['a', 'k', self::KELVIN_SIGN, '0', 'ab', "\n"], ['', '!', 'b', 'ab', self::DOTLESS_I]),
+        );
+    }
+
+    #[Test]
+    public function test_caseless_unicode_fold_shapes_proven_safe_survive_fold_attacks(): void
+    {
+        // The premises of the attack alphabet, pinned on the engine with
+        // pcre.jit 0 (PHP 8.4.26, PCRE2 10.49): the Kelvin sign, the long s
+        // and the angstrom sign fold under /iu, the Turkish dotless i folds
+        // with nothing.
+        $this->assertSame(1, preg_match('/k/iu', self::KELVIN_SIGN));
+        $this->assertSame(1, preg_match('/s/iu', self::LONG_S));
+        $this->assertSame(1, preg_match('/\x{E5}/iu', self::ANGSTROM_SIGN));
+        $this->assertSame(0, preg_match('/i/ui', self::DOTLESS_I));
+
+        // The long s at 1,000 repetitions is 2,000 bytes, the Kelvin sign
+        // at 666 is 1,998: the family attacks proven-safe patterns with
+        // two-thousand-byte inputs of fold bytes. The long inputs run on a
+        // reduced cross product: one unanchored retry over them is
+        // polynomial wall time the backtrack limit never sees (the
+        // guarantee is per match attempt), so breadth is kept short and
+        // only depth pays.
+        $this->assertNoFalseSafeVerdict(
+            $this->foldPatterns(),
+            static fn (string $pattern): ?string => self::attack(
+                $pattern,
+                ['', 'a'],
+                ['k', 's', 'i', 'K', 'S', self::KELVIN_SIGN, self::LONG_S, self::ANGSTROM_SIGN, self::DOTLESS_I, 'é', 'ki'],
+                ['', '!', self::DOTLESS_I, self::KELVIN_SIGN, 'é'],
+                [12, 40],
+            ) ?? self::attack(
+                $pattern,
+                [''],
+                [self::LONG_S, self::KELVIN_SIGN, self::DOTLESS_I],
+                ['', '!'],
+                [666, 1000],
+                2001,
+            ),
+        );
+    }
+
+    #[Test]
+    public function test_corpus_proven_safe_patterns_survive_pump_attacks(): void
+    {
+        $contents = file_get_contents(\dirname(__DIR__, 3).'/Fixtures/Corpus/lint-expectations.json');
+        $this->assertIsString($contents);
+        $corpus = json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($corpus);
+
+        $analyzer = new RedosAnalyzer();
+        $sample = [];
+        $safe = 0;
+        foreach ($corpus as $entry) {
+            if (!\is_array($entry) || !\is_string($entry['pattern'] ?? null)) {
+                continue;
+            }
+            if ($analyzer->analyze($entry['pattern'])->isProvenSafe()) {
+                $safe++;
+                // Every Nth proven-safe pattern, in corpus order: the sample
+                // moves with the corpus and the model, and stays fixed
+                // within one of each.
+                if (0 === $safe % self::CORPUS_STRIDE) {
+                    $sample[] = $entry['pattern'];
+                }
+            }
+        }
+
+        $this->assertGreaterThan(100, \count($sample), 'the corpus no longer holds a hundred proven-safe patterns');
+        $this->assertNoFalseSafeVerdict($sample, static fn (string $pattern): ?string => self::attack($pattern, ['', 'x'], ['a', '0', "\n", 'ab'], ['', '!', 'b'], [12, 40]));
     }
 
     #[Test]
@@ -164,17 +339,25 @@ final class RedosSoundnessFuzzTest extends TestCase
             }
             $replayed++;
 
+            // The replay runs on the call form its verdict came from: a
+            // pattern that can match empty (\K, empty alternatives) only
+            // blows up on preg_match() without $matches, where PHP retries
+            // an empty match; the confirmation's note says which form that
+            // was (measured: such a witness fails from 10 pumps without
+            // $matches and never with them).
+            $withoutMatches = Confirmation::WITHOUT_MATCHES === ($analysis->confirmation->note ?? null);
             $limit = $analysis->confirmation->backtrackLimit ?? 100_000;
             ini_set('pcre.backtrack_limit', (string) $limit);
             $reproduced = false;
             for ($n = 1; !$reproduced && $n <= self::MAX_PUMPS; $n++) {
-                $reproduced = false === @preg_match($pattern, $analysis->witness->build($n), $matches)
-                    && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error();
+                $subject = $analysis->witness->build($n);
+                $result = $withoutMatches ? @preg_match($pattern, $subject) : @preg_match($pattern, $subject, $matches);
+                $reproduced = false === $result && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error();
             }
             ini_set('pcre.backtrack_limit', '1000000');
 
             if (!$reproduced) {
-                $hits[] = $pattern.': '.$analysis->witness->render().' (backtrack_limit '.$limit.')';
+                $hits[] = $pattern.': '.$analysis->witness->render().' (backtrack_limit '.$limit.', '.($withoutMatches ? 'without' : 'with').' $matches)';
             }
         }
 
@@ -186,7 +369,7 @@ final class RedosSoundnessFuzzTest extends TestCase
      * @param list<string>              $patterns
      * @param \Closure(string): ?string $attack
      */
-    private function assertNoFalseSafeVerdict(array $patterns, \Closure $attack): void
+    private function assertNoFalseSafeVerdict(array $patterns, \Closure $attack, bool $requireAttacked = true): void
     {
         $analyzer = new RedosAnalyzer();
         $attacked = 0;
@@ -203,7 +386,9 @@ final class RedosSoundnessFuzzTest extends TestCase
             }
         }
 
-        $this->assertGreaterThan(0, $attacked, 'no pattern of the family was judged safe (proven)');
+        if ($requireAttacked) {
+            $this->assertGreaterThan(0, $attacked, 'no pattern of the family was judged safe (proven)');
+        }
         $this->assertSame([], $hits, \sprintf("%d of %d \"safe (proven)\" patterns exhaust the backtrack limit:\n%s", \count($hits), $attacked, implode("\n", $hits)));
     }
 
@@ -339,6 +524,116 @@ final class RedosSoundnessFuzzTest extends TestCase
     }
 
     /**
+     * (x)\1+-style shapes: a capturing group, its own backreference and
+     * quantifiers around both.
+     *
+     * @return list<string>
+     */
+    private function backrefPatterns(): array
+    {
+        $bodies = ['a', '\w', '[a-z]', '\d', '.', 'ab', '(?:ab|a)', '(a|b)', '[^x]', 'x?'];
+        $shells = ['(%s)\1%s', '(%s)%s\1', '((%s)\2)\1%s', '(%s)(\1)%s', '(?:%s(\1))%s', '(%s)\1?\1%s', '(?:(%s)\1)+%s'];
+
+        return $this->compilable(self::BACKREF_PATTERNS, fn (): string => '/'.sprintf(
+            $this->pick($shells),
+            $this->pick($bodies),
+            $this->quantifier(),
+            $this->quantifier(),
+        ).'/'.$this->pick(['', '', 'i', 'u']));
+    }
+
+    /**
+     * Shapes kept outside the model: recursion, subroutines, the
+     * backtracking verbs, the start-of-pattern verbs, conditionals, \R and
+     * \X. None of them may ever carry a proof.
+     *
+     * @return list<string>
+     */
+    private function outOfModelPatterns(): array
+    {
+        $startVerbs = ['(*UTF)', '(*UCP)', '(*CR)', '(*ANY)'];
+        $verbs = ['(*COMMIT)', '(*PRUNE)', '(*SKIP)', '(*FAIL)', '(*SKIP:m)'];
+        $cores = ['a+', '\w+', '(a+)+', '(?:ab|a)+', '[a-z]+!', '\d+$', '(\w\w)+', 'a*b*'];
+
+        return $this->compilable(self::OUT_OF_MODEL_PATTERNS, function () use ($startVerbs, $verbs, $cores): string {
+            $core = $this->pick($cores);
+            $verb = $this->pick($verbs);
+            $shell = $this->pick([
+                // Start-of-pattern verbs must come first; the others travel.
+                $this->pick($startVerbs).$core,
+                $verb.$core,
+                $core.$verb.$this->pick(['b', '', 'c']),
+                '(?:'.$verb.$core.')+',
+                '(?:a(?R)?)+',
+                'a(?R)?'.$core,
+                $core.'(?R)?b',
+                '(a)(?1)?b',
+                '(a)(?1)'.$core,
+                '(a)?(?(1)'.$core.'|c)',
+                '(a)?(?(1)b|'.$core.')',
+                '(a)(?(1)'.$core.')',
+                '(\R'.$core.')+!',
+                '('.$core.'\R)+',
+                '(\R+)+!',
+                '\R*'.$core.'$',
+                '(\X+)+!',
+                '('.$core.'\X)+',
+            ]);
+            $flags = str_contains($shell, '\X') ? 'u' : $this->pick(['', '', 'i', 'u']);
+
+            return '/'.$shell.'/'.$flags;
+        });
+    }
+
+    /**
+     * Shapes built from the constructs the model does analyse: branch
+     * reset, \K, POSIX classes, scoped and cancelled inline flags.
+     *
+     * @return list<string>
+     */
+    private function inModelPatterns(): array
+    {
+        $atoms = ['a', '\w', '[a-z]', 'k', '\d', '[[:^space:]]', '[[:alnum:][:space:]]', '[[:punct:]]'];
+        $posix = ['[[:alpha:]]', '[[:^digit:]]', '[[:xdigit:]]', '[[:word:]]', '[[:lower:]]'];
+
+        return $this->compilable(self::IN_MODEL_PATTERNS, function () use ($atoms, $posix): string {
+            $first = $this->pick($atoms);
+            $second = $this->pick($atoms);
+            $class = $this->pick($posix);
+            $shell = $this->pick([
+                '^(?|'.$first.'|'.$second.')+$',
+                '(?|'.$first.'|'.$second.')+$',
+                '\K(?|'.$first.'|'.$second.')+',
+                '^(?|('.$first.'+)|('.$second.'?))+$',
+                '^\K'.$class.'+$',
+                '('.$class.'+)+!',
+                '(?i:'.$first.'+)$',
+                $first.'(?-i)'.$second.'$',
+                '(?i:'.$first.'|'.$second.')+',
+                '^(?i:'.$class.')+$',
+                '\K^'.$first.'+$',
+                '(?|'.$class.'|'.$first.')'.$this->quantifier(),
+            ]);
+
+            return '/'.$shell.'/'.$this->pick(['', '', 'i', 'u', 'iu']);
+        });
+    }
+
+    /**
+     * Caseless unicode folds under /iu: the k, s, a-ring and i letters and
+     * their folding partners, inside the shapes that once hid an ambiguity.
+     *
+     * @return list<string>
+     */
+    private function foldPatterns(): array
+    {
+        $letters = ['k', 'K', 's', 'S', 'i', '\x{E5}', '\x{17F}', '\x{212B}', '\x{212A}', '\x{131}', 'é'];
+        $shells = ['^(%s+)+!$', '(%s+)+$', '^(%s*)*$', '(%s|%s)+$', '(\w|%s)+$', '(?i:%s+)%s?$', '^(?i:(%s+))+!$', '%s+(%s?)+$', '(?i:[%s%s]+)$', '\x{131}+$', '(%s|\x{131})+$'];
+
+        return $this->compilable(self::FOLD_PATTERNS, fn (): string => '/'.sprintf($this->pick($shells), $this->pick($letters), $this->pick($letters)).'/iu');
+    }
+
+    /**
      * @param \Closure(): string $generate
      *
      * @return list<string>
@@ -373,16 +668,19 @@ final class RedosSoundnessFuzzTest extends TestCase
     {
         $roll = $this->next(100);
         if ($depth <= 0 || $roll < 40) {
-            return $this->pick(['a', 'a', 'b', 'x', '0', '!', ' ', '\w', '\d', '\s', '.', '[^b]', '[ab]', '\W', '\S']).$this->quantifier();
+            return $this->pick(['a', 'a', 'b', 'x', '0', '!', ' ', '\w', '\d', '\s', '.', '[^b]', '[ab]', '\W', '\S', '[[:alpha:]]', '[[:xdigit:]]']).$this->quantifier();
         }
         if ($roll < 48) {
-            return $this->pick(['\b', '\B', '^', '$', '\z']);
+            return $this->pick(['\b', '\B', '^', '$', '\z', '\K']);
         }
         if ($roll < 62) {
             return '('.$this->sequence($depth - 1).')'.$this->quantifier();
         }
         if ($roll < 76) {
             return '(?:'.$this->sequence($depth - 1).'|'.$this->sequence($depth - 1).')'.$this->quantifier();
+        }
+        if ($roll < 80) {
+            return '(?|'.$this->sequence($depth - 1).'|'.$this->sequence($depth - 1).')'.$this->quantifier();
         }
         if ($roll < 84) {
             return '(?:'.$this->sequence($depth - 1).')'.$this->quantifier();
@@ -391,7 +689,7 @@ final class RedosSoundnessFuzzTest extends TestCase
             return '(?>'.$this->sequence($depth - 1).')'.$this->quantifier();
         }
         if ($roll < 96) {
-            return $this->pick(['(?=', '(?!']).$this->sequence($depth - 1).')';
+            return $this->pick(['(?=', '(?!', '(?i:']).$this->sequence($depth - 1).')';
         }
 
         return $this->pick(['(?<=', '(?<!']).$this->pick(['a', 'b', '\w', '\s', '!']).')';
