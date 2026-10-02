@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Internal\Backtrack;
+namespace PHPRegex\Parser\Hir;
 
 /**
  * Code points to and from the subject's bytes: UTF-8 under /u, one byte

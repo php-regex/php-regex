@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Internal\Backtrack;
+namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Internal\StaticCaches;
@@ -63,16 +63,18 @@ final class ClassSetProvider
      * @param string $modifiers        the inline modifiers in force: any of "i", "s", "x"
      * @param bool   $caselessRestrict whether the pattern carries /r: no caseless match
      *                                 between ASCII and non-ASCII characters
+     * @param string $startVerbs       the options the pattern opens with, such as "(*UCP)"
+     *                                 or "(*CR)": they change what a class or a dot matches
      */
-    public static function query(string $atom, bool $unicode, string $modifiers, bool $caselessRestrict = false): ?CharSet
+    public static function query(string $atom, bool $unicode, string $modifiers, bool $caselessRestrict = false, string $startVerbs = ''): ?CharSet
     {
         StaticCaches::register(self::class, self::clear(...));
 
         $global = ($unicode ? 'u' : '').($caselessRestrict ? 'r' : '');
-        $key = $global.'|'.$modifiers.':'.$atom;
+        $key = $startVerbs.$global.'|'.$modifiers.':'.$atom;
         if (!isset(self::$sets[$key])) {
             self::$sets = StaticCaches::makeRoom(self::$sets);
-            self::$sets[$key] = self::scan($atom, $unicode, $modifiers, $global) ?? false;
+            self::$sets[$key] = self::scan($atom, $unicode, $modifiers, $global, $startVerbs) ?? false;
         }
 
         $set = self::$sets[$key];
@@ -87,11 +89,11 @@ final class ClassSetProvider
         self::$byteSubject = null;
     }
 
-    private static function scan(string $atom, bool $unicode, string $modifiers, string $global): ?CharSet
+    private static function scan(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs): ?CharSet
     {
         $delimiter = null;
         foreach (self::DELIMITERS as $candidate) {
-            if (!str_contains($atom, $candidate)) {
+            if (!str_contains($atom.$startVerbs, $candidate)) {
                 $delimiter = $candidate;
 
                 break;
@@ -102,7 +104,7 @@ final class ClassSetProvider
             return null;
         }
 
-        $pattern = $delimiter.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
+        $pattern = $delimiter.$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
         $subject = $unicode ? self::unicodeSubject() : self::byteSubject();
         $engine = new PcreEngine();
         $ranges = [];

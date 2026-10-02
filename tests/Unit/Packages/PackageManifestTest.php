@@ -156,7 +156,7 @@ final class PackageManifestTest extends TestCase
             'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\StaticCaches'],
             'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser'],
             'Optimizer' => ['Parser\Internal\PatternParser'],
-            'Redos' => ['Parser\Internal\PatternParser', 'Parser\Internal\StaticCaches'],
+            'Redos' => ['Parser\Internal\PatternParser'],
             'Symfony' => ['Parser\Internal\DisplayEscaper'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
         ];

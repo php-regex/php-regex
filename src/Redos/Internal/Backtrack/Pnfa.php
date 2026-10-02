@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Internal\Backtrack;
 
+use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Node\NodeInterface;
 
 /**

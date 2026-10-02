@@ -15,6 +15,7 @@ namespace PHPRegex\Redos\Internal\Backtrack;
 
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
+use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\GroupNode;

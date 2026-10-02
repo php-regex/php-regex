@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Internal\Backtrack;
 
+use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Hir\ClassSetProvider;
+use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;

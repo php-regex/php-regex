@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Internal\Backtrack;
 
+use PHPRegex\Parser\Hir\Utf8;
+
 /**
  * Writes raw bytes as the inside of a PHP double-quoted literal that reads
  * back as the same bytes: printable ASCII as it is but the characters PHP

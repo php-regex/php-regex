@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Internal\Backtrack;
 
+use PHPRegex\Parser\Hir\CharSet;
+
 /**
  * The prioritized NFA without its epsilon moves, keeping how many distinct
  * epsilon paths lead to each state: an item reads one character of its
