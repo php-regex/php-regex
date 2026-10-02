@@ -337,12 +337,12 @@ final readonly class SecurityConfigExtractor
 
             [$pairKey, $value] = $pair;
             if ('pattern' === $pairKey) {
-                $firewalls[$currentFirewallIndex]['pattern'] = $value;
+                $firewalls[$currentFirewallIndex]['pattern'] = $this->stripQuotes($value);
                 $firewalls[$currentFirewallIndex]['line'] = $index + 1;
             }
 
             if ('request_matcher' === $pairKey) {
-                $firewalls[$currentFirewallIndex]['requestMatcher'] = $value;
+                $firewalls[$currentFirewallIndex]['requestMatcher'] = $this->stripQuotes($value);
             }
         }
 

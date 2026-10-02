@@ -50,4 +50,16 @@ final class SecurityConfigExtractorTest extends TestCase
         $this->assertSame(10, $result['firewalls'][1]['line']);
         $this->assertSame('dev.matcher', $result['firewalls'][1]['requestMatcher']);
     }
+    #[Test]
+    public function test_firewall_patterns_lose_their_yaml_quotes(): void
+    {
+        $path = dirname(__DIR__, 4).'/Fixtures/Symfony/security_quoted_patterns.yaml';
+
+        $result = (new SecurityConfigExtractor())->extract($path);
+
+        $this->assertSame('^/api/(a+)+$', $result['firewalls'][0]['pattern'], 'single quotes');
+        $this->assertSame('^/(dev|config)/', $result['firewalls'][1]['pattern'], 'double quotes');
+        $this->assertSame('api.request.matcher', $result['firewalls'][2]['requestMatcher'], 'request_matcher');
+    }
+
 }

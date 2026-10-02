@@ -1,0 +1,8 @@
+security:
+  firewalls:
+    main:
+      pattern: '^/api/(a+)+$'
+    dev:
+      pattern: "^/(dev|config)/"
+    api:
+      request_matcher: 'api.request.matcher'
