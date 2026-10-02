@@ -71,6 +71,30 @@ final class NfaBuilder
         return $stateId;
     }
 
+    /**
+     * The transitions leaving a state, for analyses that run while the
+     * automaton is still being built.
+     *
+     * @return array<NfaTransition>
+     */
+    public function transitionsOf(int $state): array
+    {
+        return $this->transitions[$state] ?? [];
+    }
+
+    /**
+     * @return array<int>
+     */
+    public function epsilonTransitionsOf(int $state): array
+    {
+        return $this->epsilonTransitions[$state] ?? [];
+    }
+
+    public function isAccepting(int $state): bool
+    {
+        return isset($this->acceptingStates[$state]);
+    }
+
     public function addTransition(int $from, CharSet $charSet, int $to): void
     {
         if ($charSet->isEmpty()) {

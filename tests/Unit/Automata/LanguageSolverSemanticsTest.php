@@ -55,6 +55,78 @@ final class LanguageSolverSemanticsTest extends TestCase
         $this->assertFalse($solver->intersection('/s/iu', '/\x{17F}/u', $this->fullMatchOptions())->isEmpty);
     }
 
+    /**
+     * Atomicity is ordered semantics, not a language: a possessive quantifier
+     * never gives back and an atomic group never retries, so "/^a*+a$/" and
+     * "/(?>ab|a)b/" match smaller languages than their greedy spellings
+     * (oracle: preg_match('/^a*+a$/', 'aaa') and
+     * preg_match('/(?>ab|a)b/', 'ab') are both false). Building them as
+     * greedy answered for a language PCRE does not match; the solver refuses
+     * them instead of answering wrong.
+     */
+    #[Test]
+    public function test_the_solver_refuses_atomic_and_possessive_semantics(): void
+    {
+        $solver = new LanguageSolver();
+
+        foreach (['/^a*+a$/', '/(?>ab|a)b/', '/(?>(a+))b/'] as $pattern) {
+            try {
+                $result = $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+                $this->fail(sprintf('%s was answered as a pure language; the solver must refuse it.', $pattern));
+            } catch (ComplexityException $e) {
+                $this->assertStringContainsString('pure language', $e->getMessage(), $pattern);
+            }
+        }
+    }
+
+    /**
+     * When nothing that follows can take back what the possessive
+     * quantifier matched — disjoint first characters, or an anchor — its
+     * language is its greedy spelling, and the solver answers: "a++" before
+     * a "b", and the Symfony requirement idiom "[^/]++" before a "/".
+     */
+    #[Test]
+    public function test_possessive_before_a_disjoint_follower_is_answered(): void
+    {
+        $solver = new LanguageSolver();
+
+        $this->assertFalse($solver->intersection('/a++b/', '/aab/', $this->fullMatchOptions())->isEmpty);
+        $this->assertFalse($solver->intersection('#^/users/[^/]++$#', '#^/users/list$#', $this->fullMatchOptions())->isEmpty);
+        $this->assertTrue($solver->intersection('#^/users/[^/]++$#', '#^/users/list/extra$#', $this->fullMatchOptions())->isEmpty);
+        // Through groups and sequences, the way Symfony wraps a requirement.
+        $this->assertFalse($solver->intersection('/(?:ab*+)c/', '/abbc/', $this->fullMatchOptions())->isEmpty);
+        // A follower made of several alternatives joins its first characters.
+        $this->assertFalse($solver->intersection('/a*+(?:[bc]|d)e/', '/ade/', $this->fullMatchOptions())->isEmpty);
+    }
+
+    /**
+     * A follower the possessive quantifier may have to feed — overlapping
+     * first characters, or one it can skip — still reads as a shorter match
+     * mattering, so it stays refused.
+     */
+    #[Test]
+    public function test_a_zero_quantifier_matches_only_the_empty_string(): void
+    {
+        $solver = new LanguageSolver();
+
+        $this->assertTrue($solver->equivalent('/a{0}b/', '/b/', $this->fullMatchOptions())->isEquivalent);
+    }
+
+    #[Test]
+    public function test_possessive_before_a_follower_that_can_take_back_stays_refused(): void
+    {
+        $solver = new LanguageSolver();
+
+        foreach (['/^a*+a$/', '/a*+b?c/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/'] as $pattern) {
+            try {
+                $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+                $this->fail(sprintf('%s was answered; the solver must refuse it.', $pattern));
+            } catch (ComplexityException $e) {
+                $this->assertStringContainsString('pure language', $e->getMessage(), $pattern);
+            }
+        }
+    }
+
     #[Test]
     #[DataProvider('provideSubsetCases')]
     public function test_subset_results(

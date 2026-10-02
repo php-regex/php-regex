@@ -56,8 +56,14 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Semantics:** For supported regexes, the solver builds an NFA and DFA and compares languages using BFS over the
   product automaton. Counter-examples are shortest strings in the modeled language.
 - **Guarantee:** **Sound and complete** for the supported regular subset **under byte-based semantics**.
-- **Limitations:** Unicode-aware semantics are not modeled. `/u` and case-insensitive behavior are approximated in ASCII.
-- **Fallbacks:** Unsupported constructs raise `ComplexityException`.
+- **Limitations:** Unicode-aware semantics beyond case are not modeled. Case-insensitive matching folds Unicode case
+  exactly, as single-code-point classes: under `/iu`, `k` matches the Kelvin sign U+212A, `s` the long s U+017F and `å`
+  the angstrom sign U+212B, while the Turkish dotless `i` stays apart, as in PCRE.
+- **Fallbacks:** Unsupported constructs raise `ComplexityException`. Atomic groups and possessive quantifiers commit to
+  what they first matched and never retry — ordered behaviour the solver cannot read as a pure language
+  (`/^a*+a$/` matches nothing at all), so they are refused — except a possessive quantifier nothing that follows can
+  take back from: disjoint first characters, or an anchor, read the same language as the greedy spelling, so Symfony's
+  `[^/]++` route requirements keep being analyzed.
 
 **Match modes**
 - **FULL:** Models the exact match language `L(P)` (as if the pattern is wrapped in `\A(?:P)\z`). Explicit `^`/`$`

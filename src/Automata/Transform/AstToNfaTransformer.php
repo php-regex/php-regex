@@ -18,6 +18,7 @@ use PHPRegex\Automata\Builder\NfaBuilder;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaFragment;
+use PHPRegex\Automata\Model\NfaTransition;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Unicode\CodePointHelper;
@@ -30,9 +31,11 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -113,6 +116,13 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
 
     private bool $caseInsensitive = false;
 
+    /**
+     * Set while building a subtree whose last element is a possessive
+     * quantifier an enclosing sequence has proven safe: nothing that follows
+     * can take back what it matched.
+     */
+    private bool $possessiveAsGreedy = false;
+
     private bool $dotAll = false;
 
     private bool $unicode = false;
@@ -164,6 +174,14 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         }
 
         if ($node instanceof GroupNode) {
+            if (GroupType::Atomic === $node->type) {
+                throw new ComplexityException(
+                    'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.',
+                    $node->getStartPosition(),
+                    $this->pattern,
+                );
+            }
+
             return $this->buildNode($node->child, $options);
         }
 
@@ -216,7 +234,42 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         }
 
         $fragments = [];
-        foreach ($node->children as $child) {
+        foreach ($node->children as $index => $child) {
+            $possessive = $this->possessiveAtEnd($child);
+            if (null !== $possessive) {
+                $follower = $node->children[$index + 1] ?? null;
+                $followerIsLast = \count($node->children) === $index + 2;
+                if (null === $follower) {
+                    // No follower here: an enclosing sequence already proved
+                    // this subtree safe, or nothing vouches for it at all.
+                    if (!$this->possessiveAsGreedy) {
+                        throw new ComplexityException(
+                            'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.',
+                            $possessive->getStartPosition(),
+                            $this->pattern,
+                        );
+                    }
+                    $fragments[] = $this->buildNode($child, $options);
+
+                    continue;
+                }
+                if (!$this->possessiveIsSafe($possessive, $follower, $options, $followerIsLast)) {
+                    throw new ComplexityException(
+                        'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.',
+                        $possessive->getStartPosition(),
+                        $this->pattern,
+                    );
+                }
+                $this->possessiveAsGreedy = true;
+
+                try {
+                    $fragments[] = $this->buildNode($child, $options);
+                } finally {
+                    $this->possessiveAsGreedy = false;
+                }
+
+                continue;
+            }
             $fragments[] = $this->buildNode($child, $options);
         }
 
@@ -226,6 +279,115 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         }
 
         return $current;
+    }
+
+    /**
+     * A possessive quantifier reads the same language as its greedy
+     * spelling when nothing that follows it can consume what it would have
+     * to give back: the follower consumes no character of its own (an
+     * anchor), or its first characters and the atom's share none — Symfony
+     * requirements are the common case, "[^/]++" before a "/". A follower
+     * that can be skipped (an epsilon path to an accepting state) makes any
+     * shorter match possible, so that case stays refused.
+     */
+    /**
+     * The possessive quantifier a subtree ends with, through plain groups
+     * and sequences — Symfony puts one inside a named group — or null. An
+     * assertion, an alternation or anything else in the tail is a barrier:
+     * what follows it is not what follows the quantifier.
+     */
+    private function possessiveAtEnd(NodeInterface $node): ?QuantifierNode
+    {
+        while (true) {
+            if ($node instanceof QuantifierNode) {
+                return QuantifierType::Possessive === $node->type ? $node : null;
+            }
+            if ($node instanceof SequenceNode) {
+                // The parser emits an EmptyNode, never an empty sequence;
+                // a null arm would fall through to the return below anyway.
+                $node = $node->children[\count($node->children) - 1] ?? null;
+
+                continue;
+            }
+            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true)) {
+                $node = $node->child;
+
+                continue;
+            }
+
+            return null;
+        }
+    }
+
+    private function possessiveIsSafe(QuantifierNode $node, NodeInterface $follower, SolverOptions $options, bool $followerIsLast): bool
+    {
+        $atom = $this->buildNode($node->node, $options);
+        $atomStart = $this->builderStateView($atom->startState);
+        if ([] !== $atomStart['epsilon'] || 1 !== \count($atomStart['transitions'])) {
+            return false;
+        }
+
+        $next = $this->buildNode($follower, $options);
+        $first = $this->firstConsumedSet($next->startState, $next->acceptStates, $followerIsLast);
+        if (null === $first) {
+            return false;
+        }
+
+        return $atomStart['transitions'][0]->charSet->intersect($first)->isEmpty();
+    }
+
+    /**
+     * The characters the state can consume before anything else, through
+     * epsilon moves; an empty set for a pure zero-width follower such as an
+     * anchor, and null when the follower may be skipped — a shorter possessive
+     * match could then matter.
+     */
+    /**
+     * @return array{transitions: array<NfaTransition>, epsilon: array<int>, accepting: bool}
+     */
+    private function builderStateView(int $state): array
+    {
+        return [
+            'transitions' => $this->builder->transitionsOf($state),
+            'epsilon' => $this->builder->epsilonTransitionsOf($state),
+            'accepting' => $this->builder->isAccepting($state),
+        ];
+    }
+
+    /**
+     * @param array<int> $acceptStates the fragment's own accepting states —
+     *                                 the builder flags them only once built
+     */
+    private function firstConsumedSet(int $state, array $acceptStates, bool $nullableIsSafe): ?CharSet
+    {
+        $seen = [];
+        $queued = [$state => true];
+        $stack = [$state];
+        $set = CharSet::empty($this->alphabetMax);
+        while ([] !== $stack) {
+            $current = array_pop($stack);
+            $seen[$current] = true;
+            $nfaState = $this->builderStateView($current);
+            if (\in_array($current, $acceptStates, true)) {
+                // A follower that may be skipped lets a shorter possessive
+                // match matter — unless it is the last thing in the sequence,
+                // where nothing follows to consume what it would give back.
+                return $nullableIsSafe ? $set : null;
+            }
+            foreach ($nfaState['transitions'] as $transition) {
+                $set = $set->union($transition->charSet);
+            }
+            // Cycles and repeats are cut here, at the push: every state is
+            // queued once, so the pop above never needs its own guard.
+            foreach ($nfaState['epsilon'] as $target) {
+                if (!isset($seen[$target]) && !isset($queued[$target])) {
+                    $queued[$target] = true;
+                    $stack[] = $target;
+                }
+            }
+        }
+
+        return $set;
     }
 
     /**
@@ -250,8 +412,20 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
     /**
      * @throws ComplexityException
      */
+    /**
+     * Possessive quantifiers reach here either through a sequence, which has
+     * already refused them or proven them safe (possessiveAsGreedy), or as
+     * the bare root of the pattern, where nothing vouches for them.
+     */
     private function buildQuantifier(QuantifierNode $node, SolverOptions $options): NfaFragment
     {
+        if (QuantifierType::Possessive === $node->type && !$this->possessiveAsGreedy) {
+            throw new ComplexityException(
+                'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.',
+                $node->getStartPosition(),
+                $this->pattern,
+            );
+        }
         [$min, $max] = $this->parseQuantifierRange($node->quantifier);
 
         if (0 === $min && 0 === $max) {
