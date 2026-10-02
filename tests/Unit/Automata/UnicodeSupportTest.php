@@ -100,8 +100,12 @@ final class UnicodeSupportTest extends TestCase
 
         // Folding used to walk every code point of the class; a class this
         // wide is now folded against the table of code points that actually
-        // have a case mapping.
-        $result = $solver->equivalent('/[à-öa-z]/iu', '/[à-öÀ-Öa-zA-Z]/u', $options);
+        // have a case mapping, as equivalence classes. Under /iu the class
+        // also matches the long s U+017F (via "s"), the Kelvin sign U+212A
+        // (via "k") and the angstrom sign U+212B (via "å") — and nothing
+        // else: the sharp s U+1E9E, İ U+0130 and DŽ U+01F1 stay out (oracle:
+        // preg_match over each of them against '/[à-öa-z]/iu').
+        $result = $solver->equivalent('/[à-öa-z]/iu', '/[à-öÀ-Öa-zA-Z\x{17F}\x{212A}\x{212B}]/u', $options);
 
         $this->assertTrue($result->isEquivalent);
     }

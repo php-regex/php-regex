@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Hir;
 
+use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\Properties;
 use PHPRegex\Parser\Hir\Utf8;
@@ -120,7 +121,7 @@ final class HirPropertiesTest extends TestCase
     public function test_an_unknown_part_makes_the_first_set_unknown(): void
     {
         $this->assertNull($this->properties('/(a)?\1b/')->first);
-        $this->assertNotNull($this->properties('/(a)\1b/')->first);
+        $this->assertInstanceOf(CharSet::class, $this->properties('/(a)\1b/')->first);
     }
 
     #[Test]

@@ -59,6 +59,9 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
      *
      * @var array<int, array<int>>|null
      */
+    /**
+     * @var array<int, list<int>>|null
+     */
     private static ?array $caseFoldingTable = null;
 
     /**
@@ -775,15 +778,26 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
         // Only a few thousand code points have a case mapping at all, so the
         // set is walked against that table rather than code point by code
         // point: folding "[\x{0}-\x{10FFFF}]" costs the same as folding "[a]".
+        // PCRE folds case as equivalence classes: a set holding "k" matches
+        // "K" and the Kelvin sign U+212A, whose own lower case is "k" — so a
+        // group joins the set when ANY of its members is in it.
         $additions = [];
-        foreach (self::caseFoldingTable() as $codePoint => $folded) {
-            if ($codePoint > $this->alphabetMax || !$charSet->contains($codePoint)) {
+        foreach (self::caseEquivalenceTable() as $members) {
+            $inSet = false;
+            foreach ($members as $member) {
+                if ($member <= $this->alphabetMax && $charSet->contains($member)) {
+                    $inSet = true;
+
+                    break;
+                }
+            }
+            if (!$inSet) {
                 continue;
             }
 
-            foreach ($folded as $other) {
-                if ($other <= $this->alphabetMax) {
-                    $additions[$other] = true;
+            foreach ($members as $member) {
+                if ($member <= $this->alphabetMax) {
+                    $additions[$member] = true;
                 }
             }
         }
@@ -820,6 +834,43 @@ final class AstToNfaTransformer implements AstToNfaTransformerInterface
      * Case mappings of every code point that has one, built once per process.
      *
      * @return array<int, array<int>>
+     */
+    /**
+     * Case as PCRE matches it: equivalence classes, keyed by the class's
+     * lower case. Every member joins when any member is matched, so "k"
+     * carries the Kelvin sign U+212A and "s" the long s U+017F.
+     *
+     * @return array<string, list<int>>
+     */
+    private static function caseEquivalenceTable(): array
+    {
+        // mbstring folds the Turkish dotless i with "i" (mb_strtoupper of
+        // U+0131 is "I"); PCRE does not — preg_match('/i/iu', "\u{131}") is
+        // 0, and so is the same for U+0130. Keep the pair out entirely.
+        $turkish = [0x130 => true, 0x131 => true];
+
+        $groups = [];
+        foreach (self::caseFoldingTable() as $codePoint => $folded) {
+            if (isset($turkish[$codePoint])) {
+                continue;
+            }
+            $char = (string) CodePointHelper::toString($codePoint);
+            // The lowercase of the uppercase, so a character that is its own
+            // lowercase (the long s U+017F) still joins the class of "s".
+            $key = \mb_strtolower(\mb_strtoupper($char, 'UTF-8'), 'UTF-8');
+            $groups[$key] ??= [];
+            $groups[$key][$codePoint] = true;
+            foreach ($folded as $other) {
+                $groups[$key][$other] = true;
+            }
+        }
+
+        return array_map(array_keys(...), $groups);
+    }
+
+    /**
+     * @return array<int, list<int>> the case variants of each code point
+     *                               that has any, keyed by the code point
      */
     private static function caseFoldingTable(): array
     {

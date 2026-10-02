@@ -150,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The automata solver folded Unicode case one character at a time, so under `/iu` a class holding `k` did not match the Kelvin sign U+212A, `s` the long s U+017F, or `å` the angstrom sign U+212B — intersection and equivalence answered for a smaller language than the one PCRE matches — while it did join the Turkish dotless `i` (U+0131) to `i`, which PCRE refuses. Case is now folded as equivalence classes, the way PCRE matches it.
 - `regex lint --redos` (or `checks.redos.enabled` in `regex.json`), Symfony's `regex:lint` with `php_regex.redos.enabled` and Laravel's `regex:lint` with `redos.enabled` never reported a ReDoS finding: the command read the setting, then built the analysis with ReDoS switched off, so only the lint-rule issues appeared. They report it now, as `regex.lint.redos`.
 - Symfony: `regex:security` and the console report of `regex:analyze` print a text detail value, a path or an attack, as written: a `<` in it was read as console markup, and a tag such as `<info>` vanished from the output.
 - Laravel: `redos.enabled` switches the ReDoS analysis of `regex:lint` on. The service provider handed it to another setting, so the analysis never ran.

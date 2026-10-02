@@ -38,6 +38,23 @@ final class LanguageSolverSemanticsTest extends TestCase
         $this->assertSame($expectedExample, $result->example);
     }
 
+    /**
+     * PCRE folds case as equivalence classes, not per-character variants:
+     * under /iu, "k" also matches the Kelvin sign U+212A and "s" the long s
+     * U+017F (oracle: preg_match('/k/iu', "\u{212A}") and
+     * preg_match('/s/iu', "\u{17F}") are both 1). The solver used to read
+     * only each character's own case variants and answered "empty".
+     */
+    #[Test]
+    public function test_full_match_folds_unicode_case_as_equivalence_classes(): void
+    {
+        $solver = new LanguageSolver();
+
+        $this->assertFalse($solver->intersection('/k/iu', '/\x{212A}/u', $this->fullMatchOptions())->isEmpty);
+        $this->assertFalse($solver->intersection('/[a-k]/iu', '/\x{212A}/u', $this->fullMatchOptions())->isEmpty);
+        $this->assertFalse($solver->intersection('/s/iu', '/\x{17F}/u', $this->fullMatchOptions())->isEmpty);
+    }
+
     #[Test]
     #[DataProvider('provideSubsetCases')]
     public function test_subset_results(
