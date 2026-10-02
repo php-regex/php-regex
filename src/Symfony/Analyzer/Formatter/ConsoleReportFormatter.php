@@ -168,7 +168,7 @@ final readonly class ConsoleReportFormatter
             return '<fg=cyan>""</>';
         }
 
-        return '<fg=cyan>'.$pattern.'</>';
+        return '<fg=cyan>'.OutputFormatter::escape($pattern).'</>';
     }
 
     private function renderSectionHeader(SymfonyStyle $io, string $title): void

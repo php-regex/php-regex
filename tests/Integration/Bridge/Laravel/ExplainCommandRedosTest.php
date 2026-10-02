@@ -27,6 +27,16 @@ use PHPUnit\Framework\Attributes\Test;
 final class ExplainCommandRedosTest extends TestCase
 {
     #[Test]
+    public function test_explain_prints_the_pattern_and_the_vulnerable_part_literally(): void
+    {
+        Artisan::call('regex:explain', ['pattern' => '#(<error>x</error>)a+#']);
+        $output = Artisan::output();
+
+        $this->assertStringContainsString('Pattern:', $output);
+        $this->assertStringContainsString('(<error>x</error>)a+', $output);
+    }
+
+    #[Test]
     #[DataProvider('provideVerdicts')]
     public function test_explain_names_the_verdict_and_the_attack(string $pattern, string $headline): void
     {

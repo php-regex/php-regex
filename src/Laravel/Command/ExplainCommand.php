@@ -82,7 +82,7 @@ final class ExplainCommand extends Command
             $highlighted = $this->regex->highlight($pattern, 'console');
             $this->line('  '.$highlighted);
         } else {
-            $this->line('  <fg=yellow>'.$pattern.'</>');
+            $this->line('  <fg=yellow>'.OutputFormatter::escape($pattern).'</>');
         }
         $this->newLine();
 
@@ -113,7 +113,7 @@ final class ExplainCommand extends Command
                     $this->line('  Attack: <fg=yellow>'.OutputFormatter::escape($analysis->redos->witness->render()).'</>');
                 }
                 if (null !== $analysis->redos->vulnerablePart) {
-                    $this->line('  Vulnerable part: <fg=yellow>'.$analysis->redos->vulnerablePart.'</>');
+                    $this->line('  Vulnerable part: <fg=yellow>'.OutputFormatter::escape($analysis->redos->vulnerablePart).'</>');
                 }
                 if (!empty($analysis->redos->recommendations)) {
                     $this->line('  Recommendations:');

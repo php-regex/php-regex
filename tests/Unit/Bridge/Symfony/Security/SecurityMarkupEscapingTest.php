@@ -64,6 +64,40 @@ final class SecurityMarkupEscapingTest extends TestCase
     }
 
     #[Test]
+    public function test_the_console_report_prints_a_pattern_detail_literally(): void
+    {
+        $report = new SecurityReport([new ReportSection('security_firewall', 'Security Firewall Regex', issues: [
+            new AnalysisIssue('redos', CheckOutcome::Critical, 'main', [new IssueDetail('Pattern', '(<error>x</error>)+', 'pattern')]),
+        ])]);
+
+        $buffer = new BufferedOutput();
+        (new ConsoleReportFormatter())->render($report, new SymfonyStyle(new ArrayInput([]), $buffer), false);
+
+        $this->assertStringContainsString('(<error>x</error>)+', $buffer->fetch());
+    }
+
+    #[Test]
+    public function test_the_security_command_prints_the_pattern_literally(): void
+    {
+        $project = $this->makeProject(['security.yaml' => "security:\n  firewalls:\n    main:\n      pattern: ".self::FIREWALL_PATTERN."\n"]);
+
+        $tester = new CommandTester(new SecurityCommand(
+            new SecurityConfigExtractor(),
+            new SecurityAccessControlAnalyzer(Regex::create()),
+            new SecurityFirewallAnalyzer(Regex::create()),
+            new SecurityConfigLocator(),
+            new SecurityAccessSuggestionBuilder(),
+            null,
+            'high',
+        ));
+        $tester->execute(['--config' => [$project.'/security.yaml']]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Pattern:', $display);
+        $this->assertStringContainsString(self::FIREWALL_PATTERN, $display, 'the firewall pattern itself must survive as written');
+    }
+
+    #[Test]
     public function test_security_command_prints_a_markup_witness_literally(): void
     {
         $witness = Regex::create()->redos('#'.self::FIREWALL_PATTERN.'#')->witness;

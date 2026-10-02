@@ -623,7 +623,7 @@ final class SecurityCommand extends Command
             return '<fg=cyan>""</>';
         }
 
-        return '<fg=cyan>'.$pattern.'</>';
+        return '<fg=cyan>'.OutputFormatter::escape($pattern).'</>';
     }
 
     private function formatSeverityBadge(string $severity): string
