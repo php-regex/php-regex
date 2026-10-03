@@ -95,11 +95,14 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             [, $rightMax] = QuantifierMath::parseRange($right->quantifier);
 
             if (null === $rightMax && CharClassSets::isSubset($leftSet, $rightSet)) {
+                [$leftMin] = QuantifierMath::parseRange($left->quantifier);
                 $issues[] = new RuleViolation(
                     'regex.lint.quantifier.concatenation',
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $left->startPosition,
-                    'Consider tightening the first quantifier to its minimum.',
+                    0 === $leftMin
+                        ? 'The first quantifier can match zero times already: consider dropping it entirely.'
+                        : 'Consider tightening the first quantifier to its minimum.',
                 );
 
                 while ($i + 1 < $count && $children[$i + 1] instanceof QuantifierNode) {
@@ -110,11 +113,14 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             }
 
             if (null === $leftMax && CharClassSets::isSubset($rightSet, $leftSet)) {
+                [$rightMin] = QuantifierMath::parseRange($right->quantifier);
                 $issues[] = new RuleViolation(
                     'regex.lint.quantifier.concatenation',
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $right->startPosition,
-                    'Consider tightening the second quantifier to its minimum.',
+                    0 === $rightMin
+                        ? 'The second quantifier can match zero times already: consider dropping it entirely.'
+                        : 'Consider tightening the second quantifier to its minimum.',
                 );
 
                 while ($i + 1 < $count && $children[$i + 1] instanceof QuantifierNode) {

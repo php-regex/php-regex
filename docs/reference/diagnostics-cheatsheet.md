@@ -19,7 +19,7 @@ Fast fixes for the most common PHPRegex diagnostics. Use this as a quick referen
 | [Suspicious ASCII range](#suspicious-ascii-range)                           | Split A-Z and a-z           |
 | [Alternation-like character class](#alternation-like-character-class)       | Use (foo\|bar)              |
 | [Useless backreference](#useless-backreference)                             | Move or remove              |
-| [Concatenated quantifiers](#concatenated-quantifiers)                       | Tighten quantifier          |
+| [Concatenated quantifiers](#concatenated-quantifiers)                       | Tighten or drop quantifier  |
 | [Useless flag](#useless-flag)                                               | Remove flag                 |
 | [Invalid delimiter](#invalid-delimiter)                                     | Use proper delimiter        |
 

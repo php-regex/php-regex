@@ -67,7 +67,7 @@ final class RegexParserRuleHighThresholdTest extends RuleTestCase
             [
                 'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                 24,
-                "Consider tightening the first quantifier to its minimum.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#optimal-quantifier-concatenation",
+                "The first quantifier can match zero times already: consider dropping it entirely.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#optimal-quantifier-concatenation",
             ],
         ]);
     }

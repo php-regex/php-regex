@@ -136,6 +136,68 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{pattern: string, hint: string}>
+     */
+    public static function provideConcatenatedQuantifierHints(): iterable
+    {
+        yield 'droppable first quantifier' => [
+            'pattern' => '/[a-z]*[a-z0-9_]*\z/',
+            'hint' => 'The first quantifier can match zero times already',
+        ];
+
+        yield 'tightenable first quantifier' => [
+            'pattern' => '/[a-z]+[a-z0-9_]*\z/',
+            'hint' => 'Consider tightening the first quantifier to its minimum.',
+        ];
+
+        yield 'droppable second quantifier' => [
+            'pattern' => '/[a-z0-9_]*[a-z]*\z/',
+            'hint' => 'The second quantifier can match zero times already',
+        ];
+
+        yield 'tightenable second quantifier' => [
+            'pattern' => '/[a-z0-9_]*[a-z]+\z/',
+            'hint' => 'Consider tightening the second quantifier to its minimum.',
+        ];
+    }
+
+    #[Test]
+    public function test_concatenated_quantifiers_hint_distinguishes_dropping_from_tightening(): void
+    {
+        $hints = [];
+        foreach (['/[a-z]*[a-z0-9_]*\z/', '/[a-z]+[a-z0-9_]*\z/'] as $pattern) {
+            $visitor = new PatternLinter();
+            Regex::create()->parse($pattern)->accept($visitor);
+            foreach ($visitor->getIssues() as $issue) {
+                if ('regex.lint.quantifier.concatenation' === $issue->id) {
+                    $hints[$pattern] = (string) $issue->hint;
+                }
+            }
+        }
+
+        $this->assertSame(['/[a-z]*[a-z0-9_]*\z/', '/[a-z]+[a-z0-9_]*\z/'], array_keys($hints));
+        $this->assertStringContainsString('dropping it entirely', $hints['/[a-z]*[a-z0-9_]*\z/'] ?? '');
+        $this->assertStringContainsString('to its minimum', $hints['/[a-z]+[a-z0-9_]*\z/'] ?? '');
+    }
+
+    #[Test]
+    #[DataProvider('provideConcatenatedQuantifierHints')]
+    public function test_concatenated_quantifiers_hint_matches_each_shape(string $pattern, string $hint): void
+    {
+        $visitor = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($visitor);
+
+        $hints = [];
+        foreach ($visitor->getIssues() as $issue) {
+            if ('regex.lint.quantifier.concatenation' === $issue->id) {
+                $hints[] = (string) $issue->hint;
+            }
+        }
+
+        $this->assertStringContainsString($hint, implode("\n", $hints), $pattern);
+    }
+
+    /**
      * `$` and `\Z` match before the subject's final newline (and, under /m,
      * `$` before any newline), so a tail that can continue that newline
      * match is not impossible.
