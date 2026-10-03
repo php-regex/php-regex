@@ -420,7 +420,7 @@
   corpus/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php:27:20
       → /(#?.*\?)\/(\?+|\d+)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/DateFormatter.php:132:33
       → /^(\[DBNum\d\])*(\[\$[^\]]*\])/i
@@ -430,7 +430,7 @@
   corpus/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php:210:24
       → /[#\?0]?.*[#\?0]\/(\?+|\d+|#)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php:279:33
       → /\.(?=(?:[^"]*"[^"]*")*[^"]*\Z)/miu
@@ -639,7 +639,7 @@
   corpus/roundcubemail/plugins/enigma/lib/enigma_engine.php:611:36
       → /^.*\r*\n\r*\n/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/roundcubemail/plugins/enigma/lib/enigma_engine.php:601:34
       → /^-----BEGIN PGP SIGNATURE-----/
@@ -697,7 +697,7 @@
   corpus/roundcubemail/program/actions/mail/search.php:255:28
       → /^(-?[a-zA-Z-]+):(.*)$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/roundcubemail/program/actions/mail/search.php:384:38
       → |^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$|i
@@ -854,7 +854,7 @@
   corpus/roundcubemail/program/lib/Roundcube/rcube_smtp.php:509:36
       → /[\s\t]*\r?\n/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
@@ -868,7 +868,7 @@
   corpus/matomo-org/matomo/core/Segment/SegmentExpression.php:374:24
       → /[^@a-zA-Z0-9_]?`?([@a-zA-Z_][@a-zA-Z0-9_]*`?\.`?[a-zA-Z0-9_`]+)`?\b/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/matomo-org/matomo/core/Plugin/Manager.php:1336:34
       → /^[a-zA-Z]([a-zA-Z0-9_]){0,59}$/D
@@ -943,7 +943,7 @@
   corpus/matomo-org/matomo/plugins/Diagnostics/Commands/Run.php:90:26
       → %</?[a-z][a-z0-9]*[^<>]*>%sim
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 's' is useless: the pattern contains no dots.
      WARN  Flag 'm' is useless: pattern '%<\/?[a-z][a-z0-9]*[^<>]*>%sim' contains no anchors.
      TIP 
@@ -1090,7 +1090,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CodeIgniter/system/database/drivers/pdo/subdrivers/pdo_odbc_driver.php:185:18
       → #^(INSERT|UPDATE).*RETURNING\s.+(\,\s?.+)*$#is
@@ -1102,7 +1102,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CodeIgniter/system/database/drivers/pdo/subdrivers/pdo_pgsql_driver.php:158:18
       → #^(INSERT|UPDATE).*RETURNING\s.+(\,\s?.+)*$#is
@@ -1114,7 +1114,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CodeIgniter/system/database/drivers/odbc/odbc_driver.php:176:27
       → /'[^']*'|"[^"]*"/i
@@ -1130,7 +1130,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CodeIgniter/system/database/DB_driver.php:955:27
       → /'[^']*'|"[^"]*"/i
@@ -1264,7 +1264,7 @@
   corpus/woocommerce/plugins/woocommerce/includes/class-wc-download-handler.php:651:21
       → /filename\*\s*=\s*[^']*'[^']*'(?<encoded_value>[^;]+)/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php:672:20
       → /^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])([ 01-9:]*)$/
@@ -1317,37 +1317,37 @@
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:69:5
       → /color\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:70:5
       → /font-family\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:71:5
       → /font-size\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:72:5
       → /font-weight\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:73:5
       → /line-height\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:74:5
       → /letter-spacing\s*:\s*[^;]+;/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php:444:33
       → /<rect[^>]+fill="white"[^>]*\/?>/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/plugins/woocommerce/src/Internal/Admin/Logging/FileV2/SearchListTable.php:157:28
       → /\.([0-9])+\-/
@@ -1390,17 +1390,17 @@
   corpus/woocommerce/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php:39:36
       → #<audio[^>]*\ssrc=["']([^"']*)["'][^>]*/?>#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php:75:16
       → #<audio[^>]*\ssrc=["']([^"']*)["'][^>]*/?>#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php:134:44
       → /(?<![a-z-])background-color\s*:\s*[^;]+;?/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/woocommerce/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php:666:20
       → /(?<![a-zA-Z0-9.-])https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[a-zA-Z0-9\/?=&%_.~+#-]*(?![a-zA-Z0-9._~+#-])/
@@ -1487,7 +1487,7 @@
   corpus/phpseclib/phpseclib/File/ASN1.php:1422:34
       → #-+END.*[\r\n ]*.*#ms
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 'm' is useless: pattern '#-+END.*[\r\n ]*.*#ms' contains no anchors.
      TIP 
          - #-+END.*[\r\n ]*.*#ms
@@ -2004,7 +2004,7 @@
   corpus/magento/app/code/Magento/Webapi/Model/Soap/Wsdl/ComplexTypeStrategy.php:406:37
       → |([http://]?.+):(.+):(.+)|i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 't' (duplicate), '/' (duplicate)
 
@@ -2374,7 +2374,7 @@
   corpus/drupal/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php:31:21
       → /^[a-zA-Z][a-zA-Z0-9:_-]*[a-zA-Z0-9]?$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/drupal/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php:49:64
       → /^[+-]?((\d+(\.\d*)?)|(\.\d+))$/i
@@ -2617,7 +2617,7 @@
   corpus/wordpress/src/wp-admin/includes/class-ftp-sockets.php:130:41
       → /^.+ \(?([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]+,[0-9]+)\)?.*$/s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/wordpress/src/wp-admin/includes/class-wp-filesystem-base.php:246:36
       → |^([a-z]{1}):|i
@@ -2644,7 +2644,7 @@
   corpus/wordpress/src/wp-admin/includes/class-ftp-pure.php:109:41
       → /^.+ \(?([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]+,[0-9]+)\)?.*$/s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/wordpress/src/wp-admin/includes/class-wp-debug-data.php:553:53
       → /\# BEGIN WordPress[\s\S]+?# END WordPress/si
@@ -2668,7 +2668,7 @@
   corpus/wordpress/src/wp-includes/functions.php:6530:26
       → #/(wp-admin/?.*|wp-login\.php.*)#i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/wordpress/src/wp-includes/functions.php:6535:26
       → #/[^/]*$#i
@@ -2867,7 +2867,7 @@
   corpus/wordpress/src/wp-includes/formatting.php:4958:23
       → |^(https?:)?//[^/]+(/?.*)|i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/wordpress/src/wp-includes/formatting.php:5168:65
       → |^([a-zA-Z0-9-\.])+$|
@@ -3213,7 +3213,7 @@
   corpus/Valinor/src/Utility/String/StringFormatter.php:56:24
       → /{\s*[^}]*[^}a-z_]+\s*}?/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/cartalyst/stripe/src/AmountConverter.php:33:32
       → /\,/i
@@ -4574,7 +4574,7 @@
   corpus/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php:27:20
       → /(#?.*\?)\/(\?+|\d+)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/DateFormatter.php:126:41
       → /^(\[DBNum\d\])*(\[\$[^\]]*\])/i
@@ -4584,7 +4584,7 @@
   corpus/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php:212:24
       → /[#\?0]?.*[#\?0]\/(\?+|\d+|#)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php:281:33
       → /\.(?=(?:[^"]*"[^"]*")*[^"]*\Z)/miu
@@ -5160,7 +5160,7 @@
   corpus/moodle/public/lib/behat/classes/behat_session_trait.php:1112:32
       → /<+\s*\/*\s*([A-Z][A-Z0-9]*)\b[^>]*\/*\s*>*/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/moodle/public/lib/behat/classes/behat_session_trait.php:1113:29
       → /(\n)+/s
@@ -5362,7 +5362,7 @@
   corpus/moodle/public/lib/weblib.php:823:25
       → ~(<a [^<]*href=["|']?([^ "']*)["|']?[^>]*>([^<]*)</a>)~i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/moodle/public/lib/weblib.php:1035:29
       → |&lt;p&gt;(.*?)&lt;/p&gt;|m
@@ -5634,7 +5634,7 @@
   corpus/pimcore/lib/Model/Listing/AbstractListing.php:192:55
       → /((?<![\\])['\"])((?:.(?!(?<![\\])\1))*.?)\1/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/pimcore/lib/Helper/Mail.php:224:24
       → @(href|src)\s*=["']([^(http|mailto|javascript|data:|#)].*?(css|jpe?g|gif|png)?)["']@is
@@ -5749,7 +5749,7 @@
   corpus/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:603:28
       → /^[ \t]*From:[ \t]*.+(?:\r?\n.*){0,5}?\r?\n[ \t]*Subject:[ \t]*.*$/im
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:651:43
       → /^(?:\s*(?:fwd?|fw)\s*:\s*)+/i
@@ -5759,12 +5759,12 @@
   corpus/aidingapp/app-modules/engagement/src/Notifications/EngagementNotification.php:91:13
       → /style="--color:\s*([^;]+);\s*--dark-color:\s*[^"]*"/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/aidingapp/app-modules/service-management/src/Models/ServiceRequestTypeEmailTemplate.php:122:13
       → /style="--color:\s*([^;]+);\s*--dark-color:\s*[^"]*"/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/aidingapp/app-modules/service-management/src/Rules/ValidServiceMonitoringKeywordValues.php:132:27
       → /^\s*(?:".*?"|[^",]*)\s*(?:,\s*(?:".*?"|[^",]*)\s*)*$/
@@ -6038,7 +6038,7 @@
   corpus/CodeIgniter4/system/ThirdParty/Kint/Parser/ColorPlugin.php:60:79
       → /^(?:(?:rgb|hsl)a?[^\)]{6,}\)|#[0-9a-f]{3,8})$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CodeIgniter4/system/Debug/Toolbar.php:527:24
       → /\d+\.\d{6}/s
@@ -6184,7 +6184,7 @@
          - ~(?<![A-Za-z0-9])(?:[A-Za-z]:[\\/]|/)(?:[^\s:]+[\\/]?)+~u
          + ~(?<![A-Za-z0-9])(?:[A-Za-z]:[\\/]|/)(?>(?:[^\s:]+[\\/]?))+~u
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
       → #\n\s*\n#Uis
@@ -6269,7 +6269,7 @@
   corpus/composer/composer/src/Composer/Repository/Vcs/GitDriver.php:206:54
       → {^ *[^/]+/HEAD }
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/composer/composer/src/Composer/Util/Platform.php:382:42
       → {-?v?\d+(\.\d+)*$}
@@ -6279,12 +6279,12 @@
   corpus/composer/composer/src/Composer/Downloader/SvnDownloader.php:147:24
       → {\s*\r?\n\s*}
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/composer/composer/src/Composer/Downloader/GitDownloader.php:360:24
       → {\s*\r?\n\s*}
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/composer/composer/src/Composer/Autoload/AutoloadGenerator.php:529:42
       → {^(([^.+*?\[^\]$(){}=!<>|:\\#-]+|\\[.+*?\[^\]$(){}=!<>|:#-])*).*}
@@ -6331,7 +6331,7 @@
   corpus/composer/composer/src/Composer/Installer/BinaryInstaller.php:341:27
       → {^(#!.*\r?\n)?[\r\n\t ]*<\?php}
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/composer/composer/src/Composer/Package/Package.php:171:36
       → { (?:^|[\\/]+) \.\.? (?:[\\/]+|$) (?:\.\.? (?:[\\/]+|$) )*}x
@@ -6366,7 +6366,7 @@
   corpus/composer/composer/src/Composer/Package/Version/VersionGuesser.php:170:59
       → {^ *.+/HEAD }
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/composer/composer/src/Composer/Package/Version/VersionGuesser.php:151:58
       → {^(?:\* ) *(\(no branch\)|\(detached from \S+\)|\(HEAD detached at \S+\)|\S+) *([a-f0-9]+) .*$}
@@ -6392,7 +6392,7 @@
   corpus/psysh/scoper.inc.php:144:17
       → /'(PhpParser\\.+(?:\\)?)'/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      TIP 
          - /'(PhpParser\\.+(?:\\)?)'/
@@ -8374,7 +8374,7 @@
   corpus/nette/tracy/src/Tracy/Logger/Logger.php:164:17
       → #\s*\r?\n\s*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/nette/tracy/src/Tracy/Helpers.php:441:21
       → #^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src(?:-elem)?\s+(?:[^;]+\s)?'nonce-([\w+/]+=*)'#mi
@@ -8726,12 +8726,12 @@
   corpus/Parser/src/Analyser/Header/Useragent/Application.php:362:24
       → /YahooMobile(?:Messenger|Mail|Weather)\/1.0 \(Android (Messenger|Mail|Weather); ([0-9\.]+)\) \([^;]+; ?[^;]+; ?([^;]+); ?([0-9\.]+)\/[^\;\)\/]+\)/u
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/Parser/src/Analyser/Header/Useragent/Application.php:394:24
       → /YahooJMobileApp\/[0-9\.]+ \(Android [a-z]+; ([0-9\.]+)\) \([^;]+; ?[^;]+; ?[^;]+; ?([^;]+); ?([0-9\.]+)\/[^\;\)\/]+\)/u
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/Parser/src/Analyser/Header/Useragent/Application.php:95:28
       → /^(.+) Android Application \([0-9]+, .+ v[0-9\.]+\) - [a-z-]+ (.*) [a-z_-]+ - [0-9A-F]{8,8}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{12,12}$/iu
@@ -8793,7 +8793,7 @@
   corpus/Parser/src/Analyser/Header/Useragent/Browser.php:1037:28
       → /^JUC ?\(Linux; ?U; ?(?:Android)? ?([0-9\.]+)[^;]*; ?[^;]+; ?([^;]*[^\s])\s*; ?[0-9]+\*[0-9]+;?\)/u
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/Parser/src/Analyser/Header/Useragent/Browser.php:1459:34
       → /(?:Obigo|Teleca)[- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)(?:[0-9])?(?:[\/;]|$)/ui
@@ -8829,7 +8829,7 @@
   corpus/elementor/modules/mcp/abilities/appliers/v3-node-bridge.php:272:26
       → /^\s*[^{}]+\{\s*[\s\S]*\}\s*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/CssToInlineStyles/src/Css/Rule/Processor.php:91:43
       → /  \#/ix
@@ -8984,7 +8984,7 @@
   corpus/laminas-filter/src/StripTags.php:122:24
       → /([^<]*)(<?[^>]*>?)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/laminas-filter/src/StripTags.php:160:31
       → ~(</?)(\w*)((/(?!>)|[^/>])*)(/?>)~
@@ -9183,12 +9183,12 @@
   corpus/processwire/wire/modules/LanguageSupport/LanguageParser.php:232:4
       → /([\s.=(\\,]__|=>__|^__)\(\s*(['"])(.+?)(?<!\\)\2\s*(?:,\s*[^)]+)?\)+(.*)$/m
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/processwire/wire/modules/LanguageSupport/LanguageParser.php:240:4
       → /([\s.=>(\\,]_x|^_x)\(\s*(['"])(.+?)(?<!\\)\2\s*,\s*(['"])(.+?)(?<!\\)\4\s*[^)]*\)+(.*)$/m
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/processwire/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php:1470:56
       → /^<\/\w[\w-]*+[ ]*+>/s
@@ -9609,7 +9609,7 @@
   corpus/prestashop/controllers/admin/AdminTranslationsController.php:1494:40
       → /{\s*[^$]+/s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - /{\s*[^$]+/s
@@ -9951,7 +9951,7 @@
   corpus/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:248:6
       → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:359:3
       → /(:?\s*url\s*\()\s*(?:'|")?\s*([^\/'"\s\)](?:(?<!data:|http:|https:|[\('"]#|%23).)*)['"\s]*\)/isU
@@ -9972,7 +9972,7 @@
   corpus/jetpack/projects/plugins/boost/app/lib/minify/functions-service.php:295:6
       → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/plugins/vaultpress/vaultpress.php:1387:20
       → /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:\s+FROM)?|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|OPTIMIZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+`?(\w+)`?/is
@@ -10246,7 +10246,7 @@
   corpus/jetpack/projects/packages/jetpack-mu-wpcom/src/features/newspack-blocks/synced-newspack-blocks/class-newspack-blocks.php:1686:42
       → / \/ ?.*/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/packages/jetpack-mu-wpcom/src/common/index.php:31:29
       → /([-_].*)$/i
@@ -10306,7 +10306,7 @@
   corpus/jetpack/projects/packages/connection/src/class-manager.php:2334:4
       → #(https?://[^?/]+)(/?.*)?$#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/packages/help-center/src/class-help-center.php:189:30
       → /([-_].*)$/i
@@ -10320,7 +10320,7 @@
   corpus/jetpack/projects/packages/changelogger/lib/KeepAChangelogParser.php:172:23
       → /^## +(\[?[^] ]+\]?) - (.+?) *$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/packages/changelogger/src/Utils.php:121:58
       → /(\n[ \t]+)+/
@@ -10335,7 +10335,7 @@
   corpus/jetpack/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/RequiresHandler.php:131:26
       → /^extension\s+(?P<value>[^\s<>=!]+)\s*(?P<version>[<>=!]{0,2}\s*[\d\.-]+[\d\.]?)?[ \t]*\r?$/m
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/jetpack/projects/packages/password-checker/src/class-password-checker.php:506:20
       → /[!|@|#|$|%|^|&|*|(|)]/
@@ -11187,7 +11187,7 @@
   corpus/PHP-Parser/lib/PhpParser/ParserAbstract.php:698:81
       → /\A#!.*\r?\n\z/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/PHP-Parser/lib/PhpParser/Comment.php:127:24
       → (^.*(?:\n\s+\*.*)+$)
@@ -11484,7 +11484,7 @@
   corpus/concretecms/concrete/src/StyleCustomizer/Inline/StyleSet.php:118:24
       → /^(?:rgb|hsl)a?\(\s*[-\d.%\s,\/]+\)$/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/concretecms/concrete/src/StyleCustomizer/Inline/StyleSet.php:356:48
       → /(['])/i
@@ -11644,7 +11644,7 @@
   corpus/thephpleague/geotools/src/Coordinate/Coordinate.php:207:24
       → /([ns]{1})\s?([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*[, ]?([we]{1})\s? ?([0-9]{1,3})\D+([0-9]{1,2}\.?\d*)\D*$/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
      TIP 
@@ -12367,12 +12367,12 @@
   corpus/voku/email-check/src/voku/helper/EmailCheck.php:202:26
       → /^(?<local>.*<?)(?:.*)@(?<domain>.*)(?:>?)$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/voku/simple_html_dom/src/voku/helper/XmlDomParser.php:653:39
       → #xmlns:?.*=(["'])(?:.*)\1#Ui
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/voku/simple_html_dom/src/voku/helper/HtmlDomParser.php:1773:17
       → /(?<start>[^<]*)?(?<broken>(?:<\/\w+(?:\s+\w+=\"[^"]+\")*+[^<]+>)+)(?<end>.*)/u
@@ -12404,7 +12404,7 @@
   corpus/voku/portable-utf8/src/voku/helper/UTF8.php:1204:13
       → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 'm' is useless: pattern '#@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+\{.*\}\s*\}\s*#isumU' contains no anchors.
      TIP 
          - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
@@ -12426,7 +12426,7 @@
   corpus/voku/portable-utf8/src/voku/helper/UTF8.php:5230:39
       → #/\r\n|\r|\n|<br.*/?>#isU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2345:20
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
@@ -12445,7 +12445,7 @@
   corpus/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSanitizer.php:86:30
       → #<script\b[^>]*/?>#is
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - #<script\b[^>]*/?>#is
@@ -12454,7 +12454,7 @@
   corpus/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSanitizer.php:87:30
       → #<style\b[^>]*/?>#is
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
          - #<style\b[^>]*/?>#is
@@ -12594,7 +12594,7 @@
   corpus/symfony/symfony/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php:88:43
       → /^data:([a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}\/[a-z0-9][a-z0-9\!\#\$\&\-\^\_\+\.]{0,126}(;[a-z0-9\-]+\=[a-z0-9\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/symfony/symfony/src/Symfony/Component/Intl/Resources/bin/update-data.php:80:59
       → #^release-[0-9]{1,}[.-][0-9]{1}$#
@@ -12941,7 +12941,7 @@
   corpus/craftcms/cms/src/helpers/App.php:340:25
       → /^--?[\w-]+$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/craftcms/cms/src/helpers/Json.php:96:25
       → /^\s*\{\s*[\r\n]+([ \t]+)"/
@@ -12979,12 +12979,12 @@
   corpus/craftcms/cms/src/helpers/StringHelper.php:1446:29
       → #/\r\n|\r|\n|<br.*/?>#isU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/craftcms/cms/src/helpers/StringHelper.php:1865:29
       → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
      WARN  Flag 'm' is useless: pattern '#@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+\{.*\}\s*\}\s*#isumU' contains no anchors.
      TIP 
          - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
@@ -13168,7 +13168,7 @@
   corpus/phpspec/src/PhpSpec/Console/ConsoleIO.php:174:24
       → /(^.*)<[a-z-]*>?[^<]*$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/silverstripe-framework/src/Forms/MoneyField.php:171:24
       → /^(?<amount>[\d\.]+)( (?<currency>\w{3}))?$/i
@@ -13177,7 +13177,7 @@
   corpus/silverstripe-framework/src/Core/Convert.php:312:34
       → /<\/?[^>]*>/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/silverstripe-framework/src/Core/Convert.php:414:24
       → /(^[A-Z]{1,})([A-Z]{1})([a-z]+.*)/
@@ -13812,7 +13812,7 @@
   corpus/mediawiki/includes/Search/SearchHighlighter.php:477:25
       → /<\/?[^>]+>/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/mediawiki/includes/Search/SearchHighlighter.php:478:25
       → /'''''/
@@ -14172,17 +14172,17 @@
   corpus/joomla/build/bump.php:199:34
       → #MAJOR_VERSION\s*=\s*[^;]*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/joomla/build/bump.php:200:34
       → #MINOR_VERSION\s*=\s*[^;]*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/joomla/build/bump.php:201:34
       → #PATCH_VERSION\s*=\s*[^;]*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/joomla/build/bump.php:268:38
       → #Joomla! [0-9]+\.[0-9]+ (|\[)version#
@@ -14360,7 +14360,7 @@
   corpus/cebe/markdown/block/HtmlTrait.php:149:19
       → ~^</?(\w+\d?)( .*?)?>~s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/laravel/valet/cli/Valet/Server.php:78:27
       → /^([0-9]+\.){3}[0-9]+$/
@@ -14436,7 +14436,7 @@
   corpus/laravel/framework/src/Illuminate/Testing/Concerns/TestDatabases.php:183:30
       → /^(.*)(\/[\w-]*)(\??.*)$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The first quantifier can match zero times already: consider dropping it entirely.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/laravel/framework/src/Illuminate/Support/Str.php:1669:29
       → ~(\s|\x{3164}|\x{1160})+~u
@@ -14505,7 +14505,7 @@
   corpus/laravel/boost/src/Rules/RuleFrontmatter.php:19:24
       → /^\s*---\s*\n(.*?)\n---\s*\n?/s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ The second quantifier can match zero times already: consider dropping it entirely.
+         ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
   corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:103:38
       → /(?<!@)@boostsnippet\(\s*(?P<nameQuote>['"])(?P<name>[^\1]*?)\1(?:\s*,\s*(?P<langQuote>['"])(?P<lang>[^\3]*?)\3)?\s*\)(?P<content>.*?)@endboostsnippet/s
