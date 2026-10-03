@@ -139,7 +139,10 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             $exclude = ['vendor'];
         }
 
-        if (OutputConfiguration::VERBOSITY_QUIET !== $verbosity && !$output->isQuiet()) {
+        // Outside the console format, stdout holds the report alone: the
+        // target and what resolving it noticed go to stderr, when there is
+        // one. The console banner carries them instead.
+        if (OutputConfiguration::VERBOSITY_QUIET !== $verbosity && !$output->isQuiet() && 'console' !== $format) {
             foreach ($target->notices() as $notice) {
                 $output->writeError('Note: '.$notice."\n");
             }
@@ -185,7 +188,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         $lint = new LintService($analysis, $sources);
 
         if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity) {
-            $output->write($this->outputRenderer->renderBanner($output, $jobs, $lintConfigFiles));
+            $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles));
         }
 
         $collectionProgress = null;

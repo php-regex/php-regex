@@ -498,19 +498,24 @@ without any configuration.
 
 **Console Output:**
 ```
-PHPRegex 1.0.0 by Younes ENNAJI
+PHPRegex 2.0.0-DEV by Younes ENNAJI
 
-Runtime       : PHP 8.2.30
+Runtime       : PHP 8.4.26, PCRE2 10.49
+Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)
 Processes     : 10
+PCRE JIT      : 1
+Backtrack     : 1000000
+Recursion     : 100000
 Configuration : regex.dist.json
 
-  [1/2] Collecting patterns
+  [1/2] Scanning files
+  Scanned 1 files, found 1 patterns.
+
   [2/2] Analyzing patterns
 
-  [PASS] No issues found, 0 optimizations available.
-  Time: 0.08s | Memory: 10 MB | Cache: 0 hits, 0 misses | Processes: 10
-
-  Found it useful? Consider starring: https://github.com/php-regex/php-regex
+  PASS No issues found, 0 optimizations available.
+  Time: 0.02s  Memory: 8 MB  Cache: 3 hits, 1 misses  Processes: 10
+  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
 
 **With Issues:**
@@ -714,16 +719,30 @@ command says so. A constraint the command cannot read (`*`, `<9`, a branch
 name) falls back to the running PHP, with a note naming it; reading
 `composer.json` never stops a run.
 
-The console, GitHub, Checkstyle and JUnit formats print the target on stderr,
-so that the report on stdout stays unchanged:
+Where the target is recorded depends on the format. The console format shows
+it as a `Target` row in the banner, right under `Runtime`, with any `Note:`
+lines from the resolution below the table — so it lives wherever the banner
+lives: on the terminal, and in a shell redirect such as
+`regex lint src/ > report.txt`, but never in the file named by `--output`,
+which holds the report alone. The GitHub, Checkstyle and JUnit formats keep
+stdout report-only and print a stable stderr line instead:
 
 ```text
 Target: PHP 8.2, PCRE2 10.40 (composer.json require.php)
 ```
 
-The JSON report carries it as its `target` key (see [JSON](#json) below).
+Machine consumers that need the target programmatically should read the JSON
+report's `target` key (see [JSON](#json) below) rather than parse that line;
+with `--format=json` the notes stay on stderr, so a JSON pipeline that
+discards stderr loses the why behind `target.source`. Two neighbouring
+surfaces keep their own spelling: the language server logs its own
+`Target: ...` line on initialization, and the Symfony and Laravel commands
+print the stderr line for the JSON format too.
+
 Single-pattern commands, such as `analyze` or `validate`, judge for the
-running PHP unless `--php-version` or `--pcre-version` is given.
+running PHP unless `--php-version` or `--pcre-version` is given; their
+banners show `Target PHP` / `Target PCRE2` rows only when those flags are
+passed.
 
 ### Errors and Exit Codes
 

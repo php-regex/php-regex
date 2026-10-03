@@ -875,9 +875,10 @@ PHP version and PCRE2 release with `--php-version` and `--pcre-version`, or set
 `phpVersion` and `pcreVersion` in `regex.json`.
 
 The JSON report gains a `target` key (`{"php": "8.2", "pcre": "10.40",
-"source": "composer.json require.php"}`); the other formats print the same line
-on stderr. Single-pattern commands, such as `analyze`, still judge for the
-running PHP.
+"source": "composer.json require.php"}`); the console banner shows the target
+as a `Target` row under `Runtime`, and the GitHub, Checkstyle and JUnit
+formats print the same line on stderr. Single-pattern commands, such as
+`analyze`, still judge for the running PHP.
 
 #### The lint command's exit codes and streams
 

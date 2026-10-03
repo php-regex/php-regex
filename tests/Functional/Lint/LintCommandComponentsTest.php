@@ -21,6 +21,7 @@ use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
@@ -233,7 +234,9 @@ final class LintCommandComponentsTest extends TestCase
     public function test_output_renderer_renders_summary_and_banner(): void
     {
         $renderer = new LintOutputRenderer();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $output = new Output(false, false, errorStream: $stream);
 
         $emptyBuffer = $this->captureOutput(static function () use ($renderer, $output): void {
             $renderer->renderSummary($output, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0], true);
@@ -256,9 +259,25 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertStringContainsString('No issues found', $passBuffer);
 
         $configPath = getcwd();
-        $banner = $renderer->renderBanner($output, 2, [$configPath.'/regex.json']);
+        $banner = $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json']);
         $this->assertStringContainsString('PHPRegex', $banner);
         $this->assertStringContainsString('Configuration : ', $banner);
+    }
+
+    public function test_output_renderer_colors_the_target_versions_but_not_the_source(): void
+    {
+        $renderer = new LintOutputRenderer();
+        $ansiStream = fopen('php://memory', 'w+');
+        $this->assertIsResource($ansiStream);
+        $output = new Output(true, false, errorStream: $ansiStream);
+
+        $target = ProjectTarget::fromSources([], [], null, []);
+        $banner = $renderer->renderBanner($output, $target, 1, []);
+
+        $this->assertStringContainsString(
+            'PHP '.Output::YELLOW.$target->php().Output::RESET.', PCRE2 '.Output::YELLOW.$target->target()->pcreVersion.Output::RESET.' ('.$target->source().')',
+            $banner,
+        );
     }
 
     public function test_extractor_factory_falls_back_without_php_parser(): void

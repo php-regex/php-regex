@@ -15,6 +15,8 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -60,18 +62,23 @@ final readonly class LintOutputRenderer
     /**
      * @param array<int, string> $configFiles
      */
-    public function renderBanner(Output $output, int $jobs = 1, array $configFiles = []): string
+    public function renderBanner(Output $output, ProjectTarget $target, int $jobs = 1, array $configFiles = []): string
     {
         $version = Regex::VERSION;
 
         $banner = $output->color('PHPRegex', Output::CYAN.Output::BOLD).' '.$output->warning($version)." by Younes ENNAJI\n\n";
 
+        $runtime = PcreRuntimeInfo::fromIni();
+        // The running release, normalized the way every other surface spells
+        // it (build date and pre-release suffix stripped): the Runtime and
+        // Target rows read as parallel engine-identity lines.
+        $runningPcre = PcreTarget::runtime()->pcreVersion;
+
         $lines = [
-            'Runtime' => 'PHP '.$output->warning(\PHP_VERSION),
+            'Runtime' => 'PHP '.$output->warning(\PHP_VERSION).', PCRE2 '.$output->warning($runningPcre),
+            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).' ('.$target->source().')',
             'Processes' => $output->warning((string) $jobs),
         ];
-        $runtime = PcreRuntimeInfo::fromIni();
-        $lines['PCRE'] = $output->warning($runtime->version);
         $lines['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
         $lines['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
         $lines['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
@@ -84,6 +91,10 @@ final readonly class LintOutputRenderer
         $maxLabelLength = max(array_map(strlen(...), array_keys($lines)));
         foreach ($lines as $label => $value) {
             $banner .= $output->bold(str_pad($label, $maxLabelLength)).' : '.$value."\n";
+        }
+
+        foreach ($target->notices() as $notice) {
+            $banner .= $output->dim('Note: '.$notice)."\n";
         }
 
         $banner .= "\n";
