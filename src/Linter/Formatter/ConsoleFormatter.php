@@ -49,7 +49,6 @@ class ConsoleFormatter extends AbstractOutputFormatter
     private const BG_YELLOW = "\033[43m";
     private const BG_CYAN = "\033[46m";
     private const BG_GRAY = "\033[100m";
-    private const DIFF_CONTEXT_LINES = 2;
     private const ARROW_LABEL = '↳';
 
     public function __construct(
@@ -267,34 +266,9 @@ class ConsoleFormatter extends AbstractOutputFormatter
             return '';
         }
 
-        $context = self::DIFF_CONTEXT_LINES;
-        $show = array_fill(0, \count($ops), false);
-        $hasChange = false;
-
-        foreach ($ops as $index => $op) {
-            if ('equal' === $op['type']) {
-                continue;
-            }
-
-            $hasChange = true;
-            $start = max(0, $index - $context);
-            $end = min(\count($ops) - 1, $index + $context);
-            for ($i = $start; $i <= $end; $i++) {
-                $show[$i] = true;
-            }
-        }
-
-        if (!$hasChange) {
-            $output = '';
-            foreach ($oldLines as $line) {
-                $output .= $this->formatDiffLine(' ', $line, self::GRAY, true);
-            }
-
-            return $output;
-        }
-
+        // Nothing is ever hidden: a diff that elides invites pasting a
+        // truncated rewrite, so every line is printed with its marker.
         $output = '';
-        $skipping = false;
         $index = 0;
         $opCount = \count($ops);
 
@@ -302,31 +276,12 @@ class ConsoleFormatter extends AbstractOutputFormatter
             $op = $ops[$index];
 
             if ('equal' === $op['type']) {
-                if (!$show[$index]) {
-                    if (!$skipping) {
-                        $skipped = 0;
-                        $peek = $index;
-                        while ($peek < $opCount && 'equal' === $ops[$peek]['type'] && !$show[$peek]) {
-                            $skipped++;
-                            $peek++;
-                        }
-
-                        $output .= $this->formatDiffEllipsis($skipped);
-                        $skipping = true;
-                    }
-                    $index++;
-
-                    continue;
-                }
-
-                $skipping = false;
                 $output .= $this->formatDiffLine(' ', $op['line'], self::GRAY, true);
                 $index++;
 
                 continue;
             }
 
-            $skipping = false;
             $block = [];
             while ($index < $opCount && 'equal' !== $ops[$index]['type']) {
                 $block[] = $ops[$index];
@@ -346,20 +301,6 @@ class ConsoleFormatter extends AbstractOutputFormatter
         return \sprintf('         %s%s'.\PHP_EOL,
             $this->color($sign.' ', $signColor),
             $content,
-        );
-    }
-
-    /**
-     * The omission marker says how much is missing: a bare ellipsis looks
-     * like a diff line and invites pasting a truncated rewrite.
-     */
-    private function formatDiffEllipsis(int $skipped): string
-    {
-        return $this->formatDiffLine(
-            ' ',
-            sprintf('... %d line%s omitted ...', $skipped, 1 === $skipped ? '' : 's'),
-            self::GRAY,
-            true,
         );
     }
 

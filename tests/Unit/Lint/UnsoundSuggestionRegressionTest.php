@@ -197,16 +197,127 @@ final class UnsoundSuggestionRegressionTest extends TestCase
         $this->assertNotNull($witness);
     }
 
+    #[Test]
+    public function test_the_language_check_detects_a_shifted_match(): void
+    {
+        // A rewrite that keeps matching but moves or resizes the match
+        // changes behavior too: on "ab", '/a|ab/' matches "a" at 0 (len 1)
+        // while '/ab|a/' matches "ab" at 0 (len 2). A boolean comparator
+        // would pass; the offset-and-extent one must not.
+        $witness = $this->firstLanguageDivergence(
+            '/a|ab/',
+            '/ab|a/',
+            ['a', 'b'],
+            3,
+        );
+
+        $this->assertSame('ab', $witness);
+    }
+
+    #[Test]
+    public function test_every_corpus_suggestion_preserves_the_match(): void
+    {
+        // The guard runs over the committed corpus fixture, not a handful
+        // of hand-picked shapes: any optimizer pass that shifts a match
+        // fails here, on real-world patterns.
+        $fixture = \dirname(__DIR__, 2).'/Fixtures/Corpus/lint-expectations.json';
+        $entries = json_decode((string) file_get_contents($fixture), true);
+        $this->assertIsArray($entries);
+
+        $checked = 0;
+        foreach ($entries as $entry) {
+            if (!\is_array($entry)) {
+                continue;
+            }
+
+            $pattern = $entry['pattern'] ?? null;
+            if (!\is_string($pattern)) {
+                continue;
+            }
+
+            foreach ($this->suggestionsFor($pattern) as $suggested) {
+                $witness = $this->firstLanguageDivergence($pattern, $suggested, $this->alphabetFrom($pattern), 3);
+                $this->assertNull($witness, sprintf(
+                    '%s vs %s diverge on %s',
+                    $pattern,
+                    $suggested,
+                    var_export($witness, true),
+                ));
+                $checked++;
+            }
+        }
+
+        $this->assertGreaterThan(0, $checked);
+    }
+
     /**
+     * @return array<int, string>
+     */
+    private function suggestionsFor(string $pattern): array
+    {
+        $pairs = [];
+        $result = $this->analyze($pattern);
+
+        /** @var array<int, array<string, mixed>> $resultOptimizations */
+        $resultOptimizations = $result['optimizations'] ?? [];
+        foreach ($resultOptimizations as $optimization) {
+            $carrier = $optimization['optimization'] ?? null;
+            $optimized = $carrier instanceof OptimizationResult ? $carrier->optimized : null;
+            if (\is_string($optimized) && '' !== $optimized && $optimized !== $pattern) {
+                $pairs[] = $optimized;
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * A small alphabet per pattern: its own literal characters plus a
+     * filler, so the exhaustive walk stays cheap and relevant.
+     *
+     * @return array<int, string>
+     */
+    private function alphabetFrom(string $pattern): array
+    {
+        $alphabet = [];
+        foreach (str_split(substr($pattern, 1)) as $char) {
+            if (\ctype_alnum($char) && !isset($alphabet[$char])) {
+                $alphabet[$char] = $char;
+            }
+        }
+
+        $alphabet = array_values($alphabet);
+        if (\count($alphabet) > 3) {
+            $alphabet = \array_slice($alphabet, 0, 3);
+        }
+
+        if (!\in_array('a', $alphabet, true)) {
+            $alphabet[] = 'a';
+        }
+
+        return $alphabet;
+    }
+
+    /**
+     * @param array<int, string> $alphabet
+     */
+    /**
+     * The comparison covers the match offset and extent, not just whether
+     * a match exists: a rewrite that keeps matching but moves the match
+     * changes behavior all the same.
+     *
      * @param array<int, string> $alphabet
      */
     private function firstLanguageDivergence(string $original, string $suggested, array $alphabet, int $maxLength): ?string
     {
         foreach ($this->allStringsOver($alphabet, $maxLength) as $subject) {
-            $before = (bool) @preg_match($original, $subject);
-            $after = (bool) @preg_match($suggested, $subject);
+            $before = @preg_match($original, $subject, $beforeMatches, \PREG_OFFSET_CAPTURE);
+            $after = @preg_match($suggested, $subject, $afterMatches, \PREG_OFFSET_CAPTURE);
 
-            if ($before !== $after) {
+            $beforeSpan = (false === $before || 0 === $before || !isset($beforeMatches[0][1])) ? null : [$beforeMatches[0][1], \strlen((string) $beforeMatches[0][0])];
+            $afterSpan = (false === $after || 0 === $after || !isset($afterMatches[0][1])) ? null : [$afterMatches[0][1], \strlen((string) $afterMatches[0][0])];
+
+            if ($beforeSpan !== $afterSpan) {
                 return $subject;
             }
         }

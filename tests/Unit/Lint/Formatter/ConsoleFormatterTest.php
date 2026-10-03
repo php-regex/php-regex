@@ -720,8 +720,14 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $this->invokePrivate($formatter, 'formatMultilineDiff', $old, $new);
 
+        // The diff hides nothing: distant or not, every line stays visible
+        // (the omission-marker assertions this test used to carry went away
+        // with the elision, on the maintainer's instruction).
         $this->assertIsString($output);
-        $this->assertStringContainsString('...', (string) $output);
+        $this->assertStringContainsString('line1', (string) $output);
+        $this->assertStringContainsString('line5', (string) $output);
+        $this->assertStringContainsString('changed', (string) $output);
+        $this->assertStringNotContainsString('omitted', (string) $output);
     }
 
     public function test_extract_pattern_from_optimizations(): void

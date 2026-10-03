@@ -76,49 +76,42 @@ final class ConsoleFormatterTest extends TestCase
     }
 
     /**
-     * The omission marker must state the exact number of hidden lines: a
-     * bare ellipsis invites pasting a truncated rewrite.
+     * A multiline tip diff hides nothing: every line of the pattern stays
+     * visible, so the suggestion can be read and applied whole. The
+     * omission-marker assertions this provider used to carry were removed
+     * with the elision itself, on the maintainer's instruction.
      *
-     * @return iterable<string, array{count: int, visibleBeforeOmission: array<int, string>, letters: array<int, string>, modified: array<string, string>}>
+     * @return iterable<string, array{letters: array<int, string>, modified: array<string, string>}>
      */
     public static function provideOmissionRuns(): iterable
     {
-        yield 'hidden run at the start' => [
-            'count' => 9,
-            'visibleBeforeOmission' => [],
+        yield 'change at the end' => [
             'letters' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
             'modified' => ['l' => 'L'],
         ];
 
-        yield 'hidden run at the end' => [
-            'count' => 9,
-            'visibleBeforeOmission' => ['aline', 'bline', 'cline'],
+        yield 'change at the start' => [
             'letters' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
             'modified' => ['a' => 'A'],
         ];
 
-        yield 'single hidden run between two hunks' => [
-            'count' => 6,
-            'visibleBeforeOmission' => [],
+        yield 'changes at both ends' => [
             'letters' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
             'modified' => ['a' => 'A', 'l' => 'L'],
         ];
 
-        yield 'a single omitted line reads in the singular' => [
-            'count' => 1,
-            'visibleBeforeOmission' => [],
+        yield 'short pattern' => [
             'letters' => ['a', 'b', 'c', 'd'],
             'modified' => ['a' => 'A'],
         ];
     }
 
     /**
-     * @param array<int, string>    $visibleBeforeOmission
      * @param array<int, string>    $letters
      * @param array<string, string> $modified
      */
     #[DataProvider('provideOmissionRuns')]
-    public function test_multiline_tip_diff_counts_omitted_lines(int $count, array $visibleBeforeOmission, array $letters, array $modified): void
+    public function test_multiline_tip_diff_shows_every_line(array $letters, array $modified): void
     {
         $config = new OutputConfiguration(
             verbosity: OutputConfiguration::VERBOSITY_NORMAL,
@@ -168,18 +161,14 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString(1 === $count ? 'line omitted' : 'lines omitted', $output);
-        $this->assertMatchesRegularExpression('/[0-9]+ lines? omitted/', $output);
-        $this->assertStringContainsString(
-            sprintf('... %d line%s omitted ...', $count, 1 === $count ? '' : 's'),
-            $output,
-        );
-        $this->assertSame(1, substr_count($output, 'omitted'), $output);
-        $this->assertStringContainsString('Anything.', $output);
-        foreach ($visibleBeforeOmission as $visible) {
-            $this->assertIsString($visible);
+        // Every line of the original stays visible; nothing is omitted.
+        foreach ($originalLines as $visible) {
             $this->assertStringContainsString($visible, $output);
         }
+        $this->assertStringNotContainsString('omitted', $output);
+        $this->assertStringContainsString('Anything.', $output);
+        $this->assertStringContainsString($originalLines[0], $output);
+        $this->assertSame(1, substr_count($output, 'TIP'), $output);
         $this->assertStringContainsString('TIP', $output);
         $this->assertStringNotContainsString("\n         ...\n", $output);
     }
