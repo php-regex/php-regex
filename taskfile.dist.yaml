@@ -225,6 +225,12 @@ tasks:
 
       - task: link
 
+  corpus:
+    desc: Refresh the corpus checkouts, then re-lint them into var/log/corpus.log
+    cmds:
+      - php bin/corpus update
+      - php bin/regex lint corpus/ --output=var/log/corpus.log
+
   link:
     cmds:
       - mkdir -p ./vendor/bin
