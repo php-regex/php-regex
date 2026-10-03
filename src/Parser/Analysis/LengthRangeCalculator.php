@@ -74,8 +74,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
-        $this->unicode = str_contains($node->flags, 'u')
-            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF\)/', $node->source ?? '');
+        $this->unicode = $node->isUnicode();
 
         return $node->pattern->accept($this);
     }

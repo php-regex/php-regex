@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Node;
 
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\NodeVisitorInterface;
 
 /**
@@ -39,6 +40,15 @@ final readonly class RegexNode extends AbstractNode
     public function accept(NodeVisitorInterface $visitor)
     {
         return $visitor->visitRegex($this);
+    }
+
+    /**
+     * Whether the pattern reads its subject as UTF-8: the /u flag, or a
+     * "(*UTF)" option it opens with.
+     */
+    public function isUnicode(): bool
+    {
+        return str_contains($this->flags, 'u') || StartOptions::turnUtfOn($this->source ?? '');
     }
 
     #[\Override]

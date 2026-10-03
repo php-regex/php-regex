@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -82,15 +82,6 @@ final class HirTranslator
      * they match nothing, and change what a class, a dot or "\R" matches.
      * The limits take a value, "(*LIMIT_MATCH=10)".
      */
-    private const START_OPTIONS = [
-        'UTF' => true, 'UCP' => true,
-        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
-        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
-        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
-        'LIMIT_MATCH' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true, 'LIMIT_RECURSION' => true,
-    ];
-
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive->value => LookKind::Ahead,
         GroupType::LookaheadNegative->value => LookKind::NegativeAhead,
@@ -118,7 +109,7 @@ final class HirTranslator
     public function translate(RegexNode $regex): Hir
     {
         $this->source = $regex->source ?? '';
-        $this->startVerbs = self::startOptions($this->source);
+        $this->startVerbs = StartOptions::of($this->source);
         $this->unicode = self::unicodeOf($regex);
         $this->unicodeFlag = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
@@ -141,34 +132,7 @@ final class HirTranslator
      */
     public static function unicodeOf(RegexNode $regex): bool
     {
-        return str_contains($regex->flags, 'u') || str_contains(self::startOptions($regex->source ?? ''), '(*UTF)');
-    }
-
-    /**
-     * The run of options the source opens with, as written: PCRE reads them
-     * there only, one after the other, nothing between.
-     */
-    private static function startOptions(string $source): string
-    {
-        $end = 0;
-        while ('(*' === substr($source, $end, 2)) {
-            $close = strpos($source, ')', $end);
-            if (false === $close) {
-                break;
-            }
-
-            $item = substr($source, $end + 2, $close - $end - 2);
-            $equals = strpos($item, '=');
-            $name = false === $equals ? $item : substr($item, 0, $equals);
-            $value = false === $equals ? null : substr($item, $equals + 1);
-            if (!isset(self::START_OPTIONS[$name]) || (str_starts_with($name, 'LIMIT_') ? null === $value || !Ascii::isDigit($value) : null !== $value)) {
-                break;
-            }
-
-            $end = $close + 1;
-        }
-
-        return substr($source, 0, $end);
+        return $regex->isUnicode();
     }
 
     private function node(NodeInterface $node, int $flags): Hir
