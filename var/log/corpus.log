@@ -2987,6 +2987,13 @@
       → /([^0-9\.\-])/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+  corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
+      → {"(?:[^"]+|\\")*$}m
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
   corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:275:28
       → /delivery[^\n\r]+failed[ \S]*\s+(\S+@\S+\w)\s/is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -6438,6 +6445,17 @@
          - #^([a-z0-9\-\*\._/]+?)$#is
          + #^([a-z0-9\-\*\._/]+?)$#i
 
+  corpus/uri-template/src/UriTemplate.php:1506:13
+      → /\A(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})*+/
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use '\x{EE}' and '\x{EF}' explicitly instead of a range.
+
+  corpus/uri-template/src/UriTemplate.php:1540:28
+      → /\A(?:[\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}]|[\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}])\z/u
+     TIP 
+         - /\A(?:[\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}]|[\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}])\z/u
+         + /\A(?:[\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}])\z/u
+
   corpus/yiisoft/yii2/framework/mail/BaseMailer.php:216:34
       → ~\R\R+~mu
      WARN  Flag 'm' is useless: pattern '~\R\R+~mu' contains no anchors.
@@ -8859,6 +8877,16 @@
          - /\s*@trim\s*/m
          + /\s*@trim\s*/
 
+  corpus/semver/src/VersionParser.php:219:24
+      → {^(?P<version>(\d++\.)*\d++)(?:\.x)?-dev$}i
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/semver/src/VersionParser.php:345:24
+      → {^(v)?[xX*](\.[xX*])*$}i
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
   corpus/phpactor/lib/Extension/LanguageServerPhpCsFixer/Provider/PhpCsFixerDiagnosticsProvider.php:178:49
       → /Description of ([\w\-\_ ]+) rule.*/
      WARN  Character class contains duplicate elements that do not add new matches.
@@ -10568,6 +10596,16 @@
          - #[^a-zA-Z0-9\-\_]#is
          + #[^a-zA-Z0-9\-\_]#i
 
+  corpus/packagist/src/Entity/VersionSummaryTrait.php:43:34
+      → {(\.9{7})+}
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/packagist/src/Service/VersionCache.php:71:34
+      → {(\.x)+}i
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
   corpus/site-kit-wp/includes/Core/Util/URL.php:86:4
       → %[^:/@?&=#]+%usD
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -11854,7 +11892,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-  corpus/voku/simple_html_dom/src/voku/helper/HtmlDomParser.php:1832:17
+  corpus/voku/simple_html_dom/src/voku/helper/HtmlDomParser.php:1854:17
       → /(?<start>[^<]*)?(?<broken>(?:<\/\w+(?:\s+\w+=\"[^"]+\")*+[^<]+>)+)(?<end>.*)/u
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -14127,6 +14165,20 @@
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+  corpus/psr7/src/UriParser.php:73:21
+      → %[^:/@?&=#]+%usD
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - %[^:/@?&=#]+%usD
+         + %[^:/@?&=#]+%uD
+
+  corpus/psr7/src/UriParser.php:93:13
+      → %[^:/@?&=#]+%usD
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - %[^:/@?&=#]+%usD
+         + %[^:/@?&=#]+%uD
+
   corpus/PHP-CSS-Parser/src/Value/CSSString.php:60:44
       → /[\s{}()<>\[\]]/isu
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -14150,16 +14202,6 @@
      TIP 
          - /\s/isSu
          + /\s/iSu
-
-  corpus/symfony-console/Command/Command.php:731:25
-      → /^[^\:]++(\:[^\:]++)*$/
-     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-  corpus/symfony-console/Helper/Table.php:620:45
-      → /^<(\w+|(\w+=[\w,]+;?)*)>.+<\/(\w+|(\w+=\w+;?)*)?>$/
-     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/hyperf/src/database/src/Commands/Ast/ModelRewriteInheritanceVisitor.php:31:28
       → /\s*([a-z0-9\\]+)(as)?([a-z0-9]+)?;?\s*/is
@@ -14679,6 +14721,12 @@
          - /define ?\( ?['"](?:WP_SITEURL|WP_HOME).+(?:HTTP_HOST).+\);/
          + /define ?\( ?['"](?:WP_SITEURL|WP_HOME).+HTTP_HOST.+\);/
 
+  corpus/packagist/src/Controller/PackageController.php:1452:40
+      → {\.9999999$}
+     TIP 
+         - {\.9999999$}
+         + {\.9{7}$}
+
   corpus/psalm/bin/hack-conformance/lib.php:29:20
       → /^\/\/\/\/\s*expect:\s*(\S+)/m
      TIP 
@@ -14936,10 +14984,4 @@
      TIP 
          - /^ {0,3}\[(.+?)\]:\s*(.+?)(?:\s+[\('"](.+?)[\)'"])?\s*$/
          + /^ {0,3}\[(.+?)\]:\s*(.+?)(?:\s+[('"](.+?)[)'"])?\s*$/
-
-  corpus/symfony-console/Terminal.php:227:43
-      → /--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
-     TIP 
-         - /--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
-         + /-{7}-+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
 
