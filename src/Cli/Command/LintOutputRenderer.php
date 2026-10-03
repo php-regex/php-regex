@@ -15,8 +15,8 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
 /**
