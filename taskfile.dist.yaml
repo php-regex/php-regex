@@ -229,6 +229,7 @@ tasks:
     desc: Refresh the corpus checkouts, then re-lint them into var/log/corpus.log
     cmds:
       - php bin/corpus update
+      - task cache-version --force
       - php bin/regex lint corpus/ --output=var/log/corpus.log
 
   link:

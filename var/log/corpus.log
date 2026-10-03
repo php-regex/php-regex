@@ -338,7 +338,7 @@
          - /\x{FFFE}/miu
          + /\x{FFFE}/iu
 
-  corpus/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1946:78
+  corpus/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1968:78
       → /[ ,](?=([^']*'[^']*')*[^']*$)/miuU
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -685,11 +685,6 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/roundcubemail/program/actions/mail/import.php:147:30
-      → /^[a-z-_]+:\s+.+/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/roundcubemail/program/actions/mail/index.php:927:30
       → /<meta[^>]+charset=[a-z0-9_"-]+[^>]*>/Ui
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -880,16 +875,6 @@
      WARN  Quantified capturing group "(...)" with "{0,59}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/matomo-org/matomo/core/Http.php:576:37
-      → ~^HTTP/(\d\.\d)\s+(\d+)(\s*.*)?~
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/matomo-org/matomo/core/Http.php:742:65
-      → ~^HTTP/(\d\.\d)\s+(\d+)(\s*.*)?~
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/matomo-org/matomo/core/Http/EgressHostValidator.php:112:25
       → /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i
      WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -1075,11 +1060,6 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/wp-cli/php/WP_CLI/Runner.php:1407:44
-      → /\s*require(?:_once)?\s*.*wp-settings\.php.*\s*;/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/wp-cli/php/WP_CLI/Runner.php:1433:43
       → /^\d+(\s+\d+)+$/
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -1261,8 +1241,6 @@
          ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/woocommerce/plugins/woocommerce/includes/class-wc-product-download.php:355:20
       → #^//+(/[^/].+)$#i
@@ -1622,8 +1600,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/tempestphp/highlight/src/Languages/Base/Injections/AdditionInjection.php:25:24
       → /(\{\+)((.|\n)*?)(\+})/
@@ -1631,8 +1607,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/tempestphp/highlight/src/Themes/InlineTheme.php:29:24
       → /(?<selector>[\w,\.\s\-]+){(?<style>(.|\n)*?)}/
@@ -1640,8 +1614,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/tempestphp/tempest-framework/packages/support/src/Str/functions.php:85:32
       → #[^(\w|\d|\'|"|\.|\!|\?|;|,|\|\/|\-|:|\&|@)]+#
@@ -1684,8 +1656,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:867:18
       → /({#.*?#})/mu
@@ -2391,10 +2361,6 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/drupal/core/lib/Drupal/Core/Mail/MailFormatHelper.php:64:28
-      → /(?(?<!^--) +\n|  +\n)/m
-     WARN  Flag 'm' is useless: pattern '/(?(?<!^--) +\n|  +\n)/m' contains no anchors.
-
   corpus/drupal/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php:120:21
       → /^[a-z]([a-zA-Z0-9_-]*[a-zA-Z0-9])*:[a-z]([a-zA-Z0-9_-]*[a-zA-Z0-9])*$/
      WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -2675,18 +2641,8 @@
      WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
          ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
 
-  corpus/wordpress/src/wp-admin/includes/class-wp-filesystem-ftpsockets.php:760:45
-      → /(\s*->\s*.*)$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/wordpress/src/wp-admin/includes/class-ftp-pure.php:109:41
       → /^.+ \(?([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]+,[0-9]+)\)?.*$/s
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/wordpress/src/wp-admin/includes/class-wp-filesystem-ftpext.php:773:40
-      → /(\s*->\s*.*)$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
@@ -3087,20 +3043,6 @@
          - #(image|audio|video|model)/#is
          + #(image|audio|video|model)/#i
 
-  corpus/wordpress/src/wp-includes/class-snoopy.php:655:18
-      → '<\/?(FORM|INPUT|SELECT|TEXTAREA|(OPTION))[^<>]*>(?(2)(.*(?=<\/?(option|select)[^<>]*>[\r\n]*)|(?=[\r\n]*))|(?=[\r\n]*))'Usi
-     WARN  Flag 's' is useless: the pattern contains no dots.
-
-  corpus/wordpress/src/wp-includes/class-snoopy.php:920:64
-      → '<frame\s+.*src[\s]*=[\'"]?([^\'"\>]+)'i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/wordpress/src/wp-includes/class-snoopy.php:1069:64
-      → '<frame\s+.*src[\s]*=[\'"]?([^\'"\>]+)'i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/wordpress/src/wp-includes/class-wp-http.php:1031:26
       → !^/(\.\./)+!
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3174,11 +3116,6 @@
      TIP 
          - ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
          + ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~i
-
-  corpus/phpstan-src/src/Command/BisectCommand.php:445:22
-      → #https://github\.com/phpstan/phpstan-src/commit/[a-f0-9]+(?:\s+.*)?#
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/phpstan-src/src/Command/ErrorFormatter/BaselineNeonErrorFormatter.php:124:95
       → ~(\n)+$~
@@ -3286,41 +3223,6 @@
       → /([^0-9\.\-])/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/mautic/app/bundles/ReportBundle/Helper/RelativeDateHelper.php:24:13
-      → /^(?:today|tomorrow|yesterday|(?:this|last|next)\s+(?:week|month|year)|[+-].+|.+\sago|(?:first|last)\s+day\s+of\s+.+)$/iD
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:185:24
-      → /(\S+@\S+\w).*\n?.*no such address here/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:196:28
-      → /<(\S+@\S+\w)>.*\n?.*\n?.*user unknown/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:208:28
-      → /<(\S+@\S+\w)>.*\n?.*no mailbox/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:220:28
-      → /(\S+@\S+\w)<br>.*\n?.*\n?.*can't find.*mailbox/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:239:28
-      → /Can't create output.*\n?.*<(\S+@\S+\w)>/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:263:28
-      → /(\S+@\S+\w).*\n?.*Unrouteable address/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
   corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:275:28
       → /delivery[^\n\r]+failed[ \S]*\s+(\S+@\S+\w)\s/is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -3334,66 +3236,6 @@
      TIP 
          - /an\s+error\s+occurred\s+while\s+trying\s+to\s+deliver\s+the\s+mail\s+to\s+the\s+following\s+recipients:\r\n\s*(\S+@\S+\w)/is
          + /an\s+error\s+occurred\s+while\s+trying\s+to\s+deliver\s+the\s+mail\s+to\s+the\s+following\s+recipients:\r\n\s*(\S+@\S+\w)/i
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:305:28
-      → /(\S+@\S+\w).*\n?.*unknown local-part/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:334:28
-      → /\s(\S+@\S+\w).*[\r\n]*.*No such.*(?:alias|account|recipient|address|email|mailbox|user)/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:346:28
-      → /<(\S+@\S+\w)>.*\n?.*(?:alias|account|recipient|address|email|mailbox|user).*no.*accept.*mail>/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:362:28
-      → /<(\S+@\S+\w)>.*\n?.*\n?.*over.*quota/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:375:28
-      → /quota exceeded.*\n?.*<(\S+@\S+\w)>/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:388:28
-      → /<(\S+@\S+\w)>.*\n?.*quota exceeded/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:400:28
-      → /\s(\S+@\S+\w)\s.*\n?.*mailbox.*full/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:434:28
-      → /(\S+@\S+\w)<br>.*\n?.*\n?.*user is inactive/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:457:28
-      → /<(\S+@\S+\w)>.*\n?.*input\/output error/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:471:28
-      → /<(\S+@\S+\w)>.*\n?.*can not open new email file/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:486:28
-      → /<(\S+@\S+\w)>.*\n?.*\n?.*Resources temporarily unavailable/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php:509:28
-      → /<(\S+@\S+\w)>.*\n?.*does not accept[^\r\n]*non-Western/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
 
   corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php:71:24
       → /Diagnostic-Code:((?:[^\n]|\n[\t ])+)(?:\n[^\t ]|$)/is
@@ -3682,11 +3524,6 @@
          - /system config error/is
          + /system config error/i
 
-  corpus/mautic/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php:1075:40
-      → /exceed.*\n?.*quota/i
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
   corpus/mautic/app/bundles/EmailBundle/Helper/PlainTextHelper.php:330:27
       → /<pre[^>]*>(.*)<\/pre>/ismU
      WARN  Flag 'm' is useless: pattern '/<pre[^>]*>(.*)<\/pre>/ismU' contains no anchors.
@@ -3965,8 +3802,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/moodle/public/question/format/gift/format.php:646:28
       → ~\n                # Start of tag token.\n                \[tag:\n\n                # Any number of allowed characters (see PARAM_TAG), with any ] escaped.\n                # This is the bit we want so capture it.\n                (\n                    (?:\\]|[^]<>`[:cntrl:]]|)+\n                )\n\n                # End of tag token.\n                ]\n                ~x
@@ -5226,8 +5061,8 @@
 
   corpus/moodle/public/lib/markdown/Michelf/Markdown.php:1424:33
       → /\n\t\t\t  (\t\t\t\t\t\t\t\t# Wrap whole match in $1\n\t\t\t\t(?>\n\t\t\t\t  ^[ ]*>[ ]?\t\t\t# ">" at the start of a line\n\t\t\t\t\t.+\n\t\t\t\t\t# rest of the first line\n\t\t\t\t  (.+\n)*\t\t\t\t\t# subsequent consecutive lines\n\t\t\t\t  \n*\t\t\t\t\t\t# blanks\n\t\t\t\t)+\n\t\t\t  )\n\t\t\t/xm
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
            ...
            				  ^[ ]*>[ ]?			# ">" at the start of a line
@@ -5238,8 +5073,6 @@
            				  \n*						# blanks
            				)+
            ...
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -5416,11 +5249,6 @@
   corpus/moodle/public/lib/wiki_to_markdown.php:363:60
       → /^\%/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-
-  corpus/moodle/public/lib/phpxmlrpc/src/Wrapper.php:308:36
-      → /@return\s+(\S+)(\s+.+)?/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/moodle/public/lib/phpxmlrpc/src/Helper/Http.php:83:24
       → /^HTTP\/1\.[0-1] 200 Connection established/
@@ -5986,13 +5814,11 @@
 
   corpus/TextFormatter/scripts/patchCollectionProxies.php:145:3
       → #(?<=\n)(?:(/[*]+\n(?:[*](?! @method).*\n)*?)(?:[*]\n)*(?:[*] @method.*\n)*[*]/\n)?class#
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
          - #(?<=\n)(?:(/[*]+\n(?:[*](?! @method).*\n)*?)(?:[*]\n)*(?:[*] @method.*\n)*[*]/\n)?class#
          + #(?<=\n)(?:(/[*]+\n(?>(?:[*](?! @method).*\n))*?)(?:[*]\n)*(?:[*] @method.*\n)*[*]/\n)?class#
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
 
   corpus/TextFormatter/scripts/patchExamples.php:21:4
       → #```php([^`]+)\n```\s+(?!```html|<pre>)#s
@@ -6144,8 +5970,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
      WARN  Flag 'm' is useless: pattern '/\/\*(.|\n)*?\*\//m' contains no anchors.
      TIP 
          - /\/\*(.|\n)*?\*\//m
@@ -6376,8 +6200,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/google/google-cloud-php/dev/src/ComponentPackage.php:215:52
       → /^{(.|\n)*?(^})/m
@@ -6385,8 +6207,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/google/google-cloud-php/dev/src/Command/ComponentUpdateReadmeSampleCommand.php:88:28
       → /### Sample\n\n(```(.|\n)*```)/
@@ -6394,8 +6214,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/google/google-cloud-php/dev/src/NewComponent.php:127:60
       → /[A-Z]([A-Z](?![a-z]))*/
@@ -6502,11 +6320,6 @@
       → {([_.-]){2,}}u
      WARN  Quantified capturing group "(...)" with "{2,}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-  corpus/composer/composer/src/Composer/Command/ConfigCommand.php:1087:40
-      → /^[^:]+:\s*.+$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/composer/composer/src/Composer/Command/GlobalCommand.php:157:48
       → {\bg(?:l(?:o(?:b(?:a(?:l)?)?)?)?)?\b}
@@ -7180,8 +6993,8 @@
 
   corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1108:33
       → /\n\t\t\t  (\t\t\t\t\t\t\t\t# Wrap whole match in $1\n\t\t\t\t(?>\n\t\t\t\t  ^[ ]*>[ ]?\t\t\t# ">" at the start of a line\n\t\t\t\t\t.+\n\t\t\t\t\t# rest of the first line\n\t\t\t\t  (.+\n)*\t\t\t\t\t# subsequent consecutive lines\n\t\t\t\t  \n*\t\t\t\t\t\t# blanks\n\t\t\t\t)+\n\t\t\t  )\n\t\t\t/xm
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
            ...
            				  ^[ ]*>[ ]?			# ">" at the start of a line
@@ -7192,8 +7005,6 @@
            				  \n*						# blanks
            				)+
            ...
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -7218,8 +7029,6 @@
 
   corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:2345:33
       → {\n\t\t\t\t(?:\n|\A)\n\t\t\t\t# 1: Opening marker\n\t\t\t\t(\n\t\t\t\t\t~{3,} # Marker: three tilde or more.\n\t\t\t\t)\n\t\t\t\t[ ]* \n # Whitespace and newline following marker.\n\n\t\t\t\t# 2: Content\n\t\t\t\t(\n\t\t\t\t\t(?>\n\t\t\t\t\t\t(?!\1 [ ]* \n)\t# Not a closing marker.\n\t\t\t\t\t\t.*\n+\n\t\t\t\t\t)+\n\t\t\t\t)\n\n\t\t\t\t# Closing marker.\n\t\t\t\t\1 [ ]* \n\n\t\t\t}xm
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
      WARN  Flag 'm' is useless: pattern '{(?:\n|\A)# 1: Opening marker
          ↳ (~{3,}# Marker: three tilde or more.
            )[ ]*\n# Whitespace and newline following marker.
@@ -7447,16 +7256,6 @@
          - /public static function getVersion.*?return '(.*?)'/ms
          + /public static function getVersion.*?return '(.*?)'/s
 
-  corpus/yiisoft/yii/build/commands/LiteCommand.php:72:25
-      → /^require(_once)?.*\s*;\s*$/mu
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/yiisoft/yii/build/commands/LiteCommand.php:73:25
-      → /^\s*Yii::trace.*\s*;\s*$/mu
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
   corpus/yiisoft/yii/build/commands/LiteCommand.php:179:26
       → /[\r\n]+[\s\t]*[\r\n]+/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -7487,8 +7286,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/yiisoft/yii/build/commands/markdown/MarkdownHtml2Tex.php:258:24
       → /<div class="revision">((.|\n)*?)<\/div>/
@@ -7496,8 +7293,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/yiisoft/yii/build/commands/markdown/MarkdownParser.php:50:31
       → /^(\s*<p>\s*)([a-z]+):\s*/sxi
@@ -7682,8 +7477,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
      WARN  Flag 'm' is useless: pattern '/!?\[((.|\n)*)]\((.*)\)/mU' contains no anchors.
      TIP 
          - /\!?\[((.|\n)*)\]\((.*)\)/mU
@@ -8876,11 +8669,6 @@
          - #/\* Laminas_Code_Generator_FileGenerator-UseMarker \*/#m
          + #/\* Laminas_Code_Generator_FileGenerator-UseMarker \*/#
 
-  corpus/laminas/laminas-code/src/Reflection/DocBlock/Tag/MethodTag.php:36:26
-      → #^(static[\s]+)?(.+[\s]+)?(.+\(\))[\s]*(.*)$#m
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
   corpus/laminas/laminas-code/src/Reflection/DocBlock/Tag/ParamTag.php:32:26
       → #((?:[\w|\\]+(?:\[\])*\|?)+)(?:\s+(\$\S+))?(?:\s+(.*))?#s
      WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -9321,8 +9109,6 @@
 
   corpus/processwire/wire/core/WireFileTools.php:1833:20
       → /(^.*[\s\r\n]+)namespace\s+([_a-zA-Z0-9\\]+);\s*$/m
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
@@ -9813,21 +9599,6 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/prestashop/classes/helper/HelperList.php:304:37
-      → /a\s*.*class/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/prestashop/classes/helper/HelperList.php:310:43
-      → /a\s*.*class\s*=\s*\".*btn.*\"/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/prestashop/classes/helper/HelperList.php:312:29
-      → /a(\s*.*)class\s*=\s*\"(.*)\"/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/prestashop/controllers/admin/AdminImportController.php:686:31
       → #([^\.]*?)\.(csv|xls[xt]?|o[dt]s)$#is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -10048,8 +9819,8 @@
 
   corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1429:33
       → /\n\t\t\t  (\t\t\t\t\t\t\t\t# Wrap whole match in $1\n\t\t\t\t(?>\n\t\t\t\t  ^[ ]*>[ ]?\t\t\t# ">" at the start of a line\n\t\t\t\t\t.+\n\t\t\t\t\t# rest of the first line\n\t\t\t\t  (.+\n)*\t\t\t\t\t# subsequent consecutive lines\n\t\t\t\t  \n*\t\t\t\t\t\t# blanks\n\t\t\t\t)+\n\t\t\t  )\n\t\t\t/xm
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
            ...
            				  ^[ ]*>[ ]?			# ">" at the start of a line
@@ -10060,8 +9831,6 @@
            				  \n*						# blanks
            				)+
            ...
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -10267,8 +10036,8 @@
 
   corpus/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:1188:33
       → /\n\t\t\t  (\t\t\t\t\t\t\t\t# Wrap whole match in $1\n\t\t\t\t(?>\n\t\t\t\t  ^[ ]*>[ ]?\t\t\t# ">" at the start of a line\n\t\t\t\t\t.+\n\t\t\t\t\t# rest of the first line\n\t\t\t\t  (.+\n)*\t\t\t\t\t# subsequent consecutive lines\n\t\t\t\t  \n*\t\t\t\t\t\t# blanks\n\t\t\t\t)+\n\t\t\t  )\n\t\t\t/xm
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
            ...
            				  ^[ ]*>[ ]?			# ">" at the start of a line
@@ -10279,8 +10048,6 @@
            				  \n*						# blanks
            				)+
            ...
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -10332,16 +10099,6 @@
       → /^(\d+,)*\d+$/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/core-api/wpcom-endpoints/class-wpcom-rest-api-v2-endpoint-admin-menu.php:1005:19
-      → /<span class=".+\s?count-(\d*).+\s?<\/span><\/span>/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/jetpack/projects/plugins/jetpack/_inc/lib/core-api/wpcom-endpoints/class-wpcom-rest-api-v2-endpoint-admin-menu.php:1020:19
-      → /<span class="inline-text".+\s?>(.+)<\/span>/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
 
   corpus/jetpack/projects/plugins/jetpack/class.json-api.php:438:20
       → #^/rest/v(\d+(\.\d+)*)#
@@ -10517,7 +10274,7 @@
          - /^\s{4}\[(.+?)\] \=\> /m
          + /^\s{4}\[(.+?)\] => /m
 
-  corpus/jetpack/projects/packages/forms/src/contact-form/class-feedback.php:2076:33
+  corpus/jetpack/projects/packages/forms/src/contact-form/class-feedback.php:2081:33
       → /.*Array\s\( (.*)\)/msx
      WARN  Flag 'm' is useless: pattern '/.*Array\s\((.*)\)/msx' contains no anchors.
      TIP 
@@ -10527,7 +10284,7 @@
          ---
          + )\)/sx
 
-  corpus/jetpack/projects/packages/forms/src/contact-form/class-feedback.php:2079:19
+  corpus/jetpack/projects/packages/forms/src/contact-form/class-feedback.php:2084:19
       → /^\s*\[([^\]]+)\] =\&gt\; (.*)(?=^\s*(\[[^\]]+\] =\&gt\;)|\z)/msU
      TIP 
          - /^\s*\[([^\]]+)\] =\&gt\; (.*)(?=^\s*(\[[^\]]+\] =\&gt\;)|\z)/msU
@@ -10564,11 +10321,6 @@
       → /^## +(\[?[^] ]+\]?) - (.+?) *$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/jetpack/projects/packages/changelogger/src/Utils.php:113:23
-      → /^([A-Z][a-zA-Z0-9-]*):((?:.|\n[ \t])*)(?:\n|$)/
-     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
   corpus/jetpack/projects/packages/changelogger/src/Utils.php:121:58
       → /(\n[ \t]+)+/
@@ -11320,8 +11072,8 @@
 
   corpus/php-markdown/Michelf/Markdown.php:1424:33
       → /\n\t\t\t  (\t\t\t\t\t\t\t\t# Wrap whole match in $1\n\t\t\t\t(?>\n\t\t\t\t  ^[ ]*>[ ]?\t\t\t# ">" at the start of a line\n\t\t\t\t\t.+\n\t\t\t\t\t# rest of the first line\n\t\t\t\t  (.+\n)*\t\t\t\t\t# subsequent consecutive lines\n\t\t\t\t  \n*\t\t\t\t\t\t# blanks\n\t\t\t\t)+\n\t\t\t  )\n\t\t\t/xm
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
            ...
            				  ^[ ]*>[ ]?			# ">" at the start of a line
@@ -11332,8 +11084,6 @@
            				  \n*						# blanks
            				)+
            ...
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -11671,11 +11421,6 @@
          - /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
          + /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?>(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
 
-  corpus/htmlpurifier/maintenance/old-remove-require-once.php:26:30
-      → #^require_once .+[\n\r]*#m
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the second quantifier to its minimum.
-
   corpus/api-platform/core/src/JsonApi/Serializer/ItemNormalizerTrait.php:94:27
       → /^\w[-\w_]*$/
      WARN  Character class contains duplicate elements that do not add new matches.
@@ -11814,16 +11559,6 @@
       → /^\d+(\.\d+){1,2}/
      WARN  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-  corpus/concretecms/concrete/src/Support/JSConstantGenerator.php:35:29
-      → ,^\s*const\s*.*\s*//!<\s*@javascript-exported,m
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/concretecms/concrete/src/Support/JSConstantGenerator.php:55:32
-      → ,^\s*const\s*.*\s*//!<\s*@javascript-exported,
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/concretecms/concrete/src/Service/Detector/HTTP/NginxDetector.php:59:45
       → /\bnginx\/(\d+(\.\d+)+)/i
@@ -12330,11 +12065,6 @@
          - /(<\!\-\-|\-\->)/s
          + /(<\!\-\-|\-\->)/
 
-  corpus/mpdf/src/Color/ColorConverter.php:218:23
-      → /\s+.*/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/mpdf/src/Utils/UtfString.php:19:32
       → /\&\#(\d+)\;/m
      WARN  Flag 'm' is useless: pattern '/&#(\d+);/m' contains no anchors.
@@ -12698,15 +12428,13 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
-  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2279:20
+  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2316:20
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
          - /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
          + /{%.?block content.?%}((?>(.*?\n))+){%.?endblock.?%}/m
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Flag 'm' is useless: pattern '/\{%.?block content.?%\}((.*?\n)+)\{%.?endblock.?%\}/m' contains no anchors.
@@ -12764,13 +12492,11 @@
 
   corpus/FOSSBilling/src/modules/Email/Service.php:465:24
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
+     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
+         ↳ Refactor with atomic groups or a more specific character class.
      TIP 
          - /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
          + /{%.?block content.?%}((?>(.*?\n))+){%.?endblock.?%}/m
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class.
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Flag 'm' is useless: pattern '/\{%.?block content.?%\}((.*?\n)+)\{%.?endblock.?%\}/m' contains no anchors.
@@ -12839,11 +12565,6 @@
          - /^[a-z][a-z0-9]*(?:[_-][a-z][a-z0-9]*)+$/
          + /^[a-z][a-z0-9]*(?>(?:[_-][a-z][a-z0-9]*))+$/
 
-  corpus/symfony/ai/src/mate/src/Agent/AgentInstructionsAggregator.php:221:29
-      → /^(#{1,6})(\s+.*)$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/symfony/symfony/src/Symfony/Component/HttpKernel/HttpCache/Esi.php:72:33
       → #<esi\:comment[^>]+>#s
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -12898,6 +12619,11 @@
       → /^(\w+)\s*\([^()]*\)\s*([<>=!]+.*)?$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/symfony/symfony/src/Symfony/Component/ExpressionLanguage/Lexer.php:41:28
+      → /\n                (?(DEFINE)(?P<LNUM>[0-9]+(_[0-9]+)*))\n                (?:\.(?&LNUM)|(?&LNUM)(?:\.(?!\.)(?&LNUM)?)?)(?:[eE][+-]?(?&LNUM))?/Ax
+     WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/symfony/symfony/src/Symfony/Component/Ldap/Adapter/ExtLdap/EntryManager.php:183:25
       → /(^[^,\\]*(?:\\.[^,\\]*)*),/
@@ -13053,19 +12779,6 @@
   corpus/symfony/flex/src/Response.php:78:28
       → {^([^:]++):\s*(.+?)\s*$}i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-
-  corpus/symfony/flex/src/Flex.php:310:35
-      → {^\s*+"name":.*,$\n}m
-     WARN  End anchor '$' appears before consuming characters, making it impossible to match.
-
-  corpus/symfony/flex/src/Flex.php:310:60
-      → {^\s*+"description":.*,$\n}m
-     WARN  End anchor '$' appears before consuming characters, making it impossible to match.
-
-  corpus/symfony/flex/src/Configurator/ContainerConfigurator.php:80:29
-      → /^\s+.*/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/symfony/polyfill/src/Intl/Idn/Idn.php:829:31
       → /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
@@ -13891,31 +13604,6 @@
       → /^[[:alpha:]]{1,3}\s*:(.*)/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4371:33
-      → /\s+.*$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4387:33
-      → /\s+.*$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:4633:32
-      → /\s+.*$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5172:32
-      → /\s+.*$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
-  corpus/contao/contao/core-bundle/contao/drivers/DC_Table.php:5197:41
-      → /\s+.*$/
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
-
   corpus/contao/contao/core-bundle/contao/library/Contao/StringUtil.php:214:27
       → /(&#*\w+)[\x00-\x20]+;/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -14668,11 +14356,6 @@
       → ~^</?(\w+\d?)( .*?)?>~s
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
-
-  corpus/webmozart-assert/bin/src/MixinGenerator.php:629:28
-      → ~^\*\s+@(\S+)(\s+.*)?$~
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/laravel/valet/cli/Valet/Server.php:78:27
       → /^([0-9]+\.){3}[0-9]+$/
