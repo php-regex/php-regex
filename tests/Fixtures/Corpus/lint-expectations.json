@@ -1066,7 +1066,8 @@
     {
         "pattern": "/\\n\\n( *?)/i",
         "issues": [
-            "regex.lint.flag.useless.i"
+            "regex.lint.flag.useless.i",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -3172,13 +3173,15 @@
     {
         "pattern": "/([ \\t\\n\\r]*)?<!-- BEGIN required -->(\\s|\\S)*<!-- END required -->([ \\t\\n\\r]*)?/iU",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
         "pattern": "/([ \\t\\n\\r]*)?<!-- BEGIN error -->(\\s|\\S)*<!-- END error -->([ \\t\\n\\r]*)?/iU",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -5078,7 +5081,8 @@
     {
         "pattern": "/(\\[[^:]*?\\w)(-)([^a-zA-Z0-9\\\\]+?)/um",
         "issues": [
-            "regex.lint.flag.useless.m"
+            "regex.lint.flag.useless.m",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -6075,19 +6079,22 @@
     {
         "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Linux\\/[0-9.+]+ Android\\/[0-9.]+/u",
         "issues": [
-            "regex.lint.flag.redundant"
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
         "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Android(_OS)?\\/[0-9.]+/u",
         "issues": [
-            "regex.lint.flag.redundant"
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
         "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Release\\/[0-9.]+/u",
         "issues": [
-            "regex.lint.flag.redundant"
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -6169,6 +6176,7 @@
     {
         "pattern": "/(.*?)<((?:.*?:)?(?:\\p{L}|_|[0-9])+?)\\((.*?)/",
         "issues": [
+            "regex.lint.quantifier.lazyEnd",
             "regex.lint.unicode.propertyWithoutU"
         ]
     },
@@ -7641,7 +7649,8 @@
         "pattern": "/[\\s]+/isU",
         "issues": [
             "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
+            "regex.lint.flag.useless.s",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -8662,7 +8671,8 @@
         "pattern": "#@media\\s+(?:only\\s)?(?:[\\s{(]|screen|all)\\s?[^{]+{.*}\\s*}\\s*#isumU",
         "issues": [
             "regex.lint.flag.useless.m",
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -9881,7 +9891,8 @@
         "pattern": "#([\\pL\\pM]+)[+.,]+([\\pL\\pM]+)#muiU",
         "issues": [
             "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
+            "regex.lint.flag.useless.m",
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {

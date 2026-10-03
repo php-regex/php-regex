@@ -70,6 +70,8 @@ final class LintConfigSchema
         'quantifier.zero' => ['Warn about quantifiers that always match zero times.', true],
         'quantifier.nested' => ['Warn about nested quantifiers that may cause catastrophic backtracking.', true],
         'quantifier.concatenation' => ['Warn about concatenated quantifiers that can be optimized.', true],
+        'quantifier.assertion' => ['Warn about a quantifier on a lookaround, which lets the match skip it or changes nothing.', true],
+        'quantifier.lazyEnd' => ['Warn about a lazy quantifier nothing follows, which always matches its minimum.', true],
         'group.redundant' => ['Warn about redundant non-capturing groups.', true],
         'group.quantifiedCapture' => ['Warn about quantified capturing groups where only last match is retained.', true],
         'anchor.impossible.start' => ['Warn about impossible start anchor positions.', true],

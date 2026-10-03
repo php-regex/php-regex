@@ -59,6 +59,8 @@ final class LintRuleRegistry
         $this->register(new ShorthandWithoutURule());
         $this->register(new MultibyteInCharClassWithoutURule());
         $this->register(new QuantifiedMultibyteWithoutURule());
+        $this->register(new QuantifiedAssertionRule());
+        $this->register(new LazyEndRule());
         $this->register(new UselessIFlagRule());
         $this->register(new UselessSFlagRule());
         $this->register(new UselessMFlagRule());

@@ -279,6 +279,52 @@ preg_match('/\w*/', $input);
 
 ---
 
+### Lazy Quantifier at the End
+
+**Identifier:** `regex.lint.quantifier.lazyEnd`
+
+**When it triggers:** A lazy quantifier, or a greedy one under `/U`, has nothing after it
+in the pattern. The match ends as soon as it may, so the quantifier matches its minimum.
+
+**Example:**
+```php
+// WARNING: +? stops after one digit
+preg_match('/id-\d+?/', 'id-123', $m);  // $m[0] is "id-1"
+
+// WARNING: under /U, + is lazy: each space is replaced on its own
+preg_replace('/\s+/U', ' ', "a   b");    // "a   b"
+
+// PREFERRED
+preg_match('/id-\d+/', 'id-123', $m);   // "id-123"
+preg_match('/id-\d+?$/', 'id-123', $m); // "id-123": something follows
+```
+
+**Fix:** Make the quantifier greedy, write its minimum, or anchor what must follow it.
+
+---
+
+### Quantified Assertion
+
+**Identifier:** `regex.lint.quantifier.assertion`
+
+**When it triggers:** A lookaround carries a quantifier. With a minimum of zero PCRE tries
+the rest of the pattern with and without the assertion, so it constrains nothing; with a
+minimum of one or more, PCRE checks it once. A lookaround that captures is left alone:
+`(?=(\w+))?` still sets its group when it holds.
+
+**Example:**
+```php
+// WARNING: the lookahead may be skipped
+preg_match('/(?=\d)?\w/', 'a');  // 1
+
+// PREFERRED
+preg_match('/(?=\d)\w/', 'a');   // 0
+```
+
+**Fix:** Remove the quantifier, or the assertion.
+
+---
+
 ## Groups
 
 ### Redundant Non-Capturing Group

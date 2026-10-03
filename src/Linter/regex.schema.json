@@ -300,6 +300,16 @@
               "description": "Warn about concatenated quantifiers that can be optimized.",
               "default": true
             },
+            "quantifier.assertion": {
+              "type": "boolean",
+              "description": "Warn about a quantifier on a lookaround, which lets the match skip it or changes nothing.",
+              "default": true
+            },
+            "quantifier.lazyEnd": {
+              "type": "boolean",
+              "description": "Warn about a lazy quantifier nothing follows, which always matches its minimum.",
+              "default": true
+            },
             "group.redundant": {
               "type": "boolean",
               "description": "Warn about redundant non-capturing groups.",
