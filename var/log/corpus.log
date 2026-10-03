@@ -3110,7 +3110,7 @@
          - /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
          + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
 
-  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:3601:36
+  corpus/phpstan-src/src/Type/Constant/ConstantArrayType.php:3612:36
       → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
@@ -11990,7 +11990,7 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/mpdf/src/Css/NormalizeProperties.php:976:18
+  corpus/mpdf/src/Css/NormalizeProperties.php:974:18
       → /["'](.){1}["']/i
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
@@ -12011,7 +12011,7 @@
          - /url\(['\"]{0,1}(.*?)['\"]{0,1}\)/i
          + /url\(['"]?(.*?)['"]?\)/i
 
-  corpus/mpdf/src/Css/NormalizeProperties.php:1026:18
+  corpus/mpdf/src/Css/NormalizeProperties.php:1024:18
       → /url\(['\"]{0,1}(.*?)['\"]{0,1}\)/i
      TIP 
          - /url\(['\"]{0,1}(.*?)['\"]{0,1}\)/i
@@ -12428,7 +12428,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
-  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2316:20
+  corpus/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2345:20
       → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
      WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
          ↳ Refactor with atomic groups or a more specific character class.
@@ -13526,31 +13526,36 @@
       → /[\r\n\t ]+[^=]/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/freescout/app/Misc/Helper.php:626:30
+  corpus/freescout/app/Misc/Mail.php:1484:44
+      → #;(\s*;)+#
+     WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/freescout/app/Misc/Helper.php:631:30
       → /\s+/mu
      WARN  Flag 'm' is useless: pattern '/\s+/mu' contains no anchors.
      TIP 
          - /\s+/mu
          + /\s+/u
 
-  corpus/freescout/app/Misc/Helper.php:1866:41
+  corpus/freescout/app/Misc/Helper.php:1909:41
       → /<!--(.|\s)*?-->/
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/freescout/app/Misc/Helper.php:2687:33
+  corpus/freescout/app/Misc/Helper.php:2785:33
       → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout/app/Misc/Helper.php:2688:33
+  corpus/freescout/app/Misc/Helper.php:2786:33
       → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout/app/Misc/Helper.php:2691:33
+  corpus/freescout/app/Misc/Helper.php:2789:33
       → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
      WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
          ↳ Refactor with atomic groups or a more specific character class.
@@ -13564,12 +13569,12 @@
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: ',' (duplicate)
 
-  corpus/freescout/app/Misc/Helper.php:2694:33
+  corpus/freescout/app/Misc/Helper.php:2792:33
       → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{2,4}\ [0-9]{2}\:[0-9]{2}\:[0-9]{2}\ [A-Z]{2}\ \-[0-9]{2}\:[0-9]{2}\ \([A-Z]{2,3}\ \-[0-9]{2}:[0-9]{2}\))+$/i
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout/app/Misc/Helper.php:2774:41
+  corpus/freescout/app/Misc/Helper.php:2872:41
       → /enable/m
      WARN  Flag 'm' is useless: pattern '/enable/m' contains no anchors.
      TIP 
@@ -13626,7 +13631,7 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/contao/contao/core-bundle/contao/library/Contao/Controller.php:1140:86
+  corpus/contao/contao/core-bundle/contao/library/Contao/Controller.php:1155:86
       → @(://)+@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
