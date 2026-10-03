@@ -59,6 +59,8 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.unicode.bracedHexWithoutU'],
             ['regex.lint.unicode.propertyWithoutU'],
             ['regex.lint.unicode.shorthandWithoutU'],
+            ['regex.lint.unicode.multibyteInClassWithoutU'],
+            ['regex.lint.unicode.quantifiedMultibyteWithoutU'],
             ['regex.lint.flag.useless.i'],
             ['regex.lint.flag.useless.s'],
             ['regex.lint.flag.useless.m'],
@@ -66,7 +68,7 @@ final class LintRuleRegistryTest extends TestCase
     }
 
     #[Test]
-    public function test_all_32_rule_ids_are_covered(): void
+    public function test_all_34_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -76,6 +78,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(32, $ids);
+        $this->assertCount(34, $ids);
     }
 }

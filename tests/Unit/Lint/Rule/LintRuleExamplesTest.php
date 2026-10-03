@@ -64,7 +64,9 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.quantifier.zero' => ['/a{0}/', '/a{1,}/'],
         'regex.lint.range.useless' => ['/[a-a]/', '/[a-f]/'],
         'regex.lint.unicode.bracedHexWithoutU' => ['/\x{100}/', '/\x{100}/u'],
+        'regex.lint.unicode.multibyteInClassWithoutU' => ['/[é]/', '/[é]/u'],
         'regex.lint.unicode.propertyWithoutU' => ['/\p{L}/', '/\p{L}/u'],
+        'regex.lint.unicode.quantifiedMultibyteWithoutU' => ['/é+/', '/é+/u'],
         'regex.lint.unicode.shorthandWithoutU' => ['/\w/', '/\w/u'],
     ];
 

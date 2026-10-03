@@ -49,6 +49,8 @@ final class LintConfigSchema
         'unicode.shorthandWithoutU' => ['Warn when \w, \d, \s are used without /u flag (ASCII-only matching).', false],
         'unicode.propertyWithoutU' => ['Error when \p{...} Unicode properties are used without /u flag.', true],
         'unicode.bracedHexWithoutU' => ['Error when \x{...} escapes with code points > 0xFF are used without /u flag.', true],
+        'unicode.multibyteInClassWithoutU' => ['Error when a multibyte character sits in a character class without /u flag (the class matches each byte).', true],
+        'unicode.quantifiedMultibyteWithoutU' => ['Error when a quantifier follows a multibyte character without /u flag (only its last byte repeats).', true],
         'flag.useless.i' => ['Warn when /i flag is used but pattern has no case-sensitive characters.', true],
         'flag.useless.m' => ['Warn when /m flag is used but pattern has no anchors.', true],
         'flag.useless.s' => ['Warn when /s flag is used but pattern has no dots.', true],

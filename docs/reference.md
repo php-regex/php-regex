@@ -14,6 +14,7 @@ This comprehensive reference documents every diagnostic, lint rule, and optimiza
 | [Alternation](#alternation)                  | Alternation patterns              |
 | [Character Classes](#character-classes)      | Character class issues            |
 | [Escapes](#escapes)                          | Escape sequence problems          |
+| [Bytes Without /u](#bytes-without-u)        | Multibyte text read as bytes      |
 | [Inline Flags](#inline-flags)                | Inline flag diagnostics           |
 | [ReDoS Security](#security-redos)            | Catastrophic backtracking         |
 | [Advanced Syntax](#advanced-syntax)          | Optimizations and assertions      |
@@ -550,6 +551,53 @@ preg_match('/\8/', $input);  // Ambiguous: not a valid escape
 
 ---
 
+## Bytes Without /u
+
+Without `/u`, PCRE reads the pattern and the subject as bytes. A character written in
+UTF-8 that takes several bytes is several items to it, and two places get it wrong.
+
+### Multibyte Character in a Class
+
+**Identifier:** `regex.lint.unicode.multibyteInClassWithoutU`
+
+**When it triggers:** A character class holds a character of two bytes or more, and the
+pattern has neither `/u` nor `(*UTF)`. The class holds each byte on its own.
+
+**Example:**
+```php
+// ERROR: [é] is the class of the bytes \xC3 and \xA9
+preg_match('/[é]/', 'à');   // 1: "à" starts with \xC3 too
+
+// PREFERRED: read code points
+preg_match('/[é]/u', 'à');  // 0
+```
+
+**Fix:** Add `/u`. If bytes are meant, write them as `\x` escapes so the class says so.
+
+---
+
+### Quantifier After a Multibyte Character
+
+**Identifier:** `regex.lint.unicode.quantifiedMultibyteWithoutU`
+
+**When it triggers:** A quantifier follows a character of two bytes or more, and the
+pattern has neither `/u` nor `(*UTF)`. The quantifier repeats the last byte only.
+
+**Example:**
+```php
+// ERROR: + repeats \xA9, the last byte of "é"
+preg_match('/^é+$/', 'éé');      // 0
+preg_match('/^é+$/', "é\xA9");   // 1
+
+// PREFERRED
+preg_match('/^é+$/u', 'éé');     // 1
+preg_match('/^(?:é)+$/', 'éé');  // 1, still byte mode
+```
+
+**Fix:** Add `/u`, or group the character so the quantifier takes all of it.
+
+---
+
 ## Inline Flags
 
 ### Inline Flag Redundant
@@ -748,6 +796,7 @@ are a separate vocabulary: they name advice, not a refused pattern.
 | Character   | `regex.lint.charclass.*`    | warning       | Remove duplicates                |
 | Ranges      | `regex.lint.range.*`        | warning       | Replace with literals            |
 | Escapes     | `regex.lint.escape.*`       | warning       | Fix escape sequences             |
+| Unicode     | `regex.lint.unicode.*`      | error         | Add the `/u` flag                |
 | ReDoS       | `regex.redos.*`             | error/warning | Use possessive quantifiers       |
 
 ---

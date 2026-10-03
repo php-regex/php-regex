@@ -195,6 +195,16 @@
               "description": "Error when \\x{...} escapes with code points > 0xFF are used without /u flag.",
               "default": true
             },
+            "unicode.multibyteInClassWithoutU": {
+              "type": "boolean",
+              "description": "Error when a multibyte character sits in a character class without /u flag (the class matches each byte).",
+              "default": true
+            },
+            "unicode.quantifiedMultibyteWithoutU": {
+              "type": "boolean",
+              "description": "Error when a quantifier follows a multibyte character without /u flag (only its last byte repeats).",
+              "default": true
+            },
             "flag.useless.i": {
               "type": "boolean",
               "description": "Warn when /i flag is used but pattern has no case-sensitive characters.",

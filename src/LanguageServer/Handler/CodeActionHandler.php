@@ -36,6 +36,8 @@ final readonly class CodeActionHandler
         'regex.lint.unicode.shorthandWithoutU',
         'regex.lint.unicode.propertyWithoutU',
         'regex.lint.unicode.bracedHexWithoutU',
+        'regex.lint.unicode.multibyteInClassWithoutU',
+        'regex.lint.unicode.quantifiedMultibyteWithoutU',
     ];
 
     public function __construct(private DocumentManager $documents, private Regex $regex) {}

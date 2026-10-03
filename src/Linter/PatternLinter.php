@@ -23,6 +23,7 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -169,7 +170,7 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->flags = $node->flags;
         $this->delimiter = $node->delimiter;
-        $this->unicodeMode = str_contains($this->flags, 'u');
+        $this->unicodeMode = HirTranslator::unicodeOf($node);
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
         $this->issues = [];
         $this->maxCapturingGroup = 0;

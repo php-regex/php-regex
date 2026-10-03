@@ -472,6 +472,8 @@ For large codebases:
 | `regex.lint.unicode.shorthandWithoutU` | Style | `\w`, `\d`, `\s` without `/u` |
 | `regex.lint.unicode.propertyWithoutU` | Error | `\p{L}` without `/u` |
 | `regex.lint.unicode.bracedHexWithoutU` | Error | `\x{100}` without `/u` |
+| `regex.lint.unicode.multibyteInClassWithoutU` | Error | `[é]` without `/u` |
+| `regex.lint.unicode.quantifiedMultibyteWithoutU` | Error | `é+` without `/u` |
 
 ---
 
