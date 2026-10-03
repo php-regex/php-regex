@@ -13,11 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\ReDoS;
 
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharSetAnalyzerTest extends TestCase
@@ -36,6 +40,51 @@ final class CharSetAnalyzerTest extends TestCase
         $set = $analyzer->firstChars(new CharTypeNode('d', 0, 0));
 
         $this->assertTrue($set->isUnknown());
+    }
+
+    #[Test]
+    public function test_dot_excludes_newline_without_the_s_flag(): void
+    {
+        $analyzer = new CharSetAnalyzer();
+        $set = $analyzer->firstChars(new DotNode(0, 0));
+
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar("\n")));
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar('x')));
+    }
+
+    #[Test]
+    public function test_dot_covers_newline_with_the_s_flag(): void
+    {
+        $analyzer = new CharSetAnalyzer('s');
+        $set = $analyzer->firstChars(new DotNode(0, 0));
+
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar("\n")));
+    }
+
+    /**
+     * @return iterable<string, array{type: string, newline: bool}>
+     */
+    public static function provideNewlineShorthands(): iterable
+    {
+        yield 'vertical whitespace contains the newline' => ['type' => 'v', 'newline' => true];
+
+        yield 'line break contains the newline' => ['type' => 'R', 'newline' => true];
+
+        yield 'negated vertical whitespace excludes it' => ['type' => 'V', 'newline' => false];
+
+        yield 'horizontal whitespace excludes it' => ['type' => 'h', 'newline' => false];
+
+        yield 'negated horizontal whitespace contains it' => ['type' => 'H', 'newline' => true];
+    }
+
+    #[DataProvider('provideNewlineShorthands')]
+    #[Test]
+    public function test_newline_shorthands_resolve_to_known_sets(string $type, bool $newline): void
+    {
+        $set = (new CharSetAnalyzer())->firstChars(new CharTypeNode($type, 0, 0));
+
+        $this->assertFalse($set->isUnknown());
+        $this->assertSame($newline, $set->intersects(ByteCharSet::fromChar("\n")));
     }
 
     public function test_char_type_digit_range_is_supported_without_unicode_flag(): void

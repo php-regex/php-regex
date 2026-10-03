@@ -128,4 +128,95 @@ final class OptimizerSafetyTest extends TestCase
         yield 'a|ab alternation not factorized' => ['/(a|ab)/', '/(a|ab)/', []];
         yield 'possessive disabled by default' => ['/\d+/', '/\d+/', []];
     }
+
+    /**
+     * The possessifier's charset overlap is computed from the outer flags
+     * only, so an inline (?s:...) scope would look disjoint from a newline
+     * follower while the engine's dot still matches it. Refuse instead of
+     * rewriting: `(?:(?s:.))++` stops before the newline the group could
+     * have consumed.
+     */
+    #[Test]
+    public function test_possessify_refuses_inline_flag_scopes(): void
+    {
+        $optimized = Regex::create(['cache' => null])->optimize(
+            '/(?:(?s:.))+\n/',
+            ['possessive' => true, 'verify_with_automata' => false],
+        )->optimized;
+
+        $this->assertSame('/(?:(?s:.))+\n/', $optimized);
+    }
+
+    /**
+     * The refusal holds wherever the inline scope hides — directly under
+     * the quantifier, inside a sequence, an alternation or a conditional —
+     * while a clean shape still possessifies.
+     *
+     * @param array<string, bool|string> $options
+     */
+    #[DataProvider('provideInlineFlagScopeShapes')]
+    #[Test]
+    public function test_possessify_refuses_inline_flag_scopes_at_any_depth(string $input, array $options): void
+    {
+        $expected = isset($options['expected']) ? (string) $options['expected'] : $input;
+        unset($options['expected']);
+
+        $optimized = Regex::create(['cache' => null])->optimize(
+            $input,
+            $options + ['verify_with_automata' => false],
+        )->optimized;
+
+        $this->assertSame($expected, $optimized);
+    }
+
+    /**
+     * @return iterable<string, array{input: string, options: array<string, bool|string>}>
+     */
+    public static function provideInlineFlagScopeShapes(): iterable
+    {
+        yield 'scoped group under the quantifier' => [
+            'input' => '/(?:(?s:a))+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'scoped group inside a sequence' => [
+            'input' => '/(?:(?s:a)b)+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'scoped group inside an alternation' => [
+            'input' => '/(?:(?s:a)|b)+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'scoped group inside a conditional' => [
+            'input' => '/()(?(1)(?s:a)|b)+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'conditional wrapped in the quantified group' => [
+            'input' => '/(?:(?(1)(?s:a)|b))+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'quantifier under the quantified group' => [
+            'input' => '/(?:(?s:a)+)+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'lookahead-conditioned scoped group in a conditional' => [
+            'input' => '/(?:(?(?=\w)(?s:a)|b))+\n/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'scoped group inside a conditional in the suffix' => [
+            'input' => '/\n+(?(1)(?s:.)|b)/',
+            'options' => ['possessive' => true],
+        ];
+
+        yield 'plain nested groups are still possessified' => [
+            'input' => '/(?:a(?:bc)d)+e/',
+            'options' => ['possessive' => true, 'expected' => '/(?:a(?:bc)d)++e/'],
+        ];
+    }
 }

@@ -39,9 +39,12 @@ final readonly class CharSetAnalyzer
 {
     private bool $unicodeMode;
 
+    private bool $dotAllMode;
+
     public function __construct(string $flags = '')
     {
         $this->unicodeMode = str_contains($flags, 'u');
+        $this->dotAllMode = str_contains($flags, 's');
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -76,7 +79,7 @@ final readonly class CharSetAnalyzer
         }
 
         if ($node instanceof DotNode) {
-            return ByteCharSet::full();
+            return $this->dot();
         }
 
         if ($node instanceof QuantifierNode) {
@@ -178,6 +181,13 @@ final readonly class CharSetAnalyzer
                 ->complement(),
             's' => $this->whitespace(),
             'S' => $this->whitespace()->complement(),
+            // ASCII-only approximation: the Unicode additions (NEL, LS, PS)
+            // sit beyond the byte universe and only under-approximate the set.
+            'v' => $this->verticalWhitespace(),
+            'V' => $this->verticalWhitespace()->complement(),
+            'R' => $this->verticalWhitespace()->union(ByteCharSet::fromChar("\r")),
+            'h' => ByteCharSet::fromChar("\t")->union(ByteCharSet::fromChar(' ')),
+            'H' => ByteCharSet::fromChar("\t")->union(ByteCharSet::fromChar(' '))->complement(),
             default => ByteCharSet::unknown(),
         };
     }
@@ -190,6 +200,28 @@ final readonly class CharSetAnalyzer
         }
 
         return $set;
+    }
+
+    private function verticalWhitespace(): ByteCharSet
+    {
+        $set = ByteCharSet::empty();
+        foreach ([10, 11, 12, 13] as $code) {
+            $set = $set->union(ByteCharSet::fromRange($code, $code));
+        }
+
+        return $set;
+    }
+
+    /**
+     * Without dotall, the dot matches every byte except the newline.
+     */
+    private function dot(): ByteCharSet
+    {
+        if ($this->dotAllMode) {
+            return ByteCharSet::full();
+        }
+
+        return ByteCharSet::full()->intersect(ByteCharSet::fromChar("\n")->complement());
     }
 
     private function literalCodepoint(NodeInterface $node): ?int

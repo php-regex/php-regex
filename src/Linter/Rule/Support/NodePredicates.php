@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
+use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -23,8 +25,10 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
@@ -240,6 +244,67 @@ final class NodePredicates
         ], true);
     }
 
+    /**
+     * Whether the node is a bare (?flags) group that only toggles flags for
+     * the rest of its enclosing sequence.
+     */
+    public static function isStandaloneInlineFlagsGroup(NodeInterface $node): bool
+    {
+        if (!$node instanceof GroupNode
+            || GroupType::InlineFlags !== $node->type
+            || null === $node->flags) {
+            return false;
+        }
+
+        if ($node->child instanceof LiteralNode) {
+            return '' === $node->child->value;
+        }
+
+        if ($node->child instanceof SequenceNode) {
+            return 0 === \count($node->child->children);
+        }
+
+        return false;
+    }
+
+    /**
+     * Fold an inline (?flags-flags) marker into the flags accumulated so
+     * far; a leading ^ resets everything first.
+     */
+    public static function applyInlineFlags(string $baseFlags, string $inlineFlags): string
+    {
+        $resetAll = str_starts_with($inlineFlags, '^');
+        if ($resetAll) {
+            $baseFlags = '';
+            $inlineFlags = substr($inlineFlags, 1);
+        }
+
+        [$setFlags, $unsetFlags] = str_contains($inlineFlags, '-')
+            ? explode('-', $inlineFlags, 2)
+            : [$inlineFlags, ''];
+
+        $flags = [];
+        foreach (str_split($baseFlags) as $flag) {
+            if ('' !== $flag) {
+                $flags[$flag] = true;
+            }
+        }
+
+        foreach (str_split($setFlags) as $flag) {
+            if ('' !== $flag) {
+                $flags[$flag] = true;
+            }
+        }
+
+        foreach (str_split($unsetFlags) as $flag) {
+            if ('' !== $flag) {
+                unset($flags[$flag]);
+            }
+        }
+
+        return implode('', array_keys($flags));
+    }
+
     public static function unwrapTransparentNode(NodeInterface $node): NodeInterface
     {
         if ($node instanceof GroupNode && self::isTransparentGroup($node->type)) {
@@ -292,6 +357,193 @@ final class NodePredicates
         return '';
     }
 
+    /**
+     * Whether the tail of a sequence can start with a newline: the
+     * continuation a multiline `$` admits before any line end. The first
+     * consuming node decides; a lookahead or an unknown charset cannot
+     * vouch for the newline, so such a tail stays reported, not silenced.
+     *
+     * @param array<int, NodeInterface> $nodes
+     */
+    public static function tailCanStartWithNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    {
+        $newline = ByteCharSet::fromChar("\n");
+
+        foreach ($nodes as $node) {
+            if ($node instanceof GroupNode
+                && null !== $node->flags
+                && self::isStandaloneInlineFlagsGroup($node)) {
+                $dotAll = str_contains(self::applyInlineFlags($dotAll ? 's' : '', $node->flags), 's');
+
+                continue;
+            }
+
+            if ($node instanceof QuantifierNode && $node->node instanceof DotNode) {
+                // The analyzer's dot set reads the outer flags only, so a
+                // quantified dot resolves through the folded scope instead.
+                // Under dotall the dot can consume the newline whether or
+                // not it is optional; without it, an optional dot consumes
+                // nothing and the next node decides.
+                [$min] = QuantifierMath::parseRange($node->quantifier);
+                if (0 === $min && !$dotAll) {
+                    continue;
+                }
+
+                return $dotAll;
+            }
+
+            if ($node instanceof DotNode) {
+                return $dotAll;
+            }
+
+            if ($node instanceof GroupNode && !self::isTransparentGroup($node->type)) {
+                return false;
+            }
+
+            $set = $analyzer->firstChars($node);
+            if ($set->isUnknown()) {
+                return false;
+            }
+
+            if ($set->intersects($newline)) {
+                return true;
+            }
+
+            if (!self::canBeEmpty($node)) {
+                return false;
+            }
+        }
+
+        // Every node is optional: the tail can continue by matching nothing.
+        return true;
+    }
+
+    /**
+     * Whether a sibling tail as a whole can match exactly one newline: the
+     * continuation `$` (without /m) and `\Z` admit before the subject's
+     * final newline. The other siblings must be guaranteed to match empty —
+     * a `\b` or a lookahead can fail there and would sink the match. What
+     * "there" means differs per side: before the newline it is the anchored
+     * position, after it the end of the subject (where `$`, `\z` and `\Z`
+     * all hold).
+     *
+     * @param array<int, NodeInterface> $nodes
+     */
+    public static function tailCanMatchNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    {
+        // Right-to-left and left-to-right aggregates so the loop below stays
+        // linear: a tail of thousands of optional siblings must not become
+        // quadratic.
+        $count = \count($nodes);
+        $emptyAfter = [];
+        $emptyBefore = [];
+        $ok = true;
+        for ($i = $count - 1; $i >= 0; $i--) {
+            $emptyAfter[$i] = $ok;
+            $ok = $ok && self::nodeAlwaysMatchesEmpty($nodes[$i], true);
+        }
+
+        $ok = true;
+        for ($i = 0; $i < $count; $i++) {
+            $emptyBefore[$i] = $ok;
+            $ok = $ok && self::nodeAlwaysMatchesEmpty($nodes[$i], false);
+        }
+
+        foreach ($nodes as $index => $node) {
+            if ($node instanceof GroupNode
+                && null !== $node->flags
+                && self::isStandaloneInlineFlagsGroup($node)) {
+                $dotAll = str_contains(self::applyInlineFlags($dotAll ? 's' : '', $node->flags), 's');
+
+                continue;
+            }
+
+            if (!self::canMatchNewline($node, $analyzer, $dotAll)) {
+                continue;
+            }
+
+            if ($emptyBefore[$index] && $emptyAfter[$index]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a node's language contains the single string "\n".
+     */
+    public static function canMatchNewline(NodeInterface $node, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    {
+        if ($node instanceof LiteralNode) {
+            return "\n" === $node->value;
+        }
+
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return 0x0A === $node->codePoint;
+        }
+
+        if ($node instanceof DotNode) {
+            return $dotAll;
+        }
+
+        if ($node instanceof CharClassNode
+            || $node instanceof CharTypeNode
+            || $node instanceof ExtendedCharClassNode
+            || $node instanceof UnicodePropNode) {
+            // Single-character constructs: "\n" is matchable iff it can start
+            // a match; an unknown set (backrefs aside: \N, \p under /u) says
+            // nothing, so the tail stays reported. POSIX classes only occur
+            // inside a CharClassNode, whose own set already includes them.
+            $set = $analyzer->firstChars($node);
+
+            return !$set->isUnknown() && $set->intersects(ByteCharSet::fromChar("\n"));
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min, $max] = QuantifierMath::parseRange($node->quantifier);
+
+            return $min <= 1 && (null === $max || $max >= 1) && self::canMatchNewline($node->node, $analyzer, $dotAll);
+        }
+
+        if ($node instanceof GroupNode) {
+            if (!self::isTransparentGroup($node->type)) {
+                return false;
+            }
+
+            $innerDotAll = $dotAll;
+            if (null !== $node->flags) {
+                $innerDotAll = str_contains(self::applyInlineFlags($innerDotAll ? 's' : '', $node->flags), 's');
+            }
+
+            return self::canMatchNewline($node->child, $analyzer, $innerDotAll);
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (self::canMatchNewline($alternative, $analyzer, $dotAll)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof SequenceNode) {
+            return self::tailCanMatchNewline(array_values($node->children), $analyzer, $dotAll);
+        }
+
+        if ($node instanceof ConditionalNode) {
+            return self::canMatchNewline($node->yes, $analyzer, $dotAll)
+                || self::canMatchNewline($node->no, $analyzer, $dotAll);
+        }
+
+        // Assertions, keep marks, comments, backrefs and other constructs
+        // are treated as never matching a newline: an exotic tail then stays
+        // reported rather than silenced.
+        return false;
+    }
+
     public static function isSyntacticallyEmptyAlternative(NodeInterface $node): bool
     {
         if ($node instanceof LiteralNode) {
@@ -324,5 +576,82 @@ final class NodePredicates
         [$min, $max] = $node->accept(new LengthRangeCalculator());
 
         return 1 === $min && 1 === $max;
+    }
+
+    /**
+     * Whether every node always matches the empty string — unlike
+     * canBeEmpty(), a `\b` or a lookaround is not guaranteed to succeed, so
+     * it disqualifies. $atEnd says where the nodes would sit: after the
+     * subject's final newline (true) or at the anchored position before it.
+     *
+     * @param array<int, NodeInterface> $nodes
+     */
+    public static function alwaysMatchesEmpty(array $nodes, bool $atEnd): bool
+    {
+        foreach ($nodes as $node) {
+            if (!self::nodeAlwaysMatchesEmpty($node, $atEnd)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function nodeAlwaysMatchesEmpty(NodeInterface $node, bool $atEnd): bool
+    {
+        if ($node instanceof LiteralNode) {
+            return '' === $node->value;
+        }
+
+        if ($node instanceof AnchorNode) {
+            // `$` holds both at the anchored position and at the end.
+            return '$' === $node->value;
+        }
+
+        if ($node instanceof AssertionNode) {
+            // `\Z` holds at both positions, `\z` only at the end.
+            return 'Z' === $node->value || ('z' === $node->value && $atEnd);
+        }
+
+        if ($node instanceof KeepNode) {
+            // `\K` resets the match start; it never fails.
+            return true;
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min] = QuantifierMath::parseRange($node->quantifier);
+
+            return 0 === $min || self::nodeAlwaysMatchesEmpty($node->node, $atEnd);
+        }
+
+        if ($node instanceof GroupNode) {
+            return self::isTransparentGroup($node->type) && self::nodeAlwaysMatchesEmpty($node->child, $atEnd);
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (self::nodeAlwaysMatchesEmpty($alternative, $atEnd)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof SequenceNode) {
+            return self::alwaysMatchesEmpty(array_values($node->children), $atEnd);
+        }
+
+        if ($node instanceof ConditionalNode) {
+            return self::nodeAlwaysMatchesEmpty($node->yes, $atEnd) && self::nodeAlwaysMatchesEmpty($node->no, $atEnd);
+        }
+
+        // Callouts and comments run without consuming and without failing;
+        // (*FAIL) is the one verb that always fails. Everything else (`^`,
+        // `\b`, lookarounds, backrefs, consuming characters) can fail at the
+        // position a final newline leaves behind.
+        return $node instanceof CalloutNode
+            || $node instanceof CommentNode
+            || ($node instanceof PcreVerbNode && !\in_array($node->verb, ['FAIL', 'F'], true));
     }
 }

@@ -19,6 +19,7 @@ use PHPRegex\Linter\Rule\LintRuleInterface;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -280,8 +281,8 @@ final class PatternLinter extends AbstractNodeVisitor
         foreach ($node->children as $child) {
             $child->accept($this);
 
-            if ($child instanceof GroupNode && $this->isStandaloneInlineFlagsGroup($child)) {
-                $this->context->setActiveFlags($this->applyInlineFlags($this->context->activeFlags(), (string) $child->flags));
+            if ($child instanceof GroupNode && NodePredicates::isStandaloneInlineFlagsGroup($child)) {
+                $this->context->setActiveFlags(NodePredicates::applyInlineFlags($this->context->activeFlags(), (string) $child->flags));
             }
         }
         $this->context->setActiveFlags($sequenceFlags);
@@ -311,8 +312,8 @@ final class PatternLinter extends AbstractNodeVisitor
         $previousFlags = $this->context->activeFlags();
 
         if (GroupType::InlineFlags === $node->type && null !== $node->flags) {
-            if (!$this->isStandaloneInlineFlagsGroup($node)) {
-                $this->context->setActiveFlags($this->applyInlineFlags($this->context->activeFlags(), (string) $node->flags));
+            if (!NodePredicates::isStandaloneInlineFlagsGroup($node)) {
+                $this->context->setActiveFlags(NodePredicates::applyInlineFlags($this->context->activeFlags(), (string) $node->flags));
             }
         }
 
@@ -364,6 +365,32 @@ final class PatternLinter extends AbstractNodeVisitor
     public function visitCharType(CharTypeNode $node): NodeInterface
     {
         $this->dispatch($node);
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitConditional(ConditionalNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        $this->context->pushParent($node);
+        $node->condition->accept($this);
+        $node->yes->accept($this);
+        $node->no->accept($this);
+        $this->context->popParent();
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitDefine(DefineNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        $this->context->pushParent($node);
+        $node->content->accept($this);
+        $this->context->popParent();
 
         return $node;
     }
@@ -463,6 +490,8 @@ final class PatternLinter extends AbstractNodeVisitor
             $this->countCapturingGroups($node->condition);
             $this->countCapturingGroups($node->yes);
             $this->countCapturingGroups($node->no);
+        } elseif ($node instanceof DefineNode) {
+            $this->countCapturingGroups($node->content);
         } elseif ($node instanceof CharClassNode) {
             $this->countCapturingGroups($node->expression);
         }
@@ -568,57 +597,6 @@ final class PatternLinter extends AbstractNodeVisitor
     private function alternationKey(AlternationNode $node): string
     {
         return (string) spl_object_id($node);
-    }
-
-    private function isStandaloneInlineFlagsGroup(GroupNode $node): bool
-    {
-        if (GroupType::InlineFlags !== $node->type || null === $node->flags) {
-            return false;
-        }
-
-        if ($node->child instanceof LiteralNode) {
-            return '' === $node->child->value;
-        }
-
-        if ($node->child instanceof SequenceNode) {
-            return 0 === \count($node->child->children);
-        }
-
-        return false;
-    }
-
-    private function applyInlineFlags(string $baseFlags, string $inlineFlags): string
-    {
-        $resetAll = str_starts_with($inlineFlags, '^');
-        if ($resetAll) {
-            $baseFlags = '';
-            $inlineFlags = substr($inlineFlags, 1);
-        }
-
-        [$setFlags, $unsetFlags] = str_contains($inlineFlags, '-')
-            ? explode('-', $inlineFlags, 2)
-            : [$inlineFlags, ''];
-
-        $flags = [];
-        foreach (str_split($baseFlags) as $flag) {
-            if ('' !== $flag) {
-                $flags[$flag] = true;
-            }
-        }
-
-        foreach (str_split($setFlags) as $flag) {
-            if ('' !== $flag) {
-                $flags[$flag] = true;
-            }
-        }
-
-        foreach (str_split($unsetFlags) as $flag) {
-            if ('' !== $flag) {
-                unset($flags[$flag]);
-            }
-        }
-
-        return implode('', array_keys($flags));
     }
 
     // Add other visit methods as needed, default to no-op

@@ -140,8 +140,8 @@ preg_match('/^\d{4}-\d{2}-\d{2}$/', $date);
 **Identifier:** `regex.lint.anchor.impossible.start`, `regex.lint.anchor.impossible.end`
 
 **When it triggers:**
-- `^` appears after consuming tokens (without `m` flag) — cannot match start
-- `$` appears before consuming tokens — asserts end too early
+- `^` appears after consuming tokens (without the `m` flag, including an inline `(?m)` scope) — cannot match start
+- `$` appears before consuming tokens that cannot continue a line end — asserts end too early. `$` and `\Z` still match before the subject's final newline (and a multiline `$` before any newline), so a tail such as `$\n` is fine; under the `D` modifier `$` is strict like `\z` (unless `m` is set, which disables `D`), and `\z` always is
 
 **Visual Explanation:**
 ```

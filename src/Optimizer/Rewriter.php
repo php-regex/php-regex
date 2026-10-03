@@ -277,6 +277,10 @@ final class Rewriter extends AbstractNodeVisitor
                     // Compute disjointness against the FIRST-set of the suffix
                     $suffixNode = 1 === \count($suffix) ? $suffix[0] : new SequenceNode($suffix, $current->startPosition, $current->endPosition);
 
+                    if ($this->containsInlineFlags($current->node) || $this->containsInlineFlags($suffixNode)) {
+                        continue;
+                    }
+
                     try {
                         $currentLastChars = $this->charSetAnalyzer->lastChars($current->node);
                         $suffixFirstChars = $this->charSetAnalyzer->firstChars($suffixNode);
@@ -690,6 +694,50 @@ final class Rewriter extends AbstractNodeVisitor
 
         if ($node instanceof DefineNode) {
             return $this->patternContainsMultilineAnchors($node->content);
+        }
+
+        return false;
+    }
+
+    /**
+     * The charset analyzer reads the outer flags only, so an inline flag
+     * scope can change what a node matches without the disjointness check
+     * seeing it; possessification then stays out.
+     */
+    private function containsInlineFlags(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode) {
+            return null !== $node->flags || $this->containsInlineFlags($node->child);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            return $this->containsInlineFlags($node->node);
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if ($this->containsInlineFlags($child)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if ($this->containsInlineFlags($alternative)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof ConditionalNode) {
+            return $this->containsInlineFlags($node->condition)
+                || $this->containsInlineFlags($node->yes)
+                || $this->containsInlineFlags($node->no);
         }
 
         return false;
