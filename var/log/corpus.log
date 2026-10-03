@@ -682,7 +682,13 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 7 lines omitted ...
+           /\A(
+           [\x09\x0A\x0D\x20-\x7E]
+               | [\xC2-\xDF][\x80-\xBF]
+               | \xE0[\xA0-\xBF][\x80-\xBF]
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
+               | \xED[\x80-\x9F][\x80-\xBF]
+               | \xF0[\x90-\xBF][\x80-\xBF]{2}
                | [\xF1-\xF3][\x80-\xBF]{3}
                | \xF4[\x80-\x8F][\x80-\xBF]{2}
          - )*\z/xs
@@ -3446,7 +3452,13 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 7 lines omitted ...
+           /\A(
+           [\x09\x0A\x0D\x20-\x7E]
+               | [\xC2-\xDF][\x80-\xBF]
+               | \xE0[\xA0-\xBF][\x80-\xBF]
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
+               | \xED[\x80-\x9F][\x80-\xBF]
+               | \xF0[\x90-\xBF][\x80-\xBF]{2}
                | [\xF1-\xF3][\x80-\xBF]{3}
                | \xF4[\x80-\x8F][\x80-\xBF]{2}
          - )*\z/xs
@@ -4767,7 +4779,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -4794,7 +4809,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -5440,7 +5458,21 @@
       → #\n\t\t\t(?<block>```php(?<code>[^`]++)```)\n\t\t\t\s*\n\t\t\t(?<open>```\w*|<pre>(?:<code>)?)\n\t\t\t(?<output>[^`]*)\n\t\t\t(?<close>```|</code></pre>)(?=\n|$)\n\t\t#sx
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 15 lines omitted ...
+           #(?<block>
+           ```php    (?<code>
+           [^`]++
+               )```
+           )\s*(?<open>
+           ```\w*
+               | <pre>        (?:
+           <code>
+                   )?
+           )(?<output>
+           [^`]*
+           )(?<close>
+           ```
+               | </code></pre>
+           )(?=
            \n
                | $
          - )#sx
@@ -6458,7 +6490,21 @@
       → %^(?:\n            [\x09\x0A\x0D\x20-\x7E]              # ASCII\n            | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte\n            | \xE0[\xA0-\xBF][\x80-\xBF]         # excluding overlongs\n            | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte\n            | \xED[\x80-\x9F][\x80-\xBF]         # excluding surrogates\n            | \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3\n            | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15\n            | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16\n            )*$%xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 15 lines omitted ...
+           %^(?:
+           [\x09\x0A\x0D\x20-\x7E]    # ASCII
+           
+               | [\xC2-\xDF][\x80-\xBF]        # non-overlong 2-byte
+           
+               | \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
+           
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}        # straight 3-byte
+           
+               | \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
+           
+               | \xF0[\x90-\xBF][\x80-\xBF]{2}        # planes 1-3
+           
+               | [\xF1-\xF3][\x80-\xBF]{3}        # planes 4-15
+           
                | \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )*$%xs
@@ -6534,7 +6580,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -6567,7 +6616,21 @@
            .*\n+)+)# Closing marker.
            \1[ ]*\n}xm' contains no anchors.
      TIP 
-           ... 15 lines omitted ...
+           {(?:
+           \n
+               | \A
+           )# 1: Opening marker
+           (
+           ~{3,}    # Marker: three tilde or more.
+           
+           )[ ]*\n# Whitespace and newline following marker.
+           # 2: Content
+           (
+               (?>
+                   (?!
+           \1[ ]*\n
+                   )        # Not a closing marker.
+           .*\n+
                )+
            )# Closing marker.
          - \1[ ]*\n}xm
@@ -6590,7 +6653,21 @@
       → %^(?:\n\t\t   [\x09\x0A\x0D\x20-\x7E]            # ASCII\n\t\t | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte\n\t\t | \xE0[\xA0-\xBF][\x80-\xBF]         # excluding overlongs\n\t\t | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte\n\t\t | \xED[\x80-\x9F][\x80-\xBF]         # excluding surrogates\n\t\t | \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3\n\t\t | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15\n\t\t | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16\n\t\t)*$%xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 15 lines omitted ...
+           %^(?:
+           [\x09\x0A\x0D\x20-\x7E]    # ASCII
+           
+               | [\xC2-\xDF][\x80-\xBF]        # non-overlong 2-byte
+           
+               | \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
+           
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}        # straight 3-byte
+           
+               | \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
+           
+               | \xF0[\x90-\xBF][\x80-\xBF]{2}        # planes 1-3
+           
+               | [\xF1-\xF3][\x80-\xBF]{3}        # planes 4-15
+           
                | \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )*$%xs
@@ -6658,7 +6735,21 @@
       → %^(?:\n\t\t   [\x09\x0A\x0D\x20-\x7E]            # ASCII\n\t\t | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte\n\t\t | \xE0[\xA0-\xBF][\x80-\xBF]         # excluding overlongs\n\t\t | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte\n\t\t | \xED[\x80-\x9F][\x80-\xBF]         # excluding surrogates\n\t\t | \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3\n\t\t | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15\n\t\t | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16\n\t\t)*$%xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 15 lines omitted ...
+           %^(?:
+           [\x09\x0A\x0D\x20-\x7E]    # ASCII
+           
+               | [\xC2-\xDF][\x80-\xBF]        # non-overlong 2-byte
+           
+               | \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
+           
+               | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}        # straight 3-byte
+           
+               | \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
+           
+               | \xF0[\x90-\xBF][\x80-\xBF]{2}        # planes 1-3
+           
+               | [\xF1-\xF3][\x80-\xBF]{3}        # planes 4-15
+           
                | \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )*$%xs
@@ -6769,7 +6860,8 @@
       → /^(\s*<p>\s*)([^:]+):\s*/sxi
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 2 lines omitted ...
+           /^(
+           \s*<p>\s*
            )(
            [^:]+
          - ):\s*/sxi
@@ -6822,7 +6914,8 @@
       → /^(\s*<p>\s*)([a-z]+):\s*/sxi
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 2 lines omitted ...
+           /^(
+           \s*<p>\s*
            )(
            [a-z]+
          - ):\s*/sxi
@@ -6881,7 +6974,11 @@
       → %(?:\n      \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3\n    | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15\n    | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16\n)%xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 5 lines omitted ...
+           %(?:
+           \xF0[\x90-\xBF][\x80-\xBF]{2}    # planes 1-3
+           
+               | [\xF1-\xF3][\x80-\xBF]{3}        # planes 4-15
+           
                | \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )%xs
@@ -6988,7 +7085,11 @@
       → %(?:\n      \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3\n    | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15\n    | \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16\n)%xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 5 lines omitted ...
+           %(?:
+           \xF0[\x90-\xBF][\x80-\xBF]{2}    # planes 1-3
+           
+               | [\xF1-\xF3][\x80-\xBF]{3}        # planes 4-15
+           
                | \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )%xs
@@ -8519,7 +8620,22 @@
       → #\n                    (?:CONSTRAINT\s+(\S+)\s+)?\n                    (?:FOREIGN\s+KEY[^)]+\)\s*)?\n                    REFERENCES\s+\S+\s*(?:\([^)]+\))?\n                    (?:\n                        [^,]*?\n                        (NOT\s+DEFERRABLE|DEFERRABLE)\n                        (?:\s+INITIALLY\s+(DEFERRED|IMMEDIATE))?\n                    )?#isx
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 16 lines omitted ...
+           #(?:
+           CONSTRAINT\s+    (
+           \S+
+               )\s+
+           )?(?:
+           FOREIGN\s+KEY[^)]+\)\s*
+           )?REFERENCES\s+\S+\s*(?:
+           \([^)]+\)
+           )?(?:
+           [^,]*?    (
+           NOT\s+DEFERRABLE
+                   | DEFERRABLE
+               )    (?:
+           \s+INITIALLY\s+        (
+           DEFERRED
+                       | IMMEDIATE
                    )
                )?
          - )?#isx
@@ -8551,7 +8667,22 @@
       → #\n                    (?:CONSTRAINT\s+(\S+)\s+)?\n                    (?:FOREIGN\s+KEY[^)]+\)\s*)?\n                    REFERENCES\s+\S+\s*(?:\([^)]+\))?\n                    (?:\n                        [^,]*?\n                        (NOT\s+DEFERRABLE|DEFERRABLE)\n                        (?:\s+INITIALLY\s+(DEFERRED|IMMEDIATE))?\n                    )?#isx
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 16 lines omitted ...
+           #(?:
+           CONSTRAINT\s+    (
+           \S+
+               )\s+
+           )?(?:
+           FOREIGN\s+KEY[^)]+\)\s*
+           )?REFERENCES\s+\S+\s*(?:
+           \([^)]+\)
+           )?(?:
+           [^,]*?    (
+           NOT\s+DEFERRABLE
+                   | DEFERRABLE
+               )    (?:
+           \s+INITIALLY\s+        (
+           DEFERRED
+                       | IMMEDIATE
                    )
                )?
          - )?#isx
@@ -9262,7 +9393,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -9453,7 +9587,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -9480,7 +9617,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -9966,7 +10106,21 @@
       → /(\n            [\x09\x0A\x0D\x20-\x7E] |            # ASCII\n            [\xC2-\xDF][\x80-\xBF] |             # non-overlong 2-byte\n            \xE0[\xA0-\xBF][\x80-\xBF] |         # excluding overlongs\n            [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2} |  # straight 3-byte\n            \xED[\x80-\x9F][\x80-\xBF] |         # excluding surrogates\n            \xF0[\x90-\xBF][\x80-\xBF]{2} |      # planes 1-3\n            [\xF1-\xF3][\x80-\xBF]{3} |          # planes 4-15\n            \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16\n        )/xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 15 lines omitted ...
+           /(
+           [\x09\x0A\x0D\x20-\x7E]
+               |         # ASCII
+           [\xC2-\xDF][\x80-\xBF]
+               |         # non-overlong 2-byte
+           \xE0[\xA0-\xBF][\x80-\xBF]
+               |         # excluding overlongs
+           [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
+               |         # straight 3-byte
+           \xED[\x80-\x9F][\x80-\xBF]
+               |         # excluding surrogates
+           \xF0[\x90-\xBF][\x80-\xBF]{2}
+               |         # planes 1-3
+           [\xF1-\xF3][\x80-\xBF]{3}
+               |         # planes 4-15
            \xF4[\x80-\x8F][\x80-\xBF]{2}        # plane 16
            
          - )/xs
@@ -10451,7 +10605,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -10478,7 +10635,10 @@
       → {\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \[\n\t\t\t\t([^\[\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \]\n\t\t\t)\n\t\t\t}xs
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
-           ... 4 lines omitted ...
+           {(
+               # wrap whole match in $1
+           \[    (
+           [^[\]]+
                )    # link text = $2; can't contain [ or ]
            ]
          - )}xs
@@ -11680,12 +11840,21 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
+  corpus/voku/simple_html_dom/src/voku/helper/Html5DomParser.php:228:13
+      → /<[A-Za-z][A-Za-z0-9:-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/s
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+     WARN  Flag 's' is useless: the pattern contains no dots.
+     TIP 
+         - /<[A-Za-z][A-Za-z0-9:-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/s
+         + /<[A-Za-z][A-Za-z0-9:-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/
+
   corpus/voku/simple_html_dom/src/voku/helper/XmlDomParser.php:653:39
       → #xmlns:?.*=(["'])(?:.*)\1#Ui
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-  corpus/voku/simple_html_dom/src/voku/helper/HtmlDomParser.php:1773:17
+  corpus/voku/simple_html_dom/src/voku/helper/HtmlDomParser.php:1832:17
       → /(?<start>[^<]*)?(?<broken>(?:<\/\w+(?:\s+\w+=\"[^"]+\")*+[^<]+>)+)(?<end>.*)/u
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -12903,7 +13072,94 @@
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
      TIP 
-           ... 88 lines omitted ...
+           /&# 1. entity prefix
+           (?=
+               # 2. followed by:
+               (?:
+                   #  a. one of the legacy semicolon-less named entities
+           A        (?:
+           Elig
+                       | MP
+                       | acute
+                       | circ
+                       | grave
+                       | ring
+                       | tilde
+                       | uml
+                   )
+                   | C            (?:
+           OPY
+                           | cedil
+                       )
+                   | E            (?:
+           TH
+                           | acute
+                           | circ
+                           | grave
+                           | uml
+                       )
+                   | GT
+                   | I            (?:
+           acute
+                           | circ
+                           | grave
+                           | uml
+                       )
+                   | LT
+                   | Ntilde
+                   | O            (?:
+           acute
+                           | circ
+                           | grave
+                           | slash
+                           | tilde
+                           | uml
+                       )
+                   | QUOT
+                   | REG
+                   | THORN
+                   | U            (?:
+           acute
+                           | circ
+                           | grave
+                           | uml
+                       )
+                   | Yacute
+                   | a            (?:
+           acute
+                           | c                    (?:
+           irc
+                                   | ute
+                               )
+                           | elig
+                           | grave
+                           | mp
+                           | ring
+                           | tilde
+                           | uml
+                       )
+                   | brvbar
+                   | c            (?:
+           cedil
+                           | edil
+                           | urren
+                       )
+                   | cent            (?!
+           erdot;
+                       )
+                   | copy            (?!
+           sr;
+                       )
+                   | deg
+                   | divide            (?!
+           ontimes;
+                       )
+                   | e            (?:
+           acute
+                           | circ
+                           | grave
+                           | th
+                           | uml
                        )
                    | frac            (?:
          - 1                (?:
@@ -12914,7 +13170,69 @@
          + 1[24]
                            | 34
                        )
-           ... 63 lines omitted ...
+                   | gt            (?!
+           c                (?:
+           c
+                               | ir
+                           )
+                           | dot
+                           | lPar
+                           | quest
+                           | r                    (?:
+           a                        (?:
+           pprox
+                                       | rr
+                                   )
+                                   | dot
+                                   | eq                            (?:
+           less
+                                           | qless
+                                       )
+                                   | less
+                                   | sim
+                               );
+                       )
+                   | i            (?:
+           acute
+                           | circ
+                           | excl
+                           | grave
+                           | quest
+                           | uml
+                       )
+                   | laquo
+                   | lt            (?!
+           c                (?:
+           c
+                               | ir
+                           )
+                           | dot
+                           | hree
+                           | imes
+                           | larr
+                           | quest
+                           | r                    (?:
+           Par
+                                   | i                            (?:
+           e
+                                           | f
+                                           | 
+                                       )
+                               );
+                       )
+                   | m            (?:
+           acr
+                           | i                    (?:
+           cro
+                                   | ddot
+                               )
+                       )
+                   | n            (?:
+           bsp
+                           | tilde
+                       )
+                   | not            (?!
+           in                (?:
            E
                                | dot
          -                     | v                        (?:
@@ -12936,7 +13254,9 @@
          + v[abc]
                                    | 
                                );
-           ... 3 lines omitted ...
+                       )
+                   | o            (?:
+           acute
                            | circ
                            | grave
          -                 | rd                    (?:
@@ -12947,7 +13267,21 @@
          +                 | rd[fm]
                            | slash
                            | tilde
-           ... 15 lines omitted ...
+                           | uml
+                       )
+                   | p            (?:
+           lusmn
+                           | ound
+                       )
+                   | para            (?!
+           llel;
+                       )
+                   | quot
+                   | r            (?:
+           aquo
+                           | eg
+                       )
+                   | s            (?:
            ect
                            | hy
          -                 | up                    (?:
@@ -12959,7 +13293,33 @@
          +                 | up[123]
                            | zlig
                        )
-           ... 27 lines omitted ...
+                   | thorn
+                   | times            (?!
+           b                (?:
+           ar
+                               | 
+                           )
+                           | d;
+                       )
+                   | u            (?:
+           acute
+                           | circ
+                           | grave
+                           | ml
+                           | uml
+                       )
+                   | y            (?:
+           acute
+                           | en
+                           | uml
+                       )
+               )    (?:
+           [^;]
+                   | $
+               )
+           )#  b. and not followed by a semicolon
+           # S = study, for efficiency
+           /Sx
 
   corpus/mediawiki/includes/Parser/Sanitizer.php:1916:20
       → !^([^:]+:)(//[^/]+)?(.*)$!iD
@@ -13080,7 +13440,30 @@
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '\x{C0}' and '\x{C1}' explicitly instead of a range.
      TIP 
-           ... 24 lines omitted ...
+           /(
+           [\xC0-\xC1]    # Invalid UTF-8 Bytes
+           
+               | [\xF5-\xFF]        # Invalid UTF-8 Bytes
+           
+               | \xE0[\x80-\x9F]        # Overlong encoding of prior code point
+           
+               | \xF0[\x80-\x8F]        # Overlong encoding of prior code point
+           
+               | [\xC2-\xDF]        (?!
+           [\x80-\xBF]
+                   )        # Invalid UTF-8 Sequence Start
+           
+               | [\xE0-\xEF]        (?!
+           [\x80-\xBF]{2}
+                   )        # Invalid UTF-8 Sequence Start
+           
+               | [\xF0-\xF4]        (?!
+           [\x80-\xBF]{3}
+                   )        # Invalid UTF-8 Sequence Start
+           
+               |         (?<=
+           [\x0-\x7F\xF5-\xFF]
+                   )[\x80-\xBF]        # Invalid UTF-8 Sequence Middle
            
                |         (?<!
          - [\xC2-\xDF]
@@ -13089,7 +13472,29 @@
          + [\xC2-\xDF\xE0-\xEF]
                        | [\xE0-\xEF][\x80-\xBF]
                        | [\xF0-\xF4]
-           ... 23 lines omitted ...
+                       | [\xF0-\xF4][\x80-\xBF]
+                       | [\xF0-\xF4][\x80-\xBF]{2}
+                   )[\x80-\xBF]        # Overlong Sequence
+           
+               |         (?<=
+           [\xE0-\xEF]
+                   )[\x80-\xBF]        (?!
+           [\x80-\xBF]
+                   )        # Short 3 byte sequence
+           
+               |         (?<=
+           [\xF0-\xF4]
+                   )[\x80-\xBF]        (?!
+           [\x80-\xBF]{2}
+                   )        # Short 4 byte sequence
+           
+               |         (?<=
+           [\xF0-\xF4][\x80-\xBF]
+                   )[\x80-\xBF]        (?!
+           [\x80-\xBF]
+                   )        # Short 4 byte sequence (2)
+           
+           )/x
 
   corpus/mediawiki/includes/Media/DjVuImage.php:355:25
       → /(?:\\(035|037))+/
@@ -13972,7 +14377,11 @@
   corpus/phpstan-src/e2e/bug13425/plugins/oepnvMobilePlugin/lib/mobileService/MobileServiceApi.php:889:24
       → /\n      \s*((?:\w+-)*\w+)     # key                               \1\n      \s*=\s*               # =\n      ('|")?               # values may be included in ' or " \2\n      (.*?)                 # value                             \3\n      (?(2) \2)            # matching ' or " if needed        \4\n      \s*(?:\n        (?=\w+\s*=) | \s*$  # followed by another key= or the end of the string\n      )\n    /x
      TIP 
-           ... 5 lines omitted ...
+           /\s*(
+               (?:
+           \w+-
+               )*\w+
+           )# key                               \1
            \s*=\s*# =
            (
          - '
@@ -13981,7 +14390,18 @@
          + ['"]
            )?# values may be included in ' or " \2
            (
-           ... 12 lines omitted ...
+           .*?
+           )# value                             \3
+           (?(2)
+           \2
+           )# matching ' or " if needed        \4
+           \s*(?:
+               (?=
+           \w+\s*=
+               )
+               | \s*$        # followed by another key= or the end of the string
+           
+           )/x
 
   corpus/carbon/src/Carbon/Lang/uk.php:175:32
       → /(\[(В|в|У|у)\])\s+dddd/u
