@@ -29,6 +29,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -37,7 +38,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_reports_missing_pattern(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', []), $output), $exitCode);
@@ -49,7 +50,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_handles_pattern(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/']), $output), $exitCode);
@@ -61,7 +62,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_outputs_json(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/', '--format=json']), $output), $exitCode);
@@ -88,7 +89,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_json_carries_the_error_code_as_a_string(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/(?<=a+)b/', '--format=json']), $output), $exitCode);
@@ -101,7 +102,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_handles_invalid_regex_options(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -121,7 +122,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_reports_invalid_pattern(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['[unclosed']), $output), $exitCode);
@@ -133,7 +134,7 @@ final class CommandTest extends TestCase
     public function test_analyze_command_reports_validation_error(): void
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Pattern that may cause validation error (e.g., invalid quantifier range)
         $exitCode = 0;
@@ -174,7 +175,7 @@ final class CommandTest extends TestCase
             [new HelpCommand(), new Input('help', [], $options, $regexOptions)],
         ] as [$command, $input]) {
             $exitCode = 0;
-            $buffer = $this->captureOutput(static fn (): int => $command->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+'))), $exitCode);
+            $buffer = $this->captureOutput(static fn (): int => $command->run($input, OutputFactory::create()), $exitCode);
 
             $this->assertStringContainsString('PCRE2 10.42', $buffer, $command->getName());
         }
@@ -183,7 +184,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_reports_missing_pattern(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', []), $output), $exitCode);
@@ -195,7 +196,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_reports_missing_input_value(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input']), $output), $exitCode);
@@ -207,7 +208,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_outputs_json(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--format=json']), $output), $exitCode);
@@ -231,7 +232,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_runs_with_input(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input=aaaa']), $output), $exitCode);
@@ -242,7 +243,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_reports_invalid_pattern(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['[unclosed']), $output), $exitCode);
@@ -266,7 +267,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_generates_auto_input_when_none_provided(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode);
@@ -279,7 +280,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_handles_input_option_with_value(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input', 'testinput']), $output), $exitCode);
@@ -291,7 +292,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_handles_invalid_regex_options(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -311,7 +312,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_handles_php_version_option(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with php_version regex option
         $input = new Input(
@@ -331,7 +332,7 @@ final class CommandTest extends TestCase
     public function test_debug_command_handles_simple_pattern(): void
     {
         $command = new DebugCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/a/']), $output), $exitCode);
@@ -343,7 +344,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_reports_missing_pattern(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', []), $output), $exitCode);
@@ -355,7 +356,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_rejects_unsupported_format(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=bogus']), $output), $exitCode);
@@ -367,7 +368,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_renders_diagram(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/']), $output), $exitCode);
@@ -378,7 +379,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_renders_svg_to_stdout(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=svg']), $output), $exitCode);
@@ -391,7 +392,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_renders_svg_diagram(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $tempFile = tempnam(sys_get_temp_dir(), 'regex-svg-');
         $this->assertNotFalse($tempFile);
 
@@ -410,7 +411,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_reports_invalid_pattern(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['[unclosed']), $output), $exitCode);
@@ -422,7 +423,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_supports_format_option_with_separate_value(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format', 'ascii']), $output), $exitCode);
@@ -434,7 +435,7 @@ final class CommandTest extends TestCase
     public function test_diagram_command_handles_invalid_regex_options(): void
     {
         $command = new DiagramCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -454,7 +455,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_reports_missing_pattern(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', []), $output), $exitCode);
@@ -466,7 +467,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_outputs_highlight(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/']), $output), $exitCode);
@@ -479,7 +480,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_supports_html_format(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=html']), $output), $exitCode);
@@ -490,7 +491,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_reports_invalid_pattern(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['[unclosed']), $output), $exitCode);
@@ -502,7 +503,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_supports_format_option_with_separate_value(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format', 'cli']), $output), $exitCode);
@@ -514,7 +515,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_reports_invalid_format(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode);
@@ -526,7 +527,7 @@ final class CommandTest extends TestCase
     public function test_highlight_command_handles_invalid_regex_options(): void
     {
         $command = new HighlightCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -546,7 +547,7 @@ final class CommandTest extends TestCase
     public function test_parse_command_reports_missing_pattern(): void
     {
         $command = new ParseCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', []), $output), $exitCode);
@@ -558,7 +559,7 @@ final class CommandTest extends TestCase
     public function test_parse_command_outputs_compiled_and_validation(): void
     {
         $command = new ParseCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['/a+/', '--validate']), $output), $exitCode);
@@ -569,7 +570,7 @@ final class CommandTest extends TestCase
     public function test_parse_command_reports_invalid_pattern(): void
     {
         $command = new ParseCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['[unclosed']), $output), $exitCode);
@@ -581,7 +582,7 @@ final class CommandTest extends TestCase
     public function test_parse_command_handles_invalid_regex_options(): void
     {
         $command = new ParseCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -601,7 +602,7 @@ final class CommandTest extends TestCase
     public function test_validate_command_reports_missing_pattern(): void
     {
         $command = new ValidateCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', []), $output), $exitCode);
@@ -613,7 +614,7 @@ final class CommandTest extends TestCase
     public function test_validate_command_reports_invalid_pattern(): void
     {
         $command = new ValidateCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/(abc/']), $output), $exitCode);
@@ -646,7 +647,7 @@ final class CommandTest extends TestCase
             'analyze' => new AnalyzeCommand(),
             default => new ParseCommand(),
         };
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $instance->run(self::makeInput($command, $arguments), $output), $exitCode);
@@ -661,7 +662,7 @@ final class CommandTest extends TestCase
     public function test_validate_command_accepts_valid_pattern(): void
     {
         $command = new ValidateCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/abc/']), $output), $exitCode);
@@ -673,7 +674,7 @@ final class CommandTest extends TestCase
     public function test_validate_command_handles_invalid_regex_options(): void
     {
         $command = new ValidateCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         // Create input with invalid regex options
         $input = new Input(
@@ -693,7 +694,7 @@ final class CommandTest extends TestCase
     public function test_help_command_outputs_sections_with_and_without_ansi(): void
     {
         $command = new HelpCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('help', []), $output), $exitCode);
@@ -713,7 +714,7 @@ final class CommandTest extends TestCase
     public function test_version_command_outputs_version(): void
     {
         $command = new VersionCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('version', []), $output), $exitCode);
@@ -727,7 +728,7 @@ final class CommandTest extends TestCase
     {
         $updater = new SelfUpdater();
         $command = new SelfUpdateCommand($updater);
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $helpExitCode = 0;
         $helpBuffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', ['--help']), $output), $helpExitCode);
@@ -773,7 +774,7 @@ final class CommandTest extends TestCase
         };
 
         $command = new SelfUpdateCommand($updater);
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode);

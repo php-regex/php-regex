@@ -18,13 +18,14 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\TestCase;
 
 final class ApplicationTest extends TestCase
 {
     public function test_register_adds_aliases(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -42,7 +43,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_help_option_invokes_help_command(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -55,7 +56,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_missing_command_shows_help(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -68,7 +69,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_unknown_command_outputs_error_and_help(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -82,7 +83,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_pattern_uses_highlight_command(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $highlight = new DummyCommand('highlight');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
@@ -99,7 +100,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_reports_global_option_errors(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -113,7 +114,7 @@ final class ApplicationTest extends TestCase
 
     public function test_resolve_ansi_honors_forced_value_and_fallback(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -128,7 +129,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_empty_command_name_shows_help(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
 
@@ -141,7 +142,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_php_version_option_sets_regex_options(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $command = new DummyCommand('test');
         $app = new Application(new GlobalOptionsParser(), $output, $help);
@@ -158,7 +159,7 @@ final class ApplicationTest extends TestCase
 
     public function test_run_with_pcre_version_option_sets_regex_options(): void
     {
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $help = new DummyCommand('help');
         $command = new DummyCommand('test');
         $app = new Application(new GlobalOptionsParser(), $output, $help);

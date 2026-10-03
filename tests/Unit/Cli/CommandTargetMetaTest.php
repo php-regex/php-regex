@@ -17,6 +17,7 @@ use PHPRegex\Cli\Command\AbstractCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -75,6 +76,6 @@ final class CommandTargetMetaTest extends TestCase
             }
         };
 
-        return $command->meta(new Input('probe', [], $options, []), new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+        return $command->meta(new Input('probe', [], $options, []), OutputFactory::create());
     }
 }

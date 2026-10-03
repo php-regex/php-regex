@@ -24,6 +24,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -191,7 +192,7 @@ final class RedosModelLineTest extends TestCase
         ob_start();
 
         try {
-            $handler->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            $handler->run($input, OutputFactory::create());
         } finally {
             $buffer = (string) ob_get_clean();
             while (ob_get_level() > $level) {

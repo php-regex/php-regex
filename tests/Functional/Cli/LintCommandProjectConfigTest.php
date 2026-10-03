@@ -18,12 +18,12 @@ use PHPRegex\Cli\Command\LintCommand;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -215,9 +215,9 @@ final class LintCommandProjectConfigTest extends TestCase
         ob_start();
 
         try {
-            // The error stream is captured: a usage dump must not leak to the
-            // real STDERR of the test runner.
-            $exitCode = $command->run($input, new Output(false, false, errorStream: \fopen('php://memory', 'w+')));
+            // The error stream is a discarded in-memory sink: a usage dump
+            // must not leak to the test runner's real STDERR.
+            $exitCode = $command->run($input, OutputFactory::create());
         } finally {
             $stdout = (string) ob_get_clean();
         }

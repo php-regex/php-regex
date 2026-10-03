@@ -18,12 +18,12 @@ use PHPRegex\Cli\Command\LintCommand;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -258,7 +258,7 @@ final class LintRedosConsoleTest extends TestCase
         ob_start();
 
         try {
-            (new HelpCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            (new HelpCommand())->run($input, OutputFactory::create());
         } finally {
             $stdout = (string) ob_get_clean();
         }
@@ -286,7 +286,7 @@ final class LintRedosConsoleTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = $command->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            $exitCode = $command->run($input, OutputFactory::create());
         } finally {
             $stdout = (string) ob_get_clean();
         }

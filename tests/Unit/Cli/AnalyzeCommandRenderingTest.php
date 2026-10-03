@@ -15,12 +15,12 @@ namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\ConsoleStyle;
-use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -79,7 +79,7 @@ final class AnalyzeCommandRenderingTest extends TestCase
     private function render(RedosAnalysis $analysis): string
     {
         $command = new AnalyzeCommand();
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
         $style = new ConsoleStyle($output, false);
 
         $method = (new \ReflectionClass($command))->getMethod('renderConsoleOutput');

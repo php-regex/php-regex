@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -124,7 +124,7 @@ final class RedosCommandIniTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = (new RedosCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            $exitCode = (new RedosCommand())->run($input, OutputFactory::create());
             $buffer = (string) ob_get_clean();
         } finally {
             while (ob_get_level() > $level) {

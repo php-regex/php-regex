@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Cli;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\TestCase;
 
 final class DebugCommandEdgeCasesTest extends TestCase
@@ -30,7 +30,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
             new GlobalOptions(false, false, false, true, null, null),
             [],
         );
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         $exitCode = 0;
         $buffer = $this->captureOutput(static function () use ($command, $input, $output, &$exitCode): void {

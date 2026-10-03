@@ -18,7 +18,7 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -112,7 +112,7 @@ final class RedosWitnessSurfaceTest extends TestCase
         ob_start();
 
         try {
-            $handler->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            $handler->run($input, OutputFactory::create());
         } finally {
             $buffer = (string) ob_get_clean();
             while (ob_get_level() > $level) {

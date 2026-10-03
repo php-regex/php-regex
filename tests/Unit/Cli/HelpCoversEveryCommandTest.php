@@ -18,7 +18,7 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -59,7 +59,7 @@ final class HelpCoversEveryCommandTest extends TestCase
      */
     private function commands(): array
     {
-        return ApplicationFactory::create(new Output(false, false, errorStream: fopen('php://memory', 'w+')))->registeredCommands();
+        return ApplicationFactory::create(OutputFactory::create())->registeredCommands();
     }
 
     /**
@@ -68,7 +68,7 @@ final class HelpCoversEveryCommandTest extends TestCase
     private function render(array $args): string
     {
         $help = (new HelpCommand())->withCommands($this->commands());
-        $output = new Output(false, false, errorStream: fopen('php://memory', 'w+'));
+        $output = OutputFactory::create();
 
         ob_start();
         $help->run(new Input('help', $args, new GlobalOptions(false, null, false, false, null, null), []), $output);

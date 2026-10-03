@@ -16,9 +16,9 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -64,7 +64,7 @@ final class RedosJsonShapeTest extends TestCase
         ob_start();
 
         try {
-            (new AnalyzeCommand())->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            (new AnalyzeCommand())->run($input, OutputFactory::create());
         } finally {
             $buffer = (string) ob_get_clean();
         }

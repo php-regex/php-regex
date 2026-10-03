@@ -18,10 +18,10 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -196,7 +196,7 @@ final class RedosVerdictConsoleTest extends TestCase
         ob_start();
 
         try {
-            $exitCode = $handler->run($input, new Output(false, false, errorStream: fopen('php://memory', 'w+')));
+            $exitCode = $handler->run($input, OutputFactory::create());
         } finally {
             $buffer = (string) ob_get_clean();
             while (ob_get_level() > $level) {
