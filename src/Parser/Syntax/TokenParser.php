@@ -290,7 +290,6 @@ final class TokenParser
     private function parseSequence(): NodeInterface
     {
         $nodes = [];
-        $quotedRun = null;
         $startPosition = $this->stream->current()->position;
 
         while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose) && !$this->stream->check(TokenType::Alternation)) {
@@ -312,16 +311,11 @@ final class TokenParser
                 continue;
             }
 
-            if ($this->quantifyPreviousItem($nodes, $quotedRun)) {
+            if ($this->quantifyPreviousItem($nodes)) {
                 continue;
             }
 
-            $inQuoteMode = $this->inQuoteMode;
-            $nodes[] = $node = $this->parseQuantifiedAtom();
-
-            if ($inQuoteMode && $node instanceof LiteralNode) {
-                $quotedRun = $node;
-            }
+            $nodes[] = $this->parseQuantifiedAtom();
         }
 
         if (empty($nodes)) {
@@ -468,9 +462,8 @@ final class TokenParser
      * item before it, the atom parser reports the quantifier.
      *
      * @param array<NodeInterface> $nodes
-     * @param LiteralNode|null     $quotedRun the last run of text read between \Q and \E
      */
-    private function quantifyPreviousItem(array &$nodes, ?LiteralNode $quotedRun): bool
+    private function quantifyPreviousItem(array &$nodes): bool
     {
         if (!$this->stream->check(TokenType::Quantifier)) {
             return false;
@@ -497,10 +490,9 @@ final class TokenParser
             $nodes[] = $this->modifyRepeatedQuantifier($target, $token);
         } else {
             // "\Qab\E*" is "ab*": only the last quoted character repeats.
-            if ($target === $quotedRun && '' !== $prefix = $this->withoutLastCharacter($quotedRun->value)) {
-                $split = $quotedRun->getStartPosition() + \strlen($prefix);
-                $nodes[] = new LiteralNode($prefix, $quotedRun->getStartPosition(), $split, $quotedRun->isRaw);
-                $target = new LiteralNode(substr($quotedRun->value, \strlen($prefix)), $split, $quotedRun->getEndPosition(), $quotedRun->isRaw);
+            [$prefix, $target] = $this->splitRepeatedCharacter($target);
+            if (null !== $prefix) {
+                $nodes[] = $prefix;
             }
 
             $this->assertQuantifierCanApply($target, $token);
@@ -510,6 +502,27 @@ final class TokenParser
         array_push($nodes, ...$comments);
 
         return true;
+    }
+
+    /**
+     * Splits off the text a quantifier does not repeat: the quantifier takes
+     * the last character, so "\Qab\E*" repeats "b" and, without /u, "é+"
+     * repeats the last byte of "é".
+     *
+     * @return array{0: ?LiteralNode, 1: NodeInterface}
+     */
+    private function splitRepeatedCharacter(NodeInterface $node): array
+    {
+        if (!$node instanceof LiteralNode || '' === $prefix = $this->withoutLastCharacter($node->value)) {
+            return [null, $node];
+        }
+
+        $split = $node->getStartPosition() + \strlen($prefix);
+
+        return [
+            new LiteralNode($prefix, $node->getStartPosition(), $split, $node->isRaw),
+            new LiteralNode(substr($node->value, \strlen($prefix)), $split, $node->getEndPosition(), $node->isRaw),
+        ];
     }
 
     /**
@@ -588,9 +601,11 @@ final class TokenParser
         if ($this->stream->match(TokenType::Quantifier)) {
             $token = $this->stream->previous();
 
+            [$prefix, $node] = $this->splitRepeatedCharacter($node);
             $this->assertQuantifierCanApply($node, $token);
+            $quantified = $this->quantify($node, $token);
 
-            return $this->quantify($node, $token);
+            return null === $prefix ? $quantified : new SequenceNode([$prefix, $quantified], $prefix->getStartPosition(), $quantified->getEndPosition());
         }
 
         if ($skipped > 0) {
