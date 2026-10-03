@@ -61,7 +61,7 @@ The LSP server analyzes PHP files and reports regex issues as you type:
 
 ```
 Warning: Shorthand "\w" matches only ASCII without /u flag.
-Error: Unicode property "\p{L}" requires /u flag.
+Error: Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
 Error: Unicode escape "\x{100}" requires /u flag for code points > U+FF.
 ```
 

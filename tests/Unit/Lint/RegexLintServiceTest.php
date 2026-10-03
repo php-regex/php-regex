@@ -141,11 +141,11 @@ final class RegexLintServiceTest extends TestCase
         ));
 
         $this->assertCount(1, $nestedWarnings);
-        $this->assertArrayHasKey('suggestedPattern', $nestedWarnings[0]);
-        $this->assertSame('/(?>(a+))+/', $nestedWarnings[0]['suggestedPattern']);
+        $this->assertArrayNotHasKey('suggestedPattern', $nestedWarnings[0]);
+        $this->assertStringContainsStringIgnoringCase('verify', (string) ($nestedWarnings[0]['hint'] ?? ''));
     }
 
-    public function test_analyze_skips_atomic_tip_when_pattern_limit_exceeded(): void
+    public function test_analyze_nested_quantifier_warning_carries_no_rewrite_under_pattern_limits(): void
     {
         $analysis = new AnalysisService(RegexParser::create(['max_pattern_length' => 10]));
         $service = new LintService($analysis, $this->sources);
@@ -165,7 +165,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertArrayNotHasKey('suggestedPattern', $nestedWarnings[0]);
     }
 
-    public function test_analyze_adds_atomic_group_tip_for_dotstar_warning(): void
+    public function test_analyze_dotstar_warning_carries_no_automatic_rewrite(): void
     {
         $request = new LintRequest(['.'], [], 0);
         $patterns = [
@@ -181,8 +181,8 @@ final class RegexLintServiceTest extends TestCase
         ));
 
         $this->assertCount(1, $dotstarWarnings);
-        $this->assertArrayHasKey('suggestedPattern', $dotstarWarnings[0]);
-        $this->assertSame('/(?>(?:.*))+/', $dotstarWarnings[0]['suggestedPattern']);
+        $this->assertArrayNotHasKey('suggestedPattern', $dotstarWarnings[0]);
+        $this->assertStringContainsStringIgnoringCase('verify', (string) ($dotstarWarnings[0]['hint'] ?? ''));
     }
 
     public function test_analyze_deduplicates_issues(): void

@@ -74,7 +74,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             'regex.lint.quantifier.nested',
             'Nested quantifiers can cause catastrophic backtracking.',
             $node->startPosition,
-            'Consider using atomic groups (?>...) or possessive quantifiers.',
+            'Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.',
         )];
     }
 

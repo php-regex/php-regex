@@ -280,7 +280,6 @@ final class ConsoleFormatterTest extends TestCase
                     'line' => 10,
                     'issueId' => 'regex.lint.quantifier.nested',
                     'hint' => 'Consider using atomic groups (?>...) or possessive quantifiers.',
-                    'suggestedPattern' => '/(?>(a+))+/',
                 ],
             ],
             'optimizations' => [],
@@ -291,9 +290,11 @@ final class ConsoleFormatterTest extends TestCase
 
         $output = $formatter->format($report);
 
-        $this->assertStringContainsString('TIP', $output);
-        $this->assertStringContainsString('- /(a+)+/', $output);
-        $this->assertStringContainsString('+ /(?>(a+))+/', $output);
+        // No producer writes issue suggestions any more: the rewrite was
+        // unsound, so an issue never renders a TIP diff.
+        $this->assertStringNotContainsString('TIP', $output);
+        $this->assertStringNotContainsString('- /(a+)+/', $output);
+        $this->assertStringNotContainsString('+ /(?>(a+))+/', $output);
     }
 
     public function test_format_with_multiline_optimization_diff(): void

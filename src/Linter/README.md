@@ -110,10 +110,7 @@ vendor/bin/regex lint src/
   demo.php:4:30
       → /(a+)+b/
     WARN Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider using atomic groups (?>...) or possessive quantifiers.
-    TIP
-         - /(a+)+b/
-         + /(?>(a+))+b/
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 ```
 
 Documentation

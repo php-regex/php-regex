@@ -9490,6 +9490,12 @@
         ]
     },
     {
+        "pattern": "#;(\\s*;)+#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
         "pattern": "/\\s+/mu",
         "issues": [
             "regex.lint.flag.useless.m"

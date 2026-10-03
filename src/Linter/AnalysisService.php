@@ -24,18 +24,6 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\Node\CharClassNode;
-use PHPRegex\Parser\Node\ConditionalNode;
-use PHPRegex\Parser\Node\DefineNode;
-use PHPRegex\Parser\Node\GroupNode;
-use PHPRegex\Parser\Node\GroupType;
-use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierNode;
-use PHPRegex\Parser\Node\QuantifierType;
-use PHPRegex\Parser\Node\RangeNode;
-use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -156,7 +144,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
     {
@@ -229,7 +217,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, suggestedPattern?: string, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     private function lintChunk(array $patterns, ?callable $progress = null): array
     {
@@ -289,11 +277,11 @@ final readonly class AnalysisService
                         continue;
                     }
 
-                    $suggestedPattern = null;
-                    if (isset(self::RISK_LINT_ISSUE_IDS[$issue->id]) && \is_int($issue->offset)) {
-                        $suggestedPattern = $this->buildAtomicGroupSuggestion($occurrence->pattern, $ast, $issue->offset);
-                    }
-
+                    // No automatic rewrite for the risk rules: wrapping the
+                    // operand in an atomic group while leaving the outer
+                    // quantifier in place removes the cross-iteration
+                    // backtracking the engine may need, so any rewrite the
+                    // user applies has to be verified by hand.
                     $issueEntry = [
                         'type' => 'warning',
                         'file' => $occurrence->file,
@@ -306,10 +294,6 @@ final readonly class AnalysisService
                         'hint' => $issue->hint,
                         'source' => $source,
                     ];
-
-                    if (null !== $suggestedPattern && $suggestedPattern !== $occurrence->pattern) {
-                        $issueEntry['suggestedPattern'] = $suggestedPattern;
-                    }
 
                     $issues[] = $issueEntry;
                 }
@@ -363,120 +347,6 @@ final readonly class AnalysisService
     private function resolveColumn(PatternOccurrence $occurrence): int
     {
         return $occurrence->column ?? 1;
-    }
-
-    private function buildAtomicGroupSuggestion(string $pattern, RegexNode $ast, int $offset): ?string
-    {
-        $quantifier = $this->findQuantifierByOffset($ast->pattern, $offset);
-        if (null === $quantifier) {
-            return null;
-        }
-
-        if (QuantifierType::Possessive === $quantifier->type) {
-            return null;
-        }
-
-        if ($quantifier->node instanceof GroupNode && GroupType::Atomic === $quantifier->node->type) {
-            return null;
-        }
-
-        $target = $quantifier->node;
-        $start = $target->getStartPosition();
-        $end = $target->getEndPosition();
-
-        try {
-            [$body, $flags, $delimiter] = PatternParser::extractPatternAndFlags($pattern, $this->regex->target());
-        } catch (\Throwable) {
-            return null;
-        }
-
-        $length = \strlen($body);
-        if ($start < 0 || $end <= $start || $end > $length) {
-            return null;
-        }
-
-        $suggestedBody = substr($body, 0, $start).'(?>'.substr($body, $start, $end - $start).')'.substr($body, $end);
-
-        try {
-            $this->regex->parsePattern($suggestedBody, $flags, $delimiter);
-        } catch (\Throwable) {
-            return null;
-        }
-
-        $closingDelimiter = PatternParser::closingDelimiter($delimiter);
-
-        return $delimiter.$suggestedBody.$closingDelimiter.$flags;
-    }
-
-    private function findQuantifierByOffset(NodeInterface $node, int $offset): ?QuantifierNode
-    {
-        if ($node instanceof QuantifierNode) {
-            if ($node->getStartPosition() === $offset) {
-                return $node;
-            }
-
-            return $this->findQuantifierByOffset($node->node, $offset);
-        }
-
-        if ($node instanceof RegexNode) {
-            return $this->findQuantifierByOffset($node->pattern, $offset);
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->findQuantifierByOffset($node->child, $offset);
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $found = $this->findQuantifierByOffset($child, $offset);
-                if (null !== $found) {
-                    return $found;
-                }
-            }
-
-            return null;
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                $found = $this->findQuantifierByOffset($alt, $offset);
-                if (null !== $found) {
-                    return $found;
-                }
-            }
-
-            return null;
-        }
-
-        if ($node instanceof ConditionalNode) {
-            foreach ([$node->condition, $node->yes, $node->no] as $child) {
-                $found = $this->findQuantifierByOffset($child, $offset);
-                if (null !== $found) {
-                    return $found;
-                }
-            }
-
-            return null;
-        }
-
-        if ($node instanceof DefineNode) {
-            return $this->findQuantifierByOffset($node->content, $offset);
-        }
-
-        if ($node instanceof CharClassNode) {
-            return $this->findQuantifierByOffset($node->expression, $offset);
-        }
-
-        if ($node instanceof RangeNode) {
-            $found = $this->findQuantifierByOffset($node->start, $offset);
-            if (null !== $found) {
-                return $found;
-            }
-
-            return $this->findQuantifierByOffset($node->end, $offset);
-        }
-
-        return null;
     }
 
     /**

@@ -46,9 +46,9 @@ final class UnicodePropertyWithoutURule extends AbstractLintRule
 
         return [new RuleViolation(
             'regex.lint.unicode.propertyWithoutU',
-            \sprintf('Unicode property "\\p{%s}" requires /u flag.', trim($node->prop, '^{}')),
+            \sprintf('Without the /u flag, Unicode property "\\p{%s}" only covers the first 256 code points.', trim($node->prop, '^{}')),
             $node->startPosition,
-            'Add /u flag to enable Unicode property matching.',
+            'Add the /u flag to match beyond the first 256 code points.',
             LintSeverity::Error,
         )];
     }

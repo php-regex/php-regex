@@ -185,7 +185,7 @@ preg_match('/(?>a+)+b/', $input);
 preg_match('/(a++)+b/', $input);
 ```
 
-**Fix:** Refactor to be deterministic, or use atomic groups/possessive quantifiers.
+**Fix:** Refactor to be deterministic, or use atomic groups/possessive quantifiers — but verify the rewrite still matches everything you need: when the inner part is ambiguous (`(?:ab|a)+b`), an atomic inner group removes the backtracking between iterations and can change the language.
 
 **Read more:**
 - [OWASP: ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
@@ -211,7 +211,7 @@ preg_match('/.*+/', $input);  // If no outer repetition is needed
 preg_match('/[^"]*/', $input);  // For double-quoted strings
 ```
 
-**Fix:** Make it atomic/possessive or replace `.*` with a specific class.
+**Fix:** Make it atomic/possessive or replace `.*` with a specific class — and verify the rewrite still matches everything you need.
 
 ---
 

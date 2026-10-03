@@ -176,8 +176,6 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
     private function displayIssues(array $issues, ?string $pattern = null): string
     {
         $parts = [];
-        $seenSuggestions = [];
-
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->getIssueBadge($issueType);
@@ -194,22 +192,6 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
                 );
             }
 
-            $suggestedPattern = $issue['suggestedPattern'] ?? null;
-            if (
-                \is_string($suggestedPattern)
-                && '' !== $suggestedPattern
-                && \is_string($pattern)
-                && '' !== $pattern
-                && !isset($seenSuggestions[$suggestedPattern])
-            ) {
-                $seenSuggestions[$suggestedPattern] = true;
-                $original = $this->safelyHighlightPattern($pattern);
-                $optimized = $this->safelyHighlightPattern($suggestedPattern);
-
-                $parts[] = '    <bg=cyan;fg=white;options=bold> TIP </>'.\PHP_EOL;
-                $parts[] = \sprintf('         <fg=red>- %s</>'.\PHP_EOL, $original);
-                $parts[] = \sprintf('         <fg=green>+ %s</>'.\PHP_EOL, $optimized);
-            }
         }
 
         return implode('', $parts);

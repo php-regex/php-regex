@@ -223,12 +223,12 @@ vendor/bin/regex lint src/ --format=json
             "issues": [
                 {
                     "type": "warning",
-                    "message": "Nested quantifiers detected. Consider using atomic groups or possessive quantifiers.",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "file": "src/Service/Validator.php",
                     "line": 42,
                     "column": 9,
                     "issueId": "regex.lint.quantifier.nested",
-                    "hint": "Use atomic groups (?>...) or possessive quantifiers (*+, ++).",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "source": "php"
                 }
             ],
@@ -260,7 +260,6 @@ vendor/bin/regex lint src/ --format=json
 | `column`  | Column number              |
 | `issueId` | Diagnostic identifier      |
 | `hint`    | Suggested fix              |
-| `suggestedPattern` | Suggested pattern rewrite (optional) |
 | `source`  | Source language            |
 
 ---

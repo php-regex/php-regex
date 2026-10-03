@@ -166,7 +166,6 @@ final class AbstractConsoleTagFormatterTest extends TestCase
                         'type' => 'warning',
                         'message' => 'Prefer </> over <fg=red>',
                         'hint' => 'Use <bar> instead\\',
-                        'suggestedPattern' => '/<foo>[0-9]+/',
                         'file' => '/project/src/Foo.php',
                         'line' => 12,
                     ],

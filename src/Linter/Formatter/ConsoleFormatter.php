@@ -188,7 +188,6 @@ class ConsoleFormatter extends AbstractOutputFormatter
     private function formatIssues(array $issues, ?string $pattern): string
     {
         $parts = [];
-        $seenSuggestions = [];
 
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
@@ -203,22 +202,6 @@ class ConsoleFormatter extends AbstractOutputFormatter
                 if ('' !== $formattedHint) {
                     $parts[] = \sprintf('         %s'.\PHP_EOL, $this->dim(self::ARROW_LABEL.' '.$formattedHint));
                 }
-            }
-
-            $suggestedPattern = $issue['suggestedPattern'] ?? null;
-            if (
-                $this->config->shouldShowOptimizations()
-                && \is_string($suggestedPattern)
-                && '' !== $suggestedPattern
-                && \is_string($pattern)
-                && '' !== $pattern
-                && !isset($seenSuggestions[$suggestedPattern])
-            ) {
-                $seenSuggestions[$suggestedPattern] = true;
-                $parts[] = \sprintf('    %s'.\PHP_EOL,
-                    $this->badge('TIP', self::WHITE, self::BG_CYAN),
-                );
-                $parts[] = $this->formatOptimizationDiff($pattern, $suggestedPattern);
             }
         }
 
@@ -321,7 +304,14 @@ class ConsoleFormatter extends AbstractOutputFormatter
             if ('equal' === $op['type']) {
                 if (!$show[$index]) {
                     if (!$skipping) {
-                        $output .= $this->formatDiffEllipsis();
+                        $skipped = 0;
+                        $peek = $index;
+                        while ($peek < $opCount && 'equal' === $ops[$peek]['type'] && !$show[$peek]) {
+                            $skipped++;
+                            $peek++;
+                        }
+
+                        $output .= $this->formatDiffEllipsis($skipped);
                         $skipping = true;
                     }
                     $index++;
@@ -359,9 +349,18 @@ class ConsoleFormatter extends AbstractOutputFormatter
         );
     }
 
-    private function formatDiffEllipsis(): string
+    /**
+     * The omission marker says how much is missing: a bare ellipsis looks
+     * like a diff line and invites pasting a truncated rewrite.
+     */
+    private function formatDiffEllipsis(int $skipped): string
     {
-        return $this->formatDiffLine(' ', '...', self::GRAY, true);
+        return $this->formatDiffLine(
+            ' ',
+            sprintf('... %d line%s omitted ...', $skipped, 1 === $skipped ? '' : 's'),
+            self::GRAY,
+            true,
+        );
     }
 
     private function formatDiffSeparator(): string

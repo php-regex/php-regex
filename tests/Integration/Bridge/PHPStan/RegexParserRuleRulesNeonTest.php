@@ -71,7 +71,7 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 22,
-                "Consider using atomic groups (?>...) or possessive quantifiers.\nRead more: ".self::DOCS.'#nested-quantifiers',
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'#nested-quantifiers',
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
