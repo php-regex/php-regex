@@ -15,8 +15,8 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures;
 
 final class ReDoSFixture
 {
-    public function testReDoS(): void
+    public function testReDoS(string $subject): void
     {
-        preg_match('/(a+)+$/', 'test'); // proven exponential: the tip carries the attack and the links
+        preg_match('/(a+)+$/', $subject); // proven exponential: the tip carries the attack and the links
     }
 }

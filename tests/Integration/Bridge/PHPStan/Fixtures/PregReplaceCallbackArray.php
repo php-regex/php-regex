@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures;
 
 final class PregReplaceCallbackArray
 {
-    public function a(): void
+    public function a(string $subject): void
     {
         preg_replace_callback_array(
             [
@@ -23,7 +23,7 @@ final class PregReplaceCallbackArray
                 '/(a+)+$/' => fn ($m) => '', // ReDoS (critical) -> regex.redos
                 '/valid/' => fn ($m) => '',
             ],
-            'subject',
+            $subject,
         );
     }
 }

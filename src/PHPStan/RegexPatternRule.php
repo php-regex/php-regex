@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\PHPStan;
 
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
@@ -54,15 +56,19 @@ final class RegexPatternRule implements Rule
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
+    /**
+     * The preg functions the rule reads, with the position and name of their
+     * subject parameter; the pattern comes first in each.
+     */
     private const PREG_FUNCTION_MAP = [
-        'preg_match' => 0,
-        'preg_match_all' => 0,
-        'preg_replace' => 0,
-        'preg_replace_callback' => 0,
-        'preg_split' => 0,
-        'preg_grep' => 0,
-        'preg_filter' => 0,
-        'preg_replace_callback_array' => 0,
+        'preg_match' => [1, 'subject'],
+        'preg_match_all' => [1, 'subject'],
+        'preg_replace' => [2, 'subject'],
+        'preg_replace_callback' => [2, 'subject'],
+        'preg_split' => [1, 'subject'],
+        'preg_grep' => [1, 'array'],
+        'preg_filter' => [2, 'subject'],
+        'preg_replace_callback_array' => [1, 'subject'],
     ];
 
     private const DOC_BASE_URL = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md';
@@ -197,24 +203,27 @@ final class RegexPatternRule implements Rule
             return [];
         }
 
-        $patternArgPosition = self::PREG_FUNCTION_MAP[$functionName];
         $args = $node->getArgs();
-
-        if (!isset($args[$patternArgPosition])) {
+        $patternArg = self::argument($args, 0, 'pattern');
+        if (null === $patternArg) {
             return [];
         }
 
-        $patternArg = $args[$patternArgPosition]->value;
+        // A constant subject cannot carry an attack: the call backtracks the
+        // same way on every run, or never.
+        [$subjectPosition, $subjectName] = self::PREG_FUNCTION_MAP[$functionName];
+        $subjectArg = self::argument($args, $subjectPosition, $subjectName);
+        $constantSubject = null !== $subjectArg && $scope->getType($subjectArg)->isConstantValue()->yes();
 
         if ('preg_replace_callback_array' === $functionName) {
-            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getLine(), $functionName);
+            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getLine(), $functionName, $constantSubject);
         }
 
         $errors = [];
         foreach ($scope->getType($patternArg)->getConstantStrings() as $constantString) {
             $errors = array_merge(
                 $errors,
-                $this->validatePattern($constantString->getValue(), $node->getLine(), $scope, $functionName),
+                $this->validatePattern($constantString->getValue(), $node->getLine(), $scope, $functionName, $constantSubject),
             );
         }
 
@@ -260,9 +269,38 @@ final class RegexPatternRule implements Rule
     }
 
     /**
+     * The argument passed for a parameter, by name when the call names its
+     * arguments, by position otherwise; null when it cannot be told.
+     *
+     * @param array<Arg> $args
+     */
+    private static function argument(array $args, int $position, string $name): ?Expr
+    {
+        foreach ($args as $index => $arg) {
+            if (null !== $arg->name) {
+                if ($name === $arg->name->toString()) {
+                    return $arg->value;
+                }
+
+                continue;
+            }
+
+            if ($arg->unpack) {
+                return null;
+            }
+
+            if ($position === $index) {
+                return $arg->value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<IdentifierRuleError>
      */
-    private function processPregReplaceCallbackArray(Node $arrayNode, Scope $scope, int $lineNumber, string $functionName): array
+    private function processPregReplaceCallbackArray(Node $arrayNode, Scope $scope, int $lineNumber, string $functionName, bool $constantSubject): array
     {
         if (!$arrayNode instanceof Array_) {
             return [];
@@ -277,7 +315,7 @@ final class RegexPatternRule implements Rule
             $pattern = $item->key->value;
             $errors = array_merge(
                 $errors,
-                $this->validatePattern($pattern, $lineNumber, $scope, $functionName),
+                $this->validatePattern($pattern, $lineNumber, $scope, $functionName, $constantSubject),
             );
         }
 
@@ -287,7 +325,7 @@ final class RegexPatternRule implements Rule
     /**
      * @return array<IdentifierRuleError>
      */
-    private function validatePattern(string $pattern, int $lineNumber, Scope $scope, string $functionName): array
+    private function validatePattern(string $pattern, int $lineNumber, Scope $scope, string $functionName, bool $constantSubject): array
     {
         if (null === $this->targetLabel && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
             return [];
@@ -351,7 +389,7 @@ final class RegexPatternRule implements Rule
             }
         }
 
-        foreach ($redosIssues as $issue) {
+        foreach ($constantSubject ? [] : $redosIssues as $issue) {
             $analysis = $issue['analysis'] ?? null;
             if (!$analysis instanceof RedosAnalysis) {
                 continue;

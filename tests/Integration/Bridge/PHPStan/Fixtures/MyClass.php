@@ -15,13 +15,13 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures;
 
 final class MyClass
 {
-    public function a(): void
+    public function a(string $subject): void
     {
         // Refused by the running engine: PHPStan core reports them, the rule stays silent
         preg_match('/foo', 'bar'); // Missing delimiter
         preg_match('/a{2,1}/', 'bar'); // Invalid quantifier
-        preg_match('/(a+)+$/', 'bar'); // ReDoS (critical) -> regex.redos
-        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', 'bar'); // ReDoS (proven polynomial, degree 60: high) -> regex.redos
+        preg_match('/(a+)+$/', $subject); // ReDoS (critical) -> regex.redos
+        preg_match('/a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b/', $subject); // ReDoS (proven polynomial, degree 60: high) -> regex.redos
 
         // Valid
         preg_match('/a/i', 'bar');

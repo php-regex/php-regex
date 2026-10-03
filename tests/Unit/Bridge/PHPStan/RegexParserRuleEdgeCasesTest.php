@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
 use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
@@ -28,6 +29,8 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\TipRuleError;
 use PHPStan\Type\Constant\ConstantStringType;
+use PHPStan\Type\StringType;
+use PHPStan\Type\Type;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -503,11 +506,12 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
-        $scope->method('getType')->willReturn(new ConstantStringType($pattern));
+        // The subject is a variable PHPStan knows as a string: it may vary.
+        $scope->method('getType')->willReturnCallback(static fn (Expr $expr): Type => $expr instanceof Variable ? new StringType() : new ConstantStringType($pattern));
 
         $node = new FuncCall(
             new Name('preg_match'),
-            [new Arg(new String_($pattern)), new Arg(new String_('subject'))],
+            [new Arg(new String_($pattern)), new Arg(new Variable('subject'))],
             ['startLine' => $line],
         );
 

@@ -65,6 +65,16 @@ for all of 2.x. The severity, how the verdict was reached and the attack are in
 the tip: a better verdict changes the tip, never the message, and your baseline
 keeps working.
 
+A call whose subject PHPStan knows to be constant — a literal, a constant, a
+concatenation of them, or an array of them — is not reported: it backtracks
+the same way on every run, or never, so no input can turn it into an attack.
+The same pattern is reported wherever its subject may come from outside.
+
+```php
+preg_match('/^(a+)+$/', 'fixed');  // not reported: the subject is constant
+preg_match('/^(a+)+$/', $input);   // reported
+```
+
 ```php
 preg_match('/^(\w+\s?)+$/', $value);
 preg_match('/\d*\d*\d*$/', $value);
