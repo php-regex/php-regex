@@ -46,7 +46,7 @@ final class SolverGuardrailsTest extends TestCase
     #[DataProvider('provideSurrogateSpellings')]
     public function test_a_pattern_naming_a_surrogate_in_any_spelling_is_refused(string $pattern): void
     {
-        $this->assertFalse(false !== @\preg_match($pattern, 'a'), $pattern.' must not compile.');
+        $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessage(HirToNfaTransformer::SURROGATE_MESSAGE);

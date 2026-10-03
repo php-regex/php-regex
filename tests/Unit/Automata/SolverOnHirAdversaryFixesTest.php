@@ -49,7 +49,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        $this->assertFalse(false !== @\preg_match($pattern, 'a'), $pattern.' must not compile.');
+        $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessage('PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.');

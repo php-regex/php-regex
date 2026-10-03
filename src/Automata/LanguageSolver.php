@@ -238,9 +238,9 @@ final readonly class LanguageSolver
             foreach ($alphabetRanges as [$start]) {
                 $symbol = $start;
                 $nextLeft = null === $leftState ? self::DEAD : $leftState->transitionFor($symbol);
-                $nextLeft = null === $nextLeft ? self::DEAD : $nextLeft;
+                $nextLeft ??= self::DEAD;
                 $nextRight = null === $rightState ? self::DEAD : $rightState->transitionFor($symbol);
-                $nextRight = null === $nextRight ? self::DEAD : $nextRight;
+                $nextRight ??= self::DEAD;
 
                 $nextKey = $this->pairKey($nextLeft, $nextRight, $rightStateCount);
 
