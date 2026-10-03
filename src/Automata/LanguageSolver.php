@@ -20,6 +20,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\PrefixReader;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
@@ -116,6 +117,22 @@ final readonly class LanguageSolver
         );
 
         return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+    }
+
+    /**
+     * Whether some string starting with the input is matched, under the match
+     * mode of the options: a half-typed "2026" begins a date that
+     * /^\d{4}-\d{2}-\d{2}$/ matches, where preg_match() can only say 0. In
+     * UTF mode, an input ending in the middle of a character is viable when
+     * one way to finish the character is.
+     *
+     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     */
+    public function acceptsPrefix(string $pattern, string $input, ?SolverOptions $options = null): bool
+    {
+        $dfa = $this->buildDfa($pattern, $options ?? new SolverOptions());
+
+        return PrefixReader::begins($dfa, $input, $this->parser()->parse($pattern)->isUnicode());
     }
 
     /**

@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `LanguageSolver::acceptsPrefix()` tells whether some string starting with an input is matched: a half-typed `2026` begins a date `/^\d{4}-\d{2}-\d{2}$/` matches, where `preg_match()` can only say `0`. In UTF mode, an input cut in the middle of a character is viable when one way to finish it is. See [the solver reference](docs/reference/logic-solver.md).
 - `CaptureShapeAnalyzer` reads what a successful `preg_match()` writes into `$matches`, from the pattern alone: per group, whether every match sets it, some leave it unset or none sets it, its length bounds and, when finite, its values; `CaptureShape::matchShape()` writes the array as a PHPStan type, honouring `PREG_UNMATCHED_AS_NULL` and `PREG_OFFSET_CAPTURE`. See [Capture Shapes](docs/reference/capture-shapes.md).
 - `RegexNode::isUnicode()` says whether a pattern reads its subject as UTF-8: the `/u` flag, or a `(*UTF)` or `(*UTF8)` option it opens with.
 - Two lint rules on by default, from eslint-plugin-regexp's catalogue: `regex.lint.quantifier.lazyEnd` for a lazy quantifier nothing follows, which matches its minimum (`/\s+/U` replaces each space on its own), and `regex.lint.quantifier.assertion` for a quantifier on a lookaround, which lets the match skip it or changes nothing.

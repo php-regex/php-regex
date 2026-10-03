@@ -78,6 +78,25 @@ Result:
 
 Educational value: **Equivalence** asks "do these patterns accept the exact same set of strings?"
 
+## Use Case 4: Live Input Validation (The "Prefix" Problem)
+
+Scenario: a form field checks a date as it is typed. `preg_match()` says `0` for `2026`
+and for `202a` alike: neither is a whole date, and nothing tells the user which one can
+still become one.
+
+```php
+$solver = new LanguageSolver();
+
+$solver->acceptsPrefix('/^\d{4}-\d{2}-\d{2}$/', '2026');    // true: "2026-10-03" completes it
+$solver->acceptsPrefix('/^\d{4}-\d{2}-\d{2}$/', '202a');    // false: nothing does
+$solver->acceptsPrefix('/^\d{4}-\d{2}-\d{2}$/', '2026-10-031'); // false: one digit too many
+```
+
+Educational value: **Prefix** asks "does some string starting with this input belong to
+the language?" The solver reads the input on the pattern's DFA, then asks whether an
+accepting state can still be reached. In UTF mode an input that ends in the middle of a
+character is viable when one way to finish the character is.
+
 ## The Guarantee: One Engine, One Truth
 
 Every character set the solver matches is asked from the PCRE2 that runs in your
@@ -146,6 +165,8 @@ $equivalence->isEquivalent;         // true
 $equivalence->leftOnlyExample;      // null: no string only the left pattern matches
 $equivalence->rightOnlyExample;     // null: no string only the right pattern matches
 
+$solver->acceptsPrefix('/^ab$/', 'a'); // true: some string starting with "a" matches
+
 $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Model\Dfa)
 ```
 
@@ -154,6 +175,7 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 | `intersection($left, $right, $options = null)` | `IntersectionResult` | `isEmpty`         | `example`: a string both match           |
 | `subsetOf($left, $right, $options = null)`     | `SubsetResult`       | `isSubset`        | `counterExample`: only the left matches  |
 | `equivalent($left, $right, $options = null)`   | `EquivalenceResult`  | `isEquivalent`    | `leftOnlyExample`, `rightOnlyExample`    |
+| `acceptsPrefix($pattern, $input, $options = null)` | `bool`          | whether some string starting with `$input` matches | — |
 | `compile($pattern, $options = null)`           | `Dfa`                | the pattern's DFA | stored in the DFA cache when one is set  |
 
 Each of the three result objects also carries `pcreVersion`, the PCRE2 release
