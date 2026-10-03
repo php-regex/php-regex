@@ -61,7 +61,7 @@ final class RegularSubsetValidator
     private function assertSupportedFlags(string $flags): void
     {
         $unsupported = [];
-        $allowed = ['i', 's', 'u'];
+        $allowed = ['i', 's', 'u', 'D'];
         foreach (\str_split($flags) as $flag) {
             if (!\in_array($flag, $allowed, true)) {
                 $unsupported[] = $flag;

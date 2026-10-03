@@ -195,7 +195,7 @@ verbatim:
 | a word boundary, `\B`, `\K`, `\G`, or an anchor away from the edge of an alternative | `Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| a flag outside `i`, `s`, `u`               | `Unsupported regex flags for automata: m.` (the pattern's own flags, in order) |
+| a flag outside `i`, `s`, `u`, `D`          | `Unsupported regex flags for automata: m.` (the pattern's own flags, in order) |
 
 Two refinements inside those rules:
 
@@ -374,7 +374,10 @@ Use this to surface safe failure messages in CI or tooling.
   backreferences, no recursion, no atomic or possessive construct the follower
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
-- The pattern flags `i`, `s` and `u` are read; `m`, `x` and `r` are refused.
+- The pattern flags `i`, `s`, `u` and `D` are read; `m`, `x` and `r` are refused.
+- In partial match mode, a search, `$` and `\Z` also match before a newline that ends
+  the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
+  A full match covers the whole subject, so there `$` is the end of the subject.
   Inline flags (`(?i:...)`) are applied where they hold.
 - Case-insensitive matching folds single code points, as the engine folds
   them. A fold that produces several code points (the Turkish `İ`, the `DŽ`

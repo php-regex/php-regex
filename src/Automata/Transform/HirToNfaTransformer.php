@@ -96,8 +96,8 @@ final class HirToNfaTransformer
 
         $fragment = $this->buildNode($hir);
         if (MatchMode::Partial === $options->matchMode) {
-            [$startAnchored, $endAnchored] = $this->partialAnchorsOf($hir);
-            $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $endAnchored);
+            [$startAnchored, $end] = $this->partialAnchorsOf($hir);
+            $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $end);
         }
 
         return $this->builder->build($fragment);
@@ -639,18 +639,18 @@ final class HirToNfaTransformer
 
     /**
      * Where a search match may start and end: every alternative anchored at
-     * its start, or none; the same at the end. A mix says the pattern
-     * reads the subject differently on each side of an alternative, which
-     * one automaton cannot express.
+     * its start, or none; at the end, every alternative ending on the same
+     * anchor, or none. A mix says the pattern reads the subject differently
+     * on each side of an alternative, which one automaton cannot express.
      *
-     * @return array{0: bool, 1: bool}
+     * @return array{0: bool, 1: AssertionKind|null} the end anchor, null when the match may end anywhere
      */
     private function partialAnchorsOf(Hir $hir): array
     {
         $branches = $hir instanceof AlternationHir ? $hir->branches : [$hir];
 
         $startAnchored = true;
-        $endAnchored = true;
+        $end = null;
 
         foreach ($branches as $index => $branch) {
             $parts = $branch instanceof ConcatHir ? $branch->parts : [$branch];
@@ -658,8 +658,9 @@ final class HirToNfaTransformer
             $last = $parts[\count($parts) - 1] ?? null;
 
             $branchStartsAnchored = $first instanceof AssertionHir && AssertionKind::SubjectStart === $first->kind;
-            $branchEndsAnchored = $last instanceof AssertionHir
-                && (AssertionKind::SubjectEnd === $last->kind || AssertionKind::EndOrFinalNewline === $last->kind);
+            $branchEnd = $last instanceof AssertionHir && (AssertionKind::SubjectEnd === $last->kind || AssertionKind::EndOrFinalNewline === $last->kind)
+                ? $last->kind
+                : null;
 
             if ($index > 0 && $branchStartsAnchored !== $startAnchored) {
                 throw new ComplexityException(
@@ -669,7 +670,7 @@ final class HirToNfaTransformer
                 );
             }
 
-            if ($index > 0 && $branchEndsAnchored !== $endAnchored) {
+            if ($index > 0 && $branchEnd !== $end) {
                 throw new ComplexityException(
                     'Mixed end anchors across alternatives are not supported in partial match mode.',
                     0,
@@ -678,16 +679,16 @@ final class HirToNfaTransformer
             }
 
             $startAnchored = $branchStartsAnchored;
-            $endAnchored = $branchEndsAnchored;
+            $end = $branchEnd;
         }
 
-        return [$startAnchored, $endAnchored];
+        return [$startAnchored, $end];
     }
 
     private function wrapPartialMatch(
         NfaFragment $fragment,
         bool $startAnchored,
-        bool $endAnchored,
+        ?AssertionKind $end,
     ): NfaFragment {
         $charSet = CharSet::universe($this->unicode);
 
@@ -698,12 +699,23 @@ final class HirToNfaTransformer
             $this->builder->addEpsilon($start, $fragment->startState);
         }
 
-        if (!$endAnchored) {
+        if (null === $end) {
             foreach ($fragment->acceptStates as $acceptState) {
                 $this->builder->addTransition($acceptState, $charSet, $acceptState);
             }
         }
 
-        return new NfaFragment($start, $fragment->acceptStates);
+        // Without /D, "$" and "\Z" also match before a newline that ends the
+        // subject: a search accepts that newline after the match.
+        $acceptStates = $fragment->acceptStates;
+        if (AssertionKind::EndOrFinalNewline === $end) {
+            $newline = $this->builder->createState();
+            foreach ($fragment->acceptStates as $acceptState) {
+                $this->builder->addTransition($acceptState, CharSet::single(0x0A), $newline);
+            }
+            $acceptStates[] = $newline;
+        }
+
+        return new NfaFragment($start, $acceptStates);
     }
 }
