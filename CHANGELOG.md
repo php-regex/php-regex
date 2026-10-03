@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `CaptureShapeAnalyzer` reads what a successful `preg_match()` writes into `$matches`, from the pattern alone: per group, whether every match sets it, some leave it unset or none sets it, its length bounds and, when finite, its values; `CaptureShape::matchShape()` writes the array as a PHPStan type, honouring `PREG_UNMATCHED_AS_NULL` and `PREG_OFFSET_CAPTURE`. See [Capture Shapes](docs/reference/capture-shapes.md).
 - `RegexNode::isUnicode()` says whether a pattern reads its subject as UTF-8: the `/u` flag, or a `(*UTF)` or `(*UTF8)` option it opens with.
 - Two lint rules on by default, from eslint-plugin-regexp's catalogue: `regex.lint.quantifier.lazyEnd` for a lazy quantifier nothing follows, which matches its minimum (`/\s+/U` replaces each space on its own), and `regex.lint.quantifier.assertion` for a quantifier on a lookaround, which lets the match skip it or changes nothing.
 - Two lint rules for multibyte text PCRE reads as bytes without `/u`, both errors: `regex.lint.unicode.multibyteInClassWithoutU` for a class holding a character of several bytes (`/[é]/` matches `à`, whose first byte it shares), and `regex.lint.unicode.quantifiedMultibyteWithoutU` for a quantifier after one (`/^é+$/` does not match `éé`). The language server offers to add `/u` for both.

@@ -20,6 +20,7 @@ Features
 * Visitors walk the tree: implement `NodeVisitorInterface`, query with `NodeFinder`, or walk with `NodeWalker`.
 * The AST cache sits behind one interface: in memory by default, a directory on disk, or a PSR-6 / PSR-16 pool.
 * Small AST analyses: group numbering, complexity score, literal extraction, length ranges.
+* Capture shapes: which groups a match always sets, may leave unset or never sets, the strings each can hold, and the `$matches` array `preg_match()` fills, written as a PHPStan type for static analysers.
 
 Installation
 ------------
@@ -125,6 +126,7 @@ This package is part of [PHPRegex](https://github.com/php-regex/php-regex), rele
 * [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — entry points, configuration options, return objects, the exception hierarchy
 * [AST node reference](https://github.com/php-regex/php-regex/blob/2.x/docs/nodes/README.md) — every node type and its properties
 * [AST visitor reference](https://github.com/php-regex/php-regex/blob/2.x/docs/visitors/README.md) — the built-in visitors and how to write custom ones
+* [Capture shapes](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/capture-shapes.md) — what `preg_match()` writes into `$matches`, read from the pattern
 * [PCRE2 conformance](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/pcre2-conformance.md) — how often validation matches PHP's own engine on PCRE2's test suite
 
 Resources

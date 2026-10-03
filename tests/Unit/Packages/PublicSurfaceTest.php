@@ -55,6 +55,7 @@ final class PublicSurfaceTest extends TestCase
             'Analysis/ComplexityScorer', 'Analysis/GroupNumbering', 'Analysis/GroupNumberingCollector',
             'Analysis/LengthRangeCalculator', 'Analysis/LiteralExtractor', 'Analysis/LiteralExtractionResult',
             'Analysis/LiteralSet', 'Analysis/MetricsCollector',
+            'Analysis/CaptureShapeAnalyzer', 'Analysis/CaptureShape', 'Analysis/CaptureGroupShape', 'Analysis/Participation',
             'Cache/CacheInterface', 'Cache/RemovableCacheInterface', 'Cache/ArrayCache', 'Cache/NullCache',
             'Cache/FilesystemCache', 'Cache/PsrCacheAdapter', 'Cache/PsrSimpleCacheAdapter',
             'Engine/PcreEngine', 'Engine/PcreError', 'Engine/PcreLimits', 'Engine/PcreMatch',

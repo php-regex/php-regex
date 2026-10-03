@@ -10,6 +10,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md)
 - [Feature Support Matrix](feature-support-matrix.md)
 - [Correctness Contracts](correctness-contracts.md)
+- [Capture Shapes](capture-shapes.md)
 - [PCRE2 Conformance](pcre2-conformance.md)
 - [FAQ and Glossary](faq-glossary.md)
 
@@ -28,6 +29,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - Understand a lint warning: [reference.md](../reference.md)
 - Fix a validation error: [diagnostics-cheatsheet.md](diagnostics-cheatsheet.md)
 - Use the library in code: [api.md](api.md)
+- Know what `preg_match()` writes into `$matches`: [capture-shapes.md](capture-shapes.md)
 - Build a custom visitor: [../nodes/README.md](../nodes/README.md) and [../visitors/README.md](../visitors/README.md)
 - Learn regex patterns: [../tutorial/README.md](../tutorial/README.md)
 - Check ReDoS safety: [../REDOS_GUIDE.md](../REDOS_GUIDE.md)
