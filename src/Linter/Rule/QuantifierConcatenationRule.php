@@ -101,7 +101,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $left->startPosition,
                     0 === $leftMin
-                        ? 'The first quantifier can match zero times already: consider dropping it entirely.'
+                        ? 'The first quantifier can match zero times already: consider dropping the whole quantified term.'
                         : 'Consider tightening the first quantifier to its minimum.',
                 );
 
@@ -119,7 +119,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $right->startPosition,
                     0 === $rightMin
-                        ? 'The second quantifier can match zero times already: consider dropping it entirely.'
+                        ? 'The second quantifier can match zero times already: consider dropping the whole quantified term.'
                         : 'Consider tightening the second quantifier to its minimum.',
                 );
 

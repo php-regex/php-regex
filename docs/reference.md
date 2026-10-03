@@ -266,9 +266,15 @@ preg_match('/\d+\w+/', $input);
 
 // PREFERRED: Keep the superset quantifier unbounded
 preg_match('/\d\w+/', $input);
+
+// WARNING: \d* before \w* can be dropped — \w covers it
+preg_match('/\d*\w*/', $input);
+
+// PREFERRED: Drop the whole quantified term
+preg_match('/\w*/', $input);
 ```
 
-**Fix:** Tighten the smaller quantifier to its minimum or remove redundant repetition.
+**Fix:** Tighten the smaller quantifier to its minimum, or — when it can already match zero times — drop the whole quantified term.
 
 ---
 

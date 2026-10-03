@@ -258,6 +258,12 @@ preg_match('/\d+\w+/', $input);
 
 // FIX: Tighten the smaller quantifier
 preg_match('/\d\w+/', $input);
+
+// WARNING: \d* before \w* can be dropped — \w covers it
+preg_match('/\d*\w*/', $input);
+
+// FIX: Drop the whole quantified term
+preg_match('/\w*/', $input);
 ```
 
 ---

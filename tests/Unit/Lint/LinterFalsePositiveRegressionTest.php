@@ -176,7 +176,7 @@ final class LinterFalsePositiveRegressionTest extends TestCase
         }
 
         $this->assertSame(['/[a-z]*[a-z0-9_]*\z/', '/[a-z]+[a-z0-9_]*\z/'], array_keys($hints));
-        $this->assertStringContainsString('dropping it entirely', $hints['/[a-z]*[a-z0-9_]*\z/'] ?? '');
+        $this->assertStringContainsString('dropping the whole quantified term', $hints['/[a-z]*[a-z0-9_]*\z/'] ?? '');
         $this->assertStringContainsString('to its minimum', $hints['/[a-z]+[a-z0-9_]*\z/'] ?? '');
     }
 
