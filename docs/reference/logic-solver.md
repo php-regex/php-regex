@@ -236,8 +236,35 @@ instead of returning an answer that would be wrong. The next section lists every
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
-`Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, and `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns. Every other class of the namespace is
+`Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns, and `Language`. Every other class of the namespace is
 `@internal` and may change in any release.
+
+## The Language of a Pattern
+
+`language()` hands out what the automaton of a pattern knows once built, under the match
+mode of the options: whether its language is finite, how many strings of each length it
+holds, each of them in order, and the strings it rejects.
+
+```php
+$solver = new LanguageSolver();
+
+$plates = $solver->language('/^[A-Z]{2}\d{4}$/');
+$plates->isFinite();          // true
+$plates->size();              // "6760000"
+$plates->minLength();         // 6
+
+$solver->language('/^[a-z]+$/')->countOfLength(20); // "19928148895209409152340197376"
+
+iterator_to_array($solver->language('/^[ab]{2}$/')->strings(), false); // ['aa', 'ab', 'ba', 'bb']
+```
+
+Counts are exact decimal strings, however large, with no extension needed. `strings()` and
+`nonMembers()` are generators: shortest first, then in code point order; an infinite
+language never runs out, so take what you need. Each string `nonMembers()` hands out is
+proven outside the language by the automaton: test fixtures with positives and negatives
+both certain. Under the default full match mode a string belongs when the whole of it
+matches; ask for `MatchMode::Partial` to read the subjects `preg_match()` accepts, a final
+newline after `$` included.
 
 ## Lookarounds
 

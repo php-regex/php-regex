@@ -34,7 +34,7 @@ final class PublicSurfaceTest extends TestCase
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',
             'Exception/ComplexityException',
-            'TrivialMatchClassifier', 'TrivialMatch', 'TrivialMatchKind',
+            'TrivialMatchClassifier', 'TrivialMatch', 'TrivialMatchKind', 'Language',
         ],
         'Cli' => [],
         'Explain' => [

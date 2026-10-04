@@ -168,6 +168,18 @@ final readonly class LanguageSolver
     }
 
     /**
+     * The set of strings the pattern matches, under the match mode of the
+     * options: whether it is finite, how many strings of each length it
+     * holds, each of them, and the strings it rejects.
+     *
+     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     */
+    public function language(string $pattern, ?SolverOptions $options = null): Language
+    {
+        return new Language($this->buildDfa($pattern, $options ?? new SolverOptions()), $this->parser()->parse($pattern)->isUnicode());
+    }
+
+    /**
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *

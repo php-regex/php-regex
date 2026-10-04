@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Language;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Model\Dfa;
@@ -51,6 +52,7 @@ final class PublicSurfaceTest extends TestCase
         TrivialMatchClassifier::class,
         TrivialMatch::class,
         TrivialMatchKind::class,
+        Language::class,
         IntersectionResult::class,
         SubsetResult::class,
         Dfa::class,
