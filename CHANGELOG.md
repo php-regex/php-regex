@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `LanguageSolver::matchEquivalent()` decides whether `preg_match()` writes the same `$matches` for two patterns on every subject — same answer, same match, same groups — where `equivalent()` compares the strings they match: `/a|ab/` and `/ab|a/` match the same strings, yet on `ab` the first matches `a`. A difference comes with the shortest subject that shows it. It reads the fragment where a leftmost-first run picks PCRE's match, and refuses the rest with a reason. See [the solver reference](docs/reference/logic-solver.md).
 - `LanguageSolver::acceptsPrefix()` tells whether some string starting with an input is matched: a half-typed `2026` begins a date `/^\d{4}-\d{2}-\d{2}$/` matches, where `preg_match()` can only say `0`. In UTF mode, an input cut in the middle of a character is viable when one way to finish it is. See [the solver reference](docs/reference/logic-solver.md).
 - `CaptureShapeAnalyzer` reads what a successful `preg_match()` writes into `$matches`, from the pattern alone: per group, whether every match sets it, some leave it unset or none sets it, its length bounds and, when finite, its values; `CaptureShape::matchShape()` writes the array as a PHPStan type, honouring `PREG_UNMATCHED_AS_NULL` and `PREG_OFFSET_CAPTURE`. See [Capture Shapes](docs/reference/capture-shapes.md).
 - `RegexNode::isUnicode()` says whether a pattern reads its subject as UTF-8: the `/u` flag, or a `(*UTF)` or `(*UTF8)` option it opens with.

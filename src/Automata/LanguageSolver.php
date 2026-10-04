@@ -15,11 +15,15 @@ namespace PHPRegex\Automata;
 
 use PHPRegex\Automata\Builder\DfaBuilder;
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Match\MatchExplorer;
+use PHPRegex\Automata\Match\PriorityNfa;
+use PHPRegex\Automata\Match\PriorityNfaBuilder;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
@@ -120,6 +124,34 @@ final readonly class LanguageSolver
     }
 
     /**
+     * Whether preg_match() writes the same $matches for both patterns on
+     * every subject: the same answer, the same match and the same groups,
+     * named alike. Stronger than equivalent(): /a|ab/ and /ab|a/ match the
+     * same strings, yet on "ab" the first matches "a" and the second "ab",
+     * as PCRE takes the first alternative that leads to a match. The
+     * counter-example is the shortest subject the two treat differently.
+     *
+     * The match mode of the options does not apply: the question is what
+     * preg_match() does.
+     *
+     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     */
+    public function matchEquivalent(string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
+    {
+        $options ??= new SolverOptions();
+        $leftNfa = $this->priorityNfa($left, $options);
+        $rightNfa = $this->priorityNfa($right, $options);
+
+        if ($leftNfa->unicode !== $rightNfa->unicode) {
+            throw new ComplexityException('Both patterns must read the subject the same way, as UTF-8 or as bytes, for the match solver to compare them.', 0, $left);
+        }
+
+        $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left))->counterExample();
+
+        return new MatchEquivalenceResult(null === $counterExample, $counterExample, $this->parser()->target()->pcreVersion);
+    }
+
+    /**
      * Whether some string starting with the input is matched, under the match
      * mode of the options: a half-typed "2026" begins a date that
      * /^\d{4}-\d{2}-\d{2}$/ matches, where preg_match() can only say 0. In
@@ -144,6 +176,22 @@ final readonly class LanguageSolver
     public function compile(string $pattern, ?SolverOptions $options = null): Dfa
     {
         return $this->buildDfa($pattern, $options ?? new SolverOptions());
+    }
+
+    /**
+     * @throws ComplexityException
+     */
+    private function priorityNfa(string $pattern, SolverOptions $options): PriorityNfa
+    {
+        $ast = $this->parser()->parse($pattern);
+
+        // These flags change nothing the tree does not already say.
+        $unsupported = array_diff(str_split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X']);
+        if ([] !== array_filter($unsupported, static fn (string $flag): bool => '' !== $flag)) {
+            throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
+        }
+
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator())->translate($ast), $ast->isUnicode());
     }
 
     private function parser(): RegexParser

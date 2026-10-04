@@ -78,7 +78,39 @@ Result:
 
 Educational value: **Equivalence** asks "do these patterns accept the exact same set of strings?"
 
-## Use Case 4: Live Input Validation (The "Prefix" Problem)
+## Use Case 4: Rewrites that Keep $matches (The "Match Equivalence" Problem)
+
+Scenario: two patterns match the same strings, yet one replaces the other only if
+`preg_match()` writes the same `$matches` for them. PCRE takes the first alternative that
+leads to a match, not the longest: on `ab`, `/a|ab/` matches `a` and `/ab|a/` matches `ab`.
+
+```php
+$solver = new LanguageSolver();
+
+$solver->equivalent('/(a|ab)/', '/(ab|a)/')->isEquivalent;          // true: same strings
+$result = $solver->matchEquivalent('/(a|ab)/', '/(ab|a)/');
+$result->isEquivalent;                                               // false
+$result->counterExample;                                             // "ab": $1 is "a", then "ab"
+
+$solver->matchEquivalent('/a|ab/', '/a(?:b)??/')->isEquivalent;      // true
+```
+
+Educational value: **Match equivalence** asks "does `preg_match()` give the same answer,
+the same match and the same groups for every subject?" The solver runs both patterns side
+by side the way a leftmost-first matcher runs one, its threads in the order PCRE tries
+its paths, a new start at each position until a match is found. It keeps positions only
+as far as their equality goes, so the search over every subject ends, and the first
+subject on which the two differ is the shortest.
+
+It reads the fragment where that run picks the match PCRE's backtracking picks. It refuses,
+each with its reason: backreferences, subroutines, conditionals and control verbs;
+lookarounds; atomic groups and possessive quantifiers; a loop over a body that can match
+empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
+and `\K`; an end anchor followed by more of the pattern; and two patterns of which one
+reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
+write different `$matches`.
+
+## Use Case 5: Live Input Validation (The "Prefix" Problem)
 
 Scenario: a form field checks a date as it is typed. `preg_match()` says `0` for `2026`
 and for `202a` alike: neither is a whole date, and nothing tells the user which one can
@@ -167,6 +199,10 @@ $equivalence->rightOnlyExample;     // null: no string only the right pattern ma
 
 $solver->acceptsPrefix('/^ab$/', 'a'); // true: some string starting with "a" matches
 
+$match = $solver->matchEquivalent('/a|ab/', '/ab|a/');
+$match->isEquivalent;               // false: same strings, other matches
+$match->counterExample;             // "ab"
+
 $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Model\Dfa)
 ```
 
@@ -175,10 +211,11 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 | `intersection($left, $right, $options = null)` | `IntersectionResult` | `isEmpty`         | `example`: a string both match           |
 | `subsetOf($left, $right, $options = null)`     | `SubsetResult`       | `isSubset`        | `counterExample`: only the left matches  |
 | `equivalent($left, $right, $options = null)`   | `EquivalenceResult`  | `isEquivalent`    | `leftOnlyExample`, `rightOnlyExample`    |
+| `matchEquivalent($left, $right, $options = null)` | `MatchEquivalenceResult` | `isEquivalent` | `counterExample`: the shortest subject with other `$matches` |
 | `acceptsPrefix($pattern, $input, $options = null)` | `bool`          | whether some string starting with `$input` matches | — |
 | `compile($pattern, $options = null)`           | `Dfa`                | the pattern's DFA | stored in the DFA cache when one is set  |
 
-Each of the three result objects also carries `pcreVersion`, the PCRE2 release
+Each of the four result objects also carries `pcreVersion`, the PCRE2 release
 the answer was computed with (`"10.49"` on the engine this page's examples ran
 on). Two results with different stamps describe two engines' languages; compare
 them only knowing that.
@@ -198,7 +235,7 @@ A pattern outside the regular subset (backreferences, lookarounds, recursion, ..
 instead of returning an answer that would be wrong. The next section lists every reason.
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
-`Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the three result classes in
+`Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`. Every other class of the namespace is
 `@internal` and may change in any release.
 

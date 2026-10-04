@@ -31,7 +31,7 @@ final class PublicSurfaceTest extends TestCase
         'Automata' => [
             'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode',
             'Determinization/DeterminizationAlgorithm', 'Minimization/MinimizationAlgorithm',
-            'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult',
+            'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',
             'Exception/ComplexityException',
         ],
