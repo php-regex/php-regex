@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Automata;
 
-use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,12 +69,14 @@ final class DollarBeforeFinalNewlineTest extends TestCase
     }
 
     #[Test]
-    public function test_alternatives_ending_on_different_anchors_are_refused_in_a_search(): void
+    public function test_alternatives_ending_on_different_anchors_are_read_in_a_search(): void
     {
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Mixed end anchors across alternatives are not supported in partial match mode.');
+        // Oracle: "/a$|b\z/" takes "a\n" and "xb", not "b\n".
+        $this->assertSame(1, preg_match('/a$|b\z/', "a\n"));
+        $this->assertSame(0, preg_match('/a$|b\z/', "b\n"));
 
-        (new LanguageSolver())->compile('/a$|b\z/', new SolverOptions(matchMode: MatchMode::Partial));
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
+        $this->assertTrue((new LanguageSolver())->equivalent('/a$|b\z/', '/(?:a\n?|b)\z/', $options)->isEquivalent);
     }
 
     /**
@@ -89,7 +91,7 @@ final class DollarBeforeFinalNewlineTest extends TestCase
         yield 'every branch' => ['pattern' => '/a$|b$/', 'members' => ["a\n", 'xb'], 'outsiders' => ["a\n\n"]];
     }
 
-    private static function accepts(\PHPRegex\Automata\Model\Dfa $dfa, string $subject): bool
+    private static function accepts(Dfa $dfa, string $subject): bool
     {
         $state = $dfa->startState;
         foreach (str_split($subject) as $byte) {

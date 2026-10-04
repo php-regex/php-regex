@@ -61,7 +61,7 @@ final class HirToNfaTransformer
 
     public const ATOMIC_MESSAGE = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
 
-    public const ASSERTION_MESSAGE = '\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
+    public const ASSERTION_MESSAGE = '\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.';
 
     public const POSSESSIVE_MESSAGE = 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.';
 
@@ -94,6 +94,14 @@ final class HirToNfaTransformer
      */
     private array $marks = [];
 
+    /**
+     * The anchors at the edges of the pattern, by object id: they hold by
+     * where the match starts and ends, and compile to nothing.
+     *
+     * @var array<int, true>
+     */
+    private array $edges = [];
+
     public function __construct(private readonly string $pattern, private readonly bool $unicode) {}
 
     /**
@@ -107,9 +115,9 @@ final class HirToNfaTransformer
         $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax);
 
         $this->marks = [];
+        [$startAnchored, $end, $this->edges] = $this->edgesOf($hir, $options->matchMode);
         $fragment = $this->buildNode($hir);
         if (MatchMode::Partial === $options->matchMode) {
-            [$startAnchored, $end] = $this->partialAnchorsOf($hir);
             $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $end);
         }
 
@@ -132,6 +140,7 @@ final class HirToNfaTransformer
     {
         $alphabetMax = $this->unicode ? self::UNICODE_MAX_CODEPOINT : self::MAX_CODEPOINT;
         $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax);
+        $this->edges = [];
         $fragment = $this->buildNode($look->body);
         $behind = LookKind::Behind === $look->kind || LookKind::NegativeBehind === $look->kind;
 
@@ -208,8 +217,6 @@ final class HirToNfaTransformer
                 throw new ComplexityException(self::LOOKAROUND_ANCHOR_MESSAGE, $node->startPosition, $this->pattern);
             }
 
-            // A whole-tree assertion sits at the edge of its alternative by
-            // definition: only the kinds carry a meaning there.
             $this->assertAssertionKind($node);
 
             return;
@@ -258,23 +265,15 @@ final class HirToNfaTransformer
     }
 
     /**
-     * A sequence: its assertions may sit at its edges, and each part that
-     * ends in a possessive quantifier is judged against what follows it —
-     * the rest of the sequence and, at its end, whatever follows the
-     * sequence itself.
+     * A sequence: each part that ends in a possessive quantifier is judged
+     * against what follows it — the rest of the sequence and, at its end,
+     * whatever follows the sequence itself.
      *
      * @throws ComplexityException
      */
     private function assertConcat(ConcatHir $node, SolverOptions $options, ?CharSet $follow): void
     {
         $parts = $node->parts;
-        $lastIndex = \count($parts) - 1;
-
-        foreach ($parts as $index => $part) {
-            if ($part instanceof AssertionHir) {
-                $this->assertAssertionPosition($part, 0 === $index, $lastIndex === $index);
-            }
-        }
 
         foreach ($parts as $index => $part) {
             $partFollow = $this->followSetOf($parts, $index, $follow);
@@ -288,46 +287,19 @@ final class HirToNfaTransformer
     }
 
     /**
-     * The kinds that carry no meaning at the edge of an alternative: the
-     * start of the subject at the start, its end (or a final newline) at
-     * the end. Every other condition reads where the match stands.
+     * The anchors and word boundaries read as the lookarounds they stand
+     * for; "\G" and "\K" read where a match starts, which no language says.
      *
      * @throws ComplexityException
      */
     private function assertAssertionKind(AssertionHir $node): void
     {
-        if (AssertionKind::SubjectStart === $node->kind
-            || AssertionKind::SubjectEnd === $node->kind
-            || AssertionKind::EndOrFinalNewline === $node->kind
-            || self::isWordBoundary($node)
-        ) {
+        if (AssertionKind::MatchStart !== $node->kind && AssertionKind::ResetMatchStart !== $node->kind
+            && (null !== $node->wordSet || !self::isWordBoundaryKind($node->kind))) {
             return;
         }
 
         throw new ComplexityException(self::ASSERTION_MESSAGE, $node->startPosition, $this->pattern);
-    }
-
-    /**
-     * @throws ComplexityException
-     */
-    private function assertAssertionPosition(AssertionHir $node, bool $atStart, bool $atEnd): void
-    {
-        $this->assertAssertionKind($node);
-
-        // A word boundary reads where it stands, as its lookarounds do.
-        if (self::isWordBoundary($node)) {
-            return;
-        }
-
-        $accepted = match ($node->kind) {
-            AssertionKind::SubjectStart => $atStart,
-            AssertionKind::SubjectEnd, AssertionKind::EndOrFinalNewline => $atEnd,
-            default => false,
-        };
-
-        if (!$accepted) {
-            throw new ComplexityException(self::ASSERTION_MESSAGE, $node->startPosition, $this->pattern);
-        }
     }
 
     /**
@@ -536,6 +508,10 @@ final class HirToNfaTransformer
             return $this->buildWordBoundary($node, $node->wordSet);
         }
 
+        if ($node instanceof AssertionHir && !isset($this->edges[spl_object_id($node)])) {
+            return $this->buildNode($this->anchorAsLookaround($node));
+        }
+
         if ($node instanceof LookHir) {
             // A mark the lookaround product reads: crossing it makes the
             // promise about what follows, or asks what came before.
@@ -582,9 +558,46 @@ final class HirToNfaTransformer
         return new NfaFragment($start, [$end]);
     }
 
+    /**
+     * An anchor away from the edges as the lookarounds it stands for, the
+     * newline being "\n": "\A" with nothing before, "\z" with nothing
+     * after, "$" and "\Z" before at most a final newline; under /m, "^"
+     * at the start or after a newline more follows, "$" before a newline
+     * or at the end.
+     */
+    private function anchorAsLookaround(AssertionHir $node): Hir
+    {
+        $any = new ClassHir(CharSet::universe($this->unicode));
+        $newline = new LiteralHir([0x0A]);
+        $look = static fn (Hir $body, LookKind $kind): LookHir => new LookHir($body, $kind, true, $node->startPosition, $node->endPosition);
+
+        return match ($node->kind) {
+            AssertionKind::SubjectStart => $look($any, LookKind::NegativeBehind),
+            AssertionKind::SubjectEnd => $look($any, LookKind::NegativeAhead),
+            AssertionKind::EndOrFinalNewline => $look(new AlternationHir([self::notNewline($any), new ConcatHir([$newline, $any])]), LookKind::NegativeAhead),
+            AssertionKind::LineStart => new AlternationHir([
+                $look($any, LookKind::NegativeBehind),
+                new ConcatHir([$look($newline, LookKind::Behind), $look($any, LookKind::Ahead)]),
+            ]),
+            AssertionKind::LineEnd => $look(self::notNewline($any), LookKind::NegativeAhead),
+            // The refusal walk lets no other kind through.
+            default => new ConcatHir([]),
+        };
+    }
+
+    private static function notNewline(ClassHir $any): ClassHir
+    {
+        return new ClassHir($any->set->subtract(CharSet::single(0x0A)));
+    }
+
     private static function isWordBoundary(AssertionHir $node): bool
     {
-        return null !== $node->wordSet && (AssertionKind::WordBoundary === $node->kind || AssertionKind::NotWordBoundary === $node->kind);
+        return null !== $node->wordSet && self::isWordBoundaryKind($node->kind);
+    }
+
+    private static function isWordBoundaryKind(AssertionKind $kind): bool
+    {
+        return AssertionKind::WordBoundary === $kind || AssertionKind::NotWordBoundary === $kind;
     }
 
     private function buildConcat(ConcatHir $node): NfaFragment
@@ -761,51 +774,46 @@ final class HirToNfaTransformer
     }
 
     /**
-     * Where a search match may start and end: every alternative anchored at
-     * its start, or none; at the end, every alternative ending on the same
-     * anchor, or none. A mix says the pattern reads the subject differently
-     * on each side of an alternative, which one automaton cannot express.
+     * The anchors at the edges of the pattern, which hold by where the match
+     * starts and ends: a full match spans the subject, so each alternative's
+     * leading "\A" and trailing "\z", "$" or "\Z" hold; a search starts at
+     * the subject's start when every alternative says so, and ends on the
+     * same anchor in every alternative, or the anchors read where they
+     * stand.
      *
-     * @return array{0: bool, 1: AssertionKind|null} the end anchor, null when the match may end anywhere
+     * @return array{0: bool, 1: AssertionKind|null, 2: array<int, true>} whether a search starts at the subject's start, the anchor it ends on, the edge anchors by object id
      */
-    private function partialAnchorsOf(Hir $hir): array
+    private function edgesOf(Hir $hir, MatchMode $mode): array
     {
-        $branches = $hir instanceof AlternationHir ? $hir->branches : [$hir];
-
-        $startAnchored = true;
-        $end = null;
-
-        foreach ($branches as $index => $branch) {
+        $starts = [];
+        $ends = [];
+        foreach ($hir instanceof AlternationHir ? $hir->branches : [$hir] as $branch) {
             $parts = $branch instanceof ConcatHir ? $branch->parts : [$branch];
             $first = $parts[0] ?? null;
             $last = $parts[\count($parts) - 1] ?? null;
-
-            $branchStartsAnchored = $first instanceof AssertionHir && AssertionKind::SubjectStart === $first->kind;
-            $branchEnd = $last instanceof AssertionHir && (AssertionKind::SubjectEnd === $last->kind || AssertionKind::EndOrFinalNewline === $last->kind)
-                ? $last->kind
-                : null;
-
-            if ($index > 0 && $branchStartsAnchored !== $startAnchored) {
-                throw new ComplexityException(
-                    'Mixed start anchors across alternatives are not supported in partial match mode.',
-                    0,
-                    $this->pattern,
-                );
-            }
-
-            if ($index > 0 && $branchEnd !== $end) {
-                throw new ComplexityException(
-                    'Mixed end anchors across alternatives are not supported in partial match mode.',
-                    0,
-                    $this->pattern,
-                );
-            }
-
-            $startAnchored = $branchStartsAnchored;
-            $end = $branchEnd;
+            $starts[] = $first instanceof AssertionHir && AssertionKind::SubjectStart === $first->kind ? $first : null;
+            $ends[] = $last instanceof AssertionHir && (AssertionKind::SubjectEnd === $last->kind || AssertionKind::EndOrFinalNewline === $last->kind) ? $last : null;
         }
 
-        return [$startAnchored, $end];
+        if (MatchMode::Full !== $mode) {
+            if (\in_array(null, $starts, true)) {
+                $starts = [];
+            }
+
+            $kinds = array_unique(array_map(static fn (?AssertionHir $end): string => $end?->kind->name ?? '', $ends));
+            if (1 !== \count($kinds) || [''] === array_values($kinds)) {
+                $ends = [];
+            }
+        }
+
+        $edges = [];
+        foreach ([...$starts, ...$ends] as $anchor) {
+            if (null !== $anchor) {
+                $edges[spl_object_id($anchor)] = true;
+            }
+        }
+
+        return [[] !== $starts && !\in_array(null, $starts, true), [] === $ends ? null : $ends[0]?->kind, $edges];
     }
 
     private function wrapPartialMatch(

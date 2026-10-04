@@ -61,7 +61,7 @@ final class TrivialMatchClassifierTest extends TestCase
         $this->assertSame(1, preg_match('/^foo$/', "foo\n"));
 
         $match = (new TrivialMatchClassifier())->classify('/^foo$/');
-        $this->assertNotNull($match);
+        $this->assertInstanceOf(TrivialMatch::class, $match);
         $this->assertNotSame(TrivialMatchKind::Equals, $match->kind);
     }
 
@@ -82,6 +82,7 @@ final class TrivialMatchClassifierTest extends TestCase
         yield 'a group changes nothing' => ['pattern' => '/^(foo)\z/', 'kind' => TrivialMatchKind::Equals, 'literals' => ['foo'], 'expression' => "'foo' === \$subject"];
         yield 'escaped dot' => ['pattern' => '/f\.o/', 'kind' => TrivialMatchKind::Contains, 'literals' => ['f.o'], 'expression' => "str_contains(\$subject, 'f.o')"];
         yield 'optional letter' => ['pattern' => '/^colou?r\z/', 'kind' => TrivialMatchKind::OneOf, 'literals' => ['color', 'colour'], 'expression' => "in_array(\$subject, ['color', 'colour'], true)"];
+        yield 'multiline without an anchor' => ['pattern' => '/foo/m', 'kind' => TrivialMatchKind::Contains, 'literals' => ['foo'], 'expression' => "str_contains(\$subject, 'foo')"];
         yield 'quote' => ['pattern' => "/it's/", 'kind' => TrivialMatchKind::Contains, 'literals' => ["it's"], 'expression' => "str_contains(\$subject, 'it\\'s')"];
     }
 
@@ -100,7 +101,6 @@ final class TrivialMatchClassifierTest extends TestCase
         yield 'matches every subject' => ['pattern' => '//'];
         yield 'backreference' => ['pattern' => '/(a)\1/'];
         yield 'invalid' => ['pattern' => '/(foo/'];
-        yield 'multiline flag the automata refuse' => ['pattern' => '/foo/m'];
         yield 'class of too many letters' => ['pattern' => '/^[a-z]\z/'];
         yield 'optional class of too many letters' => ['pattern' => '/^\w?\z/'];
         yield 'too many combinations' => ['pattern' => '/^[ab][ab][ab][ab][ab]\z/'];

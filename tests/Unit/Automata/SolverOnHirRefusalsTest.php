@@ -46,7 +46,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         $nested = 'A lookaround inside a lookaround is beyond what the automata solver reads.';
         $anchored = 'An anchor inside a lookaround is beyond what the automata solver reads.';
         $atomic = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
-        $assertion = '\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
+        $assertion = '\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.';
         $surrogate = 'PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.';
 
         // "\g{1}" is the unambiguous spelling of the backreference: the
@@ -67,8 +67,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'match start after a character' => ['pattern' => '/a\G/', 'expected' => $assertion];
         yield 'word boundary inside a lookahead' => ['pattern' => '/(?=\b)a/', 'expected' => 'An anchor inside a lookaround is beyond what the automata solver reads.'];
         yield 'keep' => ['pattern' => '/a\Kb/', 'expected' => $assertion];
-        yield 'subject start inside' => ['pattern' => '/a\Ab/', 'expected' => $assertion];
-        yield 'subject end inside' => ['pattern' => '/a\zb/', 'expected' => $assertion];
+        yield 'keep at the start' => ['pattern' => '/\Ka/', 'expected' => $assertion];
         yield 'match start' => ['pattern' => '/\Gab/', 'expected' => $assertion];
 
         // Oracle: PCRE refuses to COMPILE a /u pattern that names a surrogate
@@ -81,12 +80,12 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'surrogate in a class' => ['pattern' => '/[a\x{D800}]/u', 'expected' => $surrogate];
         yield 'surrogate as a range endpoint' => ['pattern' => '/[\x{D800}-\x{E000}]/u', 'expected' => $surrogate];
 
-        // The accepted flag set stays {i, s, u}: patterns without anchors
-        // under /m, extended-mode patterns and the caseless-restrict /r are
-        // refused by the flag check, kept word for word. Anchors are kept
-        // out of these rows so only the flag check can refuse them.
-        yield 'm flag' => ['pattern' => '/ab/m', 'expected' => 'Unsupported regex flags for automata: m.'];
-        yield 'x flag' => ['pattern' => '/a b/x', 'expected' => 'Unsupported regex flags for automata: x.'];
+        // Oracle: preg_match('/a/A', 'ba') is 0, the anchored flag pins a
+        // search to the subject's start; preg_match('/a/r', 'a') is 1, the
+        // caseless restriction narrows what /i folds. Neither is read, so the
+        // flag check refuses them word for word.
+        yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
+        yield 'newline convention under m' => ['pattern' => '/(*CR)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
         yield 'r flag' => ['pattern' => '/a/r', 'expected' => 'Unsupported regex flags for automata: r.'];
     }
 

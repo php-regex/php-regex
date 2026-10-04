@@ -291,6 +291,14 @@ A word boundary is two lookarounds in disguise, and reads as them: `\b` holds be
 word character and something else, `(?<=\w)(?!\w)|(?<!\w)(?=\w)`, `\B` where it does not.
 Word characters are the engine's: `é` is one under `/u`, two bytes that are not without it.
 
+Anchors away from the edges of the pattern read the same way. `\A` holds with nothing
+before, `(?<![\s\S])`; `\z` with nothing after, `(?![\s\S])`; `$` and `\Z` before at
+most a newline that ends the subject. Under `/m`, `^` holds at the start or after a newline
+that more follows, and `$` before any newline or at the end. So `/a\Ab/` matches nothing,
+`/(?:^|,)a/` finds an `a` at the start or after a comma, and `/^\d+$/m` checks one line
+among many. Anchors at the edges, `\A` leading every alternative of a search or `\z`
+closing it, still cost nothing.
+
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it.
 
@@ -308,22 +316,17 @@ verbatim:
 | an anchor inside a lookaround              | `An anchor inside a lookaround is beyond what the automata solver reads.` |
 | a non-atomic lookaround, `(*napla:...)`    | `A non-atomic lookaround, (*napla:...) or its kind, backtracks into its body, which the automata solver does not read.` |
 | an atomic group (and `\R`)                 | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
-| `\K`, `\G`, or an anchor away from the edge of an alternative | `\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.` |
+| `\K` or `\G`                               | `\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| a flag outside `i`, `s`, `u`, `D`          | `Unsupported regex flags for automata: m.` (the pattern's own flags, in order) |
+| a start option such as `(*CRLF)` with `$`, `\Z` or `/m` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| the flag `A` or `r`                        | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
 Two refinements inside those rules:
 
-- **Anchors.** `^`, `$`, `\A`, `\z` and `\Z` are read where they carry no
-  meaning of their own — at the outer start or end of an alternative
-  (`/\Aab\z/` and `/^ab$/` are answered; `/a\Ab/` is refused with the
-  zero-width message above). `^` and `$` misplaced keep their own message
-  (`Anchors in partial match mode must appear at the start or end of each
-  alternative.`), as do anchors nested inside a group or under a quantifier
-  (`Nested anchors are not supported in partial match mode.`), and alternatives
-  that anchor differently (`Mixed start anchors across alternatives are not
-  supported in partial match mode.`).
+- **Anchors.** `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand,
+  under `/m` too; see [Lookarounds](#lookarounds). Inside a
+  lookaround they stay refused, with the message above.
 - **Possessive quantifiers and atomic groups are refused — except when nothing
   that follows can take the characters back.** `/^a*+a$/` matches nothing at
   all, an ordered fact no pure language can say, so it is refused; but `a++`
@@ -490,7 +493,9 @@ Use this to surface safe failure messages in CI or tooling.
   backreferences, no recursion, no atomic or possessive construct the follower
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
-- The pattern flags `i`, `s`, `u` and `D` are read; `m`, `x` and `r` are refused.
+- The pattern flags `i`, `s`, `u`, `D` and `m` are read; `x`, `U`, `n`, `J`, `S` and `X`
+  change nothing a language says. `A` and `r` are refused, and so is a newline convention
+  other than `\n` where `$`, `\Z` or `/m` would read it.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.
@@ -502,5 +507,4 @@ Use this to surface safe failure messages in CI or tooling.
 - Under `/u` the sets cover the code points minus the surrogates
   `U+D800`-`U+DFFF`; without `/u` the alphabet is the 256 bytes, and a
   multi-byte subject is read byte by byte, as the engine does without `/u`.
-- Partial matching is modeled as **Σ\* L Σ\***, with anchors allowed only at
-  the outer boundaries of each alternative, consistently across alternatives.
+- Partial matching is modeled as **Σ\* L Σ\***; an anchor reads where it stands.

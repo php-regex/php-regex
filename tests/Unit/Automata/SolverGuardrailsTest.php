@@ -281,44 +281,43 @@ final class SolverGuardrailsTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideNestedAnchorRows')]
-    public function test_a_nested_anchor_is_refused_with_the_ladder_message(string $pattern, string $message): void
+    public function test_a_nested_anchor_is_read_where_it_stands(string $pattern): void
     {
-        $this->assertNotFalse(@\preg_match($pattern, ''), $pattern.' must compile.');
+        foreach (['ab', "a\nb", "ab\n", 'b'] as $subject) {
+            $this->assertSame(0, preg_match($pattern, $subject), $pattern.' must match nothing.');
+        }
 
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage($message);
-
-        (new LanguageSolver())->compile($pattern, $this->fullMatchOptions());
+        $this->assertTrue((new LanguageSolver())->intersection($pattern, '/[\s\S]*/', $this->fullMatchOptions())->isEmpty);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, message: string}>
+     * @return iterable<string, array{pattern: string}>
      */
     public static function provideNestedAnchorRows(): iterable
     {
-        yield 'a dollar inside a group' => ['pattern' => '/(a$)b/', 'message' => 'Nested anchors are not supported in full match mode.'];
-        yield 'a caret deeper in the sequence' => ['pattern' => '/^a(b^)/', 'message' => 'Nested anchors are not supported in full match mode.'];
+        yield 'a dollar inside a group' => ['pattern' => '/(a$)b/'];
+        yield 'a caret deeper in the sequence' => ['pattern' => '/^a(b^)/'];
+        yield 'a subject start inside a group' => ['pattern' => '/(a\A)b/'];
     }
 
     /**
-     * Oracle: "/(a\A)b/" compiles and matches nothing — "\A" reads where
-     * the match stands, and the refusal keeps the one message every such
-     * condition shares instead of the nested-anchor one.
+     * Oracle: "/(a\G)b/" compiles — "\G" reads where the match started,
+     * nested or not, and the refusal keeps the one message it shares with
+     * "\K".
      */
     #[Test]
-    public function test_a_nested_condition_anchor_keeps_the_condition_message(): void
+    public function test_a_nested_match_start_keeps_the_condition_message(): void
     {
-        $this->assertNotFalse(@\preg_match('/(a\A)b/', ''));
+        $this->assertNotFalse(@\preg_match('/(a\G)b/', ''));
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessage(HirToNfaTransformer::ASSERTION_MESSAGE);
 
-        (new LanguageSolver())->compile('/(a\A)b/', $this->fullMatchOptions());
+        (new LanguageSolver())->compile('/(a\G)b/', $this->fullMatchOptions());
     }
 
     /**
-     * Oracle: "/a^/" and "/a\bb/" compile while matching nothing, and
-     * "/\b/" matches the empty subject — the ladder itself refuses them
+     * Oracle: "/a\Kb/" and "/\G/" compile — the ladder itself refuses them
      * even when the pattern is handed straight to the transformer, without
      * the AST gate in front of it: the graph command does exactly that.
      */
@@ -339,41 +338,35 @@ final class SolverGuardrailsTest extends TestCase
      */
     public static function provideDirectTransformerRows(): iterable
     {
-        yield 'a caret after a character' => ['pattern' => '/a^/'];
+        yield 'a match reset after a character' => ['pattern' => '/a\Kb/'];
         yield 'a whole pattern of match start' => ['pattern' => '/\G/'];
         yield 'a match start inside a sequence' => ['pattern' => '/a\Gb/'];
     }
 
     /**
-     * Oracle: "/^|b/" and "/a$|b/" compile — one alternative anchors where
-     * its sibling does not, and one automaton cannot say where a partial
-     * match may start or end for one branch and not the other, so the
-     * question is refused with the mixing named. The refusal carries no
-     * single spot of the pattern: it points at the pattern itself, from
-     * its first byte.
+     * Oracle: "/^|b/" matches every subject, its empty first branch at the
+     * start; "/a$|b/" matches "xa" and "b", not "ax". One alternative
+     * anchors where its sibling does not: each anchor reads where it
+     * stands.
      */
     #[Test]
     #[DataProvider('provideMixedPartialAnchorRows')]
-    public function test_mixed_anchors_across_alternatives_are_refused_in_partial_mode(string $pattern, string $message): void
+    public function test_mixed_anchors_across_alternatives_are_read_in_partial_mode(string $pattern, string $same, string $other): void
     {
-        $this->assertNotFalse(@\preg_match($pattern, ''), $pattern.' must compile.');
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(matchMode: MatchMode::Partial);
 
-        try {
-            (new LanguageSolver())->intersection($pattern, '/b/', new SolverOptions(matchMode: MatchMode::Partial));
-            $this->fail($pattern.' must be refused in partial match mode.');
-        } catch (ComplexityException $e) {
-            $this->assertSame($message, $e->getMessage());
-            $this->assertSame(0, $e->getPosition(), $pattern.' must be reported at the pattern start.');
-        }
+        $this->assertTrue($solver->equivalent($pattern, $same, $options)->isEquivalent);
+        $this->assertFalse($solver->equivalent($pattern, $other, $options)->isEquivalent);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, message: string}>
+     * @return iterable<string, array{pattern: string, same: string, other: string}>
      */
     public static function provideMixedPartialAnchorRows(): iterable
     {
-        yield 'one branch anchored at the start' => ['pattern' => '/^|b/', 'message' => 'Mixed start anchors across alternatives are not supported in partial match mode.'];
-        yield 'one branch anchored at the end' => ['pattern' => '/a$|b/', 'message' => 'Mixed end anchors across alternatives are not supported in partial match mode.'];
+        yield 'one branch anchored at the start' => ['pattern' => '/^|b/', 'same' => '//', 'other' => '/b/'];
+        yield 'one branch anchored at the end' => ['pattern' => '/a$|b/', 'same' => '/a\n?\z|b/', 'other' => '/a|b/'];
     }
 
     /**

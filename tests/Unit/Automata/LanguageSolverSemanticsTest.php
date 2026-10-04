@@ -205,13 +205,15 @@ final class LanguageSolverSemanticsTest extends TestCase
     }
 
     #[Test]
-    public function test_partial_match_rejects_anchors(): void
+    public function test_partial_match_reads_an_anchor_in_the_middle(): void
     {
         $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::Partial);
 
-        $this->expectException(ComplexityException::class);
-        $solver->intersection('/foo^bar/', '/foobar/', $options);
+        // Oracle: preg_match('/foo^bar/', 'foobar') is 0, no subject has a
+        // start after "foo".
+        $this->assertSame(0, preg_match('/foo^bar/', 'foobar'));
+        $this->assertTrue($solver->intersection('/foo^bar/', '/foobar/', $options)->isEmpty);
     }
 
     #[Test]
@@ -243,13 +245,16 @@ final class LanguageSolverSemanticsTest extends TestCase
     }
 
     #[Test]
-    public function test_partial_match_rejects_nested_anchor_alternation(): void
+    public function test_partial_match_reads_nested_anchor_alternation(): void
     {
         $solver = new LanguageSolver();
         $options = new SolverOptions(matchMode: MatchMode::Partial);
 
-        $this->expectException(ComplexityException::class);
-        $solver->intersection('/(^a)|(^b)/', '/a|b/', $options);
+        // Oracle: preg_match('/(^a)|(^b)/', ...) is 1 on "a", "b" and "a\nb",
+        // 0 on "xa": the anchors nested in groups still pin the start.
+        $this->assertSame(0, preg_match('/(^a)|(^b)/', 'xa'));
+        $this->assertTrue($solver->equivalent('/(^a)|(^b)/', '/^[ab]/', $options)->isEquivalent);
+        $this->assertFalse($solver->equivalent('/(^a)|(^b)/', '/a|b/', $options)->isEquivalent);
     }
 
     public static function provideIntersectionCases(): \Generator
@@ -266,37 +271,26 @@ final class LanguageSolverSemanticsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideMisplacedAnchorPatterns')]
-    public function test_full_match_refuses_an_anchor_it_would_have_to_ignore(string $pattern, string $expected): void
+    public function test_full_match_reads_an_anchor_it_must_not_ignore(string $pattern): void
     {
         $solver = new LanguageSolver();
 
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage($expected);
-
-        $solver->equivalent($pattern, '/ab/', $this->fullMatchOptions());
+        $this->assertSame(0, preg_match($pattern, 'ab'));
+        $this->assertSame(0, preg_match($pattern, "a\nb"));
+        $this->assertFalse($solver->equivalent($pattern, '/ab/', $this->fullMatchOptions())->isEquivalent);
+        $this->assertTrue($solver->intersection($pattern, '/[\s\S]*/', $this->fullMatchOptions())->isEmpty);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, expected: string}>
+     * @return iterable<string, array{pattern: string}>
      */
     public static function provideMisplacedAnchorPatterns(): iterable
     {
         // "/a^b/" and "/a$b/" match nothing at all; compiling their anchor to
         // an epsilon transition would answer that they are the same as "/ab/".
-        yield 'start anchor in the middle' => [
-            'pattern' => '/a^b/',
-            'expected' => 'Anchors in full match mode must appear at the start or end of each alternative.',
-        ];
-
-        yield 'end anchor in the middle' => [
-            'pattern' => '/a$b/',
-            'expected' => 'Anchors in full match mode must appear at the start or end of each alternative.',
-        ];
-
-        yield 'anchor nested in a group' => [
-            'pattern' => '/a(^b)/',
-            'expected' => 'Nested anchors are not supported in full match mode.',
-        ];
+        yield 'start anchor in the middle' => ['pattern' => '/a^b/'];
+        yield 'end anchor in the middle' => ['pattern' => '/a$b/'];
+        yield 'anchor nested in a group' => ['pattern' => '/a(^b)/'];
     }
 
     #[Test]
