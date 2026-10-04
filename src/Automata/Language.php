@@ -31,9 +31,9 @@ final class Language
     private const LIMB = 1_000_000_000;
 
     /**
-     * @var array<int, true>|null
+     * @var array<string, array<int, true>> per side, inside or outside, the states that lead to acceptance
      */
-    private ?array $live = null;
+    private array $live = [];
 
     /**
      * @var array<int, list<array{int, int, int}>> per state, its moves as [from, to, target], in order
@@ -66,42 +66,7 @@ final class Language
      */
     public function isFinite(): bool
     {
-        $live = $this->live();
-        $state = [];
-        /** @var list<array{int, int}> $stack */
-        $stack = [[$this->dfa->startState, 0]];
-        if (!isset($live[$this->dfa->startState])) {
-            return true;
-        }
-
-        // Depth first, a state on the current way seen again closes a loop.
-        $state[$this->dfa->startState] = 1;
-        while ([] !== $stack) {
-            [$current, $next] = array_pop($stack);
-            $moves = $this->movesOf($current);
-            if ($next >= \count($moves)) {
-                $state[$current] = 2;
-
-                continue;
-            }
-
-            $stack[] = [$current, $next + 1];
-            $target = $moves[$next][2];
-            if (!isset($live[$target])) {
-                continue;
-            }
-
-            if (1 === ($state[$target] ?? 0)) {
-                return false;
-            }
-
-            if (!isset($state[$target])) {
-                $state[$target] = 1;
-                $stack[] = [$target, 0];
-            }
-        }
-
-        return true;
+        return $this->isFiniteOn(false);
     }
 
     /**
@@ -134,28 +99,7 @@ final class Language
      */
     public function maxLength(): ?int
     {
-        if ($this->isEmpty() || !$this->isFinite()) {
-            return null;
-        }
-
-        $live = $this->live();
-        $longest = [];
-        $longestFrom = function (int $state) use (&$longestFrom, &$longest, $live): int {
-            if (isset($longest[$state])) {
-                return $longest[$state];
-            }
-
-            $best = $this->dfa->getState($state)->isAccepting ? 0 : -1;
-            foreach ($this->movesOf($state) as [, , $target]) {
-                if (isset($live[$target])) {
-                    $best = max($best, $longestFrom($target) + 1);
-                }
-            }
-
-            return $longest[$state] = $best;
-        };
-
-        return $longestFrom($this->dfa->startState);
+        return $this->maxLengthOn(false);
     }
 
     /**
@@ -207,15 +151,90 @@ final class Language
 
     /**
      * Every string outside the language, shortest first, then in code point
-     * order: each is proven out by the automaton.
+     * order: each is proven out by the automaton. They run out when only
+     * finitely many strings are outside, none for a language of every string.
      *
      * @return \Generator<int, string>
      */
     public function nonMembers(): \Generator
     {
-        for ($length = 0; ; $length++) {
+        if (!isset($this->live(true)[$this->dfa->startState])) {
+            return;
+        }
+
+        $max = $this->maxLengthOn(true);
+        for ($length = 0; null === $max || $length <= $max; $length++) {
             yield from $this->ofLength($this->dfa->startState, $length, '', true);
         }
+    }
+
+    private function isFiniteOn(bool $outside): bool
+    {
+        $live = $this->live($outside);
+        $state = [];
+        /** @var list<array{int, int}> $stack */
+        $stack = [[$this->dfa->startState, 0]];
+        if (!isset($live[$this->dfa->startState])) {
+            return true;
+        }
+
+        // Depth first, a state on the current way seen again closes a loop.
+        $state[$this->dfa->startState] = 1;
+        while ([] !== $stack) {
+            [$current, $next] = array_pop($stack);
+            $moves = $this->movesOf($current);
+            if ($next >= \count($moves)) {
+                $state[$current] = 2;
+
+                continue;
+            }
+
+            $stack[] = [$current, $next + 1];
+            $target = $moves[$next][2];
+            if (!isset($live[$target])) {
+                continue;
+            }
+
+            if (1 === ($state[$target] ?? 0)) {
+                return false;
+            }
+
+            if (!isset($state[$target])) {
+                $state[$target] = 1;
+                $stack[] = [$target, 0];
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The longest string inside the language, or outside it.
+     */
+    private function maxLengthOn(bool $outside): ?int
+    {
+        $live = $this->live($outside);
+        if (!isset($live[$this->dfa->startState]) || !$this->isFiniteOn($outside)) {
+            return null;
+        }
+
+        $longest = [];
+        $longestFrom = function (int $state) use (&$longestFrom, &$longest, $live, $outside): int {
+            if (isset($longest[$state])) {
+                return $longest[$state];
+            }
+
+            $best = $this->accepts($state, $outside) ? 0 : -1;
+            foreach ($this->movesOf($state) as [, , $target]) {
+                if (isset($live[$target])) {
+                    $best = max($best, $longestFrom($target) + 1);
+                }
+            }
+
+            return $longest[$state] = $best;
+        };
+
+        return $longestFrom($this->dfa->startState);
     }
 
     /**
@@ -363,10 +382,11 @@ final class Language
     /**
      * @return array<int, true>
      */
-    private function live(): array
+    private function live(bool $outside = false): array
     {
-        if (null !== $this->live) {
-            return $this->live;
+        $side = $outside ? 'outside' : 'inside';
+        if (isset($this->live[$side])) {
+            return $this->live[$side];
         }
 
         $predecessors = [];
@@ -377,7 +397,7 @@ final class Language
                 $predecessors[$target][$id] = true;
             }
 
-            if ($state->isAccepting) {
+            if ($state->isAccepting !== $outside) {
                 $live[$id] = true;
                 $queue[] = $id;
             }
@@ -393,7 +413,7 @@ final class Language
             }
         }
 
-        return $this->live = $live;
+        return $this->live[$side] = $live;
     }
 
     /**

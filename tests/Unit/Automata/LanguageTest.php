@@ -125,6 +125,32 @@ final class LanguageTest extends TestCase
         $this->assertSame([], iterator_to_array($language->strings(), false));
     }
 
+    /**
+     * Oracle: preg_match('//', $s) is 1 on every subject, so nothing is
+     * proven out; preg_match('/^[\s\S]{2,}\z/', $s) is 0 on the empty
+     * subject and the 256 single bytes only.
+     */
+    #[Test]
+    #[DataProvider('provideFiniteOutsides')]
+    public function test_the_strings_proven_out_run_out(string $pattern, int $outside): void
+    {
+        $strings = iterator_to_array((new LanguageSolver())->language($pattern)->nonMembers(), false);
+
+        $this->assertCount($outside, $strings);
+        foreach ($strings as $string) {
+            $this->assertSame(0, preg_match($pattern, $string), \sprintf('%s does match %s.', $pattern, json_encode($string)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, outside: int}>
+     */
+    public static function provideFiniteOutsides(): iterable
+    {
+        yield 'every string' => ['pattern' => '/[\s\S]*/', 'outside' => 0];
+        yield 'every string of two or more' => ['pattern' => '/^[\s\S]{2,}\z/', 'outside' => 257];
+    }
+
     #[Test]
     public function test_strings_in_utf_mode_are_whole_characters(): void
     {
