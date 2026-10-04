@@ -95,6 +95,21 @@ final class PriorityNfa
     }
 
     /**
+     * Everything the automaton does, positions in the pattern aside: two
+     * automata with the same fingerprint run alike on every subject.
+     */
+    public function fingerprint(): string
+    {
+        $sets = array_map(static fn (CharSet $set): array => $set->ranges, $this->sets);
+        ksort($sets);
+        ksort($this->next);
+        ksort($this->targets);
+        ksort($this->slots);
+
+        return serialize([$this->unicode, $this->groupCount, $this->names, $this->start, $this->kinds, $this->next, $this->targets, $this->slots, $sets]);
+    }
+
+    /**
      * Whether preg_match() writes $matches of the same keys for both: as many
      * groups, named alike.
      */

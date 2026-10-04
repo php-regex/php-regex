@@ -38,16 +38,14 @@ final class MatchExplorer
      * @var list<int> one character standing for each class of characters no
      *                state tells apart
      */
-    private array $symbols;
+    private array $symbols = [];
 
     public function __construct(
         private readonly PriorityNfa $left,
         private readonly PriorityNfa $right,
         private readonly int $maxConfigurations,
         private readonly string $pattern,
-    ) {
-        $this->symbols = $this->alphabet();
-    }
+    ) {}
 
     /**
      * The shortest subject preg_match() treats differently, or null when
@@ -57,7 +55,13 @@ final class MatchExplorer
      */
     public function counterExample(): ?string
     {
+        // The same automaton runs alike everywhere: [0-9] and \d read alike.
+        if ($this->left->fingerprint() === $this->right->fingerprint()) {
+            return null;
+        }
+
         $sameShape = $this->left->hasTheShapeOf($this->right);
+        $this->symbols = $this->alphabet();
 
         [$left, $right, $key] = $this->canonical(
             $this->start($this->left),
@@ -84,7 +88,7 @@ final class MatchExplorer
             }
 
             $fresh = self::labelCount($left, $right);
-            foreach ($this->symbols as $symbol) {
+            foreach ($this->symbolsFor($left, $right) as $symbol) {
                 [$nextLeft, $nextRight, $nextKey] = $this->canonical(
                     $this->step($this->left, $left, $symbol, $fresh),
                     $this->step($this->right, $right, $symbol, $fresh),
@@ -106,6 +110,47 @@ final class MatchExplorer
         }
 
         return null;
+    }
+
+    /**
+     * The characters worth reading here: two characters the waiting threads
+     * read alike lead to the same next configuration, so one of them stands
+     * for both. The newline counts apart wherever "$" waits.
+     *
+     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $left
+     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $right
+     *
+     * @return list<int>
+     */
+    private function symbolsFor(array $left, array $right): array
+    {
+        $sets = [];
+        $newline = false;
+        foreach ([[$this->left, $left], [$this->right, $right]] as [$nfa, $side]) {
+            foreach ($side['t'] as [$state, , $waiting]) {
+                if (null !== $waiting) {
+                    continue;
+                }
+
+                $kind = $nfa->kinds[$state];
+                if (PriorityNfa::CHAR === $kind) {
+                    $sets[$nfa->sets[$state]->key()] = $nfa->sets[$state];
+                } elseif (PriorityNfa::END_OR_FINAL_NEWLINE === $kind) {
+                    $newline = true;
+                }
+            }
+        }
+
+        $symbols = [];
+        foreach ($this->symbols as $symbol) {
+            $signature = $newline && self::NEWLINE === $symbol ? 'n' : '';
+            foreach ($sets as $set) {
+                $signature .= $set->contains($symbol) ? '1' : '0';
+            }
+            $symbols[$signature] ??= $symbol;
+        }
+
+        return array_values($symbols);
     }
 
     /**
@@ -388,40 +433,59 @@ final class MatchExplorer
 
     /**
      * One character per class of characters that every set of both automata
-     * treats alike, the newline on its own for "$".
+     * treats alike, the newline on its own for "$": characters inside the
+     * same sets are one class, however many ranges they spread over.
      *
      * @return list<int>
      */
     private function alphabet(): array
     {
         $universe = CharSet::universe($this->left->unicode);
-        $bounds = [];
-        $sets = [CharSet::single(self::NEWLINE), $universe];
+        $sets = [CharSet::single(self::NEWLINE)];
         foreach ([$this->left, $this->right] as $nfa) {
             foreach ($nfa->sets as $set) {
-                $sets[] = $set;
+                $sets[$set->key()] = $set;
             }
         }
+        $sets = array_values($sets);
 
-        foreach ($sets as $set) {
+        $bounds = [];
+        foreach ([$universe, ...$sets] as $set) {
             foreach ($set->ranges as [$from, $to]) {
                 $bounds[$from] = true;
                 $bounds[$to + 1] = true;
             }
         }
-
         $bounds = array_keys($bounds);
         sort($bounds);
 
+        // The sets a character belongs to name its class; the first printable
+        // character of the class stands for it.
         $symbols = [];
         for ($index = 0, $count = \count($bounds) - 1; $index < $count; $index++) {
-            $class = CharSet::range($bounds[$index], $bounds[$index + 1] - 1)->intersect($universe);
-            $symbol = $class->representative();
-            if (null !== $symbol) {
-                $symbols[] = $symbol;
+            $symbol = CharSet::range($bounds[$index], $bounds[$index + 1] - 1)->intersect($universe)->representative();
+            if (null === $symbol) {
+                continue;
+            }
+
+            $signature = '';
+            foreach ($sets as $set) {
+                $signature .= $set->contains($symbol) ? '1' : '0';
+            }
+
+            if (!isset($symbols[$signature]) || (!self::printable($symbols[$signature]) && self::printable($symbol))) {
+                $symbols[$signature] = $symbol;
             }
         }
 
+        $symbols = array_values($symbols);
+        sort($symbols);
+
         return $symbols;
+    }
+
+    private static function printable(int $codePoint): bool
+    {
+        return $codePoint >= 0x20 && $codePoint <= 0x7E;
     }
 }

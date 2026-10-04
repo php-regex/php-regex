@@ -97,6 +97,17 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     #[Test]
+    public function test_patterns_that_read_alike_are_equivalent_without_a_search(): void
+    {
+        // [0-9] and \d, [a-zA-Z0-9_] and \w read as the same automaton: no
+        // subject has to be tried, and a budget of one configuration does.
+        $options = new SolverOptions(maxDfaStates: 1);
+        $solver = new LanguageSolver();
+
+        $this->assertTrue($solver->matchEquivalent('/^([0-9]+)-([a-zA-Z0-9_]+)$/', '/^(\d+)-(\w+)$/', $options)->isEquivalent);
+    }
+
+    #[Test]
     public function test_the_result_names_the_pcre_release(): void
     {
         $this->assertSame(explode(' ', \PCRE_VERSION)[0], (new LanguageSolver())->matchEquivalent('/a/', '/a/')->pcreVersion);
