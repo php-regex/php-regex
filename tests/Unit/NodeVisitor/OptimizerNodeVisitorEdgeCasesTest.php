@@ -174,11 +174,11 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    public function test_find_common_prefix_empty_returns_empty_string(): void
+    public function test_shared_start_of_strings_sharing_nothing_is_empty(): void
     {
         $optimizer = new Rewriter();
 
-        $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [[]]);
+        $result = $this->invokePrivate($optimizer, 'sharedStart', [['abc', 'def']]);
 
         $this->assertSame('', $result);
     }
@@ -539,46 +539,33 @@ final class OptimizerNodeVisitorEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    public function test_string_to_node_covers_all_cases(): void
+    public function test_shared_end_keeps_whole_characters(): void
     {
         $optimizer = new Rewriter();
 
-        // Test single character
-        $result = $this->invokePrivate($optimizer, 'stringToNode', ['a', 0, 1]);
-        $this->assertInstanceOf(LiteralNode::class, $result);
-
-        // Test quantifier pattern
-        $result = $this->invokePrivate($optimizer, 'stringToNode', ['{2,}', 0, 4]);
-        $this->assertInstanceOf(LiteralNode::class, $result);
-
-        // Test string with escape sequences
-        $result = $this->invokePrivate($optimizer, 'stringToNode', ['\\d', 0, 2]);
-        $this->assertInstanceOf(CharTypeNode::class, $result);
-
-        // Test string with multiple characters
-        $result = $this->invokePrivate($optimizer, 'stringToNode', ['abc', 0, 3]);
-        $this->assertInstanceOf(SequenceNode::class, $result);
+        $this->assertSame('bc', $this->invokePrivate($optimizer, 'sharedEnd', [['abc', 'xbc']]));
+        $this->assertSame('é', $this->invokePrivate($optimizer, 'sharedEnd', [['aé', 'bé']]));
+        $this->assertSame('b', $this->invokePrivate($optimizer, 'sharedEnd', [['ab', 'cb']]));
+        $this->assertSame('', $this->invokePrivate($optimizer, 'sharedEnd', [['a', 'b']]));
+        // "é" and "ɩ" share their last byte, not a character
+        $this->assertSame('', $this->invokePrivate($optimizer, 'sharedEnd', [['é', 'ɩ']]));
     }
 
-    public function test_find_common_prefix_covers_edge_cases(): void
+    public function test_shared_start_covers_edge_cases(): void
     {
         $optimizer = new Rewriter();
 
-        // Test empty array
-        $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [[]]);
-        $this->assertSame('', $result);
+        // A single string shares all of itself
+        $this->assertSame('abc', $this->invokePrivate($optimizer, 'sharedStart', [['abc']]));
 
-        // Test single string
-        $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [['abc']]);
-        $this->assertSame('abc', $result);
+        // A shared start
+        $this->assertSame('ab', $this->invokePrivate($optimizer, 'sharedStart', [['abc', 'abd', 'abe']]));
 
-        // Test common prefix
-        $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [['abc', 'abd', 'abe']]);
-        $this->assertSame('ab', $result);
+        // Nothing shared
+        $this->assertSame('', $this->invokePrivate($optimizer, 'sharedStart', [['abc', 'def']]));
 
-        // Test no common prefix
-        $result = $this->invokePrivate($optimizer, 'findCommonPrefix', [['abc', 'def']]);
-        $this->assertSame('', $result);
+        // "é" and "è" share a byte, not a character
+        $this->assertSame('', $this->invokePrivate($optimizer, 'sharedStart', [['é', 'è']]));
     }
 
     public function test_pattern_contains_dots_covers_all_cases(): void

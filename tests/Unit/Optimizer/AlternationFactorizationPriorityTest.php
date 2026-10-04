@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationFactorizationPriorityTest extends TestCase
 {
-    private const SUBJECTS = ['', 'a', 'ab', 'abc', 'b', 'bc', 'abcd', 'x', 'xb', 'xc', 'xbc', 'xxbc', 'foo', 'foobar', 'foobarx'];
+    private const SUBJECTS = ['', 'a', 'ab', 'abc', 'b', 'bc', 'abcd', 'x', 'xb', 'xc', 'xbc', 'xxbc', 'foo', 'foobar', 'foobarx', "\r\n", "\r", "\n", 'src="../', 'src="./', 'src="././', '/#!/', '/', '0a', '0b', '\\r'];
 
     #[Test]
     #[DataProvider('providePatterns')]
@@ -69,6 +69,10 @@ final class AlternationFactorizationPriorityTest extends TestCase
         yield 'shared suffix, anchored' => ['pattern' => '/^(?:bc|abc)$/'];
         yield 'shared suffix, shorter in the middle' => ['pattern' => '/abc|bc|xbc/'];
         yield 'after a prefix' => ['pattern' => '/a(?:b|bc)/'];
+        yield 'a branch that is no literal' => ['pattern' => '/ab|a+/'];
+        yield 'escapes sharing a backslash' => ['pattern' => '/(\r\n|\r|\n)/s'];
+        yield 'escaped dots sharing a prefix' => ['pattern' => '/src="(\.\.\/|\.\/)+/'];
+        yield 'escaped slashes sharing a prefix' => ['pattern' => '/(\/\#\!\/|\/)/'];
     }
 
     /**
@@ -79,5 +83,7 @@ final class AlternationFactorizationPriorityTest extends TestCase
         yield 'shorter first goes lazy' => ['pattern' => '/a|ab/', 'expected' => '/a(?:b)??/'];
         yield 'shorter last stays greedy' => ['pattern' => '/ab|a/', 'expected' => '/a(?:b)?/'];
         yield 'no empty branch' => ['pattern' => '/ab|ac/', 'expected' => '/a(?:b|c)/'];
+        yield 'prefix of a zero' => ['pattern' => '/0a|0b/', 'expected' => '/0(?:a|b)/'];
+        yield 'prefix of escapes' => ['pattern' => '/\r\n|\r\t/', 'expected' => '/\r(?:\n|\t)/'];
     }
 }

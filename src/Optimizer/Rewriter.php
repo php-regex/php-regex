@@ -16,7 +16,6 @@ namespace PHPRegex\Optimizer;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node;
-use PHPRegex\Parser\Node\AbstractNode;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -1370,194 +1369,192 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
+     * Factors the start the literal branches share out of an alternation:
+     * "ab|ac" is "a(?:b|c)". It works on the strings the literals stand for,
+     * never on their spelling: "\r\n|\r" share "\r", not a backslash.
+     *
      * @param array<NodeInterface> $alts
      *
      * @return array<NodeInterface>
      */
     private function factorizeAlternation(array $alts): array
     {
-        if (\count($alts) < 2) {
+        $literals = self::literalBranches($alts);
+        if (null === $literals) {
+            return $alts;
+        }
+        $values = array_map(static fn (LiteralNode $literal): string => $literal->value, $literals);
+
+        $prefix = self::sharedStart($values);
+        if ('' === $prefix) {
             return $alts;
         }
 
-        // Safety check: only factorize if all alternatives are LiteralNode
-        // Complex nodes (groups, quantifiers, etc.) cannot be safely reconstructed from string output
-        foreach ($alts as $alt) {
-            if (!$alt instanceof LiteralNode) {
-                return $alts;
-            }
+        $rests = [];
+        foreach ($literals as $alt) {
+            $rest = substr($alt->value, \strlen($prefix));
+            $rests[] = '' === $rest ? null : new LiteralNode($rest, $alt->startPosition, $alt->endPosition);
         }
 
-        // Get string representations
-        $strings = [];
-        foreach ($alts as $alt) {
-            $strings[] = $this->nodeToString($alt);
+        $first = $literals[0];
+        $last = $literals[\count($literals) - 1];
+        if ([] === array_filter($rests)) {
+            // Every branch is the same string: one is enough.
+            return [new LiteralNode($prefix, $first->startPosition, $first->endPosition)];
         }
 
-        // Find common prefix
-        $prefix = $this->findCommonPrefix($strings);
-        if (empty($prefix) || str_starts_with($prefix, '[')) {
+        $group = $this->optionalGroup($rests);
+        if (null === $group) {
             return $alts;
         }
 
-        // Split into with prefix and without
-        $withPrefix = [];
-        $withoutPrefix = [];
-        foreach ($alts as $i => $alt) {
-            if (str_starts_with($strings[$i], $prefix)) {
-                $withPrefix[] = $alt;
-            } else {
-                $withoutPrefix[] = $alt;
-            }
-        }
-
-        if (\count($withPrefix) < 2) {
-            return $alts;
-        }
-
-        // Create suffixes
-        $suffixes = [];
-        foreach ($withPrefix as $alt) {
-            $suffixStr = substr($this->nodeToString($alt), \strlen($prefix));
-            if (empty($suffixStr)) {
-                $suffixes[] = null;
-            } else {
-                $suffixes[] = $this->stringToNode($suffixStr, $alt->startPosition + \strlen($prefix), $alt->endPosition);
-            }
-        }
-
-        $emptyBranch = self::emptyBranchQuantifier($suffixes);
-        if (false === $emptyBranch) {
-            return $alts;
-        }
-
-        /** @var array<NodeInterface> $nonNullSuffixes */
-        $nonNullSuffixes = array_values(array_filter($suffixes, static fn ($suffix): bool => null !== $suffix));
-        if (empty($nonNullSuffixes)) {
-            // All are just the prefix
-            $firstAlt = $withPrefix[0];
-
-            return [$this->stringToNode($prefix, $firstAlt->startPosition, $firstAlt->startPosition + \strlen($prefix))];
-        }
-
-        /** @var AbstractNode $firstSuffix */
-        $firstSuffix = $nonNullSuffixes[0];
-        /** @var AbstractNode $lastSuffix */
-        $lastSuffix = $nonNullSuffixes[\count($nonNullSuffixes) - 1];
-        $newAlt = 1 === \count($nonNullSuffixes)
-            ? $firstSuffix
-            : new AlternationNode($nonNullSuffixes, $firstSuffix->startPosition, $lastSuffix->endPosition);
-        $group = new GroupNode($newAlt, GroupType::NonCapturing);
-        if (null !== $emptyBranch) {
-            $group = new QuantifierNode($group, '?', $emptyBranch, $firstSuffix->startPosition, $lastSuffix->endPosition);
-        }
-        $firstAlt = $withPrefix[0];
-        $prefixNode = $this->stringToNode($prefix, $firstAlt->startPosition, $firstAlt->startPosition + \strlen($prefix));
-        $factored = new SequenceNode([$prefixNode, $group], $firstAlt->startPosition, $firstAlt->endPosition);
-
-        if (empty($withoutPrefix)) {
-            return [$factored];
-        }
-
-        return array_merge([$factored], $withoutPrefix);
-
+        return [new SequenceNode([new LiteralNode($prefix, $first->startPosition, $first->startPosition), $group], $first->startPosition, $last->endPosition)];
     }
 
     /**
+     * Factors the end the literal branches share out of an alternation:
+     * "abc|xbc" is "(?:a|x)bc".
+     *
      * @param array<NodeInterface> $alts
      *
      * @return array<NodeInterface>
      */
     private function factorizeSuffix(array $alts): array
     {
-        if (\count($alts) < 2) {
+        $literals = self::literalBranches($alts);
+        if (null === $literals) {
+            return $alts;
+        }
+        $values = array_map(static fn (LiteralNode $literal): string => $literal->value, $literals);
+
+        $suffix = self::sharedEnd($values);
+        if (\strlen($suffix) < 2) {
             return $alts;
         }
 
-        // Safety check: only factorize if all alternatives are LiteralNode
-        foreach ($alts as $alt) {
-            if (!$alt instanceof LiteralNode) {
-                return $alts; // Too risky to factorize complex nodes based on string output.
-            }
+        $rests = [];
+        foreach ($literals as $alt) {
+            $rest = substr($alt->value, 0, -\strlen($suffix));
+            $rests[] = '' === $rest ? null : new LiteralNode($rest, $alt->startPosition, $alt->endPosition);
         }
 
-        // Get string representations
-        $strings = [];
-        /** @var Node\LiteralNode $alt */
-        foreach ($alts as $alt) {
-            $strings[] = $this->nodeToString($alt);
+        $first = $literals[0];
+        $last = $literals[\count($literals) - 1];
+        if ([] === array_filter($rests)) {
+            return [new LiteralNode($suffix, $first->startPosition, $first->endPosition)];
         }
 
-        // Find common suffix by reversing strings and finding common prefix
-        $reversedStrings = array_map(strrev(...), $strings);
-        $suffix = $this->findCommonPrefix($reversedStrings);
-        if (empty($suffix) || \strlen($suffix) < 2 || str_starts_with($suffix, '[')) {
+        $group = $this->optionalGroup($rests);
+        if (null === $group) {
             return $alts;
         }
 
-        // Reverse back to get the actual suffix
-        $suffix = strrev($suffix);
+        return [new SequenceNode([$group, new LiteralNode($suffix, $last->endPosition, $last->endPosition)], $first->startPosition, $last->endPosition)];
+    }
 
-        // Split into with suffix and without
-        $withSuffix = [];
-        $withoutSuffix = [];
-        foreach ($alts as $i => $alt) {
-            if (str_ends_with($strings[$i], $suffix)) {
-                $withSuffix[] = $alt;
-            } else {
-                $withoutSuffix[] = $alt;
-            }
-        }
-
-        if (\count($withSuffix) < 2) {
-            return $alts;
-        }
-
-        // Create prefixes (everything before the suffix)
-        $prefixes = [];
-        foreach ($withSuffix as $alt) {
-            $prefixStr = substr($this->nodeToString($alt), 0, -\strlen($suffix));
-            if (empty($prefixStr)) {
-                $prefixes[] = null;
-            } else {
-                $prefixes[] = $this->stringToNode($prefixStr, $alt->startPosition, $alt->endPosition - \strlen($suffix));
-            }
-        }
-
-        $emptyBranch = self::emptyBranchQuantifier($prefixes);
+    /**
+     * The branches left once the shared part is gone, as one group, optional
+     * when one of them is empty; null when no group keeps their order.
+     *
+     * @param non-empty-list<LiteralNode|null> $rests at least one not null
+     */
+    private function optionalGroup(array $rests): ?NodeInterface
+    {
+        $emptyBranch = self::emptyBranchQuantifier($rests);
         if (false === $emptyBranch) {
-            return $alts;
+            return null;
         }
 
-        /** @var array<NodeInterface> $nonNullPrefixes */
-        $nonNullPrefixes = array_values(array_filter($prefixes, static fn ($prefix): bool => null !== $prefix));
-        if (empty($nonNullPrefixes)) {
-            // All are just the suffix
-            $firstAlt = $withSuffix[0];
+        $kept = array_values(array_filter($rests, static fn (?LiteralNode $rest): bool => null !== $rest));
 
-            return [$this->stringToNode($suffix, $firstAlt->endPosition - \strlen($suffix), $firstAlt->endPosition)];
+        $first = $kept[0];
+        $last = $kept[\count($kept) - 1];
+        $group = new GroupNode(1 === \count($kept) ? $first : new AlternationNode($kept, $first->startPosition, $last->endPosition), GroupType::NonCapturing);
+
+        return null === $emptyBranch ? $group : new QuantifierNode($group, '?', $emptyBranch, $first->startPosition, $last->endPosition);
+    }
+
+    /**
+     * The branches, when every one is a plain literal.
+     *
+     * @param array<NodeInterface> $alts
+     *
+     * @return non-empty-list<LiteralNode>|null
+     */
+    private static function literalBranches(array $alts): ?array
+    {
+        if (\count($alts) < 2) {
+            return null;
         }
 
-        /** @var AbstractNode $firstPrefix */
-        $firstPrefix = $nonNullPrefixes[0];
-        /** @var AbstractNode $lastPrefix */
-        $lastPrefix = $nonNullPrefixes[\count($nonNullPrefixes) - 1];
-        $newAlt = 1 === \count($nonNullPrefixes)
-            ? $firstPrefix
-            : new AlternationNode($nonNullPrefixes, $firstPrefix->startPosition, $lastPrefix->endPosition);
-        $group = new GroupNode($newAlt, GroupType::NonCapturing);
-        if (null !== $emptyBranch) {
-            $group = new QuantifierNode($group, '?', $emptyBranch, $firstPrefix->startPosition, $lastPrefix->endPosition);
-        }
-        $firstAlt = $withSuffix[0];
-        $suffixNode = $this->stringToNode($suffix, $firstAlt->endPosition - \strlen($suffix), $firstAlt->endPosition);
-        $factored = new SequenceNode([$group, $suffixNode], $firstAlt->startPosition, $firstAlt->endPosition);
-
-        if (empty($withoutSuffix)) {
-            return [$factored];
+        $literals = [];
+        foreach ($alts as $alt) {
+            if (!$alt instanceof LiteralNode || $alt->isRaw) {
+                return null;
+            }
+            $literals[] = $alt;
         }
 
-        return array_merge([$factored], $withoutSuffix);
+        return $literals;
+    }
+
+    /**
+     * The longest start every string shares, cut back to whole characters
+     * when they are all UTF-8.
+     *
+     * @param list<string> $values
+     */
+    private static function sharedStart(array $values): string
+    {
+        $prefix = $values[0];
+        foreach ($values as $value) {
+            $length = 0;
+            $limit = min(\strlen($prefix), \strlen($value));
+            while ($length < $limit && $prefix[$length] === $value[$length]) {
+                $length++;
+            }
+            $prefix = substr($prefix, 0, $length);
+        }
+
+        if (self::allUtf8($values)) {
+            while ('' !== $prefix && !mb_check_encoding($prefix, 'UTF-8')) {
+                $prefix = substr($prefix, 0, -1);
+            }
+        }
+
+        return $prefix;
+    }
+
+    /**
+     * The longest end every string shares, cut back to whole characters
+     * when they are all UTF-8.
+     *
+     * @param list<string> $values
+     */
+    private static function sharedEnd(array $values): string
+    {
+        $suffix = strrev(self::sharedStart(array_map(strrev(...), $values)));
+        if (self::allUtf8($values)) {
+            while ('' !== $suffix && !mb_check_encoding($suffix, 'UTF-8')) {
+                $suffix = substr($suffix, 1);
+            }
+        }
+
+        return $suffix;
+    }
+
+    /**
+     * @param list<string> $values
+     */
+    private static function allUtf8(array $values): bool
+    {
+        foreach ($values as $value) {
+            if (!mb_check_encoding($value, 'UTF-8')) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1587,113 +1584,6 @@ final class Rewriter extends AbstractNodeVisitor
         $this->compiler->resetState();
 
         return $node->accept($this->compiler);
-    }
-
-    private function stringToNode(string $str, int $start, int $end): NodeInterface
-    {
-        // Meta-characters that should not be escaped when unescaped in the string
-        /** @var array<string, true> $metaChars */
-        static $metaChars = [
-            '(' => true, ')' => true, '[' => true, ']' => true,
-            '{' => true, '}' => true, '|' => true, '^' => true,
-            '$' => true, '.' => true, '*' => true, '+' => true, '?' => true,
-        ];
-
-        if (1 === \strlen($str)) {
-            $isRaw = isset($metaChars[$str]);
-
-            return new LiteralNode($str, $start, $end, $isRaw);
-        }
-
-        // Check if the entire string is a quantifier pattern
-        if (preg_match('/^\{\d+(?:,\d*)?\}\z/', $str)) {
-            return new LiteralNode($str, $start, $end, true);
-        }
-
-        $children = [];
-        $len = \strlen($str);
-        $i = 0;
-
-        while ($i < $len) {
-            $char = $str[$i];
-
-            // Handle escape sequences
-            if ('\\' === $char && $i + 1 < $len) {
-                $nextChar = $str[$i + 1];
-                $nodeStart = $start + $i;
-                $nodeEnd = $start + $i + 2;
-
-                // Character types: \d, \D, \w, \W, \s, \S, \h, \H, \v, \V, \R, \N
-                if (preg_match('/^[dDwWsShHvVRN]$/', $nextChar)) {
-                    $children[] = new CharTypeNode($nextChar, $nodeStart, $nodeEnd);
-                    $i += 2;
-
-                    continue;
-                }
-
-                // Escaped metacharacters: \., \{, \}, \[, \], \(, \), \|, \*, \+, \?, \^, \$, \\
-                // These are literal characters, so isRaw should be false (they need escaping)
-                // @regex-ignore-next-line
-                if (preg_match('/^[.{}\\[\\]()|*+?^$\\\\]$/', $nextChar)) {
-                    $children[] = new LiteralNode($nextChar, $nodeStart, $nodeEnd, false);
-                    $i += 2;
-
-                    continue;
-                }
-
-                // Other escape sequences - keep as literal backslash + char
-                $children[] = new LiteralNode($char, $start + $i, $start + $i + 1, false);
-                $i++;
-
-                continue;
-            }
-
-            // Handle quantifier patterns like {2,}, {3}, {1,5}
-            if ('{' === $char) {
-                if (preg_match('/^\{\d+(?:,\d*)?\}/', substr($str, $i), $matches)) {
-                    $quantifier = $matches[0];
-                    $nodeStart = $start + $i;
-                    $nodeEnd = $start + $i + \strlen($quantifier);
-                    // Quantifier patterns are raw regex syntax
-                    $children[] = new LiteralNode($quantifier, $nodeStart, $nodeEnd, true);
-                    $i += \strlen($quantifier);
-
-                    continue;
-                }
-            }
-
-            // Regular character - check if it's a meta-character
-            $isRaw = isset($metaChars[$char]);
-            $children[] = new LiteralNode($char, $start + $i, $start + $i + 1, $isRaw);
-            $i++;
-        }
-
-        if (1 === \count($children)) {
-            return $children[0];
-        }
-
-        return new SequenceNode($children, $start, $end);
-    }
-
-    /**
-     * @param array<string> $strings
-     */
-    private function findCommonPrefix(array $strings): string
-    {
-        if (empty($strings)) {
-            return '';
-        }
-        $prefix = $strings[0];
-        foreach ($strings as $str) {
-            while (!str_starts_with((string) $str, (string) $prefix)) {
-                $prefix = substr((string) $prefix, 0, -1);
-                if (empty($prefix)) {
-                    return '';
-                }
-            }
-        }
-
-        return $prefix;
     }
 
     /**
