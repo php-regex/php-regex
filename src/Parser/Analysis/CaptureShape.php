@@ -22,6 +22,8 @@ final readonly class CaptureShape
 {
     private const MAX_RENDERED_VALUES = 16;
 
+    private const CONTROL_CHARACTERS = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F";
+
     /**
      * @param list<CaptureGroupShape> $groups one per group number; branch reset groups sharing a number share a record
      * @param list<string>            $marks  the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
@@ -188,7 +190,7 @@ final readonly class CaptureShape
 
         $literals = [];
         foreach ($values as $value) {
-            if (!mb_check_encoding($value, 'UTF-8') || 1 === preg_match('/[\x00-\x1F\x7F]/', $value)) {
+            if (!mb_check_encoding($value, 'UTF-8') || false !== strpbrk($value, self::CONTROL_CHARACTERS)) {
                 return null;
             }
 
