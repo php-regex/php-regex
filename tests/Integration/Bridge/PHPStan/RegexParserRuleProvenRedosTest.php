@@ -59,6 +59,14 @@ final class RegexParserRuleProvenRedosTest extends RuleTestCase
     }
 
     #[Test]
+    public function test_redos_tip_carries_a_proven_repair(): void
+    {
+        $tip = $this->tipOnLine(20);
+
+        $this->assertStringContainsString("\nProven repair: /(a+)$/ (same subjects, same matches, linear).\n", $tip);
+    }
+
+    #[Test]
     public function test_redos_tip_carries_the_polynomial_degree(): void
     {
         $tip = $this->tipOnLine(21);

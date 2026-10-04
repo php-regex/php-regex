@@ -45,7 +45,7 @@ final class PublicSurfaceTest extends TestCase
         'LanguageServer' => [],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex'],
         'Linter' => ['PatternLinter', 'Diagnostic', 'DiagnosticType', 'LintSeverity', 'LintException', 'Rule/RuleViolation'],
-        'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer'],
+        'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
             'TolerantParseResult', 'NodeVisitorInterface', 'AbstractNodeVisitor', 'AbstractTraversingVisitor',

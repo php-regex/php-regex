@@ -27,6 +27,7 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
@@ -440,7 +441,7 @@ final class RegexPatternRule implements Rule
                 $this->truncatePattern($pattern),
             ))
                 ->line($lineNumber)
-                ->tip($this->getTipForReDoS($analysis))
+                ->tip($this->getTipForReDoS($analysis, $pattern))
                 ->identifier(self::IDENTIFIER_REDOS)
                 ->build();
         }
@@ -633,7 +634,7 @@ final class RegexPatternRule implements Rule
      * The verdict, the attack when there is a witness, the recommendations,
      * a blank line, then the documentation links.
      */
-    private function getTipForReDoS(RedosAnalysis $analysis): string
+    private function getTipForReDoS(RedosAnalysis $analysis, string $pattern): string
     {
         $lines = ['Severity: '.self::redosVerdict($analysis).'.'];
         if (null !== $analysis->witness) {
@@ -641,6 +642,12 @@ final class RegexPatternRule implements Rule
             // "\x3C", the literal stays valid PHP for the same bytes. The renderer
             // prints "<" raw and never inside one of its escape sequences.
             $lines[] = 'Attack: '.str_replace('<', '\x3C', $analysis->witness->render());
+        }
+
+        // A rewrite proven to match the same subjects and proven linear.
+        $repair = (new RedosRepairer($this->regex))->repair($pattern)[0] ?? null;
+        if (null !== $repair && $repair->isCertified()) {
+            $lines[] = \sprintf('Proven repair: %s (same subjects%s, linear).', str_replace('<', '\x3C', $repair->pattern), true === $repair->sameMatches ? ', same matches' : '');
         }
 
         $recommendations = implode("\n", $analysis->recommendations);

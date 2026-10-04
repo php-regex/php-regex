@@ -13,13 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPUnit\Framework\Assert;
 
 /**
  * The tip of a ReDoS error: the verdict on the first line, the attack when
- * the verdict has a witness, then the recommendations, a blank line and the
- * documentation links.
+ * the verdict has a witness, a certified repair when there is one, then the
+ * recommendations, a blank line and the documentation links.
  */
 final class RedosTip
 {
@@ -36,6 +37,11 @@ final class RedosTip
             $witness = (new RedosAnalyzer())->analyze($pattern)->witness;
             Assert::assertNotNull($witness, $pattern.' has no witness');
             $tip .= 'Attack: '.$witness->render()."\n";
+        }
+
+        $repair = (new RedosRepairer())->repair($pattern)[0] ?? null;
+        if (null !== $repair && $repair->isCertified()) {
+            $tip .= \sprintf("Proven repair: %s (same subjects%s, linear).\n", $repair->pattern, true === $repair->sameMatches ? ', same matches' : '');
         }
 
         return $tip.$recommendationsAndLinks;

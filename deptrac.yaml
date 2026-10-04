@@ -63,7 +63,7 @@ deptrac:
   ruleset:
     Parser: ~
     Explain: [Parser]
-    Optimizer: [Parser, Automata]
+    Optimizer: [Parser, Automata, ReDoS]
     Generator: [Parser]
     Automata: [Parser]
     ReDoS: [Parser]

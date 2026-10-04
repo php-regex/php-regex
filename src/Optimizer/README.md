@@ -18,7 +18,8 @@ Features
 - Repeated items collapse into a quantifier, `/aaaa/` becoming `/a{4}/`, from `min_quantifier_count` repetitions on
 - Alternatives sharing a prefix share it, `/abc|abd/` becoming `/ab(?:c|d)/` — opt-in
 - A quantifier becomes possessive where nothing after it can take back what it matched, `/[0-9]+;/` becoming `/\d++;/` — opt-in
-- Each rewrite can be proven to match the same strings by the automata engine before it is offered — opt-in
+- Each rewrite can be proven by the automata engine to write the same `$matches`, or at least to match the same strings, before it is offered — opt-in
+- `RedosRepairer` repairs a pattern open to catastrophic backtracking, `/href="([^"]+)*"/` becoming `/href="([^"]*)"/`, each repair proven linear and, when the automata can tell, proven to match the same subjects
 - A `Modernizer` visitor cleans legacy syntax: unneeded escapes dropped, redundant non-capturing groups unwrapped
 - A pattern that cannot be improved comes back unchanged, with an empty change log
 

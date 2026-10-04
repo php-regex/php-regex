@@ -60,6 +60,9 @@ reported under `regex.redos`, with one of three messages:
 | `Polynomial backtracking (ReDoS): <pattern>` | proven polynomial |
 | `Potential backtracking (ReDoS): <pattern>` | judged by the structural heuristics |
 
+When a rewrite of the pattern is proven to match the same subjects and proven
+linear, the tip prints it: `Proven repair: /(a+)$/ (same subjects, same matches, linear).`
+
 The message holds the verdict class and the pattern only, and stays the same
 for all of 2.x. The severity, how the verdict was reached and the attack are in
 the tip: a better verdict changes the tip, never the message, and your baseline

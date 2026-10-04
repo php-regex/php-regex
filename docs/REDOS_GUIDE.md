@@ -374,6 +374,29 @@ Before filing a security issue:
 
 See [SECURITY.md](../SECURITY.md) for reporting channels.
 
+## Repairs with proofs
+
+`RedosRepairer` rewrites a pattern open to catastrophic backtracking and keeps the rewrites
+the model proves linear, each with what the automata prove about it:
+
+```php
+use PHPRegex\Optimizer\RedosRepairer;
+
+$repairs = (new RedosRepairer())->repair('/href="([^"]+)*"/');
+
+$repairs[0]->pattern;       // '/href="([^"]*)"/'
+$repairs[0]->sameSubjects;  // true: the automata prove it matches the same subjects
+$repairs[0]->sameMatches;   // false: on 'href=""', $1 is '' where it was unset
+$repairs[0]->isCertified(); // true: same subjects, proven linear
+```
+
+It tries a repeat of a repeat flattened, `(?:a+)+` to `a+`; the optimizer's own rewrite;
+each greedy quantifier made possessive, then all of them. A rewrite proven to match other
+subjects is dropped. One the automata cannot judge stays listed with `sameSubjects` set to
+`null`, after the certified ones: the possessive forms mostly, as `/^(\w++\s?)+$/` for
+`/^(\w+\s?)+$/`, linear for sure, the same subjects for you to check. With ReDoS checks on,
+the PHPStan rule prints a certified repair in the tip of the error.
+
 ## Fixing Vulnerable Patterns (Verify Behavior)
 
 These rewrites remove the ambiguity, but can change what the pattern matches or captures. Run the analysis again on the rewrite, and validate it with tests.
