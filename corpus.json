@@ -56,7 +56,7 @@
         "facebook/open-graph-protocol": { "url": "https://github.com/facebook/open-graph-protocol.git", "branch": "master", "commit": "718f79b0806ec0270d19d6943a01fa733fe9b898" },
         "facebook/php-graph-sdk": { "url": "https://github.com/facebook/php-graph-sdk.git", "branch": "5.x", "commit": "2d8250638b33d73e7a87add65f47fabf91f8ad9b" },
         "FakerPHP/Faker": { "url": "https://github.com/FakerPHP/Faker.git", "branch": "2.0", "commit": "82f77b19dbbddda50317ffc36f8ea152cb0f50a0" },
-        "filamentphp/filament": { "url": "https://github.com/filamentphp/filament.git", "branch": "4.x", "commit": "2cde7f97b8951dba80d99e04b06c9698f16186c3" },
+        "filamentphp/filament": { "url": "https://github.com/filamentphp/filament.git", "branch": "4.x", "commit": "e37c0b9c7427d615d5baf431ddbe0d2382dd1496" },
         "filp/whoops": { "url": "https://github.com/filp/whoops.git", "branch": "master", "commit": "7d0a2cde892089bb09372f4366e9b960eb3001a9" },
         "flarum/framework": { "url": "https://github.com/flarum/framework.git", "branch": "2.x", "commit": "51d6a1e81059edbfb704a9bdc25fdbc33019e244" },
         "FOSSBilling/FOSSBilling": { "url": "https://github.com/FOSSBilling/FOSSBilling.git", "branch": "main", "commit": "a7a219e5c93ea11c23f6d69eebfde1a2437111dd" },

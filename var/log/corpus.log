@@ -548,6 +548,8 @@
 
   corpus/spipu/html2pdf/src/Parsing/TagParser.php:162:72
       → /[\s]+/isU
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
      WARN  Flag 's' is useless: the pattern contains no dots.
      TIP 
@@ -680,6 +682,11 @@
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/Codeception/Codeception/src/Codeception/Lib/Generator/GherkinSnippets.php:122:36
+      → #(\s+?|'|\"|\W)#
+     WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
+
   corpus/Codeception/Codeception/src/Codeception/Subscriber/Console.php:736:28
       → #^ +.* +(\d+)$#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -713,6 +720,11 @@
      TIP 
          - /^(last|previous){1}([0-9]*)$/D
          + /^(last|previous)([0-9]*)$/D
+
+  corpus/matomo-org/matomo/core/Piwik.php:775:28
+      → /^[A-Za-zÄäÖöÜüß0-9_.@+-]*$/D
+     WARN  Character class holds "Ä", which without /u is the bytes \xC3 \x84: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/matomo-org/matomo/plugins/LanguagesManager/Commands/Update.php:165:24
       → /plugins\/([a-zA-z]+) /
@@ -753,6 +765,11 @@
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/matomo-org/matomo/plugins/UsersManager/Validators/Login.php:43:28
+      → /^[A-Za-zÄäÖöÜüß0-9_.@+-]*$/D
+     WARN  Character class holds "Ä", which without /u is the bytes \xC3 \x84: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/matomo-org/matomo/plugins/Diagnostics/Commands/Run.php:90:26
       → %</?[a-z][a-z0-9]*[^<>]*>%sim
@@ -847,14 +864,20 @@
   corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:270:36
       → /^(?U)([^\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\/[^\/]*)? Linux\/[0-9.+]+ Android\/[0-9.]+/u
      WARN  Inline flag 'U' is redundant; it is already set by an earlier inline flag group.
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
   corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:272:42
       → /^(?U)([^\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\/[^\/]*)? Android(_OS)?\/[0-9.]+/u
      WARN  Inline flag 'U' is redundant; it is already set by an earlier inline flag group.
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
   corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:274:42
       → /^(?U)([^\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\/[^\/]*)? Release\/[0-9.]+/u
      WARN  Inline flag 'U' is redundant; it is already set by an earlier inline flag group.
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
   corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:1388:28
       → /Nokia-?([^\/;\)\s]+)[\s|\/|;|\)]/u
@@ -1138,10 +1161,14 @@
 
   corpus/woocommerce/woocommerce/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php:76:24
       → /\n\n( *?)/i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
   corpus/woocommerce/woocommerce/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php:78:24
       → /\n\n( *?)/i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
   corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:69:5
@@ -1508,6 +1535,11 @@
      TIP 
          - /^[\W]{1}(.*)[\W]{1}(\w+)?$/
          + /^[\W](.*)[\W](\w+)?$/
+
+  corpus/magento/magento2/app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php:90:27
+      → /(?<group>(?<section>.*?)\/.*?)\/.*?/
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/magento/magento2/app/code/Magento/LoginAsCustomerAdminUi/Ui/Customer/Component/ConfirmationPopup/Options.php:147:20
       → /\$[:]*{(.)*}/
@@ -2680,6 +2712,8 @@
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+     WARN  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6530:26
       → #/(wp-admin/?.*|wp-login\.php.*)#i
@@ -2952,6 +2986,16 @@
      WARN  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:574:37
+      → #^\??&*?#
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:677:38
+      → #^\??&*?#
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
   corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-xmlrpc-server.php:7209:15
       → |<title>([^<]*?)</title>|is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -3155,10 +3199,20 @@
          - =^@{0,1}(todo|var|fixme):{0,1}(.*)=i
          + =^@?(todo|var|fixme):?(.*)=i
 
+  corpus/theseer/phpdox/src/collector/project/Tokenizer.php:96:39
+      → /\R+/Uu
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
+
   corpus/theseer/tokenizer/tools/php-cs-fixer.d/PhpdocSingleLineVarFixer.php:51:28
       → #^/\*\*[\s\*]+(@var[^\r\n]+)[\s\*]*\*\/$#u
      WARN  "*" is a literal character inside a character class, not a quantifier.
          ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
+  corpus/theseer/tokenizer/src/Tokenizer.php:72:34
+      → /\R+/Uu
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
   corpus/bolt/core/src/Widget/Injector/QueueProcessor.php:31:31
       → /<!--(.*)-->/Uis
@@ -3553,6 +3607,11 @@
       → /([https?|ftps?]?\{.*?\})&(.*?)$/
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 't' (duplicate), 'p' (duplicate), 's' (duplicate), '?' (duplicate)
+
+  corpus/mautic/mautic/plugins/MauticSocialBundle/Integration/TwitterIntegration.php:232:24
+      → #https?://twitter.com/(.*?)(/.*?|$)#i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/minkphp/Mink/src/Selector/Xpath/Manipulator.php:53:28
       → /^[\(\s*]+/
@@ -4178,6 +4237,16 @@
          - /\}\}/si
          + /\}\}/i
 
+  corpus/moodle/moodle/public/lib/tcpdf/include/tcpdf_static.php:1069:22
+      → /@media[\s]+([^\§]*)§([^§]*)§/i
+     WARN  Character class holds "§", which without /u is the bytes \xC2 \xA7: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
+
+  corpus/moodle/moodle/public/lib/tcpdf/include/tcpdf_static.php:1074:28
+      → /@media[\s]+([^\§]*)§([^§]*)§/i
+     WARN  Character class holds "§", which without /u is the bytes \xC2 \xA7: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
+
   corpus/moodle/moodle/public/lib/tcpdf/include/tcpdf_static.php:1120:31
       → /[\>\+\~\s]{1}[a-zA-Z0-9]+/
      WARN  Quantifier is redundant; it matches exactly once.
@@ -4644,16 +4713,22 @@
       → /([ \t\n\r]*)?<!-- BEGIN required -->(\s|\S)*<!-- END required -->([ \t\n\r]*)?/iU
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/moodle/moodle/public/lib/pear/HTML/QuickForm/Renderer/Default.php:254:34
       → /([ \t\n\r]*)?<!-- BEGIN error -->(\s|\S)*<!-- END error -->([ \t\n\r]*)?/iU
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/moodle/moodle/public/lib/pear/HTML/QuickForm/Renderer/Default.php:292:38
       → /([ \t\n\r]*)?<!-- BEGIN required -->(\s|\S)*<!-- END required -->([ \t\n\r]*)?/iU
      WARN  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php:33:17
       → /\$?([^\.]+)\.([^\.]+):\$?([^\.]+)\.([^\.]+)/miu
@@ -5739,6 +5814,16 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the second quantifier to its minimum.
 
+  corpus/moodle/moodle/public/mod/assign/submission/onlinetext/locallib.php:613:48
+      → /<\s*((video|audio)[^>]*>(.*?)<\s*\/\s*(video|audio)>)|(img[^>]*>(.*?))/
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/moodle/moodle/public/mod/assign/submission/onlinetext/locallib.php:640:48
+      → /<\s*((video|audio)[^>]*>(.*?)<\s*\/\s*(video|audio)>)|(img[^>]*>(.*?))/
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
   corpus/moodle/moodle/public/mod/book/tool/importhtml/locallib.php:222:24
       → /charset=([^"]+)/is
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -6660,6 +6745,16 @@
          - #{([a-z0-9\-_]*?)\}#is
          + #{([a-z0-9\-_]*?)\}#i
 
+  corpus/phpbb/phpbb/phpBB/develop/create_variable_overview.php:466:22
+      → #^L_(.*?)#
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/phpbb/phpbb/phpBB/develop/create_variable_overview.php:482:22
+      → #^L_(.*?)#
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
   corpus/phpbb/phpbb/phpBB/phpbb/install/module/install_database/task/add_default_data.php:95:38
       → #\{L_([A-Z0-9\-_]*)\}#s
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -6866,6 +6961,11 @@
      TIP 
          - #\[((?:/)?(?:[a-z]+))#i
          + #\[(/?(?:[a-z]+))#i
+
+  corpus/phpbb/phpbb/phpBB/includes/message_parser.php:811:25
+      → #^quote=&quot;(.*?)#is
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/phpbb/phpbb/phpBB/includes/message_parser.php:1098:96
       → #\[\/?[a-z\*\+\-]+(?:=\S+?)?\]#ius
@@ -8632,6 +8732,21 @@
          - /[\{]([^\}]*?)[\}]/s
          + /[\{]([^\}]*?)[\}]/
 
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:139:52
+      → /^(mod[\.]|app[\.]).*?/s
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:150:48
+      → /^(mod[\.]|app[\.]).*?/s
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:153:52
+      → /^[$].*?/s
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
   corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/QuickCreateMetaParser.php:193:36
       → /<textarea/si
      WARN  Flag 's' is useless: the pattern contains no dots.
@@ -8659,6 +8774,11 @@
      TIP 
          - /<textarea/si
          + /<textarea/i
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/DetailViewMetaParser.php:146:56
+      → /^(mod[\.]|app[\.]).*?/i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/Rules/EmailAddressRule.php:67:32
       → /lbl_email_addresses/si
@@ -8716,6 +8836,16 @@
      TIP 
          - /[\{]([^\}]*?)[\}]/s
          + /[\{]([^\}]*?)[\}]/
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:204:51
+      → /^(mod[\.]|app[\.]).*?/i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:218:47
+      → /^(mod[\.]|app[\.]).*?/i
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/salesagility/SuiteCRM/include/SugarFields/Parsers/EditViewMetaParser.php:264:35
       → /<textarea/si
@@ -9238,6 +9368,11 @@
       → /^([a-zA-Z0-9-._~!$&\'()*+,;=]|%[[:xdigit:]]{2}){1,254}$/i
      WARN  Quantified capturing group "(...)" with "{1,254}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/laminas/laminas-validator/src/GpsPoint.php:86:27
+      → /([°'"]+[NESW])/
+     WARN  Character class holds "°", which without /u is the bytes \xC2 \xB0: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/laminas/laminas-validator/src/DateComparison.php:197:26
       → /^\d{4}-[0-1]\d-[0-3]\d$/
@@ -9832,6 +9967,13 @@
       → /\d+[-–\d,. ]*/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
+     WARN  Character class holds "–", which without /u is the bytes \xE2 \x80 \x93: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
+
+  corpus/processwire/processwire/wire/core/Sanitizer.php:5187:34
+      → !([-−])(\d+)!
+     WARN  Character class holds "−", which without /u is the bytes \xE2 \x88 \x92: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/processwire/processwire/wire/core/WireShutdown.php:358:24
       → !(<br[^>]*>\s*)(#\d+\s+[^<]+)!is
@@ -11101,6 +11243,8 @@
       → /([\.|\,|\:|\¡|\¿|\>|\{|\(]?)@{1}(\w*)([\.|\,|\:|\!|\?|\>|\}|\)]?)\s/i
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '|' (duplicate)
+     WARN  Character class holds "¡", which without /u is the bytes \xC2 \xA1: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -11112,6 +11256,8 @@
       → /([\.|\,|\:|\¡|\¿|\>|\{|\(]?)#{1}(\w*)([\.|\,|\:|\!|\?|\>|\}|\)]?)\s/i
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '|' (duplicate)
+     WARN  Character class holds "¡", which without /u is the bytes \xC2 \xA1: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
      WARN  Quantifier is redundant; it matches exactly once.
          ↳ Remove the {1} quantifier; it does not change the match.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -11721,6 +11867,8 @@
       → /(.*?)<((?:.*?:)?(?:\p{L}|_|[0-9])+?)\((.*?)/
      WARN  Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
          ↳ Add the /u flag to match beyond the first 256 code points.
+     WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Lexer/ReferenceEscaperLexer.php:45:38
       → /(\p{L})@/
@@ -11946,6 +12094,21 @@
      WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
          ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.
 
+  corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1672:41
+      → /(["'])?data\s*:\s*(?:image\s*\/.*)[^\001]*base64[^\001]*,[^\001]*\001?/iUus
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1688:45
+      → /(["'])?data\s*:\s*(?:image\s*\/.*)[^\001]*base64[^\001]*,[^\001]*\001?/iUus
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1755:21
+      → #(?:%3C|¼|<)[^\p{L}@]*/*[^\p{L}@]*(?:script[^\p{L}@]+).*(?:%3E|¾|>)?#iUus
+     WARN  Lazy quantifier "?" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
   corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2039:17
       → #<(?!!--|!\[)((?<start>/*\s*)((?<tagName>[\p{L}:]+)(?=[^\p{L}]|$|)|.+)[^\s"'\p{L}>/=]*[^>]*)(?<closeTag>>)?#iusS
      WARN  Alternation contains an empty alternative.
@@ -11956,6 +12119,8 @@
       → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+     WARN  Lazy quantifier "*" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'm' is useless: pattern '#@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+\{.*\}\s*\}\s*#isumU' contains no anchors.
      TIP 
          - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
@@ -12258,14 +12423,14 @@
       → /\W/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1732:34
+  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1734:34
       → /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m
      WARN  Flag 'm' is useless: pattern '/\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m' contains no anchors.
      TIP 
          - /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/m
          + /\n.*DEPRECATED_PARAMETERS.*\n.*\n.*\n/
 
-  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1739:34
+  corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php:1741:34
       → /\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/m
      WARN  Flag 'm' is useless: pattern '/\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/m' contains no anchors.
      TIP 
@@ -12509,10 +12674,17 @@
       → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+     WARN  Lazy quantifier "*" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'm' is useless: pattern '#@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+\{.*\}\s*\}\s*#isumU' contains no anchors.
      TIP 
          - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
          + #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isuU
+
+  corpus/craftcms/cms/src/helpers/StringHelper.php:2505:32
+      → /['"‘’“”ʻ\[\]\(\)\{\}:]/
+     WARN  Character class holds "‘", which without /u is the bytes \xE2 \x80 \x98: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/ibexa/core/src/contracts/Repository/Values/Content/Query/Aggregation/Location/SubtreeTermAggregation.php:41:27
       → /^(\/\w+)+\/$/
@@ -12614,6 +12786,8 @@
 
   corpus/scrivo/highlight.php/tools/get_language_definitions.php:74:33
       → /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/um
+     WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'm' is useless: pattern '/(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/um' contains no anchors.
      TIP 
          - /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/um
@@ -12999,6 +13173,8 @@
 
   corpus/joomla/joomla-cms/administrator/components/com_finder/src/Indexer/Language.php:152:31
       → #([\pL\pM]+)[+.,]+([\pL\pM]+)#muiU
+     WARN  Lazy quantifier "+" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
      WARN  Flag 'm' is useless: pattern '#([\pL\pM]+)[+.,]+([\pL\pM]+)#muiU' contains no anchors.
      TIP 
@@ -13184,6 +13360,11 @@
       → /{\s*[^}]*[^}a-z_]+\s*}?/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+
+  corpus/CuyZ/Valinor/src/Utility/Reflection/Annotations.php:198:29
+      → /^\s*\*\s*(\S*)/mU
+     WARN  Lazy quantifier "*" ends the pattern, so it always matches its minimum.
+         ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
   corpus/cebe/markdown/Markdown.php:102:20
       → ~<\w+([^>]+)$~s
@@ -13942,9 +14123,24 @@
            # S = study, for efficiency
            /Sx
 
+  corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:577:18
+      → |^data-[^:= \t\r\n/>\0_＿]*$|i
+     WARN  Character class holds "＿", which without /u is the bytes \xEF \xBC \xBF: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
+
   corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1916:20
       → !^([^:]+:)(//[^/]+)?(.*)$!iD
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/wikimedia/mediawiki/includes/Languages/LanguageFi.php:33:22
+      → /[aou][^äöy]*$/i
+     WARN  Character class holds "ä", which without /u is the bytes \xC3 \xA4: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
+
+  corpus/wikimedia/mediawiki/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php:40:22
+      → /[aou][^äöy]*$/i
+     WARN  Character class holds "ä", which without /u is the bytes \xC3 \xA4: the class matches each byte on its own.
+         ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
   corpus/wikimedia/mediawiki/includes/libs/ObjectCache/MemcachedBagOStuff.php:60:5
       → /[^\x21-\x22\x24\x26-\x39\x3b-\x7e]+/
@@ -14202,6 +14398,11 @@
       → /[\s\n,]/
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
+
+  corpus/walkor/workerman/src/Worker.php:1316:32
+      → /^\S+?\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?/
+     WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
   corpus/walkor/workerman/src/Protocols/Http.php:140:13
       → ~^(?-i:GET|POST|OPTIONS|HEAD|DELETE|PUT|PATCH) /[^\x00-\x20\x7f]* (?-i:HTTP)/1\.(?<minor>[0-9])$~
