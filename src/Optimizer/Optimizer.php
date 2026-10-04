@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Optimizer;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
@@ -43,6 +44,13 @@ use PHPRegex\Parser\TraversalAction;
  */
 final readonly class Optimizer
 {
+    /**
+     * The configurations the match check of a rewrite may explore: a few
+     * hundred settle the rewrites of real patterns, and the huge ones fall
+     * back to comparing languages.
+     */
+    private const MATCH_CHECK_BUDGET = 500;
+
     private readonly LanguageSolver $solver;
 
     public function __construct(private RegexParser $parser, private ?DfaCacheInterface $dfaCache = null)
@@ -171,6 +179,15 @@ final readonly class Optimizer
      */
     private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
     {
+        // The same strings are not enough: a rewrite must write the same
+        // $matches, which /(a|ab)/ and /(ab|a)/ do not on "ab".
+        try {
+            return $this->solver->matchEquivalent($original, $optimized, new SolverOptions(maxDfaStates: self::MATCH_CHECK_BUDGET))->isEquivalent;
+        } catch (ComplexityException) {
+            // Outside what the match solver reads, or past its budget: the
+            // strings must agree.
+        }
+
         try {
             $result = $this->solver->equivalent($original, $optimized, new SolverOptions());
 
