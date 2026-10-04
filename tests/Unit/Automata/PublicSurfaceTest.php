@@ -25,6 +25,7 @@ use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -43,6 +44,7 @@ final class PublicSurfaceTest extends TestCase
         DeterminizationAlgorithm::class,
         MinimizationAlgorithm::class,
         EquivalenceResult::class,
+        MatchEquivalenceResult::class,
         IntersectionResult::class,
         SubsetResult::class,
         Dfa::class,
