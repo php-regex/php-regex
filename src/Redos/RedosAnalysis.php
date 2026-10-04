@@ -34,10 +34,11 @@ final readonly class RedosAnalysis implements \JsonSerializable
      * @param array<string>  $recommendations
      * @param array<Finding> $findings
      * @param array<Hotspot> $hotspots
-     * @param int|null       $degree          the degree of a polynomial verdict, 2 or more; null otherwise
-     * @param bool|null      $replayed        whether the witness made the running engine fail; null when no replay was attempted
-     * @param list<string>   $abstractions    what the model analysed differently from the pattern as written
-     * @param string|null    $pcreVersion     the PCRE2 release; the running one when null
+     * @param int|null       $degree           the degree of a polynomial verdict, 2 or more; null otherwise
+     * @param bool|null      $replayed         whether the witness made the running engine fail; null when no replay was attempted
+     * @param list<string>   $abstractions     what the model analysed differently from the pattern as written
+     * @param string|null    $pcreVersion      the PCRE2 release; the running one when null
+     * @param int|null       $upperBoundDegree the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
      */
     public function __construct(
         public RedosSeverity $severity,
@@ -63,6 +64,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public array $abstractions = [],
         ?string $pcreVersion = null,
         public string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
+        public ?int $upperBoundDegree = null,
     ) {
         $this->vulnerableSubpattern = $vulnerableSubpattern ?? $vulnerablePart;
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];

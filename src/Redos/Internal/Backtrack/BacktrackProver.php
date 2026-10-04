@@ -49,6 +49,8 @@ final class BacktrackProver
 {
     private ?PnfaBuilder $builder = null;
 
+    private ?int $stepBound = null;
+
     public function __construct(
         private readonly int $maxStates,
         private readonly int $maxSteps,
@@ -61,6 +63,7 @@ final class BacktrackProver
     public function prove(RegexNode $regex): ProofResult
     {
         $budget = new Budget($this->maxSteps, $this->maxStates);
+        $this->stepBound = null;
         $builder = $this->builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff);
         $searches = $builder->build();
 
@@ -78,6 +81,9 @@ final class BacktrackProver
         /** @var array<int, list<int>|null> $reach */
         $reach = [];
         $best = null;
+        // A lookaround runs within the attempt that meets it: the bounds of
+        // the searches add up, a ceiling for their product.
+        $stepBound = 0;
         foreach ($searches as $index => $pnfa) {
             if (null !== $pnfa->parent && null !== $pnfa->mark) {
                 // A lookaround's body starts where its mark stands, after the
@@ -101,6 +107,7 @@ final class BacktrackProver
             if (isset($parents[$index])) {
                 $automata[$index] = $automaton;
             }
+            $stepBound = null === $stepBound ? null : self::boundOf($automaton, $stepBound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = (new AmbiguityFinder($automaton, $budget))->find($literals);
             unset($automaton);
@@ -113,6 +120,9 @@ final class BacktrackProver
                 $best = $verdict;
             }
         }
+
+        // Known before any verdict is refused: a ceiling needs no witness.
+        $this->stepBound = $stepBound;
 
         if (null !== $best && null !== $best['unwitnessed']) {
             throw ModelLimit::unwitnessed($best['unwitnessed']);
@@ -154,6 +164,16 @@ final class BacktrackProver
     }
 
     /**
+     * An upper bound on the steps of one match attempt, as the degree d of
+     * n^d, from the last proof: null when an exponential ambiguity may exist,
+     * when the pattern left the model, or when the bound outgrew its budget.
+     */
+    public function stepBound(): ?int
+    {
+        return $this->stepBound;
+    }
+
+    /**
      * The bounded repeats read as unbounded so far: all of them after a
      * proof, the ones met before the budget ran out otherwise.
      *
@@ -162,6 +182,22 @@ final class BacktrackProver
     public function abstractions(): array
     {
         return $this->builder?->abstractions() ?? [];
+    }
+
+    /**
+     * The searches' bound so far plus this automaton's, on a budget of its
+     * own so that it takes nothing from the proof; null for an exponential
+     * ambiguity or a budget run out.
+     */
+    private function boundOf(ItemAutomaton $automaton, int $sofar): ?int
+    {
+        try {
+            $bound = (new AmbiguityFinder($automaton, new Budget($this->maxSteps, $this->maxStates)))->stepBound();
+        } catch (ModelLimit) {
+            return null;
+        }
+
+        return null === $bound ? null : $sofar + $bound;
     }
 
     /**

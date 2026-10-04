@@ -105,6 +105,53 @@ final class AmbiguityFinder
     }
 
     /**
+     * An upper bound on the steps one attempt takes, as the degree d of
+     * n^d, or null when an exponential ambiguity may exist. Without a state
+     * that has two distinct paths back to itself on one word, two items of a
+     * strongly connected component are joined by at most one path on any
+     * word (Weber and Seidl, 1991): a path crosses at most c cyclic
+     * components, so an attempt follows at most n^c partial paths, the nodes
+     * of a backtracking matcher's search tree. The automaton reads at least
+     * what the pattern reads, so the bound holds for the pattern.
+     */
+    public function stepBound(): ?int
+    {
+        $this->components(false);
+        foreach ($this->cyclic as $members) {
+            if ($this->splittingComponents($members)->valid()) {
+                return null;
+            }
+        }
+
+        // The most cyclic components a path crosses, over the components in
+        // topological order, the last first.
+        $edges = $this->edges([]);
+        $components = $this->stronglyConnected($edges);
+        $of = [];
+        foreach ($components as $index => $members) {
+            foreach ($members as $member) {
+                $of[$member] = $index;
+            }
+        }
+
+        $longest = [];
+        for ($index = \count($components) - 1; $index >= 0; $index--) {
+            $after = 0;
+            foreach ($components[$index] as $member) {
+                foreach ($edges[$member] as $next) {
+                    if ($of[$next] !== $index) {
+                        $after = max($after, $longest[$of[$next]]);
+                    }
+                }
+            }
+
+            $longest[$index] = $after + (isset($this->component[$components[$index][0]]) ? 1 : 0);
+        }
+
+        return [] === $longest ? 0 : max($longest);
+    }
+
+    /**
      * The worst ambiguity: its class, the degree of a polynomial, the
      * witness as characters (prefix, pump, suffix), other suffixes that also
      * reject for the replay, the suffix to publish, whether the pump crosses
@@ -487,6 +534,28 @@ final class AmbiguityFinder
      */
     private function exponentialCandidates(array $members): \Generator
     {
+        foreach ($this->splittingComponents($members) as [$diagonal, $within]) {
+            foreach ($diagonal as $state) {
+                $cycle = $this->splittingCycle($state, $within);
+                if (null !== $cycle) {
+                    yield [$state, ...$cycle];
+                }
+            }
+        }
+    }
+
+    /**
+     * The strongly connected sets of pairs of states a word leads to from
+     * the same state that hold both a state paired with itself and two paths
+     * that split: each is an exponential ambiguity, the states paired with
+     * themselves listed.
+     *
+     * @param list<int> $members
+     *
+     * @return \Generator<int, array{list<int>, array<int, true>}>
+     */
+    private function splittingComponents(array $members): \Generator
+    {
         $automaton = $this->automaton;
         $size = $this->size;
         $inside = array_fill_keys($members, true);
@@ -560,13 +629,7 @@ final class AmbiguityFinder
             }
 
             sort($diagonal);
-            $within = array_fill_keys($component, true);
-            foreach ($diagonal as $state) {
-                $cycle = $this->splittingCycle($state, $within);
-                if (null !== $cycle) {
-                    yield [$state, ...$cycle];
-                }
-            }
+            yield [$diagonal, array_fill_keys($component, true)];
         }
     }
 

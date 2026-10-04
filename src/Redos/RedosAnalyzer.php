@@ -140,6 +140,7 @@ final class RedosAnalyzer
                 abstractions: RedosProof::Proven === $proofKind || $keepsAbstractions
                     ? [...$prover->abstractions(), ...(null === $reason ? [] : [$reason])]
                     : [],
+                upperBoundDegree: $prover->stepBound(),
             );
 
             if (RedosMode::Confirmed !== $mode || !$analysis->exceedsThreshold($threshold)) {
@@ -278,6 +279,7 @@ final class RedosAnalyzer
             abstractions: $analysis->abstractions,
             pcreVersion: $analysis->pcreVersion,
             analysisVersion: $analysis->analysisVersion,
+            upperBoundDegree: $analysis->upperBoundDegree,
         );
     }
 

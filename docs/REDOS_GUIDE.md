@@ -254,6 +254,36 @@ With the default budget, the same pattern is `Exponential backtracking (proven)`
 
 `Regex::redos()` uses the default budget. The configuration files have no key for it in 2.0.
 
+## A ceiling without a witness
+
+A verdict says what an attack costs, from the input that mounts it. When the model finds an
+ambiguity but no input to drive it, as in `/(.*)'(.*)'(.*)/i`, the verdict stays
+`unknown` — and a ceiling may still be proven. `RedosAnalysis::$upperBoundDegree` is the
+degree `d` of a bound `n^d` on the steps of one match attempt:
+
+```php
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
+
+$analyzer = new RedosAnalyzer(RegexParser::create());
+
+$analyzer->analyze("/(.*)'(.*)'(.*)/i")->upperBoundDegree; // 3: at most n^3, attack or not
+$analyzer->analyze('/^a+b$/')->upperBoundDegree;           // 1
+$analyzer->analyze('/(a+)+$/')->upperBoundDegree;          // null: no polynomial ceiling
+```
+
+The argument: when no state of the pattern's automaton has two distinct paths back to itself
+on one word, two states of a strongly connected part are joined by at most one path on any
+word (Weber and Seidl, 1991). A path then crosses at most `c` loops of the automaton, and an
+attempt follows at most `n^c` partial paths, which bounds a backtracking matcher's search
+tree. The automaton reads at least what the pattern reads, bounded repeats it treats as
+unbounded included, so the bound holds for the pattern.
+
+It is an upper bound, worded "at most": `/^(?:a|b)*c+d*$/` gets 3 though its attempts are
+linear. It is `null` when such a state exists — witnessed or not — and when the pattern
+leaves the model. Never below a proven degree, it turns about a fifth of the corpus
+patterns left `unknown` into ones with a polynomial ceiling.
+
 ## Reading the result
 
 `RedosAnalysis` keeps the fields of 1.x (`severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendations`, `confirmation`, …) and adds:
