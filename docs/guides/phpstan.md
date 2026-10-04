@@ -168,6 +168,7 @@ custom wiring, reads them in any case.
 | `regex.invalidForTarget` | a pattern the target refuses and the running PHP compiles |
 | `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the tip |
 | `regex.optimization` | a pattern with a shorter equivalent |
+| `regex.trivialMatch` | a `preg_match($pattern, $subject)` a string function answers alike, `str_starts_with()` for `/^https:/`, proven by the automata; with `optimizations` on |
 | `regex.lint.<rule>` | a lint rule, as `regex.lint.flag.useless.i` |
 
 Use them in `ignoreErrors` or a baseline as with any PHPStan identifier.

@@ -19,6 +19,7 @@
     "require": {
         "php": ">=8.2",
         "phpstan/phpstan": "^2.0",
+        "php-regex/regex-automata": "^2.0",
         "php-regex/regex-linter": "^2.0",
         "php-regex/regex-optimizer": "^2.0",
         "php-regex/regex-parser": "^2.0",

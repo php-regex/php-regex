@@ -21,7 +21,8 @@ Features
 * Opt-in lint: the 32 lint rules of [php-regex/regex-linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter), each finding carrying its rule identifier and a tip.
 * Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds: a proven exponential or polynomial verdict, or a heuristic one, with the attack input in the tip. A call whose subject PHPStan knows to be constant is not reported: no input can reach it.
 * Opt-in optimization suggestions behind a minimum-savings setting; every rewrite is proven equivalent by the automata solver before it is reported.
-* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regex.redos`, `regex.optimization`, `regex.lint.<rule>`.
+* With optimizations on, a `preg_match($pattern, $subject)` a string function answers alike is reported with the function: `/^https:/` is `str_starts_with($subject, 'https:')`, `/^(?:GET|POST)\z/` an `in_array()`. Each is proven by the automata; `/^foo$/` is no `===`, as `$` also takes `"foo\n"`.
+* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regex.redos`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
 
 Installation

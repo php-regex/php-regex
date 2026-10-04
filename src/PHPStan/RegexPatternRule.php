@@ -21,6 +21,8 @@ use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\PrettyPrinter\Standard;
+use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -51,6 +53,8 @@ final class RegexPatternRule implements Rule
     public const IDENTIFIER_INVALID_FOR_TARGET = 'regex.invalidForTarget';
     public const IDENTIFIER_REDOS = 'regex.redos';
     public const IDENTIFIER_OPTIMIZATION = 'regex.optimization';
+
+    public const IDENTIFIER_TRIVIAL_MATCH = 'regex.trivialMatch';
 
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
@@ -143,6 +147,8 @@ final class RegexPatternRule implements Rule
 
     private ?AnalysisService $analysis = null;
 
+    private ?TrivialMatchClassifier $trivialMatches = null;
+
     /**
      * @param array<string, mixed> $config     the "phpRegex" parameter: "phpVersion", "pcreVersion" and
      *                                         "checks" ("lint", "redos", "optimizations"), every key optional
@@ -219,12 +225,19 @@ final class RegexPatternRule implements Rule
             return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getLine(), $functionName, $constantSubject);
         }
 
+        // preg_match($pattern, $subject) alone, its result the only output.
+        $plainMatch = $this->optimizationsEnabled && 'preg_match' === $functionName && 2 === \count($args) && null !== $subjectArg;
+
         $errors = [];
         foreach ($scope->getType($patternArg)->getConstantStrings() as $constantString) {
             $errors = array_merge(
                 $errors,
                 $this->validatePattern($constantString->getValue(), $node->getLine(), $scope, $functionName, $constantSubject),
             );
+
+            if ($plainMatch) {
+                $errors = array_merge($errors, $this->trivialMatch($constantString->getValue(), $subjectArg, $node->getLine()));
+            }
         }
 
         return $errors;
@@ -266,6 +279,33 @@ final class RegexPatternRule implements Rule
         }
 
         return true;
+    }
+
+    /**
+     * A preg_match() a string function answers alike, as the automata prove.
+     *
+     * @return list<IdentifierRuleError>
+     */
+    private function trivialMatch(string $pattern, Expr $subject, int $lineNumber): array
+    {
+        if (!$this->runningEngineCompiles($pattern)) {
+            return [];
+        }
+
+        $match = ($this->trivialMatches ??= new TrivialMatchClassifier($this->regex))->classify($pattern);
+        if (null === $match) {
+            return [];
+        }
+
+        return [RuleErrorBuilder::message(\sprintf(
+            'preg_match() with %s is %s.',
+            $this->truncatePattern($pattern),
+            $match->phpExpression((new Standard())->prettyPrintExpr($subject)),
+        ))
+            ->line($lineNumber)
+            ->identifier(self::IDENTIFIER_TRIVIAL_MATCH)
+            ->tip('Both say yes for exactly the same subjects, as the automata prove, and the function needs no regex engine; preg_match() returns 1 or 0 where the function returns true or false.')
+            ->build()];
     }
 
     /**

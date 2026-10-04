@@ -27,6 +27,9 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Automata\Solver\IntersectionResult;
 use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Automata\TrivialMatch;
+use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Automata\TrivialMatchKind;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +48,9 @@ final class PublicSurfaceTest extends TestCase
         MinimizationAlgorithm::class,
         EquivalenceResult::class,
         MatchEquivalenceResult::class,
+        TrivialMatchClassifier::class,
+        TrivialMatch::class,
+        TrivialMatchKind::class,
         IntersectionResult::class,
         SubsetResult::class,
         Dfa::class,

@@ -236,7 +236,7 @@ instead of returning an answer that would be wrong. The next section lists every
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
-`Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`. Every other class of the namespace is
+`Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, and `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns. Every other class of the namespace is
 `@internal` and may change in any release.
 
 ## What the Solver Refuses
