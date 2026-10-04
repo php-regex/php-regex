@@ -359,7 +359,11 @@ final class HirTranslator
             return $this->opaque($node, Properties::zeroWidth());
         }
 
-        return new AssertionHir($kind, $node->getStartPosition(), $node->getEndPosition());
+        // A word boundary tells word characters from the rest: which they
+        // are, under /u or "(*UCP)", the engine says.
+        $word = AssertionKind::WordBoundary === $kind || AssertionKind::NotWordBoundary === $kind ? $this->classOf('\\w', $node, $flags) : null;
+
+        return new AssertionHir($kind, $node->getStartPosition(), $node->getEndPosition(), $word instanceof ClassHir ? $word->set : null);
     }
 
     private function scriptRun(ScriptRunNode $node, int $flags): Hir

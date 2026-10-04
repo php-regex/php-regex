@@ -61,7 +61,7 @@ final class HirToNfaTransformer
 
     public const ATOMIC_MESSAGE = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
 
-    public const ASSERTION_MESSAGE = 'Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
+    public const ASSERTION_MESSAGE = '\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
 
     public const POSSESSIVE_MESSAGE = 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.';
 
@@ -123,16 +123,6 @@ final class HirToNfaTransformer
     }
 
     /**
-     * The lookaround marks the last build left.
-     *
-     * @return array<int, LookHir>
-     */
-    private function marks(): array
-    {
-        return $this->marks;
-    }
-
-    /**
      * The automaton of a lookaround's body: what it matches from where it
      * stands, or, for a lookbehind, any subject ending with what it matches.
      *
@@ -158,6 +148,16 @@ final class HirToNfaTransformer
     {
         $this->vouchedPossessives = [];
         $this->assertNode($hir, $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
+    }
+
+    /**
+     * The lookaround marks the last build left.
+     *
+     * @return array<int, LookHir>
+     */
+    private function marks(): array
+    {
+        return $this->marks;
     }
 
     /**
@@ -299,6 +299,7 @@ final class HirToNfaTransformer
         if (AssertionKind::SubjectStart === $node->kind
             || AssertionKind::SubjectEnd === $node->kind
             || AssertionKind::EndOrFinalNewline === $node->kind
+            || self::isWordBoundary($node)
         ) {
             return;
         }
@@ -312,6 +313,11 @@ final class HirToNfaTransformer
     private function assertAssertionPosition(AssertionHir $node, bool $atStart, bool $atEnd): void
     {
         $this->assertAssertionKind($node);
+
+        // A word boundary reads where it stands, as its lookarounds do.
+        if (self::isWordBoundary($node)) {
+            return;
+        }
 
         $accepted = match ($node->kind) {
             AssertionKind::SubjectStart => $atStart,
@@ -526,6 +532,10 @@ final class HirToNfaTransformer
             return $this->buildNode($node->body);
         }
 
+        if ($node instanceof AssertionHir && null !== $node->wordSet && self::isWordBoundary($node)) {
+            return $this->buildWordBoundary($node, $node->wordSet);
+        }
+
         if ($node instanceof LookHir) {
             // A mark the lookaround product reads: crossing it makes the
             // promise about what follows, or asks what came before.
@@ -540,6 +550,41 @@ final class HirToNfaTransformer
         // An assertion the refusal walk accepted, or nothing at all: the
         // empty string.
         return $this->epsilonFragment();
+    }
+
+    /**
+     * A word boundary as the lookarounds it stands for: \b between a word
+     * character and something else, (?<=\w)(?!\w)|(?<!\w)(?=\w); \B
+     * where it is not, (?<=\w)(?=\w)|(?<!\w)(?!\w).
+     *
+     * @throws ComplexityException
+     */
+    private function buildWordBoundary(AssertionHir $node, CharSet $word): NfaFragment
+    {
+        $boundary = AssertionKind::WordBoundary === $node->kind;
+        $pairs = [
+            [LookKind::Behind, $boundary ? LookKind::NegativeAhead : LookKind::Ahead],
+            [LookKind::NegativeBehind, $boundary ? LookKind::Ahead : LookKind::NegativeAhead],
+        ];
+
+        $start = $this->builder->createState();
+        $end = $this->builder->createState();
+        foreach ($pairs as [$before, $after]) {
+            $first = $this->buildNode(new LookHir(new ClassHir($word), $before, true, $node->startPosition, $node->endPosition));
+            $second = $this->buildNode(new LookHir(new ClassHir($word), $after, true, $node->startPosition, $node->endPosition));
+            $pair = $this->concatenate($first, $second);
+            $this->builder->addEpsilon($start, $pair->startState);
+            foreach ($pair->acceptStates as $state) {
+                $this->builder->addEpsilon($state, $end);
+            }
+        }
+
+        return new NfaFragment($start, [$end]);
+    }
+
+    private static function isWordBoundary(AssertionHir $node): bool
+    {
+        return null !== $node->wordSet && (AssertionKind::WordBoundary === $node->kind || AssertionKind::NotWordBoundary === $node->kind);
     }
 
     private function buildConcat(ConcatHir $node): NfaFragment

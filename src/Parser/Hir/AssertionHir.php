@@ -20,10 +20,14 @@ namespace PHPRegex\Parser\Hir;
  */
 final readonly class AssertionHir extends Hir
 {
+    /**
+     * @param CharSet|null $wordSet for a word boundary, the characters the engine reads as \w here
+     */
     public function __construct(
         public AssertionKind $kind,
         int $startPosition = 0,
         int $endPosition = 0,
+        public ?CharSet $wordSet = null,
     ) {
         parent::__construct(Properties::zeroWidth(), $startPosition, $endPosition);
     }

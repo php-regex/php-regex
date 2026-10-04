@@ -132,11 +132,12 @@ final class RegularSubsetValidator
 
         // "\A" reads as "^" at the start, "\z" and "\Z" as "$" at the end:
         // the same edges, refused with the ladder's one message elsewhere.
-        // Every other condition — "\b", "\B", "\G" — reads where the match
-        // stands, wherever it is written.
+        // A word boundary is the lookarounds it stands for, read anywhere;
+        // "\G" reads where the match stands, which no language says.
         $readable = match ($value) {
             'A' => $atStart,
             'z', 'Z' => $atEnd,
+            'b', 'B' => true,
             default => false,
         };
 
@@ -173,6 +174,10 @@ final class RegularSubsetValidator
 
     private function anchorInside(NodeInterface $node): AnchorNode|AssertionNode|null
     {
+        if ($node instanceof AssertionNode && \in_array($node->value, ['b', 'B'], true)) {
+            return null;
+        }
+
         if ($node instanceof AnchorNode || $node instanceof AssertionNode) {
             return $node;
         }

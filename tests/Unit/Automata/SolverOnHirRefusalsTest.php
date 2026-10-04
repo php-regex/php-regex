@@ -46,7 +46,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         $nested = 'A lookaround inside a lookaround is beyond what the automata solver reads.';
         $anchored = 'An anchor inside a lookaround is beyond what the automata solver reads.';
         $atomic = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
-        $assertion = 'Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
+        $assertion = '\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
         $surrogate = 'PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.';
 
         // "\g{1}" is the unambiguous spelling of the backreference: the
@@ -64,8 +64,8 @@ final class SolverOnHirRefusalsTest extends TestCase
 
         yield 'atomic group' => ['pattern' => '/(?>a+)b/', 'expected' => $atomic];
 
-        yield 'word boundary' => ['pattern' => '/a\b/', 'expected' => $assertion];
-        yield 'not a word boundary' => ['pattern' => '/a\B/', 'expected' => $assertion];
+        yield 'match start after a character' => ['pattern' => '/a\G/', 'expected' => $assertion];
+        yield 'word boundary inside a lookahead' => ['pattern' => '/(?=\b)a/', 'expected' => 'An anchor inside a lookaround is beyond what the automata solver reads.'];
         yield 'keep' => ['pattern' => '/a\Kb/', 'expected' => $assertion];
         yield 'subject start inside' => ['pattern' => '/a\Ab/', 'expected' => $assertion];
         yield 'subject end inside' => ['pattern' => '/a\zb/', 'expected' => $assertion];

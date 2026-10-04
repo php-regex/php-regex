@@ -340,8 +340,8 @@ final class SolverGuardrailsTest extends TestCase
     public static function provideDirectTransformerRows(): iterable
     {
         yield 'a caret after a character' => ['pattern' => '/a^/'];
-        yield 'a whole pattern of word boundary' => ['pattern' => '/\b/'];
-        yield 'a word boundary inside a sequence' => ['pattern' => '/a\bb/'];
+        yield 'a whole pattern of match start' => ['pattern' => '/\G/'];
+        yield 'a match start inside a sequence' => ['pattern' => '/a\Gb/'];
     }
 
     /**

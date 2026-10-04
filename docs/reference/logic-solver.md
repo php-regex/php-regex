@@ -260,8 +260,12 @@ stands. The product of the pattern's automaton with the pending promises and tho
 an automaton of its own, determinized as any other (Berglund, van der Merwe and van
 Litsenborgh, "Regular Expressions with Lookahead", 2021).
 
-A lookaround inside a lookaround, an anchor inside one, and the non-atomic `(*napla:...)`
-are refused. The product can grow large; the usual NFA and DFA budgets bound it.
+A word boundary is two lookarounds in disguise, and reads as them: `\b` holds between a
+word character and something else, `(?<=\w)(?!\w)|(?<!\w)(?=\w)`, `\B` where it does not.
+Word characters are the engine's: `é` is one under `/u`, two bytes that are not without it.
+
+A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
+`(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it.
 
 ## What the Solver Refuses
 
@@ -277,7 +281,7 @@ verbatim:
 | an anchor inside a lookaround              | `An anchor inside a lookaround is beyond what the automata solver reads.` |
 | a non-atomic lookaround, `(*napla:...)`    | `A non-atomic lookaround, (*napla:...) or its kind, backtracks into its body, which the automata solver does not read.` |
 | an atomic group (and `\R`)                 | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
-| a word boundary, `\B`, `\K`, `\G`, or an anchor away from the edge of an alternative | `Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.` |
+| `\K`, `\G`, or an anchor away from the edge of an alternative | `\K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | a flag outside `i`, `s`, `u`, `D`          | `Unsupported regex flags for automata: m.` (the pattern's own flags, in order) |
