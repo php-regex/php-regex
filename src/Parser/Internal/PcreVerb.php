@@ -130,7 +130,7 @@ final readonly class PcreVerb
         }
 
         $matches = [];
-        if (preg_match('/^LIMIT_MATCH=(\d++)$/i', $verb, $matches)) {
+        if (preg_match('/^LIMIT_MATCH=(\d++)\z/i', $verb, $matches)) {
             return new self($verb, null, null, (int) $matches[1]);
         }
 

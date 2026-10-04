@@ -1433,7 +1433,7 @@ final class Validator extends AbstractNodeVisitor
             $this->validateStartOfPatternPlacement($verbName, $node->startPosition);
         }
 
-        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++$/', $node->verb)) {
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++\z/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
                 PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
@@ -1450,7 +1450,7 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        if (isset(self::LIMIT_VERBS[$verbName]) && 1 === preg_match('/=(\d++)$/', $node->verb, $digits, \PREG_OFFSET_CAPTURE)) {
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 === preg_match('/=(\d++)\z/', $node->verb, $digits, \PREG_OFFSET_CAPTURE)) {
             $this->validateLimitValue($digits[1][0], $node->startPosition + 2 + $digits[1][1]);
         }
 

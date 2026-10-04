@@ -147,7 +147,7 @@ final class GroupNameReader
         // PCRE group names are word characters only and must not start with
         // a digit: PCRE reads the characters a name may hold, and wants what
         // closes the name right after them.
-        $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+$/u' : '/^[A-Za-z_]\w*+$/';
+        $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+\z/u' : '/^[A-Za-z_]\w*+\z/';
         if (1 !== preg_match($namePattern, $name)) {
             $offset = $this->invalidNameOffset($nameStart);
             $fault = $this->nameFault($nameStart, $offset);
