@@ -19,7 +19,7 @@ Features
 * `parseTolerant()` returns a best-effort AST plus the parse errors instead of throwing on broken input.
 * Visitors walk the tree: implement `NodeVisitorInterface`, query with `NodeFinder`, or walk with `NodeWalker`.
 * The AST cache sits behind one interface: in memory by default, a directory on disk, or a PSR-6 / PSR-16 pool.
-* Small AST analyses: group numbering, complexity score, literal extraction, length ranges.
+* Small AST analyses: group numbering, complexity score, literal extraction, length ranges, and the literals every match holds, for a `str_contains()` prefilter.
 * Capture shapes: which groups a match always sets, may leave unset or never sets, the strings each can hold, and the `$matches` array `preg_match()` fills, written as a PHPStan type for static analysers.
 
 Installation

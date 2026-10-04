@@ -11,6 +11,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - [Feature Support Matrix](feature-support-matrix.md)
 - [Correctness Contracts](correctness-contracts.md)
 - [Capture Shapes](capture-shapes.md)
+- [Prefilters](prefilters.md)
 - [PCRE2 Conformance](pcre2-conformance.md)
 - [FAQ and Glossary](faq-glossary.md)
 
