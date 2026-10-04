@@ -251,7 +251,8 @@ final class Rewriter extends AbstractNodeVisitor
 
         // Compact repeated literal sequences (only when beneficial)
         foreach ($optimizedChildren as $i => $child) {
-            if ($child instanceof LiteralNode && preg_match('/^(.)\1+$/', $child->value, $matches)) {
+            // \z, not $: "aaa\n" is no run of "a", though $ matches before its newline.
+            if ($child instanceof LiteralNode && preg_match('/^(.)\1+\z/s', $child->value, $matches)) {
                 $char = $matches[1];
                 $count = \strlen($child->value);
                 // Only compact if count meets the configured minimum (avoids making output longer/less readable)
@@ -1579,7 +1580,7 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         // Check if the entire string is a quantifier pattern
-        if (preg_match('/^\{\d+(?:,\d*)?\}$/', $str)) {
+        if (preg_match('/^\{\d+(?:,\d*)?\}\z/', $str)) {
             return new LiteralNode($str, $start, $end, true);
         }
 

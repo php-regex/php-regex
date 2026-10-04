@@ -165,6 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The optimizer read a literal ending with a newline as a run of one character, because `$` matches before a final newline: `/aaa\n/` became `/a{4}/` and `/^---\n(.+)$/` became `/^-{4}(.+)$/`, which match other strings. A run now ends where the literal does.
 - In partial match mode the automata solver read `$` and `\Z` as the end of the subject, though without `/D` PCRE also matches them before a newline that ends it: the solver called `/^ab$/` and `/^ab\z/` equivalent, while `preg_match('/^ab$/', "ab\n")` is 1 and the `\z` pattern says 0. A search now accepts that newline, and the solver reads `/D`, which it refused.
 - A pattern opening with `(*UTF8)`, which the 8-bit PCRE2 library takes as `(*UTF)`, was read as a byte pattern by the automata solver and the length analysis: the solver called `/(*UTF8)./` and `/./u` different. Every part of the library now reads UTF mode from one place.
 - The PHPStan rule read the first argument of a `preg_*` call as the pattern even when the call names its arguments: `preg_match(subject: $s, pattern: '/(a+)+$/')` checked the subject. Named arguments are read by name.
