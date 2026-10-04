@@ -337,6 +337,38 @@ final class CorpusScriptTest extends TestCase
     }
 
     #[Test]
+    public function test_update_lands_on_the_default_branch_when_the_configured_one_is_gone(): void
+    {
+        $this->script(['install']);
+
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $manifest['repositories']['src']['branch'] = 'gone';
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+
+        [$code, $output] = $this->script(['update']);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('default branch', $output);
+        $this->assertSame('main', $this->manifestEntryField('src', 'branch'), 'the branch landed on must be written back to corpus.json');
+        $this->assertSame($this->secondCommit, $this->manifestCommit(), 'landing on the default branch records its tip');
+    }
+
+    #[Test]
+    public function test_update_does_not_follow_tags(): void
+    {
+        $this->git($this->origin, 'tag', 'v1.0.0');
+        $this->script(['install']);
+
+        [$code, $output] = $this->script(['update']);
+
+        $this->assertSame(0, $code, $output);
+        $tagopt = trim((string) shell_exec('git -C '.escapeshellarg($this->root.'/corpus/src').' config remote.origin.tagopt 2>/dev/null'));
+        $this->assertSame('--no-tags', $tagopt, 'a case-colliding tag upstream must not be able to break the fetch');
+        $tags = trim((string) shell_exec('git -C '.escapeshellarg($this->root.'/corpus/src').' tag -l'));
+        $this->assertSame('', $tags);
+    }
+
+    #[Test]
     public function test_install_force_keeps_a_dirty_unlisted_checkout(): void
     {
         $this->script(['install']);

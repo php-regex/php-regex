@@ -1009,6 +1009,7 @@ function normalizeWorkerResult(mixed $decoded, mixed $item): array
         'previous' => \is_string($decoded['previous'] ?? null) ? $decoded['previous'] : null,
         'count' => \is_int($decoded['count'] ?? null) ? $decoded['count'] : null,
         'notes' => $stringList($decoded['notes'] ?? null),
+        'branch' => \is_string($decoded['branch'] ?? null) ? $decoded['branch'] : null,
     ];
 }
 
@@ -1342,6 +1343,11 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
     }
 
     // --- Branch phase ---
+    // Corpus checkouts track branches, never tags: auto-followed tags have
+    // broken real fetches where the remote carries two tags differing only in
+    // casing (impossible to store on a case-insensitive filesystem).
+    runGitLogged($repoPath, ['config', 'remote.origin.tagopt', '--no-tags'], $timeout, $debug, $log);
+
     // The manifest branch is authoritative: switch before pulling so that a
     // branch bump in corpus.json propagates to the checkout.
     $branchNote = '';
@@ -1358,7 +1364,37 @@ function processRepo(string $repoPath, bool $force, string $corpusDir, bool $deb
 
         $fetch = runGitLogged($repoPath, ['fetch', $remote, '+refs/heads/'.$branch.':refs/remotes/'.$remote.'/'.$branch], $timeout, $debug, $log);
         if (0 !== $fetch['code']) {
-            return $fail('Configured branch '.$branch.' not found on '.$remote.': '.$fetch['output']);
+            // The configured branch is gone or unreachable (renamed, deleted,
+            // or case-colliding with another ref on a case-insensitive
+            // filesystem). Land on the remote's default branch instead of
+            // failing the whole update; the branch reached is written back to
+            // the manifest, so the next run tracks it directly.
+            $default = getRemoteDefaultBranch($repoPath, $remote, $timeout);
+            $landed = null !== $default
+                && 0 === runGitLogged($repoPath, ['fetch', $remote, '+refs/heads/'.$default.':refs/remotes/'.$remote.'/'.$default], $timeout, $debug, $log)['code'];
+
+            if ($landed) {
+                ensureFetchRefspec($repoPath, $remote, $default, $timeout);
+                $landed = 0 === runGitLogged($repoPath, ['checkout', '-B', $default, $remote.'/'.$default], $timeout, $debug, $log)['code'];
+            }
+
+            if (!$landed) {
+                return $fail('Configured branch '.$branch.' not found on '.$remote.': '.$fetch['output']);
+            }
+
+            runGitLogged($repoPath, ['branch', '--set-upstream-to='.$remote.'/'.$default, $default], $timeout, $debug, $log);
+            $branchNote = 'Configured branch '.$branch.' not found on '.$remote.'; switched to the default branch '.$default.'.';
+            $branch = $default;
+
+            return [
+                'path' => $repoPath,
+                'status' => 'OK',
+                'output' => $branchNote,
+                'command' => 'git checkout -B '.$default.' '.$remote.'/'.$default,
+                'code' => 0,
+                'log' => $log,
+                'notes' => [$branchNote],
+            ];
         }
 
         // Point the fetch refspec at the new branch before the checkout: on a
@@ -1477,7 +1513,12 @@ function syncRepo(
         }
     }
 
-    return $result + ['change' => $change, 'commit' => $after, 'previous' => $previous, 'count' => $count];
+    // Where the checkout actually stands after the update: when a configured
+    // branch was gone and the default branch took its place, this is what the
+    // manifest must remember for the next run.
+    $branch = 'OK' === $result['status'] ? getCurrentBranch($repoPath, $timeout) : null;
+
+    return $result + ['change' => $change, 'commit' => $after, 'previous' => $previous, 'count' => $count, 'branch' => $branch];
 }
 
 // ---------------------------------------------------------------------------
@@ -2038,12 +2079,26 @@ function recordCommits(string $manifestFile, array $manifest, array $results, st
         }
 
         $relPath = formatRepoLabel($result['path'], $corpusDir);
-        if (!isset($manifest['repositories'][$relPath]) || $manifest['repositories'][$relPath]['commit'] === $commit) {
+        if (!isset($manifest['repositories'][$relPath])) {
             continue;
         }
 
-        $manifest['repositories'][$relPath]['commit'] = $commit;
-        $changed = true;
+        $commitChanged = $manifest['repositories'][$relPath]['commit'] !== $commit;
+        if ($commitChanged) {
+            $manifest['repositories'][$relPath]['commit'] = $commit;
+        }
+
+        // A checkout that had to leave its configured branch (renamed or
+        // deleted upstream) must record where it landed, or every later run
+        // fails on the same missing branch again.
+        $branch = $result['branch'] ?? null;
+        $branchChanged = \is_string($branch) && '' !== $branch
+            && ($manifest['repositories'][$relPath]['branch'] ?? null) !== $branch;
+        if ($branchChanged) {
+            $manifest['repositories'][$relPath]['branch'] = $branch;
+        }
+
+        $changed = $changed || $commitChanged || $branchChanged;
     }
 
     if (!$changed) {
