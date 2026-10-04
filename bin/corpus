@@ -306,7 +306,8 @@ function printUsage(): void
           --no-clone        Do not clone missing repositories, only pull existing ones
           --clone-only      Only clone missing repositories, do not pull existing ones
           --add <url>       Add a repository to the manifest and clone it (repeatable)
-          --as <path>       Target path under corpus/ for --add (default: derived from the URL)
+          --as <path>       Target path under corpus/ for --add (default: the
+                            "vendor/name" derived from the URL)
           --branch <name>   Branch to record for --add (default: the remote default branch)
           --depth <n>       Clone depth for --add, 0 for a full clone (default: manifest default)
           --write-manifest  Rewrite corpus.json from the repositories found on disk
@@ -732,15 +733,17 @@ function getRemoteUrl(string $repoPath, string $remote, int $timeout): ?string
 }
 
 /**
- * Derive "vendor/repo" style target paths from a clone URL.
- *
- * @param array<string, mixed> $taken Paths already in use, keyed by target path
+ * Derive the "vendor/name" target path from a clone URL: always the last two
+ * path segments, so a bare "semver" never hides which vendor it belongs to.
+ * A URL with no vendor segment to show is refused; name it with --as instead.
  */
-function deriveTargetPath(string $url, array $taken): string
+function deriveTargetPath(string $url): string
 {
-    $path = preg_replace('~^(?:https?://|ssh://|git://)[^/]+/~', '', $url) ?? $url;
-    $path = preg_replace('~^git@[^:]+:~', '', $path) ?? $path;
-    $path = preg_replace('~\.git$~', '', $path) ?? $path;
+    $path = preg_replace('~[?#].*$~', '', $url) ?? $url;
+    $path = preg_replace('~^(?:https?://|ssh://|git://|file://)[^/]*~', '', $path) ?? $path;
+    $path = preg_replace('~^[\w.-]+@[\w.-]+:~', '', $path) ?? $path;
+    $path = rtrim($path, '/');
+    $path = preg_replace('~\.git$~i', '', $path) ?? $path;
     $path = trim($path, '/');
 
     $segments = array_values(array_filter(explode('/', $path), static fn (string $s): bool => '' !== $s));
@@ -748,19 +751,18 @@ function deriveTargetPath(string $url, array $taken): string
         throw new RuntimeException(sprintf('Unable to derive a target path from %s.', $url));
     }
 
-    $name = normalizeManifestPath(end($segments));
-    if (!isset($taken[$name])) {
-        return $name;
+    if (\count($segments) < 2) {
+        throw new RuntimeException(sprintf(
+            'Unable to derive "vendor/name" from %s: it has no vendor segment; pass --as to name it.',
+            $url,
+        ));
     }
 
-    if (\count($segments) >= 2) {
-        $nested = normalizeManifestPath($segments[\count($segments) - 2].'/'.$name);
-        if (!isset($taken[$nested])) {
-            return $nested;
-        }
+    try {
+        return normalizeManifestPath($segments[\count($segments) - 2].'/'.end($segments));
+    } catch (RuntimeException $e) {
+        throw new RuntimeException(sprintf('Unable to derive a target path from %s: %s', $url, $e->getMessage()), 0, $e);
     }
-
-    return $name;
 }
 
 /**
@@ -1803,9 +1805,13 @@ function addCommand(
             continue;
         }
 
-        $relPath = $as ?? deriveTargetPath($url, $manifest['repositories']);
+        $relPath = $as ?? deriveTargetPath($url);
+        $normalizedUrl = normalizeCloneUrl($url, $manifest['defaults']['protocol']);
 
-        if (isset($manifest['repositories'][$relPath]) && $manifest['repositories'][$relPath]['url'] !== $url) {
+        // Compare the stored form against the same normalization of the input:
+        // re-adding a URL in its scp spelling must recognize the stored https
+        // form as the same repository, not as a collision.
+        if (isset($manifest['repositories'][$relPath]) && $manifest['repositories'][$relPath]['url'] !== $normalizedUrl) {
             $io->error(sprintf('The manifest already maps %s to %s; pass --as to pick another path.', $relPath, $manifest['repositories'][$relPath]['url']));
             $failed++;
 
@@ -1813,7 +1819,7 @@ function addCommand(
         }
 
         $entry = [
-            'url' => normalizeCloneUrl($url, $manifest['defaults']['protocol']),
+            'url' => $normalizedUrl,
             'branch' => \is_string($options['branch']) && '' !== trim($options['branch']) ? trim($options['branch']) : null,
             'depth' => $depth ?? $manifest['defaults']['depth'],
             'commit' => null,
@@ -2611,4 +2617,6 @@ function main(array $argv): int
     return countFailures($results) > 0 ? 1 : 0;
 }
 
-exit(main($argv));
+if (!\defined('CORPUS_INCLUDED')) {
+    exit(main($argv));
+}

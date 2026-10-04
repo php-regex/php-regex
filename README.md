@@ -135,6 +135,10 @@ php bin/corpus update --add https://github.com/vendor/repo.git [--as path] [--br
 php bin/corpus update --write-manifest # rewrite corpus.json from what is on disk
 ```
 
+Every `corpus.json` key is a `vendor/name` path — a repository added without
+`--as` is checked out under the `vendor/name` derived from its URL, and a URL
+that offers no vendor segment is refused rather than guessed at.
+
 `install` never writes to `corpus.json`: delete `corpus/` at any time and one
 command rebuilds it, repository by repository, at the exact commits the
 manifest pins. `update` is the only command that moves the pins. A checkout

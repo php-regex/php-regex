@@ -299,6 +299,44 @@ final class CorpusScriptTest extends TestCase
     }
 
     #[Test]
+    public function test_add_derives_a_vendor_name_target_from_the_url(): void
+    {
+        [$code, $output] = $this->script(['update', '--add', 'file://'.$this->origin]);
+
+        $expected = basename(dirname($this->origin)).'/'.basename($this->origin);
+        $this->assertSame(0, $code, $output);
+        $this->assertContains($expected, $this->manifestRepositoryKeys(), $output);
+        $this->assertDirectoryExists($this->root.'/corpus/'.$expected);
+    }
+
+    #[Test]
+    public function test_add_refuses_a_vendor_name_target_already_taken_by_another_url(): void
+    {
+        $derived = basename(dirname($this->origin)).'/'.basename($this->origin);
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $manifest = \is_array($manifest) ? $manifest : [];
+        $repositories = \is_array($manifest['repositories'] ?? null) ? $manifest['repositories'] : [];
+        $repositories[$derived] = ['url' => 'file://'.$this->root.'-elsewhere'];
+        $manifest['repositories'] = $repositories;
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+
+        [$code, $output] = $this->script(['update', '--add', 'file://'.$this->origin]);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('--as', $output);
+    }
+
+    #[Test]
+    public function test_add_refuses_a_url_without_a_vendor_segment(): void
+    {
+        [$code, $output] = $this->script(['update', '--add', 'file:///solo-'.bin2hex(random_bytes(4))]);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('no vendor segment', $output);
+        $this->assertStringContainsString('--as', $output);
+    }
+
+    #[Test]
     public function test_install_force_keeps_a_dirty_unlisted_checkout(): void
     {
         $this->script(['install']);

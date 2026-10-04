@@ -28,6 +28,12 @@ parameters:
         - src
         - tests
 
+    # bin/corpus has no .php extension, so paths above do not parse it; scan it
+    # so its functions (deriveTargetPath, normalizeCloneUrl, ...) exist for the
+    # tests that require it.
+    scanFiles:
+        - bin/corpus
+
     bootstrapFiles:
         - tools/phpunit/vendor/autoload.php
 
