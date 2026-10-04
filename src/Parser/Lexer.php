@@ -131,8 +131,9 @@ final class Lexer
         'T_GROUP_CLOSE' => '\\)',
         'T_CHAR_CLASS_OPEN' => '\\[',
         // Braces are a quantifier only with a number in them: "{}" and "{,}"
-        // are literal text, as PCRE reads them.
-        'T_QUANTIFIER' => '(?: [\*\+\?] | \{ \s* (?: \d+ \s* (?: , \s* \d* \s* )? | , \s* \d+ \s* ) \} ) [\?\+]?',
+        // are literal text, as PCRE reads them, and so are braces padded
+        // with white space other than spaces and tabs: "{2\n}".
+        'T_QUANTIFIER' => '(?: [\*\+\?] | '.self::REPEAT_COUNT.' ) [\?\+]?',
         'T_ALTERNATION' => '\\|',
         'T_DOT' => '\\.',
         'T_ANCHOR' => '\\^|\\$',

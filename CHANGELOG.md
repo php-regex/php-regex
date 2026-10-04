@@ -165,6 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Braces padded with a newline, a carriage return or a form feed were read as a count: `a{2\n}` became `a{2}`, though PCRE lets only spaces and tabs pad a count and reads `a{2\n}` as text, matching `a{2\n}` and not `aa` (under `/x`, `a{2}`). The tree, the solver and every analysis now read such braces as text.
 - Validation accepted a group name or a `(*LIMIT_...)` value ending with a newline, which PCRE refuses: `(?<n\n>a)`, `(?'n\n'a)`, `(?P<n\n>a)` and `(*LIMIT_MATCH=1\n)` were reported valid, the checks reading them with `$`, which matches before a final newline. They are now refused where PHP refuses them.
 - The optimizer read a literal ending with a newline as a run of one character, because `$` matches before a final newline: `/aaa\n/` became `/a{4}/` and `/^---\n(.+)$/` became `/^-{4}(.+)$/`, which match other strings. A run now ends where the literal does.
 - In partial match mode the automata solver read `$` and `\Z` as the end of the subject, though without `/D` PCRE also matches them before a newline that ends it: the solver called `/^ab$/` and `/^ab\z/` equivalent, while `preg_match('/^ab$/', "ab\n")` is 1 and the `\z` pattern says 0. A search now accepts that newline, and the solver reads `/D`, which it refused.

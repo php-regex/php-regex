@@ -55,7 +55,7 @@ final readonly class QuantifierBounds
                 return new self(0, 1);
         }
 
-        if (1 !== preg_match('/^\{\s*(\d*)\s*(?:(,)\s*(\d*)\s*)?\}$/', $base, $m)) {
+        if (1 !== preg_match('/^\{[ \t]*+(\d*)[ \t]*+(?:(,)[ \t]*+(\d*)[ \t]*+)?\}\z/', $base, $m)) {
             return null;
         }
 
