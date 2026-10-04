@@ -91,7 +91,7 @@ final class CompareCommand extends AbstractCommand
                 default => self::INVALID,
             };
         } catch (ComplexityException) {
-            $output->write($output->error('Comparison not supported: Pattern contains advanced features (e.g., lookarounds).')."\n");
+            $output->write($output->error('Comparison not supported: Pattern contains advanced features (e.g., backreferences).')."\n");
 
             return self::FAILURE;
         } catch (\Throwable $exception) {

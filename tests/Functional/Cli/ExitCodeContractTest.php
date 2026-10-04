@@ -161,7 +161,7 @@ final class ExitCodeContractTest extends TestCase
         yield 'analyze on a pattern a JSON report cannot hold' => [['analyze', "/\xff/", '--format=json']];
         yield 'debug on a pattern a JSON report cannot hold' => [['debug', "/\xff/", '--format=json']];
         yield 'redos on a pattern a JSON report cannot hold' => [['redos', "/\xff/", '--format=json']];
-        yield 'compare on a pattern with a lookaround' => [['compare', '/(?=a)/', '/a/']];
+        yield 'compare on a pattern with a backreference' => [['compare', '/(a)\\1/', '/a/']];
         yield 'compare --method=subset on a pattern that is no subset' => [['compare', '/a|b/', '/a/', '--method=subset']];
         yield 'graph on a pattern it cannot draw' => [['graph', '/a\\1/']];
     }

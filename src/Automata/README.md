@@ -19,7 +19,8 @@ Features
 - Two match semantics: the whole input (`MatchMode::Full`) or any substring (`MatchMode::Partial`)
 - The `i`, `s` and `u` flags, character classes and ranges, dot, `^`/`$`, alternation, groups and quantifiers — and POSIX classes, Unicode properties (`\p{...}`), Perl extended classes (`(?[ ... ])`) and `\C`
 - Every character set is asked from the PCRE2 that runs in your PHP, so verdicts follow the engine (bytes without `/u`, code points minus the surrogate block with it)
-- Backreferences, lookarounds, recursion and other non-regular constructs throw a `ComplexityException` instead of a wrong answer
+- Lookarounds, `(?=...)`, `(?!...)`, `(?<=...)` and `(?<!...)`, read as the regular languages they keep: a password rule `^(?=.*\d)(?=.*[a-z]).{8,}$` compares like any pattern
+- Backreferences, recursion and other non-regular constructs throw a `ComplexityException` instead of a wrong answer
 - NFA, DFA and transition budgets bound the work on pathological patterns
 - A pluggable DFA cache (`DfaCacheInterface`) reuses compiled automata across questions
 - `compile()` exposes the DFA of a single pattern
@@ -113,7 +114,7 @@ try {
 }
 ```
 
-Every reason has its own message — conditionals, lookarounds, atomic groups, zero-width conditions, unsafe possessives, unsupported flags — listed in the [logic solver reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/logic-solver.md#what-the-solver-refuses).
+Every reason has its own message — conditionals, nested lookarounds, atomic groups, zero-width conditions, unsafe possessives, unsupported flags — listed in the [logic solver reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/logic-solver.md#what-the-solver-refuses).
 
 Documentation
 -------------

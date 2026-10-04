@@ -158,7 +158,7 @@ final class PackageManifestTest extends TestCase
                 'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
                 'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
                 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
-                'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\OpaqueHir',
+                'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
                 'Parser\Hir\RepetitionHir',
             ],
             'Cli' => ['Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],

@@ -32,6 +32,7 @@ use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 
@@ -52,7 +53,11 @@ final class HirToNfaTransformer
 
     public const CONDITIONAL_MESSAGE = 'Conditional groups branch on match state the automata solver cannot read as a pure language.';
 
-    public const LOOKAROUND_MESSAGE = 'Lookaround assertions match context instead of characters, which the automata solver cannot read as a pure language.';
+    public const NESTED_LOOKAROUND_MESSAGE = 'A lookaround inside a lookaround is beyond what the automata solver reads.';
+
+    public const LOOKAROUND_ANCHOR_MESSAGE = 'An anchor inside a lookaround is beyond what the automata solver reads.';
+
+    public const NON_ATOMIC_LOOKAROUND_MESSAGE = 'A non-atomic lookaround, (*napla:...) or its kind, backtracks into its body, which the automata solver does not read.';
 
     public const ATOMIC_MESSAGE = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
 
@@ -82,6 +87,13 @@ final class HirToNfaTransformer
      */
     private array $vouchedPossessives = [];
 
+    private bool $insideLookaround = false;
+
+    /**
+     * @var array<int, LookHir> the mark state of each lookaround
+     */
+    private array $marks = [];
+
     public function __construct(private readonly string $pattern, private readonly bool $unicode) {}
 
     /**
@@ -94,13 +106,46 @@ final class HirToNfaTransformer
         $alphabetMax = $this->unicode ? self::UNICODE_MAX_CODEPOINT : self::MAX_CODEPOINT;
         $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax);
 
+        $this->marks = [];
         $fragment = $this->buildNode($hir);
         if (MatchMode::Partial === $options->matchMode) {
             [$startAnchored, $end] = $this->partialAnchorsOf($hir);
             $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $end);
         }
 
-        return $this->builder->build($fragment);
+        $nfa = $this->builder->build($fragment);
+        $marks = $this->marks();
+        if ([] === $marks) {
+            return $nfa;
+        }
+
+        return (new LookaroundProduct($this->pattern, $this->unicode, $options))->build($nfa, $marks);
+    }
+
+    /**
+     * The lookaround marks the last build left.
+     *
+     * @return array<int, LookHir>
+     */
+    private function marks(): array
+    {
+        return $this->marks;
+    }
+
+    /**
+     * The automaton of a lookaround's body: what it matches from where it
+     * stands, or, for a lookbehind, any subject ending with what it matches.
+     *
+     * @throws ComplexityException
+     */
+    public function lookaroundBody(LookHir $look, SolverOptions $options): Nfa
+    {
+        $alphabetMax = $this->unicode ? self::UNICODE_MAX_CODEPOINT : self::MAX_CODEPOINT;
+        $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax);
+        $fragment = $this->buildNode($look->body);
+        $behind = LookKind::Behind === $look->kind || LookKind::NegativeBehind === $look->kind;
+
+        return $this->builder->build($behind ? $this->wrapPartialMatch($fragment, false, AssertionKind::SubjectEnd) : $fragment);
     }
 
     /**
@@ -133,7 +178,25 @@ final class HirToNfaTransformer
         }
 
         if ($node instanceof LookHir) {
-            throw new ComplexityException(self::LOOKAROUND_MESSAGE, $node->startPosition, $this->pattern);
+            if (!$node->atomic) {
+                throw new ComplexityException(self::NON_ATOMIC_LOOKAROUND_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
+            if ($this->insideLookaround) {
+                throw new ComplexityException(self::NESTED_LOOKAROUND_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
+            // The body is read as a language of its own, in full: what it
+            // matches from the lookaround's position, or up to it.
+            $this->insideLookaround = true;
+
+            try {
+                $this->assertNode($node->body, new SolverOptions(matchMode: MatchMode::Full, maxNfaStates: $options->maxNfaStates, maxDfaStates: $options->maxDfaStates), CharSet::empty());
+            } finally {
+                $this->insideLookaround = false;
+            }
+
+            return;
         }
 
         if ($node instanceof AtomicHir) {
@@ -141,6 +204,10 @@ final class HirToNfaTransformer
         }
 
         if ($node instanceof AssertionHir) {
+            if ($this->insideLookaround) {
+                throw new ComplexityException(self::LOOKAROUND_ANCHOR_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
             // A whole-tree assertion sits at the edge of its alternative by
             // definition: only the kinds carry a meaning there.
             $this->assertAssertionKind($node);
@@ -457,6 +524,17 @@ final class HirToNfaTransformer
 
         if ($node instanceof CaptureHir) {
             return $this->buildNode($node->body);
+        }
+
+        if ($node instanceof LookHir) {
+            // A mark the lookaround product reads: crossing it makes the
+            // promise about what follows, or asks what came before.
+            $mark = $this->builder->createState();
+            $after = $this->builder->createState();
+            $this->builder->addEpsilon($mark, $after);
+            $this->marks[$mark] = $node;
+
+            return new NfaFragment($mark, [$after]);
         }
 
         // An assertion the refusal walk accepted, or nothing at all: the

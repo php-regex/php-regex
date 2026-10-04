@@ -159,7 +159,7 @@ final class LanguageSolverTest extends TestCase
         foreach (['intersection', 'subsetOf', 'equivalent', 'compile'] as $method) {
             yield $method.' with a backreference' => ['method' => $method, 'pattern' => '/(a)\1/'];
             yield $method.' with recursion' => ['method' => $method, 'pattern' => '/a(?R)?b/'];
-            yield $method.' with a lookahead' => ['method' => $method, 'pattern' => '/(?=a)a/'];
+            yield $method.' with a lookahead inside a lookahead' => ['method' => $method, 'pattern' => '/(?=a(?=b))a/'];
         }
     }
 }

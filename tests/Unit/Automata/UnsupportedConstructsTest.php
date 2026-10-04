@@ -34,8 +34,8 @@ final class UnsupportedConstructsTest extends TestCase
 
     public static function provideNonRegularPatterns(): \Generator
     {
-        yield 'lookahead' => ['/(?=a)a/'];
-        yield 'lookbehind' => ['/(?<=a)b/'];
+        yield 'lookahead inside a lookahead' => ['/(?=a(?=b))a/'];
+        yield 'non-atomic lookahead' => ['/(*napla:a)a/'];
         yield 'backreference' => ['/(a)\\1/'];
         yield 'recursion' => ['/(?R)/'];
         yield 'subroutine' => ['/(a)(?1)/'];

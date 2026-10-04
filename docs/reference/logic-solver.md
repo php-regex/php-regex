@@ -231,13 +231,37 @@ use PHPRegex\Parser\RegexParser;
 $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), new InMemoryDfaCache());
 ```
 
-A pattern outside the regular subset (backreferences, lookarounds, recursion, ...) throws a `ComplexityException`
+A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, and `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns. Every other class of the namespace is
 `@internal` and may change in any release.
+
+## Lookarounds
+
+Lookarounds keep a language regular, and the solver reads them: a password rule
+`^(?=.*\d)(?=.*[a-z]).{8,}$` is a language like any other.
+
+```php
+$solver = new LanguageSolver();
+
+$solver->subsetOf('/^(?=.*\d)(?=.*[a-z]).{8,}$/', '/^.{8,}$/')->isSubset;     // true
+$solver->equivalent('/^a(?!b)./', '/^a[^b\n]/')->isEquivalent;              // true
+$solver->equivalent('/a(?=b)c/', '/[^\s\S]/')->isEquivalent;               // true: never matches
+```
+
+A lookahead is a promise about what follows: crossing it starts a run of its body's
+automaton on the characters still to come, kept once that run accepts — broken, for a
+negative lookahead. A lookbehind asks about what came before: the automaton of "anything,
+then its body" runs from the start of the subject, and the lookbehind reads where it
+stands. The product of the pattern's automaton with the pending promises and those runs is
+an automaton of its own, determinized as any other (Berglund, van der Merwe and van
+Litsenborgh, "Regular Expressions with Lookahead", 2021).
+
+A lookaround inside a lookaround, an anchor inside one, and the non-atomic `(*napla:...)`
+are refused. The product can grow large; the usual NFA and DFA budgets bound it.
 
 ## What the Solver Refuses
 
@@ -249,7 +273,9 @@ verbatim:
 |-------------------------------------------|----------------------|
 | a backreference, subroutine call, callout or control verb (and `\X`) | `Backreferences, subroutines, callouts and control verbs carry match state the automata solver cannot read as a pure language.` |
 | a conditional group                        | `Conditional groups branch on match state the automata solver cannot read as a pure language.` |
-| a lookaround                               | `Lookaround assertions match context instead of characters, which the automata solver cannot read as a pure language.` |
+| a lookaround inside a lookaround           | `A lookaround inside a lookaround is beyond what the automata solver reads.` |
+| an anchor inside a lookaround              | `An anchor inside a lookaround is beyond what the automata solver reads.` |
+| a non-atomic lookaround, `(*napla:...)`    | `A non-atomic lookaround, (*napla:...) or its kind, backtracks into its body, which the automata solver does not read.` |
 | an atomic group (and `\R`)                 | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
 | a word boundary, `\B`, `\K`, `\G`, or an anchor away from the edge of an alternative | `Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
@@ -291,7 +317,7 @@ to read. A range that straddles the block with both endpoints outside it
 the hole out.
 
 On the command line the same refusal is summarized as
-`Comparison not supported: Pattern contains advanced features (e.g., lookarounds).`
+`Comparison not supported: Pattern contains advanced features (e.g., backreferences).`
 and the command exits with code 1.
 
 ## How it Works (Under the Hood)
@@ -429,7 +455,7 @@ Use this to surface safe failure messages in CI or tooling.
 
 ## Limitations
 
-- Supports the **regular subset** of PCRE only — no lookarounds, no
+- Supports the **regular subset** of PCRE only — no
   backreferences, no recursion, no atomic or possessive construct the follower
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).

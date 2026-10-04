@@ -136,7 +136,7 @@ final class CompareCommand extends Command
 
             return $this->handleEquivalence($solver, $options, $pattern1, $pattern2, $io);
         } catch (ComplexityException) {
-            $io->error('Comparison not supported: Pattern contains advanced features (e.g., lookarounds).');
+            $io->error('Comparison not supported: Pattern contains advanced features (e.g., backreferences).');
 
             return Command::FAILURE;
         } catch (\Throwable $exception) {

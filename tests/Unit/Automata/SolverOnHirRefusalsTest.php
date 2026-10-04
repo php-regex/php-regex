@@ -43,7 +43,8 @@ final class SolverOnHirRefusalsTest extends TestCase
     {
         $opaque = 'Backreferences, subroutines, callouts and control verbs carry match state the automata solver cannot read as a pure language.';
         $conditional = 'Conditional groups branch on match state the automata solver cannot read as a pure language.';
-        $lookaround = 'Lookaround assertions match context instead of characters, which the automata solver cannot read as a pure language.';
+        $nested = 'A lookaround inside a lookaround is beyond what the automata solver reads.';
+        $anchored = 'An anchor inside a lookaround is beyond what the automata solver reads.';
         $atomic = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
         $assertion = 'Word boundaries, \K, \G and anchors away from the edges of an alternative are zero-width conditions the automata solver cannot read as a pure language.';
         $surrogate = 'PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.';
@@ -58,8 +59,8 @@ final class SolverOnHirRefusalsTest extends TestCase
 
         yield 'conditional group' => ['pattern' => '/(?(1)a|b)/', 'expected' => $conditional];
 
-        yield 'lookahead' => ['pattern' => '/(?=a)a/', 'expected' => $lookaround];
-        yield 'negative lookbehind' => ['pattern' => '/(?<!a)b/', 'expected' => $lookaround];
+        yield 'lookahead inside a lookahead' => ['pattern' => '/(?=a(?=b))a/', 'expected' => $nested];
+        yield 'anchor inside a negative lookbehind' => ['pattern' => '/(?<!^a)b/', 'expected' => $anchored];
 
         yield 'atomic group' => ['pattern' => '/(?>a+)b/', 'expected' => $atomic];
 

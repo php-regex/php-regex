@@ -21,6 +21,8 @@ use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -173,6 +175,11 @@ final class RegularSubsetValidator
     {
         if ($node instanceof AnchorNode || $node instanceof AssertionNode) {
             return $node;
+        }
+
+        // What a lookaround holds is the lookaround compiler's to judge.
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+            return null;
         }
 
         foreach ($node->getChildren() as $child) {
