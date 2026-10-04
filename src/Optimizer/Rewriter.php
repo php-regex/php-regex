@@ -1417,15 +1417,18 @@ final class Rewriter extends AbstractNodeVisitor
 
         // Create suffixes
         $suffixes = [];
-        $hasEmptySuffix = false;
         foreach ($withPrefix as $alt) {
             $suffixStr = substr($this->nodeToString($alt), \strlen($prefix));
             if (empty($suffixStr)) {
                 $suffixes[] = null;
-                $hasEmptySuffix = true;
             } else {
                 $suffixes[] = $this->stringToNode($suffixStr, $alt->startPosition + \strlen($prefix), $alt->endPosition);
             }
+        }
+
+        $emptyBranch = self::emptyBranchQuantifier($suffixes);
+        if (false === $emptyBranch) {
+            return $alts;
         }
 
         /** @var array<NodeInterface> $nonNullSuffixes */
@@ -1445,14 +1448,8 @@ final class Rewriter extends AbstractNodeVisitor
             ? $firstSuffix
             : new AlternationNode($nonNullSuffixes, $firstSuffix->startPosition, $lastSuffix->endPosition);
         $group = new GroupNode($newAlt, GroupType::NonCapturing);
-        if ($hasEmptySuffix) {
-            $group = new QuantifierNode(
-                $group,
-                '?',
-                QuantifierType::Greedy,
-                $firstSuffix->startPosition,
-                $lastSuffix->endPosition,
-            );
+        if (null !== $emptyBranch) {
+            $group = new QuantifierNode($group, '?', $emptyBranch, $firstSuffix->startPosition, $lastSuffix->endPosition);
         }
         $firstAlt = $withPrefix[0];
         $prefixNode = $this->stringToNode($prefix, $firstAlt->startPosition, $firstAlt->startPosition + \strlen($prefix));
@@ -1527,6 +1524,11 @@ final class Rewriter extends AbstractNodeVisitor
             }
         }
 
+        $emptyBranch = self::emptyBranchQuantifier($prefixes);
+        if (false === $emptyBranch) {
+            return $alts;
+        }
+
         /** @var array<NodeInterface> $nonNullPrefixes */
         $nonNullPrefixes = array_values(array_filter($prefixes, static fn ($prefix): bool => null !== $prefix));
         if (empty($nonNullPrefixes)) {
@@ -1544,6 +1546,9 @@ final class Rewriter extends AbstractNodeVisitor
             ? $firstPrefix
             : new AlternationNode($nonNullPrefixes, $firstPrefix->startPosition, $lastPrefix->endPosition);
         $group = new GroupNode($newAlt, GroupType::NonCapturing);
+        if (null !== $emptyBranch) {
+            $group = new QuantifierNode($group, '?', $emptyBranch, $firstPrefix->startPosition, $lastPrefix->endPosition);
+        }
         $firstAlt = $withSuffix[0];
         $suffixNode = $this->stringToNode($suffix, $firstAlt->endPosition - \strlen($suffix), $firstAlt->endPosition);
         $factored = new SequenceNode([$group, $suffixNode], $firstAlt->startPosition, $firstAlt->endPosition);
@@ -1553,6 +1558,27 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         return array_merge([$factored], $withoutSuffix);
+    }
+
+    /**
+     * How the branches left once the shared part is factored out keep the
+     * order PCRE tries them in: an empty branch tried first makes them a lazy
+     * option, "a|ab" is "a(?:b)??"; tried last, a greedy one, "ab|a" is
+     * "a(?:b)?". Null when no branch is empty, false when the empty one sits
+     * in the middle, where no quantifier keeps the order.
+     *
+     * @param array<NodeInterface|null> $branches
+     */
+    private static function emptyBranchQuantifier(array $branches): QuantifierType|false|null
+    {
+        $empty = array_search(null, $branches, true);
+
+        return match ($empty) {
+            false => null,
+            0 => QuantifierType::Lazy,
+            \count($branches) - 1 => QuantifierType::Greedy,
+            default => false,
+        };
     }
 
     private function nodeToString(NodeInterface $node): string
