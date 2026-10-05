@@ -61,6 +61,63 @@ source still pointed there.
 9. **README badges** — the Packagist and CI badge URLs change with the names
    (done with the README rewrite).
 
+## Before 2.0.0: known defects to fix
+
+Found while auditing the lint output over the corpus (October 2026). Each one
+is confirmed against `preg_match()` and predates the fixes made then. 2.0.0
+freezes the public API, so they go before the tag.
+
+### First: false "safe (proven)" ReDoS verdicts
+
+A proven verdict must never be wrong (see
+[backward-compatibility.md](docs/reference/backward-compatibility.md)). Two
+gaps in the backtracking prover give one:
+
+- **An inline option carried into the following alternatives.** PCRE applies
+  an option set inside one alternative to the alternatives after it, and the
+  prover does not: `/x(?i)|(?:a+A)+$/` and `/x(?s)|(?:.*\n.*\n)+x/` are
+  "safe (proven)" but exponential. The lint rules already keep their warning
+  for these patterns; `Regex::redos()` and `regex analyze` do not.
+- **Inline `r` (caseless restrict) toggles.** `(?i-r:…)`, `(?-r:…)` and a
+  `(?^…)` reset under `/r` are read as if `r` stayed on:
+  `/(?i-r:(?:k+\x{212A})+)$/ur` is "safe (proven)" but exponential, and
+  `/(?ir)(?:k+\x{212A})+$/u` is "exponential (proven)" but linear.
+
+Raise `RedosAnalyzer::ANALYSIS_VERSION` with the fix.
+
+### The character-set analysis
+
+- Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
+  byte above it. The nested-loop rules now refuse to decide in that case, but
+  `regex.lint.quantifier.concatenation` still suggests rewrites that change
+  the matches (`/^b+[é]+\z/u`, `/^\h+[\t ]+\z/` on a no-break space).
+- Case-insensitivity and lookarounds are ignored: `/(?:a|A)+$/i` (exponential)
+  gets no overlap warning, `(?:,a*(?:(?!z)a)*)+$` no nested warning, and
+  `/^A?[^a]*\z/i` a concatenation hint that loses `"a"`.
+- `(*UCP)` without `/u` is not seen: `\w` and `\d` stay ASCII.
+- A `(?^)` reset keeps `r` where PCRE clears it.
+
+### Other findings
+
+- With `possessive` on, the optimizer suggests `.*+` under `/x` where an
+  inline or start-of-pattern option makes the rewrite change the matches
+  (`/(*CR)[0-9][0-9]a.*\n/x`): the `/x` path skips the atomicity check, and
+  the rewriter ignores the newline convention.
+- `regex.lint.anchor.impossible.end` reads `$`, `\Z` and `^` under `/m` as if
+  the newline were always `\n`: six false warnings under `(*CR)`, `(*CRLF)`,
+  `(*NUL)`, `(*ANY)` and `(*ANYCRLF)`, and `/(*CR)a$\n/` (impossible) is
+  missed.
+- A pattern shown under `/x` does not read back as itself: raw whitespace and
+  `#` comments change meaning once spelled `\n`.
+- `regex lint --baseline` drops `column` and `fileOffset` from every result.
+- A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
+  whole before extraction, which double-encodes its UTF-8 patterns.
+- `/\Q\x\E/` parses as a code point instead of the text `\x`.
+- C1 controls (U+0080-U+009F) and bidi overrides are shown raw in reports.
+- The message for `\P{L}` without `/u` names `\p{L}`.
+- The static ReDoS verdict depends on the caller's `pcre.backtrack_limit`: a
+  tiny limit turns "safe (proven)" into "no risk found (heuristic)".
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
