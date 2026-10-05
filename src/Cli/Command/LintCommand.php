@@ -27,6 +27,7 @@ use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -40,9 +41,6 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
- *
- * @phpstan-import-type LintResult from LintReport
- * @phpstan-import-type LintStats from LintReport
  */
 final class LintCommand extends AbstractCommand implements CommandInterface
 {
@@ -440,57 +438,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             }
         }
 
-        return new LintReport($filteredResults, $this->countStats($filteredResults));
-    }
-
-    /**
-     * The stats of the issues a baseline leaves, counted as LintService
-     * counts a run: "redos" and "lintErrors" among the errors, "infos" apart,
-     * each left out at zero.
-     *
-     * @phpstan-param array<LintResult> $results
-     *
-     * @phpstan-return LintStats
-     */
-    private function countStats(array $results): array
-    {
-        $stats = ['errors' => 0, 'warnings' => 0, 'optimizations' => 0];
-        $redos = 0;
-        $infos = 0;
-        $lintErrors = 0;
-
-        foreach ($results as $result) {
-            foreach ($result['issues'] as $issue) {
-                if ('error' === $issue['type']) {
-                    $stats['errors']++;
-                    if (isset($issue['analysis'])) {
-                        $redos++;
-                    } elseif (!isset($issue['validation'])) {
-                        $lintErrors++;
-                    }
-                } elseif ('warning' === $issue['type']) {
-                    $stats['warnings']++;
-                } elseif ('info' === $issue['type']) {
-                    $infos++;
-                }
-            }
-
-            $stats['optimizations'] += \count($result['optimizations']);
-        }
-
-        if ($redos > 0) {
-            $stats['redos'] = $redos;
-        }
-
-        if ($infos > 0) {
-            $stats['infos'] = $infos;
-        }
-
-        if ($lintErrors > 0) {
-            $stats['lintErrors'] = $lintErrors;
-        }
-
-        return $stats;
+        return new LintReport($filteredResults, LintStatsCounter::count($filteredResults));
     }
 
     private function toRelativePath(string $path): string

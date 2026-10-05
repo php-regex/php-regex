@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
@@ -93,7 +94,7 @@ final readonly class LintService
 
         $results = $this->combineResults($issues, $optimizations, $patterns);
 
-        $stats = $this->updateStatsFromResults($this->createStats(), $results);
+        $stats = LintStatsCounter::count($results);
 
         return new LintReport($results, $stats);
     }
@@ -118,14 +119,6 @@ final readonly class LintService
 
             return true;
         }));
-    }
-
-    /**
-     * @return LintStats
-     */
-    private function createStats(): array
-    {
-        return ['errors' => 0, 'warnings' => 0, 'optimizations' => 0];
     }
 
     /**
@@ -437,54 +430,5 @@ final readonly class LintService
             RedosSeverity::Unknown => LintSeverity::Warning,
             RedosSeverity::Low, RedosSeverity::Safe => LintSeverity::Info,
         };
-    }
-
-    /**
-     * @param LintStats         $stats
-     * @param array<LintResult> $results
-     *
-     * @return LintStats
-     */
-    private function updateStatsFromResults(array $stats, array $results): array
-    {
-        $redos = 0;
-        $infos = 0;
-        $lintErrors = 0;
-
-        foreach ($results as $result) {
-            foreach ($result['issues'] as $issue) {
-                if ('error' === $issue['type']) {
-                    $stats['errors']++;
-                    // A ReDoS error or a lint rule at Error fails the run like
-                    // any error, but the pattern compiles: the summaries name
-                    // them apart.
-                    if (isset($issue['analysis'])) {
-                        $redos++;
-                    } elseif (!isset($issue['validation'])) {
-                        $lintErrors++;
-                    }
-                } elseif ('warning' === $issue['type']) {
-                    $stats['warnings']++;
-                } elseif ('info' === $issue['type']) {
-                    $infos++;
-                }
-            }
-
-            $stats['optimizations'] += \count($result['optimizations']);
-        }
-
-        if ($redos > 0) {
-            $stats['redos'] = $redos;
-        }
-
-        if ($infos > 0) {
-            $stats['infos'] = $infos;
-        }
-
-        if ($lintErrors > 0) {
-            $stats['lintErrors'] = $lintErrors;
-        }
-
-        return $stats;
     }
 }
