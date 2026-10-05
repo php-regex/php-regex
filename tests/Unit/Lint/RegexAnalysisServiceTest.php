@@ -18,11 +18,13 @@ use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Toolkit\Regex;
@@ -557,6 +559,27 @@ final class RegexAnalysisServiceTest extends TestCase
         );
 
         $this->assertSame([], $result);
+    }
+
+    public function test_worker_payload_round_trips_a_redos_analysis_with_its_culprit_node(): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/');
+        $this->assertInstanceOf(NodeInterface::class, $analysis->getCulpritNode());
+
+        $file = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
+        file_put_contents($file, serialize(['ok' => true, 'result' => [$analysis]]));
+        $payload = (new \ReflectionMethod($this->analysis, 'readWorkerPayload'))->invoke($this->analysis, $file);
+        @unlink($file);
+
+        $this->assertIsArray($payload);
+        $this->assertTrue($payload['ok']);
+        $this->assertIsArray($payload['result']);
+        $read = $payload['result'][0];
+        $this->assertInstanceOf(RedosAnalysis::class, $read);
+        $this->assertInstanceOf(NodeInterface::class, $read->getCulpritNode());
+        $this->assertSame($analysis->severity, $read->severity);
+        $this->assertCount(\count($analysis->findings), $read->findings);
+        $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
     }
 
     public function test_worker_payload_helpers_cover_error_branches(): void

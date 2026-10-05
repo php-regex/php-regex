@@ -26,6 +26,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -671,10 +672,12 @@ final readonly class AnalysisService
             RedosAnalysis::class,
         ];
 
+        // Every class of the AST and of the ReDoS result, found next to a class
+        // of each: installed on its own, a sibling package is not at ../.
         $allowed = array_merge(
             $allowed,
-            self::classNamesFromDir(__DIR__.'/../Parser/Node', 'PHPRegex\\Parser\\Node\\'),
-            self::classNamesFromDir(__DIR__.'/../Redos', 'PHPRegex\\Redos\\'),
+            self::classNamesBeside(NodeInterface::class),
+            self::classNamesBeside(RedosAnalysis::class),
         );
 
         $allowed = array_values(array_unique($allowed));
@@ -683,15 +686,26 @@ final readonly class AnalysisService
     }
 
     /**
+     * The classes under the directory and namespace of $class, subdirectories included.
+     *
+     * @param class-string $class
+     *
      * @return array<string>
      */
-    private static function classNamesFromDir(string $dir, string $namespace): array
+    private static function classNamesBeside(string $class): array
     {
-        $paths = glob($dir.'/*.php') ?: [];
+        $dir = \dirname((string) (new \ReflectionClass($class))->getFileName());
+        $namespace = substr($class, 0, (int) strrpos($class, '\\') + 1);
         $classes = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $path) {
+            \assert($path instanceof \SplFileInfo);
+            if ('php' !== $path->getExtension()) {
+                continue;
+            }
 
-        foreach ($paths as $path) {
-            $classes[] = $namespace.basename($path, '.php');
+            $relative = substr($path->getPathname(), \strlen($dir) + 1, -4);
+            $classes[] = $namespace.str_replace(\DIRECTORY_SEPARATOR, '\\', $relative);
         }
 
         return $classes;
