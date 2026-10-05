@@ -15,6 +15,8 @@ namespace PHPRegex\Linter;
 
 /**
  * Unified representation of syntax, semantic, lint, security, or optimization issues.
+ *
+ * @internal
  */
 final readonly class Diagnostic
 {

@@ -23,6 +23,8 @@ namespace PHPRegex\Parser\Analysis;
 final readonly class CaptureGroupShape
 {
     /**
+     * @internal built by CaptureShapeAnalyzer::analyze(), for CaptureShape::$whole and CaptureShape::$groups
+     *
      * @param list<string>|null $values every string the group can hold, or null when they are not a small finite set
      */
     public function __construct(

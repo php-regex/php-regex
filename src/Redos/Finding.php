@@ -18,6 +18,9 @@ namespace PHPRegex\Redos;
  */
 final readonly class Finding implements \JsonSerializable
 {
+    /**
+     * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$findings
+     */
     public function __construct(
         public RedosSeverity $severity,
         public string $message,

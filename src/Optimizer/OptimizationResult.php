@@ -19,6 +19,8 @@ namespace PHPRegex\Optimizer;
 final readonly class OptimizationResult
 {
     /**
+     * @internal built by Optimizer::optimize(), Regex::optimize() and Regex::analyze()
+     *
      * @param array<string> $changes
      */
     public function __construct(

@@ -31,6 +31,8 @@ final readonly class RedosAnalysis implements \JsonSerializable
     public string $pcreVersion;
 
     /**
+     * @internal built by RedosAnalyzer::analyze() and Regex::redos()
+     *
      * @param array<string>  $recommendations
      * @param array<Finding> $findings
      * @param array<Hotspot> $hotspots

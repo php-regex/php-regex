@@ -22,6 +22,8 @@ use PHPRegex\Redos\RedosAnalysis;
 final readonly class AnalysisReport
 {
     /**
+     * @internal built by Regex::analyze()
+     *
      * @param array<string> $errors
      * @param array<mixed>  $lintIssues
      */

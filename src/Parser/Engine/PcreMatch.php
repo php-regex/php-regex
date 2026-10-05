@@ -19,6 +19,8 @@ namespace PHPRegex\Parser\Engine;
 final readonly class PcreMatch
 {
     /**
+     * @internal built by PcreEngine::match() and PcreEngine::test()
+     *
      * @param bool|null                 $matched   true or false as preg_match() answers; null when it gave no answer
      * @param array<int|string, string> $groups    the groups as preg_match() fills them; empty without an answer
      * @param string|null               $error     why no answer came: the compilation error, or the engine's last error

@@ -22,6 +22,8 @@ use PHPRegex\Redos\RedosComplexity;
 final readonly class RedosRepair
 {
     /**
+     * @internal built by RedosRepairer::repair()
+     *
      * @param bool|null $sameSubjects whether the automata prove it matches the subjects the pattern matches; null when they cannot judge
      * @param bool|null $sameMatches  whether preg_match() also writes the same $matches; null when the match solver cannot judge
      */

@@ -32,6 +32,8 @@ final readonly class Confirmation implements \JsonSerializable
     public const LIMITS_UNAVAILABLE = 'engine limits unavailable';
 
     /**
+     * @internal built by ConfirmationRunner::confirm() and RedosAnalyzer::analyze() in confirmed mode
+     *
      * @param array<ConfirmationSample> $samples
      */
     public function __construct(

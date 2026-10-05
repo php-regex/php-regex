@@ -18,6 +18,9 @@ namespace PHPRegex\Redos;
  */
 final readonly class Hotspot implements \JsonSerializable
 {
+    /**
+     * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$hotspots
+     */
     public function __construct(
         public int $start,
         public int $end,

@@ -19,11 +19,11 @@
     "require": {
         "php": ">=8.2",
         "phpstan/phpstan": "^2.0",
-        "php-regex/regex-automata": "^2.0",
-        "php-regex/regex-linter": "^2.0",
-        "php-regex/regex-optimizer": "^2.0",
-        "php-regex/regex-parser": "^2.0",
-        "php-regex/regex-redos": "^2.0"
+        "php-regex/regex-automata": "self.version",
+        "php-regex/regex-linter": "self.version",
+        "php-regex/regex-optimizer": "self.version",
+        "php-regex/regex-parser": "self.version",
+        "php-regex/regex-redos": "self.version"
     },
     "autoload": {
         "psr-4": {

@@ -33,6 +33,8 @@ final readonly class TrivialMatch
     private const HIDDEN = '/[\x{80}-\x{9F}\p{Cf}\p{Zl}\p{Zp}]/u';
 
     /**
+     * @internal built by TrivialMatchClassifier::classify()
+     *
      * @param list<string> $literals the literal, or the literals of OneOf; none for IsEmpty
      */
     public function __construct(public TrivialMatchKind $kind, public array $literals) {}

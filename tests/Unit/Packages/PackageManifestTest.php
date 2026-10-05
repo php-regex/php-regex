@@ -73,7 +73,7 @@ final class PackageManifestTest extends TestCase
         foreach (self::strings(self::dig(self::manifest($directory), 'require')) as $package => $constraint) {
             if (str_starts_with($package, 'php-regex/')) {
                 $required[] = $package;
-                $this->assertSame('^2.0', $constraint, $package);
+                $this->assertSame('self.version', $constraint, $package);
             }
         }
         sort($required);
@@ -146,9 +146,10 @@ final class PackageManifestTest extends TestCase
     #[Test]
     public function test_no_new_use_of_another_package_internals(): void
     {
-        // The uses 2.0 ships with: these classes keep their signatures for all
-        // of 2.x. A new entry here is a new cross-package dependency on code
-        // that promises nothing; make the class public instead, or keep it.
+        // The uses 2.0 ships with. Siblings always run at the same version,
+        // so these may change in any release; a new entry here is still a new
+        // cross-package dependency on code that promises nothing: make the
+        // class public instead, or keep it.
         // Parser\Hir is watched the same way: it stays @internal while the
         // analyses move onto the normalized form.
         $allowed = [

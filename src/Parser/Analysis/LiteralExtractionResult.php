@@ -19,6 +19,8 @@ namespace PHPRegex\Parser\Analysis;
 final readonly class LiteralExtractionResult
 {
     /**
+     * @internal built by Regex::literals()
+     *
      * @param array<string> $literals
      * @param array<string> $patterns
      */

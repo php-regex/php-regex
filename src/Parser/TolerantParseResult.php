@@ -21,6 +21,8 @@ use PHPRegex\Parser\Node\RegexNode;
 final readonly class TolerantParseResult
 {
     /**
+     * @internal built by RegexParser::parseTolerant() and Regex::parseTolerant()
+     *
      * @param array<\Throwable> $errors
      */
     public function __construct(public RegexNode $ast, public array $errors = []) {}

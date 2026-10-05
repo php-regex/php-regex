@@ -21,6 +21,8 @@ final readonly class EquivalenceResult
     public string $pcreVersion;
 
     /**
+     * @internal built by LanguageSolver::equivalent()
+     *
      * @param bool        $isEquivalent     Whether both regexes accept the same language
      * @param string|null $leftOnlyExample  Example accepted by left but not right
      * @param string|null $rightOnlyExample Example accepted by right but not left

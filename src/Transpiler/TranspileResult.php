@@ -19,6 +19,8 @@ namespace PHPRegex\Transpiler;
 final readonly class TranspileResult
 {
     /**
+     * @internal built by Transpiler::transpile() and Regex::transpile()
+     *
      * @param array<int, string> $warnings
      * @param array<int, string> $notes
      */

@@ -30,8 +30,9 @@ Installation
 composer require php-regex/regex-redos
 ```
 
-`php-regex/regex-parser` (^2.0) is pulled in automatically. To scan a whole code
-base instead of one pattern at a time, use the [linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter).
+`php-regex/regex-parser` is pulled in automatically, at the same version. To
+scan a whole code base instead of one pattern at a time, use the
+[linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter).
 
 Configuration
 -------------

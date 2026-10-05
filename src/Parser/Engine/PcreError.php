@@ -21,6 +21,8 @@ namespace PHPRegex\Parser\Engine;
 final readonly class PcreError
 {
     /**
+     * @internal built by PcreEngine::compile()
+     *
      * @param string   $message the message, without the function name and without "Compilation failed: "
      * @param int|null $offset  the byte offset in the pattern body the message names, null when it names none
      */

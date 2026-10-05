@@ -21,6 +21,8 @@ final readonly class IntersectionResult
     public string $pcreVersion;
 
     /**
+     * @internal built by LanguageSolver::intersection()
+     *
      * @param bool        $isEmpty     Whether the intersection is empty
      * @param string|null $example     Example string found in the intersection
      * @param string|null $pcreVersion The PCRE2 release the answer was computed with

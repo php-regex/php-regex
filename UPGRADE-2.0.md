@@ -31,6 +31,13 @@ ships in, and many took a name that says what they are. Enum cases are in
 PascalCase, and a few methods are renamed. The sections after this one name
 classes as 1.3 did; the tables at the end of this one give each 2.0 name.
 
+A few 1.3 classes map to a 2.0 class marked `@internal`, which the
+[backward compatibility promise](docs/reference/backward-compatibility.md)
+does not cover: `RegexProblem` and `ProblemType` became `Linter\Diagnostic`
+and `Linter\DiagnosticType`, built only by the lint commands. Read lint
+results through `PatternLinter::getIssues()` (`Rule\RuleViolation`) or the
+CLI's JSON output.
+
 A Rector set makes these changes in your code. Add it to your `rector.php`
 and run Rector twice:
 
@@ -811,7 +818,7 @@ passes the `ErrorCode` case instead.
 
 `regex.callout.invalid_type` is gone: no pattern could raise it.
 
-The CLI's JSON output and `RegexProblem::$code` still carry the string value.
+The CLI's JSON output still carries the string value.
 
 #### Optimizer options are typed, and keyed in snake_case
 

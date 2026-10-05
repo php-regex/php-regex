@@ -25,6 +25,9 @@ use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
  */
 final readonly class RedosWitness
 {
+    /**
+     * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$witness
+     */
     public function __construct(
         public string $prefix,
         public string $pump,

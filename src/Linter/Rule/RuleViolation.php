@@ -20,6 +20,9 @@ use PHPRegex\Linter\LintSeverity;
  */
 final readonly class RuleViolation
 {
+    /**
+     * @internal built by the lint rules PatternLinter runs, read through PatternLinter::getIssues()
+     */
     public function __construct(
         public string $id,
         public string $message,

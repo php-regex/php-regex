@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "php-regex/regex-parser": "^2.0"
+        "php-regex/regex-parser": "self.version"
     },
     "autoload": {
         "psr-4": {

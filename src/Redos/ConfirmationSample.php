@@ -18,6 +18,9 @@ namespace PHPRegex\Redos;
  */
 final readonly class ConfirmationSample implements \JsonSerializable
 {
+    /**
+     * @internal built by ConfirmationRunner::confirm(), for Confirmation::$samples
+     */
     public function __construct(
         public int $inputLength,
         public float $durationMs,

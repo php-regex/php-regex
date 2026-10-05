@@ -22,6 +22,8 @@ final readonly class MatchEquivalenceResult
     public string $pcreVersion;
 
     /**
+     * @internal built by LanguageSolver::matchEquivalent()
+     *
      * @param bool        $isEquivalent   Whether every subject gets the same answer, match and groups from both
      * @param string|null $counterExample The shortest subject that gets different ones
      * @param string|null $pcreVersion    The PCRE2 release the answer was computed with

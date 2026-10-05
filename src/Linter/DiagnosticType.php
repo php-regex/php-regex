@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+/**
+ * @internal
+ */
 enum DiagnosticType: string
 {
     case Syntax = 'syntax';

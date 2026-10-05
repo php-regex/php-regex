@@ -2,8 +2,10 @@
 
 PHPRegex follows [semantic versioning](https://semver.org/). Every package of
 the family (`php-regex/regex-*`) is released together, with one version number,
-and each requires its siblings at the same minor version: you never compute a
-compatibility matrix between them.
+and each requires its siblings at exactly its own version (Composer's
+`self.version`): you never compute a compatibility matrix between them. Install
+and update them together, with `composer update 'php-regex/*'`; Composer refuses
+a partial update.
 
 This page says what a minor release (2.1, 2.2, …) and a patch release
 (2.0.1, …) may change, and what only the next major release (3.0) may change.
@@ -12,18 +14,35 @@ This page says what a minor release (2.1, 2.2, …) and a patch release
 
 Every class, interface, trait and enum **not marked `@internal`**, with its
 public methods, public properties and public constants. A class marked
-`@internal` is not part of the API: it may change in any release. Some of them
-are used across packages; those keep their signatures within 2.x because the
-packages are released together, but code outside this project must not rely on
-them.
+`@internal` is not part of the API: it may change in any release.
 
-One of those cross-package dependencies is named as an exception, because two
-packages build on it: `regex-parser` does not change the `PHPRegex\Parser\Hir`
-classes that `regex-automata` (the whole normalized form and the translator
-that builds it) and `regex-redos` (`CharSet`, `ClassSetProvider`, `Utf8`)
-consume without a coordinated patch to both. The layer stays `@internal` — it
-is not yours to build on — and the repository's cross-package test suite holds
-the three sides to that list.
+Some `@internal` classes and constructors are shared between packages. They
+may change in any release, since siblings always run at the same version. Code
+outside this project must not use them.
+
+The `PHPRegex\Parser\Hir` classes of `regex-parser` are `@internal` like the
+rest: `regex-automata` and `regex-redos`, which build on them, move with them.
+
+Result objects are built by the library. Their class, methods and properties
+are public, but their constructors are `@internal`: read them, never build
+them. A minor release may add a constructor parameter, required or not. If a
+test of your own code needs one, get it from the producer on a known pattern,
+for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
+`RedosAnalyzer::analyze()` for a `RedosAnalysis`. The result objects are:
+
+- `regex-parser`: `TolerantParseResult`, `Validation\ValidationResult`,
+  `Analysis\GroupNumbering`, `Analysis\LiteralExtractionResult`,
+  `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Engine\PcreMatch`,
+  `Engine\PcreError`;
+- `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
+- `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
+  `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
+  `TrivialMatch`;
+- `regex-redos`: `RedosAnalysis`, `Finding`, `Hotspot`, `RedosWitness`,
+  `Confirmation`, `ConfirmationSample`;
+- `regex-transpiler`: `TranspileResult`;
+- `regex-linter`: `Rule\RuleViolation`;
+- `regex-toolkit`: `AnalysisReport`.
 
 `@internal` still means removable. The 2.0.0 release removed `Automata\Alphabet\CharSet`
 (use `Parser\Hir\CharSet`) and the AST-walking transformer behind the solver
@@ -34,20 +53,47 @@ In short, the public surface is:
 
 | package | public |
 |---|---|
-| `regex-parser` | `RegexParser`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, every class of `Node\`, the visitor base classes (`NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`), `NodeWalker`, `NodeFinder`, `TraversalAction`, `Token\`, `Validation\ValidationResult` and `ValidationErrorCategory`, `Printer\`, the analyses of `Analysis\` (but `ByteCharSet` and `CharSetAnalyzer`), `Cache\` (but `AstSerializer`), `Engine\`, and the exceptions of `Exception\` |
-| `regex-explain` | the explainers, the renderers, `Highlighter\ConsoleHighlighter` and `HtmlHighlighter` |
-| `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer` |
+| `regex-parser` | `RegexParser`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, `NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`, `NodeWalker`, `NodeFinder`, `TraversalAction`, `Token\Token`, `Token\TokenStream`, `Token\TokenType`, `Validation\ValidationResult`, `Validation\ValidationErrorCategory`, `Printer\PatternPrinter`, `Printer\NodeDumper`, `Analysis\ComplexityScorer`, `Analysis\GroupNumbering`, `Analysis\GroupNumberingCollector`, `Analysis\LengthRangeCalculator`, `Analysis\LiteralExtractor`, `Analysis\LiteralExtractionResult`, `Analysis\LiteralSet`, `Analysis\MetricsCollector`, `Analysis\CaptureShapeAnalyzer`, `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Analysis\Participation`, `Analysis\RequiredLiteralAnalyzer`, `Cache\CacheInterface`, `Cache\RemovableCacheInterface`, `Cache\ArrayCache`, `Cache\NullCache`, `Cache\FilesystemCache`, `Cache\PsrCacheAdapter`, `Cache\PsrSimpleCacheAdapter`, `Engine\PcreEngine`, `Engine\PcreError`, `Engine\PcreLimits`, `Engine\PcreMatch`, `Exception\ExceptionInterface`, `Exception\RegexException`, `Exception\LexerException`, `Exception\ParserException`, `Exception\SyntaxErrorException`, `Exception\SemanticErrorException`, `Exception\RecursionLimitException`, `Exception\ResourceLimitException`, `Exception\InvalidRegexOptionException`, `Exception\CacheException`, `Node\*` |
+| `regex-explain` | `TextExplainer`, `HtmlExplainer`, `AsciiTreeRenderer`, `MermaidRenderer`, `RailroadSvgRenderer`, `Highlighter\ConsoleHighlighter`, `Highlighter\HtmlHighlighter` |
+| `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
-| `regex-automata` | `LanguageSolver`, `SolverOptions`, `MatchMode`, the two algorithm enums, the three result classes, `Dfa`, `DfaState`, `DfaCacheInterface`, `InMemoryDfaCache`, `Exception\ComplexityException` |
-| `regex-redos` | `RedosAnalyzer` (with `ANALYSIS_VERSION`), `RedosAnalysis` (with `isProvenSafe()` and `headline()`), `RedosOptions`, `RedosSeverity` (with `rank()`), `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation` (with `wasSkipped()` and `LIMITS_UNAVAILABLE`), `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
+| `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language` |
+| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `TranspileException` |
-| `regex-linter` | `PatternLinter`, `Diagnostic`, `DiagnosticType`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
+| `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
-| `regex-phpstan` | `RegexPatternRule`, and the `phpRegex` parameters of `extension.neon` |
-| `regex-symfony` | `PHPRegexBundle`, the `php_regex` configuration, the commands' names and options |
-| `regex-laravel` | `PHPRegexServiceProvider`, the `Regex` facade, the `php-regex` configuration, the commands' names and options |
-| `regex-cli` | the `regex` command: its commands, options, exit codes and JSON output (no PHP class is public) |
-| `regex-language-server` | the protocol it speaks (no PHP class is public) |
+| `regex-phpstan` | `RegexPatternRule` |
+| `regex-symfony` | `PHPRegexBundle` |
+| `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
+| `regex-cli` | no PHP class is public |
+| `regex-language-server` | no PHP class is public |
+
+Each path is relative to the package namespace: `Analysis\CaptureShape` in
+`regex-parser` is `PHPRegex\Parser\Analysis\CaptureShape`. `Node\*` is every
+class of `Node\`.
+
+In `regex-parser`, `NodeVisitorInterface`, `AbstractNodeVisitor` and
+`AbstractTraversingVisitor` are the visitor base classes. `Analysis\ByteCharSet`,
+`Analysis\CharSetAnalyzer` and `Cache\AstSerializer` are not public, nor is any
+other class of those namespaces left out of the row.
+
+In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
+`Minimization\MinimizationAlgorithm` are the two algorithm enums.
+
+In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
+`RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
+`Confirmation::wasSkipped()` and `Confirmation::LIMITS_UNAVAILABLE`.
+
+The bridges and tools carry more than their classes:
+
+- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
+- `regex-symfony`: the `php_regex` configuration, and the commands' names and
+  options.
+- `regex-laravel`: the `Regex` facade (`Facades\Regex`), the `php-regex`
+  configuration, and the commands' names and options.
+- `regex-cli`: the `regex` command, with its commands, options, exit codes and
+  JSON output.
+- `regex-language-server`: the protocol it speaks.
 
 ## Using the API: call, extend, implement
 
@@ -132,7 +178,7 @@ add one to yet.
 - The **`regex lint` baseline file**: a baseline generated by 2.0 is read by
   every 2.x, and an issue it records stays matched when its line or its
   message changes.
-- The **PHP floor**, PHP 8.2.
+- The **PHP floor**, PHP 8.2: no 2.x release raises it.
 
 ## What a patch release may change
 

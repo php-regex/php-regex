@@ -19,6 +19,8 @@ namespace PHPRegex\Parser\Analysis;
 final readonly class GroupNumbering
 {
     /**
+     * @internal built by GroupNumberingCollector::collect()
+     *
      * @param array<int>                $captureSequence
      * @param array<string, array<int>> $namedGroups
      */

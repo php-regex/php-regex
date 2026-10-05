@@ -20,6 +20,9 @@ use PHPRegex\Parser\ErrorCode;
  */
 final readonly class ValidationResult
 {
+    /**
+     * @internal built by RegexParser::validate() and Regex::validate()
+     */
     public function __construct(
         public bool $isValid,
         public ?string $error = null,
