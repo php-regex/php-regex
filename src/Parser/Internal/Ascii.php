@@ -51,6 +51,15 @@ final class Ascii
         return self::consistsOf($text, self::SPACES);
     }
 
+    /**
+     * The text without the leading bytes C's isspace() accepts, as PHP skips
+     * them before the delimiter; NUL is not one of them.
+     */
+    public static function trimLeadingSpaces(string $text): string
+    {
+        return ltrim($text, self::SPACES);
+    }
+
     public static function isHexDigit(string $text): bool
     {
         return self::consistsOf($text, self::DIGITS.self::HEX_LETTERS);

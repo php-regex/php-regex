@@ -190,58 +190,90 @@ Linting finds issues beyond validity — performance, security, and best practic
 ### CLI Lint Output
 
 ```bash
-vendor/bin/regex lint src/ --no-ansi
+vendor/bin/regex lint app/ --no-ansi
 ```
 
-**Output:**
+**Output (trimmed):**
 ```
-src/Service/Validator.php:42: warning: Nested quantifiers detected
-  Pattern: /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/i
-  Hint: Use atomic groups (?>...) or possessive quantifiers (*+, ++).
+  [1/2] Scanning files
+  Scanned 1 files, found 1 patterns.
+
+  [2/2] Analyzing patterns
+  app/Service/Validator.php:9:33
+      → /^(?:[0-9]+\s?)+$/
+    WARN Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+    TIP
+         - /^(?:[0-9]+\s?)+$/
+         + /^(?:\d+\s?)+$/
+
+  PASS 1 warnings found, 1 optimizations available.
 ```
+
+Each finding opens on `file:line:column` and the pattern, then one line per issue,
+its badge (`FAIL`, `WARN` or `INFO`) and its hint, and a `TIP` for a shorter
+equivalent. Warnings alone leave the exit code at 0.
 
 ### JSON Output for CI
 
 ```bash
-vendor/bin/regex lint src/ --format=json
+vendor/bin/regex lint app/ --format=json
 ```
 
 **Output:**
 ```json
 {
+    "target": {
+        "php": "8.4",
+        "pcre": "10.49",
+        "source": "running PHP"
+    },
     "stats": {
         "errors": 0,
         "warnings": 1,
-        "optimizations": 1
+        "optimizations": 1,
+        "redos": 0,
+        "infos": 0,
+        "lintErrors": 0
     },
     "results": [
         {
-            "file": "src/Service/Validator.php",
-            "line": 42,
-            "source": "php",
-            "pattern": "/^[a-z0-9._%+-]+@[a-z0-9-]+(?:\\.[a-z0-9-]+)+$/i",
+            "file": "app/Service/Validator.php",
+            "line": 9,
+            "column": 33,
+            "fileOffset": 147,
+            "source": "preg_match()",
+            "pattern": "/^(?:[0-9]+\\s?)+$/",
+            "location": null,
             "issues": [
                 {
                     "type": "warning",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
-                    "file": "src/Service/Validator.php",
-                    "line": 42,
-                    "column": 9,
+                    "file": "app/Service/Validator.php",
+                    "line": 9,
+                    "column": 33,
+                    "fileOffset": 147,
+                    "position": 1,
                     "issueId": "regex.lint.quantifier.nested",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "source": "php"
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers \u2014 verify the rewrite still matches everything you need.",
+                    "source": "preg_match()"
                 }
             ],
             "optimizations": [
                 {
-                    "file": "src/Service/Validator.php",
-                    "line": 42,
+                    "file": "app/Service/Validator.php",
+                    "line": 9,
+                    "column": 33,
+                    "fileOffset": 147,
                     "optimization": {
-                        "original": "/[0-9]+/",
-                        "optimized": "/\\d+/"
+                        "original": "/^(?:[0-9]+\\s?)+$/",
+                        "optimized": "/^(?:\\d+\\s?)+$/",
+                        "changes": [
+                            "Optimized pattern."
+                        ]
                     },
-                    "savings": 2,
-                    "source": "php"
+                    "savings": 3,
+                    "source": "preg_match()"
                 }
             ]
         }
@@ -253,14 +285,48 @@ vendor/bin/regex lint src/ --format=json
 
 | Field     | Description                |
 |-----------|----------------------------|
-| `type`    | `error` or `warning`       |
+| `type`    | `error`, `warning` or `info` |
 | `message` | Human-readable explanation |
 | `file`    | Source file path           |
 | `line`    | Line number                |
 | `column`  | Column number              |
 | `issueId` | Diagnostic identifier      |
 | `hint`    | Suggested fix              |
-| `source`  | Source language            |
+| `fileOffset` | Byte offset of the pattern in the file |
+| `position` | Offset of the issue in the pattern body |
+| `source`  | The call the pattern was found in, as `preg_match()` |
+
+**Stats Fields:** the JSON report always carries every key, in this order, `0` when there
+is none:
+
+| Field           | Counts                                                                        |
+|-----------------|-------------------------------------------------------------------------------|
+| `errors`        | Every issue of type `error`: invalid patterns, ReDoS errors and lint errors   |
+| `warnings`      | Every issue of type `warning`                                                 |
+| `optimizations` | The optimization suggestions                                                  |
+| `redos`         | The ReDoS errors, among `errors`                                              |
+| `infos`         | Every issue of type `info`                                                    |
+| `lintErrors`    | The lint rules of error severity that fired, among `errors`                   |
+
+The console summary names each kind of error apart: `1 invalid patterns, 1 ReDoS errors,
+1 lint errors, 2 warnings, 0 optimizations.` An invalid pattern is one PCRE refuses to
+compile; a lint error is a pattern that compiles but that a rule of error severity reports.
+
+### Severity in Each Format
+
+Each lint rule declares a severity, and every output format maps it the same way:
+
+| Rule severity           | Console | JSON `type` | GitHub    | Checkstyle | JUnit        | LSP         |
+|-------------------------|---------|-------------|-----------|------------|--------------|-------------|
+| `critical`              | `FAIL`  | `error`     | `error`   | `error`    | `error`      | Error       |
+| `error`                 | `FAIL`  | `error`     | `error`   | `error`    | `failure`    | Error       |
+| `warning`               | `WARN`  | `warning`   | `warning` | `warning`  | `system-out` | Warning     |
+| `style`, `perf`, `info` | `INFO`  | `info`      | `notice`  | `info`     | `system-out` | Information |
+
+An issue of type `error` makes `regex lint` exit with 1; warnings and infos leave 0. In
+JUnit, a `critical` problem is an `<error>` element and an `error` one a `<failure>`; a
+warning or an info is a passing test case that carries the message in `system-out`.
+See the [severity table](../reference.md#quick-reference-table) for the severity of each rule.
 
 ---
 
@@ -528,6 +594,12 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.verb.name_too_long` | `VerbNameTooLong` | The name of a verb is longer than PCRE allows. |
 | `regex.verb.turkish_casing_without_utf` | `VerbTurkishCasingWithoutUtf` | "(*TURKISH_CASING)" is used without UTF mode. |
 | `regex.verb.unclosed` | `VerbUnclosed` | A verb such as "(*MARK:name" is not closed by ")". |
+
+The delimiter follows PHP: it must not be alphanumeric, a backslash or a NUL byte, and the
+leading whitespace before it (space, tab, newline, carriage return, vertical tab, form feed)
+is skipped, as PHP does. `"\f/a/"` is the pattern `a`; `"\0/a/"` is refused with
+`regex.delimiter.invalid`: `Invalid delimiter "\x00". Delimiters must not be alphanumeric,
+backslash, or NUL byte.`
 
 ---
 

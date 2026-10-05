@@ -17,9 +17,14 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosProof;
+use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
@@ -124,14 +129,14 @@ final class RegexLintServiceTest extends TestCase
         $request = new LintRequest(['.'], [], 0);
         // Pattern with nested quantifier which should produce a warning
         $patterns = [
-            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match'),
         ];
 
         $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
         $this->assertCount(1, $result->results);
-        $this->assertSame('/(a+)+/', $result->results[0]['pattern']);
+        $this->assertSame('/(a+)+$/', $result->results[0]['pattern']);
         $warnings = array_filter($result->results[0]['issues'], static fn ($issue) => 'warning' === $issue['type']);
         $this->assertNotSame([], $warnings, 'The linter reported no warning for a nested quantifier.');
 
@@ -151,7 +156,7 @@ final class RegexLintServiceTest extends TestCase
         $service = new LintService($analysis, $this->sources);
         $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $service->analyze($patterns, $request, null);
@@ -289,7 +294,7 @@ final class RegexLintServiceTest extends TestCase
     {
         $request = new LintRequest(['.'], [], 0);
         $patterns = [
-            new PatternOccurrence('/(a+)+/', 'test.php', 1, 'route:home'),
+            new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'route:home'),
         ];
 
         $service = new LintService($this->analysis, $this->sources);
@@ -380,5 +385,252 @@ final class RegexLintServiceTest extends TestCase
 
         // Issues for nonexistent files should still be processed (not ignored)
         $this->assertCount(1, $result->results);
+    }
+
+    /**
+     * A heuristic ReDoS lint issue is dropped when the ReDoS analysis ran
+     * and proved the pattern linear; any other verdict keeps it.
+     *
+     * @return iterable<string, array{pattern: string, heuristic: string, redos: bool, proof: RedosProof|null, kept: bool}>
+     */
+    public static function provideHeuristicIssuesAgainstTheVerdict(): iterable
+    {
+        // Proven linear: (c?)+$ on c{40}d takes 123 steps.
+        yield 'nested, proven linear' => ['pattern' => '/(c?)+$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
+        yield 'nested and trailing, proven linear' => ['pattern' => '/(a+)+/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
+        yield 'dot star, proven linear' => ['pattern' => '/(?:.*)+/', 'heuristic' => 'regex.lint.dotstar.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
+        yield 'overlap, proven linear' => ['pattern' => '/(?:[a-m]|[a-z])+/', 'heuristic' => 'regex.lint.overlap.charset', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
+        // Proven exponential: the verdict and the heuristic both stay.
+        yield 'nested, proven exponential' => ['pattern' => '/^(a+)+$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => true];
+        yield 'overlap, proven exponential' => ['pattern' => '/(?:[a-m]|[a-z])+$/', 'heuristic' => 'regex.lint.overlap.charset', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => true];
+        // A backreference is outside the model: the heuristics decided.
+        yield 'nested, heuristic verdict' => ['pattern' => '/(x)(a+)+\1$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Heuristic, 'kept' => true];
+        yield 'nested, budget exceeded' => ['pattern' => '/^(?:(?:a{16}){16}){16}(c?)+$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::BudgetExceeded, 'kept' => true];
+        // No analysis, nothing proven, nothing dropped.
+        yield 'nested, ReDoS off' => ['pattern' => '/(c?)+$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => false, 'proof' => null, 'kept' => true];
+        yield 'overlap, ReDoS off' => ['pattern' => '/(?:[a-m]|[a-z])+/', 'heuristic' => 'regex.lint.overlap.charset', 'redos' => false, 'proof' => null, 'kept' => true];
+    }
+
+    #[DataProvider('provideHeuristicIssuesAgainstTheVerdict')]
+    public function test_analysis_drops_a_heuristic_issue_only_when_proven_linear(string $pattern, string $heuristic, bool $redos, ?RedosProof $proof, bool $kept): void
+    {
+        if (null !== $proof) {
+            $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
+            $this->assertSame($proof, $verdict->proof, 'The row no longer names the verdict the analysis gives.');
+            $this->assertSame(!$kept, $verdict->isProvenSafe());
+        }
+
+        $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: $redos))
+            ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
+        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+
+        $kept
+            ? $this->assertContains($heuristic, $ids, $pattern)
+            : $this->assertNotContains($heuristic, $ids, $pattern);
+    }
+
+    public function test_analysis_keeps_the_redos_issue_next_to_the_heuristic_on_a_proven_blow_up(): void
+    {
+        $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
+            ->lint([new PatternOccurrence('/^(a+)+$/', 'test.php', 1, 'preg_match')]);
+        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+
+        $this->assertContains('regex.lint.redos', $ids);
+        $this->assertContains('regex.lint.quantifier.nested', $ids);
+    }
+
+    /**
+     * The analysis misreads an r turned on or off by an inline group: it
+     * proves "(?i-r:(?:k+\x{212A})+)$" under ur linear, while the engine
+     * needs 68 -> 3 194 -> 150 050 steps on (k, Kelvin sign){4, 8, 12}x.
+     * So the heuristics stay whenever the pattern holds an inline flag
+     * group, scoped or not, even a harmless "(?s:x)" (the engine runs
+     * "(?s:x)(?:.*)+" in 2 steps whatever the subject: that report is a
+     * conservative one). With no inline group, the same loop under ur is
+     * linear (6 -> 10 steps) and its heuristic is dropped. Every row is
+     * proven linear by the analysis, and the linter alone reports it.
+     *
+     * @return iterable<string, array{pattern: string, heuristic: string, unit: string, suffix: string, exponential: bool, kept: bool}>
+     */
+    public static function provideProvenLinearPatternsAndInlineFlagGroups(): iterable
+    {
+        yield 'scoped i turning r off' => ['pattern' => '/(?i-r:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
+        yield 'caret reset with i' => ['pattern' => '/(?^i:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
+        yield 'scoped i inside r turned off' => ['pattern' => '/(?-r:(?i:(?:k+\x{212A})+))$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
+        yield 'harmless scoped s' => ['pattern' => '/(?s:x)(?:.*)+/', 'heuristic' => 'regex.lint.dotstar.nested', 'unit' => 'a', 'suffix' => "\n", 'exponential' => false, 'kept' => true];
+        yield 'no inline group under ur' => ['pattern' => '/(?:k+\x{212A})+$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => false, 'kept' => false];
+    }
+
+    #[DataProvider('provideProvenLinearPatternsAndInlineFlagGroups')]
+    public function test_analysis_keeps_the_heuristic_when_the_pattern_holds_an_inline_flag_group(string $pattern, string $heuristic, string $unit, string $suffix, bool $exponential, bool $kept): void
+    {
+        if (\PHP_VERSION_ID < 80400 && str_ends_with($pattern, 'r')) {
+            // Before PHP 8.4 the r modifier does not exist: PHP refuses the
+            // pattern, and there is nothing to analyse.
+            $this->assertFalse(@preg_match($pattern, ''));
+
+            return;
+        }
+
+        $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
+        $this->assertSame(RedosProof::Proven, $verdict->proof, 'The row no longer names the verdict the analysis gives.');
+        $this->assertTrue($verdict->isProvenSafe(), 'The row no longer names the verdict the analysis gives.');
+
+        $short = self::steps($pattern, str_repeat($unit, 4).$suffix);
+        $long = self::steps($pattern, str_repeat($unit, 8).$suffix);
+        $this->assertSame($exponential, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $linter = new PatternLinter();
+        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+        $this->assertContains($heuristic, array_map(static fn ($issue): string => $issue->id, $linter->getIssues()));
+
+        $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
+            ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
+        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+
+        $kept
+            ? $this->assertContains($heuristic, $ids, $pattern)
+            : $this->assertNotContains($heuristic, $ids, $pattern);
+    }
+
+    /**
+     * The analysis misses an s set in an earlier alternative: it proves
+     * "x(?s)|(?:.*\n.*\n)+x" linear, while the engine needs 385 -> 98 305
+     * steps on "\n"{8} -> "\n"{16}. With an inline flag group that is not
+     * scoped, the heuristic stays next to the verdict.
+     */
+    public function test_analysis_keeps_the_heuristic_when_an_inline_flag_group_is_not_scoped(): void
+    {
+        $pattern = '/x(?s)|(?:.*\n.*\n)+x/';
+
+        // The verdict as the analysis gives it today.
+        $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
+        $this->assertSame(RedosProof::Proven, $verdict->proof);
+        $this->assertTrue($verdict->isProvenSafe());
+
+        // Oracle: the engine exhausts a limit of 1 000 000 steps on 24 "\n".
+        $jit = ini_get('pcre.jit');
+        $limit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.jit', '0');
+        ini_set('pcre.backtrack_limit', '1000000');
+
+        try {
+            $this->assertFalse(@preg_match('/(*NO_START_OPT)x(?s)|(?:.*\n.*\n)+x/', str_repeat("\n", 24)));
+            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+        } finally {
+            ini_set('pcre.jit', false === $jit ? '1' : $jit);
+            ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
+        }
+
+        $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
+            ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
+        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+
+        $this->assertContains('regex.lint.dotstar.nested', $ids);
+    }
+
+    /**
+     * An s set in an earlier alternative reaches the loop: the dot takes
+     * "\n" and the loop blows up (1 024 -> 262 144 steps on "\na"{8} ->
+     * "\na"{16}; 716 -> 159 824 on "a\n"{8} -> "a\n"{16}). With ReDoS
+     * analysis on, the heuristic still reports it.
+     *
+     * @return iterable<string, array{pattern: string, unit: string, heuristic: string}>
+     */
+    public static function provideLoopsUnderAnSSetInAnEarlierAlternative(): iterable
+    {
+        yield 'overlapping alternatives' => ['pattern' => '/x(?s)|(?:.a|\na)+x/', 'unit' => "\na", 'heuristic' => 'regex.lint.overlap.charset'];
+        yield 'nested quantifiers' => ['pattern' => '/x(?s)|(?:.{1,9}\n)+x/', 'unit' => "a\n", 'heuristic' => 'regex.lint.quantifier.nested'];
+    }
+
+    #[DataProvider('provideLoopsUnderAnSSetInAnEarlierAlternative')]
+    public function test_analysis_reports_a_loop_under_an_s_set_in_an_earlier_alternative(string $pattern, string $unit, string $heuristic): void
+    {
+        // Oracle: the engine exhausts a limit of 1 000 000 steps on 24 units.
+        $jit = ini_get('pcre.jit');
+        $limit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.jit', '0');
+        ini_set('pcre.backtrack_limit', '1000000');
+
+        try {
+            $this->assertFalse(@preg_match('/(*NO_START_OPT)'.substr($pattern, 1), str_repeat($unit, 24).'!'));
+            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+        } finally {
+            ini_set('pcre.jit', false === $jit ? '1' : $jit);
+            ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
+        }
+
+        $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
+            ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
+        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+
+        $this->assertContains($heuristic, $ids, $pattern);
+    }
+
+    public function test_analysis_drops_charset_overlap_on_an_ignored_pattern(): void
+    {
+        $analysis = new AnalysisService(RegexParser::create(), ignoredPatterns: ['(?:[a-m]|[a-z])+', '(a+)+']);
+
+        $ids = array_map(
+            static fn (array $issue): string => $issue['issueId'] ?? '',
+            $analysis->lint([
+                new PatternOccurrence('/^(?:[a-m]|[a-z])+$/', 'test.php', 1, 'preg_match'),
+                new PatternOccurrence('/^(a+)+$/', 'test.php', 2, 'preg_match'),
+            ]),
+        );
+
+        $this->assertNotContains('regex.lint.overlap.charset', $ids);
+        $this->assertNotContains('regex.lint.quantifier.nested', $ids);
+    }
+
+    public function test_analyze_with_route_pattern_filters_charset_overlap(): void
+    {
+        $service = new LintService($this->analysis, $this->sources);
+        $result = $service->analyze(
+            [new PatternOccurrence('/^(?:[a-m]|[a-z])+$/', 'test.php', 1, 'route:home')],
+            new LintRequest(['.'], [], 0),
+            null,
+        );
+
+        $ids = [];
+        foreach ($result->results as $item) {
+            foreach ($item['issues'] as $issue) {
+                $ids[] = $issue['issueId'] ?? '';
+            }
+        }
+
+        $this->assertNotContains('regex.lint.overlap.charset', $ids);
+    }
+
+    /**
+     * The smallest backtrack limit the match attempt runs under: the
+     * engine's count of steps for one start, JIT off, start optimizations
+     * off.
+     */
+    private static function steps(string $pattern, string $subject): int
+    {
+        $jit = ini_get('pcre.jit');
+        $limit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.jit', '0');
+        $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+
+        try {
+            $low = 1;
+            $high = 1 << 22;
+            while ($low < $high) {
+                $middle = intdiv($low + $high, 2);
+                ini_set('pcre.backtrack_limit', (string) $middle);
+                if (false === @preg_match($unoptimized, $subject)) {
+                    $low = $middle + 1;
+                } else {
+                    $high = $middle;
+                }
+            }
+
+            return $low;
+        } finally {
+            ini_set('pcre.jit', false === $jit ? '1' : $jit);
+            ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
+        }
     }
 }

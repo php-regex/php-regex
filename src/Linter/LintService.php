@@ -38,13 +38,14 @@ use PHPRegex\Redos\RedosSeverity;
  *     source?: string
  * }
  * @phpstan-type LintResult array{file: string, line: int, column?: int, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int}
  */
 final readonly class LintService
 {
     private const ROUTE_IGNORED_ISSUE_IDS = [
         'regex.lint.quantifier.nested' => true,
         'regex.lint.dotstar.nested' => true,
+        'regex.lint.overlap.charset' => true,
     ];
 
     public function __construct(private AnalysisService $analysis, private PatternSourceCollection $sources) {}
@@ -447,18 +448,25 @@ final readonly class LintService
     private function updateStatsFromResults(array $stats, array $results): array
     {
         $redos = 0;
+        $infos = 0;
+        $lintErrors = 0;
 
         foreach ($results as $result) {
             foreach ($result['issues'] as $issue) {
                 if ('error' === $issue['type']) {
                     $stats['errors']++;
-                    // A ReDoS error fails the run like any error, but the
-                    // pattern compiles: the summaries name it apart.
+                    // A ReDoS error or a lint rule at Error fails the run like
+                    // any error, but the pattern compiles: the summaries name
+                    // them apart.
                     if (isset($issue['analysis'])) {
                         $redos++;
+                    } elseif (!isset($issue['validation'])) {
+                        $lintErrors++;
                     }
                 } elseif ('warning' === $issue['type']) {
                     $stats['warnings']++;
+                } elseif ('info' === $issue['type']) {
+                    $infos++;
                 }
             }
 
@@ -467,6 +475,14 @@ final readonly class LintService
 
         if ($redos > 0) {
             $stats['redos'] = $redos;
+        }
+
+        if ($infos > 0) {
+            $stats['infos'] = $infos;
+        }
+
+        if ($lintErrors > 0) {
+            $stats['lintErrors'] = $lintErrors;
         }
 
         return $stats;

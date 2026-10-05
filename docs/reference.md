@@ -61,12 +61,14 @@ PHPRegex targets **PHP's PCRE2 engine** (`preg_*`). Key behaviors that may surpr
 
 **Identifier:** `regex.lint.flag.useless.s`
 
-**When it triggers:** The pattern sets the `s` (DotAll) modifier but contains no dot tokens (`.`). The `s` flag only affects `.` behavior.
+**When it triggers:** The pattern sets the `s` (DotAll) modifier but contains no unescaped dot outside a character class. The `s` flag only affects `.`: an escaped `\.` and a `.` inside `[...]` are literal dots, which it leaves alone.
+
+**Message:** `Flag 's' is useless: the pattern contains no unescaped dot outside a character class.`
 
 **Visual Explanation:**
 ```
-/^\d+$/s
-  -> no dot in pattern
+/^\d+\.\d+$/s
+  -> no unescaped dot outside a class
   -> s has no effect
 ```
 
@@ -90,7 +92,9 @@ preg_match('/^user_id:\d+$/', $input);
 
 **Identifier:** `regex.lint.flag.useless.m`
 
-**When it triggers:** The pattern sets the `m` (multiline) modifier but contains no start/end anchors (`^` or `$`).
+**When it triggers:** The pattern sets the `m` (multiline) modifier but contains no start/end anchors (`^` or `$`). `\A`, `\z` and `\Z` are not read by `m`, so they do not count.
+
+**Message:** `Flag 'm' is useless: the pattern contains no ^ or $ anchor.`
 
 **Visual Explanation:**
 ```
@@ -166,6 +170,14 @@ Invalid:
 
 **When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential.
 
+It is not reported when the nesting cannot blow up:
+
+- **Nothing at all follows the outer loop**: `/(a+)+/` and `/x(\d+\.?)+/` end the pattern, so the first way the engine finds is the match. This holds when the outer minimum is 0 or 1, and when no subroutine call runs the loop again. Anything after the loop, an anchor or an assertion included, keeps the issue: `/(a+)+$/` and `/(?:a+)+(?=b)/` are reported.
+- **A short run before the end**: an outer bound of at most 2 around a greedy run of one literal character, followed only by `$`, `\z` or `\Z`, without `/m`, as `/(a+){1,2}$/`. Any other shape keeps the issue: a bound of 3 or more (`/(a+){0,3}$/`), a class (`/([ab]+){1,2}$/`), a lazy run (`/(a+?){1,2}$/`), `/m`, or a lookahead after the loop.
+- **A separator splits each iteration**: the inner loop is followed right away by an item it cannot match, and every other item of the iteration matches one way only. In the unrolled loop `/"[^"\\]*(?:\\.[^"\\]*)*"/`, each iteration ends with `[^"\\]*`, and the `\\` that opens the next iteration is what `[^"\\]` refuses, so there is one way to split the input. Under `/i` the two sides are compared case-folded, so `/(?:a+,)+$/i` is still exempt, but a loop unrolled this way is never exempt: `/"[^"\\]*(?:\\.[^"\\]*)*"/i` is reported.
+
+With the ReDoS analysis on (`--redos`, or `checks.redos.enabled` in `regex.json`), a pattern the analysis proves linear drops the issue: the proof outranks the heuristic. A pattern holding an inline option group keeps it, whether an option setting such as `(?s)` or a scoped group such as `(?i-r:…)`: the proof does not follow every inline option, so the heuristic stays, even for a harmless `(?s:x)`. The issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
+
 **Visual Explanation:**
 ```
 Pattern: /(a+)+b/
@@ -198,6 +210,8 @@ preg_match('/(a++)+b/', $input);
 **Identifier:** `regex.lint.dotstar.nested`
 
 **When it triggers:** An unbounded quantifier wraps a dot-star, which can cause extreme backtracking.
+
+Without `/s` (or an inline `(?s)`), a dot cannot cross a newline, so `/(?:.*\n)+x/` is not reported: each iteration ends at the next newline and the input splits one way. With `/s` or `(?s)`, the same pattern is reported. Unlike nested quantifiers, a loop at the very end of the pattern is still reported, as `/(?:.*)+/` in the example below. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, unless it holds an inline option group such as `(?s)` or `(?s:…)` (see [Nested Quantifiers](#nested-quantifiers-redos-risk)).
 
 **Example:**
 ```php
@@ -275,6 +289,8 @@ preg_match('/\d*\w*/', $input);
 preg_match('/\w*/', $input);
 ```
 
+An atom guarded by a negative lookahead, as in `(?:.(?!x))*`, does not match every character of its class: `.(?!x)` refuses a character followed by `x`. Such a pair is reported only when the rewrite keeps every guard true, so `/^(?:.(?!x))*.{1,3}$/` is not.
+
 **Fix:** Tighten the smaller quantifier to its minimum, or — when it can already match zero times — drop the whole quantified term.
 
 ---
@@ -285,6 +301,12 @@ preg_match('/\w*/', $input);
 
 **When it triggers:** A lazy quantifier, or a greedy one under `/U`, has nothing after it
 in the pattern. The match ends as soon as it may, so the quantifier matches its minimum.
+Under `/U` the message says where the laziness comes from:
+`Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.`
+
+A quantifier inside a group that a subroutine call runs again (`(?1)`, `(?&name)`) is not
+reported: where the call stands, something may follow it. In `/(?1)x(a+?)/`, the call takes
+`aaa` from `aaaxa`. A recursive pattern (`(?R)`, `(?0)`) is not checked by this rule at all.
 
 **Example:**
 ```php
@@ -420,18 +442,18 @@ preg_match('/a+b/', $input);  // Often equivalent
 
 **Identifier:** `regex.lint.overlap.charset`
 
-**When it triggers:** Alternation branches have overlapping character sets.
+**When it triggers:** Alternation branches have overlapping character sets, and the alternation is repeated by an unbounded quantifier: a character both branches accept can be taken by either, on every iteration. An alternation matched once, such as `/[a-c]|[b-d]/`, is not reported, nor is one inside a lookbehind (`(?<!http:|https:)`): PCRE runs a lookaround atomically, so the loop around it never comes back to try the other branch. A loop at the very end of the pattern is still reported. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, unless it holds an inline option group such as `(?s)` or `(?s:…)`; like the two rules above, the issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
 
 **Example:**
 ```php
-// WARNING: Overlapping character classes
-preg_match('/[a-c]|[b-d]/', $input);
+// WARNING: Overlapping character classes inside a repetition
+preg_match('/(?:[a-c]|[b-d])+$/', $input);
 
 // SAFER: Use an atomic group to avoid backtracking
-preg_match('/(?>[a-c]|[b-d])/', $input);
+preg_match('/(?>[a-c]|[b-d])+$/', $input);
 
 // IF EQUIVALENT: Merge ranges
-preg_match('/[a-d]/', $input);
+preg_match('/[a-d]+$/', $input);
 ```
 
 ---
@@ -443,6 +465,8 @@ preg_match('/[a-d]/', $input);
 **Identifier:** `regex.lint.backref.useless`
 
 **When it triggers:** A backreference is used before its capturing group can be set or when the group is guaranteed to be empty.
+
+A backreference inside a group that a subroutine call runs again is not reported: the call may run it after the group has captured, as in `/^(?:(a)|(\1))(?2)$/`. A recursive pattern (`(?R)`, `(?0)`) is not checked by this rule.
 
 **Example:**
 ```php
@@ -470,18 +494,29 @@ preg_match('/(a)\1/', $input);
 
 **Example:**
 ```php
-// WARNING: Duplicate letters
+// WARNING: Redundant elements detected in character class.
+// ↳ Redundant elements: range 'a'-'z' (overlaps 'a'-'z')
 preg_match('/[a-zA-Za-z]/', $input);
 
 // PREFERRED: Remove duplicates
 preg_match('/[a-zA-Z]/', $input);
 
-// WARNING: Overlapping ranges
-preg_match('/[a-fc-d]/', $input);  // 'c' and 'd' already in a-f
+// WARNING: Redundant elements detected in character class.
+// ↳ Redundant elements: range 'c'-'d' (covered by range 'a'-'f')
+preg_match('/[a-fc-d]/', $input);
 
 // PREFERRED: Use clean ranges
 preg_match('/[a-f]/', $input);
+
+// WARNING: Redundant elements detected in character class.
+// ↳ Redundant elements: ranges 'a'-'m' and 'k'-'z' overlap: merge them into 'a'-'z'
+preg_match('/[a-mk-z]/', $input);
+
+// PREFERRED: One range
+preg_match('/[a-z]/', $input);
 ```
+
+The hint (`↳`) names what to change: a repeated range is named with the one it repeats, a range another one covers is named with the range that covers it, and two ranges that only partly overlap, which are both needed as written, come with the range to merge them into.
 
 **Fix:** Remove duplicates or merge ranges.
 
@@ -571,6 +606,28 @@ preg_match('/(error|failure)/', $input);
 
 ---
 
+### Literal Metacharacter in a Character Class
+
+**Identifier:** `regex.lint.charclass.literalMetachar`
+
+**When it triggers:** A small character class holds a shorthand (`\w`, `\d`, `\s` or their negations) next to an unescaped `*`, `+` or `?`. Inside `[...]` these are literal characters, so `[\w*]` matches a word character or a `*`: the quantifier was likely meant outside the class. It is not reported when the metacharacter is written with a backslash, as `\*` in `[\w\*]`, which says the literal is meant, in a negated class such as `[^\s+]`, or in a class that lists three elements or more besides it, such as `[\w+.-]`, which builds a set on purpose.
+
+**Example:**
+```php
+// WARNING: "*" is a literal character inside a character class, not a quantifier
+preg_match('/^[\w*]$/', '*');    // 1: the class matches a "*"
+
+// PREFERRED: Quantify the shorthand
+preg_match('/^\w*$/', '*');      // 0
+
+// PREFERRED: Escape the literal with a backslash when it is meant
+preg_match('/^[\w\*]$/', '*');   // 1, not reported
+```
+
+**Fix:** Move the quantifier out of the class, or escape the character with a backslash when the literal is meant.
+
+---
+
 ## Escapes
 
 ### Suspicious Escapes
@@ -600,7 +657,14 @@ preg_match('/\8/', $input);  // Ambiguous: not a valid escape
 ## Bytes Without /u
 
 Without `/u`, PCRE reads the pattern and the subject as bytes. A character written in
-UTF-8 that takes several bytes is several items to it, and two places get it wrong.
+UTF-8 that takes several bytes is several items to it, and three places get it wrong: a
+multibyte character in a class, a quantifier after one, and a Unicode property such as
+`\p{L}` (`regex.lint.unicode.propertyWithoutU`), which then covers only the first 256
+code points.
+
+The three rules report at error severity: the pattern compiles, but does not do what it
+says, so `regex lint` exits with 1. Turn one off under `checks.lint.rules` in `regex.json`
+(`"unicode.multibyteInClassWithoutU": false`) when bytes are really meant.
 
 ### Multibyte Character in a Class
 
@@ -641,6 +705,27 @@ preg_match('/^(?:é)+$/', 'éé');  // 1, still byte mode
 ```
 
 **Fix:** Add `/u`, or group the character so the quantifier takes all of it.
+
+---
+
+### Unicode Property Without /u
+
+**Identifier:** `regex.lint.unicode.propertyWithoutU`
+
+**When it triggers:** A Unicode property (`\p{…}` or `\P{…}`) is used, and the pattern has
+neither `/u` nor `(*UTF)`. The property then reads one byte at a time, as a code point
+below 256, so it covers only the first 256 code points.
+
+**Example:**
+```php
+// ERROR: "é" is the bytes \xC3 \xA9, and \xA9 is no letter
+preg_match('/^\p{L}+$/', 'é');   // 0
+
+// PREFERRED
+preg_match('/^\p{L}+$/u', 'é');  // 1
+```
+
+**Fix:** Add `/u`.
 
 ---
 
@@ -831,19 +916,29 @@ are a separate vocabulary: they name advice, not a refused pattern.
 
 ## Quick Reference Table
 
-| Category    | Rule ID                     | Severity      | Quick Fix                        |
-|-------------|-----------------------------|---------------|----------------------------------|
-| Flags       | `regex.lint.flag.useless.*` | warning       | Remove unused flag               |
-| Anchors     | `regex.lint.anchor.*`       | error         | Move anchors to correct position |
-| Quantifiers | `regex.lint.quantifier.*`   | warning/error | Use atomic groups                |
-| Groups      | `regex.lint.group.*`        | info          | Remove redundant groups          |
-| Alternation | `regex.lint.alternation.*`  | warning       | Simplify or use atomic           |
-| Backrefs    | `regex.lint.backref.*`      | warning       | Move or remove backreferences    |
-| Character   | `regex.lint.charclass.*`    | warning       | Remove duplicates                |
-| Ranges      | `regex.lint.range.*`        | warning       | Replace with literals            |
-| Escapes     | `regex.lint.escape.*`       | warning       | Fix escape sequences             |
-| Unicode     | `regex.lint.unicode.*`      | error         | Add the `/u` flag                |
-| ReDoS       | `regex.redos.*`             | error/warning | Use possessive quantifiers       |
+Every lint rule reports at warning severity unless the table says otherwise. A rule of
+error severity fails `regex lint` (exit code 1); a warning is printed and leaves the code
+at 0; an info, `style` included, is printed under an `INFO` badge and leaves the code at 0.
+
+| Category    | Rule ID                                                                                   | Severity | Quick Fix                         |
+|-------------|-------------------------------------------------------------------------------------------|----------|-----------------------------------|
+| Flags       | `regex.lint.flag.useless.s`, `.m`, `.i`                                                   | warning  | Remove the unused flag            |
+| Anchors     | `regex.lint.anchor.impossible.start`, `.end`                                              | warning  | Move the anchor                   |
+| Quantifiers | `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested`                               | warning  | Use atomic groups                 |
+| Quantifiers | `regex.lint.quantifier.useless`, `.zero`, `.concatenation`, `.lazyEnd`, `.assertion`      | warning  | Simplify the quantifier           |
+| Groups      | `regex.lint.group.redundant`                                                              | warning  | Remove the group                  |
+| Groups      | `regex.lint.group.quantifiedCapture`                                                      | info for an unnamed group, warning for a named one | Repeat a non-capturing group |
+| Alternation | `regex.lint.alternation.duplicateDisjunction`, `.empty`, `.overlap`, `.dotNewline`        | warning  | Simplify or use atomic            |
+| Alternation | `regex.lint.overlap.charset`                                                              | warning  | Use atomic or merge the sets      |
+| Backrefs    | `regex.lint.backref.useless`, `.undefined`                                                | warning  | Move or remove the backreference  |
+| Character   | `regex.lint.charclass.redundant`, `.duplicateChars`, `.suspiciousRange`, `.suspiciousPipe`, `.literalMetachar`, `.backrefAsOctal` | warning | Clean up the class |
+| Ranges      | `regex.lint.range.useless`                                                                | warning  | Replace with literals             |
+| Escapes     | `regex.lint.escape.suspicious`                                                            | warning  | Fix the escape sequence           |
+| Unicode     | `regex.lint.unicode.multibyteInClassWithoutU`, `.quantifiedMultibyteWithoutU`, `.propertyWithoutU`, `.bracedHexWithoutU` | error | Add the `/u` flag |
+| Unicode     | `regex.lint.unicode.shorthandWithoutU` (off by default)                                   | style    | Add the `/u` flag                 |
+| Inline      | `regex.lint.flag.redundant`, `.override`                                                  | warning  | Remove or scope the inline flag   |
+| Complexity  | `regex.lint.complexity`                                                                   | warning  | Split the pattern                 |
+| ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above | Use possessive quantifiers |
 
 ---
 

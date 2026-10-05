@@ -106,7 +106,7 @@ vendor/bin/regex analyze '/(a+)+$/' --no-visuals
 vendor/bin/regex lint src/ --format=github --no-visuals
 # Target: PHP 8.2, PCRE2 10.40 (composer.json require.php)
 # ::warning file=demo.php,line=3,col=0,title=Lint (regex.lint.quantifier.nested)::Nested quantifiers can cause catastrophic backtracking.%0ASuggestion: Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-# ::warning file=demo.php,line=3,col=0,title=Lint (regex.lint.group.quantifiedCapture)::Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.%0ASuggestion: Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+# ::notice file=demo.php,line=3,col=0,title=Lint (regex.lint.group.quantifiedCapture)::Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.%0ASuggestion: Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 ```
 
 `transpile` writes the pattern for another engine:

@@ -101,7 +101,7 @@ regex.lint.unicode.shorthandWithoutU: Shorthand "\w" matches only ASCII without 
 regex.lint.unicode.shorthandWithoutU: Shorthand "\d" matches only ASCII without /u flag.
 ```
 
-A whole codebase, from the terminal — exits non-zero when at least one error is found, `--format=github` fits CI:
+A whole codebase, from the terminal — exits non-zero when a pattern does not compile, a confirmed ReDoS verdict reaches `high`, or a rule of error severity fires (the `/u` rules: a multibyte character in a class, a quantified multibyte character, a Unicode property); `--format=github` fits CI:
 
 ```bash
 vendor/bin/regex lint src/

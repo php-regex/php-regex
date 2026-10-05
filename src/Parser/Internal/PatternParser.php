@@ -31,34 +31,34 @@ final class PatternParser
         $target ??= PcreTarget::runtime();
         $phpVersionId = $target->phpVersionId;
 
-        // Trim leading whitespace to match PHP's PCRE behavior
-        $regex = ltrim($regex);
+        // PHP skips the leading bytes isspace() accepts, NUL not included.
+        $regex = Ascii::trimLeadingSpaces($regex);
 
         $len = \strlen($regex);
-        if ($len < 2) {
-            // Nothing at all is an empty pattern; a lone delimiter never
-            // closes, and a lone character that is no delimiter is refused
-            // as one.
-            $code = match (true) {
-                0 === $len => ErrorCode::PatternEmpty,
-                self::isValidDelimiter($regex) => ErrorCode::DelimiterUnclosed,
-                default => ErrorCode::DelimiterInvalid,
-            };
-
+        if (0 === $len) {
             // No body, so no offset: offsets count from the body.
-            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', $code);
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::PatternEmpty);
         }
 
+        // PHP judges the delimiter before the length, so a lone letter is
+        // refused as a delimiter and a lone delimiter never closes.
         $delimiter = $regex[0];
         if (!self::isValidDelimiter($delimiter)) {
-            $suggested = self::suggestPattern($regex);
+            $message = \sprintf(
+                'Invalid delimiter "%s". Delimiters must not be alphanumeric, backslash, or NUL byte.',
+                DisplayEscaper::escape($delimiter),
+            );
+            if ("\0" !== $delimiter) {
+                $message .= \sprintf(' Try %s.', self::suggestPattern($regex));
+            }
 
-            throw new ParserException(\sprintf(
-                'Invalid delimiter "%s". Delimiters must not be alphanumeric, backslash, or whitespace. Try %s.',
-                $delimiter,
-                $suggested,
-            ), ErrorCode::DelimiterInvalid);
+            throw new ParserException($message, ErrorCode::DelimiterInvalid);
         }
+
+        if (1 === $len) {
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::DelimiterUnclosed);
+        }
+
         // Handle bracket delimiters style: (pattern), [pattern], {pattern}, <pattern>
         $closingDelimiter = self::closingDelimiter($delimiter);
 
@@ -116,7 +116,9 @@ final class PatternParser
                     // Found the end delimiter
                     $pattern = substr($regex, 1, $i - 1);
                     $flagsWithWhitespace = substr($regex, $i + 1);
-                    $flags = preg_replace('/\s+/', '', $flagsWithWhitespace) ?? '';
+                    // PHP skips a space, "\n" and "\r" among the modifiers;
+                    // any other whitespace is an unknown modifier.
+                    $flags = str_replace([' ', "\n", "\r"], '', $flagsWithWhitespace);
 
                     // "n" arrived in PHP 8.2; "r" in PHP 8.4, which reads it
                     // only when built against PCRE2 10.43 or later; "e" left
@@ -150,7 +152,7 @@ final class PatternParser
                         $invalid = preg_replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
 
                         // The first modifier PHP refuses, whitespace skipped.
-                        $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \t\n\r\v\f");
+                        $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \n\r");
                         $flagPosition = $i + $faultyFlag;
 
                         if (str_contains((string) $invalid, 'e')) {
@@ -158,7 +160,7 @@ final class PatternParser
                         }
 
                         // Format each invalid flag individually with quotes
-                        $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', $flag), str_split($invalid ?? $flags)));
+                        $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', DisplayEscaper::escape($flag)), str_split($invalid ?? $flags)));
 
                         throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $regex, null, $flagPosition + 1);
                     }
@@ -195,9 +197,8 @@ final class PatternParser
 
     private static function isValidDelimiter(string $delimiter): bool
     {
-        return 1 === \strlen($delimiter)
-            && !Ascii::isAlnum($delimiter)
-            && !Ascii::isSpace($delimiter)
+        return !Ascii::isAlnum($delimiter)
+            && "\0" !== $delimiter
             && '\\' !== $delimiter;
     }
 

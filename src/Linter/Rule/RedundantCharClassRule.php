@@ -97,7 +97,7 @@ final class RedundantCharClassRule extends AbstractLintRule
                         $this->recordRedundantNote(
                             $redundantNotes,
                             $redundantOverflow,
-                            'range '.$rangeLabel.' (overlaps '.$existingRange['label'].')',
+                            $this->describeRangeOverlap($existingRange, ['start' => $start, 'end' => $end, 'label' => $rangeLabel]),
                         );
 
                         break;
@@ -165,6 +165,35 @@ final class RedundantCharClassRule extends AbstractLintRule
         }
 
         return $hint;
+    }
+
+    /**
+     * A repeated range or one inside the other can go; two ranges that only
+     * partly overlap are both needed, and the fix is to merge them.
+     *
+     * @param array{start: int, end: int, label: string} $earlier
+     * @param array{start: int, end: int, label: string} $later
+     */
+    private function describeRangeOverlap(array $earlier, array $later): string
+    {
+        if ($earlier['start'] === $later['start'] && $earlier['end'] === $later['end']) {
+            return 'range '.$later['label'].' (overlaps '.$earlier['label'].')';
+        }
+
+        if ($earlier['start'] <= $later['start'] && $later['end'] <= $earlier['end']) {
+            return 'range '.$later['label'].' (covered by range '.$earlier['label'].')';
+        }
+
+        if ($later['start'] <= $earlier['start'] && $earlier['end'] <= $later['end']) {
+            return 'range '.$earlier['label'].' (covered by range '.$later['label'].')';
+        }
+
+        return \sprintf(
+            'ranges %s and %s overlap: merge them into %s',
+            $earlier['label'],
+            $later['label'],
+            $this->formatRangeForHint(min($earlier['start'], $later['start']), max($earlier['end'], $later['end'])),
+        );
     }
 
     private function formatRangeForHint(int $start, int $end): string

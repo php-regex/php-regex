@@ -466,14 +466,21 @@ For large codebases:
 
 ## Diagnostic Codes
 
+Each lint rule's severity is sent as the LSP diagnostic severity: `critical` and `error`
+as Error, `warning` as Warning, and `style`, `perf` and `info` as Information, the same
+mapping as `regex lint` (see [Severity in Each Format](../reference/diagnostics.md#severity-in-each-format)).
+No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
+
 | Code | Severity | Description |
 |------|----------|-------------|
 | `regex.<area>.<problem>` | Error | A pattern PCRE refuses, with its [error code](../reference/diagnostics.md#error-codes), such as `regex.group.unclosed` |
-| `regex.lint.unicode.shorthandWithoutU` | Style | `\w`, `\d`, `\s` without `/u` |
+| `regex.lint.unicode.shorthandWithoutU` | Information | `\w`, `\d`, `\s` without `/u` |
 | `regex.lint.unicode.propertyWithoutU` | Error | `\p{L}` without `/u` |
 | `regex.lint.unicode.bracedHexWithoutU` | Error | `\x{100}` without `/u` |
 | `regex.lint.unicode.multibyteInClassWithoutU` | Error | `[é]` without `/u` |
 | `regex.lint.unicode.quantifiedMultibyteWithoutU` | Error | `é+` without `/u` |
+| `regex.lint.group.quantifiedCapture` | Information, Warning for a named group | `(a)+` keeps only the last iteration |
+| other `regex.lint.*` | Warning | The [lint rules](../reference.md#quick-reference-table) |
 
 ---
 

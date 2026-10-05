@@ -978,7 +978,7 @@ final class RedosCommand extends AbstractCommand
 
     private function formatInput(string $value, ?int $limit): string
     {
-        $escaped = DisplayEscaper::escape($value);
+        $escaped = DisplayEscaper::escapeText($value);
         if (null !== $limit && \strlen($escaped) > $limit) {
             return substr($escaped, 0, $limit).'...';
         }

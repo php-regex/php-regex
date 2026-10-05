@@ -109,16 +109,16 @@ final class DiagnosticConverterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{LintSeverity, int}>
+     * @return iterable<string, array{inputSeverity: LintSeverity, expectedLspSeverity: int}>
      */
     public static function provideSeverityMapping(): iterable
     {
-        yield 'Critical -> Error (1)' => [LintSeverity::Critical, 1];
-        yield 'Error -> Error (1)' => [LintSeverity::Error, 1];
-        yield 'Warning -> Warning (2)' => [LintSeverity::Warning, 2];
-        yield 'Style -> Information (3)' => [LintSeverity::Style, 3];
-        yield 'Perf -> Information (3)' => [LintSeverity::Perf, 3];
-        yield 'Info -> Hint (4)' => [LintSeverity::Info, 4];
+        yield 'Critical -> Error (1)' => ['inputSeverity' => LintSeverity::Critical, 'expectedLspSeverity' => 1];
+        yield 'Error -> Error (1)' => ['inputSeverity' => LintSeverity::Error, 'expectedLspSeverity' => 1];
+        yield 'Warning -> Warning (2)' => ['inputSeverity' => LintSeverity::Warning, 'expectedLspSeverity' => 2];
+        yield 'Style -> Information (3)' => ['inputSeverity' => LintSeverity::Style, 'expectedLspSeverity' => 3];
+        yield 'Perf -> Information (3)' => ['inputSeverity' => LintSeverity::Perf, 'expectedLspSeverity' => 3];
+        yield 'Info -> Information (3)' => ['inputSeverity' => LintSeverity::Info, 'expectedLspSeverity' => 3];
     }
 
     #[Test]

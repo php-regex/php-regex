@@ -45,7 +45,7 @@ final class RegexParserRuleTest extends RuleTestCase
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 23,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers",
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers-redos-risk",
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
@@ -92,7 +92,7 @@ final class RegexParserRuleTest extends RuleTestCase
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 20,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers",
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers-redos-risk",
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
@@ -106,7 +106,7 @@ final class RegexParserRuleTest extends RuleTestCase
     {
         $this->analyse([__DIR__.'/Fixtures/UselessFlagFixture.php'], [
             [
-                'Flag \'s\' is useless: the pattern contains no dots.',
+                'Flag \'s\' is useless: the pattern contains no unescaped dot outside a character class.',
                 20,
                 'Read more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#useless-flag-s-dotall',
             ],
@@ -134,7 +134,7 @@ final class RegexParserRuleTest extends RuleTestCase
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 20,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers",
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md#nested-quantifiers-redos-risk",
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -39,12 +40,35 @@ final readonly class CharSetAnalyzer
 {
     private bool $unicodeMode;
 
-    private bool $dotAllMode;
+    private ByteCharSet $dot;
 
-    public function __construct(string $flags = '')
+    /**
+     * @param string $startOptions the options the pattern opens with, such
+     *                             as "(*CR)(*UTF)": the newline convention
+     *                             they set decides where the dot stops
+     */
+    public function __construct(string $flags = '', private string $startOptions = '')
     {
         $this->unicodeMode = str_contains($flags, 'u');
-        $this->dotAllMode = str_contains($flags, 's');
+        $this->dot = self::dotSet(str_contains($flags, 's'), StartOptions::newline($startOptions));
+    }
+
+    /**
+     * An analyzer for the pattern as a whole: its flags and the newline
+     * convention its start options set.
+     */
+    public static function forRegex(RegexNode $regex): self
+    {
+        return new self($regex->flags, StartOptions::of($regex->source ?? ''));
+    }
+
+    /**
+     * The same pattern under other flags, such as the inline ones in effect
+     * at a node.
+     */
+    public function withFlags(string $flags): self
+    {
+        return new self($flags, $this->startOptions);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -79,7 +103,7 @@ final readonly class CharSetAnalyzer
         }
 
         if ($node instanceof DotNode) {
-            return $this->dot();
+            return $this->dot;
         }
 
         if ($node instanceof QuantifierNode) {
@@ -213,15 +237,28 @@ final readonly class CharSetAnalyzer
     }
 
     /**
-     * Without dotall, the dot matches every byte except the newline.
+     * Without dotall, the dot matches every character but a newline, which
+     * the convention defines. Under (*CRLF) only the pair is a newline, so
+     * a single byte of it is an ordinary character. The newlines (*ANY)
+     * adds above ASCII lie outside the sets.
      */
-    private function dot(): ByteCharSet
+    private static function dotSet(bool $dotAll, string $newline): ByteCharSet
     {
-        if ($this->dotAllMode) {
-            return ByteCharSet::full();
+        $newlines = match (true) {
+            $dotAll, 'CRLF' === $newline => '',
+            'CR' === $newline => "\r",
+            'NUL' === $newline => "\0",
+            'ANYCRLF' === $newline => "\n\r",
+            'ANY' === $newline => "\n\v\f\r",
+            default => "\n",
+        };
+
+        $set = ByteCharSet::empty();
+        foreach (str_split($newlines) as $char) {
+            $set = $set->union(ByteCharSet::fromChar($char));
         }
 
-        return ByteCharSet::full()->intersect(ByteCharSet::fromChar("\n")->complement());
+        return $set->complement();
     }
 
     private function literalCodepoint(NodeInterface $node): ?int

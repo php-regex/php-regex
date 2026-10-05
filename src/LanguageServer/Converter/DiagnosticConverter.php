@@ -28,7 +28,6 @@ final class DiagnosticConverter
     private const SEVERITY_ERROR = 1;
     private const SEVERITY_WARNING = 2;
     private const SEVERITY_INFORMATION = 3;
-    private const SEVERITY_HINT = 4;
 
     /**
      * Convert a LintIssue to LSP diagnostic format.
@@ -131,8 +130,7 @@ final class DiagnosticConverter
         return match ($severity) {
             LintSeverity::Critical, LintSeverity::Error => self::SEVERITY_ERROR,
             LintSeverity::Warning => self::SEVERITY_WARNING,
-            LintSeverity::Style, LintSeverity::Perf => self::SEVERITY_INFORMATION,
-            LintSeverity::Info => self::SEVERITY_HINT,
+            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => self::SEVERITY_INFORMATION,
         };
     }
 }

@@ -68,6 +68,25 @@ final class RedosSummaryLabelTest extends TestCase
     }
 
     /**
+     * A lint rule at Error fails the run, but the pattern compiles: it is a
+     * lint error, not an invalid pattern. Without /u, \p{L} stops at the
+     * first 256 code points.
+     */
+    #[Test]
+    #[DataProvider('provideFormatters')]
+    public function test_summary_does_not_count_a_lint_error_as_an_invalid_pattern(string $formatter): void
+    {
+        $this->assertSame(0, preg_match('/^\p{L}$/', 'ā'));
+        $report = self::report('/\p{L}/');
+        $this->assertSame(1, $report->stats['errors']);
+
+        $summary = self::summaryLine(self::formatter($formatter)->format($report));
+
+        $this->assertDoesNotMatchRegularExpression('/[1-9]\d* invalid patterns?/', $summary);
+        $this->assertStringContainsString('1 lint error', $summary);
+    }
+
+    /**
      * @return iterable<string, array{formatter: string}>
      */
     public static function provideFormatters(): iterable

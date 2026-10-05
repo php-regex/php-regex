@@ -101,7 +101,7 @@ final class LinterNodeVisitorTest extends TestCase
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
-        $this->assertContains("Flag 's' is useless: the pattern contains no dots.", $warnings);
+        $this->assertContains("Flag 's' is useless: the pattern contains no unescaped dot outside a character class.", $warnings);
     }
 
     public function test_s_flag_not_useless_with_dots(): void
@@ -111,7 +111,60 @@ final class LinterNodeVisitorTest extends TestCase
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
-        $this->assertNotContains("Flag 's' is useless: the pattern contains no dots.", $warnings);
+        $this->assertNotContains("Flag 's' is useless: the pattern contains no unescaped dot outside a character class.", $warnings);
+        $this->assertNotContains('regex.lint.flag.useless.s', array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
+    }
+
+    /**
+     * \A and \z do not read m, and an escaped dot does not read s: the
+     * message names the exact construct that is missing.
+     *
+     * @return iterable<string, array{pattern: string, ruleId: string, message: string}>
+     */
+    public static function provideUselessFlagMessages(): iterable
+    {
+        yield 'm with only \A and \z' => [
+            'pattern' => '/\Afoo\z/m',
+            'ruleId' => 'regex.lint.flag.useless.m',
+            'message' => "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+        ];
+        yield 'm on a multi-line x pattern' => [
+            'pattern' => "/a\nb # c\n/xm",
+            'ruleId' => 'regex.lint.flag.useless.m',
+            'message' => "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+        ];
+        yield 's with only a dot inside a class' => [
+            'pattern' => '/a[.]b/s',
+            'ruleId' => 'regex.lint.flag.useless.s',
+            'message' => "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+        ];
+        yield 's with only an escaped dot' => [
+            'pattern' => '/a\.b/s',
+            'ruleId' => 'regex.lint.flag.useless.s',
+            'message' => "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+        ];
+    }
+
+    #[DataProvider('provideUselessFlagMessages')]
+    public function test_useless_flag_message_names_the_missing_construct(string $pattern, string $ruleId, string $message): void
+    {
+        $linter = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($linter);
+
+        $issue = $this->findIssueById($linter->getIssues(), $ruleId);
+
+        $this->assertInstanceOf(RuleViolation::class, $issue);
+        $this->assertSame($message, $issue->message);
+        $this->assertStringNotContainsString("\n", $issue->message);
+    }
+
+    public function test_useless_flag_verdicts_match_the_engine(): void
+    {
+        // \A and \z ignore m; \. ignores s.
+        $this->assertSame(preg_match('/\Afoo\z/m', "x\nfoo"), preg_match('/\Afoo\z/', "x\nfoo"));
+        $this->assertSame(0, preg_match('/\Afoo\z/m', "x\nfoo"));
+        $this->assertSame(preg_match('/a\.b/s', "a\nb"), preg_match('/a\.b/', "a\nb"));
+        $this->assertSame(0, preg_match('/a\.b/s', "a\nb"));
     }
 
     public function test_useless_m_flag_no_anchors(): void
@@ -130,6 +183,8 @@ final class LinterNodeVisitorTest extends TestCase
             }
         }
         $this->assertTrue($found, "Expected 'Flag 'm' is useless:' warning not found in: ".implode(', ', $warnings));
+        // The message names what is missing; it no longer embeds the pattern.
+        $this->assertContains("Flag 'm' is useless: the pattern contains no ^ or $ anchor.", $warnings);
     }
 
     public function test_m_flag_not_useless_with_anchors(): void
@@ -139,7 +194,9 @@ final class LinterNodeVisitorTest extends TestCase
         $regex->accept($linter);
         $warnings = $linter->getWarnings();
 
-        $this->assertNotContains("Flag 'm' is useless: the pattern contains no anchors.", $warnings);
+        // The message checked is the one the rule emits, so this can fail.
+        $this->assertNotContains("Flag 'm' is useless: the pattern contains no ^ or $ anchor.", $warnings);
+        $this->assertNotContains('regex.lint.flag.useless.m', array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
     }
 
     public function test_start_anchor_conflict(): void
@@ -310,6 +367,43 @@ final class LinterNodeVisitorTest extends TestCase
             '/([.!#>+-=|{}~])/',
             "'.' (covered by range '+'-'=')",
         ];
+        // Neither range is removable: [a-mk-z] matches "n", [a-m] does not.
+        yield 'partial range overlap asks for a merge' => [
+            '/[a-mk-z]/',
+            "ranges 'a'-'m' and 'k'-'z' overlap: merge them into 'a'-'z'",
+        ];
+        yield 'earlier range covered by a later one' => [
+            '/[b-cA-z]/',
+            "range 'b'-'c' (covered by range 'A'-'z')",
+        ];
+        yield 'repeated range is unchanged' => [
+            '/[a-zA-Za-z]/',
+            "range 'a'-'z' (overlaps 'a'-'z')",
+        ];
+    }
+
+    public function test_partial_range_overlap_is_not_called_redundant_range(): void
+    {
+        // Oracle: dropping either range changes what the class matches.
+        $this->assertSame(1, preg_match('/^[a-mk-z]+$/', 'n'));
+        $this->assertSame(0, preg_match('/^[a-m]+$/', 'n'));
+        $this->assertSame(1, preg_match('/^[a-mk-z]+$/', 'a'));
+        $this->assertSame(0, preg_match('/^[k-z]+$/', 'a'));
+
+        $linter = new PatternLinter();
+        Regex::create()->parse('/[a-mk-z]/')->accept($linter);
+        $issue = $this->findIssueById($linter->getIssues(), 'regex.lint.charclass.redundant');
+
+        $this->assertInstanceOf(RuleViolation::class, $issue);
+        $this->assertStringNotContainsString("range 'k'-'z' (overlaps 'a'-'m')", (string) $issue->hint);
+    }
+
+    public function test_adjacent_ranges_are_not_redundant(): void
+    {
+        $linter = new PatternLinter();
+        Regex::create()->parse('/[a-mn-z]/')->accept($linter);
+
+        $this->assertNull($this->findIssueById($linter->getIssues(), 'regex.lint.charclass.redundant'));
     }
 
     #[DataProvider('provideInlineFlagRedundantHints')]
@@ -568,16 +662,31 @@ final class LinterNodeVisitorTest extends TestCase
 
     public static function provideLiteralMetacharInCharClassCases(): \Generator
     {
-        yield 'plus with \w shorthand' => ['/[\w+]*/', true];
-        yield 'star with \d shorthand' => ['/[\d*]/', true];
-        yield 'question mark with \s shorthand' => ['/[\s?]/', true];
-        yield 'plus without shorthand — not flagged' => ['/[a-z+]/', false];
-        yield 'star without shorthand — not flagged' => ['/[0-9*]/', false];
-        yield 'no metachar with shorthand — not flagged' => ['/[\w-]/', false];
-        yield 'plus with \W shorthand' => ['/[\W+]/', true];
-        yield 'negated class — not flagged' => ['/[^\s+]/', false];
-        yield 'multi-element URI scheme — not flagged' => ['/[a-z\d+.-]/', false];
-        yield 'multi-element base64 — not flagged' => ['/[a-zA-Z\d\/+]/', false];
+        yield 'plus with \w shorthand' => ['pattern' => '/[\w+]*/', 'expectWarning' => true];
+        yield 'star with \d shorthand' => ['pattern' => '/[\d*]/', 'expectWarning' => true];
+        yield 'question mark with \s shorthand' => ['pattern' => '/[\s?]/', 'expectWarning' => true];
+        yield 'plus without shorthand — not flagged' => ['pattern' => '/[a-z+]/', 'expectWarning' => false];
+        yield 'star without shorthand — not flagged' => ['pattern' => '/[0-9*]/', 'expectWarning' => false];
+        yield 'no metachar with shorthand — not flagged' => ['pattern' => '/[\w-]/', 'expectWarning' => false];
+        yield 'plus with \W shorthand' => ['pattern' => '/[\W+]/', 'expectWarning' => true];
+        yield 'negated class — not flagged' => ['pattern' => '/[^\s+]/', 'expectWarning' => false];
+        yield 'multi-element URI scheme — not flagged' => ['pattern' => '/[a-z\d+.-]/', 'expectWarning' => false];
+        yield 'multi-element base64 — not flagged' => ['pattern' => '/[a-zA-Z\d\/+]/', 'expectWarning' => false];
+        // An escaped metacharacter says the author meant the literal.
+        yield 'escaped star with \w shorthand — not flagged' => ['pattern' => '/[\w\*]/', 'expectWarning' => false];
+        yield 'escaped plus with \w shorthand — not flagged' => ['pattern' => '/[\w\+]/', 'expectWarning' => false];
+        yield 'escaped question mark with \w shorthand — not flagged' => ['pattern' => '/[\w\?]/', 'expectWarning' => false];
+        yield 'escaped star with \d shorthand — not flagged' => ['pattern' => '/[\d\*]/', 'expectWarning' => false];
+        yield 'star with \w shorthand' => ['pattern' => '/[\w*]/', 'expectWarning' => true];
+    }
+
+    public function test_escaped_and_bare_metachar_in_class_match_the_same_byte(): void
+    {
+        // Oracle: the escape changes nothing for the engine, only the intent.
+        foreach (['*', '+', '?'] as $metachar) {
+            $this->assertSame(1, preg_match('/^[\w\\'.$metachar.']$/', $metachar));
+            $this->assertSame(1, preg_match('/^[\w'.$metachar.']$/', $metachar));
+        }
     }
 
     // ---------------------------------------------------------------

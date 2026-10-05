@@ -49,7 +49,7 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
                 'Read more: '.self::DOCS.'#redundant-non-capturing-group',
             ],
             [
-                'Flag \'s\' is useless: the pattern contains no dots.',
+                'Flag \'s\' is useless: the pattern contains no unescaped dot outside a character class.',
                 21,
                 'Read more: '.self::DOCS.'#useless-flag-s-dotall',
             ],
@@ -71,7 +71,7 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 22,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'#nested-quantifiers',
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'#nested-quantifiers-redos-risk',
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',

@@ -604,7 +604,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * Checks if the pattern contains any dot nodes.
+     * Whether a dot stands anywhere in the pattern. Every node is walked
+     * through its children, so a dot inside a DEFINE body, a script run or
+     * any other container still reads the flag.
      */
     private function patternContainsDots(NodeInterface $node): bool
     {
@@ -612,45 +614,18 @@ final class Rewriter extends AbstractNodeVisitor
             return true;
         }
 
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                if ($this->patternContainsDots($child)) {
-                    return true;
-                }
+        foreach ($node->getChildren() as $child) {
+            if ($this->patternContainsDots($child)) {
+                return true;
             }
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                if ($this->patternContainsDots($alt)) {
-                    return true;
-                }
-            }
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->patternContainsDots($node->child);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            return $this->patternContainsDots($node->node);
-        }
-
-        if ($node instanceof CharClassNode) {
-            return $this->patternContainsDots($node->expression);
-        }
-
-        if ($node instanceof ConditionalNode) {
-            return $this->patternContainsDots($node->condition)
-                || $this->patternContainsDots($node->yes)
-                || $this->patternContainsDots($node->no);
         }
 
         return false;
     }
 
     /**
-     * Checks if the pattern contains ^ or $ anchors that depend on multiline mode.
+     * Whether a ^ or $ anchor, the two that depend on multiline mode,
+     * stands anywhere in the pattern.
      */
     private function patternContainsMultilineAnchors(NodeInterface $node): bool
     {
@@ -658,42 +633,10 @@ final class Rewriter extends AbstractNodeVisitor
             return '^' === $node->value || '$' === $node->value;
         }
 
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                if ($this->patternContainsMultilineAnchors($child)) {
-                    return true;
-                }
+        foreach ($node->getChildren() as $child) {
+            if ($this->patternContainsMultilineAnchors($child)) {
+                return true;
             }
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                if ($this->patternContainsMultilineAnchors($alt)) {
-                    return true;
-                }
-            }
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->patternContainsMultilineAnchors($node->child);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            return $this->patternContainsMultilineAnchors($node->node);
-        }
-
-        if ($node instanceof CharClassNode) {
-            return $this->patternContainsMultilineAnchors($node->expression);
-        }
-
-        if ($node instanceof ConditionalNode) {
-            return $this->patternContainsMultilineAnchors($node->condition)
-                || $this->patternContainsMultilineAnchors($node->yes)
-                || $this->patternContainsMultilineAnchors($node->no);
-        }
-
-        if ($node instanceof DefineNode) {
-            return $this->patternContainsMultilineAnchors($node->content);
         }
 
         return false;
@@ -706,38 +649,14 @@ final class Rewriter extends AbstractNodeVisitor
      */
     private function containsInlineFlags(NodeInterface $node): bool
     {
-        if ($node instanceof GroupNode) {
-            return null !== $node->flags || $this->containsInlineFlags($node->child);
+        if ($node instanceof GroupNode && null !== $node->flags) {
+            return true;
         }
 
-        if ($node instanceof QuantifierNode) {
-            return $this->containsInlineFlags($node->node);
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                if ($this->containsInlineFlags($child)) {
-                    return true;
-                }
+        foreach ($node->getChildren() as $child) {
+            if ($this->containsInlineFlags($child)) {
+                return true;
             }
-
-            return false;
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alternative) {
-                if ($this->containsInlineFlags($alternative)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        if ($node instanceof ConditionalNode) {
-            return $this->containsInlineFlags($node->condition)
-                || $this->containsInlineFlags($node->yes)
-                || $this->containsInlineFlags($node->no);
         }
 
         return false;

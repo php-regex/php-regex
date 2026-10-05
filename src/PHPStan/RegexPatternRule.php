@@ -102,7 +102,7 @@ final class RegexPatternRule implements Rule
         'regex.lint.flag.useless.i' => self::DOC_BASE_URL.'#useless-flag-i-caseless',
         'regex.lint.anchor.impossible.start' => self::DOC_BASE_URL.'#anchor-conflicts',
         'regex.lint.anchor.impossible.end' => self::DOC_BASE_URL.'#anchor-conflicts',
-        'regex.lint.quantifier.nested' => self::DOC_BASE_URL.'#nested-quantifiers',
+        'regex.lint.quantifier.nested' => self::DOC_BASE_URL.'#nested-quantifiers-redos-risk',
         'regex.lint.dotstar.nested' => self::DOC_BASE_URL.'#dot-star-in-quantifier',
         'regex.lint.quantifier.useless' => self::DOC_BASE_URL.'#useless-quantifier',
         'regex.lint.quantifier.zero' => self::DOC_BASE_URL.'#zero-quantifier',
@@ -110,7 +110,7 @@ final class RegexPatternRule implements Rule
         'regex.lint.alternation.duplicateDisjunction' => self::DOC_BASE_URL.'#duplicate-alternation-branches',
         'regex.lint.alternation.empty' => self::DOC_BASE_URL.'#empty-alternatives',
         'regex.lint.alternation.overlap' => self::DOC_BASE_URL.'#overlapping-alternation-branches',
-        'regex.lint.overlap.charset' => self::DOC_BASE_URL.'#overlapping-alternation-branches',
+        'regex.lint.overlap.charset' => self::DOC_BASE_URL.'#overlapping-character-sets',
         'regex.lint.backref.useless' => self::DOC_BASE_URL.'#useless-backreferences',
         'regex.lint.charclass.redundant' => self::DOC_BASE_URL.'#redundant-character-class-elements',
         'regex.lint.charclass.duplicateChars' => self::DOC_BASE_URL.'#duplicate-character-class-elements',
@@ -121,6 +121,11 @@ final class RegexPatternRule implements Rule
         'regex.lint.flag.redundant' => self::DOC_BASE_URL.'#inline-flag-redundant',
         'regex.lint.flag.override' => self::DOC_BASE_URL.'#inline-flag-override',
         'regex.lint.quantifier.concatenation' => self::DOC_BASE_URL.'#optimal-quantifier-concatenation',
+        'regex.lint.quantifier.lazyEnd' => self::DOC_BASE_URL.'#lazy-quantifier-at-the-end',
+        'regex.lint.charclass.literalMetachar' => self::DOC_BASE_URL.'#literal-metacharacter-in-a-character-class',
+        'regex.lint.unicode.multibyteInClassWithoutU' => self::DOC_BASE_URL.'#multibyte-character-in-a-class',
+        'regex.lint.unicode.quantifiedMultibyteWithoutU' => self::DOC_BASE_URL.'#quantifier-after-a-multibyte-character',
+        'regex.lint.unicode.propertyWithoutU' => self::DOC_BASE_URL.'#bytes-without-u',
     ];
 
     /**

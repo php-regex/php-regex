@@ -92,7 +92,7 @@ preg_match('/(a+)+$/', $value);    // nested unbounded quantifiers
 ```
 
 ```
-Flag 's' is useless: the pattern contains no dots.
+Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
 🪪 regex.lint.flag.useless.s
 Nested quantifiers can cause catastrophic backtracking.
 🪪 regex.lint.quantifier.nested
@@ -104,6 +104,8 @@ Exponential backtracking (ReDoS): /(a+)+$/
 ```
 
 A ReDoS message is `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`, then the pattern, and stays the same for all of 2.x; the severity, how the verdict was reached and the attack (`str_repeat("a", $n) . "!"`) are in the tip. A baseline written with 1.x must be regenerated once.
+
+Every lint issue is a PHPStan error, whatever the rule's severity: an issue the `regex lint` console prints as `INFO`, such as `regex.lint.group.quantifiedCapture` on an unnamed group, is reported too, under its own identifier, so you can ignore it by identifier. Lint messages and the set of reported issues moved in 2.0.0: after upgrading, regenerate the baseline once with `vendor/bin/phpstan analyse --generate-baseline`.
 
 Optimizations, once enabled, suggest the shorter equivalent as a tip:
 

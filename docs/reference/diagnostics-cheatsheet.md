@@ -105,7 +105,7 @@ preg_match('/\d{2,5}/', $input);
 **Problem:** Nested variable quantifiers can cause ReDoS.
 
 ```php
-// ERROR: (a+)+ can explode
+// WARNING: (a+)+ can explode
 preg_match('/(a+)+b/', $input);
 
 // FIX 1: Use atomic group
@@ -143,7 +143,7 @@ preg_match('/[^x]*x/', $input);  // If matching until 'x'
 **Problem:** One branch is a prefix of another inside repetition.
 
 ```php
-// ERROR: 'a' and 'aa' overlap
+// WARNING: 'a' and 'aa' overlap
 preg_match('/(a|aa)+b/', $input);
 
 // FIX 1: Use atomic group

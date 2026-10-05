@@ -220,7 +220,7 @@ final class DebugCommand extends AbstractCommand
             }
 
             if (null !== $inputValue) {
-                $escaped = DisplayEscaper::escape($inputValue);
+                $escaped = DisplayEscaper::escapeText($inputValue);
                 $output->write('  Input:      "'.$escaped.'"'.$inputSource."\n");
             }
 

@@ -246,22 +246,39 @@ final class NodePredicates
 
     /**
      * Whether the node is a bare (?flags) group that only toggles flags for
-     * the rest of its enclosing sequence.
+     * what follows it, up to the end of the enclosing group: the rest of its
+     * alternative and the alternatives after it.
+     *
+     * An empty scoped group, "(?s:)", holds the same empty child but sets
+     * its flags inside itself only. The span alone tells them apart: "(?s)"
+     * is its flags and three bytes, "(?s:)" one byte longer, and a scoped
+     * group with a body longer still.
      */
     public static function isStandaloneInlineFlagsGroup(NodeInterface $node): bool
     {
-        if (!$node instanceof GroupNode
-            || GroupType::InlineFlags !== $node->type
-            || null === $node->flags) {
-            return false;
-        }
+        return $node instanceof GroupNode
+            && GroupType::InlineFlags === $node->type
+            && null !== $node->flags
+            && $node->getEndPosition() - $node->getStartPosition() === \strlen($node->flags) + 3;
+    }
 
-        if ($node->child instanceof LiteralNode) {
-            return '' === $node->child->value;
-        }
+    /**
+     * Whether an inline flag group anywhere in the nodes turns the i flag
+     * on, as "(?i)" does in "(?!(?i)A)" or "(?i:A)". "(?-i)", "(?^)" and
+     * "(?i-i)" leave it off.
+     */
+    public static function turnsCaselessOn(NodeInterface ...$nodes): bool
+    {
+        foreach ($nodes as $node) {
+            if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && null !== $node->flags
+                && str_contains(self::applyInlineFlags('', $node->flags), 'i')
+            ) {
+                return true;
+            }
 
-        if ($node->child instanceof SequenceNode) {
-            return 0 === \count($node->child->children);
+            if (self::turnsCaselessOn(...$node->getChildren())) {
+                return true;
+            }
         }
 
         return false;
@@ -269,13 +286,14 @@ final class NodePredicates
 
     /**
      * Fold an inline (?flags-flags) marker into the flags accumulated so
-     * far; a leading ^ resets everything first.
+     * far. A leading ^ first resets i, m, n, s and x; the other modifiers,
+     * such as U, u and D, stay.
      */
     public static function applyInlineFlags(string $baseFlags, string $inlineFlags): string
     {
         $resetAll = str_starts_with($inlineFlags, '^');
         if ($resetAll) {
-            $baseFlags = '';
+            $baseFlags = str_replace(['i', 'm', 'n', 's', 'x'], '', $baseFlags);
             $inlineFlags = substr($inlineFlags, 1);
         }
 
@@ -571,11 +589,45 @@ final class NodePredicates
         return false;
     }
 
+    /**
+     * Whether the node always matches exactly one character, read from its
+     * length alone; its character set is not looked at. A node holding a
+     * lookaround or a scan-substring group anywhere, a conditional's
+     * assertion included, is never one: `.(?!x)` matches one character but
+     * not every `.`. A backreference or a subroutine call has no upper
+     * length, so a node holding one is never one either, except as the
+     * condition of a conditional, which matches no text: `(?(1)a|b)` is one,
+     * and its character set is unknown.
+     */
     public static function nodeIsSingleChar(NodeInterface $node): bool
     {
+        if (self::readsBeyondItsCharacter($node)) {
+            return false;
+        }
+
         [$min, $max] = $node->accept(new LengthRangeCalculator());
 
         return 1 === $min && 1 === $max;
+    }
+
+    /**
+     * Whether the node holds a lookaround or a scan-substring group, whose
+     * success depends on more than the character the node consumes:
+     * `(?<!b)a` takes an "a" only after anything but a "b".
+     */
+    public static function readsBeyondItsCharacter(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && !self::isTransparentGroup($node->type)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::readsBeyondItsCharacter($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

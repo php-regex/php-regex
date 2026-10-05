@@ -17,7 +17,8 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\NodeInterface;
 
 /**
- * Detects a useless 's' flag: the pattern contains no dots.
+ * Detects a useless 's' flag: the pattern contains no unescaped dot outside
+ * a character class.
  *
  * Stateful: tracks dots during traversal and emits in finish().
  *
@@ -54,7 +55,7 @@ final class UselessSFlagRule extends AbstractLintRule
         if ($context->pattern->hasFlag('s') && !$this->hasDots) {
             return [new RuleViolation(
                 'regex.lint.flag.useless.s',
-                "Flag 's' is useless: the pattern contains no dots.",
+                "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
             )];
         }
 

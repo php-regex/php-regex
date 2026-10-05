@@ -17,6 +17,7 @@ use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\ConditionalNode;
@@ -56,6 +57,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         $issues = [];
         $children = $node->children;
         $count = \count($children);
+        $flags = $context->flagsAtEachChild($node);
 
         for ($i = 0; $i < $count - 1; $i++) {
             $left = $children[$i];
@@ -85,17 +87,26 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            $leftSet = $this->singleCharNodeCharSet($left->node, $context);
-            $rightSet = $this->singleCharNodeCharSet($right->node, $context);
-            if (null === $leftSet || null === $rightSet) {
+            // Nothing between the two runs changes the flags: both read the
+            // ones in effect at the first.
+            $leftAtom = $this->singleCharAtom($left->node, $context, $flags[$i]);
+            $rightAtom = $this->singleCharAtom($right->node, $context, $flags[$i]);
+            if (null === $leftAtom || null === $rightAtom) {
                 continue;
             }
 
-            [, $leftMax] = QuantifierMath::parseRange($left->quantifier);
-            [, $rightMax] = QuantifierMath::parseRange($right->quantifier);
+            [$leftSet, $leftGuards] = $leftAtom;
+            [$rightSet, $rightGuards] = $rightAtom;
+            [$leftMin, $leftMax] = QuantifierMath::parseRange($left->quantifier);
+            [$rightMin, $rightMax] = QuantifierMath::parseRange($right->quantifier);
 
-            if (null === $rightMax && CharClassSets::isSubset($leftSet, $rightSet)) {
-                [$leftMin] = QuantifierMath::parseRange($left->quantifier);
+            // The unbounded side takes over the characters the other one
+            // gives up; a guard on the side that gives them up goes with
+            // them. A guard on the side that takes them over must hold after
+            // each: it does when one of them still follows (the other side
+            // keeps at least one) and what the guard refuses cannot start
+            // with a character of that set.
+            if (null === $rightMax && CharClassSets::isSubset($leftSet, $rightSet) && [] === $rightGuards) {
                 $issues[] = new RuleViolation(
                     'regex.lint.quantifier.concatenation',
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
@@ -112,8 +123,9 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            if (null === $leftMax && CharClassSets::isSubset($rightSet, $leftSet)) {
-                [$rightMin] = QuantifierMath::parseRange($right->quantifier);
+            if (null === $leftMax && CharClassSets::isSubset($rightSet, $leftSet)
+                && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
+            ) {
                 $issues[] = new RuleViolation(
                     'regex.lint.quantifier.concatenation',
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
@@ -132,19 +144,79 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         return $issues;
     }
 
-    private function singleCharNodeCharSet(NodeInterface $node, LintContext $context): ?ByteCharSet
+    /**
+     * The character set of an atom matching one character, and the bodies
+     * of the negative lookaheads that may follow that character inside it,
+     * as in (?:[a-z](?!__)).
+     *
+     * The set is read under the flags in effect at the atom. Under i a
+     * guard is refused: the character sets are read without case folding,
+     * and "(?!A)" also refuses an "a" there.
+     *
+     * @return array{ByteCharSet, list<NodeInterface>}|null
+     */
+    private function singleCharAtom(NodeInterface $node, LintContext $context, string $flags): ?array
     {
-        if (!NodePredicates::nodeIsSingleChar($node) || !NodePredicates::isConsuming($node)) {
+        $core = $node;
+        $guards = [];
+        $inner = $node instanceof GroupNode && GroupType::NonCapturing === $node->type ? $node->child : $node;
+        if ($inner instanceof SequenceNode) {
+            $children = $inner->children;
+            while ([] !== $children) {
+                $last = $children[\count($children) - 1];
+                if (!$last instanceof GroupNode || GroupType::LookaheadNegative !== $last->type) {
+                    break;
+                }
+                array_unshift($guards, $last->child);
+                array_pop($children);
+            }
+
+            if ([] !== $guards) {
+                if (1 !== \count($children) || str_contains($flags, 'i') || NodePredicates::turnsCaselessOn(...$guards)) {
+                    return null;
+                }
+                $core = $children[0];
+            }
+        }
+
+        if (!NodePredicates::nodeIsSingleChar($core) || !NodePredicates::isConsuming($core)) {
             return null;
         }
 
-        $set = $context->charSetAnalyzer->firstChars($node);
+        $set = $context->firstChars($core, $flags);
 
         if ($set->isUnknown() || $set->isEmpty()) {
             return null;
         }
 
-        return $set;
+        return [$set, $guards];
+    }
+
+    /**
+     * Whether each (?!X) holds wherever the text starts with a character of
+     * the set: X needs at least one character, and none it can start with
+     * is in the set. A lookaround in X is refused: the first characters
+     * read "(?<!b)a" as starting with a "b", yet it matches an "a". A
+     * backreference or a subroutine call needs no such refusal: where one
+     * can come first in X, its first characters are unknown.
+     *
+     * @param list<NodeInterface> $guards
+     */
+    private function guardsHoldBefore(array $guards, ByteCharSet $next, LintContext $context, string $flags): bool
+    {
+        foreach ($guards as $guard) {
+            if (NodePredicates::readsBeyondItsCharacter($guard)) {
+                return false;
+            }
+
+            [$min] = $guard->accept(new LengthRangeCalculator());
+            $first = $context->firstChars($guard, $flags);
+            if (0 === $min || $first->isUnknown() || $first->intersects($next)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function nodeContainsCapturingGroup(NodeInterface $node): bool

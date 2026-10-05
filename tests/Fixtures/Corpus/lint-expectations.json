@@ -1,129 +1,5 @@
 [
     {
-        "pattern": "/^[0-9.a-e:.]*$/i",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "/^([a-zA-Z0-9-._~!$&\\'()*+,;=]|%[[:xdigit:]]{2}){1,254}$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^\\d{4}-[0-1]\\d-[0-3]\\d$/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^\\d{4}-[0-1]\\d-[0-3]\\dT\\d{1,2}:[0-5]\\d:[0-5]\\d$/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^([01]{8}\\.){3}[01]{8}\\z/i",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]{3}\\.){3}[0-9]{3}\\z/i",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^([0-9a-f]{2}\\.){3}[0-9a-f]{2}\\z/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^\\s+$/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(for\\((?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*);[^;\\{]*;[^;\\{]*\\));(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(for\\([^;\\{]*;(?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*);[^;\\{]*\\));(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(for\\([^;\\{]*;[^;\\{]*;(?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*)\\));(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(for\\([^;\\{]+\\s+in\\s+[^;\\{]+\\));(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/(\\bif\\s*\\([^{;]*\\));\\}/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(while\\([^;\\{]+\\));(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/else;/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/;(\\}|$)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "`\\* This is an alias of {@see (?P<aliasOf>[^\\s\\}]++)`sim",
-        "issues": [
-            "regex.lint.flag.useless.m",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "`\\* @method.*? \\*/\\nclass `sim",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/```php\\n<\\?php\\nuse Assert\\\\Assertion;\\n\\nAssertion::.*?```/sim",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
         "pattern": "/(\\r|\\n)+(\\s)/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -148,6 +24,166 @@
         ]
     },
     {
+        "pattern": "/filter:\\s*progid:DXImageTransform\\.Microsoft\\.Matrix\\(([^)]+)\\)/Ss",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\[\\s*([a-z][a-z-]+)\\s*([\\*\\|\\^\\$~]?=)\\s*['\"](-?[a-z_][a-z0-9-_]+)['\"]\\s*\\]/Ssi",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?:\"(?:[^\\\\\"]|\\\\.|\\\\)*\")|(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S",
+        "issues": [
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "~^[-+]\\s*(?:(?:public|protected|private|readonly|static)(?:\\(set\\))?\\s+)+[^=;(]*?\\$(\\w+)~",
+        "issues": [
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/^\\t(?:static\\s+)?(?:[\\w:<>]+(?:\\s*[&*])?\\s+)+(\\w+?)(_?)\\(/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/%(\\d*)(\\[[^\\]]+\\]|[cdeEfosux]{1})/",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "~^(?:[\\\\]?+[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF-]*+)++$~si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "~(\\n)+$~",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*(\\\\[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*)*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/]8;;(.*)]8;;/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(calendar)\\/([A-z0-9-@_]+)\\//",
+        "issues": [
+            "regex.lint.charclass.redundant",
+            "regex.lint.charclass.suspiciousRange"
+        ]
+    },
+    {
+        "pattern": "#([kmgtp]?b?)$#si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\B(?<![^a-z0-9_\\-@\\.\\'\\s])@(\"(guest|email)\\/[a-f0-9]+\"|\"(?:federated_)?(?:group|team|user){1}\\/[a-z0-9_\\-@\\.\\' \\/:]+\"|\"[a-z0-9_\\-@\\.\\' ]+\"|[a-z0-9_\\-@\\.\\']+)/i",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/^([0-9a-f]{4}-?){8}$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\!?\\[((.|\\n)*)\\]\\((.*)\\)/mU",
+        "issues": [
+            "regex.lint.alternation.dotNewline",
+            "regex.lint.flag.useless.m",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([[:xdigit:]]\\/){7}[0-9]+/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[^A-Za-z][tn]\\(['\"][^'\"]*?['\"],( ?)['\"][^'\"]*?(\\.\\.\\.)[^'\"]*?['\"]/sU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(.*)data-requesttoken=\"(.*)\">(.*)/sm",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(.*)@\\[.*\\]/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^[_a-z0-9-+]+(\\.[_a-z0-9-+]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)*(\\.[a-z]{2,4})$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^[1-9][0-9]*(\\.[0-9]+){0,3}$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^## (?:\\[)?(?:v)?(\\d+\\.\\d+(\\.\\d+)?)/m",
+        "issues": [
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "/(@[^{]+{(?:[^{}]*|(?R))*})/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/-{2,}/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/( \\([2-9]\\)){2,}/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#^[0-1][0-9]:[0-5][0-9]$#",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
         "pattern": "#[\\s%+]#",
         "issues": [
             "regex.lint.charclass.literalMetachar"
@@ -160,9 +196,294 @@
         ]
     },
     {
-        "pattern": "/^([12345]{1}\\d{2})|([12345]{1}XX)$/",
+        "pattern": "/[^0-9]/isU",
         "issues": [
-            "regex.lint.quantifier.useless"
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/[^a-zA-Z0-9]/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<page([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<page_header([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<page_footer([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/page([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/page_header([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/page_footer([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<bookmark([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/bookmark([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<barcode([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/barcode([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<qrcode([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/qrcode([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^url\\(([^)]+)\\)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^([-]?[0-9\\.]+)%/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^([0-9]+)x([0-9]+)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^([0-9]*)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^#([^#]+)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+px$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+pt$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+in$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+mm$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.\\-]+%$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^#[0-9A-Fa-f]{6}$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^#[0-9A-F]{3}$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^url\\(([^)]*)\\)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[-]?[0-9\\.]+%$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/([a-z]+)\\(([^\\)]*)\\)/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\s+/isu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<body/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<link ([^>]*)[\\/]?>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\/>$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[0-9]+$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^([0-9]+)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/[\\s]+/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s",
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/^[0-9\\.]+$/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/([^{}]+){([^}]*)}/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<link([^>]*)>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<link[^>]*>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<\\/link[^>]*>/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/url\\(([^\\\\][^)]*)\\)/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/url\\((\\\\[^)]*)\\)/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^([a-z0-9]+)$/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*([\\w\\|\\\\\\[\\]]+)\\s*\\$\\w+.*$/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
@@ -203,275 +524,6 @@
         ]
     },
     {
-        "pattern": "~^[\\s\\*]*$~",
-        "issues": [
-            "regex.lint.charclass.literalMetachar"
-        ]
-    },
-    {
-        "pattern": "~^\\+ +\\* @(param|var) (mixed|string|int|float|bool|null|array|\\?|\\|)+( \\$\\w+)?$~m",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "~^\\+ +\\* @return (mixed|string|int|float|bool|null|array|void|\\?|\\|)+$~m",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+):\\$?([^\\.]+)\\.([^\\.]+)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+):\\.([^\\.]+)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\.([^\\.]+):\\.([^\\.]+)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\.([^\\.]+)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\x{FFFE}/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\[\\$?([^\\.]+)\\.([^\\.]+):\\.([^\\.]+)\\]/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\[\\$?([^\\.]+)\\.([^\\.]+)\\]/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\[\\.([^\\.]+):\\.([^\\.]+)\\]/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\[\\.([^\\.]+)\\]/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/[ ,](?=([^']*'[^']*')*[^']*$)/miuU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[\\p{L}_\\\\]/iu",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^[\\p{L}_\\\\][\\p{L}\\p{M}0-9\\._]*$/iu",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/[#0,]+\\.?[?#0,]*/ui",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/\\.0+/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/([\"])(?:(?=(\\\\?))\\2.)*?\\1/u",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(\\\\(((.)(?!((AM\\/PM)|(A\\/P))))|([^ ])))(?=(?:[^\"]|\"[^\"]*\")*$)/ui",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/_.?/ui",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/(\\[\\$[A-Z]*-[0-9A-F]*\\])*[hmsdy](?=(?:[^\"]|\"[^\"]*\")*$)/miu",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\[\\$[A-Z]{3}\\]/miu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/[0\\?#]\\.(?![^\\[]*\\])/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(#?.*\\?)\\/(\\?+|\\d+)/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^(\\[DBNum\\d\\])*(\\[\\$[^\\]]*\\])/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[#\\?0]?.*[#\\?0]\\/(\\?+|\\d+|#)/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/\\.(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\\Z)/miu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^(\\d|[0-1]\\d|2[0-3]):[0-5]\\d$/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^(\\d|[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/\"/ui",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/(?<operator>[^\"]*)(?<operand>\".*[*?].*\")/ui",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^[1-9]{1}(\\.\\d+)?E{1}$/",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "/^\\s*\\d+(\\s+\\d+)+\\s*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\"([^\"]|\"\"){0,255}\"/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^#[A-Z0\\/]{3,5}[!?]{1}$/",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "/\\n */mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(|\\.php)/",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/(\\d+\\.?)+(-p\\d+)?$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(\\d+\\.?)+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#(\\{\\{(?<name>[\\w_:\\-/]+)\\}\\})#",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/recipe\\/[\\w_\\d]+\\.php$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
         "pattern": "#/*\\*.*?\\*/#ms",
         "issues": [
             "regex.lint.flag.useless.m"
@@ -490,228 +542,15 @@
         ]
     },
     {
+        "pattern": "#(\\s+?|'|\\\"|\\W)#",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "#^ +.* +(\\d+)$#",
         "issues": [
             "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/[\\b<](.+@.+)[\\b>]/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^.*\\r*\\n\\r*\\n/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/%h:([\\w_-]+)/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/[\\s\\t]+for[\\s\\t]+<([^>]+)>/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]|10)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^[0-9]+$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^\\d+[0-9.]+$/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/[\\s\\t\\n,]+/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^[0-9]+(,[0-9]+)*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\n[\\t\\s]+/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/<meta[^>]+charset=[a-z0-9_\"-]+[^>]*>/Ui",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/\\.([^.]+)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^(-?[a-zA-Z-]+):(.*)$/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "|^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$|i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/<div id=\"_rc_sig\">(&nbsp;)?<\\/div>[\\s\\r\\n]*$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^[a-zA-Z0-9\\+\\/=_-]+(,[a-zA-Z0-9\\+\\/=_-]+)*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/U[A-Z][A-Z](7|8|16|32)(BE|LE)*/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\A(\\n            [\\x09\\x0A\\x0D\\x20-\\x7E]\\n            | [\\xC2-\\xDF][\\x80-\\xBF]\\n            | \\xE0[\\xA0-\\xBF][\\x80-\\xBF]\\n            | [\\xE1-\\xEC\\xEE\\xEF][\\x80-\\xBF]{2}\\n            | \\xED[\\x80-\\x9F][\\x80-\\xBF]\\n            | \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}\\n            | [\\xF1-\\xF3][\\x80-\\xBF]{3}\\n            | \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}\\n            )*\\z/xs",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/<base\\s+href=['\"]*([^'\"]+)/is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\r?\\n(\\t| )+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[\\s\\t\\n\\r\\0\\x0B]/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^(>+ {0,1})+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\{([0-9]+)\\}\\r\\n/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^\\* VANISHED [()EARLIER]*/i",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "/\\s+$/sm",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\n[\\t\\s]*/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/;[\\s\\r\\n\\t]*/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/<pre[^>]*>(.*)<\\/pre>/ismU",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/<pre[^>]*>.*<\\/pre>/ismU",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^[\\w.-]+$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/([0-9]{1,3}([.-][0-9]{1,3}){3})$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#/\\*.*\\*/#Ums",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/[.-\\/\\\\]/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/(CONSTRAINT|UNIQUE|INDEX)[\\s\\t`\"]*$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/[\\s\\t]*\\r?\\n/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^(?:['\"])(.*?)(?:['\"])?$/",
-        "issues": [
-            "regex.lint.group.redundant"
         ]
     },
     {
@@ -743,6 +582,12 @@
         "pattern": "/^(last|previous){1}([0-9]*)$/D",
         "issues": [
             "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/^[A-Za-zÄäÖöÜüß0-9_.@+-]*$/D",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
         ]
     },
     {
@@ -813,21 +658,9 @@
         ]
     },
     {
-        "pattern": "/\\pL/",
+        "pattern": "/\\.0$/s",
         "issues": [
-            "regex.lint.unicode.propertyWithoutU"
-        ]
-    },
-    {
-        "pattern": "/\\pN/",
-        "issues": [
-            "regex.lint.unicode.propertyWithoutU"
-        ]
-    },
-    {
-        "pattern": "/\\p{Z}|\\p{S}|\\p{P}/",
-        "issues": [
-            "regex.lint.unicode.propertyWithoutU"
+            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -839,20 +672,174 @@
     {
         "pattern": "#// line (?<line_number>\\d+)+#",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/\\.0$/s",
+        "pattern": "/YahooMobile(?:Messenger|Mail|Weather)\\/1.0 \\(Android (Messenger|Mail|Weather); ([0-9\\.]+)\\) \\([^;]+; ?[^;]+; ?([^;]+); ?([0-9\\.]+)\\/[^\\;\\)\\/]+\\)/u",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/YahooJMobileApp\\/[0-9\\.]+ \\(Android [a-z]+; ([0-9\\.]+)\\) \\([^;]+; ?[^;]+; ?[^;]+; ?([^;]+); ?([0-9\\.]+)\\/[^\\;\\)\\/]+\\)/u",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/IDL[ -]?([0-9]+.*)/u",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/Andr[0o]id(?: )?(?:AllPhone_|CyanogenMod_|OUYA )?(?:\\/)?v?([0-9.]+)/ui",
+        "issues": [
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Linux\\/[0-9.+]+ Android\\/[0-9.]+/u",
+        "issues": [
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Android(_OS)?\\/[0-9.]+/u",
+        "issues": [
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Release\\/[0-9.]+/u",
+        "issues": [
+            "regex.lint.flag.redundant",
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/Nokia-?([^\\/;\\)\\s]+)[\\s|\\/|;|\\)]/u",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "/《붉은별》\\/([0-9.]*)/iu",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^JUC ?\\(Linux; ?U; ?(?:Android)? ?([0-9\\.]+)[^;]*; ?[^;]+; ?([^;]*[^\\s])\\s*; ?[0-9]+\\*[0-9]+;?\\)/u",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/(?:Obigo|Teleca)[- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)(?:[0-9])?(?:[\\/;]|$)/ui",
+        "issues": [
+            "regex.lint.charclass.redundant",
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "#(protected static \\$unicodePropsRegexp)[^;]++;#s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "=//(.*)$|/\\*{1,}(.*)\\*/$|/\\*{1,}(.*)$|^(.*)\\*/$|#(.*)$|\\*{1}(.*)$|^(.*)$=",
+        "pattern": "#\\n\\t\\t\\t(?<block>```php(?<code>[^`]++)```)\\n\\t\\t\\t\\s*\\n\\t\\t\\t(?<open>```\\w*|<pre>(?:<code>)?)\\n\\t\\t\\t(?<output>[^`]*)\\n\\t\\t\\t(?<close>```|</code></pre>)(?=\\n|$)\\n\\t\\t#sx",
         "issues": [
-            "regex.lint.quantifier.useless"
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#(?<=\\n)(?:(/[*]+\\n(?:[*](?! @method).*\\n)*?)(?:[*]\\n)*(?:[*] @method.*\\n)*[*]/\\n)?class#",
+        "issues": [
+            "regex.lint.dotstar.nested"
+        ]
+    },
+    {
+        "pattern": "#```php([^`]+)\\n```\\s+(?!```html|<pre>)#s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#^((?:\\w+,? )*or [a-z]+) element(?:, or if there is no more content in the parent element and the parent element is an HTML element that is not an? (?:\\w+, )*or \\w+ element, or an autonomous custom element)?$#",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "(^[\\d.\\s]*The (?:\\w+, )*(?:(?:\\w+ )?and )*\\w+ elements?\\s*$)",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "(((?:listed|labelable|submittable|resettable),? )+and autocapitalize-inheriting )",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/^ *:?-+:?(?:(?:\\+| *\\| *):?-+:?)+ *$/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/\\[((?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*)\\]/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/\\[(?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*\\]\\(( *(?:\\([^\\x17\\s()]*\\)|[^\\x17\\s)])*(?=[ )]) *(?:\"[^\\x17]*?\"|'[^\\x17]*?'|\\([^\\x17)]*\\))? *)\\)/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/!\\[(?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*\\]\\(( *(?:[^\\x17\\s()]|\\([^\\x17\\s()]*\\))*(?=[ )]) *(?:\"[^\\x17]*?\"|'[^\\x17]*?'|\\([^\\x17)]*\\))? *)\\)/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/!\\[((?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*)\\](?: ?\\[([^\\x17[\\]]+)\\])?/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/\\343\\200\\202|\\357(?:\\274\\216|\\275\\241)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "([^\\s!\\-0-9<=>a-z\\(-.]|\\.(?![0-9])|\\b[-a-z](?![-\\w]+\\()|\\(\\s*\\))i",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "#^(\\w+://)%5B([-\\w:._%]+)%5D#i",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "#\\(\\?>#iA",
+        "issues": [
+            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -894,111 +881,10 @@
         ]
     },
     {
-        "pattern": "#^(INSERT|UPDATE).*RETURNING\\s.+(\\,\\s?.+)*$#is",
-        "issues": [
-            "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/'[^']*'|\"[^\"]*\"/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/<\\w+.*/si",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "#<a(?:rea)?[^a-z0-9>]+([^>]*?)(?:>|$)#si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#<img[^a-z0-9]+([^>]*?)(?:\\s?/?>|$)#si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#<img[\\s/]+.*?src\\s*=\\s*([\"'])([^\\1]+?)\\1.*?\\>#i",
-        "issues": [
-            "regex.lint.charclass.backrefAsOctal"
-        ]
-    },
-    {
-        "pattern": "/\\s+/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#\\s*[a-z\\-]+\\s*=\\s*(\\042|\\047)([^\\1]*?)\\1#is",
-        "issues": [
-            "regex.lint.charclass.backrefAsOctal",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#<.+?>#si",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "#\\{.+?\\}#si",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/(<(?:[^<>]+(?:\"[^\"]*\"|'[^']*')?)+>)/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#\\A[0-9a-f]{2}(?<delimiter>[:-])([0-9a-f]{2}(?P=delimiter)){4}[0-9a-f]{2}\\z#i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#((\\A|\\.)[0-9a-f]{4}){3}\\z#i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#^(\\w+:)?//#i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "#(\\w*://|www\\.)[a-z0-9]+(-+[a-z0-9]+)*(\\.[a-z0-9]+(-+[a-z0-9]+)*)+(/([^\\s()<>;]+\\w)?/?)?#i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([a-z]+?){1}/i",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
         "pattern": "/^packages:((\\n\\s+.+)+)/m",
         "issues": [
             "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -1198,12 +1084,6 @@
         ]
     },
     {
-        "pattern": "/(\\w+)=(?:\"([^\"]*)\"|'([^']*)'|([^\\s\\]]+(?:\\s+(?!\\w+=)[^\\s\\]]+)*))/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "#^[^/]([r-][w-][xstST-]){3}#",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -1316,12 +1196,6 @@
         ]
     },
     {
-        "pattern": "/\\$\\w+(?:(?:\\[[^\\]]+\\])|(?:->\\w+))*/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/^([0-1]\\d|2[0-3]):?[0-5]\\d$|^(([0-1]?\\d|2[0-3]):[0-5]\\d)$/",
         "issues": [
             "regex.lint.range.useless"
@@ -1344,117 +1218,6 @@
         "issues": [
             "regex.lint.alternation.dotNewline",
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/({#.*?#})/mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/({{.*?}})/mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/({%.*?%})/mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/<!DOCTYPE\\b[^>]*(?:\\[[^\\]]*\\])?[^>]*>/is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^---\\n(.+?)\\n---\\n{0,}(.*)$/uis",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/(?:(\\\\[|])|[^|`]|`[^`]+`|`)+/",
-        "issues": [
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "%[^:/@?&=#]+%usD",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\r\\n|\\r/um",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\R/um",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/\\s*[\\r\\n]+\\s*/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^<\\s*\\/([^\\s]+?)\\s*>$/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/#\\d*/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/([a-zd])([A-Z])/",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "/((['\"])[^\\2]*\\2)/",
-        "issues": [
-            "regex.lint.charclass.backrefAsOctal"
-        ]
-    },
-    {
-        "pattern": "/define\\(\\s*['\"]GRAV_VERSION['\"]\\s*,\\s*['\"]([^'\"]+)['\"]\\s*\\);/mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/[\\\\\\/:\"*?&<>|]+/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(-+[\\w-]+)/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^<\\?php\\s*(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\r\\n]*(?:\\r?\\n|$)|\\s)*declare\\s*\\(\\s*strict_types\\s*=\\s*1\\s*\\)\\s*;/m",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -1489,6 +1252,12 @@
         ]
     },
     {
+        "pattern": "/(?<group>(?<section>.*?)\\/.*?)\\/.*?/",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "/\\$[:]*{(.)*}/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -1498,6 +1267,12 @@
         "pattern": "/\\s+/iu",
         "issues": [
             "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/\\s+/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -1584,8 +1359,7 @@
     {
         "pattern": "/^\\\\?[A-Za-z_][A-Za-z0-9_]*(\\\\[A-Za-z_][A-Za-z0-9_]*)*$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -1643,8 +1417,7 @@
         "pattern": "~(?:INSERT|REPLACE)\\s+(?:IGNORE)?\\s*INTO `(.*)` \\((.*)\\) VALUES (\\(.*\\))+~",
         "issues": [
             "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -1706,7 +1479,8 @@
         "pattern": "/^([a-z0-9_]+[a-z0-9\\._]*(\\/[a-z0-9_]+[a-z0-9\\._]*)*)?$/",
         "issues": [
             "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -1804,26 +1578,212 @@
         ]
     },
     {
-        "pattern": "/^(-|)[1-9]+[0-9]*$/",
-        "issues": [
-            "regex.lint.alternation.empty",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^([\"'](.*)[\"'](\\s)*:)/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
         "pattern": "/('|\")([\\w\\-_\\.]+)('|\")(,)?(\\s*)(.*)/",
         "issues": [
             "regex.lint.charclass.duplicateChars"
         ]
     },
     {
-        "pattern": "/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$/",
+        "pattern": "#^[0-9a-fA-F]{4}$#s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\b((?:[a-z][\\w\\-]+:(?:\\/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}\\/)(?:[^\\s()<>]|\\((?:[^\\s()<>]|(?:\\([^\\s()<>]+\\)))*\\))+(?:\\((?:[^\\s()<>]|(?:\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?\\x{00ab}\\x{00bb}\\x{201c}\\x{201d}\\x{2018}\\x{2019}]))/iu",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^ \\* Version: (\\d+\\.\\d+.*)/m",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^Version: (\\d+\\.\\d+.*)/m",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "#^\\s*\\*/\\s+abstract class TestDoubleBuilder\\s#ms",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^<!---?[^>-](?:-?[^-])*-->/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^[',\"]use strict[',\"];/Uims",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?P<pre_path>@import\\s+(?:url\\s*\\()?['\"\\s]*)(?P<path>[^'\"\\s](?:https?:\\/\\/.+\\/?)?.+?)(?P<post_path>['\"\\s\\)]*;)/i",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^\\s*(?:(?:EXPLAIN\\s+(?:EXTENDED\\s+)?)?SELECT.*?\\s+FROM|INSERT(?:\\s+LOW_PRIORITY|\\s+DELAYED|\\s+HIGH_PRIORITY)?(?:\\s+IGNORE)?(?:\\s+INTO)?|REPLACE(?:\\s+LOW_PRIORITY|\\s+DELAYED)?(?:\\s+INTO)?|UPDATE(?:\\s+LOW_PRIORITY)?(?:\\s+IGNORE)?|DELETE(?:\\s+LOW_PRIORITY|\\s+QUICK|\\s+IGNORE)*(?:\\s+FROM)?|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|OPTIMIZE|REPAIR).*\\s+TABLE|TRUNCATE(?:\\s+TABLE)?|CREATE(?:\\s+TEMPORARY)?\\s+TABLE(?:\\s+IF\\s+NOT\\s+EXISTS)?|ALTER(?:\\s+IGNORE)?\\s+TABLE|DROP\\s+TABLE(?:\\s+IF\\s+EXISTS)?|CREATE(?:\\s+\\w+)?\\s+INDEX.*\\s+ON|DROP\\s+INDEX.*\\s+ON|LOAD\\s+DATA.*INFILE.*INTO\\s+TABLE|(?:GRANT|REVOKE).*ON\\s+TABLE|SHOW\\s+(?:.*FROM|.*TABLE))\\s+`?(\\w+)`?/is",
+        "issues": [
+            "regex.lint.alternation.duplicateDisjunction",
+            "regex.lint.group.redundant",
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^\\d+(\\.\\d+)+$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([-_].*)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/[!|@|#|$|%|^|&|*|(|)]/",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "#[`|~|-|_|=|+|\\[|{|\\]|}|\\|\\|;:'\",<\\.>/\\?]#",
+        "issues": [
+            "regex.lint.charclass.redundant",
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "#(?<!<)(?:https?|ftp)://([^\\s<>\"'\\[\\]()]+|\\[(?1)*+\\]|\\((?1)*+\\))+(?<![_*.?])#i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/custom\\-[0-1]+/i",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^@?\\w{1,15}$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "#(?:^|\\s|\"|')(https?://([^\\s()<>]+(?:\\([\\w\\d]+\\)|([^[:punct:]\\s]|/))))#",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^(\\d+,)*\\d+$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#^/rest/v(\\d+(\\.\\d+)*)#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#!\\s*IE(\\s*\\d+){0}#i",
+        "issues": [
+            "regex.lint.quantifier.zero"
+        ]
+    },
+    {
+        "pattern": "/^\\d+(\\.\\d+)+(-(beta|rc|pressable)\\d?)$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(<figure)[^>]*(?=class=([\"']?)[^>]*wp-block-gallery[^>]*\\2)#is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#(<a[^>]* href=([\"']?)(\\S+)\\2>)\\s*(<img[^>]*)(class=([\"']?)[^>]*wp-image-[0-9]+[^>]*\\6.*>)\\s*</a>#is",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "#&lt;iframe\\s[^&]*?(?:&(?!gt;)[^&]*?)*?src=\"<a href=\"https?://(.*)?\\.google\\.(.*?)/(.*?)\\?(.+?)&quot;[^&]*?(?:&(?!gt;)[^&]*?)*?&gt;\\s*&lt;/iframe&gt;&lt;br\">[^\"]*?\"&gt;\\s*&lt;/iframe&gt;(?:&lt;br</a>\\s*/&gt;\\s*&lt;small&gt;.*?&lt;/small&gt;)?#i",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "#&lt;iframe\\s[^&]*?(?:&(?!gt;)[^&]*?)*?src=\"https?://(.*)?\\.google\\.(.*?)/(.*?)\\?(.+?)\"[^&]*?(?:&(?!gt;)[^&]*?)*?&gt;\\s*&lt;/iframe&gt;(?:\\s*(?:&lt;br\\s*/?&gt;)?\\s*&lt;small&gt;.*?&lt;/small&gt;)?#i",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^http(s|):\\/\\/twitter\\.com(\\/\\#\\!\\/|\\/)([a-zA-Z0-9_]{1,20})\\/status(es)*\\/(\\d+)$/",
+        "issues": [
+            "regex.lint.alternation.empty",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^([\\da-z-]+(,[\\da-z-]+)*).*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^\\/(?:s)\\/(.+)$/",
+        "issues": [
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "/<iframe src=\"(https?:)?\\/\\/([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)\\/[^\\\"]+\\\"/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/(https?:)?\\/\\/([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)\\/photos\\/([^\\/]+)\\/\\d+\\//",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "~^(https?:)?//([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)/.*~i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(\\<div\\s)+(id=\\\"gist[0-9]+\\\")+(\\sclass=\\\"gist\\\"\\>)?#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "!https?://(docs|drive|spreadsheets\\d*|calendar|www)*\\.google\\.com/([-\\w\\./]+)\\?([^\"]+)!",
         "issues": [
             "regex.lint.group.quantifiedCapture",
             "regex.lint.overlap.charset",
@@ -1831,36 +1791,131 @@
         ]
     },
     {
-        "pattern": "/^(?:\\w+\\:{2})?on[A-Z]{1}[\\w+]*$/",
+        "pattern": "#(<(?:br /|/?p)>\\n?)*(\\[/?[a-z]+\\])(<(?:br /|/?p)>\\n?)*#",
         "issues": [
-            "regex.lint.charclass.literalMetachar",
-            "regex.lint.quantifier.useless"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
-        "pattern": "/\\<(figure|span)\\s+[^\\>]+\\>[^<]*\\<\\/\\1\\>/i",
+        "pattern": "/(_.*)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "#https?://twitter\\.com/settings/widgets/(\\d+)#s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "!^https?://!is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#((?<!/)/[^/]+)*/wp-content/plugins/wordpress/plugins/wpcomsh/([^/]+)/#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[^\\s\\r\\n\\t\\f]/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/ \\/ ?.*/",
         "issues": [
             "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "/^on[A-Z]{1}[\\w+]*$/",
+        "pattern": "/.*Array\\s\\( (.*)\\)/msx",
         "issues": [
-            "regex.lint.charclass.literalMetachar",
-            "regex.lint.quantifier.useless"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "/^get[A-Z]{1}[\\w+]*Options$/",
+        "pattern": "/[^a-zA-Z0-9.-_:]/",
         "issues": [
-            "regex.lint.charclass.literalMetachar",
-            "regex.lint.quantifier.useless"
+            "regex.lint.charclass.redundant"
         ]
     },
     {
-        "pattern": "/\\<figure\\s+[^\\>]+\\>[^\\<]*\\<\\/figure\\>/i",
+        "pattern": "%^(?:(?:https?|ftp)://)?(?:\\S+(?::\\S*)?@|\\d{1,3}(?:\\.\\d{1,3}){3}|(?:(?:[a-z\\d\\x{00a1}-\\x{ffff}]+-?)*[a-z\\d\\x{00a1}-\\x{ffff}]+)(?:\\.(?:[a-z\\d\\x{00a1}-\\x{ffff}]+-?)*[a-z\\d\\x{00a1}-\\x{ffff}]+)*(?:\\.[a-z\\x{00a1}-\\x{ffff}]{2,6}))(?::\\d+)?(?:[^\\s]*)?$%iu",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "#(https?://[^?/]+)(/?.*)?$#",
         "issues": [
             "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^\\[([^]]+)\\]: *(\\S+(?: +(?:\"(?:[^\"]|\\\\.)*\"|'(?:[^']|\\\\.)*'|\\((?:[^()]|\\\\.)*\\)))?)\\s*\\Z/m",
+        "issues": [
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/^## +(\\[?[^] ]+\\]?) - (.+?) *$/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/(\\n[ \\t]+)+/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^extension\\s+(?P<value>[^\\s<>=!]+)\\s*(?P<version>[<>=!]{0,2}\\s*[\\d\\.-]+[\\d\\.]?)?[ \\t]*\\r?$/m",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^[0-9,a-z,A-Z$_]+$/i",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "#(?:<a[^>]*?\\s+?href=[\"'](?P<link_url>[^\\s]+?)[\"'][^>]*?>\\s*)?(?P<img_tag><(?:img|amp-img|amp-anim)[^>]*?\\s+?src=[\"'](?P<img_url>[^\\s]+?)[\"'].*?>){1}(?:\\s*</a>)?#is",
+        "issues": [
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "#^http(s)?://i[\\d]{1}.wp.com#",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "#^i[\\d]{1}.wp.com$#i",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/\\A#!.*\\r?\\n\\z/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "(^.*(?:\\n\\s+\\*.*)+$)",
+        "issues": [
+            "regex.lint.dotstar.nested"
         ]
     },
     {
@@ -1959,9 +2014,42 @@
         ]
     },
     {
-        "pattern": "/^([0-9\\.]*(cm|mm|in|pt|pc|px|%|em|ex|)|auto)$/i",
+        "pattern": "/^`{32} example\\n((?s).*?)\\n\\.\\n(?:|((?s).*?)\\n)`{32}$|^#{1,6} *(.*?)$/m",
         "issues": [
             "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/^<\\/\\w[\\w-]*+[ ]*+>/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^<!---?[^>-](?:-?+[^-])*-->/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^<(\\w++:\\/{2}[^ >]++)>/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "@(https?://([-\\w\\.]+[-\\w])+(:\\d+)?(/([\\w/_\\.#-]*(\\?\\S+)?[^\\.\\s])?)?)@i",
+        "issues": [
+            "regex.lint.charclass.duplicateChars",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/[^\\w\\d\\-\\_]/i",
+        "issues": [
+            "regex.lint.charclass.duplicateChars",
+            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -2185,6 +2273,12 @@
         ]
     },
     {
+        "pattern": "#^\\??&*?#",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "|<title>([^<]*?)</title>|is",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -2224,7 +2318,6 @@
     {
         "pattern": "/^(((?=.*(::))(?!.*\\3.+\\3))\\3?|([\\dA-F]{1,4}(\\3|:\\b|$)|\\2))(?4){5}((?4){2}|(((2[0-4]|1\\d|[1-9])?\\d|25[0-5])\\.?\\b){4})$/i",
         "issues": [
-            "regex.lint.backref.useless",
             "regex.lint.group.quantifiedCapture"
         ]
     },
@@ -2261,46 +2354,52 @@
         ]
     },
     {
-        "pattern": "~^[-+]\\s*(?:(?:public|protected|private|readonly|static)(?:\\(set\\))?\\s+)+[^=;(]*?\\$(\\w+)~",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/^\\t(?:static\\s+)?(?:[\\w:<>]+(?:\\s*[&*])?\\s+)+(\\w+?)(_?)\\(/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/%(\\d*)(\\[[^\\]]+\\]|[cdeEfosux]{1})/",
+        "pattern": "/^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/",
         "issues": [
             "regex.lint.quantifier.useless"
         ]
     },
     {
-        "pattern": "~^(?:[\\\\]?+[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF-]*+)++$~si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "~(\\n)+$~",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*(\\\\[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*)*$/",
+        "pattern": "/(\\d+\\.?)+(-p\\d+)?$/",
         "issues": [
             "regex.lint.group.quantifiedCapture",
             "regex.lint.quantifier.nested"
         ]
     },
     {
-        "pattern": "/^\\s*([\\w\\|\\\\\\[\\]]+)\\s*\\$\\w+.*$/",
+        "pattern": "/(\\d+\\.?)+/",
         "issues": [
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(\\{\\{(?<name>[\\w_:\\-/]+)\\}\\})#",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/recipe\\/[\\w_\\d]+\\.php$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[A-z0-9\\-#., ()%]+$/",
+        "issues": [
+            "regex.lint.charclass.suspiciousRange"
+        ]
+    },
+    {
+        "pattern": "=//(.*)$|/\\*{1,}(.*)\\*/$|/\\*{1,}(.*)$|^(.*)\\*/$|#(.*)$|\\*{1}(.*)$|^(.*)$=",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/\\R+/Uu",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -2316,43 +2415,6 @@
         ]
     },
     {
-        "pattern": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/mU",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/mU",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(?<!\\\\)(\\\\{2})*(LTS|LT|[Ll]{1,4})/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^(?:\\h*-?\\d+(?:\\.\\d+)?\\h*[a-z]+)+$/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(-?\\d(\\d(?![\\/-])|[^\\d\\/-]([\\/-])?)*|P[T\\d].*|(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+)$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/{\\s*[^}]*[^}a-z_]+\\s*}?/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
         "pattern": "/\\,/i",
         "issues": [
             "regex.lint.flag.useless.i"
@@ -2362,6 +2424,13 @@
         "pattern": "/([^0-9\\.\\-])/i",
         "issues": [
             "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "{\"(?:[^\"]+|\\\\\")*$}m",
+        "issues": [
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -2623,6 +2692,18 @@
         ]
     },
     {
+        "pattern": "/<pre[^>]*>(.*)<\\/pre>/ismU",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/<pre[^>]*>.*<\\/pre>/ismU",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
         "pattern": "/^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\\.)*(xn--)?([a-z0-9][a-z0-9\\-]{0,60}|[a-z0-9-]{1,30}\\.[a-z]{2,})$/",
         "issues": [
             "regex.lint.group.quantifiedCapture",
@@ -2659,6 +2740,261 @@
         "pattern": "/([https?|ftps?]?\\{.*?\\})&(.*?)$/",
         "issues": [
             "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "#https?://twitter.com/(.*?)(/.*?|$)#i",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/^[\\(\\s*]+/",
+        "issues": [
+            "regex.lint.charclass.literalMetachar"
+        ]
+    },
+    {
+        "pattern": "~^\\+ +\\* @(param|var) (mixed|string|int|float|bool|null|array|\\?|\\|)+( \\$\\w+)?$~m",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "~^\\+ +\\* @return (mixed|string|int|float|bool|null|array|void|\\?|\\|)+$~m",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+):\\$?([^\\.]+)\\.([^\\.]+)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+):\\.([^\\.]+)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\$?([^\\.]+)\\.([^\\.]+)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\.([^\\.]+):\\.([^\\.]+)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\.([^\\.]+)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\x{FFFE}/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\[\\$?([^\\.]+)\\.([^\\.]+):\\.([^\\.]+)\\]/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\[\\$?([^\\.]+)\\.([^\\.]+)\\]/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\[\\.([^\\.]+):\\.([^\\.]+)\\]/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/\\[\\.([^\\.]+)\\]/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/[ ,](?=([^']*'[^']*')*[^']*$)/miuU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^[\\p{L}_\\\\]/iu",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^[\\p{L}_\\\\][\\p{L}\\p{M}0-9\\._]*$/iu",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/[#0,]+\\.?[?#0,]*/ui",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/\\.0+/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/([\"])(?:(?=(\\\\?))\\2.)*?\\1/u",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(\\\\(((.)(?!((AM\\/PM)|(A\\/P))))|([^ ])))(?=(?:[^\"]|\"[^\"]*\")*$)/ui",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/_.?/ui",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/(\\[\\$[A-Z]*-[0-9A-F]*\\])*[hmsdy](?=(?:[^\"]|\"[^\"]*\")*$)/miu",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/\\[\\$[A-Z]{3}\\]/miu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/[0\\?#]\\.(?![^\\[]*\\])/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(#?.*\\?)\\/(\\?+|\\d+)/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^(\\[DBNum\\d\\])*(\\[\\$[^\\]]*\\])/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[#\\?0]?.*[#\\?0]\\/(\\?+|\\d+|#)/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/\\.(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\\Z)/miu",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/^(\\d|[0-1]\\d|2[0-3]):[0-5]\\d$/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^(\\d|[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/\"/ui",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/(?<operator>[^\"]*)(?<operand>\".*[*?].*\")/ui",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^[1-9]{1}(\\.\\d+)?E{1}$/",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/^\\s*\\d+(\\s+\\d+)+\\s*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\"([^\"]|\"\"){0,255}\"/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^#[A-Z0\\/]{3,5}[!?]{1}$/",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/\\n */mu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(|\\.php)/",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/^([0-9\\.]*(cm|mm|in|pt|pc|px|%|em|ex|)|auto)$/i",
+        "issues": [
+            "regex.lint.alternation.empty"
         ]
     },
     {
@@ -2754,9 +3090,64 @@
         ]
     },
     {
+        "pattern": "/U[A-Z][A-Z](7|8|16|32)(BE|LE)*/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\A(\\n            [\\x09\\x0A\\x0D\\x20-\\x7E]\\n            | [\\xC2-\\xDF][\\x80-\\xBF]\\n            | \\xE0[\\xA0-\\xBF][\\x80-\\xBF]\\n            | [\\xE1-\\xEC\\xEE\\xEF][\\x80-\\xBF]{2}\\n            | \\xED[\\x80-\\x9F][\\x80-\\xBF]\\n            | \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}\\n            | [\\xF1-\\xF3][\\x80-\\xBF]{3}\\n            | \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}\\n            )*\\z/xs",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\r?\\n(\\t| )+/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
         "pattern": "/(\\{[0-9]+\\}\\r\\n)/m",
         "issues": [
             "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/^\\* VANISHED [()EARLIER]*/i",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "/\\s+$/sm",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\n[\\t\\s]*/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[\\w.-]+$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "#/\\*.*\\*/#Ums",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/[.-\\/\\\\]/",
+        "issues": [
+            "regex.lint.range.useless"
         ]
     },
     {
@@ -2803,6 +3194,61 @@
         ]
     },
     {
+        "pattern": "/(for\\((?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*);[^;\\{]*;[^;\\{]*\\));(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(for\\([^;\\{]*;(?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*);[^;\\{]*\\));(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(for\\([^;\\{]*;[^;\\{]*;(?:[^;\\{]*|[^;\\{]*function[^;\\{]*(\\{([^\\{\\}]*(?-2))*[^\\{\\}]*\\})?[^;\\{]*)\\));(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(for\\([^;\\{]+\\s+in\\s+[^;\\{]+\\));(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/(\\bif\\s*\\([^{;]*\\));\\}/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(while\\([^;\\{]+\\));(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/else;/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/;(\\}|$)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
         "pattern": "/[\\s]*/si",
         "issues": [
             "regex.lint.flag.useless.i",
@@ -2832,6 +3278,12 @@
         "issues": [
             "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/@media[\\s]+([^\\§]*)§([^§]*)§/i",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
         ]
     },
     {
@@ -3282,15 +3734,15 @@
         ]
     },
     {
-        "pattern": "~\\n                (?:\\n                    \\(\\?\\(\\n                  | \\[ [^\\]\\\\]* (?: \\\\ . [^\\]\\\\]* )* \\]\\n                  | \\\\ .\\n                ) (*SKIP)(*FAIL) |\\n                \\(\\n                (?!\\n                    \\? (?! <(?![!=]) | P< | ' )\\n                  | \\*\\n                )\\n            ~x",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/;(?=([^\"]*\"[^\"]*\")*[^\"]*$)/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "%[^:/@?&=#]+%usD",
+        "issues": [
+            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -3555,6 +4007,12 @@
         ]
     },
     {
+        "pattern": "/^<\\s*\\/([^\\s]+?)\\s*>$/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
         "pattern": "/^<!--<!\\[endif\\]-->$/s",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -3596,18 +4054,6 @@
             "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.m",
             "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#^[0-9a-fA-F]{4}$#s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\b((?:[a-z][\\w\\-]+:(?:\\/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}\\/)(?:[^\\s()<>]|\\((?:[^\\s()<>]|(?:\\([^\\s()<>]+\\)))*\\))+(?:\\((?:[^\\s()<>]|(?:\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?\\x{00ab}\\x{00bb}\\x{201c}\\x{201d}\\x{2018}\\x{2019}]))/iu",
-        "issues": [
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -3740,8 +4186,7 @@
     {
         "pattern": "/^\\ *([\\*\\#]{1,5})\\ *((?:[^\\n]|\\n(?!(?:\\ *[\\*\\#])|\\n))+)/im",
         "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.quantifier.nested"
+            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -3769,6 +4214,12 @@
         ]
     },
     {
+        "pattern": "/<\\s*((video|audio)[^>]*>(.*?)<\\s*\\/\\s*(video|audio)>)|(img[^>]*>(.*?))/",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "/charset=([^\"]+)/is",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -3784,8 +4235,7 @@
         "pattern": "/(?<=\\$)(\\w+)+/i",
         "issues": [
             "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -3834,12 +4284,6 @@
         "pattern": "/[^\\w]/i",
         "issues": [
             "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/((?<![\\\\])['\\\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
         ]
     },
     {
@@ -3902,177 +4346,6 @@
         ]
     },
     {
-        "pattern": "/^(https?:\\/\\/)?((([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,})|(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(\\[[A-Fa-f0-9:]+\\])|([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}))(:\\d+)?(\\/.*)?$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^([a-z0-9]+(-[a-z0-9]+)*\\.)+[a-z]{2,}$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(?!-)([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z]{2,63}$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/(\\s|\\x{3164}|\\x{1160})+/u",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[ \\t]*From:[ \\t]*.+(?:\\r?\\n.*){0,5}?\\r?\\n[ \\t]*Subject:[ \\t]*.*$/im",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^(?:\\s*(?:fwd?|fw)\\s*:\\s*)+/i",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/style=\"--color:\\s*([^;]+);\\s*--dark-color:\\s*[^\"]*\"/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(?:\".*?\"|[^\",]*)\\s*(?:,\\s*(?:\".*?\"|[^\",]*)\\s*)*$/",
-        "issues": [
-            "regex.lint.dotstar.nested"
-        ]
-    },
-    {
-        "pattern": "/^#([\\da-f]{3}){1,2}$|^#([\\da-f]{4}){1,2}$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "((/\\*\\*)(?:\\n\\* @method.*)+)",
-        "issues": [
-            "regex.lint.dotstar.nested",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#(protected static \\$unicodePropsRegexp)[^;]++;#s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#\\n\\t\\t\\t(?<block>```php(?<code>[^`]++)```)\\n\\t\\t\\t\\s*\\n\\t\\t\\t(?<open>```\\w*|<pre>(?:<code>)?)\\n\\t\\t\\t(?<output>[^`]*)\\n\\t\\t\\t(?<close>```|</code></pre>)(?=\\n|$)\\n\\t\\t#sx",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "(^[\\s\\*/]++\\K(?!@).*)",
-        "issues": [
-            "regex.lint.charclass.literalMetachar"
-        ]
-    },
-    {
-        "pattern": "#(?<=\\n)(?:(/[*]+\\n(?:[*](?! @method).*\\n)*?)(?:[*]\\n)*(?:[*] @method.*\\n)*[*]/\\n)?class#",
-        "issues": [
-            "regex.lint.dotstar.nested"
-        ]
-    },
-    {
-        "pattern": "#```php([^`]+)\\n```\\s+(?!```html|<pre>)#s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#^((?:\\w+,? )*or [a-z]+) element(?:, or if there is no more content in the parent element and the parent element is an HTML element that is not an? (?:\\w+, )*or \\w+ element, or an autonomous custom element)?$#",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "(^[\\d.\\s]*The (?:\\w+, )*(?:(?:\\w+ )?and )*\\w+ elements?\\s*$)",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "(((?:listed|labelable|submittable|resettable),? )+and autocapitalize-inheriting )",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/^ *:?-+:?(?:(?:\\+| *\\| *):?-+:?)+ *$/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "((?:[^\\s\\]]|[ \\t](?!\\s*(?:[-\\w]+=|/?\\])))*)",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\[((?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*)\\]/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\[(?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*\\]\\(( *(?:\\([^\\x17\\s()]*\\)|[^\\x17\\s)])*(?=[ )]) *(?:\"[^\\x17]*?\"|'[^\\x17]*?'|\\([^\\x17)]*\\))? *)\\)/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/!\\[(?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*\\]\\(( *(?:[^\\x17\\s()]|\\([^\\x17\\s()]*\\))*(?=[ )]) *(?:\"[^\\x17]*?\"|'[^\\x17]*?'|\\([^\\x17)]*\\))? *)\\)/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/!\\[((?:[^\\x17[\\]]|\\[[^\\x17[\\]]*\\])*)\\](?: ?\\[([^\\x17[\\]]+)\\])?/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\343\\200\\202|\\357(?:\\274\\216|\\275\\241)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "([^\\s!\\-0-9<=>a-z\\(-.]|\\.(?![0-9])|\\b[-a-z](?![-\\w]+\\()|\\(\\s*\\))i",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "#^(\\w+://)%5B([-\\w:._%]+)%5D#i",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "#\\(\\?>#iA",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
         "pattern": "/^(\\d{2}){3,7}$/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -4105,6 +4378,12 @@
         ]
     },
     {
+        "pattern": "/^[$]|^\\d+$|[^0-9a-zA-Z$_\\x80-\\xffff]/",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
         "pattern": "/\\/\\*(.|\\n)*?\\*\\//m",
         "issues": [
             "regex.lint.alternation.dotNewline",
@@ -4119,9 +4398,39 @@
         ]
     },
     {
+        "pattern": "#<.+?>#si",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "#\\{.+?\\}#si",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/(<(?:[^<>]+(?:\"[^\"]*\"|'[^']*')?)+>)/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "#^(\\w+:)?//#i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
         "pattern": "#([a-z][a-z0-9+\\-.]*://|www\\.)[a-z0-9]+(-+[a-z0-9]+)*(\\.[a-z0-9]+(-+[a-z0-9]+)*)+(/([^\\s()<>;]+\\w)?/?)?#i",
         "issues": [
             "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#<img[\\s/]+.*?src\\s*=\\s*([\"'])([^\\1]+?)\\1.*?\\>#i",
+        "issues": [
+            "regex.lint.charclass.backrefAsOctal"
         ]
     },
     {
@@ -4262,8 +4571,7 @@
     {
         "pattern": "~(?<![A-Za-z0-9])(?:[A-Za-z]:[\\\\/]|/)(?:[^\\s:]+[\\\\/]?)+~u",
         "issues": [
-            "regex.lint.quantifier.concatenation",
-            "regex.lint.quantifier.nested"
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
@@ -4307,33 +4615,179 @@
         ]
     },
     {
-        "pattern": "#^/\\*\\*[\\s\\*]+(@var[^\\r\\n]+)[\\s\\*]*\\*\\/$#u",
+        "pattern": "/<a\\s+[^>]*href=[\"']([^\"']*)[\"'][^>]*>(.*?)<\\/a>/i",
         "issues": [
-            "regex.lint.charclass.literalMetachar"
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "/### Usage\\n([^#]*)\\n\\n###/s",
+        "pattern": "/<script\\b([^>]*?)\\s*src=/si",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/filter:\\s*progid:DXImageTransform\\.Microsoft\\.Matrix\\(([^)]+)\\)/Ss",
+        "pattern": "/[\\b<](.+@.+)[\\b>]/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^.*\\r*\\n\\r*\\n/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/%h:([\\w_-]+)/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/[\\s\\t]+for[\\s\\t]+<([^>]+)>/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^([0-9]|10)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^[0-9]+$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^\\d+[0-9.]+$/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/[\\s\\t\\n,]+/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[0-9]+(,[0-9]+)*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\n[\\t\\s]+/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/<meta[^>]+charset=[a-z0-9_\"-]+[^>]*>/Ui",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/\\.([^.]+)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^(-?[a-zA-Z-]+):(.*)$/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "|^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$|i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/<div id=\"_rc_sig\">(&nbsp;)?<\\/div>[\\s\\r\\n]*$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[a-zA-Z0-9\\+\\/=_-]+(,[a-zA-Z0-9\\+\\/=_-]+)*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/<base\\s+href=['\"]*([^'\"]+)/is",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/\\[\\s*([a-z][a-z-]+)\\s*([\\*\\|\\^\\$~]?=)\\s*['\"](-?[a-z_][a-z0-9-_]+)['\"]\\s*\\]/Ssi",
+        "pattern": "/[\\s\\t\\n\\r\\0\\x0B]/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^(>+ {0,1})+/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\{([0-9]+)\\}\\r\\n/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/;[\\s\\r\\n\\t]*/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/([0-9]{1,3}([.-][0-9]{1,3}){3})$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/(CONSTRAINT|UNIQUE|INDEX)[\\s\\t`\"]*$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/[\\s\\t]*\\r?\\n/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/<([^>]+)>/s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/(?:\"(?:[^\\\\\"]|\\\\.|\\\\)*\")|(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S",
+        "pattern": "/^(-|)[1-9]+[0-9]*$/",
         "issues": [
-            "regex.lint.overlap.charset"
+            "regex.lint.alternation.empty",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^([\"'](.*)[\"'](\\s)*:)/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -4410,12 +4864,6 @@
         ]
     },
     {
-        "pattern": "{ (?:^|[\\\\/]+) \\.\\.? (?:[\\\\/]+|$) (?:\\.\\.? (?:[\\\\/]+|$) )*}x",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "{^\\^\\d+(\\.\\d+)*$}",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -4440,64 +4888,9 @@
         ]
     },
     {
-        "pattern": "/'(PhpParser\\\\.+(?:\\\\)?)'/",
+        "pattern": "{(\\.x)+}i",
         "issues": [
-            "regex.lint.group.redundant",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^&?[\\w_]+\\s*\\(/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^&?[\\w_]+$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^&?[\\w_]+/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^([\\w_]+)\\s*(?:\\(([^\\)]*)\\))?/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^[\\w_]+$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "#^(<|<=|>|>=|=)\\s*(\\d+)\\s*((?:[KMGTPEZY])b)?$#",
-        "issues": [
-            "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/(?:\\$)?[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*/u",
-        "issues": [
-            "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/^\\s*([^\\s]+)(\\s+.*)$/s",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^([a-z][a-z0-9-]*)\\s+.*?(-{1,2}[\\w-]*)$/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -4558,6 +4951,12 @@
         "pattern": "#{([a-z0-9\\-_]*?)\\}#is",
         "issues": [
             "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#^L_(.*?)#",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -4692,20 +5091,13 @@
     {
         "pattern": "/ROLE_(?<title>([A-Z]+_?)+)/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
         "pattern": "#^((\\.\\./)*([a-z0-9/_-]+))#i",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#^([a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)+)$#",
-        "issues": [
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -4733,6 +5125,12 @@
         ]
     },
     {
+        "pattern": "#^quote=&quot;(.*?)#is",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "#\\[\\/?[a-z\\*\\+\\-]+(?:=\\S+?)?\\]#ius",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -4754,12 +5152,6 @@
         "pattern": "/\\n[\\n\\r\\s\\t]*/",
         "issues": [
             "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/(?:\\n\\t\\t\\t\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"         |\\n\\t\\t\\t'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'     |\\n\\t\\t\\t[(),]                                  |\\n\\t\\t\\t[^\\s(),]+)/x",
-        "issues": [
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -5055,6 +5447,96 @@
         ]
     },
     {
+        "pattern": "/^(# .+|- .+|<!--+|-->|SPDX-.+|)$/",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/^@param ([^$]+) \\$([a-zA-Z0-1]+)$/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^(([0-9a-fA-F]{2}-){5}|([0-9a-fA-F]{2}:){5})[0-9a-fA-F]{2}$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^(\\s|[b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z])*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(\\/\\*\\*)+\\/?$#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(\\/|\\\\)(\\*\\*\\/)+#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^[a-zA-Z_\\x80-\\xff](?:[\\\\]?[a-zA-Z0-9_\\x80-\\xff]+)*$/",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/\\n \\*\\s+/um",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/array\\(([0-9a-zA-Z_'\\\" ]+,)*([0-9a-zA-Z_'\\\" ]+)\\)/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\[([0-9a-zA-Z_'\\\" ]+,)*([0-9a-zA-Z_'\\\" ]+)\\]/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "@^/\\*\\*\\n(\\s*\\*\\s*\\n)*\\s*\\*?\\*/$@",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/,[\\n\\s]+}/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[A-Za-z0-9_]+(\\\\[A-Za-z0-9_]+)*(::[A-Za-z0-9_]+)?$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^[1-9][0-9]*_([0-9]+_)*[0-9]+$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[\\\\]{1}/",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
         "pattern": "/\\d+\\.\\d+.*$/",
         "issues": [
             "regex.lint.quantifier.concatenation"
@@ -5073,22 +5555,130 @@
         ]
     },
     {
-        "pattern": "#([kmgtp]?b?)$#si",
+        "pattern": "/\\pL/",
+        "issues": [
+            "regex.lint.unicode.propertyWithoutU"
+        ]
+    },
+    {
+        "pattern": "/\\pN/",
+        "issues": [
+            "regex.lint.unicode.propertyWithoutU"
+        ]
+    },
+    {
+        "pattern": "/\\p{Z}|\\p{S}|\\p{P}/",
+        "issues": [
+            "regex.lint.unicode.propertyWithoutU"
+        ]
+    },
+    {
+        "pattern": "![\\w\\d-]+: .+!",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "!([a-zA-Z\\s]+)$!s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/(\\[[^:]*?\\w)(-)([^a-zA-Z0-9\\\\]+?)/um",
+        "pattern": "/^\\xEF\\xBB\\xBF/i",
         "issues": [
-            "regex.lint.flag.useless.m",
-            "regex.lint.quantifier.lazyEnd"
+            "regex.lint.flag.useless.i"
         ]
     },
     {
-        "pattern": "#(?<!\\\\)/#um",
+        "pattern": "/(.|\\s)+/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "#<!--((\\[[^\\]]+\\]>.*?<!\\[[^\\]]+\\])|(\\s*/?ko\\s+.+))-->#is",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "#<!--.*?-->#ms",
         "issues": [
             "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "#@!@SMARTY:([0-9]+):SMARTY@!@#is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?<=\\[)(?:[^\\r\\n]+)(?=\\])/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(?<=\\[)(?:[^\\r\\n]*[?*][^\\r\\n]*)(?=\\])|(?<=\\[)(?:[^\\r\\n*?]+)(?=\\])(?![^\\[]*Comment=)/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(-+[\\w-]+)/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^<\\?php\\s*(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\r\\n]*(?:\\r?\\n|$)|\\s)*declare\\s*\\(\\s*strict_types\\s*=\\s*1\\s*\\)\\s*;/m",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/mU",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/mU",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(?<!\\\\)(\\\\{2})*(LTS|LT|[Ll]{1,4})/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^(?:\\h*-?\\d+(?:\\.\\d+)?\\h*[a-z]+)+$/i",
+        "issues": [
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^(-?\\d(\\d(?![\\/-])|[^\\d\\/-]([\\/-])?)*|P[T\\d].*|(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+)$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^([A-z_0-9]+\\\\)*([A-z_]+)/",
+        "issues": [
+            "regex.lint.charclass.redundant",
+            "regex.lint.charclass.suspiciousRange",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -5104,21 +5694,203 @@
         ]
     },
     {
-        "pattern": "/^(\\d{1,3}){4}:\\d+$/",
+        "pattern": "#^(INSERT|UPDATE).*RETURNING\\s.+(\\,\\s?.+)*$#is",
+        "issues": [
+            "regex.lint.dotstar.nested",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/'[^']*'|\"[^\"]*\"/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/<\\w+.*/si",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "#<a(?:rea)?[^a-z0-9>]+([^>]*?)(?:>|$)#si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#<img[^a-z0-9]+([^>]*?)(?:\\s?/?>|$)#si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#\\s*[a-z\\-]+\\s*=\\s*(\\042|\\047)([^\\1]*?)\\1#is",
+        "issues": [
+            "regex.lint.charclass.backrefAsOctal",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#\\A[0-9a-f]{2}(?<delimiter>[:-])([0-9a-f]{2}(?P=delimiter)){4}[0-9a-f]{2}\\z#i",
         "issues": [
             "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "~^(?-i:GET|POST|OPTIONS|HEAD|DELETE|PUT|PATCH) /[^\\x00-\\x20\\x7f]* (?-i:HTTP)/1\\.(?<minor>[0-9])$~",
+        "pattern": "#((\\A|\\.)[0-9a-f]{4}){3}\\z#i",
         "issues": [
-            "regex.lint.flag.redundant"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/^(?:\\[[^\\]\\r\\n]+\\]|[^\\s:\\/\\[\\]\\r\\n]+)(?::[0-9]+)?$/",
+        "pattern": "#(\\w*://|www\\.)[a-z0-9]+(-+[a-z0-9]+)*(\\.[a-z0-9]+(-+[a-z0-9]+)*)+(/([^\\s()<>;]+\\w)?/?)?#i",
         "issues": [
-            "regex.lint.charclass.duplicateChars"
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([a-z]+?){1}/i",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/^\\s*\\[(?P<array>.*)/is",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^\\s*(?P<value>true|false)/is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*\\<(?P<name>[A-F0-9]+)\\>/is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*<<(?P<struct>.*)/is",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^\\s*(?P<value>\\-?[0-9\\.]+)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*(null)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*(?P<id>[0-9]+\\s+[0-9]+\\s+R)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^\\s*\\/([A-Z0-9\\-\\+,#\\.]+)/is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?P<escape>[\\\\]*)$/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/[^A-Z0-9]/is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/<(?P<string>[0-9A-F]+)> */is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(<[a-f0-9\\s]+>)/si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^<[a-f0-9\\s]+>$/si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\\\/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^( *[\\r]?[\\n])/isU",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(endstream)[\\x09\\x0a\\x0c\\x0d\\x20]/isU",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?<=[\\r\\n])startxref[\\s]*[\\r\\n]+([0-9]+)[\\s]*[\\r\\n]+%%EOF/i",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/\\[((\\(.*?\\)|[0-9\\.\\-\\s]*)*)\\]/s",
+        "issues": [
+            "regex.lint.dotstar.nested",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/(<|>)/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\s(EMC)\\s/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(\\r\\n){2,}/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^(\\d{1,3}){4}:\\d+$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -5140,96 +5912,87 @@
         ]
     },
     {
-        "pattern": "/(calendar)\\/([A-z0-9-@_]+)\\//",
-        "issues": [
-            "regex.lint.charclass.redundant",
-            "regex.lint.charclass.suspiciousRange"
-        ]
-    },
-    {
-        "pattern": "/\\B(?<![^a-z0-9_\\-@\\.\\'\\s])@(\"(guest|email)\\/[a-f0-9]+\"|\"(?:federated_)?(?:group|team|user){1}\\/[a-z0-9_\\-@\\.\\' \\/:]+\"|\"[a-z0-9_\\-@\\.\\' ]+\"|[a-z0-9_\\-@\\.\\']+)/i",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "/^([0-9a-f]{4}-?){8}$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\!?\\[((.|\\n)*)\\]\\((.*)\\)/mU",
-        "issues": [
-            "regex.lint.alternation.dotNewline",
-            "regex.lint.flag.useless.m",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([[:xdigit:]]\\/){7}[0-9]+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[^A-Za-z][tn]\\(['\"][^'\"]*?['\"],( ?)['\"][^'\"]*?(\\.\\.\\.)[^'\"]*?['\"]/sU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(.*)data-requesttoken=\"(.*)\">(.*)/sm",
+        "pattern": "/({#.*?#})/mu",
         "issues": [
             "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "/(.*)@\\[.*\\]/i",
+        "pattern": "/({{.*?}})/mu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/({%.*?%})/mu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/<!DOCTYPE\\b[^>]*(?:\\[[^\\]]*\\])?[^>]*>/is",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^---\\n(.+?)\\n---\\n{0,}(.*)$/uis",
         "issues": [
             "regex.lint.flag.useless.i"
         ]
     },
     {
-        "pattern": "/^[_a-z0-9-+]+(\\.[_a-z0-9-+]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)*(\\.[a-z]{2,4})$/",
+        "pattern": "/(?:(\\\\[|])|[^|`]|`[^`]+`|`)+/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.overlap.charset"
         ]
     },
     {
-        "pattern": "/^[1-9][0-9]*(\\.[0-9]+){0,3}$/",
+        "pattern": "/\\r\\n|\\r/um",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "/^## (?:\\[)?(?:v)?(\\d+\\.\\d+(\\.\\d+)?)/m",
+        "pattern": "/\\R/um",
         "issues": [
-            "regex.lint.group.redundant"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "/(@[^{]+{(?:[^{}]*|(?R))*})/",
+        "pattern": "/\\s*[\\r\\n]+\\s*/",
         "issues": [
-            "regex.lint.quantifier.nested"
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "/-{2,}/s",
+        "pattern": "/#\\d*/m",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "/( \\([2-9]\\)){2,}/",
+        "pattern": "/([a-zd])([A-Z])/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.charclass.redundant"
         ]
     },
     {
-        "pattern": "/([ ,-:;\\x{2013}\\x{2014}]+$)/us",
+        "pattern": "/((['\"])[^\\2]*\\2)/",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.charclass.backrefAsOctal"
+        ]
+    },
+    {
+        "pattern": "/define\\(\\s*['\"]GRAV_VERSION['\"]\\s*,\\s*['\"]([^'\"]+)['\"]\\s*\\);/mu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/[\\\\\\/:\"*?&<>|]+/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
         ]
     },
     {
@@ -5369,21 +6132,9 @@
         ]
     },
     {
-        "pattern": "![\\w\\d-]+: .+!",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
         "pattern": "!'?\\b\\w(\\w|')*\\b!",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "!([a-zA-Z\\s]+)$!s",
-        "issues": [
-            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -5429,6 +6180,18 @@
         ]
     },
     {
+        "pattern": "/^(mod[\\.]|app[\\.]).*?/s",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "/^[$].*?/s",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "/<textarea/si",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -5444,6 +6207,12 @@
         "pattern": "/hidden/si",
         "issues": [
             "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^(mod[\\.]|app[\\.]).*?/i",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
@@ -5905,64 +6674,71 @@
         ]
     },
     {
-        "pattern": "/^`{32} example\\n((?s).*?)\\n\\.\\n(?:|((?s).*?)\\n)`{32}$|^#{1,6} *(.*?)$/m",
+        "pattern": "/^[0-9.a-e:.]*$/i",
         "issues": [
-            "regex.lint.alternation.empty"
+            "regex.lint.charclass.redundant"
         ]
     },
     {
-        "pattern": "/^<\\/\\w[\\w-]*+[ ]*+>/s",
+        "pattern": "/^([a-zA-Z0-9-._~!$&\\'()*+,;=]|%[[:xdigit:]]{2}){1,254}$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([°'\"]+[NESW])/",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
+        ]
+    },
+    {
+        "pattern": "/^\\d{4}-[0-1]\\d-[0-3]\\d$/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^\\d{4}-[0-1]\\d-[0-3]\\dT\\d{1,2}:[0-5]\\d:[0-5]\\d$/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^([01]{8}\\.){3}[01]{8}\\z/i",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^([0-9]{3}\\.){3}[0-9]{3}\\z/i",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^([0-9a-f]{2}\\.){3}[0-9a-f]{2}\\z/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^\\s+$/s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/^<!---?[^>-](?:-?+[^-])*-->/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^<(\\w++:\\/{2}[^ >]++)>/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^\\xEF\\xBB\\xBF/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/(.|\\s)+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/('[^'\\\\]*(?:\\\\.[^'\\\\]*)*'|\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|:|[^:]+)/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#<!--((\\[[^\\]]+\\]>.*?<!\\[[^\\]]+\\])|(\\s*/?ko\\s+.+))-->#is",
+        "pattern": "/([^<]*)(<?[^>]*>?)/",
         "issues": [
             "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "#<!--.*?-->#ms",
+        "pattern": "~(</?)(\\w*)((/(?!>)|[^/>])*)(/?>)~",
         "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "#@!@SMARTY:([0-9]+):SMARTY@!@#is",
-        "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -6022,25 +6798,6 @@
         ]
     },
     {
-        "pattern": "/(?<=\\[)(?:[^\\r\\n]+)(?=\\])/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(?<=\\[)(?:[^\\r\\n]*[?*][^\\r\\n]*)(?=\\])|(?<=\\[)(?:[^\\r\\n*?]+)(?=\\])(?![^\\[]*Comment=)/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "{\"(?:[^\"]+|\\\\\")*$}m",
-        "issues": [
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "#^[\\pL_][\\pL0-9._-]*$#ui",
         "issues": [
             "regex.lint.flag.useless.i"
@@ -6050,76 +6807,6 @@
         "pattern": "{\"[^\"\\\\]*+(\\\\.[^\"\\\\]*+)*+\"|'[^'\\\\]*+(\\\\.[^'\\\\]*+)*+'}s",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/YahooMobile(?:Messenger|Mail|Weather)\\/1.0 \\(Android (Messenger|Mail|Weather); ([0-9\\.]+)\\) \\([^;]+; ?[^;]+; ?([^;]+); ?([0-9\\.]+)\\/[^\\;\\)\\/]+\\)/u",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/YahooJMobileApp\\/[0-9\\.]+ \\(Android [a-z]+; ([0-9\\.]+)\\) \\([^;]+; ?[^;]+; ?[^;]+; ?([^;]+); ?([0-9\\.]+)\\/[^\\;\\)\\/]+\\)/u",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/IDL[ -]?([0-9]+.*)/u",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/Andr[0o]id(?: )?(?:AllPhone_|CyanogenMod_|OUYA )?(?:\\/)?v?([0-9.]+)/ui",
-        "issues": [
-            "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Linux\\/[0-9.+]+ Android\\/[0-9.]+/u",
-        "issues": [
-            "regex.lint.flag.redundant",
-            "regex.lint.quantifier.lazyEnd"
-        ]
-    },
-    {
-        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Android(_OS)?\\/[0-9.]+/u",
-        "issues": [
-            "regex.lint.flag.redundant",
-            "regex.lint.quantifier.lazyEnd"
-        ]
-    },
-    {
-        "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Release\\/[0-9.]+/u",
-        "issues": [
-            "regex.lint.flag.redundant",
-            "regex.lint.quantifier.lazyEnd"
-        ]
-    },
-    {
-        "pattern": "/Nokia-?([^\\/;\\)\\s]+)[\\s|\\/|;|\\)]/u",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "/《붉은별》\\/([0-9.]*)/iu",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^JUC ?\\(Linux; ?U; ?(?:Android)? ?([0-9\\.]+)[^;]*; ?[^;]+; ?([^;]*[^\\s])\\s*; ?[0-9]+\\*[0-9]+;?\\)/u",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/(?:Obigo|Teleca)[- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)(?:[0-9])?(?:[\\/;]|$)/ui",
-        "issues": [
-            "regex.lint.charclass.redundant",
-            "regex.lint.group.redundant"
         ]
     },
     {
@@ -6149,64 +6836,22 @@
         ]
     },
     {
-        "pattern": "/  \\#/ix",
+        "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)\\s*(?:--DATA--\\s*(.*))?\\s*--EXCEPTION--\\s*(.*)/sx",
         "issues": [
-            "regex.lint.flag.useless.i"
+            "regex.lint.dotstar.nested"
         ]
     },
     {
-        "pattern": "/@media [^{]*+{([^{}]++|{[^{}]*+})*+}/",
+        "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)--DATA--.*?--EXPECT--.*/s",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^([a-z\\d](-*[a-z\\d])*)(\\.([a-z\\d](-*[a-z\\d])*))*$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^[^\\.]{1,63}(\\.[^\\.]{1,63})*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/(.*?)<((?:.*?:)?(?:\\p{L}|_|[0-9])+?)\\((.*?)/",
-        "issues": [
-            "regex.lint.quantifier.lazyEnd",
-            "regex.lint.unicode.propertyWithoutU"
-        ]
-    },
-    {
-        "pattern": "/(\\p{L})@/",
-        "issues": [
-            "regex.lint.unicode.propertyWithoutU"
-        ]
-    },
-    {
-        "pattern": "@(https?://([-\\w\\.]+[-\\w])+(:\\d+)?(/([\\w/_\\.#-]*(\\?\\S+)?[^\\.\\s])?)?)@i",
-        "issues": [
-            "regex.lint.charclass.duplicateChars",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/[^\\w\\d\\-\\_]/i",
-        "issues": [
-            "regex.lint.charclass.duplicateChars",
-            "regex.lint.flag.useless.i"
+            "regex.lint.dotstar.nested"
         ]
     },
     {
         "pattern": "/.*?(\\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\\[!\"#$%&'\\(\\)*+,.\\/:;<=>?@\\[\\]^{|}~]))+)/",
         "issues": [
             "regex.lint.anchor.impossible.end",
-            "regex.lint.anchor.impossible.start",
-            "regex.lint.quantifier.nested"
+            "regex.lint.anchor.impossible.start"
         ]
     },
     {
@@ -6226,23 +6871,20 @@
         "pattern": "/-.*?(\\{% block (.*?) %})+/",
         "issues": [
             "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
         "pattern": "/\\+.*?(\\{% block (.*?) %})+/",
         "issues": [
             "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
         "pattern": "/^[_a-zA-Z][_a-zA-Z0-9]*(\\\\[_a-zA-Z][_a-zA-Z0-9]*)*\\\\$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -6258,21 +6900,153 @@
         ]
     },
     {
-        "pattern": "/^[$]|^\\d+$|[^0-9a-zA-Z$_\\x80-\\xffff]/",
+        "pattern": "/^#([\\da-f]{3}){1,2}$|^#([\\da-f]{4}){1,2}$/i",
         "issues": [
-            "regex.lint.charclass.redundant"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/([^<]*)(<?[^>]*>?)/",
+        "pattern": "/^(?<amount>[\\d\\.]+)( (?<currency>\\w{3}))?$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/<\\/?[^>]*>/",
         "issues": [
             "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "~(</?)(\\w*)((/(?!>)|[^/>])*)(/?>)~",
+        "pattern": "/(^[A-Z]{1,})([A-Z]{1})([a-z]+.*)/",
+        "issues": [
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/(^[A-Z]{1})([a-z]+.*)/",
+        "issues": [
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "#(url\\([\\n\\r\\s'\"]*)([^\\s\\)\\?'\"]+)#i",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "#</?(html|head(?!er)|body)[^>]*>#si",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#^<iframe(?:\"[^\"]*\"|'[^']*'|[^>])*>#i",
+        "issues": [
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^\\t[\\-@=\\+]+.*/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^(?<class>.+)(_[^_]+)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^(.+) ([^\"]+)$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "~(\\R){2,}~u",
         "issues": [
             "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[^\\w_]+$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/\\\\'(?:[^']|''|\\\\\\\\')*\\\\'/",
+        "issues": [
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/((\\d+\\.){2}\\d+)-mariadb/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^(\\d+\\.){2}\\d+$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/\\\\([\\\\'])/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/\\\\([nrtvf\\\\$\"]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2})/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(_t\\([^\\)]*?\\))/ms",
+        "issues": [
+            "regex.lint.flag.useless.m",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "#(\\<option[^>]*[\\s]+selected)(?!\\s*\\=)#si",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "#(\\<input[^>]*[\\s]+checked)(?!\\s*\\=)#si",
+        "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "%^\\s*(\\\\|/){2,}%",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#[^a-zA-Z0-9\\-\\_]#is",
+        "issues": [
+            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -6305,12 +7079,6 @@
         "pattern": "/<livewire:[^>]+?\\/>/is",
         "issues": [
             "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(?<=\\s)wire:key\\s*=\\s*(?:\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)')/",
-        "issues": [
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -6412,6 +7180,12 @@
         ]
     },
     {
+        "pattern": "!([-−])(\\d+)!",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
+        ]
+    },
+    {
         "pattern": "!(<br[^>]*>\\s*)(#\\d+\\s+[^<]+)!is",
         "issues": [
             "regex.lint.flag.useless.s",
@@ -6464,12 +7238,6 @@
         "pattern": "{^(.*?/|)(([A-Z][a-zA-Z0-9_]+)\\.module(?:\\.php)?)$}",
         "issues": [
             "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/\\s*@trim\\s*/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
         ]
     },
     {
@@ -6835,12 +7603,6 @@
         ]
     },
     {
-        "pattern": "/^[A-Z][A-Za-z0-9_]*(?:\\.[A-Z][A-Za-z0-9_]*){1,2}$/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/src=\"(\\.\\.\\/|\\.\\/)+/",
         "issues": [
             "regex.lint.group.quantifiedCapture",
@@ -6910,9 +7672,28 @@
         ]
     },
     {
-        "pattern": "/[\\\\]{1}/",
+        "pattern": "/^([a-z\\d](-*[a-z\\d])*)(\\.([a-z\\d](-*[a-z\\d])*))*$/i",
         "issues": [
-            "regex.lint.quantifier.useless"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^[^\\.]{1,63}(\\.[^\\.]{1,63})*$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([ ,-:;\\x{2013}\\x{2014}]+$)/us",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/(?:[^,\"]*+(?:\"[^\"]*+\")?)+[^,\"]*+/",
+        "issues": [
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -6924,332 +7705,9 @@
         ]
     },
     {
-        "pattern": "/^ \\* Version: (\\d+\\.\\d+.*)/m",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^Version: (\\d+\\.\\d+.*)/m",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "#^\\s*\\*/\\s+abstract class TestDoubleBuilder\\s#ms",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^<!---?[^>-](?:-?[^-])*-->/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[',\"]use strict[',\"];/Uims",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(Microsoft.AlphaImageLoader\\s*\\([^\\)]*src=(?:'|\")?)([^\\/'\"\\s\\)](?:(?<!http:|https:).)*)\\)/isU",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/(?P<pre_path>@import\\s+(?:url\\s*\\()?['\"\\s]*)(?P<path>[^'\"\\s](?:https?:\\/\\/.+\\/?)?.+?)(?P<post_path>['\"\\s\\)]*;)/i",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/(:?\\s*url\\s*\\()\\s*(?:'|\")?\\s*([^\\/'\"\\s\\)](?:(?<!data:|http:|https:|[\\('\"]#|%23).)*)['\"\\s]*\\)/isU",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(?:(?:EXPLAIN\\s+(?:EXTENDED\\s+)?)?SELECT.*?\\s+FROM|INSERT(?:\\s+LOW_PRIORITY|\\s+DELAYED|\\s+HIGH_PRIORITY)?(?:\\s+IGNORE)?(?:\\s+INTO)?|REPLACE(?:\\s+LOW_PRIORITY|\\s+DELAYED)?(?:\\s+INTO)?|UPDATE(?:\\s+LOW_PRIORITY)?(?:\\s+IGNORE)?|DELETE(?:\\s+LOW_PRIORITY|\\s+QUICK|\\s+IGNORE)*(?:\\s+FROM)?|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|OPTIMIZE|REPAIR).*\\s+TABLE|TRUNCATE(?:\\s+TABLE)?|CREATE(?:\\s+TEMPORARY)?\\s+TABLE(?:\\s+IF\\s+NOT\\s+EXISTS)?|ALTER(?:\\s+IGNORE)?\\s+TABLE|DROP\\s+TABLE(?:\\s+IF\\s+EXISTS)?|CREATE(?:\\s+\\w+)?\\s+INDEX.*\\s+ON|DROP\\s+INDEX.*\\s+ON|LOAD\\s+DATA.*INFILE.*INTO\\s+TABLE|(?:GRANT|REVOKE).*ON\\s+TABLE|SHOW\\s+(?:.*FROM|.*TABLE))\\s+`?(\\w+)`?/is",
-        "issues": [
-            "regex.lint.alternation.duplicateDisjunction",
-            "regex.lint.group.redundant",
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.concatenation",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^\\d+(\\.\\d+)+$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([-_].*)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/[!|@|#|$|%|^|&|*|(|)]/",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "#[`|~|-|_|=|+|\\[|{|\\]|}|\\|\\|;:'\",<\\.>/\\?]#",
-        "issues": [
-            "regex.lint.charclass.redundant",
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "#(?<!<)(?:https?|ftp)://([^\\s<>\"'\\[\\]()]+|\\[(?1)*+\\]|\\((?1)*+\\))+(?<![_*.?])#i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/custom\\-[0-1]+/i",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^@?\\w{1,15}$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "#(?:^|\\s|\"|')(https?://([^\\s()<>]+(?:\\([\\w\\d]+\\)|([^[:punct:]\\s]|/))))#",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^(\\d+,)*\\d+$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#^/rest/v(\\d+(\\.\\d+)*)#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#!\\s*IE(\\s*\\d+){0}#i",
-        "issues": [
-            "regex.lint.quantifier.zero"
-        ]
-    },
-    {
-        "pattern": "/^\\d+(\\.\\d+)+(-(beta|rc|pressable)\\d?)$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#(<figure)[^>]*(?=class=([\"']?)[^>]*wp-block-gallery[^>]*\\2)#is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#(<a[^>]* href=([\"']?)(\\S+)\\2>)\\s*(<img[^>]*)(class=([\"']?)[^>]*wp-image-[0-9]+[^>]*\\6.*>)\\s*</a>#is",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "#&lt;iframe\\s[^&]*?(?:&(?!gt;)[^&]*?)*?src=\"<a href=\"https?://(.*)?\\.google\\.(.*?)/(.*?)\\?(.+?)&quot;[^&]*?(?:&(?!gt;)[^&]*?)*?&gt;\\s*&lt;/iframe&gt;&lt;br\">[^\"]*?\"&gt;\\s*&lt;/iframe&gt;(?:&lt;br</a>\\s*/&gt;\\s*&lt;small&gt;.*?&lt;/small&gt;)?#i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#&lt;iframe\\s[^&]*?(?:&(?!gt;)[^&]*?)*?src=\"https?://(.*)?\\.google\\.(.*?)/(.*?)\\?(.+?)\"[^&]*?(?:&(?!gt;)[^&]*?)*?&gt;\\s*&lt;/iframe&gt;(?:\\s*(?:&lt;br\\s*/?&gt;)?\\s*&lt;small&gt;.*?&lt;/small&gt;)?#i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^http(s|):\\/\\/twitter\\.com(\\/\\#\\!\\/|\\/)([a-zA-Z0-9_]{1,20})\\/status(es)*\\/(\\d+)$/",
-        "issues": [
-            "regex.lint.alternation.empty",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^([\\da-z-]+(,[\\da-z-]+)*).*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^\\/(?:s)\\/(.+)$/",
+        "pattern": "/^(?:['\"])(.*?)(?:['\"])?$/",
         "issues": [
             "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/<iframe src=\"(https?:)?\\/\\/([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)\\/[^\\\"]+\\\"/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/(https?:)?\\/\\/([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)\\/photos\\/([^\\/]+)\\/\\d+\\//",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "~^(https?:)?//([\\da-z\\-]+\\.)*?((static)?flickr\\.com|flic\\.kr)/.*~i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#(\\<div\\s)+(id=\\\"gist[0-9]+\\\")+(\\sclass=\\\"gist\\\"\\>)?#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "!https?://(docs|drive|spreadsheets\\d*|calendar|www)*\\.google\\.com/([-\\w\\./]+)\\?([^\"]+)!",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#(<(?:br /|/?p)>\\n?)*(\\[/?[a-z]+\\])(<(?:br /|/?p)>\\n?)*#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/(_.*)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "#https?://twitter\\.com/settings/widgets/(\\d+)#s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "!^https?://!is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#((?<!/)/[^/]+)*/wp-content/plugins/wordpress/plugins/wpcomsh/([^/]+)/#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[^\\s\\r\\n\\t\\f]/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/ \\/ ?.*/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/.*Array\\s\\( (.*)\\)/msx",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/[^a-zA-Z0-9.-_:]/",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "%^(?:(?:https?|ftp)://)?(?:\\S+(?::\\S*)?@|\\d{1,3}(?:\\.\\d{1,3}){3}|(?:(?:[a-z\\d\\x{00a1}-\\x{ffff}]+-?)*[a-z\\d\\x{00a1}-\\x{ffff}]+)(?:\\.(?:[a-z\\d\\x{00a1}-\\x{ffff}]+-?)*[a-z\\d\\x{00a1}-\\x{ffff}]+)*(?:\\.[a-z\\x{00a1}-\\x{ffff}]{2,6}))(?::\\d+)?(?:[^\\s]*)?$%iu",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "#(https?://[^?/]+)(/?.*)?$#",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^\\[([^]]+)\\]: *(\\S+(?: +(?:\"(?:[^\"]|\\\\.)*\"|'(?:[^']|\\\\.)*'|\\((?:[^()]|\\\\.)*\\)))?)\\s*\\Z/m",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/^## +(\\[?[^] ]+\\]?) - (.+?) *$/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/(\\n[ \\t]+)+/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^extension\\s+(?P<value>[^\\s<>=!]+)\\s*(?P<version>[<>=!]{0,2}\\s*[\\d\\.-]+[\\d\\.]?)?[ \\t]*\\r?$/m",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^[0-9,a-z,A-Z$_]+$/i",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "#(?:<a[^>]*?\\s+?href=[\"'](?P<link_url>[^\\s]+?)[\"'][^>]*?>\\s*)?(?P<img_tag><(?:img|amp-img|amp-anim)[^>]*?\\s+?src=[\"'](?P<img_url>[^\\s]+?)[\"'].*?>){1}(?:\\s*</a>)?#is",
-        "issues": [
-            "regex.lint.quantifier.concatenation",
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "#^http(s)?://i[\\d]{1}.wp.com#",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "#^i[\\d]{1}.wp.com$#i",
-        "issues": [
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/",
-        "issues": [
-            "regex.lint.quantifier.useless"
         ]
     },
     {
@@ -7284,519 +7742,138 @@
         ]
     },
     {
-        "pattern": "/^\\s*\\[(?P<array>.*)/is",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(?P<value>true|false)/is",
+        "pattern": "/### Usage\\n([^#]*)\\n\\n###/s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/^\\s*\\<(?P<name>[A-F0-9]+)\\>/is",
+        "pattern": "`^http(?:s)?://(?:www\\.)?(?:twitter|x)\\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.group.redundant"
         ]
     },
     {
-        "pattern": "/^\\s*<<(?P<struct>.*)/is",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(?P<value>\\-?[0-9\\.]+)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(null)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^\\s*(?P<id>[0-9]+\\s+[0-9]+\\s+R)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^\\s*\\/([A-Z0-9\\-\\+,#\\.]+)/is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(?P<escape>[\\\\]*)$/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/[^A-Z0-9]/is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<(?P<string>[0-9A-F]+)> */is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(<[a-f0-9\\s]+>)/si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^<[a-f0-9\\s]+>$/si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\\\/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^( *[\\r]?[\\n])/isU",
+        "pattern": "/^(\\w)*/i",
         "issues": [
             "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/(endstream)[\\x09\\x0a\\x0c\\x0d\\x20]/isU",
+        "pattern": "`\\[[^\\]]+\\]`s",
         "issues": [
             "regex.lint.flag.useless.s"
         ]
     },
     {
-        "pattern": "/(?<=[\\r\\n])startxref[\\s]*[\\r\\n]+([0-9]+)[\\s]*[\\r\\n]+%%EOF/i",
+        "pattern": "`\\* This is an alias of {@see (?P<aliasOf>[^\\s\\}]++)`sim",
+        "issues": [
+            "regex.lint.flag.useless.m",
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "`\\* @method.*? \\*/\\nclass `sim",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/```php\\n<\\?php\\nuse Assert\\\\Assertion;\\n\\nAssertion::.*?```/sim",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^(?:\\w+\\:{2})?on[A-Z]{1}[\\w+]*$/",
+        "issues": [
+            "regex.lint.charclass.literalMetachar",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/\\<(figure|span)\\s+[^\\>]+\\>[^<]*\\<\\/\\1\\>/i",
         "issues": [
             "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "/\\[((\\(.*?\\)|[0-9\\.\\-\\s]*)*)\\]/s",
+        "pattern": "/^on[A-Z]{1}[\\w+]*$/",
         "issues": [
-            "regex.lint.dotstar.nested",
+            "regex.lint.charclass.literalMetachar",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/^get[A-Z]{1}[\\w+]*Options$/",
+        "issues": [
+            "regex.lint.charclass.literalMetachar",
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
+        "pattern": "/\\<figure\\s+[^\\>]+\\>[^\\<]*\\<\\/figure\\>/i",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^(https?:\\/\\/)?((([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,})|(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(\\[[A-Fa-f0-9:]+\\])|([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}))(:\\d+)?(\\/.*)?$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/^([a-z0-9]+(-[a-z0-9]+)*\\.)+[a-z]{2,}$/",
+        "issues": [
             "regex.lint.group.quantifiedCapture",
             "regex.lint.quantifier.nested"
         ]
     },
     {
-        "pattern": "/(<|>)/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\s(EMC)\\s/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(\\r\\n){2,}/",
+        "pattern": "/^(?!-)([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z]{2,63}$/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/]8;;(.*)]8;;/m",
+        "pattern": "/(\\s|\\x{3164}|\\x{1160})+/u",
         "issues": [
-            "regex.lint.flag.useless.m"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
-        "pattern": "/[^0-9]/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/[^a-zA-Z0-9]/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<page([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<page_header([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<page_footer([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/page([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/page_header([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/page_footer([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<bookmark([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/bookmark([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<barcode([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/barcode([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<qrcode([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/qrcode([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^url\\(([^)]+)\\)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^([-]?[0-9\\.]+)%/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]+)x([0-9]+)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]*)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^#([^#]+)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+px$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+pt$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+in$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+mm$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.\\-]+%$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^#[0-9A-Fa-f]{6}$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^#[0-9A-F]{3}$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^url\\(([^)]*)\\)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[-]?[0-9\\.]+%$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/([a-z]+)\\(([^\\)]*)\\)/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\s+/isu",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<body/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<link ([^>]*)[\\/]?>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\/>$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[0-9]+$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^([0-9]+)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/[\\s]+/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s",
-            "regex.lint.quantifier.lazyEnd"
-        ]
-    },
-    {
-        "pattern": "/^[0-9\\.]+$/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/([^{}]+){([^}]*)}/isU",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<link([^>]*)>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<link[^>]*>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<\\/link[^>]*>/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/url\\(([^\\\\][^)]*)\\)/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/url\\((\\\\[^)]*)\\)/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^([a-z0-9]+)$/isU",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^[\\(\\s*]+/",
-        "issues": [
-            "regex.lint.charclass.literalMetachar"
-        ]
-    },
-    {
-        "pattern": "#[^a-zA-Z0-9\\-\\_]#is",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/<a\\s+[^>]*href=[\"']([^\"']*)[\"'][^>]*>(.*?)<\\/a>/i",
+        "pattern": "/^[ \\t]*From:[ \\t]*.+(?:\\r?\\n.*){0,5}?\\r?\\n[ \\t]*Subject:[ \\t]*.*$/im",
         "issues": [
             "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "/<script\\b([^>]*?)\\s*src=/si",
+        "pattern": "/^(?:\\s*(?:fwd?|fw)\\s*:\\s*)+/i",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.overlap.charset"
         ]
     },
     {
-        "pattern": "#(\\/\\*\\*)+\\/?$#",
+        "pattern": "/style=\"--color:\\s*([^;]+);\\s*--dark-color:\\s*[^\"]*\"/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
-        "pattern": "#(\\/|\\\\)(\\*\\*\\/)+#",
+        "pattern": "/^\\s*(?:\".*?\"|[^\",]*)\\s*(?:,\\s*(?:\".*?\"|[^\",]*)\\s*)*$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[a-zA-Z_\\x80-\\xff](?:[\\\\]?[a-zA-Z0-9_\\x80-\\xff]+)*$/",
-        "issues": [
+            "regex.lint.dotstar.nested",
             "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/\\n \\*\\s+/um",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/array\\(([0-9a-zA-Z_'\\\" ]+,)*([0-9a-zA-Z_'\\\" ]+)\\)/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\[([0-9a-zA-Z_'\\\" ]+,)*([0-9a-zA-Z_'\\\" ]+)\\]/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "@^/\\*\\*\\n(\\s*\\*\\s*\\n)*\\s*\\*?\\*/$@",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/,[\\n\\s]+}/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/^[A-Za-z0-9_]+(\\\\[A-Za-z0-9_]+)*(::[A-Za-z0-9_]+)?$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[1-9][0-9]*_([0-9]+_)*[0-9]+$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\A#!.*\\r?\\n\\z/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "(^.*(?:\\n\\s+\\*.*)+$)",
-        "issues": [
-            "regex.lint.dotstar.nested"
         ]
     },
     {
@@ -7843,30 +7920,6 @@
         ]
     },
     {
-        "pattern": "/^(?:ORDER[[:space:]]*BY[[:space:]]*)+/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(?:FROM[[:space:]]+)+/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(?:GROUP[[:space:]]*BY[[:space:]]*)+/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(?:(AND|OR)[[:space:]]*)+/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/<\\?php|\\?>/is",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -7903,12 +7956,6 @@
         ]
     },
     {
-        "pattern": "#/(?:\\.{2,})+#",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "#^(?:\\.{2,})+/#",
         "issues": [
             "regex.lint.quantifier.nested"
@@ -7935,8 +7982,7 @@
     {
         "pattern": "#^([\\t\\v=+*%/@-]+)+#",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -8178,18 +8224,6 @@
         "pattern": "/\\n/m",
         "issues": [
             "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^[A-z0-9\\-#., ()%]+$/",
-        "issues": [
-            "regex.lint.charclass.suspiciousRange"
-        ]
-    },
-    {
-        "pattern": "#^\\\\.+::.+$#i",
-        "issues": [
-            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -8436,7 +8470,8 @@
     {
         "pattern": "/^r?([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G(JN?)?){0,4}[CR]J?((Z?F)?[N]{0,2})?A?((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8455,8 +8490,7 @@
     {
         "pattern": "/([a-z]|[A-Z])([ ,\\-.\\d]+)*/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -8481,8 +8515,7 @@
     {
         "pattern": "/([MZLHVCSQTAmzlhvcsqta])([eE ,\\-.\\d]+)*/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -8543,6 +8576,80 @@
         "pattern": "/(\\/GS1 gs\\n){2,20}/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/(.*?)<((?:.*?:)?(?:\\p{L}|_|[0-9])+?)\\((.*?)/",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd",
+            "regex.lint.unicode.propertyWithoutU"
+        ]
+    },
+    {
+        "pattern": "/(\\p{L})@/",
+        "issues": [
+            "regex.lint.unicode.propertyWithoutU"
+        ]
+    },
+    {
+        "pattern": "/'(PhpParser\\\\.+(?:\\\\)?)'/",
+        "issues": [
+            "regex.lint.group.redundant",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^&?[\\w_]+\\s*\\(/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^&?[\\w_]+$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^&?[\\w_]+/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^([\\w_]+)\\s*(?:\\(([^\\)]*)\\))?/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^[\\w_]+$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "#^(<|<=|>|>=|=)\\s*(\\d+)\\s*((?:[KMGTPEZY])b)?$#",
+        "issues": [
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "/(?:\\$)?[a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*/u",
+        "issues": [
+            "regex.lint.group.redundant"
+        ]
+    },
+    {
+        "pattern": "/^\\s*([^\\s]+)(\\s+.*)$/s",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^([a-z][a-z0-9-]*)\\s+.*?(-{1,2}[\\w-]*)$/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
         ]
     },
     {
@@ -8661,6 +8768,18 @@
         ]
     },
     {
+        "pattern": "/([\"'])?data\\s*:\\s*(?:image\\s*\\/.*)[^\\001]*base64[^\\001]*,[^\\001]*\\001?/iUus",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "#(?:%3C|¼|<)[^\\p{L}@]*/*[^\\p{L}@]*(?:script[^\\p{L}@]+).*(?:%3E|¾|>)?#iUus",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "#<(?!!--|!\\[)((?<start>/*\\s*)((?<tagName>[\\p{L}:]+)(?=[^\\p{L}]|$|)|.+)[^\\s\"'\\p{L}>/=]*[^>]*)(?<closeTag>>)?#iusS",
         "issues": [
             "regex.lint.alternation.empty",
@@ -8694,9 +8813,14 @@
         ]
     },
     {
+        "pattern": "/^([12345]{1}\\d{2})|([12345]{1}XX)$/",
+        "issues": [
+            "regex.lint.quantifier.useless"
+        ]
+    },
+    {
         "pattern": "/{%.?block content.?%}((.*?\\n)+){%.?endblock.?%}/m",
         "issues": [
-            "regex.lint.dotstar.nested",
             "regex.lint.flag.useless.m",
             "regex.lint.group.quantifiedCapture"
         ]
@@ -8752,8 +8876,7 @@
     {
         "pattern": "/^test[a-zA-Z0-9]*(_[a-z0-9][a-zA-Z0-9]*)*$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
@@ -8781,21 +8904,9 @@
         ]
     },
     {
-        "pattern": "/^[A-Z][a-zA-Z0-9]*(?::[A-Z][a-zA-Z0-9]*)*$/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/^[a-z0-9]([_.-]?[a-z0-9]+)*\\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^[a-z][a-z0-9]*(?:[_-][a-z][a-z0-9]*)+$/",
-        "issues": [
-            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8853,12 +8964,6 @@
         ]
     },
     {
-        "pattern": "/(^[^,\\\\]*(?:\\\\.[^,\\\\]*)*),/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/^#@[+-]{1}/m",
         "issues": [
             "regex.lint.quantifier.useless"
@@ -8895,12 +9000,6 @@
         ]
     },
     {
-        "pattern": "~(?:(?:\\\\\\*){2,}(/?))+~",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
         "pattern": "/[\\x80-\\xFF]|(?<!\\\\)\\\\(?:\\\\\\\\)*+(?-i:X|[pP][\\{CLMNPSZ]|x\\{[A-Fa-f0-9]{3})/",
         "issues": [
             "regex.lint.flag.redundant"
@@ -8922,12 +9021,6 @@
         "pattern": "/([^\\\\]++\\\\)++/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#(?:^/\\*\\*|\\n\\s*+\\*)\\s*+@return\\s++(static|\\$this)[\\s\\*]#i",
-        "issues": [
-            "regex.lint.charclass.literalMetachar"
         ]
     },
     {
@@ -9048,36 +9141,6 @@
         ]
     },
     {
-        "pattern": "/(?:[^,\"]*+(?:\"[^\"]*+\")?)+[^,\"]*+/",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/<([^>]+)>/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)\\s*(?:--DATA--\\s*(.*))?\\s*--EXCEPTION--\\s*(.*)/sx",
-        "issues": [
-            "regex.lint.dotstar.nested"
-        ]
-    },
-    {
-        "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)--DATA--.*?--EXPECT--.*/s",
-        "issues": [
-            "regex.lint.dotstar.nested"
-        ]
-    },
-    {
-        "pattern": "#^[0-1][0-9]:[0-5][0-9]$#",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
         "pattern": "/^\\[[^\\]]+\\](.*?)\\[[^\\]]+\\]$/is",
         "issues": [
             "regex.lint.flag.useless.i"
@@ -9126,6 +9189,12 @@
         ]
     },
     {
+        "pattern": "/['\"‘’“”ʻ\\[\\]\\(\\)\\{\\}:]/",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
+        ]
+    },
+    {
         "pattern": "/^(\\/\\w+)+\\/$/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
@@ -9136,25 +9205,6 @@
         "issues": [
             "regex.lint.overlap.charset",
             "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "`^http(?:s)?://(?:www\\.)?(?:twitter|x)\\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`",
-        "issues": [
-            "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/^(\\w)*/i",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "`\\[[^\\]]+\\]`s",
-        "issues": [
-            "regex.lint.flag.useless.s"
         ]
     },
     {
@@ -9184,49 +9234,10 @@
         ]
     },
     {
-        "pattern": "/^(# .+|- .+|<!--+|-->|SPDX-.+|)$/",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/^@param ([^$]+) \\$([a-zA-Z0-1]+)$/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^(([0-9a-fA-F]{2}-){5}|([0-9a-fA-F]{2}:){5})[0-9a-fA-F]{2}$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^(\\s|[b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z])*$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
         "pattern": "/\\?(?=(?:[^'\\\\']*'[^'\\']*')*[^'\\\\']*$)(?:\\?)/",
         "issues": [
             "regex.lint.charclass.redundant",
             "regex.lint.group.redundant"
-        ]
-    },
-    {
-        "pattern": "/^([A-z_0-9]+\\\\)*([A-z_]+)/",
-        "issues": [
-            "regex.lint.charclass.redundant",
-            "regex.lint.charclass.suspiciousRange",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/[\\s\\*]+@property\\s+[^\\s]+\\s+\\$(.*)/",
-        "issues": [
-            "regex.lint.charclass.literalMetachar"
         ]
     },
     {
@@ -9248,315 +9259,40 @@
         ]
     },
     {
-        "pattern": "/^(?<amount>[\\d\\.]+)( (?<currency>\\w{3}))?$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/<\\/?[^>]*>/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/(^[A-Z]{1,})([A-Z]{1})([a-z]+.*)/",
-        "issues": [
-            "regex.lint.quantifier.concatenation",
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "/(^[A-Z]{1})([a-z]+.*)/",
-        "issues": [
-            "regex.lint.quantifier.concatenation",
-            "regex.lint.quantifier.useless"
-        ]
-    },
-    {
-        "pattern": "#(url\\([\\n\\r\\s'\"]*)([^\\s\\)\\?'\"]+)#i",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "#</?(html|head(?!er)|body)[^>]*>#si",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "#^<iframe(?:\"[^\"]*\"|'[^']*'|[^>])*>#i",
-        "issues": [
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^\\t[\\-@=\\+]+.*/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^(?<class>.+)(_[^_]+)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^(.+) ([^\"]+)$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "~(\\R){2,}~u",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[^\\w_]+$/",
-        "issues": [
-            "regex.lint.charclass.duplicateChars"
-        ]
-    },
-    {
-        "pattern": "/\\\\'(?:[^']|''|\\\\\\\\')*\\\\'/",
-        "issues": [
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/((\\d+\\.){2}\\d+)-mariadb/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^(\\d+\\.){2}\\d+$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/\\\\([\\\\'])/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/\\\\([nrtvf\\\\$\"]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2})/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/(_t\\([^\\)]*?\\))/ms",
+        "pattern": "/(\\[[^:]*?\\w)(-)([^a-zA-Z0-9\\\\]+?)/um",
         "issues": [
             "regex.lint.flag.useless.m",
-            "regex.lint.flag.useless.s"
+            "regex.lint.quantifier.lazyEnd"
         ]
     },
     {
-        "pattern": "#(\\<option[^>]*[\\s]+selected)(?!\\s*\\=)#si",
+        "pattern": "#(?<!\\\\)/#um",
         "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "#(\\<input[^>]*[\\s]+checked)(?!\\s*\\=)#si",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "%^\\s*(\\\\|/){2,}%",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/(^[a-zA-Z0-9_-]+([.][^\\001)\\ ]+)+$)/siU",
-        "issues": [
-            "regex.lint.flag.useless.s",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^<\\/\\w[\\w-]*[ ]*>/s",
-        "issues": [
-            "regex.lint.flag.useless.s"
-        ]
-    },
-    {
-        "pattern": "/^<(\\w+:\\/{2}[^ >]+)>/i",
+        "pattern": "#^\\\\.+::.+$#i",
         "issues": [
             "regex.lint.flag.useless.i"
         ]
     },
     {
-        "pattern": "@([A-z]+?://([-\\w\\.]+[-\\w])+(:\\d+)?(/([\\w/_\\.#-]*(\\?\\S+)?[^\\.\\s])?)?)@",
+        "pattern": "/\\s*@trim\\s*/m",
         "issues": [
-            "regex.lint.charclass.duplicateChars",
-            "regex.lint.charclass.suspiciousRange",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.flag.useless.m"
         ]
     },
     {
-        "pattern": "#^\\d+(\\.\\d+)*#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "#(\\w:)?(/\\w+)*/src/Execution(?:Loop)?Closure.php\\(\\d+\\) : eval\\(\\)'d code#",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "%^\\(*\"((.|\\\\|\\\")*?)\" *%",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/([0-9]{4}\\.[0-9]{1,2}\\.[0-9]{1,2}\\-[0-9]{1,2}\\.[0-9]{1,2}.[0-9]{1,2})+$/i",
-        "issues": [
-            "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([0-9]{2} [A-Z]{3} [0-9]{4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4})+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,4}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ ([0-9]{2}|[0-9]{4})\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}[\\,]\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4}\\ \\([A-Z]{3,4}\\))(\\/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4}\\ \\([A-Z]{3,4}\\))+)?$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})\\/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ \\+[0-9]{2,4}\\ \\(\\+[0-9]{1,2}\\))+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}.*)+$/i",
-        "issues": [
-            "regex.lint.charclass.redundant",
-            "regex.lint.dotstar.nested",
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/([0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{2,4}\\ [0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\ [A-Z]{2}\\ \\-[0-9]{2}\\:[0-9]{2}\\ \\([A-Z]{2,3}\\ \\-[0-9]{2}:[0-9]{2}\\))+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/[\\r\\n\\t ]+[^=]/i",
+        "pattern": "/  \\#/ix",
         "issues": [
             "regex.lint.flag.useless.i"
         ]
     },
     {
-        "pattern": "#;(\\s*;)+#",
+        "pattern": "/@media [^{]*+{([^{}]++|{[^{}]*+})*+}/",
         "issues": [
             "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/\\s+/mu",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/<!--(.|\\s)*?-->/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset"
-        ]
-    },
-    {
-        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/enable/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "#[\\r\\n].+#m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/From:[^<\\n]+<([^<\\n]+)>/m",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^[[:alpha:]]{1,3}\\s*:(.*)/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -9591,146 +9327,16 @@
         ]
     },
     {
-        "pattern": "/^(?:[a-z_\\x80-\\xff][a-z0-9_\\x80-\\xff]*\\\\?)+(?<!\\\\)$/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^(.*&|)action=([^&]*)(&(.*)|)$/",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/\\d+=/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/^(?:<style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s*)+$/iS",
-        "issues": [
-            "regex.lint.dotstar.nested",
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "!^([^:]+:)(//[^/]+)?(.*)$!iD",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "/[^\\x21-\\x22\\x24\\x26-\\x39\\x3b-\\x7e]+/",
-        "issues": [
-            "regex.lint.range.useless"
-        ]
-    },
-    {
-        "pattern": "/^(?:\\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^\"%&;]{1,64};|(?:[^\"%&]|&amp;|&quot;){0,255})\"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\\s*>|\\s*<!--(?:[^-]|-[^-])*-->|\\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED \"http:\\/\\/www.w3.org\\/1999\\/xlink\">)*\\s*$/",
-        "issues": [
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "!^(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}):(?:\\d+-|)(\\d+)$!",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/-?\\d++(,-?\\d++)++/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "/(\\{?\"([^\"\\\\]|\\\\.)*\"|[^,{}]+)+([,}]+)/",
+        "pattern": "/<!--(.|\\s)*?-->/",
         "issues": [
             "regex.lint.group.quantifiedCapture",
-            "regex.lint.overlap.charset",
-            "regex.lint.quantifier.nested"
-        ]
-    },
-    {
-        "pattern": "/^SELECT\\s+pg_(try_|)advisory_\\w+\\(/",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "/[ ,.!?~!@#$%^&*\\(\\)+=\\-\\\\|\\[\\]\"'<>]/",
-        "issues": [
-            "regex.lint.charclass.redundant"
-        ]
-    },
-    {
-        "pattern": "/<\\/?[^>]+>/",
-        "issues": [
-            "regex.lint.quantifier.concatenation"
-        ]
-    },
-    {
-        "pattern": "/^(\\d+)\\.(\\d+).*/i",
-        "issues": [
-            "regex.lint.flag.useless.i"
-        ]
-    },
-    {
-        "pattern": "!^(\\d+)(k|m|g|)$!i",
-        "issues": [
-            "regex.lint.alternation.empty"
-        ]
-    },
-    {
-        "pattern": "!type\\s*=\\s*['\"]?\\s*(?:\\w*/)?(?:ecma|java)!im",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "!(?:href|src|data)\\s*=\\s*['\"]?\\s*(?:ecma|java)script:!im",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "!url\\s*\\(\\s*['\"]?\\s*(?:ecma|java)script:!im",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/^&(#38;)*ns_[a-z_]+;$/",
-        "issues": [
-            "regex.lint.group.quantifiedCapture"
-        ]
-    },
-    {
-        "pattern": "!(http|https|data|script):!im",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "!url\\s*\\(\\s*[\"']?[^#]!im",
-        "issues": [
-            "regex.lint.flag.useless.m"
-        ]
-    },
-    {
-        "pattern": "/(?:\\\\(035|037))+/",
-        "issues": [
             "regex.lint.overlap.charset"
         ]
     },
     {
-        "pattern": "!^DB://(\\w+)/(\\d+)(?:/([0-9a-fA-F]+)|)$!",
+        "pattern": "/^(?:[a-z_\\x80-\\xff][a-z0-9_\\x80-\\xff]*\\\\?)+(?<!\\\\)$/i",
         "issues": [
-            "regex.lint.alternation.empty"
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -10030,6 +9636,18 @@
         ]
     },
     {
+        "pattern": "/{\\s*[^}]*[^}a-z_]+\\s*}?/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^\\s*\\*\\s*(\\S*)/mU",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
         "pattern": "~<\\w+([^>]+)$~s",
         "issues": [
             "regex.lint.flag.useless.s"
@@ -10226,9 +9844,319 @@
         ]
     },
     {
-        "pattern": "/((?:\\p{L}\\p{M}*|\\p{N})+)/u",
+        "pattern": "/(^[a-zA-Z0-9_-]+([.][^\\001)\\ ]+)+$)/siU",
         "issues": [
+            "regex.lint.flag.useless.s",
+            "regex.lint.group.quantifiedCapture",
             "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^<\\/\\w[\\w-]*[ ]*>/s",
+        "issues": [
+            "regex.lint.flag.useless.s"
+        ]
+    },
+    {
+        "pattern": "/^<(\\w+:\\/{2}[^ >]+)>/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "@([A-z]+?://([-\\w\\.]+[-\\w])+(:\\d+)?(/([\\w/_\\.#-]*(\\?\\S+)?[^\\.\\s])?)?)@",
+        "issues": [
+            "regex.lint.charclass.duplicateChars",
+            "regex.lint.charclass.suspiciousRange",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "#^\\d+(\\.\\d+)*#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "#(\\w:)?(/\\w+)*/src/Execution(?:Loop)?Closure.php\\(\\d+\\) : eval\\(\\)'d code#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "%^\\(*\"((.|\\\\|\\\")*?)\" *%",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/([0-9]{4}\\.[0-9]{1,2}\\.[0-9]{1,2}\\-[0-9]{1,2}\\.[0-9]{1,2}.[0-9]{1,2})+$/i",
+        "issues": [
+            "regex.lint.flag.useless.i",
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([0-9]{2} [A-Z]{3} [0-9]{4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4})+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,4}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ ([0-9]{2}|[0-9]{4})\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}[\\,]\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4}\\ \\([A-Z]{3,4}\\))(\\/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4}\\ \\([A-Z]{3,4}\\))+)?$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})\\/([A-Z]{2,3}\\.\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\.\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ [\\-|\\+][0-9]{4})+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ \\+[0-9]{2,4}\\ \\(\\+[0-9]{1,2}\\))+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}.*)+$/i",
+        "issues": [
+            "regex.lint.charclass.redundant",
+            "regex.lint.dotstar.nested",
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/([0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{2,4}\\ [0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\ [A-Z]{2}\\ \\-[0-9]{2}\\:[0-9]{2}\\ \\([A-Z]{2,3}\\ \\-[0-9]{2}:[0-9]{2}\\))+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/[\\r\\n\\t ]+[^=]/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "#;(\\s*;)+#",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/\\s+/mu",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/([A-Z]{2,3}\\,\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\ UT)+$/i",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/enable/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "#[\\r\\n].+#m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/From:[^<\\n]+<([^<\\n]+)>/m",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/^[[:alpha:]]{1,3}\\s*:(.*)/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^(.*&|)action=([^&]*)(&(.*)|)$/",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/\\d+=/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/^(?:<style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s*)+$/iS",
+        "issues": [
+            "regex.lint.dotstar.nested",
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "|^data-[^:= \\t\\r\\n/>\\0_＿]*$|i",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
+        ]
+    },
+    {
+        "pattern": "!^([^:]+:)(//[^/]+)?(.*)$!iD",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "/[aou][^äöy]*$/i",
+        "issues": [
+            "regex.lint.unicode.multibyteInClassWithoutU"
+        ]
+    },
+    {
+        "pattern": "/[^\\x21-\\x22\\x24\\x26-\\x39\\x3b-\\x7e]+/",
+        "issues": [
+            "regex.lint.range.useless"
+        ]
+    },
+    {
+        "pattern": "/^(?:\\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^\"%&;]{1,64};|(?:[^\"%&]|&amp;|&quot;){0,255})\"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\\s*>|\\s*<!--(?:[^-]|-[^-])*-->|\\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED \"http:\\/\\/www.w3.org\\/1999\\/xlink\">)*\\s*$/",
+        "issues": [
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "!^(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}):(?:\\d+-|)(\\d+)$!",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/-?\\d++(,-?\\d++)++/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "/(\\{?\"([^\"\\\\]|\\\\.)*\"|[^,{}]+)+([,}]+)/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.overlap.charset",
+            "regex.lint.quantifier.nested"
+        ]
+    },
+    {
+        "pattern": "/^SELECT\\s+pg_(try_|)advisory_\\w+\\(/",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "/[ ,.!?~!@#$%^&*\\(\\)+=\\-\\\\|\\[\\]\"'<>]/",
+        "issues": [
+            "regex.lint.charclass.redundant"
+        ]
+    },
+    {
+        "pattern": "/<\\/?[^>]+>/",
+        "issues": [
+            "regex.lint.quantifier.concatenation"
+        ]
+    },
+    {
+        "pattern": "/^(\\d+)\\.(\\d+).*/i",
+        "issues": [
+            "regex.lint.flag.useless.i"
+        ]
+    },
+    {
+        "pattern": "!^(\\d+)(k|m|g|)$!i",
+        "issues": [
+            "regex.lint.alternation.empty"
+        ]
+    },
+    {
+        "pattern": "!type\\s*=\\s*['\"]?\\s*(?:\\w*/)?(?:ecma|java)!im",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "!(?:href|src|data)\\s*=\\s*['\"]?\\s*(?:ecma|java)script:!im",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "!url\\s*\\(\\s*['\"]?\\s*(?:ecma|java)script:!im",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/^&(#38;)*ns_[a-z_]+;$/",
+        "issues": [
+            "regex.lint.group.quantifiedCapture"
+        ]
+    },
+    {
+        "pattern": "!(http|https|data|script):!im",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "!url\\s*\\(\\s*[\"']?[^#]!im",
+        "issues": [
+            "regex.lint.flag.useless.m"
+        ]
+    },
+    {
+        "pattern": "/(?:\\\\(035|037))+/",
+        "issues": [
+            "regex.lint.overlap.charset"
+        ]
+    },
+    {
+        "pattern": "!^DB://(\\w+)/(\\d+)(?:/([0-9a-fA-F]+)|)$!",
+        "issues": [
+            "regex.lint.alternation.empty"
         ]
     },
     {
@@ -10278,6 +10206,30 @@
         "pattern": "/[\\s\\n,]/",
         "issues": [
             "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/^\\S+?\\s+?(\\S+?)\\s+?(\\S+?)\\s+?(\\S+?)\\s+?(\\S+?)\\s+?(\\S+?)\\s+?(\\S+?)\\s+?(\\S+?)\\s+?/",
+        "issues": [
+            "regex.lint.quantifier.lazyEnd"
+        ]
+    },
+    {
+        "pattern": "~^(?-i:GET|POST|OPTIONS|HEAD|DELETE|PUT|PATCH) /[^\\x00-\\x20\\x7f]* (?-i:HTTP)/1\\.(?<minor>[0-9])$~",
+        "issues": [
+            "regex.lint.flag.redundant"
+        ]
+    },
+    {
+        "pattern": "/^(?:\\[[^\\]\\r\\n]+\\]|[^\\s:\\/\\[\\]\\r\\n]+)(?::[0-9]+)?$/",
+        "issues": [
+            "regex.lint.charclass.duplicateChars"
+        ]
+    },
+    {
+        "pattern": "/\\A(?:[\\x00-\\x7F]|[\\xC2-\\xDF][\\x80-\\xBF]|\\xE0[\\xA0-\\xBF][\\x80-\\xBF]|[\\xE1-\\xEC][\\x80-\\xBF]{2}|\\xED[\\x80-\\x9F][\\x80-\\xBF]|[\\xEE-\\xEF][\\x80-\\xBF]{2}|\\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}|[\\xF1-\\xF3][\\x80-\\xBF]{3}|\\xF4[\\x80-\\x8F][\\x80-\\xBF]{2})*+/",
+        "issues": [
+            "regex.lint.range.useless"
         ]
     }
 ]

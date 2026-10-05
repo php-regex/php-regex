@@ -142,8 +142,8 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
     {
         return match ($severity) {
             LintSeverity::Error, LintSeverity::Critical => 'error',
-            LintSeverity::Warning, LintSeverity::Style, LintSeverity::Perf => 'warning',
-            LintSeverity::Info => 'info',
+            LintSeverity::Warning => 'warning',
+            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
         };
     }
 

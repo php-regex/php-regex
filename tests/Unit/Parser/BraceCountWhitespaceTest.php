@@ -58,7 +58,7 @@ final class BraceCountWhitespaceTest extends TestCase
     public function test_the_bounds_of_a_count_take_spaces_and_tabs_only(): void
     {
         $bounds = QuantifierBounds::parse("{1,\t2 }");
-        $this->assertNotNull($bounds);
+        $this->assertInstanceOf(QuantifierBounds::class, $bounds);
         $this->assertSame([1, 2], [$bounds->min, $bounds->max]);
 
         $this->assertNull(QuantifierBounds::parse("{2\n}"));

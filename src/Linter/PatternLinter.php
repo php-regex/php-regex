@@ -23,6 +23,7 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -45,6 +46,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
@@ -93,6 +95,34 @@ final class PatternLinter extends AbstractNodeVisitor
     private int $nextCapturingGroupNumber = 1;
 
     private bool $skipUselessBackref = false;
+
+    /**
+     * Groups numbered so far by the subroutine pre-pass, branch resets
+     * included.
+     */
+    private int $openedGroups = 0;
+
+    /**
+     * @var array<int, GroupNode> the first group holding each number
+     */
+    private array $firstGroupByNumber = [];
+
+    /**
+     * @var array<string, GroupNode> the first group holding each name
+     */
+    private array $firstGroupByName = [];
+
+    /**
+     * @var list<int|string> the group each call targets, by number or by name
+     */
+    private array $subroutineCalls = [];
+
+    /**
+     * @var array<int, GroupNode>
+     */
+    private array $subroutineTargets = [];
+
+    private bool $recurses = false;
 
     private CharSetAnalyzer $charSetAnalyzer;
 
@@ -170,7 +200,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->flags = $node->flags;
         $this->delimiter = $node->delimiter;
         $this->unicodeMode = $node->isUnicode();
-        $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
+        $this->charSetAnalyzer = CharSetAnalyzer::forRegex($node);
         $this->issues = [];
         $this->maxCapturingGroup = 0;
         $this->definedNamedGroups = [];
@@ -184,6 +214,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->patternValue = $node->pattern->accept($compiler);
 
         $this->collectCapturingGroupInfo($node->pattern);
+        $this->collectSubroutineTargets($node->pattern);
 
         // First pass: count capturing groups
         $this->countCapturingGroups($node->pattern);
@@ -276,16 +307,13 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->dispatch($node);
 
+        // A standalone (?s) changes the flags for the rest of the sequence
+        // and for the alternatives after it; the group, conditional or
+        // DEFINE holding them restores the flags at its end.
         $this->context->pushParent($node);
-        $sequenceFlags = $this->context->activeFlags();
         foreach ($node->children as $child) {
             $child->accept($this);
-
-            if ($child instanceof GroupNode && NodePredicates::isStandaloneInlineFlagsGroup($child)) {
-                $this->context->setActiveFlags(NodePredicates::applyInlineFlags($this->context->activeFlags(), (string) $child->flags));
-            }
         }
-        $this->context->setActiveFlags($sequenceFlags);
         $this->context->popParent();
 
         return $node;
@@ -297,9 +325,11 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->dispatch($node);
 
         if (null !== $node->content) {
+            $previousFlags = $this->context->activeFlags();
             $this->context->pushParent($node);
             $node->content->accept($this);
             $this->context->popParent();
+            $this->context->setActiveFlags($previousFlags);
         }
 
         return $node;
@@ -310,23 +340,33 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->dispatch($node);
         $previousFlags = $this->context->activeFlags();
+        $standalone = NodePredicates::isStandaloneInlineFlagsGroup($node);
 
-        if (GroupType::InlineFlags === $node->type && null !== $node->flags) {
-            if (!NodePredicates::isStandaloneInlineFlagsGroup($node)) {
-                $this->context->setActiveFlags(NodePredicates::applyInlineFlags($this->context->activeFlags(), (string) $node->flags));
-            }
+        if (GroupType::InlineFlags === $node->type && null !== $node->flags && !$standalone) {
+            $this->context->setActiveFlags(NodePredicates::applyInlineFlags($previousFlags, $node->flags));
         }
 
         $this->context->pushParent($node);
         $node->child->accept($this);
         $this->context->popParent();
-        $this->context->setActiveFlags($previousFlags);
+
+        // A standalone (?s) holds for what follows it, up to the end of the
+        // enclosing group; a group with content restores the flags.
+        $this->context->setActiveFlags($standalone ? NodePredicates::applyInlineFlags($previousFlags, (string) $node->flags) : $previousFlags);
 
         return $node;
     }
 
     #[\Override]
     public function visitBackref(BackrefNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitSubroutine(SubroutineNode $node): NodeInterface
     {
         $this->dispatch($node);
 
@@ -374,11 +414,13 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->dispatch($node);
 
+        $previousFlags = $this->context->activeFlags();
         $this->context->pushParent($node);
         $node->condition->accept($this);
         $node->yes->accept($this);
         $node->no->accept($this);
         $this->context->popParent();
+        $this->context->setActiveFlags($previousFlags);
 
         return $node;
     }
@@ -388,9 +430,11 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->dispatch($node);
 
+        $previousFlags = $this->context->activeFlags();
         $this->context->pushParent($node);
         $node->content->accept($this);
         $this->context->popParent();
+        $this->context->setActiveFlags($previousFlags);
 
         return $node;
     }
@@ -410,6 +454,8 @@ final class PatternLinter extends AbstractNodeVisitor
                 $this->capturingGroups,
                 $this->capturingGroupsByName,
                 $this->skipUselessBackref,
+                $this->subroutineTargets,
+                $this->recurses,
             ),
             $this->charSetAnalyzer,
         );
@@ -585,6 +631,118 @@ final class PatternLinter extends AbstractNodeVisitor
             $this->collectCapturingGroupInfo($node->start, $alternation);
             $this->collectCapturingGroupInfo($node->end, $alternation);
         }
+    }
+
+    /**
+     * Collects the groups a subroutine call runs again, and whether the
+     * pattern recurses into itself whole. A call by number reaches the first
+     * group holding that number, which inside a branch reset is the one in
+     * the earliest alternative; a call by name reaches the first group so
+     * named.
+     */
+    private function collectSubroutineTargets(NodeInterface $pattern): void
+    {
+        $this->openedGroups = 0;
+        $this->firstGroupByNumber = [];
+        $this->firstGroupByName = [];
+        $this->subroutineCalls = [];
+        $this->subroutineTargets = [];
+        $this->recurses = false;
+
+        $this->collectSubroutineCalls($pattern);
+
+        foreach ($this->subroutineCalls as $target) {
+            if (0 === $target) {
+                $this->recurses = true;
+
+                continue;
+            }
+
+            $group = \is_int($target) ? ($this->firstGroupByNumber[$target] ?? null) : ($this->firstGroupByName[$target] ?? null);
+            if (null !== $group) {
+                $this->subroutineTargets[spl_object_id($group)] = $group;
+            }
+        }
+    }
+
+    private function collectSubroutineCalls(NodeInterface $node): void
+    {
+        if ($node instanceof SubroutineNode) {
+            $target = $this->subroutineTarget($node);
+            if (null !== $target) {
+                $this->subroutineCalls[] = $target;
+            }
+
+            return;
+        }
+
+        if ($node instanceof ConditionalNode) {
+            // A recursion test such as (?(R1)...) reads where the match
+            // stands; it calls nothing.
+            if (!$node->condition instanceof SubroutineNode) {
+                $this->collectSubroutineCalls($node->condition);
+            }
+            $this->collectSubroutineCalls($node->yes);
+            $this->collectSubroutineCalls($node->no);
+
+            return;
+        }
+
+        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
+            $this->firstGroupByNumber[++$this->openedGroups] ??= $node;
+            if (null !== $node->name) {
+                $this->firstGroupByName[$node->name] ??= $node;
+            }
+        }
+
+        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
+            // Each alternative numbers its groups from the same start; the
+            // count after the reset is the highest any alternative reached.
+            $start = $this->openedGroups;
+            $end = $start;
+            $alternatives = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
+            foreach ($alternatives as $alternative) {
+                $this->openedGroups = $start;
+                $this->collectSubroutineCalls($alternative);
+                $end = max($end, $this->openedGroups);
+            }
+            $this->openedGroups = $end;
+
+            return;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->collectSubroutineCalls($child);
+        }
+    }
+
+    /**
+     * The group a call targets: a number (0 for the whole pattern), relative
+     * numbers resolved against the groups opened before the call, or a name;
+     * null for a relative call that reaches before the first group, which
+     * PCRE refuses.
+     */
+    private function subroutineTarget(SubroutineNode $node): int|string|null
+    {
+        $reference = $node->reference;
+        if ('R' === $reference) {
+            return 0;
+        }
+
+        $sign = $reference[0] ?? '';
+        $relative = '+' === $sign || '-' === $sign;
+        if (!Ascii::isDigit($relative ? substr($reference, 1) : $reference)) {
+            return $reference;
+        }
+
+        $number = (int) $reference;
+        if ($relative) {
+            $number += $this->openedGroups + ('-' === $sign ? 1 : 0);
+
+            return $number > 0 ? $number : null;
+        }
+
+        return $number;
     }
 
     private function nodeIsAlwaysEmpty(NodeInterface $node): bool

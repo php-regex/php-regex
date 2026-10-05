@@ -80,7 +80,7 @@ What each command counts as a problem (code 1):
 
 | Command                                      | Exits with 1 when                                                                  |
 |----------------------------------------------|------------------------------------------------------------------------------------|
-| `lint`                                       | At least one error is found (warnings alone leave 0), or the files cannot be read |
+| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read |
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
@@ -90,6 +90,13 @@ What each command counts as a problem (code 1):
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
+
+The lint rules of error severity target patterns that compile but do not do
+what they say without `/u`: a multibyte character in a class, a quantified
+multibyte character, a Unicode property. The `lint` summary counts them as lint
+errors (`FAIL 1 lint errors, 2 warnings, 0 optimizations.`), apart from the
+invalid patterns, which PCRE refuses to compile. Every other rule is a warning or
+an info, printed without changing the code.
 
 A theoretical ReDoS verdict is a warning, as it is for `lint`: it is printed
 and leaves the code at 0, proven or not. A verdict the confirmed mode did not
@@ -539,13 +546,17 @@ vendor/bin/regex lint src/ --redos
       → /^(a+)+$/
     WARN Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-    WARN Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
     WARN Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
          ↳ Attack: "a" x n . "!" Unbounded quantifier detected. May cause backtracking on non-matching input. ...
 
-  FAIL 1 invalid patterns, 3 warnings, 0 optimizations.
+  FAIL 1 invalid patterns, 2 warnings, 1 infos found, 0 optimizations.
 ```
+
+The summary counts infos only when there are some: a run with infos and
+nothing worse ends with `PASS 0 warnings, 2 infos found, 0 optimizations
+available.`, and exits with 0.
 
 The ReDoS issue, `regex.lint.redos`, carries the verdict's headline, then
 `Severity: …, confidence: …`, and in its hint the attack. It is a warning in
@@ -565,7 +576,7 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed
     FAIL Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
          ↳ Attack: "a" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. ...
 
-  FAIL 1 invalid patterns, 1 ReDoS errors, 2 warnings, 0 optimizations.
+  FAIL 1 invalid patterns, 1 ReDoS errors, 1 warnings, 1 infos found, 0 optimizations.
 ```
 
 An exponential verdict the engine did not reproduce is dropped, and a
@@ -744,9 +755,12 @@ passed.
 ### Errors and Exit Codes
 
 `lint` exits with the codes every command uses (see
-[Exit Codes](#exit-codes)): 1 when at least one error is found, 2 when the
-configuration or the command line cannot be used, in which case nothing is
-scanned.
+[Exit Codes](#exit-codes)): 1 when a pattern does not compile, when a ReDoS
+verdict is reproduced at high or above, or when a lint rule of error severity
+fires (a multibyte character in a class, a quantified multibyte character or a
+Unicode property, each without `/u`); 2 when the configuration or the command
+line cannot be used, in which case nothing is scanned. Warnings and infos
+leave 0.
 
 With `--format=json`, a configuration or command-line error is printed on
 stdout as `{"error": "..."}`, so that stdout always holds one JSON document;
@@ -820,7 +834,9 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "errors": 2,
         "warnings": 0,
         "optimizations": 0,
-        "redos": 1
+        "redos": 1,
+        "infos": 0,
+        "lintErrors": 0
     },
     "results": [
         {
@@ -867,8 +883,12 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
 }
 ```
 
-`stats.errors` counts every error; `stats.redos`, always present, counts the
-ReDoS errors among them.
+`stats.errors` counts every error; `stats.redos` counts the ReDoS errors among
+them and `stats.lintErrors` the lint rules of error severity that fired;
+`stats.infos` counts the issues of type `info`. Every key is always present, `0`
+when there is none. An issue's `type` is `error`, `warning` or `info`, from the
+severity of the rule that reported it (see
+[Severity in Each Format](../reference/diagnostics.md#severity-in-each-format)).
 
 ### GitHub Actions
 

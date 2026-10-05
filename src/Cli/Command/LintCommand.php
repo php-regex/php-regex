@@ -40,6 +40,9 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
+ *
+ * @phpstan-import-type LintResult from LintReport
+ * @phpstan-import-type LintStats from LintReport
  */
 final class LintCommand extends AbstractCommand implements CommandInterface
 {
@@ -413,9 +416,6 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         }
 
         $filteredResults = [];
-        $errors = 0;
-        $warnings = 0;
-        $optimizations = 0;
 
         foreach ($report->results as $result) {
             $filteredIssues = [];
@@ -424,13 +424,6 @@ final class LintCommand extends AbstractCommand implements CommandInterface
                 $key = $relativeFile.':'.$issue['line'].':'.$issue['message'];
                 if (!isset($baselineMap[$key])) {
                     $filteredIssues[] = $issue;
-                    if ('error' === $issue['type']) {
-                        $errors++;
-                    } elseif ('warning' === $issue['type']) {
-                        $warnings++;
-                    } elseif ('optimization' === $issue['type']) {
-                        $optimizations++;
-                    }
                 }
             }
             if (!empty($filteredIssues) || !empty($result['optimizations']) || !empty($result['problems'])) {
@@ -447,11 +440,57 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             }
         }
 
-        return new LintReport($filteredResults, [
-            'errors' => $errors,
-            'warnings' => $warnings,
-            'optimizations' => $optimizations,
-        ]);
+        return new LintReport($filteredResults, $this->countStats($filteredResults));
+    }
+
+    /**
+     * The stats of the issues a baseline leaves, counted as LintService
+     * counts a run: "redos" and "lintErrors" among the errors, "infos" apart,
+     * each left out at zero.
+     *
+     * @phpstan-param array<LintResult> $results
+     *
+     * @phpstan-return LintStats
+     */
+    private function countStats(array $results): array
+    {
+        $stats = ['errors' => 0, 'warnings' => 0, 'optimizations' => 0];
+        $redos = 0;
+        $infos = 0;
+        $lintErrors = 0;
+
+        foreach ($results as $result) {
+            foreach ($result['issues'] as $issue) {
+                if ('error' === $issue['type']) {
+                    $stats['errors']++;
+                    if (isset($issue['analysis'])) {
+                        $redos++;
+                    } elseif (!isset($issue['validation'])) {
+                        $lintErrors++;
+                    }
+                } elseif ('warning' === $issue['type']) {
+                    $stats['warnings']++;
+                } elseif ('info' === $issue['type']) {
+                    $infos++;
+                }
+            }
+
+            $stats['optimizations'] += \count($result['optimizations']);
+        }
+
+        if ($redos > 0) {
+            $stats['redos'] = $redos;
+        }
+
+        if ($infos > 0) {
+            $stats['infos'] = $infos;
+        }
+
+        if ($lintErrors > 0) {
+            $stats['lintErrors'] = $lintErrors;
+        }
+
+        return $stats;
     }
 
     private function toRelativePath(string $path): string

@@ -13,15 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\Node\CommentNode;
-use PHPRegex\Parser\Node\GroupNode;
-use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
-use PHPRegex\Parser\Node\SequenceNode;
 
 /**
  * Detects a lazy quantifier nothing follows: the match ends as soon as it
@@ -33,8 +28,6 @@ use PHPRegex\Parser\Node\SequenceNode;
 final class LazyEndRule extends AbstractLintRule
 {
     private const ID = 'regex.lint.quantifier.lazyEnd';
-
-    private const TRANSPARENT_GROUPS = [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags];
 
     public function getRuleIds(): array
     {
@@ -54,53 +47,21 @@ final class LazyEndRule extends AbstractLintRule
 
         $lazy = (QuantifierType::Lazy === $node->type) !== str_contains($context->activeFlags(), 'U');
         $bounds = QuantifierBounds::parse($node->quantifier);
-        if (!$lazy || null === $bounds || $bounds->min === $bounds->max || !self::endsThePattern($node, $context->parents())) {
+        // A subroutine call runs the quantifier again where something may
+        // follow it, and there it takes more than its minimum.
+        if (!$lazy || null === $bounds || $bounds->min === $bounds->max || !$context->endsThePatternForEveryCall($node)) {
             return [];
         }
 
-        $written = $node->quantifier.(QuantifierType::Lazy === $node->type ? '?' : '');
-
         return [new RuleViolation(
             self::ID,
-            \sprintf('Lazy quantifier "%s" ends the pattern, so it always matches its minimum.', $written),
+            QuantifierType::Lazy === $node->type
+                ? \sprintf('Lazy quantifier "%s?" ends the pattern, so it always matches its minimum.', $node->quantifier)
+                : \sprintf('Quantifier "%s" is lazy under the U flag and ends the pattern, so it always matches its minimum.', $node->quantifier),
             $node->getStartPosition(),
             0 === $bounds->min
                 ? 'Remove the quantified item, make the quantifier greedy, or anchor what must follow it.'
                 : 'Write the minimum count, make the quantifier greedy, or anchor what must follow it.',
         )];
-    }
-
-    /**
-     * Whether nothing can be matched after the node: each enclosing node
-     * ends with it, up to the pattern itself.
-     *
-     * @param list<NodeInterface> $parents
-     */
-    private static function endsThePattern(NodeInterface $node, array $parents): bool
-    {
-        $child = $node;
-        foreach (array_reverse($parents) as $parent) {
-            $last = match (true) {
-                $parent instanceof SequenceNode => self::onlyCommentsFollow($parent, $child) ? $child : null,
-                $parent instanceof AlternationNode => $child,
-                $parent instanceof GroupNode && \in_array($parent->type, self::TRANSPARENT_GROUPS, true) => $parent->child,
-                default => null,
-            };
-
-            if ($last !== $child) {
-                return false;
-            }
-
-            $child = $parent;
-        }
-
-        return true;
-    }
-
-    private static function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item): bool
-    {
-        $after = \array_slice($sequence->children, (int) array_search($item, $sequence->children, true) + 1);
-
-        return [] === array_filter($after, static fn (NodeInterface $next): bool => !$next instanceof CommentNode);
     }
 }

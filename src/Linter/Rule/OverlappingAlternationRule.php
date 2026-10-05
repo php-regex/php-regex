@@ -102,7 +102,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                         if (str_starts_with($a, $b) || str_starts_with($b, $a)) {
                             $issues[] = new RuleViolation(
                                 'regex.lint.alternation.overlap',
-                                \sprintf('Alternation branches "%s" and "%s" overlap.', DisplayEscaper::escape($a), DisplayEscaper::escape($b)),
+                                \sprintf('Alternation branches "%s" and "%s" overlap.', DisplayEscaper::escapeText($a), DisplayEscaper::escapeText($b)),
                                 $node->startPosition,
                                 'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
                             );
@@ -133,9 +133,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return null;
         }
 
+        // Each alternative reads the flags in effect there, with the ones an
+        // earlier alternative carries into it.
         $charSets = [];
-        foreach ($node->alternatives as $alt) {
-            $charSet = $context->charSetAnalyzer->firstChars($alt);
+        foreach ($context->flagsAtEachChild($node) as $index => $flags) {
+            $charSet = $context->firstChars($node->alternatives[$index], $flags);
             if ($charSet->isUnknown()) {
                 // If we can't analyze any charset, skip semantic overlap detection
                 return null;

@@ -176,8 +176,25 @@ custom wiring, reads them in any case.
 
 Use them in `ignoreErrors` or a baseline as with any PHPStan identifier.
 
+PHPStan has one level of report, so every lint issue is a PHPStan error, whatever
+the severity of its rule: an issue the `regex lint` console prints as `INFO`, as
+`regex.lint.group.quantifiedCapture` on an unnamed group, is reported as well.
+Its identifier lets you ignore it:
+
+```neon
+parameters:
+    ignoreErrors:
+        - identifier: regex.lint.group.quantifiedCapture
+```
+
 A baseline written before 2.0 holds a 1.x ReDoS message, `Potential ReDoS
 risk (theoretical) (severity: …, confidence: …): …` or `Confirmed ReDoS risk
 (…): …`, which no longer matches:
 regenerate it with `vendor/bin/phpstan analyse --generate-baseline` (see
 [UPGRADE-2.0.md](../../UPGRADE-2.0.md)).
+
+Regenerate it once after upgrading to 2.0.0 as well, whatever version wrote it:
+lint messages were reworded (the useless `m` and `s` flags, a lazy quantifier
+under `U`, redundant class ranges), false positives were removed, and with
+`redos` on, the nested-quantifier, dot-star and overlapping-set issues are no
+longer reported for a pattern the analysis proves linear.

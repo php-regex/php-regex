@@ -61,7 +61,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.quantifier.assertion' => ['/(?=a)?b/', '/(?=a)b/'],
         'regex.lint.quantifier.concatenation' => ['/.*.*x/', '/.*x/'],
         'regex.lint.quantifier.lazyEnd' => ['/a.*?/', '/a.*?b/'],
-        'regex.lint.quantifier.nested' => ['/(a+)+/', '/(?>a+)+/'],
+        'regex.lint.quantifier.nested' => ['/(a+)+$/', '/(?>a+)+$/'],
         'regex.lint.quantifier.useless' => ['/a{1}/', '/a{2}/'],
         'regex.lint.quantifier.zero' => ['/a{0}/', '/a{1,}/'],
         'regex.lint.range.useless' => ['/[a-a]/', '/[a-f]/'],

@@ -45,7 +45,7 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $decoded['stats']);
         $this->assertSame([], $decoded['results']);
     }
 
@@ -102,7 +102,7 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array<string, int>, results: array<array<string, mixed>>} $decoded */
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $decoded['stats']);
         $this->assertIsArray($decoded['results']);
         $this->assertCount(2, $decoded['results']);
 
@@ -185,8 +185,8 @@ final class JsonFormatterTest extends TestCase
         $entry = $decoded['results'][0];
         $this->assertIsArray($entry);
 
-        $this->assertSame('invalid-\2611', $entry['file']);
-        $this->assertSame('/x\376\200y/is', $entry['pattern']);
+        $this->assertSame('invalid-\xB11', $entry['file']);
+        $this->assertSame('/x\xFE\x80y/is', $entry['pattern']);
     }
 
     public function test_format_error(): void

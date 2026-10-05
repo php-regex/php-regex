@@ -248,10 +248,11 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
         $innerBoundary = (new CharSetAnalyzer())->firstChars(new LiteralNode('a', 0, 0));
 
         $optionalSeparator = new LiteralNode('', 0, 0);
-        $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$optionalSeparator, $innerBoundary, $context]));
+        $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$optionalSeparator, $innerBoundary, $context, false]));
 
         $unknownSeparator = new UnicodePropNode('L', true, 0, 0);
-        $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$unknownSeparator, $innerBoundary, $context]));
+        $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$unknownSeparator, $innerBoundary, $context, false]));
+        $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$unknownSeparator, $innerBoundary, $context, true]));
     }
 
     public function test_is_optional_node_branches(): void

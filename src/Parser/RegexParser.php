@@ -25,6 +25,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\ConditionalNode;
@@ -61,7 +62,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-9ae6b8adbfea211a541ca96e0e14ba6c';
+    public const CACHE_VERSION = 'ast-340b2a17539d3ae071358ae8b56de50d';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -794,7 +795,7 @@ final readonly class RegexParser
             // Past the last character allowed, counted from the body: after
             // the whitespace PHP skips and the opening delimiter. The snippet
             // shows the pattern as written, from its delimiter.
-            $trimmed = ltrim($regex);
+            $trimmed = Ascii::trimLeadingSpaces($regex);
             $bodyStart = \strlen($regex) - \strlen($trimmed) + 1;
             $offset = max(0, $this->maxPatternLength - $bodyStart);
 

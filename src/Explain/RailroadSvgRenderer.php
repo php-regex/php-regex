@@ -135,32 +135,37 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
     public function visitSequence(SequenceNode $node)
     {
         $layouts = [];
-        $buffer = '';
+        // The run shown so far, and the literal text read after it: the text
+        // is spelled as text, a character written as an escape as written.
+        $label = '';
+        $text = '';
 
         foreach ($node->children as $child) {
             if ($child instanceof LiteralNode) {
-                $buffer .= $child->value;
+                $text .= $child->value;
 
                 continue;
             }
+
+            $label .= DisplayEscaper::escapeText($text);
+            $text = '';
 
             if ($child instanceof CharLiteralNode) {
-                $buffer .= $child->originalRepresentation;
+                $label .= DisplayEscaper::escape($child->originalRepresentation);
 
                 continue;
             }
 
-            if ('' !== $buffer) {
-                $value = DisplayEscaper::escape($buffer);
-                $layouts[] = $this->createNodeLayout($value, 'node literal', true);
-                $buffer = '';
+            if ('' !== $label) {
+                $layouts[] = $this->createNodeLayout($label, 'node literal', true);
+                $label = '';
             }
             $layouts[] = $this->layoutFor($child);
         }
 
-        if ('' !== $buffer) {
-            $value = DisplayEscaper::escape($buffer);
-            $layouts[] = $this->createNodeLayout($value, 'node literal', true);
+        $label .= DisplayEscaper::escapeText($text);
+        if ('' !== $label) {
+            $layouts[] = $this->createNodeLayout($label, 'node literal', true);
         }
 
         return $this->layoutSequence($layouts);
@@ -184,7 +189,7 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node)
     {
-        $value = DisplayEscaper::escape($node->value);
+        $value = DisplayEscaper::escapeText($node->value);
         if ('' === $value) {
             $value = '(empty)';
         }

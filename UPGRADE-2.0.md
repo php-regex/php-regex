@@ -612,6 +612,14 @@ covers it, and falls back to the 1.x heuristics elsewhere (see
   The new messages stay the same for all of 2.x: a better verdict changes the
   tip, never the message. An `ignoreErrors` entry on the identifier
   `regex.redos` keeps working; one matching the 1.x message text does not.
+
+  The same regeneration covers the lint issues, whose messages and reported
+  set changed in 2.0.0: the useless `m` and `s` flag messages, the lazy
+  quantifier under `U` and the redundant class ranges are reworded; false
+  positives are gone; and with `redos` on, the nested-quantifier, dot-star
+  and overlapping-set issues are no longer reported for a pattern the
+  analysis proves linear. Regenerate the baseline once after upgrading, even
+  one written by an earlier 2.0 pre-release.
 - **Severities.** A pattern the model proves gets the severity of its class:
   exponential `critical`, polynomial of degree 3 or more `high`, of degree 2
   `medium`, linear `safe`. Many unanchored patterns the heuristics rated
@@ -890,6 +898,40 @@ formats print the same line on stderr. Single-pattern commands, such as
 - Errors go to stderr. With `--format=json` they go to stdout as
   `{"error": "..."}`, and the progress and status lines stay out of stdout, so
   that stdout always holds one JSON document.
+- A lint rule of error severity now exits with 1, where every lint issue was
+  a warning. Three rules are at that severity, each on a pattern that compiles
+  but does not do what it says without `/u`: a multibyte character in a class
+  (`unicode.multibyteInClassWithoutU`, `/[é]/`), a quantifier after a
+  multibyte character (`unicode.quantifiedMultibyteWithoutU`, `/é+/`) and a
+  Unicode property (`unicode.propertyWithoutU`, `/\p{L}/`). The fix is to add
+  `/u`. To keep the old exit code, turn them off in `regex.json`:
+
+  ```json
+  {
+      "checks": {
+          "lint": {
+              "rules": {
+                  "unicode.multibyteInClassWithoutU": false,
+                  "unicode.quantifiedMultibyteWithoutU": false,
+                  "unicode.propertyWithoutU": false
+              }
+          }
+      }
+  }
+  ```
+
+  The Symfony and Laravel `regex:lint` commands exit with 1 on these rules
+  too, and have no per-rule setting: add `/u`, or put
+  `// @regex-ignore-next-line` above the call when bytes are meant.
+- The issues follow the severity of their rule in every format: the JSON
+  `type` is `error`, `warning` or `info`, and `stats` always carries
+  `errors`, `warnings`, `optimizations`, `redos`, `infos` and `lintErrors`;
+  GitHub writes an info as `notice` and Checkstyle as `info`, where `style`
+  and `perf` rules were warnings. The language server sends an info as
+  Information, where it sent a Hint, which editors tend to show faintly or
+  not at all. A quantified unnamed capturing group, an info, no longer counts
+  among the warnings. See
+  [Diagnostics](docs/reference/diagnostics.md#severity-in-each-format).
 
 #### Every command exits with 0, 1 or 2
 

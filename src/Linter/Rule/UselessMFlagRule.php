@@ -56,7 +56,7 @@ final class UselessMFlagRule extends AbstractLintRule
         if ($context->pattern->hasFlag('m') && !$this->hasAnchors) {
             return [new RuleViolation(
                 'regex.lint.flag.useless.m',
-                "Flag 'm' is useless: pattern '{$context->pattern->fullPattern()}' contains no anchors.",
+                "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
             )];
         }
 

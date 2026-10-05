@@ -205,41 +205,55 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
 
 ```json
 {
+  "target": {
+    "php": "8.4",
+    "pcre": "10.49",
+    "source": "running PHP"
+  },
   "stats": {
     "errors": 0,
     "warnings": 1,
-    "optimizations": 1
+    "optimizations": 1,
+    "redos": 0,
+    "infos": 0,
+    "lintErrors": 0
   },
   "results": [
     {
-      "file": "src/Service/EmailValidator.php",
-      "line": 42,
-      "source": "php",
-      "pattern": "/^[a-z0-9._%+-]+@[a-z0-9-]+(?:\\.[a-z0-9-]+)+$/i",
+      "file": "app/Service/Validator.php",
+      "line": 9,
+      "column": 33,
+      "fileOffset": 147,
+      "source": "preg_match()",
+      "pattern": "/^(?:[0-9]+\\s?)+$/",
       "location": null,
       "issues": [
         {
           "type": "warning",
-          "message": "Nested quantifiers detected...",
-          "file": "src/Service/EmailValidator.php",
-          "line": 42,
-          "column": 9,
+          "file": "app/Service/Validator.php",
+          "line": 9,
+          "column": 33,
+          "fileOffset": 147,
+          "position": 1,
           "issueId": "regex.lint.quantifier.nested",
-          "hint": "Use atomic groups...",
-          "source": "php"
+          "message": "Nested quantifiers can cause catastrophic backtracking.",
+          "hint": "Consider atomic groups (?>...) or possessive quantifiers \u2014 verify the rewrite still matches everything you need.",
+          "source": "preg_match()"
         }
       ],
       "optimizations": [
         {
-          "file": "src/Service/EmailValidator.php",
-          "line": 42,
+          "file": "app/Service/Validator.php",
+          "line": 9,
+          "column": 33,
+          "fileOffset": 147,
           "optimization": {
-            "original": "/[0-9]+/",
-            "optimized": "/\\d+/",
+            "original": "/^(?:[0-9]+\\s?)+$/",
+            "optimized": "/^(?:\\d+\\s?)+$/",
             "changes": ["Optimized pattern."]
           },
-          "savings": 2,
-          "source": "php"
+          "savings": 3,
+          "source": "preg_match()"
         }
       ]
     }
@@ -248,9 +262,10 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
 ```
 
 Notes:
-- `stats` contains the run summary.
+- `target` names the PHP and PCRE2 release the patterns were judged for.
+- `stats` contains the run summary; every key is always present, `0` when there is none.
 - `results` contains one entry per pattern occurrence.
-- `issues` and `optimizations` are present only when applicable.
+- `issues` and `optimizations` are always present, empty when there is none.
 
 ### Field Reference
 
@@ -259,13 +274,16 @@ Notes:
 | `stats.errors`              | int    | Total error count              | Yes               |
 | `stats.warnings`            | int    | Total warning count            | Yes               |
 | `stats.optimizations`       | int    | Total optimization suggestions | Yes               |
+| `stats.redos`               | int    | ReDoS errors, among `errors`   | Yes               |
+| `stats.infos`               | int    | Total info count               | Yes               |
+| `stats.lintErrors`          | int    | Lint rules of error severity that fired, among `errors` | Yes |
 | `results[].file`            | string | Source file path               | Yes               |
 | `results[].line`            | int    | Line number                    | Yes               |
 | `results[].column`          | int    | Column number                  | Sometimes         |
-| `results[].source`          | string | Source language                | Yes               |
+| `results[].source`          | string | The call the pattern was found in, as `preg_match()` | Yes |
 | `results[].pattern`         | string | The pattern being analyzed     | Yes               |
-| `results[].issues[]`        | array  | Diagnostic issues              | When issues found |
-| `results[].optimizations[]` | array  | Optimization suggestions       | When applicable   |
+| `results[].issues[]`        | array  | Diagnostic issues              | Yes, may be empty |
+| `results[].optimizations[]` | array  | Optimization suggestions       | Yes, may be empty |
 
 ### CLI Examples
 

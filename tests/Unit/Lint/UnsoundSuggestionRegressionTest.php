@@ -43,7 +43,7 @@ final class UnsoundSuggestionRegressionTest extends TestCase
     public static function provideNestedQuantifierPatterns(): iterable
     {
         yield 'nested quantifier' => [
-            'pattern' => '/(a+)+/',
+            'pattern' => '/(a+)+$/',
             'issueId' => 'regex.lint.quantifier.nested',
         ];
 

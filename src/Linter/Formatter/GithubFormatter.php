@@ -115,8 +115,8 @@ final class GithubFormatter extends AbstractOutputFormatter
     {
         return match ($severity) {
             LintSeverity::Error, LintSeverity::Critical => 'error',
-            LintSeverity::Warning, LintSeverity::Style, LintSeverity::Perf => 'warning',
-            LintSeverity::Info => 'notice',
+            LintSeverity::Warning => 'warning',
+            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'notice',
         };
     }
 

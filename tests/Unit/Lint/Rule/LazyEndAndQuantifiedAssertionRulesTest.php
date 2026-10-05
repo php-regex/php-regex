@@ -160,6 +160,154 @@ final class LazyEndAndQuantifiedAssertionRulesTest extends TestCase
         yield 'quantified group' => ['pattern' => '/(?:a)?b/'];
     }
 
+    /**
+     * A subroutine call runs the group again where something follows it:
+     * that instance takes more than its minimum. The rule skips a node
+     * inside a group a subroutine calls.
+     *
+     * @return iterable<string, array{pattern: string, subject: string, match: string}>
+     */
+    public static function provideLazyQuantifiersReenteredBySubroutine(): iterable
+    {
+        // The called instance takes "aaa" before the "x".
+        yield 'numbered call before the group' => ['pattern' => '/(?1)x(a+?)/', 'subject' => 'aaaxa', 'match' => 'aaaxa'];
+        yield 'named call before the group' => ['pattern' => '/(?&w)!(?<w>\w+?)/', 'subject' => 'abc!de', 'match' => 'abc!d'];
+        // The call inside the first branch must reach the "y".
+        yield 'call from another branch' => ['pattern' => '/(?:x(?1)y|(a+?))/', 'subject' => 'xaay', 'match' => 'xaay'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLazyQuantifiersReenteredBySubroutine')]
+    public function test_a_lazy_quantifier_a_subroutine_reenters_is_not_reported(string $pattern, string $subject, string $match): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject, $matches));
+        $this->assertSame($match, $matches[0]);
+
+        $this->assertNull($this->violation($pattern, self::LAZY_END));
+    }
+
+    /**
+     * Inside a branch reset two groups share a number, and (?1) calls the
+     * first of them.
+     */
+    #[Test]
+    public function test_a_lazy_quantifier_in_the_branch_reset_group_a_call_reaches_is_not_reported(): void
+    {
+        // The called instance takes "aaa" before the "x".
+        $this->assertSame(1, preg_match('/(?1)x(?|(a+?)|(b))/', 'aaaxa', $matches));
+        $this->assertSame('aaaxa', $matches[0]);
+
+        $this->assertNull($this->violation('/(?1)x(?|(a+?)|(b))/', self::LAZY_END));
+    }
+
+    #[Test]
+    public function test_a_lazy_quantifier_in_the_branch_reset_group_no_call_reaches_is_still_reported(): void
+    {
+        // (?1) calls (b): "a+?" only runs at the end, at its minimum.
+        $this->assertSame(1, preg_match('/(?1)x(?|(b)|(a+?))/', 'bxaaa', $matches));
+        $this->assertSame('bxa', $matches[0]);
+        $this->assertSame(0, preg_match('/(?1)x(?|(b)|(a+?))/', 'aaaxa'));
+
+        $this->assertInstanceOf(RuleViolation::class, $this->violation('/(?1)x(?|(b)|(a+?))/', self::LAZY_END));
+    }
+
+    /**
+     * A pattern that recurses into itself is skipped whole.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideRecursivePatterns(): iterable
+    {
+        yield 'recursion with (?R)' => ['pattern' => '/x(?R)y|a+?/'];
+        yield 'recursion with (?0)' => ['pattern' => '/x(?0)y|a+?/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideRecursivePatterns')]
+    public function test_a_lazy_quantifier_in_a_recursive_pattern_is_not_reported(string $pattern): void
+    {
+        // Oracle: the recursed instance of "a+?" takes "aa" to reach the "y".
+        $this->assertSame(1, preg_match($pattern, 'xaay', $matches));
+        $this->assertSame('xaay', $matches[0]);
+
+        $this->assertNull($this->violation($pattern, self::LAZY_END));
+    }
+
+    /**
+     * Deliberate loss of recall: here every instance of "b+?" does stop at
+     * its minimum ("aabbb" matches "aabb"), so the report would be true, but
+     * a recursive pattern is skipped whole rather than reasoned about.
+     */
+    #[Test]
+    public function test_a_recursive_pattern_is_skipped_even_when_the_report_would_hold(): void
+    {
+        $this->assertSame(1, preg_match('/a(?R)?b+?/', 'aabbb', $matches));
+        $this->assertSame('aabb', $matches[0]);
+
+        $this->assertNull($this->violation('/a(?R)?b+?/', self::LAZY_END));
+    }
+
+    /**
+     * A subroutine call elsewhere does not silence a trailing lazy
+     * quantifier outside every called group.
+     */
+    #[Test]
+    public function test_a_lazy_quantifier_outside_every_called_group_is_still_reported(): void
+    {
+        preg_match('/(?1)x(a+?)z|(b)c+?/', 'bccc', $matches);
+        $this->assertSame('bc', $matches[0]);
+
+        $violation = $this->violation('/(?1)x(a+?)z|(b)c+?/', self::LAZY_END);
+
+        $this->assertInstanceOf(RuleViolation::class, $violation);
+        $this->assertSame('Lazy quantifier "+?" ends the pattern, so it always matches its minimum.', $violation->message);
+    }
+
+    /**
+     * Under U a quantifier written greedy is lazy; the message says why.
+     *
+     * @return iterable<string, array{pattern: string, message: string}>
+     */
+    public static function provideLazyEndsUnderTheUFlag(): iterable
+    {
+        yield 'R escape under U and u' => [
+            'pattern' => '/\R+/Uu',
+            'message' => 'Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.',
+        ];
+        yield 'dot star under U' => [
+            'pattern' => '/a.*/U',
+            'message' => 'Quantifier "*" is lazy under the U flag and ends the pattern, so it always matches its minimum.',
+        ];
+        yield 'inline U' => [
+            'pattern' => '/(?U)a\d+/',
+            'message' => 'Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.',
+        ];
+        yield 'explicit lazy keeps its message' => [
+            'pattern' => '/a\d+?/',
+            'message' => 'Lazy quantifier "+?" ends the pattern, so it always matches its minimum.',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideLazyEndsUnderTheUFlag')]
+    public function test_a_lazy_end_under_the_u_flag_says_the_flag_made_it_lazy(string $pattern, string $message): void
+    {
+        $violation = $this->violation($pattern, self::LAZY_END);
+
+        $this->assertInstanceOf(RuleViolation::class, $violation);
+        $this->assertSame($message, $violation->message);
+    }
+
+    #[Test]
+    public function test_the_engine_stops_a_quantifier_made_lazy_by_u_at_its_minimum(): void
+    {
+        preg_match('/\R+/Uu', "\n\n\n", $matches);
+        $this->assertSame(["\n"], $matches);
+
+        preg_match('/(?U)a\d+/', 'a123', $matches);
+        $this->assertSame(['a1'], $matches);
+    }
+
     private function violation(string $pattern, string $id): ?RuleViolation
     {
         $linter = new PatternLinter();

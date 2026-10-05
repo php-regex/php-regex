@@ -129,7 +129,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): string
     {
-        $value = DisplayEscaper::escape($node->value);
+        $value = DisplayEscaper::escapeText($node->value);
         $this->addLine("Literal ('".$value."')");
 
         return '';

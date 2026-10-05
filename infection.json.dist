@@ -5,8 +5,9 @@
         ],
         "excludes": [
             "Exception",
-            "Bundle",
-            "Bridge"
+            "Laravel",
+            "Symfony",
+            "PHPStan"
         ]
     },
     "timeout": 10,

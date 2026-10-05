@@ -45,6 +45,12 @@ final class UselessBackrefRule extends AbstractLintRule
             return [];
         }
 
+        // A subroutine call can run the backreference again after a group
+        // of another alternative, or one closed later, has captured.
+        if ($context->isReenteredBySubroutine($node)) {
+            return [];
+        }
+
         $target = BackrefTarget::parse($node->ref);
         if (null === $target) {
             return [];

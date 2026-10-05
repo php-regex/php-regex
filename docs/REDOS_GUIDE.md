@@ -194,7 +194,7 @@ echo $analysis->confirmation->samples[0]->inputLength, "\n"; // 18
 echo $analysis->confirmation->samples[0]->pregError, "\n";   // Backtrack limit exhausted
 ```
 
-Only a verdict the engine reproduced, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a verdict PHP has not reproduced.
+Only a verdict the engine reproduced, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a ReDoS verdict PHP has not reproduced (a `lint` run still fails on a pattern that does not compile, or on a lint rule of error severity).
 
 ## Severity and thresholds
 

@@ -21,6 +21,10 @@ namespace PHPRegex\Parser\Internal;
  */
 final class StartOptions
 {
+    /**
+     * Every option PCRE2 reads in the opening run; the same list as the
+     * validator's start-of-pattern settings, kept in step with it.
+     */
     private const NAMES = [
         'UTF' => true, 'UTF8' => true, 'UCP' => true,
         'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
@@ -28,7 +32,10 @@ final class StartOptions
         'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
         'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
         'LIMIT_MATCH' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true, 'LIMIT_RECURSION' => true,
+        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
     ];
+
+    private const NEWLINES = ['CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true];
 
     /**
      * The run of options the source opens with, as written.
@@ -54,6 +61,22 @@ final class StartOptions
         }
 
         return substr($source, 0, $end);
+    }
+
+    /**
+     * The newline convention the options set, "LF" when they set none: the
+     * last of "(*CR)", "(*LF)", "(*CRLF)", "(*ANYCRLF)", "(*ANY)", "(*NUL)".
+     */
+    public static function newline(string $source): string
+    {
+        $newline = 'LF';
+        foreach (explode(')(*', substr(self::of($source), 2, -1)) as $option) {
+            if (isset(self::NEWLINES[$option])) {
+                $newline = $option;
+            }
+        }
+
+        return $newline;
     }
 
     /**

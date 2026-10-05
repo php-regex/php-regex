@@ -36,8 +36,16 @@ final class JsonFormatter extends AbstractOutputFormatter
     {
         $data = null === $this->target ? [] : ['target' => $this->target];
         $data += [
-            // A report reader finds every key on every run, "redos" included.
-            'stats' => $report->stats + ['redos' => 0],
+            // A report reader finds every key on every run, the optional
+            // counts included.
+            'stats' => [
+                'errors' => $report->stats['errors'],
+                'warnings' => $report->stats['warnings'],
+                'optimizations' => $report->stats['optimizations'],
+                'redos' => $report->stats['redos'] ?? 0,
+                'infos' => $report->stats['infos'] ?? 0,
+                'lintErrors' => $report->stats['lintErrors'] ?? 0,
+            ],
             'results' => $this->normalizeResults($report->results),
         ];
 

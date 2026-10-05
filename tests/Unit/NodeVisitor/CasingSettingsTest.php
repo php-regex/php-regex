@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
  * settings read at the start of the pattern. Turkish casing needs UTF mode
  * (without it, error 204, or 205 under UCP alone) and does not go with the
  * caseless restriction (error 206), both reported where the leading settings
- * end. No PHP bundles 10.45: for a targeted PHP they are unknown verbs,
+ * end. Where the judged PCRE2 is older than 10.45 they are unknown verbs,
  * refused where the name ends (pcre2test 10.44 and 10.48, and PHP).
  */
 final class CasingSettingsTest extends TestCase
@@ -54,6 +54,10 @@ final class CasingSettingsTest extends TestCase
         yield 'Turkish casing under UCP alone' => ['pattern' => '/(*UCP)(*TURKISH_CASING)i/i'];
         yield 'both casings' => ['pattern' => '/(*TURKISH_CASING)(*CASELESS_RESTRICT)i/iu'];
         yield 'caseless restriction after text' => ['pattern' => '/a(*CASELESS_RESTRICT)/'];
+        // Other start options still read after a casing setting.
+        yield 'newline verb after the caseless restriction' => ['pattern' => '/(*CASELESS_RESTRICT)(*CR)a/'];
+        yield 'newline verb after Turkish casing' => ['pattern' => '/(*UTF)(*TURKISH_CASING)(*CR)a/'];
+        yield 'limit and UTF after the caseless restriction' => ['pattern' => '/(*CASELESS_RESTRICT)(*LIMIT_MATCH=5)(*UTF)a/'];
     }
 
     #[Test]

@@ -342,6 +342,9 @@ final class CorpusScriptTest extends TestCase
         $this->script(['install']);
 
         $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $this->assertIsArray($manifest['repositories']['src'] ?? null);
         $manifest['repositories']['src']['branch'] = 'gone';
         file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
 

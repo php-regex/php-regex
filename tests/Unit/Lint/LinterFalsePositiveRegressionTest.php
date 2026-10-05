@@ -136,6 +136,52 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     }
 
     /**
+     * The dot reads the s flag in force where it stands, not the pattern's
+     * modifiers: under a local (?-s) it stops at "\n", so "\n+" is no
+     * subset of it and tightening "\n+" to "\n" changes the match ("a\n\nb"
+     * matches the pattern, not the rewrite). Each row compares the pattern
+     * with the rewrite the hint proposes, match offset and extent, over
+     * every subject of up to five characters of "a", "\n" and "b".
+     *
+     * @return iterable<string, array{pattern: string, rewrite: string, reported: bool}>
+     */
+    public static function provideConcatenationUnderALocalDotAll(): iterable
+    {
+        yield 's turned off at the start under the s flag' => ['pattern' => '/(?-s)a\n+.+/s', 'rewrite' => '/(?-s)a\n.+/s', 'reported' => false];
+        yield 's turned off in a group under the s flag' => ['pattern' => '/a(?-s:\n+.+)/s', 'rewrite' => '/a(?-s:\n.+)/s', 'reported' => false];
+        // A (?-s) set in an earlier alternative carries into the later ones.
+        yield 's turned off in an earlier alternative under the s flag' => ['pattern' => '/x(?-s)|a\n+.+/s', 'rewrite' => '/x(?-s)|a\n.+/s', 'reported' => false];
+        yield 's turned off between the two runs under the s flag' => ['pattern' => '/a\n+(?-s).+/s', 'rewrite' => '/a\n(?-s).+/s', 'reported' => false];
+        yield 's set then turned off' => ['pattern' => '/(?s)(?-s)a\n+.+/', 'rewrite' => '/(?s)(?-s)a\n.+/', 'reported' => false];
+        // Where the dot does take "\n", the tightening is sound.
+        yield 's flag' => ['pattern' => '/a\n+.+/s', 'rewrite' => '/a\n.+/s', 'reported' => true];
+        yield 's set inline' => ['pattern' => '/(?s)a\n+.+/', 'rewrite' => '/(?s)a\n.+/', 'reported' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideConcatenationUnderALocalDotAll')]
+    public function test_concatenated_quantifiers_read_the_s_flag_in_force(string $pattern, string $rewrite, bool $reported): void
+    {
+        $same = true;
+        foreach (self::subjects(['a', "\n", 'b'], 5) as $subject) {
+            $left = preg_match($pattern, $subject, $leftMatch, \PREG_OFFSET_CAPTURE);
+            $right = preg_match($rewrite, $subject, $rightMatch, \PREG_OFFSET_CAPTURE);
+            if ($left !== $right || ($leftMatch[0] ?? null) !== ($rightMatch[0] ?? null)) {
+                $same = false;
+
+                break;
+            }
+        }
+        $this->assertSame($reported, $same, 'Oracle disagrees with the row.');
+        $this->assertSame(1, preg_match($pattern, "a\n\nb"));
+        $this->assertSame($reported ? 1 : 0, preg_match($rewrite, "a\n\nb"), 'Oracle disagrees with the row on "a\n\nb".');
+
+        $reported
+            ? $this->assertContains('regex.lint.quantifier.concatenation', $this->issueIds($pattern), $pattern)
+            : $this->assertNotContains('regex.lint.quantifier.concatenation', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, hint: string}>
      */
     public static function provideConcatenatedQuantifierHints(): iterable
@@ -595,5 +641,203 @@ final class LinterFalsePositiveRegressionTest extends TestCase
         $issueIds = array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues());
 
         $this->assertContains('regex.lint.anchor.impossible.end', $issueIds, $pattern);
+    }
+
+    /**
+     * A lookaround glued to a single character restricts where that
+     * character may sit: `.(?!x)` is not the set of `.`, so the following
+     * quantifier cannot always take over what the loop matched. Each row
+     * names the rewrite the hint would propose and the subject on which the
+     * engine tells them apart.
+     *
+     * @return iterable<string, array{pattern: string, rewrite: string, subject: string}>
+     */
+    public static function provideConcatenationThroughALookaround(): iterable
+    {
+        // pimcore: dropping ".?" turns a match into a miss.
+        yield 'quoted string loop before an optional dot' => [
+            'pattern' => <<<'REGEX'
+                /((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/
+                REGEX,
+            'rewrite' => <<<'REGEX'
+                /((?<![\\])['"])((?:.(?!(?<![\\])\1))*)\1/
+                REGEX,
+            'subject' => "'ab'",
+        ];
+
+        // Tightening ".{1,3}" to "." loses "ax": the loop cannot take the
+        // "a" a "x" follows.
+        yield 'negative lookahead loop before a bounded dot' => [
+            'pattern' => '/^(?:.(?!x))*.{1,3}$/',
+            'rewrite' => '/^(?:.(?!x))*.$/',
+            'subject' => 'ax',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideConcatenationThroughALookaround')]
+    public function test_concatenation_through_a_lookaround_is_not_reported(string $pattern, string $rewrite, string $subject): void
+    {
+        // Oracle: the hinted rewrite changes the verdict.
+        $this->assertSame(1, preg_match($pattern, $subject));
+        $this->assertSame(0, preg_match($rewrite, $subject));
+
+        $this->assertNotContains('regex.lint.quantifier.concatenation', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * Corpus: the lookahead (?!__) can only fail before a "_", and the
+     * trailing [a-z0-9]+ never holds one, so the loop can take every
+     * character but the last and the tightening is sound. The engine agrees
+     * on every subject over {a, 0, _, -} up to six characters.
+     */
+    #[Test]
+    public function test_concatenation_through_a_lookaround_the_tail_cannot_trip_is_still_reported(): void
+    {
+        $pattern = '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/';
+        $tightened = '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]$/';
+
+        foreach (self::subjects(['a', '0', '_', '-'], 6) as $subject) {
+            $this->assertSame(preg_match($pattern, $subject), preg_match($tightened, $subject), $subject);
+        }
+
+        $hints = [];
+        $visitor = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($visitor);
+        foreach ($visitor->getIssues() as $issue) {
+            if ('regex.lint.quantifier.concatenation' === $issue->id) {
+                $hints[] = (string) $issue->hint;
+            }
+        }
+
+        $this->assertSame(['Consider tightening the second quantifier to its minimum.'], $hints);
+    }
+
+    /**
+     * A backreference in a group a subroutine call re-enters reads the
+     * capture another alternative made before the call.
+     *
+     * @return iterable<string, array{pattern: string, withoutBackref: string, subjects: list<string>}>
+     */
+    public static function provideBackrefsReenteredBySubroutine(): iterable
+    {
+        // WordPress IPv6 validator: group 4 holds \3 and \2, and (?4){5}
+        // re-enters it after group 1's first alternative captured both.
+        $ipv6 = '/^(((?=.*(::))(?!.*\3.+\3))\3?|([\dA-F]{1,4}(\3|:\b|$)|\2))(?4){5}((?4){2}|(((2[0-4]|1\d|[1-9])?\d|25[0-5])\.?\b){4})$/i';
+
+        yield 'IPv6 validator, backref to group 2' => [
+            'pattern' => $ipv6,
+            'withoutBackref' => str_replace('|\2))', '|(?!)))', $ipv6),
+            'subjects' => ['::1', '1::', '2001:db8::1', '::ffff:1.2.3.4'],
+        ];
+
+        yield 'IPv6 validator, backref to group 3' => [
+            'pattern' => $ipv6,
+            'withoutBackref' => str_replace('(\3|:\b|$)', '((?!)|:\b|$)', $ipv6),
+            'subjects' => ['1::', '2001:db8::1'],
+        ];
+
+        yield 'minimal re-entry' => [
+            'pattern' => '/^(?:(a)|(\1))(?2)$/',
+            'withoutBackref' => '/^(?:(a)|((?!)))(?2)$/',
+            'subjects' => ['aa'],
+        ];
+    }
+
+    /**
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideBackrefsReenteredBySubroutine')]
+    public function test_backref_reentered_by_a_subroutine_call_is_not_useless(string $pattern, string $withoutBackref, array $subjects): void
+    {
+        $this->assertNotSame($pattern, $withoutBackref);
+        foreach ($subjects as $subject) {
+            // Oracle: removing the backreference loses the match.
+            $this->assertSame(1, preg_match($pattern, $subject), $subject);
+            $this->assertSame(0, preg_match($withoutBackref, $subject), $subject);
+        }
+
+        $this->assertNotContains('regex.lint.backref.useless', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * Inside a branch reset two groups share a number, and (?2) calls the
+     * first of them. A backreference in the called one is re-entered after
+     * group 1 captured; one in the other is never reached that way, and
+     * group 1 sits in another alternative: it is useless.
+     *
+     * @return iterable<string, array{pattern: string, withoutBackref: string, differs: bool, reported: bool}>
+     */
+    public static function provideBackrefsInABranchReset(): iterable
+    {
+        // "aa" matches only through the backreference.
+        yield 'backref in the group (?2) calls' => [
+            'pattern' => '/^(?:(a)|(?|(\1)|(x)))(?2)$/',
+            'withoutBackref' => '/^(?:(a)|(?|((?!))|(x)))(?2)$/',
+            'differs' => true,
+            'reported' => false,
+        ];
+        // (?2) calls (x): the backreference never matters, but the rule
+        // stays silent inside a branch reset, whose group numbers it does
+        // not resolve: a known false negative, never a false report.
+        yield 'backref in the group sharing the number' => [
+            'pattern' => '/^(?:(a)|(?|(x)|(\1)))(?2)$/',
+            'withoutBackref' => '/^(?:(a)|(?|(x)|((?!))))(?2)$/',
+            'differs' => false,
+            'reported' => false,
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideBackrefsInABranchReset')]
+    public function test_backref_in_a_branch_reset_follows_the_group_the_call_reaches(string $pattern, string $withoutBackref, bool $differs, bool $reported): void
+    {
+        // Oracle: every subject over {a, x} up to five characters.
+        $differences = 0;
+        foreach (self::subjects(['a', 'x'], 5) as $subject) {
+            preg_match($pattern, $subject, $with);
+            preg_match($withoutBackref, $subject, $without);
+            $differences += $with === $without ? 0 : 1;
+        }
+        $this->assertSame($differs, $differences > 0, 'Oracle disagrees with the row.');
+
+        $reported
+            ? $this->assertContains('regex.lint.backref.useless', $this->issueIds($pattern), $pattern)
+            : $this->assertNotContains('regex.lint.backref.useless', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function issueIds(string $pattern): array
+    {
+        $visitor = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($visitor);
+
+        return array_values(array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues()));
+    }
+
+    /**
+     * Every string over the alphabet up to the given length.
+     *
+     * @param list<string> $alphabet
+     *
+     * @return \Generator<int, string>
+     */
+    private static function subjects(array $alphabet, int $maxLength): \Generator
+    {
+        $words = [''];
+        yield '';
+        for ($length = 1; $length <= $maxLength; $length++) {
+            $next = [];
+            foreach ($words as $word) {
+                foreach ($alphabet as $letter) {
+                    $next[] = $word.$letter;
+                    yield $word.$letter;
+                }
+            }
+            $words = $next;
+        }
     }
 }

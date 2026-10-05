@@ -127,6 +127,11 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'alphanumeric delimiter' => ['pattern' => 'abc', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.invalid'];
         yield 'backslash delimiter' => ['pattern' => '\\a\\', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.invalid'];
         yield 'NUL delimiter' => ['pattern' => "\0a\0", 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.invalid'];
+        // NUL is no whitespace: PHP never skips it, so it is the delimiter.
+        yield 'NUL before a valid delimiter' => ['pattern' => "\0/a/", 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.invalid'];
+        yield 'lone NUL' => ['pattern' => "\0", 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.invalid'];
+        // Form feed is whitespace to PHP: skipped, then nothing is left.
+        yield 'lone form feed' => ['pattern' => "\x0C", 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.pattern.empty'];
         yield 'no closing delimiter' => ['pattern' => '/abc', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.unclosed'];
         yield 'no closing bracket delimiter' => ['pattern' => '(abc', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.unclosed'];
         yield 'bracket delimiter left open by nesting' => ['pattern' => '{a{b}', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.delimiter.unclosed'];

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\ConditionalNode;
@@ -59,6 +60,7 @@ final class NestedDotStarRule extends AbstractLintRule
         if ($isAtomicQuantifier
             || !QuantifierMath::isUnbounded($node->quantifier)
             || !$this->containsDotStar($node->node)
+            || $this->isSeparated($node, $context)
         ) {
             return [];
         }
@@ -69,6 +71,26 @@ final class NestedDotStarRule extends AbstractLintRule
             $node->startPosition,
             'Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.',
         )];
+    }
+
+    /**
+     * Without the s flag the dot stops at a newline, so "(?:.*\n)+" splits
+     * its text into iterations one way only.
+     */
+    private function isSeparated(QuantifierNode $loop, LintContext $context): bool
+    {
+        $iteration = LoopShape::iteration($loop);
+        if (null === $iteration) {
+            return false;
+        }
+
+        foreach ($iteration->children as $child) {
+            if ($child instanceof QuantifierNode && $child->node instanceof DotNode) {
+                return LoopShape::isSeparatedIteration($iteration, $child, $context);
+            }
+        }
+
+        return false;
     }
 
     private function containsDotStar(NodeInterface $node): bool

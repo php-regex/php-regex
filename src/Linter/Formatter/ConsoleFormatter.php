@@ -88,7 +88,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int} $stats
      */
     public function getSummary(array $stats): string
     {
@@ -111,17 +111,12 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $warnings = $report->stats['warnings'];
 
         if ($errors > 0) {
-            return \sprintf('FAIL: %s, %d warnings, %d optimizations.'.\PHP_EOL,
-                LintSummary::errors($report->stats), $warnings, $report->stats['optimizations']);
+            return \sprintf('FAIL: %s, %s.'.\PHP_EOL,
+                LintSummary::errors($report->stats), LintSummary::failureCounts($report->stats));
         }
 
-        if ($warnings > 0) {
-            return \sprintf('WARN: %d warnings found, %d optimizations available.'.\PHP_EOL,
-                $warnings, $report->stats['optimizations']);
-        }
-
-        return \sprintf('PASS: No issues found, %d optimizations available.'.\PHP_EOL,
-            $report->stats['optimizations']);
+        return \sprintf('%s: %s, %d optimizations available.'.\PHP_EOL,
+            $warnings > 0 ? 'WARN' : 'PASS', LintSummary::passCounts($report->stats), $report->stats['optimizations']);
     }
 
     /**
@@ -194,9 +189,10 @@ class ConsoleFormatter extends AbstractOutputFormatter
             $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
 
             // An invalid pattern says it all in its message and caret; a
-            // ReDoS error still needs its hint, which opens on the evidence.
+            // ReDoS error still needs its hint, which opens on the evidence,
+            // and a lint rule at Error its fix.
             $hint = $issue['hint'] ?? null;
-            if (('error' !== $issueType || isset($issue['analysis'])) && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
+            if (!isset($issue['validation']) && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
                 $formattedHint = $this->formatHint($hint);
                 if ('' !== $formattedHint) {
                     $parts[] = \sprintf('         %s'.\PHP_EOL, $this->dim(self::ARROW_LABEL.' '.$formattedHint));
@@ -426,7 +422,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
     private function isExtendedModePattern(string $pattern): bool
     {
-        $pattern = ltrim($pattern);
+        $pattern = Ascii::trimLeadingSpaces($pattern);
         if ('' === $pattern) {
             return false;
         }
@@ -508,18 +504,18 @@ class ConsoleFormatter extends AbstractOutputFormatter
             $output .= \sprintf('  %s %s%s'.\PHP_EOL,
                 $this->badge('FAIL', self::WHITE, self::BG_RED),
                 $this->color(LintSummary::errors($stats), self::RED.self::BOLD),
-                $this->dim(\sprintf(', %d warnings, %d optimizations.', $warnings, $optimizations)),
+                $this->dim(', '.LintSummary::failureCounts($stats).'.'),
             );
         } elseif ($warnings > 0) {
             $output .= \sprintf('  %s %s%s'.\PHP_EOL,
                 $this->badge('PASS', self::BLACK, self::BG_YELLOW),
-                $this->color(\sprintf('%d warnings found', $warnings), self::YELLOW.self::BOLD),
+                $this->color(LintSummary::passCounts($stats), self::YELLOW.self::BOLD),
                 $this->dim(\sprintf(', %d optimizations available.', $optimizations)),
             );
         } else {
             $output .= \sprintf('  %s %s%s'.\PHP_EOL,
                 $this->badge('PASS', self::WHITE, self::BG_GREEN),
-                $this->color('No issues found', self::GREEN.self::BOLD),
+                $this->color(LintSummary::passCounts($stats), self::GREEN.self::BOLD),
                 $this->dim(\sprintf(', %d optimizations available.', $optimizations)),
             );
         }
@@ -805,8 +801,10 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
         $delimiter = $pattern[0];
 
-        // Delimiters in PCRE must be non-alphanumeric, non-backslash, non-whitespace.
-        if (Ascii::isAlnum($delimiter) || '\\' === $delimiter || Ascii::isSpace($delimiter)) {
+        // PHP refuses an alphanumeric, backslash or NUL delimiter. It skips
+        // leading whitespace before the delimiter, and this text is not
+        // trimmed, so a whitespace first byte is no delimiter either.
+        if (Ascii::isAlnum($delimiter) || '\\' === $delimiter || "\0" === $delimiter || Ascii::isSpace($delimiter)) {
             return null;
         }
 

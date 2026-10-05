@@ -172,8 +172,9 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_lint_with_linter_warnings(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
-        // Use a pattern with nested quantifiers that should trigger linter warnings
-        $pattern = new PatternOccurrence('#(a*)*#', 'file.php', 1, 'route:test', '(a*)*');
+        // Nested quantifiers something must follow: a trailing loop cannot
+        // fail after it, so the anchor keeps the warning meaningful
+        $pattern = new PatternOccurrence('#(a*)*$#', 'file.php', 1, 'route:test', '(a*)*$');
 
         $issues = $service->lint([$pattern]);
 

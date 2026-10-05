@@ -182,9 +182,10 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
             $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
 
             // An invalid pattern says it all in its message and caret; a
-            // ReDoS error still needs its hint, which opens on the evidence.
+            // ReDoS error still needs its hint, which opens on the evidence,
+            // and a lint rule at Error its fix.
             $hint = $issue['hint'] ?? null;
-            if (('error' !== $issueType || isset($issue['analysis'])) && \is_string($hint) && '' !== $hint) {
+            if (!isset($issue['validation']) && \is_string($hint) && '' !== $hint) {
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     self::ARROW_LABEL,
@@ -294,18 +295,18 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
 
         $message = match (true) {
             $errors > 0 => \sprintf(
-                '  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>%s</><fg=gray>, %d warnings, %d optimizations.</>',
+                '  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>%s</><fg=gray>, %s.</>',
                 LintSummary::errors($stats),
-                $warnings,
-                $optimizations,
+                LintSummary::failureCounts($stats),
             ),
             $warnings > 0 => \sprintf(
-                '  <bg=yellow;fg=black;options=bold> PASS </> <fg=yellow;options=bold>%d warnings found</><fg=gray>, %d optimizations available.</>',
-                $warnings,
+                '  <bg=yellow;fg=black;options=bold> PASS </> <fg=yellow;options=bold>%s</><fg=gray>, %d optimizations available.</>',
+                LintSummary::passCounts($stats),
                 $optimizations,
             ),
             default => \sprintf(
-                '  <bg=green;fg=white;options=bold> PASS </> <fg=green;options=bold>No issues found</><fg=gray>, %d optimizations available.</>',
+                '  <bg=green;fg=white;options=bold> PASS </> <fg=green;options=bold>%s</><fg=gray>, %d optimizations available.</>',
+                LintSummary::passCounts($stats),
                 $optimizations,
             ),
         };

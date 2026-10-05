@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Parser\Internal\PatternParser;
-
 /**
  * Immutable facts about the pattern being linted.
  *
@@ -28,14 +26,6 @@ final readonly class PatternInfo
         public string $patternValue,
         public bool $unicodeMode,
     ) {}
-
-    /**
-     * The full regex pattern including delimiters and flags.
-     */
-    public function fullPattern(): string
-    {
-        return $this->delimiter.$this->patternValue.PatternParser::closingDelimiter($this->delimiter).$this->flags;
-    }
 
     public function hasFlag(string $flag): bool
     {

@@ -23,7 +23,12 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -48,6 +53,7 @@ final readonly class AnalysisService
     private const RISK_LINT_ISSUE_IDS = [
         'regex.lint.quantifier.nested' => true,
         'regex.lint.dotstar.nested' => true,
+        'regex.lint.overlap.charset' => true,
     ];
 
     private RedosSeverity $redosSeverityThreshold;
@@ -266,6 +272,7 @@ final readonly class AnalysisService
 
             $ast = $this->regex->parse($occurrence->pattern);
             $skipRiskAnalysis = $this->shouldSkipRiskAnalysis($occurrence);
+            $lintIssues = [];
 
             // Run linter if enabled
             if ($this->lintEnabled) {
@@ -283,7 +290,7 @@ final readonly class AnalysisService
                     // backtracking the engine may need, so any rewrite the
                     // user applies has to be verified by hand.
                     $issueEntry = [
-                        'type' => 'warning',
+                        'type' => self::issueType($issue->severity),
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
                         'column' => $this->resolveColumn($occurrence),
@@ -295,13 +302,14 @@ final readonly class AnalysisService
                         'source' => $source,
                     ];
 
-                    $issues[] = $issueEntry;
+                    $lintIssues[] = $issueEntry;
                 }
             }
 
+            $riskIssues = [];
             if (!$skipRiskAnalysis) {
                 if ($validation->complexityScore >= $this->warningThreshold) {
-                    $issues[] = [
+                    $riskIssues[] = [
                         'type' => 'warning',
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
@@ -320,8 +328,20 @@ final readonly class AnalysisService
                     $this->redosConfirmOptions,
                 );
 
+                // The heuristic rules guess what the analysis just proved:
+                // once it shows the pattern linear, their warnings go. The
+                // proof does not follow every inline option group, such as
+                // "(?s)" carried into the branches after it or "(?-r:...)",
+                // so a pattern holding one keeps the heuristics.
+                if ($redos->isProvenSafe() && !self::hasInlineOptionGroup($ast)) {
+                    $lintIssues = array_values(array_filter(
+                        $lintIssues,
+                        static fn (array $issue): bool => !isset(self::RISK_LINT_ISSUE_IDS[$issue['issueId']]),
+                    ));
+                }
+
                 if ($this->shouldReportRedos($redos, $this->redosSeverityThreshold)) {
-                    $issues[] = [
+                    $riskIssues[] = [
                         'type' => $this->resolveRedosIssueType($redos),
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
@@ -335,6 +355,8 @@ final readonly class AnalysisService
                     ];
                 }
             }
+
+            array_push($issues, ...$lintIssues, ...$riskIssues);
 
             if ($progress) {
                 $progress();
@@ -790,7 +812,7 @@ final readonly class AnalysisService
     private function usesExtendedMode(string $pattern): bool
     {
         // Fast path: if there is no trailing flag block, there's no /x.
-        $pattern = ltrim($pattern);
+        $pattern = Ascii::trimLeadingSpaces($pattern);
         if ('' === $pattern) {
             return false;
         }
@@ -1069,6 +1091,31 @@ final readonly class AnalysisService
         }
 
         return $hints;
+    }
+
+    /**
+     * Whether the pattern holds an inline option group, an option setting
+     * such as "(?s)" or a scoped one such as "(?i-r:...)".
+     */
+    private static function hasInlineOptionGroup(NodeInterface $ast): bool
+    {
+        return null !== NodeFinder::findFirst(
+            $ast,
+            static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::InlineFlags === $node->type,
+        );
+    }
+
+    /**
+     * The one mapping from a rule severity to an issue type: Critical and
+     * Error fail the run, Warning warns, Style, Perf and Info inform.
+     */
+    private static function issueType(LintSeverity $severity): string
+    {
+        return match ($severity) {
+            LintSeverity::Critical, LintSeverity::Error => 'error',
+            LintSeverity::Warning => 'warning',
+            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
+        };
     }
 
     private function resolveRedosIssueType(RedosAnalysis $analysis): string

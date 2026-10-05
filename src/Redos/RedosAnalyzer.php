@@ -89,7 +89,7 @@ final class RedosAnalyzer
                 return self::notAnalyzed($mode, $validation->error ?? 'The pattern is invalid.');
             }
 
-            $visitor = new RedosProfiler(new CharSetAnalyzer($ast->flags));
+            $visitor = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
             $ast->accept($visitor);
             $heuristics = $visitor->getResult();
 

@@ -53,7 +53,7 @@ final class LintConfigSchema
         'unicode.quantifiedMultibyteWithoutU' => ['Error when a quantifier follows a multibyte character without /u flag (only its last byte repeats).', true],
         'flag.useless.i' => ['Warn when /i flag is used but pattern has no case-sensitive characters.', true],
         'flag.useless.m' => ['Warn when /m flag is used but pattern has no anchors.', true],
-        'flag.useless.s' => ['Warn when /s flag is used but pattern has no dots.', true],
+        'flag.useless.s' => ['Warn when /s flag is used but pattern has no unescaped dot outside a character class.', true],
         'flag.redundant' => ['Warn about redundant flag modifiers.', true],
         'flag.override' => ['Warn when inline flags override outer flags.', true],
         'charclass.redundant' => ['Warn about redundant character classes like [a].', true],

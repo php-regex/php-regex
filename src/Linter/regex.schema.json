@@ -217,7 +217,7 @@
             },
             "flag.useless.s": {
               "type": "boolean",
-              "description": "Warn when /s flag is used but pattern has no dots.",
+              "description": "Warn when /s flag is used but pattern has no unescaped dot outside a character class.",
               "default": true
             },
             "flag.redundant": {

@@ -83,7 +83,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertIsArray($data);
         $this->assertArrayHasKey('stats', $data);
         $this->assertArrayHasKey('results', $data);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0], $data['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $data['stats']);
         $this->assertSame([], $data['results']);
     }
 
@@ -349,6 +349,36 @@ final class RegexLintCommandTest extends TestCase
         $this->assertIsArray(json_decode($tester->getDisplay(), true));
     }
 
+    /**
+     * A lint rule at Error fails the command: without /u, [é] matches the
+     * byte \xC3 on its own.
+     */
+    public function test_execute_fails_on_a_lint_rule_at_error(): void
+    {
+        $this->assertSame(1, preg_match('/^[é]$/', "\xC3"));
+
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/[é]/')]));
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
+
+        $this->assertSame(1, $status);
+        $issue = self::firstIssue($tester->getDisplay());
+        $this->assertSame('error', $issue['type'] ?? null);
+        $this->assertSame('regex.lint.unicode.multibyteInClassWithoutU', $issue['issueId'] ?? null);
+    }
+
+    public function test_execute_passes_on_a_lint_rule_at_info(): void
+    {
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/(a)+/')]));
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
+
+        $this->assertSame(0, $status);
+        $this->assertSame('info', self::firstIssue($tester->getDisplay())['type'] ?? null);
+        $data = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($data);
+        $this->assertIsArray($data['stats'] ?? null);
+        $this->assertSame(1, $data['stats']['infos'] ?? null);
+    }
+
     private function createCommand(): LintCommand
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -363,6 +393,43 @@ final class RegexLintCommandTest extends TestCase
             formatterRegistry: new FormatterRegistry(),
             editorUrl: null,
         );
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function firstIssue(string $json): array
+    {
+        $data = json_decode($json, true);
+        self::assertIsArray($data, $json);
+        self::assertIsArray($data['results'] ?? null);
+        self::assertIsArray($data['results'][0] ?? null);
+        self::assertIsArray($data['results'][0]['issues'] ?? null);
+        self::assertIsArray($data['results'][0]['issues'][0] ?? null);
+
+        return $data['results'][0]['issues'][0];
+    }
+
+    private static function sourceOf(string $pattern): PatternSourceInterface
+    {
+        return new class($pattern) implements PatternSourceInterface {
+            public function __construct(private readonly string $pattern) {}
+
+            public function getName(): string
+            {
+                return 'custom';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                return [new PatternOccurrence($this->pattern, 'test.php', 12, 'php:preg_match()')];
+            }
+        };
     }
 
     /**

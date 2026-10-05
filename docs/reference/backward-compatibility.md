@@ -91,6 +91,9 @@ add one to yet.
   proven, and an ambiguity listed as without witness may get one, with
   `RedosAnalyzer::ANALYSIS_VERSION` raised. Their patterns move from
   `proof: heuristic` to `proof: proven`, and their severity may move with them.
+  The heuristic lint issues (nested quantifiers, dot-star in a quantifier,
+  overlapping character sets) are dropped for a pattern the analysis proves
+  linear, so they may disappear for a pattern the wider model now proves.
 - **New ReDoS options**: a configuration key for the analysis budget may be
   added; none is removed.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
@@ -110,6 +113,9 @@ add one to yet.
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
   configuration error).
+- The **severity of the lint rules**: a minor never raises an existing rule to
+  error severity, the one that fails `regex lint`, and a new rule lands at
+  warning severity or lower.
 - The **PHP floor**, PHP 8.2.
 
 ## What a patch release may change

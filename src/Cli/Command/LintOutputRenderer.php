@@ -16,6 +16,7 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Internal\LintSummary;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
@@ -43,7 +44,14 @@ final readonly class LintOutputRenderer
         $optimizations = $stats['optimizations'];
 
         if ($errors > 0) {
-            $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->color(\sprintf('%d invalid patterns', $errors), Output::RED.Output::BOLD)
+            $labels = LintSummary::errors([
+                'errors' => $errors,
+                'warnings' => $warnings,
+                'optimizations' => $optimizations,
+                'redos' => $stats['redos'] ?? 0,
+                'lintErrors' => $stats['lintErrors'] ?? 0,
+            ]);
+            $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->color($labels, Output::RED.Output::BOLD)
                 .$output->dim(\sprintf(', %d warnings, %d optimizations.', $warnings, $optimizations))
                 ."\n");
         } elseif ($warnings > 0) {

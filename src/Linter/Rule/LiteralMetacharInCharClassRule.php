@@ -72,8 +72,12 @@ final class LiteralMetacharInCharClassRule extends AbstractLintRule
         $metachars = [];
         $otherCount = 0;
 
+        // A metachar written escaped (\*, \+, \?, two bytes of source) says
+        // the author meant the literal: it counts as any other element.
         foreach ($parts as $part) {
-            if ($part instanceof LiteralNode && 1 === \strlen($part->value) && \in_array($part->value, ['+', '*', '?'], true)) {
+            if ($part instanceof LiteralNode && 1 === \strlen($part->value) && \in_array($part->value, ['+', '*', '?'], true)
+                && 1 === $part->getEndPosition() - $part->getStartPosition()
+            ) {
                 $metachars[] = $part;
             } else {
                 $otherCount++;

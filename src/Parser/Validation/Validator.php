@@ -180,7 +180,8 @@ final class Validator extends AbstractNodeVisitor
 
     /**
      * Settings PCRE2 only reads in the run of "(*...)" items that opens the
-     * pattern; anywhere else they are not verbs at all.
+     * pattern; anywhere else they are not verbs at all. StartOptions holds
+     * the same list, kept in step with this one.
      */
     private const START_OF_PATTERN_VERBS = [
         'UTF8' => true, 'UTF' => true, 'UCP' => true,
@@ -193,7 +194,9 @@ final class Validator extends AbstractNodeVisitor
     ];
 
     /**
-     * Start-of-pattern settings PCRE2 10.45 added, which no PHP bundles yet.
+     * Start-of-pattern settings PCRE2 10.45 added: settings where the PCRE2
+     * judged is 10.45 or newer, unknown verbs on an older one, whether that
+     * is the library PHP runs with or the one a targeted PHP version bundles.
      */
     private const PCRE_1045_SETTINGS = ['CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true];
 

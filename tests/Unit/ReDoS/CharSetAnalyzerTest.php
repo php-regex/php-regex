@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -140,5 +141,52 @@ final class CharSetAnalyzerTest extends TestCase
         ], 0, 0);
 
         $this->assertTrue($method->invoke($analyzer, $sequence, true));
+    }
+
+    /**
+     * The newline convention a pattern opens with decides which bytes the
+     * dot stops at; the last newline option wins. Under (*CRLF) a lone "\r"
+     * or "\n" is an ordinary character, only the pair is a newline.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideNewlineConventions(): iterable
+    {
+        yield 'no option' => ['pattern' => '/a.b/'];
+        yield 'LF' => ['pattern' => '/(*LF)a.b/'];
+        yield 'CR' => ['pattern' => '/(*CR)a.b/'];
+        yield 'CRLF' => ['pattern' => '/(*CRLF)a.b/'];
+        yield 'NUL' => ['pattern' => '/(*NUL)a.b/'];
+        yield 'ANYCRLF' => ['pattern' => '/(*ANYCRLF)a.b/'];
+        yield 'ANY' => ['pattern' => '/(*ANY)a.b/'];
+        yield 'CR then LF, the last one wins' => ['pattern' => '/(*CR)(*LF)a.b/'];
+        yield 'LF then CR, the last one wins' => ['pattern' => '/(*LF)(*CR)a.b/'];
+        yield 'CR after another option' => ['pattern' => '/(*LIMIT_MATCH=10)(*CR)a.b/'];
+        yield 'CR read by the dot in a later group' => ['pattern' => '/(*CR)a(?:.)b/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideNewlineConventions')]
+    public function test_dot_follows_the_newline_convention_of_the_pattern(string $pattern): void
+    {
+        $set = CharSetAnalyzer::forRegex(RegexParser::create()->parse($pattern))->firstChars(new DotNode(0, 0));
+
+        foreach (["\n", "\r", "\0", "\v", "\f", 'x'] as $char) {
+            $this->assertSame(
+                1 === preg_match($pattern, 'a'.$char.'b'),
+                $set->intersects(ByteCharSet::fromChar($char)),
+                \sprintf('%s on byte 0x%s', $pattern, bin2hex($char)),
+            );
+        }
+    }
+
+    #[Test]
+    public function test_flags_given_later_keep_the_newline_convention(): void
+    {
+        $analyzer = CharSetAnalyzer::forRegex(RegexParser::create()->parse('/(*NUL)a.b/'));
+
+        $this->assertTrue($analyzer->withFlags('')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\n")));
+        $this->assertFalse($analyzer->withFlags('')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\0")));
+        $this->assertTrue($analyzer->withFlags('s')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\0")));
     }
 }
