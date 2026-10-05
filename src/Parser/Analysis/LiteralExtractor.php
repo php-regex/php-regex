@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -76,7 +77,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
     {
         $this->caseInsensitive = str_contains($node->flags, 'i');
         $this->unicode = str_contains($node->flags, 'u')
-            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*(?:UTF|UCP)\)/', $node->source ?? '');
+            || 1 === LibraryPcre::match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*(?:UTF|UCP)\)/', $node->source ?? '');
 
         return $node->pattern->accept($this);
     }
@@ -443,7 +444,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         // Limit expansion length. Beyond ASCII, caseless matching folds
         // characters strtolower() does not know ("ⱥ" and "Ⱥ"); in UTF mode
         // it also folds "k" with the Kelvin sign and "s" with the long s.
-        if (\strlen($value) > 8 || 1 === preg_match($this->unicode ? '/[\x80-\xffkKsS]/' : '/[\x80-\xff]/', $value)) {
+        if (\strlen($value) > 8 || 1 === LibraryPcre::match($this->unicode ? '/[\x80-\xffkKsS]/' : '/[\x80-\xff]/', $value)) {
             return LiteralSet::empty();
         }
 

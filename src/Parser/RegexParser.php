@@ -52,17 +52,19 @@ use PHPRegex\Parser\Validation\Validator;
 final readonly class RegexParser
 {
     /**
-     * Cache version for AST serialization.
+     * Cache version for AST serialization, and part of the key of a
+     * persistent DFA cache.
      *
-     * A cached tree is only worth restoring while the current code would
-     * build the same one, so this is not a number anybody raises by hand: it
-     * is a fingerprint of the code that decides what a pattern parses into —
-     * the lexer, the parser, the nodes and the readers they use.
+     * A cached tree or automaton is only worth restoring while the current
+     * code would build the same one, so this is not a number anybody raises
+     * by hand: it is a fingerprint of the code that decides what a pattern
+     * parses into — the lexer, the parser, the nodes, the validator and the
+     * readers they use — and of the code that turns a tree into a DFA.
      *
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-340b2a17539d3ae071358ae8b56de50d';
+    public const CACHE_VERSION = 'ast-3bb9bb0913edf1171af489776a838a9e';
 
     /**
      * Default maximum allowed regex pattern length.

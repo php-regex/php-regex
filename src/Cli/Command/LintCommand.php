@@ -35,6 +35,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
@@ -314,7 +315,7 @@ final class LintCommand extends AbstractCommand implements CommandInterface
             $content = $formatter->format($report);
             if ('console' === $format) {
                 // Strip ANSI codes for file output
-                $content = preg_replace('/\e\[[0-9;]*m/', '', $content);
+                $content = LibraryPcre::replace('/\e\[[0-9;]*m/', '', $content);
             }
             $dir = dirname($outputFile);
             if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
@@ -475,11 +476,12 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         // Unix-like systems
         if (\DIRECTORY_SEPARATOR === '/') {
             // Linux
+            // Linux only: no test on another system reads /proc/cpuinfo.
             if (\is_readable('/proc/cpuinfo')) {
                 $cpuinfo = \file_get_contents('/proc/cpuinfo');
                 if (false !== $cpuinfo) {
                     $matches = [];
-                    \preg_match_all('/^processor\s*:/m', $cpuinfo, $matches);
+                    LibraryPcre::matchAll('/^processor\s*:/m', $cpuinfo, $matches);
                     if (!empty($matches[0])) {
                         return \count($matches[0]);
                     }

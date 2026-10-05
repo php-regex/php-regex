@@ -65,7 +65,7 @@ tasks:
     method: checksum
 
   cache-version:
-    desc: Write RegexParser::CACHE_VERSION from the code that builds an AST
+    desc: Write RegexParser::CACHE_VERSION from the code that builds an AST or a DFA
     cmds:
       - cmd: php tests/Tools/update_cache_version.php
     sources:
@@ -80,6 +80,20 @@ tasks:
       - src/Parser/PcreTarget.php
       - src/Parser/PcreFeature.php
       - src/Parser/Analysis/GroupNumbering*.php
+      - src/Parser/Analysis/LengthRangeCalculator.php
+      - src/Parser/Engine/PcreEngine.php
+      - src/Parser/RegexParser.php
+      - src/Parser/Hir/*.php
+      - src/Automata/LanguageSolver.php
+      - src/Automata/Builder/*.php
+      - src/Automata/Determinization/*.php
+      - src/Automata/Minimization/*.php
+      - src/Automata/Model/*.php
+      - src/Automata/Options/*.php
+      - src/Automata/Solver/*.php
+      - src/Automata/Support/*.php
+      - src/Automata/Transform/*.php
+      - src/Automata/Unicode/*.php
       - tests/Support/AstFingerprint.php
     generates:
       - src/Parser/RegexParser.php

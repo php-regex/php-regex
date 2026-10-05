@@ -63,27 +63,10 @@ source still pointed there.
 
 ## Before 2.0.0: known defects to fix
 
-Found while auditing the lint output over the corpus (October 2026). Each one
-is confirmed against `preg_match()` and predates the fixes made then. 2.0.0
-freezes the public API, so they go before the tag.
-
-### First: false "safe (proven)" ReDoS verdicts
-
-A proven verdict must never be wrong (see
-[backward-compatibility.md](docs/reference/backward-compatibility.md)). Two
-gaps in the backtracking prover give one:
-
-- **An inline option carried into the following alternatives.** PCRE applies
-  an option set inside one alternative to the alternatives after it, and the
-  prover does not: `/x(?i)|(?:a+A)+$/` and `/x(?s)|(?:.*\n.*\n)+x/` are
-  "safe (proven)" but exponential. The lint rules already keep their warning
-  for these patterns; `Regex::redos()` and `regex analyze` do not.
-- **Inline `r` (caseless restrict) toggles.** `(?i-r:…)`, `(?-r:…)` and a
-  `(?^…)` reset under `/r` are read as if `r` stayed on:
-  `/(?i-r:(?:k+\x{212A})+)$/ur` is "safe (proven)" but exponential, and
-  `/(?ir)(?:k+\x{212A})+$/u` is "exponential (proven)" but linear.
-
-Raise `RedosAnalyzer::ANALYSIS_VERSION` with the fix.
+Found while auditing the lint output over the corpus and while reworking the
+ReDoS proof and the lexer (October 2026). Each one is confirmed against
+`preg_match()` or measured, and predates the fixes made then. 2.0.0 freezes
+the public API, so they go before the tag.
 
 ### The character-set analysis
 
@@ -95,7 +78,20 @@ Raise `RedosAnalyzer::ANALYSIS_VERSION` with the fix.
   gets no overlap warning, `(?:,a*(?:(?!z)a)*)+$` no nested warning, and
   `/^A?[^a]*\z/i` a concatenation hint that loses `"a"`.
 - `(*UCP)` without `/u` is not seen: `\w` and `\d` stay ASCII.
-- A `(?^)` reset keeps `r` where PCRE clears it.
+
+### The ReDoS proof: precision
+
+Sound in both cases, but verdicts the proof could give:
+
+- It does not read an atomic or possessive alternation of one-character
+  branches as the union of their sets: `/^(?>z(?i)|a|A)*$/` and
+  `/^(?>a|a)+$/` get a heuristic verdict where the engine is linear, a gain
+  to make with its own soundness check against the engine.
+- It steps out of its model at the first `xx` option:
+  `/^(?xx)(?x)(?:[ a]|\x20)*$/` (exponential on the engine) and
+  `/^(?xx)(?:[a b]|\x20)*$/` (linear) both get a heuristic verdict. Reading
+  `xx` as the automata solver does (a lone `x` clears it, a class drops its
+  space and tab) would prove both.
 
 ### Other findings
 
@@ -115,8 +111,84 @@ Raise `RedosAnalyzer::ANALYSIS_VERSION` with the fix.
 - `/\Q\x\E/` parses as a code point instead of the text `\x`.
 - C1 controls (U+0080-U+009F) and bidi overrides are shown raw in reports.
 - The message for `\P{L}` without `/u` names `\p{L}`.
-- The static ReDoS verdict depends on the caller's `pcre.backtrack_limit`: a
-  tiny limit turns "safe (proven)" into "no risk found (heuristic)".
+- The Laravel extractor's own `regex:` pattern backtracks exponentially on a
+  run of backslashes with no closing quote (700, then 85,972, then 10,573,735
+  steps); past about 25 backslashes `preg_match_all` gives up and every rule
+  in that file is skipped silently.
+- A lookahead before a loop yields a ReDoS witness with an empty suffix, which
+  then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
+  right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
+  the witness is wrong.
+- The persistent DFA cache is keyed on the target PCRE version, but the
+  character sets inside come from the running engine. To check whether two
+  runtimes can share one entry.
+- Error offsets and messages inside an alphabetic assertion body differ from
+  PCRE: `/(?*[a)/` says "Invalid group modifier syntax" at 3 (PCRE: "missing
+  terminating ]" at 6); `(?*a\` reports 4 (PCRE: 5); an unclosed class or a
+  trailing `\` in a body reads "Missing closing parenthesis for (*pla:".
+  More of the same family: an unclosed `(?*` body is always "Invalid group
+  modifier syntax" at 3 (`/(?*a/`, `/(?*[])/`, and `/(*CR)(?*b#c\n))/x`
+  at 8; PCRE reports the end of the pattern); an error inside a body is not
+  found ahead of a later one, as `/(*pla:[[::])])/` (PCRE: "unknown POSIX
+  class name" at 11; the library "Unmatched closing parenthesis" at 14).
+  And a `\p{` left open in a body with a `}` past its
+  `)` is reported there as "Missing closing parenthesis for (*pla:" at 17
+  (`/(*pla:\p{a)b\p{L}/`; PCRE: "malformed \P or \p sequence" at 15).
+- The body of an alphabetic assertion (`(*pla:…)`, `(?*…)`) is not read in
+  the state around it, as `(?=…)` is:
+  - `xx` reaches the body as `x`, and the spaces before the first member of a
+    class are not skipped there: `/(?xx)(*pla:[ a])./` keeps the space in
+    the tree, and the Python transpiler gives `(?xx)(?=[ a]).`, which
+    matches `" "` where PCRE does not;
+  - group names are checked per body: `/(?<n>a)(*pla:(?<n>b))/`,
+    `/(?|(?<n>a)|(*pla:(?<m>b)))/` and `/(*pla:(?J)(?<n>a))(?<n>b)/` are
+    accepted, where PCRE refuses all three.
+- `\Q…\E` inside a class is read one character per regex call: a 48 KB
+  quote takes about 5 seconds to validate.
+- An unclosed `(?C` callout is read again to the end of the pattern at each
+  attempt: 20,000 of them take about a second, four times as long for twice
+  as many.
+- A quoted `[:` in a class is read as the start of a POSIX class:
+  `/[\Qc[:(\E:]/` and `/[[:^digit:]\Qc[:(\E:]/` are refused with
+  `Invalid POSIX class`, where PCRE accepts both.
+- Without `/u`, a quantifier stacked on a multi-byte character is accepted:
+  U+2029 or U+2028 written as raw bytes, then `+{2}` or `{2}{2}` (PCRE:
+  "quantifier does not follow a repeatable item"); `/a+{2}/` and the `/u`
+  forms are refused as they should.
+- The text of a comment reaches `explain()`, the highlighters and the Mermaid
+  output as raw bytes: a byte-mode comment that is not valid UTF-8
+  (`/a(?#\xE1)b/`, or `"/(*ANY)a#\u{5140}b/x"`, whose comment ends at the
+  0x85 byte inside the character) gives an explanation `json_encode()`
+  refuses, and the language server then drops its hover reply without a
+  word. The Mermaid output also cuts a comment at 20 bytes, mid-character.
+- Printer round trips that change the meaning:
+  - `PatternPrinter` drops the wrapper of a `(?#...)` comment whose text
+    starts with `#` under `/x`: `/a(?##c)b/x` prints as `/a#cb/x`, which
+    turns `b` into comment;
+  - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
+    `x`, so the NEL becomes whitespace;
+  - pretty mode rewrites `(?#x\ny)` as `#` lines in a pattern without `x`
+    (`/a(?#x\ny)b/` then no longer matches `"ab"`), and puts newlines before
+    `|` in a pattern without `x`.
+- `~(*CR)(**\Q…~x` is accepted; PCRE refuses it at offset 7.
+- The printer rewrites `(?P=אABC)`, a reference by a non-ASCII name, as
+  `\k<אABC>`, where an ASCII name keeps its spelling.
+- `regex.lint.escape.suspicious` warns on `/\N{U+41}/u`, which is valid and
+  matches `"A"`.
+- The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
+  on the lines under `roles:`, `methods:` or `ips:`): the dash lines are taken
+  before the list is looked at, so they produce bogus rules, and the parent
+  rule loses its roles, methods and addresses.
+- The language server's flag completion is off by one (the occurrence starts
+  at the opening quote): with the cursor right after `/abc/`, no flag is
+  offered.
+- With `ini_get()` or `ini_set()` in `disable_functions`, the engine throws an
+  `\Error` when it runs a pattern under explicit limits (ReDoS confirmation)
+  or turns the JIT off for one that cannot take `(*NO_JIT)`. Without
+  `ini_get()` it cannot set the caller's value back: decide whether it then
+  changes the setting anyway or runs the pattern as is.
+- The JavaScript transpiler refuses `\k'n'`, the same backreference as
+  `\k<n>`.
 
 ## Report the PCRE2 JIT crash upstream
 

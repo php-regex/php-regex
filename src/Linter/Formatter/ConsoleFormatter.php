@@ -19,6 +19,7 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 
@@ -574,7 +575,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $href = $this->linkFormatter?->format($file, $line, '✏️', $column);
 
         // Extract URL from Symfony href format: <href=URL>✏️</>
-        if (preg_match('/<href=([^>]+)>/', (string) $href, $matches)) {
+        if (LibraryPcre::match('/<href=([^>]+)>/', (string) $href, $matches)) {
             $url = $matches[1];
 
             return "\e]8;;{$url}\e\\✏️\e]8;;\e\\";
@@ -869,7 +870,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
     private function stripAnsi(string $text): string
     {
-        return preg_replace('/\e\\[[0-9;]*m/', '', $text) ?? $text;
+        return LibraryPcre::replace('/\e\\[[0-9;]*m/', '', $text) ?? $text;
     }
 
     /**
@@ -911,7 +912,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
     private function stripMessageLine(string $message): string
     {
-        return preg_replace_callback(
+        return LibraryPcre::replaceCallback(
             '/^Line \d+:/m',
             static fn (array $matches): string => str_repeat(' ', \strlen($matches[0])),
             $message,

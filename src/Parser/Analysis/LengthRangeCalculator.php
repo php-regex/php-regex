@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -165,7 +166,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     {
         // A literal holds a run of characters, or none at all for an empty
         // group, branch or option setting.
-        $length = $this->unicode && 1 === preg_match('//u', $node->value)
+        $length = $this->unicode && 1 === LibraryPcre::match('//u', $node->value)
             ? mb_strlen($node->value, 'UTF-8')
             : \strlen($node->value);
 

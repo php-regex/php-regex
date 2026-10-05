@@ -148,7 +148,7 @@ final class GroupNameReader
         // a digit: PCRE reads the characters a name may hold, and wants what
         // closes the name right after them.
         $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+\z/u' : '/^[A-Za-z_]\w*+\z/';
-        if (1 !== preg_match($namePattern, $name)) {
+        if (1 !== LibraryPcre::match($namePattern, $name)) {
             $offset = $this->invalidNameOffset($nameStart);
             $fault = $this->nameFault($nameStart, $offset);
 
@@ -213,17 +213,17 @@ final class GroupNameReader
         $pattern = $this->stream->getPattern();
 
         if ($this->unicodeNames) {
-            if (1 === preg_match('/\G\p{Nd}/u', $pattern, $matches, 0, $position)) {
+            if (1 === LibraryPcre::match('/\G\p{Nd}/u', $pattern, $matches, 0, $position)) {
                 return $position + ($this->pastTheFault ? \strlen($matches[0]) : 0);
             }
 
-            preg_match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
+            LibraryPcre::match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
         } else {
             if (Ascii::isDigit($pattern[$position] ?? '')) {
                 return $position + ($this->pastTheFault ? 1 : 0);
             }
 
-            preg_match('/\G\w*+/', $pattern, $matches, 0, $position);
+            LibraryPcre::match('/\G\w*+/', $pattern, $matches, 0, $position);
         }
 
         return $position + \strlen($matches[0] ?? '');
@@ -260,7 +260,7 @@ final class GroupNameReader
         $digit = $this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/';
 
         return match (true) {
-            1 === preg_match($digit, $this->stream->getPattern(), $matches, 0, $nameStart) => ErrorCode::GroupNameInvalid,
+            1 === LibraryPcre::match($digit, $this->stream->getPattern(), $matches, 0, $nameStart) => ErrorCode::GroupNameInvalid,
             $stop === $nameStart => ErrorCode::GroupNameExpected,
             default => ErrorCode::GroupNameUnterminated,
         };

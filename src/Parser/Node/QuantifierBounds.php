@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Node;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Canonical parsed form of a quantifier token.
  *
@@ -55,7 +57,7 @@ final readonly class QuantifierBounds
                 return new self(0, 1);
         }
 
-        if (1 !== preg_match('/^\{[ \t]*+(\d*)[ \t]*+(?:(,)[ \t]*+(\d*)[ \t]*+)?\}\z/', $base, $m)) {
+        if (1 !== LibraryPcre::match('/^\{[ \t]*+(\d*)[ \t]*+(?:(,)[ \t]*+(\d*)[ \t]*+)?\}\z/', $base, $m)) {
             return null;
         }
 

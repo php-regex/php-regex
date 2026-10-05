@@ -24,6 +24,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Analysis\MetricsCollector;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\NodeDumper;
@@ -88,6 +89,58 @@ final class ExtendedCharClassDisplayTest extends TestCase
             $this->assertContains($meta.' '.$operator, $parts);
         }
         $this->assertSame('(?[ \d - ( [3] & ![a] ) ^ \x61 | [b] ])', preg_replace('/\e\[[\d;]*+m/', '', $highlighted));
+    }
+
+    /**
+     * When the engine gives up splitting what lies between the operands (a
+     * caller's backtrack limit of 1, the raise refused, no JIT), the text
+     * there is kept, escaped, with nothing wrapped; the operands and the
+     * class's own brackets are still highlighted.
+     *
+     * @param NodeVisitorInterface<string> $highlighter
+     */
+    #[Test]
+    #[DataProvider('provideLayoutsTheEngineCouldNotSplit')]
+    public function test_the_highlight_keeps_the_layout_the_engine_could_not_split(NodeVisitorInterface $highlighter, string $expected): void
+    {
+        $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse('/(?[ [a] & ( [b] | ![c] ) ])/');
+        $saved = ['pcre.jit' => ini_get('pcre.jit'), 'pcre.backtrack_limit' => ini_get('pcre.backtrack_limit')];
+        LibraryPcre::useIniSetter(static fn (): false => false);
+
+        try {
+            ini_set('pcre.jit', '0');
+            ini_set('pcre.backtrack_limit', '1');
+            $highlighted = $tree->accept($highlighter);
+        } finally {
+            foreach ($saved as $key => $value) {
+                if (false !== $value) {
+                    ini_set($key, $value);
+                }
+            }
+            LibraryPcre::useIniSetter(null);
+        }
+
+        $this->assertSame($expected, $highlighted);
+    }
+
+    /**
+     * @return iterable<string, array{highlighter: NodeVisitorInterface<string>, expected: string}>
+     */
+    public static function provideLayoutsTheEngineCouldNotSplit(): iterable
+    {
+        $html = static fn (string $class, string $text): string => '<span class="regex-token '.$class.'">'.$text.'</span>';
+        $htmlMember = static fn (string $member): string => $html('regex-meta', '[').$html('regex-literal', $member).$html('regex-meta', ']');
+        yield 'HTML' => [
+            'highlighter' => new HtmlHighlighter(),
+            'expected' => $html('regex-meta regex-group', '(?[').' '.$htmlMember('a').' &amp; ( '.$htmlMember('b').' | !'.$htmlMember('c').' ) '.$html('regex-meta regex-group', '])'),
+        ];
+
+        $console = static fn (string $colour, string $text): string => "\e[38;2;{$colour}m{$text}\e[0m";
+        $consoleMember = static fn (string $member): string => $console('86;156;214', '[').$console('206;145;120', $member).$console('86;156;214', ']');
+        yield 'console' => [
+            'highlighter' => new ConsoleHighlighter(),
+            'expected' => $console('197;134;192', '(?[').' '.$consoleMember('a').' & ( '.$consoleMember('b').' | !'.$consoleMember('c').' ) '.$console('197;134;192', '])'),
+        ];
     }
 
     #[Test]

@@ -18,6 +18,7 @@ use PHPRegex\Linter\Internal\LintSummary;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
@@ -145,7 +146,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
     private function safelyHighlightPattern(string $pattern): string
     {
         // Wrap with / / if no delimiter
-        if (!preg_match('/^[^a-zA-Z0-9\\\\]/', $pattern)) {
+        if (!LibraryPcre::match('/^[^a-zA-Z0-9\\\\]/', $pattern)) {
             $pattern = '/'.$pattern.'/';
         }
 
@@ -365,7 +366,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
 
     private function stripMessageLine(string $message): string
     {
-        return preg_replace_callback(
+        return LibraryPcre::replaceCallback(
             '/^Line \d+:/m',
             static fn (array $matches): string => str_repeat(' ', \strlen($matches[0])),
             $message,

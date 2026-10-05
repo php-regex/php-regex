@@ -73,6 +73,35 @@ final class HirTranslator
 
     private const RESTRICT = 64;
 
+    private const ASCII_DIGIT = 128;
+
+    private const ASCII_SPACE = 256;
+
+    private const ASCII_WORD = 512;
+
+    private const ASCII_POSIX = 1024;
+
+    private const ASCII_POSIX_DIGIT = 2048;
+
+    /**
+     * The ASCII options by the letter after "a": "(?aD)" for "\d", "(?aS)"
+     * for "\s", "(?aW)" for "\w", "(?aP)" for the POSIX classes, the digit
+     * ones with them, "(?aT)" for the POSIX digit classes only. "-aP" also
+     * takes the digit ones off: "(?aT)(?-aP)[[:digit:]]" matches U+0663.
+     */
+    private const ASCII_OPTIONS = [
+        'D' => self::ASCII_DIGIT,
+        'S' => self::ASCII_SPACE,
+        'W' => self::ASCII_WORD,
+        'P' => self::ASCII_POSIX | self::ASCII_POSIX_DIGIT,
+        'T' => self::ASCII_POSIX_DIGIT,
+    ];
+
+    /**
+     * What a lone "a" sets and "-a" takes off: every ASCII option.
+     */
+    private const ASCII_ALL = self::ASCII_DIGIT | self::ASCII_SPACE | self::ASCII_WORD | self::ASCII_POSIX | self::ASCII_POSIX_DIGIT;
+
     private const SURROGATE_FIRST = 0xD800;
 
     private const SURROGATE_LAST = 0xDFFF;
@@ -95,8 +124,6 @@ final class HirTranslator
 
     private bool $dollarEndOnly = false;
 
-    private bool $caselessRestrict = false;
-
     private string $startVerbs = '';
 
     private string $source = '';
@@ -113,11 +140,10 @@ final class HirTranslator
         $this->unicode = self::unicodeOf($regex);
         $this->unicodeFlag = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
-        $this->caselessRestrict = str_contains($regex->flags, 'r');
         $this->groupNumbers = $this->numberGroups($regex);
 
         $flags = 0;
-        foreach (['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY] as $letter => $bit) {
+        foreach (['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY, 'r' => self::RESTRICT] as $letter => $bit) {
             if (str_contains($regex->flags, $letter)) {
                 $flags |= $bit;
             }
@@ -155,10 +181,12 @@ final class HirTranslator
                 ? new EmptyHir($node->getStartPosition(), $node->getEndPosition())
                 : new OpaqueHir($node, Properties::zeroWidth(false, 0, str_starts_with($node->verb, 'ACCEPT')), null, $node->getStartPosition(), $node->getEndPosition()),
             $node instanceof CalloutNode, $node instanceof VersionConditionNode => $this->opaque($node, Properties::zeroWidth()),
+            // The engine reads a conditional left to right: an option set in
+            // its yes branch holds in its no branch.
             $node instanceof ConditionalNode => new ConditionalHir(
                 $node->condition,
                 $this->node($node->yes, $flags),
-                $this->node($node->no, $flags),
+                $this->node($node->no, $this->flagsAfter($node->yes, $flags)),
                 self::capturesIn($node->condition),
                 $node->getStartPosition(),
                 $node->getEndPosition(),
@@ -300,7 +328,10 @@ final class HirTranslator
                 return $this->surrogateHir($node);
             }
 
-            if (0 === ($flags & self::CASELESS)) {
+            // Under xx a class skips its unescaped spaces and tabs, "[a b]"
+            // is "[ab]": the engine reads such a class.
+            if (0 === ($flags & self::CASELESS)
+                && (0 === ($flags & self::EXTENDED_MORE) || false === strpbrk($this->text($node), " \t"))) {
                 $set = $this->directClass($node);
                 if (null !== $set) {
                     return new ClassHir($set, $node->getStartPosition(), $node->getEndPosition());
@@ -318,18 +349,22 @@ final class HirTranslator
     {
         $modifiers = (0 !== ($flags & self::CASELESS) ? 'i' : '')
             .(0 !== ($flags & self::DOT_ALL) ? 's' : '')
-            .(0 !== ($flags & self::EXTENDED_MORE) ? 'xx' : (0 !== ($flags & self::EXTENDED) ? 'x' : ''));
+            .(0 !== ($flags & self::EXTENDED_MORE) ? 'xx' : (0 !== ($flags & self::EXTENDED) ? 'x' : ''))
+            .(0 !== ($flags & self::RESTRICT) ? 'r' : '');
+        foreach (['D' => self::ASCII_DIGIT, 'S' => self::ASCII_SPACE, 'W' => self::ASCII_WORD, 'P' => self::ASCII_POSIX] as $letter => $bit) {
+            if (0 !== ($flags & $bit)) {
+                $modifiers .= 'a'.$letter;
+            }
+        }
+        // "aP" holds the digit classes already.
+        if (self::ASCII_POSIX_DIGIT === ($flags & (self::ASCII_POSIX | self::ASCII_POSIX_DIGIT))) {
+            $modifiers .= 'aT';
+        }
 
-        $set = ClassSetProvider::query(
-            $atom,
-            $this->unicode,
-            $modifiers,
-            $this->caselessRestrict || 0 !== ($flags & self::RESTRICT),
-            $this->startVerbs,
-            $this->unicodeFlag,
-        );
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag);
         if (null === $set) {
-            // PCRE refused the atom on its own: one character, of a set unknown.
+            // PCRE refused the atom on its own, or gave up scanning it under
+            // its limits: one character, of a set unknown.
             return $this->opaque($node, new Properties(1, 1, false, null, null, null, [], [], 0, false, false));
         }
 
@@ -590,31 +625,54 @@ final class HirTranslator
     {
         $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'U' => self::UNGREEDY, 'r' => self::RESTRICT];
         if (str_starts_with($options, '^')) {
-            // "(?^" takes every letter it may set back off, the restrict
-            // with them: "(?ri)(?^i)k" folds to the Kelvin sign again.
+            // "(?^" takes i, m, n, s, x, xx and r back off: "(?ri)(?^i)k"
+            // folds to the Kelvin sign again. U and the ASCII options stay.
             $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::EXTENDED_MORE | self::RESTRICT);
             $options = substr($options, 1);
         }
 
+        // The group's letters are gathered first and applied together, as
+        // PCRE does: "x" alone in a group takes xx off, so "(?xx)(?x)" and
+        // "(?xx)(?ix)" leave a class's spaces in, while "(?xxix)" keeps xx.
+        // "-x" takes both off.
+        $set = 0;
+        $unset = 0;
         $on = true;
         $previous = '';
-        foreach (str_split($options) as $letter) {
+        $length = \strlen($options);
+        for ($index = 0; $index < $length; $index++) {
+            $letter = $options[$index];
+            $bit = 0;
             if ('-' === $letter) {
                 $on = false;
             } elseif ('x' === $letter) {
-                // "x" sets /x, "xx" also its form for classes; "-x" unsets both.
-                $flags = match (true) {
-                    !$on => $flags & ~(self::EXTENDED | self::EXTENDED_MORE),
-                    'x' === $previous => $flags | self::EXTENDED_MORE,
-                    default => $flags | self::EXTENDED,
-                };
+                $bit = $on && 'x' !== $previous ? self::EXTENDED : self::EXTENDED | self::EXTENDED_MORE;
+            } elseif ('a' === $letter) {
+                // "a" alone, or "a" and the one letter naming its option.
+                $next = $options[$index + 1] ?? '';
+                $ascii = self::ASCII_OPTIONS[$next] ?? null;
+                if (null !== $ascii) {
+                    $index++;
+                }
+
+                $bit = $ascii ?? self::ASCII_ALL;
             } elseif (isset($bits[$letter])) {
-                $flags = $on ? $flags | $bits[$letter] : $flags & ~$bits[$letter];
+                $bit = $bits[$letter];
+            }
+
+            if ($on) {
+                $set |= $bit;
+            } else {
+                $unset |= $bit;
             }
 
             $previous = $letter;
         }
 
-        return $flags;
+        if (self::EXTENDED === ($set & (self::EXTENDED | self::EXTENDED_MORE))) {
+            $unset |= self::EXTENDED_MORE;
+        }
+
+        return ($flags | $set) & ~$unset;
     }
 }

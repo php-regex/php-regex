@@ -19,6 +19,7 @@ use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * Configuration options for Regex parser.
@@ -296,7 +297,7 @@ final readonly class ParserOptions
                 return $asInt;
             }
 
-            if (preg_match('/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/', $trimmed, $matches)) {
+            if (LibraryPcre::match('/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/', $trimmed, $matches)) {
                 $major = (int) $matches[1];
                 $minor = isset($matches[2]) && \is_string($matches[2]) ? (int) $matches[2] : 0;
                 $patch = isset($matches[3]) && \is_string($matches[3]) ? (int) $matches[3] : 0;

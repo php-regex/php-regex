@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -61,5 +62,46 @@ final class SecurityConfigExtractorTest extends TestCase
         $this->assertSame('^/api/(a+)+$', $result['firewalls'][0]['pattern'], 'single quotes');
         $this->assertSame('^/(dev|config)/', $result['firewalls'][1]['pattern'], 'double quotes');
         $this->assertSame('api.request.matcher', $result['firewalls'][2]['requestMatcher'], 'request_matcher');
+    }
+
+    /**
+     * A list key left empty ("roles:", read by YAML as null) does not take
+     * the lines after it: a sibling key at its indent, or an empty flow
+     * list on the next line, deeper. Both readings agree with symfony/yaml.
+     *
+     * @param array{roles: list<string>, methods: list<string>, ips: list<string>} $expected
+     */
+    #[Test]
+    #[DataProvider('provideEmptyListKeys')]
+    public function test_access_control_reads_a_list_key_left_empty(string $yaml, array $expected): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'regex-security-');
+        $this->assertIsString($path);
+
+        try {
+            file_put_contents($path, $yaml);
+            $rules = (new SecurityConfigExtractor())->extract($path)['accessControl'];
+        } finally {
+            unlink($path);
+        }
+
+        $this->assertCount(1, $rules);
+        $this->assertSame('^/admin', $rules[0]['path']);
+        $this->assertSame($expected, ['roles' => $rules[0]['roles'], 'methods' => $rules[0]['methods'], 'ips' => $rules[0]['ips']]);
+    }
+
+    /**
+     * @return iterable<string, array{yaml: string, expected: array{roles: list<string>, methods: list<string>, ips: list<string>}}>
+     */
+    public static function provideEmptyListKeys(): iterable
+    {
+        yield 'sibling key after an empty list key' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          roles:\n          methods: [GET, POST]\n",
+            'expected' => ['roles' => [], 'methods' => ['GET', 'POST'], 'ips' => []],
+        ];
+        yield 'empty flow list on the line after the key' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          ips:\n              []\n          methods: [GET]\n",
+            'expected' => ['roles' => [], 'methods' => ['GET'], 'ips' => []],
+        ];
     }
 }

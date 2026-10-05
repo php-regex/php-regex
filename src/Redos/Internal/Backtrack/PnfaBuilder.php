@@ -52,6 +52,12 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  * start; "\b", "\B" and "^" under /m are not kept. A bounded repeat is
  * unrolled up to the cutoff and read as unbounded past it.
  *
+ * Inline options hold where PCRE reads them: one set inside an alternative
+ * also holds in the alternatives after it, up to the end of the group around
+ * them. The caseless restriction r and the ASCII options are read per scope,
+ * like the others, and the engine is asked for each set under the options in
+ * force where its atom stands.
+ *
  * @internal
  */
 final class PnfaBuilder
@@ -65,6 +71,37 @@ final class PnfaBuilder
     private const EXTENDED = 8;
 
     private const UNGREEDY = 16;
+
+    private const RESTRICT = 32;
+
+    private const ASCII_DIGIT = 64;
+
+    private const ASCII_SPACE = 128;
+
+    private const ASCII_WORD = 256;
+
+    private const ASCII_POSIX = 512;
+
+    private const ASCII_POSIX_DIGIT = 1024;
+
+    /**
+     * The ASCII options by the letter after "a": "(?aD)" for "\d", "(?aS)"
+     * for "\s", "(?aW)" for "\w" and "\b", "(?aP)" for the POSIX classes,
+     * the digit ones with them, "(?aT)" for the POSIX digit classes only.
+     * "-aP" also takes the digit ones off.
+     */
+    private const ASCII_OPTIONS = [
+        'D' => self::ASCII_DIGIT,
+        'S' => self::ASCII_SPACE,
+        'W' => self::ASCII_WORD,
+        'P' => self::ASCII_POSIX | self::ASCII_POSIX_DIGIT,
+        'T' => self::ASCII_POSIX_DIGIT,
+    ];
+
+    /**
+     * What a lone "a" sets and "-a" takes off: every ASCII option.
+     */
+    private const ASCII_ALL = self::ASCII_DIGIT | self::ASCII_SPACE | self::ASCII_WORD | self::ASCII_POSIX | self::ASCII_POSIX_DIGIT;
 
     private const OUT_OF_MODEL_TYPES = ['R', 'X', 'C'];
 
@@ -146,8 +183,6 @@ final class PnfaBuilder
 
     private readonly bool $dollarEndOnly;
 
-    private readonly bool $caselessRestrict;
-
     private readonly string $source;
 
     public function __construct(
@@ -157,7 +192,6 @@ final class PnfaBuilder
     ) {
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
-        $this->caselessRestrict = str_contains($regex->flags, 'r');
         $this->source = $regex->source ?? '';
         $this->collectAbstractions($regex->pattern);
     }
@@ -172,7 +206,7 @@ final class PnfaBuilder
     public function build(): array
     {
         $flags = 0;
-        foreach ([['i', self::CASELESS], ['s', self::DOT_ALL], ['m', self::MULTILINE], ['x', self::EXTENDED], ['U', self::UNGREEDY]] as [$letter, $bit]) {
+        foreach ([['i', self::CASELESS], ['s', self::DOT_ALL], ['m', self::MULTILINE], ['x', self::EXTENDED], ['U', self::UNGREEDY], ['r', self::RESTRICT]] as [$letter, $bit]) {
             if (str_contains($this->regex->flags, $letter)) {
                 $flags |= $bit;
             }
@@ -693,9 +727,24 @@ final class PnfaBuilder
             },
             'z' => $pnfa->peek($none, true, $next),
             'Z' => $this->endOrFinalNewline($next, $pnfa),
-            'b', 'B' => $pnfa->boundary('B' === $node->value, $this->wordSet ??= $this->query('\\w', 0), $next),
+            'b', 'B' => $pnfa->boundary('B' === $node->value, $this->wordSet($flags), $next),
             default => throw ModelLimit::outOfModel('The assertion \\'.$node->value),
         };
+    }
+
+    /**
+     * The characters "\b" reads as word characters where it stands: "\w"
+     * under the options in force, ASCII only under aW. One search keeps one
+     * set: boundaries that read two different ones are outside the model.
+     */
+    private function wordSet(int $flags): CharSet
+    {
+        $set = $this->query('\\w', $flags);
+        if (null !== $this->wordSet && $this->wordSet->key() !== $set->key()) {
+            throw ModelLimit::outOfModel('Word boundaries under different ASCII options');
+        }
+
+        return $this->wordSet = $set;
     }
 
     /**
@@ -840,9 +889,7 @@ final class PnfaBuilder
 
     private function query(string $atom, int $flags): CharSet
     {
-        $modifiers = (0 !== ($flags & self::CASELESS) ? 'i' : '')
-            .(0 !== ($flags & self::DOT_ALL) ? 's' : '')
-            .(0 !== ($flags & self::EXTENDED) ? 'x' : '');
+        $modifiers = self::modifiers($flags);
 
         // A scan of the Unicode range costs the engine tens of milliseconds:
         // each distinct atom is charged before it runs, the same whether the
@@ -853,12 +900,15 @@ final class PnfaBuilder
             $this->budget->step($this->unicode ? self::UNICODE_SCAN_STEPS : self::BYTE_SCAN_STEPS);
         }
 
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->caselessRestrict);
+        // The options are the whole scope: a pattern-wide /r is a bit of
+        // them already, and "(?-r)" takes it off.
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers);
         if (null !== $set) {
             return $set;
         }
 
-        // PCRE refused the atom on its own: every character stands for it.
+        // PCRE refused the atom on its own, or gave up scanning it under its
+        // limits: every character stands for it.
         // A larger set can hide the continuation that rejects: the states
         // reading it are marked, so that only an exponential pump through
         // exact sets is proven.
@@ -868,6 +918,30 @@ final class PnfaBuilder
         }
 
         return $this->anyCharacter ??= CharSet::universe($this->unicode);
+    }
+
+    /**
+     * The options in force that change what an atom matches, as an inline
+     * group writes them: the letters set only.
+     */
+    private static function modifiers(int $flags): string
+    {
+        $modifiers = (0 !== ($flags & self::CASELESS) ? 'i' : '')
+            .(0 !== ($flags & self::DOT_ALL) ? 's' : '')
+            .(0 !== ($flags & self::EXTENDED) ? 'x' : '')
+            .(0 !== ($flags & self::RESTRICT) ? 'r' : '');
+        foreach (['D' => self::ASCII_DIGIT, 'S' => self::ASCII_SPACE, 'W' => self::ASCII_WORD, 'P' => self::ASCII_POSIX] as $letter => $bit) {
+            if (0 !== ($flags & $bit)) {
+                $modifiers .= 'a'.$letter;
+            }
+        }
+
+        // "aP" holds the digit classes already.
+        if (self::ASCII_POSIX_DIGIT === ($flags & (self::ASCII_POSIX | self::ASCII_POSIX_DIGIT))) {
+            $modifiers .= 'aT';
+        }
+
+        return $modifiers;
     }
 
     private function text(NodeInterface $node): string
@@ -884,10 +958,22 @@ final class PnfaBuilder
             && $length - 3 === strspn($text, '^-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 2, $length - 3);
     }
 
+    /**
+     * The options in force after the node: those an option setting changes,
+     * or one written anywhere in a sequence, up to the end of the group
+     * around it. A group's own end restores what was set inside it.
+     */
     private function flagsAfter(NodeInterface $node, int $flags): int
     {
         if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && $this->isBareOptionSetting($node)) {
             return $this->applyOptions($flags, $node->flags ?? '');
+        }
+
+        // "(?i)" inside a branch also holds in the branches after it.
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $flags = $this->flagsAfter($child, $flags);
+            }
         }
 
         return $flags;
@@ -900,21 +986,29 @@ final class PnfaBuilder
             throw ModelLimit::outOfModel('The xx option');
         }
 
-        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY];
+        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY, 'r' => self::RESTRICT];
         if (str_starts_with($options, '^')) {
-            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED);
+            // "(?^" takes i, m, n, s, x, xx and r back off; U and the ASCII
+            // options stay.
+            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::RESTRICT);
             $options = substr($options, 1);
         }
 
         $on = true;
-        foreach (str_split($options) as $letter) {
+        $length = \strlen($options);
+        for ($index = 0; $index < $length; $index++) {
+            $letter = $options[$index];
             if ('-' === $letter) {
                 $on = false;
+            } elseif ('a' === $letter) {
+                // "a" alone, or "a" and the one letter naming its option.
+                $ascii = self::ASCII_OPTIONS[$options[$index + 1] ?? ''] ?? null;
+                if (null !== $ascii) {
+                    $index++;
+                }
 
-                continue;
-            }
-
-            if (isset($bits[$letter])) {
+                $flags = $on ? $flags | ($ascii ?? self::ASCII_ALL) : $flags & ~($ascii ?? self::ASCII_ALL);
+            } elseif (isset($bits[$letter])) {
                 $flags = $on ? $flags | $bits[$letter] : $flags & ~$bits[$letter];
             }
         }

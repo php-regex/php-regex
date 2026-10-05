@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Parses backreference syntax into a numeric or named target.
  *
@@ -27,15 +29,15 @@ final class BackrefTarget
      */
     public static function parse(string $ref): ?array
     {
-        if (preg_match('/^\\\\g\{?[+-]\d+\\}?$/', $ref) > 0) {
+        if (LibraryPcre::match('/^\\\\g\{?[+-]\d+\\}?$/', $ref) > 0) {
             return null;
         }
 
-        if (preg_match('/^\\\\(\d+)$/', $ref, $matches) || preg_match('/^\\\\g\{?(\d+)\\}?$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\(\d+)$/', $ref, $matches) || LibraryPcre::match('/^\\\\g\{?(\d+)\\}?$/', $ref, $matches)) {
             return ['type' => 'number', 'value' => (int) $matches[1]];
         }
 
-        if (preg_match('/^\\\\k[<{\'](?<name>\w+)[>}\']$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k[<{\'](?<name>\w+)[>}\']$/', $ref, $matches)) {
             return ['type' => 'name', 'value' => $matches['name']];
         }
 

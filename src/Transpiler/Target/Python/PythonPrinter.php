@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -397,15 +398,15 @@ final class PythonPrinter extends AbstractTargetPrinter
 
     private function normalizeBackreference(string $ref, int $position): string
     {
-        if (preg_match('/^\\\\([1-9]\\d*)$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\([1-9]\\d*)$/', $ref, $matches)) {
             return '\\'.$matches[1];
         }
 
-        if (preg_match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref, $matches)) {
             return '(?P='.$matches[1].')';
         }
 
-        if (preg_match('/^\\\\g\{?([1-9]\\d*)\}?$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\g\{?([1-9]\\d*)\}?$/', $ref, $matches)) {
             return '\\'.$matches[1];
         }
 

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Protocol;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Represents a JSON-RPC message in the Language Server Protocol.
  *
@@ -62,7 +64,7 @@ final readonly class Message
                 break;
             }
 
-            if (preg_match('/^([^:]+):\s*(.+)$/', $line, $matches)) {
+            if (LibraryPcre::match('/^([^:]+):\s*(.+)$/', $line, $matches)) {
                 $headers[strtolower($matches[1])] = $matches[2];
             }
         }

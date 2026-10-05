@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -194,7 +195,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        if (preg_match('/[A-Za-z]/', $value) > 0) {
+        if (LibraryPcre::match('/[A-Za-z]/', $value) > 0) {
             return true;
         }
 
@@ -202,7 +203,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        $chars = preg_split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
+        $chars = LibraryPcre::split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
         if (false === $chars) {
             return false;
         }

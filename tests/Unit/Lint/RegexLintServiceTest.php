@@ -22,6 +22,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -440,45 +441,46 @@ final class RegexLintServiceTest extends TestCase
     }
 
     /**
-     * The analysis misreads an r turned on or off by an inline group: it
-     * proves "(?i-r:(?:k+\x{212A})+)$" under ur linear, while the engine
-     * needs 68 -> 3 194 -> 150 050 steps on (k, Kelvin sign){4, 8, 12}x.
-     * So the heuristics stay whenever the pattern holds an inline flag
-     * group, scoped or not, even a harmless "(?s:x)" (the engine runs
-     * "(?s:x)(?:.*)+" in 2 steps whatever the subject: that report is a
-     * conservative one). With no inline group, the same loop under ur is
-     * linear (6 -> 10 steps) and its heuristic is dropped. Every row is
-     * proven linear by the analysis, and the linter alone reports it.
+     * The analysis reads every inline option as the engine does, so the
+     * linter drops a heuristic exactly when the verdict is proven linear,
+     * inline option group or not: "(?i-r:(?:k+\x{212A})+)$" under ur is
+     * exponential on the engine (68 -> 3 194 -> 150 050 steps on (k,
+     * Kelvin sign){4, 8, 12}x) and keeps its heuristic next to the ReDoS
+     * issue; "(?s:x)(?:.*)+" runs in 2 steps whatever the subject and
+     * loses it; "(?ir)(?:k+\x{212A})+$" under u is linear (6 -> 10 steps)
+     * and loses it too, where the analysis called it exponential before.
      *
-     * @return iterable<string, array{pattern: string, heuristic: string, unit: string, suffix: string, exponential: bool, kept: bool}>
+     * @return iterable<string, array{pattern: string, heuristic: string, unit: string, suffix: string, exponential: bool}>
      */
-    public static function provideProvenLinearPatternsAndInlineFlagGroups(): iterable
+    public static function provideInlineOptionPatternsAgainstTheEngine(): iterable
     {
-        yield 'scoped i turning r off' => ['pattern' => '/(?i-r:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
-        yield 'caret reset with i' => ['pattern' => '/(?^i:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
-        yield 'scoped i inside r turned off' => ['pattern' => '/(?-r:(?i:(?:k+\x{212A})+))$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true, 'kept' => true];
-        yield 'harmless scoped s' => ['pattern' => '/(?s:x)(?:.*)+/', 'heuristic' => 'regex.lint.dotstar.nested', 'unit' => 'a', 'suffix' => "\n", 'exponential' => false, 'kept' => true];
-        yield 'no inline group under ur' => ['pattern' => '/(?:k+\x{212A})+$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => false, 'kept' => false];
+        yield 'scoped i turning r off' => ['pattern' => '/(?i-r:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true];
+        yield 'caret reset with i' => ['pattern' => '/(?^i:(?:k+\x{212A})+)$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true];
+        yield 'scoped i inside r turned off' => ['pattern' => '/(?-r:(?i:(?:k+\x{212A})+))$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => true];
+        yield 'harmless scoped s' => ['pattern' => '/(?s:x)(?:.*)+/', 'heuristic' => 'regex.lint.dotstar.nested', 'unit' => 'a', 'suffix' => "\n", 'exponential' => false];
+        yield 'inline r on a caseless loop' => ['pattern' => '/(?ir)(?:k+\x{212A})+$/u', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => false];
+        yield 'no inline group under ur' => ['pattern' => '/(?:k+\x{212A})+$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => false];
     }
 
-    #[DataProvider('provideProvenLinearPatternsAndInlineFlagGroups')]
-    public function test_analysis_keeps_the_heuristic_when_the_pattern_holds_an_inline_flag_group(string $pattern, string $heuristic, string $unit, string $suffix, bool $exponential, bool $kept): void
+    #[DataProvider('provideInlineOptionPatternsAgainstTheEngine')]
+    public function test_analysis_drops_the_heuristic_on_an_inline_option_pattern_only_when_the_engine_is_linear(string $pattern, string $heuristic, string $unit, string $suffix, bool $exponential): void
     {
-        if (\PHP_VERSION_ID < 80400 && str_ends_with($pattern, 'r')) {
-            // Before PHP 8.4 the r modifier does not exist: PHP refuses the
-            // pattern, and there is nothing to analyse.
-            $this->assertFalse(@preg_match($pattern, ''));
+        if (false === @preg_match($pattern, '')) {
+            // Before PHP 8.4 the r modifier does not exist, and before
+            // PCRE2 10.43 neither does "(?r)": nothing to analyse.
+            $this->assertTrue(\PHP_VERSION_ID < 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile here.');
 
             return;
         }
 
-        $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
-        $this->assertSame(RedosProof::Proven, $verdict->proof, 'The row no longer names the verdict the analysis gives.');
-        $this->assertTrue($verdict->isProvenSafe(), 'The row no longer names the verdict the analysis gives.');
-
         $short = self::steps($pattern, str_repeat($unit, 4).$suffix);
         $long = self::steps($pattern, str_repeat($unit, 8).$suffix);
         $this->assertSame($exponential, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
+        $this->assertSame(RedosProof::Proven, $verdict->proof, $pattern.' is "'.$verdict->headline().'"');
+        $this->assertSame(!$exponential, $verdict->isProvenSafe(), $pattern.' is "'.$verdict->headline().'", the engine disagrees.');
+        $this->assertSame($exponential ? RedosComplexity::Exponential : RedosComplexity::Linear, $verdict->complexity, $pattern);
 
         $linter = new PatternLinter();
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
@@ -488,25 +490,26 @@ final class RegexLintServiceTest extends TestCase
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
         $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
 
-        $kept
+        $exponential
             ? $this->assertContains($heuristic, $ids, $pattern)
             : $this->assertNotContains($heuristic, $ids, $pattern);
+        $this->assertSame($exponential, \in_array('regex.lint.redos', $ids, true), $pattern.' and the ReDoS issue');
     }
 
     /**
-     * The analysis misses an s set in an earlier alternative: it proves
-     * "x(?s)|(?:.*\n.*\n)+x" linear, while the engine needs 385 -> 98 305
-     * steps on "\n"{8} -> "\n"{16}. With an inline flag group that is not
-     * scoped, the heuristic stays next to the verdict.
+     * An s set in an earlier alternative reaches the loop: the analysis
+     * proves "x(?s)|(?:.*\n.*\n)+x" exponential, as the engine needs
+     * 385 -> 98 305 steps on "\n"{8} -> "\n"{16}; the heuristic stays next
+     * to the ReDoS issue.
      */
-    public function test_analysis_keeps_the_heuristic_when_an_inline_flag_group_is_not_scoped(): void
+    public function test_analysis_reports_an_s_carried_from_an_earlier_alternative(): void
     {
         $pattern = '/x(?s)|(?:.*\n.*\n)+x/';
 
-        // The verdict as the analysis gives it today.
         $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
         $this->assertSame(RedosProof::Proven, $verdict->proof);
-        $this->assertTrue($verdict->isProvenSafe());
+        $this->assertFalse($verdict->isProvenSafe(), $pattern.' is "'.$verdict->headline().'"');
+        $this->assertSame(RedosComplexity::Exponential, $verdict->complexity);
 
         // Oracle: the engine exhausts a limit of 1 000 000 steps on 24 "\n".
         $jit = ini_get('pcre.jit');
@@ -515,18 +518,21 @@ final class RegexLintServiceTest extends TestCase
         ini_set('pcre.backtrack_limit', '1000000');
 
         try {
-            $this->assertFalse(@preg_match('/(*NO_START_OPT)x(?s)|(?:.*\n.*\n)+x/', str_repeat("\n", 24)));
-            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+            $result = @preg_match('/(*NO_START_OPT)x(?s)|(?:.*\n.*\n)+x/', str_repeat("\n", 24));
+            $error = preg_last_error();
         } finally {
             ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
+        $this->assertFalse($result);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $error);
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
         $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
 
         $this->assertContains('regex.lint.dotstar.nested', $ids);
+        $this->assertContains('regex.lint.redos', $ids);
     }
 
     /**

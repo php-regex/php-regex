@@ -63,10 +63,16 @@ reported under `regex.redos`, with one of three messages:
 When a rewrite of the pattern is proven to match the same subjects and proven
 linear, the tip prints it: `Proven repair: /(a+)$/ (same subjects, same matches, linear).`
 
-The message holds the verdict class and the pattern only, and stays the same
-for all of 2.x. The severity, how the verdict was reached and the attack are in
-the tip: a better verdict changes the tip, never the message, and your baseline
-keeps working.
+The message holds the verdict class and the pattern only, and the text of each
+of the three stays the same for all of 2.x. The severity, how the verdict was
+reached and the attack are in the tip. Which patterns are reported is not
+frozen: when the analysis improves, an error may appear, disappear or change
+class (Exponential, Polynomial, Potential). After an upgrade that changes the
+analysis, regenerate the baseline:
+
+```bash
+vendor/bin/phpstan analyse --generate-baseline
+```
 
 A call whose subject PHPStan knows to be constant — a literal, a constant, a
 concatenation of them, or an array of them — is not reported: it backtracks

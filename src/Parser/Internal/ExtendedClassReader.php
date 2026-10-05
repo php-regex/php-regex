@@ -137,7 +137,7 @@ final class ExtendedClassReader
      */
     public static function escapeLength(string $pattern, int $start, bool $utf = false): int
     {
-        preg_match(
+        LibraryPcre::match(
             '/\G\\\\(?:x\{[ \t]*+[0-9A-Fa-f]*+[ \t]*+\}?|o\{[ \t]*+[0-7]*+[ \t]*+\}?|[pPN]\{[^}]*+\}?|[pP].|x[0-9A-Fa-f]{0,2}|c.|[0-7]{1,3}|.)/s'.($utf ? 'u' : ''),
             $pattern,
             $escape,
@@ -154,7 +154,7 @@ final class ExtendedClassReader
      */
     private static function pastQuoteMarks(string $pattern, int $at): int
     {
-        while (1 === preg_match('/\G(?:[ \t]++|\\\\(?:Q\\\\E|E))/', $pattern, $mark, 0, $at)) {
+        while (1 === LibraryPcre::match('/\G(?:[ \t]++|\\\\(?:Q\\\\E|E))/', $pattern, $mark, 0, $at)) {
             $at += \strlen($mark[0]);
         }
 
@@ -436,7 +436,7 @@ final class ExtendedClassReader
      */
     private function pastCharacter(int $at): int
     {
-        if (!$this->utf || 1 !== preg_match('/\G./su', $this->pattern, $character, 0, $at)) {
+        if (!$this->utf || 1 !== LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $at)) {
             return $at + 1;
         }
 
@@ -507,7 +507,7 @@ final class ExtendedClassReader
         do {
             $before = $this->at;
             $this->at += strspn($this->pattern, " \t", $this->at);
-            if (1 === preg_match('/\G\\\\(?:Q\\\\E|E)/', $this->pattern, $quote, 0, $this->at)) {
+            if (1 === LibraryPcre::match('/\G\\\\(?:Q\\\\E|E)/', $this->pattern, $quote, 0, $this->at)) {
                 $this->at += \strlen($quote[0]);
             }
         } while ($this->at > $before);

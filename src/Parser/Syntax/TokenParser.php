@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Syntax;
 
-use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -25,6 +24,7 @@ use PHPRegex\Parser\Internal\CodePointReader;
 use PHPRegex\Parser\Internal\ExtendedClassReader;
 use PHPRegex\Parser\Internal\GroupNameReader;
 use PHPRegex\Parser\Internal\InlineFlags;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Lexer;
@@ -192,6 +192,19 @@ final class TokenParser
     private int $capturesBefore = 0;
 
     /**
+     * The recursion depth the text this parser reads starts at: a body read
+     * apart is as deep as the group it stands for in the pattern around it.
+     */
+    private int $depthBefore = 0;
+
+    /**
+     * Reads the bodies of the pattern read apart, shared with the parsers
+     * of the bodies nested in them: what it found of one body is not read
+     * again for the bodies inside it.
+     */
+    private ?Lexer $partLexer = null;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
@@ -218,12 +231,12 @@ final class TokenParser
         // Group names take any letter in Unicode mode: "u", or "(*UTF)" at
         // the start.
         $this->unicodeMode = str_contains($flags, 'u')
-            || 1 === preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
+            || 1 === LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
         $this->groupNames->readUnicodeNames($this->unicodeMode);
         $this->extendedMode = str_contains($flags, 'x');
         $this->noAutoCapture = str_contains($flags, 'n');
         $this->inQuoteMode = false;
-        $this->recursionDepth = 0;
+        $this->recursionDepth = $this->depthBefore;
         $this->captureCount = $this->capturesBefore;
         $this->splitEscape = null;
 
@@ -531,7 +544,7 @@ final class TokenParser
      */
     private function withoutLastCharacter(string $text): string
     {
-        if ($this->unicodeMode && 1 === preg_match('/.\z/su', $text, $matches)) {
+        if ($this->unicodeMode && 1 === LibraryPcre::match('/.\z/su', $text, $matches)) {
             return substr($text, 0, -\strlen($matches[0]));
         }
 
@@ -710,8 +723,8 @@ final class TokenParser
         // it in a group. No other verb takes a quantifier. An alphabetic name
         // PCRE does not know, as "(*scs:" before PCRE2 10.45, is refused where
         // it ends, before its quantifier is read: the validator reports it.
-        $isAccept = $node instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::|$)/', $node->verb);
-        $isUnknownName = $node instanceof PcreVerbNode && 1 === preg_match('/^[a-z]/', $node->verb);
+        $isAccept = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::|$)/', $node->verb);
+        $isUnknownName = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^[a-z]/', $node->verb);
 
         if (!$isAccept && !$isUnknownName && $this->isAssertionNode($node)) {
             $this->guardQuantifierCount($token);
@@ -794,8 +807,8 @@ final class TokenParser
             // A name that starts with a lowercase letter is an alphabetic
             // assertion PCRE does not know, wherever it ends before PCRE2
             // 10.47, and from 10.47 unless the pattern ends with it.
-            if ($unclosedVerb && 1 === preg_match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)
-                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed) || 1 !== preg_match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
+            if ($unclosedVerb && 1 === LibraryPcre::match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)
+                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed) || 1 !== LibraryPcre::match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
                 throw $this->parserException(
                     \sprintf('Unknown alphabetic assertion "(*%s" at position %d.', substr($this->pattern, $namePosition, $position - $namePosition), $position),
                     ErrorCode::VerbInvalid,
@@ -871,7 +884,7 @@ final class TokenParser
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
         $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
 
-        if (1 === preg_match($digit, $this->pattern, $matches, 0, $nameStart)) {
+        if (1 === LibraryPcre::match($digit, $this->pattern, $matches, 0, $nameStart)) {
             throw $this->parserException(
                 \sprintf('Group name after \k%s must not start with a digit at position %d.', $opener, $nameEnd),
                 ErrorCode::GroupNameInvalid,
@@ -1068,7 +1081,7 @@ final class TokenParser
             // "(?Cab)": a callout takes a number or a delimited string;
             // "(?C1x)": the number is read, and ")" is due after it.
             $code = ErrorCode::CalloutInvalidDelimiter;
-            if (1 === preg_match('/^\d++/', $value, $number)) {
+            if (1 === LibraryPcre::match('/^\d++/', $value, $number)) {
                 $code = \strlen(ltrim($number[0], '0')) > 3 || (int) $number[0] > 255 ? ErrorCode::CalloutOutOfRange : ErrorCode::CalloutUnclosed;
             }
             $position = $this->calloutFault($startPosition)[0] ?? $startPosition + 4;
@@ -1082,9 +1095,9 @@ final class TokenParser
 
         // A doubled closing delimiter stands for itself: "(?C{a}}b})".
         $quoted = preg_quote($closing, '/');
-        if (1 !== preg_match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
+        if (1 !== LibraryPcre::match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
             // "(?C"a"b)": the string is closed, and ")" is due after it.
-            $closed = 1 === preg_match('/^.(?:[^'.$quoted.']|'.$quoted.$quoted.')*+'.$quoted.'/s', $value);
+            $closed = 1 === LibraryPcre::match('/^.(?:[^'.$quoted.']|'.$quoted.$quoted.')*+'.$quoted.'/s', $value);
             $code = $closed ? ErrorCode::CalloutUnclosed : ErrorCode::CalloutUnclosedString;
             $position = $this->calloutFault($startPosition)[0] ?? $startPosition;
 
@@ -1110,20 +1123,20 @@ final class TokenParser
 
         // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
         // like \g<N>, calls the group instead.
-        if (preg_match('/^\\\\g(?:\{([0-9+-]++)\}|([0-9+-]++))$/', $value, $m)) {
+        if (LibraryPcre::match('/^\\\\g(?:\{([0-9+-]++)\}|([0-9+-]++))$/', $value, $m)) {
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
         // \g{name} is a back reference, like \k{name}; it is recorded that
         // way, and the compiler gives back the spelling the pattern used.
-        if (preg_match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
+        if (LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
             return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
         }
 
         // "\g<5fg>": PCRE reads a number after "\g<" or "\g'", and wants the
         // closing character right after it; before PCRE2 10.47, it refuses
         // the "\g" itself.
-        if (1 === preg_match('/^\\\\g[<\'][+-]?\d/', $value) && 1 !== preg_match('/^\\\\g(?:<[+-]?\d++>|\'[+-]?\d++\')$/', $value)) {
+        if (1 === LibraryPcre::match('/^\\\\g[<\'][+-]?\d/', $value) && 1 !== LibraryPcre::match('/^\\\\g(?:<[+-]?\d++>|\'[+-]?\d++\')$/', $value)) {
             $position = $this->gReferenceErrorOffset($token->position);
 
             throw $this->parserException(
@@ -1134,11 +1147,11 @@ final class TokenParser
         }
 
         // \g<name> and \g'name' (non-numeric) call the group -> Subroutine
-        if (preg_match('/^\\\\g<([+-]?[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
+        if (LibraryPcre::match('/^\\\\g<([+-]?[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        if (preg_match('/^\\\\g\'([+-]?[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
+        if (LibraryPcre::match('/^\\\\g\'([+-]?[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
@@ -1173,7 +1186,7 @@ final class TokenParser
         $nameStart = $start + 3 + ('{' === $opener ? strspn($this->pattern, " \t", $start + 3) : 0);
 
         return match (true) {
-            1 === preg_match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart) => ErrorCode::BackrefInvalidSyntax,
+            1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart) => ErrorCode::BackrefInvalidSyntax,
             $position === $nameStart => ErrorCode::GroupNameExpected,
             default => ErrorCode::GroupNameUnterminated,
         };
@@ -1187,7 +1200,7 @@ final class TokenParser
      */
     private function guardReferenceNameLength(string $reference, int $start): void
     {
-        if (1 === preg_match('/^\\\\[gk][<{\'][ \t]*+([^\d+\- \t>}\'][^ \t>}\']*+)/', $reference, $matches, \PREG_OFFSET_CAPTURE)) {
+        if (1 === LibraryPcre::match('/^\\\\[gk][<{\'][ \t]*+([^\d+\- \t>}\'][^ \t>}\']*+)/', $reference, $matches, \PREG_OFFSET_CAPTURE)) {
             $this->guardNameLength($matches[1][0], $start + $matches[1][1]);
         }
     }
@@ -1213,7 +1226,7 @@ final class TokenParser
      */
     private static function withoutBracePadding(string $reference): string
     {
-        return preg_replace('/^(\\\\[gk]\{)[ \t]*+(.*?)[ \t]*+\}$/', '$1$2}', $reference) ?? $reference;
+        return LibraryPcre::replace('/^(\\\\[gk]\{)[ \t]*+(.*?)[ \t]*+\}$/', '$1$2}', $reference) ?? $reference;
     }
 
     /**
@@ -1237,7 +1250,7 @@ final class TokenParser
         $position++;
         $position += strspn($this->pattern, $blanks, $position);
 
-        if (1 === preg_match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
+        if (1 === LibraryPcre::match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
             // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
             // or, before 10.43, the space after "{" that pads it.
             if (!$this->supports(PcreFeature::GReferenceNumberReadBeforeClosing)) {
@@ -1314,7 +1327,7 @@ final class TokenParser
      */
     private function digitsFromUnreadReference(Token $token, int $startPosition): ?NodeInterface
     {
-        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference) || 1 !== preg_match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
+        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference) || 1 !== LibraryPcre::match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
             return null;
         }
 
@@ -1330,9 +1343,9 @@ final class TokenParser
 
     private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
     {
-        if (1 !== preg_match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
+        if (1 !== LibraryPcre::match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
             || (\strlen($matches[1]) < 6 && (int) $matches[1] <= $this->captureCount)
-            || 1 !== preg_match('/^[0-7]{1,3}/', $matches[1], $octal)) {
+            || 1 !== LibraryPcre::match('/^[0-7]{1,3}/', $matches[1], $octal)) {
             return null;
         }
 
@@ -1562,7 +1575,7 @@ final class TokenParser
 
     private function firstCharacterOf(Token $token): string
     {
-        return $this->unicodeMode && 1 === preg_match('/^./su', $token->value, $matches) ? $matches[0] : $token->value[0];
+        return $this->unicodeMode && 1 === LibraryPcre::match('/^./su', $token->value, $matches) ? $matches[0] : $token->value[0];
     }
 
     /**
@@ -1665,7 +1678,7 @@ final class TokenParser
 
             // PCRE stops at the colon of a named group, or at the "*", past
             // it from PCRE2 10.47.
-            $position = 1 === preg_match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
+            $position = 1 === LibraryPcre::match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
                 ? $verbStartPosition + 2 + \strlen($name[0])
                 : $this->pastTheFault($verbStartPosition + 1);
 
@@ -1693,7 +1706,7 @@ final class TokenParser
      */
     private function alphaNameConditionError(int $nameStart): ?ParserException
     {
-        if (1 !== preg_match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
+        if (1 !== LibraryPcre::match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
             return null;
         }
 
@@ -1718,8 +1731,8 @@ final class TokenParser
 
     /**
      * Parses a raw sub-pattern string (e.g. the payload of an alphabetic
-     * assertion verb) into an AST. Node positions inside the sub-pattern are
-     * relative to the payload, not to the enclosing pattern.
+     * assertion verb) into an AST. Node positions are those of the enclosing
+     * pattern: the payload is read from $absoluteOffset on.
      */
     private function parseSubPattern(string $payload, int $absoluteOffset): NodeInterface
     {
@@ -1734,8 +1747,10 @@ final class TokenParser
 
         // The payload is read for the same target as the pattern around it,
         // its tokens moved to where they stand in the whole pattern.
+        $this->partLexer ??= new Lexer($this->target);
+
         try {
-            $stream = (new Lexer($this->target))->tokenize($payload, $flags);
+            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags);
         } catch (LexerException $error) {
             // Not reached from a parsed pattern: the lexer read this text around it first.
             throw $this->movedError($error, $absoluteOffset);
@@ -1748,10 +1763,13 @@ final class TokenParser
 
         $inner = new TokenParser($this->maxRecursionDepth, $this->target);
         $inner->capturesBefore = $this->captureCount;
+        $inner->depthBefore = $this->recursionDepth;
+        $inner->partLexer = $this->partLexer;
         $pattern = $inner->parse(new TokenStream($tokens, $this->pattern), $flags, '/', \strlen($this->pattern));
 
-        // The groups it holds take numbers in the enclosing pattern.
-        $this->captureCount += (new GroupNumberingCollector())->collect($pattern)->maxGroupNumber;
+        // The groups it holds take numbers in the enclosing pattern: the
+        // body's parser counted on from those opened before it.
+        $this->captureCount = $inner->captureCount;
 
         return $pattern->pattern;
     }
@@ -1768,7 +1786,7 @@ final class TokenParser
             // An escape is read as a class reads it: "\b" is a backspace, "\1" an octal escape.
             function (string $escape, int $at): NodeInterface {
                 // "\p{" never closed is refused where the pattern ends.
-                if (1 === preg_match('/^\\\\[pP]\{[^}]*+$/', $escape)) {
+                if (1 === LibraryPcre::match('/^\\\\[pP]\{[^}]*+$/', $escape)) {
                     $end = \strlen($this->pattern);
 
                     throw $this->parserException(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), ErrorCode::UnicodePropertyMalformed, $end);
@@ -1793,7 +1811,7 @@ final class TokenParser
             function (string $class, int $at): NodeInterface {
                 // A POSIX class stands on its own there, "[:alpha:]", whatever
                 // its name; the name is judged as in a class.
-                if (1 === preg_match('/^\[:(.*):\]$/s', $class, $posix)) {
+                if (1 === LibraryPcre::match('/^\[:(.*):\]$/s', $class, $posix)) {
                     return new PosixClassNode($posix[1], $at, $at + \strlen($class));
                 }
 
@@ -2168,7 +2186,7 @@ final class TokenParser
 
         $groups = [];
         while (true) {
-            if (1 !== preg_match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
+            if (1 !== LibraryPcre::match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
                 // The reader stops on such an item too: the fallback is for the type.
                 throw $this->groupListError($fault ?? [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)]);
             }
@@ -2792,7 +2810,7 @@ final class TokenParser
 
         // Under /u no name starts with a digit of any script, as in "(?(٣)":
         // PCRE refuses the digit, past it from PCRE2 10.47.
-        if ($this->unicodeMode && 1 === preg_match('/\G\p{Nd}/u', $this->pattern, $matches, 0, $startPosition)) {
+        if ($this->unicodeMode && 1 === LibraryPcre::match('/\G\p{Nd}/u', $this->pattern, $matches, 0, $startPosition)) {
             $position = $this->groupNames->invalidNameOffset($startPosition);
 
             throw $this->parserException(
@@ -2838,7 +2856,7 @@ final class TokenParser
     {
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
         $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
-        if ($nameEnd === $nameStart || 1 === preg_match($digit, $this->pattern, $matches, 0, $nameStart)) {
+        if ($nameEnd === $nameStart || 1 === LibraryPcre::match($digit, $this->pattern, $matches, 0, $nameStart)) {
             return null;
         }
 
@@ -3281,7 +3299,7 @@ final class TokenParser
         ) {
             $isLiteral = $this->stream->check(TokenType::Literal) || $this->stream->check(TokenType::LiteralEscaped);
             $char = $this->stream->current()->value;
-            if (!$isLiteral || 1 !== preg_match('/^[\p{L}\p{Nd}_]$/u', $char)) {
+            if (!$isLiteral || 1 !== LibraryPcre::match('/^[\p{L}\p{Nd}_]$/u', $char)) {
                 throw $this->subroutineNameError($name, $nameStart, $char);
             }
 
@@ -3298,7 +3316,7 @@ final class TokenParser
 
         // A name that starts with a digit names no group: PCRE stops past the
         // digit.
-        if (1 === preg_match('/^\p{Nd}/u', $name)) {
+        if (1 === LibraryPcre::match('/^\p{Nd}/u', $name)) {
             throw $this->parserException(
                 \sprintf(
                     'Invalid group name "%s": names must contain only word characters and must not start with a digit.',
@@ -3340,7 +3358,7 @@ final class TokenParser
             return $this->parserException(\sprintf('Unexpected token "%s" at position %d: a subroutine name is expected there.', $found, $position), ErrorCode::GroupNameExpected, $position);
         }
 
-        if (1 === preg_match('/^\p{Nd}/u', $name)) {
+        if (1 === LibraryPcre::match('/^\p{Nd}/u', $name)) {
             $position = $this->groupNames->invalidNameOffset($nameStart);
 
             return $this->parserException(\sprintf('Invalid subroutine name "%s" at position %d: a group name must not start with a digit.', $name, $position), ErrorCode::GroupNameInvalid, $position);
@@ -3386,7 +3404,7 @@ final class TokenParser
 
         // "(?1", "(?-1", "(?+1": a call, which ends after its number, and is
         // refused while its number is read when PCRE cannot take it.
-        if (1 === preg_match('/\G([+-]?)(\d++)/', $pattern, $matches, 0, $position)) {
+        if (1 === LibraryPcre::match('/\G([+-]?)(\d++)/', $pattern, $matches, 0, $position)) {
             [$number, $sign, $digits] = $matches;
             $end = $position + \strlen($number);
             $tooBig = $this->numberTooBigOffset($digits, $position + \strlen($sign))
@@ -3561,7 +3579,7 @@ final class TokenParser
     private function countErrorOffset(Token $token): ?int
     {
         $blank = $this->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
-        if (1 !== preg_match('/^\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $token->value, $matches, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)) {
+        if (1 !== LibraryPcre::match('/^\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $token->value, $matches, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)) {
             return null;
         }
 
@@ -3608,7 +3626,7 @@ final class TokenParser
      */
     private function countErrorCode(Token $token): ErrorCode
     {
-        preg_match_all('/\d++/', $token->value, $numbers);
+        LibraryPcre::matchAll('/\d++/', $token->value, $numbers);
 
         foreach ($numbers[0] as $digits) {
             if (\strlen(ltrim($digits, '0')) > 5 || (int) $digits > 65535) {
@@ -3654,7 +3672,7 @@ final class TokenParser
     {
         // A limit is only read in the run of settings that opens the
         // pattern; elsewhere it is a verb PCRE does not know.
-        preg_match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $this->pattern, $settings);
+        LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $this->pattern, $settings);
         $limit = $start > \strlen($settings[0] ?? '') ? null : PcreVerb::limitValueErrorOffset(
             $this->pattern,
             $start,
@@ -3664,7 +3682,7 @@ final class TokenParser
             return $limit;
         }
 
-        preg_match('/\G[A-Za-z0-9_]*+/', $this->pattern, $matches, 0, $start + 2);
+        LibraryPcre::match('/\G[A-Za-z0-9_]*+/', $this->pattern, $matches, 0, $start + 2);
         $name = $matches[0] ?? '';
         $nameEnd = $start + 2 + \strlen($name);
 
@@ -3680,7 +3698,7 @@ final class TokenParser
             return $this->pastTheFault($nameEnd);
         }
 
-        return $pastTheFault && 1 === preg_match('/^[a-z]/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
+        return $pastTheFault && 1 === LibraryPcre::match('/^[a-z]/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
             ? $nameEnd + 1
             : $nameEnd;
     }

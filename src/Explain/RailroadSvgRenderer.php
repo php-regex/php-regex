@@ -15,6 +15,7 @@ namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -1143,11 +1144,11 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
             return ['(empty)'];
         }
 
-        $words = preg_split('/\s+/', $label) ?: [];
+        LibraryPcre::matchAll('/\S+/', $label, $words);
         $lines = [];
         $current = '';
 
-        foreach ($words as $word) {
+        foreach ($words[0] ?? [] as $word) {
             $candidate = '' === $current ? $word : $current.' '.$word;
             if (\strlen($candidate) <= self::MAX_LABEL_CHARS) {
                 $current = $candidate;

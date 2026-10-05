@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * Handles textDocument/completion requests for regex patterns.
@@ -226,12 +227,12 @@ final readonly class CompletionHandler
         }
 
         // Check for \p{ - Unicode property
-        if (preg_match('/\\\\p\\{([^}]*)$/', $textBeforeCursor, $matches)) {
+        if (LibraryPcre::match('/\\\\p\\{([^}]*)$/', $textBeforeCursor, $matches)) {
             return ['type' => 'unicode_property', 'prefix' => $matches[1]];
         }
 
         // Check for [: - POSIX class
-        if (preg_match('/\\[\\[:?([^\\]:]*)$/', $textBeforeCursor, $matches)) {
+        if (LibraryPcre::match('/\\[\\[:?([^\\]:]*)$/', $textBeforeCursor, $matches)) {
             return ['type' => 'posix', 'prefix' => $matches[1]];
         }
 
@@ -240,7 +241,7 @@ final readonly class CompletionHandler
         if (false !== $delimiterPos && $delimiterPos > 0) {
             // We're after the closing delimiter, offer flags
             $afterDelimiter = substr($textBeforeCursor, $delimiterPos + 1);
-            if (preg_match('/^[imsxuUADSJ]*$/', $afterDelimiter)) {
+            if (LibraryPcre::match('/^[imsxuUADSJ]*$/', $afterDelimiter)) {
                 return ['type' => 'flags', 'prefix' => $afterDelimiter];
             }
         }

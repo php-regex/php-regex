@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * Token-based extraction strategy mirroring PHPStan's preg_* handling.
@@ -747,7 +748,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         // Check if this looks like a regex with flags (e.g., "/pattern/m" or "{pattern}u")
         // Need to handle escaped delimiters in the string
-        if (preg_match('/^([\'"{}\/#~%])(.*?)([\'"{}\/#~%])([A-Za-z]*)$/', $pattern, $matches)) {
+        if (LibraryPcre::match('/^([\'"{}\/#~%])(.*?)([\'"{}\/#~%])([A-Za-z]*)$/', $pattern, $matches)) {
             $delimiter = $matches[1];
             $regexBody = $matches[2];
             $flags = $matches[4];
@@ -1140,7 +1141,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             return null;
         }
 
-        if (1 !== preg_match(self::IDENTIFIER_PATTERN, $token[1])) {
+        if (1 !== LibraryPcre::match(self::IDENTIFIER_PATTERN, $token[1])) {
             return null;
         }
 

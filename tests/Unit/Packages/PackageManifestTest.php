@@ -159,16 +159,22 @@ final class PackageManifestTest extends TestCase
                 'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
                 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
                 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
-                'Parser\Hir\RepetitionHir',
+                'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre',
             ],
-            'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
-            'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper'],
-            'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\StaticCaches'],
-            'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\PatternParser'],
-            'Optimizer' => ['Parser\Internal\PatternParser'],
+            'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+            'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+            'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
+            // The library's own regexes run under the PCRE floor in every
+            // package that runs one: the floor helper is the one shared
+            // internal they all use for it.
+            'LanguageServer' => ['Parser\Internal\LibraryPcre'],
+            'Laravel' => ['Parser\Internal\LibraryPcre'],
+            'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
+            'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
             'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\PatternParser'],
-            'Symfony' => ['Parser\Internal\DisplayEscaper'],
+            'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
+            'Transpiler' => ['Parser\Internal\LibraryPcre'],
         ];
 
         $found = [];

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\BackrefTarget;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\NodeInterface;
 
@@ -53,7 +54,7 @@ final class UndefinedBackrefRule extends AbstractLintRule
 
             // "\NN" of two digits or more that names no group is an octal
             // escape when it starts with an octal digit: "\11" is a tab.
-            if ($num > $context->groups->maxCapturingGroup && 1 === preg_match('/^\\\\[0-7]\d/', $node->ref)) {
+            if ($num > $context->groups->maxCapturingGroup && 1 === LibraryPcre::match('/^\\\\[0-7]\d/', $node->ref)) {
                 return [];
             }
 

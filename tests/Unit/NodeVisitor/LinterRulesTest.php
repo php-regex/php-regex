@@ -202,6 +202,41 @@ final class LinterRulesTest extends TestCase
         $this->assertContains('regex.lint.escape.suspicious', $issues);
     }
 
+    /**
+     * The rule looks a "\N{name}" up by its name. PCRE2 compiles no
+     * "\N{name}" at all (only "\N{U+hhhh}", in UTF mode), and validate()
+     * says so too, so the lint command never lints one: this is the rule on
+     * a parsed tree, as the linter visitor sees it.
+     *
+     * @param list<string> $expected
+     */
+    #[DataProvider('provideUnicodeNamedEscapes')]
+    public function test_suspicious_escape_looks_up_the_unicode_character_name(string $pattern, array $expected): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE2 compiles no \N{name}.');
+        $this->assertFalse(Regex::create(['cache' => null])->validate($pattern)->isValid);
+
+        $linter = new PatternLinter();
+        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+        $messages = [];
+        foreach ($linter->getIssues() as $issue) {
+            if ('regex.lint.escape.suspicious' === $issue->id) {
+                $messages[] = $issue->message;
+            }
+        }
+
+        $this->assertSame($expected, $messages);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: list<string>}>
+     */
+    public static function provideUnicodeNamedEscapes(): iterable
+    {
+        yield 'known name' => ['pattern' => '/\\N{LATIN SMALL LETTER A}/u', 'expected' => []];
+        yield 'unknown name' => ['pattern' => '/\\N{NO SUCH CHARACTER}/u', 'expected' => ['Unknown Unicode character name "NO SUCH CHARACTER".']];
+    }
+
     public function test_useless_flag_s_warning(): void
     {
         $issues = $this->lint('/no_dot/s');

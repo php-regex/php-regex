@@ -47,7 +47,8 @@ use PHPUnit\Framework\TestCase;
  * the Turkish DOTLESS I folds with nothing (premises pinned below on the
  * engine, pcre.jit 0), the suffixes include ones that satisfy a
  * lookbehind ("b", "ab") and those fold bytes, and the fold attacks run to
- * 2,000 bytes of input. Every fifth pattern the analyzer proves safe in
+ * 2,000 bytes of input. A family sets every inline option letter in
+ * every position PCRE reads it from. Every fifth pattern the analyzer proves safe in
  * the repository corpus is attacked with the same pump machinery, so real
  * shapes, not only generated ones, hold the guarantee.
  *
@@ -98,6 +99,57 @@ final class RedosSoundnessFuzzTest extends TestCase
     private const IN_MODEL_PATTERNS = 80;
 
     private const FOLD_PATTERNS = 60;
+
+    /**
+     * Every inline option letter PCRE2 10.43+ reads, each written set,
+     * unset, after a caret, and as a bare caret.
+     */
+    private const OPTION_LETTERS = ['i', 'm', 'n', 'r', 's', 'x', 'xx', 'U', 'J', 'a', 'aD', 'aS', 'aW', 'aP', 'aT'];
+
+    private const OPTION_FORMS = ['%s', '-%s', '^%s', '^'];
+
+    /**
+     * Templates and global flags drawn for each letter, position and form.
+     */
+    private const OPTION_DRAWS = 3;
+
+    /**
+     * Where an option is set, relative to a loop over two atoms the option
+     * may make overlap or part: {O} is the option, {P} and {Q} the atoms.
+     */
+    private const OPTION_POSITIONS = [
+        'later alternative' => ['^(?:z(?{O})|{P}|{Q})*$', 'x(?{O})|^(?:{P}|{Q})*$', '^(?:(?{O})z|{P}|{Q})*$'],
+        'scoped group' => ['^(?{O}:(?:{P}|{Q})*)$', '^(?:(?{O}:{P})|{Q})*$'],
+        'nested group end' => ['^(?:z(?{O})|y)?(?:{P}|{Q})*$', '^(?:(?{O}))(?:{P}|{Q})*$'],
+        'conditional yes to no' => ['^(?(?=z)z(?{O})|(?:{P}|{Q})*$)', '^(?:(?(?=z)z(?{O})|{P})|{Q})*$'],
+        'after a lookaround' => ['^(?=z(?{O})|)(?:{P}|{Q})*$', '^(?:(?=(?{O})){P}|{Q})*$', '(?<!z(?{O}))(?:{P}|{Q})*$'],
+    ];
+
+    /**
+     * The two atoms each letter moves: case, the Kelvin sign under r, the
+     * newline under s, a space under x, U+0663 under aD and aT, U+00A0
+     * under aS, U+00E9 under aW and aP.
+     */
+    private const OPTION_ATOMS = [
+        'i' => ['a', 'A'], 'm' => ['a', 'a$'], 'n' => ['(a)', 'a'], 'r' => ['k', '\x{212A}'], 's' => ['.', '\n'],
+        'x' => ['a', 'a '], 'xx' => ['[a ]', 'a'], 'U' => ['a+', 'a'], 'J' => ['(?<n>a)', 'a'],
+        'a' => ['\d', '\x{663}'], 'aD' => ['\d', '\x{663}'], 'aS' => ['\s', '\x{A0}'], 'aW' => ['\w', '\x{E9}'],
+        'aP' => ['[[:alpha:]]', '\x{E9}'], 'aT' => ['[[:digit:]]', '\x{663}'],
+    ];
+
+    private const OPTION_FLAGS = ['', 'i', 'u', 'iu', 'ur', 'iur', 'U', 'iU', 'su', 'mu'];
+
+    /**
+     * r and the ASCII options only change anything under /u.
+     */
+    private const UNICODE_OPTION_FLAGS = ['u', 'iu', 'ur', 'iur', 'uU', 'iuU'];
+
+    private const UNICODE_OPTION_LETTERS = ['r', 'a', 'aD', 'aS', 'aW', 'aP', 'aT'];
+
+    /**
+     * r restricts caseless matching: it is drawn under /iu.
+     */
+    private const CASELESS_UNICODE_OPTION_FLAGS = ['iu', 'iur', 'iuU'];
 
     /**
      * Every Nth pattern the analyzer proves safe in the corpus is attacked.
@@ -285,6 +337,71 @@ final class RedosSoundnessFuzzTest extends TestCase
                 2001,
             ),
         );
+    }
+
+    /**
+     * Every inline option letter, set, unset, after a caret and as a bare
+     * caret, in every position PCRE reads it from: carried into a later
+     * alternative, scoped to a group, taken back at a group end, carried
+     * from a conditional's yes branch into its no branch, set inside a
+     * lookaround; under global flags that include r and U. No pattern of
+     * the family proven safe exhausts the limit. Engine facts the attack
+     * rests on: "/x(?i)|^(?:a|A)*$/" needs 65 -> 1 025 -> 16 385 steps on
+     * "a"{4, 8, 12}."!", "/^(?:z(?-r)|k|\x{212A})*$/iur" 95 -> 1 535 ->
+     * 24 575 on the Kelvin sign (pcre.jit 0, "(*NO_START_OPT)").
+     */
+    #[Test]
+    public function test_inline_option_shapes_proven_safe_survive_the_pump_attacks(): void
+    {
+        $this->assertNoFalseSafeVerdict(
+            array_keys($this->inlineOptionPatterns()),
+            static fn (string $pattern): ?string => self::attack(
+                $pattern,
+                ['', 'z', 'y'],
+                ['a', 'A', 'k', 'K', self::KELVIN_SIGN, "\n", ' ', "\u{663}", '3', "\u{A0}", "\u{E9}", 'e', 'aa'],
+                ['!', '', "\n", 'x'],
+                [12, 25],
+            ),
+        );
+    }
+
+    /**
+     * The precondition for trusting the net on inline options: it holds a
+     * pattern for every letter in every position, the set, unset and caret
+     * forms, and global r and U. Before PCRE2 10.43 the engine refuses
+     * "(?r)" and the ASCII options, so those letters are absent there.
+     */
+    #[Test]
+    public function test_inline_option_family_covers_every_letter_and_position(): void
+    {
+        $entries = $this->inlineOptionPatterns();
+        $modern = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+
+        $covered = [];
+        $forms = [];
+        $globalFlags = '';
+        foreach ($entries as $pattern => $entry) {
+            $covered[$entry['letter']][$entry['position']] = true;
+            $forms[$entry['form']] = true;
+            $globalFlags .= substr($pattern, (int) strrpos($pattern, '/') + 1);
+        }
+
+        $missing = [];
+        foreach (self::OPTION_LETTERS as $letter) {
+            $expected = $modern || !\in_array($letter, self::UNICODE_OPTION_LETTERS, true);
+            foreach (array_keys(self::OPTION_POSITIONS) as $position) {
+                if ($expected !== isset($covered[$letter][$position])) {
+                    $missing[] = $letter.' / '.$position;
+                }
+            }
+        }
+
+        $this->assertSame([], $missing);
+        $this->assertSame(self::OPTION_FORMS, array_values(array_intersect(self::OPTION_FORMS, array_keys($forms))));
+        $this->assertStringContainsString('U', $globalFlags);
+        if (\PHP_VERSION_ID >= 80400 && $modern) {
+            $this->assertStringContainsString('r', $globalFlags);
+        }
     }
 
     #[Test]
@@ -631,6 +748,38 @@ final class RedosSoundnessFuzzTest extends TestCase
         $shells = ['^(%s+)+!$', '(%s+)+$', '^(%s*)*$', '(%s|%s)+$', '(\w|%s)+$', '(?i:%s+)%s?$', '^(?i:(%s+))+!$', '%s+(%s?)+$', '(?i:[%s%s]+)$', '\x{131}+$', '(%s|\x{131})+$'];
 
         return $this->compilable(self::FOLD_PATTERNS, fn (): string => '/'.sprintf($this->pick($shells), $this->pick($letters), $this->pick($letters)).'/iu');
+    }
+
+    /**
+     * One pattern per letter, position and form, its template, global flags
+     * and the two atoms the letter moves; those this engine compiles.
+     *
+     * @return array<string, array{letter: string, position: string, form: string}>
+     */
+    private function inlineOptionPatterns(): array
+    {
+        $entries = [];
+        foreach (self::OPTION_LETTERS as $letter) {
+            foreach (self::OPTION_POSITIONS as $position => $templates) {
+                foreach (self::OPTION_FORMS as $form) {
+                    [$first, $second] = self::OPTION_ATOMS[$letter];
+                    for ($draw = 0; $draw < self::OPTION_DRAWS; $draw++) {
+                        $template = $this->pick($templates);
+                        $flags = $this->pick(match (true) {
+                            'r' === $letter => self::CASELESS_UNICODE_OPTION_FLAGS,
+                            \in_array($letter, self::UNICODE_OPTION_LETTERS, true) => self::UNICODE_OPTION_FLAGS,
+                            default => self::OPTION_FLAGS,
+                        });
+                        $pattern = '/'.strtr($template, ['{O}' => \sprintf($form, $letter), '{P}' => $first, '{Q}' => $second]).'/'.$flags;
+                        if (false !== @preg_match($pattern, '') && !isset($entries[$pattern])) {
+                            $entries[$pattern] = ['letter' => $letter, 'position' => $position, 'form' => $form];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $entries;
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CharClassSets;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
@@ -58,7 +59,7 @@ final class BackrefAsOctalInCharClassRule extends AbstractLintRule
             }
 
             // Check if the original representation looks like \1-\9 (a single digit backref)
-            if (!preg_match('/^\\\\([1-9])$/', $part->originalRepresentation, $m)) {
+            if (!LibraryPcre::match('/^\\\\([1-9])$/', $part->originalRepresentation, $m)) {
                 continue;
             }
 

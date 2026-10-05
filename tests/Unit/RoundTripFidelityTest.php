@@ -93,6 +93,9 @@ final class RoundTripFidelityTest extends TestCase
         yield 'inline x' => ['/(?x)  a b  /'];
         yield 'scoped x' => ['/(?x:  a b  )c d/'];
         yield 'around alternation' => ['/a  |  b/x'];
+        yield 'one space before the bar, two after' => ['/a |  b/x'];
+        yield 'two spaces before the bar, one after' => ['/a  | b/x'];
+        yield 'around alternation under an inline x' => ['/((?x)x y z | a b c)/'];
         yield 'inside a group' => ['/(  a b  )c/x'];
         yield 'inside a non capturing group' => ['/(?: a | b )/x'];
         yield 'inside a branch reset' => ['/(?| a | b )/x'];

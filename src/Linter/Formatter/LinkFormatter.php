@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * @internal
  */
@@ -117,7 +119,7 @@ final readonly class LinkFormatter
             return false;
         }
 
-        if (preg_match('/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//', $path)) {
+        if (LibraryPcre::match('/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//', $path)) {
             return true;
         }
 
@@ -125,7 +127,7 @@ final readonly class LinkFormatter
             return true;
         }
 
-        return (bool) preg_match('/\.[A-Za-z0-9]+$/', $path);
+        return (bool) LibraryPcre::match('/\.[A-Za-z0-9]+$/', $path);
     }
 
     private function isAbsolutePath(string $path): bool
@@ -136,8 +138,8 @@ final readonly class LinkFormatter
 
         return str_starts_with($path, '/')
             || str_starts_with($path, '//')
-            || (bool) preg_match('/^[A-Za-z]:\//', $path)
-            || (bool) preg_match('/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//', $path);
+            || (bool) LibraryPcre::match('/^[A-Za-z]:\//', $path)
+            || (bool) LibraryPcre::match('/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//', $path);
     }
 
     private function normalizePath(string $path): string
@@ -175,7 +177,7 @@ final readonly class LinkFormatter
      */
     private function escape(string $text): string
     {
-        $result = preg_replace('/([^\\\\]|^)([<>])/', '$1\\\\$2', $text);
+        $result = LibraryPcre::replace('/([^\\\\]|^)([<>])/', '$1\\\\$2', $text);
         if (null === $result) {
             return $text; // fallback to original text if regex fails
         }

@@ -16,6 +16,7 @@ namespace PHPRegex\Laravel\Extractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * Extracts regex patterns from Laravel validation rules.
@@ -106,7 +107,7 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
         // quotes) may appear inside the pattern, e.g. 'regex:/^[^"]+$/'.
         $regexPattern = '/([\'"])(?:not_)?regex:((?:\\\\.|(?!\1).)+)\1/';
 
-        if (preg_match_all($regexPattern, $content, $matches, \PREG_OFFSET_CAPTURE)) {
+        if (LibraryPcre::matchAll($regexPattern, $content, $matches, \PREG_OFFSET_CAPTURE)) {
             foreach ($matches[2] as $index => $match) {
                 $pattern = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
                 $offset = $match[1];

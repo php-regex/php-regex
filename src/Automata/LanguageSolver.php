@@ -262,9 +262,12 @@ final readonly class LanguageSolver
     private function cacheKey(string $pattern, SolverOptions $options): string
     {
         // The PHP and PCRE2 judged decide what the pattern means: "{,2}"
-        // repeats from PCRE2 10.43 and is text before.
+        // repeats from PCRE2 10.43 and is text before. The version of the
+        // code that reads it keeps a persistent cache from answering with a
+        // DFA an older reading built.
         $parts = [
             $pattern,
+            RegexParser::CACHE_VERSION,
             $this->parser()->target()->cacheKey(),
             $options->matchMode->value,
             $options->maxNfaStates,

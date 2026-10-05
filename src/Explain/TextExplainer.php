@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -520,15 +521,15 @@ final class TextExplainer extends AbstractNodeVisitor
     private function formatUnicodeHexValue(CharLiteralNode $node): string
     {
         $rep = $node->originalRepresentation;
-        if (preg_match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $matches)) {
+        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $matches)) {
             return strtoupper($matches[1]);
         }
 
-        if (preg_match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $matches)) {
+        if (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $matches)) {
             return strtoupper($matches[1]);
         }
 
-        if (preg_match('/^\\\\[xu]\\{([0-9a-fA-F]+)\\}$/', $rep, $matches)) {
+        if (LibraryPcre::match('/^\\\\[xu]\\{([0-9a-fA-F]+)\\}$/', $rep, $matches)) {
             return strtoupper($matches[1]);
         }
 
@@ -542,7 +543,7 @@ final class TextExplainer extends AbstractNodeVisitor
     private function formatOctalValue(CharLiteralNode $node): string
     {
         $rep = $node->originalRepresentation;
-        if (preg_match('/^\\\\o\\{([0-7]+)\\}$/', $rep, $matches)) {
+        if (LibraryPcre::match('/^\\\\o\\{([0-7]+)\\}$/', $rep, $matches)) {
             return '0'.$matches[1];
         }
 
@@ -559,7 +560,7 @@ final class TextExplainer extends AbstractNodeVisitor
     private function extractCharLiteralDetail(CharLiteralNode $node): string
     {
         if (CharLiteralType::UnicodeNamed === $node->type) {
-            if (preg_match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
+            if (LibraryPcre::match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
                 return $matches[1];
             }
         }

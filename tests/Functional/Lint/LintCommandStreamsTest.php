@@ -224,6 +224,26 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertIsArray(json_decode((string) file_get_contents($directory.'/build/report.json'), true));
     }
 
+    /**
+     * The console report shown in colour is written to the file without
+     * its escape sequences: the file holds the same report, as plain text.
+     */
+    #[Test]
+    public function test_lint_strips_ansi_codes_from_a_console_report_written_to_a_file(): void
+    {
+        $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => "<?php\n\npreg_match('/[aa]/', 'a');\n"]);
+
+        [, $stdout] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos', '--output='.$directory.'/build/report.txt'], ansi: true);
+
+        $written = (string) file_get_contents($directory.'/build/report.txt');
+        // The report on stdout carries escape sequences the file does not.
+        $this->assertStringNotContainsString($written, $stdout, 'The console report is not in colour: nothing to strip.');
+        $this->assertStringNotContainsString("\e[", $written);
+        $this->assertStringContainsString('src/a.php', $written);
+        $this->assertStringContainsString($written, (string) preg_replace('/\e\[[0-9;]*m/', '', $stdout));
+        $this->assertStringContainsString('Output also written to: '.$directory.'/build/report.txt', $stdout);
+    }
+
     #[Test]
     public function test_lint_reports_an_output_file_it_cannot_write_on_stderr(): void
     {
@@ -270,7 +290,7 @@ final class LintCommandStreamsTest extends TestCase
      *
      * @return array{int, string, string}
      */
-    private function runLint(array $args, ?string $phpVersion = null, ?string $pcreVersion = null, bool $globalQuiet = false): array
+    private function runLint(array $args, ?string $phpVersion = null, ?string $pcreVersion = null, bool $globalQuiet = false, bool $ansi = false): array
     {
         $command = new LintCommand(
             new HelpCommand(),
@@ -288,7 +308,7 @@ final class LintCommandStreamsTest extends TestCase
         try {
             $exitCode = $command->run(
                 new Input('lint', $args, new GlobalOptions(false, false, false, true, $phpVersion, null, $pcreVersion), []),
-                new Output(false, $globalQuiet, errorStream: $stream),
+                new Output($ansi, $globalQuiet, errorStream: $stream),
             );
         } finally {
             $stdout = (string) ob_get_clean();

@@ -137,7 +137,7 @@ final readonly class VersionCondition
      */
     public static function isMajorLeftOpenAt(string $pattern, int $position, int $offset): bool
     {
-        if (1 !== preg_match('/\GVERSION>?=(\d++)/', $pattern, $matches, 0, $position)) {
+        if (1 !== LibraryPcre::match('/\GVERSION>?=(\d++)/', $pattern, $matches, 0, $position)) {
             return false;
         }
 
@@ -156,7 +156,7 @@ final readonly class VersionCondition
             return 0;
         }
 
-        if ($utf && 1 === preg_match('/\G./su', $pattern, $matches, 0, $position)) {
+        if ($utf && 1 === LibraryPcre::match('/\G./su', $pattern, $matches, 0, $position)) {
             return \strlen($matches[0]);
         }
 

@@ -332,6 +332,6 @@ final class DisplayEscaper
 
     private static function isUtf8(string $text): bool
     {
-        return 1 === preg_match('//u', $text);
+        return 1 === LibraryPcre::match('//u', $text);
     }
 }

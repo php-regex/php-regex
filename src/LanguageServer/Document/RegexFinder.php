@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\LanguageServer\Converter\PositionConverter;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * Finds regex patterns in PHP source code.
@@ -189,7 +190,7 @@ final class RegexFinder
         $delimiter = $pattern[0];
 
         // Common regex delimiters
-        if (preg_match('/^[\/~#@!%]/', $delimiter)) {
+        if (LibraryPcre::match('/^[\/~#@!%]/', $delimiter)) {
             return true;
         }
 

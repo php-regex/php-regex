@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -395,7 +396,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private function escapeString(string $value): string
     {
-        if (!$this->inCharClass && preg_match('/^\\{\\d+(?:,\\d*)?\\}$/', $value)) {
+        if (!$this->inCharClass && LibraryPcre::match('/^\\{\\d+(?:,\\d*)?\\}$/', $value)) {
             return $value;
         }
 
@@ -493,8 +494,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private function normalizeBackreference(string $ref, int $position): string
     {
         if (
-            preg_match('/^\\\\g([+-]\\d+)$/', $ref, $matches)
-            || preg_match('/^\\\\g\\{([+-]\\d+)\\}$/', $ref, $matches)
+            LibraryPcre::match('/^\\\\g([+-]\\d+)$/', $ref, $matches)
+            || LibraryPcre::match('/^\\\\g\\{([+-]\\d+)\\}$/', $ref, $matches)
         ) {
             throw new TranspileException(
                 'Relative backreferences are not supported in JavaScript: '.$matches[0].'.',
@@ -503,19 +504,19 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             );
         }
 
-        if (preg_match('/^\\\\g\\{?([0-9]+)\\}?$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\g\\{?([0-9]+)\\}?$/', $ref, $matches)) {
             return '\\'.$matches[1];
         }
 
-        if (preg_match('/^\\\\k\\{([a-zA-Z0-9_]+)\\}$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k\\{([a-zA-Z0-9_]+)\\}$/', $ref, $matches)) {
             return '\\k<'.$matches[1].'>';
         }
 
-        if (preg_match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref)) {
+        if (LibraryPcre::match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref)) {
             return $ref;
         }
 
-        if (preg_match('/^\\\\[1-9]\\d*$/', $ref)) {
+        if (LibraryPcre::match('/^\\\\[1-9]\\d*$/', $ref)) {
             return $ref;
         }
 

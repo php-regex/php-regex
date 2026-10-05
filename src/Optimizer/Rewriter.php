@@ -15,6 +15,7 @@ namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -251,7 +252,7 @@ final class Rewriter extends AbstractNodeVisitor
         // Compact repeated literal sequences (only when beneficial)
         foreach ($optimizedChildren as $i => $child) {
             // \z, not $: "aaa\n" is no run of "a", though $ matches before its newline.
-            if ($child instanceof LiteralNode && preg_match('/^(.)\1+\z/s', $child->value, $matches)) {
+            if ($child instanceof LiteralNode && LibraryPcre::match('/^(.)\1+\z/s', $child->value, $matches)) {
                 $char = $matches[1];
                 $count = \strlen($child->value);
                 // Only compact if count meets the configured minimum (avoids making output longer/less readable)

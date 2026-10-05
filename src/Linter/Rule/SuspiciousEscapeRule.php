@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -60,7 +61,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
 
         if (CharLiteralType::UnicodeNamed === $node->type && class_exists(\IntlChar::class)) {
             $name = $node->originalRepresentation;
-            if (preg_match('/^\\\\N\\{(.+)}$/', $name, $matches)) {
+            if (LibraryPcre::match('/^\\\\N\\{(.+)}$/', $name, $matches)) {
                 $char = \IntlChar::charFromName($matches[1]);
                 if (null === $char) {
                     return [new RuleViolation(

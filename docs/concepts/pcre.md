@@ -121,11 +121,9 @@ modifier"); earlier releases compile it, but matching it can crash PHP
 every target: at the `\C` for a PHP that refuses it, at the enclosing
 lookbehind for one that compiles it, as that PHP refuses it only there.
 
-The library reads patterns with PCRE itself, so it needs the engine's limits
-left near PHP's defaults: a `pcre.backtrack_limit` of a few dozen already
-misreads some patterns, and one of 1 misreads nearly all of them. The PHP
-default is 1000000; anything from 1000 up reads the patterns in the library's
-own test corpus the same way.
+The library reads patterns with PCRE itself, under limits of its own: a low
+`pcre.backtrack_limit` in your configuration changes neither how a pattern is
+read nor its verdict (see [PCRE settings](#pcre-settings)).
 
 ## What changed in which release
 
@@ -201,6 +199,39 @@ What this library does about it:
 Code that runs untrusted patterns against generated subjects is exposed the
 same way; `pcre.jit=0` or a leading `(*NO_JIT)` avoids it, at the cost of
 the JIT's speed.
+
+## PCRE settings
+
+The library runs regexes of its own: to tokenize and parse a pattern, to
+validate it, to scan the classes the ReDoS proof reads, and in the optimizer,
+the transpiler and the explanations. Those run under at least PHP's default
+limits, a `pcre.backtrack_limit` of 1 000 000 and a `pcre.recursion_limit` of
+100 000, whatever your configuration says, so a pattern is read the same way
+and gets the same verdict under a tiny limit as under the default.
+
+- **Raised, never lowered.** A limit below its default is raised for the
+  library's call only, and set back right after it, also when the call throws.
+  A limit at or above its default, or -1 (unlimited), is kept. The values
+  are read as PHP hands them to the engine: `1M` is 1 048 576, and only the low
+  32 bits count, so `4294967296` is 0 and is raised like any tiny limit.
+- **Nothing written when nothing is needed.** With both limits already high
+  enough, which is the case under PHP's defaults, the library reads them and
+  calls no `ini_set()`.
+- **Only around the library's own regexes.** No code of yours runs while a
+  limit is raised: no pattern you passed, no cache adapter, no callback.
+- **Your pattern keeps your limits.** A pattern the library is given and runs
+  (runtime validation, the samples `generate()` checks, `PcreEngine` without
+  explicit limits) runs under the limits you set. The ReDoS confirmation runs
+  under the limits of its `ConfirmationOptions`, and the `redos` command's
+  benchmark under the ones its options name.
+- **A refused raise changes nothing.** With `ini_set()` or `ini_get()`
+  disabled, or the limits fixed by `php_admin_value`, the library runs under
+  the current limits, as it did before it raised them.
+- **`preg_last_error()`** after a library call reports the library's own last
+  regex, not yours: read it right after your own `preg_*` call.
+- **A fatal error inside such a call** ends the request before the limits are
+  set back. PHP puts every `ini_set()` back at the end of a request, so under
+  FPM the next request starts with its configured limits.
 
 ## PCRE vs other regex engines
 

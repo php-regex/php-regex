@@ -15,6 +15,7 @@ namespace PHPRegex\Cli\SelfUpdate;
 
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * @internal
@@ -284,10 +285,10 @@ class SelfUpdater
     private function parseChecksum(string $contents): string
     {
         $line = trim($contents);
-        $parts = preg_split('/\s+/', $line);
-        $checksum = strtolower($parts[0] ?? '');
+        $first = (LibraryPcre::split('/\s+/', $line) ?: [])[0] ?? '';
+        $checksum = strtolower($first);
 
-        if (!preg_match('/^[a-f0-9]{64}$/', $checksum)) {
+        if (!LibraryPcre::match('/^[a-f0-9]{64}$/', $checksum)) {
             throw new CliException('Invalid checksum format.');
         }
 

@@ -87,7 +87,7 @@ final readonly class InlineFlags
      */
     public static function withoutAsciiOptions(string $text): string
     {
-        return preg_replace('/a[DSWPT]?/', '', $text) ?? $text;
+        return LibraryPcre::replace('/a[DSWPT]?/', '', $text) ?? $text;
     }
 
     public function turnsOn(string $flag): bool

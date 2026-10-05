@@ -176,7 +176,7 @@ It is not reported when the nesting cannot blow up:
 - **A short run before the end**: an outer bound of at most 2 around a greedy run of one literal character, followed only by `$`, `\z` or `\Z`, without `/m`, as `/(a+){1,2}$/`. Any other shape keeps the issue: a bound of 3 or more (`/(a+){0,3}$/`), a class (`/([ab]+){1,2}$/`), a lazy run (`/(a+?){1,2}$/`), `/m`, or a lookahead after the loop.
 - **A separator splits each iteration**: the inner loop is followed right away by an item it cannot match, and every other item of the iteration matches one way only. In the unrolled loop `/"[^"\\]*(?:\\.[^"\\]*)*"/`, each iteration ends with `[^"\\]*`, and the `\\` that opens the next iteration is what `[^"\\]` refuses, so there is one way to split the input. Under `/i` the two sides are compared case-folded, so `/(?:a+,)+$/i` is still exempt, but a loop unrolled this way is never exempt: `/"[^"\\]*(?:\\.[^"\\]*)*"/i` is reported.
 
-With the ReDoS analysis on (`--redos`, or `checks.redos.enabled` in `regex.json`), a pattern the analysis proves linear drops the issue: the proof outranks the heuristic. A pattern holding an inline option group keeps it, whether an option setting such as `(?s)` or a scoped group such as `(?i-r:…)`: the proof does not follow every inline option, so the heuristic stays, even for a harmless `(?s:x)`. The issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
+With the ReDoS analysis on (`--redos`, or `checks.redos.enabled` in `regex.json`), a pattern the analysis proves linear drops the issue: the proof outranks the heuristic. That holds for a pattern with inline options too, an option setting such as `(?s)` or a scoped group such as `(?i-r:…)`, which the proof reads as PCRE does. The issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
 
 **Visual Explanation:**
 ```
@@ -211,7 +211,7 @@ preg_match('/(a++)+b/', $input);
 
 **When it triggers:** An unbounded quantifier wraps a dot-star, which can cause extreme backtracking.
 
-Without `/s` (or an inline `(?s)`), a dot cannot cross a newline, so `/(?:.*\n)+x/` is not reported: each iteration ends at the next newline and the input splits one way. With `/s` or `(?s)`, the same pattern is reported. Unlike nested quantifiers, a loop at the very end of the pattern is still reported, as `/(?:.*)+/` in the example below. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, unless it holds an inline option group such as `(?s)` or `(?s:…)` (see [Nested Quantifiers](#nested-quantifiers-redos-risk)).
+Without `/s` (or an inline `(?s)`), a dot cannot cross a newline, so `/(?:.*\n)+x/` is not reported: each iteration ends at the next newline and the input splits one way. With `/s` or `(?s)`, the same pattern is reported. Unlike nested quantifiers, a loop at the very end of the pattern is still reported, as `/(?:.*)+/` in the example below. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, inline options such as `(?s)` or `(?s:…)` included (see [Nested Quantifiers](#nested-quantifiers-redos-risk)).
 
 **Example:**
 ```php
@@ -442,7 +442,7 @@ preg_match('/a+b/', $input);  // Often equivalent
 
 **Identifier:** `regex.lint.overlap.charset`
 
-**When it triggers:** Alternation branches have overlapping character sets, and the alternation is repeated by an unbounded quantifier: a character both branches accept can be taken by either, on every iteration. An alternation matched once, such as `/[a-c]|[b-d]/`, is not reported, nor is one inside a lookbehind (`(?<!http:|https:)`): PCRE runs a lookaround atomically, so the loop around it never comes back to try the other branch. A loop at the very end of the pattern is still reported. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, unless it holds an inline option group such as `(?s)` or `(?s:…)`; like the two rules above, the issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
+**When it triggers:** Alternation branches have overlapping character sets, and the alternation is repeated by an unbounded quantifier: a character both branches accept can be taken by either, on every iteration. An alternation matched once, such as `/[a-c]|[b-d]/`, is not reported, nor is one inside a lookbehind (`(?<!http:|https:)`): PCRE runs a lookaround atomically, so the loop around it never comes back to try the other branch. A loop at the very end of the pattern is still reported. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, inline options such as `(?s)` or `(?s:…)` included; like the two rules above, the issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
 
 **Example:**
 ```php

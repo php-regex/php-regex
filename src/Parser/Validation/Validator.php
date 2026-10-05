@@ -22,6 +22,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -476,7 +477,7 @@ final class Validator extends AbstractNodeVisitor
         $this->positionOffset = 0;
         $this->charClassDepth = 0;
         $this->unicodeFlag = str_contains($flags, 'u');
-        $this->unicodeMode = $this->unicodeFlag || 1 === preg_match(self::LEADING_UTF_VERB, $source);
+        $this->unicodeMode = $this->unicodeFlag || 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $source);
 
         // Before PCRE2 10.45, "\N" ending a range is refused as the range.
         $nEndsRange = !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN);
@@ -535,7 +536,7 @@ final class Validator extends AbstractNodeVisitor
         $this->validateCasingSettings($node);
         $this->unicodeFlag = str_contains($node->flags, 'u');
         $this->unicodeMode = $this->unicodeFlag
-            || (null !== $node->source && 1 === preg_match(self::LEADING_UTF_VERB, $node->source));
+            || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->groupsByNumber = [];
         $this->groupsByName = [];
@@ -726,7 +727,7 @@ final class Validator extends AbstractNodeVisitor
         // as such.
         if ($node->node instanceof CharTypeNode && 'N' === $node->node->value && 0 === $this->charClassDepth
             && str_starts_with($node->quantifier, '{')
-            && 1 !== preg_match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
+            && 1 !== LibraryPcre::match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
             && !$this->supports(PcreFeature::OpenAndPaddedRepeatCounts)) {
             $this->raiseSemanticError(
                 \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
@@ -1003,7 +1004,7 @@ final class Validator extends AbstractNodeVisitor
         $suggestions = $this->getNameSuggestions($ref);
 
         // Fast path for numeric backreferences
-        if (preg_match('/^\\\\(\d++)$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
             if (0 === $num) {
                 $this->raiseSemanticError(
@@ -1030,14 +1031,14 @@ final class Validator extends AbstractNodeVisitor
 
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
-        if (preg_match('/^[+-]\d++$/', $ref)) {
+        if (LibraryPcre::match('/^[+-]\d++$/', $ref)) {
             $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition');
 
             return;
         }
 
         // Numeric conditionals without a leading backslash (e.g., (?(2)...))
-        if (preg_match('/^(\d++)$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
             if (0 === $num) {
                 $this->raiseSemanticError(
@@ -1059,7 +1060,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // Optimized named backreference validation
-        if (preg_match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             $name = $matches['name'];
             if (!$this->groupNumbering->hasNamedGroup($name)) {
                 $suggestions = $this->getNameSuggestions($name);
@@ -1088,7 +1089,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // \g backreference with optimized validation (\g1, \g{1}, \g'1')
-        if (preg_match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $ref, $matches)) {
             $numStr = ('' !== $matches[1]) ? $matches[1] : (('' !== ($matches[2] ?? '')) ? $matches[2] : ($matches[3] ?? ''));
 
             // "\g-" or "\g+" with no digit is no reference at all: PCRE stops
@@ -1109,7 +1110,7 @@ final class Validator extends AbstractNodeVisitor
                 );
             }
 
-            if (1 === preg_match('/^([+-]?)(\d++)$/', $numStr, $number)) {
+            if (1 === LibraryPcre::match('/^([+-]?)(\d++)$/', $numStr, $number)) {
                 $this->guardGroupNumberSize($node, $number[1], $number[2]);
             }
 
@@ -1135,7 +1136,7 @@ final class Validator extends AbstractNodeVisitor
         // "\k<1>": PCRE reads a name there, and a name never starts with a
         // digit. The tree spells "\g{1a}" the same way, but PCRE reads a
         // number after "\g{" and calls it a syntax error: the source tells.
-        if (1 === preg_match('/^\\\\k[<{\']\d/', $ref) && null !== $this->source && '\\k' === substr($this->source, $node->startPosition, 2)) {
+        if (1 === LibraryPcre::match('/^\\\\k[<{\']\d/', $ref) && null !== $this->source && '\\k' === substr($this->source, $node->startPosition, 2)) {
             $this->raiseSemanticError(
                 \sprintf('Group name after \k must not start with a digit: "%s".', $ref),
                 $this->missingReferenceOffset($node),
@@ -1156,7 +1157,7 @@ final class Validator extends AbstractNodeVisitor
         // "\N{name}": PCRE2 refuses a character name, whatever it names, on
         // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point.
         if (CharLiteralType::UnicodeNamed === $node->type
-            && 1 !== preg_match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
+            && 1 !== LibraryPcre::match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
             $this->raiseUnsupportedEscape('N{', $this->pastTheFault($node->startPosition + 3));
         }
 
@@ -1317,7 +1318,7 @@ final class Validator extends AbstractNodeVisitor
             $ref = $node->condition->reference;
             if ('R' === $ref || '0' === $ref) {
                 // Always valid recursion condition to entire pattern.
-            } elseif (preg_match('/^R-?\d++$/', $ref)) {
+            } elseif (LibraryPcre::match('/^R-?\d++$/', $ref)) {
                 $num = (int) substr($ref, 1);
                 // PCRE reads "R2" as a name, then as a group number digit by
                 // digit, and stops on the digit that takes it over 65535.
@@ -1401,7 +1402,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): void
     {
-        $verbName = preg_split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
+        $verbName = LibraryPcre::split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
             && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->supports(PcreFeature::CasingSettingVerbs))) {
@@ -1418,11 +1419,11 @@ final class Validator extends AbstractNodeVisitor
             // PCRE reports an unknown verb where its name ends, and past the
             // character after it an alphabetic assertion, whose name starts
             // with a lowercase letter, followed by no colon.
-            $nameEnd = $node->startPosition + 2 + (1 === preg_match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
+            $nameEnd = $node->startPosition + 2 + (1 === LibraryPcre::match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
                 match (true) {
-                    1 === preg_match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + 1),
+                    1 === LibraryPcre::match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + 1),
                     default => $nameEnd,
                 },
                 ErrorCode::VerbInvalid,
@@ -1436,7 +1437,7 @@ final class Validator extends AbstractNodeVisitor
             $this->validateStartOfPatternPlacement($verbName, $node->startPosition);
         }
 
-        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== preg_match('/=\d++\z/', $node->verb)) {
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== LibraryPcre::match('/=\d++\z/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
                 PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
@@ -1445,7 +1446,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // A verb name holds at most 255 code units.
-        if (1 === preg_match('/^[A-Z]*+:(.*)$/s', $node->verb, $name) && \strlen($name[1]) > self::MAX_VERB_NAME_LENGTH) {
+        if (1 === LibraryPcre::match('/^[A-Z]*+:(.*)$/s', $node->verb, $name) && \strlen($name[1]) > self::MAX_VERB_NAME_LENGTH) {
             $this->raiseSemanticError(
                 \sprintf('The name of (*%s) is too long: PCRE takes at most %d code units.', $verbName, self::MAX_VERB_NAME_LENGTH),
                 $closing,
@@ -1453,7 +1454,7 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        if (isset(self::LIMIT_VERBS[$verbName]) && 1 === preg_match('/=(\d++)\z/', $node->verb, $digits, \PREG_OFFSET_CAPTURE)) {
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 === LibraryPcre::match('/=(\d++)\z/', $node->verb, $digits, \PREG_OFFSET_CAPTURE)) {
             $this->validateLimitValue($digits[1][0], $node->startPosition + 2 + $digits[1][1]);
         }
 
@@ -1466,7 +1467,7 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        if ('MARK' === $verbName && 1 !== preg_match('/^MARK:./s', $node->verb)) {
+        if ('MARK' === $verbName && 1 !== LibraryPcre::match('/^MARK:./s', $node->verb)) {
             $this->raiseSemanticError(
                 '(*MARK) must have a name: (*MARK:name) or (*:name).',
                 $closing,
@@ -1504,7 +1505,7 @@ final class Validator extends AbstractNodeVisitor
 
         // The digits as written, leading zeros included.
         $written = null === $this->source ? '' : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        if (1 === preg_match('/=(\d++)\)$/', $written, $digits, \PREG_OFFSET_CAPTURE)) {
+        if (1 === LibraryPcre::match('/=(\d++)\)$/', $written, $digits, \PREG_OFFSET_CAPTURE)) {
             $this->validateLimitValue($digits[1][0], $node->startPosition + $digits[1][1]);
         }
     }
@@ -1530,7 +1531,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // PCRE reads a major number and at most one ".minor".
-        if (1 === preg_match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
+        if (1 === LibraryPcre::match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
             $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
 
             // "(?(VERSION=10 )": before PCRE2 10.47, what follows the major
@@ -1558,7 +1559,7 @@ final class Validator extends AbstractNodeVisitor
 
         // The pattern matches every string, the empty prefix included: the
         // '' branch is unreachable and only there for the type.
-        $valid = 1 === preg_match('/^\d*+(?:\.\d*+)?/', $node->version, $matches) ? $matches[0] : '';
+        $valid = 1 === LibraryPcre::match('/^\d*+(?:\.\d*+)?/', $node->version, $matches) ? $matches[0] : '';
         $afterNumber = '' !== $valid && !str_ends_with($valid, '.');
         $versionStart = null === $this->source
             ? $node->startPosition
@@ -1672,7 +1673,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // Numeric reference: (?1), (?-1), (?+1), \g<-1>, \g<+1>
-        if (1 === preg_match('/^([+-]?)(\d+)$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^([+-]?)(\d+)$/', $ref, $matches)) {
             $this->guardGroupNumberSize($node, $matches[1], $matches[2]);
             $num = (int) $ref;
             if (0 === $num) {
@@ -1705,14 +1706,14 @@ final class Validator extends AbstractNodeVisitor
     private function releaseAddingProperty(UnicodePropNode $node): ?string
     {
         $written = substr($this->source ?? '', $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        if (1 !== preg_match('/^\\\\[pP]\{([ \t]*+)(\^?)(.*)\}$/s', $written, $matches)) {
+        if (1 !== LibraryPcre::match('/^\\\\[pP]\{([ \t]*+)(\^?)(.*)\}$/s', $written, $matches)) {
             return null;
         }
 
         // Loose matching: case, spaces, hyphens and underscores are ignored,
         // and "sc=", "scx:" and their long forms only name the table.
         $name = strtolower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
-        $name = preg_replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
+        $name = LibraryPcre::replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
 
         return '' !== $matches[1] && '' !== $matches[2] ? '10.45' : (self::UNICODE_NAMES_SINCE[$name] ?? null);
     }
@@ -1784,7 +1785,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function calloutOverflowOffset(CalloutNode $node): int
     {
-        $digits = null !== $this->source && 1 === preg_match('/\G\d++/', $this->source, $matches, 0, $node->startPosition + 3)
+        $digits = null !== $this->source && 1 === LibraryPcre::match('/\G\d++/', $this->source, $matches, 0, $node->startPosition + 3)
             ? $matches[0]
             : (string) $node->identifier; // Unreachable from a parsed pattern: only a hand-built callout has no source.
 
@@ -1811,7 +1812,7 @@ final class Validator extends AbstractNodeVisitor
         $suffix = QuantifierType::Greedy === $node->type ? 0 : 1;
         $braceStart = $node->getEndPosition() - $suffix - \strlen($node->quantifier);
 
-        if (1 !== preg_match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
+        if (1 !== LibraryPcre::match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
             return [$node->startPosition, $node->startPosition];
         }
 
@@ -1910,7 +1911,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $inner = substr($q, 1, -1);
-        $inner = preg_replace('/\\s+/', '', $inner) ?? $inner;
+        $inner = LibraryPcre::replace('/\\s+/', '', $inner) ?? $inner;
 
         return '{'.$inner.'}';
     }
@@ -1933,7 +1934,7 @@ final class Validator extends AbstractNodeVisitor
 
     private function isBareNamedBackref(string $ref): bool
     {
-        return 1 === preg_match('/^'.self::GROUP_NAME.'$/u', $ref);
+        return 1 === LibraryPcre::match('/^'.self::GROUP_NAME.'$/u', $ref);
     }
 
     private function validateUnicode(CharLiteralNode $node): void
@@ -1941,11 +1942,11 @@ final class Validator extends AbstractNodeVisitor
         // Parse codePoint from the escape string
         $rep = $node->originalRepresentation;
 
-        if (preg_match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $m)) {
+        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
-        } elseif (preg_match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
+        } elseif (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
-        } elseif (preg_match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
+        } elseif (LibraryPcre::match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[2]);
         } else {
             return; // Invalid format, skip
@@ -2022,14 +2023,14 @@ final class Validator extends AbstractNodeVisitor
     {
         // Extract the Unicode name from the representation. Unreachable from
         // a parsed pattern: the parser always spells a non-empty "\N{...}".
-        if (!preg_match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
+        if (!LibraryPcre::match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
             throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", ErrorCode::EscapeUnsupported, $node->getStartPosition(), $this->pattern);
         }
 
         $name = $matches[1];
 
         // PCRE only supports \N{U+hhhh} in Unicode (/u) mode.
-        if (!$this->unicodeMode && 1 === preg_match('/^[ \t]*+U\+[0-9A-Fa-f]+[ \t]*+$/', $name)) {
+        if (!$this->unicodeMode && 1 === LibraryPcre::match('/^[ \t]*+U\+[0-9A-Fa-f]+[ \t]*+$/', $name)) {
             $this->raiseSemanticError(
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
                 // From PCRE2 10.47, PCRE reads the escape to its closing
@@ -2041,7 +2042,7 @@ final class Validator extends AbstractNodeVisitor
 
         // As for "\x{...}", PCRE reads every digit before it refuses a value
         // above U+10FFFF, and reports it at the closing brace.
-        if (1 === preg_match('/^[ \t]*+U\+0*+([0-9A-Fa-f]++)[ \t]*+$/', $name, $digits)
+        if (1 === LibraryPcre::match('/^[ \t]*+U\+0*+([0-9A-Fa-f]++)[ \t]*+$/', $name, $digits)
             && (\strlen($digits[1]) > 6 || hexdec($digits[1]) > 0x10FFFF)) {
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
@@ -2075,7 +2076,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // Fallback: map Block=/Blk= to In<block> alias which PCRE recognizes.
-        if (preg_match('/^p\\{(\\^)?bl(?:ock|k)=([^}]+)\\}$/i', $key, $matches)) {
+        if (LibraryPcre::match('/^p\\{(\\^)?bl(?:ock|k)=([^}]+)\\}$/i', $key, $matches)) {
             $negation = (string) $matches[1];
             $block = $matches[2];
             $aliasKey = 'p{'.$negation.'In'.$block.'}';
@@ -2091,7 +2092,7 @@ final class Validator extends AbstractNodeVisitor
 
     private function mapJavaUnicodeProperty(string $key): ?string
     {
-        if (!preg_match('/^p\\{(\\^)?([A-Za-z_][A-Za-z0-9_]*)\\}$/', $key, $matches)) {
+        if (!LibraryPcre::match('/^p\\{(\\^)?([A-Za-z_][A-Za-z0-9_]*)\\}$/', $key, $matches)) {
             return null;
         }
 
@@ -2280,7 +2281,7 @@ final class Validator extends AbstractNodeVisitor
     private function lookbehindErrorPosition(GroupNode $node): int
     {
         $start = $node->startPosition;
-        if (null !== $this->pattern && 1 === preg_match('/\G\(\*(\w++):/', $this->pattern, $name, 0, $start)) {
+        if (null !== $this->pattern && 1 === LibraryPcre::match('/\G\(\*(\w++):/', $this->pattern, $name, 0, $start)) {
             return $start + \strlen($name[1]) - 1;
         }
 
@@ -2491,7 +2492,7 @@ final class Validator extends AbstractNodeVisitor
         $unmeasured = $node instanceof BackrefNode
             && $this->hasBranchReset
             && !str_starts_with($node->ref, '\\k')
-            && 1 !== preg_match('/^\\\\g[{<\']?\s*+(?:-|[+-]?0++(?!\d))/', $node->ref);
+            && 1 !== LibraryPcre::match('/^\\\\g[{<\']?\s*+(?:-|[+-]?0++(?!\d))/', $node->ref);
         if ([] === $groups && !$unmeasured) {
             $captureIndex = $this->captureIndex;
             $this->captureIndex = $this->captureIndexAt[spl_object_id($node)] ?? $captureIndex;
@@ -2544,7 +2545,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $reference = $node->reference;
 
-        if (1 === preg_match('/^[+-]\d++$/', $reference)) {
+        if (1 === LibraryPcre::match('/^[+-]\d++$/', $reference)) {
             $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
             if (null === $next) {
                 // Unreachable from a parsed pattern: every call in the tree
@@ -2560,7 +2561,7 @@ final class Validator extends AbstractNodeVisitor
             return \array_slice($this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [], 0, 1);
         }
 
-        if (1 === preg_match('/^\d++$/', $reference)) {
+        if (1 === LibraryPcre::match('/^\d++$/', $reference)) {
             return \array_slice($this->groupsByNumber[(int) $reference] ?? [], 0, 1);
         }
 
@@ -2575,7 +2576,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $ref = $node->ref;
 
-        if (1 === preg_match('/^\\\\g(?:\{([+-]\d++)\}|\'([+-]\d++)\'|([+-]\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\g(?:\{([+-]\d++)\}|\'([+-]\d++)\'|([+-]\d++))$/', $ref, $matches)) {
             $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
             $offset = (int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''));
 
@@ -2587,11 +2588,11 @@ final class Validator extends AbstractNodeVisitor
             return $this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [];
         }
 
-        if (1 === preg_match('/^\\\\(?:g\{(\d++)\}|g\'(\d++)\'|g?(\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\(?:g\{(\d++)\}|g\'(\d++)\'|g?(\d++))$/', $ref, $matches)) {
             return $this->groupsByNumber[(int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''))] ?? [];
         }
 
-        if (1 === preg_match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             return $this->groupsByName[$matches[1]] ?? [];
         }
 
@@ -2697,7 +2698,7 @@ final class Validator extends AbstractNodeVisitor
 
         // A space before "U+" makes "\N{" a name, which PCRE2 refuses past
         // the "\N", as "\N{foo}".
-        $name = CharLiteralType::UnicodeNamed === $node->type && 1 === preg_match('/^\\\\N\{[ \t]/', $representation);
+        $name = CharLiteralType::UnicodeNamed === $node->type && 1 === LibraryPcre::match('/^\\\\N\{[ \t]/', $representation);
         [$code, $escape] = match (true) {
             CharLiteralType::Octal === $node->type => [ErrorCode::OctalInvalidDigit, '\o{}'],
             $name => [ErrorCode::EscapeUnsupported, '\N{U+}'],
@@ -2725,7 +2726,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $written = substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        if (1 !== preg_match('/^\\\\([gk])\{([ \t]*+)([^ \t}]*+)([ \t]?)/', $written, $matches)
+        if (1 !== LibraryPcre::match('/^\\\\([gk])\{([ \t]*+)([^ \t}]*+)([ \t]?)/', $written, $matches)
             || '' === $matches[2].$matches[4]) {
             return;
         }
@@ -2853,7 +2854,7 @@ final class Validator extends AbstractNodeVisitor
         $text = substr($this->source, $start, $end - $start);
 
         // "\g{2}", "\g-1", "\k<name>", "\g<name>", "\g'1'", ...
-        if (1 === preg_match('/^\\\\([gk])([{<\'])?\s*+([+-]?)(\d*)/', $text, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\([gk])([{<\'])?\s*+([+-]?)(\d*)/', $text, $matches)) {
             if ('' === $matches[4]) {
                 return $start + 3;
             }
@@ -2924,7 +2925,7 @@ final class Validator extends AbstractNodeVisitor
             return $start + 2;
         }
 
-        if (1 === preg_match('/^([+-]?)(\d++)$/', $text, $matches)) {
+        if (1 === LibraryPcre::match('/^([+-]?)(\d++)$/', $text, $matches)) {
             return $this->groupNumberTooBigOffset($start + \strlen($matches[1]))
                 ?? ('-' === $matches[1] || 0 === (int) $matches[2] ? $end : $end - 2);
         }
@@ -3277,7 +3278,7 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        if (1 !== preg_match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {
+        if (1 !== LibraryPcre::match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {
             $this->raiseUnsupportedEscape('N{', $this->pastTheFault($position + 1));
         }
     }
@@ -3644,7 +3645,7 @@ final class Validator extends AbstractNodeVisitor
 
         // The run may be empty, so the pattern always matches: the 0 branch
         // is unreachable and only there for the type.
-        return 1 === preg_match('/\A(?:\(\*(?:'.$names.')(?:=\d*+)?\))*+/', $source, $matches) ? \strlen($matches[0]) : 0;
+        return 1 === LibraryPcre::match('/\A(?:\(\*(?:'.$names.')(?:=\d*+)?\))*+/', $source, $matches) ? \strlen($matches[0]) : 0;
     }
 
     /**
@@ -3671,7 +3672,7 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        if (!str_contains($node->flags, 'u') && 1 !== preg_match('/\(\*UTF8?\)/', $settings)) {
+        if (!str_contains($node->flags, 'u') && 1 !== LibraryPcre::match('/\(\*UTF8?\)/', $settings)) {
             $this->raiseSemanticError(
                 str_contains($settings, '(*UCP)')
                     ? '(*TURKISH_CASING) needs UTF mode: UCP alone is not enough.'
@@ -3754,7 +3755,7 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof DotNode, $node instanceof CharLiteralNode => 1,
             // A callout carries its number or its string; a verb its name.
             $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? 11 + \strlen($node->identifier) : 6,
-            $node instanceof PcreVerbNode => 1 === preg_match('/^(?:MARK|PRUNE|SKIP|THEN|COMMIT):(.+)$/s', $node->verb, $name) ? 3 + \strlen($name[1]) : 0,
+            $node instanceof PcreVerbNode => 1 === LibraryPcre::match('/^(?:MARK|PRUNE|SKIP|THEN|COMMIT):(.+)$/s', $node->verb, $name) ? 3 + \strlen($name[1]) : 0,
             default => 0,
         };
 
@@ -3883,7 +3884,7 @@ final class Validator extends AbstractNodeVisitor
 
         // "(*ACCEPT)" is wrapped in a group to be repeated; a name adds its
         // length and three units.
-        if ($node->node instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::(.*))?$/s', $node->node->verb, $accept)) {
+        if ($node->node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::(.*))?$/s', $node->node->verb, $accept)) {
             $copy = self::COMPILED_GROUP_SIZE + 1 + (isset($accept[1]) && '' !== $accept[1] ? 3 + \strlen($accept[1]) : 0);
         } elseif (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode) {
             return $copy;
@@ -3908,7 +3909,7 @@ final class Validator extends AbstractNodeVisitor
     private function branchCountErrorOffset(ConditionalNode $node): int
     {
         $condition = $node->condition;
-        if ($condition instanceof BackrefNode && 1 === preg_match('/^[+-]?\d++$/', $condition->ref)) {
+        if ($condition instanceof BackrefNode && 1 === LibraryPcre::match('/^[+-]?\d++$/', $condition->ref)) {
             return $node->startPosition + \strlen($condition->ref) - 1;
         }
 

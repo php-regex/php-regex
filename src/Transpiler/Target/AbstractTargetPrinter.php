@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Transpiler\Target;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -67,6 +68,6 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     protected function normalizeQuantifier(string $quantifier): string
     {
-        return preg_replace('/\s+/', '', $quantifier) ?? $quantifier;
+        return LibraryPcre::replace('/\s+/', '', $quantifier) ?? $quantifier;
     }
 }

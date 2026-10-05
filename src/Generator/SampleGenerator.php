@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -262,7 +263,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         $this->textAhead = 0;
         $this->lengthRanges = [];
         $this->unicode = str_contains($node->flags, 'u')
-            || 1 === preg_match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
+            || 1 === LibraryPcre::match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
         // Ensure we are seeded if the user expects it
         if (null !== $this->seed) {
@@ -458,7 +459,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
 
         // Check numeric reference with \
-        if (preg_match('/^\\\\(\d++)$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\(\d++)$/', $ref, $matches)) {
             $key = (int) $matches[1];
             if (isset($this->captures[$key])) {
                 return $this->captures[$key];
@@ -467,7 +468,7 @@ final class SampleGenerator extends AbstractNodeVisitor
 
         // "\g1", "\g{1}", and relative "\g-1", "\g{-1}", "\g{+1}": relative
         // ones count the groups opened before the reference.
-        if (preg_match('/^\\\\g\{?([+-]?)(\d++)\}?$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\g\{?([+-]?)(\d++)\}?$/', $ref, $matches)) {
             $number = (int) $matches[2];
             if ('' !== $matches[1]) {
                 $opened = \count(array_filter($this->groupIndexMap, static fn (GroupNode $group): bool => $group->startPosition < $node->startPosition));
@@ -484,7 +485,7 @@ final class SampleGenerator extends AbstractNodeVisitor
 
         // "\k<name>", "\k{name}", "\k'name'": several groups may share the
         // name, and the reference matches the first of them that captured.
-        if (1 === preg_match('/^\\\\k[<{\']([^>}\']++)[>}\']$/', $ref, $m)) {
+        if (1 === LibraryPcre::match('/^\\\\k[<{\']([^>}\']++)[>}\']$/', $ref, $m)) {
             foreach ($this->groupNumbersByName[$m[1]] ?? [] as $number) {
                 if (isset($this->captures[$number])) {
                     return $this->captures[$number];
@@ -953,7 +954,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             }
 
             // "(*ACCEPT)" ends what it stands in: what follows it is not read.
-            if ($child instanceof PcreVerbNode && 1 === preg_match('/^ACCEPT(?::|$)/', $child->verb)) {
+            if ($child instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::|$)/', $child->verb)) {
                 $this->accepted = true;
 
                 return $text;
@@ -1273,12 +1274,15 @@ final class SampleGenerator extends AbstractNodeVisitor
 
         // "(?(R)" holds inside any call, "(?(R2)" and "(?(R&name)" inside a
         // call to that group, the latest call.
-        if ($condition instanceof SubroutineNode && 1 === preg_match('/^R(?:(\d++)|&(.++))?$/', $condition->reference, $matches, \PREG_UNMATCHED_AS_NULL)) {
+        if ($condition instanceof SubroutineNode && 1 === LibraryPcre::match('/^R(?:(\d++)|&(.++))?$/', $condition->reference, $matches)) {
             $latest = [] === $this->calls ? null : $this->calls[\count($this->calls) - 1];
+            // Both groups match at least one character: an empty one did not take part.
+            $number = $matches[1] ?? '';
+            $name = $matches[2] ?? '';
 
             return match (true) {
-                null !== $matches[1] => (int) $matches[1] === $latest,
-                null !== $matches[2] => \in_array($latest, $this->groupNumbersByName[$matches[2]] ?? [], true),
+                '' !== $number => (int) $number === $latest,
+                '' !== $name => \in_array($latest, $this->groupNumbersByName[$name] ?? [], true),
                 default => null !== $latest,
             };
         }
@@ -1296,7 +1300,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             return true;
         }
 
-        if (preg_match('/^\\\\(\d++)$/', $reference, $matches)) {
+        if (LibraryPcre::match('/^\\\\(\d++)$/', $reference, $matches)) {
             return isset($this->captures[(int) $matches[1]]);
         }
 
@@ -1450,7 +1454,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
 
         // "(?-1)" and "(?+1)" count the groups opened before the call.
-        if (1 === preg_match('/^([+-])(\d++)$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^([+-])(\d++)$/', $ref, $matches)) {
             $opened = \count(array_filter($this->groupIndexMap, static fn (GroupNode $group): bool => $group->startPosition < $node->startPosition));
             $number = '-' === $matches[1] ? $opened - (int) $matches[2] + 1 : $opened + (int) $matches[2];
 

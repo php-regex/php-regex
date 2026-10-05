@@ -401,6 +401,10 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'broken three-byte sequence after text' => ['pattern' => "/ab\xe2\x82z/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
         yield 'surrogate after text' => ['pattern' => "/ab\xed\xa0\x80/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
         yield '(*UTF) not at the start' => ['pattern' => "/a(*UTF)\xff/", 'code' => 'regex.verb.misplaced', 'message' => '(*UTF)'];
+        // PCRE: "subpattern name expected", where the name should start.
+        yield '\\g brace with nothing in it' => ['pattern' => '/\\g{/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];
+        yield '\\g brace holding only padding' => ['pattern' => '/(a)\\g{  }/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];
+        yield '\\g brace holding a lone sign' => ['pattern' => '/(a)\\g{- 1}/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];
     }
 
     /**

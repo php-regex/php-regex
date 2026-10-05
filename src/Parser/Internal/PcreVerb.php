@@ -130,11 +130,11 @@ final readonly class PcreVerb
         }
 
         $matches = [];
-        if (preg_match('/^LIMIT_MATCH=(\d++)\z/i', $verb, $matches)) {
+        if (LibraryPcre::match('/^LIMIT_MATCH=(\d++)\z/i', $verb, $matches)) {
             return new self($verb, null, null, (int) $matches[1]);
         }
 
-        if (1 === preg_match('/^(scs|scan_substring):/', $verb, $scan)) {
+        if (1 === LibraryPcre::match('/^(scs|scan_substring):/', $verb, $scan)) {
             return new self($verb, scanSubstring: $scan[1]);
         }
 
@@ -177,13 +177,13 @@ final readonly class PcreVerb
             $quote = $pattern[$at] ?? '';
             if ('<' === $quote || "'" === $quote) {
                 $nameStart = $at + 1;
-                if (1 === preg_match($unicode ? '/\G\p{Nd}/u' : '/\G[0-9]/', $pattern, $digit, 0, $nameStart)) {
+                if (1 === LibraryPcre::match($unicode ? '/\G\p{Nd}/u' : '/\G[0-9]/', $pattern, $digit, 0, $nameStart)) {
                     $offset = $nameStart + ($pastTheDigit ? \strlen($digit[0]) : 0);
 
                     return [$offset, ErrorCode::GroupNameInvalid, \sprintf('A group name must not start with a digit, at position %d.', $offset)];
                 }
 
-                preg_match($unicode ? '/\G[_\p{L}\p{Nd}]*+/u' : '/\G\w*+/', $pattern, $name, 0, $nameStart);
+                LibraryPcre::match($unicode ? '/\G[_\p{L}\p{Nd}]*+/u' : '/\G\w*+/', $pattern, $name, 0, $nameStart);
                 $nameEnd = $nameStart + \strlen($name[0] ?? '');
                 if ($nameEnd === $nameStart) {
                     return [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Group name expected at position %d.', $nameStart)];
@@ -194,7 +194,7 @@ final readonly class PcreVerb
                 }
 
                 $at = $nameEnd + 1;
-            } elseif (1 === preg_match('/\G[+-]?\d++/', $pattern, $number, 0, $at)) {
+            } elseif (1 === LibraryPcre::match('/\G[+-]?\d++/', $pattern, $number, 0, $at)) {
                 $at += \strlen($number[0]);
             } else {
                 return [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)];
@@ -244,7 +244,7 @@ final readonly class PcreVerb
      */
     public static function limitValueErrorOffset(string $pattern, int $start, bool $pcre1045): ?int
     {
-        if (1 !== preg_match('/\G\(\*LIMIT_(?:MATCH|HEAP|DEPTH|RECURSION)=/', $pattern, $matches, 0, $start)) {
+        if (1 !== LibraryPcre::match('/\G\(\*LIMIT_(?:MATCH|HEAP|DEPTH|RECURSION)=/', $pattern, $matches, 0, $start)) {
             return null;
         }
 

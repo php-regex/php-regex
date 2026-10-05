@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -289,7 +290,7 @@ final readonly class CharSetAnalyzer
             return 1;
         }
 
-        if (preg_match('/\{(\d++)(?:,(\d++)?)?\}/', $quantifier, $matches)) {
+        if (LibraryPcre::match('/\{(\d++)(?:,(\d++)?)?\}/', $quantifier, $matches)) {
             return (int) $matches[1];
         }
 

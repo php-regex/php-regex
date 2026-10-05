@@ -77,5 +77,8 @@ final class RequiredLiteralAnalyzerTest extends TestCase
         yield 'optional group' => ['pattern' => '/a(?:bc)?d/', 'expected' => ['a', 'd']];
         yield 'nothing required' => ['pattern' => '/\w*/', 'expected' => []];
         yield 'utf-8' => ['pattern' => '/é+ü/u', 'expected' => ['éü']];
+        yield 'control escape between literals' => ['pattern' => '/a\\cAb/', 'expected' => ["a\x01b"]];
+        yield 'callout between literals' => ['pattern' => '/ab(?C1)cd/', 'expected' => ['abcd']];
+        yield 'script run' => ['pattern' => '/(*sr:abc)/', 'expected' => ['abc']];
     }
 }

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Security;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Extracts access_control and firewall patterns from security config files.
  *
@@ -141,7 +143,7 @@ final readonly class SecurityConfigExtractor
                 continue;
             }
 
-            if (preg_match('/^\s*-\s*(.*)$/', $line, $matches)) {
+            if (LibraryPcre::match('/^\s*-\s*(.*)$/', $line, $matches)) {
                 $currentRuleIndex = \count($rules);
                 $currentRuleIndent = $indent;
                 $currentListKey = null;
@@ -182,7 +184,7 @@ final readonly class SecurityConfigExtractor
             }
 
             if (null !== $currentListKey && null !== $currentListIndent) {
-                if ($indent > $currentListIndent && preg_match('/^\s*-\s*(.+)$/', $line, $matches)) {
+                if ($indent > $currentListIndent && LibraryPcre::match('/^\s*-\s*(.+)$/', $line, $matches)) {
                     $value = $this->stripQuotes(trim($matches[1]));
                     if ('' !== $value) {
                         $rules[$currentRuleIndex][$currentListKey][] = $value;
@@ -552,7 +554,7 @@ final readonly class SecurityConfigExtractor
 
     private function extractKeyFromLine(string $line): ?string
     {
-        if (!preg_match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.@-]+))\s*:/', $line, $matches)) {
+        if (!LibraryPcre::match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.@-]+))\s*:/', $line, $matches)) {
             return null;
         }
 
@@ -571,7 +573,7 @@ final readonly class SecurityConfigExtractor
      */
     private function extractKeyValueFromLine(string $line): ?array
     {
-        if (!preg_match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.@-]+))\s*:\s*(.*)$/', $line, $matches)) {
+        if (!LibraryPcre::match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.@-]+))\s*:\s*(.*)$/', $line, $matches)) {
             return null;
         }
 

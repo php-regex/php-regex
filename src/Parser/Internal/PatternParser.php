@@ -147,9 +147,9 @@ final class PatternParser
                     }
 
                     $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
-                    if (!preg_match($allowedPattern, $flags)) {
+                    if (!LibraryPcre::match($allowedPattern, $flags)) {
                         // Find the invalid flag for a better error message
-                        $invalid = preg_replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
+                        $invalid = LibraryPcre::replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
 
                         // The first modifier PHP refuses, whitespace skipped.
                         $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \n\r");

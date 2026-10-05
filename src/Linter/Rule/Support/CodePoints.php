@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -46,7 +47,7 @@ final class CodePoints
         }
 
         if ($unicodeMode) {
-            $chars = preg_split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
+            $chars = LibraryPcre::split('//u', $value, -1, \PREG_SPLIT_NO_EMPTY);
             if (false === $chars || 1 !== \count($chars)) {
                 return null;
             }
@@ -65,15 +66,15 @@ final class CodePoints
 
     public static function parseUnicodeEscape(string $escape): ?int
     {
-        if (preg_match('/^\\\\x([0-9a-fA-F]{2})$/', $escape, $matches)) {
+        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{2})$/', $escape, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
-        if (preg_match('/^\\\\u([0-9a-fA-F]{4})$/', $escape, $matches)) {
+        if (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $escape, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
-        if (preg_match('/^\\\\[xu]\\{([0-9a-fA-F]++)\\}$/', $escape, $matches)) {
+        if (LibraryPcre::match('/^\\\\[xu]\\{([0-9a-fA-F]++)\\}$/', $escape, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
@@ -82,7 +83,7 @@ final class CodePoints
 
     public static function isBracedUnicodeEscape(string $escape): bool
     {
-        return preg_match('/^\\\\[xu]\\{/', $escape) > 0;
+        return LibraryPcre::match('/^\\\\[xu]\\{/', $escape) > 0;
     }
 
     public static function isAsciiLetter(int $ord): bool

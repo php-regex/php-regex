@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -80,7 +81,7 @@ final class RegularSubsetValidator
     private function assertNewlineConvention(RegexNode $regex): void
     {
         $source = $regex->source ?? '';
-        if (1 !== preg_match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*(?:CR|CRLF|ANYCRLF|ANY|NUL)\)/', $source)) {
+        if (1 !== LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*(?:CR|CRLF|ANYCRLF|ANY|NUL)\)/', $source)) {
             return;
         }
 

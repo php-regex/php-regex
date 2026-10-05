@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -48,6 +49,37 @@ final class JavaScriptTranspilerTest extends TestCase
         $result = $regex->transpile('/(\\d)\\g{1}/', 'javascript');
 
         $this->assertSame('/(\\d)\\1/', $result->literal);
+    }
+
+    /**
+     * A backreference JavaScript spells as PCRE does is kept as it is: the
+     * same subjects match on both sides (PCRE through preg_match, JavaScript
+     * checked with node: "aa" and "abcdefghijj" match, "ab" and
+     * "abcdefghija0" do not, "\10" naming the tenth group in both).
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideBackreferencesSpelledAlike')]
+    public function test_transpiles_a_backreference_spelled_alike_unchanged(string $pattern, array $subjects): void
+    {
+        foreach ($subjects as $subject => $matches) {
+            $this->assertSame($matches, preg_match($pattern, (string) $subject), \sprintf('Oracle: %s on %s.', $pattern, $subject));
+        }
+
+        $result = Regex::create()->transpile($pattern, 'javascript');
+
+        $this->assertSame($pattern, $result->literal);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: array<string, int>}>
+     */
+    public static function provideBackreferencesSpelledAlike(): iterable
+    {
+        yield 'numbered' => ['pattern' => '/(a)\\1/', 'subjects' => ['aa' => 1, 'ab' => 0]];
+        yield 'named in angle brackets' => ['pattern' => '/(?<n>a)\\k<n>/', 'subjects' => ['aa' => 1, 'ab' => 0]];
+        yield 'two digits' => ['pattern' => '/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10/', 'subjects' => ['abcdefghijj' => 1, 'abcdefghija0' => 0]];
     }
 
     #[Test]

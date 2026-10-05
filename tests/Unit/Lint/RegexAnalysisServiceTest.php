@@ -26,6 +26,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
@@ -690,6 +691,52 @@ final class RegexAnalysisServiceTest extends TestCase
         $offset = \strlen('/(?<=\\w{2})foo/');
         $validation = new ValidationResult(false, 'Lookbehind is unbounded', 0, null, $offset);
         $this->assertNull($this->invokePrivate('suggestLookbehindFix', '/(?<=\\w{2})foo/', $validation));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function provideQuantifierRangeTips(): iterable
+    {
+        yield 'bounds swapped in the pattern' => ['pattern' => '/a{3,2}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
+        yield 'leading zero on the lower bound' => ['pattern' => '/a{03,2}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
+        yield 'leading zero on the upper bound' => ['pattern' => '/a{3,02}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
+    }
+
+    /**
+     * Each pattern is refused by PCRE: "numbers out of order in {}
+     * quantifier". The tip gives the whole pattern back with the bounds
+     * swapped, written as numbers.
+     */
+    #[DataProvider('provideQuantifierRangeTips')]
+    public function test_validation_tip_quantifier_range_spells_the_swapped_pattern(string $pattern, string $expected): void
+    {
+        $validation = new ValidationResult(false, 'Invalid quantifier range', 0, null, 0);
+
+        $this->assertSame($expected, $this->invokePrivate('getTipForValidationError', 'Invalid quantifier range', $pattern, $validation));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function provideBackreferenceTips(): iterable
+    {
+        yield 'one group, reference to the second' => [
+            'pattern' => '/(a)\\2/',
+            'expected' => 'Backreference \\2 refers to group 2, but only 1 capturing groups exist in the pattern. Valid backreferences are \\1 through \\1.',
+        ];
+        yield 'valid reference before the missing one' => [
+            'pattern' => '/(a)(b)\\1\\3/',
+            'expected' => 'Backreference \\3 refers to group 3, but only 2 capturing groups exist in the pattern. Valid backreferences are \\1 through \\2.',
+        ];
+    }
+
+    #[DataProvider('provideBackreferenceTips')]
+    public function test_validation_tip_backreference_names_the_missing_group(string $pattern, string $expected): void
+    {
+        $validation = new ValidationResult(false, 'Backreference to non-existent group', 0, null, 0);
+
+        $this->assertSame($expected, $this->invokePrivate('getTipForValidationError', 'Backreference to non-existent group', $pattern, $validation));
     }
 
     public function test_generic_tip_helpers_cover_other_messages(): void

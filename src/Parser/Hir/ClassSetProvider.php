@@ -13,15 +13,17 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Hir;
 
-use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\NoJit;
 use PHPRegex\Parser\Internal\StaticCaches;
 
 /**
  * The exact set of characters one atom matches, asked of the running PCRE:
  * the atom runs over a subject holding every character of the alphabet
  * once, in order, and each run of matches is a range of the set. The answer
- * is kept for the process, keyed by the atom and its modes, and emptied
- * with the library's other caches.
+ * is kept for the process, keyed by the atom and its options, and emptied
+ * with the library's other caches. The probe is the library's own regex: it
+ * runs under the library's floor of PCRE limits, whatever the caller set.
  *
  * @internal
  */
@@ -57,28 +59,43 @@ final class ClassSetProvider
     private static array $sets = [];
 
     /**
-     * The characters the atom matches, or null when PCRE refuses it.
+     * The characters the atom matches, or null when PCRE refuses it or
+     * gives up on it.
      *
-     * @param string $atom             one character's worth of pattern: a class, an escape, a dot
-     * @param string $modifiers        the inline modifiers in force: any of "i", "s", "x"
-     * @param bool   $caselessRestrict whether the pattern carries /r: no caseless match
-     *                                 between ASCII and non-ASCII characters
-     * @param string $startVerbs       the options the pattern opens with, such as "(*UCP)"
-     *                                 or "(*CR)": they change what a class or a dot matches
-     * @param bool   $unicodeFlag      whether the pattern's own /u flag is set: this PHP
-     *                                 passes PCRE2_UCP with it, so the probe carries the flag
-     *                                 only when the pattern does — a lone "(*UTF)" reads
-     *                                 UTF-8 without the Unicode properties
+     * The options are the ones in force where the atom stands, written as
+     * an inline group writes them, letters set only: "i", "s", "x" or
+     * "xx", "r", and the ASCII options "aD", "aS", "aW", "aP" (which holds
+     * "aT"), "aT", or "a" for all of them. They are the whole scope: the
+     * probe sets no pattern-wide /r, so an "(?-r)" under /r is the options
+     * without "r".
+     *
+     * A scan the engine gave up under its limits answers null without
+     * being kept: the next query scans again. A refusal to compile the
+     * probe, or an atom that leaves no delimiter free, is kept.
+     *
+     * @param string $atom        one character's worth of pattern: a class, an escape, a dot
+     * @param string $modifiers   the options in force at the atom, as above
+     * @param string $startVerbs  the options the pattern opens with, such as "(*UCP)"
+     *                            or "(*CR)": they change what a class or a dot matches
+     * @param bool   $unicodeFlag whether the pattern's own /u flag is set: this PHP
+     *                            passes PCRE2_UCP with it, so the probe carries the flag
+     *                            only when the pattern does — a lone "(*UTF)" reads
+     *                            UTF-8 without the Unicode properties
      */
-    public static function query(string $atom, bool $unicode, string $modifiers, bool $caselessRestrict = false, string $startVerbs = '', bool $unicodeFlag = true): ?CharSet
+    public static function query(string $atom, bool $unicode, string $modifiers, string $startVerbs = '', bool $unicodeFlag = true): ?CharSet
     {
         StaticCaches::register(self::class, self::clear(...));
 
-        $global = ($unicodeFlag && $unicode ? 'u' : '').($caselessRestrict ? 'r' : '');
+        $global = $unicodeFlag && $unicode ? 'u' : '';
         $key = $startVerbs.$global.'|'.$modifiers.':'.$atom;
         if (!isset(self::$sets[$key])) {
+            $set = self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
+            if (null === $set) {
+                return null;
+            }
+
             self::$sets = StaticCaches::makeRoom(self::$sets);
-            self::$sets[$key] = self::scan($atom, $unicode, $modifiers, $global, $startVerbs) ?? false;
+            self::$sets[$key] = $set;
         }
 
         $set = self::$sets[$key];
@@ -93,7 +110,11 @@ final class ClassSetProvider
         self::$byteSubject = null;
     }
 
-    private static function scan(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs): ?CharSet
+    /**
+     * The set, false when the probe cannot be written or PCRE refuses it,
+     * null when the engine gave up under its limits.
+     */
+    private static function scan(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs): CharSet|false|null
     {
         $delimiter = null;
         foreach (self::DELIMITERS as $candidate) {
@@ -105,12 +126,13 @@ final class ClassSetProvider
         }
 
         if (null === $delimiter) {
-            return null;
+            return false;
         }
 
-        $pattern = $delimiter.$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
+        // Without the JIT, which crashes PHP on some pattern and subject pairs:
+        // no delimiter here is one the verb holds.
+        $pattern = $delimiter.NoJit::VERB.$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
         $subject = $unicode ? self::unicodeSubject() : self::byteSubject();
-        $engine = new PcreEngine();
         $ranges = [];
 
         // A block at a time: a run over the whole subject (".") would pass the
@@ -118,9 +140,9 @@ final class ClassSetProvider
         // edge join again in the set.
         foreach (self::blocks($unicode, \strlen($subject)) as [$blockStart, $blockLength]) {
             $block = substr($subject, $blockStart, $blockLength);
-            $runs = $engine->matchAll($pattern, $block);
-            if (null === $runs) {
-                return null;
+            $runs = self::matchAll($pattern, $block);
+            if (!\is_array($runs)) {
+                return $runs;
             }
 
             $position = 0;
@@ -142,6 +164,33 @@ final class ClassSetProvider
         }
 
         return CharSet::fromRanges($ranges)->intersect(CharSet::universe($unicode));
+    }
+
+    /**
+     * Every match of the probe in the block; false when PCRE refuses the
+     * probe, null when the engine gave up under its limits. The probe runs
+     * under the library's floor, the warning of a refusal caught.
+     *
+     * @param non-empty-string $pattern
+     *
+     * @return list<string>|false|null
+     */
+    private static function matchAll(string $pattern, string $block): array|false|null
+    {
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $result = LibraryPcre::matchAll($pattern, $block, $matches);
+            $error = LibraryPcre::lastError();
+        } finally {
+            restore_error_handler();
+        }
+
+        if (false !== $result) {
+            return $matches[0] ?? [];
+        }
+
+        return \in_array($error, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
     }
 
     /**

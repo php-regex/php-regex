@@ -24,11 +24,8 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Node\GroupNode;
-use PHPRegex\Parser\Node\GroupType;
-use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -329,11 +326,8 @@ final readonly class AnalysisService
                 );
 
                 // The heuristic rules guess what the analysis just proved:
-                // once it shows the pattern linear, their warnings go. The
-                // proof does not follow every inline option group, such as
-                // "(?s)" carried into the branches after it or "(?-r:...)",
-                // so a pattern holding one keeps the heuristics.
-                if ($redos->isProvenSafe() && !self::hasInlineOptionGroup($ast)) {
+                // once it shows the pattern linear, their warnings go.
+                if ($redos->isProvenSafe()) {
                     $lintIssues = array_values(array_filter(
                         $lintIssues,
                         static fn (array $issue): bool => !isset(self::RISK_LINT_ISSUE_IDS[$issue['issueId']]),
@@ -784,7 +778,7 @@ final readonly class AnalysisService
         }
 
         foreach ($parts as $part) {
-            if (!preg_match('#^[A-Za-z0-9._-]+$#', $part)) {
+            if (!LibraryPcre::match('#^[A-Za-z0-9._-]+$#', $part)) {
                 return false;
             }
         }
@@ -871,7 +865,7 @@ final readonly class AnalysisService
     private function suggestDelimiterFix(string $pattern): string
     {
         // Find the delimiter used
-        if (!preg_match('/^([#~\-%@!])(.*)$/', $pattern, $matches)) {
+        if (!LibraryPcre::match('/^([#~\-%@!])(.*)$/', $pattern, $matches)) {
             $matches = ['', '/', $pattern];
         }
 
@@ -910,14 +904,13 @@ final readonly class AnalysisService
     private function suggestQuantifierRangeFix(string $pattern, ValidationResult $validation): ?string
     {
         // Look for quantifier ranges in the pattern
-        if (preg_match('/\{(\d+),(\d+)\}/', $pattern, $matches, \PREG_OFFSET_CAPTURE)) {
-            $min = (int) $matches[1][0];
-            $max = (int) $matches[2][0];
-            $offset = $matches[0][1];
+        if (LibraryPcre::match('/\{(\d+),(\d+)\}/', $pattern, $matches)) {
+            $min = (int) $matches[1];
+            $max = (int) $matches[2];
 
             if ($min > $max) {
                 $fixed = '{'.$max.','.$min.'}';
-                $suggested = str_replace($matches[0][0], $fixed, $pattern);
+                $suggested = str_replace($matches[0], $fixed, $pattern);
 
                 return "Swap min and max values: $suggested";
             }
@@ -929,12 +922,12 @@ final readonly class AnalysisService
     private function suggestBackreferenceFix(string $pattern, ValidationResult $validation): ?string
     {
         // Find all backreferences in the pattern
-        if (preg_match_all('/\\\\(\d+)/', $pattern, $matches, \PREG_OFFSET_CAPTURE)) {
+        if (LibraryPcre::matchAll('/\\\\(\d+)/', $pattern, $matches)) {
             // Count opening parentheses (capturing groups)
             $openCount = substr_count($pattern, '(');
 
             foreach ($matches[1] as $match) {
-                $refNum = (int) $match[0];
+                $refNum = (int) $match;
                 if ($refNum > $openCount) {
                     return "Backreference \\$refNum refers to group $refNum, but only $openCount capturing groups exist in the pattern. Valid backreferences are \\1 through \\$openCount.";
                 }
@@ -963,7 +956,7 @@ final readonly class AnalysisService
         $lookbehindContent = substr($pattern, $lookbehindStart, $offset - $lookbehindStart);
 
         // Check for unbounded quantifiers in lookbehind
-        if (preg_match('/[+*][?]?/', $lookbehindContent)) {
+        if (LibraryPcre::match('/[+*][?]?/', $lookbehindContent)) {
             return "Replace unbounded quantifiers in lookbehind with fixed-length alternatives. For example, change (?<=\w*) to (?<=\w{0,10}) with an appropriate maximum length.";
         }
 
@@ -1069,7 +1062,7 @@ final readonly class AnalysisService
         $hints = [];
 
         // Look for common vulnerable patterns and suggest fixes
-        if (preg_match('/\((?:(?:[^()][^)]*)?\)\+|\([^)]*(?:\+\)\)|\)\+))/', $pattern)) {
+        if (LibraryPcre::match('/\((?:(?:[^()][^)]*)?\)\+|\([^)]*(?:\+\)\)|\)\+))/', $pattern)) {
             $hints[] = 'Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.';
         }
 
@@ -1077,32 +1070,20 @@ final readonly class AnalysisService
             $hints[] = 'Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking.';
         }
 
-        if (preg_match('/\([^)]*\*\)/', $pattern)) {
+        if (LibraryPcre::match('/\([^)]*\*\)/', $pattern)) {
             $hints[] = 'Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...).';
         }
 
         // If we have a vulnerable subpattern, try to suggest a specific fix
         if (null !== $analysis->vulnerableSubpattern) {
             $vulnerable = $analysis->vulnerableSubpattern;
-            if (preg_match('/(\w+)\+(\)\+)/', $vulnerable, $matches)) {
+            if (LibraryPcre::match('/(\w+)\+(\)\+)/', $vulnerable, $matches)) {
                 $char = $matches[1];
                 $hints[] = "Suggested (verify behavior): replace ($char+)+ with atomic group (?>$char+) or possessive $char++.";
             }
         }
 
         return $hints;
-    }
-
-    /**
-     * Whether the pattern holds an inline option group, an option setting
-     * such as "(?s)" or a scoped one such as "(?i-r:...)".
-     */
-    private static function hasInlineOptionGroup(NodeInterface $ast): bool
-    {
-        return null !== NodeFinder::findFirst(
-            $ast,
-            static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::InlineFlags === $node->type,
-        );
     }
 
     /**

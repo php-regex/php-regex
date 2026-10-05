@@ -609,9 +609,12 @@ covers it, and falls back to the 1.x heuristics elsewhere (see
   vendor/bin/phpstan analyse --generate-baseline
   ```
 
-  The new messages stay the same for all of 2.x: a better verdict changes the
-  tip, never the message. An `ignoreErrors` entry on the identifier
-  `regex.redos` keeps working; one matching the 1.x message text does not.
+  The text of each new message stays the same for all of 2.x. Which patterns
+  are reported does not: when the analysis improves, an error may appear,
+  disappear or change class (Exponential, Polynomial, Potential), so
+  regenerate the baseline after an upgrade that changes the analysis. An
+  `ignoreErrors` entry on the identifier `regex.redos` keeps working; one
+  matching the 1.x message text does not.
 
   The same regeneration covers the lint issues, whose messages and reported
   set changed in 2.0.0: the useless `m` and `s` flag messages, the lazy

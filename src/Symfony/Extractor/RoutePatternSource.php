@@ -16,6 +16,7 @@ namespace PHPRegex\Symfony\Extractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Routing\Route;
@@ -97,7 +98,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
             if (false !== $lines) {
                 foreach ($yamlRequirements as $parameter => $lineIndex) {
                     $line = $lines[$lineIndex] ?? '';
-                    if (!preg_match('/^\s*'.preg_quote($parameter, '/').'\s*:\s*(.+)$/', $line, $matches)) {
+                    if (!LibraryPcre::match('/^\s*'.preg_quote($parameter, '/').'\s*:\s*(.+)$/', $line, $matches)) {
                         continue;
                     }
                     $value = trim($matches[1], " \t\n\r\0\x0B'\"");
@@ -288,7 +289,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
 
     private function extractKeyFromLine(string $line): ?string
     {
-        if (!preg_match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.-]+))\s*:/', $line, $matches)) {
+        if (!LibraryPcre::match('/^\s*(?:\'([^\']+)\'|"([^"]+)"|([A-Za-z0-9_.-]+))\s*:/', $line, $matches)) {
             return null;
         }
 

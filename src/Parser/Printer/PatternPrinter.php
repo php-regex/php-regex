@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Printer;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\InlineFlags;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -491,7 +492,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // before it; where more have, "\o{101}" still is one. In a class,
         // "\101" is always octal.
         if (!$this->inCharClass && CharLiteralType::OctalLegacy === $node->type
-            && 1 === preg_match('/^\\\\([1-7][0-7]*+)$/', $rep, $digits)
+            && 1 === LibraryPcre::match('/^\\\\([1-7][0-7]*+)$/', $rep, $digits)
             && (\strlen($digits[1]) < 2 || (int) $digits[1] <= $this->capturesOpened)) {
             return '\\o{'.$digits[1].'}';
         }
@@ -755,7 +756,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         if (
             !$node->isStringIdentifier
             && \is_string($node->identifier)
-            && preg_match('/^[A-Z_a-z]\w*+$/', $node->identifier)
+            && LibraryPcre::match('/^[A-Z_a-z]\w*+$/', $node->identifier)
         ) {
             return '(?C'.$node->identifier.')';
         }
@@ -763,7 +764,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // A string callout doubles its delimiter to hold it. The spelling the
         // pattern used is kept when it still carries this text.
         $written = $this->writtenText($node);
-        if (null !== $written && 1 === preg_match('/^\(\?C([`\'"^%#$]|\{)(.*)\)$/s', $written, $matches)) {
+        if (null !== $written && 1 === LibraryPcre::match('/^\(\?C([`\'"^%#$]|\{)(.*)\)$/s', $written, $matches)) {
             $closing = '{' === $matches[1] ? '}' : $matches[1];
             if (str_ends_with($matches[2], $closing)
                 && str_replace($closing.$closing, $closing, substr($matches[2], 0, -1)) === $node->identifier) {
@@ -804,7 +805,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function namesTheSameVerb(string $written, string $verb): bool
     {
         $matches = [];
-        if (1 !== preg_match('/^\(\*(.*)\)$/s', $written, $matches)) {
+        if (1 !== LibraryPcre::match('/^\(\*(.*)\)$/s', $written, $matches)) {
             return false;
         }
 
@@ -857,7 +858,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         // Only a spelling of this very name is taken back; anything else means
         // the offsets no longer line up with the source.
-        return 1 === preg_match('/^\(\?P?(?:<'.$quoted.'>|\''.$quoted.'\'|"'.$quoted.'")$/', $written)
+        return 1 === LibraryPcre::match('/^\(\?P?(?:<'.$quoted.'>|\''.$quoted.'\'|"'.$quoted.'")$/', $written)
             ? $written
             : $opening;
     }
@@ -938,7 +939,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $characters = $unicodeMode ? mb_str_split($value, 1, 'UTF-8') : str_split($value);
 
         return implode('', array_map(static function (string $character) use ($unicodeMode): string {
-            if (1 === preg_match('/^[!-\/:-@\[-`{-~ ]$/', $character)) {
+            if (1 === LibraryPcre::match('/^[!-\/:-@\[-`{-~ ]$/', $character)) {
                 return '\\'.$character;
             }
 
@@ -979,7 +980,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function withoutOptionalEscapes(string $text): string
     {
-        return preg_replace('/\\\\([^a-zA-Z0-9])/', '$1', $text) ?? $text;
+        return LibraryPcre::replace('/\\\\([^a-zA-Z0-9])/', '$1', $text) ?? $text;
     }
 
     /**
@@ -991,7 +992,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // "\k{ name }" and "\g{ 1 }" may pad the braces.
         $syntax = '/^(?:\\(\\?P=|\\\\k[<{\']?|\\\\g[<{\']?|\\\\)[ \t]*([A-Za-z_][A-Za-z0-9_]*|[0-9]+)/';
 
-        return 1 === preg_match($syntax, $reference, $matches) ? $matches[1] : null;
+        return 1 === LibraryPcre::match($syntax, $reference, $matches) ? $matches[1] : null;
     }
 
     /**
@@ -1006,15 +1007,15 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $matches = [];
-        if (1 === preg_match('/^\\\\[xu]\\{?([0-9a-fA-F]{1,8})\\}?$/', $text, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\[xu]\\{?([0-9a-fA-F]{1,8})\\}?$/', $text, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
-        if (1 === preg_match('/^\\\\(?:o\\{([0-7]+)\\}|([0-7]{1,3}))$/', $text, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\(?:o\\{([0-7]+)\\}|([0-7]{1,3}))$/', $text, $matches)) {
             return (int) octdec($matches[1] ?: ($matches[2] ?? ''));
         }
 
-        if (1 === preg_match('/^.$/us', $text)) {
+        if (1 === LibraryPcre::match('/^.$/us', $text)) {
             $codePoint = mb_ord($text, 'UTF-8');
 
             return false === $codePoint ? null : $codePoint;
@@ -1060,7 +1061,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         $text = substr($this->source, $start, $length);
 
-        return 1 === preg_match('/^(\s*)\|(\s*)$/', $text, $matches) ? [$matches[1], $matches[2]] : ['', ''];
+        return 1 === LibraryPcre::match('/^(\s*)\|(\s*)$/', $text, $matches) ? [$matches[1], $matches[2]] : ['', ''];
     }
 
     /**
@@ -1096,7 +1097,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private static function takesMoreDigits(string $compiled, string $next): bool
     {
-        if (1 !== preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\(?<escape>[0-9]+|g[+-]?[0-9]+|x[0-9A-Fa-f]?)\z/', $compiled, $matches)) {
+        if (1 !== LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\(?<escape>[0-9]+|g[+-]?[0-9]+|x[0-9A-Fa-f]?)\z/', $compiled, $matches)) {
             return false;
         }
 
@@ -1111,14 +1112,14 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function opensConstruct(string $compiled, string $next): bool
     {
         if ($this->inCharClass) {
-            return \in_array($next, [':', '.', '='], true) && 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\[\z/', $compiled);
+            return \in_array($next, [':', '.', '='], true) && 1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\[\z/', $compiled);
         }
 
         if ('{' === $next) {
-            return 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\N\z/', $compiled);
+            return 1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\N\z/', $compiled);
         }
 
-        return str_contains("0123456789, \t}", $next) && 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*+\{[0-9, \t]*+\z/', $compiled);
+        return str_contains("0123456789, \t}", $next) && 1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\{[0-9, \t]*+\z/', $compiled);
     }
 
     /**
@@ -1135,7 +1136,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $text = substr($this->source, $start, $end - $start);
-        if (1 !== preg_match('/\A(?:[ \t\n\r\v\f]|\\\\E|\\\\Q\\\\E)++\z/', $text)) {
+        if (1 !== LibraryPcre::match('/\A(?:[ \t\n\r\v\f]|\\\\E|\\\\Q\\\\E)++\z/', $text)) {
             return null;
         }
 
@@ -1220,7 +1221,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
     private function normalizeQuantifier(string $quantifier): string
     {
-        return preg_replace('/\\s+/', '', $quantifier) ?? $quantifier;
+        return LibraryPcre::replace('/\\s+/', '', $quantifier) ?? $quantifier;
     }
 
     /**

@@ -17,6 +17,7 @@ use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 
 /**
@@ -637,7 +638,7 @@ final readonly class HelpCommand implements CommandInterface
             return $option;
         }
 
-        $parts = preg_split('/(<[^>]+>)/', $option, -1, \PREG_SPLIT_DELIM_CAPTURE);
+        $parts = LibraryPcre::split('/(<[^>]+>)/', $option, -1, \PREG_SPLIT_DELIM_CAPTURE);
         if (false === $parts) {
             return $option;
         }
@@ -648,15 +649,13 @@ final readonly class HelpCommand implements CommandInterface
                 continue;
             }
 
-            $partText = \is_array($part) ? $part[0] : $part;
-
-            if ($this->isPlaceholder($partText)) {
-                $formatted .= $output->color($partText, Output::YELLOW.Output::BOLD);
+            if ($this->isPlaceholder($part)) {
+                $formatted .= $output->color($part, Output::YELLOW.Output::BOLD);
 
                 continue;
             }
 
-            $formatted .= $output->color($partText, Output::CYAN);
+            $formatted .= $output->color($part, Output::CYAN);
         }
 
         return $formatted;

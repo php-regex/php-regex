@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 
@@ -206,7 +207,7 @@ final readonly class ProjectTarget
     private static function fromComposer(string $projectDir, array $env, array &$notices): ?array
     {
         $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
-        $path = str_starts_with($name, '/') || 1 === preg_match('/^[A-Za-z]:[\\\\\/]/', $name) ? $name : $projectDir.'/'.$name;
+        $path = str_starts_with($name, '/') || 1 === LibraryPcre::match('/^[A-Za-z]:[\\\\\/]/', $name) ? $name : $projectDir.'/'.$name;
 
         $contents = is_file($path) ? @file_get_contents($path) : false;
         if (false === $contents) {
@@ -295,7 +296,7 @@ final readonly class ProjectTarget
     private static function floor(string $constraint): ?int
     {
         $lowest = null;
-        foreach (preg_split('/\s*\|\|?\s*/', trim($constraint)) ?: [] as $branch) {
+        foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint)) ?: [] as $branch) {
             $floor = self::branchFloor($branch);
             if (null === $floor) {
                 return null;
@@ -308,16 +309,16 @@ final readonly class ProjectTarget
 
     private static function branchFloor(string $branch): ?int
     {
-        if (1 === preg_match('/^(\S+)\s+-\s+\S+$/', $branch, $range)) {
+        if (1 === LibraryPcre::match('/^(\S+)\s+-\s+\S+$/', $branch, $range)) {
             return self::versionId($range[1]);
         }
 
         // An operator may be followed by spaces: ">= 8.3".
-        $branch = (string) preg_replace('/(>=|<=|!=|==|[<>=^~])\s+/', '$1', $branch);
+        $branch = (string) LibraryPcre::replace('/(>=|<=|!=|==|[<>=^~])\s+/', '$1', $branch);
 
         $floor = null;
-        foreach (preg_split('/[\s,]+/', trim($branch)) ?: [] as $term) {
-            if (1 !== preg_match('/^(>=|<=|!=|==|[<>=^~])?(.+)$/', $term, $parts)) {
+        foreach (LibraryPcre::split('/[\s,]+/', trim($branch)) ?: [] as $term) {
+            if (1 !== LibraryPcre::match('/^(>=|<=|!=|==|[<>=^~])?(.+)$/', $term, $parts)) {
                 return null;
             }
             $operator = $parts[1];
@@ -340,7 +341,7 @@ final readonly class ProjectTarget
      */
     private static function versionId(string $version): ?int
     {
-        if (1 !== preg_match('/^v?(\d+)(?:\.(\d+|\*))?(?:\.(\d+|\*))?(?:\.\d+)?$/', $version, $parts)) {
+        if (1 !== LibraryPcre::match('/^v?(\d+)(?:\.(\d+|\*))?(?:\.(\d+|\*))?(?:\.\d+)?$/', $version, $parts)) {
             return null;
         }
 

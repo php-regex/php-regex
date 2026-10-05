@@ -104,11 +104,14 @@ add one to yet.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, …): baselines and ignore lists keep working.
-- The **messages of the PHPStan ReDoS errors**: `Exponential backtracking
+- The **text of the PHPStan ReDoS messages**: `Exponential backtracking
   (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
   backtracking (ReDoS): %s`, followed by the pattern. The severity, the proof
-  and the attack are in the tip, which may change, so a verdict fix never
-  breaks a baseline.
+  and the attack are in the tip, which may change. Which patterns get an error
+  is not frozen: when the analysis improves, an error may appear, disappear or
+  move to another class (Exponential, Polynomial, Potential). Regenerate the
+  baseline after an upgrade that changes the analysis; the CHANGELOG says
+  when one does.
 - The **configuration keys** of `regex.json`, of the Symfony bundle, of the
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
@@ -133,5 +136,7 @@ it changes a severity, and may move the pattern to `proof: heuristic`.
 ## Caches
 
 `RegexParser::CACHE_VERSION` changes whenever the code that builds a tree
-changes, in any release, and every cached tree is rebuilt then. A cache is
-never a format to depend on.
+changes, in any release, and every cached tree is rebuilt then. It covers the
+code that turns a tree into automata too: a `DfaCacheInterface` you keep across
+releases is keyed on it, so its DFAs are rebuilt after such an upgrade. A cache
+is never a format to depend on.

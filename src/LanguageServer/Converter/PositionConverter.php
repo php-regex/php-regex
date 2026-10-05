@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Converter;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Converts between byte offsets and LSP line/column positions.
  *
@@ -107,7 +109,7 @@ final class PositionConverter
             return \strlen($text);
         }
 
-        return (int) mb_strlen($text, 'UTF-8') + (int) preg_match_all('/[\x{10000}-\x{10FFFF}]/u', $text);
+        return (int) mb_strlen($text, 'UTF-8') + (int) LibraryPcre::matchAll('/[\x{10000}-\x{10FFFF}]/u', $text);
     }
 
     /**
@@ -126,13 +128,13 @@ final class PositionConverter
         $consumed = 0;
         $bytes = 0;
 
-        foreach ((array) preg_split('//u', $line, -1, \PREG_SPLIT_NO_EMPTY) as $character) {
+        foreach (LibraryPcre::split('//u', $line, -1, \PREG_SPLIT_NO_EMPTY) ?: [] as $character) {
             if ($consumed >= $units) {
                 break;
             }
 
-            $consumed += $this->utf16Length((string) $character);
-            $bytes += \strlen((string) $character);
+            $consumed += $this->utf16Length($character);
+            $bytes += \strlen($character);
         }
 
         return $bytes;
@@ -140,7 +142,7 @@ final class PositionConverter
 
     private function isUtf8(string $text): bool
     {
-        return 1 === preg_match('//u', $text);
+        return 1 === LibraryPcre::match('//u', $text);
     }
 
     /**

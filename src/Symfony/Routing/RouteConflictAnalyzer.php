@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -654,7 +655,7 @@ final readonly class RouteConflictAnalyzer
 
     private function countVariableSegments(string $path): int
     {
-        preg_match_all('/\{[^}]+\}/', $path, $matches);
+        LibraryPcre::matchAll('/\{[^}]+\}/', $path, $matches);
 
         return \count($matches[0]);
     }

@@ -15,6 +15,7 @@ namespace PHPRegex\Explain\Highlighter;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -435,15 +436,20 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
      */
     private function highlightLayout(string $text): string
     {
-        return preg_replace_callback(
-            '/[!&+|\-^]|[()]|[^!&+|\-^()]++/',
-            fn (array $part): string => match (true) {
-                '(' === $part[0], ')' === $part[0] => $this->wrap($part[0], 'group'),
-                1 === \strlen($part[0]) && str_contains('!&+|-^', $part[0]) => $this->wrap($this->escape($part[0]), 'meta'),
-                default => $this->escape($part[0]),
+        // The three alternatives cover every byte, so the parts put back
+        // together are the text.
+        if (false === LibraryPcre::matchAll('/[!&+|\-^]|[()]|[^!&+|\-^()]++/', $text, $parts)) {
+            return $this->escape($text);
+        }
+
+        return implode('', array_map(
+            fn (string $part): string => match (true) {
+                '(' === $part, ')' === $part => $this->wrap($part, 'group'),
+                1 === \strlen($part) && str_contains('!&+|-^', $part) => $this->wrap($this->escape($part), 'meta'),
+                default => $this->escape($part),
             },
-            $text,
-        ) ?? $this->escape($text);
+            $parts[0] ?? [],
+        ));
     }
 
     private function renderInlineFlagsGroup(string $flags, string $child, string $open, string $close): string
@@ -482,7 +488,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
             return '';
         }
 
-        if (1 === preg_match('/^[+-]?\d+$/', $reference)) {
+        if (1 === LibraryPcre::match('/^[+-]?\d+$/', $reference)) {
             return $this->wrap($this->escape($reference), 'number');
         }
 

@@ -33,10 +33,10 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * what production sees, so it stays out of the engine.
      */
     private const OWN_REGEX_FILES = [
+        'src/Parser/Internal/LibraryPcre.php',
         'src/Parser/Analysis/CharSetAnalyzer.php',
         'src/Automata/Transform/HirToNfaTransformer.php',
         'src/Automata/Transform/RegularSubsetValidator.php',
-        'src/Automata/Unicode/CodePointHelper.php',
         'src/Laravel/Command/LintCommand.php',
         'src/Laravel/Extractor/ValidationRulePatternSource.php',
         'src/Symfony/Command/LintCommand.php',
@@ -95,10 +95,29 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
     ];
 
     /**
+     * The one place a regex the library owns runs: under at least PHP's
+     * default backtrack and recursion limits, whatever the caller set.
+     */
+    private const LIBRARY_PCRE = 'src/Parser/Internal/LibraryPcre.php';
+
+    /**
+     * The CLI benchmark runs the user's pattern with the JIT and the
+     * caller's limits on purpose: it measures what production sees, so it
+     * goes through neither the engine nor the floor.
+     */
+    private const USER_PATTERN_BENCHMARKS = ['src/Cli/Command/RedosCommand.php'];
+
+    /**
+     * The functions that run a regex; preg_quote() runs none.
+     */
+    private const RUNS_A_REGEX = '/^preg_(?:match|match_all|replace|replace_callback|replace_callback_array|split|grep|filter)$/';
+
+    /**
      * Reading the engine's last error belongs to whoever ran the pattern:
      * the engine, the Lexer for its own tokenizing regexes, the benchmark.
      */
     private const LAST_ERROR_READERS = [
+        'src/Parser/Internal/LibraryPcre.php',
         'src/Parser/Lexer.php',
         'src/Cli/Command/RedosCommand.php',
     ];
@@ -142,6 +161,36 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         }
 
         $this->assertSame([], $unexpected);
+    }
+
+    /**
+     * A pattern the library was given runs through the engine, under the
+     * caller's limits; a regex the library owns runs through the floor
+     * helper, under at least PHP's defaults. No regex runs anywhere else,
+     * so none of them depends on a caller's small pcre.backtrack_limit.
+     */
+    #[Test]
+    public function test_every_regex_runs_through_the_engine_or_the_library_floor(): void
+    {
+        $unrouted = [];
+        foreach (LibrarySource::files() as $path => $tokens) {
+            if (str_starts_with($path, self::ENGINE) || self::LIBRARY_PCRE === $path || \in_array($path, self::USER_PATTERN_BENCHMARKS, true)) {
+                continue;
+            }
+
+            foreach (LibrarySource::functionCalls($tokens, self::RUNS_A_REGEX) as $call) {
+                $unrouted[] = $path.':'.$call['line'].' '.$call['function'];
+            }
+        }
+
+        $this->assertSame([], $unrouted, \sprintf('%d regex calls run outside the engine and the floor helper.', \count($unrouted)));
+    }
+
+    #[Test]
+    public function test_the_library_floor_helper_exists_where_the_rule_names_it(): void
+    {
+        $this->assertArrayHasKey(self::LIBRARY_PCRE, LibrarySource::files());
+        $this->assertNotSame([], LibrarySource::functionCalls(LibrarySource::files()[self::LIBRARY_PCRE], self::RUNS_A_REGEX));
     }
 
     #[Test]

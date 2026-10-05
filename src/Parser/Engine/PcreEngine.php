@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\NoJit;
 
 /**
@@ -241,12 +242,14 @@ final readonly class PcreEngine
     /**
      * The warning as PHP words it for the pattern as written: no function
      * name, no "Compilation failed: ", the offset counted without the verb.
+     * The warning is read under the library's own limits, so a caller's
+     * tiny limit does not blank it.
      */
     private static function error(string $warning, int $shift): PcreError
     {
-        $message = (string) preg_replace('/^\w+\(\):\s*/', '', $warning);
-        $compilation = (string) preg_replace('/^Compilation failed:\s*/', '', $message);
-        if ($compilation === $message || 1 !== preg_match('/ at offset (\d+)$/', $compilation, $matches)) {
+        $message = (string) LibraryPcre::replace('/^\w+\(\):\s*/', '', $warning);
+        $compilation = (string) LibraryPcre::replace('/^Compilation failed:\s*/', '', $message);
+        if ($compilation === $message || 1 !== LibraryPcre::match('/ at offset (\d+)$/', $compilation, $matches)) {
             return new PcreError($compilation);
         }
 

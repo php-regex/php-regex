@@ -103,7 +103,7 @@ Exponential backtracking (ReDoS): /(a+)+$/
 💡 Attack: "a" x n . "!"
 ```
 
-A ReDoS message is `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`, then the pattern, and stays the same for all of 2.x; the severity, how the verdict was reached and the attack (`str_repeat("a", $n) . "!"`) are in the tip. A baseline written with 1.x must be regenerated once.
+A ReDoS message is `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`, then the pattern; the text of each stays the same for all of 2.x, and the severity, how the verdict was reached and the attack (`str_repeat("a", $n) . "!"`) are in the tip. When the analysis improves, an error may appear, disappear or change class: regenerate the baseline after such an upgrade, and once after moving from 1.x.
 
 Every lint issue is a PHPStan error, whatever the rule's severity: an issue the `regex lint` console prints as `INFO`, such as `regex.lint.group.quantifiedCapture` on an unnamed group, is reported too, under its own identifier, so you can ignore it by identifier. Lint messages and the set of reported issues moved in 2.0.0: after upgrading, regenerate the baseline once with `vendor/bin/phpstan analyse --generate-baseline`.
 

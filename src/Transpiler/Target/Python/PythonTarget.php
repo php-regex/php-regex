@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Transpiler\Target\TargetInterface;
 use PHPRegex\Transpiler\TranspileContext;
@@ -129,7 +130,7 @@ final readonly class PythonTarget implements TargetInterface
      */
     private function quote(string $pattern): string
     {
-        $endsWithBackslash = 1 === preg_match('/(?<!\\\\)(?:\\\\\\\\)*\\\\$/', $pattern);
+        $endsWithBackslash = 1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*\\\\$/', $pattern);
 
         if (!$endsWithBackslash && !str_contains($pattern, "'")) {
             return "r'".$pattern."'";

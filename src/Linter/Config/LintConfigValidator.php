@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Checks a decoded regex.json against LintConfigSchema::definition().
  *
@@ -159,7 +161,7 @@ final readonly class LintConfigValidator
         }
 
         if (isset($schema['pattern']) && \is_string($schema['pattern']) && \is_string($value)
-            && 1 !== preg_match('/'.str_replace('/', '\/', $schema['pattern']).'/u', $value)) {
+            && 1 !== LibraryPcre::match('/'.str_replace('/', '\/', $schema['pattern']).'/u', $value)) {
             return false;
         }
 

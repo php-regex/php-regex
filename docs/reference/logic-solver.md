@@ -500,7 +500,9 @@ Use this to surface safe failure messages in CI or tooling.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.
-  Inline flags (`(?i:...)`) are applied where they hold.
+  Inline flags (`(?i:...)`) are applied where they hold, inline `r` and the ASCII
+  options (`(?aD)`, `(?aW)`, …) included; `(?^)` clears `r` and keeps the ASCII
+  options, as PCRE does.
 - Case-insensitive matching folds single code points, as the engine folds
   them. A fold that produces several code points (the Turkish `İ`, the `DŽ`
   digraph) is outside the model: under `/iu`, `k` still matches the Kelvin sign

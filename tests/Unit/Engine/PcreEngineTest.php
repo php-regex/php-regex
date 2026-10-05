@@ -123,6 +123,63 @@ final class PcreEngineTest extends TestCase
         yield 'white space only, no offset' => ['   '];
     }
 
+    /**
+     * The error is read out of PHP's warning by regexes of the library's
+     * own, which run under at least PHP's default limits: under a caller's
+     * backtrack limit of 0 or 1 the message and the offset are those the
+     * default limits give. Run under the caller's limits instead, the
+     * message came back empty and the offset null, with the JIT on or off.
+     */
+    #[Test]
+    #[DataProvider('provideRefusedPatternsUnderTinyLimits')]
+    public function test_compile_reports_the_same_error_under_the_callers_tiny_limits(string $pattern, string $backtrack, string $recursion): void
+    {
+        $expected = $this->oracleCompileError($pattern);
+        $this->assertNotNull($expected, 'The oracle compiles the case itself.');
+
+        $error = $this->withoutWarnings(function () use ($pattern, $backtrack, $recursion): ?PcreError {
+            \ini_set('pcre.backtrack_limit', $backtrack);
+            \ini_set('pcre.recursion_limit', $recursion);
+
+            try {
+                return (new PcreEngine())->compile($pattern);
+            } finally {
+                \ini_set('pcre.backtrack_limit', $this->backtrackLimit);
+                \ini_set('pcre.recursion_limit', $this->recursionLimit);
+            }
+        });
+
+        $this->assertInstanceOf(PcreError::class, $error);
+        $this->assertSame($expected['message'], $error->message);
+        $this->assertSame($expected['offset'], $error->offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, backtrack: string, recursion: string}>
+     */
+    public static function provideRefusedPatternsUnderTinyLimits(): iterable
+    {
+        $patterns = [
+            'unclosed group' => '/(/',
+            'range out of order' => '/[z-a]/',
+            'repeat counts out of order' => '/a{2,1}/',
+            'duplicate group name' => '/a(?<n>b)(?<n>c)/',
+            'no ending delimiter' => '/abc',
+            'unknown modifier' => '/a/Q',
+        ];
+        $limits = [
+            'backtrack limit 0' => ['0', '100000'],
+            'backtrack limit 1' => ['1', '100000'],
+            'both limits 1' => ['1', '1'],
+        ];
+
+        foreach ($patterns as $patternName => $pattern) {
+            foreach ($limits as $limitName => [$backtrack, $recursion]) {
+                yield $patternName.', '.$limitName => ['pattern' => $pattern, 'backtrack' => $backtrack, 'recursion' => $recursion];
+            }
+        }
+    }
+
     #[Test]
     public function test_compile_and_match_leave_the_caller_error_handler_in_place(): void
     {

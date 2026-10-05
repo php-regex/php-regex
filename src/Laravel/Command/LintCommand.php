@@ -25,6 +25,7 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
@@ -443,11 +444,12 @@ final class LintCommand extends Command
         // Unix-like systems
         if (\DIRECTORY_SEPARATOR === '/') {
             // Linux
+            // Linux only: no test on another system reads /proc/cpuinfo.
             if (\is_readable('/proc/cpuinfo')) {
                 $cpuinfo = \file_get_contents('/proc/cpuinfo');
                 if (false !== $cpuinfo) {
                     $matches = [];
-                    \preg_match_all('/^processor\s*:/m', $cpuinfo, $matches);
+                    LibraryPcre::matchAll('/^processor\s*:/m', $cpuinfo, $matches);
                     if (!empty($matches[0])) {
                         return \count($matches[0]);
                     }
