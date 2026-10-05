@@ -6553,7 +6553,7 @@
          - {^(?:\* ) *(\(no branch\)|\(detached from \S+\)|\(HEAD detached at \S+\)|\S+) *([a-f0-9]+) .*$}
          + {^\*  *(\(no branch\)|\(detached from \S+\)|\(HEAD detached at \S+\)|\S+) *([a-f0-9]+) .*$}
 
-  corpus/composer/composer/src/Composer/Package/Loader/ArrayLoader.php:331:42
+  corpus/composer/composer/src/Composer/Package/Loader/ArrayLoader.php:325:42
       → {(\.9{7})+}
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -9416,6 +9416,13 @@
          ↳ Consider tightening the second quantifier to its minimum.
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
+
+  corpus/elementor/elementor/modules/atomic-widgets/props-resolver/custom-icon-svg/fontello-glyph-parser.php:214:29
+      → /<!DOCTYPE[^>]*>/si
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /<!DOCTYPE[^>]*>/si
+         + /<!DOCTYPE[^>]*>/i
 
   corpus/elementor/elementor/modules/mcp/abilities/appliers/v3-node-bridge.php:272:26
       → /^\s*[^{}]+\{\s*[\s\S]*\}\s*$/
