@@ -239,6 +239,19 @@ The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverO
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns, and `Language`. Every other class of the namespace is
 `@internal` and may change in any release.
 
+`TrivialMatchClassifier::matchedLiteral()` is a question built on `equivalent()` in full-match
+mode: the one non-empty string a pattern matches, proven, or `null`. A pattern made of
+literals, groups, one-member classes and fixed repetitions names its candidate, and the
+solver checks the pattern against that string quoted byte by byte; a `ComplexityException`
+on the way answers `null`. See [Prefilters](prefilters.md#string-functions-in-disguise).
+
+```php
+use PHPRegex\Automata\TrivialMatchClassifier;
+
+(new TrivialMatchClassifier())->matchedLiteral('/(?:foo)/'); // 'foo'
+(new TrivialMatchClassifier())->matchedLiteral('/fo?/');     // null
+```
+
 ## The Language of a Pattern
 
 `language()` hands out what the automaton of a pattern knows once built, under the match

@@ -64,6 +64,7 @@ In short, the public surface is:
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule` |
+| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
 | `regex-cli` | no PHP class is public |
@@ -80,7 +81,9 @@ and `BsrConvention` are the enums of `Analysis\PatternInfo`. `Analysis\ByteCharS
 other class of those namespaces left out of the row.
 
 In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
-`Minimization\MinimizationAlgorithm` are the two algorithm enums.
+`Minimization\MinimizationAlgorithm` are the two algorithm enums. The promise
+covers `TrivialMatchClassifier::matchedLiteral()` with `classify()`: a minor
+release may prove more patterns than the one before, and its CHANGELOG says so.
 
 In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 `RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
@@ -89,6 +92,10 @@ In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 The bridges and tools carry more than their classes:
 
 - `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
+- `regex-rector`: the three rules keep their names for all of 2.x and take no
+  configuration, and `RegexSetList::STRING_FUNCTIONS` names the set that
+  registers them. Each rewrites only what the automata prove; a minor release
+  may prove more calls than the one before, and its CHANGELOG says so.
 - `regex-symfony`: the `php_regex` configuration, and the commands' names and
   options.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`), the `php-regex`

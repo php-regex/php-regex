@@ -85,5 +85,10 @@ parameters:
           identifier: argument.type
           path: tests/Unit/Parser/CaptureShapeAnalyzerTest.php
           count: 2
+        # The contract test pins what the types already say: the replace and
+        # split rules have no PHP floor, and a later change must not add one.
+        - identifier: function.impossibleType
+          path: tests/Integration/Bridge/Rector/RuleContractTest.php
+          count: 2
 
     reportUnmatchedIgnoredErrors: false

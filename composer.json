@@ -41,6 +41,7 @@
         "php-regex/regex-optimizer": "self.version",
         "php-regex/regex-parser": "self.version",
         "php-regex/regex-phpstan": "self.version",
+        "php-regex/regex-rector": "self.version",
         "php-regex/regex-redos": "self.version",
         "php-regex/regex-symfony": "self.version",
         "php-regex/regex-toolkit": "self.version",
@@ -56,7 +57,12 @@
             "PHPRegex\\Tests\\": "tests/"
         },
         "exclude-from-classmap": [
-            "tests/Fixtures/"
+            "tests/Fixtures/",
+            "tests/Integration/Bridge/Rector/**/Fixture/",
+            "tests/Integration/Bridge/Rector/**/FixturePhp74/",
+            "tests/Integration/Bridge/Rector/**/FixturePhp80/",
+            "tests/Integration/Bridge/Rector/**/FixturePhp81/",
+            "tests/Integration/Bridge/Rector/**/FixturePhp82/"
         ]
     },
     "bin": [
@@ -115,6 +121,7 @@
         "phpstan/phpstan": "To run static analysis and detect invalid regex patterns.",
         "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
         "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
+        "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
         "illuminate/support": "Required for Laravel integration.",
         "illuminate/console": "Required for Laravel Artisan commands.",
         "illuminate/routing": "Required for Laravel route analysis."

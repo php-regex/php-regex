@@ -52,6 +52,10 @@ deptrac:
       collectors:
         - type: classLike
           value: '^PHPRegex\\PHPStan\\'
+    - name: Rector
+      collectors:
+        - type: classLike
+          value: '^PHPRegex\\Rector\\'
     - name: Symfony
       collectors:
         - type: classLike
@@ -73,5 +77,6 @@ deptrac:
     Cli: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
     LanguageServer: [Toolkit, Parser, Explain, Optimizer, Linter]
     PHPStan: [Parser, Linter, ReDoS, Automata, Optimizer]
+    Rector: [Parser, Automata]
     Symfony: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
     Laravel: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]

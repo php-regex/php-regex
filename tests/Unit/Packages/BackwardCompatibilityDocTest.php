@@ -81,6 +81,17 @@ final class BackwardCompatibilityDocTest extends TestCase
     }
 
     #[Test]
+    public function test_bc_doc_names_the_rector_set_and_the_matched_literal_method(): void
+    {
+        $doc = (string) file_get_contents(self::root().'/'.self::DOC);
+
+        // A set constant and a method are no class: the table cannot list
+        // them, the text under it does.
+        $this->assertStringContainsString('`RegexSetList::STRING_FUNCTIONS`', $doc);
+        $this->assertStringContainsString('`TrivialMatchClassifier::matchedLiteral()`', $doc);
+    }
+
+    #[Test]
     public function test_bc_doc_lists_exactly_the_result_objects(): void
     {
         $labels = self::labels();

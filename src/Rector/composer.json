@@ -1,0 +1,36 @@
+{
+    "name": "php-regex/regex-rector",
+    "type": "rector-extension",
+    "description": "Rector rules that rewrite a preg_* call into the string function that does the same, only when the automata prove it.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "rector",
+        "refactoring",
+        "automata"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "rector/rector": "^2.0",
+        "php-regex/regex-automata": "self.version",
+        "php-regex/regex-parser": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Rector\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}

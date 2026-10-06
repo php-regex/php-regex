@@ -16,13 +16,21 @@ source still pointed there.
    (GitHub redirects the old URL), but `php-regex/regex-parser` must not be
    created. `bin/split` refuses to push into a repository that serves the
    monorepo. `bin/status` shows a ✓ once Packagist has switched.
-3. **GitHub** — create the 14 read-only repositories (13 done 2026-10-01; `regex-parser` only once step 2 is done: `gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki`), empty (no README, no
+3. **GitHub** — create the 15 read-only repositories (13 done 2026-10-01; `regex-rector`, added after, not created yet; `regex-parser` only once step 2 is done: `gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki`), empty (no README, no
    license, no .gitignore), each with issues and pull requests pointing to
    `php-regex/php-regex`:
    `regex-parser`, `regex-explain`, `regex-optimizer`, `regex-generator`,
    `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`,
    `regex-toolkit`, `regex-cli`, `regex-language-server`, `regex-phpstan`,
-   `regex-symfony`, `regex-laravel`.
+   `regex-rector`, `regex-symfony`, `regex-laravel`.
+
+   **`regex-rector` comes first, before its branch is merged into `2.x`**:
+   the repository `php-regex/regex-rector`, its access in the `SPLIT_TOKEN`
+   token (step 4) and its Packagist entry (step 6) must all exist when
+   `src/Rector` reaches `2.x`. From that merge on, `bin/split` lists
+   `src/Rector:regex-rector`, cannot read a repository that does not exist,
+   counts it as failed, and the split job fails on every push to `2.x` (the
+   other packages are still pushed).
 3b. **GitHub, `php-regex/regex-parser`, once Packagist has switched** — every
    `composer.lock` of 1.x points at
    `api.github.com/repos/php-regex/regex-parser/zipball/<commit>` (~13k
@@ -42,15 +50,15 @@ source still pointed there.
    Then add `regex-parser` to the `SPLIT_TOKEN` token: the next push to `2.x`
    splits it (`bin/split` no longer skips it once it is a repository of its
    own).
-4. ~~**GitHub** — create a fine-grained token~~ (done 2026-10-01; add `regex-parser` to it once that repository exists) with *Contents: read and write* on
-   those 14 repositories only, and store it as the secret `SPLIT_TOKEN` of
+4. ~~**GitHub** — create a fine-grained token~~ (done 2026-10-01; add `regex-rector` to it before its branch is merged, and `regex-parser` once that repository exists) with *Contents: read and write* on
+   those 15 repositories only, and store it as the secret `SPLIT_TOKEN` of
    `php-regex/php-regex` (Settings → Secrets and variables → Actions).
 5. ~~**Split**~~ (enabled 2026-10-01: 13 repositories split by CI; `regex-parser` is skipped until it exists) — first run `bin/split --dry-run` locally to read the plan, then
    set the repository variable `SPLIT_ENABLED` to `true` (same page, tab
    *Variables*): `.github/workflows/split.yml` then splits on every push to
    `2.x` and every `v2.*` tag. Push once (or run `bin/split` locally with
    splitsh-lite installed) and check each repository received `2.x`.
-6. **Packagist** — submit the 14 packages (`php-regex/regex-*`), from their
+6. **Packagist** — submit the 15 packages (`php-regex/regex-*`), from their
    repositories, and `php-regex/php-regex` from the monorepo if the whole
    library should be installable in one package.
 7. **Packagist** — enable updates on push for each package: the GitHub

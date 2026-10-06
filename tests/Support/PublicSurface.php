@@ -65,6 +65,7 @@ final class PublicSurface
             'Node/*',
         ],
         'PHPStan' => ['RegexPatternRule'],
+        'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'Set/RegexSetList'],
         'Redos' => [
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Heatmap', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',

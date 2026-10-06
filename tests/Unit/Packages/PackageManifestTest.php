@@ -35,6 +35,7 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => 'regex-optimizer',
         'Parser' => 'regex-parser',
         'PHPStan' => 'regex-phpstan',
+        'Rector' => 'regex-rector',
         'Redos' => 'regex-redos',
         'Symfony' => 'regex-symfony',
         'Toolkit' => 'regex-toolkit',
@@ -99,8 +100,9 @@ final class PackageManifestTest extends TestCase
     {
         $manifest = self::manifest($directory);
         $declared = array_keys(self::strings(self::dig($manifest, 'require')) + self::strings(self::dig($manifest, 'suggest')));
-        // PHPStan ships nikic/php-parser inside its phar.
-        if (\in_array('phpstan/phpstan', $declared, true)) {
+        // PHPStan ships nikic/php-parser inside its phar, and Rector ships
+        // the same parser with it.
+        if (\in_array('phpstan/phpstan', $declared, true) || \in_array('rector/rector', $declared, true)) {
             $declared[] = 'nikic/php-parser';
         }
 
@@ -140,6 +142,41 @@ final class PackageManifestTest extends TestCase
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
             $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
             $this->assertTrue(is_executable(self::root().'/src/'.$directory.'/'.$script), $script);
+        }
+    }
+
+    #[Test]
+    public function test_rector_package_is_a_rector_extension_on_rector_2(): void
+    {
+        $manifest = self::manifest('Rector');
+
+        $this->assertSame('rector-extension', self::dig($manifest, 'type'));
+        $this->assertSame('^2.0', self::dig($manifest, 'require', 'rector/rector'));
+        // Rector bundles the parser it runs on: requiring another copy could
+        // only conflict with it.
+        $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));
+        $this->assertFileExists(self::root().'/src/Rector/config/sets/string-functions.php');
+    }
+
+    #[Test]
+    public function test_deptrac_has_a_layer_and_a_ruleset_per_package(): void
+    {
+        $config = (string) file_get_contents(self::root().'/deptrac.yaml');
+        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+'~", $config, $layers, \PREG_SET_ORDER);
+
+        $byDirectory = [];
+        foreach ($layers as [, $layer, $directory]) {
+            $byDirectory[$directory] = $layer;
+        }
+        ksort($byDirectory);
+        $expected = array_keys(self::PACKAGES);
+        sort($expected);
+
+        $this->assertSame($expected, array_keys($byDirectory));
+
+        $ruleset = substr($config, (int) strpos($config, "\n  ruleset:"));
+        foreach ($byDirectory as $directory => $layer) {
+            $this->assertMatchesRegularExpression('~^    '.$layer.': ~m', $ruleset, \sprintf('deptrac.yaml: the %s layer (src/%s) has no ruleset entry.', $layer, $directory));
         }
     }
 

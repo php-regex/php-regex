@@ -63,8 +63,60 @@ the subject, so `/^foo$/` is not `$s === 'foo'`: it takes `"foo\n"` too. And a p
 UTF mode is left alone: on a subject that is not UTF-8, `preg_match()` fails where a string
 function answers.
 
+It also leaves alone, before any proof, a pattern whose answer depends on more than the
+subject:
+
+- a pattern matched without case in any form (`/i`, `(?i)`, `(?i:...)`), and one using a
+  shorthand class (`\d`, `\s`, `\w`, `\h`, `\v` and their negations, inside a class too) or
+  a POSIX class (`[[:alpha:]]`). Once a program calls `setlocale()`, PHP builds PCRE's
+  character and case tables from `LC_CTYPE`: under `fr_FR.ISO8859-1`, `/^[[:alpha:]]\z/` and
+  `/^\w\z/` match `"\xE9"`, and `/^\xe9\z/i` matches `"\xC9"`, where a string function
+  answers the same in every locale;
+- a pattern that opens with a verb, or holds one: `(*LIMIT_MATCH=1)foo` makes `preg_match()`
+  return `false` without the JIT, where `str_contains()` answers. The newline and `\R`
+  conventions, `(*UCP)` and `(*UTF)` are refused alike;
+- a pattern under `/A`, which is tried at offset 0 only;
+- in extended mode (`x`, `xx`, `(?x)`), a pattern holding a raw byte above 0x7F: PCRE skips
+  the pattern bytes its tables call white space, and under `nl_NL.UTF-8` on macOS a raw
+  0xA0 is one, so `"/prix\xA0eur/x"` matches `prixeur`. The escape `\xa0` is a byte the
+  locale does not touch.
+
+It also counts the paths through the pattern, not the strings: a pattern that reaches one
+string along two paths is left alone, as the engine tries both. `(?:a|a)` reaches `a` twice;
+twenty of them reach a string 2^20 ways, and on forty `a` and a `c`,
+`preg_match('/(?:a|a){4}(?:a|a){4}(?:a|a){4}(?:a|a){4}(?:a|a){4}b/', $s)` returns `false`
+("Backtrack limit exhausted") where `str_contains()` answers. `/^a?a?\z/` reaches `a` twice
+too. At most 16 paths are read.
+
+```php
+$classifier->classify('/^\s\z/');              // null
+$classifier->classify('/^foo\z/i');             // null
+$classifier->classify('/(*LIMIT_MATCH=1)foo/'); // null
+$classifier->classify('/(?:a|a)/');             // null
+```
+
 With optimizations on, the PHPStan rule reports such a `preg_match($pattern, $subject)` under
 `regex.trivialMatch`; a call that fills `$matches`, or passes flags, is left alone.
+
+`matchedLiteral()` answers for `preg_replace()` and `preg_split()`: the one non-empty string
+the pattern's full-match language holds, or `null`. Both functions scan left to right and
+take non-overlapping matches, as `str_replace()` and `explode()` do, so with that string they
+answer alike. It refuses what `classify()` refuses, reads only literals, groups,
+one-member classes and fixed repetitions (an alternation is two paths, so two strings or
+one string the engine backtracks through twice), and then has the automata prove the
+language in full-match mode: `/ab?/` finds what `/a/` finds, yet
+`preg_replace('/ab?/', 'X', 'ab')` is `X` where `str_replace('a', 'X', 'ab')` is `Xb`.
+
+```php
+$classifier->matchedLiteral('/a\.b/'); // 'a.b'
+$classifier->matchedLiteral('/x{3}/'); // 'xxx'
+$classifier->matchedLiteral('/ab?/');  // null
+$classifier->matchedLiteral('/^foo/'); // null: an anchor
+$classifier->matchedLiteral('/(?:a|a){20}b/'); // null: one string, 2^20 paths
+```
+
+The Rector rules of `php-regex/regex-rector` rewrite the code with both methods: see
+[the Rector guide](../guides/rector.md).
 
 ---
 

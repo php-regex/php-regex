@@ -22,7 +22,11 @@ use PHPUnit\Framework\Attributes\Test;
 /**
  * A preg_match() a string function answers alike is reported with the
  * function, once the automata prove they agree on every subject: never for
- * "/^foo$/", which also takes "foo\n", nor for a call that fills $matches.
+ * "/^foo$/", which also takes "foo\n", nor for a call that fills $matches,
+ * nor for a pattern whose answer moves with the locale (shorthand and POSIX
+ * classes, caseless matching, a raw high byte in extended mode), that sets
+ * how PCRE runs it (a leading verb), or that reaches one string along two
+ * paths (the engine may fail on its backtrack limit).
  *
  * @extends RuleTestCase<RegexPatternRule>
  */
