@@ -15,12 +15,41 @@ namespace PHPRegex\Cli;
 
 use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\JsonCommandInterface;
+use PHPRegex\Parser\Internal\IniFlag;
+use PHPRegex\Parser\Internal\JsonDocument;
 
 /**
  * @internal
  */
 final class Application
 {
+    /**
+     * The errors that stop PHP: no document follows them.
+     */
+    private const FATAL_ERRORS = \E_ERROR | \E_PARSE | \E_CORE_ERROR | \E_COMPILE_ERROR | \E_USER_ERROR;
+
+    /**
+     * The bytes set aside during a JSON run for printing the envelope after
+     * PHP ran out of memory.
+     */
+    private const MEMORY_RESERVE = 256 * 1024;
+
+    /**
+     * The output of the JSON run in progress, null between runs.
+     */
+    private static ?Output $jsonRunOutput = null;
+
+    /**
+     * The process the JSON run in progress started in, null between runs.
+     */
+    private static int|false|null $jsonRunPid = null;
+
+    /**
+     * Freed first when PHP stops a JSON run, null between runs.
+     */
+    private static ?string $memoryReserve = null;
+
     /**
      * @var array<string, CommandInterface>
      */
@@ -60,8 +89,145 @@ final class Application
 
         $this->configureOutput($options);
 
+        // The command's own options are not read yet: whether JSON was asked
+        // for is read from the whole command line.
+        if (!$this->asksForJson(\array_slice($argv, 1), $args)) {
+            return $this->dispatch($args, $options, false);
+        }
+
+        // Where ini_get() or ini_set() is disabled the setting is left as it
+        // is: the run goes on.
+        $displayErrors = \function_exists('ini_get') && \function_exists('ini_set') ? \ini_get('display_errors') : false;
+        if (false !== $displayErrors && IniFlag::displaysErrors($displayErrors)) {
+            // PHP's own diagnostics stay off stdout, which holds the document.
+            \ini_set('display_errors', 'stderr');
+        }
+
+        self::prepareFatalErrorReport($this->output);
+
+        try {
+            return $this->dispatch($args, $options, true);
+        } catch (\Throwable $e) {
+            // The boundary of the application: a failure no command caught
+            // still leaves stdout holding one document.
+            if ($this->output->hasWrittenDocument()) {
+                throw $e;
+            }
+
+            $this->output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_INTERNAL));
+
+            return CommandInterface::FAILURE;
+        } finally {
+            self::$jsonRunOutput = null;
+            self::$jsonRunPid = null;
+            self::$memoryReserve = null;
+            if (false !== $displayErrors) {
+                \ini_set('display_errors', $displayErrors);
+            }
+        }
+    }
+
+    /**
+     * @return array<int, CommandInterface>
+     */
+    public function registeredCommands(): array
+    {
+        return $this->registered;
+    }
+
+    /**
+     * A JSON run PHP stopped with a fatal error never printed its document:
+     * the envelope takes its place, stage "internal", exit code 1. Nothing
+     * is printed for a run that already printed its document, nor once the
+     * run is over.
+     *
+     * The binary calls it at the shutdown of the process and exits with the
+     * code it returns: library code never exits.
+     *
+     * @internal
+     *
+     * @return int|null the exit code when the envelope was printed, null otherwise
+     */
+    public static function reportFatalError(): ?int
+    {
+        // Reached at the shutdown of the process only: the tests run it in a
+        // child PHP process, which a fatal error stops. A forked worker runs
+        // the shutdown code of its parent too: what stops it is the parent's
+        // to report, from what the worker left.
+        if (null === self::$jsonRunPid || getmypid() !== self::$jsonRunPid) {
+            return null;
+        }
+
+        // Memory exhausted leaves none to print with: the reserve makes room.
+        self::$memoryReserve = null;
+
+        $output = self::$jsonRunOutput;
+        $error = error_get_last();
+        if (null === $output || $output->hasWrittenDocument() || null === $error || 0 === ($error['type'] & self::FATAL_ERRORS)) {
+            return null;
+        }
+
+        $output->writeDocument(JsonDocument::error('Fatal error: '.$error['message'], JsonDocument::STAGE_INTERNAL));
+
+        return CommandInterface::FAILURE;
+    }
+
+    /**
+     * Whether the command line asks for JSON of a command that has a JSON
+     * mode, or of a command it does not name: a command without one reports
+     * in text whatever the command line holds.
+     *
+     * @param array<int, string> $argv the command line after the binary
+     * @param array<int, string> $args the same without the global options
+     */
+    private function asksForJson(array $argv, array $args): bool
+    {
+        if (!JsonRequest::in($argv)) {
+            return false;
+        }
+
+        $name = $args[0] ?? null;
+        if (null === $name) {
+            return true;
+        }
+
+        if ($this->isRegexArgument($name)) {
+            return false;
+        }
+
+        $command = $this->getCommand($name);
+
+        return null === $command || $command instanceof JsonCommandInterface;
+    }
+
+    /**
+     * Records the JSON run reportFatalError() reports on, and sets aside
+     * what printing the envelope takes: a run that exhausts the memory has
+     * none left for it.
+     */
+    private static function prepareFatalErrorReport(Output $output): void
+    {
+        // PHP loads a class, and allocates the engine cache of a function,
+        // the first time it is used: each costs memory a run that exhausted
+        // it no longer has, so the envelope's path is used once now. No run
+        // is recorded yet: the report returns at once. What is left to
+        // allocate fits in the reserve, freed before it is needed.
+        self::reportFatalError();
+        JsonDocument::error('', JsonDocument::STAGE_INTERNAL);
+
+        self::$jsonRunOutput = $output;
+        self::$jsonRunPid = getmypid();
+        self::$memoryReserve = str_repeat('x', self::MEMORY_RESERVE);
+    }
+
+    /**
+     * @param array<int, string> $args
+     * @param bool               $json whether errors are reported as the JSON envelope
+     */
+    private function dispatch(array $args, GlobalOptions $options, bool $json): int
+    {
         if (null !== $options->error) {
-            return $this->handleError($options->error);
+            return $this->handleError($options->error, $json);
         }
 
         if ($options->help) {
@@ -79,6 +245,13 @@ final class Application
 
         $command = $this->getCommand($commandName);
         if (null === $command) {
+            if ($json) {
+                // An option before the command name: --json analyze /a/.
+                $hint = str_starts_with($commandName, '-') ? ' Options go after the command name.' : '';
+
+                return $this->handleError("Unknown command: {$commandName}.".$hint, true);
+            }
+
             return $this->handleUnknownCommand($commandName, $options);
         }
 
@@ -86,14 +259,6 @@ final class Application
         $input = $this->createInput($commandName, $commandArgs, $options);
 
         return $command->run($input, $this->output);
-    }
-
-    /**
-     * @return array<int, CommandInterface>
-     */
-    public function registeredCommands(): array
-    {
-        return $this->registered;
     }
 
     /**
@@ -118,8 +283,14 @@ final class Application
         return $forced ?? (\function_exists('posix_isatty') && posix_isatty(\STDOUT));
     }
 
-    private function handleError(string $errorMessage): int
+    private function handleError(string $errorMessage, bool $json = false): int
     {
+        if ($json) {
+            $this->output->writeDocument(JsonDocument::error($errorMessage, JsonDocument::STAGE_USAGE));
+
+            return CommandInterface::INVALID;
+        }
+
         $this->output->write($this->output->error('Error: '.$errorMessage."\n"));
 
         return CommandInterface::INVALID;

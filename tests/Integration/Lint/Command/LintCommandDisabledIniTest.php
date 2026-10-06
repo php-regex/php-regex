@@ -71,11 +71,11 @@ final class LintCommandDisabledIniTest extends TestCase
 
         [$exitCode, $stdout, $stderr] = $this->regex($args);
         $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertSame(1, self::stats($stdout)['redos'] ?? 0, 'With ini_set(), the replay confirms the verdict.');
+        $this->assertSame(1, self::stats($stdout)['redos_errors'] ?? 0, 'With ini_set(), the replay confirms the verdict.');
 
         [$exitCode, $stdout, $stderr] = $this->regex($args, 'ini_set');
         $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertSame(1, self::stats($stdout)['redos'] ?? 0, $stdout);
+        $this->assertSame(1, self::stats($stdout)['redos_errors'] ?? 0, $stdout);
     }
 
     /**
@@ -97,7 +97,7 @@ final class LintCommandDisabledIniTest extends TestCase
             $this->assertIsArray($result['issues'] ?? null);
             foreach ($result['issues'] as $issue) {
                 $this->assertIsArray($issue);
-                if ('regex.lint.redos' === ($issue['issueId'] ?? null)) {
+                if ('regex.lint.redos' === ($issue['issue_id'] ?? null)) {
                     $this->assertIsString($issue['hint'] ?? null);
                     $hints[] = $issue['hint'];
                 }
@@ -174,12 +174,12 @@ final class LintCommandDisabledIniTest extends TestCase
 
         $this->assertSame(0, $exitCode, $stdout.$stderr);
         $this->assertSame(0, self::stats($stdout)['errors'] ?? null, $stdout);
-        $this->assertSame(0, self::stats($stdout)['redos'] ?? 0, 'Only errors are counted as ReDoS verdicts.');
+        $this->assertSame(0, self::stats($stdout)['redos_errors'] ?? 0, 'Only errors are counted as ReDoS verdicts.');
 
         $issues = self::redosIssues($stdout);
         $this->assertSame([2, 3], array_column($issues, 'line'), $stdout);
         foreach ($issues as $issue) {
-            $this->assertSame('warning', $issue['type'] ?? null, $stdout);
+            $this->assertSame('warning', $issue['severity'] ?? null, $stdout);
             $this->assertIsString($issue['message'] ?? null);
             $this->assertStringContainsString('not replayed', (string) $issue['message']);
             $this->assertStringContainsString('engine limits unavailable', (string) $issue['message']);
@@ -205,12 +205,12 @@ final class LintCommandDisabledIniTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->regex(['lint', $this->directory, '--redos', '--redos-mode=confirmed', '--format=json', '--jobs=1']);
 
         $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertSame(2, self::stats($stdout)['redos'] ?? 0, $stdout);
+        $this->assertSame(2, self::stats($stdout)['redos_errors'] ?? 0, $stdout);
 
         $issues = self::redosIssues($stdout);
         $this->assertSame([2, 3], array_column($issues, 'line'), $stdout);
         foreach ($issues as $issue) {
-            $this->assertSame('error', $issue['type'] ?? null, $stdout);
+            $this->assertSame('error', $issue['severity'] ?? null, $stdout);
             $this->assertIsString($issue['message'] ?? null);
             $this->assertStringContainsString('(heuristic)', (string) $issue['message']);
             $this->assertStringContainsString('confirmed, evidence: backtrack_limit', (string) $issue['message']);
@@ -294,7 +294,7 @@ final class LintCommandDisabledIniTest extends TestCase
             self::assertIsArray($result['issues'] ?? null);
             foreach ($result['issues'] as $issue) {
                 self::assertIsArray($issue);
-                if ('regex.lint.redos' === ($issue['issueId'] ?? null)) {
+                if ('regex.lint.redos' === ($issue['issue_id'] ?? null)) {
                     $issues[] = $issue;
                 }
             }

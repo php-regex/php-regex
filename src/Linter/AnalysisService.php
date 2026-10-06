@@ -148,7 +148,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
     {
@@ -167,7 +167,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: RedosAnalysis}>
+     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     public function analyzeRedos(array $patterns, RedosSeverity $threshold, int $workers = 1): array
     {
@@ -187,7 +187,7 @@ final readonly class AnalysisService
      * @param OptimizerOptions|null    $options  what an optimization may rewrite; by default, what lint
      *                                           allows, every rewrite checked with the automata
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
+     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
      */
     public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1): array
     {
@@ -221,7 +221,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
      */
     private function lintChunk(array $patterns, ?callable $progress = null): array
     {
@@ -361,15 +361,19 @@ final readonly class AnalysisService
         return $issues;
     }
 
-    private function resolveColumn(PatternOccurrence $occurrence): int
+    /**
+     * The 1-based column of the pattern in its file, null when the source
+     * does not know it: none is invented.
+     */
+    private function resolveColumn(PatternOccurrence $occurrence): ?int
     {
-        return $occurrence->column ?? 1;
+        return $occurrence->column;
     }
 
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, analysis: RedosAnalysis}>
+     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     private function analyzeRedosChunk(array $patterns, RedosSeverity $threshold): array
     {
@@ -411,7 +415,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
+     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
      */
     private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options): array
     {

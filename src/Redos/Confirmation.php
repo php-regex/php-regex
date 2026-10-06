@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos;
 
+use PHPRegex\Parser\Internal\IniFlag;
+
 /**
  * Represents evidence gathered from a bounded confirmation run.
  */
@@ -65,14 +67,14 @@ final readonly class Confirmation implements \JsonSerializable
     }
 
     /**
-     * @return array{confirmed: bool, samples: array<int|string, ConfirmationSample>, jit_setting: string|null, backtrack_limit: int|null, recursion_limit: int|null, iterations: int, timeout_ms: float, timed_out: bool, evidence: string|null, note: string|null, error: string|null}
+     * @return array{confirmed: bool, samples: array<int|string, ConfirmationSample>, jit_setting: bool|null, backtrack_limit: int|null, recursion_limit: int|null, iterations: int, timeout_ms: float, timed_out: bool, evidence: string|null, note: string|null, error: string|null}
      */
     public function jsonSerialize(): array
     {
         return [
             'confirmed' => $this->confirmed,
             'samples' => $this->samples,
-            'jit_setting' => $this->jitSetting,
+            'jit_setting' => null === $this->jitSetting ? null : IniFlag::isOn($this->jitSetting),
             'backtrack_limit' => $this->backtrackLimit,
             'recursion_limit' => $this->recursionLimit,
             'iterations' => $this->iterations,

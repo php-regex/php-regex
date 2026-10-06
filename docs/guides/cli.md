@@ -60,7 +60,7 @@ PHPRegex CLI provides these commands:
 |-----------------------|-----------------------------------|
 | `--ansi`              | Force ANSI colors                 |
 | `--no-ansi`           | Disable ANSI colors               |
-| `-q, --quiet`         | Suppress output                   |
+| `-q, --quiet`         | Suppress output; a JSON, GitHub, Checkstyle or JUnit report is still printed |
 | `--silent`            | Same as `--quiet`                 |
 | `--php-version <ver>` | Target PHP version for validation |
 | `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
@@ -84,8 +84,8 @@ What each command counts as a problem (code 1):
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
-| `transpile`                                  | The pattern does not parse, or cannot be written for the target                    |
-| `debug`                                      | The pattern does not parse                                                         |
+| `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
+| `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
 | `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
@@ -111,6 +111,16 @@ a missing pattern, a removed option such as `--redos-no-jit`, an
 and a `regex.json` that cannot be read (`lint` and `debug`). `regex` run
 without a command prints the help and exits with 2, as `regex help` with an
 unknown command does.
+
+For `lint`, code 2 also covers the paths it is given:
+
+| Case                                                         | Exit code | JSON `stage` |
+|--------------------------------------------------------------|-----------|--------------|
+| A path on the command line that does not exist               | `2`       | `usage`      |
+| A path listed in `regex.json` that does not exist            | `2`       | `config`     |
+| A `--baseline` file that is missing, cannot be read, or is not a baseline | `2` | `usage` |
+| A `--generate-baseline` file that cannot be written          | `2`       | `usage`      |
+| A path that exists but holds no pattern                      | `0`       | none         |
 
 Options may come before or after the pattern; `--` ends them, so that what
 follows is read as the pattern even when it starts with `-`.
@@ -269,7 +279,8 @@ polynomial verdict is never replayed.
 
 `--format=json` prints the same verdict under `redos`, with `complexity`,
 `degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version` and
-`analysis_version` next to the 1.x keys:
+`analysis_version` next to the 1.x keys (every key is in the
+[JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis)):
 
 ```bash
 vendor/bin/regex analyze '/(a+)+$/' --format=json
@@ -587,12 +598,17 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --format=github
 ```
 
 ```
-::error file=src/Validator.php,line=7,col=1,title=Security (regex.lint.redos)::Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.%0AAttack: "0" x n . "!"%0AReplayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).%0ASuggestion: ...
-::warning file=src/Validator.php,line=12,col=1,title=Security (regex.lint.redos)::Polynomial backtracking, degree 3 (proven). Severity: HIGH, confidence: MEDIUM.%0AAttack: "0" x n . "!"%0ASuggestion: ...
+::error file=src/Validator.php,line=7,col=33,title=Security (regex.lint.redos)::Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.%0AAttack: "0" x n . "!"%0AReplayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).%0ASuggestion: ...
+::warning file=src/Validator.php,line=12,col=33,title=Security (regex.lint.redos)::Polynomial backtracking, degree 3 (proven). Severity: HIGH, confidence: MEDIUM.%0AAttack: "0" x n . "!"%0ASuggestion: ...
 ```
 
+Here `/^(\d+)+$/` sits on line 7 and `/^\d*\d*\d*$/` on line 12, each in a
+`preg_match()` call whose opening quote is at column 33. The lint issues of the
+same lines (nested quantifiers, a quantified capturing group) are left out.
+
 In JSON, the issue carries the whole analysis under `analysis`, with the keys
-`analyze --format=json` prints.
+`analyze --format=json` prints (see the
+[JSON output reference](../reference/json-output.md)).
 
 ---
 
@@ -763,8 +779,12 @@ line cannot be used, in which case nothing is scanned. Warnings and infos
 leave 0.
 
 With `--format=json`, a configuration or command-line error is printed on
-stdout as `{"error": "..."}`, so that stdout always holds one JSON document;
-with the other formats it is printed on stderr.
+stdout as the error envelope, `{"error": "...", "stage": "config"}` (stage
+`usage` for the command line, a path argument that does not exist included,
+`config` for a path in `regex.json` that does not exist, `collect` when the
+files cannot be read), so that stdout always holds one JSON document; with
+the other formats it is printed on stderr. See
+[the error envelope](../reference/json-output.md#the-error-envelope).
 
 ### IDE Integration
 
@@ -834,29 +854,32 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "errors": 2,
         "warnings": 0,
         "optimizations": 0,
-        "redos": 1,
+        "redos_errors": 1,
         "infos": 0,
-        "lintErrors": 0
+        "lint_errors": 0
     },
     "results": [
         {
             "file": "src/Example.php",
             "line": 3,
             "column": 12,
-            "fileOffset": 18,
+            "file_offset": 18,
             "source": "preg_match()",
             "pattern": "/(?<=a+)b/",
             "location": null,
             "issues": [
                 {
-                    "type": "error",
+                    "severity": "error",
                     "file": "src/Example.php",
                     "line": 3,
                     "column": 12,
-                    "fileOffset": 18,
+                    "file_offset": 18,
                     "position": 0,
+                    "issue_id": "regex.lookbehind.unbounded",
                     "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",
                     ...
+                    "validation": { ... },
+                    "analysis": null
                 }
             ],
             "optimizations": []
@@ -868,12 +891,13 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
             "pattern": "/^(a+)+$/",
             "issues": [
                 {
-                    "type": "error",
+                    "severity": "error",
                     ...
-                    "issueId": "regex.lint.redos",
+                    "issue_id": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"a\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). ...",
                     "source": "preg_match()",
+                    "validation": null,
                     "analysis": { ... }
                 }
             ],
@@ -883,12 +907,19 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
 }
 ```
 
-`stats.errors` counts every error; `stats.redos` counts the ReDoS errors among
-them and `stats.lintErrors` the lint rules of error severity that fired;
-`stats.infos` counts the issues of type `info`. Every key is always present, `0`
-when there is none. An issue's `type` is `error`, `warning` or `info`, from the
+`stats.errors` counts every error; `stats.redos_errors` counts the ReDoS errors
+among them and `stats.lint_errors` the lint rules of error severity that fired;
+`stats.infos` counts the issues of severity `info`. Every key is always present,
+`0` when there is none, and every issue carries every key, `null` when it does
+not apply. An issue's `severity` is `error`, `warning` or `info`, from the
 severity of the rule that reported it (see
 [Severity in Each Format](../reference/diagnostics.md#severity-in-each-format)).
+Results are sorted by file, line and column, the same whatever `--jobs` says.
+
+The [JSON output reference](../reference/json-output.md) lists every key of
+this report and of the other commands' JSON (`analyze`, `debug`, `redos`,
+`transpile`), with the units of each position, the error envelope and what a
+minor release may add.
 
 ### GitHub Actions
 
@@ -898,8 +929,15 @@ vendor/bin/regex lint src/ --format=github
 
 **Output:**
 ```
-::error file=src/Example.php,line=42::Variable-length lookbehind is not supported
+::error file=src/Example.php,line=3,col=16,title=Semantic (regex.lookbehind.unbounded)::Lookbehind is unbounded. PCRE requires a bounded maximum length.%0ALine 1: (?<=a+)b%0A        ^%0ASuggestion: Use a bounded quantifier instead of "+".
 ```
+
+This is `if (preg_match('/(?<=a+)b/', $input)) {` on line 3. `col` is the
+column of the pattern in the file, its opening quote, the `column` of the JSON
+report; it is left out when the column is unknown, as for a pattern not read
+from a PHP string. The message is escaped as GitHub's format requires: a
+newline is `%0A`, a carriage return `%0D` and `%` is `%25`. In the `file` and
+`title` properties, `:` and `,` are escaped too, as `%3A` and `%2C`.
 
 ### Checkstyle (for CI)
 
@@ -923,6 +961,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--min-savings <n>` | Minimum optimization savings                       |
 | `--jobs <n>`        | Parallel workers                                   |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
+| `--json`            | Same as `--format=json`                            |
 | `--output <file>`   | Also write the report to a file                    |
 | `--baseline <file>` | Leave out the issues recorded in a baseline file (see [Baseline](#baseline)) |
 | `--generate-baseline <file>` | Record every issue of this run in a baseline file |
@@ -973,16 +1012,17 @@ Both options take their file after a space or an `=`.
   from: generate and apply the baseline from the same directory, usually the
   project root.
 - **The file.** `{"version": 1, "issues": [...]}`, each issue with its `file`,
-  `line`, `message`, `type`, `issueId`, `pattern` and `patternHash`. Bytes of a
-  pattern that are not valid UTF-8 are written `\xHH`, so the file is always
-  valid JSON.
+  `line`, `column`, `issue_id`, `message`, `severity`, `pattern` and
+  `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
+  lists them. Bytes that are not valid UTF-8 are written `\xHH`, so the file
+  is always valid JSON.
 - **A 1.x baseline**, a plain list, is still read, matched on file, line and
   message as 1.x did; the run prints a note suggesting to generate it again.
 - **Exit code 2** when the baseline file is missing, empty or not a baseline,
   or when the generated file cannot be written.
 
 The `column` of a JSON result is a 1-based byte column in its line, and
-`fileOffset` a 0-based byte offset in the file.
+`file_offset` a 0-based byte offset in the file.
 
 ---
 

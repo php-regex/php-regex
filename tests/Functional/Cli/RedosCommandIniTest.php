@@ -63,7 +63,7 @@ final class RedosCommandIniTest extends TestCase
         $this->assertIsArray($payload);
         $runtime = $payload['runtime'] ?? null;
         $this->assertIsArray($runtime);
-        $this->assertSame($this->otherJit(), $runtime['jit'] ?? null);
+        $this->assertSame('1' === $this->otherJit(), $runtime['jit'] ?? null);
         $this->assertSame(12345, $runtime['backtrack_limit'] ?? null);
         $this->assertSame(6789, $runtime['recursion_limit'] ?? null);
     }

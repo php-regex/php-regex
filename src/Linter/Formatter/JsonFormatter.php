@@ -15,9 +15,20 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Internal\JsonEncodingFailure;
 
 /**
  * JSON output formatter for machine-readable output.
+ *
+ * Every object is written by the mapping below, key by key: a property
+ * added to an issue array, a result or a value object does not reach the
+ * report unless it is mapped here. Every issue carries every key, null
+ * when it does not apply.
+ *
+ * @phpstan-import-type LintResult from LintReport
+ * @phpstan-import-type LintIssue from LintReport
+ * @phpstan-import-type OptimizationEntry from LintReport
  *
  * @internal
  */
@@ -31,6 +42,9 @@ final class JsonFormatter extends AbstractOutputFormatter
         parent::__construct($config);
     }
 
+    /**
+     * @throws LintException when a value of the report has no JSON form
+     */
     public function format(LintReport $report): string
     {
         $data = null === $this->target ? [] : ['target' => $this->target];
@@ -41,91 +55,99 @@ final class JsonFormatter extends AbstractOutputFormatter
                 'errors' => $report->stats['errors'],
                 'warnings' => $report->stats['warnings'],
                 'optimizations' => $report->stats['optimizations'],
-                'redos' => $report->stats['redos'] ?? 0,
+                'redos_errors' => $report->stats['redos'] ?? 0,
                 'infos' => $report->stats['infos'] ?? 0,
-                'lintErrors' => $report->stats['lintErrors'] ?? 0,
+                'lint_errors' => $report->stats['lintErrors'] ?? 0,
             ],
-            'results' => $this->normalizeResults($report->results),
+            'results' => $this->mapResults($report->results),
         ];
 
-        $json = json_encode($data, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-        if (false === $json) {
-            throw new LintException('Failed to encode JSON');
+        try {
+            return JsonDocument::encode($data);
+        } catch (JsonEncodingFailure $e) {
+            throw new LintException($e->getMessage(), 0, $e);
         }
-
-        return $json;
-    }
-
-    public function formatError(string $message): string
-    {
-        return json_encode(['error' => $message], \JSON_THROW_ON_ERROR);
     }
 
     /**
-     * @param array<array<string, mixed>> $results
-     *
-     * @return array<array<string, mixed>>
+     * The error envelope, {"error", "stage"}; the stage says where the run
+     * stopped (usage, config, collect, pattern, internal).
      */
-    private function normalizeResults(array $results): array
+    public function formatError(string $message, string $stage = JsonDocument::STAGE_INTERNAL): string
     {
-        $normalized = [];
+        return JsonDocument::error($message, $stage);
+    }
+
+    /**
+     * @phpstan-param array<LintResult> $results
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function mapResults(array $results): array
+    {
+        $mapped = [];
 
         foreach ($results as $result) {
+            // A malformed entry has nothing a reader could rely on.
             if (!\is_array($result)) {
                 continue;
             }
 
-            $entry = $result;
-            unset($entry['problems']);
-            $normalized[] = $this->escapeStrings($entry);
+            $mapped[] = [
+                'file' => $result['file'],
+                'line' => $result['line'],
+                'column' => $result['column'] ?? null,
+                'file_offset' => $result['fileOffset'] ?? null,
+                'source' => $result['source'] ?? null,
+                'pattern' => $result['pattern'],
+                'location' => $result['location'] ?? null,
+                'issues' => array_map($this->mapIssue(...), array_values($result['issues'])),
+                'optimizations' => array_map($this->mapOptimization(...), array_values($result['optimizations'])),
+            ];
         }
 
-        return $normalized;
+        return $mapped;
     }
 
     /**
-     * Every string of the report, including the ones held by issue and
-     * optimization objects, is carried as it was found: only the bytes that
-     * are no part of a UTF-8 character, which json_encode() rejects, are
-     * written "\xHH".
+     * @phpstan-param LintIssue $issue
      *
-     * @template TKey of array-key
-     *
-     * @param array<TKey, mixed> $value
-     *
-     * @return array<TKey, mixed>
+     * @return array<string, mixed>
      */
-    private function escapeStrings(array $value): array
+    private function mapIssue(array $issue): array
     {
-        foreach ($value as $key => $item) {
-            $value[$key] = $this->escapeValue($item);
-        }
-
-        return $value;
+        return [
+            'severity' => $issue['type'],
+            'file' => $issue['file'],
+            'line' => $issue['line'],
+            'column' => $issue['column'] ?? null,
+            'file_offset' => $issue['fileOffset'] ?? null,
+            'position' => $issue['position'] ?? null,
+            'issue_id' => $issue['issueId'] ?? null,
+            'message' => $issue['message'],
+            'hint' => $issue['hint'] ?? null,
+            'tip' => $issue['tip'] ?? null,
+            'source' => $issue['source'] ?? null,
+            'validation' => $issue['validation'] ?? null,
+            'analysis' => $issue['analysis'] ?? null,
+        ];
     }
 
-    private function escapeValue(mixed $value): mixed
+    /**
+     * @phpstan-param OptimizationEntry $optimization
+     *
+     * @return array<string, mixed>
+     */
+    private function mapOptimization(array $optimization): array
     {
-        if (\is_string($value)) {
-            return ReportSpelling::source($value);
-        }
-
-        if (\is_array($value)) {
-            return $this->escapeStrings($value);
-        }
-
-        if ($value instanceof \JsonSerializable) {
-            return $this->escapeValue($value->jsonSerialize());
-        }
-
-        if ($value instanceof \BackedEnum) {
-            return $value->value;
-        }
-
-        if (\is_object($value)) {
-            return $this->escapeStrings(get_object_vars($value));
-        }
-
-        return $value;
+        return [
+            'file' => $optimization['file'],
+            'line' => $optimization['line'],
+            'column' => $optimization['column'] ?? null,
+            'file_offset' => $optimization['fileOffset'] ?? null,
+            'optimization' => $optimization['optimization'],
+            'savings' => $optimization['savings'],
+            'source' => $optimization['source'] ?? null,
+        ];
     }
 }

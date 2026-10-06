@@ -15,10 +15,10 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\CliException;
 use PHPRegex\Linter\DiagnosticType;
-use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Validation\ValidationResult;
 
@@ -65,8 +65,11 @@ final readonly class LintBaseline
      */
     public static function load(string $file): self
     {
-        if (!is_file($file)) {
+        if (!file_exists($file)) {
             throw new CliException(\sprintf('Baseline file not found: %s', $file));
+        }
+        if (!is_file($file) || !is_readable($file)) {
+            throw new CliException(\sprintf('Baseline file not readable: %s', $file));
         }
 
         $content = @file_get_contents($file);
@@ -92,9 +95,11 @@ final readonly class LintBaseline
     }
 
     /**
-     * The baseline of every issue of the report, as JSON. Each string is
-     * written with the bytes that are not UTF-8 spelled "\xHH", so that the
-     * encoding cannot fail; the hash keeps the exact pattern.
+     * The baseline of every issue of the report, as the JSON document every
+     * command writes: one entry per issue, in the report's order, its keys
+     * those of the report's issue. Each string is written with the bytes
+     * that are not UTF-8 spelled "\xHH", so that the encoding cannot fail;
+     * the hash keeps the exact pattern.
      */
     public static function generate(LintReport $report): string
     {
@@ -103,23 +108,21 @@ final readonly class LintBaseline
             $pattern = $result['pattern'] ?? '';
             foreach ($result['issues'] as $issue) {
                 $issues[] = [
-                    'file' => self::escape(self::relativePath($issue['file'])),
+                    'file' => self::relativePath($issue['file']),
                     'line' => $issue['line'],
-                    'message' => self::escape($issue['message']),
-                    'type' => self::escape($issue['type']),
-                    'issueId' => self::issueId($issue),
-                    'pattern' => self::escape($pattern),
-                    'patternHash' => self::hash($pattern),
+                    'column' => $issue['column'] ?? null,
+                    'issue_id' => self::issueId($issue),
+                    'message' => $issue['message'],
+                    'severity' => $issue['type'],
+                    'pattern' => $pattern,
+                    'pattern_hash' => self::hash($pattern),
                 ];
             }
         }
 
-        // Every string is valid UTF-8 once escaped and every number an
+        // Every string is valid UTF-8 once spelled and every number an
         // integer, so the encoding cannot fail: the file is never empty.
-        return json_encode(
-            ['version' => self::VERSION, 'issues' => $issues],
-            \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR,
-        );
+        return JsonDocument::encode(['version' => self::VERSION, 'issues' => $issues]);
     }
 
     /**
@@ -305,14 +308,14 @@ final readonly class LintBaseline
         foreach ($data['issues'] as $item) {
             $entry = $item instanceof \stdClass ? get_object_vars($item) : null;
             if (null === $entry
-                || !\is_string($entry['issueId'] ?? null)
+                || !\is_string($entry['issue_id'] ?? null)
                 || !\is_string($entry['file'] ?? null)
-                || !\is_string($entry['patternHash'] ?? null)
+                || !\is_string($entry['pattern_hash'] ?? null)
                 || !\is_int($entry['line'] ?? null)
             ) {
                 throw self::notABaseline($file);
             }
-            $lines[self::key($entry['issueId'], self::normalizeSpelledPath($entry['file']), $entry['patternHash'])][] = $entry['line'];
+            $lines[self::key($entry['issue_id'], self::normalizeSpelledPath($entry['file']), $entry['pattern_hash'])][] = $entry['line'];
         }
 
         return new self($lines, false);
@@ -371,7 +374,7 @@ final readonly class LintBaseline
      */
     private static function escape(string $value): string
     {
-        return ReportSpelling::source($value);
+        return JsonDocument::spellInvalidBytes($value);
     }
 
     /**

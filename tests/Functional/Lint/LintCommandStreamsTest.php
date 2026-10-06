@@ -273,6 +273,7 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertIsArray($payload, 'stdout is not JSON: '.$stdout);
         $this->assertIsString($payload['error'] ?? null);
         $this->assertStringContainsString('Failed to collect patterns', (string) $payload['error']);
+        $this->assertSame('collect', $payload['stage'] ?? null);
     }
 
     /**

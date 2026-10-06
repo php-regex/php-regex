@@ -118,7 +118,9 @@ Sound in both cases, but verdicts the proof could give:
   `(*NUL)`, `(*ANY)` and `(*ANYCRLF)`, and `/(*CR)a$\n/` (impossible) is
   missed.
 - A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
-  whole before extraction, which double-encodes its UTF-8 patterns.
+  whole before extraction, which double-encodes its UTF-8 patterns. It also
+  shifts `column` and `file_offset` and changes `pattern` in the JSON report
+  for that file.
 - A lookahead before a loop yields a ReDoS witness with an empty suffix, which
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
@@ -134,6 +136,10 @@ Sound in both cases, but verdicts the proof could give:
   refuses it. Accepting it needs the capture shape to stop naming the shared
   record after the first branch that names it, and the `(?J)` rule of
   `capture-shapes.md` to say which name PHP keeps.
+- `lint` skips a file that does not fit in its memory budget without saying so:
+  at a low `memory_limit` (6 MB, `--jobs=1`) the JSON report reads
+  `results: []` with exit 0, a clean run that is not one. A skipped file should
+  be reported.
 - The text of a comment reaches `explain()`, the highlighters and the Mermaid
   output as raw bytes: a byte-mode comment that is not valid UTF-8
   (`/a(?#\xE1)b/`, or `"/(*ANY)a#\u{5140}b/x"`, whose comment ends at the

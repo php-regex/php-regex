@@ -79,7 +79,8 @@ final class LintCommandProjectConfigTest extends TestCase
         $this->assertSame(2, $exitCode);
         $payload = json_decode($stdout, true);
         $this->assertIsArray($payload, 'stdout is not JSON: '.$stdout);
-        $this->assertSame(['error'], array_keys($payload));
+        $this->assertSame(['error', 'stage'], array_keys($payload));
+        $this->assertSame('config', $payload['stage']);
         $this->assertIsString($payload['error']);
         $this->assertStringContainsString($named, (string) $payload['error']);
     }

@@ -86,7 +86,7 @@ final class LintCommandRedosTest extends TestCase
             $this->assertIsArray($result);
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 $this->assertIsArray($issue);
-                $ids[] = (string) ($issue['issueId'] ?? '');
+                $ids[] = (string) ($issue['issue_id'] ?? '');
             }
         }
 

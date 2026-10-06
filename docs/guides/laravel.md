@@ -91,10 +91,15 @@ report carries it as a top-level `target` object:
 ```json
 {
     "target": {"php": "8.2", "pcre": "10.40", "source": "config php-regex.php_version"},
-    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos": 0, "infos": 0, "lintErrors": 0},
+    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0},
     "results": []
 }
 ```
+
+The report is the one `vendor/bin/regex lint --format=json` prints, and
+`regex:transpile --format=json` prints the same document as
+`vendor/bin/regex transpile`; the [JSON output reference](../reference/json-output.md)
+lists every key.
 
 `runtime_pcre_validation` compiles with the PHP that runs, which cannot tell
 whether an older PHP accepts a pattern: the lint never uses it.

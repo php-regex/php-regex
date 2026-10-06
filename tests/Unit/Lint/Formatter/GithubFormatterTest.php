@@ -18,7 +18,9 @@ use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\GithubFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GithubFormatterTest extends TestCase
@@ -60,6 +62,7 @@ final class GithubFormatterTest extends TestCase
         $result = [
             'file' => '/path/to/file.php',
             'line' => 10,
+            'column' => 7,
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
@@ -72,7 +75,8 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('::error file=/path/to/file.php,line=10,col=5,title=Syntax (regex.syntax.error)::', $output);
+        // The column of the issue in the file, not the offset in the pattern.
+        $this->assertStringContainsString('::error file=/path/to/file.php,line=10,col=7,title=Syntax (regex.syntax.error)::', $output);
         $this->assertStringContainsString('Invalid regex pattern', $output);
         $this->assertStringContainsString('Location: in function call', $output);
         $this->assertStringContainsString('some snippet', $output);
@@ -104,7 +108,8 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('::warning file=file with spaces.php,line=1,col=1,title=Lint (regex.lint.quantifier.nested)::', $output);
+        // No column known: none is invented.
+        $this->assertStringContainsString('::warning file=file with spaces.php,line=1,title=Lint (regex.lint.quantifier.nested)::', $output);
         $this->assertStringContainsString('Nested quantifier detected', $output);
     }
 
@@ -133,7 +138,7 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('::notice file=info.php,line=3,col=1,title=Lint::', $output);
+        $this->assertStringContainsString('::notice file=info.php,line=3,title=Lint::', $output);
         $this->assertStringContainsString('Info message', $output);
     }
 
@@ -162,7 +167,8 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('::error file=critical.php,line=8,col=2,title=Security (regex.redos)::', $output);
+        // The position in the pattern is not a column in the file.
+        $this->assertStringContainsString('::error file=critical.php,line=8,title=Security (regex.redos)::', $output);
         $this->assertStringContainsString('Critical security issue', $output);
         $this->assertStringContainsString('vulnerable pattern', $output);
         $this->assertStringContainsString('Suggestion: Use atomic groups', $output);
@@ -308,6 +314,45 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('file=test.php', $output);
     }
 
+    /**
+     * A ":" or "," in a property value would end it early: both are
+     * escaped there, in the file and in the title, and kept as they are in
+     * the message.
+     */
+    #[Test]
+    #[DataProvider('providePropertySeparators')]
+    public function test_format_escapes_property_separators(string $file, ?string $code, string $expected): void
+    {
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Message: a, b', $code, null, null, null);
+        $report = new LintReport([[
+            'file' => $file,
+            'line' => 1,
+            'pattern' => '/test/',
+            'issues' => [],
+            'optimizations' => [],
+            'problems' => [$problem],
+        ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+
+        $this->assertSame($expected."\n", $this->formatter->format($report));
+    }
+
+    /**
+     * @return iterable<string, array{file: string, code: string|null, expected: string}>
+     */
+    public static function providePropertySeparators(): iterable
+    {
+        yield 'a colon and a comma in the file' => [
+            'file' => 'C:/src/a,b.php',
+            'code' => null,
+            'expected' => '::error file=C%3A/src/a%2Cb.php,line=1,title=Lint::Message: a, b',
+        ];
+        yield 'a colon and a comma in the title' => [
+            'file' => 'test.php',
+            'code' => 'x:y,z',
+            'expected' => '::error file=test.php,line=1,title=Lint (x%3Ay%2Cz)::Message: a, b',
+        ];
+    }
+
     public function test_format_escapes_data(): void
     {
         $problem = new Diagnostic(
@@ -364,6 +409,26 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('title=Lint (code with %25 and \n)', $output);
     }
 
+    public function test_format_escapes_percent_in_data(): void
+    {
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Matches 100% of the inputs', null, null, '50%0A', null);
+
+        $result = [
+            'file' => 'test.php',
+            'line' => 1,
+            'column' => 3,
+            'pattern' => '/test/',
+            'issues' => [],
+            'optimizations' => [],
+            'problems' => [$problem],
+        ];
+
+        $output = $this->formatter->format(new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]));
+
+        // "%" first, so a literal "%0A" in the data does not read as a newline.
+        $this->assertStringContainsString('::warning file=test.php,line=1,col=3,title=Lint::Matches 100%25 of the inputs%0A50%250A', $output);
+    }
+
     public function test_format_error(): void
     {
         $message = 'Test error message';
@@ -398,7 +463,7 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('::notice file=test.php,line=1,col=1,title=Lint::Simple message', $output);
+        $this->assertStringContainsString('::notice file=test.php,line=1,title=Lint::Simple message', $output);
     }
 
     public function test_format_with_location_and_snippet(): void
@@ -427,7 +492,7 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $expected = '::warning file=test.php,line=5,col=1,title=Lint::Warning message%0ALocation: inside preg_match call%0Acode snippet here%0ASuggestion: fix suggestion';
+        $expected = '::warning file=test.php,line=5,title=Lint::Warning message%0ALocation: inside preg_match call%0Acode snippet here%0ASuggestion: fix suggestion';
         $this->assertStringContainsString($expected, $output);
     }
 }

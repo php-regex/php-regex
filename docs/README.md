@@ -39,6 +39,7 @@ Start here:
 - [API Reference](reference/api.md) - PHP API documentation.
 - [Diagnostics](reference/diagnostics.md) - Error types and messages.
 - [Diagnostics Cheat Sheet](reference/diagnostics-cheatsheet.md) - Quick error reference.
+- [JSON Output](reference/json-output.md) - Every key the `regex` command prints in JSON.
 - [Feature Support Matrix](reference/feature-support-matrix.md) - PCRE construct coverage by component.
 - [Correctness Contracts](reference/correctness-contracts.md) - Soundness/completeness guarantees by feature.
 - [Backward Compatibility Promise](reference/backward-compatibility.md) - What each release may change.

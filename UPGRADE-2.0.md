@@ -925,9 +925,14 @@ formats print the same line on stderr. Single-pattern commands, such as
   `regex.json`, an unknown option or `--format`, and the removed options below.
 - `--redos-mode=off` is refused: use `--no-redos`. `--redos-no-jit` is refused:
   the confirmation always runs without JIT.
-- Errors go to stderr. With `--format=json` they go to stdout as
-  `{"error": "..."}`, and the progress and status lines stay out of stdout, so
-  that stdout always holds one JSON document.
+- Errors go to stderr. With `--format=json` they go to stdout as the error
+  envelope, `{"error": "...", "stage": "..."}`, and the progress and status
+  lines stay out of stdout, so that stdout always holds one JSON document (see
+  [JSON output](#json-output)).
+- `--quiet` silences the status lines only. The JSON, GitHub, Checkstyle and
+  JUnit reports are printed under it, where 1.x printed nothing. Symfony's
+  and Laravel's `regex:lint` do the same.
+- `--json` is short for `--format=json`.
 - A lint rule of error severity now exits with 1, where every lint issue was
   a warning. Three rules are at that severity, each on a pattern that compiles
   but does not do what it says without `/u`: a multibyte character in a class
@@ -954,14 +959,124 @@ formats print the same line on stderr. Single-pattern commands, such as
   too, and have no per-rule setting: add `/u`, or put
   `// @regex-ignore-next-line` above the call when bytes are meant.
 - The issues follow the severity of their rule in every format: the JSON
-  `type` is `error`, `warning` or `info`, and `stats` always carries
-  `errors`, `warnings`, `optimizations`, `redos`, `infos` and `lintErrors`;
+  `severity` is `error`, `warning` or `info`, and `stats` always carries
+  `errors`, `warnings`, `optimizations`, `redos_errors`, `infos` and
+  `lint_errors`;
   GitHub writes an info as `notice` and Checkstyle as `info`, where `style`
   and `perf` rules were warnings. The language server sends an info as
   Information, where it sent a Hint, which editors tend to show faintly or
   not at all. A quantified unnamed capturing group, an info, no longer counts
   among the warnings. See
   [Diagnostics](docs/reference/diagnostics.md#severity-in-each-format).
+
+#### JSON output
+
+The JSON the `regex` command prints is part of the backward compatibility
+promise for all of 2.x, and 2.0 settles its shape. Every key is snake_case,
+every command prints one document ending with a newline, and every failure
+prints one error envelope. The
+[JSON output reference](docs/reference/json-output.md) lists every key.
+
+| Where | 1.x | 2.0 |
+|---|---|---|
+| lint result, issue and optimization entry | `fileOffset` | `file_offset` |
+| lint issue | `issueId` | `issue_id` |
+| lint issue | `type` | `severity` |
+| lint issue `validation` | `isValid` | `is_valid` |
+| lint issue `validation` | `complexityScore` | `complexity_score` |
+| lint issue `validation` | `caretSnippet` | `caret_snippet` |
+| lint issue `validation` | `errorCode` | `error_code` |
+| `analyze` `validation` | `valid` | `is_valid` |
+| baseline entry | `type` | `severity` |
+| `runtime.jit` (`analyze`, `debug`, `redos`) | the `pcre.jit` string, as `"1"` | a bool |
+| `confirmation.jit_setting` | a string | a bool |
+| an error | `{"error": "..."}`, or `{"error": "...", "stage": "analyze"}` and `"debug"` | `{"error": "...", "stage": "..."}`, stage `usage`, `config`, `collect`, `pattern` or `internal` |
+
+The rest of the lint `validation` object (`error`, `category`, `offset`,
+`hint`) and the keys of the ReDoS analysis keep their names; only
+`confirmation.jit_disable_requested` is gone, with the option it reported.
+
+The same renames hold in PHP. `ValidationResult` implements
+`JsonSerializable`, so `json_encode($validationResult)` gives `is_valid`,
+`complexity_score`, `caret_snippet` and `error_code`, where 1.x gave the
+public property names `isValid`, `complexityScore`, `caretSnippet` and
+`errorCode`. `category` and `error_code` are the enum values, as strings. The
+keys of `json_encode()` on an `OptimizationResult` or a `TranspileResult` do
+not change.
+
+- Every lint issue carries every key, `null` when it does not apply:
+  `severity, file, line, column, file_offset, position, issue_id, message,
+  hint, tip, source, validation, analysis`. An invalid pattern's `issue_id`
+  is its error code, such as `regex.group.unclosed`. `column` is `null` when
+  unknown, where 1.x printed `1`.
+- The lint report ends with a newline, lists its results sorted by file, line
+  and column whatever `--jobs` says, and gives `file` relative to the working
+  directory with `/`. `stats` gains `redos_errors`, `infos` and `lint_errors`;
+  the report gains `target`.
+- `analyze` on an invalid pattern prints its document, with `parse.ok` false,
+  `validation` saying why, and `redos` and `explain` null. `debug` always
+  carries `validation`; on an invalid pattern its `analysis` is null and it
+  exits with 1, where 1.x printed an analysis of severity `unknown` and
+  exited with 0.
+- `transpile` and `redos` on an invalid pattern print the envelope with stage
+  `pattern` and the `validation` object, and exit with 1. `transpile`
+  validates the pattern first, so a pattern that parses but PHP refuses, such
+  as `/(?<=a+)b/`, is refused where 1.x translated it. A valid pattern the
+  target cannot express prints the envelope with stage `pattern` and no
+  `validation`. `redos --format=json` no longer prints a benchmark of a
+  pattern PHP refuses; its console output still measures it.
+- Symfony's and Laravel's `regex:transpile` validate the pattern first, and
+  in JSON print the CLI's document and envelope. Laravel's
+  `{source, target, result, flags, warnings, compatible}` is gone: read
+  `pattern` for `result`, and an empty `warnings` for `compatible`. Its
+  `{error, details, snippet}` error is the envelope: `error` holds what
+  `details` held, and the snippet is `validation.caret_snippet`.
+- Laravel's `regex:transpile --target` takes the transpiler's targets:
+  `javascript` (or `js`, as in the CLI) and `python` (or `py`). `ruby`, `go`,
+  `rust`, `java`, `csharp` and `swift` were listed but never translated: 1.x
+  accepted them, then failed with exit code 1. They are an unknown target
+  now, a usage error with exit code 2, stage `usage` in JSON.
+- Symfony's and Laravel's `regex:lint` print a failure in JSON as the
+  envelope with its stage (`usage`, `config` or `collect`), where they
+  printed `{"error": "..."}`, or a text error for an option Symfony could not
+  use.
+- A usage error is printed as the envelope, stage `usage`, as soon as
+  `--format=json` or `--json` is on the command line, wherever it sits.
+  `--format` values are case-insensitive, and the last `--format` or
+  `--json` wins.
+- A path given to `lint` that does not exist is a usage error: exit code 2,
+  stage `usage` in JSON. A path listed in `regex.json` that does not exist is
+  a configuration error: exit code 2, stage `config`. 1.x scanned nothing,
+  reported no pattern and exited with 0.
+- The baseline file written by `--generate-baseline` is
+  `{"version": 1, "issues": [...]}`, each entry holding
+  `{file, line, column, issue_id, message, severity, pattern, pattern_hash}`;
+  1.x wrote a plain list, with `type` and a `pattern` always `null`. A 1.x
+  baseline still loads, matched by file, line and message (see
+  [`regex lint --baseline`](#regex-lint---baseline)). Regenerate it once so
+  that a moved pattern or a reworded message no longer brings an issue back.
+- A string is written as itself, its control characters in JSON's own
+  escapes. A byte that is not valid UTF-8 comes out as the text `\xNN`, so a
+  document can always be encoded.
+
+A script reading the lint report renames the keys of the table, reads
+`severity` where it read `type`, and tells a failure from a report by the
+top-level `error` key.
+
+#### GitHub and Checkstyle reports point at the pattern
+
+`lint --format=github` writes `col=` as the column of the pattern in the
+file, the `column` of the JSON report. 1.x wrote the position of the issue
+inside the pattern there, and `1` when it had none, so the annotation landed
+on the wrong column. When the column is unknown, as for a pattern not read
+from a PHP string, `col=` is left out. The values are escaped as GitHub's
+format requires: `%` is written `%25` in the message and in the properties,
+where 1.x left it in the message, and `:` and `,` are written `%3A` and
+`%2C` in the properties (`file`, `title`), where they ended the value early.
+
+The Checkstyle `column` attribute is the same column, and is left out when
+the column is unknown: 1.x wrote the position inside the pattern there too,
+or `1`.
 
 #### Every command exits with 0, 1 or 2
 
@@ -977,10 +1092,12 @@ Every CLI command now uses the codes of the lint command:
   or option, a missing pattern or option value, an unknown `--format`,
   `--target` or `--method`, an invalid `--php-version`, a removed option, an
   `--input-file` that cannot be read, an `--output` file that cannot be
-  written. `regex` without a command and `regex help <unknown>` exit with 2.
+  written, a path given to `lint` that does not exist. `regex` without a
+  command and `regex help <unknown>` exit with 2.
 - Some results that exited with 0 exit with 1: `analyze` and `parse --validate`
-  on an invalid pattern, `debug` on a pattern that does not parse, `analyze`
-  and `debug` on a ReDoS verdict that `--redos-mode=confirmed` reproduces on
+  on an invalid pattern, `debug` on an invalid pattern in every format, a
+  semantic error such as `/(?<=a+)b/` included, `transpile` on a pattern that
+  parses but PHP refuses, `analyze` and `debug` on a ReDoS verdict that `--redos-mode=confirmed` reproduces on
   the running PCRE at high severity or more, `redos` on a pattern PHP refuses.
   A theoretical ReDoS verdict still exits with 0, proven or not.
 - `debug` stops with 2 on a `regex.json` it cannot read, where it ignored it.

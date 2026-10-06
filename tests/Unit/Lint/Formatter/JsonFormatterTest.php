@@ -16,10 +16,17 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\JsonFormatter;
+use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Internal\JsonEncodingFailure;
+use PHPRegex\Redos\Confirmation;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosSeverity;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class JsonFormatterTest extends TestCase
@@ -45,8 +52,73 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0], $decoded['stats']);
         $this->assertSame([], $decoded['results']);
+    }
+
+    /**
+     * A value of the report JSON has no form for, a non-finite float, is
+     * reported as the lint's own exception, the encoding failure kept as
+     * its cause.
+     */
+    #[Test]
+    #[DataProvider('provideNonFiniteTimeouts')]
+    public function test_format_reports_a_value_with_no_json_form_as_a_lint_exception(float $timeoutMs): void
+    {
+        $analysis = new RedosAnalysis(RedosSeverity::Safe, 0, confirmation: new Confirmation(false, [], null, null, null, 1, $timeoutMs));
+        $report = new LintReport([[
+            'file' => 'a.php',
+            'line' => 1,
+            'pattern' => '/a/',
+            'issues' => [['type' => 'error', 'message' => 'm', 'file' => 'a.php', 'line' => 1, 'analysis' => $analysis]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+
+        try {
+            $this->formatter->format($report);
+            $this->fail('No exception for a value with no JSON form.');
+        } catch (LintException $e) {
+            $this->assertSame('Failed to encode JSON: Inf and NaN cannot be JSON encoded', $e->getMessage());
+            $this->assertInstanceOf(JsonEncodingFailure::class, $e->getPrevious());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{timeoutMs: float}>
+     */
+    public static function provideNonFiniteTimeouts(): iterable
+    {
+        yield 'infinity' => ['timeoutMs' => \INF];
+        yield 'not a number' => ['timeoutMs' => \NAN];
+    }
+
+    /**
+     * The issues and optimizations of a result are JSON arrays whatever
+     * their keys: a list with a gap would otherwise come out as an object.
+     */
+    #[Test]
+    public function test_format_writes_issues_and_optimizations_as_arrays_whatever_their_keys(): void
+    {
+        $report = new LintReport([[
+            'file' => 'a.php',
+            'line' => 1,
+            'pattern' => '/[0-9]/',
+            'issues' => [3 => ['type' => 'warning', 'message' => 'm', 'file' => 'a.php', 'line' => 1]],
+            'optimizations' => [5 => ['file' => 'a.php', 'line' => 1, 'optimization' => new OptimizationResult('/[0-9]/', '/\d/', ['digit class']), 'savings' => 2]],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 1]);
+
+        $decoded = json_decode($this->formatter->format($report), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertIsArray($decoded['results'] ?? null);
+        $result = $decoded['results'][0] ?? null;
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['issues'] ?? null);
+        $this->assertIsArray($result['optimizations'] ?? null);
+        $this->assertSame([0], array_keys($result['issues']));
+        $this->assertSame([0], array_keys($result['optimizations']));
     }
 
     public function test_format_leads_with_the_target_when_given(): void
@@ -102,7 +174,7 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array<string, int>, results: array<array<string, mixed>>} $decoded */
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0], $decoded['stats']);
         $this->assertIsArray($decoded['results']);
         $this->assertCount(2, $decoded['results']);
 
@@ -118,7 +190,29 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame('/test1/', $decoded['results'][0]['pattern']);
         $this->assertSame('preg_match', $decoded['results'][0]['source']);
         $this->assertSame('function call', $decoded['results'][0]['location']);
-        $this->assertSame([['type' => 'error', 'message' => 'Error 1', 'file' => 'file1.php', 'line' => 10]], $decoded['results'][0]['issues']);
+        // Every documented key, null when the issue does not have it.
+        $expectedIssue = [
+            'severity' => 'error',
+            'file' => 'file1.php',
+            'line' => 10,
+            'column' => null,
+            'file_offset' => null,
+            'position' => null,
+            'issue_id' => null,
+            'message' => 'Error 1',
+            'hint' => null,
+            'tip' => null,
+            'source' => null,
+            'validation' => null,
+            'analysis' => null,
+        ];
+        $this->assertIsArray($decoded['results'][0]['issues']);
+        $this->assertCount(1, $decoded['results'][0]['issues']);
+        $issue = $decoded['results'][0]['issues'][0];
+        $this->assertIsArray($issue);
+        ksort($expectedIssue);
+        ksort($issue);
+        $this->assertSame($expectedIssue, $issue);
         /** @var array<array{savings: int}> $optimizations */
         $optimizations = $decoded['results'][0]['optimizations'];
         $this->assertIsArray($optimizations);
@@ -197,7 +291,9 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['error' => 'Test error message'], $decoded);
+        $this->assertSame(['error', 'stage'], array_keys($decoded));
+        $this->assertSame('Test error message', $decoded['error']);
+        $this->assertIsString($decoded['stage']);
     }
 
     public function test_format_error_with_special_chars(): void
@@ -208,7 +304,8 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['error' => $message], $decoded);
+        $this->assertSame(['error', 'stage'], array_keys($decoded));
+        $this->assertSame($message, $decoded['error']);
     }
 
     public function test_format_uses_pretty_print(): void

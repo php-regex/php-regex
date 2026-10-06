@@ -92,7 +92,7 @@ The bridges and tools carry more than their classes:
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`), the `php-regex`
   configuration, and the commands' names and options.
 - `regex-cli`: the `regex` command, with its commands, options, exit codes and
-  JSON output.
+  JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
 
 ## Using the API: call, extend, implement
@@ -128,10 +128,15 @@ add one to yet.
   optional trailing `?DfaCacheInterface $dfaCache = null` — with it, one
   instance reuses the DFAs its equivalence checks compiled, and without it a
   fresh in-memory cache is used, as before.
-- **New classes, methods and options**, and new keys in a JSON report or a
-  configuration file.
-- **Message texts**: an error or lint message may be reworded; the CHANGELOG
-  says so. Match on the error code, not on the message.
+- **New classes, methods and options**, and new keys in a configuration file.
+- **New keys and values in the JSON output**: a key in any JSON document the
+  `regex` command prints, an optional key in its error envelope, and a value
+  of an open enum field, such as `stage` or `severity`. The
+  [JSON output reference](json-output.md#what-a-minor-release-may-change)
+  lists what may change and which fields are open.
+- **Message texts**: an error or lint message may be reworded, in the console
+  and in JSON alike; the CHANGELOG says so. Match on the error code, the
+  `issue_id` or the `stage`, not on the message.
 - **Support for a new PCRE2 release**, as `PcreFeature` cases and the targets
   that use them.
 - **A wider ReDoS model**: a construct the structural heuristics judge today
@@ -174,6 +179,9 @@ add one to yet.
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
   configuration error).
+- The **JSON output** of the `regex` command: a key keeps its name, its type
+  and its meaning, and a success document never gains a top-level `error`
+  (see [JSON output](json-output.md)).
 - The **severity of the lint rules**: a minor never raises an existing rule to
   error severity, the one that fails `regex lint`, and a new rule lands at
   warning severity or lower.

@@ -93,7 +93,7 @@ final class LintSeverityContractTest extends TestCase
         $this->assertSame(1, $jsonCode, $json);
         $this->assertSame(['regex.lint.unicode.multibyteInClassWithoutU' => 'error'], self::issueTypes($json));
         $this->assertSame(1, self::stats($json)['errors'] ?? null);
-        $this->assertSame(1, self::stats($json)['lintErrors'] ?? null);
+        $this->assertSame(1, self::stats($json)['lint_errors'] ?? null);
     }
 
     #[Test]
@@ -152,7 +152,7 @@ final class LintSeverityContractTest extends TestCase
         [, $json] = $this->runLint(['src', '--jobs=1', '--format=json']);
 
         $this->assertSame(1, self::stats($json)['errors'] ?? null);
-        $this->assertSame(0, self::stats($json)['lintErrors'] ?? null);
+        $this->assertSame(0, self::stats($json)['lint_errors'] ?? null);
     }
 
     /**
@@ -168,8 +168,8 @@ final class LintSeverityContractTest extends TestCase
         $this->assertSame(0, $code, $json);
         $stats = self::stats($json);
         $this->assertSame(0, $stats['infos'] ?? null);
-        $this->assertSame(0, $stats['lintErrors'] ?? null);
-        $this->assertSame(0, $stats['redos'] ?? null);
+        $this->assertSame(0, $stats['lint_errors'] ?? null);
+        $this->assertSame(0, $stats['redos_errors'] ?? null);
     }
 
     /**
@@ -198,7 +198,7 @@ final class LintSeverityContractTest extends TestCase
         [$jsonCode, $json] = $this->runLint(['src', '--jobs=1', '--format=json', '--baseline=baseline.json']);
 
         $this->assertSame(1, $jsonCode, $json);
-        $this->assertSame(1, self::stats($json)['lintErrors'] ?? null);
+        $this->assertSame(1, self::stats($json)['lint_errors'] ?? null);
         $this->assertSame(1, self::stats($json)['infos'] ?? null);
     }
 
@@ -221,11 +221,11 @@ final class LintSeverityContractTest extends TestCase
         $arguments = ['src', '--jobs=1', '--format=json', '--redos', '--redos-mode=confirmed', '--redos-threshold=high', '--no-optimize'];
 
         [, $withoutBaseline] = $this->runLint($arguments);
-        $this->assertSame(1, self::stats($withoutBaseline)['redos'] ?? null);
+        $this->assertSame(1, self::stats($withoutBaseline)['redos_errors'] ?? null);
 
         [, $json] = $this->runLint([...$arguments, '--baseline=baseline.json']);
 
-        $this->assertSame(1, self::stats($json)['redos'] ?? null);
+        $this->assertSame(1, self::stats($json)['redos_errors'] ?? null);
     }
 
     /**
@@ -256,7 +256,7 @@ final class LintSeverityContractTest extends TestCase
         [, $withoutBaseline] = $this->runLint(['src', '--jobs=1', '--format=json']);
         [, $json] = $this->runLint(['src', '--jobs=1', '--format=json', '--baseline=baseline.json']);
 
-        $expected = ['errors' => 1, 'warnings' => 1, 'optimizations' => 2, 'redos' => 0, 'infos' => 1, 'lintErrors' => 1];
+        $expected = ['errors' => 1, 'warnings' => 1, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 1];
         $this->assertSame($expected, self::stats($withoutBaseline));
         $this->assertSame($expected, self::stats($json));
     }
@@ -303,9 +303,9 @@ final class LintSeverityContractTest extends TestCase
             self::assertIsArray($result);
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 self::assertIsArray($issue);
-                self::assertIsString($issue['issueId'] ?? null);
-                self::assertIsString($issue['type'] ?? null);
-                $types[$issue['issueId']] = $issue['type'];
+                self::assertIsString($issue['issue_id'] ?? null);
+                self::assertIsString($issue['severity'] ?? null);
+                $types[$issue['issue_id']] = $issue['severity'];
             }
         }
 

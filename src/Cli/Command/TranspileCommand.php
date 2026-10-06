@@ -15,9 +15,11 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
@@ -26,7 +28,7 @@ use PHPRegex\Transpiler\TranspileResult;
 /**
  * @internal
  */
-final class TranspileCommand extends AbstractCommand
+final class TranspileCommand extends AbstractCommand implements JsonCommandInterface
 {
     public function getName(): string
     {
@@ -45,38 +47,52 @@ final class TranspileCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
+        $json = JsonRequest::in($input->args);
         $args = $this->parseArguments($input->args);
 
         if (null !== $args['error']) {
-            $output->write($output->error('Error: '.$args['error']."\n"));
-            $output->write("Usage: regex transpile <pattern> [--target=js|python] [--format=json]\n");
-
-            return self::INVALID;
+            return $this->usageError($output, $args['error'], "Usage: regex transpile <pattern> [--target=js|python] [--format=json]\n", $json);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
+        $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
             return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
 
+        // Only a valid pattern is translated: a semantic error parses, and
+        // would otherwise come out in the other dialect.
+        $validation = $regex->validate($args['pattern']);
+        if (!$validation->isValid) {
+            $message = $validation->error ?? 'Invalid pattern.';
+            if ('json' === $args['format']) {
+                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
+
+                return self::FAILURE;
+            }
+
+            $output->write('  '.$output->error('Transpile failed: '.$message)."\n");
+
+            return self::FAILURE;
+        }
+
         try {
-            // We use a direct instantiation here or via Regex facade if exposed?
-            // The Regex facade doesn't seem to expose transpiler directly in the previous Read,
-            // but we can instantiate Transpiler manually.
             $transpiler = new Transpiler($regex->parser());
 
             $result = $transpiler->transpile($args['pattern'], $args['target']);
 
             if ('json' === $args['format']) {
-                return $this->renderJsonOutput($output, $result);
+                $output->writeDocument(JsonDocument::encode($result->jsonSerialize()));
+
+                return self::SUCCESS;
             }
 
             return $this->renderConsoleOutput($output, $style, $result);
         } catch (LexerException|ParserException|TranspileException $e) {
+            // A valid pattern the target cannot express.
             if ('json' === $args['format']) {
-                $output->write(json_encode(['error' => $e->getMessage()], \JSON_PRETTY_PRINT)."\n");
+                $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
 
                 return self::FAILURE;
             }
@@ -136,6 +152,17 @@ final class TranspileCommand extends AbstractCommand
 
             if (!$stopParsing && str_starts_with($arg, '--format=')) {
                 $format = strtolower(substr($arg, \strlen('--format=')));
+
+                continue;
+            }
+
+            if (!$stopParsing && '--format' === $arg) {
+                $value = $args[$i + 1] ?? '';
+                if ('' === $value || str_starts_with($value, '-')) {
+                    return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing value for --format.'];
+                }
+                $format = strtolower($value);
+                $i++;
 
                 continue;
             }
@@ -204,24 +231,6 @@ final class TranspileCommand extends AbstractCommand
                 $output->write('   - '.$note."\n");
             }
         }
-
-        return self::SUCCESS;
-    }
-
-    private function renderJsonOutput(Output $output, TranspileResult $result): int
-    {
-        $payload = [
-            'target' => $result->target,
-            'source' => $result->source,
-            'pattern' => $result->pattern,
-            'flags' => $result->flags,
-            'literal' => $result->literal,
-            'constructor' => $result->constructor,
-            'warnings' => $result->warnings,
-            'notes' => $result->notes,
-        ];
-
-        $output->write(json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES)."\n");
 
         return self::SUCCESS;
     }

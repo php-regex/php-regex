@@ -270,7 +270,7 @@ final class ValidationRuleExtractionFailureTest extends TestCase
         $this->assertIsArray($result['issues'] ?? null);
         $this->assertSame(
             [['error', 1, 'regex.lint.source.unreadable']],
-            array_map(static fn (array $issue): array => [$issue['type'] ?? null, $issue['line'] ?? null, $issue['issueId'] ?? null], $result['issues']),
+            array_map(static fn (array $issue): array => [$issue['severity'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null], $result['issues']),
             $output,
         );
     }

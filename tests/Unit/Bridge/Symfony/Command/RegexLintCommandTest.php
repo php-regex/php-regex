@@ -83,7 +83,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertIsArray($data);
         $this->assertArrayHasKey('stats', $data);
         $this->assertArrayHasKey('results', $data);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0, 'infos' => 0, 'lintErrors' => 0], $data['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0], $data['stats']);
         $this->assertSame([], $data['results']);
     }
 
@@ -362,8 +362,8 @@ final class RegexLintCommandTest extends TestCase
 
         $this->assertSame(1, $status);
         $issue = self::firstIssue($tester->getDisplay());
-        $this->assertSame('error', $issue['type'] ?? null);
-        $this->assertSame('regex.lint.unicode.multibyteInClassWithoutU', $issue['issueId'] ?? null);
+        $this->assertSame('error', $issue['severity'] ?? null);
+        $this->assertSame('regex.lint.unicode.multibyteInClassWithoutU', $issue['issue_id'] ?? null);
     }
 
     public function test_execute_passes_on_a_lint_rule_at_info(): void
@@ -372,7 +372,7 @@ final class RegexLintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(0, $status);
-        $this->assertSame('info', self::firstIssue($tester->getDisplay())['type'] ?? null);
+        $this->assertSame('info', self::firstIssue($tester->getDisplay())['severity'] ?? null);
         $data = json_decode($tester->getDisplay(), true);
         $this->assertIsArray($data);
         $this->assertIsArray($data['stats'] ?? null);

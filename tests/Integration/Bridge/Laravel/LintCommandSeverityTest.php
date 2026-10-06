@@ -88,9 +88,9 @@ final class LintCommandSeverityTest extends TestCase
             $this->assertIsArray($result);
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 $this->assertIsArray($issue);
-                $this->assertIsString($issue['issueId'] ?? null);
-                $this->assertIsString($issue['type'] ?? null);
-                $types[$issue['issueId']] = $issue['type'];
+                $this->assertIsString($issue['issue_id'] ?? null);
+                $this->assertIsString($issue['severity'] ?? null);
+                $types[$issue['issue_id']] = $issue['severity'];
             }
         }
 

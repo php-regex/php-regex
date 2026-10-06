@@ -455,30 +455,15 @@ final class LintArgumentParser
                 continue;
             }
 
+            // The other commands' --json: an alias of --format=json.
+            if ('--json' === $arg) {
+                $arguments = $this->withFormat($arguments, 'json');
+
+                continue;
+            }
+
             if (str_starts_with($arg, '--format=')) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    substr($arg, \strlen('--format=')),
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                );
+                $arguments = $this->withFormat($arguments, substr($arg, \strlen('--format=')));
 
                 continue;
             }
@@ -488,29 +473,7 @@ final class LintArgumentParser
                 if ('' === $value || str_starts_with($value, '-')) {
                     return new LintParseResult(null, 'Missing value for --format.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $value,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                );
+                $arguments = $this->withFormat($arguments, $value);
                 $i++;
 
                 continue;
@@ -808,7 +771,7 @@ final class LintArgumentParser
             );
         }
 
-        return new LintParseResult($arguments);
+        return new LintParseResult($arguments, pathsGiven: $pathsProvided);
     }
 
     /**
@@ -823,6 +786,33 @@ final class LintArgumentParser
             RedosMode::Off => 'The --redos-mode=off value was removed in 2.0: use --no-redos.',
             default => $mode,
         };
+    }
+
+    private function withFormat(LintArguments $arguments, string $format): LintArguments
+    {
+        return new LintArguments(
+            $arguments->paths,
+            $arguments->exclude,
+            $arguments->minSavings,
+            $arguments->verbosity,
+            $format,
+            $arguments->quiet,
+            $arguments->checkRedos,
+            $arguments->checkValidation,
+            $arguments->checkOptimizations,
+            $arguments->checkLint,
+            $arguments->jobs,
+            $arguments->output,
+            $arguments->baseline,
+            $arguments->generateBaseline,
+            $arguments->ide,
+            $arguments->optimizations,
+            $arguments->redosMode,
+            $arguments->redosThreshold,
+            $arguments->lintRules,
+            $arguments->interop,
+            $arguments->patternFunctions,
+        );
     }
 
     /**

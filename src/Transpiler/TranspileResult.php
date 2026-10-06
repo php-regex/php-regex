@@ -16,7 +16,7 @@ namespace PHPRegex\Transpiler;
 /**
  * Captures transpilation output for a target regex dialect.
  */
-final readonly class TranspileResult
+final readonly class TranspileResult implements \JsonSerializable
 {
     /**
      * @internal built by Transpiler::transpile() and Regex::transpile()
@@ -43,5 +43,22 @@ final readonly class TranspileResult
     public function hasNotes(): bool
     {
         return [] !== $this->notes;
+    }
+
+    /**
+     * @return array{target: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: array<int, string>, notes: array<int, string>}
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'target' => $this->target,
+            'source' => $this->source,
+            'pattern' => $this->pattern,
+            'flags' => $this->flags,
+            'literal' => $this->literal,
+            'constructor' => $this->constructor,
+            'warnings' => $this->warnings,
+            'notes' => $this->notes,
+        ];
     }
 }

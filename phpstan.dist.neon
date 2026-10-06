@@ -53,6 +53,11 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
 
     ignoreErrors:
+        # The memory reserve of a JSON run is only ever freed, when PHP stops
+        # the run: holding it is its whole use.
+        - message: '#^Static property PHPRegex\\Cli\\Application::\$memoryReserve is never read, only written\.$#'
+          identifier: property.onlyWritten
+          path: src/Cli/Application.php
         - identifiers:
             - classConstant.internalClass
             # Unicode lint rules are style warnings - too noisy for our codebase

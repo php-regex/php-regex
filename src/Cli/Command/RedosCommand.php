@@ -15,6 +15,7 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -23,6 +24,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\Internal\InputGenerator;
@@ -31,7 +33,7 @@ use PHPRegex\Toolkit\Regex;
 /**
  * @internal
  */
-final class RedosCommand extends AbstractCommand
+final class RedosCommand extends AbstractCommand implements JsonCommandInterface
 {
     private const PREVIEW_LIMIT = 120;
 
@@ -74,12 +76,10 @@ final class RedosCommand extends AbstractCommand
      */
     private function benchmark(Input $input, Output $output, array &$saved): int
     {
+        $json = JsonRequest::in($input->args);
         $parsed = $this->parseArguments($input->args);
         if (null !== $parsed['error']) {
-            $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex redos <pattern> [--safe <pattern>] [--input <string> | --input-file <path>] [--repeat <n>] [--prefix <string>] [--suffix <string>] [--iterations <n>] [--warmup <n>] [--jit 0|1] [--backtrack-limit <n>] [--recursion-limit <n>] [--time-limit <sec>] [--format=json] [--show-input]\n");
-
-            return self::INVALID;
+            return $this->usageError($output, $parsed['error'], "Usage: regex redos <pattern> [--safe <pattern>] [--input <string> | --input-file <path>] [--repeat <n>] [--prefix <string>] [--suffix <string>] [--iterations <n>] [--warmup <n>] [--jit 0|1] [--backtrack-limit <n>] [--recursion-limit <n>] [--time-limit <sec>] [--format=json] [--show-input]\n", $json);
         }
 
         $pattern = $parsed['pattern'];
@@ -98,9 +98,27 @@ final class RedosCommand extends AbstractCommand
         $format = $parsed['format'];
         $showInput = $parsed['showInput'];
 
-        $regex = $this->createRegex($output, $input->regexOptions);
+        $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
             return self::INVALID;
+        }
+
+        // A JSON run stops on an invalid pattern, with its validation: there
+        // is no benchmark of it to report.
+        if ('json' === $format) {
+            $validation = $regex->validate($pattern);
+            if (!$validation->isValid) {
+                $output->writeDocument(JsonDocument::error($validation->error ?? 'Invalid pattern.', JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
+
+                return self::FAILURE;
+            }
+
+            $safeValidation = null !== $safePattern && '' !== $safePattern ? $regex->validate($safePattern) : null;
+            if (null !== $safeValidation && !$safeValidation->isValid) {
+                $output->writeDocument(JsonDocument::error('Invalid --safe pattern: '.($safeValidation->error ?? 'Invalid pattern.'), JsonDocument::STAGE_PATTERN, ['validation' => $safeValidation]));
+
+                return self::FAILURE;
+            }
         }
 
         $target = $regex->target();
@@ -126,7 +144,11 @@ final class RedosCommand extends AbstractCommand
         if (null !== $inputFile) {
             $inputValue = is_file($inputFile) && is_readable($inputFile) ? @file_get_contents($inputFile) : false;
             if (false === $inputValue) {
-                $output->write($output->error("Error: Input file not readable: {$inputFile}\n"));
+                if ($json) {
+                    $output->writeDocument(JsonDocument::error("Input file not readable: {$inputFile}", JsonDocument::STAGE_USAGE));
+                } else {
+                    $output->write($output->error("Error: Input file not readable: {$inputFile}\n"));
+                }
 
                 return self::INVALID;
             }
@@ -240,13 +262,7 @@ final class RedosCommand extends AbstractCommand
                 'summary' => $summary,
             ];
 
-            $json = json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-            if (false === $json) {
-                $output->write($output->error("Error: Failed to encode JSON\n"));
-
-                return self::FAILURE;
-            }
-            $output->write($json."\n");
+            $output->writeDocument(JsonDocument::encode($payload));
 
             return $verdict;
         }

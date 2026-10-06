@@ -44,8 +44,18 @@ if (null === $autoloadPath) {
 
 require_once $autoloadPath;
 
+use PHPRegex\Cli\Application;
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
+
+// A JSON run that PHP stops with a fatal error prints the error envelope
+// instead of its document, and exits with 1.
+register_shutdown_function(static function (): void {
+    $code = Application::reportFatalError();
+    if (null !== $code) {
+        exit($code);
+    }
+});
 
 $progressBarFull = "\xE2\x96\x93";
 $progressBarEmpty = "\xE2\x96\x91";

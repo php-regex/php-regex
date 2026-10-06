@@ -59,7 +59,7 @@ final class PcreRuntimeInfoTest extends TestCase
 
         $this->assertSame([
             'version' => '10.42',
-            'jit' => '1',
+            'jit' => true,
             'backtrack_limit' => 1000000,
             'recursion_limit' => 100000,
         ], $info->jsonSerialize());

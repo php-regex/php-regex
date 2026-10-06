@@ -58,14 +58,19 @@ final class RedosCommandTimeLimitTest extends TestCase
         });
 
         try {
-            [$exitCode, $buffer] = $this->runCommand(['/[a/', '--input', 'aaa', '--format=json']);
+            // In console mode: a JSON request stops on the invalid pattern
+            // with the error envelope, before anything is measured.
+            [$exitCode, $buffer] = $this->runCommand(['/[a/', '--input', 'aaa']);
         } finally {
             restore_error_handler();
         }
 
         $this->assertSame([], $warnings);
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('"err_code": '.\PREG_INTERNAL_ERROR, $buffer);
+        // PHP refuses the pattern with PREG_INTERNAL_ERROR, whose message
+        // preg_last_error_msg() gives as "Internal error": the measured row
+        // fails with it.
+        $this->assertMatchesRegularExpression('/^vuln\s+\| error\s+\|.*\| Internal error$/m', $buffer);
     }
 
     /**

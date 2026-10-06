@@ -15,6 +15,7 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -26,18 +27,18 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Heatmap;
 use PHPRegex\Redos\Internal\InputGenerator;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
  */
-final class DebugCommand extends AbstractCommand
+final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 {
     public function __construct(private readonly ?LintConfigLoader $configLoader = null, private readonly ?LintDefaultsBuilder $defaultsBuilder = null) {}
 
@@ -58,12 +59,18 @@ final class DebugCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
+        $json = JsonRequest::in($input->args);
+
         // The configuration file's defaults, when there is one to read.
         $defaults = [];
         if (null !== $this->configLoader && null !== $this->defaultsBuilder) {
             $configResult = $this->configLoader->load();
             if (null !== $configResult->error) {
-                $output->write($output->error('Error: '.$configResult->error."\n"));
+                if ($json) {
+                    $output->writeDocument(JsonDocument::error($configResult->error, JsonDocument::STAGE_CONFIG));
+                } else {
+                    $output->write($output->error('Error: '.$configResult->error."\n"));
+                }
 
                 return self::INVALID;
             }
@@ -72,10 +79,7 @@ final class DebugCommand extends AbstractCommand
 
         $parsed = $this->parseArguments($input->args, $defaults);
         if (null !== $parsed['error']) {
-            $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
-
-            return self::INVALID;
+            return $this->usageError($output, $parsed['error'], "Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n", $json);
         }
 
         $pattern = $parsed['pattern'];
@@ -85,7 +89,7 @@ final class DebugCommand extends AbstractCommand
         $redosThreshold = $parsed['redosThreshold'];
         $confirmOptions = $parsed['confirmOptions'];
 
-        $regex = $this->createRegex($output, $input->regexOptions);
+        $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
             return self::INVALID;
         }
@@ -104,13 +108,31 @@ final class DebugCommand extends AbstractCommand
         }
 
         $target = $regex->target();
+        $validation = $regex->validate($pattern);
+
+        // The report holds an invalid pattern, with no analysis of it.
+        if ('json' === $format && !$validation->isValid) {
+            $output->writeDocument(JsonDocument::encode([
+                'pattern' => $pattern,
+                'runtime' => $runtime,
+                'validation' => $validation,
+                'analysis' => null,
+                'input' => [
+                    'value' => $inputValue,
+                    'source' => null === $inputValue ? null : 'user',
+                ],
+            ]));
+
+            return self::FAILURE;
+        }
 
         try {
             $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
             // The analysis reports a pattern it cannot parse as its error;
-            // the exit code reports it as a problem of the pattern.
-            $verdict = $this->parses($regex, $pattern) && !$this->isConfirmedRedos($analysis, $redosThreshold)
+            // the exit code reports an invalid pattern, syntax or semantic
+            // error alike, as a problem of the pattern.
+            $verdict = $validation->isValid && !$this->isConfirmedRedos($analysis, $redosThreshold)
                 ? self::SUCCESS
                 : self::FAILURE;
             $hasConfirmation = RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation;
@@ -147,22 +169,16 @@ final class DebugCommand extends AbstractCommand
             }
 
             if ('json' === $format) {
-                $payload = [
+                $output->writeDocument(JsonDocument::encode([
                     'pattern' => $pattern,
                     'runtime' => $runtime,
+                    'validation' => $validation,
                     'analysis' => $analysis,
                     'input' => [
                         'value' => $inputValue,
                         'source' => $inputSourceLabel,
                     ],
-                ];
-                $json = json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-                if (false === $json) {
-                    $output->write($output->error("Error: Failed to encode JSON\n"));
-
-                    return self::FAILURE;
-                }
-                $output->write($json."\n");
+                ]));
 
                 return $verdict;
             }
@@ -264,8 +280,9 @@ final class DebugCommand extends AbstractCommand
             }
         } catch (\Throwable $e) {
             if ('json' === $format) {
-                $json = json_encode(['error' => $e->getMessage(), 'stage' => 'debug'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-                $output->write(($json ?: '{"error":"Debug failed"}')."\n");
+                // Only a failure of the library itself reaches here in JSON mode: the
+                // pattern is valid and the ReDoS analysis reports its own errors.
+                $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_INTERNAL));
 
                 return self::FAILURE;
             }
@@ -276,17 +293,6 @@ final class DebugCommand extends AbstractCommand
         }
 
         return $verdict;
-    }
-
-    private function parses(Regex $regex, string $pattern): bool
-    {
-        try {
-            $regex->parse($pattern);
-
-            return true;
-        } catch (LexerException|ParserException) {
-            return false;
-        }
     }
 
     /**

@@ -25,6 +25,7 @@ use PHPRegex\Linter\LintSeverity;
  * @phpstan-type FlattenedProblem array{
  *     file: string,
  *     line: int,
+ *     column: int|null,
  *     source?: string|null,
  *     pattern?: string|null,
  *     location?: string|null,
@@ -54,13 +55,15 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                 \assert($problem instanceof Diagnostic);
 
                 $line = $this->normalizeLine((int) $entry['line']);
-                $column = $this->normalizeColumn($problem->position);
+                // The column of the pattern in the file, as the JSON report
+                // gives it; the attribute is optional, left out when unknown.
+                $column = null !== $entry['column'] ? \sprintf(' column="%d"', $entry['column']) : '';
                 $severity = $this->mapCheckstyleSeverity($problem->severity);
                 $message = $this->formatProblemMessage($problem, $entry);
                 $source = $this->formatCheckstyleSource($problem);
 
                 $lines[] = \sprintf(
-                    '    <error line="%d" column="%d" severity="%s" message="%s" source="%s"/>',
+                    '    <error line="%d"%s severity="%s" message="%s" source="%s"/>',
                     $line,
                     $column,
                     ReportSpelling::xmlAttribute($severity),
@@ -111,6 +114,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                 $flattened[] = [
                     'file' => $result['file'],
                     'line' => $result['line'],
+                    'column' => $result['column'] ?? null,
                     'source' => $result['source'] ?? null,
                     'pattern' => $result['pattern'],
                     'location' => $result['location'] ?? null,
@@ -130,11 +134,6 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
     private function normalizeLine(int $line): int
     {
         return max(1, $line);
-    }
-
-    private function normalizeColumn(?int $position): int
-    {
-        return $position ?? 1;
     }
 
     private function mapCheckstyleSeverity(LintSeverity $severity): string

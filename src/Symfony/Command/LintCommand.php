@@ -24,6 +24,7 @@ use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
@@ -190,9 +191,7 @@ final class LintCommand extends Command
             );
             $parser = Regex::create($this->regexOptions + $target->regexOptions())->parser();
         } catch (InvalidRegexOptionException $e) {
-            $io->error('Invalid option: '.$e->getMessage());
-
-            return Command::INVALID;
+            return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);
         }
         $analysis = $this->analysis->withParser($parser);
         $lint = $this->lint->withAnalysis($analysis);
@@ -209,9 +208,7 @@ final class LintCommand extends Command
 
         if ($jobsExplicitlySet) {
             if ($jobs < 1) {
-                $io->error('The --jobs value must be a positive integer.');
-
-                return Command::INVALID;
+                return $this->renderFailure($format, $output, $io, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, Command::INVALID);
             }
         } else {
             // Auto-detect optimal number of jobs
@@ -274,7 +271,7 @@ final class LintCommand extends Command
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
-            return $this->renderCollectionFailure($format, $output, $io, $e->getMessage());
+            return $this->renderFailure($format, $output, $io, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, Command::FAILURE);
         }
 
         $patternCount = \count($patterns);
@@ -319,8 +316,7 @@ final class LintCommand extends Command
 
         $stats = $report->stats;
 
-        $formatter = $this->formatterRegistry->get($format);
-        $output->write($formatter->format($report));
+        $this->writeReport($format, $output, $this->formatterRegistry->get($format)->format($report));
 
         if (self::FORMAT_CONSOLE === $format) {
             $elapsed = (float) microtime(true) - $startTime;
@@ -373,22 +369,45 @@ final class LintCommand extends Command
         return \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</> (%s)', $target->php(), $target->target()->pcreVersion, $target->source());
     }
 
-    private function renderCollectionFailure(
+    /**
+     * A run that stops: an error block on the console, the format's own
+     * error document otherwise (the JSON envelope names the stage).
+     */
+    private function renderFailure(
         string $format,
         OutputInterface $output,
         SymfonyStyle $io,
-        string $errorMessage,
+        string $message,
+        string $stage,
+        int $exitCode,
     ): int {
-        $message = "Failed to collect patterns: {$errorMessage}";
-
         if (self::FORMAT_CONSOLE === $format) {
             $io->error($message);
-        } else {
-            $formatter = $this->formatterRegistry->get($format);
-            $output->writeln($formatter->formatError($message));
+
+            return $exitCode;
         }
 
-        return Command::FAILURE;
+        $formatter = $this->formatterRegistry->get($format);
+        $error = $formatter instanceof JsonFormatter ? $formatter->formatError($message, $stage) : $formatter->formatError($message);
+        $this->writeReport($format, $output, str_ends_with($error, "\n") ? $error : $error."\n");
+
+        return $exitCode;
+    }
+
+    /**
+     * The console report goes through the console styles; a machine format
+     * is written as it is, never read for tags, and even under --quiet: it
+     * is the output asked for, not a status line.
+     */
+    private function writeReport(string $format, OutputInterface $output, string $report): void
+    {
+        if (self::FORMAT_CONSOLE === $format) {
+            $output->write($report);
+
+            return;
+        }
+
+        $output->write($report, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
     private function renderEmptyResults(string $format, OutputInterface $output, SymfonyStyle $io): int
@@ -401,8 +420,7 @@ final class LintCommand extends Command
 
         $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
-        $formatter = $this->formatterRegistry->get($format);
-        $output->write($formatter->format($emptyReport));
+        $this->writeReport($format, $output, $this->formatterRegistry->get($format)->format($emptyReport));
 
         return Command::SUCCESS;
     }

@@ -232,31 +232,34 @@ vendor/bin/regex lint app/ --format=json
         "errors": 0,
         "warnings": 1,
         "optimizations": 1,
-        "redos": 0,
+        "redos_errors": 0,
         "infos": 0,
-        "lintErrors": 0
+        "lint_errors": 0
     },
     "results": [
         {
             "file": "app/Service/Validator.php",
             "line": 9,
             "column": 33,
-            "fileOffset": 147,
+            "file_offset": 147,
             "source": "preg_match()",
             "pattern": "/^(?:[0-9]+\\s?)+$/",
             "location": null,
             "issues": [
                 {
-                    "type": "warning",
+                    "severity": "warning",
                     "file": "app/Service/Validator.php",
                     "line": 9,
                     "column": 33,
-                    "fileOffset": 147,
+                    "file_offset": 147,
                     "position": 1,
-                    "issueId": "regex.lint.quantifier.nested",
+                    "issue_id": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers \u2014 verify the rewrite still matches everything you need.",
-                    "source": "preg_match()"
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers ...",
+                    "tip": null,
+                    "source": "preg_match()",
+                    "validation": null,
+                    "analysis": null
                 }
             ],
             "optimizations": [
@@ -264,7 +267,7 @@ vendor/bin/regex lint app/ --format=json
                     "file": "app/Service/Validator.php",
                     "line": 9,
                     "column": 33,
-                    "fileOffset": 147,
+                    "file_offset": 147,
                     "optimization": {
                         "original": "/^(?:[0-9]+\\s?)+$/",
                         "optimized": "/^(?:\\d+\\s?)+$/",
@@ -281,32 +284,38 @@ vendor/bin/regex lint app/ --format=json
 }
 ```
 
-**Issue Fields:**
+**Issue Fields:** every issue carries every key, `null` when it does not apply.
 
-| Field     | Description                |
-|-----------|----------------------------|
-| `type`    | `error`, `warning` or `info` |
-| `message` | Human-readable explanation |
-| `file`    | Source file path           |
-| `line`    | Line number                |
-| `column`  | Column number              |
-| `issueId` | Diagnostic identifier      |
-| `hint`    | Suggested fix              |
-| `fileOffset` | Byte offset of the pattern in the file |
-| `position` | Offset of the issue in the pattern body |
-| `source`  | The call the pattern was found in, as `preg_match()` |
+| Field         | Description                                                        |
+|---------------|--------------------------------------------------------------------|
+| `severity`    | `error`, `warning` or `info`                                       |
+| `file`        | Source file path, relative to the working directory when under it |
+| `line`        | Line number, 1-based                                               |
+| `column`      | Column number, 1-based, in bytes; `null` when unknown              |
+| `file_offset` | Byte offset of the pattern in the file, 0-based                    |
+| `position`    | Byte offset of the issue in the pattern body, 0-based              |
+| `issue_id`    | Diagnostic identifier; for an invalid pattern, its error code      |
+| `message`     | Human-readable explanation                                         |
+| `hint`        | Suggested fix                                                      |
+| `tip`         | A further suggestion for an invalid pattern                        |
+| `source`      | The call the pattern was found in, as `preg_match()`               |
+| `validation`  | Why an invalid pattern is invalid                                  |
+| `analysis`    | The ReDoS verdict of a ReDoS issue                                 |
+
+The [JSON output reference](json-output.md) lists every key of the report,
+with its type, and the rules every JSON document follows.
 
 **Stats Fields:** the JSON report always carries every key, in this order, `0` when there
 is none:
 
 | Field           | Counts                                                                        |
 |-----------------|-------------------------------------------------------------------------------|
-| `errors`        | Every issue of type `error`: invalid patterns, ReDoS errors and lint errors   |
-| `warnings`      | Every issue of type `warning`                                                 |
+| `errors`        | Every issue of severity `error`: invalid patterns, ReDoS errors and lint errors |
+| `warnings`      | Every issue of severity `warning`                                             |
 | `optimizations` | The optimization suggestions                                                  |
-| `redos`         | The ReDoS errors, among `errors`                                              |
-| `infos`         | Every issue of type `info`                                                    |
-| `lintErrors`    | The lint rules of error severity that fired, among `errors`                   |
+| `redos_errors`  | The ReDoS errors, among `errors`                                              |
+| `infos`         | Every issue of severity `info`                                                |
+| `lint_errors`   | The lint rules of error severity that fired, among `errors`                   |
 
 The console summary names each kind of error apart: `1 invalid patterns, 1 ReDoS errors,
 1 lint errors, 2 warnings, 0 optimizations.` An invalid pattern is one PCRE refuses to
@@ -316,14 +325,14 @@ compile; a lint error is a pattern that compiles but that a rule of error severi
 
 Each lint rule declares a severity, and every output format maps it the same way:
 
-| Rule severity           | Console | JSON `type` | GitHub    | Checkstyle | JUnit        | LSP         |
-|-------------------------|---------|-------------|-----------|------------|--------------|-------------|
-| `critical`              | `FAIL`  | `error`     | `error`   | `error`    | `error`      | Error       |
-| `error`                 | `FAIL`  | `error`     | `error`   | `error`    | `failure`    | Error       |
-| `warning`               | `WARN`  | `warning`   | `warning` | `warning`  | `system-out` | Warning     |
-| `style`, `perf`, `info` | `INFO`  | `info`      | `notice`  | `info`     | `system-out` | Information |
+| Rule severity           | Console | JSON `severity` | GitHub    | Checkstyle | JUnit        | LSP         |
+|-------------------------|---------|-----------------|-----------|------------|--------------|-------------|
+| `critical`              | `FAIL`  | `error`         | `error`   | `error`    | `error`      | Error       |
+| `error`                 | `FAIL`  | `error`         | `error`   | `error`    | `failure`    | Error       |
+| `warning`               | `WARN`  | `warning`       | `warning` | `warning`  | `system-out` | Warning     |
+| `style`, `perf`, `info` | `INFO`  | `info`          | `notice`  | `info`     | `system-out` | Information |
 
-An issue of type `error` makes `regex lint` exit with 1; warnings and infos leave 0. In
+An issue of severity `error` makes `regex lint` exit with 1; warnings and infos leave 0. In
 JUnit, a `critical` problem is an `<error>` element and an `error` one a `<failure>`; a
 warning or an info is a passing test case that carries the message in `system-out`.
 See the [severity table](../reference.md#quick-reference-table) for the severity of each rule.

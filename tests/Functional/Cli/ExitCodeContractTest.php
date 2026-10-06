@@ -158,9 +158,6 @@ final class ExitCodeContractTest extends TestCase
         yield 'analyze on a pattern that does not parse, as JSON' => [['analyze', '/(/', '--format=json']];
         yield 'debug on a pattern without delimiters, as JSON' => [['debug', '[unclosed', '--format=json']];
         yield 'transpile on a pattern that does not parse, as JSON' => [['transpile', '/(/', '--format=json']];
-        yield 'analyze on a pattern a JSON report cannot hold' => [['analyze', "/\xff/", '--format=json']];
-        yield 'debug on a pattern a JSON report cannot hold' => [['debug', "/\xff/", '--format=json']];
-        yield 'redos on a pattern a JSON report cannot hold' => [['redos', "/\xff/", '--format=json']];
         yield 'compare on a pattern with a backreference' => [['compare', '/(a)\\1/', '/a/']];
         yield 'compare --method=subset on a pattern that is no subset' => [['compare', '/a|b/', '/a/', '--method=subset']];
         yield 'graph on a pattern it cannot draw' => [['graph', '/a\\1/']];
@@ -205,6 +202,11 @@ final class ExitCodeContractTest extends TestCase
         yield 'diagram written to a file' => [['diagram', '/a/', '--output=a.txt']];
         yield 'graph written to a file' => [['graph', '/a/', '--output=a.dot']];
         yield 'transpile as JSON' => [['transpile', '/a/', '--format=json']];
+        // A byte that is not UTF-8 is a valid pattern byte without the u
+        // flag, and the JSON report spells it \xNN.
+        yield 'analyze on a pattern with a byte that is not UTF-8, as JSON' => [['analyze', "/\xff/", '--format=json']];
+        yield 'debug on a pattern with a byte that is not UTF-8, as JSON' => [['debug', "/\xff/", '--format=json']];
+        yield 'redos on a pattern with a byte that is not UTF-8, as JSON' => [['redos', "/\xff/", '--format=json']];
     }
 
     /**

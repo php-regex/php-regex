@@ -18,9 +18,13 @@ namespace PHPRegex\Linter\Config;
  */
 final readonly class LintParseResult
 {
+    /**
+     * @param bool $pathsGiven whether the paths come from the command line, not from the configuration
+     */
     public function __construct(
         public ?LintArguments $arguments,
         public ?string $error = null,
         public bool $help = false,
+        public bool $pathsGiven = false,
     ) {}
 }

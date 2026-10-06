@@ -18,6 +18,8 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Tests\TestUtils\OutputFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class HelpCommandTest extends TestCase
@@ -47,6 +49,36 @@ final class HelpCommandTest extends TestCase
                 $_SERVER['argv'] = $originalArgv;
             }
         }
+    }
+
+    /**
+     * The overview's Lint Options section lists each lint option, the
+     * first of the table and the --json shorthand included.
+     */
+    #[Test]
+    #[DataProvider('provideLintOptions')]
+    public function test_general_help_lists_the_lint_option(string $option, string $description): void
+    {
+        $command = new HelpCommand();
+        $input = new Input('help', [], new GlobalOptions(false, null, false, false, null, null), []);
+
+        ob_start();
+        $command->run($input, OutputFactory::create());
+        $text = (string) ob_get_clean();
+
+        $section = strstr($text, 'Lint Options:');
+        $this->assertIsString($section);
+        $section = (string) strstr($section, 'Config:', true);
+        $this->assertMatchesRegularExpression('/^  '.preg_quote($option, '/').' +'.preg_quote($description, '/').'$/m', $section);
+    }
+
+    /**
+     * @return iterable<string, array{option: string, description: string}>
+     */
+    public static function provideLintOptions(): iterable
+    {
+        yield '--exclude' => ['option' => '--exclude <path>', 'description' => 'Paths to exclude (repeatable)'];
+        yield '--json' => ['option' => '--json', 'description' => 'Same as --format=json'];
     }
 
     public function test_render_command_help_returns_zero_for_valid_command(): void
@@ -282,7 +314,8 @@ final class HelpCommandTest extends TestCase
         $this->assertArrayHasKey('examples', $data);
         $this->assertIsArray($data['options']);
         $this->assertIsArray($data['notes']);
-        $this->assertCount(11, $data['options']);
+        $this->assertCount(12, $data['options']);
+        $this->assertContains(['--json', 'Same as --format=json'], $data['options']);
         $this->assertCount(4, $data['notes']);
     }
 

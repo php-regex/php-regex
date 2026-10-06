@@ -18,7 +18,7 @@ use PHPRegex\Parser\ErrorCode;
 /**
  * Outcome of a regex validation check.
  */
-final readonly class ValidationResult
+final readonly class ValidationResult implements \JsonSerializable
 {
     /**
      * @internal built by RegexParser::validate() and Regex::validate()
@@ -78,5 +78,22 @@ final readonly class ValidationResult
     public function getErrorCode(): ?ErrorCode
     {
         return $this->errorCode;
+    }
+
+    /**
+     * @return array{is_valid: bool, error: string|null, complexity_score: int, category: string|null, offset: int|null, caret_snippet: string|null, hint: string|null, error_code: string|null}
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'is_valid' => $this->isValid,
+            'error' => $this->error,
+            'complexity_score' => $this->complexityScore,
+            'category' => $this->category?->value,
+            'offset' => $this->offset,
+            'caret_snippet' => $this->caretSnippet,
+            'hint' => $this->hint,
+            'error_code' => $this->errorCode?->value,
+        ];
     }
 }

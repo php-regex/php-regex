@@ -162,19 +162,19 @@ final class PackageManifestTest extends TestCase
                 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
                 'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre',
             ],
-            'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+            'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
             'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
             'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
             // The library's own regexes run under the PCRE floor in every
             // package that runs one: the floor helper is the one shared
             // internal they all use for it.
             'LanguageServer' => ['Parser\Internal\LibraryPcre'],
-            'Laravel' => ['Linter\Internal\LintStatsCounter', 'Parser\Internal\LibraryPcre'],
-            'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions'],
+            'Laravel' => ['Linter\Internal\LintStatsCounter', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+            'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions'],
             'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
             'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-            'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\PatternParser'],
-            'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+            'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
+            'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
             'Transpiler' => ['Parser\Internal\LibraryPcre'],
         ];

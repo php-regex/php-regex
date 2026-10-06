@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\Output;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class OutputTest extends TestCase
@@ -59,6 +61,54 @@ final class OutputTest extends TestCase
         });
 
         $this->assertSame('', $buffer);
+    }
+
+    /**
+     * A document is printed even under quiet mode, and the output remembers
+     * it was: a fatal error after it must not print a second document.
+     */
+    #[Test]
+    #[DataProvider('provideQuietModes')]
+    public function test_has_written_document_after_a_document(bool $quiet): void
+    {
+        $output = new Output(false, $quiet);
+        $this->assertFalse($output->hasWrittenDocument());
+
+        $buffer = $this->captureOutput(static function () use ($output): void {
+            $output->writeDocument("{}\n");
+        });
+
+        $this->assertSame("{}\n", $buffer);
+        $this->assertTrue($output->hasWrittenDocument());
+    }
+
+    /**
+     * @return iterable<string, array{quiet: bool}>
+     */
+    public static function provideQuietModes(): iterable
+    {
+        yield 'not quiet' => ['quiet' => false];
+        yield 'quiet' => ['quiet' => true];
+    }
+
+    /**
+     * Status lines and errors are no document: after them a JSON run has
+     * still printed nothing a program reads.
+     */
+    #[Test]
+    public function test_has_written_document_ignores_status_lines_and_errors(): void
+    {
+        $errors = fopen('php://memory', 'w+');
+        $this->assertIsResource($errors);
+        $output = new Output(false, false, '#', '-', $errors);
+
+        $this->captureOutput(static function () use ($output): void {
+            $output->write("a status line\n");
+            $output->writeError("an error\n");
+        });
+        fclose($errors);
+
+        $this->assertFalse($output->hasWrittenDocument());
     }
 
     public function test_progress_outputs_when_ansi_enabled(): void

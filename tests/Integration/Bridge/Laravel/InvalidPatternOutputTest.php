@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -55,9 +55,15 @@ final class InvalidPatternOutputTest extends TestCase
         Artisan::call('regex:transpile', ['pattern' => '/(?<=a+)b/', '--format' => 'json']);
         $payload = json_decode(Artisan::output(), true);
 
+        // The error envelope, its validation carrying the message and the
+        // snippet as the text itself.
         $this->assertIsArray($payload);
-        $this->assertSame('Lookbehind is unbounded. PCRE requires a bounded maximum length.', $payload['details'] ?? null);
-        $this->assertSame("Line 1: (?<=a+)b\n        ^", $payload['snippet'] ?? null);
+        $this->assertSame('pattern', $payload['stage'] ?? null);
+        $validation = $payload['validation'] ?? null;
+        $this->assertIsArray($validation);
+        $this->assertSame('Lookbehind is unbounded. PCRE requires a bounded maximum length.', $validation['error'] ?? null);
+        // A string is written as itself: the snippet keeps its newline.
+        $this->assertSame("Line 1: (?<=a+)b\n        ^", $validation['caret_snippet'] ?? null);
     }
 
     protected function getPackageProviders($app): array

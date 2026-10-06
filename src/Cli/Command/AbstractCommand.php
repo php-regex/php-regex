@@ -17,6 +17,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
@@ -30,13 +31,18 @@ abstract class AbstractCommand implements CommandInterface
 {
     /**
      * @param array<string, mixed> $options
+     * @param bool                 $json    whether the command line asked for JSON: the error is then the envelope
      */
-    protected function createRegex(Output $output, array $options): ?Regex
+    protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
     {
         try {
             return Regex::create($options);
         } catch (InvalidRegexOptionException $e) {
-            $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
+            if ($json) {
+                $output->writeDocument(JsonDocument::error('Invalid option: '.$e->getMessage(), JsonDocument::STAGE_USAGE));
+            } else {
+                $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
+            }
 
             return null;
         }
@@ -109,10 +115,18 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * Report a command line the command cannot use, with its usage.
+     * Report a command line the command cannot use, with its usage; as the
+     * JSON error envelope, stage "usage", when the command line asked for
+     * JSON.
      */
-    protected function usageError(Output $output, string $message, string $usage): int
+    protected function usageError(Output $output, string $message, string $usage, bool $json = false): int
     {
+        if ($json) {
+            $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+
+            return self::INVALID;
+        }
+
         $output->write($output->error('Error: '.$message."\n"));
         $output->write($usage);
 

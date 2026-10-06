@@ -14,8 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Transpile a PCRE regex to another dialect.
@@ -25,27 +31,13 @@ use PHPRegex\Transpiler\TranspileOptions;
 final class TranspileCommand extends Command
 {
     /**
-     * Supported target dialects.
-     */
-    private const SUPPORTED_TARGETS = [
-        'javascript',
-        'python',
-        'ruby',
-        'go',
-        'rust',
-        'java',
-        'csharp',
-        'swift',
-    ];
-
-    /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'regex:transpile
         {pattern : The regex pattern to transpile}
-        {--target=javascript : Target dialect (javascript, python, ruby, go, rust, java, csharp, swift)}
+        {--target=javascript : Target dialect (javascript, js, python, py)}
         {--format=console : Output format (console, json)}';
 
     /**
@@ -68,27 +60,43 @@ final class TranspileCommand extends Command
         $pattern = (string) $this->argument('pattern');
         $target = strtolower((string) $this->option('target'));
         $format = strtolower((string) $this->option('format'));
-
-        // Validate target
-        if (!\in_array($target, self::SUPPORTED_TARGETS, true)) {
-            $this->error(\sprintf(
-                "Invalid target '%s'. Supported targets: %s",
-                $target,
-                implode(', ', self::SUPPORTED_TARGETS),
-            ));
+        if ('json' !== $format && 'console' !== $format) {
+            // As the CLI: an unknown format is a usage error, and JSON was not asked for.
+            $this->error(\sprintf('Invalid value for --format: %s. Use console or json.', (string) $this->option('format')));
 
             return self::INVALID;
         }
 
-        // Validate pattern
+        // The transpiler's own targets, aliases included, as the regex
+        // command reads them; the JSON envelope carries its very message.
+        $registry = new TargetRegistry();
+
+        try {
+            $registry->get($target);
+        } catch (TranspileException $e) {
+            if ('json' === $format) {
+                $this->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
+            } else {
+                $this->error(\sprintf(
+                    "Invalid target '%s'. Supported targets: %s",
+                    $target,
+                    implode(', ', $registry->listTargets()),
+                ));
+            }
+
+            return self::INVALID;
+        }
+
+        // An invalid pattern stops here, with everything the validation
+        // found: the transpiler would only throw its first parse error.
         $validation = $this->regex->validate($pattern);
         if (!$validation->isValid) {
             if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
-                    'error' => 'Invalid pattern',
-                    'details' => $validation->error,
-                    'snippet' => $validation->caretSnippet,
-                ], \JSON_PRETTY_PRINT));
+                $this->writeDocument(JsonDocument::error(
+                    $validation->error ?? 'Invalid pattern.',
+                    JsonDocument::STAGE_PATTERN,
+                    ['validation' => $validation],
+                ));
             } else {
                 $this->error('Invalid pattern:');
                 $this->line((string) $validation->error);
@@ -106,14 +114,7 @@ final class TranspileCommand extends Command
             $result = $this->regex->transpile($pattern, $target, $options);
 
             if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
-                    'source' => $pattern,
-                    'target' => $target,
-                    'result' => $result->pattern,
-                    'flags' => $result->flags,
-                    'warnings' => $result->warnings,
-                    'compatible' => !$result->hasWarnings(),
-                ], \JSON_PRETTY_PRINT));
+                $this->writeDocument(JsonDocument::encode($result->jsonSerialize()));
 
                 return self::SUCCESS;
             }
@@ -126,7 +127,7 @@ final class TranspileCommand extends Command
             $this->line('  '.$this->regex->highlight($pattern, 'console'));
             $this->newLine();
 
-            $this->line('<fg=white;options=bold>Target ('.ucfirst($target).'):</>');
+            $this->line('<fg=white;options=bold>Target ('.ucfirst($result->target).'):</>');
             $targetPattern = $result->pattern;
             if ('' !== $result->flags) {
                 $targetPattern .= ' <fg=gray>(flags: '.$result->flags.')</>';
@@ -150,17 +151,24 @@ final class TranspileCommand extends Command
             $this->newLine();
 
             return self::SUCCESS;
-        } catch (\Throwable $e) {
+        } catch (LexerException|ParserException|TranspileException $e) {
+            // A valid pattern the target cannot express.
             if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
-                    'error' => 'Transpilation failed',
-                    'details' => $e->getMessage(),
-                ], \JSON_PRETTY_PRINT));
+                $this->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
             } else {
                 $this->error('Transpilation failed: '.$e->getMessage());
             }
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * The document as it is, never read for console tags, and written even
+     * under --quiet: it is the output asked for, not a status line.
+     */
+    private function writeDocument(string $document): void
+    {
+        $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 }

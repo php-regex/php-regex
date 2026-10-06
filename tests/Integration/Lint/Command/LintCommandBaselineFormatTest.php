@@ -32,9 +32,9 @@ use PHPUnit\Framework\TestCase;
  * file relative to the working directory and its pattern. An issue stays
  * known when its line moves or its message is reworded. Both spellings of
  * the options are read ("--baseline <file>" and "--baseline=<file>"). A
- * baseline that is missing or unreadable is a configuration error (exit
- * 2); a pattern json_encode() cannot take is written escaped, never as an
- * empty file.
+ * baseline that is missing or unreadable is a usage error (exit 2); a
+ * pattern json_encode() cannot take is written escaped, never as an empty
+ * file.
  *
  * Every run happens in a directory of its own, the working directory while
  * the test runs, so the paths the baseline holds are relative to it.
@@ -276,10 +276,10 @@ final class LintCommandBaselineFormatTest extends TestCase
         $after = self::resultFor($with, '/other[class/');
 
         $this->assertArrayHasKey('column', $after);
-        $this->assertArrayHasKey('fileOffset', $after);
+        $this->assertArrayHasKey('file_offset', $after);
         $this->assertSame($before['column'], $after['column']);
-        $this->assertSame($before['fileOffset'], $after['fileOffset']);
-        $this->assertIsInt($after['fileOffset']);
+        $this->assertSame($before['file_offset'], $after['file_offset']);
+        $this->assertIsInt($after['file_offset']);
         // The baselined error leaves the report: only the new one is listed.
         $this->assertCount(1, $with, (string) json_encode($with));
     }
@@ -315,7 +315,7 @@ final class LintCommandBaselineFormatTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideUnusableBaselines')]
-    public function test_an_unusable_baseline_is_a_configuration_error(?string $content): void
+    public function test_an_unusable_baseline_is_a_usage_error(?string $content): void
     {
         file_put_contents('test.php', self::ERROR_SOURCE);
         if (null !== $content) {
@@ -357,17 +357,18 @@ final class LintCommandBaselineFormatTest extends TestCase
 
     /**
      * A baseline that cannot be written (its directory does not exist) is
-     * a configuration error: exit 2, said on stderr, and no report.
+     * a usage error found before the run: exit 2, said on stderr, and no
+     * report.
      */
     #[Test]
-    public function test_a_baseline_that_cannot_be_written_is_a_configuration_error(): void
+    public function test_a_baseline_that_cannot_be_written_is_a_usage_error(): void
     {
         file_put_contents('test.php', self::ERROR_SOURCE);
 
         [$exitCode, $stdout, $stderr] = $this->lint(['test.php', '--generate-baseline=missing/baseline.json']);
 
         $this->assertSame(2, $exitCode, $stdout.$stderr);
-        $this->assertSame("Error: Could not write the baseline to missing/baseline.json\n", $stderr);
+        $this->assertSame("Error: Baseline file not writable: missing/baseline.json\n", $stderr);
         $this->assertStringNotContainsString(self::ERROR_PATTERN, $stdout);
         $this->assertDirectoryDoesNotExist('missing');
     }
@@ -383,7 +384,7 @@ final class LintCommandBaselineFormatTest extends TestCase
         [$exitCode, $stdout] = $this->lint(['test.php', '--format=json', '--generate-baseline=missing/baseline.json']);
 
         $this->assertSame(2, $exitCode, $stdout);
-        $this->assertSame(['error' => 'Could not write the baseline to missing/baseline.json'], json_decode($stdout, true), $stdout);
+        $this->assertSame(['error' => 'Baseline file not writable: missing/baseline.json', 'stage' => 'usage'], json_decode($stdout, true), $stdout);
         $this->assertDirectoryDoesNotExist('missing');
     }
 

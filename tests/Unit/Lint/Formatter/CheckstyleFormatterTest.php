@@ -63,6 +63,7 @@ final class CheckstyleFormatterTest extends TestCase
         $result = [
             'file' => '/path/to/file.php',
             'line' => 10,
+            'column' => 12,
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
@@ -77,7 +78,8 @@ final class CheckstyleFormatterTest extends TestCase
 
         $this->assertStringContainsString('<file name="/path/to/file.php">', $output);
         $this->assertStringContainsString('line="10"', $output);
-        $this->assertStringContainsString('column="5"', $output);
+        // The column of the pattern in the file, not the position 5 inside the pattern.
+        $this->assertStringContainsString('column="12"', $output);
         $this->assertStringContainsString('severity="error"', $output);
         $this->assertStringContainsString('source="php-regex.regex.syntax.error"', $output);
         $this->assertStringContainsString('Invalid regex pattern', $output);
@@ -209,9 +211,13 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('line="1"', $output);
     }
 
+    /**
+     * The column attribute is optional in Checkstyle: a column the report
+     * does not know is left out, never invented.
+     */
     public function test_format_normalizes_column_positions(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 5, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -226,7 +232,29 @@ final class CheckstyleFormatterTest extends TestCase
 
         $output = $this->formatter->format($report);
 
-        $this->assertStringContainsString('column="1"', $output);
+        $this->assertStringContainsString('<error line="1" severity="error"', $output);
+        $this->assertStringNotContainsString('column=', $output);
+    }
+
+    public function test_format_writes_the_column_of_the_pattern_in_the_file(): void
+    {
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 3, null, null);
+
+        $result = [
+            'file' => 'test.php',
+            'line' => 4,
+            'column' => 17,
+            'pattern' => '/(a/',
+            'issues' => [],
+            'optimizations' => [],
+            'problems' => [$problem],
+        ];
+
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+
+        $output = $this->formatter->format($report);
+
+        $this->assertStringContainsString('<error line="4" column="17" severity="error"', $output);
     }
 
     public function test_format_escapes_xml(): void

@@ -15,6 +15,7 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -22,6 +23,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -32,7 +34,7 @@ use PHPRegex\Redos\RedosSeverity;
 /**
  * @internal
  */
-final class AnalyzeCommand extends AbstractCommand
+final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterface
 {
     public function getName(): string
     {
@@ -51,16 +53,14 @@ final class AnalyzeCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
+        $json = JsonRequest::in($input->args);
         $parsed = $this->parseArguments($input->args);
 
         if (null !== $parsed['error']) {
-            $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
-
-            return self::INVALID;
+            return $this->usageError($output, $parsed['error'], "Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n", $json);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
+        $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
             return self::INVALID;
         }
@@ -80,8 +80,23 @@ final class AnalyzeCommand extends AbstractCommand
             $redosThreshold = $parsed['redosThreshold'];
             $confirmOptions = $parsed['confirmOptions'];
 
-            $ast = $regex->parse($pattern);
             $validation = $regex->validate($pattern);
+            // The report holds an invalid pattern, its parse failed and the
+            // analyses that need a valid pattern left empty.
+            if ('json' === $format && !$validation->isValid) {
+                $output->writeDocument(JsonDocument::encode([
+                    'pattern' => $pattern,
+                    'runtime' => $runtime,
+                    'parse' => ['ok' => false],
+                    'validation' => $validation,
+                    'redos' => null,
+                    'explain' => null,
+                ]));
+
+                return self::FAILURE;
+            }
+
+            $ast = $regex->parse($pattern);
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
             $explain = $regex->explain($pattern);
 
@@ -272,27 +287,12 @@ final class AnalyzeCommand extends AbstractCommand
             'pattern' => $pattern,
             'runtime' => $runtime,
             'parse' => ['ok' => true],
-            'validation' => [
-                'valid' => $validation->isValid,
-                'error' => $validation->error,
-                'complexity_score' => $validation->complexityScore,
-                'category' => $validation->category?->value,
-                'offset' => $validation->offset,
-                'hint' => $validation->hint,
-                'error_code' => $validation->errorCode?->value,
-            ],
+            'validation' => $validation,
             'redos' => $analysis,
             'explain' => $explain,
         ];
 
-        $json = json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-        if (false === $json) {
-            $output->write($output->error("Error: Failed to encode JSON\n"));
-
-            return self::FAILURE;
-        }
-
-        $output->write($json."\n");
+        $output->writeDocument(JsonDocument::encode($payload));
 
         return self::SUCCESS;
     }
@@ -404,9 +404,10 @@ final class AnalyzeCommand extends AbstractCommand
 
     private function handleAnalysisError(Output $output, string $format, string $errorMessage): int
     {
+        // Not reached in JSON mode today: an invalid pattern is reported in the payload,
+        // and parse(), redos() and explain() repeat the parse validate() accepted.
         if ('json' === $format) {
-            $json = json_encode(['error' => $errorMessage, 'stage' => 'analyze'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
-            $output->write(($json ?: '{"error":"Analyze failed"}')."\n");
+            $output->writeDocument(JsonDocument::error($errorMessage, JsonDocument::STAGE_PATTERN));
 
             return self::FAILURE;
         }

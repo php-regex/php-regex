@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StartOptions;
@@ -72,15 +73,7 @@ final class ReportSpelling
      */
     public static function source(string $text): string
     {
-        if (mb_check_encoding($text, 'UTF-8')) {
-            return $text;
-        }
-
-        return LibraryPcre::replaceCallback(
-            self::UTF8_OR_STRAY_BYTE,
-            static fn (array $match): string => isset($match[1]) && '' !== $match[1] ? \sprintf('\\x%02X', \ord($match[1])) : $match[0],
-            $text,
-        ) ?? $text;
+        return JsonDocument::spellInvalidBytes($text);
     }
 
     /**

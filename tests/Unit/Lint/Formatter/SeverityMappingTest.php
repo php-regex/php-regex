@@ -110,8 +110,8 @@ final class SeverityMappingTest extends TestCase
             $this->assertIsArray($result['issues'] ?? null);
             foreach ($result['issues'] as $issue) {
                 $this->assertIsArray($issue);
-                $this->assertIsString($issue['issueId'] ?? null);
-                $types[$issue['issueId']] = $issue['type'] ?? null;
+                $this->assertIsString($issue['issue_id'] ?? null);
+                $types[$issue['issue_id']] = $issue['severity'] ?? null;
             }
         }
         $this->assertSame('error', $types['regex.lint.unicode.multibyteInClassWithoutU'] ?? null);
@@ -121,10 +121,10 @@ final class SeverityMappingTest extends TestCase
         $stats = $json['stats'] ?? null;
         $this->assertIsArray($stats);
         $this->assertSame(1, $stats['errors'] ?? null);
-        $this->assertSame(1, $stats['lintErrors'] ?? null);
+        $this->assertSame(1, $stats['lint_errors'] ?? null);
         $this->assertSame(1, $stats['warnings'] ?? null);
         $this->assertSame(1, $stats['infos'] ?? null);
-        $this->assertSame(0, $stats['redos'] ?? null);
+        $this->assertSame(0, $stats['redos_errors'] ?? null);
     }
 
     private static function report(LintSeverity $severity): LintReport

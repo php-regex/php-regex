@@ -58,7 +58,7 @@ final class LintCommandBaselineTest extends TestCase
 
         $content = file_get_contents($baselineFile);
         $this->assertIsString($content);
-        /** @var array{version: int, issues: array<array{file: string, line: int, message: string, type: string, issueId: string, pattern: string}>} $baseline */
+        /** @var array{version: int, issues: array<array{file: string, line: int, column: int|null, issue_id: string, message: string, severity: string, pattern: string, pattern_hash: string}>} $baseline */
         $baseline = json_decode($content, true);
         $this->assertIsArray($baseline);
         $this->assertSame(1, $baseline['version']);
@@ -68,8 +68,8 @@ final class LintCommandBaselineTest extends TestCase
         $this->assertArrayHasKey('file', $issue);
         $this->assertArrayHasKey('line', $issue);
         $this->assertArrayHasKey('message', $issue);
-        $this->assertArrayHasKey('type', $issue);
-        $this->assertArrayHasKey('issueId', $issue);
+        $this->assertArrayHasKey('severity', $issue);
+        $this->assertArrayHasKey('issue_id', $issue);
         $this->assertIsString($issue['pattern']);
 
         // File should be relative
@@ -125,7 +125,7 @@ final class LintCommandBaselineTest extends TestCase
         $legacy = [];
         foreach ($current['issues'] as $issue) {
             $this->assertIsArray($issue);
-            $legacy[] = ['file' => $issue['file'], 'line' => $issue['line'], 'message' => $issue['message'], 'type' => $issue['type']];
+            $legacy[] = ['file' => $issue['file'], 'line' => $issue['line'], 'message' => $issue['message'], 'type' => $issue['severity']];
         }
         $this->assertNotSame([], $legacy);
         $legacyFile = $dir.'/legacy.json';

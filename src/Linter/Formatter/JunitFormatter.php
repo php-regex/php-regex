@@ -70,7 +70,6 @@ final class JunitFormatter extends AbstractOutputFormatter
             $name = $this->formatProblemTitle($problem);
             $file = $this->normalizeFile((string) $entry['file']);
             $line = $this->normalizeLine((int) $entry['line']);
-            $column = $this->normalizeColumn($problem->position);
             $message = $this->formatProblemMessage($problem, $entry);
 
             $lines[] = \sprintf(
@@ -172,11 +171,6 @@ final class JunitFormatter extends AbstractOutputFormatter
     private function normalizeLine(int $line): int
     {
         return max(1, $line);
-    }
-
-    private function normalizeColumn(?int $position): int
-    {
-        return $position ?? 1;
     }
 
     /**

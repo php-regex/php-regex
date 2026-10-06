@@ -139,10 +139,10 @@ final class LintBaselineTest extends TestCase
         yield 'document without a version' => ['content' => '{"issues": []}'];
         yield 'document whose issues are an object' => ['content' => '{"version": 1, "issues": {}}'];
         yield 'entry holding a number' => ['content' => '{"version": 1, "issues": [1]}'];
-        yield 'entry without a line' => ['content' => '{"version": 1, "issues": [{"issueId": "r", "file": "a.php", "patternHash": "h"}]}'];
-        yield 'entry without an issue identifier' => ['content' => '{"version": 1, "issues": [{"file": "a.php", "patternHash": "h", "line": 3}]}'];
-        yield 'entry without a file' => ['content' => '{"version": 1, "issues": [{"issueId": "r", "patternHash": "h", "line": 3}]}'];
-        yield 'entry without a pattern hash' => ['content' => '{"version": 1, "issues": [{"issueId": "r", "file": "a.php", "line": 3}]}'];
+        yield 'entry without a line' => ['content' => '{"version": 1, "issues": [{"issue_id": "r", "file": "a.php", "pattern_hash": "h"}]}'];
+        yield 'entry without an issue identifier' => ['content' => '{"version": 1, "issues": [{"file": "a.php", "pattern_hash": "h", "line": 3}]}'];
+        yield 'entry without a file' => ['content' => '{"version": 1, "issues": [{"issue_id": "r", "pattern_hash": "h", "line": 3}]}'];
+        yield 'entry without a pattern hash' => ['content' => '{"version": 1, "issues": [{"issue_id": "r", "file": "a.php", "line": 3}]}'];
     }
 
     #[Test]
@@ -528,7 +528,7 @@ final class LintBaselineTest extends TestCase
         $this->assertIsArray($data);
         $this->assertIsArray($data['issues'] ?? null);
 
-        $this->assertSame(['regex.lint.known', ErrorCode::BackrefMissingGroup->value], array_column($data['issues'], 'issueId'));
+        $this->assertSame(['regex.lint.known', ErrorCode::BackrefMissingGroup->value], array_column($data['issues'], 'issue_id'));
     }
 
     private function baselineOf(LintReport $report): LintBaseline

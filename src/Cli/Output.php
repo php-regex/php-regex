@@ -46,6 +46,8 @@ final class Output
 
     private int $progressStartedAt = 0;
 
+    private bool $documentWritten = false;
+
     /**
      * @param resource|null $errorStream where writeError() writes; STDERR by default
      */
@@ -82,6 +84,24 @@ final class Output
         if (!$this->quiet) {
             echo $text;
         }
+    }
+
+    /**
+     * Write a document a program reads, a JSON report: quiet mode silences
+     * the status lines around it, never the document itself.
+     */
+    public function writeDocument(string $text): void
+    {
+        $this->documentWritten = true;
+        echo $text;
+    }
+
+    /**
+     * Whether a document was written: a run prints one at most.
+     */
+    public function hasWrittenDocument(): bool
+    {
+        return $this->documentWritten;
     }
 
     /**

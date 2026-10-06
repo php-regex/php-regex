@@ -105,7 +105,7 @@ final class LintRedosReportedTest extends TestCase
      */
     private static function issueIds(string $json): array
     {
-        return array_map(static fn (array $issue): string => \is_string($issue['issueId'] ?? null) ? $issue['issueId'] : '', self::issues($json));
+        return array_map(static fn (array $issue): string => \is_string($issue['issue_id'] ?? null) ? $issue['issue_id'] : '', self::issues($json));
     }
 
     /**
@@ -115,8 +115,8 @@ final class LintRedosReportedTest extends TestCase
     {
         $types = [];
         foreach (self::issues($json) as $issue) {
-            if ('regex.lint.redos' === ($issue['issueId'] ?? null)) {
-                $types[] = \is_string($issue['type'] ?? null) ? $issue['type'] : '';
+            if ('regex.lint.redos' === ($issue['issue_id'] ?? null)) {
+                $types[] = \is_string($issue['severity'] ?? null) ? $issue['severity'] : '';
             }
         }
 

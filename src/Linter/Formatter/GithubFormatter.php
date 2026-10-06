@@ -25,6 +25,7 @@ use PHPRegex\Linter\LintSeverity;
  * @phpstan-type FlattenedProblem array{
  *     file: string,
  *     line: int,
+ *     column: int|null,
  *     source?: string|null,
  *     pattern?: string|null,
  *     location?: string|null,
@@ -69,6 +70,7 @@ final class GithubFormatter extends AbstractOutputFormatter
                 $flattened[] = [
                     'file' => $result['file'],
                     'line' => $result['line'],
+                    'column' => $result['column'] ?? null,
                     'source' => $result['source'] ?? null,
                     'pattern' => $result['pattern'],
                     'location' => $result['location'] ?? null,
@@ -91,7 +93,9 @@ final class GithubFormatter extends AbstractOutputFormatter
         $level = $this->mapAnnotationLevel($problem->severity);
         $file = $entry['file'];
         $line = $entry['line'];
-        $column = $problem->position ?? 1;
+        // The column of the pattern in the file, as the JSON report gives
+        // it; a position inside the pattern is not one.
+        $column = $entry['column'];
         $title = $this->formatProblemTitle($problem);
         $message = $this->formatProblemMessage($problem, $entry);
 
@@ -99,7 +103,9 @@ final class GithubFormatter extends AbstractOutputFormatter
         if ('' !== $file) {
             $properties[] = 'file='.$this->escapeGithubProperty(ReportSpelling::displayText($file));
             $properties[] = 'line='.$line;
-            $properties[] = 'col='.$column;
+            if (null !== $column) {
+                $properties[] = 'col='.$column;
+            }
         }
 
         if ('' !== $title) {

@@ -214,31 +214,34 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
     "errors": 0,
     "warnings": 1,
     "optimizations": 1,
-    "redos": 0,
+    "redos_errors": 0,
     "infos": 0,
-    "lintErrors": 0
+    "lint_errors": 0
   },
   "results": [
     {
       "file": "app/Service/Validator.php",
       "line": 9,
       "column": 33,
-      "fileOffset": 147,
+      "file_offset": 147,
       "source": "preg_match()",
       "pattern": "/^(?:[0-9]+\\s?)+$/",
       "location": null,
       "issues": [
         {
-          "type": "warning",
+          "severity": "warning",
           "file": "app/Service/Validator.php",
           "line": 9,
           "column": 33,
-          "fileOffset": 147,
+          "file_offset": 147,
           "position": 1,
-          "issueId": "regex.lint.quantifier.nested",
+          "issue_id": "regex.lint.quantifier.nested",
           "message": "Nested quantifiers can cause catastrophic backtracking.",
-          "hint": "Consider atomic groups (?>...) or possessive quantifiers \u2014 verify the rewrite still matches everything you need.",
-          "source": "preg_match()"
+          "hint": "Consider atomic groups (?>...) or possessive quantifiers ...",
+          "tip": null,
+          "source": "preg_match()",
+          "validation": null,
+          "analysis": null
         }
       ],
       "optimizations": [
@@ -246,7 +249,7 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
           "file": "app/Service/Validator.php",
           "line": 9,
           "column": 33,
-          "fileOffset": 147,
+          "file_offset": 147,
           "optimization": {
             "original": "/^(?:[0-9]+\\s?)+$/",
             "optimized": "/^(?:\\d+\\s?)+$/",
@@ -264,26 +267,15 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
 Notes:
 - `target` names the PHP and PCRE2 release the patterns were judged for.
 - `stats` contains the run summary; every key is always present, `0` when there is none.
-- `results` contains one entry per pattern occurrence.
-- `issues` and `optimizations` are always present, empty when there is none.
+- `results` contains one entry per pattern with something to report, sorted by file, line and column.
+- `issues` and `optimizations` are always present, empty when there is none; every issue carries every key, `null` when it does not apply.
 
 ### Field Reference
 
-| Field                       | Type   | Description                    | Always Present    |
-|-----------------------------|--------|--------------------------------|-------------------|
-| `stats.errors`              | int    | Total error count              | Yes               |
-| `stats.warnings`            | int    | Total warning count            | Yes               |
-| `stats.optimizations`       | int    | Total optimization suggestions | Yes               |
-| `stats.redos`               | int    | ReDoS errors, among `errors`   | Yes               |
-| `stats.infos`               | int    | Total info count               | Yes               |
-| `stats.lintErrors`          | int    | Lint rules of error severity that fired, among `errors` | Yes |
-| `results[].file`            | string | Source file path               | Yes               |
-| `results[].line`            | int    | Line number                    | Yes               |
-| `results[].column`          | int    | Column number                  | Sometimes         |
-| `results[].source`          | string | The call the pattern was found in, as `preg_match()` | Yes |
-| `results[].pattern`         | string | The pattern being analyzed     | Yes               |
-| `results[].issues[]`        | array  | Diagnostic issues              | Yes, may be empty |
-| `results[].optimizations[]` | array  | Optimization suggestions       | Yes, may be empty |
+The [JSON output reference](reference/json-output.md) lists every key of this
+report, with its type and meaning, and the JSON of `analyze`, `debug`, `redos`
+and `transpile`. It also gives the units of each position, the error envelope
+printed when a run fails, and what a minor release may add.
 
 ### CLI Examples
 

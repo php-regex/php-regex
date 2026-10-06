@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Cli;
 
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\IniFlag;
 
 /**
  * @internal
@@ -47,7 +48,7 @@ final readonly class PcreRuntimeInfo implements \JsonSerializable
     /**
      * @return array{
      *     version: string,
-     *     jit: string|null,
+     *     jit: bool|null,
      *     backtrack_limit: int|null,
      *     recursion_limit: int|null,
      * }
@@ -56,7 +57,7 @@ final readonly class PcreRuntimeInfo implements \JsonSerializable
     {
         return [
             'version' => $this->version,
-            'jit' => $this->jitSetting,
+            'jit' => null === $this->jitSetting ? null : IniFlag::isOn($this->jitSetting),
             'backtrack_limit' => $this->backtrackLimit,
             'recursion_limit' => $this->recursionLimit,
         ];

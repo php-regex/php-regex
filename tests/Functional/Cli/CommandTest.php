@@ -95,7 +95,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/(?<=a+)b/', '--format=json']), $output), $exitCode);
 
         $validation = $this->requireArrayKey($this->decodeJsonPayload($buffer), 'validation');
-        $this->assertFalse($validation['valid']);
+        $this->assertFalse($validation['is_valid'] ?? null);
         $this->assertSame('regex.lookbehind.unbounded', $validation['error_code']);
     }
 

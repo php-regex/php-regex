@@ -318,7 +318,7 @@ $analyzer->analyze('/(a)?(?(1)a|b)/')->isSafe();         // true:  no risk found
 $analyzer->analyze('/(a)?(?(1)a|b)/')->isProvenSafe();   // false
 ```
 
-The JSON output (`vendor/bin/regex analyze --format=json`, `lint --format=json`) carries the same fields, `pcre_version` and `analysis_version` in snake case, and the witness as its three escaped parts:
+The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`), and the witness as its three escaped parts; the [JSON output reference](reference/json-output.md#redos-analysis-redos_analysis) lists every key:
 
 ```json
 "complexity": "exponential",

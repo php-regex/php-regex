@@ -18,6 +18,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -28,17 +29,17 @@ use PHPRegex\Redos\RedosSeverity;
  *
  * @internal
  *
- * @phpstan-type LintIssue array{type: string, message: string, file: string, line: int, column?: int, fileOffset?: int|null, position?: int|null, issueId?: string, hint?: string|null, tip?: string|null, source?: string, pattern?: string, regex?: string, analysis?: RedosAnalysis, validation?: ValidationResult}
+ * @phpstan-type LintIssue array{type: string, message: string, file: string, line: int, column?: int|null, fileOffset?: int|null, position?: int|null, issueId?: string, hint?: string|null, tip?: string|null, source?: string, pattern?: string, regex?: string, analysis?: RedosAnalysis, validation?: ValidationResult}
  * @phpstan-type OptimizationEntry array{
  *     file: string,
  *     line: int,
- *     column?: int,
+ *     column?: int|null,
  *     fileOffset?: int|null,
  *     optimization: OptimizationResult,
  *     savings: int,
  *     source?: string
  * }
- * @phpstan-type LintResult array{file: string, line: int, column?: int, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
+ * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
  * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int}
  */
 final readonly class LintService
@@ -184,14 +185,173 @@ final readonly class LintService
      */
     private function combineResults(array $issues, array $optimizations, array $originalPatterns): array
     {
-        $patternMap = $this->createPatternMap($originalPatterns);
+        $workingDirectory = getcwd();
+        $workingDirectory = false === $workingDirectory ? null : $workingDirectory;
+        $patternMap = $this->createPatternMap($originalPatterns, $workingDirectory);
         /** @var array<string, LintResult> $results */
         $results = [];
+
+        $issues = array_map(static fn (array $issue): array => self::normalizeIssue($issue, $workingDirectory), $issues);
+        // Grouping keeps the order it is given: issues sorted here come out
+        // sorted inside each result, whatever order the workers returned.
+        usort($issues, self::compareIssues(...));
+        $optimizations = array_map(static function (array $optimization) use ($workingDirectory): array {
+            $optimization['file'] = self::displayPath($optimization['file'], $workingDirectory);
+
+            return $optimization;
+        }, $optimizations);
+        usort($optimizations, self::compareLocations(...));
 
         $this->addIssuesToResults($issues, $patternMap, $results);
         $this->addOptimizationsToResults($optimizations, $patternMap, $results);
 
-        return array_values($results);
+        $results = array_values($results);
+        usort($results, self::compareLocations(...));
+
+        return $results;
+    }
+
+    /**
+     * The file as every report shows it, and the identifier an invalid
+     * pattern is known by: its error code.
+     *
+     * @phpstan-param LintIssue $issue
+     *
+     * @phpstan-return LintIssue
+     */
+    private static function normalizeIssue(array $issue, ?string $workingDirectory): array
+    {
+        $issue['file'] = self::displayPath($issue['file'], $workingDirectory);
+
+        $errorCode = ($issue['validation'] ?? null)?->errorCode;
+        if (!isset($issue['issueId']) && null !== $errorCode) {
+            $issue['issueId'] = $errorCode->value;
+        }
+
+        return $issue;
+    }
+
+    /**
+     * The order of the results: file (bytewise), line, column, offset in the
+     * file, then source; an unknown value sorts first.
+     *
+     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $left
+     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $right
+     */
+    private static function compareLocations(array $left, array $right): int
+    {
+        return [strcmp($left['file'], $right['file']) <=> 0, $left['line'], self::nullFirst($left['column'] ?? null), self::nullFirst($left['fileOffset'] ?? null), self::nullFirst($left['source'] ?? null)]
+            <=> [0, $right['line'], self::nullFirst($right['column'] ?? null), self::nullFirst($right['fileOffset'] ?? null), self::nullFirst($right['source'] ?? null)];
+    }
+
+    /**
+     * Inside one result: by position in the pattern, then identifier; an
+     * unknown value sorts first.
+     *
+     * @phpstan-param LintIssue $left
+     * @phpstan-param LintIssue $right
+     */
+    private static function compareIssues(array $left, array $right): int
+    {
+        return [self::nullFirst($left['position'] ?? null), self::nullFirst($left['issueId'] ?? null)]
+            <=> [self::nullFirst($right['position'] ?? null), self::nullFirst($right['issueId'] ?? null)];
+    }
+
+    /**
+     * A sort key where null comes before any value: arrays compare element
+     * by element, and a string against a string compares bytewise.
+     *
+     * @return array{int, int|string}
+     */
+    private static function nullFirst(int|string|null $value): array
+    {
+        return null === $value ? [0, 0] : [1, $value];
+    }
+
+    /**
+     * Relative to the working directory, with "/" separators, when the file
+     * lies under it; absolute otherwise. "./src", "src/", "../project/src"
+     * and the absolute path all give the same value. A name that is not a
+     * path (a stream URL, a route collection) is left as it is.
+     */
+    private static function displayPath(string $file, ?string $workingDirectory): string
+    {
+        if ('' === $file || null === $workingDirectory || str_contains($file, '://')) {
+            return $file;
+        }
+
+        $path = self::slashes($file);
+        $base = self::collapse(self::slashes($workingDirectory));
+        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
+
+        $relative = self::under($absolute, $base);
+        if (null !== $relative) {
+            return $relative;
+        }
+
+        // Through a symbolic link ($PWD may name the working directory by a
+        // link, getcwd() never does): compare the resolved paths.
+        $resolvedFile = realpath($file);
+        $resolvedBase = realpath($workingDirectory);
+        if (false !== $resolvedFile && false !== $resolvedBase) {
+            $relative = self::under(self::slashes($resolvedFile), self::slashes($resolvedBase));
+            if (null !== $relative) {
+                return $relative;
+            }
+        }
+
+        return $absolute;
+    }
+
+    private static function slashes(string $path): string
+    {
+        return '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
+    }
+
+    /**
+     * The root an absolute path starts with, "/" or a drive ("C:/"); empty
+     * for a relative path.
+     */
+    private static function root(string $path): string
+    {
+        if (str_starts_with($path, '/')) {
+            return '/';
+        }
+
+        return \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':/' === substr($path, 1, 2) ? substr($path, 0, 3) : '';
+    }
+
+    /**
+     * "." and empty segments dropped, ".." resolved, without touching the
+     * filesystem.
+     */
+    private static function collapse(string $path): string
+    {
+        $root = self::root($path);
+
+        $segments = [];
+        foreach (explode('/', substr($path, \strlen($root))) as $segment) {
+            if ('' === $segment || '.' === $segment) {
+                continue;
+            }
+
+            if ('..' === $segment) {
+                array_pop($segments);
+
+                continue;
+            }
+
+            $segments[] = $segment;
+        }
+
+        return $root.implode('/', $segments);
+    }
+
+    private static function under(string $path, string $base): ?string
+    {
+        $prefix = rtrim($base, '/').'/';
+
+        return str_starts_with($path, $prefix) && \strlen($path) > \strlen($prefix) ? substr($path, \strlen($prefix)) : null;
     }
 
     /**
@@ -199,11 +359,11 @@ final readonly class LintService
      *
      * @return array<string, array{pattern: string, location: string|null}>
      */
-    private function createPatternMap(array $originalPatterns): array
+    private function createPatternMap(array $originalPatterns, ?string $workingDirectory): array
     {
         $map = [];
         foreach ($originalPatterns as $pattern) {
-            $key = $this->createPatternKey($pattern->file, $pattern->line, $pattern->source, $pattern->fileOffset);
+            $key = $this->createPatternKey(self::displayPath($pattern->file, $workingDirectory), $pattern->line, $pattern->source, $pattern->fileOffset);
             $map[$key] = [
                 'pattern' => $pattern->displayPattern ?? $pattern->pattern,
                 'location' => $pattern->location,
@@ -314,7 +474,7 @@ final readonly class LintService
     }
 
     /**
-     * @param array{file: string, line: int, column?: int, fileOffset?: int|null, source?: string|null, ...} $item
+     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $item
      *
      * @return LintResult
      */
@@ -323,7 +483,7 @@ final readonly class LintService
         return [
             'file' => $item['file'],
             'line' => $item['line'],
-            'column' => $item['column'] ?? 1,
+            'column' => $item['column'] ?? null,
             'fileOffset' => $item['fileOffset'] ?? null,
             'source' => $item['source'] ?? null,
             'pattern' => $pattern,

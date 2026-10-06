@@ -87,7 +87,7 @@ final class WitnessXmlFormatterTest extends TestCase
         $pumps = [];
         foreach ((array) ($payload['results'] ?? []) as $result) {
             foreach ((array) (\is_array($result) ? ($result['issues'] ?? []) : []) as $issue) {
-                if (\is_array($issue) && 'regex.lint.redos' === ($issue['issueId'] ?? null)) {
+                if (\is_array($issue) && 'regex.lint.redos' === ($issue['issue_id'] ?? null)) {
                     $analysis = $issue['analysis'] ?? null;
                     $witness = \is_array($analysis) ? ($analysis['witness'] ?? null) : null;
                     $pumps[] = \is_array($witness) ? ($witness['pump'] ?? null) : null;

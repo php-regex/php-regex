@@ -215,4 +215,19 @@ final class LintArgumentParserTest extends TestCase
         yield 'a value after the sign that starts with a dash' => ['args' => ['src', '--baseline=-known.json', '--generate-baseline=-new.json', 'lib'], 'baseline' => '-known.json', 'generateBaseline' => '-new.json'];
         yield 'neither option' => ['args' => ['src', 'lib'], 'baseline' => null, 'generateBaseline' => null];
     }
+
+    public function test_parse_tells_paths_given_from_configured_ones(): void
+    {
+        $parser = new LintArgumentParser();
+
+        $configured = $parser->parse(['--format=json'], ['paths' => ['lib']]);
+        $given = $parser->parse(['src', '--format', 'github'], ['paths' => ['lib']]);
+
+        $this->assertFalse($configured->pathsGiven);
+        $this->assertSame(['lib'], $configured->arguments?->paths);
+        $this->assertSame('json', $configured->arguments->format);
+        $this->assertTrue($given->pathsGiven);
+        $this->assertSame(['src'], $given->arguments?->paths);
+        $this->assertSame('github', $given->arguments->format);
+    }
 }
