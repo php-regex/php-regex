@@ -150,6 +150,9 @@ cannot tell, the answer widens rather than guesses:
 The facts are checked against the engine: for patterns covering each case above, every
 `$matches` PHP writes under each flag combination must follow them, and PHPStan, reading
 the written shape, must accept it.
+The shapes are also checked against the engine on a parity corpus of a few hundred
+`preg_match()` cases, some taken from the php-src PCRE tests: under each flag
+combination, every shape holds every `$matches` PHP writes, key by key.
 
 ## What a release may change
 

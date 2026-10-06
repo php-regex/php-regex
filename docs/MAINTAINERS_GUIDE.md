@@ -494,6 +494,33 @@ class RegexProcessor
 
 ---
 
+## Capture Shapes Next to PHPStan
+
+The default test run replays the capture shapes on the engine over a corpus of
+`preg_match()` cases, `tests/Fixtures/CaptureShapeParity/cases.php`: for each pattern
+and each flag set, the shape must hold every `$matches` PHP writes, key by key.
+
+A report puts the type PHPStan infers for `$matches` next to the shape PHPRegex writes,
+for every row of that corpus. It is left out of the default run; run it alone, and it
+writes `var/capture-shape-parity.md`:
+
+```bash
+tools/phpunit/vendor/bin/phpunit --group capture-shape-parity
+```
+
+The report lists the rows where either type refuses a `$matches` the engine writes,
+and compares the two types (equal, narrower, wider or incomparable). It fails only when
+PHPRegex's shape refuses one; what PHPStan infers is recorded, never asserted.
+
+The time to read a shape from the pattern string, over that corpus and over the lint
+corpus:
+
+```bash
+tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
+```
+
+---
+
 ## Related Documentation
 
 | Topic           | File                                       |
