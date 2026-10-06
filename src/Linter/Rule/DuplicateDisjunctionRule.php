@@ -65,7 +65,11 @@ final class DuplicateDisjunctionRule extends AbstractLintRule
             $compiler = new PatternPrinter();
             $signature = $alt->accept($compiler);
             if (isset($seen[$signature])) {
-                $display = DisplayEscaper::escape($signature);
+                // The branch as written, a piece of the body spelled in the
+                // pattern's mode; the printed form when the body is unknown.
+                $start = $alt->getStartPosition();
+                $written = substr($context->pattern->source, $start, $alt->getEndPosition() - $start);
+                $display = DisplayEscaper::escapeFragment('' !== $written ? $written : $signature, $context->pattern->unicodeMode);
 
                 return [new RuleViolation(
                     'regex.lint.alternation.duplicateDisjunction',

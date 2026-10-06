@@ -227,6 +227,17 @@ and gets the same verdict under a tiny limit as under the default.
 - **A refused raise changes nothing.** With `ini_set()` or `ini_get()`
   disabled, or the limits fixed by `php_admin_value`, the library runs under
   the current limits, as it did before it raised them.
+- **`PcreEngine` with `ini_set()` disabled.** A call that asks for explicit
+  limits (`PcreLimits`, as the ReDoS confirmation does) does not run: it
+  returns a `PcreMatch` with a `null` result, the error `The PCRE limits could
+  not be set: ini_set() is disabled` and the code `PREG_INTERNAL_ERROR`, and
+  `matchAll()` returns `null`. A pattern the engine runs without the JIT by
+  turning `pcre.jit` off (one whose delimiters leave no room for
+  `(*NO_JIT)`) runs with your settings instead. The engine reads no setting
+  with `ini_get()`: it restores the value `ini_set()` hands back, so a
+  disabled `ini_get()` alone changes nothing. Limits fixed by
+  `php_admin_value` are not detected: a call that asks for explicit limits
+  then runs under the fixed ones.
 - **`preg_last_error()`** after a library call reports the library's own last
   regex, not yours: read it right after your own `preg_*` call.
 - **A fatal error inside such a call** ends the request before the limits are

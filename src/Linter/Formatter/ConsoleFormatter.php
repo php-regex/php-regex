@@ -135,10 +135,11 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
         $hasLocation = \is_string($location) && '' !== $location;
 
-        // Build a compact file:line prefix, e.g. "src/Console/Command.php:679".
+        // Build a compact file:line prefix, e.g. "src/Console/Command.php:679",
+        // the file name in display form, on one line.
         $prefix = '';
         if ('' !== $file && $line > 0) {
-            $fileLine = $file.':'.$line;
+            $fileLine = ReportSpelling::displayField($file).':'.$line;
             if ($column > 1) {
                 $fileLine .= ':'.$column;
             }
@@ -149,7 +150,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
                 $prefix = $fileLine;
             }
         } elseif ('' !== $file) {
-            $prefix = $file;
+            $prefix = ReportSpelling::displayField($file);
         } elseif ($line > 0) {
             $prefix = (string) $line;
         }
@@ -169,7 +170,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         }
 
         if ($hasLocation) {
-            $output .= \sprintf('     %s'.\PHP_EOL, $this->color(self::ARROW_LABEL.' '.$location, self::CYAN));
+            $output .= \sprintf('     %s'.\PHP_EOL, $this->color(self::ARROW_LABEL.' '.ReportSpelling::displayField($location), self::CYAN));
         }
 
         return $output;
@@ -187,14 +188,14 @@ class ConsoleFormatter extends AbstractOutputFormatter
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->issueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
+            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue, $pattern));
 
             // An invalid pattern says it all in its message and caret; a
             // ReDoS error still needs its hint, which opens on the evidence,
             // and a lint rule at Error its fix.
             $hint = $issue['hint'] ?? null;
             if (!isset($issue['validation']) && \is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
-                $formattedHint = $this->formatHint($hint);
+                $formattedHint = ReportSpelling::displayText($this->formatHint($hint));
                 if ('' !== $formattedHint) {
                     $parts[] = \sprintf('         %s'.\PHP_EOL, $this->dim(self::ARROW_LABEL.' '.$formattedHint));
                 }
@@ -255,8 +256,10 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
     private function formatMultilineDiff(string $old, string $new): string
     {
-        $oldLines = $this->splitLines($old);
-        $newLines = $this->splitLines($new);
+        // Each line is spelled in its pattern's mode, so no character that
+        // moves or hides text reaches the terminal raw.
+        $oldLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $old), $this->splitLines($old));
+        $newLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $new), $this->splitLines($new));
 
         $ops = $this->diffLines($oldLines, $newLines);
         if (empty($ops)) {
@@ -525,20 +528,21 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * The message of an issue, and under it the caret snippet its validation
-     * carries apart: the line of the pattern with the character at fault.
+     * The message of an issue in display form, and under it the caret
+     * snippet its validation carries apart: the line of the pattern with the
+     * character at fault, spelled in the pattern's mode.
      *
      * @param array<array-key, mixed> $issue
      */
-    private function messageWithSnippet(array $issue): string
+    private function messageWithSnippet(array $issue, ?string $pattern): string
     {
-        $message = \is_string($issue['message'] ?? null) ? $issue['message'] : '';
+        $message = ReportSpelling::displayText(\is_string($issue['message'] ?? null) ? $issue['message'] : '');
         $validation = $issue['validation'] ?? null;
         if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
             return $message;
         }
 
-        return $message."\n".$validation->caretSnippet;
+        return $message."\n".ReportSpelling::displaySnippet($validation->caretSnippet, $pattern);
     }
 
     private function displaySingleIssue(string $badge, string $message): string

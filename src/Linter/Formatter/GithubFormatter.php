@@ -48,7 +48,7 @@ final class GithubFormatter extends AbstractOutputFormatter
 
     public function formatError(string $message): string
     {
-        return "::error::{$this->escapeGithubData($message)}";
+        return "::error::{$this->escapeGithubData(ReportSpelling::displayText($message))}";
     }
 
     /**
@@ -97,7 +97,7 @@ final class GithubFormatter extends AbstractOutputFormatter
 
         $properties = [];
         if ('' !== $file) {
-            $properties[] = 'file='.$this->escapeGithubProperty($file);
+            $properties[] = 'file='.$this->escapeGithubProperty(ReportSpelling::displayText($file));
             $properties[] = 'line='.$line;
             $properties[] = 'col='.$column;
         }
@@ -135,39 +135,40 @@ final class GithubFormatter extends AbstractOutputFormatter
      */
     private function formatProblemMessage(Diagnostic $problem, array $context): string
     {
-        $parts = [$problem->message];
+        $parts = [ReportSpelling::displayText($problem->message)];
         $location = $context['location'] ?? null;
 
         if (\is_string($location) && '' !== $location) {
-            $parts[] = 'Location: '.$location;
+            $parts[] = 'Location: '.ReportSpelling::displayField($location);
         }
 
         if (null !== $problem->snippet && '' !== $problem->snippet) {
-            $parts[] = $problem->snippet;
+            $parts[] = ReportSpelling::displaySnippet($problem->snippet, $context['pattern'] ?? null);
         }
 
         if (null !== $problem->suggestion && '' !== $problem->suggestion) {
-            $parts[] = 'Suggestion: '.$problem->suggestion;
+            $parts[] = 'Suggestion: '.ReportSpelling::displayText($problem->suggestion);
         }
 
         return implode("\n", $parts);
     }
 
+    /**
+     * A property value as the runner reads it back: the data escapes, then
+     * ":" and ",", which would otherwise end the property.
+     */
     private function escapeGithubProperty(string $value): string
     {
-        return str_replace(
-            ['%', "\n", "\r"],
-            ['%25', '%0A', '%0D'],
-            $value,
-        );
+        return str_replace([':', ','], ['%3A', '%2C'], $this->escapeGithubData($value));
     }
 
+    /**
+     * The message of a workflow command as the runner reads it back: "%"
+     * first, so that the "%" of the escapes written after it stays as is,
+     * then the carriage return and the line feed.
+     */
     private function escapeGithubData(string $value): string
     {
-        return str_replace(
-            ["\n", "\r"],
-            ['%0A', '%0D'],
-            $value,
-        );
+        return str_replace(['%', "\r", "\n"], ['%25', '%0D', '%0A'], $value);
     }
 }

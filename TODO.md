@@ -103,25 +103,14 @@ Sound in both cases, but verdicts the proof could give:
   the newline were always `\n`: six false warnings under `(*CR)`, `(*CRLF)`,
   `(*NUL)`, `(*ANY)` and `(*ANYCRLF)`, and `/(*CR)a$\n/` (impossible) is
   missed.
-- A pattern shown under `/x` does not read back as itself: raw whitespace and
-  `#` comments change meaning once spelled `\n`.
-- `regex lint --baseline` drops `column` and `fileOffset` from every result.
 - A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
   whole before extraction, which double-encodes its UTF-8 patterns.
 - `/\Q\x\E/` parses as a code point instead of the text `\x`.
-- C1 controls (U+0080-U+009F) and bidi overrides are shown raw in reports.
 - The message for `\P{L}` without `/u` names `\p{L}`.
-- The Laravel extractor's own `regex:` pattern backtracks exponentially on a
-  run of backslashes with no closing quote (700, then 85,972, then 10,573,735
-  steps); past about 25 backslashes `preg_match_all` gives up and every rule
-  in that file is skipped silently.
 - A lookahead before a loop yields a ReDoS witness with an empty suffix, which
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
   the witness is wrong.
-- The persistent DFA cache is keyed on the target PCRE version, but the
-  character sets inside come from the running engine. To check whether two
-  runtimes can share one entry.
 - Error offsets and messages inside an alphabetic assertion body differ from
   PCRE: `/(?*[a)/` says "Invalid group modifier syntax" at 3 (PCRE: "missing
   terminating ]" at 6); `(?*a\` reports 4 (PCRE: 5); an unclosed class or a
@@ -171,6 +160,28 @@ Sound in both cases, but verdicts the proof could give:
     (`/a(?#x\ny)b/` then no longer matches `"ab"`), and puts newlines before
     `|` in a pattern without `x`.
 - `~(*CR)(**\Q…~x` is accepted; PCRE refuses it at offset 7.
+- The console form of a pattern does not always read back as itself:
+  - an escape it inserts can hold an unusual delimiter (`}a\x{202E}b}u`
+    with `}` as delimiter), and a control-byte delimiter is itself escaped
+    (`\x01a b\x01x`);
+  - an invalid pattern can read back as a valid one: `\c` before a control
+    or non-ASCII byte (`/\c\u{85}/` shows as `\c\xC2\x85`), invalid UTF-8
+    under `/u` (`\xA0` compiles once shown);
+  - with a bracket delimiter, a `#` comment dropped under `x` can hold a
+    bracket PHP counted, so the shown form no longer closes (`{{#,x} }x`
+    shows as `{{}x`);
+  - a message quoting a pattern without `/u` spells a hidden character
+    `\x{202E}`, which PCRE refuses in that pattern.
+- `regex redos` with `--jit`, `--backtrack-limit`, `--recursion-limit` or
+  `--time-limit` stops on a fatal error where `ini_set()` is in
+  `disable_functions`.
+- A railroad label spells quoted text as text, so `{2}` after an atom
+  reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
+  (PCRE2 10.44 and older) before `{` is not respelled either.
+- The caret under a lint snippet is placed by bytes, so each multi-byte
+  character before the fault moves it one column right.
+- In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
+  reads the same as the four characters `\xHH` already in a pattern.
 - The printer rewrites `(?P=אABC)`, a reference by a non-ASCII name, as
   `\k<אABC>`, where an ASCII name keeps its spelling.
 - `regex.lint.escape.suspicious` warns on `/\N{U+41}/u`, which is valid and
@@ -182,11 +193,6 @@ Sound in both cases, but verdicts the proof could give:
 - The language server's flag completion is off by one (the occurrence starts
   at the opening quote): with the cursor right after `/abc/`, no flag is
   offered.
-- With `ini_get()` or `ini_set()` in `disable_functions`, the engine throws an
-  `\Error` when it runs a pattern under explicit limits (ReDoS confirmation)
-  or turns the JIT off for one that cannot take `(*NO_JIT)`. Without
-  `ini_get()` it cannot set the caller's value back: decide whether it then
-  changes the setting anyway or runs the pattern as is.
 - The JavaScript transpiler refuses `\k'n'`, the same backreference as
   `\k<n>`.
 

@@ -938,7 +938,8 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Unicode     | `regex.lint.unicode.shorthandWithoutU` (off by default)                                   | style    | Add the `/u` flag                 |
 | Inline      | `regex.lint.flag.redundant`, `.override`                                                  | warning  | Remove or scope the inline flag   |
 | Complexity  | `regex.lint.complexity`                                                                   | warning  | Split the pattern                 |
-| ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above | Use possessive quantifiers |
+| ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above or proves one it cannot replay | Use possessive quantifiers |
+| Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted (Laravel `regex:lint`, for the `regex:` validation rules it reads) | error | Fix what the message names |
 
 ---
 

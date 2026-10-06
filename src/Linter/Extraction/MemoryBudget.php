@@ -40,7 +40,7 @@ final class MemoryBudget
     {
         $limit = self::limitInBytes();
         if ($limit <= 0) {
-            // No limit configured: nothing to stay under.
+            // No limit configured, or none readable: nothing to stay under.
             return true;
         }
 
@@ -50,10 +50,16 @@ final class MemoryBudget
     }
 
     /**
-     * The memory_limit ini value in bytes, or -1 when unlimited.
+     * The memory_limit ini value in bytes, or -1 when unlimited or when it
+     * cannot be read (ini_get() in disable_functions).
      */
     private static function limitInBytes(): int
     {
+        if (!\function_exists('ini_get')) {
+            // Reached only where ini_get() is disabled; the tests run that case in a child PHP process.
+            return -1;
+        }
+
         $limit = ini_get('memory_limit');
         if (!\is_string($limit) || '' === $limit) {
             return -1;

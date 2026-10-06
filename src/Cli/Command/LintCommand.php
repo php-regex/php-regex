@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\Command;
 
+use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\AnalysisService;
@@ -27,7 +28,6 @@ use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -102,6 +102,16 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         $formatterRegistry = new FormatterRegistry();
         if (!$formatterRegistry->has($format)) {
             return $this->fail($output, $json, \sprintf('Unknown format: %s. Available formats: %s', $format, implode(', ', $formatterRegistry->getNames())), self::INVALID);
+        }
+
+        // Read before the run: a baseline that cannot be used stops it.
+        $baseline = null;
+        if (null !== $arguments->baseline) {
+            try {
+                $baseline = LintBaseline::load($arguments->baseline);
+            } catch (CliException $e) {
+                return $this->fail($output, $json, $e->getMessage(), self::INVALID);
+            }
         }
 
         try {
@@ -279,14 +289,14 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         // A generated baseline must cover the FULL report, before any
         // existing baseline filters issues out — otherwise previously
         // baselined issues silently vanish from the new baseline.
-        if ($arguments->generateBaseline) {
-            $baseline = $this->generateBaseline($report);
-            file_put_contents($arguments->generateBaseline, json_encode($baseline, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        if (null !== $arguments->generateBaseline) {
+            if (false === @file_put_contents($arguments->generateBaseline, LintBaseline::generate($report)."\n")) {
+                return $this->fail($output, $json, 'Could not write the baseline to '.$arguments->generateBaseline, self::INVALID);
+            }
         }
 
-        if ($arguments->baseline) {
-            $baseline = $this->loadBaseline($arguments->baseline);
-            $report = $this->filterReportByBaseline($report, $baseline);
+        if (null !== $baseline) {
+            $report = $baseline->filter($report);
         }
 
         $output->write($formatter->format($report));
@@ -307,8 +317,12 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         // Only the console report shares stdout with status lines.
         $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
 
-        if ($arguments->generateBaseline) {
+        if (null !== $arguments->generateBaseline) {
             $status("Baseline generated at {$arguments->generateBaseline}\n");
+        }
+
+        if (null !== $baseline && $baseline->legacy) {
+            $status("Note: the baseline {$arguments->baseline} is in the 1.x format, matched on file, line and message; regenerate it with --generate-baseline to match issues whose line or message changed.\n");
         }
 
         if (null !== $outputFile) {
@@ -361,106 +375,6 @@ final class LintCommand extends AbstractCommand implements CommandInterface
         }
 
         return false;
-    }
-
-    /**
-     * @return array<array{file: string, line: int, message: string, type: string, pattern?: string|null}>
-     */
-    private function generateBaseline(LintReport $report): array
-    {
-        $baseline = [];
-        foreach ($report->results as $result) {
-            foreach ($result['issues'] as $issue) {
-                $relativeFile = $this->toRelativePath($issue['file']);
-                $baseline[] = [
-                    'file' => $relativeFile,
-                    'line' => $issue['line'],
-                    'message' => $issue['message'],
-                    'type' => $issue['type'],
-                    'pattern' => $issue['pattern'] ?? null,
-                ];
-            }
-        }
-
-        return $baseline;
-    }
-
-    /**
-     * @return array<array{file: string, line: int, message: string, type: string, pattern?: string|null}>
-     */
-    private function loadBaseline(string $file): array
-    {
-        if (!file_exists($file)) {
-            return [];
-        }
-        $content = file_get_contents($file);
-        if (false === $content) {
-            return [];
-        }
-        /** @var array<array{file: string, line: int, message: string, type: string, pattern?: string|null}> $data */
-        $data = json_decode($content, true);
-
-        return is_array($data) ? $data : [];
-    }
-
-    /**
-     * @param array<array{file: string, line: int, message: string, type: string, pattern?: string|null}> $baseline
-     */
-    private function filterReportByBaseline(LintReport $report, array $baseline): LintReport
-    {
-        $baselineMap = [];
-        foreach ($baseline as $item) {
-            $key = $item['file'].':'.$item['line'].':'.$item['message'];
-            $baselineMap[$key] = true;
-        }
-
-        $filteredResults = [];
-
-        foreach ($report->results as $result) {
-            $filteredIssues = [];
-            foreach ($result['issues'] as $issue) {
-                $relativeFile = $this->toRelativePath($issue['file']);
-                $key = $relativeFile.':'.$issue['line'].':'.$issue['message'];
-                if (!isset($baselineMap[$key])) {
-                    $filteredIssues[] = $issue;
-                }
-            }
-            if (!empty($filteredIssues) || !empty($result['optimizations']) || !empty($result['problems'])) {
-                $filteredResults[] = [
-                    'file' => $result['file'],
-                    'line' => $result['line'],
-                    'source' => $result['source'] ?? null,
-                    'pattern' => $result['pattern'],
-                    'location' => $result['location'] ?? null,
-                    'issues' => $filteredIssues,
-                    'optimizations' => $result['optimizations'],
-                    'problems' => $result['problems'],
-                ];
-            }
-        }
-
-        return new LintReport($filteredResults, LintStatsCounter::count($filteredResults));
-    }
-
-    private function toRelativePath(string $path): string
-    {
-        $normalizedPath = str_replace('\\', '/', $path);
-        $cwd = getcwd();
-        if (false === $cwd) {
-            return $normalizedPath;
-        }
-
-        $normalizedCwd = rtrim(str_replace('\\', '/', $cwd), '/');
-        if ('' === $normalizedCwd) {
-            return $normalizedPath;
-        }
-
-        $prefix = $normalizedCwd.'/';
-        if (str_starts_with($normalizedPath, $prefix)) {
-            return substr($normalizedPath, \strlen($prefix));
-        }
-
-        return $normalizedPath;
     }
 
     /**

@@ -63,6 +63,18 @@ reported under `regex.redos`, with one of three messages:
 When a rewrite of the pattern is proven to match the same subjects and proven
 linear, the tip prints it: `Proven repair: /(a+)$/ (same subjects, same matches, linear).`
 
+The verdicts and the character sets behind them come from the PCRE2 that runs
+PHPStan. PHPStan's result cache does not know when a distribution upgrades
+libpcre2 under an unchanged PHP: clear it (`vendor/bin/phpstan clear-result-cache`)
+after such an upgrade.
+
+`<pattern>` is the pattern as the console shows it, cut after 50
+characters: C1 controls, Unicode format characters (bidirectional overrides,
+zero-width spaces, tag characters…) and line separators
+are written as escapes (`\x{202E}` under `/u`, `\xE2\x80\xAE` otherwise), a
+pattern under `x` is written on one line without its `#` comments, and the cut
+never splits a character or an escape.
+
 The message holds the verdict class and the pattern only, and the text of each
 of the three stays the same for all of 2.x. The severity, how the verdict was
 reached and the attack are in the tip. Which patterns are reported is not

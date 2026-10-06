@@ -14,15 +14,20 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
+use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Diagnostic;
+use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -43,6 +48,11 @@ final class LintCommand extends Command
     private const PROGRESS_BAR_WIDTH = 28;
     private const MESSAGE_PAD_LENGTH = 15;
     private const FORMAT_CONSOLE = 'console';
+
+    /**
+     * The identifier of a source file an extractor could not read.
+     */
+    private const ISSUE_ID_SOURCE_UNREADABLE = 'regex.lint.source.unreadable';
 
     /**
      * Keys of config/php-regex.php that 2.0 no longer reads, with what
@@ -217,6 +227,8 @@ final class LintCommand extends Command
             return $this->renderCollectionFailure($format, $e->getMessage());
         }
 
+        $unreadFiles = $skipValidators ? [] : $this->unreadFileResults();
+
         $patternCount = \count($patterns);
         if ($showProgress) {
             $this->newLine();
@@ -224,7 +236,7 @@ final class LintCommand extends Command
             $this->newLine();
         }
 
-        if (empty($patterns)) {
+        if (empty($patterns) && [] === $unreadFiles) {
             return $this->renderEmptyResults($format);
         }
 
@@ -252,9 +264,10 @@ final class LintCommand extends Command
             $this->newLine(2);
         }
 
+        $results = [...$report->results, ...$unreadFiles];
         $report = new LintReport(
-            $this->sortResultsByFileAndLine($report->results),
-            $report->stats,
+            $this->sortResultsByFileAndLine($results),
+            LintStatsCounter::count($results),
         );
 
         $stats = $report->stats;
@@ -271,6 +284,37 @@ final class LintCommand extends Command
         }
 
         return $stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * A file the validation rule extractor could not read fails the run:
+     * one error on its first line, named after the file and identified as
+     * regex.lint.source.unreadable, instead of the rules it holds.
+     *
+     * @phpstan-return list<LintResult>
+     */
+    private function unreadFileResults(): array
+    {
+        /** @var ValidationRulePatternSource $validators */
+        $validators = $this->laravel->make(ValidationRulePatternSource::class);
+
+        $results = [];
+        foreach ($validators->failures() as $failure) {
+            $results[] = [
+                'file' => $failure['file'],
+                'line' => 1,
+                'column' => 1,
+                'fileOffset' => null,
+                'source' => 'validation',
+                'pattern' => null,
+                'location' => 'Laravel validation rule',
+                'issues' => [['type' => 'error', 'message' => $failure['message'], 'file' => $failure['file'], 'line' => 1, 'issueId' => self::ISSUE_ID_SOURCE_UNREADABLE, 'source' => 'validation']],
+                'optimizations' => [],
+                'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $failure['message'], self::ISSUE_ID_SOURCE_UNREADABLE)],
+            ];
+        }
+
+        return $results;
     }
 
     private function showBanner(int $jobs, ProjectTarget $target): void

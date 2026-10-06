@@ -58,16 +58,19 @@ final class LintCommandBaselineTest extends TestCase
 
         $content = file_get_contents($baselineFile);
         $this->assertIsString($content);
-        /** @var array<array{file: string, line: int, message: string, type: string, pattern?: string|null}> $baseline */
+        /** @var array{version: int, issues: array<array{file: string, line: int, message: string, type: string, issueId: string, pattern: string}>} $baseline */
         $baseline = json_decode($content, true);
         $this->assertIsArray($baseline);
-        $this->assertCount(1, $baseline);
+        $this->assertSame(1, $baseline['version']);
+        $this->assertCount(1, $baseline['issues']);
 
-        $issue = $baseline[0];
+        $issue = $baseline['issues'][0];
         $this->assertArrayHasKey('file', $issue);
         $this->assertArrayHasKey('line', $issue);
         $this->assertArrayHasKey('message', $issue);
         $this->assertArrayHasKey('type', $issue);
+        $this->assertArrayHasKey('issueId', $issue);
+        $this->assertIsString($issue['pattern']);
 
         // File should be relative
         $this->assertStringStartsNotWith('/', $issue['file']);
@@ -99,6 +102,63 @@ final class LintCommandBaselineTest extends TestCase
 
         $this->assertSame(0, $exitCode); // No errors after filtering
         $this->assertStringNotContainsString('Unknown regex flag', $buffer);
+    }
+
+    /**
+     * A 1.x baseline, a plain list matched on file, line and message, is
+     * still read: its issues stay filtered, and the report suggests
+     * generating the baseline again.
+     */
+    public function test_a_1x_list_baseline_still_filters_its_issues(): void
+    {
+        $dir = $this->makeTempDir();
+        $file = realpath($dir).'/test.php';
+        copy(__DIR__.'/../../../Fixtures/Lint/unclosed_character_class.php', $file);
+
+        $command = $this->makeLintCommand();
+        $generated = $dir.'/generated.json';
+        $command->run($this->makeInput([$file, '--generate-baseline='.$generated]), new Output(true, true));
+
+        $current = json_decode((string) file_get_contents($generated), true);
+        $this->assertIsArray($current);
+        $this->assertIsArray($current['issues']);
+        $legacy = [];
+        foreach ($current['issues'] as $issue) {
+            $this->assertIsArray($issue);
+            $legacy[] = ['file' => $issue['file'], 'line' => $issue['line'], 'message' => $issue['message'], 'type' => $issue['type']];
+        }
+        $this->assertNotSame([], $legacy);
+        $legacyFile = $dir.'/legacy.json';
+        file_put_contents($legacyFile, json_encode($legacy, \JSON_PRETTY_PRINT));
+
+        // Not quiet: the note goes where the report's status lines go.
+        $errors = fopen('php://memory', 'w+');
+        $this->assertIsResource($errors);
+        $exitCode = 0;
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([$file, '--baseline='.$legacyFile]), new Output(false, false, '#', '-', $errors)), $exitCode);
+        rewind($errors);
+        $buffer .= (string) stream_get_contents($errors);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringNotContainsString('Unknown regex flag', $buffer);
+        $this->assertMatchesRegularExpression('/regenerat/i', $buffer);
+    }
+
+    /**
+     * An empty 1.x baseline is a valid baseline that filters nothing.
+     */
+    public function test_an_empty_1x_list_baseline_is_accepted(): void
+    {
+        $dir = $this->makeTempDir();
+        $file = realpath($dir).'/test.php';
+        copy(__DIR__.'/../../../Fixtures/Lint/unclosed_character_class.php', $file);
+        $baselineFile = $dir.'/empty.json';
+        file_put_contents($baselineFile, '[]');
+
+        $exitCode = 0;
+        $this->captureOutput(fn (): int => $this->makeLintCommand()->run($this->makeInput([$file, '--baseline='.$baselineFile]), new Output(true, true)), $exitCode);
+
+        $this->assertSame(1, $exitCode);
     }
 
     private function makeLintCommand(): LintCommand

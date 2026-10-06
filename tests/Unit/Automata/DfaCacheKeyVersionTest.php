@@ -103,6 +103,108 @@ final class DfaCacheKeyVersionTest extends TestCase
     }
 
     /**
+     * Two engines judging the same target with the same options get two
+     * keys; the same engine gets the same key every time.
+     */
+    #[Test]
+    public function test_the_key_changes_with_the_running_engine_only(): void
+    {
+        $options = new SolverOptions();
+        $target = 'php8.4/pcre10.42';
+
+        $older = LanguageSolver::dfaCacheKey('/a+b/', $target, $options, '10.44 2024-06-07');
+        $newer = LanguageSolver::dfaCacheKey('/a+b/', $target, $options, '10.49 2026-01-01');
+
+        $this->assertNotSame($older, $newer);
+        $this->assertSame($newer, LanguageSolver::dfaCacheKey('/a+b/', $target, $options, '10.49 2026-01-01'));
+        // Distro builds share major.minor: the full version string, date
+        // included, keeps them apart.
+        $this->assertNotSame($newer, LanguageSolver::dfaCacheKey('/a+b/', $target, $options, '10.49 2026-02-02'));
+    }
+
+    /**
+     * A DFA built under one transition budget is not served for another:
+     * the budget decides whether the build stops, so each one, and no
+     * budget at all, is a key of its own.
+     */
+    #[Test]
+    public function test_the_key_changes_with_the_transition_budget(): void
+    {
+        $keys = array_map(
+            static fn (?int $budget): string => LanguageSolver::dfaCacheKey('/a+b/', 'php8.4/pcre10.42', new SolverOptions(maxTransitionsProcessed: $budget), '10.49 2026-01-01'),
+            [null, 10, 1_000_000],
+        );
+
+        $this->assertCount(3, array_unique($keys));
+    }
+
+    /**
+     * The character sets a DFA is built from come from the running engine,
+     * whatever PCRE2 is judged: two runtimes judging the same target with
+     * different engines must not share a DFA. A DFA stored under the key
+     * that leaves the running engine out is not reused.
+     */
+    #[Test]
+    public function test_a_dfa_stored_under_a_key_without_the_running_engine_is_not_reused(): void
+    {
+        $options = new SolverOptions();
+        $parser = RegexParser::create(['pcre_version' => '10.42']);
+        $stale = (new LanguageSolver($parser))->compile('/b/', $options);
+        $cache = new class implements DfaCacheInterface {
+            /**
+             * @var array<string, Dfa>
+             */
+            public array $entries = [];
+
+            /**
+             * @var list<string>
+             */
+            public array $asked = [];
+
+            public function get(string $key): ?Dfa
+            {
+                $this->asked[] = $key;
+
+                return $this->entries[$key] ?? null;
+            }
+
+            public function set(string $key, Dfa $dfa): void
+            {
+                $this->entries[$key] = $dfa;
+            }
+        };
+        $withoutEngine = self::keyWithoutTheRunningEngine('/a/', $parser, $options);
+        $cache->entries[$withoutEngine] = $stale;
+
+        $compiled = (new LanguageSolver($parser, $cache))->compile('/a/', $options);
+
+        $this->assertNotSame($stale, $compiled, 'A DFA stored without the running engine in its key answered.');
+        $this->assertNotContains($withoutEngine, $cache->asked);
+        $this->assertCount(1, $cache->asked);
+    }
+
+    /**
+     * The key as the solver builds it with the version of the analysis but
+     * without the running engine: the pattern, the version, the PHP and
+     * PCRE2 judged, and the options.
+     */
+    private static function keyWithoutTheRunningEngine(string $pattern, RegexParser $parser, SolverOptions $options): string
+    {
+        return hash('sha256', implode('|', [
+            $pattern,
+            RegexParser::CACHE_VERSION,
+            $parser->target()->cacheKey(),
+            $options->matchMode->value,
+            $options->maxNfaStates,
+            $options->maxDfaStates,
+            $options->minimizeDfa ? '1' : '0',
+            $options->minimizationAlgorithm->value,
+            $options->determinizationAlgorithm->value,
+            $options->maxTransitionsProcessed ?? 'null',
+        ]));
+    }
+
+    /**
      * The key as the solver built it before the version entered it: the
      * pattern, the PHP and PCRE2 judged, and the options.
      */

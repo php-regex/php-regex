@@ -1026,12 +1026,10 @@ final readonly class AnalysisService
         }
 
         // A replayed witness already says what the engine did, in its own line.
-        if (RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation && null === $analysis->replayed) {
-            if ($analysis->confirmation->confirmed) {
-                $hints[] = 'Confirmation: bounded runtime checks observed evidence of excessive backtracking.';
-            } else {
-                $hints[] = 'Confirmation: bounded runtime checks found no evidence within limits.';
-            }
+        // Any other reported confirmation that did not confirm is a skipped
+        // one, which ran no check: its message gives the cause.
+        if (RedosMode::Confirmed === $analysis->mode && null === $analysis->replayed && true === $analysis->confirmation?->confirmed) {
+            $hints[] = 'Confirmation: bounded runtime checks observed evidence of excessive backtracking.';
         }
 
         $hints[] = 'Test with adversarial inputs like repeated strings followed by a non-matching character.';
@@ -1101,7 +1099,7 @@ final readonly class AnalysisService
 
     private function resolveRedosIssueType(RedosAnalysis $analysis): string
     {
-        if ($analysis->isConfirmed() && $analysis->exceedsThreshold(RedosSeverity::High)) {
+        if (RedosVerdict::standsConfirmed($analysis) && $analysis->exceedsThreshold(RedosSeverity::High)) {
             return 'error';
         }
 
@@ -1115,8 +1113,10 @@ final readonly class AnalysisService
 
     /**
      * Whether a verdict is reported: at or above the threshold, and in
-     * confirmed mode only when the engine confirmed it, except a polynomial
-     * verdict, which is never replayed and is reported as it stands.
+     * confirmed mode only when the engine confirmed it, except a verdict the
+     * engine could not replay, a proof reported as a confirmed one and a
+     * heuristic verdict as a warning, and a polynomial verdict, which is
+     * never replayed and is reported as it stands.
      */
     private function shouldReportRedos(RedosAnalysis $analysis, RedosSeverity $threshold): bool
     {
@@ -1124,7 +1124,9 @@ final readonly class AnalysisService
             return false;
         }
 
-        if (RedosMode::Confirmed !== $this->redosMode || $analysis->isConfirmed()) {
+        if (RedosMode::Confirmed !== $this->redosMode
+            || RedosVerdict::standsConfirmed($analysis)
+            || RedosVerdict::replaySkipped($analysis)) {
             return true;
         }
 

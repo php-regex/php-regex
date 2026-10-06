@@ -139,6 +139,14 @@ ReDoS analysis defaults to **theoretical** mode: the pattern is read, never run.
 - a **polynomial** verdict is not replayed: the backtrack counter does not measure polynomial work, and a timing would depend on the machine. It is still reported, with `replayed: null`;
 - a **heuristic** verdict is run on inputs of growing length, as in 1.x.
 
+When the running PHP cannot set the limits of the replay (`ini_set()` in
+`disable_functions`), nothing is replayed: the verdict keeps its severity and
+its proof, `replayed` is `null`, and the confirmation's evidence reads
+`engine limits unavailable`. A proven exponential pattern is still reported
+at its severity, so it cannot slip under a threshold. A heuristic verdict
+whose replay was skipped is reported by `regex lint` as a warning, its
+message noting that it was not replayed and why.
+
 ```bash
 vendor/bin/regex analyze '/(a+)+b/' --redos-mode=confirmed
 ```
@@ -195,7 +203,7 @@ echo $analysis->confirmation->samples[0]->inputLength, "\n"; // 18
 echo $analysis->confirmation->samples[0]->pregError, "\n";   // Backtrack limit exhausted
 ```
 
-Only a verdict the engine reproduced, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a ReDoS verdict PHP has not reproduced (a `lint` run still fails on a pattern that does not compile, or on a lint rule of error severity).
+Only a verdict the engine reproduced, or a proven one it could not replay because `ini_set()` is disabled, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a theoretical verdict, nor from one the engine ran without reproducing it (a `lint` run still fails on a pattern that does not compile, or on a lint rule of error severity).
 
 ## Severity and thresholds
 

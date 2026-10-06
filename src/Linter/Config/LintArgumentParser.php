@@ -391,8 +391,11 @@ final class LintArgumentParser
                 continue;
             }
 
-            if (str_starts_with($arg, '--generate-baseline=')) {
-                $generateBaseline = substr($arg, \strlen('--generate-baseline='));
+            if ('--generate-baseline' === $arg || str_starts_with($arg, '--generate-baseline=')) {
+                $generateBaseline = '--generate-baseline' === $arg ? ($args[++$i] ?? '') : substr($arg, \strlen('--generate-baseline='));
+                if ('' === $generateBaseline || ('--generate-baseline' === $arg && str_starts_with($generateBaseline, '-'))) {
+                    return new LintParseResult(null, 'Missing value for --generate-baseline.');
+                }
                 $arguments = new LintArguments(
                     $arguments->paths,
                     $arguments->exclude,
@@ -420,8 +423,11 @@ final class LintArgumentParser
                 continue;
             }
 
-            if (str_starts_with($arg, '--baseline=')) {
-                $baseline = substr($arg, \strlen('--baseline='));
+            if ('--baseline' === $arg || str_starts_with($arg, '--baseline=')) {
+                $baseline = '--baseline' === $arg ? ($args[++$i] ?? '') : substr($arg, \strlen('--baseline='));
+                if ('' === $baseline || ('--baseline' === $arg && str_starts_with($baseline, '-'))) {
+                    return new LintParseResult(null, 'Missing value for --baseline.');
+                }
                 $arguments = new LintArguments(
                     $arguments->paths,
                     $arguments->exclude,

@@ -25,6 +25,10 @@ final readonly class PatternInfo
         public string $delimiter,
         public string $patternValue,
         public bool $unicodeMode,
+        /**
+         * The body as written, which node positions point into.
+         */
+        public string $source = '',
     ) {}
 
     public function hasFlag(string $flag): bool

@@ -28,6 +28,10 @@ use PHPRegex\Redos\Internal\InputGenerator;
  * at the backtrack limit of the options, within a fixed budget of work. The
  * failing sample is the shortest build that gives up there: the same input
  * does on every run, whatever the machine.
+ *
+ * Where the engine cannot set the limits (ini_set() disabled), nothing is
+ * run: the confirmation is not confirmed, holds no sample, and its evidence
+ * says the engine limits are unavailable.
  */
 final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
 {
@@ -43,6 +47,12 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
     public function confirm(string $regex, RedosAnalysis $analysis, ?ConfirmationOptions $options = null): Confirmation
     {
         $options ??= new ConfirmationOptions();
+        $skipped = WitnessReplayer::skipped($options);
+        if (null !== $skipped) {
+            // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
+            return $skipped;
+        }
+
         $limits = new PcreLimits($options->backtrackLimit, $options->recursionLimit);
 
         if (null !== $analysis->witness && RedosComplexity::Exponential === $analysis->complexity) {

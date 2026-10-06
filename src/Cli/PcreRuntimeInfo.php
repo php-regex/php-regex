@@ -62,8 +62,16 @@ final readonly class PcreRuntimeInfo implements \JsonSerializable
         ];
     }
 
+    /**
+     * The setting, or null when it is unknown or ini_get() is disabled.
+     */
     private static function iniValue(string $key): ?string
     {
+        if (!\function_exists('ini_get')) {
+            // Reached only where ini_get() is disabled; the tests run that case in a child PHP process.
+            return null;
+        }
+
         $value = ini_get($key);
         if (false === $value) {
             return null;
@@ -74,8 +82,8 @@ final readonly class PcreRuntimeInfo implements \JsonSerializable
 
     private static function iniInt(string $key): ?int
     {
-        $value = ini_get($key);
-        if (false === $value) {
+        $value = self::iniValue($key);
+        if (null === $value) {
             return null;
         }
 

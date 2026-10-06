@@ -30,6 +30,8 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
@@ -305,7 +307,7 @@ final class RegexPatternRule implements Rule
 
         return [RuleErrorBuilder::message(\sprintf(
             'preg_match() with %s is %s.',
-            $this->truncatePattern($pattern),
+            self::displayPattern($pattern),
             $match->phpExpression((new Standard())->prettyPrintExpr($subject)),
         ))
             ->line($lineNumber)
@@ -443,7 +445,7 @@ final class RegexPatternRule implements Rule
 
             $errors[] = RuleErrorBuilder::message(\sprintf(
                 self::redosMessageFormat($analysis),
-                $this->truncatePattern($pattern),
+                self::displayPattern($pattern),
             ))
                 ->line($lineNumber)
                 ->tip($this->getTipForReDoS($analysis, $pattern))
@@ -464,11 +466,10 @@ final class RegexPatternRule implements Rule
                 if (!$this->isOptimizationFormatSafe($pattern, $optimization->optimized)) {
                     continue;
                 }
-                $shortPattern = $this->truncatePattern($pattern);
-                $errors[] = RuleErrorBuilder::message(\sprintf('Regex pattern can be optimized: "%s"', $shortPattern))
+                $errors[] = RuleErrorBuilder::message(\sprintf('Regex pattern can be optimized: "%s"', self::displayPattern($pattern)))
                     ->line($lineNumber)
                     ->identifier(self::IDENTIFIER_OPTIMIZATION)
-                    ->tip(\sprintf('Consider using: %s', $optimization->optimized))
+                    ->tip(\sprintf('Consider using: %s', DisplayEscaper::escape($optimization->optimized)))
                     ->build();
             }
         }
@@ -507,9 +508,59 @@ final class RegexPatternRule implements Rule
         return null === (new PcreEngine())->compile($pattern);
     }
 
-    private function truncatePattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string
+    /**
+     * The pattern as the console shows it, on one line with the characters
+     * that move or hide text escaped in the pattern's own mode, cut after
+     * its first 50 characters (bytes when the rendering is not valid UTF-8)
+     * and followed by "..." when cut. The cut never splits a character, nor
+     * an escape sequence such as "\x{202E}", "\xC2", "\p{L}", "\pL" or "\d": the
+     * text stops before the sequence it would otherwise fall inside.
+     */
+    private static function displayPattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string
     {
-        return \strlen($pattern) > $length ? substr($pattern, 0, $length).'...' : $pattern;
+        $rendered = DisplayEscaper::escape($pattern);
+        $modifiers = 1 === LibraryPcre::match('//u', $rendered) ? 'su' : 's';
+        if (1 !== LibraryPcre::match('/\A.{'.$length.'}(?=.)/'.$modifiers, $rendered, $head)) {
+            return $rendered;
+        }
+
+        $cut = \strlen($head[0]);
+        for ($offset = 0; $offset < $cut; $offset++) {
+            if ('\\' !== $rendered[$offset]) {
+                continue;
+            }
+            $end = self::escapeSequenceEnd($rendered, $offset);
+            if ($end > $cut) {
+                $cut = $offset;
+
+                break;
+            }
+            $offset = $end - 1;
+        }
+
+        return substr($rendered, 0, $cut).'...';
+    }
+
+    /**
+     * The offset just past the escape sequence a backslash at $offset opens:
+     * "\x" with its braced code point or up to two hex digits; "\N" or "\o"
+     * with its braced operand ("\N{U+41}"); "\p" or "\P" with its braced
+     * operand ("\p{L}") or the one letter naming a property ("\pL", "\pZs"
+     * being "\pZ" then "s"); "\g" or
+     * "\k" with its operand in braces, angle brackets or quotes ("\g{1}",
+     * "\k<n>", "\k'n'"), or "\g" with an optionally signed number ("\g1",
+     * "\g-1", "\g+1"); "\c" with the character it controls; "\0" with up
+     * to two more octal digits; "\1" to "\9" with every digit after it, the
+     * octal escape or back reference PCRE reads there being no longer; an
+     * operand left open runs to the end of the text. Otherwise the backslash
+     * and the whole character after it.
+     */
+    private static function escapeSequenceEnd(string $text, int $offset): int
+    {
+        // The operand is optional: a lone backslash is a sequence of one.
+        LibraryPcre::match('/\G\\\\(?:x(?:\{[^}]*\}?|[0-9A-Fa-f]{0,2})|[No]\{[^}]*\}?|[Pp](?:\{[^}]*\}?|[A-Za-z])|[gk](?:\{[^}]*\}?|<[^>]*>?|\'[^\']*\'?)|g[+-]?[0-9]+|c(?:[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?|0[0-7]{0,2}|[1-9][0-9]*|[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?/', $text, $match, 0, $offset);
+
+        return $offset + max(1, \strlen($match[0] ?? ''));
     }
 
     private function firstLine(string $message): string

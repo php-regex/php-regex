@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * JUnit XML output formatter.
@@ -76,27 +75,27 @@ final class JunitFormatter extends AbstractOutputFormatter
 
             $lines[] = \sprintf(
                 '  <testcase name="%s" classname="%s:%d">',
-                $this->escapeXml($name),
-                $this->escapeXml($file),
+                ReportSpelling::xmlAttribute($name),
+                ReportSpelling::xmlAttribute($file),
                 $line,
             );
 
             if (LintSeverity::Critical === $problem->severity) {
                 $lines[] = \sprintf(
                     '    <error message="%s">%s</error>',
-                    $this->escapeXml($problem->message),
-                    $this->escapeXmlLines($message),
+                    ReportSpelling::xmlAttribute($problem->message),
+                    ReportSpelling::xmlText($message),
                 );
             } elseif (LintSeverity::Error === $problem->severity) {
                 $lines[] = \sprintf(
                     '    <failure message="%s">%s</failure>',
-                    $this->escapeXml($problem->message),
-                    $this->escapeXmlLines($message),
+                    ReportSpelling::xmlAttribute($problem->message),
+                    ReportSpelling::xmlText($message),
                 );
             } else {
                 $lines[] = \sprintf(
                     '    <system-out>%s</system-out>',
-                    $this->escapeXmlLines($message),
+                    ReportSpelling::xmlText($message),
                 );
             }
 
@@ -116,8 +115,8 @@ final class JunitFormatter extends AbstractOutputFormatter
             '  <testcase name="pattern-collection">',
             \sprintf(
                 '    <failure message="%s">%s</failure>',
-                $this->escapeXml($message),
-                $this->escapeXml($message),
+                ReportSpelling::xmlAttribute($message),
+                ReportSpelling::xmlText($message),
             ),
             '  </testcase>',
             '</testsuite>',
@@ -201,20 +200,5 @@ final class JunitFormatter extends AbstractOutputFormatter
         }
 
         return implode("\n", $parts);
-    }
-
-    private function escapeXml(string $value): string
-    {
-        return htmlspecialchars(DisplayEscaper::escape($value), \ENT_XML1 | \ENT_QUOTES);
-    }
-
-    /**
-     * Each line escaped on its own, so that the line breaks between the
-     * parts of a message stay line breaks instead of the two characters
-     * "\n".
-     */
-    private function escapeXmlLines(string $value): string
-    {
-        return implode("\n", array_map($this->escapeXml(...), explode("\n", $value)));
     }
 }

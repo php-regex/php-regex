@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * A string function that returns true for exactly the subjects preg_match()
  * returns 1 for, as the automata proved.
@@ -20,6 +22,15 @@ namespace PHPRegex\Automata;
 final readonly class TrivialMatch
 {
     private const PRINTABLE = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+
+    /**
+     * The characters that move or hide text when printed raw, as PCRE2
+     * reads them: the C1 controls U+0080 to U+009F, the format characters
+     * (general category Cf, the bidirectional controls and the tag
+     * characters among them), the line separator and the paragraph
+     * separator.
+     */
+    private const HIDDEN = '/[\x{80}-\x{9F}\p{Cf}\p{Zl}\p{Zp}]/u';
 
     /**
      * @param list<string> $literals the literal, or the literals of OneOf; none for IsEmpty
@@ -60,7 +71,9 @@ final readonly class TrivialMatch
 
     /**
      * A PHP string literal: single-quoted when the text is printable ASCII,
-     * double-quoted with escapes otherwise.
+     * double-quoted with escapes otherwise. In valid UTF-8 the characters
+     * that move or hide text when printed raw are spelled "\u{HEX}"; text
+     * that is no valid UTF-8 has its bytes from 0x80 spelled "\xHH".
      */
     private static function phpString(string $text): string
     {
@@ -68,20 +81,44 @@ final readonly class TrivialMatch
             return "'".addcslashes($text, "'\\")."'";
         }
 
-        $escaped = '';
         $utf8 = mb_check_encoding($text, 'UTF-8');
-        foreach (str_split($text) as $byte) {
-            $code = \ord($byte);
-            $escaped .= match (true) {
-                "\n" === $byte => '\n',
-                "\r" === $byte => '\r',
-                "\t" === $byte => '\t',
-                '\\' === $byte, '"' === $byte, '$' === $byte => '\\'.$byte,
-                $code < 0x20, 0x7F === $code, $code >= 0x80 && !$utf8 => \sprintf('\x%02X', $code),
-                default => $byte,
-            };
+        $escaped = '';
+        foreach ($utf8 ? mb_str_split($text, 1, 'UTF-8') : str_split($text) as $character) {
+            $escaped .= 1 < \strlen($character) ? self::phpCharacter($character) : self::phpByte($character, $utf8);
         }
 
         return '"'.$escaped.'"';
+    }
+
+    /**
+     * A multibyte UTF-8 character inside a double-quoted literal: "\u{HEX}"
+     * for a C1 control, a format character (general category Cf), the
+     * line separator U+2028 or the paragraph separator U+2029; the
+     * character itself otherwise.
+     */
+    private static function phpCharacter(string $character): string
+    {
+        if (1 === LibraryPcre::match(self::HIDDEN, $character)) {
+            return \sprintf('\u{%X}', mb_ord($character, 'UTF-8'));
+        }
+
+        return $character;
+    }
+
+    /**
+     * One byte inside a double-quoted literal.
+     */
+    private static function phpByte(string $byte, bool $utf8): string
+    {
+        $code = \ord($byte);
+
+        return match (true) {
+            "\n" === $byte => '\n',
+            "\r" === $byte => '\r',
+            "\t" === $byte => '\t',
+            '\\' === $byte, '"' === $byte, '$' === $byte => '\\'.$byte,
+            $code < 0x20, 0x7F === $code, $code >= 0x80 && !$utf8 => \sprintf('\x%02X', $code),
+            default => $byte,
+        };
     }
 }

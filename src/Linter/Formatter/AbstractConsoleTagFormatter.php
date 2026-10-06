@@ -123,6 +123,9 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
                 $label .= ':'.$column;
             }
         }
+        // The label is the file name in display form on one line, its tags
+        // escaped; the link still points at the file as named.
+        $label = self::escape(ReportSpelling::displayField($label));
         $linkedLabel = $this->linkFormatter->format($file, $line, $label, $column > 0 ? $column : 1, $label);
 
         $output = '  <fg=cyan;options=bold>'.$linkedLabel.'</>'.\PHP_EOL;
@@ -136,7 +139,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
             $output .= \sprintf(
                 '     <fg=gray>%s %s</>'.\PHP_EOL,
                 self::ARROW_LABEL,
-                self::escape($location),
+                self::escape(ReportSpelling::displayField($location)),
             );
         }
 
@@ -158,8 +161,10 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
         }
 
         try {
-            // Try highlighting the escaped pattern, but if it contains escapes, skip highlighting
-            if (str_contains($escapedPattern, '\\')) {
+            // Highlighting reads the pattern as written: once its display
+            // form differs (escapes, an x pattern put on one line), the
+            // display form is shown as is.
+            if ($escapedPattern !== $pattern || str_contains($escapedPattern, '\\')) {
                 return self::escape($escapedPattern);
             }
 
@@ -180,7 +185,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->getIssueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue));
+            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue, $pattern));
 
             // An invalid pattern says it all in its message and caret; a
             // ReDoS error still needs its hint, which opens on the evidence,
@@ -190,7 +195,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     self::ARROW_LABEL,
-                    self::escape($hint),
+                    self::escape(ReportSpelling::displayText($hint)),
                 );
             }
 
@@ -234,20 +239,21 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
     }
 
     /**
-     * The message of an issue, and under it the caret snippet its validation
-     * carries apart: the line of the pattern with the character at fault.
+     * The message of an issue in display form, and under it the caret
+     * snippet its validation carries apart: the line of the pattern with the
+     * character at fault, spelled in the pattern's mode.
      *
      * @param array<array-key, mixed> $issue
      */
-    private function messageWithSnippet(array $issue): string
+    private function messageWithSnippet(array $issue, ?string $pattern): string
     {
-        $message = \is_string($issue['message'] ?? null) ? $issue['message'] : '';
+        $message = ReportSpelling::displayText(\is_string($issue['message'] ?? null) ? $issue['message'] : '');
         $validation = $issue['validation'] ?? null;
         if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
             return $message;
         }
 
-        return $message."\n".$validation->caretSnippet;
+        return $message."\n".ReportSpelling::displaySnippet($validation->caretSnippet, $pattern);
     }
 
     private function displaySingleIssue(string $badge, string $message): string

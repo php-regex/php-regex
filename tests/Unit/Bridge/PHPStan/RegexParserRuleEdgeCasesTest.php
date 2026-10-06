@@ -466,11 +466,11 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
         $this->assertContains('regex.optimization', $identifiers);
     }
 
-    public function test_truncate_pattern_handles_edge_cases(): void
+    public function test_display_pattern_cuts_at_the_length_limit(): void
     {
         $rule = new RegexPatternRule();
         $ref = new \ReflectionClass($rule);
-        $refMethod = $ref->getMethod('truncatePattern');
+        $refMethod = $ref->getMethod('displayPattern');
 
         // Test exactly at length limit
         $result = $refMethod->invokeArgs($rule, [str_repeat('a', 50), 50]);

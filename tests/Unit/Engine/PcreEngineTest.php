@@ -414,6 +414,45 @@ final class PcreEngineTest extends TestCase
     }
 
     /**
+     * The warning a refused pattern raises is the engine's answer, not a
+     * PHP error: nothing of it is left for error_get_last().
+     */
+    #[Test]
+    public function test_a_refused_pattern_leaves_no_last_error(): void
+    {
+        error_clear_last();
+
+        $error = (new PcreEngine())->compile('/(/');
+
+        $this->assertInstanceOf(PcreError::class, $error);
+        $this->assertNull(error_get_last());
+    }
+
+    /**
+     * A caller's limit PHP reads loosely ("10x" is read as 10, with a
+     * warning the caller got when setting it) is put back as written, and
+     * putting it back raises nothing: error_get_last() stays empty.
+     */
+    #[Test]
+    public function test_a_loosely_read_caller_limit_is_put_back_without_a_warning(): void
+    {
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            \ini_set('pcre.backtrack_limit', '10x');
+        } finally {
+            restore_error_handler();
+        }
+        error_clear_last();
+
+        $match = (new PcreEngine())->match('/a/', 'a', new PcreLimits(backtrackLimit: 1000, recursionLimit: 1000));
+
+        $this->assertTrue($match->matched);
+        $this->assertSame('10x', \ini_get('pcre.backtrack_limit'));
+        $this->assertNull(error_get_last());
+    }
+
+    /**
      * Runs the callback with an error handler that records anything the
      * engine lets through, and fails on it.
      *

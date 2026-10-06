@@ -35,11 +35,6 @@ final class RedosCommand extends AbstractCommand
 {
     private const PREVIEW_LIMIT = 120;
 
-    /**
-     * What a run may change, and puts back.
-     */
-    private const RUNTIME_SETTINGS = ['pcre.jit', 'pcre.backtrack_limit', 'pcre.recursion_limit', 'max_execution_time'];
-
     public function getName(): string
     {
         return 'redos';
@@ -60,33 +55,24 @@ final class RedosCommand extends AbstractCommand
         // The benchmark runs the pattern with the JIT on purpose, unless
         // "--jit 0" says otherwise: it measures what production sees. So it
         // runs the pattern itself, not through the engine, and gives the
-        // process back as it found it on every way out.
+        // process back as it found it on every way out: each setting it
+        // changes, to the value ini_set() says it had, so nothing needs
+        // ini_get().
         $saved = [];
-        foreach (self::RUNTIME_SETTINGS as $key) {
-            $saved[$key] = \ini_get($key);
-        }
 
         try {
-            return $this->benchmark($input, $output);
+            return $this->benchmark($input, $output, $saved);
         } finally {
             foreach ($saved as $key => $value) {
-                if (false === $value || \ini_get($key) === $value) {
-                    continue;
-                }
-
-                if ('max_execution_time' === $key) {
-                    // Setting the time limit again restarts its count.
-                    set_time_limit((int) $value);
-
-                    continue;
-                }
-
                 ini_set($key, $value);
             }
         }
     }
 
-    private function benchmark(Input $input, Output $output): int
+    /**
+     * @param array<string, string> $saved the settings changed, with the value each had
+     */
+    private function benchmark(Input $input, Output $output, array &$saved): int
     {
         $parsed = $this->parseArguments($input->args);
         if (null !== $parsed['error']) {
@@ -120,16 +106,17 @@ final class RedosCommand extends AbstractCommand
         $target = $regex->target();
 
         if (null !== $jit) {
-            ini_set('pcre.jit', $jit);
+            self::change($saved, 'pcre.jit', $jit);
         }
         if (null !== $backtrackLimit) {
-            ini_set('pcre.backtrack_limit', (string) $backtrackLimit);
+            self::change($saved, 'pcre.backtrack_limit', (string) $backtrackLimit);
         }
         if (null !== $recursionLimit) {
-            ini_set('pcre.recursion_limit', (string) $recursionLimit);
+            self::change($saved, 'pcre.recursion_limit', (string) $recursionLimit);
         }
         if (null !== $timeLimit && $timeLimit > 0) {
-            set_time_limit($timeLimit);
+            // Setting the time limit restarts its count, as set_time_limit() does.
+            self::change($saved, 'max_execution_time', (string) $timeLimit);
         }
 
         $runtime = PcreRuntimeInfo::fromIni();
@@ -293,6 +280,19 @@ final class RedosCommand extends AbstractCommand
         }
 
         return false === $result && $warned;
+    }
+
+    /**
+     * Set the setting, once per run, keeping in $saved the value it had.
+     *
+     * @param array<string, string> $saved
+     */
+    private static function change(array &$saved, string $key, string $value): void
+    {
+        $previous = ini_set($key, $value);
+        if (false !== $previous) {
+            $saved[$key] = $previous;
+        }
     }
 
     /**

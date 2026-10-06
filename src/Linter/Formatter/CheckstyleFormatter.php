@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * Checkstyle XML output formatter.
@@ -49,7 +48,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
         $lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<checkstyle version="4.3">'];
 
         foreach ($byFile as $file => $fileEntries) {
-            $lines[] = \sprintf('  <file name="%s">', $this->escapeXml($file));
+            $lines[] = \sprintf('  <file name="%s">', ReportSpelling::xmlAttribute($file));
             foreach ($fileEntries as $entry) {
                 $problem = $entry['problem'];
                 \assert($problem instanceof Diagnostic);
@@ -64,9 +63,9 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                     '    <error line="%d" column="%d" severity="%s" message="%s" source="%s"/>',
                     $line,
                     $column,
-                    $this->escapeXml($severity),
-                    $this->escapeXmlLines($message),
-                    $this->escapeXml($source),
+                    ReportSpelling::xmlAttribute($severity),
+                    ReportSpelling::xmlAttribute($message),
+                    ReportSpelling::xmlAttribute($source),
                 );
             }
             $lines[] = '  </file>';
@@ -85,7 +84,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
             '  <file name="php-regex">',
             \sprintf(
                 '    <error line="1" column="1" severity="error" message="%s" source="php-regex"/>',
-                $this->escapeXml($message),
+                ReportSpelling::xmlAttribute($message),
             ),
             '  </file>',
             '</checkstyle>',
@@ -179,20 +178,5 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
         }
 
         return $source;
-    }
-
-    private function escapeXml(string $value): string
-    {
-        return htmlspecialchars(DisplayEscaper::escape($value), \ENT_XML1 | \ENT_QUOTES);
-    }
-
-    /**
-     * Each line escaped on its own, so that the line breaks between the
-     * parts of a message stay line breaks instead of the two characters
-     * "\n"; written as a character reference, which an attribute keeps.
-     */
-    private function escapeXmlLines(string $value): string
-    {
-        return implode('&#10;', array_map($this->escapeXml(...), explode("\n", $value)));
     }
 }

@@ -101,6 +101,9 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
     private const META_HEIGHT = 12;
     private const MAX_LABEL_CHARS = 28;
 
+    private const DIGITS = '0123456789';
+    private const HEX_DIGITS = self::DIGITS.'ABCDEFabcdef';
+
     private int $groupCounter = 0;
 
     private int $charClassDepth = 0;
@@ -136,9 +139,11 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
     public function visitSequence(SequenceNode $node)
     {
         $layouts = [];
-        // The run shown so far, and the literal text read after it: the text
-        // is spelled as text, a character written as an escape as written.
+        // The run shown so far, the last escape of it, and the literal text
+        // read after that: the text is spelled as text, a character written
+        // as an escape as written, unless the text would read as more of it.
         $label = '';
+        $escape = null;
         $text = '';
 
         foreach ($node->children as $child) {
@@ -148,11 +153,12 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
                 continue;
             }
 
-            $label .= DisplayEscaper::escapeText($text);
+            $label .= self::spellRun($escape, $text);
+            $escape = null;
             $text = '';
 
             if ($child instanceof CharLiteralNode) {
-                $label .= DisplayEscaper::escape($child->originalRepresentation);
+                $escape = $child;
 
                 continue;
             }
@@ -164,7 +170,7 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
             $layouts[] = $this->layoutFor($child);
         }
 
-        $label .= DisplayEscaper::escapeText($text);
+        $label .= self::spellRun($escape, $text);
         if ('' !== $label) {
             $layouts[] = $this->createNodeLayout($label, 'node literal', true);
         }
@@ -382,6 +388,27 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
         }
 
         return $this->createNodeLayout($label, 'node');
+    }
+
+    /**
+     * An escape and the text after it. The escape keeps its spelling unless
+     * the text would read as more of it: "\0" before "1" reads as "\01",
+     * "\x4" before "a" as "\x4a". It is then its code point in braces.
+     */
+    private static function spellRun(?CharLiteralNode $escape, string $text): string
+    {
+        $spelled = DisplayEscaper::escapeText($text);
+        if (null === $escape) {
+            return $spelled;
+        }
+
+        $written = $escape->originalRepresentation;
+        $length = \strlen($written);
+        $readsOn = '' !== $spelled && $length <= 3 && (str_starts_with($written, '\x')
+            ? strspn($written, self::HEX_DIGITS, 2) === $length - 2 && 1 === strspn($spelled, self::HEX_DIGITS, 0, 1)
+            : strspn($written, self::DIGITS, 1) === $length - 1 && 1 === strspn($spelled, self::DIGITS, 0, 1));
+
+        return ($readsOn ? '\x{'.strtoupper(dechex($escape->codePoint)).'}' : DisplayEscaper::escape($written)).$spelled;
     }
 
     /**

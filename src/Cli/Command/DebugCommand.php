@@ -20,6 +20,7 @@ use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -254,15 +255,7 @@ final class DebugCommand extends AbstractCommand
                 $output->write("\n");
                 $style->renderSection('Findings', $steps, $steps);
                 foreach ($analysis->findings as $finding) {
-                    $label = strtoupper($finding->severity->value);
-                    $findingSeverity = match ($finding->severity) {
-                        RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
-                        RedosSeverity::Medium => $output->warning($label),
-                        RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
-                            ? $output->error($label)
-                            : $output->warning($label),
-                        RedosSeverity::Unknown => $output->info($label),
-                    };
+                    $findingSeverity = $this->formatRedosSeverity($analysis, $output, $finding->severity);
                     $output->write('  - ['.$findingSeverity.'] '.$finding->message."\n");
                     if (null !== $finding->suggestedRewrite && '' !== $finding->suggestedRewrite) {
                         $output->write('      Suggested (verify behavior): '.$finding->suggestedRewrite."\n");
@@ -461,14 +454,19 @@ final class DebugCommand extends AbstractCommand
         ];
     }
 
-    private function formatRedosSeverity(RedosAnalysis $analysis, Output $output): string
+    /**
+     * The severity, the verdict's own by default, coloured by what stands
+     * behind the verdict.
+     */
+    private function formatRedosSeverity(RedosAnalysis $analysis, Output $output, ?RedosSeverity $severity = null): string
     {
-        $label = strtoupper($analysis->severity->value);
+        $severity ??= $analysis->severity;
+        $label = strtoupper($severity->value);
 
-        $color = match ($analysis->severity) {
+        $color = match ($severity) {
             RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
             RedosSeverity::Medium => $output->warning($label),
-            RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
+            RedosSeverity::High, RedosSeverity::Critical => RedosVerdict::standsConfirmed($analysis)
                 ? $output->error($label)
                 : $output->warning($label),
             RedosSeverity::Unknown => $output->info($label),

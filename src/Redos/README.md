@@ -142,6 +142,10 @@ var_dump($confirmation->confirmed); // bool(true)
 echo $confirmation->evidence, "\n"; // backtrack_limit
 ```
 
+Where `ini_set()` is disabled the engine cannot set those limits: nothing is
+run, `$confirmation->wasSkipped()` is true and its evidence is
+`Confirmation::LIMITS_UNAVAILABLE`.
+
 Documentation
 -------------
 

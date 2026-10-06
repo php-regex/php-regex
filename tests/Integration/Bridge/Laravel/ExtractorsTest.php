@@ -22,6 +22,7 @@ use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for Laravel pattern extractors.
@@ -310,6 +311,75 @@ final class ExtractorsTest extends TestCase
         rmdir($tempDir.'/app');
         rmdir($tempDir.'/vendor');
         rmdir($tempDir);
+    }
+
+    /**
+     * A rule whose pattern is only white space gives no pattern to lint;
+     * the rule after it on the same line is still read.
+     */
+    #[Test]
+    public function test_validation_extractor_skips_a_rule_with_a_blank_pattern(): void
+    {
+        $tempDir = sys_get_temp_dir().'/regex_blank_test_'.uniqid();
+        mkdir($tempDir, 0o777, true);
+
+        file_put_contents($tempDir.'/test.php', <<<'PHP'
+            <?php
+            $rules = ['blank' => 'regex:   ', 'kept' => 'not_regex: /^kept$/ '];
+            PHP);
+
+        try {
+            $patterns = (new ValidationRulePatternSource())->extract(new PatternSourceContext(paths: [$tempDir], excludePaths: []));
+        } finally {
+            unlink($tempDir.'/test.php');
+            rmdir($tempDir);
+        }
+
+        $this->assertSame(
+            [['/^kept$/', 2, 'validation:not_regex']],
+            array_map(static fn (PatternOccurrence $p): array => [$p->pattern, $p->line, $p->source], $patterns),
+        );
+    }
+
+    /**
+     * Each rule is read with the quote that opened its literal: an escaped
+     * quote of that kind is the quote itself, as PHP reads the literal. The
+     * rule kind does not depend on the quote, and the line is the one the
+     * rule is on, counted from the first byte of the file: a blank line
+     * before "<?php" counts, and the lines after the rule do not.
+     */
+    #[Test]
+    public function test_validation_extractor_reads_each_rule_with_its_quote_kind_and_line(): void
+    {
+        $tempDir = sys_get_temp_dir().'/regex_quote_kind_test_'.uniqid();
+        mkdir($tempDir, 0o777, true);
+
+        file_put_contents($tempDir.'/test.php', "\n".<<<'PHP'
+            <?php
+            $rules = [
+                'single' => 'regex:/^[^\']+$/',
+                'double' => "regex:/^[^\"]+$/",
+                'single_not' => 'not_regex:/^x$/',
+                'double_not' => "not_regex:/^y$/",
+            ];
+            PHP);
+
+        try {
+            $patterns = (new ValidationRulePatternSource())->extract(new PatternSourceContext(paths: [$tempDir], excludePaths: []));
+        } finally {
+            unlink($tempDir.'/test.php');
+            rmdir($tempDir);
+        }
+
+        $this->assertSame(
+            [
+                ["/^[^']+\$/", 4, 'validation:regex'],
+                ['/^[^"]+$/', 5, 'validation:regex'],
+                ['/^x$/', 6, 'validation:not_regex'],
+                ['/^y$/', 7, 'validation:not_regex'],
+            ],
+            array_map(static fn (PatternOccurrence $p): array => [$p->pattern, $p->line, $p->source], $patterns),
+        );
     }
 
     /**

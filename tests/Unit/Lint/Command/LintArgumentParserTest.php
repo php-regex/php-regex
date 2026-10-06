@@ -16,6 +16,8 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintArgumentParserTest extends TestCase
@@ -155,5 +157,62 @@ final class LintArgumentParserTest extends TestCase
         $result = $parser->parse(['--unknown']);
 
         $this->assertSame('Unknown option: --unknown', $result->error);
+    }
+
+    /**
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideMissingBaselineValues')]
+    public function test_parse_reports_a_missing_baseline_value(array $args, string $error): void
+    {
+        $result = (new LintArgumentParser())->parse($args);
+
+        $this->assertSame($error, $result->error);
+        $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
+    }
+
+    /**
+     * @return iterable<string, array{args: list<string>, error: string}>
+     */
+    public static function provideMissingBaselineValues(): iterable
+    {
+        yield '--generate-baseline as the last argument' => ['args' => ['src', '--generate-baseline'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--generate-baseline followed by an option' => ['args' => ['--generate-baseline', '--quiet', 'src'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--generate-baseline followed by an empty argument' => ['args' => ['--generate-baseline', '', 'src'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--generate-baseline= with nothing after the sign' => ['args' => ['--generate-baseline=', 'src'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--baseline as the last argument' => ['args' => ['src', '--baseline'], 'error' => 'Missing value for --baseline.'];
+        yield '--baseline followed by an option' => ['args' => ['--baseline', '--quiet', 'src'], 'error' => 'Missing value for --baseline.'];
+        yield '--baseline followed by an empty argument' => ['args' => ['--baseline', '', 'src'], 'error' => 'Missing value for --baseline.'];
+        yield '--baseline= with nothing after the sign' => ['args' => ['--baseline=', 'src'], 'error' => 'Missing value for --baseline.'];
+    }
+
+    /**
+     * The value is the next argument, or what follows the sign: after the
+     * sign it may start with a dash, and the paths around it are kept.
+     *
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideBaselineValues')]
+    public function test_parse_reads_the_baseline_values(array $args, ?string $baseline, ?string $generateBaseline): void
+    {
+        $result = (new LintArgumentParser())->parse($args);
+
+        $this->assertNull($result->error);
+        $this->assertSame($baseline, $result->arguments?->baseline);
+        $this->assertSame($generateBaseline, $result->arguments?->generateBaseline);
+        $this->assertSame(['src', 'lib'], $result->arguments?->paths);
+    }
+
+    /**
+     * @return iterable<string, array{args: list<string>, baseline: string|null, generateBaseline: string|null}>
+     */
+    public static function provideBaselineValues(): iterable
+    {
+        yield 'separate arguments' => ['args' => ['src', '--baseline', 'known.json', '--generate-baseline', 'new.json', 'lib'], 'baseline' => 'known.json', 'generateBaseline' => 'new.json'];
+        yield 'equals signs' => ['args' => ['src', '--baseline=known.json', '--generate-baseline=new.json', 'lib'], 'baseline' => 'known.json', 'generateBaseline' => 'new.json'];
+        yield 'a value after the sign that starts with a dash' => ['args' => ['src', '--baseline=-known.json', '--generate-baseline=-new.json', 'lib'], 'baseline' => '-known.json', 'generateBaseline' => '-new.json'];
+        yield 'neither option' => ['args' => ['src', 'lib'], 'baseline' => null, 'generateBaseline' => null];
     }
 }

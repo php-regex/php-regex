@@ -401,6 +401,26 @@ final class DisplayEscaperTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideQuotedBytes')]
+    public function test_quote_spells_each_byte_that_would_break_the_layout(string $value, string $expected): void
+    {
+        $this->assertSame($expected, DisplayEscaper::quote($value));
+    }
+
+    /**
+     * @return iterable<string, array{value: string, expected: string}>
+     */
+    public static function provideQuotedBytes(): iterable
+    {
+        yield 'tab' => ['value' => "a\tb", 'expected' => '"a\tb"'];
+        yield 'carriage return' => ['value' => "a\rb", 'expected' => '"a\rb"'];
+        yield 'space, the first printable byte' => ['value' => ' ', 'expected' => '" "'];
+        yield 'tilde, the last printable byte' => ['value' => '~', 'expected' => '"~"'];
+        yield 'DEL, one past the last printable byte' => ['value' => "\x7F", 'expected' => '"\x7F"'];
+        yield 'a byte above ASCII' => ['value' => "\xFF", 'expected' => '"\xFF"'];
+    }
+
+    #[Test]
     public function test_quote_puts_the_markup_around_the_quotes(): void
     {
         $this->assertSame('<fg=cyan>"ok"</>', DisplayEscaper::quote('ok', '<fg=cyan>', '</>'));

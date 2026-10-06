@@ -18,6 +18,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -422,7 +423,7 @@ final class AnalyzeCommand extends AbstractCommand
         $color = match ($analysis->severity) {
             RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),
             RedosSeverity::Medium => $output->warning($label),
-            RedosSeverity::High, RedosSeverity::Critical => $analysis->isConfirmed()
+            RedosSeverity::High, RedosSeverity::Critical => RedosVerdict::standsConfirmed($analysis)
                 ? $output->error($label)
                 : $output->warning($label),
             RedosSeverity::Unknown => $output->info($label),

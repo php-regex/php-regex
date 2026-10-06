@@ -17,6 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
 use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +55,39 @@ final class SolverEngineStampTest extends TestCase
         yield 'intersection result' => ['question' => 'intersection'];
         yield 'subset result' => ['question' => 'subset'];
         yield 'equivalence result' => ['question' => 'equivalence'];
+    }
+
+    /**
+     * The sets every answer is computed from come from the running engine,
+     * also when an older PCRE2 is judged: each result, the match
+     * equivalence included, carries the running engine's release.
+     */
+    #[Test]
+    #[DataProvider('provideQuestionsUnderAnOlderTarget')]
+    public function test_every_result_carries_the_running_engine_under_an_older_target(string $question): void
+    {
+        $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']));
+
+        $result = match ($question) {
+            'intersection' => $solver->intersection('/a/', '/a/'),
+            'subset' => $solver->subsetOf('/a/', '/a*/'),
+            'equivalence' => $solver->equivalent('/a/', '/a/'),
+            'match equivalence' => $solver->matchEquivalent('/a/', '/a/'),
+            default => $this->fail($question.' is not a solver question.'),
+        };
+
+        $this->assertSame(explode(' ', \PCRE_VERSION)[0], $result->pcreVersion, $question);
+    }
+
+    /**
+     * @return iterable<string, array{question: string}>
+     */
+    public static function provideQuestionsUnderAnOlderTarget(): iterable
+    {
+        yield 'intersection result' => ['question' => 'intersection'];
+        yield 'subset result' => ['question' => 'subset'];
+        yield 'equivalence result' => ['question' => 'equivalence'];
+        yield 'match equivalence result' => ['question' => 'match equivalence'];
     }
 
     #[Test]

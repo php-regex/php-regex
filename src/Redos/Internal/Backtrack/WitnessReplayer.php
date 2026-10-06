@@ -27,6 +27,9 @@ use PHPRegex\Redos\RedosWitness;
  * work, counted as the subject's length times the backtrack limit: the
  * replay ends on the same call on every machine, and within seconds.
  *
+ * Where ini_set() is disabled the engine can neither set the limits nor
+ * turn the JIT off: nothing is run, and the confirmation says why.
+ *
  * @internal
  */
 final readonly class WitnessReplayer
@@ -62,6 +65,12 @@ final readonly class WitnessReplayer
      */
     public function replay(string $regex, array $candidates, ConfirmationOptions $options, bool $withoutMatches): array
     {
+        $skipped = self::skipped($options);
+        if (null !== $skipped) {
+            // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
+            return [$skipped, null];
+        }
+
         $limits = new PcreLimits($options->backtrackLimit, $options->recursionLimit);
         $work = 0;
         $first = null;
@@ -95,6 +104,20 @@ final readonly class WitnessReplayer
         }
 
         return [$first ?? $this->confirmation(false, [], $options, $withoutMatches), null];
+    }
+
+    /**
+     * The confirmation of a run the engine cannot make under the limits of
+     * the options, with nothing run; null when it can.
+     */
+    public static function skipped(ConfirmationOptions $options): ?Confirmation
+    {
+        if (\function_exists('ini_set')) {
+            return null;
+        }
+
+        // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
+        return new Confirmation(false, [], null, null, null, 0, $options->timeoutMs, false, Confirmation::LIMITS_UNAVAILABLE);
     }
 
     /**

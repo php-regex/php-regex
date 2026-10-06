@@ -442,6 +442,22 @@ move your settings to it, and delete the old one.
 
 <!-- upgrade-map:end -->
 
+### `regex lint --baseline`
+
+The baseline file has a new format, `{"version": 1, "issues": [...]}`, and an
+issue is matched on its identifier, its file and its pattern rather than on
+its line and message, so a moved pattern or a reworded message no longer
+brings it back. A 1.x baseline is still read the 1.x way, with a note; generate
+it once more to switch to the new matching:
+
+```bash
+vendor/bin/regex lint src/ --generate-baseline regex-baseline.json
+```
+
+A baseline file that is missing or is not a baseline is now a usage error
+(exit code 2), where 1.x went on with no baseline. See
+[the CLI guide](docs/guides/cli.md#baseline).
+
 ### Breaking Changes
 
 #### One way to do each thing on the facade
@@ -614,7 +630,11 @@ covers it, and falls back to the 1.x heuristics elsewhere (see
   disappear or change class (Exponential, Polynomial, Potential), so
   regenerate the baseline after an upgrade that changes the analysis. An
   `ignoreErrors` entry on the identifier `regex.redos` keeps working; one
-  matching the 1.x message text does not.
+  matching the 1.x message text does not. The `<pattern>` of the message is
+  the pattern as the console shows it, escaped and on one line, cut after 50
+  characters: a baseline entry written for a pattern holding a control
+  character, a bidirectional override, a multi-byte character near the cut, or
+  a line break under `x` needs that same regeneration.
 
   The same regeneration covers the lint issues, whose messages and reported
   set changed in 2.0.0: the useless `m` and `s` flag messages, the lazy

@@ -121,13 +121,14 @@ abstract class AbstractCommand implements CommandInterface
 
     /**
      * Whether a ReDoS analysis is a problem the exit code reports: a risk the
-     * confirmed mode confirmed, at the threshold or above and of high
-     * severity or more, the rule the lint command uses for an error. A
+     * confirmed mode confirmed, or a proof whose replay was skipped because
+     * the engine could not set its limits, at the threshold or above and of
+     * high severity or more, the rule the lint command uses for an error. A
      * theoretical finding is a warning.
      */
     protected function isConfirmedRedos(RedosAnalysis $analysis, ?RedosSeverity $threshold): bool
     {
-        return $analysis->isConfirmed()
+        return RedosVerdict::standsConfirmed($analysis)
             && $analysis->exceedsThreshold($threshold ?? RedosSeverity::High)
             && $analysis->exceedsThreshold(RedosSeverity::High);
     }

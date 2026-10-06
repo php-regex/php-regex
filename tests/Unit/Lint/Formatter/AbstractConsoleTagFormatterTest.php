@@ -18,6 +18,7 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
@@ -81,7 +82,9 @@ final class AbstractConsoleTagFormatterTest extends TestCase
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $this->assertStringContainsString(
-            "         <fg=gray>\u{21B3} ".OutputFormatter::escape($text).'</>'.\PHP_EOL,
+            // The hint is spelled for display first (a NUL or an escape
+            // character becomes "\xHH"), then escaped as Symfony escapes it.
+            "         <fg=gray>\u{21B3} ".OutputFormatter::escape(ReportSpelling::displayText($text)).'</>'.\PHP_EOL,
             $formatter->format($report),
         );
     }
@@ -104,6 +107,106 @@ final class AbstractConsoleTagFormatterTest extends TestCase
         yield 'a backslash inside' => ['a\\b'];
         yield 'plain text' => ['plain'];
         yield 'multibyte text' => ["caf\u{E9} <\u{2192}>"];
+    }
+
+    /**
+     * The file field is one line: a line feed, a carriage return or a tab
+     * in a file name is spelled "\xHH", so that a name cannot draw a line
+     * of a report of its own.
+     *
+     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     */
+    #[Test]
+    #[DataProvider('provideFileFieldsPerFormatter')]
+    public function test_the_file_field_is_one_line(string $formatterClass, string $file, int $line, string $expected): void
+    {
+        $formatter = new $formatterClass(
+            new AnalysisService(RegexParser::create(['cache' => null])),
+            new LinkFormatter(null, new RelativePathHelper('/project')),
+            false,
+        );
+        $report = new LintReport([[
+            'file' => $file,
+            'line' => $line,
+            'pattern' => '/a/',
+            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => $file, 'line' => $line]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+
+        $output = $formatter->format($report);
+
+        $this->assertStringContainsString($expected, $output);
+        $this->assertStringNotContainsString($file, $output);
+    }
+
+    /**
+     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>, file: string, line: int, expected: string}>
+     */
+    public static function provideFileFieldsPerFormatter(): iterable
+    {
+        foreach ([SymfonyConsoleFormatter::class, LaravelConsoleFormatter::class] as $class) {
+            foreach (self::provideFileFields() as $name => $row) {
+                yield $class.', '.$name => ['formatterClass' => $class] + $row;
+            }
+        }
+    }
+
+    /**
+     * File names holding the bytes that lay text out, each with the file
+     * field it is shown as.
+     *
+     * @return iterable<string, array{file: string, line: int, expected: string}>
+     */
+    public static function provideFileFields(): iterable
+    {
+        yield 'a line feed and a line of its own' => ['file' => "src/x.php\n    \u{2714} FAKE.php", 'line' => 2, 'expected' => "src/x.php\\x0A    \u{2714} FAKE.php:2"];
+        yield 'a tab' => ['file' => "src/t\tab.php", 'line' => 2, 'expected' => 'src/t\x09ab.php:2'];
+        yield 'a carriage return before a line feed' => ['file' => "src/c\r\n.php", 'line' => 2, 'expected' => 'src/c\x0D\x0A.php:2'];
+        yield 'a lone carriage return' => ['file' => "src/c\r.php", 'line' => 2, 'expected' => 'src/c\x0D.php:2'];
+        yield 'a line feed, no line' => ['file' => "src/x.php\n    \u{2714} FAKE.php", 'line' => 0, 'expected' => "src/x.php\\x0A    \u{2714} FAKE.php"];
+    }
+
+    /**
+     * The location field is one line too; a message keeps its line
+     * breaks, which lay it out.
+     *
+     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     */
+    #[Test]
+    #[DataProvider('provideFormatterClasses')]
+    public function test_the_location_field_is_one_line_and_a_message_keeps_its_line_breaks(string $formatterClass): void
+    {
+        $formatter = new $formatterClass(
+            new AnalysisService(RegexParser::create(['cache' => null])),
+            new LinkFormatter(null, new RelativePathHelper('/project')),
+            false,
+        );
+        $report = new LintReport([[
+            'file' => '/project/src/Foo.php',
+            'line' => 1,
+            'pattern' => '/a/',
+            'location' => "route a\nb\tc\r\nd",
+            'issues' => [['type' => 'warning', 'message' => "first\nsecond", 'file' => '/project/src/Foo.php', 'line' => 1]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+
+        $output = $formatter->format($report);
+
+        $this->assertStringContainsString('route a\x0Ab\x09c\x0D\x0Ad', $output);
+        $this->assertStringNotContainsString("route a\n", $output);
+        $this->assertMatchesRegularExpression("/first\n[^\n]*second/", (string) (new OutputFormatter(false))->format($output));
+        $this->assertStringNotContainsString('first\x0A', $output);
+    }
+
+    /**
+     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>}>
+     */
+    public static function provideFormatterClasses(): iterable
+    {
+        yield 'symfony' => ['formatterClass' => SymfonyConsoleFormatter::class];
+        yield 'laravel' => ['formatterClass' => LaravelConsoleFormatter::class];
     }
 
     #[Test]

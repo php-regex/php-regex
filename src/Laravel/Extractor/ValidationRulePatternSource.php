@@ -26,8 +26,25 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class ValidationRulePatternSource implements PatternSourceInterface
+final class ValidationRulePatternSource implements PatternSourceInterface
 {
+    /**
+     * A 'regex:' or 'not_regex:' rule in a single- or double-quoted literal,
+     * up to the quote that opened it, on one line. Group 1 is the quote,
+     * group 2 the rule's pattern as written in the literal. An escaped
+     * character (a backslash and the character after it) and any other
+     * character but a backslash, the quote and a newline are disjoint, so
+     * a run of backslashes is read in one pass.
+     */
+    private const RULE_PATTERN = '/(?|(\')(?:not_)?regex:((?:\\\\.|[^\'\\\\\n])++)\'|(")(?:not_)?regex:((?:\\\\.|[^"\\\\\n])++)")/';
+
+    /**
+     * The files the last extract() could not read, each with why.
+     *
+     * @var list<array{file: string, message: string}>
+     */
+    private array $failures = [];
+
     public function getName(): string
     {
         return 'validators';
@@ -43,6 +60,7 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
      */
     public function extract(PatternSourceContext $context): array
     {
+        $this->failures = [];
         $patterns = [];
 
         foreach ($context->paths as $path) {
@@ -54,6 +72,17 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
         }
 
         return $patterns;
+    }
+
+    /**
+     * The files the last extract() could not read: the rule regex gave up
+     * on them, so the rules they hold were not linted.
+     *
+     * @return list<array{file: string, message: string}>
+     */
+    public function failures(): array
+    {
+        return $this->failures;
     }
 
     /**
@@ -101,48 +130,52 @@ final readonly class ValidationRulePatternSource implements PatternSourceInterfa
 
         $patterns = [];
 
-        // Match Laravel validation regex rules: 'regex:/pattern/' or "regex:/pattern/"
-        // Also matches not_regex variant. The pattern runs until the quote that
-        // opened the string literal, so the other quote character (and escaped
-        // quotes) may appear inside the pattern, e.g. 'regex:/^[^"]+$/'.
-        $regexPattern = '/([\'"])(?:not_)?regex:((?:\\\\.|(?!\1).)+)\1/';
+        // The pattern runs until the quote that opened the string literal,
+        // so the other quote character (and escaped quotes) may appear
+        // inside it, e.g. 'regex:/^[^"]+$/'.
+        if (false === LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE)) {
+            $this->failures[] = [
+                'file' => $filePath,
+                'message' => \sprintf(
+                    'Validation rules not read: the rule regex gave up on this file (%s).',
+                    \PREG_BACKTRACK_LIMIT_ERROR === LibraryPcre::lastError() ? 'backtrack limit reached' : 'PCRE error '.LibraryPcre::lastError(),
+                ),
+            ];
 
-        if (LibraryPcre::matchAll($regexPattern, $content, $matches, \PREG_OFFSET_CAPTURE)) {
-            foreach ($matches[2] as $index => $match) {
-                $pattern = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
-                $offset = $match[1];
+            return [];
+        }
 
-                // Calculate line number from offset
-                $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
+        foreach ($matches[2] as $index => $match) {
+            $pattern = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
+            $offset = $match[1];
 
-                // Normalize pattern (ensure it has delimiters)
-                $normalized = $this->normalizePattern($pattern);
-                if (null === $normalized) {
-                    continue;
-                }
+            // Calculate line number from offset
+            $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
 
-                // Get the full rule match for context
-                $fullMatch = $matches[0][$index][0];
-                $isNotRegex = str_starts_with($fullMatch, "'not_regex:") || str_starts_with($fullMatch, '"not_regex:');
-                $ruleType = $isNotRegex ? 'not_regex' : 'regex';
-
-                $patterns[] = new PatternOccurrence(
-                    $normalized,
-                    $filePath,
-                    $lineNumber,
-                    'validation:'.$ruleType,
-                    $pattern,
-                    'Laravel validation rule',
-                );
+            // Normalize pattern (ensure it has delimiters)
+            $normalized = $this->normalizePattern($pattern);
+            if (null === $normalized) {
+                continue;
             }
+
+            // Get the full rule match for context
+            $fullMatch = $matches[0][$index][0];
+            $isNotRegex = str_starts_with($fullMatch, "'not_regex:") || str_starts_with($fullMatch, '"not_regex:');
+            $ruleType = $isNotRegex ? 'not_regex' : 'regex';
+
+            $patterns[] = new PatternOccurrence(
+                $normalized,
+                $filePath,
+                $lineNumber,
+                'validation:'.$ruleType,
+                $pattern,
+                'Laravel validation rule',
+            );
         }
 
         return $patterns;
     }
 
-    /**
-     * Normalize a validation regex pattern.
-     */
     /**
      * Undo the PHP string-literal escaping of the quote that delimited the
      * rule, so the extracted pattern matches what the validator receives.

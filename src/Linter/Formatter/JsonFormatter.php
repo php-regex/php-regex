@@ -15,7 +15,6 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * JSON output formatter for machine-readable output.
@@ -85,10 +84,10 @@ final class JsonFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * Byte-mode patterns are not valid UTF-8, which json_encode() rejects.
-     * Every string of the report — including the ones held by issue and
-     * optimization objects — is escaped the way the console renders them, so
-     * the report stays encodable and the patterns remain readable.
+     * Every string of the report, including the ones held by issue and
+     * optimization objects, is carried as it was found: only the bytes that
+     * are no part of a UTF-8 character, which json_encode() rejects, are
+     * written "\xHH".
      *
      * @template TKey of array-key
      *
@@ -108,7 +107,7 @@ final class JsonFormatter extends AbstractOutputFormatter
     private function escapeValue(mixed $value): mixed
     {
         if (\is_string($value)) {
-            return DisplayEscaper::escape($value);
+            return ReportSpelling::source($value);
         }
 
         if (\is_array($value)) {

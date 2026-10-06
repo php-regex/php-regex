@@ -25,6 +25,13 @@ final readonly class Confirmation implements \JsonSerializable
     public const WITHOUT_MATCHES = 'preg_match() without $matches';
 
     /**
+     * The evidence of a run skipped because the engine cannot set its
+     * limits, as where ini_set() is disabled: nothing ran, and a verdict
+     * stands on its proof alone.
+     */
+    public const LIMITS_UNAVAILABLE = 'engine limits unavailable';
+
+    /**
      * @param array<ConfirmationSample> $samples
      */
     public function __construct(
@@ -40,6 +47,20 @@ final readonly class Confirmation implements \JsonSerializable
         public ?string $note = null,
         public ?string $error = null,
     ) {}
+
+    /**
+     * Whether nothing ran because the engine could not set the limits of
+     * the run: not confirmed, no sample, no iteration, and the evidence
+     * LIMITS_UNAVAILABLE. False for any run that happened, whether it
+     * reproduced or not.
+     */
+    public function wasSkipped(): bool
+    {
+        return !$this->confirmed
+            && [] === $this->samples
+            && 0 === $this->iterations
+            && self::LIMITS_UNAVAILABLE === $this->evidence;
+    }
 
     /**
      * @return array{confirmed: bool, samples: array<int|string, ConfirmationSample>, jit_setting: string|null, backtrack_limit: int|null, recursion_limit: int|null, iterations: int, timeout_ms: float, timed_out: bool, evidence: string|null, note: string|null, error: string|null}

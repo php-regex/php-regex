@@ -86,7 +86,7 @@ What each command counts as a problem (code 1):
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
 | `transpile`                                  | The pattern does not parse, or cannot be written for the target                    |
 | `debug`                                      | The pattern does not parse                                                         |
-| `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE |
+| `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
@@ -561,7 +561,7 @@ available.`, and exits with 0.
 The ReDoS issue, `regex.lint.redos`, carries the verdict's headline, then
 `Severity: …, confidence: …`, and in its hint the attack. It is a warning in
 theoretical mode. With `--redos-mode=confirmed`, a verdict the running PCRE
-reproduced at `high` or above is an error, and makes the command exit with 1;
+reproduced at `high` or above, or a proven one it cannot replay because `ini_set()` is disabled, is an error, and makes the command exit with 1;
 its hint adds the replay, and the summary counts it apart from the invalid
 patterns:
 
@@ -924,6 +924,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--jobs <n>`        | Parallel workers                                   |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--output <file>`   | Also write the report to a file                    |
+| `--baseline <file>` | Leave out the issues recorded in a baseline file (see [Baseline](#baseline)) |
+| `--generate-baseline <file>` | Record every issue of this run in a baseline file |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
 | `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
@@ -942,6 +944,45 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 `--no-redos` to skip the analysis; the confirmation always runs without JIT.
 Either one is now a usage error (exit code 2), as is an unknown `--format`.
 `analyze` and `debug` refuse `--redos-no-jit` too, for the same reason.
+
+### Baseline
+
+A baseline records the issues a codebase has today, so that a CI run fails
+only on new ones:
+
+```bash
+vendor/bin/regex lint src/ --generate-baseline regex-baseline.json
+vendor/bin/regex lint src/ --baseline regex-baseline.json
+```
+
+Both options take their file after a space or an `=`.
+
+- **What an entry matches.** An issue is left out when an entry has the same
+  issue identifier, the same file and the same pattern (compared by a hash of
+  its exact bytes). The line only decides between entries that share all
+  three, so moving a pattern down a file, or a message reworded in a newer
+  release, does not bring the issue back. One entry leaves out one issue: a
+  second, identical pattern in the same file is reported. When copies of a
+  pattern are added, the entries are aligned with the issues in line order,
+  as a diff aligns two versions of a file, so the copy reported is the one
+  inserted, not one that moved.
+- **Every format.** A baselined issue is gone from the console, JSON, GitHub,
+  Checkstyle and JUnit reports alike, and the exit code is computed without
+  it.
+- **Paths.** Files are recorded relative to the directory the command runs
+  from: generate and apply the baseline from the same directory, usually the
+  project root.
+- **The file.** `{"version": 1, "issues": [...]}`, each issue with its `file`,
+  `line`, `message`, `type`, `issueId`, `pattern` and `patternHash`. Bytes of a
+  pattern that are not valid UTF-8 are written `\xHH`, so the file is always
+  valid JSON.
+- **A 1.x baseline**, a plain list, is still read, matched on file, line and
+  message as 1.x did; the run prints a note suggesting to generate it again.
+- **Exit code 2** when the baseline file is missing, empty or not a baseline,
+  or when the generated file cannot be written.
+
+The `column` of a JSON result is a 1-based byte column in its line, and
+`fileOffset` a 0-based byte offset in the file.
 
 ---
 

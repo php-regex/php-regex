@@ -416,7 +416,7 @@ final readonly class LintService
 
     private function mapRedosSeverity(RedosAnalysis $analysis): LintSeverity
     {
-        if (!$analysis->isConfirmed()) {
+        if (!RedosVerdict::standsConfirmed($analysis)) {
             return match ($analysis->severity) {
                 RedosSeverity::Low, RedosSeverity::Safe => LintSeverity::Info,
                 default => LintSeverity::Warning,

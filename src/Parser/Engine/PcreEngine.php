@@ -24,7 +24,9 @@ use PHPRegex\Parser\Internal\NoJit;
  * subject pairs (PCRE2 10.40 to 10.49): "(*NO_JIT)" leads the pattern, right
  * after its opening delimiter. A warning the pattern raises is captured, not
  * silenced, and reported for the pattern as the caller wrote it. Limits asked
- * for are set for the call and the ini is left as it was found.
+ * for are set for the call and the ini is left as it was found. Where ini_set()
+ * is disabled, limits asked for are reported as not set, in the answer, and
+ * a pattern the verb finds no place in runs with the JIT as the caller left it.
  */
 final readonly class PcreEngine
 {
@@ -36,6 +38,8 @@ final readonly class PcreEngine
      * compiled again rather than served as the JIT compiled it earlier.
      */
     private const FRESH_CACHE_KEY = "\v";
+
+    private const LIMITS_UNAVAILABLE = 'The PCRE limits could not be set: ini_set() is disabled';
 
     /**
      * The pattern as the engine runs it: "(*NO_JIT)" right after the opening
@@ -182,53 +186,69 @@ final readonly class PcreEngine
      * the warning PHP raises for it, the limits set and the JIT turned off
      * when the verb found no place.
      *
+     * Each setting is put back from the value ini_set() returned when it was
+     * changed, so a disabled ini_get() changes nothing. Where ini_set() is
+     * disabled, a call under limits gets no answer and an error saying so;
+     * a pattern that needs the JIT off runs as it is, under the caller's
+     * settings.
+     *
      * @param \Closure(string): (int|false) $call
      *
      * @return array{result: int|false, error: PcreError|null, lastError: int, lastErrorMessage: string}
      */
     private function run(string $pattern, \Closure $call, ?PcreLimits $limits = null): array
     {
+        $canSet = \function_exists('ini_set');
+        if (null !== $limits && !$canSet) {
+            // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
+            return [
+                'result' => false,
+                'error' => null,
+                'lastError' => \PREG_INTERNAL_ERROR,
+                'lastErrorMessage' => self::LIMITS_UNAVAILABLE,
+            ];
+        }
+
         $prepared = $this->withVerb($pattern);
         $shift = null === $prepared ? 0 : \strlen(NoJit::VERB);
-        $jitOff = null === $prepared && null !== NoJit::split($pattern);
+        $jitOff = $canSet && null === $prepared && null !== NoJit::split($pattern);
         $runnable = $prepared ?? ($jitOff ? self::FRESH_CACHE_KEY.$pattern : $pattern);
 
-        $saved = [];
+        $settings = [];
         if (null !== $limits) {
-            $saved['pcre.backtrack_limit'] = \ini_get('pcre.backtrack_limit');
-            $saved['pcre.recursion_limit'] = \ini_get('pcre.recursion_limit');
+            $settings['pcre.backtrack_limit'] = (string) $limits->backtrackLimit;
+            $settings['pcre.recursion_limit'] = (string) $limits->recursionLimit;
         }
         if ($jitOff) {
-            $saved['pcre.jit'] = \ini_get('pcre.jit');
+            $settings['pcre.jit'] = '0';
         }
 
+        $saved = [];
         $warning = null;
-        set_error_handler(static function (int $errno, string $message) use (&$warning): bool {
-            $warning ??= $message;
-
-            return true;
-        });
 
         try {
-            if (null !== $limits) {
-                \ini_set('pcre.backtrack_limit', (string) $limits->backtrackLimit);
-                \ini_set('pcre.recursion_limit', (string) $limits->recursionLimit);
-            }
-            if ($jitOff) {
-                \ini_set('pcre.jit', '0');
-            }
-
-            $result = $call($runnable);
-            $lastError = preg_last_error();
-            $lastErrorMessage = preg_last_error_msg();
-        } finally {
-            foreach ($saved as $key => $value) {
-                if (false !== $value) {
-                    \ini_set($key, $value);
+            foreach ($settings as $key => $value) {
+                $previous = ini_set($key, $value);
+                if (false !== $previous) {
+                    $saved[$key] = $previous;
                 }
             }
 
-            restore_error_handler();
+            set_error_handler(static function (int $errno, string $message) use (&$warning): bool {
+                $warning ??= $message;
+
+                return true;
+            });
+
+            try {
+                $result = $call($runnable);
+                $lastError = preg_last_error();
+                $lastErrorMessage = preg_last_error_msg();
+            } finally {
+                restore_error_handler();
+            }
+        } finally {
+            self::restore($saved);
         }
 
         return [
@@ -237,6 +257,30 @@ final readonly class PcreEngine
             'lastError' => $lastError,
             'lastErrorMessage' => $lastErrorMessage,
         ];
+    }
+
+    /**
+     * Puts each setting back as the caller had it, without a warning about
+     * a value PHP reads loosely reaching any error handler: PHP already gave
+     * it when the caller set that value.
+     *
+     * @param array<string, string> $saved
+     */
+    private static function restore(array $saved): void
+    {
+        if ([] === $saved) {
+            return;
+        }
+
+        set_error_handler(static fn (): bool => true, \E_WARNING);
+
+        try {
+            foreach ($saved as $key => $value) {
+                ini_set($key, $value);
+            }
+        } finally {
+            restore_error_handler();
+        }
     }
 
     /**

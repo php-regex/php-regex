@@ -19,6 +19,7 @@ use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
@@ -216,6 +217,55 @@ final class ConsoleFormatterTest extends TestCase
 
         $this->assertStringContainsString('42', $output);
         $this->assertStringNotContainsString('pattern unavailable', $output);
+    }
+
+    /**
+     * The file field is one line: a line feed, a carriage return or a tab
+     * in a file name is spelled "\xHH", so that a name cannot draw a line
+     * of a report of its own.
+     */
+    #[DataProviderExternal(AbstractConsoleTagFormatterTest::class, 'provideFileFields')]
+    public function test_format_shows_the_file_field_on_one_line(string $file, int $line, string $expected): void
+    {
+        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
+        $report = new LintReport([[
+            'file' => $file,
+            'line' => $line,
+            'pattern' => '/a/',
+            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => $file, 'line' => $line]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+
+        $output = $formatter->format($report);
+
+        $this->assertStringContainsString($expected, $output);
+        $this->assertStringNotContainsString($file, $output);
+    }
+
+    /**
+     * The location field is one line too; a message keeps its line
+     * breaks, which lay it out.
+     */
+    public function test_format_shows_the_location_on_one_line_and_keeps_the_line_breaks_of_a_message(): void
+    {
+        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
+        $report = new LintReport([[
+            'file' => 'src/Foo.php',
+            'line' => 1,
+            'pattern' => '/a/',
+            'location' => "route a\nb\tc\r\nd",
+            'issues' => [['type' => 'warning', 'message' => "first\nsecond", 'file' => 'src/Foo.php', 'line' => 1]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+
+        $output = $formatter->format($report);
+
+        $this->assertStringContainsString('route a\x0Ab\x09c\x0D\x0Ad', $output);
+        $this->assertStringNotContainsString("route a\n", $output);
+        $this->assertMatchesRegularExpression("/first\n[^\n]*second/", $output);
+        $this->assertStringNotContainsString('first\x0A', $output);
     }
 
     public function test_format_skips_invalid_optimization_entries(): void

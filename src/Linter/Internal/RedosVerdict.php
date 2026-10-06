@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Internal;
 
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 
@@ -51,11 +52,39 @@ final class RedosVerdict
             $details[] = null !== $evidence ? 'confirmed, evidence: '.$evidence : 'confirmed';
         }
 
+        if (self::replaySkipped($analysis)) {
+            // A runner that could not set the engine limits; the bundled one, only where ini_set() is disabled.
+            $details[] = 'not replayed, evidence: '.Confirmation::LIMITS_UNAVAILABLE;
+        }
+
         if (null !== $analysis->error) {
             $details[] = 'error: '.$analysis->error;
         }
 
         return \sprintf('%s. %s.', $analysis->headline(), ucfirst(implode(', ', $details)));
+    }
+
+    /**
+     * Whether a confirmed-mode verdict is reported as a reproduced one: the
+     * engine reproduced it, or the analysis proved it and the engine could
+     * not set the limits a replay needs. A proof the host cannot check
+     * fails closed.
+     */
+    public static function standsConfirmed(RedosAnalysis $analysis): bool
+    {
+        return $analysis->isConfirmed()
+            || (RedosProof::Proven === $analysis->proof && self::replaySkipped($analysis));
+    }
+
+    /**
+     * Whether the verdict, proven or heuristic, is a confirmed-mode one
+     * whose replay was skipped because the engine could not set its limits.
+     */
+    public static function replaySkipped(RedosAnalysis $analysis): bool
+    {
+        return RedosMode::Confirmed === $analysis->mode
+            && null === $analysis->replayed
+            && true === $analysis->confirmation?->wasSkipped();
     }
 
     /**

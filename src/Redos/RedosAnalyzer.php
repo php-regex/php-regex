@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
@@ -161,7 +162,7 @@ final class RedosAnalyzer
                 $analysis->witness,
                 null,
             );
-        } catch (\Throwable $e) {
+        } catch (ExceptionInterface $e) {
             return self::notAnalyzed($mode, $e::class.': '.$e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
         }
     }
@@ -194,6 +195,10 @@ final class RedosAnalyzer
      * witness does not reproduce, the replay tries the suffix the model
      * found to reject while ending with that literal, and publishes the
      * witness that reproduced. A polynomial verdict is never replayed.
+     *
+     * A replay the engine cannot make (its limits cannot be set) is skipped:
+     * the verdict stands, "replayed" stays null, and the confirmation says
+     * why.
      */
     private function replay(string $regex, RedosAnalysis $analysis, ProofResult $proof, ?ConfirmationOptions $options): RedosAnalysis
     {
@@ -217,7 +222,7 @@ final class RedosAnalyzer
                 return self::with($analysis, $confirmation, self::provenConfidence($proof, true), $reproduced, true);
             }
 
-            return self::with($analysis, $confirmation, self::provenConfidence($proof, false), $witness, false);
+            return self::with($analysis, $confirmation, self::provenConfidence($proof, false), $witness, $confirmation->wasSkipped() ? null : false);
         }
 
         $first = null;
@@ -229,7 +234,7 @@ final class RedosAnalyzer
             }
         }
 
-        return self::with($analysis, $first, self::provenConfidence($proof, false), $witness, false);
+        return self::with($analysis, $first, self::provenConfidence($proof, false), $witness, $first->wasSkipped() ? null : false);
     }
 
     /**

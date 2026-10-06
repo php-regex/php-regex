@@ -128,6 +128,8 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private bool $unicodeMode = false;
 
+    private string $source = '';
+
     /**
      * Per-run context shared with the lint rules: immutable pattern facts
      * plus the mutable traversal cursor (parents, alternation branches,
@@ -200,6 +202,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->flags = $node->flags;
         $this->delimiter = $node->delimiter;
         $this->unicodeMode = $node->isUnicode();
+        $this->source = $node->source ?? '';
         $this->charSetAnalyzer = CharSetAnalyzer::forRegex($node);
         $this->issues = [];
         $this->maxCapturingGroup = 0;
@@ -447,6 +450,7 @@ final class PatternLinter extends AbstractNodeVisitor
                 $this->delimiter,
                 $this->patternValue ?? '',
                 $this->unicodeMode,
+                $this->source,
             ),
             new GroupIndex(
                 $this->maxCapturingGroup,

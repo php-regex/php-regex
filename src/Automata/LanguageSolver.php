@@ -148,7 +148,10 @@ final readonly class LanguageSolver
 
         $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left))->counterExample();
 
-        return new MatchEquivalenceResult(null === $counterExample, $counterExample, $this->parser()->target()->pcreVersion);
+        // The sets the answer is computed from come from the running engine,
+        // whatever PCRE2 is judged: the result carries the running release,
+        // like every other question.
+        return new MatchEquivalenceResult(null === $counterExample, $counterExample);
     }
 
     /**
@@ -188,6 +191,40 @@ final readonly class LanguageSolver
     public function compile(string $pattern, ?SolverOptions $options = null): Dfa
     {
         return $this->buildDfa($pattern, $options ?? new SolverOptions());
+    }
+
+    /**
+     * The key a compiled DFA is stored under.
+     *
+     * The PHP and PCRE2 judged decide what the pattern means: "{,2}" repeats
+     * from PCRE2 10.43 and is text before. The character sets the DFA is
+     * built from come from the running engine, whatever release is judged,
+     * so its full version string enters the key too. The version of the code
+     * that reads the pattern keeps a persistent cache from answering with a
+     * DFA an older reading built.
+     *
+     * @param string $targetKey     The cache key of the PHP and PCRE2 target judged
+     * @param string $engineVersion The running engine's full PCRE_VERSION string
+     *
+     * @internal
+     */
+    public static function dfaCacheKey(string $pattern, string $targetKey, SolverOptions $options, string $engineVersion): string
+    {
+        $parts = [
+            $pattern,
+            RegexParser::CACHE_VERSION,
+            $targetKey,
+            $engineVersion,
+            $options->matchMode->value,
+            $options->maxNfaStates,
+            $options->maxDfaStates,
+            $options->minimizeDfa ? '1' : '0',
+            $options->minimizationAlgorithm->value,
+            $options->determinizationAlgorithm->value,
+            $options->maxTransitionsProcessed ?? 'null',
+        ];
+
+        return \hash('sha256', \implode('|', $parts));
     }
 
     /**
@@ -261,24 +298,7 @@ final readonly class LanguageSolver
 
     private function cacheKey(string $pattern, SolverOptions $options): string
     {
-        // The PHP and PCRE2 judged decide what the pattern means: "{,2}"
-        // repeats from PCRE2 10.43 and is text before. The version of the
-        // code that reads it keeps a persistent cache from answering with a
-        // DFA an older reading built.
-        $parts = [
-            $pattern,
-            RegexParser::CACHE_VERSION,
-            $this->parser()->target()->cacheKey(),
-            $options->matchMode->value,
-            $options->maxNfaStates,
-            $options->maxDfaStates,
-            $options->minimizeDfa ? '1' : '0',
-            $options->minimizationAlgorithm->value,
-            $options->determinizationAlgorithm->value,
-            $options->maxTransitionsProcessed ?? 'null',
-        ];
-
-        return \hash('sha256', \implode('|', $parts));
+        return self::dfaCacheKey($pattern, $this->parser()->target()->cacheKey(), $options, \PCRE_VERSION);
     }
 
     /**
