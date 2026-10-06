@@ -51,8 +51,8 @@ Tokens are matched by compiling two prioritized token maps into a single regex:
 
 At each position, the lexer runs the compiled pattern with an anchored match (`/A`) to find the next token. Context-sensitive literals are adjusted after matching; for example:
 
-- `^` at the start of a class becomes `T_NEGATION`
-- `-` within a class becomes `T_RANGE`
+- `^` at the start of a class becomes `TokenType::Negation`
+- `-` within a class becomes `TokenType::Range`
 
 This keeps lexing fast and deterministic while preserving byte offsets.
 

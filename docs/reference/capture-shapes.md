@@ -171,6 +171,48 @@ changes an answer, a fact or the string. Key a cache of shapes on it.
 Either way, a PHPStan baseline that prints the type may need regenerating. The CHANGELOG
 says when.
 
+## Group numbers
+
+`GroupNumberingCollector` answers a smaller question: which numbers the groups of a
+pattern take, as PCRE numbers them. It reads branch resets `(?|...)` and duplicate
+names under `J`. It does not read what the groups capture. A tool that checks a
+backreference, a subroutine call or a `$matches` key against the pattern needs only
+this.
+
+`collect()` takes a parsed pattern and returns a `GroupNumbering`:
+
+- `$maxGroupNumber`: the highest group number. It is the last numeric key of
+  `$matches` only when every group is kept: without `PREG_UNMATCHED_AS_NULL`, PHP drops
+  the trailing groups that took no part in the match (`preg_match('/(a)|(b)/', 'a', $m)`
+  gives the keys `[0, 1]`, where `$maxGroupNumber` is 2).
+- `$captureSequence`: the number of each capturing group, in the order they are written.
+- `getCaptureCount()`: how many capturing groups are written. Inside a branch reset,
+  this can be more than `$maxGroupNumber`.
+- `$namedGroups`: each name and the numbers it stands for.
+- `hasNamedGroup()` and `getNamedGroupNumbers()`: one name, looked up. An unknown name
+  has no numbers.
+
+```php
+use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\RegexParser;
+
+$regex = RegexParser::create()->parse('/(?<year>\d{4})-(?|(\d\d)|([a-z]{3}))-(?<day>\d\d)/');
+$numbering = (new GroupNumberingCollector())->collect($regex);
+
+$numbering->maxGroupNumber;                 // 3
+$numbering->captureSequence;                // [1, 2, 2, 3]
+$numbering->getCaptureCount();              // 4
+$numbering->namedGroups;                    // ['year' => [1], 'day' => [3]]
+$numbering->hasNamedGroup('day');           // true
+$numbering->getNamedGroupNumbers('day');    // [3]
+$numbering->getNamedGroupNumbers('month');  // []
+```
+
+The two branches of the branch reset share group 2, as in PCRE: `preg_match()` on
+`2026-oct-06` writes `oct` under key `2` and `06` under key `3`. A name used twice under
+`J` stands for both groups: in `/(?<n>a)|(?<n>b)/J`, `getNamedGroupNumbers('n')` is
+`[1, 2]`.
+
 ---
 
 Previous: [Reference Index](README.md) | Next: [API Reference](api.md)

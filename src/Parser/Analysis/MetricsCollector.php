@@ -272,6 +272,14 @@ final class MetricsCollector extends AbstractNodeVisitor
      */
     private function record(NodeInterface $node, ?callable $traverse = null): array
     {
+        // The node a run starts on: a reused collector counts each tree
+        // afresh instead of adding it to the trees it measured before.
+        if (0 === $this->currentDepth) {
+            $this->counts = [];
+            $this->total = 0;
+            $this->maxDepth = 0;
+        }
+
         $this->total++;
         $type = $this->shortName($node::class);
         $this->counts[$type] = ($this->counts[$type] ?? 0) + 1;

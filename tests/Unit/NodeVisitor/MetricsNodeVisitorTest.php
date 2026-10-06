@@ -30,6 +30,41 @@ final class MetricsNodeVisitorTest extends TestCase
         $this->assertGreaterThanOrEqual(4, $metrics['maxDepth']);
     }
 
+    public function test_it_counts_each_tree_afresh_when_reused(): void
+    {
+        $ast = Regex::create()->parse('/foo|bar/');
+        $collector = new MetricsCollector();
+
+        $first = $ast->accept($collector);
+        $second = $ast->accept($collector);
+
+        $this->assertSame(10, $first['total']);
+        $this->assertSame($first, $second);
+    }
+
+    public function test_it_counts_a_second_tree_alone_when_reused(): void
+    {
+        $collector = new MetricsCollector();
+        Regex::create()->parse('/(((a)))/')->accept($collector);
+
+        $this->assertSame(
+            Regex::create()->parse('/b/')->accept(new MetricsCollector()),
+            Regex::create()->parse('/b/')->accept($collector),
+        );
+    }
+
+    public function test_it_counts_a_subtree_afresh_when_reused(): void
+    {
+        $ast = Regex::create()->parse('/foo|bar/');
+        $collector = new MetricsCollector();
+        $ast->accept($collector);
+
+        $this->assertSame(
+            $ast->pattern->accept(new MetricsCollector()),
+            $ast->pattern->accept($collector),
+        );
+    }
+
     public function test_it_counts_quantifier_nodes(): void
     {
         $ast = Regex::create()->parse('/a+/');

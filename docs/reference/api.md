@@ -354,6 +354,8 @@ $shape->matchShape();       // "array{0: non-empty-string, 1: 'GET'|'POST', 2: n
 
 A static analysis extension calls `CaptureShapeAnalyzer` from `php-regex/regex-parser` instead. See
 [Capture Shapes](capture-shapes.md) for the facts, the flags and what a release may change.
+For the group numbers alone, branch resets and duplicate names included, see
+[Group numbers](capture-shapes.md#group-numbers).
 
 ---
 
@@ -395,16 +397,20 @@ supported regular subset. Unsupported patterns fall back to the original behavio
 
 ### transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
 
-Transpiles a PCRE literal to another regex dialect (starting with JavaScript).
+Transpiles a PCRE literal to another regex dialect: JavaScript or Python.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
 
-echo $result->literal;     // '/(?<word>\\w+)/i'
-echo $result->constructor; // 'new RegExp("(?<word>\\w+)", "i")'
-print_r($result->warnings);
+echo $result->literal;     // /(?<word>\w+)/i
+echo $result->constructor; // new RegExp("(?<word>\\w+)", "i")
+
+$result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'python');
+
+echo $result->literal;     // r'(?i)(?P<word>\w+)'
+echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.IGNORECASE)
 ```
 
 Notes:
@@ -412,7 +418,7 @@ Notes:
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - `/x` is dropped after comments/whitespace are normalized.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
-- Available targets: `javascript` (alias: `js`).
+- Available targets: `javascript` (alias: `js`) and `python` (alias: `py`).
 
 ---
 
@@ -585,19 +591,26 @@ foreach ($result->changes as $change) {
 
 ### TranspileResult
 
-Returned by `transpile()`. Includes JavaScript output and diagnostics.
+Returned by `transpile()`. Includes the output for the target, JavaScript or Python, and diagnostics.
 
 ```php
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
 
-echo $result->pattern;     // '(?<word>\\w+)'
-echo $result->flags;       // 'i'
-echo $result->literal;     // '/(?<word>\\w+)/i'
-echo $result->constructor; // 'new RegExp("(?<word>\\w+)", "i")'
+echo $result->target;      // javascript
+echo $result->pattern;     // (?<word>\w+)
+echo $result->flags;       // i
+echo $result->literal;     // /(?<word>\w+)/i
+echo $result->constructor; // new RegExp("(?<word>\\w+)", "i")
 
 foreach ($result->warnings as $warning) {
     echo "- $warning\n";
 }
+// (no warnings for this pattern)
+
+foreach ($result->notes as $note) {
+    echo "- $note\n";
+}
+// - JavaScript \w and \b are ASCII-based; Unicode word boundaries may differ.
 ```
 
 ---

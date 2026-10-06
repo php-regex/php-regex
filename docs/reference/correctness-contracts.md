@@ -67,10 +67,18 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Limitations:** Case-insensitive matching folds single code points, as the engine folds them: under `/iu`, `k`
   matches the Kelvin sign U+212A, `s` the long s U+017F and `å` the angstrom sign U+212B, while the Turkish dotless
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
-  modeled. The flags `i`, `s` and `u` are read; `m`, `x` and `r` are refused.
+  modeled. The flags `i`, `s`, `u`, `D` and `m` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
+  language says. `A` and `r` are refused, and so is a start option such as `(*CRLF)` when `$`, `\Z` or `/m` would
+  read the newline it sets. `matchEquivalent()` reads the same flags except `m`, which it refuses.
+- **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
+  as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:
+  `/(?:^|,)a/` and `/^\d+$/m` are answered. A lookaround inside a lookaround, an anchor or word boundary inside a
+  lookaround, and a non-atomic lookaround (`(?*...)`, `(*napla:...)`) are refused.
 - **Fallbacks:** None — there is no approximation. A construct outside the subset raises `ComplexityException` with
-  one message per reason (backreferences and other match state, conditionals, lookarounds, atomic groups, zero-width
-  conditions, unsafe possessives, unsupported flags); the list is in
+  one message per reason (backreferences, subroutines, callouts and control verbs, conditionals, nested lookarounds,
+  anchors inside a lookaround, non-atomic lookarounds, atomic groups, `\K` and `\G`, unsafe possessives, the flags `A`
+  and `r`, a newline convention other than `\n`, a surrogate code point named under `/u`, which PCRE refuses to
+  compile); the list is in
   [the logic solver reference](logic-solver.md#what-the-solver-refuses). Atomic groups and possessive quantifiers commit to
   what they first matched and never retry — ordered behaviour the solver cannot read as a pure language
   (`/^a*+a$/` matches nothing at all), so they are refused — except a possessive quantifier nothing that follows can
@@ -79,14 +87,16 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   Symfony's `[^/]++` route requirements keep being analyzed.
 
 **Match modes**
-- **FULL:** Models the exact match language `L(P)` (as if the pattern is wrapped in `\A(?:P)\z`). Explicit `^`/`$`
-  anchors are redundant under FULL because the whole string is already constrained.
-- **PARTIAL:** Models search semantics `Σ* L(P) Σ*`. If a pattern is start-anchored (`^`) the leading `Σ*` is removed;
-  if it is end-anchored (`$`) the trailing `Σ*` is removed.
-- **Anchor rules in PARTIAL:** Anchors must appear only at the outer boundary of each alternative (first/last token) and
-  must be consistent across alternatives. `^`/`$` and `\A`/`\z`/`\Z` are read at those edges; an anchor anywhere else,
-  or nested (e.g., inside a group), is rejected with `ComplexityException`, as are `\b`, `\B`, `\G` and `\K` in any
-  position.
+- **FULL:** Models the exact match language `L(P)` (as if the pattern is wrapped in `\A(?:P)\z`). A `^` or `$` at the
+  edge of the pattern is redundant under FULL because the whole string is already constrained.
+- **PARTIAL:** Models search semantics `Σ* L(P) Σ*`. If a pattern is start-anchored (`\A`, or `^` without `/m`) the
+  leading `Σ*` is removed; if it is end-anchored (`\z`, or `$` without `/m`) the trailing `Σ*` is removed, `$` still
+  letting a final newline follow. Under `/m`, `^` and `$` do not anchor the search: they also hold at the line breaks
+  inside the subject, so `/^a/m` finds the `a` of `"x\na"`.
+- **Anchors in PARTIAL:** An anchor reads where it stands. `^` and `\A` hold at the start of the subject, `\z` at its
+  end, `$` and `\Z` at the end or before a final newline, as PCRE's do without `/D`. Under `/m`, `^` also holds after
+  a newline that more follows, and `$` before any newline. So `/a\Ab/` matches nothing, and `/(?:^|,)a/` finds an `a`
+  at the start or after a comma. `\G` and `\K` are refused in any position.
 
 ## Symfony Bridge Analyzers
 

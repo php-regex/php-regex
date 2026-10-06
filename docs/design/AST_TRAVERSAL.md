@@ -123,10 +123,13 @@ $pattern = $ast->accept(new PatternPrinter());
 ### Pattern 2: Stateful (Accumulates and Returns Result)
 
 ```php
-// MetricsCollector - stores internal state
-$visitor = new MetricsCollector();
-$ast->accept($visitor);
-$metrics = $visitor->getMetrics(); // Get accumulated data
+// MetricsCollector - accumulates counts while it walks the tree
+$metrics = Regex::create()->parse('/foo|bar/')->accept(new MetricsCollector());
+// [
+//     'counts' => ['RegexNode' => 1, 'AlternationNode' => 1, 'SequenceNode' => 2, 'LiteralNode' => 6],
+//     'total' => 10,
+//     'maxDepth' => 4,
+// ]
 ```
 
 | Pattern   | Use Case                       | Example Visitor                              |
@@ -344,7 +347,7 @@ class SafeVisitor extends AbstractNodeVisitor
 
 Write a visitor that counts all capturing groups in a pattern.
 
-**Hint:** Look for `GroupNode` with type `T_GROUP_CAPTURING` or `T_GROUP_NAMED`.
+**Hint:** Look for `GroupNode` with type `GroupType::Capturing` or `GroupType::Named`.
 
 ```php
 // Starter code:

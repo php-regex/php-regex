@@ -61,7 +61,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
-class YourClassTest extends TestCase
+final class YourClassTest extends TestCase
 {
     public function test_descriptive_name(): void
     {

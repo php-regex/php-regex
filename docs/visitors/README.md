@@ -256,14 +256,16 @@ echo $result->errorCode?->value;  // regex.backref.missing_named_group
 
 **Purpose:** Checks for performance issues, anti-patterns, and readability problems. Used by CLI linter and PHPStan rule.
 
-**Linting Rules:**
+**Linting Rules:** each issue carries a rule id. A few of them:
 
-| Rule                   | Description               | Severity |
-|------------------------|---------------------------|----------|
-| `PossessiveQuantifier` | Use possessive quantifier | warning  |
-| `UnnecessaryGroup`     | Remove unnecessary group  | info     |
-| `AmbiguousEscape`      | Clarify ambiguous escape  | warning  |
-| `ComplexPattern`       | Pattern is complex        | info     |
+| Rule ID                              | Description                                       | Severity                         |
+|--------------------------------------|---------------------------------------------------|----------------------------------|
+| `regex.lint.quantifier.nested`       | Nested quantifiers can backtrack catastrophically | warning                          |
+| `regex.lint.group.quantifiedCapture` | A repeated capture keeps only its last iteration  | info (warning for a named group) |
+| `regex.lint.group.redundant`         | A group that changes nothing                      | warning                          |
+| `regex.lint.escape.suspicious`       | An escape that does not mean what it looks like   | warning                          |
+
+Every rule id is listed in the [Rule Reference](../reference.md#quick-reference-table).
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -336,7 +338,15 @@ echo $score;  // e.g., 42
 
 ### MetricsCollector
 
-**Purpose:** Collects various metrics about the pattern structure.
+**Purpose:** Counts the nodes of the AST by type and measures its depth.
+
+`accept()` returns an array with three keys:
+
+| Key        | Description                                                |
+|------------|------------------------------------------------------------|
+| `counts`   | Number of nodes per node type, keyed by short class name   |
+| `total`    | Total number of nodes in the AST, the `RegexNode` included |
+| `maxDepth` | Maximum nesting depth, the `RegexNode` counting as 1       |
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -345,20 +355,18 @@ use PHPRegex\Parser\Analysis\MetricsCollector;
 $ast = Regex::create()->parse('/\d{4}-\d{2}-\d{2}/');
 $metrics = $ast->accept(new MetricsCollector());
 
-echo $metrics->getTotalNodeCount();
-echo $metrics->getQuantifierCount();
-echo $metrics->getCaptureGroupCount();
+echo $metrics['total'];                     // 10
+echo $metrics['maxDepth'];                  // 4
+echo $metrics['counts']['QuantifierNode'];  // 3
 ```
 
-**Available Metrics:**
+The full `counts` entry for this pattern:
 
-| Method                   | Description                |
-|--------------------------|----------------------------|
-| `getTotalNodeCount()`    | Total nodes in AST         |
-| `getQuantifierCount()`   | Number of quantifiers      |
-| `getCaptureGroupCount()` | Number of capturing groups |
-| `getAlternationCount()`  | Number of alternations     |
-| `getMaxNestingDepth()`   | Maximum nesting depth      |
+```text
+RegexNode => 1, SequenceNode => 1, QuantifierNode => 3, CharTypeNode => 3, LiteralNode => 2
+```
+
+A node type that does not occur in the pattern has no key in `counts`.
 
 ---
 
@@ -387,17 +395,25 @@ var_dump($max);   // NULL (unbounded)
 
 **Purpose:** Extracts fixed literals from the pattern, useful for optimization or indexing.
 
+`accept()` returns a `LiteralSet`. Its `prefixes` list the strings every match starts with one of, and its `suffixes`
+the strings every match ends with one of. An empty list says nothing about that end. `complete` is `true` when the
+prefixes list every string the pattern matches.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 
-$ast = Regex::create()->parse('/user-\d{4}/');
+$ast = Regex::create()->parse('/user-\d{4}\.log/');
 $literals = $ast->accept(new LiteralExtractor());
 
-echo $literals->getLiterals()[0];  // 'user-'
-echo $literals->getPrefix();       // 'user-'
-echo $literals->getSuffix();       // ''
+var_dump($literals->prefixes);            // ['user-']
+var_dump($literals->suffixes);            // ['.log']
+var_dump($literals->getLongestPrefix());  // 'user-'
+var_dump($literals->getLongestSuffix());  // '.log'
+var_dump($literals->complete);            // false
 ```
+
+`getLongestPrefix()` and `getLongestSuffix()` return `null` when the list is empty.
 
 ---
 

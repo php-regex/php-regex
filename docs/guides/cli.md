@@ -47,7 +47,7 @@ PHPRegex CLI provides these commands:
 | `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA        |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
-| `transpile`   | Transpile PCRE regex to other dialects (js, python, etc.) |
+| `transpile`   | Transpile a PCRE regex to JavaScript (`js`) or Python (`py`) |
 | `lint`        | Lint entire codebase for regex issues                    |
 | `clear-cache` | Clear the regex parser cache                             |
 | `version`     | Display version information                              |
@@ -959,18 +959,22 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 |---------------------|----------------------------------------------------|
 | `--exclude <path>`  | Exclude path (repeatable)                          |
 | `--min-savings <n>` | Minimum optimization savings                       |
-| `--jobs <n>`        | Parallel workers                                   |
+| `-j, --jobs <n>`    | Parallel workers                                   |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--json`            | Same as `--format=json`                            |
 | `--output <file>`   | Also write the report to a file                    |
-| `--baseline <file>` | Leave out the issues recorded in a baseline file (see [Baseline](#baseline)) |
-| `--generate-baseline <file>` | Record every issue of this run in a baseline file |
+| `--baseline <file>` | Leave out the issues a baseline file lists (see [Baseline](#baseline)); `--baseline=<file>` works too |
+| `--generate-baseline <file>` | Write every issue of this run to a baseline file; `--generate-baseline=<file>` works too |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
 | `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
 | `--redos-threshold <sev>` | Lowest severity reported: low, medium, high, critical |
 | `--no-validate`     | Skip validation                                    |
 | `--no-optimize`     | Disable optimization suggestions                   |
+| `--lint`            | Run the lint rules (the default)                   |
+| `--no-lint`         | Skip the lint rules                                |
+| `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
+| `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
 | `--interop <presets>` | Wrapper libraries to read patterns from (comma separated, `none` to disable) |
 | `--no-interop`      | Read patterns from native `preg_*` calls only      |
 | `--pattern-function <spec>` | Extra call carrying a pattern (repeatable) |

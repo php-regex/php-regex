@@ -26,10 +26,10 @@ use PHPUnit\Framework\TestCase;
  * Unit coverage for the per-case conformance runner.
  *
  * The runner feeds a suite case to Regex::validate() on the product path
- * (default options, runtime PCRE validation off), normalizes whatever offset
- * comes back to PCRE2's body-relative coordinate, and compares it with the
- * expected outcome: the verdict must always match, and when both sides reject
- * the body-relative offsets must be equal, whatever the two error messages
+ * (default options, runtime PCRE validation off) and compares the result with
+ * the expected outcome as it comes back, the library's offsets being counted
+ * from the pattern body as PCRE2's are: the verdict must always match, and
+ * when both sides reject the offsets must be equal, whatever the two error messages
  * say (PCRE2's text and the library's text are never compared). A case
  * carrying a phpOverride is expected to behave as PHP compiled it, not as
  * pcre2test did.

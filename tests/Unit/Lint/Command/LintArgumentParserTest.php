@@ -230,4 +230,61 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame(['src'], $given->arguments?->paths);
         $this->assertSame('github', $given->arguments->format);
     }
+
+    /**
+     * --baseline and --generate-baseline take their file after a space as
+     * well as after "=", as the help's Options rows show.
+     *
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideBaselineSpellings')]
+    public function test_parse_reads_the_baseline_files_in_either_spelling(array $args): void
+    {
+        $result = (new LintArgumentParser())->parse($args);
+
+        $this->assertNull($result->error);
+        $this->assertSame('base.json', $result->arguments?->baseline);
+        $this->assertSame('new.json', $result->arguments->generateBaseline);
+        $this->assertSame(['src'], $result->arguments->paths);
+    }
+
+    /**
+     * @return iterable<string, array{args: list<string>}>
+     */
+    public static function provideBaselineSpellings(): iterable
+    {
+        yield 'equals sign' => ['args' => ['--baseline=base.json', '--generate-baseline=new.json', 'src']];
+        yield 'space' => ['args' => ['--baseline', 'base.json', '--generate-baseline', 'new.json', 'src']];
+        yield 'space, after the path' => ['args' => ['src', '--generate-baseline', 'new.json', '--baseline', 'base.json']];
+    }
+
+    /**
+     * The space form needs a file after it: nothing, or the next option,
+     * is a missing value, as for --output. So is an empty "=" value.
+     *
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideMissingBaselineFiles')]
+    public function test_parse_reports_a_missing_baseline_file(array $args, string $error): void
+    {
+        $result = (new LintArgumentParser())->parse($args);
+
+        $this->assertSame($error, $result->error);
+        $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
+    }
+
+    /**
+     * @return iterable<string, array{args: list<string>, error: string}>
+     */
+    public static function provideMissingBaselineFiles(): iterable
+    {
+        yield '--baseline last' => ['args' => ['src', '--baseline'], 'error' => 'Missing value for --baseline.'];
+        yield '--baseline before an option' => ['args' => ['--baseline', '--json', 'src'], 'error' => 'Missing value for --baseline.'];
+        yield '--generate-baseline last' => ['args' => ['src', '--generate-baseline'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--generate-baseline before an option' => ['args' => ['--generate-baseline', '-v', 'src'], 'error' => 'Missing value for --generate-baseline.'];
+        yield '--baseline= with no file' => ['args' => ['src', '--baseline='], 'error' => 'Missing value for --baseline.'];
+        yield '--generate-baseline= with no file' => ['args' => ['--generate-baseline=', 'src'], 'error' => 'Missing value for --generate-baseline.'];
+    }
 }

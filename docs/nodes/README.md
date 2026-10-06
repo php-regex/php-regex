@@ -154,19 +154,19 @@ foreach ($alternation->alternatives as $alt) {
 
 **Group Types:**
 
-| Type Constant                 | Pattern        | Description                    |
-|-------------------------------|----------------|--------------------------------|
-| `T_GROUP_CAPTURING`           | `(foo)`        | Captures matched text          |
-| `T_GROUP_NON_CAPTURING`       | `(?:foo)`      | Groups without capture         |
-| `T_GROUP_NAMED`               | `(?<name>foo)` | Captures with name             |
-| `T_GROUP_LOOKAHEAD_POSITIVE`  | `(?=foo)`      | Lookahead (matches position)   |
-| `T_GROUP_LOOKAHEAD_NEGATIVE`  | `(?!foo)`      | Negative lookahead             |
-| `T_GROUP_LOOKBEHIND_POSITIVE` | `(?<=foo)`     | Lookbehind                     |
-| `T_GROUP_LOOKBEHIND_NEGATIVE` | `(?<!foo)`     | Negative lookbehind            |
-| `T_GROUP_INLINE_FLAGS`        | `(?i:foo)`     | Inline flag modification       |
-| `T_GROUP_ATOMIC`              | `(?>foo)`      | Atomic group (no backtracking) |
-| `T_GROUP_BRANCH_RESET`        | `(?\|foo\|bar)` | Same group numbers in branches |
-| `T_GROUP_SCAN_SUBSTRING`      | `(*scs:(1)foo)` | Matches its body against what the listed groups captured (PCRE2 10.45) |
+| Case                            | Pattern         | Description                                                            |
+|---------------------------------|-----------------|------------------------------------------------------------------------|
+| `GroupType::Capturing`          | `(foo)`         | Captures matched text                                                  |
+| `GroupType::NonCapturing`       | `(?:foo)`       | Groups without capture                                                 |
+| `GroupType::Named`              | `(?<name>foo)`  | Captures with name                                                     |
+| `GroupType::LookaheadPositive`  | `(?=foo)`       | Lookahead (matches position)                                           |
+| `GroupType::LookaheadNegative`  | `(?!foo)`       | Negative lookahead                                                     |
+| `GroupType::LookbehindPositive` | `(?<=foo)`      | Lookbehind                                                             |
+| `GroupType::LookbehindNegative` | `(?<!foo)`      | Negative lookbehind                                                    |
+| `GroupType::InlineFlags`        | `(?i:foo)`      | Inline flag modification                                               |
+| `GroupType::Atomic`             | `(?>foo)`       | Atomic group (no backtracking)                                         |
+| `GroupType::BranchReset`        | `(?\|foo\|bar)` | Same group numbers in branches                                         |
+| `GroupType::ScanSubstring`      | `(*scs:(1)foo)` | Matches its body against what the listed groups captured (PCRE2 10.45) |
 
 **Example:**
 ```php
@@ -212,11 +212,11 @@ echo $lookahead->type === GroupType::LookaheadPositive;  // true
 
 **Quantifier Types:**
 
-| Type Constant  | Pattern              | Behavior                                     |
-|----------------|----------------------|----------------------------------------------|
-| `T_GREEDY`     | `+`, `*`, `{m,n}`    | Matches as much as possible, then backtracks |
-| `T_LAZY`       | `+?`, `*?`, `{m,n}?` | Matches as little as possible                |
-| `T_POSSESSIVE` | `++`, `*+`, `{m,n}+` | Matches as much as possible, no backtracking |
+| Case                         | Pattern              | Behavior                                     |
+|------------------------------|----------------------|----------------------------------------------|
+| `QuantifierType::Greedy`     | `+`, `*`, `{m,n}`    | Matches as much as possible, then backtracks |
+| `QuantifierType::Lazy`       | `+?`, `*?`, `{m,n}?` | Matches as little as possible                |
+| `QuantifierType::Possessive` | `++`, `*+`, `{m,n}+` | Matches as much as possible, no backtracking |
 
 **Example:**
 ```php
@@ -430,8 +430,8 @@ echo $endAnchor->value;    // '$'
 | `(?!...)`  | Negative lookahead (GroupNode)               |
 | `(?<=...)` | Positive lookbehind (GroupNode)              |
 | `(?<!...)` | Negative lookbehind (GroupNode)              |
-| `(?*...)`, `(*napla:...)` | Non-atomic positive lookahead: a `T_GROUP_LOOKAHEAD_POSITIVE` GroupNode whose `flags` is `*` |
-| `(?<*...)`, `(*naplb:...)` | Non-atomic positive lookbehind: a `T_GROUP_LOOKBEHIND_POSITIVE` GroupNode whose `flags` is `*` |
+| `(?*...)`, `(*napla:...)` | Non-atomic positive lookahead: a `GroupType::LookaheadPositive` GroupNode whose `flags` is `*` |
+| `(?<*...)`, `(*naplb:...)` | Non-atomic positive lookbehind: a `GroupType::LookbehindPositive` GroupNode whose `flags` is `*` |
 
 **Example:**
 ```php

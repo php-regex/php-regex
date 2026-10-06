@@ -36,6 +36,36 @@ final readonly class HelpCommand implements CommandInterface
     ];
 
     /**
+     * The options LintArgumentParser accepts, listed once for `help lint`
+     * and the overview's Lint Options alike.
+     */
+    private const LINT_OPTIONS = [
+        ['--exclude <path>', 'Paths to exclude (repeatable)'],
+        ['--min-savings <n>', 'Minimum optimization savings'],
+        ['-j, --jobs <n>', 'Parallel workers for analysis'],
+        ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
+        ['--json', 'Same as --format=json'],
+        ['--output <file>', 'Write output to file'],
+        ['--baseline <file>', 'Leave out the issues a baseline file lists'],
+        ['--generate-baseline <file>', 'Write the issues found to a baseline file'],
+        ['--redos', 'Run the ReDoS risk analysis, off by default'],
+        ['--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'],
+        ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
+        ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
+        ['--no-validate', 'Skip validation errors (structural lint only)'],
+        ['--no-optimize', 'Disable optimization suggestions'],
+        ['--lint', 'Run the lint rules (the default)'],
+        ['--no-lint', 'Skip the lint rules'],
+        ['--enable-rule=<id>', 'Turn a lint rule on (repeatable)'],
+        ['--disable-rule=<id>', 'Turn a lint rule off (repeatable)'],
+        ['--interop <presets>', 'Wrapper libraries to read patterns from (composer-pcre, nette-utils, spatie-regex, laravel-str, none)'],
+        ['--no-interop', 'Read patterns from native preg_* calls only'],
+        ['--pattern-function <spec>', 'Extra call carrying a pattern, e.g. App\\Str::matches#1 (repeatable)'],
+        ['-v, --verbose', 'Show detailed output'],
+        ['--debug', 'Show debug information'],
+    ];
+
+    /**
      * @param array<int, CommandInterface> $commands the commands the
      *                                               application knows, so
      *                                               that the summary cannot
@@ -106,25 +136,7 @@ final readonly class HelpCommand implements CommandInterface
         ];
         $this->renderTableSection($output, 'Global Options', $globalOptions, fn (string $value): string => $this->formatOption($output, $value));
 
-        $lintOptions = [
-            ['--exclude <path>', 'Paths to exclude (repeatable)'],
-            ['--min-savings <n>', 'Minimum optimization savings'],
-            ['--jobs <n>', 'Parallel workers for analysis'],
-            ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
-            ['--json', 'Same as --format=json'],
-            ['--output <file>', 'Write output to file'],
-            ['--redos', 'Run the ReDoS risk analysis, off by default (--no-redos skips it when regex.json turns it on)'],
-            ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
-            ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-            ['--no-validate', 'Skip validation errors (structural lint only)'],
-            ['--no-optimize', 'Disable optimization suggestions'],
-            ['--interop <presets>', 'Wrapper libraries to read patterns from (composer-pcre, nette-utils, spatie-regex, laravel-str, none)'],
-            ['--no-interop', 'Read patterns from native preg_* calls only'],
-            ['--pattern-function <spec>', 'Extra call carrying a pattern, e.g. App\\Str::matches#1 (repeatable)'],
-            ['-v, --verbose', 'Show detailed output'],
-            ['--debug', 'Show debug information'],
-        ];
-        $this->renderTableSection($output, 'Lint Options', $lintOptions, fn (string $value): string => $this->formatOption($output, $value));
+        $this->renderTableSection($output, 'Lint Options', self::LINT_OPTIONS, fn (string $value): string => $this->formatOption($output, $value));
         $output->write($output->dim('  Config: regex.json or regex.dist.json in the working directory sets lint defaults.')."\n");
         $output->write($output->dim('  Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.')."\n");
         $output->write($output->dim('  Inline ignore: // @regex-ignore-next-line or // @regex-ignore')."\n\n");
@@ -138,11 +150,13 @@ final readonly class HelpCommand implements CommandInterface
         $transpileOptions = [
             ['--target <dialect>', 'Target dialect (js, python)'],
             ['--format <format>', 'Output format (console, json)'],
+            ['--json', 'Same as --format=json'],
         ];
         $this->renderTableSection($output, 'Transpile Options', $transpileOptions, fn (string $value): string => $this->formatOption($output, $value));
 
         $analyzeOptions = [
             ['--format <format>', 'Output format (console, json)'],
+            ['--json', 'Same as --format=json'],
             ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
             ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
         ];
@@ -151,6 +165,7 @@ final readonly class HelpCommand implements CommandInterface
         $debugOptions = [
             ['--input <string>', 'Input string to test against the pattern'],
             ['--format <format>', 'Output format (console, json)'],
+            ['--json', 'Same as --format=json'],
             ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
             ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
         ];
@@ -170,6 +185,7 @@ final readonly class HelpCommand implements CommandInterface
             ['--recursion-limit <n>', 'Override pcre.recursion_limit'],
             ['--time-limit <n>', 'Set max_execution_time in seconds'],
             ['--format <format>', 'Output format (console, json)'],
+            ['--json', 'Same as --format=json'],
             ['--show-input', 'Print full input string'],
         ];
         $this->renderTableSection($output, 'ReDoS Benchmark Options', $redosOptions, fn (string $value): string => $this->formatOption($output, $value));
@@ -301,6 +317,7 @@ final readonly class HelpCommand implements CommandInterface
                 'description' => 'Parse, validate, and analyze ReDoS risk',
                 'options' => [
                     ['--format <format>', 'Output format (console, json)'],
+                    ['--json', 'Same as --format=json'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
@@ -317,10 +334,12 @@ final readonly class HelpCommand implements CommandInterface
                 'description' => 'Compare two regex patterns using automata logic',
                 'options' => [
                     ['--method <method>', 'intersection (default), subset, or equivalence'],
+                    ['--determinizer <algo>', 'subset-indexed (default) or subset'],
+                    ['--minimizer <algo>', 'hopcroft (default) or moore'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => ['Supports the regular subset only (no lookarounds or backreferences).'],
+                'notes' => ['Compares the regular subset: lookarounds, \b and anchors are read; backreferences, recursion and atomic groups are refused.'],
                 'examples' => [
                     [[$this->resolveInvocation(), 'compare', "'/[a-z]+/'", "'/edit/'"], 'Check intersection'],
                     [[$this->resolveInvocation(), 'compare', "'/edit/'", "'/[a-z]+/'", '--method=subset'], 'Check subset'],
@@ -343,6 +362,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--input <string>', 'Input string to test against the pattern'],
                     ['--format <format>', 'Output format (console, json)'],
+                    ['--json', 'Same as --format=json'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
@@ -370,6 +390,7 @@ final readonly class HelpCommand implements CommandInterface
                     ['--recursion-limit <n>', 'Override pcre.recursion_limit'],
                     ['--time-limit <n>', 'Set max_execution_time in seconds'],
                     ['--format <format>', 'Output format (console, json)'],
+                    ['--json', 'Same as --format=json'],
                     ['--show-input', 'Print full input string'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
@@ -382,9 +403,10 @@ final readonly class HelpCommand implements CommandInterface
                 ],
             ],
             'diagram' => [
-                'description' => 'Render an ASCII diagram of the AST',
+                'description' => 'Render a diagram of the AST (text or SVG)',
                 'options' => [
-                    ['--format <format>', 'Output format (ascii)'],
+                    ['--format <format>', 'Output format (text, svg)'],
+                    ['--output <file>', 'Write output to file'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
@@ -424,6 +446,7 @@ final readonly class HelpCommand implements CommandInterface
                 'options' => [
                     ['--target <dialect>', 'Target dialect (js, python)'],
                     ['--format <format>', 'Output format (console, json)'],
+                    ['--json', 'Same as --format=json'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -433,20 +456,7 @@ final readonly class HelpCommand implements CommandInterface
             ],
             'lint' => [
                 'description' => 'Lint regex patterns in PHP source code',
-                'options' => [
-                    ['--exclude <path>', 'Paths to exclude (repeatable)'],
-                    ['--min-savings <n>', 'Minimum optimization savings'],
-                    ['--jobs <n>', 'Parallel workers for analysis'],
-                    ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
-                    ['--json', 'Same as --format=json'],
-                    ['--redos', 'Run the ReDoS risk analysis, off by default (--no-redos skips it when regex.json turns it on)'],
-                    ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
-                    ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                    ['--no-validate', 'Skip validation errors (structural lint only)'],
-                    ['--no-optimize', 'Disable optimization suggestions'],
-                    ['-v, --verbose', 'Show detailed output'],
-                    ['--debug', 'Show debug information'],
-                ],
+                'options' => self::LINT_OPTIONS,
                 'notes' => [
                     'Config: regex.json or regex.dist.json in the working directory sets lint defaults.',
                     'Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.',

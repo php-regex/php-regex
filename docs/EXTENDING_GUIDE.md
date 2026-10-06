@@ -28,7 +28,8 @@ PHPRegex core extension points:
 
 ## Step 1: Add a New Node
 
-Create a node class for your new PCRE feature:
+Create a node class for your new PCRE feature. The example below is the
+callout node, `(?C)`, `(?C1)` or `(?C"name")`, as the library ships it.
 
 **Location:** `src/Parser/Node/YourFeatureNode.php`
 
@@ -41,24 +42,19 @@ namespace PHPRegex\Parser\Node;
 
 use PHPRegex\Parser\NodeVisitorInterface;
 
-/**
- * Represents your new PCRE feature.
- *
- * Example: (?C) or (?C99) callouts
- */
-readonly class CalloutNode extends AbstractNode
+final readonly class CalloutNode extends AbstractNode
 {
     /**
-     * @param int|null $number Callout number (null for (?C))
-     * @param int      $startPos 0-based start offset
-     * @param int      $endPos 0-based end offset (exclusive)
+     * @param int|string|null $identifier         callout number or string, null for "(?C)"
+     * @param bool            $isStringIdentifier whether the identifier was a delimited string
      */
     public function __construct(
-        public ?int $number,
-        int $startPos,
-        int $endPos,
+        public int|string|null $identifier,
+        public bool $isStringIdentifier,
+        int $startPosition,
+        int $endPosition,
     ) {
-        parent::__construct($startPos, $endPos);
+        parent::__construct($startPosition, $endPosition);
     }
 
     public function accept(NodeVisitorInterface $visitor): mixed
@@ -73,52 +69,86 @@ readonly class CalloutNode extends AbstractNode
 - [ ] Extend `AbstractNode`
 - [ ] Implement `NodeInterface` (via `accept()`)
 - [ ] Add public readonly properties
-- [ ] Call `parent::__construct($startPos, $endPos)`
+- [ ] Call `parent::__construct($startPosition, $endPosition)`
 
 ---
 
-## Step 2: Update the Parser
+## Step 2: Update the Lexer and the Parser
 
-Add parsing logic in `src/Parser/Syntax/TokenParser.php`:
+### Lex the new syntax
+
+The lexer (`src/Parser/Lexer.php`) cuts the pattern into tokens. Each token
+has a `TokenType` case (`src/Parser/Token/TokenType.php`). A whole callout,
+`(?C...)` up to its `)`, is one `TokenType::Callout` token, and its value is
+the text between `(?C` and `)`. A new token needs three things:
+
+- a case in `TokenType`, e.g. `case Callout = 'callout';`;
+- a pattern in the lexer's token map (`PATTERNS_OUTSIDE`, or `PATTERNS_INSIDE`
+  for a token read inside a character class), keyed `T_` plus the upper-cased
+  backing value: `'T_CALLOUT' => '...'`. The lexer turns the key back into the
+  case with `TokenType::from(strtolower(substr($tokenName, 2)))`, so a key that
+  does not spell a backing value is an error;
+- the same key in the matching priority list, `TOKENS_OUTSIDE` or
+  `TOKENS_INSIDE`: the lexer reads the token's type from the first key of that
+  list whose pattern matched. A key missing from the list is never read, and a
+  match of its pattern ends the run with a lexer internal error.
+
+The patterns are tried in the order of the token map, and the first that
+matches at the current position wins: a new pattern goes before any pattern
+that would match a prefix of its syntax (`T_CALLOUT` sits before
+`T_GROUP_MODIFIER_OPEN`, which would match the `(?` of `(?C1)`).
+
+### Parse the token
+
+Add parsing logic in `src/Parser/Syntax/TokenParser.php`. The parser reads a
+`TokenStream` (`src/Parser/Token/TokenStream.php`):
+
+- `match(TokenType $type)` moves past the current token when it has that type, and says whether it did.
+- `previous()` returns the token just moved past.
+- `consume(TokenType $type, string $error, ErrorCode $code)` moves past a token of that type, or throws a parser exception with that error code.
+
+An atom is dispatched in `parseAtom()`. Syntax that opens with `(` goes
+through `parseGroupOrCharClassAtom()`, and syntax that opens with `(?` goes on
+to `parseGroupModifier()`. The callout token is matched in `parseAtom()` of
+`src/Parser/Syntax/TokenParser.php`:
 
 ```php
-// In the parseGroup() method, add your feature
+if ($this->stream->match(TokenType::Callout)) {
+    return $this->parseCallout();
+}
+```
 
-private function parseGroup(int $startPosition): NodeInterface
+`parseCallout()` builds the node from the token it just matched, in
+`src/Parser/Syntax/TokenParser.php`:
+
+```php
+private function parseCallout(): CalloutNode
 {
-    // ... existing code ...
+    $token = $this->stream->previous();
+    $startPosition = $token->position;
+    $value = $token->value; // the text between "(?C" and ")"
+    $endPosition = $startPosition + \strlen($value) + self::CALLOUT_WRAPPER_LENGTH;
 
-    if ($this->isNextToken('T_GROUP_OPEN')) {
-        // Check for callout pattern: (?C) or (?C<number>)
-        if ($this->isNextToken('T_PCRE_VERB') && str_starts_with($this->currentToken->value, '(*CALLOUT')) {
-            return $this->parseCallout($startPosition);
-        }
+    if ('' === $value) {
+        return new CalloutNode(null, false, $startPosition, $endPosition);
     }
 
-    // ... continue ...
-}
-
-private function parseCallout(int $startPosition): CalloutNode
-{
-    // Consume the callout token
-    $this->consumeToken();
-
-    // Parse callout number if present
-    $number = null;
-    if ($this->isNextToken('T_NUMBER')) {
-        $number = (int) $this->currentToken->value;
-        $this->consumeToken();
+    if (Ascii::isDigit($value)) {
+        return new CalloutNode((int) $value, false, $startPosition, $endPosition);
     }
 
-    // Expect closing parenthesis
-    $this->consumeToken('T_GROUP_CLOSE');
-
-    return new CalloutNode(
-        $number,
-        $startPosition,
-        $this->currentToken->endPosition,
-    );
+    // ... a delimited string, or a parser exception for anything else
 }
+```
+
+The parser then returns the node in the tree:
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/a(?C1)b(?C"tag")/');
+// $ast->pattern->children[1]: CalloutNode, identifier 1, isStringIdentifier false, positions 1 to 6
+// $ast->pattern->children[3]: CalloutNode, identifier "tag", isStringIdentifier true, positions 7 to 16
 ```
 
 ---
@@ -168,11 +198,18 @@ they stand in the pattern.
 ```php
 public function visitCallout(CalloutNode $node): string
 {
-    return $node->number !== null
-        ? "(?C{$node->number})"
-        : "(?C)";
+    if (null === $node->identifier) {
+        return '(?C)';
+    }
+
+    return $node->isStringIdentifier
+        ? '(?C"'.$node->identifier.'")'
+        : '(?C'.$node->identifier.')';
 }
 ```
+
+This sketch does not double a `"` inside the string, as `(?C"a""b")` needs.
+`PatternPrinter::visitCallout()` is the full version.
 
 ---
 

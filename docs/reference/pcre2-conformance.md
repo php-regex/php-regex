@@ -42,12 +42,6 @@ Subject lines are ignored: this is a compile-level measurement, not a match-leve
 - **The pinned suite is authoritative.** The live-engine tests elsewhere in the test suite describe the PHP build they
   run on; this page describes PCRE2 10.48, pinned, whatever PHP build runs the test suite.
 
-> [!NOTE]
-> `ValidationResult::$offset` is informational for now. Syntax errors inside the pattern body report a body-relative
-> offset, while flag errors report an offset into the whole pattern string and delimiter errors report none. This page
-> normalizes flag-error offsets to the body before comparing. A future release will make `$offset` body-relative
-> everywhere — see [UPGRADE-2.0.md](../../UPGRADE-2.0.md).
-
 The case-by-case record lives in `tests/Fixtures/Pcre2/`. Its JSON format is internal and may change between releases
 without notice; do not build on it.
 

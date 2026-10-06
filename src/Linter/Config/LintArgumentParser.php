@@ -392,8 +392,8 @@ final class LintArgumentParser
             }
 
             if ('--generate-baseline' === $arg || str_starts_with($arg, '--generate-baseline=')) {
-                $generateBaseline = '--generate-baseline' === $arg ? ($args[++$i] ?? '') : substr($arg, \strlen('--generate-baseline='));
-                if ('' === $generateBaseline || ('--generate-baseline' === $arg && str_starts_with($generateBaseline, '-'))) {
+                $generateBaseline = $this->fileValue($args, $i, '--generate-baseline');
+                if (null === $generateBaseline) {
                     return new LintParseResult(null, 'Missing value for --generate-baseline.');
                 }
                 $arguments = new LintArguments(
@@ -424,8 +424,8 @@ final class LintArgumentParser
             }
 
             if ('--baseline' === $arg || str_starts_with($arg, '--baseline=')) {
-                $baseline = '--baseline' === $arg ? ($args[++$i] ?? '') : substr($arg, \strlen('--baseline='));
-                if ('' === $baseline || ('--baseline' === $arg && str_starts_with($baseline, '-'))) {
+                $baseline = $this->fileValue($args, $i, '--baseline');
+                if (null === $baseline) {
                     return new LintParseResult(null, 'Missing value for --baseline.');
                 }
                 $arguments = new LintArguments(
@@ -772,6 +772,30 @@ final class LintArgumentParser
         }
 
         return new LintParseResult($arguments, pathsGiven: $pathsProvided);
+    }
+
+    /**
+     * The file a baseline option names, as "--option=file" or as
+     * "--option file" (then $i moves past the file); null when there is no
+     * file: an empty "=" value, or nothing but an option after the space.
+     *
+     * @param array<int, string> $args
+     */
+    private function fileValue(array $args, int &$i, string $option): ?string
+    {
+        if (str_starts_with($args[$i], $option.'=')) {
+            $value = substr($args[$i], \strlen($option) + 1);
+
+            return '' === $value ? null : $value;
+        }
+
+        $value = $args[$i + 1] ?? '';
+        if ('' === $value || str_starts_with($value, '-')) {
+            return null;
+        }
+        $i++;
+
+        return $value;
     }
 
     /**
