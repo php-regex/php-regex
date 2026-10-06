@@ -337,6 +337,26 @@ var_dump($confirmed->replayed);                               // bool(true)
 
 ---
 
+### captureShape(string $regex): CaptureShape
+
+Reads what a successful `preg_match()` writes into `$matches`, from the pattern alone. The pattern is parsed through
+the facade's cache, and an invalid one throws what `parse()` throws. `$groups` is keyed by group number;
+`matchShape()` writes the array as a PHPStan type and takes `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`.
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$shape = Regex::create()->captureShape('/(GET|POST) (\S+)/');
+
+$shape->groups[1]->values;  // ['GET', 'POST']
+$shape->matchShape();       // "array{0: non-empty-string, 1: 'GET'|'POST', 2: non-empty-string}"
+```
+
+A static analysis extension calls `CaptureShapeAnalyzer` from `php-regex/regex-parser` instead. See
+[Capture Shapes](capture-shapes.md) for the facts, the flags and what a release may change.
+
+---
+
 ## Transform and Extract Methods
 
 ### optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
@@ -660,6 +680,7 @@ try {
 | `validate($regex)`      | ValidationResult        | Check validity    |
 | `analyze($regex)`       | AnalysisReport          | Analysis report   |
 | `redos($regex)`         | RedosAnalysis           | ReDoS check       |
+| `captureShape($regex)`  | CaptureShape            | Shape of `$matches` |
 | `optimize($regex)`      | OptimizationResult      | Optimize pattern  |
 | `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |

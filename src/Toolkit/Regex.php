@@ -23,6 +23,8 @@ use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Analysis\CaptureShape;
+use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -321,6 +323,18 @@ final readonly class Regex
         $confidenceLevel = $this->determineConfidenceLevel($literalSet);
 
         return new LiteralExtractionResult($uniqueLiterals, $searchPatterns, $confidenceLevel, $literalSet);
+    }
+
+    /**
+     * Describe the array preg_match() fills for the pattern: its keys, which are optional, and the strings each can hold.
+     *
+     * @param string $regex The regular expression to analyze
+     *
+     * @throws ExceptionInterface when the pattern does not parse, as parse() throws
+     */
+    public function captureShape(string $regex): CaptureShape
+    {
+        return (new CaptureShapeAnalyzer())->analyze($this->parse($regex));
     }
 
     /**

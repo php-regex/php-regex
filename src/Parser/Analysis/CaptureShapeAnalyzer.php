@@ -46,6 +46,11 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class CaptureShapeAnalyzer
 {
+    /**
+     * Rises in any release that changes an answer: a fact or the match shape string.
+     */
+    public const ANALYSIS_VERSION = '1';
+
     private const MAX_VALUES = 32;
 
     private const MARK_VERBS = ['MARK', 'PRUNE', 'THEN', 'ACCEPT', 'COMMIT', 'F', 'FAIL'];
@@ -54,10 +59,13 @@ final class CaptureShapeAnalyzer
 
     private const NEGATIVE_LOOKAROUNDS = [GroupType::LookaheadNegative, GroupType::LookbehindNegative];
 
+    /**
+     * @var int<1, max>
+     */
     private int $next = 1;
 
     /**
-     * @var array<int, list<array{name: ?string, never: bool, values: list<string>|null, min: int, max: int|null}>>
+     * @var array<int<1, max>, list<array{name: ?string, never: bool, values: list<string>|null, min: int, max: int|null}>>
      */
     private array $occurrences = [];
 
@@ -90,7 +98,7 @@ final class CaptureShapeAnalyzer
         ksort($this->occurrences);
         $groups = [];
         foreach ($this->occurrences as $number => $occurrences) {
-            $groups[] = $this->group($number, $occurrences, isset($guaranteed[$number]));
+            $groups[$number] = $this->group($number, $occurrences, isset($guaranteed[$number]));
         }
 
         [$min, $max] = $regex->pattern->accept($this->lengths);
@@ -114,10 +122,18 @@ final class CaptureShapeAnalyzer
     }
 
     /**
+     * @param int<1, max>                                                                                 $number
      * @param list<array{name: ?string, never: bool, values: list<string>|null, min: int, max: int|null}> $occurrences
      */
     private function group(int $number, array $occurrences, bool $guaranteed): CaptureGroupShape
     {
+        // A branch reset number takes the name any of its branches gives:
+        // PCRE refuses two different names for one number.
+        $name = null;
+        foreach ($occurrences as $occurrence) {
+            $name ??= $occurrence['name'];
+        }
+
         $set = array_values(array_filter($occurrences, static fn (array $occurrence): bool => !$occurrence['never']));
 
         $participation = match (true) {
@@ -142,10 +158,10 @@ final class CaptureShapeAnalyzer
 
         if ($this->accepts) {
             // A group (*ACCEPT) leaves open holds what it read so far.
-            return new CaptureGroupShape($number, $occurrences[0]['name'], $participation, 0, null, null);
+            return new CaptureGroupShape($number, $name, $participation, 0, null, null);
         }
 
-        return new CaptureGroupShape($number, $occurrences[0]['name'], $participation, $min ?? 0, $max, [] === $set ? null : $values);
+        return new CaptureGroupShape($number, $name, $participation, $min ?? 0, $max, [] === $set ? null : $values);
     }
 
     /**

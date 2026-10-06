@@ -119,7 +119,9 @@ add one to yet.
 - **New node types**, with the matching `visitX()` method on
   `NodeVisitorInterface` and its default in the abstract visitors.
 - **New enum cases**, in `ErrorCode`, `TokenType`, `PcreFeature`, `GroupType`
-  and the others. A `match` over one of these enums needs a `default` arm.
+  and the others. A `match` over one of these enums needs a `default` arm. A new
+  `Analysis\Participation` case only refines `MayBeUnset`, so a `default` arm
+  that answers `MayBeUnset` stays sound.
 - **New optional parameters**: a node constructor or a method may gain a
   trailing parameter with a default value. Pass arguments by position for the
   ones you set, or by name. 2.0.0 adds one: `Optimizer::__construct()` takes an
@@ -140,6 +142,13 @@ add one to yet.
   The heuristic lint issues (nested quantifiers, dot-star in a quantifier,
   overlapping character sets) are dropped for a pattern the analysis proves
   linear, so they may disappear for a pattern the wider model now proves.
+- **A narrower capture shape**: the facts of `CaptureShapeAnalyzer` and the
+  string `CaptureShape::matchShape()` writes may become more precise, still
+  holding every `$matches` PHP writes, and the string may be written
+  differently for the same type. `CaptureShapeAnalyzer::ANALYSIS_VERSION`
+  rises with any such change, and a patch may widen an answer to make it sound
+  again. A PHPStan baseline that prints the type may need regenerating; the
+  CHANGELOG says when. See [Capture Shapes](capture-shapes.md).
 - **New ReDoS options**: a configuration key for the analysis budget may be
   added; none is removed.
 - **What a lint rule reports**: a rule may report more or fewer patterns when

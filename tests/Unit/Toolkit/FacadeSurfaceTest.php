@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Toolkit;
 
+use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
@@ -38,6 +39,20 @@ final class FacadeSurfaceTest extends TestCase
 
         $this->assertSame(1, $parse->getNumberOfParameters());
         $this->assertSame(RegexNode::class, (string) $parse->getReturnType());
+    }
+
+    #[Test]
+    public function test_capture_shape_takes_only_the_pattern(): void
+    {
+        $captureShape = new \ReflectionMethod(Regex::class, 'captureShape');
+
+        $this->assertTrue($captureShape->isPublic());
+        $this->assertFalse($captureShape->isStatic());
+        $this->assertSame(1, $captureShape->getNumberOfParameters());
+        $this->assertSame('string', (string) $captureShape->getParameters()[0]->getType());
+        // Named arguments make the name public: the facade calls a pattern $regex everywhere.
+        $this->assertSame('regex', $captureShape->getParameters()[0]->getName());
+        $this->assertSame(CaptureShape::class, (string) $captureShape->getReturnType());
     }
 
     #[Test]

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 /**
- * Thrown when invalid options are passed to `Regex::create()`.
+ * Thrown when invalid options are passed to `Regex::create()`, or when
+ * `CaptureShape::matchShape()` is given a flag preg_match() refuses.
  */
 final class InvalidRegexOptionException extends \InvalidArgumentException implements ExceptionInterface {}

@@ -123,6 +123,17 @@ Sound in both cases, but verdicts the proof could give:
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
   the witness is wrong.
+- The inline `n` state does not reach the body of an alphabetic assertion
+  (`(*pla:…)`, `(*atomic:…)`, …), as it reaches `(?=…)`:
+  `/(?-n)(*atomic:(a))/n` captures group 1 on the engine, and the library
+  numbers no group, so the capture shape misses key `1` (also `(?^)`,
+  `(?-n:…)`, and every alphabetic group name).
+- Under `(?J)`, PCRE accepts two names for one branch-reset number when the
+  later name already exists: `/(?J)(?<n>a)(?|(?<m>b)|(?<n>c))/` on `ab`
+  gives `{"0":"ab","n":"b","1":"a","2":"b"}`, with no `m` key. The library
+  refuses it. Accepting it needs the capture shape to stop naming the shared
+  record after the first branch that names it, and the `(?J)` rule of
+  `capture-shapes.md` to say which name PHP keeps.
 - The text of a comment reaches `explain()`, the highlighters and the Mermaid
   output as raw bytes: a byte-mode comment that is not valid UTF-8
   (`/a(?#\xE1)b/`, or `"/(*ANY)a#\u{5140}b/x"`, whose comment ends at the

@@ -26,7 +26,9 @@ use PHPUnit\Framework\Attributes\Test;
 
 /**
  * The match shape is a PHPStan type: PHPStan reads it, and the type it reads
- * holds every $matches the engine writes.
+ * holds every $matches the engine writes, every key included. The rows are
+ * the analyzer test's engine rows (a group named MARK beside a mark verb, a
+ * name in one branch of a branch reset, names shared under (?J), /n).
  */
 final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
 {
@@ -56,6 +58,16 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
                     $type->isSuperTypeOf($actual)->yes(),
                     \sprintf('%s on "%s" with flags %d wrote %s, outside %s.', $pattern, $subject, $flags, $actual->describe(VerbosityLevel::precise()), $written),
                 );
+
+                // An array shape takes extra keys as a subtype: each key the
+                // engine writes must be one PHPStan knows, or reading it is
+                // reported as an offset that does not exist.
+                foreach (array_keys($matches) as $key) {
+                    $this->assertFalse(
+                        $type->hasOffsetValueType(ConstantTypeHelper::getTypeFromValue($key))->no(),
+                        \sprintf('%s on "%s" with flags %d wrote key "%s", missing from %s.', $pattern, $subject, $flags, $key, $written),
+                    );
+                }
             }
         }
     }
