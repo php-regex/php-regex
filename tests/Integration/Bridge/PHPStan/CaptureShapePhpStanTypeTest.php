@@ -122,6 +122,65 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     }
 
     /**
+     * Each preg_match_all() shape the analyzer test expects is a type
+     * PHPStan reads, an array shape under PREG_PATTERN_ORDER and a list
+     * under PREG_SET_ORDER, and matchAllShape() resolves to that type.
+     */
+    #[Test]
+    #[DataProviderExternal(CaptureShapeAnalyzerTest::class, 'provideMatchAllShapes')]
+    public function test_the_match_all_shape_is_a_type_phpstan_reads(string $pattern, int $flags, string $expected): void
+    {
+        $resolver = self::getContainer()->getByType(TypeStringResolver::class);
+        $type = $resolver->resolve($expected);
+
+        if (0 !== ($flags & \PREG_SET_ORDER)) {
+            $this->assertTrue($type->isList()->yes(), \sprintf('PHPStan reads "%s" as %s, not a list.', $expected, $type->describe(VerbosityLevel::precise())));
+        } else {
+            $this->assertTrue($type->isConstantArray()->yes(), \sprintf('PHPStan reads "%s" as %s, not an array shape.', $expected, $type->describe(VerbosityLevel::precise())));
+        }
+
+        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+        self::assertEquivalent($type, $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
+    }
+
+    /**
+     * Under PREG_PATTERN_ORDER a group named MARK keeps its list until a
+     * match sets a mark: PHP then writes the marks, keyed by match index,
+     * over the group's list, at the group's place. Read from the engine (PHP
+     * 8.4.26, PCRE2 10.49):
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'a', $m)                        -> {"0":["a"],"MARK":["a"],"1":["a"]}
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'ab', $m)                       -> {"0":["a","b"],"MARK":{"1":"x"},"1":["a",""]}
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'a', $m, PREG_OFFSET_CAPTURE)   -> {"0":[["a",0]],"MARK":[["a",0]],"1":[["a",0]]}
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'ab', $m, 768)                  -> {…,"MARK":{"1":"x"},"1":[["a",0],[null,-1]]}
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'z', $m)                        -> {"0":[],"MARK":[],"1":[]}
+     *   preg_match_all('/(?<MARK>a)(*MARK:x)b/', 'abab', $m, PREG_OFFSET_CAPTURE) -> {…,"MARK":["x","x"],…}
+     * Under PREG_SET_ORDER each set is what preg_match() writes:
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'ab', $m, PREG_SET_ORDER)       -> [{"0":"a","MARK":"a","1":"a"},{"0":"b","MARK":"x"}]
+     */
+    #[Test]
+    #[DataProvider('provideMatchAllMarkGroups')]
+    public function test_a_group_named_mark_yields_its_list_to_the_marks_in_pattern_order(string $pattern, int $flags, string $expected): void
+    {
+        $resolver = self::getContainer()->getByType(TypeStringResolver::class);
+        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+
+        self::assertEquivalent($resolver->resolve($expected), $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, flags: int, expected: string}>
+     */
+    public static function provideMatchAllMarkGroups(): iterable
+    {
+        yield 'group and verb in different branches' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, MARK: list<''|'a'>|array<int, 'x'>, 1: list<''|'a'>}"];
+        yield 'group and verb in different branches, as null' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'|'b'>, MARK: list<'a'|null>|array<int, 'x'>, 1: list<'a'|null>}"];
+        yield 'group and verb in different branches, offsets' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a'|'b', int<0, max>}>, MARK: list<array{''|'a', int<-1, max>}>|array<int, 'x'>, 1: list<array{''|'a', int<-1, max>}>}"];
+        yield 'group always set, verb after it' => ['pattern' => '/(?<MARK>a)(*MARK:x)b/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ab'>, MARK: list<'a'>|array<int, 'x'>, 1: list<'a'>}"];
+        yield 'group always set, verb after it, offsets' => ['pattern' => '/(?<MARK>a)(*MARK:x)b/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'ab', int<0, max>}>, MARK: list<array{'a', int<0, max>}>|array<int, 'x'>, 1: list<array{'a', int<0, max>}>}"];
+        yield 'group and verb in different branches, set order' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a', MARK: 'a', 1: 'a'}|array{0: 'b', MARK?: 'x'}>"];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, flags: int, printed: string}>
      */
     public static function providePrintedShapes(): iterable

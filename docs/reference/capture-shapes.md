@@ -20,6 +20,10 @@ $shape->groups[2]->nonFalsy;      // false: \S+ may read "0"
 $shape->matchShape();             // "array{0: non-falsy-string, 1: 'GET'|'POST', 2: non-empty-string}"
 ```
 
+`matchAllShape()` types what `preg_match_all()` writes, in either order
+([`preg_match_all()`](#preg_match_all)), and `matchShape()` also types the array a replace
+callback receives ([Replace callbacks](#replace-callbacks)).
+
 An application that already uses the facade gets the same answer in one call. It
 parses through the facade's cache, and an invalid pattern throws what `parse()` throws:
 
@@ -293,6 +297,106 @@ are written as a union of sixteen shapes without flags, and as the merged shape 
 `PREG_OFFSET_CAPTURE`, where each value is a pair. `$cases` holds the sixteen cases
 either way.
 
+## `preg_match_all()`
+
+`matchAllShape(int $flags = PREG_PATTERN_ORDER)` writes the array `preg_match_all()`
+fills, in the same syntax. It takes the order, `PREG_PATTERN_ORDER` or `PREG_SET_ORDER`,
+with `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`. `0` is read as
+`PREG_PATTERN_ORDER`, as PHP reads it.
+
+The shape holds for every result, a call that finds no match included: then
+`preg_match_all('/(a)(b)?(c)?/', 'x', $m)` writes `[[], [], [], []]`, and under
+`PREG_SET_ORDER` it writes `[]`. A list in the shape may therefore be empty. An adapter
+that knows the count is positive, after `preg_match_all(...) > 0`, narrows each list to
+`non-empty-list` itself.
+
+### Pattern order
+
+Under `PREG_PATTERN_ORDER` the shape is one array shape: each key holds a list, with one
+value per match. Every group key is written on every call, set or not, so no group key
+is optional and none is left out at the end; only `MARK` may be missing. The keys come in the order `matchShape()` writes them:
+`0`, then for each group its name before its number. Where a match leaves a group unset,
+its list holds `''`, `null` under `PREG_UNMATCHED_AS_NULL`, and the pair `['', -1]` or
+`[null, -1]` under `PREG_OFFSET_CAPTURE`:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/(a)(b)?(c)?/'));
+
+// preg_match_all('/(a)(b)?(c)?/', 'a ab', $m): [['a', 'ab'], ['a', 'a'], ['', 'b'], ['', '']]
+$shape->matchAllShape();
+// array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<''|'b'>, 3: list<''|'c'>}
+
+$shape->matchAllShape(PREG_UNMATCHED_AS_NULL);
+// array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<'b'|null>, 3: list<'c'|null>}
+
+$shape->matchAllShape(PREG_OFFSET_CAPTURE);
+// array{0: list<array{'a'|'ac'|'ab'|'abc', int<0, max>}>, 1: list<array{'a', int<0, max>}>,
+//       2: list<array{''|'b', int<-1, max>}>, 3: list<array{''|'c', int<-1, max>}>}
+```
+
+Each list holds the merged value of its group, facts included; a split pattern is not
+written per case here, since one call gathers the matches of every case.
+
+Two keys differ from `preg_match()`:
+
+- A name several groups share under `(?J)` holds the list of the highest-numbered group
+  bearing it, set or not, where `preg_match()` gives the highest one set.
+  `preg_match_all('/(?J)(?<n>a)(?<n>z)?(c)/', 'ac azc', $m)` writes `n => ['', 'z']`, the
+  list of group 2, though group 1 is set on `ac`. The name is typed `list<''|'z'>`.
+- The marks a verb leaves sit under `MARK`, keyed by the index of each match that set
+  one, and the key is written only when some match did:
+  `preg_match_all('/(*MARK:m)(a)|(b)/', 'ba', $m)` writes `'MARK' => [1 => 'm']`, and
+  on `b` alone writes no `MARK` key. It is typed `MARK?: array<int, 'm'>`, the last key,
+  and a mark stays a plain string under `PREG_OFFSET_CAPTURE`. A group named `MARK`
+  keeps its list until a match sets a mark, which then writes the marks over it, at the
+  group's place: `/(?<MARK>a)|(*MARK:x)b/` on `a` writes `'MARK' => ['a']`, on `ab`
+  writes `'MARK' => [1 => 'x']`, and is typed `MARK: list<''|'a'>|array<int, 'x'>`.
+
+### Set order
+
+Under `PREG_SET_ORDER` each element of the list is what `preg_match()` writes at that
+match, trailing unset groups left out unless `PREG_UNMATCHED_AS_NULL`. The shape is
+`list<S>`, where `S` is exactly `matchShape()` under the same `PREG_OFFSET_CAPTURE` and
+`PREG_UNMATCHED_AS_NULL` flags, the union of the cases and its budget of 256 value types
+included:
+
+```php
+// preg_match_all('/(a)(b)?(c)?/', 'a ab', $m, PREG_SET_ORDER): [['a', 'a'], ['ab', 'a', 'b']]
+$shape->matchAllShape(PREG_SET_ORDER);
+// list<array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2?: ''|'b', 3?: 'c'}>
+
+$shape->matchAllShape(PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL);
+// list<array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2: 'b'|null, 3: 'c'|null}>
+```
+
+### Flags
+
+`preg_match_all()` accepts `0`, `PREG_PATTERN_ORDER` (1) or `PREG_SET_ORDER` (2) in the
+low byte (`$flags & 0xff`) and throws a `ValueError` for any other value: both orders
+together (3), `PREG_SPLIT_OFFSET_CAPTURE` (4), any other bit of that byte.
+`matchAllShape()` throws `InvalidRegexOptionException` for the same values. A bit above
+the low byte is ignored, as PHP ignores it: `preg_match_all('/(a)/', 'a', $m, 1024)`
+writes `[['a'], ['a']]`. `PREG_SPLIT_NO_EMPTY` and `PREG_SPLIT_DELIM_CAPTURE` share the
+values 1 and 2, so PHP reads them as the two orders.
+
+## Replace callbacks
+
+The callback of `preg_replace_callback()`, and each callback of
+`preg_replace_callback_array()`, receives at each match what `preg_match()` writes there.
+Its array is typed `matchShape($flags & (PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL))`
+for the `$flags` passed to the replace call, which ignores every other bit:
+
+```php
+// preg_replace_callback('/(a)(b)?(c)?/', $callback, 'a'): $callback(['a', 'a'])
+$shape->matchShape();
+// array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2?: ''|'b', 3?: 'c'}
+
+// preg_replace_callback('/(a)(b)?(c)?/', $callback, 'a', -1, $count, PREG_UNMATCHED_AS_NULL):
+// $callback(['a', 'a', null, null])
+$shape->matchShape(PREG_UNMATCHED_AS_NULL);
+// array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2: 'b'|null, 3: 'c'|null}
+```
+
 ## Soundness
 
 Every answer is sound: a group reported `Always` is set by every match, a value set holds
@@ -322,17 +426,20 @@ The facts are checked against the engine: for patterns covering each case above,
 the written shape, must accept it.
 The shapes are also checked against the engine on a parity corpus of a few hundred
 `preg_match()` cases, some taken from the php-src PCRE tests: under each flag
-combination, every shape holds every `$matches` PHP writes, key by key.
+combination, every shape holds every `$matches` PHP writes, key by key. The same corpus
+is replayed through `preg_match_all()`, in both orders, on subjects with several matches
+and with none, and through the replace callbacks.
 
 ## What a release may change
 
 `CaptureShapeAnalyzer::ANALYSIS_VERSION` is a string of digits, as
 `RedosAnalyzer::ANALYSIS_VERSION` is. It rises in any release that
-changes an answer, a fact or the string. Key a cache of shapes on it.
+changes an answer, a fact or either string, the one `matchShape()` writes or the one
+`matchAllShape()` writes. Key a cache of shapes on it.
 
 - A minor release may add properties and methods to `CaptureShape` and
-  `CaptureGroupShape`. `matchShape()` grows through new methods or trailing optional
-  parameters, never through a new positional boolean.
+  `CaptureGroupShape`. `matchShape()` and `matchAllShape()` grow through new methods or
+  trailing optional parameters, never through a new positional boolean.
 - A minor release may add a `Participation` case. A new case only refines
   `MayBeUnset`, so a `match` that maps any case it does not know to `MayBeUnset` stays
   sound.

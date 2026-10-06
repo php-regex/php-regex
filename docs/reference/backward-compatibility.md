@@ -148,9 +148,9 @@ add one to yet.
   overlapping character sets) are dropped for a pattern the analysis proves
   linear, so they may disappear for a pattern the wider model now proves.
 - **A narrower capture shape**: the facts of `CaptureShapeAnalyzer` and the
-  string `CaptureShape::matchShape()` writes may become more precise, still
-  holding every `$matches` PHP writes, and the string may be written
-  differently for the same type. `CaptureShapeAnalyzer::ANALYSIS_VERSION`
+  strings `CaptureShape::matchShape()` and `CaptureShape::matchAllShape()`
+  write may become more precise, still holding every `$matches` PHP writes,
+  and either string may be written differently for the same type. `CaptureShapeAnalyzer::ANALYSIS_VERSION`
   rises with any such change, and a patch may widen an answer to make it sound
   again. A PHPStan baseline that prints the type may need regenerating; the
   CHANGELOG says when. See [Capture Shapes](capture-shapes.md).

@@ -341,7 +341,8 @@ var_dump($confirmed->replayed);                               // bool(true)
 
 Reads what a successful `preg_match()` writes into `$matches`, from the pattern alone. The pattern is parsed through
 the facade's cache, and an invalid one throws what `parse()` throws. `$groups` is keyed by group number;
-`matchShape()` writes the array as a PHPStan type and takes `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`.
+`matchShape()` writes the array as a PHPStan type and takes `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`;
+`matchAllShape()` writes what `preg_match_all()` fills, under `PREG_PATTERN_ORDER` or `PREG_SET_ORDER`, with the same flags.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -350,6 +351,7 @@ $shape = Regex::create()->captureShape('/(GET|POST) (\S+)/');
 
 $shape->groups[1]->values;  // ['GET', 'POST']
 $shape->matchShape();       // "array{0: non-falsy-string, 1: 'GET'|'POST', 2: non-empty-string}"
+$shape->matchAllShape();    // "array{0: list<non-falsy-string>, 1: list<'GET'|'POST'>, 2: list<non-empty-string>}"
 ```
 
 A static analysis extension calls `CaptureShapeAnalyzer` from `php-regex/regex-parser` instead. See

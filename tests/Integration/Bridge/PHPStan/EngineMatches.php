@@ -20,7 +20,8 @@ use PHPStan\Type\VerbosityLevel;
 
 /**
  * The $matches the engine writes, held against a PHPStan type: the parity
- * corpus, and the reasons a type refuses one value.
+ * corpus, and the reasons a type refuses one value, for preg_match() and
+ * for preg_match_all() in either order.
  *
  * An array shape takes extra keys as a subtype, so isSuperTypeOf() alone
  * would accept a $matches holding a key the type does not list; reading that
@@ -41,6 +42,27 @@ final class EngineMatches
         \PREG_OFFSET_CAPTURE => 'PREG_OFFSET_CAPTURE',
         \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL => 'PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL',
     ];
+
+    /**
+     * The order and flag combinations a preg_match_all() call can pass that
+     * change the shape: each order with each preg_match() flag set.
+     */
+    public const MATCH_ALL_FLAG_SETS = [
+        \PREG_PATTERN_ORDER => 'PREG_PATTERN_ORDER',
+        \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL => 'PREG_PATTERN_ORDER | PREG_UNMATCHED_AS_NULL',
+        \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE => 'PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE',
+        \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL => 'PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL',
+        \PREG_SET_ORDER => 'PREG_SET_ORDER',
+        \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL => 'PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL',
+        \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE => 'PREG_SET_ORDER | PREG_OFFSET_CAPTURE',
+        \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL => 'PREG_SET_ORDER | PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL',
+    ];
+
+    /**
+     * Subjects tried, in order, when a replay needs one the pattern does not
+     * match: preg_match_all() then writes its empty result.
+     */
+    private const NON_MATCHING_CANDIDATES = ["\x00", '', '#', ' ', "\n", '0', 'Z', '~!~'];
 
     /**
      * @return list<array{source: string, pattern: string, subjects: non-empty-list<string>}>
@@ -98,6 +120,85 @@ final class EngineMatches
         }
 
         return $refusals;
+    }
+
+    /**
+     * Why a preg_match_all() shape refuses the $matches the engine writes.
+     * Under PREG_SET_ORDER the type is a list: the engine must write a list,
+     * and each set is held against the element type as refusals() holds a
+     * preg_match() result, extra keys included. Under PREG_PATTERN_ORDER the
+     * type is one array shape whose keys hold lists, held as refusals() does.
+     *
+     * @param array<int|string, mixed> $matches
+     *
+     * @return list<string> why the type refuses the value; empty when it holds it
+     */
+    public static function matchAllRefusals(Type $type, array $matches, int $flags): array
+    {
+        if (0 === ($flags & \PREG_SET_ORDER)) {
+            if (!$type->isConstantArray()->yes()) {
+                return [\sprintf('%s is not an array shape', $type->describe(VerbosityLevel::precise()))];
+            }
+
+            return self::refusals($type, $matches);
+        }
+
+        if (!$type->isList()->yes()) {
+            return [\sprintf('%s is not a list', $type->describe(VerbosityLevel::precise()))];
+        }
+
+        if (!array_is_list($matches)) {
+            return ['the engine writes sets that are not a list'];
+        }
+
+        $element = $type->getIterableValueType();
+        $refusals = [];
+        foreach ($matches as $index => $set) {
+            if (!\is_array($set)) {
+                $refusals[] = \sprintf('set %d is not an array', $index);
+
+                continue;
+            }
+
+            foreach (self::refusals($element, $set) as $refusal) {
+                $refusals[] = \sprintf('set %d: %s', $index, $refusal);
+            }
+        }
+
+        $value = ConstantTypeHelper::getTypeFromValue($matches);
+        // Each set is checked above. The whole value adds the list itself, but
+        // only while PHPStan keeps its sets as constant shapes: past PHPStan's
+        // value-type limit it generalises the engine's value, which then says
+        // nothing about the shape written.
+        if ([] === $refusals && $value->getIterableValueType()->isConstantArray()->yes() && !$type->isSuperTypeOf($value)->yes()) {
+            $refusals[] = \sprintf('%s is outside %s', $value->describe(VerbosityLevel::precise()), $type->describe(VerbosityLevel::precise()));
+        }
+
+        return $refusals;
+    }
+
+    /**
+     * The subjects a preg_match_all() replay runs a corpus row on: the
+     * concatenation of its subjects (several matches in one call), each
+     * subject alone, and a subject the pattern does not match, when one of
+     * the candidates is such a subject.
+     *
+     * @param non-empty-list<string> $subjects
+     *
+     * @return list<string>
+     */
+    public static function matchAllSubjects(string $pattern, array $subjects): array
+    {
+        $replayed = [implode('', $subjects), ...$subjects];
+        foreach (self::NON_MATCHING_CANDIDATES as $candidate) {
+            if (0 === @preg_match($pattern, $candidate)) {
+                $replayed[] = $candidate;
+
+                break;
+            }
+        }
+
+        return array_values(array_unique($replayed));
     }
 
     /**

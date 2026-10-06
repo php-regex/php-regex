@@ -47,7 +47,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
 final class CaptureShapeAnalyzer
 {
     /**
-     * Rises in any release that changes an answer: a fact or the match shape string.
+     * Rises in any release that changes an answer: a fact, or either string
+     * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
     public const ANALYSIS_VERSION = '1';
 

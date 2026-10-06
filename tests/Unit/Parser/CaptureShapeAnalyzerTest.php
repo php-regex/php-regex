@@ -624,6 +624,233 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * What preg_match_all() writes into $matches, for any return value, 0
+     * included: under PREG_PATTERN_ORDER one list per key, every key always
+     * written; under PREG_SET_ORDER a list of what preg_match() writes.
+     * Each row is read from the engine in the comment above its provider.
+     */
+    #[Test]
+    #[DataProvider('provideMatchAllShapes')]
+    public function test_match_all_shape_is_written_as_a_phpstan_type(string $pattern, int $flags, string $expected): void
+    {
+        $this->assertSame($expected, $this->analyze($pattern)->matchAllShape($flags));
+    }
+
+    /**
+     * preg_match_all() without flags orders by pattern:
+     * preg_match_all('/(a)(b)?(c)?/', 'a ab', $m) and the same call with
+     * PREG_PATTERN_ORDER both write [["a","ab"],["a","a"],["","b"],["",""]]
+     * (PHP 8.4.26, PCRE2 10.49).
+     */
+    #[Test]
+    public function test_match_all_shape_defaults_to_pattern_order(): void
+    {
+        $shape = $this->analyze('/(a)(b)?(c)?/');
+
+        $this->assertSame("array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<''|'b'>, 3: list<''|'c'>}", $shape->matchAllShape());
+        $this->assertSame($shape->matchAllShape(), $shape->matchAllShape(\PREG_PATTERN_ORDER));
+        $this->assertSame($shape->matchAllShape(), $shape->matchAllShape(0));
+    }
+
+    /**
+     * Each set preg_match_all() writes under PREG_SET_ORDER is what
+     * preg_match() writes for that match, trailing unset groups left out:
+     * preg_match_all('/(a)(b)?(c)?/', 'a ab', $m, PREG_SET_ORDER) ->
+     * [["a","a"],["ab","a","b"]], with PREG_UNMATCHED_AS_NULL
+     * [["a","a",null,null],["ab","a","b",null]] (PHP 8.4.26, PCRE2 10.49).
+     * The element is matchShape() under the same offset and null flags,
+     * the union of the cases included. Replayed on the subjects, one by one
+     * and concatenated, each set the engine writes follows the merged shape,
+     * and one case when the pattern splits.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideEngineRows')]
+    #[DataProvider('provideCaseEngineRows')]
+    public function test_match_all_shape_in_set_order_is_a_list_of_the_match_shape(string $pattern, array $subjects): void
+    {
+        $shape = $this->analyze($pattern);
+        $unicode = RegexParser::create()->parse($pattern)->isUnicode();
+        $replayed = array_values(array_unique([implode('', $subjects), ...$subjects]));
+
+        foreach (self::FLAG_SETS as $flags) {
+            $this->assertSame('list<'.$shape->matchShape($flags).'>', $shape->matchAllShape(\PREG_SET_ORDER | $flags), \sprintf('%s with flags %d', $pattern, $flags));
+
+            foreach ($replayed as $subject) {
+                $sets = [];
+                $this->assertNotFalse(preg_match_all($pattern, $subject, $sets, \PREG_SET_ORDER | $flags));
+                // Each subject matches; their concatenation may not, under an anchor.
+                if (\in_array($subject, $subjects, true)) {
+                    $this->assertNotSame([], $sets, \sprintf('%s must match %s.', $pattern, json_encode($subject)));
+                }
+
+                foreach ($sets as $index => $set) {
+                    $context = \sprintf('%s on %s with PREG_SET_ORDER | %d, set %d', $pattern, json_encode($subject, \JSON_UNESCAPED_UNICODE), $flags, $index);
+                    $this->assertMatchesFollow($shape, $set, $flags, $unicode, $context);
+                    if ([] !== $shape->cases) {
+                        $held = array_filter($shape->cases, static fn (CaptureShape $case): bool => self::caseHolds($case, $set, $flags, $unicode));
+                        $this->assertNotSame([], $held, $context.': '.json_encode($set).', which no case holds.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * PHPStan counts its budget of value types on the element of the list:
+     * up to 256 the element is the union of the cases, past it the merged
+     * shape, as matchShape() writes it.
+     */
+    #[Test]
+    #[DataProvider('provideBudgetEdges')]
+    public function test_match_all_shape_in_set_order_counts_the_budget_on_the_element(string $pattern, int $flags, int $cases, int $distinct, bool $union): void
+    {
+        $shape = $this->analyze($pattern);
+        $written = $shape->matchAllShape(\PREG_SET_ORDER | $flags);
+
+        $this->assertCount($cases, $shape->cases);
+        $this->assertSame('list<'.$shape->matchShape($flags).'>', $written);
+        $this->assertSame($union, str_contains($written, '}|array{'), $written);
+        // The element holds each distinct shape of the cases once, or the merged shape alone.
+        $this->assertStringStartsWith('list<', $written);
+        $this->assertCount($union ? $distinct : 1, self::topLevelMembers(substr($written, \strlen('list<'), -1)), $written);
+    }
+
+    /**
+     * Under PREG_PATTERN_ORDER PHP writes every key on every call, a match
+     * or none, in the order preg_match() would (0, then per group its name
+     * before its number), and MARK last, only when a match set a mark
+     * (PHP 8.4.26, PCRE2 10.49):
+     *   preg_match_all('/(?<x>a)(b)?/', 'a', $m)        -> {"0":["a"],"x":["a"],"1":["a"],"2":[""]}
+     *   preg_match_all('/(?<x>a)(b)?/', 'x', $m)        -> {"0":[],"x":[],"1":[],"2":[]}
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ab', $m)  -> {"0":["a","b"],"1":["a",""],"2":["","b"],"MARK":["m"]}
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'b', $m)   -> [["b"],[""],["b"]]
+     *   preg_match_all('/(?<MARK>a)|(*MARK:x)b/', 'ab', $m) -> {"0":["a","b"],"MARK":{"1":"x"},"1":["a",""]}
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideEngineRows')]
+    #[DataProvider('provideCaseEngineRows')]
+    public function test_match_all_shape_in_pattern_order_lists_every_key_in_the_order_php_writes_them(string $pattern, array $subjects): void
+    {
+        $shape = $this->analyze($pattern);
+        $replayed = [implode('', $subjects), ...$subjects];
+        if (0 === preg_match($pattern, "\x00")) {
+            $replayed[] = "\x00";
+        }
+
+        foreach (self::FLAG_SETS as $flags) {
+            $members = self::topLevelKeys($shape->matchAllShape(\PREG_PATTERN_ORDER | $flags));
+            $this->assertCount(1, $members, \sprintf('%s with flags %d: one array shape.', $pattern, $flags));
+            $keys = $members[0];
+            $this->assertSame(array_values(array_unique($keys)), $keys, \sprintf('%s with flags %d writes a key twice.', $pattern, $flags));
+
+            foreach ($replayed as $subject) {
+                $matches = [];
+                $this->assertNotFalse(preg_match_all($pattern, $subject, $matches, \PREG_PATTERN_ORDER | $flags));
+                $written = array_map(strval(...), array_keys($matches));
+                $context = \sprintf('%s on %s with flags %d writes keys %s', $pattern, json_encode($subject, \JSON_UNESCAPED_UNICODE), $flags, json_encode($written));
+
+                $this->assertSame($written, array_values(array_intersect($keys, $written)), $context.': a key the shape lacks, or out of order.');
+                $this->assertSame([], array_values(array_diff($keys, $written, ['MARK'])), $context.': a key the shape lists is missing.');
+            }
+        }
+    }
+
+    /**
+     * preg_match_all() accepts exactly 0, PREG_PATTERN_ORDER (1) and
+     * PREG_SET_ORDER (2) in the low byte, and refuses the 253 other values
+     * with ValueError "Argument #4 ($flags) must be a PREG_* constant" (PHP
+     * 8.4.26). PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE share the
+     * values 1 and 2, so the engine takes them as the orders.
+     */
+    #[Test]
+    public function test_match_all_shape_refuses_exactly_the_low_bytes_preg_match_all_refuses(): void
+    {
+        $shape = $this->analyze('/(a)/');
+
+        $engine = [];
+        $library = [];
+        for ($flags = 0; $flags < 256; $flags++) {
+            try {
+                preg_match_all('/(a)/', 'a', $matches, $flags);
+                $engine[$flags] = 'accepted';
+            } catch (\ValueError) {
+                $engine[$flags] = 'refused';
+            }
+
+            try {
+                $shape->matchAllShape($flags);
+                $library[$flags] = 'accepted';
+            } catch (InvalidRegexOptionException) {
+                $library[$flags] = 'refused';
+            }
+        }
+
+        $this->assertSame([0, 1, 2], array_keys($engine, 'accepted', true));
+        $this->assertSame($engine, $library);
+    }
+
+    #[Test]
+    #[DataProvider('provideMatchAllRefusedFlags')]
+    public function test_match_all_shape_refuses_a_flag_preg_match_all_refuses(int $flags): void
+    {
+        try {
+            preg_match_all('/(a)/', 'a', $matches, $flags);
+            $this->fail(\sprintf('preg_match_all() was expected to refuse flags %d.', $flags));
+        } catch (\ValueError) {
+        }
+
+        $shape = $this->analyze('/(a)/');
+
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage(\sprintf('got flags %d.', $flags));
+
+        $shape->matchAllShape($flags);
+    }
+
+    /**
+     * preg_match_all() ignores a bit above the low byte (PHP 8.4.26):
+     * '/(a)/' on 'a' with 1024 writes [["a"],["a"]], as with no flag; with
+     * 2|256|512|4096 [[["a",0],["a",0]]], as with 2|256|512.
+     */
+    #[Test]
+    #[DataProvider('provideMatchAllIgnoredFlags')]
+    public function test_match_all_shape_ignores_a_flag_preg_match_all_ignores(int $flags, int $meaningful): void
+    {
+        $with = [];
+        $without = [];
+        $this->assertSame(2, preg_match_all('/(z)?(a)/', 'a a', $with, $flags));
+        $this->assertSame(2, preg_match_all('/(z)?(a)/', 'a a', $without, $meaningful));
+        $this->assertSame($without, $with);
+
+        $shape = $this->analyze('/(z)?(a)/');
+
+        $this->assertSame($shape->matchAllShape($meaningful), $shape->matchAllShape($flags));
+    }
+
+    /**
+     * The shape of each key is built once per call, as matchShape() builds
+     * it: its time grows with the group count, not with its square.
+     */
+    #[Test]
+    #[DataProvider('provideManyGroups')]
+    public function test_match_all_shape_stays_fast_with_many_groups(string $pattern, int $flags): void
+    {
+        $shape = $this->analyze($pattern);
+
+        foreach ([\PREG_PATTERN_ORDER, \PREG_SET_ORDER] as $order) {
+            $start = hrtime(true);
+            $shape->matchAllShape($order | $flags);
+            $seconds = (hrtime(true) - $start) / 1e9;
+
+            $this->assertLessThan(2.0, $seconds, \sprintf('matchAllShape(%d) took %.2f s.', $order | $flags, $seconds));
+        }
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, expected: array<int<1, max>, Participation>}>
      */
     public static function provideParticipation(): iterable
@@ -1227,6 +1454,138 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'an offset pair counts three value types: 255' => ['pattern' => '/'.str_repeat('(x)', 40).'(?:(a)|(b))/', 'flags' => \PREG_OFFSET_CAPTURE, 'cases' => 2, 'distinct' => 2, 'union' => true];
         // 3 x (43 + 44).
         yield 'an offset pair counts three value types: 261' => ['pattern' => '/'.str_repeat('(x)', 41).'(?:(a)|(b))/', 'flags' => \PREG_OFFSET_CAPTURE, 'cases' => 2, 'distinct' => 2, 'union' => false];
+    }
+
+    /**
+     * Read from the engine (PHP 8.4.26, PCRE2 10.49):
+     *   preg_match_all('/(a)(b)?(c)?/', 'a ab', $m)                           -> [["a","ab"],["a","a"],["","b"],["",""]]
+     *   … PREG_PATTERN_ORDER | PREG_UNMATCHED_AS_NULL                         -> [["a","ab"],["a","a"],[null,"b"],[null,null]]
+     *   preg_match_all('/(a)(b)?(c)?/', 'a', $m, PREG_OFFSET_CAPTURE)          -> [[["a",0]],[["a",0]],[["",-1]],[["",-1]]]
+     *   … PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL                        -> [[["a",0]],[["a",0]],[[null,-1]],[[null,-1]]]
+     *   preg_match_all('/(a)(b)?(c)?/', 'a ab', $m, PREG_SET_ORDER)           -> [["a","a"],["ab","a","b"]]
+     *   preg_match_all('/(?<x>a)(b)?/', 'a', $m)                              -> {"0":["a"],"x":["a"],"1":["a"],"2":[""]}
+     *   preg_match_all('/(?<x>a)(b)?/', 'a', $m, PREG_SET_ORDER)              -> [{"0":"a","x":"a","1":"a"}]
+     *   preg_match_all('/(?!(b))a/', 'aa', $m)                                -> [["a","a"],["",""]]; PREG_SET_ORDER -> [["a"],["a"]]
+     *   preg_match_all('/(?(DEFINE)(?<d>x))(a)(?&d)/', 'ax', $m)              -> {"0":["ax"],"d":[""],"1":[""],"2":["a"]}
+     *   preg_match_all('/(?J)(?<n>a)(?<n>z)?(c)/', 'ac azc', $m)              -> {"0":["ac","azc"],"n":["","z"],"1":["a","a"],"2":["","z"],"3":["c","c"]}
+     *     (the list of group 2, the last group named n, where preg_match() on 'ac' gives n => 'a');
+     *     PREG_SET_ORDER -> [{"0":"ac","n":"a","1":"a","2":"","3":"c"},{"0":"azc","n":"z","1":"a","2":"z","3":"c"}]
+     *   preg_match_all('/(?J)(?<n>a)(?<n>z){0}/', 'aa', $m)                   -> {"0":["a","a"],"n":["",""],"1":["a","a"],"2":["",""]}
+     *   preg_match_all('/(?J)(?<n>a)|(?<n>b)/', 'ab', $m)                     -> {"0":["a","b"],"n":["","b"],"1":["a",""],"2":["","b"]}
+     *   preg_match_all('/(?|(a)|(b)(c))(d)/', 'ad bcd', $m)                   -> [["ad","bcd"],["a","b"],["","c"],["d","d"]]
+     *   preg_match_all('/(?|(x)|(?<a>y))/', 'xy', $m)                         -> {"0":["x","y"],"a":["x","y"],"1":["x","y"]}
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ab', $m)                        -> {"0":["a","b"],"1":["a",""],"2":["","b"],"MARK":["m"]}
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ba', $m)                        -> {…,"MARK":{"1":"m"}}: keyed by match index
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ab', $m, PREG_OFFSET_CAPTURE)   -> {…,"MARK":["m"]}: a mark stays a string
+     *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ab', $m, PREG_SET_ORDER)        -> [{"0":"a","1":"a","MARK":"m"},["b","","b"]]
+     *   preg_match_all('/(*MARK:m)a|(*MARK:n)b/', 'ab', $m)                   -> {"0":["a","b"],"MARK":["m","n"]}
+     *   preg_match_all('/(?<MARK>a)/', 'aa', $m)                              -> {"0":["a","a"],"MARK":["a","a"],"1":["a","a"]}
+     *   preg_match_all('/(a)|(b)/', 'ab', $m)                                 -> [["a","b"],["a",""],["","b"]]; PREG_SET_ORDER -> [["a","a"],["b","","b"]]
+     *   preg_match_all('/(?:(a)|(b))?c/', 'c bc', $m)                         -> [["c","bc"],["",""],["","b"]]; PREG_SET_ORDER -> [["c"],["bc","","b"]]
+     *   preg_match_all('/(\d+)/', '1 22', $m)                                 -> [["1","22"],["1","22"]]
+     *   preg_match_all('/(a)(?<x>b)/n', 'abab', $m)                           -> {"0":["ab","ab"],"x":["b","b"],"1":["b","b"]}
+     *
+     * @return iterable<string, array{pattern: string, flags: int, expected: string}>
+     */
+    public static function provideMatchAllShapes(): iterable
+    {
+        // Orders and flags: every key, an unset group read as '' (null, or a pair at -1), no trailing trimming in pattern order.
+        yield 'pattern order: every group key' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<''|'b'>, 3: list<''|'c'>}"];
+        yield 'pattern order: every group key, as null' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<'b'|null>, 3: list<'c'|null>}"];
+        yield 'pattern order: every group key, offsets' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a'|'ac'|'ab'|'abc', int<0, max>}>, 1: list<array{'a', int<0, max>}>, 2: list<array{''|'b', int<-1, max>}>, 3: list<array{''|'c', int<-1, max>}>}"];
+        yield 'pattern order: every group key, offsets, as null' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<array{'a'|'ac'|'ab'|'abc', int<0, max>}>, 1: list<array{'a', int<0, max>}>, 2: list<array{'b'|null, int<-1, max>}>, 3: list<array{'c'|null, int<-1, max>}>}"];
+        yield 'set order: the match shape of each set' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2?: ''|'b', 3?: 'c'}>"];
+        yield 'set order: the match shape of each set, as null' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: 'a'|'ac'|'ab'|'abc', 1: 'a', 2: 'b'|null, 3: 'c'|null}>"];
+        yield 'set order: the match shape of each set, offsets' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "list<array{0: array{'a'|'ac'|'ab'|'abc', int<0, max>}, 1: array{'a', int<0, max>}, 2?: array{''|'b', int<-1, max>}, 3?: array{'c', int<-1, max>}}>"];
+        yield 'set order: the match shape of each set, offsets, as null' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: array{'a'|'ac'|'ab'|'abc', int<0, max>}, 1: array{'a', int<0, max>}, 2: array{'b'|null, int<-1, max>}, 3: array{'c'|null, int<-1, max>}}>"];
+        yield 'pattern order: no group' => ['pattern' => '/a/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'>}"];
+        yield 'set order: no group' => ['pattern' => '/a/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'}>"];
+
+        // Names: the name before its number.
+        yield 'pattern order: a name before its number' => ['pattern' => '/(?<x>a)(b)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'ab'>, x: list<'a'>, 1: list<'a'>, 2: list<''|'b'>}"];
+        yield 'pattern order: a name before its number, offsets' => ['pattern' => '/(?<x>a)(b)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a'|'ab', int<0, max>}>, x: list<array{'a', int<0, max>}>, 1: list<array{'a', int<0, max>}>, 2: list<array{''|'b', int<-1, max>}>}"];
+        yield 'set order: a name before its number' => ['pattern' => '/(?<x>a)(b)?/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'|'ab', x: 'a', 1: 'a', 2?: 'b'}>"];
+        yield 'pattern order: no auto capture' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ab'>, x: list<'b'>, 1: list<'b'>}"];
+
+        // Groups no match sets.
+        yield 'pattern order: a group never set' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'>, 1: list<''>}"];
+        yield 'pattern order: a group never set, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'>, 1: list<null>}"];
+        yield 'pattern order: a group never set, offsets' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a', int<0, max>}>, 1: list<array{'', int<-1, max>}>}"];
+        yield 'set order: a group never set is left out' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'}>"];
+        yield 'set order: a group never set, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: 'a', 1: null}>"];
+        yield 'pattern order: groups inside DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-empty-string>, d: list<''>, 1: list<''>, 2: list<'a'>}"];
+
+        // Names shared under (?J): in pattern order the list of the last group bearing the name, set or not.
+        yield 'pattern order: a shared name holds the list of its last group' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ac'|'azc'>, n: list<''|'z'>, 1: list<'a'>, 2: list<''|'z'>, 3: list<'c'>}"];
+        yield 'pattern order: a shared name holds the list of its last group, as null' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'ac'|'azc'>, n: list<'z'|null>, 1: list<'a'>, 2: list<'z'|null>, 3: list<'c'>}"];
+        yield 'pattern order: a shared name holds the list of its last group, offsets' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'ac'|'azc', int<0, max>}>, n: list<array{''|'z', int<-1, max>}>, 1: list<array{'a', int<0, max>}>, 2: list<array{''|'z', int<-1, max>}>, 3: list<array{'c', int<0, max>}>}"];
+        yield 'set order: a shared name holds the highest group set' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'ac'|'azc', n: 'a'|'z', 1: 'a', 2: ''|'z', 3: 'c'}>"];
+        yield 'pattern order: a shared name whose last group is never set' => ['pattern' => '/(?J)(?<n>a)(?<n>z){0}/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'>, n: list<''>, 1: list<'a'>, 2: list<''>}"];
+        yield 'pattern order: a shared name whose last group is never set, as null' => ['pattern' => '/(?J)(?<n>a)(?<n>z){0}/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'>, n: list<null>, 1: list<'a'>, 2: list<null>}"];
+        yield 'set order: a shared name whose last group is never set' => ['pattern' => '/(?J)(?<n>a)(?<n>z){0}/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a', n: 'a', 1: 'a'}>"];
+        yield 'pattern order: a shared name across a split' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, n: list<''|'b'>, 1: list<''|'a'>, 2: list<''|'b'>}"];
+        yield 'set order: a shared name across a split' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}>"];
+
+        // Branch reset.
+        yield 'pattern order: branch reset' => ['pattern' => '/(?|(a)|(b)(c))(d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ad'|'bcd'>, 1: list<'a'|'b'>, 2: list<''|'c'>, 3: list<'d'>}"];
+        yield 'set order: branch reset' => ['pattern' => '/(?|(a)|(b)(c))(d)/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'ad'|'bcd', 1: 'a'|'b', 2: ''|'c', 3: 'd'}>"];
+        yield 'pattern order: a name in one branch of a branch reset' => ['pattern' => '/(?|(x)|(?<a>y))/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'x'|'y'>, a: list<'x'|'y'>, 1: list<'x'|'y'>}"];
+
+        // Marks: in pattern order keyed by match index, only for the matches that set one; in set order as preg_match() writes them.
+        yield 'pattern order: marks keyed by match index' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, 1: list<''|'a'>, 2: list<''|'b'>, MARK?: array<int, 'm'>}"];
+        yield 'pattern order: marks keyed by match index, as null' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'|'b'>, 1: list<'a'|null>, 2: list<'b'|null>, MARK?: array<int, 'm'>}"];
+        yield 'pattern order: marks stay strings under offsets' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a'|'b', int<0, max>}>, 1: list<array{''|'a', int<-1, max>}>, 2: list<array{''|'b', int<-1, max>}>, MARK?: array<int, 'm'>}"];
+        yield 'set order: a mark as preg_match() writes it' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a', 1: 'a', MARK?: 'm'}|array{0: 'b', 1: '', 2: 'b'}>"];
+        yield 'set order: a mark as preg_match() writes it, offsets' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'flags' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "list<array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}, MARK?: 'm'}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}>"];
+        yield 'pattern order: several mark names' => ['pattern' => '/(*MARK:m)a|(*MARK:n)b/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, MARK?: array<int, 'm'|'n'>}"];
+        yield 'pattern order: a group named MARK, no verb' => ['pattern' => '/(?<MARK>a)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'>, MARK: list<'a'>, 1: list<'a'>}"];
+
+        // A split pattern: the merged view per key in pattern order, the union of the cases in set order.
+        yield 'pattern order: a split pattern, merged per key' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, 1: list<''|'a'>, 2: list<''|'b'>}"];
+        yield 'pattern order: a split pattern, merged per key, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'|'b'>, 1: list<'a'|null>, 2: list<'b'|null>}"];
+        yield 'set order: a split pattern, the union of the cases' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}>"];
+        yield 'set order: a split pattern, the union of the cases, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}>"];
+        yield 'pattern order: an optional split' => ['pattern' => '/(?:(a)|(b))?c/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'c'|'ac'|'bc'>, 1: list<''|'a'>, 2: list<''|'b'>}"];
+        yield 'set order: an optional split' => ['pattern' => '/(?:(a)|(b))?c/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'ac', 1: 'a'}|array{0: 'bc', 1: '', 2: 'b'}|array{0: 'c'}>"];
+
+        // Facts in the list values.
+        yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<numeric-string>, 1: list<numeric-string>}'];
+        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<string>, 1: list<''|(non-falsy-string&numeric-string)>}"];
+        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: list<string>, 1: list<(non-falsy-string&numeric-string)|null>}'];
+        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{string, int<0, max>}>, 1: list<array{''|(non-falsy-string&numeric-string), int<-1, max>}>}"];
+        yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-empty-string>, 1: list<''|numeric-string>, 2: list<''|non-falsy-string>}"];
+        yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}>"];
+    }
+
+    /**
+     * Each refused by preg_match_all() with ValueError (PHP 8.4.26), the
+     * test checks it again.
+     *
+     * @return iterable<string, array{flags: int}>
+     */
+    public static function provideMatchAllRefusedFlags(): iterable
+    {
+        yield 'both orders' => ['flags' => \PREG_PATTERN_ORDER | \PREG_SET_ORDER];
+        yield 'both orders with both flags' => ['flags' => \PREG_PATTERN_ORDER | \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
+        yield 'PREG_SPLIT_OFFSET_CAPTURE' => ['flags' => \PREG_SPLIT_OFFSET_CAPTURE];
+        yield 'PREG_SET_ORDER | PREG_SPLIT_OFFSET_CAPTURE' => ['flags' => \PREG_SET_ORDER | \PREG_SPLIT_OFFSET_CAPTURE];
+        yield 'bit 3' => ['flags' => 8];
+        yield 'highest bit of the low byte' => ['flags' => 128];
+        yield 'the whole low byte' => ['flags' => 255];
+        yield '-1' => ['flags' => -1];
+        yield '999' => ['flags' => 999];
+    }
+
+    /**
+     * @return iterable<string, array{flags: int, meaningful: int}>
+     */
+    public static function provideMatchAllIgnoredFlags(): iterable
+    {
+        yield '0 is pattern order' => ['flags' => 0, 'meaningful' => \PREG_PATTERN_ORDER];
+        yield '1024 alone' => ['flags' => 1024, 'meaningful' => \PREG_PATTERN_ORDER];
+        yield '1024 with set order' => ['flags' => \PREG_SET_ORDER | 1024, 'meaningful' => \PREG_SET_ORDER];
+        yield 'a high bit with set order and both flags' => ['flags' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL | 4096, 'meaningful' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
+        yield 'PHP_INT_MIN, a low byte of 0' => ['flags' => \PHP_INT_MIN, 'meaningful' => \PREG_PATTERN_ORDER];
     }
 
     /**

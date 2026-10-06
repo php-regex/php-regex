@@ -195,6 +195,11 @@ return [
     ['source' => 'parity: names', 'pattern' => '/(a)\g{-1}/', 'subjects' => ['aa']],
     ['source' => 'parity: names', 'pattern' => '/(?<n>a)|(?<n>b)/J', 'subjects' => ['a', 'b']],
     ['source' => 'parity: names', 'pattern' => '/(?J)(?<n>a)?(?<n>b)/', 'subjects' => ['b', 'ab']],
+    // preg_match() gives n the group set, preg_match_all() in pattern order
+    // the list of the last group bearing the name, here one never set:
+    // preg_match('/(?J)(?<n>a)(?<n>z){0}/', 'a') -> n => 'a';
+    // preg_match_all(…, 'aa') -> n => ["",""] (PHP 8.4.26, PCRE2 10.49).
+    ['source' => 'parity: names', 'pattern' => '/(?J)(?<n>a)(?<n>z){0}/', 'subjects' => ['a']],
 
     // No auto capture: /n and (?n) leave the unnamed groups out.
     ['source' => 'parity: no auto capture', 'pattern' => '/(a)(b)/n', 'subjects' => ['ab']],
