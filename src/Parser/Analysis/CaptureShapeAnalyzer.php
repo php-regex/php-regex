@@ -14,17 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\Node\AnchorNode;
-use PHPRegex\Parser\Node\AssertionNode;
-use PHPRegex\Parser\Node\CalloutNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
-use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
-use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
@@ -32,6 +26,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 
 /**
  * Reads, from the tree alone, what a successful preg_match() writes into
@@ -39,7 +34,12 @@ use PHPRegex\Parser\Node\SequenceNode;
  * which none sets, and the strings each can hold.
  *
  * Every answer is sound: when the pattern alone cannot tell, a group may be
- * unset and its values are unknown.
+ * unset, its values are unknown and its facts are false.
+ *
+ * One alternation holding capturing groups, reached from the root through
+ * sequences and groups that neither capture nor repeat, splits the answer
+ * into one case per branch, plus one where no branch is taken when that
+ * group is optional. Each case reads the pattern in its own option flow.
  *
  *     $shape = (new CaptureShapeAnalyzer())->analyze($parser->parse('/(a)(b)?/'));
  *     $shape->matchShape(); // "array{0: 'a'|'ab', 1: 'a', 2?: 'b'}"
@@ -51,7 +51,13 @@ final class CaptureShapeAnalyzer
      */
     public const ANALYSIS_VERSION = '1';
 
-    private const MAX_VALUES = 32;
+    private const MAX_CASES = 16;
+
+    /**
+     * Groups that neither capture nor assert: the split alternation may sit
+     * inside them.
+     */
+    private const PATH_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags];
 
     private const MARK_VERBS = ['MARK', 'PRUNE', 'THEN', 'ACCEPT', 'COMMIT', 'F', 'FAIL'];
 
@@ -65,7 +71,7 @@ final class CaptureShapeAnalyzer
     private int $next = 1;
 
     /**
-     * @var array<int<1, max>, list<array{name: ?string, never: bool, values: list<string>|null, min: int, max: int|null}>>
+     * @var array<int<1, max>, list<array{name: ?string, never: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}>>
      */
     private array $occurrences = [];
 
@@ -80,20 +86,76 @@ final class CaptureShapeAnalyzer
 
     private bool $caseless = false;
 
-    private bool $unicode = false;
+    /**
+     * \d and [[:digit:]] match non-ASCII digits: /u, or (*UCP).
+     */
+    private bool $ucp = false;
 
-    private LengthRangeCalculator $lengths;
+    /**
+     * A subroutine call or a recursion may run a branch the case left out.
+     */
+    private bool $hasCalls = false;
+
+    /**
+     * The case under analysis: the alternation it splits, the branch it
+     * takes (null for none: the optional group is skipped), the optional
+     * quantifier around it, and the nodes between the root and it.
+     *
+     * @var array{alternation: AlternationNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>}|null
+     */
+    private ?array $selection = null;
+
+    /**
+     * Depth of the branches the case leaves out: a verb or \K there never runs.
+     */
+    private int $discardedDepth = 0;
+
+    /**
+     * What each node reads, measured once per analysis: a capturing group's
+     * body never holds the split alternation, so it reads the same in every
+     * case.
+     */
+    private CaptureFacts $facts;
 
     public function __construct()
     {
-        $this->lengths = new LengthRangeCalculator();
+        $this->facts = new CaptureFacts();
     }
 
     public function analyze(RegexNode $regex): CaptureShape
     {
-        $this->reset($regex);
+        $this->caseless = str_contains($regex->flags, 'i');
+        $this->ucp = str_contains($regex->flags, 'u');
+        $this->hasCalls = false;
+        $this->scan($regex->pattern);
+        $this->facts = new CaptureFacts($regex->isUnicode(), $this->caseless, $this->ucp);
+        $this->selection = null;
 
-        $guaranteed = $this->walk($regex->pattern, false);
+        $merged = $this->shape($regex->pattern);
+
+        $split = $this->split($regex->pattern);
+        if (null === $split) {
+            return $merged;
+        }
+
+        $cases = [];
+        foreach ([...$split['alternation']->alternatives, ...(null === $split['optional'] ? [] : [null])] as $branch) {
+            $this->selection = ['branch' => $branch] + $split;
+            $cases[] = $this->shape($regex->pattern);
+        }
+        $this->selection = null;
+
+        return new CaptureShape($merged->whole, $merged->groups, $merged->marks, $cases);
+    }
+
+    /**
+     * The shape of every match, or of the matches of the selected case.
+     */
+    private function shape(NodeInterface $pattern): CaptureShape
+    {
+        $this->reset();
+
+        $guaranteed = $this->walk($pattern, false);
 
         ksort($this->occurrences);
         $groups = [];
@@ -101,29 +163,176 @@ final class CaptureShapeAnalyzer
             $groups[$number] = $this->group($number, $occurrences, isset($guaranteed[$number]));
         }
 
-        [$min, $max] = $regex->pattern->accept($this->lengths);
         // \K and (*ACCEPT) cut the whole match short: only its presence is known.
-        $exact = !$this->keeps && !$this->accepts;
-        $whole = new CaptureGroupShape(0, null, Participation::Always, $exact ? $min : 0, $exact ? $max : null, $exact ? $this->values($regex->pattern) : null);
+        if ($this->keeps || $this->accepts) {
+            return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks);
+        }
 
-        return new CaptureShape($whole, $groups, $this->marks);
+        $whole = $this->facts->of($this->rebuild($pattern) ?? self::nothing($pattern));
+
+        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
     }
 
-    private function reset(RegexNode $regex): void
+    private function reset(): void
     {
         $this->next = 1;
         $this->occurrences = [];
         $this->marks = [];
         $this->accepts = false;
         $this->keeps = false;
-        $this->unicode = $regex->isUnicode();
-        $this->caseless = str_contains($regex->flags, 'i') || self::turnsCaselessOn($regex->pattern);
-        $this->lengths = new LengthRangeCalculator($this->unicode);
+        $this->discardedDepth = 0;
     }
 
     /**
-     * @param int<1, max>                                                                                 $number
-     * @param list<array{name: ?string, never: bool, values: list<string>|null, min: int, max: int|null}> $occurrences
+     * Reads what the whole pattern turns on: caseless matching, UCP, calls.
+     */
+    private function scan(NodeInterface $node): void
+    {
+        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains(explode('-', $node->flags ?? '')[0], 'i')) {
+            $this->caseless = true;
+        }
+
+        if ($node instanceof PcreVerbNode && 'UCP' === $node->verb) {
+            $this->ucp = true;
+        }
+
+        if ($node instanceof SubroutineNode) {
+            $this->hasCalls = true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->scan($child);
+        }
+    }
+
+    /**
+     * The one alternation holding capturing groups that the root reaches
+     * through sequences and groups that neither capture nor repeat, a `?` on
+     * one of them making it optional; null when there is none, more than
+     * one, a branch reset in the way, or more cases than MAX_CASES.
+     *
+     * @return array{alternation: AlternationNode, optional: QuantifierNode|null, path: array<int, true>}|null
+     */
+    private function split(NodeInterface $pattern): ?array
+    {
+        $reached = self::reach($pattern, null, []);
+        if ($reached['blocked'] || 1 !== \count($reached['found'])) {
+            return null;
+        }
+
+        $split = $reached['found'][0];
+        if (\count($split['alternation']->alternatives) + (null === $split['optional'] ? 0 : 1) > self::MAX_CASES) {
+            return null;
+        }
+
+        return $split;
+    }
+
+    /**
+     * The alternations holding capturing groups that the node reaches
+     * through sequences and groups that neither capture nor repeat, the
+     * search stopping past the second; blocked when a branch reset holding
+     * capturing groups is on the way, which prevents the split.
+     *
+     * @param array<int, true> $path
+     *
+     * @return array{blocked: bool, found: list<array{alternation: AlternationNode, optional: QuantifierNode|null, path: array<int, true>}>}
+     */
+    private static function reach(NodeInterface $node, ?QuantifierNode $optional, array $path): array
+    {
+        $path[spl_object_id($node)] = true;
+
+        if ($node instanceof AlternationNode) {
+            return ['blocked' => false, 'found' => self::captures($node) ? [['alternation' => $node, 'optional' => $optional, 'path' => $path]] : []];
+        }
+
+        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
+            return ['blocked' => self::captures($node), 'found' => []];
+        }
+
+        if ($node instanceof GroupNode && \in_array($node->type, self::PATH_GROUPS, true)) {
+            return self::reach($node->child, $optional, $path);
+        }
+
+        if (null === $optional && $node instanceof QuantifierNode && $node->node instanceof GroupNode && \in_array($node->node->type, self::PATH_GROUPS, true)) {
+            $bounds = QuantifierBounds::parse($node->quantifier);
+            if (null !== $bounds && 0 === $bounds->min && 1 === $bounds->max) {
+                return self::reach($node->node, $node, $path);
+            }
+        }
+
+        $found = [];
+        foreach ($node instanceof SequenceNode ? $node->children : [] as $child) {
+            $reached = self::reach($child, $optional, $path);
+            if ($reached['blocked']) {
+                return $reached;
+            }
+
+            $found = [...$found, ...$reached['found']];
+            if (\count($found) > 1) {
+                break;
+            }
+        }
+
+        return ['blocked' => false, 'found' => $found];
+    }
+
+    private static function captures(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::captures($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The node as the selected case reads it: the split alternation replaced
+     * by the branch the case takes, its optional quantifier by its group, or
+     * dropped (null) when the case takes no branch. Only the nodes between
+     * the root and the alternation are rebuilt.
+     */
+    private function rebuild(NodeInterface $node): ?NodeInterface
+    {
+        $selection = $this->selection;
+        if (null === $selection || !isset($selection['path'][spl_object_id($node)])) {
+            return $node;
+        }
+
+        if ($node === $selection['optional']) {
+            return null === $selection['branch'] ? null : $this->rebuild($selection['optional']->node);
+        }
+
+        if ($node === $selection['alternation']) {
+            return $selection['branch'];
+        }
+
+        // Any other node on the path is a sequence or a group that neither captures nor repeats.
+        return match (true) {
+            $node instanceof SequenceNode => new SequenceNode(array_values(array_filter(array_map($this->rebuild(...), $node->children), static fn (?NodeInterface $child): bool => null !== $child)), $node->startPosition, $node->endPosition),
+            $node instanceof GroupNode => new GroupNode($this->rebuild($node->child) ?? self::nothing($node->child), $node->type, $node->name, $node->flags, $node->startPosition, $node->endPosition, $node->usePythonSyntax, $node->scannedGroups),
+            default => $node,
+        };
+    }
+
+    /**
+     * An empty sequence where the node stood: what a case reads in place of
+     * the optional group it skips.
+     */
+    private static function nothing(NodeInterface $node): SequenceNode
+    {
+        return new SequenceNode([], $node->getStartPosition(), $node->getStartPosition());
+    }
+
+    /**
+     * @param int<1, max>                                                                                                                   $number
+     * @param list<array{name: ?string, never: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}> $occurrences
      */
     private function group(int $number, array $occurrences, bool $guaranteed): CaptureGroupShape
     {
@@ -145,15 +354,19 @@ final class CaptureShapeAnalyzer
         $values = [];
         $min = null;
         $max = 0;
+        $nonFalsy = [] !== $set;
+        $digitsOnly = [] !== $set;
         foreach ([] === $set ? $occurrences : $set as $occurrence) {
             $values = null === $values || null === $occurrence['values'] ? null : [...$values, ...$occurrence['values']];
             $min = null === $min ? $occurrence['min'] : min($min, $occurrence['min']);
             $max = null === $max || null === $occurrence['max'] ? null : max($max, $occurrence['max']);
+            $nonFalsy = $nonFalsy && $occurrence['nonFalsy'];
+            $digitsOnly = $digitsOnly && $occurrence['digitsOnly'];
         }
 
         if (null !== $values) {
             $values = array_values(array_unique($values));
-            $values = \count($values) > self::MAX_VALUES ? null : $values;
+            $values = \count($values) > CaptureFacts::MAX_VALUES ? null : $values;
         }
 
         if ($this->accepts) {
@@ -161,7 +374,7 @@ final class CaptureShapeAnalyzer
             return new CaptureGroupShape($number, $name, $participation, 0, null, null);
         }
 
-        return new CaptureGroupShape($number, $name, $participation, $min ?? 0, $max, [] === $set ? null : $values);
+        return new CaptureGroupShape($number, $name, $participation, $min ?? 0, $max, [] === $set ? null : $values, $nonFalsy, $digitsOnly);
     }
 
     /**
@@ -172,11 +385,19 @@ final class CaptureShapeAnalyzer
      */
     private function walk(NodeInterface $node, bool $never): array
     {
-        if ($node instanceof PcreVerbNode) {
+        $selection = $this->selection;
+        if (null !== $selection && ($node === $selection['alternation'] || $node === $selection['optional'])) {
+            return $this->walkSelected($node, $selection, $never);
+        }
+
+        // A verb or \K in a branch the case leaves out never runs, unless a call runs it.
+        $runs = 0 === $this->discardedDepth || $this->hasCalls;
+
+        if ($runs && $node instanceof PcreVerbNode) {
             $this->readVerb($node);
         }
 
-        if ($node instanceof KeepNode) {
+        if ($runs && $node instanceof KeepNode) {
             $this->keeps = true;
         }
 
@@ -193,6 +414,36 @@ final class CaptureShapeAnalyzer
             $node instanceof ScriptRunNode && null !== $node->content => $this->walk($node->content, $never),
             default => [],
         };
+    }
+
+    /**
+     * Walks the split alternation, or the optional quantifier around it, in
+     * the selected case: the branch it takes as usual, the others numbered
+     * but never set.
+     *
+     * @param array{alternation: AlternationNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>} $selection
+     *
+     * @return array<int, true>
+     */
+    private function walkSelected(NodeInterface $node, array $selection, bool $never): array
+    {
+        $taken = $node === $selection['optional'] && null !== $selection['branch'] ? $selection['optional']->node : $selection['branch'];
+        $guaranteed = [];
+
+        // In order: the branches before the one taken number their groups first.
+        foreach ($node instanceof AlternationNode ? $node->alternatives : $node->getChildren() as $branch) {
+            if ($branch === $taken) {
+                $guaranteed = $this->walk($branch, $never);
+
+                continue;
+            }
+
+            $this->discardedDepth++;
+            $this->walk($branch, true);
+            $this->discardedDepth--;
+        }
+
+        return $guaranteed;
     }
 
     /**
@@ -217,14 +468,14 @@ final class CaptureShapeAnalyzer
 
         if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
             $number = $this->next++;
-            [$min, $max] = $node->child->accept($this->lengths);
-            $this->occurrences[$number][] = [
-                'name' => $node->name,
-                'never' => $never,
-                'values' => $this->values($node->child),
-                'min' => $min,
-                'max' => $max,
-            ];
+            if ($never) {
+                // A group no match sets holds no value: its lengths are all it says.
+                [$min, $max] = $this->facts->lengths($node->child);
+                $read = ['min' => $min, 'max' => $max, 'values' => null, 'nonFalsy' => false, 'digitsOnly' => false];
+            } else {
+                $read = $this->facts->of($node->child);
+            }
+            $this->occurrences[$number][] = ['name' => $node->name, 'never' => $never] + $read;
 
             return [$number => true] + $this->walk($node->child, $never);
         }
@@ -284,118 +535,6 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * The strings a node can match, when they are a small finite set read
-     * from literals alone.
-     *
-     * @return list<string>|null
-     */
-    private function values(NodeInterface $node): ?array
-    {
-        if ($this->caseless) {
-            return null;
-        }
-
-        return match (true) {
-            $node instanceof LiteralNode => [$node->value],
-            $node instanceof CharLiteralNode => $this->character($node->codePoint),
-            $node instanceof SequenceNode => $this->product(array_map($this->values(...), $node->children)),
-            $node instanceof AlternationNode => $this->union(array_map($this->values(...), $node->alternatives)),
-            $node instanceof GroupNode => \in_array($node->type, [...self::NEGATIVE_LOOKAROUNDS, GroupType::LookaheadPositive, GroupType::LookbehindPositive], true) ? [''] : $this->values($node->child),
-            $node instanceof QuantifierNode => $this->repeat($node),
-            $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
-            $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
-            $node instanceof PcreVerbNode => str_starts_with($node->verb, 'ACCEPT') ? null : [''],
-            default => null,
-        };
-    }
-
-    /**
-     * @return list<string>|null
-     */
-    private function repeat(QuantifierNode $node): ?array
-    {
-        $bounds = QuantifierBounds::parse($node->quantifier);
-        $body = $this->values($node->node);
-        if (null === $bounds || null === $body) {
-            return null;
-        }
-
-        if (0 === $bounds->min && 1 === $bounds->max) {
-            return $this->union([[''], $body]);
-        }
-
-        if ($bounds->min !== $bounds->max || $bounds->min > 4) {
-            return null;
-        }
-
-        return $this->product(array_fill(0, $bounds->min, $body));
-    }
-
-    /**
-     * @return list<string>|null
-     */
-    private function character(int $codePoint): ?array
-    {
-        if ($this->unicode) {
-            $character = mb_chr($codePoint, 'UTF-8');
-
-            return false === $character ? null : [$character];
-        }
-
-        return $codePoint <= 0xFF ? [\chr($codePoint)] : null;
-    }
-
-    /**
-     * @param array<list<string>|null> $parts
-     *
-     * @return list<string>|null
-     */
-    private function product(array $parts): ?array
-    {
-        $strings = [''];
-        foreach ($parts as $part) {
-            if (null === $part) {
-                return null;
-            }
-
-            $next = [];
-            foreach ($strings as $prefix) {
-                foreach ($part as $suffix) {
-                    $next[] = $prefix.$suffix;
-                }
-            }
-
-            $strings = array_values(array_unique($next));
-            if (\count($strings) > self::MAX_VALUES) {
-                return null;
-            }
-        }
-
-        return $strings;
-    }
-
-    /**
-     * @param array<list<string>|null> $parts
-     *
-     * @return list<string>|null
-     */
-    private function union(array $parts): ?array
-    {
-        $strings = [];
-        foreach ($parts as $part) {
-            if (null === $part) {
-                return null;
-            }
-
-            $strings = [...$strings, ...$part];
-        }
-
-        $strings = array_values(array_unique($strings));
-
-        return \count($strings) > self::MAX_VALUES ? null : $strings;
-    }
-
-    /**
      * @param array<array<int, true>> $sets
      *
      * @return array<int, true>
@@ -403,20 +542,5 @@ final class CaptureShapeAnalyzer
     private static function intersect(array $sets): array
     {
         return [] === $sets ? [] : array_intersect_key(...$sets);
-    }
-
-    private static function turnsCaselessOn(NodeInterface $node): bool
-    {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains(explode('-', $node->flags ?? '')[0], 'i')) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::turnsCaselessOn($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

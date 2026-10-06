@@ -19,10 +19,19 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
  * What a successful preg_match() writes into $matches, read from the pattern
  * alone: one record per capturing group, keyed by its number, plus the
  * whole match and the marks a verb may leave.
+ *
+ * $whole, $groups and $marks merge every match. When the analyzer splits the
+ * pattern, $cases holds shapes whose union covers every match, each more
+ * precise than the merged view.
  */
 final readonly class CaptureShape
 {
     private const MAX_RENDERED_VALUES = 16;
+
+    /**
+     * Mirrors PHPStan's ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT: past this many value types, nested arrays included, PHPStan generalises a union of array shapes.
+     */
+    private const PHPSTAN_ARRAY_COUNT_LIMIT = 256;
 
     private const CONTROL_CHARACTERS = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F";
 
@@ -31,17 +40,21 @@ final readonly class CaptureShape
      *
      * @param array<int<1, max>, CaptureGroupShape> $groups keyed by group number, 1 to the capture count with no gap; branch reset groups sharing a number share a record
      * @param list<string>                          $marks  the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
+     * @param list<self>                            $cases  shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
      */
     public function __construct(
         public CaptureGroupShape $whole,
         public array $groups,
         public array $marks,
+        public array $cases = [],
     ) {}
 
     /**
      * The array shape of $matches after preg_match() returned 1, written as a
      * PHPStan type: "array{0: 'ab', 1: 'a', 2?: 'b'}", its keys in the order
-     * preg_match() writes them. It honours PREG_UNMATCHED_AS_NULL and
+     * preg_match() writes them, or the union of the shapes of the cases when
+     * the pattern is split and PHPStan keeps that union as array shapes (the
+     * merged shape otherwise). It honours PREG_UNMATCHED_AS_NULL and
      * PREG_OFFSET_CAPTURE; like preg_match(), it ignores a bit above the low
      * byte and refuses any other flag.
      *
@@ -53,6 +66,36 @@ final readonly class CaptureShape
             throw new InvalidRegexOptionException(\sprintf('matchShape() accepts PREG_OFFSET_CAPTURE and PREG_UNMATCHED_AS_NULL only, as preg_match() does; got flags %d.', $flags));
         }
 
+        if ([] !== $this->cases) {
+            $written = [];
+            $count = 0;
+            foreach ($this->cases as $case) {
+                [$shape, $values] = $case->render($flags);
+                $count += isset($written[$shape]) ? 0 : $values;
+                $written[$shape] = true;
+            }
+
+            // Past the budget PHPStan reads the union as a list without keys: the merged shape says more.
+            // PHPStan first merges the shapes that share their keys, and generalises only when what
+            // is left still counts past the budget. This count, taken before any merging, is never
+            // below PHPStan's: the merged shape may be written where PHPStan would keep the union,
+            // which is sound, only less precise.
+            if ($count <= self::PHPSTAN_ARRAY_COUNT_LIMIT) {
+                return implode('|', array_keys($written));
+            }
+        }
+
+        return $this->render($flags)[0];
+    }
+
+    /**
+     * The shape string, and the number of value types PHPStan counts in it:
+     * one per key, two more per key written as an offset pair.
+     *
+     * @return array{0: string, 1: int}
+     */
+    private function render(int $flags): array
+    {
         $asNull = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL);
         $offsets = 0 !== ($flags & \PREG_OFFSET_CAPTURE);
 
@@ -95,11 +138,14 @@ final readonly class CaptureShape
             $items[] = $group->number.$presence.': '.self::entry($types, $always, $offsets);
         }
 
+        // Under PREG_OFFSET_CAPTURE every key holds a pair, but a mark verb's own key.
+        $values = \count($items) * ($offsets ? 3 : 1);
         if ([] !== $this->marks && !$marked) {
             $items[] = 'MARK?: '.implode('|', $this->markTypes());
+            $values++;
         }
 
-        return 'array{'.implode(', ', $items).'}';
+        return ['array{'.implode(', ', $items).'}', $values];
     }
 
     /**
@@ -174,7 +220,8 @@ final readonly class CaptureShape
      * A name holds the value of its group. A name several groups share (/J)
      * holds the value of the highest-numbered of them that is set, or, when
      * none is set, what an unset one reads: the union of what each holds
-     * covers both.
+     * covers both. When one of them is set by every match, the name always
+     * holds the value of a group that is set.
      *
      * @param non-empty-list<CaptureGroupShape> $sharing
      *
@@ -182,6 +229,13 @@ final readonly class CaptureShape
      */
     private static function nameTypes(array $sharing, int $lastAlways, int $lastMaySet, bool $asNull): array
     {
+        $set = array_filter($sharing, static fn (CaptureGroupShape $group): bool => Participation::Never !== $group->participation);
+        foreach ($set as $group) {
+            if (Participation::Always === $group->participation) {
+                return array_values(array_map(self::valueType(...), $set));
+            }
+        }
+
         $types = [];
         foreach ($sharing as $group) {
             $types = [...$types, ...self::types($group, $lastAlways, $lastMaySet, $asNull)];
@@ -198,7 +252,8 @@ final readonly class CaptureShape
         $types = array_values(array_unique($types));
         // '' first and null last, as PHPStan prints them.
         usort($types, static fn (string $a, string $b): int => self::rank($a) <=> self::rank($b));
-        $type = implode('|', $types);
+        // PHPStan's type parser reads an intersection inside a union only in parentheses.
+        $type = 1 === \count($types) ? $types[0] : implode('|', array_map(static fn (string $type): string => str_contains($type, '&') ? '('.$type.')' : $type, $types));
 
         return $offsets ? \sprintf('array{%s, int<%d, max>}', $type, $always ? 0 : -1) : $type;
     }
@@ -222,7 +277,13 @@ final readonly class CaptureShape
             return "''";
         }
 
-        return $group->minLength > 0 ? 'non-empty-string' : 'string';
+        return match (true) {
+            $group->digitsOnly && $group->nonFalsy => 'non-falsy-string&numeric-string',
+            $group->digitsOnly => 'numeric-string',
+            $group->nonFalsy => 'non-falsy-string',
+            $group->minLength > 0 => 'non-empty-string',
+            default => 'string',
+        };
     }
 
     /**

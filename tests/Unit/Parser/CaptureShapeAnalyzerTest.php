@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\Participation;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -168,13 +169,16 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         $written = $this->analyze($pattern)->matchShape($flags);
 
-        $this->assertSame(['MARK'], array_values(array_filter(self::topLevelKeys($written), static fn (string $key): bool => 'MARK' === $key)), \sprintf('"%s" must have one MARK key.', $written));
+        foreach (self::topLevelKeys($written) as $keys) {
+            $this->assertSame(['MARK'], array_values(array_filter($keys, static fn (string $key): bool => 'MARK' === $key)), \sprintf('Each shape of "%s" must have one MARK key.', $written));
+        }
         $this->assertSame($expected, $written);
     }
 
     /**
      * PHP writes $matches in insertion order: 0, then per group its name
-     * before its number. The string lists its keys in that order, once each.
+     * before its number. Each shape of the string lists its keys in that
+     * order, once each, and one of them holds the keys each match writes.
      *
      * @param list<string> $subjects
      */
@@ -185,15 +189,18 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $shape = $this->analyze($pattern);
 
         foreach (self::FLAG_SETS as $flags) {
-            $keys = self::topLevelKeys($shape->matchShape($flags));
-            $this->assertSame(array_values(array_unique($keys)), $keys, \sprintf('%s with flags %d writes a key twice.', $pattern, $flags));
+            $members = self::topLevelKeys($shape->matchShape($flags));
+            foreach ($members as $keys) {
+                $this->assertSame(array_values(array_unique($keys)), $keys, \sprintf('%s with flags %d writes a key twice.', $pattern, $flags));
+            }
 
             foreach ($subjects as $subject) {
                 $matches = [];
                 preg_match($pattern, $subject, $matches, $flags);
                 $written = array_map(strval(...), array_keys($matches));
 
-                $this->assertSame($written, array_values(array_intersect($keys, $written)), \sprintf('%s on "%s" with flags %d: keys out of order.', $pattern, $subject, $flags));
+                $ordered = array_filter($members, static fn (array $keys): bool => $written === array_values(array_intersect($keys, $written)));
+                $this->assertNotSame([], $ordered, \sprintf('%s on "%s" with flags %d: keys out of order.', $pattern, $subject, $flags));
             }
         }
     }
@@ -338,6 +345,285 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * nonFalsy: every value the group holds when it is set satisfies
+     * (bool) $value, so neither '' nor '0'. false means "not proven".
+     */
+    #[Test]
+    #[DataProvider('provideNonFalsy')]
+    public function test_non_falsy_is_proven_from_the_pattern(string $pattern, int $group, bool $expected): void
+    {
+        $this->assertSame($expected, $this->group($pattern, $group)->nonFalsy);
+    }
+
+    /**
+     * digitsOnly: every value the group holds when it is set satisfies
+     * ctype_digit($value), so a non-empty run of ASCII 0-9. false means "not
+     * proven".
+     */
+    #[Test]
+    #[DataProvider('provideDigitsOnly')]
+    public function test_digits_only_is_proven_from_the_pattern(string $pattern, int $group, bool $expected): void
+    {
+        $this->assertSame($expected, $this->group($pattern, $group)->digitsOnly);
+    }
+
+    /**
+     * The analysis proves the facts the row lists, and a fact proven true
+     * holds for every value the engine writes into a set group; the unset
+     * slot ('' or null) is the participation's business.
+     *
+     * @param list<string>                              $subjects
+     * @param array<int, list<'nonFalsy'|'digitsOnly'>> $facts
+     */
+    #[Test]
+    #[DataProvider('provideFactEngineRows')]
+    public function test_proven_facts_hold_for_what_the_engine_writes(string $pattern, array $subjects, array $facts): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $proven = [];
+        foreach ([$shape->whole, ...$shape->groups] as $group) {
+            $proven[$group->number] = array_keys(array_filter(['nonFalsy' => $group->nonFalsy, 'digitsOnly' => $group->digitsOnly]));
+        }
+        $this->assertSame($facts, $proven, $pattern);
+
+        $this->assertProvenFactsHold($shape, $pattern, $subjects);
+    }
+
+    #[Test]
+    #[DataProvider('provideFactShapes')]
+    #[DataProvider('provideCaseShapes')]
+    public function test_the_match_shape_writes_the_facts_and_the_cases(string $pattern, int $flags, string $expected): void
+    {
+        $this->assertSame($expected, $this->analyze($pattern)->matchShape($flags));
+    }
+
+    #[Test]
+    #[DataProvider('provideSplits')]
+    public function test_cases_split_on_the_one_alternation_reachable_from_the_root(string $pattern, int $count): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $this->assertCount($count, $shape->cases);
+        foreach ($shape->cases as $case) {
+            $this->assertInstanceOf(CaptureShape::class, $case);
+            // Each case numbers every group of the pattern, as $groups does.
+            $this->assertSame(array_keys($shape->groups), array_keys($case->groups));
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideNoSplits')]
+    public function test_cases_stay_empty_when_the_pattern_does_not_split(string $pattern): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $this->assertSame([], $shape->cases);
+        $this->assertStringNotContainsString('}|array{', $shape->matchShape());
+    }
+
+    /**
+     * Each case is computed as if the other branches' groups took no part:
+     * preg_match('/(a)|(b)/', 'b') -> ["b","","b"]; on 'a' -> ["a","a"];
+     * preg_match('/(?:(a)|(b))?/', '') -> [""] (PHP 8.4.26, PCRE2 10.49).
+     * The merged view stays in $groups.
+     *
+     * @param list<array<int<1, max>, Participation>> $expected in any order: cases carry no index correspondence with the branches
+     * @param array<int<1, max>, Participation>       $merged   the merged view, unchanged
+     */
+    #[Test]
+    #[DataProvider('provideCaseParticipation')]
+    public function test_a_case_holds_only_the_groups_of_its_branch(string $pattern, array $expected, array $merged): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $actual = array_map(static fn (CaptureShape $case): array => array_map(static fn (CaptureGroupShape $group): Participation => $group->participation, $case->groups), $shape->cases);
+
+        $this->assertEqualsCanonicalizing($expected, $actual);
+        $this->assertSame($merged, array_map(static fn (CaptureGroupShape $group): Participation => $group->participation, $shape->groups));
+    }
+
+    /**
+     * An inline option set in one alternative stays in force in the
+     * following ones, as in PCRE: preg_match('/a(?i)b|(c)/', 'C') ->
+     * ["C","C"], and preg_match('/^(?:a(?i)b|c)$/', 'C') -> 1 (PHP 8.4.26,
+     * PCRE2 10.49). The case where group 1 is set must hold 'C'.
+     */
+    #[Test]
+    public function test_inline_options_flow_into_the_cases_of_the_following_branches(): void
+    {
+        $shape = $this->analyze('/a(?i)b|(c)/');
+        $this->assertNotSame([], $shape->cases);
+
+        $holding = array_values(array_filter($shape->cases, static fn (CaptureShape $case): bool => Participation::Never !== $case->groups[1]->participation));
+        $this->assertNotSame([], $holding, 'One case must set group 1.');
+        foreach ($holding as $case) {
+            $values = $case->groups[1]->values;
+            $this->assertTrue(null === $values || \in_array('C', $values, true), \sprintf('Group 1 holds %s, not "C".', json_encode($values)));
+            $this->assertFalse($case->groups[1]->digitsOnly);
+        }
+    }
+
+    /**
+     * A name several groups share under /J holds, per case, only the groups
+     * of that case: preg_match('/(?<n>a)|(?<n>b)/J', 'b') ->
+     * {"0":"b","n":"b","1":"","2":"b"} (PHP 8.4.26, PCRE2 10.49), so the
+     * case of the second branch writes n as 'b', never ''.
+     */
+    #[Test]
+    public function test_a_shared_name_holds_only_the_groups_of_its_case(): void
+    {
+        $shape = $this->analyze('/(?<n>a)|(?<n>b)/J');
+
+        $this->assertCount(2, $shape->cases);
+        $this->assertSame("array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}", $shape->matchShape());
+    }
+
+    /**
+     * PHPStan generalises a union of array shapes holding more than 256
+     * value types, nested arrays included, into a list that loses the keys:
+     * past that budget the merged shape is written instead. Sixteen
+     * one-group branches hold 152 value types without flags, 456 with
+     * PREG_OFFSET_CAPTURE (each value a pair); the cases stay the same.
+     */
+    #[Test]
+    public function test_a_union_past_phpstans_budget_falls_back_to_the_merged_shape(): void
+    {
+        $shape = $this->analyze(self::branches(16, ''));
+        $merged = new CaptureShape($shape->whole, $shape->groups, $shape->marks);
+
+        $this->assertCount(16, $shape->cases);
+        $this->assertSame(implode('|', array_map(static fn (CaptureShape $case): string => $case->matchShape(), $shape->cases)), $shape->matchShape());
+        $this->assertSame($merged->matchShape(\PREG_OFFSET_CAPTURE), $shape->matchShape(\PREG_OFFSET_CAPTURE));
+        $this->assertStringNotContainsString('}|array{', $shape->matchShape(\PREG_OFFSET_CAPTURE));
+    }
+
+    /**
+     * The union of the cases covers every match: each $matches the engine
+     * writes is held by at least one case, under every flag set.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideCaseEngineRows')]
+    public function test_every_engine_result_is_held_by_one_case(string $pattern, array $subjects): void
+    {
+        $shape = $this->analyze($pattern);
+        $this->assertNotSame([], $shape->cases, \sprintf('%s must split.', $pattern));
+        $unicode = RegexParser::create()->parse($pattern)->isUnicode();
+
+        foreach ($subjects as $subject) {
+            foreach (self::FLAG_SETS as $flags) {
+                $matches = [];
+                $this->assertSame(1, preg_match($pattern, $subject, $matches, $flags));
+
+                $held = array_filter($shape->cases, static fn (CaptureShape $case): bool => self::caseHolds($case, $matches, $flags, $unicode));
+                $this->assertNotSame([], $held, \sprintf('%s on %s with flags %d writes %s, which no case holds.', $pattern, json_encode($subject), $flags, json_encode($matches)));
+            }
+        }
+
+        // The merged view proves its own facts, which hold for every match too.
+        $this->assertProvenFactsHold($shape, $pattern, $subjects);
+    }
+
+    /**
+     * A capturing group's body never holds the split alternation, so what it
+     * reads is the same in every case: its facts are computed once, not once
+     * per case and again for the merged shape. Sixteen cases over forty
+     * nested groups then cost little more than the merged shape alone, where
+     * recomputing them made the split pattern about fifteen times slower.
+     * Each time is the fastest of three runs, so a busy machine slows both.
+     */
+    #[Test]
+    public function test_cases_reuse_the_facts_of_each_group(): void
+    {
+        $nested = str_repeat('([a]x?', 40).str_repeat(')', 40);
+        $split = RegexParser::create()->parse('/(?:'.$nested.str_repeat('|(b)', 15).')/');
+        $merged = RegexParser::create()->parse('/(?:'.$nested.')/');
+
+        $analyzer = new CaptureShapeAnalyzer();
+        $this->assertCount(16, $analyzer->analyze($split)->cases);
+
+        $splitSeconds = self::fastestAnalysis($analyzer, $split);
+        $mergedSeconds = self::fastestAnalysis($analyzer, $merged);
+
+        $this->assertLessThan(3 * $mergedSeconds, $splitSeconds, \sprintf('The split pattern took %.3f s, the merged one %.3f s.', $splitSeconds, $mergedSeconds));
+    }
+
+    /**
+     * PHPStan keeps a union of array shapes holding at most 256 value types,
+     * and generalises past them (TypeCombinator::optimizeConstantArrays(),
+     * "<= ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT"): up to the budget the
+     * union of the cases is written, each distinct shape once; one value type
+     * past it, the merged shape.
+     */
+    #[Test]
+    #[DataProvider('provideBudgetEdges')]
+    public function test_the_union_is_written_up_to_phpstans_budget_and_no_further(string $pattern, int $flags, int $cases, int $distinct, bool $union): void
+    {
+        $shape = $this->analyze($pattern);
+        $written = array_values(array_unique(array_map(static fn (CaptureShape $case): string => $case->matchShape($flags), $shape->cases)));
+        $merged = new CaptureShape($shape->whole, $shape->groups, $shape->marks);
+
+        $this->assertCount($cases, $shape->cases);
+        $this->assertCount($distinct, $written);
+        $this->assertSame($union ? implode('|', $written) : $merged->matchShape($flags), $shape->matchShape($flags));
+    }
+
+    /**
+     * A subroutine call runs a branch the case leaves out, and the verbs and
+     * the \K inside it with that branch (PHP 8.4.26, PCRE2 10.49):
+     *   preg_match('/(?:(a)|(b(*MARK:m)))(?2)/', 'ab') -> {"0":"ab","1":"a","MARK":"m"}
+     *   preg_match('/(?:(a)|(b\K))(?2)/', 'ab')         -> ["","a"]
+     */
+    #[Test]
+    public function test_a_call_runs_the_verbs_and_the_keep_of_a_branch_the_case_leaves_out(): void
+    {
+        $matches = [];
+        $this->assertSame(1, preg_match('/(?:(a)|(b(*MARK:m)))(?2)/', 'ab', $matches));
+        $this->assertSame('m', $matches['MARK']);
+        $this->assertSame(1, preg_match('/(?:(a)|(b\K))(?2)/', 'ab', $matches));
+        $this->assertSame('', $matches[0]);
+
+        $marked = $this->analyze('/(?:(a)|(b(*MARK:m)))(?2)/');
+        $this->assertCount(2, $marked->cases);
+        foreach ($marked->cases as $case) {
+            $this->assertSame(['m'], $case->marks);
+            $this->assertStringContainsString("MARK?: 'm'", $case->matchShape());
+        }
+
+        $kept = $this->analyze('/(?:(a)|(b\K))(?2)/');
+        $this->assertCount(2, $kept->cases);
+        foreach ($kept->cases as $case) {
+            $this->assertSame(0, $case->whole->minLength);
+            $this->assertNull($case->whole->maxLength);
+            $this->assertNull($case->whole->values);
+        }
+    }
+
+    /**
+     * A group a case never sets proves no fact there, though its pattern
+     * proves both where it is set: preg_match('/(?:(\d\d)|(a))/', '00') ->
+     * ["00","00"], on 'a' -> ["a","","a"] (PHP 8.4.26, PCRE2 10.49).
+     */
+    #[Test]
+    public function test_a_group_a_case_never_sets_proves_no_fact(): void
+    {
+        $shape = $this->analyze('/(?:(\d\d)|(a))/');
+        $this->assertCount(2, $shape->cases);
+
+        $participations = [];
+        foreach ($shape->cases as $case) {
+            $group = $case->groups[1];
+            $participations[] = $group->participation;
+            $proven = Participation::Always === $group->participation;
+            $this->assertSame($proven, $group->nonFalsy);
+            $this->assertSame($proven, $group->digitsOnly);
+        }
+        $this->assertEqualsCanonicalizing([Participation::Always, Participation::Never], $participations);
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, expected: array<int<1, max>, Participation>}>
      */
     public static function provideParticipation(): iterable
@@ -386,6 +672,10 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'unbounded' => ['pattern' => '/(a+)/', 'group' => 1, 'values' => null];
         yield 'extended mode' => ['pattern' => '/(a b)/x', 'group' => 1, 'values' => ['ab']];
         yield 'branch reset joins' => ['pattern' => '/(?|(a)|(b))/', 'group' => 1, 'values' => ['a', 'b']];
+        // A branch reset number joins the values of its branches, up to 32: preg_match() on each of
+        // 'a', 'p', 'q', '5' sets group 1 to that character (PHP 8.4.26, PCRE2 10.49).
+        yield 'branch reset joins 32 values: the limit' => ['pattern' => '/(?|(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p)|(q|r|s|t|u|v|w|x|y|z|0|1|2|3|4|5))/', 'group' => 1, 'values' => str_split('abcdefghijklmnopqrstuvwxyz012345')];
+        yield 'branch reset joins 33 values: past the limit' => ['pattern' => '/(?|(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p)|(q|r|s|t|u|v|w|x|y|z|0|1|2|3|4|5|6))/', 'group' => 1, 'values' => null];
         yield 'whole match' => ['pattern' => '/a(b|c)/', 'group' => 0, 'values' => ['ab', 'ac']];
         yield 'keep resets the whole match' => ['pattern' => '/a\K(b)/', 'group' => 0, 'values' => null];
         yield 'too many' => ['pattern' => '/((?:a|b|c|d)(?:a|b|c|d)(?:a|b|c|d))/', 'group' => 1, 'values' => null];
@@ -405,6 +695,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'accept leaves the group open before any text' => ['pattern' => '/((*ACCEPT)a)/', 'group' => 1, 'min' => 0, 'max' => null];
         // preg_match('/(a(*ACCEPT)b)c/', 'abc') -> ["a","a"]
         yield 'accept leaves the group open after some text' => ['pattern' => '/(a(*ACCEPT)b)c/', 'group' => 1, 'min' => 0, 'max' => null];
+        // preg_match('/a\Kb?/', 'a') -> [""]: \K leaves the whole match empty, so its minimum is exactly 0
+        yield 'keep cuts the whole match short' => ['pattern' => '/a\Kb?/', 'group' => 0, 'min' => 0, 'max' => null];
     }
 
     /**
@@ -415,7 +707,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'trailing optional group is left out' => ['pattern' => '/(a)(z)?/', 'flags' => 0, 'expected' => "array{0: 'a'|'az', 1: 'a', 2?: 'z'}"];
         yield 'middle optional group is empty' => ['pattern' => '/(z)?(a)/', 'flags' => 0, 'expected' => "array{0: 'a'|'za', 1: ''|'z', 2: 'a'}"];
         yield 'unmatched as null' => ['pattern' => '/(a)(x)?(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ab'|'axb', 1: 'a', 2: 'x'|null, 3: 'b'}"];
-        yield 'named group' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, n: non-empty-string, 1: non-empty-string, 2: \'b\'}'];
+        yield 'named group' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, n: non-falsy-string, 1: non-falsy-string, 2: \'b\'}'];
         yield 'offset capture' => ['pattern' => '/(z)?(a)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a'|'za', int<0, max>}, 1: array{''|'z', int<-1, max>}, 2: array{'a', int<0, max>}}"];
         yield 'never set, then set' => ['pattern' => '/(?!(b))(a)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: '', 2: 'a'}"];
         yield 'never set, last' => ['pattern' => '/(?!(b))a/', 'flags' => 0, 'expected' => "array{0: 'a'}"];
@@ -425,20 +717,26 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'named group next to a mark verb' => ['pattern' => '/(?<x>a)(*MARK:m)b/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'a', 1: 'a', MARK?: 'm'}"];
         // preg_match('/(?<MARK>a)/', 'a') -> {"0":"a","MARK":"a","1":"a"}: without a verb the key holds the group alone
         yield 'group named MARK, no mark verb' => ['pattern' => '/(?<MARK>a)/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a', 1: 'a'}"];
-        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, y: non-empty-string, 1: non-empty-string, d?: non-empty-string, 2?: non-empty-string}'];
-        yield 'duplicate names' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a'|'b', n?: ''|'a'|'b', 1?: ''|'a', 2?: 'b'}"];
+        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, y: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string, d?: non-falsy-string&numeric-string, 2?: non-falsy-string&numeric-string}'];
+        // A root alternation holding groups splits into one shape per branch:
+        // preg_match('/(?J)(?<n>a)|(?<n>b)/', 'a') -> {"0":"a","n":"a","1":"a"}, on 'b' -> {"0":"b","n":"b","1":"","2":"b"}
+        yield 'duplicate names' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
         yield 'unknown text' => ['pattern' => '/(\w*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}'];
         yield 'quote in a value' => ['pattern' => "/(it's)/", 'flags' => 0, 'expected' => "array{0: 'it\\'s', 1: 'it\\'s'}"];
-        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
-        yield 'empty group of unknown text' => ['pattern' => '/(\b)a/i', 'flags' => 0, 'expected' => "array{0: non-empty-string, 1: ''}"];
-        yield 'too many values to write' => ['pattern' => '/(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q)/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
+        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
+        yield 'empty group of unknown text' => ['pattern' => '/(\b)a/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: ''}"];
+        yield 'too many values to write' => ['pattern' => '/(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
         // preg_match('/(a)(?<x>b)/n', 'ab') -> {"0":"ab","x":"b","1":"b"}, the same under (?n) (PHP 8.4.26)
         yield 'no auto capture' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'b', 1: 'b'}"];
         yield 'inline no auto capture' => ['pattern' => '/(?n)(a)(?<x>b)/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'b', 1: 'b'}"];
         yield 'no auto capture, offsets' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'ab', int<0, max>}, x: array{'b', int<0, max>}, 1: array{'b', int<0, max>}}"];
         // preg_match('/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'ax') -> n => 'a', 2 => ''; on 'bx' -> n => 'b', 1 => ''
-        yield 'shared name, one group set' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'flags' => 0, 'expected' => "array{0: 'ax'|'bx', n: ''|'a'|'b', 1: ''|'a', 2: ''|'b', 3: 'x'}"];
-        yield 'shared name, one group set, as null' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ax'|'bx', n: 'a'|'b'|null, 1: 'a'|null, 2: 'b'|null, 3: 'x'}"];
+        yield 'shared name, one group set' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'flags' => 0, 'expected' => "array{0: 'ax', n: 'a', 1: 'a', 2: '', 3: 'x'}|array{0: 'bx', n: 'b', 1: '', 2: 'b', 3: 'x'}"];
+        yield 'shared name, one group set, as null' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ax', n: 'a', 1: 'a', 2: null, 3: 'x'}|array{0: 'bx', n: 'b', 1: null, 2: 'b', 3: 'x'}"];
+        // A name one group always sets never reads unset: it holds a set group's value.
+        // preg_match('/(?J)(?<n>a)(?<n>z)?(c)/', 'ac') -> {"0":"ac","n":"a","1":"a","2":"","3":"c"}, as null n => 'a' too (PHP 8.4.26, PCRE2 10.49)
+        yield 'shared name, one group always set' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => 0, 'expected' => "array{0: 'ac'|'azc', n: 'a'|'z', 1: 'a', 2: ''|'z', 3: 'c'}"];
+        yield 'shared name, one group always set, as null' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ac'|'azc', n: 'a'|'z', 1: 'a', 2: 'z'|null, 3: 'c'}"];
     }
 
     /**
@@ -488,6 +786,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(?|(?<a>x)|(y))/' => ['pattern' => '/(?|(?<a>x)|(y))/', 'subjects' => ['x', 'y']];
         yield '/(?J)(?:(?<n>a)|(?<n>b))(x)/' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'subjects' => ['ax', 'bx']];
         yield '/(?J)(?<n>a)(?<n>b)/' => ['pattern' => '/(?J)(?<n>a)(?<n>b)/', 'subjects' => ['ab']];
+        yield '/(?J)(?<n>a)(?<n>z)?(c)/' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'subjects' => ['ac', 'azc']];
         yield '/(?J)(?:(?<n>a)|(?<n>b))?(x)/' => ['pattern' => '/(?J)(?:(?<n>a)|(?<n>b))?(x)/', 'subjects' => ['x', 'ax']];
         yield '/(a)(?<x>b)/n' => ['pattern' => '/(a)(?<x>b)/n', 'subjects' => ['ab']];
         yield '/(?n)(a)(?<x>b)/' => ['pattern' => '/(?n)(a)(?<x>b)/', 'subjects' => ['ab']];
@@ -557,8 +856,10 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'group may be unset, several mark names, as null' => ['pattern' => '/(?<MARK>a)?(b)(?:(*MARK:x)c|d|(*MARK:y)e)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'bc'|'bd'|'be'|'abc'|'abd'|'abe', MARK: 'a'|'x'|'y'|null, 1: 'a'|null, 2: 'b'}"];
         yield 'group always set, verb after it' => ['pattern' => '/(?<MARK>a)(*MARK:x)b/', 'flags' => 0, 'expected' => "array{0: 'ab', MARK: 'a'|'x', 1: 'a'}"];
         yield 'group always set, verb after it, offsets' => ['pattern' => '/(?<MARK>a)(*MARK:x)b/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'ab', int<0, max>}, MARK: array{'a', int<0, max>}|'x', 1: array{'a', int<0, max>}}"];
-        yield 'group and verb in different branches' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => 0, 'expected' => "array{0: 'a'|'b', MARK?: 'a'|'x', 1?: 'a'}"];
-        yield 'group and verb in different branches, offsets' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a'|'b', int<0, max>}, MARK?: array{'a', int<-1, max>}|'x', 1?: array{'a', int<-1, max>}}"];
+        // The root alternation splits; a verb in the branch not taken leaves no mark:
+        // preg_match('/(*MARK:x)c|b/', 'b') -> ["b"] (PHP 8.4.26, PCRE2 10.49).
+        yield 'group and verb in different branches' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a', 1: 'a'}|array{0: 'b', MARK?: 'x'}"];
+        yield 'group and verb in different branches, offsets' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, MARK: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, MARK?: 'x'}"];
         // A mark name holding a control byte cannot be written as a constant: preg_match('/(?<MARK>a)(*MARK:x\x01)b/', 'ab') writes "x\x01".
         yield 'mark name not writable as a constant' => ['pattern' => "/(?<MARK>a)(*MARK:x\x01)b/", 'flags' => 0, 'expected' => "array{0: 'ab', MARK: 'a'|non-empty-string, 1: 'a'}"];
         yield 'mark name not writable as a constant, offsets' => ['pattern' => "/(?<MARK>a)(*MARK:x\x01)b/", 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'ab', int<0, max>}, MARK: array{'a', int<0, max>}|non-empty-string, 1: array{'a', int<0, max>}}"];
@@ -623,6 +924,320 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'optional groups, PREG_UNMATCHED_AS_NULL' => ['pattern' => $optional, 'flags' => \PREG_UNMATCHED_AS_NULL];
         yield 'optional groups, both flags' => ['pattern' => $optional, 'flags' => \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
         yield 'distinct names, no flag' => ['pattern' => $named, 'flags' => 0];
+    }
+
+    /**
+     * Oracle (PHP 8.4.26, PCRE2 10.49), and (bool) '00' === true:
+     *   preg_match('/(\d)/', '0')          -> ["0","0"]
+     *   preg_match('/(a|0)/', '0')         -> ["0","0"]
+     *   preg_match('/(a?)/', '')           -> ["",""]
+     *   preg_match('/(a?)(\1)/', '')       -> ["","",""]
+     *   preg_match('/(0(*ACCEPT)1)/', '01') -> ["0","0"]
+     *   preg_match('/(.)/', '0')           -> ["0","0"]
+     *   preg_match('/^([^a])$/', '0')      -> 1
+     *   preg_match('/^([^0])$/', '0'), and the same for [^\d], [^a0],
+     *   (?:a|)[1-9] and, under /u, (?:\Qab\E)?[1-9]  -> 0
+     *
+     * @return iterable<string, array{pattern: string, group: int, expected: bool}>
+     */
+    public static function provideNonFalsy(): iterable
+    {
+        yield 'two characters' => ['pattern' => '/(ab)/', 'group' => 1, 'expected' => true];
+        yield 'may be empty' => ['pattern' => '/(a?)/', 'group' => 1, 'expected' => false];
+        yield 'one character from a class without zero' => ['pattern' => '/([1-9])/', 'group' => 1, 'expected' => true];
+        yield 'one digit may be zero' => ['pattern' => '/(\d)/', 'group' => 1, 'expected' => false];
+        yield 'the zero literal' => ['pattern' => '/(0)/', 'group' => 1, 'expected' => false];
+        yield 'two digits, "00" included, are truthy' => ['pattern' => '/(\d\d)/', 'group' => 1, 'expected' => true];
+        yield 'the "00" literal is truthy' => ['pattern' => '/(00)/', 'group' => 1, 'expected' => true];
+        yield 'never set: negative lookahead' => ['pattern' => '/(?!(ab))c/', 'group' => 1, 'expected' => false];
+        yield 'never set: zero repeat' => ['pattern' => '/(ab){0}c/', 'group' => 1, 'expected' => false];
+        yield 'every branch truthy, one starts with zero' => ['pattern' => '/(a|0b)/', 'group' => 1, 'expected' => true];
+        yield 'a branch reads zero alone' => ['pattern' => '/(a|0)/', 'group' => 1, 'expected' => false];
+        yield 'optional group: the fact describes the set value' => ['pattern' => '/(ab)?/', 'group' => 1, 'expected' => true];
+        yield 'whole match of two characters' => ['pattern' => '/ab/', 'group' => 0, 'expected' => true];
+        yield 'whole match of one digit' => ['pattern' => '/\d/', 'group' => 0, 'expected' => false];
+        yield 'backreference to a group that may be empty' => ['pattern' => '/(a?)(\1)/', 'group' => 2, 'expected' => false];
+        yield 'accept leaves the group at "0"' => ['pattern' => '/(0(*ACCEPT)1)/', 'group' => 1, 'expected' => false];
+        yield 'any character may be zero' => ['pattern' => '/(.)/', 'group' => 1, 'expected' => false];
+        yield 'any code point may be zero' => ['pattern' => '/(.)/u', 'group' => 1, 'expected' => false];
+        yield 'one code point that is not zero' => ['pattern' => '/(é)/u', 'group' => 1, 'expected' => true];
+        yield 'caseless, two characters' => ['pattern' => '/(ab)/i', 'group' => 1, 'expected' => true];
+        yield 'a negated class that holds zero' => ['pattern' => '/([^0])/', 'group' => 1, 'expected' => true];
+        yield 'a negated class that holds every digit' => ['pattern' => '/([^\d])/', 'group' => 1, 'expected' => true];
+        yield 'a negated class with zero among its members' => ['pattern' => '/([^a0])/', 'group' => 1, 'expected' => true];
+        yield 'a negated class without zero' => ['pattern' => '/([^a])/', 'group' => 1, 'expected' => false];
+        yield 'an empty alternative reads no zero' => ['pattern' => '/((?:a|)[1-9])/', 'group' => 1, 'expected' => true];
+        yield 'an empty alternative, then a character that may be zero' => ['pattern' => '/((?:a|)\w)/', 'group' => 1, 'expected' => false];
+        yield 'a quoted run of two code points is not zero alone' => ['pattern' => '/((?:\Qab\E)?[1-9])/u', 'group' => 1, 'expected' => true];
+        yield 'a quoted run of two code points, then a character that may be zero' => ['pattern' => '/((?:\Qab\E)?\w)/u', 'group' => 1, 'expected' => false];
+    }
+
+    /**
+     * Oracle (PHP 8.4.26, PCRE2 10.49), U+0663 ARABIC-INDIC DIGIT THREE, for
+     * which ctype_digit() is false:
+     *   preg_match('/(\d+)/u', "\u{663}")             -> 1: /u turns UCP on
+     *   preg_match('/(*UTF)(*UCP)(\d+)/', "\u{663}")  -> 1
+     *   preg_match('/([[:digit:]]+)/u', "\u{663}")    -> 1: UCP widens the POSIX class too
+     *   preg_match('/(\p{Nd}+)/u', "\u{663}")         -> 1
+     *   preg_match('/(*UTF)(\d+)/', "\u{663}")        -> 0: UTF without UCP keeps \d ASCII
+     *   preg_match('/(\d+)/', "\u{663}")              -> 0
+     *   preg_match('/([0-9]+)/u', "\u{663}")          -> 0, and no code point folds into [0-9] under /iu
+     *   \d, \d under /i and [0-9] under /i match the bytes 0x30-0x39 only, in byte mode
+     *
+     * @return iterable<string, array{pattern: string, group: int, expected: bool}>
+     */
+    public static function provideDigitsOnly(): iterable
+    {
+        yield 'a class of ASCII digits' => ['pattern' => '/([0-9]+)/', 'group' => 1, 'expected' => true];
+        yield '\d without UCP' => ['pattern' => '/(\d+)/', 'group' => 1, 'expected' => true];
+        yield '\d under /u matches non-ASCII digits' => ['pattern' => '/(\d+)/u', 'group' => 1, 'expected' => false];
+        yield '\d under (*UTF)(*UCP) matches non-ASCII digits' => ['pattern' => '/(*UTF)(*UCP)(\d+)/', 'group' => 1, 'expected' => false];
+        // A deliberate over-approximation: \d proves digitsOnly only without
+        // UCP, so the answer reads the pattern alone, not the engine's
+        // tables. In byte mode the engine itself keeps \d to 0x30-0x39 under
+        // (*UCP) (no Latin-1 byte is Nd), so true would be sound here.
+        yield '\d under (*UCP) is not proven' => ['pattern' => '/(*UCP)(\d+)/', 'group' => 1, 'expected' => false];
+        yield '\d under (*UTF) without UCP' => ['pattern' => '/(*UTF)(\d+)/', 'group' => 1, 'expected' => true];
+        yield '\d under /i' => ['pattern' => '/(\d+)/i', 'group' => 1, 'expected' => true];
+        yield 'a class of ASCII digits under /u' => ['pattern' => '/([0-9]+)/u', 'group' => 1, 'expected' => true];
+        yield 'a class of ASCII digits under /iu' => ['pattern' => '/([0-9]+)/iu', 'group' => 1, 'expected' => true];
+        yield 'POSIX digit under /u matches non-ASCII digits' => ['pattern' => '/([[:digit:]]+)/u', 'group' => 1, 'expected' => false];
+        yield '\p{Nd} under /u' => ['pattern' => '/(\p{Nd}+)/u', 'group' => 1, 'expected' => false];
+        yield 'a range with escaped endpoints' => ['pattern' => '/([\x30-\x39]+)/', 'group' => 1, 'expected' => true];
+        yield 'a digit then a letter' => ['pattern' => '/(1a)/', 'group' => 1, 'expected' => false];
+        yield 'may be empty' => ['pattern' => '/(\d*)/', 'group' => 1, 'expected' => false];
+        yield 'never set' => ['pattern' => '/(?!(1))a/', 'group' => 1, 'expected' => false];
+        yield 'optional group: the fact describes the set value' => ['pattern' => '/(\d+)?/', 'group' => 1, 'expected' => true];
+        yield 'the zero literal is digits' => ['pattern' => '/(0)/', 'group' => 1, 'expected' => true];
+        yield 'two digits' => ['pattern' => '/(\d\d)/', 'group' => 1, 'expected' => true];
+        yield 'whole match of digits' => ['pattern' => '/(\d+)/', 'group' => 0, 'expected' => true];
+        yield 'whole match with a dot' => ['pattern' => '/(\d+)\.(\d+)/', 'group' => 0, 'expected' => false];
+        yield 'a digit or a dash' => ['pattern' => '/(\d|-)/', 'group' => 1, 'expected' => false];
+    }
+
+    /**
+     * Each subject reaches the value that makes a fact false, or proves a
+     * true one: the replay fails on a wrong true. The facts list, for each
+     * group number, 0 included, the facts the analysis proves.
+     *
+     * @return iterable<string, array{pattern: string, subjects: list<string>, facts: array<int, list<'nonFalsy'|'digitsOnly'>>}>
+     */
+    public static function provideFactEngineRows(): iterable
+    {
+        yield 'facts: /(\d+)/' => ['pattern' => '/(\d+)/', 'subjects' => ['0', '123'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /(\d+)/u' => ['pattern' => '/(\d+)/u', 'subjects' => ['0', "\u{663}"], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(*UTF)(*UCP)(\d+)/' => ['pattern' => '/(*UTF)(*UCP)(\d+)/', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(*UCP)(\d+)/' => ['pattern' => '/(*UCP)(\d+)/', 'subjects' => ['0', '9'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(*UTF)(\d+)/' => ['pattern' => '/(*UTF)(\d+)/', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /(\d+)/i' => ['pattern' => '/(\d+)/i', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /([0-9]+)/u' => ['pattern' => '/([0-9]+)/u', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /([[:digit:]]+)/u' => ['pattern' => '/([[:digit:]]+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(\p{Nd}+)/u' => ['pattern' => '/(\p{Nd}+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /([\x30-\x39]+)/' => ['pattern' => '/([\x30-\x39]+)/', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /(\d\d)/' => ['pattern' => '/(\d\d)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
+        yield 'facts: /(\d)/' => ['pattern' => '/(\d)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /(0)/' => ['pattern' => '/(0)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /(a|0b)/' => ['pattern' => '/(a|0b)/', 'subjects' => ['a', '0b'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(a|0)/' => ['pattern' => '/(a|0)/', 'subjects' => ['a', '0'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(a?)/' => ['pattern' => '/(a?)/', 'subjects' => ['', 'a'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(a?)(\1)/' => ['pattern' => '/(a?)(\1)/', 'subjects' => ['', 'aa'], 'facts' => [0 => [], 1 => [], 2 => []]];
+        yield 'facts: /(0(*ACCEPT)1)/' => ['pattern' => '/(0(*ACCEPT)1)/', 'subjects' => ['01'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /([1-9])/' => ['pattern' => '/([1-9])/', 'subjects' => ['1'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
+        yield 'facts: /(\d+)?/' => ['pattern' => '/(\d+)?/', 'subjects' => ['', '0'], 'facts' => [0 => [], 1 => ['digitsOnly']]];
+        yield 'facts: /(ab)?/' => ['pattern' => '/(ab)?/', 'subjects' => ['', 'ab'], 'facts' => [0 => [], 1 => ['nonFalsy']]];
+        yield 'facts: /(1a)/' => ['pattern' => '/(1a)/', 'subjects' => ['1a'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(\d*)/' => ['pattern' => '/(\d*)/', 'subjects' => ['', '7'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(.)/' => ['pattern' => '/(.)/', 'subjects' => ['0'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(é)/u' => ['pattern' => '/(é)/u', 'subjects' => ['é'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(ab)/i' => ['pattern' => '/(ab)/i', 'subjects' => ['AB'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(\d+)\.(\d+)/' => ['pattern' => '/(\d+)\.(\d+)/', 'subjects' => ['1.5'], 'facts' => [0 => ['nonFalsy'], 1 => ['digitsOnly'], 2 => ['digitsOnly']]];
+        yield 'facts: /(\d\d+)/' => ['pattern' => '/(\d\d+)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
+        yield 'facts: /([a-z]+)/' => ['pattern' => '/([a-z]+)/', 'subjects' => ['abc'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+    }
+
+    /**
+     * Written in PHPRegex's own form: every key named, a group's facts as
+     * accessory types. A digit run is a numeric-string, which PHPStan already
+     * reads as non-empty. CaptureShapePhpStanTypeTest checks that each one is
+     * the type PHPStan prints for the pattern, up to type equivalence.
+     *
+     * @return iterable<string, array{pattern: string, flags: int, expected: string}>
+     */
+    public static function provideFactShapes(): iterable
+    {
+        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: numeric-string, 1: numeric-string}'];
+        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{numeric-string, int<0, max>}, 1: array{numeric-string, int<0, max>}}'];
+        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string}'];
+        yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}'];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => 'array{0: string, 1?: numeric-string}'];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: string, 1: numeric-string|null}'];
+        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
+        // PHPStan's type parser reads an intersection inside a union only in parentheses.
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: string, 1: (non-falsy-string&numeric-string)|null}'];
+    }
+
+    /**
+     * The union of the cases, one shape per branch in the order of the
+     * branches, then the case where no branch group is set. Oracle (PHP
+     * 8.4.26, PCRE2 10.49):
+     *   '/(a)|(b)/' on 'a' -> ["a","a"], on 'b' -> ["b","","b"]; with UNMATCHED_AS_NULL ["a","a",null], ["b",null,"b"];
+     *     with OFFSET_CAPTURE on 'b' -> [["b",0],["",-1],["b",0]]
+     *   '/^(?:(\d+)|([a-z]+))$/' on '0' -> ["0","0"], on 'ab' -> ["ab","","ab"]
+     *   '/(?:(a)|(b))?/' on '' -> [""], as null ["",null,null]
+     *   '/(?:(a)|(b))?c/' on 'c' -> ["c"], on 'bc' -> ["bc","","b"]
+     *   '/(a)|b/' on 'b' -> ["b"]; '/(a)|/' on '' -> [""]
+     *   '/(?<n>a)|(?<n>b)/J' with UNMATCHED_AS_NULL on 'a' -> {"0":"a","n":"a","1":"a","2":null}
+     *
+     * @return iterable<string, array{pattern: string, flags: int, expected: string}>
+     */
+    public static function provideCaseShapes(): iterable
+    {
+        yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
+        yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
+        yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}"];
+        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}"];
+        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: numeric-string, 1: numeric-string, 2: null}|array{0: non-falsy-string, 1: null, 2: non-falsy-string}'];
+        yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'flags' => 0, 'expected' => "array{0: 'xa', 1: 'a'}|array{0: 'xb', 1: '', 2: 'b'}"];
+        yield 'optional: a case where no branch group is set' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}|array{0: ''}"];
+        yield 'optional: a case where no branch group is set, as null' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}|array{0: '', 1: null, 2: null}"];
+        yield 'optional, then a literal' => ['pattern' => '/(?:(a)|(b))?c/', 'flags' => 0, 'expected' => "array{0: 'ac', 1: 'a'}|array{0: 'bc', 1: '', 2: 'b'}|array{0: 'c'}"];
+        yield 'optional, inside a non-capturing group' => ['pattern' => '/(?:(?:(a)|(b))?)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}|array{0: ''}"];
+        yield 'a branch with no group' => ['pattern' => '/(a)|b/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b'}"];
+        yield 'an empty branch' => ['pattern' => '/(a)|/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: ''}"];
+        yield 'a name shared under /J' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => 0, 'expected' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
+        yield 'a name shared under /J, as null' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', n: 'a', 1: 'a', 2: null}|array{0: 'b', n: 'b', 1: null, 2: 'b'}"];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, count: int}>
+     */
+    public static function provideSplits(): iterable
+    {
+        yield 'root alternation' => ['pattern' => '/(a)|(b)/', 'count' => 2];
+        yield 'three branches' => ['pattern' => '/(a)|(b)|(c)/', 'count' => 3];
+        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'count' => 2];
+        yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'count' => 2];
+        yield 'optional: one more case' => ['pattern' => '/(?:(a)|(b))?/', 'count' => 3];
+        yield 'a branch with no group' => ['pattern' => '/(a)|b/', 'count' => 2];
+        yield 'an empty branch' => ['pattern' => '/(a)|/', 'count' => 2];
+        yield 'a name shared under /J' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'count' => 2];
+        yield 'an option set in the first branch' => ['pattern' => '/a(?i)b|(c)/', 'count' => 2];
+        yield 'a second alternation without groups' => ['pattern' => '/(?:(a)|(b))(?:c|d)/', 'count' => 2];
+        yield 'sixteen branches: the limit' => ['pattern' => self::branches(16, ''), 'count' => 16];
+        yield 'fifteen optional branches: sixteen cases' => ['pattern' => self::branches(15, '?'), 'count' => 16];
+        yield 'optional, inside a non-capturing group' => ['pattern' => '/(?:(?:(a)|(b))?)/', 'count' => 3];
+        // preg_match('/(?|a|b)(?:(c)|(d))/', 'bd') -> ["bd","","d"]: a branch reset that captures nothing numbers nothing
+        yield 'a branch reset without groups beside the alternation' => ['pattern' => '/(?|a|b)(?:(c)|(d))/', 'count' => 2];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideNoSplits(): iterable
+    {
+        yield 'seventeen branches: past the limit' => ['pattern' => self::branches(17, '')];
+        yield 'sixteen optional branches: seventeen cases' => ['pattern' => self::branches(16, '?')];
+        yield 'a second alternation with groups' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))/'];
+        yield 'branch reset at the root' => ['pattern' => '/(?|(a)|(b))/'];
+        // preg_match('/(?|(a)|(b))(?:(c)|(d))/', 'bd') -> ["bd","b","","d"] (PHP 8.4.26, PCRE2 10.49)
+        yield 'a branch reset with groups before the alternation' => ['pattern' => '/(?|(a)|(b))(?:(c)|(d))/'];
+        // preg_match('/(?:(c)|(d))(?|(a)|(b))/', 'db') -> ["db","","d","b"]
+        yield 'a branch reset with groups after the alternation' => ['pattern' => '/(?:(c)|(d))(?|(a)|(b))/'];
+        yield 'repeated exactly once' => ['pattern' => '/(?:(a)|(b)){1}/'];
+        // preg_match('/(x)(?:(?:a)|b)/', 'xb') -> ["xb","x"]: no branch captures
+        yield 'an alternation whose only group does not capture' => ['pattern' => '/(x)(?:(?:a)|b)/'];
+        yield 'repeated at least once' => ['pattern' => '/(?:(a)|(b))+/'];
+        yield 'repeated any number of times' => ['pattern' => '/(?:(a)|(b))*/'];
+        yield 'repeated twice' => ['pattern' => '/(?:(a)|(b)){2}/'];
+        yield 'inside a capturing group' => ['pattern' => '/((a)|(b))/'];
+        yield 'inside a lookahead' => ['pattern' => '/(?=(a)|(b))\w/'];
+        yield 'an alternation without groups' => ['pattern' => '/(x)(?:a|b)/'];
+        yield 'a root alternation without groups' => ['pattern' => '/a|b/'];
+        yield 'no alternation' => ['pattern' => '/(a)/'];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: list<array<int<1, max>, Participation>>, merged: array<int<1, max>, Participation>}>
+     */
+    public static function provideCaseParticipation(): iterable
+    {
+        $always = Participation::Always;
+        $maybe = Participation::MayBeUnset;
+        $never = Participation::Never;
+
+        yield 'two branches' => ['pattern' => '/(a)|(b)/', 'expected' => [[1 => $always, 2 => $never], [1 => $never, 2 => $always]], 'merged' => [1 => $maybe, 2 => $maybe]];
+        yield 'optional: no branch group set' => ['pattern' => '/(?:(a)|(b))?/', 'expected' => [[1 => $always, 2 => $never], [1 => $never, 2 => $always], [1 => $never, 2 => $never]], 'merged' => [1 => $maybe, 2 => $maybe]];
+        yield 'a group outside the alternation' => ['pattern' => '/(x)(?:(a)|(b))/', 'expected' => [[1 => $always, 2 => $always, 3 => $never], [1 => $always, 2 => $never, 3 => $always]], 'merged' => [1 => $always, 2 => $maybe, 3 => $maybe]];
+        yield 'an optional group inside a branch' => ['pattern' => '/(a)(b)?|(c)/', 'expected' => [[1 => $always, 2 => $maybe, 3 => $never], [1 => $never, 2 => $never, 3 => $always]], 'merged' => [1 => $maybe, 2 => $maybe, 3 => $maybe]];
+        // preg_match('/(a)(b)|(c)/', 'ab') -> ["ab","a","b"]; on 'c' -> ["c","","","c"]
+        yield 'two groups in one branch' => ['pattern' => '/(a)(b)|(c)/', 'expected' => [[1 => $always, 2 => $always, 3 => $never], [1 => $never, 2 => $never, 3 => $always]], 'merged' => [1 => $maybe, 2 => $maybe, 3 => $maybe]];
+    }
+
+    /**
+     * Each subject takes a different branch.
+     *
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideCaseEngineRows(): iterable
+    {
+        yield 'cases: /(a)|(b)/' => ['pattern' => '/(a)|(b)/', 'subjects' => ['a', 'b']];
+        yield 'cases: /(a)|(b)|(c)/' => ['pattern' => '/(a)|(b)|(c)/', 'subjects' => ['a', 'b', 'c']];
+        yield 'cases: /^(?:(\d+)|([a-z]+))$/' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'subjects' => ['0', '42', 'ab']];
+        yield 'cases: /x(?:(a)|(b))/' => ['pattern' => '/x(?:(a)|(b))/', 'subjects' => ['xa', 'xb']];
+        yield 'cases: /(?:(a)|(b))?/' => ['pattern' => '/(?:(a)|(b))?/', 'subjects' => ['', 'a', 'b']];
+        yield 'cases: /(?:(a)|(b))?c/' => ['pattern' => '/(?:(a)|(b))?c/', 'subjects' => ['c', 'ac', 'bc']];
+        yield 'cases: /(a)|b/' => ['pattern' => '/(a)|b/', 'subjects' => ['a', 'b']];
+        yield 'cases: /(a)|/' => ['pattern' => '/(a)|/', 'subjects' => ['', 'a']];
+        yield 'cases: /(?<n>a)|(?<n>b)/J' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'subjects' => ['a', 'b']];
+        yield 'cases: /a(?i)b|(c)/' => ['pattern' => '/a(?i)b|(c)/', 'subjects' => ['ab', 'aB', 'c', 'C']];
+        yield 'cases: /(?:(a)|(b))(?:c|d)/' => ['pattern' => '/(?:(a)|(b))(?:c|d)/', 'subjects' => ['ac', 'bd']];
+        yield 'cases: /(x)(?:(a)|(b))/' => ['pattern' => '/(x)(?:(a)|(b))/', 'subjects' => ['xa', 'xb']];
+        yield 'cases: /(a)(b)?|(c)/' => ['pattern' => '/(a)(b)?|(c)/', 'subjects' => ['a', 'ab', 'c']];
+        yield 'cases: sixteen branches' => ['pattern' => self::branches(16, ''), 'subjects' => range('a', 'p')];
+        yield 'cases: fifteen optional branches' => ['pattern' => self::branches(15, '?'), 'subjects' => ['', 'a', 'o']];
+        yield 'cases: /(a)(b)|(c)/' => ['pattern' => '/(a)(b)|(c)/', 'subjects' => ['ab', 'c']];
+        yield 'cases: /(?|a|b)(?:(c)|(d))/' => ['pattern' => '/(?|a|b)(?:(c)|(d))/', 'subjects' => ['ac', 'bd']];
+        yield 'cases: /(?:(\d\d)|(a))/' => ['pattern' => '/(?:(\d\d)|(a))/', 'subjects' => ['00', 'a']];
+        // The call runs the \K of the branch the first case leaves out: on 'ab' -> ["","a"].
+        yield 'cases: /(?:(a)|(b\K))(?2)/' => ['pattern' => '/(?:(a)|(b\K))(?2)/', 'subjects' => ['ab', 'bb']];
+        yield 'cases: /(?:(a)|(b(*MARK:m)))(?2)/' => ['pattern' => '/(?:(a)|(b(*MARK:m)))(?2)/', 'subjects' => ['ab', 'bb']];
+    }
+
+    /**
+     * Value types: one per key, three per key written as an offset pair (the
+     * pair and its two members), one for the MARK key, the same count
+     * TypeCombinator::countConstantArrayValueTypes() gives for each shape.
+     * Each row keeps under 63 distinct keys: past them PHPStan generalises
+     * any union of array shapes, whatever its count.
+     *
+     * @return iterable<string, array{pattern: string, flags: int, cases: int, distinct: int, union: bool}>
+     */
+    public static function provideBudgetEdges(): iterable
+    {
+        // 18 + 14 x 17: the last branch writes the shape of the second again.
+        yield 'a shape two cases share counts once: 256 value types' => ['pattern' => '/'.str_repeat('(x)', 16).'(?:(a)|b|c|d|e|f|g|h|i|j|k|l|m|n|o|b)/', 'flags' => 0, 'cases' => 16, 'distinct' => 15, 'union' => true];
+        // 33 + 7 x 32.
+        yield 'a shape two cases share counts once: 257 value types' => ['pattern' => '/'.str_repeat('(x)', 31).'(?:(a)|b|c|d|e|f|g|h|b)/', 'flags' => 0, 'cases' => 9, 'distinct' => 8, 'union' => false];
+        // 18 + 14 x 17, the mark key one in each.
+        yield 'a mark counts one value type: 256' => ['pattern' => '/(*MARK:m)'.str_repeat('(x)', 15).'(?:(a)|b|c|d|e|f|g|h|i|j|k|l|m|n|o)/', 'flags' => 0, 'cases' => 15, 'distinct' => 15, 'union' => true];
+        // 17 + 15 x 16.
+        yield 'a mark counts one value type: 257' => ['pattern' => '/(*MARK:m)'.str_repeat('(x)', 14).'(?:(a)|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p)/', 'flags' => 0, 'cases' => 16, 'distinct' => 16, 'union' => false];
+        // 3 x (42 + 43).
+        yield 'an offset pair counts three value types: 255' => ['pattern' => '/'.str_repeat('(x)', 40).'(?:(a)|(b))/', 'flags' => \PREG_OFFSET_CAPTURE, 'cases' => 2, 'distinct' => 2, 'union' => true];
+        // 3 x (43 + 44).
+        yield 'an offset pair counts three value types: 261' => ['pattern' => '/'.str_repeat('(x)', 41).'(?:(a)|(b))/', 'flags' => \PREG_OFFSET_CAPTURE, 'cases' => 2, 'distinct' => 2, 'union' => false];
+    }
+
+    /**
+     * '/(a)|(b)|…/' with $count branches of one letter each, or, with a
+     * quantifier, '/(?:(a)|(b)|…)?/'.
+     */
+    private static function branches(int $count, string $quantifier): string
+    {
+        $alternation = implode('|', array_map(static fn (string $letter): string => '('.$letter.')', \array_slice(range('a', 'z'), 0, $count)));
+
+        return '' === $quantifier ? '/'.$alternation.'/' : '/(?:'.$alternation.')'.$quantifier.'/';
     }
 
     /**
@@ -696,15 +1311,167 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
-     * The keys of a written array shape, outermost level only, in order.
+     * Whether one case holds a $matches the engine wrote: every key it
+     * writes is a group of the case, each group the case always sets is
+     * written, each group it never sets reads unset, and each value set
+     * fits the group's values and lengths.
+     *
+     * @param array<int|string, mixed> $matches
+     */
+    private static function caseHolds(CaptureShape $case, array $matches, int $flags, bool $unicode): bool
+    {
+        $asNull = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL);
+        $offsets = 0 !== ($flags & \PREG_OFFSET_CAPTURE);
+        $unset = $asNull ? null : '';
+
+        foreach ([$case->whole, ...$case->groups] as $group) {
+            $present = \array_key_exists($group->number, $matches);
+            $entry = $present ? $matches[$group->number] : null;
+            $value = $offsets && \is_array($entry) ? $entry[0] : $entry;
+            $located = !$offsets || !\is_array($entry) || -1 !== $entry[1];
+
+            if (Participation::Always === $group->participation && (!$present || null === $value || !$located)) {
+                return false;
+            }
+
+            if (Participation::Never === $group->participation) {
+                if ($present && ($unset !== $value || $located && $offsets)) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (!\is_string($value) || !$located || ('' === $value && Participation::Always !== $group->participation && !$asNull)) {
+                continue;
+            }
+
+            if (null !== $group->values && !\in_array($value, $group->values, true)) {
+                return false;
+            }
+
+            if (($group->nonFalsy && !(bool) $value) || ($group->digitsOnly && !ctype_digit($value))) {
+                return false;
+            }
+
+            $length = $unicode ? mb_strlen($value, 'UTF-8') : \strlen($value);
+            if ($length < $group->minLength || (null !== $group->maxLength && $length > $group->maxLength)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * A fact proven true holds for every value the engine writes into a set
+     * group of the merged shape.
+     *
+     * @param list<string> $subjects
+     */
+    private function assertProvenFactsHold(CaptureShape $shape, string $pattern, array $subjects): void
+    {
+        foreach ($subjects as $subject) {
+            $located = [];
+            $this->assertSame(1, preg_match($pattern, $subject, $located, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL), \sprintf('%s must match %s.', $pattern, json_encode($subject)));
+
+            foreach ([$shape->whole, ...$shape->groups] as $group) {
+                [$value, $offset] = $located[$group->number];
+                if (-1 === $offset || !\is_string($value)) {
+                    continue;
+                }
+
+                $context = \sprintf('%s on %s: group %d holds %s', $pattern, json_encode($subject, \JSON_UNESCAPED_UNICODE), $group->number, json_encode($value, \JSON_UNESCAPED_UNICODE));
+                if ($group->nonFalsy) {
+                    $this->assertTrue((bool) $value, $context.', proven non-falsy.');
+                }
+                if ($group->digitsOnly) {
+                    $this->assertTrue(ctype_digit($value), $context.', proven digits only.');
+                }
+            }
+        }
+    }
+
+    /**
+     * The fastest of three analyses of one tree, in seconds.
+     */
+    private static function fastestAnalysis(CaptureShapeAnalyzer $analyzer, RegexNode $regex): float
+    {
+        $fastest = \INF;
+        for ($run = 0; $run < 3; $run++) {
+            $start = hrtime(true);
+            $analyzer->analyze($regex);
+            $fastest = min($fastest, (hrtime(true) - $start) / 1e9);
+        }
+
+        return $fastest;
+    }
+
+    /**
+     * The keys of each array shape of a written type, a shape or a union of
+     * shapes, outermost level only, in order.
+     *
+     * @return list<list<string>>
+     */
+    private static function topLevelKeys(string $type): array
+    {
+        $members = [];
+        foreach (self::topLevelMembers($type) as $shape) {
+            self::assertStringStartsWith('array{', $shape);
+            self::assertStringEndsWith('}', $shape);
+            $members[] = self::shapeKeys($shape);
+        }
+
+        return $members;
+    }
+
+    /**
+     * The members of a written union, split on each '|' outside a shape and
+     * outside a quoted string.
      *
      * @return list<string>
      */
-    private static function topLevelKeys(string $shape): array
+    private static function topLevelMembers(string $type): array
     {
-        self::assertStringStartsWith('array{', $shape);
-        self::assertStringEndsWith('}', $shape);
+        $members = [];
+        $depth = 0;
+        $member = '';
+        $quoted = false;
+        $escaped = false;
+        foreach (str_split($type.'|') as $char) {
+            if ($quoted) {
+                $member .= $char;
+                [$escaped, $quoted] = [!$escaped && '\\' === $char, $escaped || "'" !== $char];
 
+                continue;
+            }
+
+            if ('|' === $char && 0 === $depth) {
+                $members[] = $member;
+                $member = '';
+
+                continue;
+            }
+
+            $member .= $char;
+            $quoted = "'" === $char;
+            $depth += match ($char) {
+                '{', '<' => 1,
+                '}', '>' => -1,
+                default => 0,
+            };
+        }
+
+        return $members;
+    }
+
+    /**
+     * The keys of one written array shape, outermost level only, in order.
+     *
+     * @return list<string>
+     */
+    private static function shapeKeys(string $shape): array
+    {
         $keys = [];
         $depth = 0;
         $item = '';

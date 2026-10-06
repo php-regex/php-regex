@@ -68,6 +68,7 @@ return [
     ['source' => 'analyzer', 'pattern' => '/(?|(?<a>x)|(y))/', 'subjects' => ['x', 'y']],
     ['source' => 'analyzer', 'pattern' => '/(?J)(?:(?<n>a)|(?<n>b))(x)/', 'subjects' => ['ax', 'bx']],
     ['source' => 'analyzer', 'pattern' => '/(?J)(?<n>a)(?<n>b)/', 'subjects' => ['ab']],
+    ['source' => 'analyzer', 'pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'subjects' => ['ac', 'azc']],
     ['source' => 'analyzer', 'pattern' => '/(?J)(?:(?<n>a)|(?<n>b))?(x)/', 'subjects' => ['x', 'ax']],
     ['source' => 'analyzer', 'pattern' => '/(a)(?<x>b)/n', 'subjects' => ['ab']],
     ['source' => 'analyzer', 'pattern' => '/(?n)(a)(?<x>b)/', 'subjects' => ['ab']],
@@ -347,4 +348,68 @@ return [
     ['source' => 'parity: values', 'pattern' => '/(\x{FF})/u', 'subjects' => ['ÿ']],
     ['source' => 'parity: values', 'pattern' => '/(*UCP)(\w)/u', 'subjects' => ['é']],
     ['source' => 'parity: values', 'pattern' => '/(a)\z|(b)/', 'subjects' => ['a', 'b']],
+
+    // Facts: digits and non-falsy values. U+0663 ARABIC-INDIC DIGIT THREE is a
+    // digit under UCP: preg_match('/(\d+)/u', "\u{663}") -> 1, ctype_digit() false;
+    // (*UTF) alone keeps \d ASCII: preg_match('/(*UTF)(\d+)/', "\u{663}") -> 0;
+    // a digit run can be falsy: preg_match('/(\d)/', '0') -> ["0","0"] (PHP 8.4.26, PCRE2 10.49).
+    ['source' => 'parity: values', 'pattern' => '/(\d+)/u', 'subjects' => ['0', "\u{663}"]],
+    ['source' => 'parity: values', 'pattern' => '/(*UTF)(*UCP)(\d+)/', 'subjects' => ["\u{663}"]],
+    ['source' => 'parity: values', 'pattern' => '/(*UCP)(\d+)/', 'subjects' => ['0', '9']],
+    ['source' => 'parity: values', 'pattern' => '/(*UTF)(\d+)/', 'subjects' => ['12']],
+    ['source' => 'parity: values', 'pattern' => '/(\d+)/i', 'subjects' => ['12']],
+    ['source' => 'parity: values', 'pattern' => '/([0-9]+)/u', 'subjects' => ['09']],
+    ['source' => 'parity: values', 'pattern' => '/([[:digit:]]+)/u', 'subjects' => ["\u{663}"]],
+    ['source' => 'parity: values', 'pattern' => '/(\p{Nd}+)/u', 'subjects' => ["\u{663}"]],
+    ['source' => 'parity: values', 'pattern' => '/([\x30-\x39]+)/', 'subjects' => ['09']],
+    ['source' => 'parity: values', 'pattern' => '/(\d\d)/', 'subjects' => ['00']],
+    ['source' => 'parity: values', 'pattern' => '/(\d)/', 'subjects' => ['0']],
+    ['source' => 'parity: values', 'pattern' => '/(0)/', 'subjects' => ['0']],
+    ['source' => 'parity: values', 'pattern' => '/(a|0b)/', 'subjects' => ['a', '0b']],
+    ['source' => 'parity: values', 'pattern' => '/(a|0)/', 'subjects' => ['a', '0']],
+    ['source' => 'parity: values', 'pattern' => '/(a?)/', 'subjects' => ['', 'a']],
+    ['source' => 'parity: values', 'pattern' => '/(a?)(\1)/', 'subjects' => ['', 'aa']],
+    ['source' => 'parity: values', 'pattern' => '/(0(*ACCEPT)1)/', 'subjects' => ['01']],
+    ['source' => 'parity: values', 'pattern' => '/([1-9])/', 'subjects' => ['1']],
+    ['source' => 'parity: values', 'pattern' => '/(\d+)?/', 'subjects' => ['', '0']],
+    ['source' => 'parity: values', 'pattern' => '/(ab)?/', 'subjects' => ['', 'ab']],
+    ['source' => 'parity: values', 'pattern' => '/(1a)/', 'subjects' => ['1a']],
+    ['source' => 'parity: values', 'pattern' => '/(.)/', 'subjects' => ['0']],
+    ['source' => 'parity: values', 'pattern' => '/(é)/u', 'subjects' => ['é']],
+    ['source' => 'parity: values', 'pattern' => '/(ab)/i', 'subjects' => ['AB']],
+    ['source' => 'parity: values', 'pattern' => '/(\d+)\.(\d+)/', 'subjects' => ['1.5']],
+    ['source' => 'parity: values', 'pattern' => '/(\d\d+)/', 'subjects' => ['00']],
+
+    // Cases: an alternation reachable from the root, split per branch. An
+    // option set in one alternative stays on in the next ones:
+    // preg_match('/a(?i)b|(c)/', 'C') -> ["C","C"]. Sixteen cases split, seventeen
+    // do not; a second alternation with groups, a repeat, a capturing group or a
+    // lookahead around the alternation prevents the split.
+    ['source' => 'parity: cases', 'pattern' => '/(a)|(b)/', 'subjects' => ['a', 'b']],
+    ['source' => 'parity: cases', 'pattern' => '/^(?:(\d+)|([a-z]+))$/', 'subjects' => ['0', '42', 'ab']],
+    ['source' => 'parity: cases', 'pattern' => '/x(?:(a)|(b))/', 'subjects' => ['xa', 'xb']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b))?/', 'subjects' => ['', 'a', 'b']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b))?c/', 'subjects' => ['c', 'ac', 'bc']],
+    ['source' => 'parity: cases', 'pattern' => '/a(?i)b|(c)/', 'subjects' => ['ab', 'aB', 'c', 'C']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b))(?:c|d)/', 'subjects' => ['ac', 'bd']],
+    ['source' => 'parity: cases', 'pattern' => '/(x)(?:(a)|(b))/', 'subjects' => ['xa', 'xb']],
+    ['source' => 'parity: cases', 'pattern' => '/(a)(b)?|(c)/', 'subjects' => ['a', 'ab', 'c']],
+    ['source' => 'parity: cases', 'pattern' => '/(a)|(b)|(c)|(d)|(e)|(f)|(g)|(h)|(i)|(j)|(k)|(l)|(m)|(n)|(o)|(p)/', 'subjects' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b)|(c)|(d)|(e)|(f)|(g)|(h)|(i)|(j)|(k)|(l)|(m)|(n)|(o))?/', 'subjects' => ['', 'a', 'o']],
+    ['source' => 'parity: cases', 'pattern' => '/(a)|(b)|(c)|(d)|(e)|(f)|(g)|(h)|(i)|(j)|(k)|(l)|(m)|(n)|(o)|(p)|(q)/', 'subjects' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b)|(c)|(d)|(e)|(f)|(g)|(h)|(i)|(j)|(k)|(l)|(m)|(n)|(o)|(p))?/', 'subjects' => ['', 'a', 'p']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b))(?:(c)|(d))/', 'subjects' => ['ac', 'ad', 'bc', 'bd']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b))*/', 'subjects' => ['', 'ab', 'ba']],
+    ['source' => 'parity: cases', 'pattern' => '/((a)|(b))/', 'subjects' => ['a', 'b']],
+    ['source' => 'parity: cases', 'pattern' => '/(?=(a)|(b))\w/', 'subjects' => ['a', 'b']],
+    // Two groups in the taken branch; a branch reset that captures nothing does not
+    // prevent the split; a group a case never sets proves no fact; a call runs the
+    // \K or the mark of a branch the case leaves out: preg_match('/(?:(a)|(b\K))(?2)/',
+    // 'ab') -> ["","a"], preg_match('/(?:(a)|(b(*MARK:m)))(?2)/', 'ab') ->
+    // {"0":"ab","1":"a","MARK":"m"}.
+    ['source' => 'parity: cases', 'pattern' => '/(a)(b)|(c)/', 'subjects' => ['ab', 'c']],
+    ['source' => 'parity: cases', 'pattern' => '/(?|a|b)(?:(c)|(d))/', 'subjects' => ['ac', 'bd']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(\d\d)|(a))/', 'subjects' => ['00', 'a']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b\K))(?2)/', 'subjects' => ['ab', 'bb']],
+    ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b(*MARK:m)))(?2)/', 'subjects' => ['ab', 'bb']],
 ];

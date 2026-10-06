@@ -349,7 +349,7 @@ use PHPRegex\Toolkit\Regex;
 $shape = Regex::create()->captureShape('/(GET|POST) (\S+)/');
 
 $shape->groups[1]->values;  // ['GET', 'POST']
-$shape->matchShape();       // "array{0: non-empty-string, 1: 'GET'|'POST', 2: non-empty-string}"
+$shape->matchShape();       // "array{0: non-falsy-string, 1: 'GET'|'POST', 2: non-empty-string}"
 ```
 
 A static analysis extension calls `CaptureShapeAnalyzer` from `php-regex/regex-parser` instead. See

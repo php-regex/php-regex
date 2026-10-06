@@ -18,7 +18,6 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Unit\Parser\CaptureShapeAnalyzerTest;
 use PHPStan\PhpDoc\TypeStringResolver;
 use PHPStan\Testing\PHPStanTestCase;
-use PHPStan\Type\Constant\ConstantArrayType;
 use PHPStan\Type\VerbosityLevel;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -56,7 +55,8 @@ final class CaptureShapeParityTest extends PHPStanTestCase
         foreach (EngineMatches::FLAG_SETS as $flags => $flagNames) {
             $written = $shape->matchShape($flags);
             $type = $resolver->resolve($written);
-            $this->assertInstanceOf(ConstantArrayType::class, $type, \sprintf('PHPStan reads "%s" as %s.', $written, $type->describe(VerbosityLevel::precise())));
+            // One array shape, or a union of shapes when the pattern splits.
+            $this->assertTrue($type->isConstantArray()->yes(), \sprintf('PHPStan reads "%s" as %s.', $written, $type->describe(VerbosityLevel::precise())));
 
             foreach ($subjects as $subject) {
                 $matches = [];
@@ -93,16 +93,47 @@ final class CaptureShapeParityTest extends PHPStanTestCase
         $corpus = array_column(EngineMatches::corpus(), 'subjects', 'pattern');
 
         $missing = [];
-        foreach (CaptureShapeAnalyzerTest::provideEngineRows() as $row) {
+        $rows = [...CaptureShapeAnalyzerTest::provideEngineRows(), ...CaptureShapeAnalyzerTest::provideFactEngineRows(), ...CaptureShapeAnalyzerTest::provideCaseEngineRows()];
+        foreach ($rows as $row) {
             $subjects = $corpus[$row['pattern']] ?? [];
             foreach ($row['subjects'] as $subject) {
                 if (!\in_array($subject, $subjects, true)) {
-                    $missing[] = $row['pattern'].' on '.json_encode($subject);
+                    $missing[] = $row['pattern'].' on '.json_encode($subject, \JSON_UNESCAPED_UNICODE);
                 }
             }
         }
 
         $this->assertSame([], $missing);
+    }
+
+    /**
+     * The written string and the text PHPStan prints for the type it reads
+     * name the same type: a baseline written from either resolves to what an
+     * adapter resolves from matchShape(). The text may differ (PHPStan drops
+     * the keys of a list shape and orders unions its own way), the type may
+     * not.
+     *
+     * @param non-empty-list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideCorpus')]
+    public function test_parity_corpus_shape_is_the_type_phpstan_prints(string $source, string $pattern, array $subjects): void
+    {
+        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        $resolver = self::getContainer()->getByType(TypeStringResolver::class);
+
+        $differences = [];
+        foreach (EngineMatches::FLAG_SETS as $flags => $flagNames) {
+            $written = $shape->matchShape($flags);
+            $type = $resolver->resolve($written);
+            $printed = $type->describe(VerbosityLevel::precise());
+            $reread = $resolver->resolve($printed);
+            if (!$type->isSuperTypeOf($reread)->yes() || !$reread->isSuperTypeOf($type)->yes()) {
+                $differences[] = \sprintf('%s writes %s, PHPStan prints %s, which reads as another type', $flagNames, $written, $printed);
+            }
+        }
+
+        $this->assertSame([], $differences, $source);
     }
 
     /**

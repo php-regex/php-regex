@@ -2,7 +2,8 @@
 
 `CaptureShapeAnalyzer` reads, from the pattern alone, what a successful `preg_match()`
 writes into `$matches`: which groups every match sets, which some matches leave unset,
-which no match sets, and the strings each group can hold. It is built for static
+which no match sets, the strings each group can hold, and facts such as "never falsy"
+or "digits only". It is built for static
 analysers that type `$matches`, and for anyone who wants to know what a pattern
 captures before running it.
 
@@ -15,7 +16,8 @@ $shape = (new CaptureShapeAnalyzer())->analyze($regex);
 
 $shape->groups[1]->values;        // ['GET', 'POST']
 $shape->groups[2]->minLength;     // 1
-$shape->matchShape();             // "array{0: non-empty-string, 1: 'GET'|'POST', 2: non-empty-string}"
+$shape->groups[2]->nonFalsy;      // false: \S+ may read "0"
+$shape->matchShape();             // "array{0: non-falsy-string, 1: 'GET'|'POST', 2: non-empty-string}"
 ```
 
 An application that already uses the facade gets the same answer in one call. It
@@ -33,8 +35,9 @@ results live there. The facade, in `php-regex/regex-toolkit`, is for application
 ## What a group record holds
 
 `analyze()` returns a `CaptureShape`: `$whole` for `$matches[0]`, `$groups` with one
-`CaptureGroupShape` per group number, and `$marks`, the names a `(*MARK)` verb, or a
-verb that sets a mark, may leave under the `MARK` key.
+`CaptureGroupShape` per group number, `$marks`, the names a `(*MARK)` verb, or a
+verb that sets a mark, may leave under the `MARK` key, and `$cases`, described in
+[Cases](#cases).
 
 `$groups` is keyed by group number: `$shape->groups[1]` is group 1. Its keys are exactly
 `1` to `N`, in order, with no gap, so `count($shape->groups)` is the number of capturing
@@ -49,6 +52,12 @@ from 1: in `/(a)(?<x>b)/n`, `$groups[1]` is `x`.
 | `participation` | `Always`, `MayBeUnset` or `Never` (below) |
 | `minLength`, `maxLength` | bounds of what the group holds, in the characters PCRE reads: code points in UTF mode, bytes otherwise; `maxLength` is `null` when unbounded |
 | `values` | every string the group can hold, when they are a small finite set read from literals, or `null` |
+| `nonFalsy` | `true` when every value satisfies `(bool) $v`: it is neither `''` nor `'0'` ([Facts](#facts)) |
+| `digitsOnly` | `true` when every value satisfies `ctype_digit($v)`: a non-empty run of ASCII `0` to `9` ([Facts](#facts)) |
+
+The lengths, the values and the facts describe the group when it is set. What PHP
+writes for an unset group, `''` or `null`, is told by the participation: a `MayBeUnset`
+group with `minLength` 1 still reads `''` when a match leaves it unset.
 
 A branch-reset record takes the name any of its branches gives. In `/(?|(x)|(?<a>y))/`,
 group 1 is named `a`, and PHP writes `a` on `x` too. PCRE refuses two different names
@@ -62,12 +71,64 @@ for one number.
 - `Never`: no match sets it: the group sits in a negative lookaround, which PCRE
   discards, in a `(?(DEFINE)...)` block, or under `{0}`.
 
+### Facts
+
+`nonFalsy` and `digitsOnly` are PHP predicates on every value `$v` the group holds when it is
+set:
+
+| fact | `true` when every value satisfies |
+|---|---|
+| `nonFalsy` | `(bool) $v` |
+| `digitsOnly` | `ctype_digit($v)` |
+
+A fact is `true` only when the pattern proves it. `false` means "not proven", not "false
+for some value". Both facts are `false` for a `Never` group, which holds no value.
+
+`nonFalsy` holds when the group reads at least two characters, or at least one and never
+`'0'` alone. PHP treats only `''` and `'0'` as falsy, so `'00'` is truthy. `digitsOnly`
+holds when the group reads at least one character and each character it reads is an ASCII
+digit.
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^(\d+)-(\d{2,})-([a-z]+)$/'),
+);
+
+$shape->groups[1]->nonFalsy;    // false: the group may hold '0'
+$shape->groups[1]->digitsOnly;  // true
+$shape->groups[2]->nonFalsy;    // true: two characters at least
+$shape->groups[2]->digitsOnly;  // true
+$shape->groups[3]->nonFalsy;    // true: no letter is '0'
+$shape->groups[3]->digitsOnly;  // false
+```
+
+`preg_match('/^(\d+)-(\d{2,})-([a-z]+)$/', '0-00-a', $m)` writes `'0'` in group 1, which
+is falsy, and `'00'` in group 2, which is not.
+
+`\d` proves `digitsOnly` only without Unicode properties. Under `/u`, or with `(*UCP)` at
+the start of the pattern, `\d` and `[[:digit:]]` follow Unicode properties and may match
+the digits of other scripts: `preg_match('/^\d$/u', "\u{0663}")` returns 1, while
+`ctype_digit("\u{0663}")` is `false`. `(*UCP)` without UTF mode reads bytes, and there
+`\d` still matches `0` to `9` only, but the analysis does not rely on the engine's
+tables: wherever Unicode properties are on, `\d` leaves `digitsOnly` false. `[0-9]` and
+literal digits always prove it:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^(\d+)-([0-9]+)$/u'),
+);
+
+$shape->groups[1]->digitsOnly;  // false
+$shape->groups[2]->digitsOnly;  // true
+```
+
 ## The shape of `$matches`
 
 `matchShape(int $flags = 0)` writes the array `preg_match()` fills on success as a type
-in PHPStan's syntax: array shapes, constant strings, `int<a, b>`, `non-empty-string`.
-The facts it is written from, the records above, are engine-neutral: any other type
-system can be fed from them.
+in PHPStan's syntax: array shapes, constant strings, `int<a, b>`, `non-empty-string`,
+`non-falsy-string`, `numeric-string`, and a union of shapes when the pattern has
+[cases](#cases). The records it is written from, above, are engine-neutral: any other
+type system can be fed from them.
 
 It takes the flags `preg_match()` takes, `PREG_OFFSET_CAPTURE` and
 `PREG_UNMATCHED_AS_NULL`, and checks the rest as `preg_match()` does. A bit of the low
@@ -89,22 +150,40 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 );
 
 $shape->matchShape();
-// array{0: non-empty-string, year: non-empty-string, 1: non-empty-string,
-//       month: non-empty-string, 2: non-empty-string,
-//       day?: non-empty-string, 3?: non-empty-string}
+// array{0: non-falsy-string,
+//       year: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string,
+//       month: non-falsy-string&numeric-string, 2: non-falsy-string&numeric-string,
+//       day?: non-falsy-string&numeric-string, 3?: non-falsy-string&numeric-string}
 
 $shape->matchShape(PREG_UNMATCHED_AS_NULL);
-// array{0: non-empty-string, year: non-empty-string, 1: non-empty-string,
-//       month: non-empty-string, 2: non-empty-string,
-//       day: non-empty-string|null, 3: non-empty-string|null}
+// array{0: non-falsy-string,
+//       year: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string,
+//       month: non-falsy-string&numeric-string, 2: non-falsy-string&numeric-string,
+//       day: (non-falsy-string&numeric-string)|null, 3: (non-falsy-string&numeric-string)|null}
 ```
 
-A group's value is written as a union of constant strings when its values are known,
-`non-empty-string` when it cannot be empty, `string` otherwise.
+A group's value is written, from the most precise to the least:
+
+- as a union of constant strings, when its values are known;
+- `''`, when it is always empty;
+- `non-falsy-string&numeric-string`, when both facts hold;
+- `numeric-string`, when `digitsOnly` holds: a run of digits is a numeric string, never empty;
+- `non-falsy-string`, when `nonFalsy` holds;
+- `non-empty-string`, when it cannot be empty;
+- `string` otherwise.
+
+PHPStan reads an intersection inside a union only in parentheses, so a group that may be
+unset is written `(non-falsy-string&numeric-string)|null`.
 
 The keys come in the order PHP writes them: `0`, then for each group its name, when it
-has one, before its number, then `MARK`. PHPStan prints this order in its messages, so
-it reaches baselines.
+has one, before its number, then `MARK`.
+
+The string is PHPRegex's own spelling of the type. PHPStan resolves it into a type, and
+prints that type its own way: it writes a shape whose keys run from 0 with no gap as a
+list without keys, and it sorts the members of a union. `/(\d+)/` is written
+`array{0: numeric-string, 1: numeric-string}`, and PHPStan prints
+`array{numeric-string, numeric-string}`. An adapter should resolve the string and rely on
+the type it gets, never on the text.
 
 ### Shared names and `MARK`
 
@@ -127,11 +206,92 @@ otherwise. It sits where the group's name sits:
 "array{0: 'ab', MARK: 'a'|'x', 1: 'a'}"
 
 // preg_match('/(?<MARK>a)|(*MARK:x)b/', 'a', $m): [0 => 'a', 'MARK' => 'a', 1 => 'a']
-"array{0: 'a'|'b', MARK?: 'a'|'x', 1?: 'a'}"
+// preg_match('/(?<MARK>a)|(*MARK:x)b/', 'b', $m): [0 => 'b', 'MARK' => 'x']
+"array{0: 'a', MARK: 'a', 1: 'a'}|array{0: 'b', MARK?: 'x'}"
 
 // preg_match('/(?<MARK>a)?(b)(*MARK:x)/', 'b', $m): [0 => 'b', 'MARK' => 'x', 1 => '', 2 => 'b']
 "array{0: 'b'|'ab', MARK: ''|'a'|'x', 1: ''|'a', 2: 'b'}"
 ```
+
+## Cases
+
+A pattern can match in ways one shape blurs. `/^(?:(\d+)|([a-z]+))$/` sets group 1 or
+group 2, never both, and the merged shape loses that link. `CaptureShape::$cases` holds
+shapes whose union covers every match, each more precise than the merged view:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^(?:(\d+)|([a-z]+))$/'),
+);
+
+count($shape->cases);  // 2
+$shape->matchShape();
+// array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}
+```
+
+Merged, the same matches read
+`array{0: non-empty-string, 1?: ''|numeric-string, 2?: non-falsy-string}`.
+
+- `$cases` is non-empty only when the analyzer splits the pattern. Otherwise it is `[]`,
+  and `$whole` and `$groups` are the whole answer.
+- `$whole`, `$groups` and `$marks` keep merging every match, cases or not: there, group 1
+  above is `MayBeUnset`. In each case it is `Always` or `Never`.
+- A case shares no index with the alternatives of the pattern: `$cases[0]` need not
+  stand for the first one. Read the cases as a set.
+
+### When the pattern splits
+
+The analyzer splits on one alternation: the one holding a capturing group that the root
+reaches through sequences and through groups that neither capture nor repeat (`(?:...)`,
+atomic `(?>...)`, option groups such as `(?i:...)`). Each alternative gives one case.
+`/(a)|(b)/`, `/^(?:(\d+)|([a-z]+))$/` and `/x(?:(a)|(b))/` split.
+
+- A `?` on that group, or `??`, `?+`, `{0,1}`, adds a case where no alternative is taken,
+  so no group of the alternation is set: `/(?:(a)|(b))?c/` gives three cases, the last
+  one `array{0: 'c'}`.
+- An alternation inside an alternative is not on the path, and stays merged within its
+  case: `/(a)|b(?:(c)|(d))/` gives two cases, the second keeping `c` and `d` merged.
+
+Nothing is split when:
+
+- the alternation sits under another quantifier (`*`, `+`, `{2}`), inside a capturing
+  group, or inside a lookaround;
+- the root reaches a second alternation holding capturing groups, as in
+  `/(?:(a)|(b))(?:(c)|(d))/`;
+- the root reaches a branch reset `(?|...)` holding capturing groups: its alternatives
+  share their numbers;
+- the split would give more than 16 cases. Sixteen alternatives split; seventeen do not,
+  nor sixteen under `?`.
+
+Each case reads the pattern as PCRE does, options included. An inline option set in one
+alternative stays in force in the following ones. In `/a(?i)b|(c)/` the `(?i)` makes the
+second alternative match `C` too: `preg_match('/a(?i)b|(c)/', 'C', $m)` writes
+`['C', 'C']`. Its case does not claim group 1 holds only `'c'`:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/a(?i)b|(c)/'));
+
+$shape->matchShape();
+// array{0: non-falsy-string}|array{0: non-falsy-string, 1: non-falsy-string}
+```
+
+Under `(?J)`, a name that groups of different alternatives share holds, in each case, the
+group of that case: `/(?<n>a)|(?<n>b)/J` is written
+`array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}`.
+
+### How the cases are written
+
+`matchShape()` writes the union of the shapes of the cases, each once. PHPStan generalises
+a union of array shapes that holds more than 256 value types, nested arrays included, to
+a list that loses its keys. When the union would hold more, `matchShape()` writes the
+merged shape instead, which says more. PHPStan first merges the shapes that share the
+same keys, and generalises only when what is left still holds more than 256; the count
+here is taken before any merging, so it is never below PHPStan's. The merged shape may
+then be written where PHPStan would have kept the union: still sound, only less
+precise. Sixteen one-group alternatives, `/(a)|(b)|...|(p)/`,
+are written as a union of sixteen shapes without flags, and as the merged shape under
+`PREG_OFFSET_CAPTURE`, where each value is a pair. `$cases` holds the sixteen cases
+either way.
 
 ## Soundness
 
@@ -146,6 +306,16 @@ cannot tell, the answer widens rather than guesses:
 - A group read through a subroutine call, or a backreference, has unknown values.
 - A key that every match writes, but only through different groups in different
   branches, is written optional.
+- A fact is `true` only when every character the group can read proves it. A part the
+  analysis cannot read, as a backreference or a subroutine call, proves no fact.
+
+The facts and the cases are computed from the pattern alone. No character table of the
+running engine is read, so the same pattern gives the same answer on every machine, and
+`ANALYSIS_VERSION` stays a valid cache key. Without `/u`, the analysis assumes the
+character tables of the C locale, which PCRE uses by default. PHP builds other tables
+when `setlocale()` sets `LC_CTYPE` to another locale: after
+`setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `preg_match('/^\w$/', "\xE9")` returns 1, where
+it returns 0 under the C locale.
 
 The facts are checked against the engine: for patterns covering each case above, every
 `$matches` PHP writes under each flag combination must follow them, and PHPStan, reading
