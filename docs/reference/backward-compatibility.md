@@ -33,7 +33,8 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
 - `regex-parser`: `TolerantParseResult`, `Validation\ValidationResult`,
   `Analysis\GroupNumbering`, `Analysis\LiteralExtractionResult`,
   `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Engine\PcreMatch`,
-  `Engine\PcreError`;
+  `Engine\PcreError`, `Analysis\PatternInfo`, `Validation\PatternCompatibility`,
+  `Validation\TargetVerdict`;
 - `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
 - `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
@@ -53,7 +54,7 @@ In short, the public surface is:
 
 | package | public |
 |---|---|
-| `regex-parser` | `RegexParser`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, `NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`, `NodeWalker`, `NodeFinder`, `TraversalAction`, `Token\Token`, `Token\TokenStream`, `Token\TokenType`, `Validation\ValidationResult`, `Validation\ValidationErrorCategory`, `Printer\PatternPrinter`, `Printer\NodeDumper`, `Analysis\ComplexityScorer`, `Analysis\GroupNumbering`, `Analysis\GroupNumberingCollector`, `Analysis\LengthRangeCalculator`, `Analysis\LiteralExtractor`, `Analysis\LiteralExtractionResult`, `Analysis\LiteralSet`, `Analysis\MetricsCollector`, `Analysis\CaptureShapeAnalyzer`, `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Analysis\Participation`, `Analysis\RequiredLiteralAnalyzer`, `Cache\CacheInterface`, `Cache\RemovableCacheInterface`, `Cache\ArrayCache`, `Cache\NullCache`, `Cache\FilesystemCache`, `Cache\PsrCacheAdapter`, `Cache\PsrSimpleCacheAdapter`, `Engine\PcreEngine`, `Engine\PcreError`, `Engine\PcreLimits`, `Engine\PcreMatch`, `Exception\ExceptionInterface`, `Exception\RegexException`, `Exception\LexerException`, `Exception\ParserException`, `Exception\SyntaxErrorException`, `Exception\SemanticErrorException`, `Exception\RecursionLimitException`, `Exception\ResourceLimitException`, `Exception\InvalidRegexOptionException`, `Exception\CacheException`, `Node\*` |
+| `regex-parser` | `RegexParser`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, `NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`, `NodeWalker`, `NodeFinder`, `TraversalAction`, `Token\Token`, `Token\TokenStream`, `Token\TokenType`, `Validation\ValidationResult`, `Validation\ValidationErrorCategory`, `Printer\PatternPrinter`, `Printer\NodeDumper`, `Analysis\ComplexityScorer`, `Analysis\GroupNumbering`, `Analysis\GroupNumberingCollector`, `Analysis\LengthRangeCalculator`, `Analysis\LiteralExtractor`, `Analysis\LiteralExtractionResult`, `Analysis\LiteralSet`, `Analysis\MetricsCollector`, `Analysis\CaptureShapeAnalyzer`, `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Analysis\Participation`, `Analysis\RequiredLiteralAnalyzer`, `Analysis\PatternInfoAnalyzer`, `Analysis\PatternInfo`, `NewlineConvention`, `BsrConvention`, `Validation\CompatibilityChecker`, `Validation\PatternCompatibility`, `Validation\TargetVerdict`, `Cache\CacheInterface`, `Cache\RemovableCacheInterface`, `Cache\ArrayCache`, `Cache\NullCache`, `Cache\FilesystemCache`, `Cache\PsrCacheAdapter`, `Cache\PsrSimpleCacheAdapter`, `Engine\PcreEngine`, `Engine\PcreError`, `Engine\PcreLimits`, `Engine\PcreMatch`, `Exception\ExceptionInterface`, `Exception\RegexException`, `Exception\LexerException`, `Exception\ParserException`, `Exception\SyntaxErrorException`, `Exception\SemanticErrorException`, `Exception\RecursionLimitException`, `Exception\ResourceLimitException`, `Exception\InvalidRegexOptionException`, `Exception\CacheException`, `Node\*` |
 | `regex-explain` | `TextExplainer`, `HtmlExplainer`, `AsciiTreeRenderer`, `MermaidRenderer`, `RailroadSvgRenderer`, `Highlighter\ConsoleHighlighter`, `Highlighter\HtmlHighlighter` |
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
@@ -73,7 +74,8 @@ Each path is relative to the package namespace: `Analysis\CaptureShape` in
 class of `Node\`.
 
 In `regex-parser`, `NodeVisitorInterface`, `AbstractNodeVisitor` and
-`AbstractTraversingVisitor` are the visitor base classes. `Analysis\ByteCharSet`,
+`AbstractTraversingVisitor` are the visitor base classes. `NewlineConvention`
+and `BsrConvention` are the enums of `Analysis\PatternInfo`. `Analysis\ByteCharSet`,
 `Analysis\CharSetAnalyzer` and `Cache\AstSerializer` are not public, nor is any
 other class of those namespaces left out of the row.
 
@@ -154,6 +156,28 @@ add one to yet.
   rises with any such change, and a patch may widen an answer to make it sound
   again. A PHPStan baseline that prints the type may need regenerating; the
   CHANGELOG says when. See [Capture Shapes](capture-shapes.md).
+- **Narrower pattern info**: the sound bounds of `Analysis\PatternInfo`,
+  `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart` and
+  `anchoredEnd`, may become more precise, still holding for every match PCRE2
+  makes: a length range may tighten and an anchor may become proven.
+  `PatternInfoAnalyzer::ANALYSIS_VERSION` rises with any such change, and a
+  patch may widen an answer to make it sound again. The exact facts
+  (`captureCount`, `names`, `maxBackreference`, `usesBackslashC`, the limits,
+  `newline` and `bsr`) equal PCRE2's: a difference is a bug, fixed in a patch.
+  See [Pattern Info](pattern-info.md).
+- **A wider compatibility matrix**: `Validation\CompatibilityChecker` judges
+  every PHP version a rule of the library changes at, with every PCRE2 release
+  it knows. Each PHP or PCRE2 release the library learns adds points, so the
+  number of verdicts `PatternCompatibility::verdicts()` lists may grow, and
+  `isValidEverywhere()` may turn false for a pattern a new point refuses.
+  `regex lint` validates over the same points when it reads the PHP range of
+  `composer.json`, so a new point may fail a project that passed. See
+  [Pattern Info](pattern-info.md#compatibility-where-a-pattern-is-valid).
+- **More PHP version boundaries**: `PcreTarget::phpVersionBoundaries()` lists
+  the PHP versions at which a verdict of the library may change. It grows in a
+  minor release, when the library learns a PHP release or a rule that changes
+  at a PHP version, and the compatibility matrix and the lint range grow with
+  it.
 - **New ReDoS options**: a configuration key for the analysis budget may be
   added; none is removed.
 - **What a lint rule reports**: a rule may report more or fewer patterns when

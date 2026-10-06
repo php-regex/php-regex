@@ -15,6 +15,7 @@ namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\PhpVersionGates;
 
 /**
  * The PHP version and the PCRE2 release a pattern is judged for.
@@ -58,14 +59,30 @@ final readonly class PcreTarget
     }
 
     /**
+     * The PHP versions, as PHP_VERSION_IDs in ascending order, at which a
+     * verdict of the library may change: the lowest PHP it supports, then
+     * each version that bundles a newer PCRE2 or where a rule changes (8.5
+     * refuses "\K" in a lookaround, and stops refusing "\C" under "u" until
+     * 8.5.10). Judging a range of PHP versions at these points judges all of
+     * it. The list may grow in a minor release, when the library learns a
+     * PHP release or a rule.
+     *
+     * @return list<int>
+     */
+    public static function phpVersionBoundaries(): array
+    {
+        return PhpVersionGates::POINTS;
+    }
+
+    /**
      * A PHP version with the PCRE2 its sources bundle: 10.40 for 8.2, 10.42
      * for 8.3, 10.44 for 8.4 and 8.5.
      */
     public static function bundledWith(int $phpVersionId): self
     {
         $release = match (true) {
-            $phpVersionId >= 80400 => '10.44',
-            $phpVersionId >= 80300 => '10.42',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_44 => '10.44',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_42 => '10.42',
             default => '10.40',
         };
 
@@ -112,7 +129,9 @@ final readonly class PcreTarget
 
     /**
      * What a cached tree was read for: the PHP major and minor version, as
-     * no rule depends on a patch release, and the PCRE2 release.
+     * no parse rule depends on a patch release, and the PCRE2 release. The
+     * rules that do, such as "\C" under "u" from PHP 8.4.25, belong to the
+     * validator, which runs on every call, cached tree or not.
      */
     public function cacheKey(): string
     {

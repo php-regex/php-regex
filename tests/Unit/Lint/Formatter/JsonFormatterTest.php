@@ -205,6 +205,7 @@ final class JsonFormatterTest extends TestCase
             'source' => null,
             'validation' => null,
             'analysis' => null,
+            'target' => null,
         ];
         $this->assertIsArray($decoded['results'][0]['issues']);
         $this->assertCount(1, $decoded['results'][0]['issues']);

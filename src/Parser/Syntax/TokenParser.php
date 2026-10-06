@@ -229,6 +229,30 @@ final class TokenParser
     private int $tokensReadWhole = 0;
 
     /**
+     * Every name the pattern gives a group, once a first reading met a
+     * "(?(R)" or "(?(R2)" written before the group so named: PCRE2 looks the
+     * name up before it reads a recursion test, wherever the group stands.
+     *
+     * @var list<string>
+     */
+    private array $patternNames = [];
+
+    /**
+     * The names of the "(?(R)" and "(?(R2)" read as recursion tests for want
+     * of a group so named, here and in the bodies read apart.
+     *
+     * @var list<string>
+     */
+    private array $recursionTests = [];
+
+    /**
+     * The names the groups of the bodies read apart were given.
+     *
+     * @var list<string>
+     */
+    private array $namesReadApart = [];
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
@@ -238,6 +262,41 @@ final class TokenParser
     }
 
     public function parse(TokenStream $stream, string $flags = '', string $delimiter = '/', int $patternLength = 0): RegexNode
+    {
+        $firstToken = $stream->getPosition();
+        $regex = $this->read($stream, $flags, $delimiter, $patternLength);
+
+        // A recursion test written before the group its name gives, as in
+        // "(?(R2)b|c)(?<R2>a)", tests that group: read again, knowing every
+        // name.
+        $names = [...$this->namesReadApart, ...$this->groupNames->names()];
+        if ([] === array_intersect($this->recursionTests, $names)) {
+            return $regex;
+        }
+
+        $again = new self($this->maxRecursionDepth, $this->target);
+        $again->patternNames = $names;
+        $stream->setPosition($firstToken);
+
+        return $again->read($stream, $flags, $delimiter, $patternLength);
+    }
+
+    /**
+     * How many tokens of the stream the items read whole so far end past,
+     * at any depth, the last parse failed or not: the stream up to there,
+     * its groups closed, parses where the rest did not.
+     *
+     * @internal
+     */
+    public function tokensReadWhole(): int
+    {
+        return $this->tokensReadWhole;
+    }
+
+    /**
+     * Reads the pattern, or a body read apart, once.
+     */
+    private function read(TokenStream $stream, string $flags, string $delimiter, int $patternLength): RegexNode
     {
         $this->stream = $stream;
         $this->pattern = $stream->getPattern();
@@ -270,6 +329,8 @@ final class TokenParser
         $this->captureCount = $this->capturesBefore;
         $this->splitEscape = null;
         $this->tokensReadWhole = 0;
+        $this->recursionTests = [];
+        $this->namesReadApart = [];
 
         $patternNode = $this->parseAlternation();
 
@@ -284,18 +345,6 @@ final class TokenParser
         $this->stream->consume(TokenType::Eof, 'Unexpected content at end of pattern', ErrorCode::TokenUnexpected);
 
         return new RegexNode($patternNode, $flags, $delimiter, 0, $patternLength, $this->pattern);
-    }
-
-    /**
-     * How many tokens of the stream the items read whole so far end past,
-     * at any depth, the last parse failed or not: the stream up to there,
-     * its groups closed, parses where the rest did not.
-     *
-     * @internal
-     */
-    public function tokensReadWhole(): int
-    {
-        return $this->tokensReadWhole;
     }
 
     /**
@@ -1939,7 +1988,11 @@ final class TokenParser
         $inner->extendedMoreBefore = $this->extendedMoreMode;
         $inner->namesAround = $this->groupNames;
         $inner->partLexer = $this->partLexer;
-        $pattern = $inner->parse(new TokenStream($tokens, $this->pattern), $flags, '/', \strlen($this->pattern));
+        $inner->patternNames = $this->patternNames;
+        // Read once: what it found of names is judged with the whole pattern.
+        $pattern = $inner->read(new TokenStream($tokens, $this->pattern), $flags, '/', \strlen($this->pattern));
+        $this->recursionTests = [...$this->recursionTests, ...$inner->recursionTests];
+        $this->namesReadApart = [...$this->namesReadApart, ...$inner->namesReadApart, ...$inner->groupNames->names()];
 
         // The groups it holds take numbers in the enclosing pattern: the
         // body's parser counted on from those opened before it, and shared
@@ -2884,9 +2937,11 @@ final class TokenParser
     }
 
     /**
-     * Parses a subroutine R condition in a conditional construct.
+     * Parses a subroutine R condition in a conditional construct: "(?(R)",
+     * "(?(R2)" and "(?(R&name)" test a recursion, unless a group has the
+     * name "R" or "R2", which PCRE2 looks up first: then it tests that group.
      */
-    private function parseSubroutineRCondition(int $startPosition): ?SubroutineNode
+    private function parseSubroutineRCondition(int $startPosition): SubroutineNode|BackrefNode|null
     {
         $savedPos = $this->stream->getPosition();
         if (!$this->stream->matchLiteral('R')) {
@@ -2918,11 +2973,17 @@ final class TokenParser
             return null;
         }
 
+        $name = 'R'.$digits;
+        if (\in_array($name, $this->patternNames, true)) {
+            return new BackrefNode($name, $startPosition, $this->stream->current()->position);
+        }
+        $this->recursionTests[] = $name;
+
         if ('' !== $digits) {
             $endPosition = $this->stream->previous()->position;
         }
 
-        return new SubroutineNode('R'.$digits, '', $startPosition, $endPosition);
+        return new SubroutineNode($name, '', $startPosition, $endPosition);
     }
 
     /**

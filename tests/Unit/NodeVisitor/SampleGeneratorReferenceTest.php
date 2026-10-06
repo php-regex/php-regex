@@ -96,5 +96,8 @@ final class SampleGeneratorReferenceTest extends TestCase
         yield 'a call to the whole pattern, not to group 1' => ['pattern' => '/a(?(R1)b|(?(R)d|c(?R)))(x){0}/', 'sample' => 'acad'];
         yield 'after the call' => ['pattern' => '/^(a(?(R)b|c))(?1)(?(R)x|y)$/', 'sample' => 'acaby'];
         yield 'a call to another group by name' => ['pattern' => '/^(?<n>a(?(R&n)b|c))(?<m>x(?(R&n)y|z))(?&m)$/', 'sample' => 'acxzxz'];
+        // A group named "R" makes "(?(R)" a test of that group, not of a call.
+        yield 'a group named R' => ['pattern' => '/^(?<R>a)(?(R)b|c)$/', 'sample' => 'ab'];
+        yield 'a group named R, inside a call' => ['pattern' => '/^(a(?(R)b|c))(?1)(?<R>x){0}$/', 'sample' => 'acac'];
     }
 }

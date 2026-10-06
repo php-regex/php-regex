@@ -131,6 +131,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 getenv(),
             );
             $regex = Regex::create($target->regexOptions());
+            $range = $target->rangeParsers($regex->parser());
         } catch (InvalidRegexOptionException $e) {
             // A version given on the command line is a usage error; one
             // read from regex.json or the environment, a configuration one.
@@ -193,6 +194,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             redosEnabled: $checkRedos,
             lintEnabled: $arguments->checkLint,
             lintRules: $arguments->lintRules,
+            range: $range,
         );
 
         $formatter = $json ? new JsonFormatter(target: $target->toArray()) : $formatterRegistry->get($format);

@@ -60,6 +60,34 @@ final class ErrorOffsetReleaseTest extends TestCase
         $this->assertSame($quirks[$running] ?? (version_compare($running, $movedIn, '>=') ? $newer : $bundled), $result->offset, $pattern);
     }
 
+    #[Test]
+    public function test_a_forward_relative_reference_counts_the_groups_before_it(): void
+    {
+        // "\g+65533" after two groups names group 65535, which does not
+        // exist: refused on the reference, before 10.47 one character
+        // earlier (PCRE2 suite testinput2:5398, 10.40 and 10.48; pcre2test
+        // 10.49). Counted without those groups, or with one more, the number
+        // would read as too big or fit, and the offset would not move.
+        foreach (['10.40' => 10, '10.49' => 11] as $release => $offset) {
+            $result = Regex::create(['cache' => null, 'php_version' => '8.2', 'pcre_version' => (string) $release])->validate('/()(\\g+65533)/');
+
+            $this->assertSame(ErrorCode::BackrefRelative, $result->errorCode, (string) $release);
+            $this->assertSame($offset, $result->offset, (string) $release);
+        }
+    }
+
+    #[Test]
+    public function test_a_reference_to_group_zero_is_refused_where_it_ends_on_every_release(): void
+    {
+        // PCRE2 suite testinput2:2090, 10.40 and 10.48; pcre2test 10.49.
+        foreach (['10.40', '10.49'] as $release) {
+            $result = Regex::create(['cache' => null, 'php_version' => '8.2', 'pcre_version' => $release])->validate('/^(a)\\g{0}/');
+
+            $this->assertFalse($result->isValid, $release);
+            $this->assertSame(9, $result->offset, $release);
+        }
+    }
+
     /**
      * @param array<string, int> $quirks offsets of a release that fits
      *                                   neither the older nor the newer one

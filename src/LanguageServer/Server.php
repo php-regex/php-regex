@@ -214,12 +214,7 @@ final class Server
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
-            self::log(self::LOG_INFO, \sprintf(
-                'Target: PHP %d.%d, PCRE2 %s (the Regex the server was started with)',
-                intdiv($target->phpVersionId, 10000),
-                intdiv($target->phpVersionId, 100) % 100,
-                $target->pcreVersion,
-            ));
+            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
 
             return;
         }

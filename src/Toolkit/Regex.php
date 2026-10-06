@@ -27,11 +27,14 @@ use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Parser\Analysis\PatternInfo;
+use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\RegexNode;
@@ -40,6 +43,8 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\TolerantParseResult;
+use PHPRegex\Parser\Validation\CompatibilityChecker;
+use PHPRegex\Parser\Validation\PatternCompatibility;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
@@ -335,6 +340,45 @@ final readonly class Regex
     public function captureShape(string $regex): CaptureShape
     {
         return (new CaptureShapeAnalyzer())->analyze($this->parse($regex));
+    }
+
+    /**
+     * The facts PCRE2 computes on the compiled pattern: capture count, group names, lengths, anchoring, limits.
+     *
+     * @param string $regex The regular expression to analyze
+     *
+     * @throws ExceptionInterface when validate() refuses the pattern at this instance's target: the exception parse()
+     *                            throws, or a SemanticErrorException carrying the validation error
+     */
+    public function info(string $regex): PatternInfo
+    {
+        $ast = $this->parse($regex);
+
+        // A pattern that parses can still be one PCRE refuses at this target,
+        // as a \K in a lookbehind on PHP 8.5: its facts would describe
+        // nothing the engine runs.
+        $validation = $this->parser->validate($regex);
+        if (!$validation->isValid) {
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->target());
+
+            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
+        }
+
+        return (new PatternInfoAnalyzer())->analyze($ast);
+    }
+
+    /**
+     * On which PHP versions and PCRE2 releases the pattern is valid, judged at every target the library knows a rule
+     * boundary for, whatever target this instance judges for.
+     *
+     * A pattern is never a reason to throw: one no target accepts, a missing delimiter included, gets a verdict
+     * refusing it at every target.
+     *
+     * @param string $regex The regular expression to judge
+     */
+    public function compatibility(string $regex): PatternCompatibility
+    {
+        return (new CompatibilityChecker())->check($regex);
     }
 
     /**

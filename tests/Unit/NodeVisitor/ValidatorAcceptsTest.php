@@ -91,6 +91,15 @@ final class ValidatorAcceptsTest extends TestCase
         yield 'validate valid subroutine: /(?R)/' => ['pattern' => '/(?R)/'];
         yield 'allows octal zero escape in validator: /\\0/' => ['pattern' => '/\\0/'];
         yield 'validates named conditional: /(?<n>a)(?(n)b)/' => ['pattern' => '/(?<n>a)(?(n)b)/'];
+        // A group named "R2" or "R" turns "(?(R2)" and "(?(R)" into a test of
+        // that group, wherever the group stands (preg_match() compiles each).
+        yield 'condition R2 on a group named R2: /(?<R2>a)(?(R2)b|c)/' => ['pattern' => '/(?<R2>a)(?(R2)b|c)/'];
+        yield 'condition R2 on a group named R2 after it: /(?(R2)b|c)(?<R2>a)/' => ['pattern' => '/(?(R2)b|c)(?<R2>a)/'];
+        yield 'condition R on a group named R: /(?<R>a)(?(R)b|c)/' => ['pattern' => '/(?<R>a)(?(R)b|c)/'];
+        yield 'condition R1 on a group named R1 beside group 1: /(a)(?<R1>x)?(?(R1)b|c)/' => ['pattern' => '/(a)(?<R1>x)?(?(R1)b|c)/'];
+        yield 'condition R2 on a duplicate name: /(?J)(?:(?<R2>a)|(?<R2>b))(?(R2)c|d)/' => ['pattern' => '/(?J)(?:(?<R2>a)|(?<R2>b))(?(R2)c|d)/'];
+        yield 'condition R2 on a group named R2 in an assertion read apart: /(*pla:(?<R2>a))(?(R2)a|c)/' => ['pattern' => '/(*pla:(?<R2>a))(?(R2)a|c)/'];
+        yield 'condition R2 in an assertion read apart, the group after: /(*pla:(?(R2)a|c))(?<R2>a)/' => ['pattern' => '/(*pla:(?(R2)a|c))(?<R2>a)/'];
         yield 'validator allows nested quantifiers: /(a+)+/' => ['pattern' => '/(a+)+/'];
         yield 'valid backreference with capturing group: /(a)\\1/' => ['pattern' => '/(a)\\1/'];
         yield 'accepts negated posix word class: /[[:^word:]]/' => ['pattern' => '/[[:^word:]]/'];

@@ -130,7 +130,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php'], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 

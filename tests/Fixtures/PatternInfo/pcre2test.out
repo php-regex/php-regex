@@ -1,0 +1,1098 @@
+PCRE2 version 10.49 2026-09-28 (8-bit)
+//I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/a{0}/I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/a|/I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/abc/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'c'
+Subject length lower bound = 3
+
+/(a)(b)(c)/I,allow_lookaround_bsk
+Capture group count = 3
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'c'
+Subject length lower bound = 3
+
+/(?:a)(?>b)(?=c)(?<=d)/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(?|(a)|(b)(c))\k<n>(?<n>d)/I,allow_lookaround_bsk
+Capture group count = 3
+Max back reference = 3
+Named capture groups:
+  n   3
+Extra options: allow_lookaround_bsk
+Starting code units: a b
+Last code unit = 'd'
+Subject length lower bound = 3
+
+/(?|(?<x>a)|(?<x>b))/I,allow_lookaround_bsk
+Capture group count = 1
+Named capture groups:
+  x   1
+Extra options: allow_lookaround_bsk
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?<n>a)|(?<n>b)/I,allow_lookaround_bsk,dupnames
+Capture group count = 2
+Named capture groups:
+  n   1
+  n   2
+Options: dupnames
+Extra options: allow_lookaround_bsk
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?J)(?<n>a)|(?<n>b)/I,allow_lookaround_bsk
+Capture group count = 2
+Named capture groups:
+  n   1
+  n   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?<b>x)(?<a>y)/I,allow_lookaround_bsk
+Capture group count = 2
+Named capture groups:
+  a   2
+  b   1
+Extra options: allow_lookaround_bsk
+First code unit = 'x'
+Last code unit = 'y'
+Subject length lower bound = 2
+
+/(?P<name>a)(?'q'b)/I,allow_lookaround_bsk
+Capture group count = 2
+Named capture groups:
+  name   1
+  q      2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(a)(?<n>b)/I,allow_lookaround_bsk,no_auto_capture
+Capture group count = 1
+Named capture groups:
+  n   1
+Options: no_auto_capture
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(?n)(a)(?<n>b)/I,allow_lookaround_bsk
+Capture group count = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(?(DEFINE)(?<d>\d))(?&d)/I,allow_lookaround_bsk
+Capture group count = 1
+Named capture groups:
+  d   1
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/((((((((((a))))))))))\10/I,allow_lookaround_bsk
+Capture group count = 10
+Max back reference = 10
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(a)\1/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(a)(b)\g{1}/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 3
+
+/(a)(b)(c)\g{-2}/I,allow_lookaround_bsk
+Capture group count = 3
+Max back reference = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'c'
+Subject length lower bound = 4
+
+/(a)(?:\2)?(b)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(a)\g1/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?<n>a)\k<n>\g{n}/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 3
+
+/(?<n>a)\k{n}\k'n'/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 3
+
+/(?P<n>a)(?P=n)(?P>n)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 3
+
+/(?J)(?<n>a)|(?<n>b)\k<n>/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  n   1
+  n   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?(2)a)()()/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/(?(<n>)a)(?<n>b)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+Last code unit = 'b'
+Subject length lower bound = 1
+
+/(?('n')a)(?<n>b)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+Last code unit = 'b'
+Subject length lower bound = 1
+
+/(?J)(?<n>a)|(?<n>b)(?(<n>)c)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  n   1
+  n   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?(R1)a|b)(c)/I,allow_lookaround_bsk
+Capture group count = 1
+Extra options: allow_lookaround_bsk
+Last code unit = 'c'
+Subject length lower bound = 2
+
+/(?(R&n)a|b)(?<n>c)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  n   1
+Extra options: allow_lookaround_bsk
+Last code unit = 'c'
+Subject length lower bound = 2
+
+/(?J)(?<n>a)|(?<n>b)(?(R&n)c)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  n   1
+  n   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?<R2>a)(?(R2)b|c)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R2   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?(R2)b|c)(?<R2>a)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R2   1
+Extra options: allow_lookaround_bsk
+Last code unit = 'a'
+Subject length lower bound = 2
+
+/(?<R>a)(?(R)b|c)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?(R)b|c)(?<R>a)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R   1
+Extra options: allow_lookaround_bsk
+Last code unit = 'a'
+Subject length lower bound = 2
+
+/(?(R)b|c)/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(a)(?<R1>x)?(?(R1)b|c)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  R1   2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?<R1>x)(a)(?(R1)b|c)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 1
+Named capture groups:
+  R1   1
+Extra options: allow_lookaround_bsk
+First code unit = 'x'
+Last code unit = 'a'
+Subject length lower bound = 3
+
+/(?<R0>a)(?(R0)b|c)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R0   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?<R02>a)(?(R2)b|c)()/I,allow_lookaround_bsk
+Capture group count = 2
+Named capture groups:
+  R02   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?J)(?:(?<R2>a)|(?<R2>b))(?(R2)c|d)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  R2   1
+  R2   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 2
+
+/(?J)(?:(?<R>a)|(?<R>b))(?(R)c|d)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Named capture groups:
+  R   1
+  R   2
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: a b
+Subject length lower bound = 2
+
+/(?(R2)a|c)(*pla:(?<R2>a))/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R2   1
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(*pla:(?(R2)a|c))(?<R2>a)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Named capture groups:
+  R2   1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(a)\g-1/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(a)\g{+1}(b)/I,allow_lookaround_bsk
+Capture group count = 2
+Max back reference = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 3
+
+/(?(+1)a)(b)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+Last code unit = 'b'
+Subject length lower bound = 1
+
+/(a)(?(-1)b)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?1)(a)/I,allow_lookaround_bsk
+Capture group count = 1
+Extra options: allow_lookaround_bsk
+Last code unit = 'a'
+Subject length lower bound = 2
+
+/(a)(?R)?/I,allow_lookaround_bsk
+Capture group count = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(a)(?-1)/I,allow_lookaround_bsk
+Capture group count = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/a\Cb/I,allow_lookaround_bsk
+Capture group count = 0
+Contains \C
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 3
+
+/(?<=\C)a/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Contains \C
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*UTF)a\Cb/I,allow_lookaround_bsk
+Capture group count = 0
+Contains \C
+Compile options: <none>
+Overall options: utf
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/\Q\C\E/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = '\'
+Last code unit = 'C'
+Subject length lower bound = 2
+
+/a\\Cb/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 4
+
+/a(?#\C)b/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/a#\C/I,allow_lookaround_bsk,extended
+Capture group count = 0
+Options: extended
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_MATCH=100)(*LIMIT_MATCH=50)a/I,allow_lookaround_bsk
+Capture group count = 0
+Match limit = 50
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_MATCH=50)(*LIMIT_MATCH=100)a/I,allow_lookaround_bsk
+Capture group count = 0
+Match limit = 100
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_DEPTH=10)(*LIMIT_HEAP=20)a/I,allow_lookaround_bsk
+Capture group count = 0
+Heap limit = 20
+Depth limit = 10
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_RECURSION=7)a/I,allow_lookaround_bsk
+Capture group count = 0
+Depth limit = 7
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_DEPTH=10)(*LIMIT_RECURSION=7)a/I,allow_lookaround_bsk
+Capture group count = 0
+Depth limit = 7
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_MATCH=0)a/I,allow_lookaround_bsk
+Capture group count = 0
+Match limit = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_HEAP=5)(*LIMIT_HEAP=0)a/I,allow_lookaround_bsk
+Capture group count = 0
+Heap limit = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_MATCH=4294967289)a/I,allow_lookaround_bsk
+Capture group count = 0
+Match limit = 4294967289
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*CR)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is CR
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LF)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is LF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*CRLF)a$/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is CRLF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*ANY)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is any Unicode newline
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*ANYCRLF)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is CR, LF, or CRLF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*NUL)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is NUL
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*CR)(*LF)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Forced newline is LF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*BSR_ANYCRLF)\R/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+\R matches CR, LF, or CRLF
+Starting code units: \x0a \x0b \x0c \x0d \x85
+Subject length lower bound = 1
+
+/(*BSR_UNICODE)\R/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+\R matches any Unicode newline
+Starting code units: \x0a \x0b \x0c \x0d \x85
+Subject length lower bound = 1
+
+/(*BSR_ANYCRLF)(*BSR_UNICODE)a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+\R matches any Unicode newline
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*CRLF)(*BSR_UNICODE)a$/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+\R matches any Unicode newline
+Forced newline is CRLF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*UTF)(*UCP)(*NO_JIT)(*CRLF)a/I,allow_lookaround_bsk
+Capture group count = 0
+Compile options: <none>
+Overall options: ucp utf
+Extra options: allow_lookaround_bsk
+Forced newline is CRLF
+First code unit = 'a'
+Subject length lower bound = 1
+
+/a/I,allow_lookaround_bsk,anchored
+Capture group count = 0
+Options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/aa(*SKIP)b|a/I,allow_lookaround_bsk,anchored
+Capture group count = 0
+Options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/aa(*MARK:x)(*SKIP:x)b|a/I,allow_lookaround_bsk,anchored
+Capture group count = 0
+Options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/\Aaa(*SKIP)b|\Aa/I,allow_lookaround_bsk,anchored
+Capture group count = 0
+Max lookbehind = 1
+Options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/aa(*PRUNE)b|a/I,allow_lookaround_bsk,anchored
+Capture group count = 0
+Options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/\Ga/I,allow_lookaround_bsk
+Capture group count = 0
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/^a/I,allow_lookaround_bsk
+Capture group count = 0
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/^a*/I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/^a/I,allow_lookaround_bsk,multiline
+Capture group count = 0
+Options: multiline
+Extra options: allow_lookaround_bsk
+First code unit at start or follows newline
+Last code unit = 'a'
+Subject length lower bound = 1
+
+/(?m)^a/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit at start or follows newline
+Last code unit = 'a'
+Subject length lower bound = 1
+
+/(?-m)^a/I,allow_lookaround_bsk,multiline
+Capture group count = 0
+Compile options: multiline
+Overall options: anchored multiline
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?i)^a/I,allow_lookaround_bsk
+Capture group count = 0
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a' (caseless)
+Subject length lower bound = 1
+
+/ ^a/I,allow_lookaround_bsk,extended
+Capture group count = 0
+Compile options: extended
+Overall options: anchored extended
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*LIMIT_MATCH=10)^a/I,allow_lookaround_bsk
+Capture group count = 0
+Match limit = 10
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/^a|\Ab/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/^a|b/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Starting code units: a b
+Subject length lower bound = 1
+
+/(?m)^a|\Ab/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/\Aa\Kb/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?:\Aa)?b/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+Last code unit = 'b'
+Subject length lower bound = 1
+
+/(?:^a|^b)/I,allow_lookaround_bsk
+Capture group count = 0
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+Starting code units: a b
+Subject length lower bound = 1
+
+/(^a)/I,allow_lookaround_bsk
+Capture group count = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/\Ga|b/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/.*a/I,allow_lookaround_bsk,dotall
+Capture group count = 0
+Compile options: dotall
+Overall options: anchored dotall
+Extra options: allow_lookaround_bsk
+Last code unit = 'a'
+Subject length lower bound = 1
+
+/(?=a)b?/I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/a$/I,allow_lookaround_bsk,dollar_endonly
+Capture group count = 0
+Options: dollar_endonly
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/a\z/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/a(*ACCEPT)b\z/I,allow_lookaround_bsk
+Capture group count = 0
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(*ACCEPT)a/I,allow_lookaround_bsk
+Capture group count = 0
+May match empty string
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 0
+
+/(?:)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?:(?:)\Aa)/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?:(?i))\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/()\Aa/I,allow_lookaround_bsk
+Capture group count = 1
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?:|)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?i:)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?|)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/\Aa|(?:)\Ab/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(*UTF)(?:)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: utf
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?#c)\Aa/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?(DEFINE)(a))\Ab/I,allow_lookaround_bsk
+Capture group count = 1
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'b'
+Subject length lower bound = 1
+
+/\A(?:)a/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?:\A(?:)|\Ab)c/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(\Aa)b/I,allow_lookaround_bsk
+Capture group count = 1
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?>\Aa)b/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 2
+
+/(?:\Aa)+b/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Compile options: <none>
+Overall options: anchored
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'b'
+Subject length lower bound = 2
+
+/(?<=ab|c)\bx\1(a)/I,allow_lookaround_bsk
+Capture group count = 1
+Max back reference = 1
+Max lookbehind = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'x'
+Last code unit = 'a'
+Subject length lower bound = 3
+
+/a\b(?<=xyz)/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 3
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?<=a(?<=bc))d/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'd'
+Subject length lower bound = 1
+
+/(?<=a{1,3})b/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 3
+Extra options: allow_lookaround_bsk
+First code unit = 'b'
+Subject length lower bound = 1
+
+/(?<=a|bc)d/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'd'
+Subject length lower bound = 1
+
+/(?<=é)a/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?<=é)a/I,allow_lookaround_bsk,utf,ucp
+Capture group count = 0
+Max lookbehind = 1
+Options: ucp utf
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Subject length lower bound = 1
+
+/(?<!\x{100}ab)c/I,allow_lookaround_bsk,utf,ucp
+Capture group count = 0
+Max lookbehind = 3
+Options: ucp utf
+Extra options: allow_lookaround_bsk
+First code unit = 'c'
+Subject length lower bound = 1
+
+/(?<=a\Kb)c/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 2
+Extra options: allow_lookaround_bsk
+First code unit = 'c'
+Subject length lower bound = 1
+
+/(?<=(?:a|bc){0}d)x/I,allow_lookaround_bsk
+Capture group count = 0
+Max lookbehind = 1
+Extra options: allow_lookaround_bsk
+First code unit = 'x'
+Subject length lower bound = 1
+
+/é+/I,allow_lookaround_bsk,utf,ucp
+Capture group count = 0
+Options: ucp utf
+Extra options: allow_lookaround_bsk
+First code unit = \xc3
+Last code unit = \xa9
+Subject length lower bound = 1
+
+/\X/I,allow_lookaround_bsk,utf,ucp
+Capture group count = 0
+Options: ucp utf
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(?i)k/I,allow_lookaround_bsk,utf,ucp
+Capture group count = 0
+Options: ucp utf
+Extra options: allow_lookaround_bsk
+Starting code units: K k \xe2
+Subject length lower bound = 1
+
+/a/I,allow_lookaround_bsk,caseless_restrict
+Capture group count = 0
+Extra options: allow_lookaround_bsk caseless_restrict
+First code unit = 'a'
+Subject length lower bound = 1
+
+/a b (?#comment) c/I,allow_lookaround_bsk,extended
+Capture group count = 0
+Options: extended
+Extra options: allow_lookaround_bsk
+First code unit = 'a'
+Last code unit = 'c'
+Subject length lower bound = 3
+
+/[[:alpha:]]+\d*/I,allow_lookaround_bsk,caseless,utf,ucp
+Capture group count = 0
+Options: caseless ucp utf
+Extra options: allow_lookaround_bsk
+Subject length lower bound = 1
+
+/(?J)(?|(x)(?<b>y)|(?<b>z))/I,allow_lookaround_bsk
+Capture group count = 2
+Named capture groups:
+  b   2
+  b   1
+Extra options: allow_lookaround_bsk
+Duplicate name status changes
+Starting code units: x z
+Subject length lower bound = 1
+

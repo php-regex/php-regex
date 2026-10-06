@@ -912,8 +912,18 @@ pattern PHP 8.2 refuses. To lint for the running engine as before, pass its
 PHP version and PCRE2 release with `--php-version` and `--pcre-version`, or set
 `phpVersion` and `pcreVersion` in `regex.json`.
 
+When the PHP comes from `require.php`, every pattern is also validated on the
+later PHP versions the constraint allows, where a rule of the library changes
+and where a branch of an OR constraint starts:
+a project requiring `>=8.2` is told about a `\K` in a lookaround, which PHP
+8.5 refuses. A project green on its floor may so turn red on its ceiling. To
+judge one version, name it with `--php-version`. See
+[Several PHP versions](docs/guides/cli.md#several-php-versions).
+
 The JSON report gains a `target` key (`{"php": "8.2", "pcre": "10.40",
-"source": "composer.json require.php"}`); the console banner shows the target
+"source": "composer.json require.php", "range": [...]}`), and each issue a
+`target` naming the later PHP that refuses its pattern, `null` for the
+others; the console banner shows the target
 as a `Target` row under `Runtime`, and the GitHub, Checkstyle and JUnit
 formats print the same line on stderr. Single-pattern commands, such as
 `analyze`, still judge for the running PHP.

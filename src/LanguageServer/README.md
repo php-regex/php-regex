@@ -34,7 +34,7 @@ Requires PHP 8.2+. The binary is installed as `vendor/bin/regex-lsp`; `--help` p
 Configuration
 -------------
 
-Every pattern of the workspace is judged for one target, a PHP and PCRE2 pair, resolved once at `initialize` and logged where the editor shows the server output (`Target: PHP 8.4, PCRE2 10.49 (running PHP)`).
+Every pattern of the workspace is judged for one target, a PHP and PCRE2 pair, resolved once at `initialize` and logged where the editor shows the server output (`Target: PHP 8.4.26, PCRE2 10.49 (running PHP)`).
 
 | Option | Accepts | When absent |
 |--------|---------|-------------|

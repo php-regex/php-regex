@@ -74,6 +74,9 @@ final class PcreDivergenceTest extends TestCase
         yield from self::rows('recursion condition with a large negative number', '/(?(R-70000)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 4, ErrorCode::GroupNameUnterminated);
         yield from self::rows('recursion condition with a negative number', '/(?(R-1)a)/', self::LIVE_RELEASES, 'syntax error in subpattern name (missing terminator?)', 4, ErrorCode::GroupNameUnterminated);
         yield from self::rows('recursion condition on a missing group', '/(?(R1)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::SubroutineRecursion);
+        // "R2" is looked up as a name first; a group named "R02" is not it,
+        // and no group 2 exists.
+        yield from self::rows('recursion condition beside a group named like it', '/(?<R02>a)(?(R2)b|c)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 12, ErrorCode::SubroutineRecursion);
 
         // Past a number, a "VERSION" and a quoted name, "(?(" reads a name
         // up to the ")": a character no name holds leaves it unterminated,

@@ -124,6 +124,8 @@ separator, so `regex lint ./src` and `regex lint src` share a baseline.
 - The issues of a result are listed by `position` (`null` first), then
   `issue_id`.
 - The `issues` of the baseline file are sorted like the results.
+- `lint.target.range` lists the floor first, then the other PHP versions in
+  ascending order.
 
 The order is the same whatever the number of workers (`--jobs`). Timing
 fields (`duration_ms`, `wall_ms`, `avg_ms`, `cpu_ms`) differ between two runs,
@@ -135,6 +137,9 @@ so two runs may not print the same bytes.
 - Add a value to an open set: a `stage`, a `severity`, a `category`, an
   `issue_id`, an `error_code`.
 - Improve a message, a hint, a tip or the escaping of a display string.
+- Add an entry to `lint.target.range`: a PHP version a rule of the library
+  changes at, learned in that release, which the project's `require.php`
+  allows.
 
 It never renames or removes a key, changes a key's type, or turns a success
 document into one with a top-level `error`.
@@ -206,7 +211,12 @@ short for `--format=json`.
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "composer.json require.php"},
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php",
+        "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
+    },
     "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0},
     "results": [
         {
@@ -240,7 +250,8 @@ short for `--format=json`.
                         "hint": null,
                         "error_code": "regex.group.unclosed"
                     },
-                    "analysis": null
+                    "analysis": null,
+                    "target": null
                 }
             ],
             "optimizations": []
@@ -253,7 +264,7 @@ short for `--format=json`.
 
 | key | type | meaning |
 |---|---|---|
-| `target` | object | The PHP and PCRE2 the patterns were judged for |
+| `target` | object | The PHP and PCRE2 the patterns were judged for, and every PHP and PCRE2 they were validated at |
 | `stats` | object | The counts of the run |
 | `results` | list of objects | One entry per pattern with at least one issue or optimization; `[]` when there is nothing to report |
 
@@ -261,9 +272,27 @@ short for `--format=json`.
 
 | key | type | meaning |
 |---|---|---|
-| `php` | string | The PHP version, as `major.minor` |
+| `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when its patch is not 0 (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`); always the first `range` entry's `php` |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
 | `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP` |
+| `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP came from `composer.json require.php` |
+
+`php`, `pcre` and `source` name the floor: the lint rules and the ReDoS
+analysis judge every pattern there. When the PHP comes from `require.php`,
+each pattern is also validated (parsed and checked, without the lint rules)
+at every PHP version above the floor that a rule of the library changes at
+and that the constraint allows, and at the lowest version of each branch of an
+OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), with the
+PCRE2 that PHP bundles, or with the release `--pcre-version` or `pcreVersion`
+names. See
+[Several PHP versions](../guides/cli.md#several-php-versions).
+
+### Target range entry: `lint.target.range[]`
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when the version is a patch release a rule changes at (`8.4.25`), the floor's own patch (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`) or the lowest patch of an OR branch (`8.5.3` for `~8.3.0 \|\| >=8.5.3`) |
+| `pcre` | string | The PCRE2 release, as `major.minor` |
 
 ### Stats: `lint.stats`
 
@@ -311,6 +340,19 @@ An issue repeats the location of its result, so it can be read alone.
 | `source` | string \| null | As in the result |
 | `validation` | object \| null | For an invalid pattern, why: a [validation](#validation-validation) object; `null` otherwise |
 | `analysis` | object \| null | For a ReDoS issue, the verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` otherwise |
+| `target` | object \| null | For a pattern valid on the floor and refused by a later PHP of `lint.target.range`, the lowest PHP and PCRE2 that refuse it; `null` for every other issue, which the floor reports |
+
+An issue whose `target` is not `null` has severity `error`, and its
+`validation` is the verdict of that target. A pattern the floor refuses is
+reported once, by the floor, and not validated at the other versions. A
+baseline does not match on `target`.
+
+### Issue target: `lint.results[].issues[].target`
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The PHP version, written as in [`lint.target.range[]`](#target-range-entry-linttargetrange) |
+| `pcre` | string | The PCRE2 release, as `major.minor` |
 
 ### Optimization entry: `lint.results[].optimizations[]`
 
@@ -611,9 +653,9 @@ is written as the body of a PHP double-quoted string, so
 a newline. `--baseline=<file>` then hides the issues it lists. An issue
 matches an entry by `issue_id`, `file` and `pattern_hash`, so a pattern that
 moves down its file or a reworded message does not bring it back; `line` only
-decides between entries that share all three. One entry hides one issue. A
-run with `--baseline` still reports `column` and `file_offset` for the issues
-left.
+decides between entries that share all three, and an issue's `target` plays
+no part. One entry hides one issue. A run with `--baseline` still reports
+`column` and `file_offset` for the issues left.
 
 A 1.x baseline, a plain list of `{file, line, message}` entries, is still
 read, matched by `file`, `line` and `message`, with a note on stderr (on

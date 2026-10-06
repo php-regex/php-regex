@@ -224,9 +224,15 @@ vendor/bin/regex lint app/ --format=json
 ```json
 {
     "target": {
-        "php": "8.4",
+        "php": "8.4.26",
         "pcre": "10.49",
-        "source": "running PHP"
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.26",
+                "pcre": "10.49"
+            }
+        ]
     },
     "stats": {
         "errors": 0,
@@ -259,7 +265,8 @@ vendor/bin/regex lint app/ --format=json
                     "tip": null,
                     "source": "preg_match()",
                     "validation": null,
-                    "analysis": null
+                    "analysis": null,
+                    "target": null
                 }
             ],
             "optimizations": [
@@ -301,6 +308,7 @@ vendor/bin/regex lint app/ --format=json
 | `source`      | The call the pattern was found in, as `preg_match()`               |
 | `validation`  | Why an invalid pattern is invalid                                  |
 | `analysis`    | The ReDoS verdict of a ReDoS issue                                 |
+| `target`      | The later PHP and PCRE2 that refuse a pattern the floor accepts    |
 
 The [JSON output reference](json-output.md) lists every key of the report,
 with its type, and the rules every JSON document follows.

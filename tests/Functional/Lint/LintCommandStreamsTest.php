@@ -185,7 +185,7 @@ final class LintCommandStreamsTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format='.$format, '--jobs=1', '--no-redos']);
 
         $this->assertSame(0, $exitCode);
-        $this->assertMatchesRegularExpression('/^Target: PHP \d+\.\d+, PCRE2 [\d.]+ \(running PHP\)$/m', $stderr);
+        $this->assertMatchesRegularExpression('/^Target: PHP \d+\.\d+(\.[1-9]\d*)?, PCRE2 [\d.]+ \(running PHP\)$/m', $stderr);
         $this->assertStringContainsString('Note: No composer.json', $stderr);
         $this->assertLessThan(
             strpos($stderr, 'Target:'),

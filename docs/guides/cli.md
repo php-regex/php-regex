@@ -721,7 +721,9 @@ pattern for one target, chosen in this order:
 1. `--php-version` and `--pcre-version` on the command line;
 2. `phpVersion` and `pcreVersion` in `regex.json`;
 3. `composer.json` in the working directory: `config.platform.php` if set,
-   else the lowest version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2).
+   else the lowest version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2),
+   and then the patterns are also validated on the later PHP versions the
+   constraint allows ([Several PHP versions](#several-php-versions));
    The `COMPOSER` environment variable names another file, as it does for
    Composer;
 4. the PHP running the command.
@@ -762,6 +764,55 @@ discards stderr loses the why behind `target.source`. Two neighbouring
 surfaces keep their own spelling: the language server logs its own
 `Target: ...` line on initialization, and the Symfony and Laravel commands
 print the stderr line for the JSON format too.
+
+#### Several PHP versions
+
+A pattern valid on the lowest PHP may be refused by a later one the project
+installs on: PHP 8.5 refuses `\K` in a lookaround, which PHP 8.4 compiles.
+When the target comes from `require.php`, the command therefore also
+validates every pattern at each PHP version above the floor where a rule of
+the library changes, as long as the constraint allows it: today 8.3, 8.4,
+8.4.25, 8.5 and 8.5.10. Each is judged with the PCRE2 release it bundles, or
+with the one `--pcre-version` or `pcreVersion` names. `>=8.2 <8.5` stops at
+8.4.25, `~8.3.0` is 8.3 alone, and an open constraint such as `>=8.2` runs to
+the newest version the library knows. Each branch of an OR constraint is also
+validated at its own lowest version, which no rule change stands for:
+`~8.3.0 || >=8.5.3` is judged at 8.3, 8.5.3 and 8.5.10, and a pattern PHP 8.5
+refuses is reported "On PHP 8.5.3 and later".
+
+What runs where:
+
+- **At the floor**, everything: validation, the lint rules, the ReDoS
+  analysis and the optimizations. A pattern the floor refuses is reported
+  there, once, and not validated elsewhere.
+- **At every later version**, validation only: the pattern is parsed and
+  checked as that PHP and PCRE2 would compile it. A pattern the floor accepts
+  and a later version refuses is reported as an error naming the versions
+  that refuse it, and fails the run:
+
+```text
+  app/Example.php:3:12
+      → /(?<=a\Kb)c/
+    FAIL On PHP 8.5 and later: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
+```
+
+The console banner still names the floor. The JSON report lists every PHP and
+PCRE2 it validated at under `target.range`, and the issue carries the lowest
+one that refuses the pattern under `target`
+([JSON output](../reference/json-output.md#target-linttarget)).
+
+Every other source names one version, and only that version is judged:
+`--php-version`, `phpVersion` in `regex.json`, `config.platform.php`, and the
+running PHP. To judge one version of a project whose `require.php` spans
+several, name it:
+
+```bash
+vendor/bin/regex lint src/ --php-version=8.2
+```
+
+Symfony's and Laravel's `regex:lint` judge the same range when they read
+`composer.json`; their `php_version` setting names one version, as
+`--php-version` does.
 
 Single-pattern commands, such as `analyze` or `validate`, judge for the
 running PHP unless `--php-version` or `--pcre-version` is given; their
@@ -846,9 +897,15 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
 ```json
 {
     "target": {
-        "php": "8.4",
+        "php": "8.4.26",
         "pcre": "10.49",
-        "source": "running PHP"
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.26",
+                "pcre": "10.49"
+            }
+        ]
     },
     "stats": {
         "errors": 2,
@@ -879,7 +936,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",
                     ...
                     "validation": { ... },
-                    "analysis": null
+                    "analysis": null,
+                    "target": null
                 }
             ],
             "optimizations": []
@@ -898,7 +956,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "hint": "Attack: \"a\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). ...",
                     "source": "preg_match()",
                     "validation": null,
-                    "analysis": { ... }
+                    "analysis": { ... },
+                    "target": null
                 }
             ],
             "optimizations": []

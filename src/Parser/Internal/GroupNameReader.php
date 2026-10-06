@@ -120,6 +120,16 @@ final class GroupNameReader
         $this->namesByNumber = &$other->namesByNumber;
     }
 
+    /**
+     * The names the groups read so far were given.
+     *
+     * @return list<string>
+     */
+    public function names(): array
+    {
+        return array_keys($this->used);
+    }
+
     public function forget(): void
     {
         $this->used = [];

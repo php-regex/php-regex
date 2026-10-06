@@ -56,7 +56,7 @@ final class ProjectTargetSourcesTest extends TestCase
             [],
         );
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'php_regex.php_version'], $resolved->toArray());
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'php_regex.php_version', 'range' => [['php' => '8.3', 'pcre' => '10.42']]], $resolved->toArray());
     }
 
     #[Test]

@@ -163,10 +163,29 @@ final class ServerTargetTest extends TestCase
         $this->assertCount(1, $this->targetLogs());
     }
 
+    #[Test]
+    public function test_the_regex_the_server_was_started_with_is_logged_with_its_patch(): void
+    {
+        // One label for the PHP judged, wherever the target comes from:
+        // major.minor, and the patch when it is not 0.
+        $this->serve(['rootUri' => $this->rootUri()], regex: Regex::create(['php_version' => '8.4.25', 'pcre_version' => '10.44']));
+
+        $this->assertSame(['Target: PHP 8.4.25, PCRE2 10.44 (the Regex the server was started with)'], $this->targetLogs());
+    }
+
+    #[Test]
+    public function test_the_regex_the_server_was_started_with_is_logged_without_a_zero_patch(): void
+    {
+        $this->serve(['rootUri' => $this->rootUri()], regex: Regex::create(['php_version' => '8.2', 'pcre_version' => '10.40']));
+
+        $this->assertSame(['Target: PHP 8.2, PCRE2 10.40 (the Regex the server was started with)'], $this->targetLogs());
+        $this->assertNotSame([], $this->diagnostics(), 'PCRE2 10.40 refuses "(?a)".');
+    }
+
     /**
      * @param array<string, mixed> $initializeParams
      */
-    private function serve(array $initializeParams, int $extraDocuments = 0): void
+    private function serve(array $initializeParams, int $extraDocuments = 0, ?Regex $regex = null): void
     {
         $messages = [
             ['id' => 1, 'method' => 'initialize', 'params' => $initializeParams],
@@ -190,7 +209,7 @@ final class ServerTargetTest extends TestCase
         fwrite($input, $payload);
         rewind($input);
 
-        (new Server(null, $input))->run();
+        (new Server($regex, $input))->run();
     }
 
     /**

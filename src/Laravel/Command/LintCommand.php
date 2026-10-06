@@ -148,6 +148,7 @@ final class LintCommand extends Command
                 getenv(),
             );
             $parser = Regex::create(PHPRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
+            $range = $target->rangeParsers($parser, PHPRegexServiceProvider::regexOptions($this->laravel));
             /** @var \PHPRegex\Linter\AnalysisService $appAnalysis */
             $appAnalysis = $this->laravel->make('php-regex.analysis');
             /** @var \PHPRegex\Linter\LintService $appLint */
@@ -155,7 +156,7 @@ final class LintCommand extends Command
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, 'Invalid config/php-regex.php: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, self::INVALID);
         }
-        $analysis = $appAnalysis->withParser($parser);
+        $analysis = $appAnalysis->withParser($parser, $range);
         $lint = $appLint->withAnalysis($analysis);
 
         $this->formatterRegistry->override(

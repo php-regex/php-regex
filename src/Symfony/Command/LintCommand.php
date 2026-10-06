@@ -190,10 +190,11 @@ final class LintCommand extends Command
                 getenv(),
             );
             $parser = Regex::create($this->regexOptions + $target->regexOptions())->parser();
+            $range = $target->rangeParsers($parser, $this->regexOptions);
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);
         }
-        $analysis = $this->analysis->withParser($parser);
+        $analysis = $this->analysis->withParser($parser, $range);
         $lint = $this->lint->withAnalysis($analysis);
 
         $this->formatterRegistry->override(

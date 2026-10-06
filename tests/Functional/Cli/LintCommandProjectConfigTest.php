@@ -129,7 +129,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php'], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -142,7 +142,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src'], '8.4');
 
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'source' => '--php-version'], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'source' => '--php-version', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -156,7 +156,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'regex.json'], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'regex.json', 'range' => [['php' => '8.2', 'pcre' => '10.40']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -169,7 +169,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php'], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     /**

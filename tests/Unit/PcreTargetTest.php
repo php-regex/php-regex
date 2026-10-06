@@ -152,8 +152,17 @@ final class PcreTargetTest extends TestCase
     {
         $this->assertSame('php8.4/pcre10.44', (new PcreTarget(80400, '10.44'))->cacheKey());
         $this->assertNotSame((new PcreTarget(80400, '10.42'))->cacheKey(), (new PcreTarget(80400, '10.44'))->cacheKey());
-        // No rule depends on a PHP patch release, and "10.4" is "10.04".
+        // No parse rule depends on a PHP patch release, and "10.4" is "10.04".
         $this->assertSame((new PcreTarget(80400, '10.44'))->cacheKey(), (new PcreTarget(80426, '10.44 2024-06-07'))->cacheKey());
         $this->assertSame((new PcreTarget(80400, '10.04'))->cacheKey(), (new PcreTarget(80400, '10.4'))->cacheKey());
+    }
+
+    #[Test]
+    public function test_php_version_boundaries_list_every_version_a_verdict_may_change_at(): void
+    {
+        // The floor, the PHP versions that bundle a newer PCRE2 (8.3, 8.4),
+        // and the ones where a rule starts: \C under u refused from 8.4.25
+        // and 8.5.10, \K in a lookaround refused from 8.5.
+        $this->assertSame([80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
     }
 }

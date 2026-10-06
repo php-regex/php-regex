@@ -52,6 +52,10 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $this->assertSame(80200, $resolved->target()->phpVersionId);
         $this->assertSame('composer.json config.platform.php', $resolved->source());
         $this->assertStringContainsString('PHP 7.4', implode("\n", $resolved->notices()));
+        $this->assertSame(
+            ['composer.json config.platform.php allows PHP 7.4, older than the PHP 8.2 this library supports: judging for PHP 8.2.'],
+            $resolved->notices(),
+        );
     }
 
     #[Test]
@@ -102,8 +106,9 @@ final class ProjectTargetEdgeCasesTest extends TestCase
     {
         $resolved = ProjectTarget::resolve('8.3.7', '10.42', [], $this->makeProject(), []);
 
-        $this->assertSame('8.3', $resolved->php());
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => '--php-version; --pcre-version'], $resolved->toArray());
+        $this->assertSame('8.3.7', $resolved->php());
+        // php and the range both name the patch the flag gives.
+        $this->assertSame(['php' => '8.3.7', 'pcre' => '10.42', 'source' => '--php-version; --pcre-version', 'range' => [['php' => '8.3.7', 'pcre' => '10.42']]], $resolved->toArray());
         $this->assertSame(['php_version' => 80307, 'pcre_version' => '10.42'], $resolved->regexOptions());
     }
 

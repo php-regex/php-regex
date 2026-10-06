@@ -42,6 +42,8 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\NodeFinder;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
@@ -705,6 +707,57 @@ final class ParserTest extends TestCase
         $this->assertInstanceOf(ParserException::class, $refusal);
         $this->assertSame(ErrorCode::GroupNameUnterminated, $refusal->getErrorCode());
         $this->assertSame(4, $refusal->getPosition());
+    }
+
+    /**
+     * PCRE2 looks "R" and "R2" up in the name table before reading them as a
+     * recursion test: a group with that exact name, before or after the
+     * condition, makes it a test of that group (preg_match('/(?<R2>a)(?(R2)b|c)/',
+     * 'ab') matches "ab"; pcre2test 10.49 prints "Max back reference = 1").
+     *
+     * @param class-string<NodeInterface> $class
+     */
+    #[Test]
+    #[DataProvider('provideConditionsReadAsAName')]
+    public function test_a_recursion_condition_naming_a_group_tests_that_group(string $pattern, string $class, string $reference): void
+    {
+        // Written back, the condition reads the same ("(*pla:" is written "(?=").
+        $printed = $this->parse($pattern)->accept(new PatternPrinter());
+
+        foreach ([$pattern, $printed] as $regex) {
+            $conditionals = NodeFinder::findInstanceOf($this->parse($regex), ConditionalNode::class);
+            $this->assertCount(1, $conditionals);
+            $condition = $conditionals[0]->condition;
+
+            $this->assertInstanceOf($class, $condition, $regex);
+            $this->assertSame($reference, $condition instanceof BackrefNode ? $condition->ref : ($condition instanceof SubroutineNode ? $condition->reference : null));
+        }
+        $this->assertStringContainsString('(?('.$reference.')', $printed);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, class: class-string<NodeInterface>, reference: string}>
+     */
+    public static function provideConditionsReadAsAName(): iterable
+    {
+        yield 'a group named R2 before' => ['pattern' => '/(?<R2>a)(?(R2)b|c)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'a group named R2 after' => ['pattern' => '/(?(R2)b|c)(?<R2>a)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'a group named R' => ['pattern' => '/(?<R>a)(?(R)b|c)/', 'class' => BackrefNode::class, 'reference' => 'R'];
+        yield 'a group named R after' => ['pattern' => '/(?(R)b|c)(?<R>a)/', 'class' => BackrefNode::class, 'reference' => 'R'];
+        yield 'no group named R' => ['pattern' => '/(?(R)b|c)/', 'class' => SubroutineNode::class, 'reference' => 'R'];
+        yield 'the name wins over the number' => ['pattern' => '/(a)(?<R1>x)?(?(R1)b|c)/', 'class' => BackrefNode::class, 'reference' => 'R1'];
+        yield 'a group numbered 1, none named R1' => ['pattern' => '/(?(R1)b|c)(a)/', 'class' => SubroutineNode::class, 'reference' => 'R1'];
+        yield 'R0 named' => ['pattern' => '/(?<R0>a)(?(R0)b|c)/', 'class' => BackrefNode::class, 'reference' => 'R0'];
+        yield 'another name' => ['pattern' => '/(?<R02>a)(?(R2)b|c)()/', 'class' => SubroutineNode::class, 'reference' => 'R2'];
+        yield 'a duplicate name' => ['pattern' => '/(?J)(?:(?<R2>a)|(?<R2>b))(?(R2)c|d)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'R&name stays a recursion test' => ['pattern' => '/(?<R2>a)(?(R&R2)b|c)/', 'class' => SubroutineNode::class, 'reference' => 'R&R2'];
+        yield 'the group inside an assertion read apart' => ['pattern' => '/(*pla:(?<R2>a))(?(R2)a|c)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'the group after an assertion read apart' => ['pattern' => '/(?(R2)a|c)(*pla:(?<R2>a))/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'the condition inside an assertion read apart' => ['pattern' => '/(*pla:(?(R2)a|c))(?<R2>a)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'the condition inside an assertion read apart, the group before' => ['pattern' => '/(?<R2>a)(*pla:(?(R2)b|c))/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'the group in the first of two assertions read apart' => ['pattern' => '/(?(R2)a|c)(*pla:(?<R2>a))(*pla:b)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'the group in an assertion read apart inside another' => ['pattern' => '/(?(R2)a|c)(*pla:(*pla:(?<R2>a)))/', 'class' => BackrefNode::class, 'reference' => 'R2'];
+        yield 'an assertion read apart between the condition and the group' => ['pattern' => '/(?(R2)a|c)(*pla:b)(?<R2>a)/', 'class' => BackrefNode::class, 'reference' => 'R2'];
     }
 
     #[Test]

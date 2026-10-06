@@ -35,7 +35,7 @@ use PHPRegex\Parser\Internal\JsonEncodingFailure;
 final class JsonFormatter extends AbstractOutputFormatter
 {
     /**
-     * @param array{php: string, pcre: string, source: string}|null $target the PHP and PCRE2 the patterns were judged for, and where that came from
+     * @param array{php: string, pcre: string, source: string, range?: list<array{php: string, pcre: string}>}|null $target the PHP and PCRE2 the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
      */
     public function __construct(OutputConfiguration $config = new OutputConfiguration(), private readonly ?array $target = null)
     {
@@ -130,6 +130,9 @@ final class JsonFormatter extends AbstractOutputFormatter
             'source' => $issue['source'] ?? null,
             'validation' => $issue['validation'] ?? null,
             'analysis' => $issue['analysis'] ?? null,
+            // The PHP and PCRE2 of the range that refuse a pattern the
+            // floor accepts; null when the issue is the floor's.
+            'target' => $issue['target'] ?? null,
         ];
     }
 

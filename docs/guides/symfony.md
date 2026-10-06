@@ -80,7 +80,9 @@ supports. It picks the target in this order:
 
 1. `php_regex.php_version` and `php_regex.pcre_version`;
 2. `composer.json` in `%kernel.project_dir%`: `config.platform.php` if set,
-   else the lowest version `require.php` allows;
+   else the lowest version `require.php` allows, and then every pattern is also validated on
+   the later PHP versions the constraint allows, as
+   [the standalone command does](cli.md#several-php-versions);
 3. the PHP running the command.
 
 Each version is chosen on its own: without `pcre_version`, the lint uses the
@@ -93,7 +95,7 @@ as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "php_regex.php_version"},
+    "target": {"php": "8.2", "pcre": "10.40", "source": "php_regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0},
     "results": []
 }

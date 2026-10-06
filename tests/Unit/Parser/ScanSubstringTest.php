@@ -72,6 +72,19 @@ final class ScanSubstringTest extends TestCase
     }
 
     #[Test]
+    public function test_a_forward_relative_group_counts_the_groups_before_the_assertion(): void
+    {
+        // pcre2test 10.49: "(+1)" is group 2, "(c)"; "(+2)" is group 3,
+        // which does not exist (error 115 at offset 10).
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
+
+        $this->assertTrue($regex->validate('/(a)(*scs:(+1)b)(c)/')->isValid);
+        $refused = $regex->validate('/(a)(*scs:(+2)b)(c)/');
+        $this->assertFalse($refused->isValid);
+        $this->assertSame(10, $refused->offset);
+    }
+
+    #[Test]
     public function test_a_list_that_goes_wrong_is_refused_where_pcre2_stops(): void
     {
         // pcre2test 10.45 and 10.49.

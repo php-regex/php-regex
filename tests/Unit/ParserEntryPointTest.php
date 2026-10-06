@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPUnit\Framework\TestCase;
 
@@ -43,6 +46,21 @@ final class ParserEntryPointTest extends TestCase
         $this->assertSame('i', $ast->flags);
         $this->assertSame('#', $ast->delimiter);
         $this->assertSame(4, $ast->getEndPosition());
+    }
+
+    public function test_a_parser_read_twice_forgets_the_names_of_the_first_pattern(): void
+    {
+        // pcre2test 10.49: "(?(R2)a|c)()()" tests a recursion into group 2;
+        // the group named R2 the first pattern held is not this pattern's.
+        $parser = new TokenParser();
+        $lexer = new Lexer();
+        $parser->parse($lexer->tokenize('(*pla:(?<R2>a))'));
+
+        $ast = $parser->parse($lexer->tokenize('(?(R2)a|c)()()'));
+
+        $conditional = $ast->pattern instanceof SequenceNode ? $ast->pattern->children[0] : null;
+        $this->assertInstanceOf(ConditionalNode::class, $conditional);
+        $this->assertInstanceOf(SubroutineNode::class, $conditional->condition);
     }
 
     public function test_parser_with_custom_recursion_depth(): void

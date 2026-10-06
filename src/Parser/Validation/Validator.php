@@ -16,14 +16,16 @@ namespace PHPRegex\Parser\Validation;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
-use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\LookbehindLength;
 use PHPRegex\Parser\Internal\PcreVerb;
+use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -312,45 +314,15 @@ final class Validator extends AbstractNodeVisitor
     private ?int $startOfPatternEnd = null;
 
     /**
-     * The groups each number and each name points to, for the length of a
-     * call or a reference inside a lookbehind.
-     *
-     * @var array<int, list<GroupNode>>
+     * The capturing groups by number and by name, and where each call or
+     * reference sits in their count.
      */
-    private array $groupsByNumber = [];
+    private GroupIndex $groups;
 
     /**
-     * @var array<string, list<GroupNode>>
+     * Measures a lookbehind branch, telling the validator of what it meets.
      */
-    private array $groupsByName = [];
-
-    /**
-     * The number the next group would take where each call or reference
-     * sits, keyed by node, so "(?-1)" can be resolved.
-     *
-     * @var array<int, int>
-     */
-    private array $nextGroupNumberAt = [];
-
-    /**
-     * How many capturing groups open before each call or reference, keyed
-     * by node, for a relative one checked out of the walk's order.
-     *
-     * @var array<int, int>
-     */
-    private array $captureIndexAt = [];
-
-    private int $capturesIndexed = 0;
-
-    /**
-     * The groups a branch reset holds, by node: a back reference to one of
-     * them has no length PCRE can know in a lookbehind.
-     *
-     * @var array<int, true>
-     */
-    private array $groupsInBranchReset = [];
-
-    private bool $hasBranchReset = false;
+    private LookbehindLength $lookbehindLength;
 
     /**
      * The capturing groups around the node being visited, by node: calling
@@ -361,40 +333,6 @@ final class Validator extends AbstractNodeVisitor
     private array $enclosingGroups = [];
 
     private int $lookbehindBranchMeasures = 0;
-
-    /**
-     * The length of each group measured for a lookbehind, by node, with the
-     * groups its measure called: a group called again, from the same
-     * lookbehind or another, is not measured again while none of those is
-     * being measured where it is called.
-     *
-     * @var array<int, array{length: array{0: int, 1: int|null}, calls: array<int, true>}>
-     */
-    private array $measuredGroupLengths = [];
-
-    /**
-     * The lookbehinds measured and found sound, by node, with the groups
-     * their measure called: one inside another is measured with it, and not
-     * again when the walk reaches it, unless it calls a group around it.
-     *
-     * @var array<int, array<int, true>>
-     */
-    private array $measuredLookbehinds = [];
-
-    /**
-     * The groups the measure in progress called, by node: whether one of
-     * them is being measured is all that decides what the measure finds.
-     *
-     * @var array<int, true>
-     */
-    private array $calledWhileMeasuring = [];
-
-    /**
-     * How many times a measure called a group being measured already. A
-     * measure during which this moved is not kept: what it found depends on
-     * the groups being measured around it.
-     */
-    private int $lookbehindRecursions = 0;
 
     /**
      * Whether the walk judges the part of a pattern read before a syntax
@@ -497,6 +435,8 @@ final class Validator extends AbstractNodeVisitor
         private readonly PcreEngine $engine = new PcreEngine(),
     ) {
         $this->target = $target ?? PcreTarget::runtime();
+        $this->groups = GroupIndex::empty();
+        $this->lookbehindLength = $this->measuring($this->groups);
     }
 
     /**
@@ -722,7 +662,7 @@ final class Validator extends AbstractNodeVisitor
 
         // PCRE refuses the "\K" as it compiles the lookaround, once the whole
         // pattern is read, and reports it at the end of the pattern.
-        if ($holdsKeep && $this->target->phpVersionId >= 80500) {
+        if ($holdsKeep && $this->target->phpVersionId >= PhpVersionGates::NO_KEEP_IN_LOOKAROUND) {
             $this->raiseLateCompileError(
                 '\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.',
                 $this->patternLength - $this->positionOffset,
@@ -1643,18 +1583,10 @@ final class Validator extends AbstractNodeVisitor
         $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
-        $this->groupsByNumber = [];
-        $this->groupsByName = [];
-        $this->nextGroupNumberAt = [];
-        $this->captureIndexAt = [];
-        $this->capturesIndexed = 0;
-        $this->groupsInBranchReset = [];
-        $this->hasBranchReset = false;
         $this->enclosingGroups = [];
-        $this->measuredGroupLengths = [];
-        $this->measuredLookbehinds = [];
-        $nextGroupNumber = 1;
-        $this->indexGroups($node->pattern, $nextGroupNumber);
+        $this->groups = GroupIndex::of($node->pattern);
+        // A measure of its own: what an earlier pattern measured is gone.
+        $this->lookbehindLength = $this->measuring($this->groups);
         $this->captureSequence = $this->groupNumbering->captureSequence;
         $this->captureIndex = 0;
 
@@ -1703,7 +1635,7 @@ final class Validator extends AbstractNodeVisitor
         foreach ($groups as $group) {
             $exists = match (true) {
                 Ascii::isDigit($group) => (int) $group <= $this->groupNumbering->maxGroupNumber,
-                str_starts_with($group, '+') => ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 + (int) $group <= $this->groupNumbering->maxGroupNumber,
+                str_starts_with($group, '+') => ($this->groups->nextNumberAt($node) ?? 1) - 1 + (int) $group <= $this->groupNumbering->maxGroupNumber,
                 str_starts_with($group, '<'), str_starts_with($group, "'") => $this->groupNumbering->hasNamedGroup(substr($group, 1, -1)),
                 // A relative number back is refused as it is read.
                 default => true,
@@ -2303,24 +2235,25 @@ final class Validator extends AbstractNodeVisitor
     {
         // A group the lookbehind sits in is being measured already.
         $measuring = $expanding ?? $this->enclosingGroups;
-        if (null === $expanding) {
-            $this->calledWhileMeasuring = [];
-        }
 
         // A lookbehind measured inside another is not measured again, unless
         // it calls a group being measured here and was not there.
-        $id = spl_object_id($node);
-        $measured = $this->measuredLookbehinds[$id] ?? null;
-        if (null !== $measured && !self::callsAnyOf($measured, $measuring)) {
-            $this->calledWhileMeasuring += $measured;
+        $this->lookbehindLength->once(
+            $node,
+            $measuring,
+            null === $expanding,
+            fn () => $this->measureLookbehindBranches($node, $measuring, null === $expanding),
+        );
+    }
 
-            return;
-        }
-
-        $calledAround = $this->calledWhileMeasuring;
-        $this->calledWhileMeasuring = [];
-        $recursions = $this->lookbehindRecursions;
-
+    /**
+     * Measure each branch of a lookbehind, raising the errors PCRE raises.
+     *
+     * @param array<int, true> $measuring the groups being measured, by node
+     * @param bool             $outermost whether the lookbehind sits in no group being measured
+     */
+    private function measureLookbehindBranches(GroupNode $node, array $measuring, bool $outermost): void
+    {
         // "\X" matches a whole grapheme cluster, of no bounded length.
         if ($this->containsGraphemeCluster($node->child)) {
             $this->raiseSemanticError(
@@ -2334,12 +2267,12 @@ final class Validator extends AbstractNodeVisitor
         // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
         // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
         $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-        if (null === $expanding) {
+        if ($outermost) {
             $this->lookbehindBranchMeasures = 0;
         }
         $lengths = [];
         foreach ($branches as $branch) {
-            $length = $this->lookbehindLength($branch, $measuring);
+            $length = $this->lookbehindLength->of($branch, $measuring);
             $lengths[] = $length;
 
             // PCRE stops at the first branch it cannot bound.
@@ -2367,31 +2300,6 @@ final class Validator extends AbstractNodeVisitor
         foreach ($lengths as $length) {
             $this->validateLookbehindBranchLength($node, $length, $variable);
         }
-
-        // In a pattern with a branch reset PCRE measures again, and counts.
-        if (!$this->hasBranchReset && $recursions === $this->lookbehindRecursions) {
-            $this->measuredLookbehinds[$id] = $this->calledWhileMeasuring;
-        }
-        $this->calledWhileMeasuring += $calledAround;
-    }
-
-    /**
-     * Whether a measure that called the groups $called, none of them being
-     * measured then, would call one of $measuring: a measure that calls
-     * none holds wherever it is taken.
-     *
-     * @param array<int, true> $called
-     * @param array<int, true> $measuring
-     */
-    private static function callsAnyOf(array $called, array $measuring): bool
-    {
-        foreach (array_keys($measuring) as $group) {
-            if (isset($called[$group])) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -2400,9 +2308,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function refusesBackslashCUnderUtf(): bool
     {
-        $php = $this->target->phpVersionId;
-
-        return $php >= 80510 || ($php >= 80425 && $php < 80500);
+        return PhpVersionGates::neverBackslashCUnderUtf($this->target->phpVersionId);
     }
 
     /**
@@ -2473,107 +2379,6 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * The length range of a lookbehind branch, the way PCRE measures it: a
-     * call or a reference is as long as the group it names, a lookaround is
-     * zero-width however often it is repeated, and a call back into a group
-     * being measured has no bound.
-     *
-     * It counts the branches it measures as it goes, hence impure.
-     *
-     * @param array<int, true> $expanding the groups being measured, by node
-     *
-     * @return array{0: int, 1: int|null}
-     *
-     * @phpstan-impure
-     */
-    private function lookbehindLength(NodeInterface $node, array $expanding): array
-    {
-        if ($node instanceof SequenceNode) {
-            [$min, $max] = [0, 0];
-            foreach ($node->children as $child) {
-                [$childMin, $childMax] = $this->lookbehindLength($child, $expanding);
-                $min += $childMin;
-                $max = null === $childMax ? null : $max + $childMax;
-
-                // PCRE stops measuring at the first item it cannot bound.
-                if (null === $max) {
-                    break;
-                }
-            }
-
-            return [$min, $max];
-        }
-
-        if ($node instanceof AlternationNode || $node instanceof ConditionalNode) {
-            $alternatives = $node instanceof AlternationNode ? $node->alternatives : [$node->yes, $node->no];
-            [$min, $max] = [\PHP_INT_MAX, 0];
-            foreach ($alternatives as $alternative) {
-                [$altMin, $altMax] = $this->lookbehindLength($alternative, $expanding);
-                $min = min($min, $altMin);
-                $max = null === $altMax ? null : max($max, $altMax);
-
-                if (null === $max) {
-                    break;
-                }
-            }
-
-            return [$min, $max];
-        }
-
-        if ($node instanceof GroupNode) {
-            if ($this->isLookaround($node)) {
-                $this->validateNestedLookbehinds($node, $expanding);
-
-                return [0, 0];
-            }
-
-            $this->countLookbehindBranches($node->child);
-
-            return $this->lookbehindLength($node->child, $expanding);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            [$childMin, $childMax] = $this->lookbehindLength($node->node, $expanding);
-            [$qMin, $qMax] = $this->getQuantifierBounds($node->quantifier);
-
-            // A repeated lookahead, "(?=.)*" or "(*pla:.)+", adds nothing.
-            // Only a lookahead read directly under the quantifier does: a
-            // repeated lookbehind, a lookahead inside another group, or a
-            // repeated "(*ACCEPT)" has no bound, as PCRE measures them.
-            if ($node->node instanceof GroupNode && \in_array($node->node->type, [
-                GroupType::LookaheadPositive,
-                GroupType::LookaheadNegative,
-            ], true)) {
-                return [0, 0];
-            }
-
-            // Before PCRE2 10.43, a group of variable length stays variable
-            // even repeated zero times.
-            if (0 === $qMax && $childMin !== $childMax && !$this->supportsVariableLengthLookbehind()) {
-                return [0, $childMax];
-            }
-
-            return [$childMin * $qMin, null === $childMax || -1 === $qMax ? null : $childMax * $qMax];
-        }
-
-        if ($node instanceof DefineNode) {
-            return [0, 0];
-        }
-
-        // "\X" is a grapheme cluster of any length, here or in a group a call
-        // or a reference reaches.
-        if ($node instanceof CharTypeNode && 'X' === $node->value) {
-            return [0, null];
-        }
-
-        if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
-            return $this->referencedGroupLength($node, $expanding);
-        }
-
-        return $node->accept(new LengthRangeCalculator($this->unicodeMode));
-    }
-
-    /**
      * PCRE measures a lookbehind it meets inside the one it is measuring, and
      * those a lookahead there holds, before it goes on: the innermost one
      * that has no bound is the one reported.
@@ -2607,81 +2412,47 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<int, true> $expanding
-     *
-     * @return array{0: int, 1: int|null}
+     * The lookbehind measure, wired to the errors PCRE raises as it measures.
      */
-    private function referencedGroupLength(SubroutineNode|BackrefNode $node, array $expanding): array
+    private function measuring(GroupIndex $groups): LookbehindLength
     {
-        $groups = $node instanceof SubroutineNode ? $this->groupsCalledBy($node) : $this->groupsReferencedBy($node);
+        return new LookbehindLength(
+            $groups,
+            $this->unicodeMode,
+            $this->supportsVariableLengthLookbehind(),
+            $this->validateNestedLookbehinds(...),
+            $this->countLookbehindBranches(...),
+            $this->checkMeasuredReference(...),
+        );
+    }
 
-        // PCRE checks that the group exists as it measures the lookbehind,
-        // counting relative references from where they stand. A numbered
-        // back reference in a pattern with a branch reset it does not
-        // measure at all, unless it failed already while being read: one
-        // back past the first group, or to group zero.
+    /**
+     * PCRE checks that the group a call or a reference names exists as it
+     * measures the lookbehind, counting relative references from where they
+     * stand. A numbered back reference in a pattern with a branch reset it
+     * does not measure at all, unless it failed already while being read:
+     * one back past the first group, or to group zero.
+     *
+     * @param list<GroupNode> $groups the groups it names
+     */
+    private function checkMeasuredReference(SubroutineNode|BackrefNode $node, array $groups): void
+    {
         $unmeasured = $node instanceof BackrefNode
-            && $this->hasBranchReset
+            && $this->groups->hasBranchReset()
             && !str_starts_with($node->ref, '\\k')
             && 1 !== LibraryPcre::match('/^\\\\g[{<\']?\s*+(?:-|[+-]?0++(?!\d))/', $node->ref);
-        if ([] === $groups && !$unmeasured) {
-            $captureIndex = $this->captureIndex;
-            $this->captureIndex = $this->captureIndexAt[spl_object_id($node)] ?? $captureIndex;
-
-            try {
-                $node->accept($this);
-            } finally {
-                $this->captureIndex = $captureIndex;
-            }
+        if ([] !== $groups || $unmeasured) {
+            return;
         }
 
-        // No group, a whole-pattern recursion, or a reference to a name that
-        // several groups share: PCRE finds no bound.
-        if (1 !== \count($groups)) {
-            return [0, null];
+        $captureIndex = $this->captureIndex;
+        $this->captureIndex = $this->groups->captureIndexAt($node) ?? $captureIndex;
+
+        try {
+            $node->accept($this);
+        } finally {
+            $this->captureIndex = $captureIndex;
         }
-
-        $group = $groups[0];
-        $id = spl_object_id($group);
-        if (isset($expanding[$id])) {
-            $this->lookbehindRecursions++;
-
-            return [0, null];
-        }
-
-        // A back reference into a branch reset: PCRE cannot tell which of
-        // the groups sharing the number it points to.
-        if ($node instanceof BackrefNode && isset($this->groupsInBranchReset[$id])) {
-            return [0, null];
-        }
-
-        $this->calledWhileMeasuring[$id] = true;
-
-        // A group measured already, from this call or another, is as long
-        // here unless it calls a group being measured here: one group
-        // calling the next twice, k levels down, is measured k times, not
-        // 2^k.
-        $measured = $this->measuredGroupLengths[$id] ?? null;
-        if (null !== $measured && !self::callsAnyOf($measured['calls'], $expanding)) {
-            $this->calledWhileMeasuring += $measured['calls'];
-
-            return $measured['length'];
-        }
-
-        $this->countLookbehindBranches($group->child);
-
-        $calledAround = $this->calledWhileMeasuring;
-        $this->calledWhileMeasuring = [];
-        $recursions = $this->lookbehindRecursions;
-        $length = $this->lookbehindLength($group->child, $expanding + [$id => true]);
-
-        // In a pattern with a branch reset PCRE measures again, and counts.
-        if (!$this->hasBranchReset && $recursions === $this->lookbehindRecursions) {
-            $this->measuredGroupLengths[$id] = ['length' => $length, 'calls' => $this->calledWhileMeasuring];
-        }
-        $this->calledWhileMeasuring += $calledAround;
-
-        return $length;
     }
 
     /**
@@ -2690,136 +2461,8 @@ final class Validator extends AbstractNodeVisitor
      */
     private function countLookbehindBranches(NodeInterface $groupBody): void
     {
-        if ($this->hasBranchReset) {
+        if ($this->groups->hasBranchReset()) {
             $this->lookbehindBranchMeasures += $groupBody instanceof AlternationNode ? \count($groupBody->alternatives) : 1;
-        }
-    }
-
-    /**
-     * @return list<GroupNode>
-     */
-    private function groupsCalledBy(SubroutineNode $node): array
-    {
-        $reference = $node->reference;
-
-        if (1 === LibraryPcre::match('/^[+-]\d++$/', $reference)) {
-            $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
-            if (null === $next) {
-                // Unreachable from a parsed pattern: every call in the tree
-                // was indexed when the regex was visited. It guards a tree
-                // visited without its root.
-                return [];
-            }
-
-            $offset = (int) $reference;
-
-            // A call measures the first group bearing the number, as PCRE
-            // does in a branch reset.
-            return \array_slice($this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [], 0, 1);
-        }
-
-        if (1 === LibraryPcre::match('/^\d++$/', $reference)) {
-            return \array_slice($this->groupsByNumber[(int) $reference] ?? [], 0, 1);
-        }
-
-        // A name, called once whichever group bears it first.
-        return \array_slice($this->groupsByName[$reference] ?? [], 0, 1);
-    }
-
-    /**
-     * @return list<GroupNode>
-     */
-    private function groupsReferencedBy(BackrefNode $node): array
-    {
-        $ref = $node->ref;
-
-        if (1 === LibraryPcre::match('/^\\\\g(?:\{([+-]\d++)\}|\'([+-]\d++)\'|([+-]\d++))$/', $ref, $matches)) {
-            $next = $this->nextGroupNumberAt[spl_object_id($node)] ?? null;
-            $offset = (int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''));
-
-            if (null === $next || 0 === $offset) {
-                return [];
-            }
-
-            // "-1" is the group before the reference, "+1" the one after it.
-            return $this->groupsByNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [];
-        }
-
-        if (1 === LibraryPcre::match('/^\\\\(?:g\{(\d++)\}|g\'(\d++)\'|g?(\d++))$/', $ref, $matches)) {
-            return $this->groupsByNumber[(int) ($matches[1].($matches[2] ?? '').($matches[3] ?? ''))] ?? [];
-        }
-
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
-            return $this->groupsByName[$matches[1]] ?? [];
-        }
-
-        // Unreachable from a parsed pattern: the parser spells a reference
-        // one of the ways above. It guards a hand-built one.
-        return [];
-    }
-
-    /**
-     * Number the capturing groups as PCRE does, branch resets included, and
-     * note where each call or reference sits in that count.
-     */
-    private function indexGroups(NodeInterface $node, int &$nextGroupNumber, bool $inBranchReset = false): void
-    {
-        if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
-            $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
-            $this->captureIndexAt[spl_object_id($node)] = $this->capturesIndexed;
-
-            return;
-        }
-
-        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
-            $this->hasBranchReset = true;
-            $base = $nextGroupNumber;
-            $highest = $base;
-            $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-            foreach ($branches as $branch) {
-                $nextGroupNumber = $base;
-                $this->indexGroups($branch, $nextGroupNumber, true);
-                $highest = max($highest, $nextGroupNumber);
-            }
-            $nextGroupNumber = $highest;
-
-            return;
-        }
-
-        if ($node instanceof GroupNode) {
-            // "(*scs:(+1)...)" counts groups from where it stands.
-            if (GroupType::ScanSubstring === $node->type) {
-                $this->nextGroupNumberAt[spl_object_id($node)] = $nextGroupNumber;
-            }
-
-            if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-                $this->capturesIndexed++;
-                $this->groupsByNumber[$nextGroupNumber++][] = $node;
-                if (null !== $node->name) {
-                    $this->groupsByName[$node->name][] = $node;
-                }
-                if ($inBranchReset) {
-                    $this->groupsInBranchReset[spl_object_id($node)] = true;
-                }
-            }
-
-            $this->indexGroups($node->child, $nextGroupNumber, $inBranchReset);
-
-            return;
-        }
-
-        $children = match (true) {
-            $node instanceof SequenceNode => $node->children,
-            $node instanceof AlternationNode => $node->alternatives,
-            $node instanceof QuantifierNode => [$node->node],
-            $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
-            $node instanceof DefineNode => [$node->content],
-            $node instanceof ScriptRunNode && null !== $node->content => [$node->content],
-            default => [],
-        };
-
-        foreach ($children as $child) {
-            $this->indexGroups($child, $nextGroupNumber, $inBranchReset);
         }
     }
 
@@ -3043,7 +2686,7 @@ final class Validator extends AbstractNodeVisitor
             // Only a positive number that names no group moved in 10.47; one
             // past 65535, a forward one counted from the groups before it
             // included, is refused where it ends.
-            $number = (int) $matches[4] + ('+' === $matches[3] ? ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1 : 0);
+            $number = (int) $matches[4] + ('+' === $matches[3] ? ($this->groups->nextNumberAt($node) ?? 1) - 1 : 0);
 
             return '-' === $matches[3] || 0 === $number || $number > 65535 ? $end : $this->pastTheFault($end);
         }
@@ -3137,7 +2780,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $number = $this->digitsWithinGroupLimit($digits) < \strlen($digits) ? 65536 : (int) $digits;
         if ('+' === $sign) {
-            $number += ($this->nextGroupNumberAt[spl_object_id($node)] ?? 1) - 1;
+            $number += ($this->groups->nextNumberAt($node) ?? 1) - 1;
         }
 
         if ($number > 65535) {
@@ -4133,8 +3776,7 @@ final class Validator extends AbstractNodeVisitor
             // Off a walk, the nodes measured on an earlier visit may be gone
             // and their ids taken by others.
             if (0 === $this->lookbehindDepth) {
-                $this->measuredGroupLengths = [];
-                $this->measuredLookbehinds = [];
+                $this->lookbehindLength->forget();
             }
             $this->validateLookbehindLength($node);
 

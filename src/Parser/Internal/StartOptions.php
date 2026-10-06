@@ -64,13 +64,26 @@ final class StartOptions
     }
 
     /**
+     * Each option of the opening run, in order, as written between "(*" and
+     * ")": "UTF", "LIMIT_MATCH=10".
+     *
+     * @return list<string>
+     */
+    public static function items(string $source): array
+    {
+        $options = self::of($source);
+
+        return '' === $options ? [] : explode(')(*', substr($options, 2, -1));
+    }
+
+    /**
      * The newline convention the options set, "LF" when they set none: the
      * last of "(*CR)", "(*LF)", "(*CRLF)", "(*ANYCRLF)", "(*ANY)", "(*NUL)".
      */
     public static function newline(string $source): string
     {
         $newline = 'LF';
-        foreach (explode(')(*', substr(self::of($source), 2, -1)) as $option) {
+        foreach (self::items($source) as $option) {
             if (isset(self::NEWLINES[$option])) {
                 $newline = $option;
             }

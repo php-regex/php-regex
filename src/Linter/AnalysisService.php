@@ -15,6 +15,7 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
@@ -27,6 +28,7 @@ use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -69,6 +71,8 @@ final readonly class AnalysisService
      * @param array<string>       $ignoredPatterns
      * @param array<string>       $redosIgnoredPatterns
      * @param array<string, bool> $lintRules
+     * @param list<RegexParser>   $range                the parsers of the PHP versions after the floor a
+     *                                                  pattern is validated at too (ProjectTarget::rangeParsers())
      *
      * @throws InvalidRegexOptionException when the threshold names no severity
      */
@@ -85,6 +89,7 @@ final readonly class AnalysisService
         bool $redosEnabled = false,
         private bool $lintEnabled = true,
         private array $lintRules = [],
+        private array $range = [],
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
@@ -111,8 +116,11 @@ final readonly class AnalysisService
      * The same analysis, judging patterns with another parser: how a lint
      * command judges for the project's target with the settings of the
      * application's service.
+     *
+     * @param list<RegexParser> $range the parsers of the PHP versions after the floor a pattern is
+     *                                 validated at too (ProjectTarget::rangeParsers())
      */
-    public function withParser(RegexParser $parser): self
+    public function withParser(RegexParser $parser, array $range = []): self
     {
         return new self(
             $parser,
@@ -127,6 +135,7 @@ final readonly class AnalysisService
             RedosMode::Off !== $this->redosMode,
             $this->lintEnabled,
             $this->lintRules,
+            $range,
         );
     }
 
@@ -148,7 +157,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}}>
      */
     public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
     {
@@ -221,7 +230,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult}>
+     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}}>
      */
     private function lintChunk(array $patterns, ?callable $progress = null): array
     {
@@ -266,6 +275,27 @@ final readonly class AnalysisService
                 }
 
                 continue;
+            }
+
+            // Valid on the floor: a later PHP of the range may refuse it.
+            // The lint rules and the risk analysis still judge the floor.
+            $rangeError = $this->rangeError($occurrence);
+            if (null !== $rangeError) {
+                [$target, $refusedOn, $rangeValidation] = $rangeError;
+                $message = \sprintf('On %s: %s', $refusedOn, $rangeValidation->error ?? 'Invalid regex.');
+                $issues[] = [
+                    'type' => 'error',
+                    'file' => $occurrence->file,
+                    'line' => $occurrence->line,
+                    'column' => $this->resolveColumn($occurrence),
+                    'fileOffset' => $occurrence->fileOffset,
+                    'position' => $rangeValidation->offset,
+                    'message' => $message,
+                    'source' => $source,
+                    'validation' => $rangeValidation,
+                    'tip' => $this->getTipForValidationError($message, $occurrence->pattern, $rangeValidation),
+                    'target' => ProjectTarget::describe($target),
+                ];
             }
 
             $ast = $this->regex->parse($occurrence->pattern);
@@ -359,6 +389,46 @@ final readonly class AnalysisService
         }
 
         return $issues;
+    }
+
+    /**
+     * What the PHP versions of the range after the floor refuse in a
+     * pattern the floor accepts: the lowest target that refuses it, the
+     * versions that do ("8.5 and later"), and its verdict. Null when every
+     * one accepts it.
+     *
+     * @return array{PcreTarget, string, ValidationResult}|null
+     */
+    private function rangeError(PatternOccurrence $occurrence): ?array
+    {
+        $lowest = null;
+        $runs = [];
+        $from = null;
+        foreach ($this->range as $parser) {
+            $validation = $parser->validate($occurrence->pattern);
+            if ($validation->isValid) {
+                // Unreachable with today's rules: none stops refusing a
+                // pattern at a later PHP. It names the stretch the day one does.
+                if (null !== $from) {
+                    $runs[] = \sprintf('PHP %s and later, before %s', $from, ProjectTarget::phpLabel($parser->target()->phpVersionId));
+                    $from = null;
+                }
+
+                continue;
+            }
+
+            $lowest ??= [$parser->target(), $validation];
+            $from ??= ProjectTarget::phpLabel($parser->target()->phpVersionId);
+        }
+
+        if (null === $lowest) {
+            return null;
+        }
+        if (null !== $from) {
+            $runs[] = \sprintf('PHP %s and later', $from);
+        }
+
+        return [$lowest[0], implode('; ', $runs), $lowest[1]];
     }
 
     /**

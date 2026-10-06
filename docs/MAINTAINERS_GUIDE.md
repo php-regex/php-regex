@@ -206,9 +206,10 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
 ```json
 {
   "target": {
-    "php": "8.4",
+    "php": "8.4.26",
     "pcre": "10.49",
-    "source": "running PHP"
+    "source": "running PHP",
+    "range": [{"php": "8.4.26", "pcre": "10.49"}]
   },
   "stats": {
     "errors": 0,
@@ -241,7 +242,8 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
           "tip": null,
           "source": "preg_match()",
           "validation": null,
-          "analysis": null
+          "analysis": null,
+          "target": null
         }
       ],
       "optimizations": [
@@ -265,7 +267,7 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
 ```
 
 Notes:
-- `target` names the PHP and PCRE2 release the patterns were judged for.
+- `target` names the PHP and PCRE2 release the patterns were judged for; `target.range` lists every PHP and PCRE2 they were validated at, the floor first.
 - `stats` contains the run summary; every key is always present, `0` when there is none.
 - `results` contains one entry per pattern with something to report, sorted by file, line and column.
 - `issues` and `optimizations` are always present, empty when there is none; every issue carries every key, `null` when it does not apply.
@@ -518,6 +520,33 @@ corpus:
 ```bash
 tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
 ```
+
+## Pattern Info Next to pcre2test
+
+The exact facts of `PatternInfo` (capture count, names, max back reference,
+`\C`, the limits, the newline and `\R` conventions) are checked against what
+PCRE2 itself reports. `tests/Fixtures/PatternInfo/pcre2test.out` holds the
+`/I` output of `pcre2test` for every pattern of
+`tests/Fixtures/PatternInfo/patterns.txt`, and
+`tests/Integration/PatternInfo/PatternInfoPcre2ParityTest.php` reads it,
+block by block, in pattern order.
+
+After adding a pattern to `patterns.txt`, or to check a newer PCRE2,
+regenerate the output with a `pcre2test` binary:
+
+```bash
+php tests/Fixtures/PatternInfo/generate.php /opt/homebrew/bin/pcre2test
+```
+
+The argument is the binary to run, `pcre2test` on the `PATH` when it is left
+out. The committed output was written by PCRE2 10.49. The script turns each
+PHP modifier into the one PHP passes to PCRE2 (`u` is `utf,ucp`; `S` and `X`
+pass nothing) and compiles every pattern with `allow_lookaround_bsk`, as PHP
+8.2 to 8.4 do. It exits with 1 when a pattern has a modifier it cannot
+convert or when `pcre2test` fails; a pattern PCRE2 refuses shows as a
+`Failed:` line, which the test rejects. Every pattern of the file must compile
+on PHP 8.4. Commit `patterns.txt` and `pcre2test.out` together: the test
+fails when their counts or their order differ.
 
 ---
 

@@ -179,6 +179,24 @@ PcreFeature::ScanSubstring->release();                                   // '10.
 `pcreAtLeast('10.45')` stays for a release that comes from data; it refuses a
 release spelled short, as `'10.4'`, which would read as 10.04.
 
+### PcreTarget::phpVersionBoundaries(): list<int>
+
+The PHP versions, as `PHP_VERSION_ID`s in ascending order, at which a verdict
+of the library may change: the lowest PHP it supports, then each version that
+bundles a newer PCRE2 or where a rule changes. PHP 8.5 refuses `\K` in a
+lookaround, and stops refusing `\C` under `u` until 8.5.10:
+
+```php
+use PHPRegex\Parser\PcreTarget;
+
+PcreTarget::phpVersionBoundaries(); // [80200, 80300, 80400, 80425, 80500, 80510]
+```
+
+Judging a range of PHP versions at these points judges all of it:
+`Regex::compatibility()` and the lint range read them. The list may grow in a
+minor release, when the library learns a PHP release or a rule (see
+[Backward Compatibility](backward-compatibility.md)).
+
 ## Parsing Methods
 
 ### parsePattern(string $pattern, string $flags = '', string $delimiter = '/'): RegexNode
@@ -358,6 +376,53 @@ A static analysis extension calls `CaptureShapeAnalyzer` from `php-regex/regex-p
 [Capture Shapes](capture-shapes.md) for the facts, the flags and what a release may change.
 For the group numbers alone, branch resets and duplicate names included, see
 [Group numbers](capture-shapes.md#group-numbers).
+
+---
+
+### info(string $regex): PatternInfo
+
+Reads the facts PCRE2 computes on the compiled pattern, which PHP does not expose, with the length and the anchoring of
+what the pattern matches. The pattern is validated first at the facade's target: `info()` throws what `validate()`
+refuses, the exception `parse()` throws or a `SemanticErrorException` carrying the validation error and its code.
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$info = Regex::create()->info('/^(?<year>\d{4})-(?<month>\d\d)$/D');
+
+$info->captureCount;   // 2
+$info->names;          // ['month' => [2], 'year' => [1]]
+$info->minMatchLength; // 7
+$info->anchoredStart;  // true
+```
+
+`captureCount`, `names`, `maxBackreference`, `usesBackslashC`, `matchLimit`, `depthLimit`, `heapLimit`, `newline` and
+`bsr` equal what PCRE2 reports. `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart` and `anchoredEnd`
+are sound bounds a minor release may narrow. A static analysis extension calls `PatternInfoAnalyzer` from
+`php-regex/regex-parser` instead. See [Pattern Info](pattern-info.md) for each fact and its PCRE2 counterpart.
+
+---
+
+### compatibility(string $regex): PatternCompatibility
+
+Judges the pattern on every PHP version a rule of the library changes at, each with every PCRE2 release from 10.40 to
+the newest the library knows, whatever target the facade judges for. It never throws for the pattern: one no target
+accepts, a missing delimiter included, gets a verdict refusing it at every point.
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$compatibility = Regex::create()->compatibility('/(?<=a\Kb)c/');
+
+$compatibility->isValidEverywhere();                        // false: PHP 8.5 refuses \K in a lookaround
+$compatibility->invalidVerdicts()[0]->target->phpVersionId; // 80500
+```
+
+`verdicts()` lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
+`PcreTarget`) and its `validation` (a `ValidationResult`). `invalidVerdicts()` keeps the ones that refuse the pattern.
+Validity is not monotone, and the matrix widens when the library learns a PHP or PCRE2 release, so a minor release may
+add verdicts. `CompatibilityChecker` gives the same answer from `php-regex/regex-parser`. See
+[Pattern Info](pattern-info.md#compatibility-where-a-pattern-is-valid).
 
 ---
 
@@ -696,6 +761,8 @@ try {
 | `analyze($regex)`       | AnalysisReport          | Analysis report   |
 | `redos($regex)`         | RedosAnalysis           | ReDoS check       |
 | `captureShape($regex)`  | CaptureShape            | Shape of `$matches` |
+| `info($regex)`          | PatternInfo             | PCRE2 facts, lengths, anchors |
+| `compatibility($regex)` | PatternCompatibility    | Valid on which PHP and PCRE2 |
 | `optimize($regex)`      | OptimizationResult      | Optimize pattern  |
 | `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |

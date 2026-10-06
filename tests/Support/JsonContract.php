@@ -64,13 +64,15 @@ final class JsonContract
 
         // regex lint --format=json
         'lint' => ['target', 'stats', 'results'],
-        'lint.target' => ['php', 'pcre', 'source'],
+        'lint.target' => ['php', 'pcre', 'source', 'range'],
+        'lint.target.range[]' => ['php', 'pcre'],
         'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors'],
         'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'location', 'issues', 'optimizations'],
         'lint.results[].issues[]' => [
             'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'message', 'hint',
-            'tip', 'source', 'validation', 'analysis',
+            'tip', 'source', 'validation', 'analysis', 'target',
         ],
+        'lint.results[].issues[].target' => ['php', 'pcre'],
         'lint.results[].optimizations[]' => ['file', 'line', 'column', 'file_offset', 'optimization', 'savings', 'source'],
         'lint.results[].optimizations[].optimization' => ['original', 'optimized', 'changes'],
 

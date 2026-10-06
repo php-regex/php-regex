@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,32 @@ final class LookbehindEdgeCasesTest extends TestCase
     protected function setUp(): void
     {
         $this->regexService = Regex::create();
+    }
+
+    public function test_a_lookbehind_inside_a_called_group_calling_it_back_is_unbounded(): void
+    {
+        // The outer lookbehind measures group 1, whose lookbehind calls
+        // group 1 again: pcre2test 10.49 error 125 at offset 11, the inner
+        // lookbehind. The second pattern reaches it through a lookahead.
+        $regex = Regex::create(['cache' => null, 'pcre_version' => '10.49']);
+
+        foreach (['/(?<=(?1))(a(?<=(?1)))/' => 11, '/(?<=(?1))(a(?=(?<=(?1))))/' => 14] as $pattern => $offset) {
+            $result = $regex->validate($pattern);
+
+            $this->assertSame(ErrorCode::LookbehindUnbounded, $result->errorCode, $pattern);
+            $this->assertSame($offset, $result->offset, $pattern);
+        }
+    }
+
+    public function test_a_missing_group_met_while_measuring_leaves_later_references_counted_as_written(): void
+    {
+        // PCRE reads the whole pattern before it measures the lookbehind:
+        // "\g{-2}", one group back past the first, is the error it reports
+        // (pcre2test 10.49: error 115 at offset 14), not the call to group 3.
+        $result = Regex::create(['cache' => null, 'pcre_version' => '10.49'])->validate('/(?<=(a)(?3))\g{-2}/');
+
+        $this->assertSame(ErrorCode::BackrefRelative, $result->errorCode);
+        $this->assertSame(14, $result->offset);
     }
 
     public function test_fixed_length_literal_lookbehind(): void

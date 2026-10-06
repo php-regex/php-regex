@@ -693,6 +693,12 @@ preg_match('/(\w)\1/', 'aa', $matches);  // Match: yes
 | `yes`       | NodeInterface | Pattern if condition is true             |
 | `no`        | NodeInterface | Pattern if condition is false (optional) |
 
+A group test, `(?(1)...)` or `(?(<n>)...)`, is a `BackrefNode`; a recursion
+test, `(?(R)...)`, `(?(R2)...)` or `(?(R&n)...)`, is a `SubroutineNode`. As in
+PCRE2, `(?(R)...)` and `(?(R2)...)` test a group instead when one is named `R`
+or `R2`, before or after the condition: `/(?<R2>a)(?(R2)b|c)/` holds a
+`BackrefNode` whose `ref` is `'R2'`.
+
 **Example:**
 ```php
 use PHPRegex\Toolkit\Regex;
