@@ -33,8 +33,9 @@ final readonly class InlineFlags
     public const LETTERS = 'imsxUJnud';
 
     /**
-     * The options "^" turns off unless it lists them, as PCRE2 resets them:
-     * "(?^)" leaves ungreedy "U" and duplicate names "J" in force.
+     * The options "^" turns off unless it lists them, as PCRE2 resets them
+     * (pcre2pattern, "Internal option setting"): "(?^)" leaves ungreedy "U"
+     * and duplicate names "J" in force.
      */
     private const RESET_BY_CARET = 'imnrsx';
 

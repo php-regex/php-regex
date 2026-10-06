@@ -47,7 +47,8 @@ final class InlineFlagsTest extends TestCase
         yield 'both at once' => ['text' => 'im-sx', 'set' => 'im', 'unset' => 'sx'];
 
         // "^" turns off what it does not list among i, m, n, r, s and x; U
-        // and J stay as they are (see test_a_caret_turns_off_imnrsx_only).
+        // and J stay as they are (preg_match('/(?J)(?^)(?<d>a)(?<d>b)/', 'ab')
+        // is 1; see test_a_caret_turns_off_imnrsx_only).
         yield 'resetting the others' => ['text' => '^im', 'set' => 'im', 'unset' => 'sxn'];
         yield 'resetting everything' => ['text' => '^', 'set' => '', 'unset' => 'imsxn'];
     }
