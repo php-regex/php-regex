@@ -123,6 +123,12 @@ final class SolverInlineOptionsTest extends TestCase
         yield 'scoped i-r clears an inline r' => ['left' => '/(?r)(?i-r:k)/u', 'right' => '/[kK\x{212A}]/u', 'equivalent' => true];
         yield 'r carried into the next alternative' => ['left' => '/x(?r)|(?i)k/u', 'right' => '/x|[kK]/u', 'equivalent' => true];
         yield 'r restored at the group end' => ['left' => '/(?:x(?r)|y)(?i)k/u', 'right' => '/[xy][kK\x{212A}]/u', 'equivalent' => true];
+        // The r modifier reads as an r set at the start: "/^k$/iur" refuses
+        // the Kelvin sign, "/^(?-r)k$/iur" and "/^(?^i)k$/ur" match it.
+        yield 'r modifier' => ['left' => '/k/iur', 'right' => '/[kK]/u', 'equivalent' => true];
+        yield 'minus r clears the r modifier' => ['left' => '/(?-r)k/iur', 'right' => '/[kK\x{212A}]/u', 'equivalent' => true];
+        yield 'caret clears the r modifier' => ['left' => '/(?^i)k/ur', 'right' => '/[kK\x{212A}]/u', 'equivalent' => true];
+        yield 'r modifier is not i alone' => ['left' => '/k/iur', 'right' => '/k/iu', 'equivalent' => false];
         // Under "xx" a class skips its spaces and tabs, wherever they stand:
         // "/^(?xx)[a b]$/" and "/^(?xx:[a b])$/" refuse " ". An escaped space
         // stays: "/^(?xx)[\ a]$/" matches " ".

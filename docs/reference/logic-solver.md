@@ -334,7 +334,7 @@ verbatim:
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | a start option such as `(*CRLF)` with `$`, `\Z` or `/m` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
-| the flag `A` or `r`                        | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
+| the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
 Two refinements inside those rules:
 
@@ -507,8 +507,8 @@ Use this to surface safe failure messages in CI or tooling.
   backreferences, no recursion, no atomic or possessive construct the follower
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
-- The pattern flags `i`, `s`, `u`, `D` and `m` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` and `r` are refused, and so is a newline convention
+- The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
+  change nothing a language says. `A` is refused, and so is a newline convention
   other than `\n` where `$`, `\Z` or `/m` would read it.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.

@@ -270,8 +270,6 @@ The follow-ups are merged too: the search cost's two false positives
   next), and stays silent on `(*SKIP:n)` with no `(*MARK:n)`, which the
   engine ignores.
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
-- The automata solver refuses the `r` modifier ("Unsupported regex flags for
-  automata: r") but reads `(?r:...)`; the lint rules spell it inline.
 - The Symfony route requirement normalizer anchors and groups a requirement
   as the route compiler does, but leaves out the flags it compiles with:
   `sD`, plus `u` under the `utf8` option, after a leading `/`. A second

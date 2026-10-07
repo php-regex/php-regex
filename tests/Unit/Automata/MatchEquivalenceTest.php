@@ -131,6 +131,7 @@ final class MatchEquivalenceTest extends TestCase
         yield 'anchored' => ['left' => '/^a+$/', 'right' => '/^a(?:a*)$/', 'letters' => "a\n"];
         yield 'counted repeat' => ['left' => '/a{2,3}/', 'right' => '/aaa?/', 'letters' => 'a'];
         yield 'caseless' => ['left' => '/ab/i', 'right' => '/[aA][bB]/', 'letters' => 'abAB'];
+        yield 'caseless restricted' => ['left' => '/k/iur', 'right' => '/[kK]/u', 'letters' => 'kKa'];
         yield 'nested groups' => ['left' => '/((a)b)/', 'right' => '/((a)b)/', 'letters' => 'ab'];
         yield 'last iteration kept' => ['left' => '/(?:(a)|b)+/', 'right' => '/(?:(a)|b)+/', 'letters' => 'ab'];
         yield 'end of subject or capital Z after dollar' => ['left' => '/a$(?:\z|\Z)/', 'right' => '/a$/', 'letters' => "a\n"];
@@ -153,6 +154,8 @@ final class MatchEquivalenceTest extends TestCase
         yield 'group moves' => ['left' => '/a(b)c/', 'right' => '/(a)bc/', 'shortest' => 'abc'];
         yield 'language differs' => ['left' => '/ab/', 'right' => '/ac/', 'shortest' => 'ab'];
         yield 'empty match against none' => ['left' => '/a*/', 'right' => '/a+/', 'shortest' => ''];
+        // "/k/iu" matches the Kelvin sign, "/k/iur" does not.
+        yield 'caseless restricted or not' => ['left' => '/k/iur', 'right' => '/k/iu', 'shortest' => "\u{212A}"];
     }
 
     /**

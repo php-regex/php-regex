@@ -82,20 +82,18 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'surrogate as a range endpoint' => ['pattern' => '/[\x{D800}-\x{E000}]/u', 'expected' => $surrogate];
 
         // Oracle: preg_match('/a/A', 'ba') is 0, the anchored flag pins a
-        // search to the subject's start; preg_match('/a/r', 'a') is 1, the
-        // caseless restriction narrows what /i folds. Neither is read, so the
-        // flag check refuses them word for word.
+        // search to the subject's start. It is not read, so the flag check
+        // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
         yield 'newline convention under m' => ['pattern' => '/(*CR)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
-        yield 'r flag' => ['pattern' => '/a/r', 'expected' => 'Unsupported regex flags for automata: r.'];
     }
 
     #[Test]
     #[DataProvider('provideRefusalRows')]
     public function test_the_hir_ladder_refuses_with_one_message_per_reason(string $pattern, string $expected): void
     {
-        // A target that reads every flag of the rows below: the "r" one
-        // needs PHP 8.4 and PCRE2 10.43, whatever engine runs the suite.
+        // A target that reads every flag of the rows below, whatever engine
+        // runs the suite.
         $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
 
         $this->expectException(ComplexityException::class);

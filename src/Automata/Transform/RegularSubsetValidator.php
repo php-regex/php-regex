@@ -60,7 +60,7 @@ final class RegularSubsetValidator
     {
         $unsupported = [];
         // Flags the tree already reads, or that change nothing a language says.
-        $allowed = ['i', 's', 'u', 'D', 'm', 'x', 'U', 'n', 'J', 'S', 'X'];
+        $allowed = ['i', 's', 'u', 'D', 'm', 'x', 'U', 'n', 'J', 'S', 'X', 'r'];
         foreach (\str_split($flags) as $flag) {
             if (!\in_array($flag, $allowed, true)) {
                 $unsupported[] = $flag;

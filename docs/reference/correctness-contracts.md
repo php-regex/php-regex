@@ -104,8 +104,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Limitations:** Case-insensitive matching folds single code points, as the engine folds them: under `/iu`, `k`
   matches the Kelvin sign U+212A, `s` the long s U+017F and `å` the angstrom sign U+212B, while the Turkish dotless
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
-  modeled. The flags `i`, `s`, `u`, `D` and `m` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
-  language says. `A` and `r` are refused, and so is a start option such as `(*CRLF)` when `$`, `\Z` or `/m` would
+  modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
+  language says. `A` is refused, and so is a start option such as `(*CRLF)` when `$`, `\Z` or `/m` would
   read the newline it sets. `matchEquivalent()` reads the same flags except `m`, which it refuses.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
   as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:

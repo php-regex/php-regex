@@ -235,7 +235,7 @@ final readonly class LanguageSolver
         $ast = $this->parser()->parse($pattern);
 
         // These flags change nothing the tree does not already say.
-        $unsupported = array_diff(str_split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X']);
+        $unsupported = array_diff(str_split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X', 'r']);
         if ([] !== array_filter($unsupported, static fn (string $flag): bool => '' !== $flag)) {
             throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
         }
