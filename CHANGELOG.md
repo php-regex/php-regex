@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex.lint.quantifier.possessiveImpossible` inside a negative lookaround says the lookaround always holds, where it said the pattern can never match: `/(?!a*+a)b/` matches `b`.
 - `regex redos` with `--jit`, `--backtrack-limit`, `--recursion-limit` or `--time-limit` where `ini_set()` is disabled says the option cannot be honoured and exits with 2 (the JSON envelope, stage `usage`, under `--format=json`), where it stopped on a fatal error.
 - PCRE's limit of 250 nested parentheses applies to groups left open as well: 300 `(` are refused as nested too deeply at 251, where the unclosed group was reported at the end.
 - A quantifier past a comment, `\E` or `/x` whitespace after `\1000` (the octal `\100`, then `0`) repeats the `0` only, as PCRE2 reads it: `/^\1000(?#c)+$/` printed back as a pattern that repeated both characters.

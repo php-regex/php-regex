@@ -306,9 +306,6 @@ The follow-ups are merged too: the search cost's two false positives
   (`/(?:(?:^))a|b/` gives `^(?:(?:(?:))a|b)`, which `group.empty` reports
   next), and stays silent on `(*SKIP:n)` with no `(*MARK:n)`, which the
   engine ignores.
-- `regex.lint.quantifier.possessiveImpossible` inside a negative lookahead
-  says "the pattern can never match through here" (`/(?!a*+a)b/` matches
-  `b`): the lookahead body is dead, not the pattern.
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
 - The automata solver refuses the `r` modifier ("Unsupported regex flags for
   automata: r") but reads `(?r:...)`; the lint rules spell it inline.

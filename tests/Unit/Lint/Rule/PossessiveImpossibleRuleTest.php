@@ -138,6 +138,34 @@ final class PossessiveImpossibleRuleTest extends TestCase
         $this->assertNull($this->violation('/k*+\x{212A}/iur'));
     }
 
+    /**
+     * In a negative lookaround the dead repeat makes the lookaround hold,
+     * not the pattern fail: preg_match('/(?!a*+a)b/', 'b') is 1.
+     */
+    #[Test]
+    public function test_in_a_negative_lookaround_the_message_says_the_lookaround_always_holds(): void
+    {
+        $this->assertSame(1, preg_match('/(?!a*+a)b/', 'b'));
+
+        $violation = $this->violation('/(?!a*+a)b/');
+
+        $this->assertInstanceOf(RuleViolation::class, $violation);
+        $this->assertStringContainsString('the negative lookaround always holds', $violation->message);
+        $this->assertStringNotContainsString('the pattern can never match', $violation->message);
+    }
+
+    #[Test]
+    public function test_in_a_positive_lookaround_the_message_says_the_pattern_never_matches_there(): void
+    {
+        // preg_match('/(?=a*+a)b/', 'ab') is 0: the lookahead fails, and the pattern with it.
+        $this->assertSame(0, preg_match('/(?=a*+a)b/', 'ab'));
+
+        $violation = $this->violation('/(?=a*+a)b/');
+
+        $this->assertInstanceOf(RuleViolation::class, $violation);
+        $this->assertStringContainsString('the pattern can never match through here', $violation->message);
+    }
+
     private function violation(string $pattern): ?RuleViolation
     {
         $linter = new PatternLinter();

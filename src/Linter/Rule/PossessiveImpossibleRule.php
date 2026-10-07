@@ -106,9 +106,15 @@ final class PossessiveImpossibleRule extends AbstractLintRule
                 continue;
             }
 
+            // In a negative lookaround the dead path makes the lookaround
+            // hold: "(?!a*+a)b" matches "b".
+            $outcome = self::inNegativeLookaround($context)
+                ? 'the negative lookaround always holds'
+                : 'the pattern can never match through here';
+
             $issues[] = new RuleViolation(
                 self::ID,
-                \sprintf('"%s" never gives back a character, and takes every one "%s" could read: the pattern can never match through here.', LanguageQuestions::text($child, $context), LanguageQuestions::text($children[$nextIndex], $context)),
+                \sprintf('"%s" never gives back a character, and takes every one "%s" could read: %s.', LanguageQuestions::text($child, $context), LanguageQuestions::text($children[$nextIndex], $context), $outcome),
                 $child->getStartPosition(),
                 'Make the repeat greedy, or exclude from it what must follow.',
             );
@@ -153,6 +159,23 @@ final class PossessiveImpossibleRule extends AbstractLintRule
         $greedy = (QuantifierType::Greedy === $node->type) !== $ungreedy;
 
         return $atomic && $greedy ? $node : null;
+    }
+
+    /**
+     * Whether the nearest lookaround around the node is a negative one.
+     */
+    private static function inNegativeLookaround(LintContext $context): bool
+    {
+        foreach (array_reverse($context->parents()) as $parent) {
+            if ($parent instanceof GroupNode && \in_array($parent->type, [GroupType::LookaheadPositive, GroupType::LookbehindPositive], true)) {
+                return false;
+            }
+            if ($parent instanceof GroupNode && \in_array($parent->type, [GroupType::LookaheadNegative, GroupType::LookbehindNegative], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
