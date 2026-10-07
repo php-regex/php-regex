@@ -81,7 +81,6 @@ final readonly class SecurityAccessControlAnalyzer
             $descriptor = $this->buildDescriptor(
                 $rule,
                 $index,
-                $options,
                 $skippedRules,
                 $rulesWithAllowIf,
                 $rulesWithIps,
@@ -135,7 +134,6 @@ final readonly class SecurityAccessControlAnalyzer
                 $equivalence = $this->solver->equivalent($left['pattern'], $right['pattern'], $options);
                 $isEquivalent = $equivalence->isEquivalent;
                 $isSubset = null === $equivalence->rightOnlyExample;
-                $leftSubset = null === $equivalence->leftOnlyExample;
                 if ($isEquivalent) {
                     $equivalent++;
                 }
@@ -222,7 +220,6 @@ final readonly class SecurityAccessControlAnalyzer
     private function buildDescriptor(
         array $rule,
         int $index,
-        SolverOptions $options,
         array &$skippedRules,
         array &$rulesWithAllowIf,
         array &$rulesWithIps,
@@ -286,7 +283,6 @@ final readonly class SecurityAccessControlAnalyzer
             try {
                 $hostPattern = $this->normalizePattern($host);
             } catch (\Throwable) {
-                $hostPattern = null;
                 $hostUnsupported = true;
                 $rulesWithUnsupportedHosts[] = $index;
                 $notes[] = 'Host restrictions are not evaluated.';

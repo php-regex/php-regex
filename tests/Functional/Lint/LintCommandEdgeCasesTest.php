@@ -184,7 +184,6 @@ final class LintCommandEdgeCasesTest extends TestCase
         $output = $this->makeOutput();
 
         $exitCode = 0;
-        $buffer = '';
 
         try {
             $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([

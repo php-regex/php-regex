@@ -80,7 +80,6 @@ final class RegexFinder
         }
 
         $positionConverter = new PositionConverter($content);
-        $lastFunctionName = null;
         $expectingPattern = false;
         $afterDoubleColon = false;
 
@@ -97,7 +96,7 @@ final class RegexFinder
                 continue;
             }
 
-            [$tokenType, $tokenValue, $line] = $token;
+            [$tokenType, $tokenValue] = $token;
 
             if (\T_DOUBLE_COLON === $tokenType) {
                 $afterDoubleColon = true;
@@ -112,7 +111,6 @@ final class RegexFinder
 
             // Track function calls
             if (\T_STRING === $tokenType && \in_array($tokenValue, self::PREG_FUNCTIONS, true)) {
-                $lastFunctionName = $tokenValue;
                 $expectingPattern = true;
 
                 continue;
@@ -121,7 +119,6 @@ final class RegexFinder
             // Track wrapper calls such as Preg::match(). Reserved words are
             // valid method names, so any identifier token is considered.
             if ($isStaticMember && \in_array(strtolower($tokenValue), self::WRAPPER_METHODS, true)) {
-                $lastFunctionName = $tokenValue;
                 $expectingPattern = true;
 
                 continue;
@@ -131,7 +128,7 @@ final class RegexFinder
             if ('next_arg' === $expectingPattern && \in_array($tokenType, [\T_CONSTANT_ENCAPSED_STRING, \T_ENCAPSED_AND_WHITESPACE], true)) {
                 $pattern = $this->extractPattern($tokenValue);
                 if (null !== $pattern && $this->isValidRegexDelimiter($pattern)) {
-                    $byteOffset = $this->findByteOffset($content, $tokens, $index);
+                    $byteOffset = $this->findByteOffset($tokens, $index);
                     $startPos = $positionConverter->offsetToPosition($byteOffset);
                     $endPos = $positionConverter->offsetToPosition($byteOffset + \strlen($tokenValue));
 
@@ -208,7 +205,7 @@ final class RegexFinder
      *
      * @param array<int|string|array{int, string, int}> $tokens
      */
-    private function findByteOffset(string $content, array $tokens, int $targetIndex): int
+    private function findByteOffset(array $tokens, int $targetIndex): int
     {
         $offset = 0;
 

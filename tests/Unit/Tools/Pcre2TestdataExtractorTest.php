@@ -154,7 +154,7 @@ final class Pcre2TestdataExtractorTest extends TestCase
 
         $this->assertSame('modifier-inexpressible', $cases[0]['skipCategory']);
         $this->assertNull($cases[0]['verdict']);
-        $this->assertStringContainsString($modifier, $cases[0]['skipReason'] ?? '');
+        $this->assertStringContainsString($modifier, (string) ($cases[0]['skipReason'] ?? ''));
     }
 
     /**

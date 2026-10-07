@@ -123,7 +123,7 @@ final class ConsoleFormatterTest extends TestCase
         $formatter = new ConsoleFormatter(null, $config);
 
         $lines = [];
-        foreach ($letters as $index => $letter) {
+        foreach ($letters as $letter) {
             $lines[] = ($modified[$letter] ?? $letter).'line';
         }
         $originalLines = [];

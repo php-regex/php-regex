@@ -223,7 +223,6 @@ final class LintCommand extends Command
         }
 
         $startTime = (float) microtime(true);
-        $collectionStartTime = $startTime;
         $collectionProgress = null;
         $showProgress = self::FORMAT_CONSOLE === $format && OutputInterface::VERBOSITY_QUIET !== $output->getVerbosity();
         $collectionBar = null;

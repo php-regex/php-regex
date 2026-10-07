@@ -222,8 +222,6 @@ final class LibraryPcreTest extends TestCase
     public function test_the_limits_are_restored_when_the_call_throws(): void
     {
         [$message, $after] = self::underLimits('19', '2', static function (): array {
-            $message = null;
-
             try {
                 LibraryPcre::run(static function (): void {
                     throw new \LogicException('inside the window');

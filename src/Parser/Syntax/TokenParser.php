@@ -1635,7 +1635,6 @@ final class TokenParser
         $endPosition = $endToken->position + 1;
 
         // Parse the rest of the pattern after the verb group
-        $expr = null;
         if (!$this->stream->isAtEnd()) {
             $expr = $this->parseScopedAlternation();
         } else {

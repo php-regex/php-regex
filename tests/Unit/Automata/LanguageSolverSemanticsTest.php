@@ -71,7 +71,7 @@ final class LanguageSolverSemanticsTest extends TestCase
 
         foreach (['/^a*+a$/', '/(?>ab|a)b/', '/(?>(a+))b/'] as $pattern) {
             try {
-                $result = $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+                $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
                 $this->fail(sprintf('%s was answered as a pure language; the solver must refuse it.', $pattern));
             } catch (ComplexityException $e) {
                 $this->assertStringContainsString('pure language', $e->getMessage(), $pattern);

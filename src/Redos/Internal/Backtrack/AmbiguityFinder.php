@@ -864,7 +864,6 @@ final class AmbiguityFinder
         )), true);
         if ($same) {
             $reached = [] !== $targets;
-            $queue = [];
         }
         $queue = $starts;
         $reached ??= false;

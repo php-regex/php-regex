@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use PHPRegex\Psalm\Plugin;
 use Psalm\Config;
 use Psalm\Internal\Analyzer\IssueData;
 use Psalm\Internal\Analyzer\ProjectAnalyzer;
@@ -35,7 +36,7 @@ use Psalm\Report\ReportOptions;
  */
 final class PsalmRun
 {
-    public const PLUGIN = 'PHPRegex\\Psalm\\Plugin';
+    public const PLUGIN = Plugin::class;
 
     public const FIXTURES = __DIR__.'/Fixtures';
 

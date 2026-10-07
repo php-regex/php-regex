@@ -482,7 +482,7 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
         $prevLayout = null;
         $prevExitXAbs = 0;
 
-        foreach ($layouts as $index => $layout) {
+        foreach ($layouts as $layout) {
             $offsetY = $baselineY - (int) $layout['entryY'];
 
             $offsetLayout = $this->offsetLayout($layout, $x, $offsetY);
@@ -1308,7 +1308,7 @@ final class RailroadSvgRenderer extends AbstractNodeVisitor
             return false;
         }
 
-        [$min, $max] = $range;
+        [, $max] = $range;
 
         return null === $max;
     }

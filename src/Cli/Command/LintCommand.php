@@ -144,7 +144,6 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $exclude = $arguments->exclude;
         $minSavings = (int) $arguments->minSavings;
         $verbosity = $arguments->verbosity;
-        $quiet = $arguments->quiet;
         $checkRedos = $arguments->checkRedos;
         $checkValidation = $arguments->checkValidation;
         $checkOptimizations = $arguments->checkOptimizations;
@@ -218,7 +217,6 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         $collectionProgress = null;
         $startTime = (float) microtime(true);
-        $collectionStartTime = $startTime;
         $fileCount = 0;
 
         if ('console' === $format && $config->shouldShowProgress()) {
@@ -265,8 +263,6 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, self::FAILURE);
         }
 
-        $collectionTime = (float) microtime(true) - $collectionStartTime;
-
         if ([] === $patterns) {
             $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
             if (!$this->writeBaselineFile($arguments, $emptyReport)) {
@@ -288,7 +284,6 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         $progressCallback = null;
-        $analysisStartTime = (float) microtime(true);
         if ('console' === $format && $config->shouldShowProgress()) {
             $output->write('  '.$output->dim('[2/2] Analyzing patterns')."\n");
             $output->progressStart(\count($patterns));
@@ -300,8 +295,6 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         if (null !== $progressCallback) {
             $output->progressFinish();
         }
-
-        $analysisTime = (float) microtime(true) - $analysisStartTime;
 
         // A generated baseline must cover the FULL report, before any
         // existing baseline filters issues out — otherwise previously

@@ -138,7 +138,7 @@ final class CommandTest extends TestCase
 
         // Pattern that may cause validation error (e.g., invalid quantifier range)
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a{5,3}/']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a{5,3}/']), $output), $exitCode);
 
         $this->assertSame(1, $exitCode);
         // Check if validation error is shown
@@ -235,7 +235,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input=aaaa']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input=aaaa']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
     }
@@ -323,7 +323,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
         // Should process without error
@@ -371,7 +371,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
     }
@@ -483,7 +483,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=html']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=html']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
     }
@@ -562,7 +562,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['/a+/', '--validate']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['/a+/', '--validate']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
     }
@@ -777,7 +777,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
     }

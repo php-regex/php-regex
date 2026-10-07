@@ -76,7 +76,7 @@ final class MatchExplorer
         $previous = [$key => null];
 
         while (!$queue->isEmpty()) {
-            [$left, $right, $atStart, $key] = $queue->dequeue();
+            [$left, $right, , $key] = $queue->dequeue();
 
             if ($this->differ($left, $right, $sameShape)) {
                 return $this->subject($key, $previous);

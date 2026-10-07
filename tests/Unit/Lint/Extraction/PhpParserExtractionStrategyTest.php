@@ -30,7 +30,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $strategy = new PhpParserExtractionStrategy();
+        new PhpParserExtractionStrategy();
     }
 
     public function test_extract_with_empty_array(): void

@@ -73,7 +73,7 @@ final class ClassSetProviderCacheTest extends TestCase
     public function test_query_scans_again_after_the_engine_gave_up(): void
     {
         $raises = 0;
-        [$first, $askedFirst, $second, $askedSecond] = self::underBacktrackLimit('2', static function () use (&$raises): array {
+        $work = static function () use (&$raises): array {
             LibraryPcre::useIniSetter(static function () use (&$raises): false {
                 $raises++;
 
@@ -85,7 +85,8 @@ final class ClassSetProviderCacheTest extends TestCase
             $second = ClassSetProvider::query('[a-z]', true, '');
 
             return [$first, $askedFirst, $second, $raises - $askedFirst];
-        });
+        };
+        [$first, $askedFirst, $second, $askedSecond] = self::underBacktrackLimit('2', $work);
         $third = ClassSetProvider::query('[a-z]', true, '');
 
         $this->assertNull($first);
@@ -108,7 +109,7 @@ final class ClassSetProviderCacheTest extends TestCase
         $this->assertFalse(@preg_match('/'.$atom.'/u', ''), 'Oracle: PCRE refuses the atom.');
 
         $raises = 0;
-        [$first, $askedFirst, $second, $askedSecond, $lastError] = self::underBacktrackLimit('2', static function () use ($atom, &$raises): array {
+        $work = static function () use ($atom, &$raises): array {
             LibraryPcre::useIniSetter(static function (string $key, string $value) use (&$raises): string|false {
                 $raises++;
 
@@ -122,7 +123,8 @@ final class ClassSetProviderCacheTest extends TestCase
             $second = ClassSetProvider::query($atom, true, '');
 
             return [$first, $askedFirst, $second, $raises - $askedFirst, error_get_last()];
-        });
+        };
+        [$first, $askedFirst, $second, $askedSecond, $lastError] = self::underBacktrackLimit('2', $work);
 
         $this->assertNull($first);
         $this->assertGreaterThan(0, $askedFirst);

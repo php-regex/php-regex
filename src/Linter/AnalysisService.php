@@ -656,8 +656,8 @@ final readonly class AnalysisService
 
             if (!($payload['ok'] ?? false)) {
                 $error = $payload['error'] ?? ['message' => 'Unknown worker failure.', 'class' => \RuntimeException::class];
-                $errorClass = \is_array($error) && isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
-                $errorMessage = \is_array($error) && isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
+                $errorClass = isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
+                $errorMessage = isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
 
                 throw new LintException(\sprintf('Parallel analysis failed: %s: %s', $errorClass, $errorMessage));
             }
@@ -952,15 +952,15 @@ final readonly class AnalysisService
         }
 
         if (str_contains($message, 'Unclosed character class')) {
-            return $this->suggestCharacterClassFix($pattern, $validation);
+            return $this->suggestCharacterClassFix($pattern);
         }
 
         if (str_contains($message, 'Invalid quantifier range')) {
-            return $this->suggestQuantifierRangeFix($pattern, $validation);
+            return $this->suggestQuantifierRangeFix($pattern);
         }
 
         if (str_contains($message, 'Backreference to non-existent group')) {
-            return $this->suggestBackreferenceFix($pattern, $validation);
+            return $this->suggestBackreferenceFix($pattern);
         }
 
         if (str_contains($message, 'Lookbehind is unbounded')) {
@@ -982,8 +982,6 @@ final readonly class AnalysisService
 
         // Check if delimiter appears in content
         if (str_contains($content, $delimiter)) {
-            $escaped = preg_quote($delimiter, '/');
-
             return "Your pattern contains the delimiter '$delimiter' inside. Either escape it as \\$delimiter or use a different delimiter like #pattern#.";
         }
 
@@ -993,7 +991,7 @@ final readonly class AnalysisService
         return "Add the missing closing delimiter: $suggested";
     }
 
-    private function suggestCharacterClassFix(string $pattern, ValidationResult $validation): ?string
+    private function suggestCharacterClassFix(string $pattern): ?string
     {
         // For patterns like /[a-z/ we need to add ] before the final delimiter
         if (str_contains($pattern, '[') && !str_contains($pattern, ']')) {
@@ -1009,7 +1007,7 @@ final readonly class AnalysisService
         return null;
     }
 
-    private function suggestQuantifierRangeFix(string $pattern, ValidationResult $validation): ?string
+    private function suggestQuantifierRangeFix(string $pattern): ?string
     {
         // Look for quantifier ranges in the pattern
         if (LibraryPcre::match('/\{(\d+),(\d+)\}/', $pattern, $matches)) {
@@ -1027,7 +1025,7 @@ final readonly class AnalysisService
         return null;
     }
 
-    private function suggestBackreferenceFix(string $pattern, ValidationResult $validation): ?string
+    private function suggestBackreferenceFix(string $pattern): ?string
     {
         // Find all backreferences in the pattern
         if (LibraryPcre::matchAll('/\\\\(\d+)/', $pattern, $matches)) {

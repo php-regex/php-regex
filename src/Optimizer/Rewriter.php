@@ -169,7 +169,6 @@ final class Rewriter extends AbstractNodeVisitor
 
         $deduplicatedAlts = $this->deduplicateAlternation($optimizedAlts);
         if (\count($deduplicatedAlts) !== \count($optimizedAlts)) {
-            $hasChanged = true;
             $optimizedAlts = $deduplicatedAlts;
         }
 
@@ -177,7 +176,6 @@ final class Rewriter extends AbstractNodeVisitor
             $factoredAlts = $this->factorizeAlternation($optimizedAlts);
 
             if ($factoredAlts !== $optimizedAlts) {
-                $hasChanged = true;
                 $optimizedAlts = $factoredAlts;
             }
 

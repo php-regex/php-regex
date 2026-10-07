@@ -37,8 +37,6 @@ final class RouteControllerFileResolverTest extends TestCase
         if (!class_exists(Route::class)) {
             $this->markTestSkipped('Symfony Routing component is not available');
         }
-
-        $resolver = new RouteControllerFileResolver();
     }
 
     public function test_resolve_returns_null_when_no_controller(): void

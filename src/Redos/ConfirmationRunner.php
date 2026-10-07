@@ -147,8 +147,6 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
      */
     private function resolveBaseInput(string $regex, RedosAnalysis $analysis, ConfirmationOptions $options): array
     {
-        $flags = '';
-
         try {
             $patternInfo = DelimitedPattern::fromDelimited($regex);
             $flags = $patternInfo->flags;

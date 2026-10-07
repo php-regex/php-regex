@@ -40,7 +40,7 @@ final readonly class ConsoleStyle
             return;
         }
 
-        $this->writeTitleBlock($command, $tagline);
+        $this->writeTitleBlock($tagline);
         $this->writeRuntimeInfo($command, $meta);
         $this->output->write("\n");
     }
@@ -90,7 +90,7 @@ final readonly class ConsoleStyle
         }
     }
 
-    private function writeTitleBlock(string $command, ?string $tagline): void
+    private function writeTitleBlock(?string $tagline): void
     {
         $version = Regex::VERSION;
         $this->output->write(

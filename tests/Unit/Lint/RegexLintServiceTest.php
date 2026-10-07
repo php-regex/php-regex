@@ -26,7 +26,6 @@ use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -42,10 +41,9 @@ final class RegexLintServiceTest extends TestCase
         $this->sources = new PatternSourceCollection([]);
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $service = new LintService($this->analysis, $this->sources);
+        $this->assertInstanceOf(LintService::class, new LintService($this->analysis, $this->sources));
     }
 
     public function test_collect_patterns(): void
@@ -348,7 +346,7 @@ final class RegexLintServiceTest extends TestCase
         };
 
         $service = new LintService($this->analysis, $this->sources);
-        $result = $service->analyze($patterns, $request, $progressCallback);
+        $service->analyze($patterns, $request, $progressCallback);
 
         $this->assertGreaterThanOrEqual(0, $progressCalls); // Progress may be called during analysis
     }

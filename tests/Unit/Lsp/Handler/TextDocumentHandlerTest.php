@@ -30,7 +30,6 @@ final class TextDocumentHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->documents = new DocumentManager(new RegexFinder());
-        $handler = new TextDocumentHandler($this->documents, Regex::create());
     }
 
     #[Test]

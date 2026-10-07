@@ -75,7 +75,6 @@ final class OptimizerSafetyTest extends TestCase
     public function test_the_atomicity_marker_walk_counts_every_form(): void
     {
         $optimizer = new \ReflectionMethod(Optimizer::class, 'atomicityMarkers');
-        $on = Optimizer::class;
         $instance = (new \ReflectionClass(Optimizer::class))->newInstance(Regex::create()->parser());
 
         $this->assertSame(0, $optimizer->invoke($instance, '/(a+)b/'));

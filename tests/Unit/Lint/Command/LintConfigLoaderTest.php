@@ -27,18 +27,6 @@ final class LintConfigLoaderTest extends TestCase
         mkdir($tempDir, 0o700, true);
 
         $configPath = $tempDir.'/regex.json';
-        $config = [
-            'paths' => ['src'],
-            'exclude' => ['vendor'],
-            'jobs' => 2,
-            'minSavings' => 3,
-            'format' => 'console',
-            'rules' => [
-                'redos' => false,
-                'validation' => true,
-                'optimization' => false,
-            ],
-        ];
 
         copy(__DIR__.'/../../../Fixtures/Config/paths_config.json', $configPath);
 

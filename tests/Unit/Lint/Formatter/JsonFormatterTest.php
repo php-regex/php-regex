@@ -25,7 +25,6 @@ use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -38,10 +37,9 @@ final class JsonFormatterTest extends TestCase
         $this->formatter = new JsonFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $formatter = new JsonFormatter();
+        $this->assertInstanceOf(JsonFormatter::class, new JsonFormatter());
     }
 
     public function test_format_empty_report(): void

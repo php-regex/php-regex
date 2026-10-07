@@ -358,7 +358,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
                 return null;
             }
 
-            $parameter = null === $argument->name ? ($parameters[$position] ?? null) : $argument->name->toString();
+            $parameter = $argument->name?->toString() ?? $parameters[$position] ?? null;
             if (null === $parameter || !\in_array($parameter, $parameters, true)) {
                 return null;
             }

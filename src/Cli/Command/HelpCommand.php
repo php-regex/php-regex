@@ -271,7 +271,7 @@ final readonly class HelpCommand implements CommandInterface
         }
 
         $this->renderTextSection($output, 'Description', [$this->describe($command, $commandData['description'])]);
-        $this->renderTextSection($output, 'Usage', [$this->formatCommandUsage($output, $binary, $command, $commandData)]);
+        $this->renderTextSection($output, 'Usage', [$this->formatCommandUsage($output, $binary, $command)]);
 
         if (!empty($commandData['options'])) {
             $this->renderTableSection($output, 'Options', $commandData['options'], fn (string $value): string => $this->formatOption($output, $value));
@@ -527,10 +527,7 @@ final readonly class HelpCommand implements CommandInterface
         return $data;
     }
 
-    /**
-     * @param array{description: string, options: array<int, array{0: string, 1: string}>, notes: array<int, string>, examples: array<int, array{0: array<int, string>, 1: string}>} $commandData
-     */
-    private function formatCommandUsage(Output $output, string $binary, string $command, array $commandData): string
+    private function formatCommandUsage(Output $output, string $binary, string $command): string
     {
         $usage = $output->color($binary, Output::BLUE).' '.$output->color($command, Output::YELLOW.Output::BOLD);
 

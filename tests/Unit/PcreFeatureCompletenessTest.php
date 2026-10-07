@@ -289,7 +289,7 @@ final class PcreFeatureCompletenessTest extends TestCase
 
         foreach ($patterns as $pattern) {
             try {
-                $ast = $this->regexService->parse($pattern);
+                $this->regexService->parse($pattern);
                 $this->assertTrue(str_contains($pattern, '/x') || str_contains($pattern, '(?x:'), "Extended mode pattern should parse: {$pattern}");
             } catch (ParserException $e) {
                 $this->fail("Extended mode pattern parsing failed: {$pattern}. Error: {$e->getMessage()}");

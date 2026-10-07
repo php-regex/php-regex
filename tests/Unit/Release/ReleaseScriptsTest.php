@@ -209,7 +209,6 @@ final class ReleaseScriptsTest extends TestCase
 
         // A splitsh-lite that hands back a commit without bin/split.
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'split');
-        $split = trim($this->git('rev-parse', 'HEAD'));
         $this->git('rm', '-q', 'bin/split');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'without split');
         $split = trim($this->git('rev-parse', 'HEAD'));

@@ -454,7 +454,7 @@ final class SelfUpdaterTest extends TestCase
     public function test_run_throws_when_tempnam_fails(): void
     {
         $pharPath = $this->copyBundledPhar();
-        $checksumFile = $this->writeChecksumFile($pharPath, $pharPath);
+        $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
         $checksumTemp = sys_get_temp_dir().'/regex-update-'.bin2hex(random_bytes(4));
@@ -480,7 +480,7 @@ final class SelfUpdaterTest extends TestCase
     public function test_run_throws_when_hash_file_fails(): void
     {
         $pharPath = $this->copyBundledPhar();
-        $checksumFile = $this->writeChecksumFile($pharPath, $pharPath);
+        $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
         SelfUpdateFunctionOverrides::queueHashFile(false);
@@ -504,7 +504,7 @@ final class SelfUpdaterTest extends TestCase
     public function test_run_throws_when_checksum_mismatch_without_phar_writes(): void
     {
         $pharPath = $this->copyBundledPhar();
-        $checksumFile = $this->writeChecksumFile($pharPath, $pharPath, str_repeat('a', 64));
+        $checksumFile = $this->writeChecksumFile($pharPath, str_repeat('a', 64));
         $output = new Output(false, true);
 
         $updater = new TestableSelfUpdater(
@@ -526,7 +526,7 @@ final class SelfUpdaterTest extends TestCase
     public function test_run_throws_when_copy_fails_after_rename_failure(): void
     {
         $pharPath = $this->copyBundledPhar();
-        $checksumFile = $this->writeChecksumFile($pharPath, $pharPath);
+        $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
         SelfUpdateFunctionOverrides::queueRename(false);
@@ -551,7 +551,7 @@ final class SelfUpdaterTest extends TestCase
     public function test_run_uses_copy_when_rename_fails(): void
     {
         $pharPath = $this->copyBundledPhar();
-        $checksumFile = $this->writeChecksumFile($pharPath, $pharPath);
+        $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
         SelfUpdateFunctionOverrides::queueRename(false);
@@ -803,7 +803,7 @@ final class SelfUpdaterTest extends TestCase
         return $target;
     }
 
-    private function writeChecksumFile(string $pharPath, string $updatePath, ?string $overrideHash = null): string
+    private function writeChecksumFile(string $updatePath, ?string $overrideHash = null): string
     {
         $checksum = $overrideHash ?? hash_file('sha256', $updatePath);
         $checksumFile = sys_get_temp_dir().'/regex-checksum-'.bin2hex(random_bytes(4)).'.txt';

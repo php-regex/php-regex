@@ -19,7 +19,6 @@ use PHPRegex\Linter\Formatter\GithubFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -32,10 +31,9 @@ final class GithubFormatterTest extends TestCase
         $this->formatter = new GithubFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $formatter = new GithubFormatter();
+        $this->assertInstanceOf(GithubFormatter::class, new GithubFormatter());
     }
 
     public function test_format_empty_report(): void

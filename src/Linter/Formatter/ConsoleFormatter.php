@@ -70,7 +70,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $parts = [];
         $groupedResults = $this->groupResults($report->results);
 
-        foreach ($groupedResults as $file => $results) {
+        foreach ($groupedResults as $results) {
             /** @var array<LintResult> $results */
             foreach ($results as $result) {
                 $pattern = $this->extractPatternForResult($result);

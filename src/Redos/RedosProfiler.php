@@ -213,7 +213,6 @@ final class RedosProfiler extends AbstractNodeVisitor
 
             if ($this->hasBackrefLoop($node->node)) {
                 $this->backrefLoopDetected = true;
-                $severity = RedosSeverity::Critical;
                 $this->addVulnerability(
                     RedosSeverity::Critical,
                     'Unbounded quantifier combined with backreferences to variable-length captures can cause catastrophic backtracking.',

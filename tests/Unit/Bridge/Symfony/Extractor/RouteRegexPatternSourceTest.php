@@ -17,7 +17,6 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ResourceInterface;
@@ -39,18 +38,16 @@ final class RouteRegexPatternSourceTest extends TestCase
         SymfonyExtractorFunctionOverrides::reset();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $source = new RoutePatternSource($this->normalizer);
+        $this->assertInstanceOf(RoutePatternSource::class, new RoutePatternSource($this->normalizer));
         // Source created successfully
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct_with_router(): void
     {
         $router = $this->createStub(RouterInterface::class);
-        $source = new RoutePatternSource($this->normalizer, $router);
+        $this->assertInstanceOf(RoutePatternSource::class, new RoutePatternSource($this->normalizer, $router));
     }
 
     public function test_get_name(): void
@@ -352,13 +349,6 @@ final class RouteRegexPatternSourceTest extends TestCase
     public function test_extract_with_yaml_route_definitions(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
-        $yamlContent = <<<YAML
-            test_route:
-              path: /test/{id}/{slug}
-              requirements:
-                id: '\d+'
-                slug: '[a-z-]+'
-            YAML;
         copy(__DIR__.'/../../../../Fixtures/Symfony/yaml_content.yaml', $tempYaml);
 
         try {

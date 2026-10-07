@@ -149,8 +149,6 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Pattern: /a(b)(c)(d(e)f)/
         // Should be optimized to: /a b c d e f/ (LiteralNode)
 
-        $regex = Regex::create();
-        $ast = $regex->parse('/abc/');
         $optimizer = new Rewriter();
 
         // Simulate a more complex AST to test the merging of adjacent LiteralNodes
@@ -450,7 +448,6 @@ final class OptimizerNodeVisitorTest extends TestCase
         // Logic: (a|b)|c -> a|b|c
         // Note: parser naturally produces flat alternations for a|b|c,
         // so we force structure via groups: (a|b)|c
-        $ast = $this->regex->parse('/(a|b)|c/');
         // Optimizing once might just remove the group.
         // We are testing the logic inside visitAlternation checking instanceof AlternationNode
 

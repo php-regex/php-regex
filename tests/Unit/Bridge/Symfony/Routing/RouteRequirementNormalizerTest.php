@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class RouteRequirementNormalizerTest extends TestCase
@@ -24,12 +23,6 @@ final class RouteRequirementNormalizerTest extends TestCase
     protected function setUp(): void
     {
         $this->normalizer = new RouteRequirementNormalizer();
-    }
-
-    #[DoesNotPerformAssertions]
-    public function test_construct(): void
-    {
-        $normalizer = new RouteRequirementNormalizer();
     }
 
     public function test_normalize_already_delimited_pattern(): void
@@ -161,7 +154,6 @@ final class RouteRequirementNormalizerTest extends TestCase
     {
         // The normalizer always uses # as delimiter, regardless of what's in the pattern
         $pattern = 'test/with/slashes';
-        $expected = '#^test\/with\/slashes$#';
 
         $result = $this->normalizer->normalize($pattern);
 

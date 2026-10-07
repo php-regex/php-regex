@@ -192,7 +192,7 @@ final readonly class CompletionHandler
             return;
         }
 
-        $context = $this->getCompletionContext($content, $occurrence, $line, $character);
+        $context = $this->getCompletionContext($occurrence, $character);
         $items = $this->getCompletionItems($context);
 
         Response::success($message->id, [
@@ -206,11 +206,8 @@ final readonly class CompletionHandler
      *
      * @return array{type: string, prefix: string}
      */
-    private function getCompletionContext(string $content, RegexOccurrence $occurrence, int $line, int $character): array
+    private function getCompletionContext(RegexOccurrence $occurrence, int $character): array
     {
-        $lines = explode("\n", $content);
-        $currentLine = $lines[$line] ?? '';
-
         // Get text from pattern start to cursor
         $patternStart = $occurrence->start['character'];
         $cursorInPattern = $character - $patternStart;

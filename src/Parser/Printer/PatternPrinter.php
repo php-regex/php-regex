@@ -1216,7 +1216,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($inline), InlineFlags::LETTERS.'r');
 
-        return null === $flags ? $current : $flags->applyTo($current);
+        return $flags?->applyTo($current) ?? $current;
     }
 
     private function normalizeQuantifier(string $quantifier): string

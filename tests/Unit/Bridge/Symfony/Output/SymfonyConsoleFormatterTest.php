@@ -21,7 +21,6 @@ use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -38,14 +37,13 @@ final class SymfonyConsoleFormatterTest extends TestCase
         }
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $this->assertInstanceOf(SymfonyConsoleFormatter::class, new SymfonyConsoleFormatter($analysis, $linkFormatter));
     }
 
     public function test_format_empty_report(): void

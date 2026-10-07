@@ -133,7 +133,7 @@ final class RegexAnalysisServiceTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_construct_with_ignore_parse_errors(): void
     {
-        $analysis = new AnalysisService(
+        new AnalysisService(
             RegexParser::create(),
             null,
             50,
@@ -699,14 +699,11 @@ final class RegexAnalysisServiceTest extends TestCase
 
     public function test_validation_tip_helpers_return_null_for_valid_cases(): void
     {
-        $validation = new ValidationResult(false, 'Unclosed character class', 0, null, 0);
-        $this->assertNull($this->invokePrivate('suggestCharacterClassFix', '/[a-z]/', $validation));
+        $this->assertNull($this->invokePrivate('suggestCharacterClassFix', '/[a-z]/'));
 
-        $validation = new ValidationResult(false, 'Invalid quantifier range', 0, null, 0);
-        $this->assertNull($this->invokePrivate('suggestQuantifierRangeFix', '/a{1,2}/', $validation));
+        $this->assertNull($this->invokePrivate('suggestQuantifierRangeFix', '/a{1,2}/'));
 
-        $validation = new ValidationResult(false, 'Backreference to non-existent group', 0, null, 0);
-        $this->assertNull($this->invokePrivate('suggestBackreferenceFix', '/(a)\\1/', $validation));
+        $this->assertNull($this->invokePrivate('suggestBackreferenceFix', '/(a)\\1/'));
 
         $validation = new ValidationResult(false, 'Lookbehind is unbounded', 0, null, 0);
         $this->assertNull($this->invokePrivate('suggestLookbehindFix', '/abc/', $validation));

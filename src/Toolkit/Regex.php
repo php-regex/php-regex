@@ -408,7 +408,6 @@ final readonly class Regex
         // the JIT, which crashes PHP on some pattern and subject pairs.
         // Only a pattern this PHP cannot compile gets a sample nothing checks.
         $compiles = null === $this->engine->compile($regex);
-        $sample = '';
         $attempts = [];
         $gaveUp = 0;
         $engineError = '';

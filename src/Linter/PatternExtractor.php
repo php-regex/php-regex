@@ -178,8 +178,8 @@ final readonly class PatternExtractor
 
             if (!($payload['ok'] ?? false)) {
                 $error = $payload['error'] ?? ['message' => 'Unknown worker failure.', 'class' => \RuntimeException::class];
-                $errorClass = \is_array($error) && isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
-                $errorMessage = \is_array($error) && isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
+                $errorClass = isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
+                $errorMessage = isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
 
                 throw new LintException(\sprintf('Parallel collection failed: %s: %s', $errorClass, $errorMessage));
             }

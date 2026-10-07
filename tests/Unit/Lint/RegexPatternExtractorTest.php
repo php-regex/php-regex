@@ -239,7 +239,7 @@ final class RegexPatternExtractorTest extends TestCase
     public function test_write_worker_payload_creates_serialized_file(): void
     {
         $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
-        $payload = ['ok' => true, 'result' => ['test']];
+        $payload = ['ok' => true];
 
         (new ForkedWorkerPool())->runChild(static fn (): array => ['test'], $tmpFile);
 
@@ -465,9 +465,6 @@ final class RegexPatternExtractorTest extends TestCase
     {
         $path1 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
         $path2 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-
-        $occ1 = new PatternOccurrence('/a+/', 'a.php', 1, 'preg_match');
-        $occ2 = new PatternOccurrence('/b+/', 'b.php', 2, 'preg_match');
 
         copy(__DIR__.'/../../Fixtures/Lint/occ_a_payload.txt', $path1);
         copy(__DIR__.'/../../Fixtures/Lint/occ_b_payload.txt', $path2);

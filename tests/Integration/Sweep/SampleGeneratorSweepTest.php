@@ -275,7 +275,7 @@ final class SampleGeneratorSweepTest extends TestCase
     {
         $this->sampleVisitor->setSeed(12345);
         $ast = $this->regexService->parse('/[a-z]+/');
-        $sample1 = $ast->accept($this->sampleVisitor);
+        $ast->accept($this->sampleVisitor);
 
         $this->sampleVisitor->resetSeed();
         $sample2 = $ast->accept($this->sampleVisitor);

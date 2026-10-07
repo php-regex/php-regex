@@ -16,16 +16,14 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class RegexPatternSourceCollectionTest extends TestCase
 {
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
         $sources = [];
-        $collection = new PatternSourceCollection($sources);
+        $this->assertInstanceOf(PatternSourceCollection::class, new PatternSourceCollection($sources));
     }
 
     public function test_collect_with_empty_sources(): void

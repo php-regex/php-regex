@@ -20,7 +20,6 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleFormatterTest extends TestCase
@@ -32,24 +31,21 @@ final class ConsoleFormatterTest extends TestCase
         $this->formatter = new ConsoleFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $formatter = new ConsoleFormatter();
+        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter());
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct_with_config(): void
     {
         $config = new OutputConfiguration(ansi: false);
-        $formatter = new ConsoleFormatter(config: $config);
+        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter(config: $config));
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct_with_analysis_service(): void
     {
         // Since AnalysisService is final, we test with null
-        $formatter = new ConsoleFormatter(null);
+        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter(null));
     }
 
     public function test_format_empty_report(): void

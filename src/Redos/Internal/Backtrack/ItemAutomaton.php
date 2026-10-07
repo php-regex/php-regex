@@ -560,7 +560,7 @@ final class ItemAutomaton
                     [$set, $allowsEnd] = Pnfa::PEEK === $pnfa->kinds[$current]
                         ? [$pnfa->sets[$current], $pnfa->ends[$current]]
                         : $this->boundary($pnfa->negated[$current], self::CONTEXT_WORD === $context);
-                    $narrowed = null === $peek ? $set : $peek->intersect($set);
+                    $narrowed = $peek?->intersect($set) ?? $set;
                     $endAllowed = $end && $allowsEnd;
                     if (!$narrowed->isEmpty() || $endAllowed) {
                         $stack[] = [$pnfa->next[$current], $narrowed, $endAllowed, $entered, $undecided, $edge];
@@ -702,7 +702,7 @@ final class ItemAutomaton
         $key = match (true) {
             $whole => 'S'.$state.'|'.$tail,
             null !== $label => $state.'|'.$label->key().'|'.$tail,
-            default => 'F|'.(null === $peek ? '*' : $peek->key()).'|'.($end ? '1' : '0'),
+            default => 'F|'.($peek?->key() ?? '*').'|'.($end ? '1' : '0'),
         };
 
         if (isset($this->ids[$key])) {

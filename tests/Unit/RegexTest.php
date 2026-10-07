@@ -206,7 +206,6 @@ final class RegexTest extends TestCase
         $report = $this->regexService->analyze('/a+/');
         $this->assertIsBool($report->isValid);
         $this->assertIsArray($report->errors());
-        $redos = $report->redos();
     }
 
     public function test_analyze_method_with_invalid_regex(): void

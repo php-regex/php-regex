@@ -150,8 +150,6 @@ final class LinterNodeVisitorEdgeCasesTest extends TestCase
 
     public function test_lint_redundant_char_class_handles_ranges_and_literals(): void
     {
-        $linter = new PatternLinter();
-
         $parts = [
             new LiteralNode('c', 0, 0),
             new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('f', 0, 0), 0, 0),

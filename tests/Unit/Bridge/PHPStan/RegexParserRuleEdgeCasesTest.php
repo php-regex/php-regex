@@ -24,6 +24,7 @@ use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\CollectedDataEmitter;
+use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
@@ -53,7 +54,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_returns_empty_for_unknown_function(): void
     {
         $rule = new RegexPatternRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
         $node = new FuncCall(new Name('strlen'), []);
@@ -65,7 +66,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_returns_empty_for_non_name_function(): void
     {
         $rule = new RegexPatternRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
         $node = new FuncCall(new Variable('preg_match'), []);
@@ -76,7 +77,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_returns_empty_when_pattern_arg_missing(): void
     {
         $rule = new RegexPatternRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
         $node = new FuncCall(new Name('preg_match'), []);
@@ -87,7 +88,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_ignores_non_array_callback_patterns(): void
     {
         $rule = new RegexPatternRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
         $node = new FuncCall(new Name('preg_replace_callback_array'), [
@@ -100,7 +101,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_skips_non_string_callback_keys(): void
     {
         $rule = new RegexPatternRule();
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
 
         $array = new Array_([
@@ -117,7 +118,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
     public function test_process_node_continues_after_non_string_callback_keys(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
 
@@ -503,7 +504,7 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
      */
     private function errorsFor(RegexPatternRule $rule, string $pattern, int $line): array
     {
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
         // The subject is a variable PHPStan knows as a string: it may vary.

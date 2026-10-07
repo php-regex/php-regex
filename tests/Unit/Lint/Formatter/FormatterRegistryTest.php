@@ -43,7 +43,7 @@ final class FormatterRegistryTest extends TestCase
     #[DoesNotPerformAssertions]
     public function test_get_returns_registered_formatter(): void
     {
-        $formatter = $this->registry->get('console');
+        $this->registry->get('console');
     }
 
     public function test_get_throws_exception_for_unknown_formatter(): void

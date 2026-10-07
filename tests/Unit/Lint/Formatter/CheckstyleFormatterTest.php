@@ -18,7 +18,6 @@ use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class CheckstyleFormatterTest extends TestCase
@@ -30,10 +29,9 @@ final class CheckstyleFormatterTest extends TestCase
         $this->formatter = new CheckstyleFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $formatter = new CheckstyleFormatter();
+        $this->assertInstanceOf(CheckstyleFormatter::class, new CheckstyleFormatter());
     }
 
     public function test_format_empty_report(): void

@@ -18,7 +18,6 @@ use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\JunitFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class JunitFormatterTest extends TestCase
@@ -30,10 +29,9 @@ final class JunitFormatterTest extends TestCase
         $this->formatter = new JunitFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $formatter = new JunitFormatter();
+        $this->assertInstanceOf(JunitFormatter::class, new JunitFormatter());
     }
 
     public function test_format_empty_report(): void

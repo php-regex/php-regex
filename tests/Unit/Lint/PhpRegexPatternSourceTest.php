@@ -17,7 +17,6 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class PhpRegexPatternSourceTest extends TestCase
@@ -29,10 +28,9 @@ final class PhpRegexPatternSourceTest extends TestCase
         $this->extractor = new PatternExtractor($this->createStub(ExtractorInterface::class));
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
-        $source = new PhpFilePatternSource($this->extractor);
+        $this->assertInstanceOf(PhpFilePatternSource::class, new PhpFilePatternSource($this->extractor));
     }
 
     public function test_get_name(): void

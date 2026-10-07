@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\Formatter\AbstractOutputFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\LintReport;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class AbstractOutputFormatterTest extends TestCase
@@ -28,13 +27,9 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->formatter = new TestableAbstractOutputFormatter();
     }
 
-    #[DoesNotPerformAssertions]
     public function test_construct_with_default_config(): void
     {
-        $formatter = new TestableAbstractOutputFormatter();
-
-        // Test that config is properly initialized
-        $config = $formatter->getConfig();
+        $this->assertInstanceOf(TestableAbstractOutputFormatter::class, new TestableAbstractOutputFormatter());
     }
 
     public function test_construct_with_custom_config(): void

@@ -313,7 +313,6 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $defaultMode = RedosMode::tryFrom($defaults['redosMode']) ?? RedosMode::Theoretical;
         }
         $redosMode = $defaultMode;
-        $redosModeExplicit = false;
 
         // Use config defaults for redosThreshold
         $redosThreshold = null;

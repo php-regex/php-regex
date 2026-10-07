@@ -981,8 +981,6 @@ final class Validator extends AbstractNodeVisitor
 
         $ref = $node->ref;
 
-        $suggestions = $this->getNameSuggestions($ref);
-
         // Fast path for numeric backreferences
         if (LibraryPcre::match('/^\\\\(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
