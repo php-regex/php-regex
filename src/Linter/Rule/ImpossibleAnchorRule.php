@@ -17,6 +17,7 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -280,6 +281,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     {
         $multiline = str_contains($flags, 'm');
         $dotAll = str_contains($flags, 's');
+
+        // The checks below know the "\n" newline only: under "(*CR)",
+        // "(*CRLF)" and the like the rule says nothing.
+        if ('LF' !== StartOptions::newline($context->pattern->source)) {
+            return true;
+        }
 
         if ($anchor instanceof AssertionNode) {
             if ('z' === $anchor->value) {

@@ -127,10 +127,10 @@ host `setlocale()` can rebuild PCRE's case tables.
   inline or start-of-pattern option makes the rewrite change the matches
   (`/(*CR)[0-9][0-9]a.*\n/x`): the `/x` path skips the atomicity check, and
   the rewriter ignores the newline convention.
-- `regex.lint.anchor.impossible.end` reads `$`, `\Z` and `^` under `/m` as if
-  the newline were always `\n`: six false warnings under `(*CR)`, `(*CRLF)`,
-  `(*NUL)`, `(*ANY)` and `(*ANYCRLF)`, and `/(*CR)a$\n/` (impossible) is
-  missed.
+- `regex.lint.anchor.impossible.end` says nothing under a newline convention
+  other than LF, where it gave false warnings: `/(*CR)a$\n/`, which never
+  matches, is still missed. Reading `\r` and `\r\n` as the newline there
+  would report it.
 - A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
   whole before extraction, which double-encodes its UTF-8 patterns. It also
   shifts `column` and `file_offset` and changes `pattern` in the JSON report
