@@ -200,8 +200,7 @@ host `setlocale()` can rebuild PCRE's case tables.
   (`/[a(?-1)/` at 7, PCRE "range out of order" at 6).
 - More error order off PCRE's (library vs PCRE2 10.49): 251 closed nested
   groups then `[` give the unclosed class at the end (PCRE "parentheses are
-  too deeply nested" at 251); `/\g{-1/` is
-  `regex.backref.invalid_syntax` at 5 (PCRE "non-existent subpattern" at 2).
+  too deeply nested" at 251).
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch

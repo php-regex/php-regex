@@ -125,6 +125,33 @@ final class RelativeConditionReferenceTest extends TestCase
         yield 'python spelling' => ['pattern' => '/(?<n>a)(?P<n/', 'offset' => 12];
     }
 
+    /**
+     * "\g{-n" with no "}": PCRE2 counts back over the open groups first and
+     * refuses a count past them on the "{" (error 115); within them, it
+     * wants the "}" (error 219).
+     */
+    #[Test]
+    #[DataProvider('provideUnclosedBackwardReferences')]
+    public function test_an_unclosed_backward_reference_is_refused_as_pcre_reads_it(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideUnclosedBackwardReferences(): iterable
+    {
+        yield 'no group open' => ['pattern' => '/\g{-1/', 'offset' => 2];
+        yield 'past the one group open' => ['pattern' => '/(a)\g{-2/', 'offset' => 5];
+        yield 'within the groups, the brace is due' => ['pattern' => '/(a)\g{-1/', 'offset' => 8];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {

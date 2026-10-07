@@ -1291,6 +1291,14 @@ final class TokenParser
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
+        // "\g{-2" with fewer groups open: PCRE counts back first and refuses
+        // the reference on its "{", before it looks for the "}".
+        if (1 === LibraryPcre::match('/\G\\\\g\{[ \t]*+-(\d++)/', $this->pattern, $back, 0, $token->position) && (int) $back[1] > $this->captureCount) {
+            $position = $token->position + 2;
+
+            throw $this->parserException(\sprintf('Backreference relative reference -%s is outside the range of available capture groups.', $back[1]), ErrorCode::BackrefRelative, $position);
+        }
+
         $position = $this->gReferenceErrorOffset($token->position);
         $code = $this->gReferenceErrorCode($token->position, $position);
 
