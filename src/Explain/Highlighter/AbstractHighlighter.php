@@ -15,6 +15,7 @@ namespace PHPRegex\Explain\Highlighter;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -298,8 +299,12 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
     #[\Override]
     public function visitComment(CommentNode $node): string
     {
+        // A byte-mode comment may hold bytes that are no UTF-8: spelled, which
+        // a comment reads the same.
+        $comment = mb_check_encoding($node->comment, 'UTF-8') ? $node->comment : DisplayEscaper::escapeText($node->comment);
+
         return $this->wrap('(?#', 'meta')
-            .$this->wrap($this->escape($node->comment), 'comment')
+            .$this->wrap($this->escape($comment), 'comment')
             .$this->wrap(')', 'meta');
     }
 

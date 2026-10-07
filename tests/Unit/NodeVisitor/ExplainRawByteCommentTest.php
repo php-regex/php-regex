@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,6 +43,18 @@ final class ExplainRawByteCommentTest extends TestCase
 
         $this->assertTrue(mb_check_encoding($html, 'UTF-8'));
         $this->assertStringContainsString('\xE1', $html);
+    }
+
+    #[Test]
+    public function test_the_highlighters_spell_a_raw_byte_of_a_comment(): void
+    {
+        $ast = Regex::create(['cache' => null])->parse("/a(?#\xE1)b/");
+
+        foreach ([new ConsoleHighlighter(), new HtmlHighlighter()] as $highlighter) {
+            $highlighted = $ast->accept($highlighter);
+            $this->assertTrue(mb_check_encoding($highlighted, 'UTF-8'), $highlighter::class);
+            $this->assertStringContainsString('\xE1', $highlighted, $highlighter::class);
+        }
     }
 
     #[Test]

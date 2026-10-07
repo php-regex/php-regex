@@ -150,9 +150,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   at a low `memory_limit` (6 MB, `--jobs=1`) the JSON report reads
   `results: []` with exit 0, a clean run that is not one. A skipped file should
   be reported.
-- The text of a comment reaches the highlighters as raw bytes: a byte-mode
-  comment that is not valid UTF-8 (`/a(?#\xE1)b/`) is written as is.
-  `explain()` (text and HTML) spells such bytes `\xHH`.
 - Printer round trips that change the meaning:
   - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
     `x`, so the NEL becomes whitespace;
