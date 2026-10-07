@@ -175,6 +175,9 @@ final class RelativeConditionReferenceTest extends TestCase
     {
         yield 'space then a letter' => ['pattern' => '/\k{a b}/', 'offset' => 5];
         yield 'space before the name, never closed' => ['pattern' => '/\k{ a/', 'offset' => 5];
+        // A "(" after a called name: PCRE2 stops past it (error 217).
+        yield 'call followed by a group' => ['pattern' => '/(?&a(?:z)/', 'offset' => 5];
+        yield 'python call followed by a group' => ['pattern' => '/(?P>a(?:z)/', 'offset' => 6];
     }
 
     #[Test]

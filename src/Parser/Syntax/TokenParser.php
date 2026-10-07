@@ -3667,6 +3667,13 @@ final class TokenParser
             return $this->parserException(\sprintf('Invalid subroutine name "%s" at position %d: a group name must not start with a digit.', $name, $position), ErrorCode::GroupNameInvalid, $position);
         }
 
+        // A "(" after the name: PCRE stops past it, a name or number expected.
+        if (str_starts_with($found, '(')) {
+            $position = $this->pastTheFault($position + 1);
+
+            return $this->parserException(\sprintf('Unexpected "(" after the subroutine name at position %d: a group name or number is expected.', $position), ErrorCode::GroupNameExpected, $position);
+        }
+
         return $this->parserException(\sprintf('Unexpected token "%s" after the subroutine name at position %d: ")" is expected to close the call.', $found, $position), ErrorCode::GroupUnclosed, $position);
     }
 
