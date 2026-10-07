@@ -197,8 +197,7 @@ host `setlocale()` can rebuild PCRE's case tables.
   "parentheses are too deeply nested" at 251.
 - Error order, still off PCRE's (each a library offset vs PCRE2 10.49):
   an error in a class left open at the end is lost to the unclosed class
-  (`/[a(?-1)/` at 7, PCRE "range out of order" at 6); `/a{3,2}(?#c)+/`
-  at 10 (PCRE 5).
+  (`/[a(?-1)/` at 7, PCRE "range out of order" at 6).
 - More error order off PCRE's (library vs PCRE2 10.49): 251 closed nested
   groups then `[` give the unclosed class at the end (PCRE "parentheses are
   too deeply nested" at 251); a callout number above 255 in a condition,

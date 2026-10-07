@@ -1828,6 +1828,12 @@ final class Validator extends AbstractNodeVisitor
         // A lazy or possessive quantifier ends with one more character.
         $suffix = QuantifierType::Greedy === $node->type ? 0 : 1;
         $braceStart = $node->getEndPosition() - $suffix - \strlen($node->quantifier);
+        // A comment may stand between the count and its "+" or "?": the
+        // count is found in the source, past the item it repeats.
+        $written = null === $this->source ? false : strpos($this->source, $node->quantifier, $node->node->getEndPosition());
+        if (false !== $written && $written < $braceStart) {
+            $braceStart = $written;
+        }
 
         if (1 !== LibraryPcre::match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
             return [$node->startPosition, $node->startPosition];
