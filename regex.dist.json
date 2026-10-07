@@ -7,7 +7,9 @@
         "vendor",
         "tests",
         "Tests",
-        "Fixtures"
+        "Fixtures",
+        "src/test/resources",
+        "sonar-php/its"
     ],
     "extraction": {
         "interop": [
