@@ -32,6 +32,12 @@ final class DfaCacheKeyVersionTest extends TestCase
     #[Test]
     public function test_a_dfa_stored_under_the_key_of_an_older_version_is_not_reused(): void
     {
+        // The class sets the solve reads are measured on the engine running
+        // the suite: one without the ASCII options cannot judge this key.
+        if (false === @preg_match('/(?aD)\d/u', '')) {
+            $this->markTestSkipped('The engine does not read the ASCII options (PCRE2 '.\PCRE_VERSION.').');
+        }
+
         $options = new SolverOptions();
         // A target that reads the ASCII options of "/(?aD)": PCRE2 takes
         // them from 10.43, whatever engine runs the suite.
@@ -76,6 +82,12 @@ final class DfaCacheKeyVersionTest extends TestCase
     #[Test]
     public function test_the_same_version_reuses_its_own_dfa(): void
     {
+        // The class sets the solve reads are measured on the engine running
+        // the suite: one without the ASCII options cannot judge this key.
+        if (false === @preg_match('/(?aD)\d/u', '')) {
+            $this->markTestSkipped('The engine does not read the ASCII options (PCRE2 '.\PCRE_VERSION.').');
+        }
+
         $cache = new class implements DfaCacheInterface {
             /**
              * @var array<string, Dfa>

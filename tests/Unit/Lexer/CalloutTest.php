@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
@@ -74,6 +75,13 @@ final class CalloutTest extends TestCase
     #[DataProvider('provideUnclosedCallouts')]
     public function test_validate_refuses_an_unclosed_callout_where_pcre_does(string $pattern, int $offset): void
     {
+        // The offset PCRE reports for a callout run it never closes moved
+        // with the releases: the row below is verified against 10.45 and
+        // later.
+        if ('/(?C(?C/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
         $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
 

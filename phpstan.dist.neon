@@ -74,6 +74,10 @@ parameters:
             - regexp.pattern
           paths:
             - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
+            - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
+            - tests/Unit/Hir/ClassSetProviderCacheTest.php
+            - tests/Unit/Internal/InlineFlagsTest.php
+            - tests/Unit/Internal/StartOptionsTest.php
             - tests/Unit/NodeVisitor/CasingSettingsTest.php
             - tests/Unit/NodeVisitor/ExtendedCharClassDisplayTest.php
             - tests/Unit/NodeVisitor/SampleGeneratorEndAnchorTest.php
@@ -81,6 +85,7 @@ parameters:
             - tests/Unit/Parser/ExtendedCharClassTest.php
             - tests/Unit/Parser/GroupNameLengthReleaseTest.php
             - tests/Unit/Parser/ScanSubstringTest.php
+            - tests/Unit/ReDoS/Proven/RedosInlineOptionsTest.php
         # Two tests hand preg_match() flags outside its stub on purpose: a bit
         # PHP refuses (PREG_SET_ORDER and the like) and one it ignores (1024).
         - message: '#^Parameter \#4 \$flags of function preg_match expects #'

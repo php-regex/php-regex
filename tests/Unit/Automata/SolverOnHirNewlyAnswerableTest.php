@@ -45,8 +45,13 @@ final class SolverOnHirNewlyAnswerableTest extends TestCase
         ?string $witnessSide,
     ): void {
         // A target that reads the rows below, the extended classes among
-        // them (PCRE2 10.45), whatever engine runs the suite.
+        // them (PCRE2 10.45), whatever engine runs the suite. The class sets
+        // are still measured on that engine: a row holding an extended class
+        // is judged only where the engine reads one.
         $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.45']));
+        if (str_contains($left, '(?[') && false === @preg_match($left, '')) {
+            $this->markTestSkipped(\sprintf('%s does not run on PCRE2 %s.', $left, \PCRE_VERSION));
+        }
 
         try {
             $result = $solver->equivalent($left, $right, $this->fullMatchOptions());
