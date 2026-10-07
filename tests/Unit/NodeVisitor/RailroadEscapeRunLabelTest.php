@@ -36,6 +36,11 @@ final class RailroadEscapeRunLabelTest extends TestCase
     #[DataProvider('provideRuns')]
     public function test_railroad_run_label_reads_back_as_the_run(string $pattern, string $flags, string $subject): void
     {
+        // White space inside braces, which the engine refuses before PCRE2 10.43.
+        if (false === @preg_match($pattern, '')) {
+            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: the pattern matches the subject.');
 
         $label = $this->label($pattern);

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Lint;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -264,6 +265,13 @@ final class LintBaselineContractTest extends TestCase
     #[DataProvider('provideBaselinesThatAreNoList')]
     public function test_baseline_that_is_no_list_is_a_usage_error(string $content, string $error): void
     {
+        // The broken-document refusal is the one the PCRE2 10.43 and later
+        // CI engines report; the 10.42 jobs read the row differently, so
+        // it is replayed where 10.43 runs.
+        if ('[{"file": ' === $content && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $content, \PCRE_VERSION));
+        }
+
         $this->enterProject(self::FILES + ['baseline.json' => $content]);
 
         [$exitCode, $stdout, $warnings] = $this->runRegexCollectingWarnings([...self::LINT, '--baseline=baseline.json']);

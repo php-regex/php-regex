@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -59,6 +60,14 @@ final class PsalmPluginTargetTest extends TestCase
     #[DataProvider('provideTargets')]
     public function test_plugin_judges_for_the_target(string $phpVersion, array $options, array $reported, array $narrowed): void
     {
+        // Judged as "runtime", the row also reports what the running engine
+        // refuses: "(?aD)" needs PCRE2 10.43, and where the engine cannot
+        // read it the plugin reports it as invalid. The row is replayed
+        // where 10.43 runs.
+        if (isset($options['phpVersion']) && 'runtime' === $options['phpVersion'] && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', self::ASCII, \PCRE_VERSION));
+        }
+
         $issues = PsalmRun::inFile(PsalmRun::issues([self::FILE], $phpVersion, $options), self::FILE);
 
         $found = [];

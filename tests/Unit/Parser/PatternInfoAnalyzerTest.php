@@ -17,6 +17,7 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\NewlineConvention;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -246,6 +247,11 @@ final class PatternInfoAnalyzerTest extends TestCase
     #[DataProvider('provideMatchLengthSubjects')]
     public function test_match_length_holds_every_match_the_engine_finds(string $pattern, array $subjects): void
     {
+        // The engine refuses "\K" inside a lookbehind before PCRE2 10.43.
+        if ('/(?<=a\Kb)c/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $info = $this->info($pattern);
         $flags = substr($pattern, (int) strrpos($pattern, '/') + 1);
         $characters = str_contains($flags, 'u') || str_starts_with($pattern, '/(*UTF)');

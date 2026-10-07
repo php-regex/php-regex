@@ -19,6 +19,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +44,9 @@ final class SolverOnHirNewlyAnswerableTest extends TestCase
         bool $expectedEquivalent,
         ?string $witnessSide,
     ): void {
-        $solver = new LanguageSolver();
+        // A target that reads the rows below, the extended classes among
+        // them (PCRE2 10.45), whatever engine runs the suite.
+        $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.45']));
 
         try {
             $result = $solver->equivalent($left, $right, $this->fullMatchOptions());

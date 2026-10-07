@@ -76,7 +76,10 @@ final class CaptureShapeParityReportTest extends TypeInferenceTestCase
             $this->assertArrayHasKey($lines[$index], $inferred, 'No type gathered for '.$case['pattern']);
             $phpstanText = $inferred[$lines[$index]];
             $phpstan = $resolver->resolve($phpstanText);
-            $phpregexText = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($case['pattern']))->matchShape($case['flags']);
+            // A fixed target, as the digests are read with one: the shapes
+            // this report compares must not change with the PCRE2 running
+            // the tests.
+            $phpregexText = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($case['pattern']))->matchShape($case['flags']);
             $phpregex = $resolver->resolve($phpregexText);
 
             $rows[] = $case + [

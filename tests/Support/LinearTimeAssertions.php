@@ -29,7 +29,11 @@ trait LinearTimeAssertions
      */
     private function assertLinearTime(\Closure $read, int $size, string $what, float $maxRatio = 3.0): void
     {
-        $budget = 1.0;
+        // The sizes above are chosen to stay well under a second on a dev
+        // machine; a loaded laptop or a two-core CI runner reads them two to
+        // three times slower, so the budget only bounds a runaway read. The
+        // ratio below is what catches a quadratic one.
+        $budget = 3.0;
 
         $small = self::bestTime($read, $size);
         $this->assertLessThan($budget, $small, \sprintf('%s x %d: %.3f s.', $what, $size, $small));
@@ -37,8 +41,9 @@ trait LinearTimeAssertions
         $large = self::bestTime($read, 2 * $size);
         $this->assertLessThan($budget, $large, \sprintf('%s x %d: %.3f s, %.3f s for half as many.', $what, 2 * $size, $large, $small));
 
-        // Below a few milliseconds the clock says more than the reading.
-        if ($large >= 0.02) {
+        // Below a few milliseconds the clock says more than the reading, so
+        // the ratio is read only when BOTH readings are above the noise.
+        if ($small >= 0.02 && $large >= 0.02) {
             $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: %.3f s for %d units, %.3f s for %d.', $what, $small, $size, $large, 2 * $size));
         }
     }

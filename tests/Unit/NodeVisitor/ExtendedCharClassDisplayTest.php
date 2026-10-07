@@ -103,7 +103,14 @@ final class ExtendedCharClassDisplayTest extends TestCase
     #[DataProvider('provideLayoutsTheEngineCouldNotSplit')]
     public function test_the_highlight_keeps_the_layout_the_engine_could_not_split(NodeVisitorInterface $highlighter, string $expected): void
     {
-        $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse('/(?[ [a] & ( [b] | ![c] ) ])/');
+        $pattern = '/(?[ [a] & ( [b] | ![c] ) ])/';
+        // Where the engine refuses the extended class outright, it cannot
+        // give up splitting it half-way: there is no layout to keep.
+        if (false === @preg_match($pattern, '')) {
+            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
+        }
+
+        $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
         $saved = ['pcre.jit' => ini_get('pcre.jit'), 'pcre.backtrack_limit' => ini_get('pcre.backtrack_limit')];
         LibraryPcre::useIniSetter(static fn (): false => false);
 

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
@@ -97,6 +98,10 @@ final class QuantifiedMultibyteLiteralTest extends TestCase
     #[DataProvider('provideStackedQuantifiers')]
     public function test_a_quantifier_stacked_on_a_quantified_multibyte_character_is_refused(string $pattern, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
         $this->assertSame(['message' => 'quantifier does not follow a repeatable item', 'offset' => $offset], $pcre, 'Oracle: '.$pattern);
 

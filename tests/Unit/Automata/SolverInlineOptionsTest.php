@@ -72,6 +72,11 @@ final class SolverInlineOptionsTest extends TestCase
     #[DataProvider('provideEquivalenceRows')]
     public function test_inline_options_change_equivalence_as_the_engine_does(string $left, string $right, bool $equivalent): void
     {
+        // An extended class, "(?[ ])", is PCRE2 10.45.
+        if (str_contains($left, '(?[') && false === @preg_match($left, '')) {
+            $this->markTestSkipped(\sprintf('%s does not run on PCRE2 %s.', $left, \PCRE_VERSION));
+        }
+
         if (!self::compilesHere($left) || !self::compilesHere($right)) {
             return;
         }

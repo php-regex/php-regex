@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
@@ -374,6 +375,12 @@ final class RedosSoundnessFuzzTest extends TestCase
     #[Test]
     public function test_inline_option_family_covers_every_letter_and_position(): void
     {
+        // The family covers every letter only on PCRE2 10.43 and later:
+        // before that the engine refuses "(?r)" and the ASCII options.
+        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('The inline option family is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', \PCRE_VERSION));
+        }
+
         $entries = $this->inlineOptionPatterns();
         $modern = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
 

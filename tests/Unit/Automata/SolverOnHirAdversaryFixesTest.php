@@ -187,6 +187,12 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
     #[Test]
     public function test_the_inline_caseless_restrict_is_read(): void
     {
+        // The oracle probes below need an engine that reads "r" (PHP 8.4,
+        // PCRE2 10.43); where it does not, there is nothing to read.
+        if (false === @preg_match('/^(?ri)k$/u', '')) {
+            $this->markTestSkipped('The engine does not read the inline caseless restrict (PCRE2 '.\PCRE_VERSION.').');
+        }
+
         $solver = new LanguageSolver();
 
         $this->assertTrue((bool) @\preg_match('/^(?ri)k$/u', 'k'));

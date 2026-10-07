@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -93,7 +94,9 @@ final class SolverOnHirRefusalsTest extends TestCase
     #[DataProvider('provideRefusalRows')]
     public function test_the_hir_ladder_refuses_with_one_message_per_reason(string $pattern, string $expected): void
     {
-        $solver = new LanguageSolver();
+        // A target that reads every flag of the rows below: the "r" one
+        // needs PHP 8.4 and PCRE2 10.43, whatever engine runs the suite.
+        $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessage($expected);

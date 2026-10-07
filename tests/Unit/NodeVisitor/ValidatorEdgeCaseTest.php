@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
@@ -203,6 +204,10 @@ final class ValidatorEdgeCaseTest extends TestCase
     #[DataProvider('provideControlEscapesBeforeAPosixOpener')]
     public function test_a_posix_opener_after_a_control_backslash_is_no_quoted_text(string $pattern, ErrorCode $code, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertRefusedAsPcreRefuses($pattern, $code, $offset);
     }
 
@@ -229,6 +234,10 @@ final class ValidatorEdgeCaseTest extends TestCase
     #[DataProvider('provideClassErrorsBeforeAnUnclosedGroupAtTheEnd')]
     public function test_validate_reports_a_class_error_before_an_unclosed_group_ending_on_the_class(string $pattern, ErrorCode $code, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertRefusedAsPcreRefuses($pattern, $code, $offset);
     }
 

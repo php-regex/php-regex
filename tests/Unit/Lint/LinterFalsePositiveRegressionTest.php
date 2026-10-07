@@ -70,8 +70,10 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     #[DataProvider('provideConditionalBranchesKeepFlagsUseful')]
     public function test_conditional_branches_keep_flags_useful(string $pattern, string $ruleId): void
     {
+        // A target that reads the rows below, the extended classes among
+        // them (PCRE2 10.45), whatever engine runs the suite.
         $visitor = new PatternLinter();
-        Regex::create()->parse($pattern)->accept($visitor);
+        Regex::create(['php_version' => '8.4', 'pcre_version' => '10.45'])->parse($pattern)->accept($visitor);
 
         $issueIds = array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues());
 

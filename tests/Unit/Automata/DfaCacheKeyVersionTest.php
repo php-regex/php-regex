@@ -33,7 +33,9 @@ final class DfaCacheKeyVersionTest extends TestCase
     public function test_a_dfa_stored_under_the_key_of_an_older_version_is_not_reused(): void
     {
         $options = new SolverOptions();
-        $solver = new LanguageSolver();
+        // A target that reads the ASCII options of "/(?aD)": PCRE2 takes
+        // them from 10.43, whatever engine runs the suite.
+        $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
 
         // What an older version stored for "/(?aD)\d/u": the DFA of "\d",
         // the reading before the ASCII options were modelled.
@@ -64,7 +66,7 @@ final class DfaCacheKeyVersionTest extends TestCase
         $legacyKey = self::legacyKey('/(?aD)\d/u', $options);
         $cache->entries[$legacyKey] = $stale;
 
-        $compiled = (new LanguageSolver(dfaCache: $cache))->compile('/(?aD)\d/u', $options);
+        $compiled = (new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']), dfaCache: $cache))->compile('/(?aD)\d/u', $options);
 
         $this->assertNotSame($stale, $compiled, 'The DFA an older version stored answered for this one.');
         $this->assertNotContains($legacyKey, $cache->asked);
@@ -93,10 +95,10 @@ final class DfaCacheKeyVersionTest extends TestCase
                 $this->writes++;
             }
         };
-        $solver = new LanguageSolver(dfaCache: $cache);
+        $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']), dfaCache: $cache);
 
         $first = $solver->compile('/(?aD)\d/u');
-        $second = (new LanguageSolver(dfaCache: $cache))->compile('/(?aD)\d/u');
+        $second = (new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']), dfaCache: $cache))->compile('/(?aD)\d/u');
 
         $this->assertSame($first, $second);
         $this->assertSame(1, $cache->writes);

@@ -17,6 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +48,11 @@ final class BraceCountWhitespaceTest extends TestCase
     #[DataProvider('providePaddedCounts')]
     public function test_spaces_and_tabs_still_pad_a_count(string $pattern): void
     {
+        // Before PCRE2 10.43 the braces are text: the count does not pad.
+        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertSame(1, preg_match($pattern, 'aa'), $pattern);
 
         $sequence = RegexParser::create()->parse($pattern)->pattern;

@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
@@ -104,6 +105,10 @@ final class QuoteModeTest extends TestCase
             $this->assertTrue($result->isValid, \sprintf('%s: %s', $pattern, (string) $result->error));
 
             return;
+        }
+
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
         }
 
         $pcre = PcreMessageCodes::read($warning ?? 'compiles');

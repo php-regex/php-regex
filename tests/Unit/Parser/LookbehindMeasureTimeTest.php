@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
@@ -178,6 +179,18 @@ final class LookbehindMeasureTimeTest extends TestCase
     #[DataProvider('provideKeptMeasuresCallingAGroupBeingMeasured')]
     public function test_validate_measures_again_a_kept_measure_that_calls_a_group_being_measured(string $pattern, int $offset): void
     {
+        // What the engine says of a kept measure that calls a group being
+        // measured changed at PCRE2 10.43: before that, another error, at
+        // another offset.
+        if (\in_array($pattern, [
+            '/(?<=(?1))(a(?2))(c(?(?<=b(?1))x))/',
+            '/(?<=(?1))((?3)(?<!a))()((?(?<!(?1))a))/',
+            '/(?<=(?1))(a(?2))(c(?(?C1)(?<=(?1))x))/',
+            '/(?<=(?1))(a(?2))(c(?(?=(?<=(?1)))x))/',
+        ], true) && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
         $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
         $allowed = PcreMessageCodes::CODES[$pcre['message']];

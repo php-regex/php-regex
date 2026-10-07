@@ -21,8 +21,10 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,6 +40,35 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlphaAssertionBodyTest extends TestCase
 {
+    use LinearTimeAssertions;
+
+    /**
+     * The rows below hold what PCRE2 10.45 reports: the POSIX-class and
+     * property errors inside a body and a stacked quantifier there, the
+     * extended class "(?[...])" and a malformed property under x, the run
+     * of two unclosed properties, and "(*scs:" — that release moved their
+     * message or offset, and an older engine reports them differently.
+     * They are replayed where 10.45 runs.
+     */
+    private const VERDICTS_OF_10_45 = [
+        '/(*pla:[[::])])/',
+        '/(*pla:[[:foo:]]))/',
+        '/(*pla:[[:foo:]])a)/',
+        '/(*pla:[[:foo:]])/',
+        '/(?*[[:foo:]])a)/',
+        '/(*pla:(*pla:[[::])]))/',
+        '/(*nla:[[::])])/',
+        '/(*atomic:[[::])])/',
+        '/(?=[[::])])/',
+        '/(*pla:\\p{a)b\\p{L}/',
+        '/(?=\\p{a)b\\p{L}/',
+        '/(*pla:a{2}{2})b)/',
+        '/(*pla:(?x)(?[ [a] # ]))/',
+        '/(*pla:(?x)[\\p{]#}])/',
+        '/a\\P{x\\p{y/',
+        '(?(*scs:(1)a',
+    ];
+
     /**
      * @param list<string> $subjects
      */
@@ -287,6 +318,8 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideUnclosedPropertiesOutsideABody')]
     public function test_validate_refuses_an_unclosed_property_outside_a_body_where_pcre_does(string $pattern, int $offset): void
     {
+        self::skipWhenTheEngineReportsItDifferently($pattern);
+
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
         $this->assertSame($offset, Regex::create(['cache' => null])->validate($pattern)->offset, $pattern);
     }
@@ -311,6 +344,8 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodyItemsReadAsAnywhere')]
     public function test_validate_reads_each_body_item_as_the_lexer_does_anywhere(string $pattern, ?int $offset): void
     {
+        self::skipWhenTheEngineReportsItDifferently($pattern);
+
         $this->assertSame(null === $offset, false !== @preg_match($pattern, ''), \sprintf('Oracle: %s.', $pattern));
 
         $result = Regex::create(['cache' => null])->validate($pattern);
@@ -740,6 +775,8 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesReadInPlaceToTheEnd')]
     public function test_validate_reports_an_error_inside_a_body_as_pcre_does(string $pattern, ErrorCode $code, int $offset): void
     {
+        self::skipWhenTheEngineReportsItDifferently($pattern);
+
         $pcre = self::pcreError($pattern);
         $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
         $this->assertContains($code->value, PcreMessageCodes::CODES[$pcre['message']] ?? [], \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
@@ -1150,6 +1187,8 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesTheLexerDoesNotRead')]
     public function test_tokenize_refuses_a_body_pcre_does_not_read_where_pcre_does(string $pattern, ErrorCode $code, int $offset, array $tokens): void
     {
+        self::skipWhenTheEngineReportsItDifferently($pattern);
+
         $pcre = self::pcreError('/'.$pattern.'/');
         $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
         if ('10.49' === self::runningRelease()) {
@@ -1354,6 +1393,17 @@ final class AlphaAssertionBodyTest extends TestCase
     }
 
     /**
+     * A row whose verdict the engine changed in PCRE2 10.45 is replayed
+     * where that release runs: an older one reports it differently.
+     */
+    private static function skipWhenTheEngineReportsItDifferently(string $pattern): void
+    {
+        if (\in_array($pattern, self::VERDICTS_OF_10_45, true) && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            self::markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+    }
+
+    /**
      * PCRE's message and offset for a pattern it refuses.
      *
      * @return array{message: string, offset: int|null}
@@ -1361,48 +1411,6 @@ final class AlphaAssertionBodyTest extends TestCase
     private static function pcreError(string $pattern): array
     {
         return PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
-    }
-
-    /**
-     * Reads $size units then twice as many, and asserts each read takes
-     * less than the budget and the larger one less than three times the
-     * smaller. Each size is timed at its best of three runs while it stays
-     * short, so a pause of the machine does not count.
-     *
-     * @param \Closure(int): void $read
-     */
-    private function assertLinearTime(\Closure $read, int $size, string $what): void
-    {
-        $budget = 1.0;
-
-        $small = self::bestTime($read, $size);
-        $this->assertLessThan($budget, $small, \sprintf('%s x %d: %.3f s.', $what, $size, $small));
-
-        $large = self::bestTime($read, 2 * $size);
-        $this->assertLessThan($budget, $large, \sprintf('%s x %d: %.3f s, %.3f s for half as many.', $what, 2 * $size, $large, $small));
-
-        // Below a few milliseconds the clock says more than the reading.
-        if ($large >= 0.02) {
-            $this->assertLessThan(3.0, $large / $small, \sprintf('%s: %.3f s for %d units, %.3f s for %d.', $what, $small, $size, $large, 2 * $size));
-        }
-    }
-
-    /**
-     * The best of three readings: a busy machine or a coverage driver slows
-     * one reading down, rarely all three.
-     *
-     * @param \Closure(int): void $read
-     */
-    private static function bestTime(\Closure $read, int $size): float
-    {
-        $best = \INF;
-        for ($run = 0; $run < 3; $run++) {
-            $start = hrtime(true);
-            $read($size);
-            $best = min($best, (hrtime(true) - $start) / 1e9);
-        }
-
-        return $best;
     }
 
     /**

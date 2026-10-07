@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -53,6 +54,10 @@ final class StartOptionsTest extends TestCase
     #[DataProvider('provideStartOptions')]
     public function test_of_reads_every_start_option_pcre_accepts(string $options): void
     {
+        if ((str_contains($options, 'CASELESS_RESTRICT') || str_contains($options, 'TURKISH_CASING')) && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $options, \PCRE_VERSION));
+        }
+
         // Oracle: PHP's PCRE compiles the option and matches past it.
         $this->assertSame(1, preg_match('/'.$options.'a/', 'a'));
 
@@ -75,6 +80,10 @@ final class StartOptionsTest extends TestCase
     #[DataProvider('provideNewlinesAfterACasingSetting')]
     public function test_newline_reads_past_a_casing_setting(string $source): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $source, \PCRE_VERSION));
+        }
+
         $dotOnNewline = substr($source, 0, -1).'^.$';
         $this->assertSame(1, preg_match('/'.$dotOnNewline.'/', "\n"));
         $this->assertSame(0, preg_match('/^.$/', "\n"));
@@ -89,6 +98,10 @@ final class StartOptionsTest extends TestCase
     #[Test]
     public function test_utf_after_turkish_casing_turns_utf_on(): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', '(*TURKISH_CASING)(*UTF)', \PCRE_VERSION));
+        }
+
         $this->assertSame(1, preg_match('/(*TURKISH_CASING)(*UTF)^.$/', 'é'));
 
         $this->assertTrue(StartOptions::turnUtfOn('(*TURKISH_CASING)(*UTF)a'));

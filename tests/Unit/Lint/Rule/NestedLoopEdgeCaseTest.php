@@ -230,6 +230,12 @@ final class NestedLoopEdgeCaseTest extends TestCase
     #[DataProvider('provideSeparatorsTheDotMayTake')]
     public function test_a_separator_the_dot_may_take_does_not_keep_the_iterations_apart(string $pattern, string $unit, bool $reported): void
     {
+        // A row only a newer engine can run — "(*CASELESS_RESTRICT)" is
+        // PCRE2 10.43 — has no oracle steps where that engine refuses it.
+        if (false === @preg_match($pattern, '')) {
+            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
+        }
+
         $short = self::steps($pattern, self::repeatUnit($unit, 6).'!');
         $long = self::steps($pattern, self::repeatUnit($unit, 12).'!');
         $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));

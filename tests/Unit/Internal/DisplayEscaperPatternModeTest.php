@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -536,6 +537,29 @@ final class DisplayEscaperPatternModeTest extends TestCase
     #[DataProvider('provideReadBackPatterns')]
     public function test_escape_shown_form_matches_as_the_original(string $pattern, array $subjects): void
     {
+        // A tab inside braces pads a count or an escape operand only from
+        // PCRE2 10.43, and inside a class "\k{...}" reads as the letter only
+        // from 10.45; before that the engine reports the braces as text.
+        $verifiedAgainst = match ($pattern) {
+            "/a{2,\t3}/",
+            "/\\x{\t41}/",
+            "/\\x{41\t}/",
+            "/\\o{\t101}/",
+            "/(a)\\g{\t1}/",
+            "/(a)\\g{1\t}/",
+            "/(?<n>a)\\k{\tn}/" => '10.43',
+            "/[a\\k{\t}]/" => '10.45',
+            default => null,
+        };
+        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
+            $this->markTestSkipped(sprintf(
+                '%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.',
+                $pattern,
+                $verifiedAgainst,
+                \PCRE_VERSION,
+            ));
+        }
+
         $shown = DisplayEscaper::escape($pattern);
 
         foreach ($subjects as $subject) {

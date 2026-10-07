@@ -38,6 +38,8 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_every_subject_matches(string $source, string $pattern, array $subjects): void
     {
+        self::skipWhenTheEngineCannotRun($pattern, $source);
+
         foreach ($subjects as $subject) {
             $this->assertSame(1, @preg_match($pattern, $subject), \sprintf('%s (%s) does not match %s: the row is wrong.', $pattern, $source, json_encode($subject)));
         }
@@ -50,7 +52,9 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_shape_holds_every_engine_result(string $source, string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        self::skipWhenTheEngineCannotRun($pattern, $source);
+
+        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
         $failures = [];
@@ -101,7 +105,9 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_match_all_shape_holds_every_engine_result(string $source, string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        self::skipWhenTheEngineCannotRun($pattern, $source);
+
+        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $replayed = EngineMatches::matchAllSubjects($pattern, $subjects);
 
@@ -156,7 +162,9 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_callback_receives_the_match_shape(string $source, string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        self::skipWhenTheEngineCannotRun($pattern, $source);
+
+        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $replayed = array_values(array_unique([implode('', $subjects), ...$subjects]));
 
@@ -257,7 +265,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_shape_is_the_type_phpstan_prints(string $source, string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
         $differences = [];
@@ -282,5 +290,26 @@ final class CaptureShapeParityTest extends PHPStanTestCase
         foreach (EngineMatches::corpus() as $row) {
             yield $row['pattern'] => $row;
         }
+    }
+
+    /**
+     * The corpus holds rows only a newer engine can run — the "r" flag needs
+     * PHP 8.4 and PCRE2 10.43 — and a pattern the running engine refuses has
+     * no engine result to hold: the row is replayed where it compiles.
+     */
+    private static function skipWhenTheEngineCannotRun(string $pattern, string $source): void
+    {
+        if (false === @preg_match($pattern, '')) {
+            self::markTestSkipped(\sprintf('%s (%s) does not run on PCRE2 %s.', $pattern, $source, \PCRE_VERSION));
+        }
+    }
+
+    /**
+     * A fixed target, as the digests are read with one: the shapes this
+     * parity holds must not change with the PCRE2 running the tests.
+     */
+    private static function parityParser(): RegexParser
+    {
+        return RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']);
     }
 }
