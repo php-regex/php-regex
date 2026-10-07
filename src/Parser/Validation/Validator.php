@@ -2359,7 +2359,8 @@ final class Validator extends AbstractNodeVisitor
         // max_lookbehind_length, which stands for PCRE2's max_varlookbehind.
         if (!$variable && $max > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
             $this->raiseSemanticError(
-                \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (length=%d).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $max),
+                // Past PHP_INT_MAX the count is a float, which %d would wrap.
+                \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (%s).', self::MAX_FIXED_LOOKBEHIND_LENGTH, \is_int($max) ? 'length='.$max : 'length over '.\PHP_INT_MAX),
                 $this->lookbehindErrorPosition($node),
                 ErrorCode::LookbehindTooLong,
                 'Shorten the lookbehind.',
