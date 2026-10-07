@@ -372,6 +372,21 @@ lint JSON key is snake_case.
   their one-second cap; they pass with `XDEBUG_MODE=off`.
 - `LintCommandBaselineFormatTest` prints the console banner into the PHPUnit
   output (the forked lint workers seem to flush the output buffer on exit).
+- Under `x` without `u`, PCRE2 skips byte 0x85 inside a raw multibyte literal
+  (`/Å/x` matches `"\xC3"`), but the lexer keeps it; pcre2test gives the last
+  code unit `\xc3`.
+- The parser accepts `/(?u)a+b/` and the ReDoS analysis calls it safe
+  (proven), but PCRE2 refuses to compile it.
+- The last code unit is not read through `(*ACCEPT)` inside `DEFINE` or a
+  one-branch conditional (`/x(?(DEFINE)(*ACCEPT))b/`); unreachable today.
+- `(*UCP)` without `u`: `/(*UCP)xk/i` gives the last code unit `k`, where
+  pcre2test gives none; unreachable today.
+- Under `u`, a class of POSIX classes covering everything
+  (`/[[:^alpha:][:alpha:]]*\d$/u`) is undecided, so the quadratic search is
+  missed (1.35 s at n = 20,000).
+- `\P{ ^any}` (a space before the `^`, PCRE2 10.45 and later) reaches the
+  ReDoS analysis as `\p{^ ^any}`, an unsupported property: not analyzed,
+  where PCRE2 reads `\p{Any}`.
 
 ### Upstream, the maintainer's call
 

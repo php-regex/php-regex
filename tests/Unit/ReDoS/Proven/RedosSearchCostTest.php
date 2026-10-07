@@ -151,6 +151,10 @@ final class RedosSearchCostTest extends TestCase
         yield 'dot loop with a lower bound' => ['pattern' => '/.+;/'];
         yield 'leading [\s\S]* under u before a whitespace loop' => ['pattern' => '/[\s\S]*\s+/u'];
         yield 'leading [\p{Any}]* in one alternative only' => ['pattern' => '/(?:[\p{Any}]*|y)\d$/u'];
+        // A negated class of "\P{Any}" alone is "\p{Any}": read, not left
+        // undecided (pcre2test 10.49: not anchored; 178.6 / 723.8 / 2887.7
+        // ms on "!"x5k/10k/20k, pcre.jit=0).
+        yield 'leading [^\P{Any}]* in one alternative only' => ['pattern' => '/(?:[^\P{Any}]*|y)\d$/u'];
         // PCRE2 anchors no dot-star behind an empty group (154.0 / 615.8 /
         // 2462.1 ms on "!"x5k/10k/20k, pcre.jit=0), nor one behind an item.
         yield 'empty group before a dot-star under s' => ['pattern' => '/(?:).*[xy]/s'];
@@ -209,6 +213,15 @@ final class RedosSearchCostTest extends TestCase
         // Nor a class of a property and its negation (212.8 / 850.5 / 3402.6
         // ms on "!"x5k/10k/20k).
         yield 'leading class of a property and its negation under u' => ['pattern' => '/[\pL\PL]*\d$/u'];
+        // One alternative matches the required code unit alone at the end
+        // (pcre2test 10.49: "Last code unit = 'b'"): the witness carries it
+        // inside the breaker, a character after it. 6.3 / 24.5 / 97.9 ms on
+        // "a"x5k/10k/20k."!b!", each other row alike (pcre.jit=0).
+        yield 'alternative matching the required code unit at the end' => ['pattern' => '/a+b|b$/'];
+        yield 'alternative matching the required sign at the end' => ['pattern' => '/\s+=|=$/'];
+        yield 'alternative matching the required semicolon at the end' => ['pattern' => '/\w+;|;$/'];
+        yield 'alternative matching the required unit letter at the very end' => ['pattern' => '/\d+px|x\z/'];
+        yield 'alternative matching the required code unit at a line end under m' => ['pattern' => '/a+b|b$/m'];
     }
 
     /**
@@ -334,6 +347,13 @@ final class RedosSearchCostTest extends TestCase
     {
         yield 'possessive loop over the required character' => ['pattern' => '/.++;/', 'unit' => ';'];
         yield 'dollar under m before a letter of the run' => ['pattern' => '/[a-z]+$x/m', 'unit' => 'x'];
+        // The required "a" is case-sensitive though the run is caseless
+        // (pcre2test 10.49: "Last code unit = 'a'", no "caseless"): an "A"
+        // is not it. "A"x5k/10k/20k alone: 0.0 ms; with an "a" after it:
+        // 8.1 / 31.6 / 125.5 ms (pcre.jit=0).
+        yield 'case-sensitive unit after a class of both cases' => ['pattern' => '/[aA]++a/', 'unit' => 'a'];
+        yield 'case-sensitive unit after a caseless group' => ['pattern' => '/(?i:a++)a/', 'unit' => 'a'];
+        yield 'case-sensitive unit after i is taken off' => ['pattern' => '/a++(?-i)a/i', 'unit' => 'a'];
     }
 
     /**
@@ -361,6 +381,7 @@ final class RedosSearchCostTest extends TestCase
         yield 'classes before the same literal' => ['pattern' => '/[a-z]+;|\d+;/', 'unit' => ';'];
         yield 'group of alternatives' => ['pattern' => '/a+(?:b|cb)/', 'unit' => 'b'];
         yield 'caseless k without u' => ['pattern' => '/[a-z]+k|\d+k/i', 'unit' => 'k'];
+        yield 'alternative matching the unit alone at the end' => ['pattern' => '/a+b|b$/', 'unit' => 'b'];
     }
 
     /**
@@ -589,20 +610,30 @@ final class RedosSearchCostTest extends TestCase
         yield 'comment before a leading dot-star under s' => ['pattern' => '/(?#c).*[xy]/s'];
         yield 'leading \N* under m, newline-free run' => ['pattern' => '/\N*\s+/m'];
         yield 'leading [\p{Any}]* under u' => ['pattern' => '/[\p{Any}]*\d$/u'];
+        // PCRE2 reads a property name loosely: case, spaces, "-" and "_"
+        // aside, and "\P" with "^" is "\p" (pcre2test 10.49, utf and ucp:
+        // "anchored"). Each row takes 0.1 / 0.1 / 0.2 ms on "!"x5k/10k/20k
+        // (pcre.jit=0).
+        yield 'leading [\p{A_ny}]* under u' => ['pattern' => '/[\p{A_ny}]*\d$/u'];
+        yield 'leading [\p{ Any }]* under u' => ['pattern' => '/[\p{ Any }]*\d$/u'];
+        yield 'leading [\p{a-n-y}]* under u' => ['pattern' => '/[\p{a-n-y}]*\d$/u'];
+        yield 'leading [\P{^A_ny}]* under u' => ['pattern' => '/[\P{^A_ny}]*\d$/u'];
         // A class whose ranges cover every code point, the surrogates
         // included, is PCRE2's any character under u, whatever else it holds
         // (pcre2test 10.49, utf and ucp: "anchored"); so is a negated class
-        // of nothing, and under i a class whose gaps the other cases fill.
-        // Each row takes 0.1 / 0.1 / 0.2 ms on "!"x5k/10k/20k (pcre.jit=0).
+        // of "\P{Any}" alone. Each row takes 0.1 / 0.1 / 0.2 ms on
+        // "!"x5k/10k/20k (pcre.jit=0).
         yield 'leading class of every code point under u' => ['pattern' => '/[\x00-\x{10FFFF}]*\d$/u'];
         yield 'leading class of every code point in braces under u' => ['pattern' => '/[\x{0}-\x{10FFFF}]*[xy]/u'];
         yield 'leading class of every code point and a property under u' => ['pattern' => '/[\x00-\x{10FFFF}\d]*\d$/u'];
         yield 'leading class of every horizontal space and the rest under u' => ['pattern' => '/[\h\H]*\d$/u'];
         yield 'leading class of every vertical space and the rest under u' => ['pattern' => '/[\v\V]*\d$/u'];
         yield 'leading class of every code point and a property, the range first, under u' => ['pattern' => '/[\x00-\x{10FFFF}\pL]*\d$/u'];
-        // A POSIX class is not read: undecided, no witness.
-        yield 'leading class of POSIX classes under u' => ['pattern' => '/[[:^ascii:][:ascii:]]*\d$/u'];
         yield 'leading negated class of no character under u' => ['pattern' => '/[^\P{Any}]*\d$/u'];
+        yield 'leading negated class of no character, loosely spelled, under u' => ['pattern' => '/[^\P{a_ny}]*\d$/u'];
+        // PCRE2 anchors these too; a POSIX class is not read, nor under i a
+        // class whose gaps the other cases may fill: undecided, no witness.
+        yield 'leading class of POSIX classes under u' => ['pattern' => '/[[:^ascii:][:ascii:]]*\d$/u'];
         yield 'leading caseless class whose gap the other case fills under u' => ['pattern' => '/[\x00-\x40\x42-\x{10FFFF}]*\d$/iu'];
     }
 
@@ -656,6 +687,11 @@ final class RedosSearchCostTest extends TestCase
         // possessive repeat moves to the end in one step (0.2 / 0.3 / 0.5 ms
         // on "a"x5k/10k/20k."b", pcre.jit=0).
         yield 'possessive class of every code point under u' => ['pattern' => '/a[\x00-\x{10FFFF}]*+b/u'];
+        // So is a class holding "\p{Any}" loosely spelled (0.1 / 0.3 / 0.5 ms
+        // on "a"x5k/10k/20k."b", pcre.jit=0).
+        yield 'possessive class of \p{A_ny} under u' => ['pattern' => '/a[\p{A_ny}]*+b/u'];
+        yield 'possessive class of [\s\S] and \p{ any} under u' => ['pattern' => '/a[\s\S\p{ any}]*+b/u'];
+        yield 'possessive class of \P{^A_ny} under u' => ['pattern' => '/a[\P{^A_ny}]*+b/u'];
     }
 
     /**

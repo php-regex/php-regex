@@ -20,10 +20,8 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
-use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -54,7 +52,8 @@ use PHPRegex\Redos\RedosSearchCost;
  * there to its end (the word enters its own cycle from an attempt's start),
  * no attempt started anywhere succeeds, and every one fails on the breaker,
  * which holds the last code unit PCRE2 requires before it tries an
- * attempt. The search then starts n attempts, each linear in what is left
+ * attempt, with a character after it when an alternative would match it at
+ * the end. The search then starts n attempts, each linear in what is left
  * of the run: quadratic. The prefix is there when the first attempt would
  * match the bare run, as "^\s+" does in the trim regex "/^\s+|\s+$/". The
  * run word is one character, a cycle's word, or up to four characters of
@@ -170,7 +169,7 @@ final readonly class SearchCostProver
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
 
         try {
-            $found = $this->witness($automaton, $budget, LastCodeUnit::of($regex), $lineStart, $jumps, $pnfa->readsFinalNewline);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::read($regex), $lineStart, $jumps, $pnfa->readsFinalNewline);
         } catch (ModelLimit) {
             return null;
         }
@@ -200,19 +199,17 @@ final readonly class SearchCostProver
 
     /**
      * Whether the run holds the code unit PCRE2 requires: the character
-     * itself, or its other ASCII case when the pattern reads both alike
-     * (one class, as under /i, where PCRE2 looks for either case). A
-     * character that only shares a class with it, as ";" with "!" under
-     * ".", is not it.
+     * itself, or its other case when PCRE2 looks for either, which it does
+     * only for an ASCII letter. A character that only shares a class with
+     * it, as ";" with "!" under ".", or "A" with a case-sensitive "a" after
+     * "[aA]", is not it.
      *
      * @param list<int> $run
      */
-    private static function holdsCodeUnit(ItemAutomaton $automaton, array $run, int $required): bool
+    private static function holdsCodeUnit(array $run, int $required, bool $caseless): bool
     {
-        $letter = static fn (int $character): bool => ($character >= 0x41 && $character <= 0x5A) || ($character >= 0x61 && $character <= 0x7A);
         foreach ($run as $character) {
-            if ($character === $required || ($letter($character) && $letter($required)
-                && ($character | 0x20) === ($required | 0x20) && $automaton->classOf($character) === $automaton->classOf($required))) {
+            if ($character === $required || ($caseless && $character === ($required ^ 0x20))) {
                 return true;
             }
         }
@@ -331,11 +328,12 @@ final readonly class SearchCostProver
      * (UTF and UCP) a class reads every item into a bitmap below U+0100,
      * and above it only its characters, ranges, "\h", "\v" and their
      * negations: it is that item when these cover every code point from
-     * U+0100, the surrogates included, or when it holds "\p{Any}"
-     * (pcre2test 10.49). "\d", "\s", "\w", their negations and the other
-     * properties count for nothing there, so "[\s\S]" is no such class. A
-     * POSIX class or a negated class is undecided, and so is under i a class
-     * whose gaps the other cases may fill: null.
+     * U+0100, the surrogates included, when it holds "\p{Any}", or when it
+     * is the negation of "\P{Any}" alone (pcre2test 10.49). "\d", "\s",
+     * "\w", their negations and the other properties count for nothing
+     * there, so "[\s\S]" is no such class. A POSIX class or another negated
+     * class is undecided, and so is under i a class whose gaps the other
+     * cases may fill: null.
      */
     private static function isAnyCharacter(NodeInterface $atom, bool $unicode, bool $caseless): ?bool
     {
@@ -352,14 +350,14 @@ final readonly class SearchCostProver
         }
 
         if ($atom->isNegated) {
-            return null;
+            return $atom->expression instanceof UnicodePropNode && false === self::anyProperty($atom->expression) ? true : null;
         }
 
         $every = CharSet::range(0, 0x10FFFF);
         $covered = CharSet::empty();
         $undecided = false;
         foreach ($atom->expression instanceof AlternationNode ? $atom->expression->alternatives : [$atom->expression] as $part) {
-            if ($part instanceof UnicodePropNode && 0 === strcasecmp(trim($part->prop, '{}'), 'Any')) {
+            if ($part instanceof UnicodePropNode && true === self::anyProperty($part)) {
                 return true;
             }
 
@@ -388,19 +386,40 @@ final readonly class SearchCostProver
     }
 
     /**
+     * Whether the property is "\p{Any}", false when it is its negation, its
+     * name read loosely as PCRE2 reads it: case, white space, "-" and "_"
+     * aside, each "^" before the name negating it, the one "\P" brings
+     * included; null for another property.
+     */
+    private static function anyProperty(UnicodePropNode $node): ?bool
+    {
+        $negated = false;
+        $name = '';
+        foreach (str_split(trim($node->prop, '{}')) as $character) {
+            if ('^' === $character && '' === $name) {
+                $negated = !$negated;
+            } elseif (!str_contains(" \t\n\v\f\r-_", $character)) {
+                $name .= strtolower($character);
+            }
+        }
+
+        return 'any' === $name ? !$negated : null;
+    }
+
+    /**
      * The code points a part of a class under u covers as PCRE2 reads it;
      * nothing for a property, null for a part not read here.
      */
     private static function classCharacters(NodeInterface $part, CharSet $every): ?CharSet
     {
         if ($part instanceof RangeNode) {
-            $from = self::classCharacter($part->start);
-            $to = self::classCharacter($part->end);
+            $from = LastCodeUnit::literalCharacter($part->start, true);
+            $to = LastCodeUnit::literalCharacter($part->end, true);
 
             return null === $from || null === $to ? null : CharSet::range($from, $to);
         }
 
-        $character = self::classCharacter($part);
+        $character = LastCodeUnit::literalCharacter($part, true);
         if (null !== $character) {
             return CharSet::single($character);
         }
@@ -422,17 +441,6 @@ final readonly class SearchCostProver
             'd', 'D', 's', 'S', 'w', 'W' => CharSet::empty(),
             default => null,
         };
-    }
-
-    private static function classCharacter(NodeInterface $node): ?int
-    {
-        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
-            return $node->codePoint;
-        }
-
-        $characters = $node instanceof LiteralNode ? Utf8::decode($node->value, true) : null;
-
-        return null !== $characters && 1 === \count($characters) ? $characters[0] : null;
     }
 
     /**
@@ -509,15 +517,15 @@ final readonly class SearchCostProver
      * succeeds on, after the shortest prefix that keeps the first attempt
      * from succeeding, with the breakers found after it, in characters.
      *
-     * @param int|null         $required     the code unit PCRE2 requires, as a character
-     * @param array<int, true> $jumps        where the repeats that jump to the end read
-     * @param bool             $finalNewline whether "$" or "\Z" may hold before a final newline
+     * @param array{int, bool}|null $required     the code unit PCRE2 requires, as a character, and whether caseless
+     * @param array<int, true>      $jumps        where the repeats that jump to the end read
+     * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
      *
      * @throws ModelLimit
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>}|null
      */
-    private function witness(ItemAutomaton $automaton, Budget $budget, ?int $required, bool $lineStart, array $jumps, bool $finalNewline): ?array
+    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, bool $lineStart, array $jumps, bool $finalNewline): ?array
     {
         $prefixes = [[]];
         for ($class = 0; $class < $automaton->classCount() && \count($prefixes) <= self::MAX_PREFIXES; $class++) {
@@ -536,7 +544,7 @@ final readonly class SearchCostProver
             }
 
             $run = array_map(static fn (int $class): int => $automaton->representatives[$class], $word);
-            $missing = null === $required || self::holdsCodeUnit($automaton, $run, $required) ? [] : [$required];
+            $missing = null === $required || self::holdsCodeUnit($run, ...$required) ? [] : [$required[0]];
             // The shortest prefix after which the attempt at the run's start
             // reads the run too, and no attempt succeeds inside it.
             foreach ($prefixes as $prefix) {
@@ -1053,10 +1061,12 @@ final readonly class SearchCostProver
     /**
      * The breakers, shortest first: characters after which every attempt of
      * the run has failed, then the code unit PCRE2 requires when the run
-     * does not hold it. With them, no attempt started anywhere succeeds.
-     * When "$" or "\Z" may hold before a final newline, a witness ending
-     * with a newline gets one more character: the model reads such a
-     * newline into the anchor, where a pattern item may read it instead.
+     * does not hold it, and one more character when an attempt would match
+     * that code unit at the end, as the second alternative of "/a+b|b$/"
+     * does. With them, no attempt started anywhere succeeds. When "$" or
+     * "\Z" may hold before a final newline, a witness ending with a newline
+     * gets one more character: the model reads such a newline into the
+     * anchor, where a pattern item may read it instead.
      *
      * @param array<int, true> $after
      * @param list<int>        $missing characters
@@ -1069,33 +1079,40 @@ final readonly class SearchCostProver
     private function breakers(ItemAutomaton $automaton, Budget $budget, array $after, array $missing, ?int $runEnd): array
     {
         $found = [];
-        $queue = [[$after, []]];
-        $seen = [implode(',', array_keys($after)) => true];
-        for ($head = 0; $head < \count($queue) && $head < self::MAX_BREAKER_NODES && \count($found) < self::MAX_BREAKERS; $head++) {
-            $budget->step();
-            [$current, $path] = $queue[$head];
-            $this->collect($automaton, $after, $path, $missing, $runEnd, $found);
-            if (\count($path) >= self::MAX_BREAKER_LENGTH) {
-                continue;
+        // The code unit with a character after it only when it fails last.
+        foreach ([] === $missing ? [false] : [false, true] as $trailing) {
+            $queue = [[$after, []]];
+            $seen = [implode(',', array_keys($after)) => true];
+            for ($head = 0; $head < \count($queue) && $head < self::MAX_BREAKER_NODES && \count($found) < self::MAX_BREAKERS; $head++) {
+                $budget->step();
+                [$current, $path] = $queue[$head];
+                $this->collect($automaton, $after, $path, $missing, $runEnd, $trailing, $found);
+                if (\count($path) >= self::MAX_BREAKER_LENGTH) {
+                    continue;
+                }
+
+                for ($class = 0; $class < $automaton->classCount() && \count($found) < self::MAX_BREAKERS; $class++) {
+                    $next = $automaton->stepSet($current, $class);
+                    if (null === $next) {
+                        continue;
+                    }
+
+                    if ([] === $next) {
+                        $this->collect($automaton, $after, [...$path, $class], $missing, $runEnd, $trailing, $found);
+
+                        continue;
+                    }
+
+                    $key = implode(',', array_keys($next));
+                    if (!isset($seen[$key])) {
+                        $seen[$key] = true;
+                        $queue[] = [$next, [...$path, $class]];
+                    }
+                }
             }
 
-            for ($class = 0; $class < $automaton->classCount() && \count($found) < self::MAX_BREAKERS; $class++) {
-                $next = $automaton->stepSet($current, $class);
-                if (null === $next) {
-                    continue;
-                }
-
-                if ([] === $next) {
-                    $this->collect($automaton, $after, [...$path, $class], $missing, $runEnd, $found);
-
-                    continue;
-                }
-
-                $key = implode(',', array_keys($next));
-                if (!isset($seen[$key])) {
-                    $seen[$key] = true;
-                    $queue[] = [$next, [...$path, $class]];
-                }
+            if ([] !== $found) {
+                break;
             }
         }
 
@@ -1104,27 +1121,27 @@ final readonly class SearchCostProver
 
     /**
      * Keeps the breaker the path and the missing code unit write when the
-     * model rejects it.
+     * model rejects it; trailing, the first of a few with one more
+     * character the model rejects.
      *
      * @param array<int, true> $after
-     * @param list<int>        $path    classes
-     * @param list<int>        $missing characters
+     * @param list<int>        $path     classes
+     * @param list<int>        $missing  characters
+     * @param bool             $trailing whether a character comes after the missing code unit
      * @param list<list<int>>  $found
      *
      * @param-out list<list<int>> $found
      *
      * @throws ModelLimit
      */
-    private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, array &$found): void
+    private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, bool $trailing, array &$found): void
     {
         $breaker = [...array_map(static fn (int $class): int => $automaton->representatives[$class], $path), ...$missing];
-        $candidates = [$breaker];
-        if (null !== $runEnd && 0x0A === ([] === $breaker ? $runEnd : $breaker[\count($breaker) - 1])) {
-            $candidates = [];
-            foreach ($automaton->representatives as $character) {
-                if (0x0A !== $character) {
-                    $candidates[] = [...$breaker, $character];
-                }
+        $newline = null !== $runEnd && 0x0A === ([] === $breaker ? $runEnd : $breaker[\count($breaker) - 1]);
+        $candidates = $newline || $trailing ? [] : [$breaker];
+        foreach ($newline || $trailing ? $automaton->representatives : [] as $character) {
+            if ((null === $runEnd || 0x0A !== $character) && (!$trailing || \count($candidates) < self::MAX_BREAKERS)) {
+                $candidates[] = [...$breaker, $character];
             }
         }
 

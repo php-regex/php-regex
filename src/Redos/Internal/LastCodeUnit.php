@@ -58,7 +58,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * Under u a code unit is a byte: a character of several gives its last
  * byte, and none when caseless. Under i a letter with more than one other
  * case under u (k, s, and their kind) is a property, and gives none; the
- * others keep the caseless flag, compared as written. A class of one
+ * others keep the caseless flag, compared as written, which PCRE2 keeps in
+ * the end only for a character with another case. A class of one
  * character is that character, and so is a class of a letter and its only
  * other case, caseless, as first written.
  *
@@ -130,6 +131,18 @@ final class LastCodeUnit
      */
     public static function of(RegexNode $regex): ?int
     {
+        return self::read($regex)[0] ?? null;
+    }
+
+    /**
+     * The character of of(), and whether PCRE2 looks for its code unit in
+     * either case: read caseless, and a character with another case, as
+     * PCRE2 keeps the flag only then.
+     *
+     * @return array{int, bool}|null
+     */
+    public static function read(RegexNode $regex): ?array
+    {
         $reader = new self($regex->isUnicode(), $regex->source ?? '');
         $options = 0;
         foreach (['i' => self::CASELESS, 'm' => self::MULTILINE, 'r' => self::RESTRICT] as $letter => $bit) {
@@ -139,8 +152,25 @@ final class LastCodeUnit
         }
 
         [, $required] = $reader->group(self::alternatives($regex->pattern), $options);
+        if ($reader->accepts || $required[0] < 0) {
+            return null;
+        }
 
-        return $reader->accepts || $required[0] < 0 ? null : $required[2];
+        return [$required[2], 0 !== ($required[0] & self::CASELESS) && $reader->otherCase($required[2]) !== $required[2]];
+    }
+
+    /**
+     * The character of a literal of one character or of an escape of one.
+     */
+    public static function literalCharacter(NodeInterface $node, bool $unicode): ?int
+    {
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return $node->codePoint;
+        }
+
+        $characters = $node instanceof LiteralNode ? Utf8::decode($node->value, $unicode) : null;
+
+        return null !== $characters && 1 === \count($characters) ? $characters[0] : null;
     }
 
     /**
@@ -200,7 +230,7 @@ final class LastCodeUnit
         $this->groupSetFirst = false;
 
         foreach (self::items($node) as $item) {
-            if ($item instanceof GroupNode && GroupType::InlineFlags === $item->type && $this->isOptionSetting($item)) {
+            if ($item instanceof GroupNode && GroupType::InlineFlags === $item->type && $this->isBareOptionSetting($item)) {
                 $options = self::apply($options, (string) $item->flags);
 
                 continue;
@@ -480,14 +510,9 @@ final class LastCodeUnit
      */
     private function characterOf(NodeInterface $node): ?int
     {
-        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
-            return $node->codePoint;
-        }
-
-        if ($node instanceof LiteralNode) {
-            $characters = Utf8::decode($node->value, $this->unicode) ?? [];
-
-            return 1 === \count($characters) ? $characters[0] : null;
+        $character = self::literalCharacter($node, $this->unicode);
+        if (null !== $character) {
+            return $character;
         }
 
         if ($node instanceof CharClassNode && !$node->isNegated && !$node->expression instanceof AlternationNode) {
@@ -581,7 +606,7 @@ final class LastCodeUnit
     /**
      * Whether the group only sets options for what follows, as "(?i)" does.
      */
-    private function isOptionSetting(GroupNode $node): bool
+    private function isBareOptionSetting(GroupNode $node): bool
     {
         $text = substr($this->source, $node->getStartPosition(), $node->getEndPosition() - $node->getStartPosition());
         $length = \strlen($text);

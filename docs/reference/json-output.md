@@ -648,7 +648,7 @@ builds the attack.
 |---|---|---|
 | `prefix` | string | What comes before the run, often empty: the first attempt fails on it where it would match the bare run (`"!"` for `/^\s+\|\s+$/`) |
 | `run` | string | The part repeated: every attempt started in it reads to its end |
-| `breaker` | string | What comes after the run and fails every attempt; it holds the last code unit every match requires when the run does not, as PCRE2 gives up at once on a subject without it (`">"` for `/\s*=>/`) |
+| `breaker` | string | What comes after the run and fails every attempt; it holds the last code unit PCRE2 requires, read as its compiler reads it, when the run does not, as PCRE2 gives up at once on a subject without it (`">"` for `/\s*=>/`), with a character after it when an alternative would match it at the end (`"!b!"` for `/a+b\|b$/`) |
 
 ### Confirmation: `redos_analysis.confirmation`
 

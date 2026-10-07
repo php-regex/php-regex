@@ -112,4 +112,41 @@ final class LastCodeUnitTest extends TestCase
         yield 'two-byte character under u' => ['pattern' => '/xé/u', 'expected' => 'é'];
         yield 'caseless two-byte character under u' => ['pattern' => '/xé/iu', 'expected' => null];
     }
+
+    /**
+     * Whether PCRE2 looks for the code unit in either case: pcre2test
+     * 10.49 marks it "(caseless)". A case-sensitive unit after a caseless
+     * item stays case-sensitive, and a caseless one without another case is
+     * not marked.
+     */
+    #[Test]
+    #[DataProvider('provideCaselessLastCodeUnits')]
+    public function test_last_code_unit_is_caseless_only_where_pcre2_reads_it_caseless(string $pattern, string $expected, bool $caseless): void
+    {
+        $regex = RegexParser::create()->parse($pattern);
+
+        $this->assertSame([$expected, $caseless], array_map(
+            static fn (int|bool $part): string|bool => \is_int($part) ? Utf8::character($part, $regex->isUnicode()) : $part,
+            LastCodeUnit::read($regex) ?? [],
+        ), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, caseless: bool}>
+     */
+    public static function provideCaselessLastCodeUnits(): iterable
+    {
+        yield 'class of both cases, then the letter' => ['pattern' => '/[aA]++a/', 'expected' => 'a', 'caseless' => false];
+        yield 'caseless group, then the letter' => ['pattern' => '/(?i:a++)a/', 'expected' => 'a', 'caseless' => false];
+        yield 'i taken off before the letter' => ['pattern' => '/a++(?-i)a/i', 'expected' => 'a', 'caseless' => false];
+        yield 'class of a letter and its other case last' => ['pattern' => '/x[aA]/', 'expected' => 'a', 'caseless' => true];
+        yield 'class of a letter and its other case repeated' => ['pattern' => '/x[aA]{2}/', 'expected' => 'a', 'caseless' => true];
+        yield 'i set before the letter' => ['pattern' => '/x(?i)a/', 'expected' => 'a', 'caseless' => true];
+        yield 'caseless alternatives ending with a k' => ['pattern' => '/[a-z]+k|\d+k/i', 'expected' => 'k', 'caseless' => true];
+        // A character without another case is looked for as it is.
+        yield 'caseless sign' => ['pattern' => '/x=/i', 'expected' => '=', 'caseless' => false];
+        yield 'caseless k under u and r' => ['pattern' => '/xk/iur', 'expected' => 'k', 'caseless' => true];
+        yield 'case-sensitive alternatives' => ['pattern' => '/a+b|b$/', 'expected' => 'b', 'caseless' => false];
+        yield 'two-byte character under u' => ['pattern' => '/xé/u', 'expected' => 'é', 'caseless' => false];
+    }
 }
