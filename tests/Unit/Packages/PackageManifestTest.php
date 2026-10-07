@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -166,7 +167,7 @@ final class PackageManifestTest extends TestCase
 
         $this->assertSame('psalm-plugin', self::dig($manifest, 'type'));
         $this->assertSame('^6.19', self::dig($manifest, 'require', 'vimeo/psalm'));
-        $this->assertSame('PHPRegex\\Psalm\\Plugin', self::dig($manifest, 'extra', 'psalm', 'pluginClass'));
+        $this->assertSame(Plugin::class, self::dig($manifest, 'extra', 'psalm', 'pluginClass'));
         $this->assertFileExists(self::root().'/src/Psalm/Plugin.php');
         // Psalm requires the parser it runs on: requiring another copy could
         // only conflict with it.

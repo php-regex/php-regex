@@ -258,9 +258,9 @@ final class AnalysisServiceSearchCostTest extends TestCase
         $this->assertIsString($hint, $pattern);
         foreach (['Replayed on PCRE2', 'Not confirmed by the step replay'] as $candidate) {
             if ($candidate === $line) {
-                $this->assertStringContainsString($candidate, $hint, $pattern);
+                $this->assertStringContainsString($candidate, (string) $hint, $pattern);
             } else {
-                $this->assertStringNotContainsString($candidate, $hint, $pattern);
+                $this->assertStringNotContainsString($candidate, (string) $hint, $pattern);
             }
         }
     }
