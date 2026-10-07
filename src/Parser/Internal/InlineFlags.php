@@ -28,9 +28,10 @@ final readonly class InlineFlags
 {
     /**
      * The modifiers PCRE lets a group carry, "r" excepted: it arrived in
-     * PCRE2 10.43 and the caller says whether it may be used.
+     * PCRE2 10.43 and the caller says whether it may be used. "u" and "d"
+     * are PHP modifiers only: PCRE refuses them after "(?".
      */
-    public const LETTERS = 'imsxUJnud';
+    public const LETTERS = 'imsxUJn';
 
     /**
      * The options "^" turns off unless it lists them, as PCRE2 resets them

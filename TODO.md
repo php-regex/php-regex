@@ -389,8 +389,6 @@ The follow-ups are merged too: the search cost's two false positives
 - Under `x` without `u`, PCRE2 skips byte 0x85 inside a raw multibyte literal
   (`/Å/x` matches `"\xC3"`), but the lexer keeps it; pcre2test gives the last
   code unit `\xc3`.
-- The parser accepts `/(?u)a+b/` and the ReDoS analysis calls it safe
-  (proven), but PCRE2 refuses to compile it.
 - The last code unit is not read through `(*ACCEPT)` inside `DEFINE` or a
   one-branch conditional (`/x(?(DEFINE)(*ACCEPT))b/`); unreachable today.
 - `(*UCP)` without `u`: `/(*UCP)xk/i` gives the last code unit `k`, where
