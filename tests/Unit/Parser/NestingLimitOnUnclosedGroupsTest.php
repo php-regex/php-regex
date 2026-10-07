@@ -68,5 +68,7 @@ final class NestingLimitOnUnclosedGroupsTest extends TestCase
     {
         yield 'groups left open' => ['pattern' => '/'.str_repeat('(', 300).'/'];
         yield 'groups closed' => ['pattern' => '/'.str_repeat('(', 251).str_repeat(')', 251).'/'];
+        yield 'groups left open, then a class never closed' => ['pattern' => '/'.str_repeat('(', 251).'[/'];
+        yield 'groups closed, then a class never closed' => ['pattern' => '/'.str_repeat('(', 251).str_repeat(')', 251).'[/'];
     }
 }
