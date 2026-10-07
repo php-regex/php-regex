@@ -65,7 +65,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-908e6683c1eec8f7b4fd651c7bf8386f';
+    public const CACHE_VERSION = 'ast-e36d3c293f635a7d13b042cfbca95029';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -449,6 +449,13 @@ final readonly class RegexParser
             return null;
         }
 
+        // PCRE refuses the 251st level of parentheses as it opens it, at the
+        // start of its body, though the groups are never closed.
+        $tooDeep = self::openerPastTheNestingLimit($tokens);
+        if (null !== $tooDeep) {
+            return new SemanticErrorException('Parentheses are nested too deeply: PCRE allows at most 250 levels.', ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
+        }
+
         $length = \strlen($pattern);
         $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
@@ -492,6 +499,11 @@ final readonly class RegexParser
      */
     private static function mayHoldAnErrorOfTheTree(array $tokens): bool
     {
+        // Past 250 levels, plain groups are refused too.
+        if (null !== self::openerPastTheNestingLimit($tokens)) {
+            return true;
+        }
+
         foreach ($tokens as $token) {
             $plain = match ($token->type) {
                 TokenType::Literal, TokenType::GroupOpen, TokenType::GroupClose, TokenType::Alternation,
@@ -509,6 +521,29 @@ final readonly class RegexParser
         }
 
         return false;
+    }
+
+    /**
+     * The token that opens the 251st level of parentheses, past PCRE's
+     * limit, or null when none does.
+     *
+     * @param list<Token> $tokens
+     */
+    private static function openerPastTheNestingLimit(array $tokens): ?Token
+    {
+        $open = [];
+        foreach ($tokens as $token) {
+            if (self::opensGroup($token)) {
+                $open[] = $token;
+                if (\count($open) > 250) {
+                    return $token;
+                }
+            } elseif (TokenType::GroupClose === $token->type) {
+                array_pop($open);
+            }
+        }
+
+        return null;
     }
 
     /**

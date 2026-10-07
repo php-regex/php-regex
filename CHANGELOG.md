@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- PCRE's limit of 250 nested parentheses applies to groups left open as well: 300 `(` are refused as nested too deeply at 251, where the unclosed group was reported at the end.
 - A quantifier past a comment, `\E` or `/x` whitespace after `\1000` (the octal `\100`, then `0`) repeats the `0` only, as PCRE2 reads it: `/^\1000(?#c)+$/` printed back as a pattern that repeated both characters.
 - An unclosed `\g{-n` counting back past the open groups, `/\g{-1/`, is refused as PCRE2 refuses it, the reference on its `{` at 2, where the missing `}` was reported at 5.
 - A name already used and left without its `>`, `/(?<n>a)(?<n/`, is refused on the missing terminator, as PCRE2 reports it, at 11, where it was refused as a duplicate at 12.
