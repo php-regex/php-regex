@@ -1382,6 +1382,18 @@ final class Lexer
                 throw LexerException::withContext($message, $code, $offset, $this->pattern);
             }
 
+            // In "(?((*foo:" the verb opens after the condition's own "(":
+            // PCRE wants a group name there, on the "(" of the verb. In
+            // "(?(*foo:" the verb is the condition, refused as a verb.
+            if (!$known && $startPos >= 3 && '(?((' === substr($this->pattern, $startPos - 3, 4)) {
+                throw LexerException::withContext(
+                    \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $startPos),
+                    ErrorCode::ConditionalInvalid,
+                    $startPos,
+                    $this->pattern,
+                );
+            }
+
             // A name PCRE knows opens a body read in place.
             throw LexerException::withContext(
                 \sprintf('Unknown alphabetic assertion "(*%s:".', $opener[1]),

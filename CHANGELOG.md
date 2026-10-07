@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An unknown verb right after the `(` of a condition, `/(?((*foo:/`, is refused where PCRE2 expects a group name, at 3, where it was refused as an unknown verb at 8.
 - `(?(-n)` counting back past the groups opened so far is refused as PCRE2 reads it, before any later error: `/(?(-1)(/` reports the reference at 5, where it reported the unclosed group at 7.
 - `(?<*+` and `(?<*?` open a non-atomic lookbehind whose `+` or `?` repeats nothing: the error is the quantifier without target past it, as PCRE2 reports it, where the library reported a missing group name.
 - A bare `\g` reference reads a sign and digits only, as PCRE2 does: in `/(a)\g-1+{2}/` the `+` is a quantifier and the count after it is refused, where the reference took the `+` and the pattern was accepted.

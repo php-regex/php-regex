@@ -47,6 +47,32 @@ final class RelativeConditionReferenceTest extends TestCase
         yield 'one group before, two counted' => ['pattern' => '/(a)(?(-2)(/', 'offset' => 8];
     }
 
+    /**
+     * A verb or an unknown alphabetic name right after "(?(" is no
+     * condition: PCRE2 expects a group name there (error 162 at 3), whether
+     * the verb is closed or runs to the end.
+     */
+    #[Test]
+    #[DataProvider('provideVerbsOpeningACondition')]
+    public function test_a_verb_opening_a_condition_is_refused_where_the_name_is_expected(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame(3, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideVerbsOpeningACondition(): iterable
+    {
+        yield 'unknown name left open' => ['pattern' => '/(?((*foo:/'];
+        yield 'unknown name closed' => ['pattern' => '/(?((*foo:a)b)/'];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {
