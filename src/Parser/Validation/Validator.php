@@ -300,6 +300,12 @@ final class Validator extends AbstractNodeVisitor
     private int $charClassDepth = 0;
 
     /**
+     * Whether a "\Q" written in the class being read is still open before
+     * the item at hand.
+     */
+    private bool $classQuoteOpen = false;
+
+    /**
      * Where the run of start-of-pattern settings ends in the source, or null
      * when there is no source to read it from.
      */
@@ -355,6 +361,47 @@ final class Validator extends AbstractNodeVisitor
     private array $enclosingGroups = [];
 
     private int $lookbehindBranchMeasures = 0;
+
+    /**
+     * The length of each group measured for a lookbehind, by node, with the
+     * groups its measure called: a group called again, from the same
+     * lookbehind or another, is not measured again while none of those is
+     * being measured where it is called.
+     *
+     * @var array<int, array{length: array{0: int, 1: int|null}, calls: array<int, true>}>
+     */
+    private array $measuredGroupLengths = [];
+
+    /**
+     * The lookbehinds measured and found sound, by node, with the groups
+     * their measure called: one inside another is measured with it, and not
+     * again when the walk reaches it, unless it calls a group around it.
+     *
+     * @var array<int, array<int, true>>
+     */
+    private array $measuredLookbehinds = [];
+
+    /**
+     * The groups the measure in progress called, by node: whether one of
+     * them is being measured is all that decides what the measure finds.
+     *
+     * @var array<int, true>
+     */
+    private array $calledWhileMeasuring = [];
+
+    /**
+     * How many times a measure called a group being measured already. A
+     * measure during which this moved is not kept: what it found depends on
+     * the groups being measured around it.
+     */
+    private int $lookbehindRecursions = 0;
+
+    /**
+     * Whether the walk judges the part of a pattern read before a syntax
+     * error: every error a lookbehind's measure finds waits for the whole
+     * pattern to be read, so there lookbehinds are not measured.
+     */
+    private bool $readingPrefix = false;
 
     /**
      * Where the text the visited nodes count their positions from starts in
@@ -514,7 +561,7 @@ final class Validator extends AbstractNodeVisitor
      */
     public function firstErrorInClassBefore(RegexNode $class, int $closingAt, int $limit): ?SemanticErrorException
     {
-        if ($this->pastTheFault($closingAt + 1) >= $limit) {
+        if ($this->pastTheFault($closingAt + 1) > $limit) {
             return null;
         }
 
@@ -527,47 +574,33 @@ final class Validator extends AbstractNodeVisitor
         return null;
     }
 
+    /**
+     * The first error PCRE meets as it reads $prefix, the part of a pattern
+     * read whole before the syntax error at $limit, its groups closed where
+     * it was cut: what PCRE only finds once it has read the whole pattern
+     * waits for that, and is not reported here.
+     *
+     * @internal
+     */
+    public function firstErrorReadBefore(RegexNode $prefix, int $limit): ?SemanticErrorException
+    {
+        $this->readingPrefix = true;
+
+        try {
+            $this->walkPattern($prefix);
+        } catch (SemanticErrorException $error) {
+            return ($error->getPosition() ?? $limit) < $limit ? $error : null;
+        } finally {
+            $this->readingPrefix = false;
+        }
+
+        return null;
+    }
+
     #[\Override]
     public function visitRegex(RegexNode $node): void
     {
-        $this->source = $node->source;
-        $this->charClassDepth = 0;
-        $this->startOfPatternEnd = null === $node->source ? null : $this->readStartOfPatternEnd($node->source);
-        $this->validateCasingSettings($node);
-        $this->unicodeFlag = str_contains($node->flags, 'u');
-        $this->unicodeMode = $this->unicodeFlag
-            || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
-        $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
-        $this->groupsByNumber = [];
-        $this->groupsByName = [];
-        $this->nextGroupNumberAt = [];
-        $this->captureIndexAt = [];
-        $this->capturesIndexed = 0;
-        $this->groupsInBranchReset = [];
-        $this->hasBranchReset = false;
-        $this->enclosingGroups = [];
-        $nextGroupNumber = 1;
-        $this->indexGroups($node->pattern, $nextGroupNumber);
-        $this->captureSequence = $this->groupNumbering->captureSequence;
-        $this->captureIndex = 0;
-
-        $this->previousNode = null;
-        $this->nextNode = null;
-        $this->lookbehindDepth = 0;
-        $this->lookbehinds = [];
-        $this->nestingDepth = 0;
-        $this->keepsInLookarounds = [];
-        $this->patternLength = \strlen($node->source ?? '');
-        $this->positionOffset = 0;
-        $this->lateErrors = [];
-        $this->walkingPattern = true;
-
-        try {
-            $node->pattern->accept($this);
-        } finally {
-            $this->walkingPattern = false;
-        }
-
+        $this->walkPattern($node);
         $this->raiseFirstLateError();
 
         // PCRE measures the compiled pattern last, once it has read it all.
@@ -924,14 +957,20 @@ final class Validator extends AbstractNodeVisitor
 
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
 
+        $quoteOpen = $this->classQuoteOpen;
+        $this->classQuoteOpen = false;
         $this->charClassDepth++;
 
         try {
+            $end = $node->startPosition;
             foreach ($parts as $part) {
+                $this->readClassQuotes($end, $part->getStartPosition());
                 $part->accept($this);
+                $end = $part->getEndPosition();
             }
         } finally {
             $this->charClassDepth--;
+            $this->classQuoteOpen = $quoteOpen;
         }
     }
 
@@ -972,6 +1011,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $node->start->accept($this);
+        $this->readClassQuotes($node->start->getEndPosition(), $node->end->getStartPosition());
 
         // "[a-[.x.]]": a collating element is no range end.
         if (null !== $this->source && $node->end instanceof LiteralNode && '[' === $node->end->value && $this->isUnquotedClassBracket($this->source, $node->end)) {
@@ -1586,6 +1626,53 @@ final class Validator extends AbstractNodeVisitor
                 $this->calloutOverflowOffset($node),
                 ErrorCode::CalloutOutOfRange,
             );
+        }
+    }
+
+    /**
+     * Walks the pattern from its root, raising each error PCRE finds as it
+     * reads it, and keeping those it finds once the whole pattern is read.
+     */
+    private function walkPattern(RegexNode $node): void
+    {
+        $this->source = $node->source;
+        $this->charClassDepth = 0;
+        $this->startOfPatternEnd = null === $node->source ? null : $this->readStartOfPatternEnd($node->source);
+        $this->validateCasingSettings($node);
+        $this->unicodeFlag = str_contains($node->flags, 'u');
+        $this->unicodeMode = $this->unicodeFlag
+            || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
+        $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
+        $this->groupsByNumber = [];
+        $this->groupsByName = [];
+        $this->nextGroupNumberAt = [];
+        $this->captureIndexAt = [];
+        $this->capturesIndexed = 0;
+        $this->groupsInBranchReset = [];
+        $this->hasBranchReset = false;
+        $this->enclosingGroups = [];
+        $this->measuredGroupLengths = [];
+        $this->measuredLookbehinds = [];
+        $nextGroupNumber = 1;
+        $this->indexGroups($node->pattern, $nextGroupNumber);
+        $this->captureSequence = $this->groupNumbering->captureSequence;
+        $this->captureIndex = 0;
+
+        $this->previousNode = null;
+        $this->nextNode = null;
+        $this->lookbehindDepth = 0;
+        $this->lookbehinds = [];
+        $this->nestingDepth = 0;
+        $this->keepsInLookarounds = [];
+        $this->patternLength = \strlen($node->source ?? '');
+        $this->positionOffset = 0;
+        $this->lateErrors = [];
+        $this->walkingPattern = true;
+
+        try {
+            $node->pattern->accept($this);
+        } finally {
+            $this->walkingPattern = false;
         }
     }
 
@@ -2214,6 +2301,26 @@ final class Validator extends AbstractNodeVisitor
      */
     private function validateLookbehindLength(GroupNode $node, ?array $expanding = null): void
     {
+        // A group the lookbehind sits in is being measured already.
+        $measuring = $expanding ?? $this->enclosingGroups;
+        if (null === $expanding) {
+            $this->calledWhileMeasuring = [];
+        }
+
+        // A lookbehind measured inside another is not measured again, unless
+        // it calls a group being measured here and was not there.
+        $id = spl_object_id($node);
+        $measured = $this->measuredLookbehinds[$id] ?? null;
+        if (null !== $measured && !self::callsAnyOf($measured, $measuring)) {
+            $this->calledWhileMeasuring += $measured;
+
+            return;
+        }
+
+        $calledAround = $this->calledWhileMeasuring;
+        $this->calledWhileMeasuring = [];
+        $recursions = $this->lookbehindRecursions;
+
         // "\X" matches a whole grapheme cluster, of no bounded length.
         if ($this->containsGraphemeCluster($node->child)) {
             $this->raiseSemanticError(
@@ -2232,8 +2339,7 @@ final class Validator extends AbstractNodeVisitor
         }
         $lengths = [];
         foreach ($branches as $branch) {
-            // A group the lookbehind sits in is being measured already.
-            $length = $this->lookbehindLength($branch, $expanding ?? $this->enclosingGroups);
+            $length = $this->lookbehindLength($branch, $measuring);
             $lengths[] = $length;
 
             // PCRE stops at the first branch it cannot bound.
@@ -2261,6 +2367,31 @@ final class Validator extends AbstractNodeVisitor
         foreach ($lengths as $length) {
             $this->validateLookbehindBranchLength($node, $length, $variable);
         }
+
+        // In a pattern with a branch reset PCRE measures again, and counts.
+        if (!$this->hasBranchReset && $recursions === $this->lookbehindRecursions) {
+            $this->measuredLookbehinds[$id] = $this->calledWhileMeasuring;
+        }
+        $this->calledWhileMeasuring += $calledAround;
+    }
+
+    /**
+     * Whether a measure that called the groups $called, none of them being
+     * measured then, would call one of $measuring: a measure that calls
+     * none holds wherever it is taken.
+     *
+     * @param array<int, true> $called
+     * @param array<int, true> $measuring
+     */
+    private static function callsAnyOf(array $called, array $measuring): bool
+    {
+        foreach (array_keys($measuring) as $group) {
+            if (isset($called[$group])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -2513,6 +2644,8 @@ final class Validator extends AbstractNodeVisitor
         $group = $groups[0];
         $id = spl_object_id($group);
         if (isset($expanding[$id])) {
+            $this->lookbehindRecursions++;
+
             return [0, null];
         }
 
@@ -2522,9 +2655,33 @@ final class Validator extends AbstractNodeVisitor
             return [0, null];
         }
 
+        $this->calledWhileMeasuring[$id] = true;
+
+        // A group measured already, from this call or another, is as long
+        // here unless it calls a group being measured here: one group
+        // calling the next twice, k levels down, is measured k times, not
+        // 2^k.
+        $measured = $this->measuredGroupLengths[$id] ?? null;
+        if (null !== $measured && !self::callsAnyOf($measured['calls'], $expanding)) {
+            $this->calledWhileMeasuring += $measured['calls'];
+
+            return $measured['length'];
+        }
+
         $this->countLookbehindBranches($group->child);
 
-        return $this->lookbehindLength($group->child, $expanding + [$id => true]);
+        $calledAround = $this->calledWhileMeasuring;
+        $this->calledWhileMeasuring = [];
+        $recursions = $this->lookbehindRecursions;
+        $length = $this->lookbehindLength($group->child, $expanding + [$id => true]);
+
+        // In a pattern with a branch reset PCRE measures again, and counts.
+        if (!$this->hasBranchReset && $recursions === $this->lookbehindRecursions) {
+            $this->measuredGroupLengths[$id] = ['length' => $length, 'calls' => $this->calledWhileMeasuring];
+        }
+        $this->calledWhileMeasuring += $calledAround;
+
+        return $length;
     }
 
     /**
@@ -3396,23 +3553,35 @@ final class Validator extends AbstractNodeVisitor
 
     /**
      * Whether a "[" read inside a class was written as is, rather than
-     * quoted by a "\Q" that holds nothing else, or escaped.
+     * escaped or quoted: PCRE reads a quoted "[" as text, so "[\Qc[:(\E:]"
+     * opens no POSIX class.
      */
     private function isUnquotedClassBracket(string $source, LiteralNode $node): bool
     {
         $start = $node->startPosition;
-        if (1 !== $node->endPosition - $start || '[' !== ($source[$start] ?? '')) {
-            return false;
+
+        return !$this->classQuoteOpen && 1 === $node->endPosition - $start && '[' === ($source[$start] ?? '');
+    }
+
+    /**
+     * Follow the "\Q" and "\E" written between two items of a class, from
+     * $from to $to: no node records them, and nothing else sits there but
+     * the class opener, the "^" that negates it, the "-" of a range and,
+     * under "xx", blanks, none of them a backslash, so the last one decides.
+     * Each stretch is read once, which keeps a long quoted class linear.
+     */
+    private function readClassQuotes(int $from, int $to): void
+    {
+        if (null === $this->source || $to <= $from) {
+            return;
         }
 
-        if ($start < 2 || '\Q' !== substr($source, $start - 2, 2)) {
-            return true;
+        $between = substr($this->source, $from, $to - $from);
+        $open = strrpos($between, '\Q');
+        $close = strrpos($between, '\E');
+        if (false !== $open || false !== $close) {
+            $this->classQuoteOpen = false === $close || (false !== $open && $open > $close);
         }
-
-        // "\\Q[" is an escaped backslash, a "Q" and a bracket.
-        $backslashes = \strlen(substr($source, 0, $start - 1)) - \strlen(rtrim(substr($source, 0, $start - 1), '\\'));
-
-        return 0 === $backslashes % 2;
     }
 
     /**
@@ -3961,8 +4130,18 @@ final class Validator extends AbstractNodeVisitor
     private function measureLookbehind(GroupNode $node): void
     {
         if (!$this->walkingPattern) {
+            // Off a walk, the nodes measured on an earlier visit may be gone
+            // and their ids taken by others.
+            if (0 === $this->lookbehindDepth) {
+                $this->measuredGroupLengths = [];
+                $this->measuredLookbehinds = [];
+            }
             $this->validateLookbehindLength($node);
 
+            return;
+        }
+
+        if ($this->readingPrefix) {
             return;
         }
 

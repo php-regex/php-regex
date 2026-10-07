@@ -68,6 +68,20 @@ ReDoS proof and the lexer (October 2026). Each one is confirmed against
 `preg_match()` or measured, and predates the fixes made then. 2.0.0 freezes
 the public API, so they go before the tag.
 
+### Next steps
+
+- Merge the `before-2-0-defects` branch (frozen surfaces, then parser
+  errors) into `2.x` and push.
+- Still to fix from this list, in this order: display, printer, language
+  server and transpilers (comment bytes, printer round trips, LSP hover
+  and completion, `\k'n'` in JavaScript); linter and extractors
+  (character sets, `.*+` under `/x`, newline conventions in anchors,
+  Latin-1 re-encoding, Symfony block lists, `\N{U+…}` warning), then
+  regenerate the corpus files; ReDoS precision (atomic unions, `xx`, the
+  empty witness suffix).
+- Then the lookbehind validation, name reader and error-order entries
+  below, found while fixing the parser errors.
+
 ### The character-set analysis
 
 - Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
@@ -105,45 +119,10 @@ Sound in both cases, but verdicts the proof could give:
   missed.
 - A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
   whole before extraction, which double-encodes its UTF-8 patterns.
-- `/\Q\x\E/` parses as a code point instead of the text `\x`.
-- The message for `\P{L}` without `/u` names `\p{L}`.
 - A lookahead before a loop yields a ReDoS witness with an empty suffix, which
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
   the witness is wrong.
-- Error offsets and messages inside an alphabetic assertion body differ from
-  PCRE: `/(?*[a)/` says "Invalid group modifier syntax" at 3 (PCRE: "missing
-  terminating ]" at 6); `(?*a\` reports 4 (PCRE: 5); an unclosed class or a
-  trailing `\` in a body reads "Missing closing parenthesis for (*pla:".
-  More of the same family: an unclosed `(?*` body is always "Invalid group
-  modifier syntax" at 3 (`/(?*a/`, `/(?*[])/`, and `/(*CR)(?*b#c\n))/x`
-  at 8; PCRE reports the end of the pattern); an error inside a body is not
-  found ahead of a later one, as `/(*pla:[[::])])/` (PCRE: "unknown POSIX
-  class name" at 11; the library "Unmatched closing parenthesis" at 14).
-  And a `\p{` left open in a body with a `}` past its
-  `)` is reported there as "Missing closing parenthesis for (*pla:" at 17
-  (`/(*pla:\p{a)b\p{L}/`; PCRE: "malformed \P or \p sequence" at 15).
-- The body of an alphabetic assertion (`(*pla:…)`, `(?*…)`) is not read in
-  the state around it, as `(?=…)` is:
-  - `xx` reaches the body as `x`, and the spaces before the first member of a
-    class are not skipped there: `/(?xx)(*pla:[ a])./` keeps the space in
-    the tree, and the Python transpiler gives `(?xx)(?=[ a]).`, which
-    matches `" "` where PCRE does not;
-  - group names are checked per body: `/(?<n>a)(*pla:(?<n>b))/`,
-    `/(?|(?<n>a)|(*pla:(?<m>b)))/` and `/(*pla:(?J)(?<n>a))(?<n>b)/` are
-    accepted, where PCRE refuses all three.
-- `\Q…\E` inside a class is read one character per regex call: a 48 KB
-  quote takes about 5 seconds to validate.
-- An unclosed `(?C` callout is read again to the end of the pattern at each
-  attempt: 20,000 of them take about a second, four times as long for twice
-  as many.
-- A quoted `[:` in a class is read as the start of a POSIX class:
-  `/[\Qc[:(\E:]/` and `/[[:^digit:]\Qc[:(\E:]/` are refused with
-  `Invalid POSIX class`, where PCRE accepts both.
-- Without `/u`, a quantifier stacked on a multi-byte character is accepted:
-  U+2029 or U+2028 written as raw bytes, then `+{2}` or `{2}{2}` (PCRE:
-  "quantifier does not follow a repeatable item"); `/a+{2}/` and the `/u`
-  forms are refused as they should.
 - The text of a comment reaches `explain()`, the highlighters and the Mermaid
   output as raw bytes: a byte-mode comment that is not valid UTF-8
   (`/a(?#\xE1)b/`, or `"/(*ANY)a#\u{5140}b/x"`, whose comment ends at the
@@ -159,7 +138,6 @@ Sound in both cases, but verdicts the proof could give:
   - pretty mode rewrites `(?#x\ny)` as `#` lines in a pattern without `x`
     (`/a(?#x\ny)b/` then no longer matches `"ab"`), and puts newlines before
     `|` in a pattern without `x`.
-- `~(*CR)(**\Q…~x` is accepted; PCRE refuses it at offset 7.
 - The console form of a pattern does not always read back as itself:
   - an escape it inserts can hold an unusual delimiter (`}a\x{202E}b}u`
     with `}` as delimiter), and a control-byte delimiter is itself escaped
@@ -178,6 +156,70 @@ Sound in both cases, but verdicts the proof could give:
 - A railroad label spells quoted text as text, so `{2}` after an atom
   reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
   (PCRE2 10.44 and older) before `{` is not respelled either.
+- PCRE's limit of 250 nested parentheses is not applied to a group left
+  open: 300 `(` give `regex.group.unclosed` at the end, where PCRE says
+  "parentheses are too deeply nested" at 251.
+- `/(?<*+a)/` is a missing group name at 3; PCRE reports the quantifier
+  that follows nothing at 5.
+- Error order, still off PCRE's (each a library offset vs PCRE2 10.49):
+  an error in a class left open at the end is lost to the unclosed class
+  (`/[a(?-1)/` at 7, PCRE "range out of order" at 6); `/(?((*foo:/` is
+  `regex.verb.invalid` at 8 (PCRE "subpattern name expected" at 3);
+  `/\g-1+/` at 5 (PCRE 4); `/a{3,2}(?#c)+/` at 10 (PCRE 5).
+- `/(a)\g-1+{2}/` is accepted; PCRE refuses the stacked quantifier at 11
+  (the `\g` token takes the `+`).
+- More error order off PCRE's (library vs PCRE2 10.49): 251 closed nested
+  groups then `[` give the unclosed class at the end (PCRE "parentheses are
+  too deeply nested" at 251); a callout number above 255 in a condition,
+  `/(?(?C256)a)/`, is the missing assertion at 9 (PCRE 8); `/(?<n>a)(?<n/`
+  is a duplicate name at 12 (PCRE unterminated name at 11); `/\g{-1/` is
+  `regex.backref.invalid_syntax` at 5 (PCRE "non-existent subpattern" at 2).
+- `regex.lint.flag.redundant` reads `(?^` as turning every option off, where `J`
+  and `U` stay on: `/(?^U)a+/U` gets no redundant-flag warning
+  (`InlineFlagsRule`).
+- A lookbehind length past `PHP_INT_MAX` (64 levels of doubling calls)
+  overflows to a float: the "too long" verdict and offset are right, but
+  the message prints `length=0` or a negative number.
+- Lookbehind validation (each against PCRE2 10.49):
+  - the "lookbehind assertion is too complicated" budget is not PCRE's:
+    PCRE counts past 2000 across the whole compile, with or without a branch
+    reset; the library caps at 1000 per lookbehind and only with a branch
+    reset, so `/(?<=(?1))…(?|x)/` with ten levels of doubling calls is
+    refused (PCRE accepts it) and 2002 `(?<=a)` are accepted (PCRE refuses);
+  - with a branch reset, measuring a lookbehind through doubling calls is
+    still exponential (266 bytes take 19 s): the budget is checked only
+    after a whole branch;
+  - a back reference in a lookbehind of a pattern with a branch reset is
+    measured, where PCRE refuses it as not limited (`/(a)(?|b|c)(?<=\1)/`
+    at 10);
+  - `\C` in a lookbehind under `(*UTF)` without `/u` is accepted
+    (`/(*UTF)(?<=b\C)/`, PCRE refuses it at 6);
+  - `\X` is judged before the branches are measured, and a lookbehind used
+    as a condition inside a lookbehind is not measured, so the first error
+    is not PCRE's.
+  - a group around a lookbehind counts as being measured, where PCRE only
+    counts a call from inside the group it calls and skips `(?(DEFINE)…)`:
+    `/(a(?2))(c(?(DEFINE)(?<=(?1))))/` is refused as not limited at 19
+    (PCRE compiles it); `/(a(?<=(?3)))(b(?<=(c(?2))))/` is refused at 14
+    (PCRE at 2).
+  - a lookbehind called from a condition that holds another lookbehind can
+    pass unmeasured: `/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` is
+    accepted, PCRE refuses it as not limited at 28.
+- Name readers outside group definitions do not stop where PCRE stops:
+  `\k<aé>` without `/u` (and `\k'`, `\k{`, `\g{`, `\g<`, `\g'`) is a
+  missing named group at 10 (PCRE: syntax error in the name at 11);
+  `(?&aé)` likewise; `\k{a b}`, `\k{ a` one byte early; `(?&a(?:z)`
+  and `(?P>a(?:z)` an unclosed group (PCRE: "expected capture group number
+  or name"); the message for `\g{٣a}` quotes `\k{٣a}`.
+- `/[z-abcd/` is the unclosed class at 7; PCRE reports the reversed range
+  at 4.
+- `\1000` (octal `\100` then `0`) followed by a comment, `\E` or an `x`
+  blank and a quantifier repeats both characters, where PCRE repeats the
+  `0` only: `/^\1000(?#c)+$/` matches `"@0@0"` once printed, and PCRE does
+  not.
+- A relative condition reference before any whole item is reported after
+  the next error: `/(?(-1)(/` is the unclosed group at 7, PCRE "reference
+  to non-existent subpattern" at 5.
 - The caret under a lint snippet is placed by bytes, so each multi-byte
   character before the fault moves it one column right.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`

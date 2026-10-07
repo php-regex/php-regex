@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
+use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
@@ -22,6 +23,7 @@ use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -66,6 +68,7 @@ final class AlphaAssertionBodyTest extends TestCase
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
         $this->assertSame($offset, $result->offset, $pattern);
         $this->assertStringContainsStringIgnoringCase('missing closing parenthesis', (string) $result->error, $pattern);
+        $this->assertSame(ErrorCode::GroupUnclosed, $result->errorCode, $pattern);
     }
 
     #[Test]
@@ -146,19 +149,23 @@ final class AlphaAssertionBodyTest extends TestCase
 
     /**
      * PCRE names the class it meets unclosed, "missing terminating ] for
-     * character class", where the library names the alphabetic assertion
-     * around it: the offset is the one PCRE reports.
+     * character class" (or "\c at end of pattern" when the class ends on
+     * "\c"), not the alphabetic assertion around it: the offset and the code
+     * are the ones PCRE gives, read from the engine.
      */
     #[Test]
     #[DataProvider('provideUnclosedClassesInBodies')]
     public function test_validate_refuses_a_class_in_the_body_that_never_closes(string $pattern, int $offset): void
     {
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
+        $pcre = self::pcreError($pattern);
+        $this->assertSame($offset, $pcre['offset'], 'Oracle: '.$pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
         $this->assertSame($offset, $result->offset, $pattern);
+        $this->assertContains($result->errorCode?->value, PcreMessageCodes::CODES[$pcre['message']], \sprintf('%s: PCRE says "%s", the library %s (%s).', $pattern, $pcre['message'], $result->errorCode?->value, (string) $result->error));
     }
 
     /**
@@ -225,6 +232,15 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'hash in a class under x' => ['pattern' => '/(*pla:(?x)[#)])/'];
         yield 'quoted hash under x' => ['pattern' => '/(*pla:(?x)\\Q#\\E)/'];
         yield 'comment group under the x flag' => ['pattern' => '/(*pla:(?#x)#)/x'];
+        // A "#" comment ends at a newline of the pattern's convention: NEL
+        // under (*ANY), as one byte or as U+0085 under (*UTF), U+2028 too;
+        // a "\n" does not end it under (*CR).
+        yield 'NEL byte ends a comment under (*ANY)' => ['pattern' => "/(*ANY)(?x)(*pla:a#)\x85)b/"];
+        yield 'NEL byte ends no comment under the default newline' => ['pattern' => "/(?x)(*pla:a#)\x85)b/"];
+        yield 'NEL ends a comment under (*UTF) and (*ANY)' => ['pattern' => "/(*UTF)(*ANY)(?x)(*pla:a#)\u{85})b/"];
+        yield 'line separator ends a comment under (*UTF) and (*ANY)' => ['pattern' => "/(*UTF)(*ANY)(?x)(*pla:a#)\u{2028})b/"];
+        yield 'carriage return ends a comment under (*CR)' => ['pattern' => "/(*CR)(?x)(*pla:a#)\r)b/"];
+        yield 'line feed ends no comment under (*CR)' => ['pattern' => "/(*CR)(?x)(*pla:a#)\n)b/"];
     }
 
     /**
@@ -390,7 +406,9 @@ final class AlphaAssertionBodyTest extends TestCase
     /**
      * No PHP pattern can end on a backslash, its delimiter would be escaped:
      * the bodies go to the lexer as they are. The offsets are pcre2test
-     * 10.49's, the pattern given in hex: "\ at end of pattern".
+     * 10.49's, the pattern given in hex: "\ at end of pattern", always at
+     * the end of the pattern, so the code is the trailing backslash one,
+     * not the unclosed body around it.
      *
      * The lexer reads no byte past the end on the way: under an error
      * handler that turns warnings into exceptions, as frameworks install,
@@ -415,6 +433,7 @@ final class AlphaAssertionBodyTest extends TestCase
 
         $this->assertInstanceOf(LexerException::class, $caught, \sprintf('%s ends on a backslash but was read.', $pattern));
         $this->assertSame($offset, $caught->getPosition(), $pattern);
+        $this->assertSame(ErrorCode::EscapeTrailingBackslash, $caught->getErrorCode(), \sprintf('%s: %s', $pattern, $caught->getMessage()));
     }
 
     /**
@@ -425,6 +444,13 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'after text' => ['pattern' => '(*pla:a\\', 'offset' => 8];
         yield 'inside a class' => ['pattern' => '(*pla:[a\\', 'offset' => 9];
         yield 'inside a nested group' => ['pattern' => '(*pla:a(b\\', 'offset' => 10];
+        yield 'after a POSIX class in a class' => ['pattern' => '(*pla:[[:alpha:]\\', 'offset' => 17];
+        yield 'inside a nested body' => ['pattern' => '(*pla:(*pla:a\\', 'offset' => 14];
+        yield 'after text in a short lookahead' => ['pattern' => '(?*a\\', 'offset' => 5];
+        yield 'inside a class in a short lookahead' => ['pattern' => '(?*[a\\', 'offset' => 6];
+        yield 'inside a nested group in a short lookahead' => ['pattern' => '(?*a(b\\', 'offset' => 7];
+        yield 'inside a nested short lookahead' => ['pattern' => '(?*(?*a\\', 'offset' => 8];
+        yield 'after a closed quote in a short lookahead' => ['pattern' => '(?*\\Qa\\E\\', 'offset' => 9];
     }
 
     /**
@@ -480,6 +506,18 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'quote running to the end' => ['pattern' => '/(*pla:\\Qa)/', 'offset' => 10];
         yield 'quote after a letter running to the end' => ['pattern' => '/(*pla:a\\Q)/', 'offset' => 10];
         yield 'escaped parenthesis only' => ['pattern' => '/(*pla:a\\)/', 'offset' => 9];
+        // "(?*" is "(*napla:" by another name: PCRE reports it unclosed at
+        // the end of the pattern too (PHP on PCRE2 10.49).
+        yield 'short lookahead with text' => ['pattern' => '/(?*a/', 'offset' => 4];
+        yield 'short lookahead with nothing after it' => ['pattern' => '/(?*/', 'offset' => 3];
+        yield 'short lookahead around a closed alphabetic one' => ['pattern' => '/(?*(*pla:a)/', 'offset' => 11];
+        yield 'short lookahead whose x comment hides the parenthesis' => ['pattern' => "/(*CR)(?*b#c\n))/x", 'offset' => 14];
+        yield 'short lookahead with an escaped parenthesis' => ['pattern' => '/(?*a\\)/', 'offset' => 6];
+        yield 'short lookahead with a quote running to the end' => ['pattern' => '/(?*\\Qa)/', 'offset' => 7];
+        yield 'short lookahead with an unclosed callout' => ['pattern' => '/(?*(?C/', 'offset' => 6];
+        // Reported where PCRE does already: kept as guards.
+        yield 'alphabetic lookahead around an open short one' => ['pattern' => '/(*pla:(?*a)/', 'offset' => 11];
+        yield 'alphabetic lookahead with an unclosed callout' => ['pattern' => '/(*pla:(?C/', 'offset' => 9];
     }
 
     /**
@@ -692,6 +730,640 @@ final class AlphaAssertionBodyTest extends TestCase
     }
 
     /**
+     * An error inside a body is reported as PCRE reports it: the class, the
+     * POSIX name or the property it meets, at PCRE's offset, before any
+     * error that comes later in the pattern. The oracle is the running
+     * engine; the code is one PCRE's message allows.
+     */
+    #[Test]
+    #[DataProvider('provideErrorsInsideBodies')]
+    #[DataProvider('provideBodiesReadInPlaceToTheEnd')]
+    public function test_validate_reports_an_error_inside_a_body_as_pcre_does(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $pcre = self::pcreError($pattern);
+        $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
+        $this->assertContains($code->value, PcreMessageCodes::CODES[$pcre['message']] ?? [], \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], \sprintf('%s: PCRE says "%s" at %d, the library "%s" at %s.', $pattern, $pcre['message'], $offset, (string) $result->error, var_export($result->offset, true)));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideErrorsInsideBodies(): iterable
+    {
+        // PCRE: "missing terminating ] for character class".
+        yield 'class left open in a short lookahead' => ['pattern' => '/(?*[a)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'bracket first in a short lookahead' => ['pattern' => '/(?*[])/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'escaped bracket in a short lookahead' => ['pattern' => '/(?*[a\\])/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 8];
+        yield 'class left open after a closed short lookahead' => ['pattern' => '/(?*a)(?*[a)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 11];
+        yield 'class left open in a short lookahead after a closed body' => ['pattern' => '/(*pla:a)(?*[a)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 14];
+        yield 'class left open in an alphabetic lookahead' => ['pattern' => '/(*pla:[a)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 9];
+        yield 'class left open in a nested group of an atomic body' => ['pattern' => '/(*atomic:([a))/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 14];
+        // PCRE: "\c at end of pattern".
+        yield 'control escape ending a class in a body' => ['pattern' => '/(*pla:[\\c/', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 9];
+        // PCRE: "missing closing parenthesis", at the end of the pattern.
+        yield 'short lookahead never closed' => ['pattern' => '/(?*a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 4];
+        yield 'short lookahead never closed around a closed body' => ['pattern' => '/(?*(*pla:a)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];
+        yield 'short lookahead under a newline verb and x' => ['pattern' => "/(*CR)(?*b#c\n))/x", 'code' => ErrorCode::GroupUnclosed, 'offset' => 14];
+        // PCRE: "unknown POSIX class name", ahead of the later ")".
+        yield 'empty POSIX name before a stray parenthesis' => ['pattern' => '/(*pla:[[::])])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 11];
+        yield 'unknown POSIX name before a stray parenthesis' => ['pattern' => '/(*pla:[[:foo:]]))/', 'code' => ErrorCode::PosixInvalid, 'offset' => 14];
+        yield 'unknown POSIX name before text and a stray parenthesis' => ['pattern' => '/(*pla:[[:foo:]])a)/', 'code' => ErrorCode::PosixInvalid, 'offset' => 14];
+        yield 'unknown POSIX name in a short lookahead' => ['pattern' => '/(?*[[:foo:]])a)/', 'code' => ErrorCode::PosixInvalid, 'offset' => 11];
+        yield 'empty POSIX name in a nested body' => ['pattern' => '/(*pla:(*pla:[[::])]))/', 'code' => ErrorCode::PosixInvalid, 'offset' => 17];
+        yield 'empty POSIX name in a negative lookahead' => ['pattern' => '/(*nla:[[::])])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 11];
+        yield 'empty POSIX name in an atomic body' => ['pattern' => '/(*atomic:[[::])])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 14];
+        // PCRE: "malformed \P or \p sequence": the name runs past the ")".
+        yield 'property name running past the body' => ['pattern' => '/(*pla:\\p{a)b\\p{L}/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 15];
+        // Under "xx" a space or tab before the first member is skipped, so
+        // "]" is that member and the class runs to the end.
+        yield 'space then bracket under xx' => ['pattern' => '/(?xx)(*pla:[ ])./', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 16];
+        yield 'tab then bracket under xx' => ['pattern' => "/(?xx)(*pla:[\t])./", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 16];
+        yield 'space then bracket under xx in a short lookahead' => ['pattern' => '/(?xx)(?*[ ])./', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 13];
+        yield 'space then bracket under xx in a negative lookahead' => ['pattern' => '/(?xx)(*nla:[ ])./', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 16];
+        // Reported where PCRE does already: kept as guards.
+        yield 'unknown POSIX name, nothing after the body' => ['pattern' => '/(*pla:[[:foo:]])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 14];
+        yield 'empty POSIX name in a lookahead spelled (?=' => ['pattern' => '/(?=[[::])])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
+        yield 'property name running past a lookahead spelled (?=' => ['pattern' => '/(?=\\p{a)b\\p{L}/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 12];
+        yield 'space then bracket under xx in a lookahead spelled (?=' => ['pattern' => '/(?xx)(?=[ ])./', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 13];
+        yield 'stacked quantifier in a body before a stray parenthesis' => ['pattern' => '/(*pla:a{2}{2})b)/', 'code' => ErrorCode::QuantifierNothingToRepeat, 'offset' => 13];
+        yield 'alphabetic lookahead never closed' => ['pattern' => '/(*pla:a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 7];
+    }
+
+    /**
+     * A body that never closes is read in place to the end of the pattern,
+     * as PCRE reads it: nested in a closed body or around one, with a "#"
+     * comment of x hiding a ")", a class under xx, a "\Q" running to the
+     * end, and a "#" comment ended by the newlines of the convention in
+     * force (NEL, U+2028, U+2029 under (*ANY); CR under (*CR)). Where that
+     * ending decides what follows, a "[" after it tells the two readings
+     * apart: an unclosed class when the comment ends, the unclosed body
+     * when it runs on.
+     *
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideBodiesReadInPlaceToTheEnd(): iterable
+    {
+        // PCRE: "missing closing parenthesis", at the end of the pattern.
+        yield 'unclosed body after a closed one' => ['pattern' => '/(*pla:a)(?*b/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 12];
+        yield 'unclosed short lookahead quoting the rest' => ['pattern' => '/(?*\\Q(?*/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 8];
+        // PCRE: "missing terminating ] for character class".
+        yield 'class after an x comment ended by a newline' => ['pattern' => "/(*pla:a#c)\n[/x", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 12];
+        yield 'class under xx, a space first' => ['pattern' => '/(?xx)(*pla:[ ]/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 14];
+        yield 'class under xx, a space before it and in it' => ['pattern' => '/(?xx)(*pla: [ a/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 15];
+        yield 'NEL byte ends the comment under (*ANY)' => ['pattern' => "/(*ANY)(?x)(*pla:a#c\x85[b/", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 22];
+        yield 'NEL byte ends the comment of a short lookahead under (*ANY)' => ['pattern' => "/(*ANY)(?x)(?*a#c\x85[b/", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 19];
+        yield 'NEL ends the comment under (*UTF) and (*ANY)' => ['pattern' => "/(*UTF)(*ANY)(?x)(*pla:a#c\u{85}[b/", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 29];
+        yield 'line separator ends the comment under (*UTF) and (*ANY)' => ['pattern' => "/(*UTF)(*ANY)(?x)(*pla:a#c\u{2028}[b/", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 30];
+        yield 'paragraph separator ends the comment under (*UTF) and (*ANY)' => ['pattern' => "/(*UTF)(*ANY)(?x)(*pla:a#c\u{2029}[b/", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 30];
+        yield 'line separator ends the comment of a short lookahead under the x flag' => ['pattern' => "/(*UTF)(*ANY)(?*a#c\u{2028}[b/x", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 23];
+        yield 'carriage return ends the comment under (*CR)' => ['pattern' => "/(*CR)(*pla:a#c\r[b/x", 'code' => ErrorCode::CharclassUnclosed, 'offset' => 17];
+        // Reported where PCRE does already: kept as guards.
+        // The comment runs on: the "[" is in it, the body is what is unclosed.
+        yield 'NEL byte ends no comment under the default newline' => ['pattern' => "/(?x)(*pla:a#c\x85[b/", 'code' => ErrorCode::GroupUnclosed, 'offset' => 16];
+        yield 'line separator ends no comment without (*ANY)' => ['pattern' => "/(*UTF)(?x)(*pla:a#c\u{2028}[b/", 'code' => ErrorCode::GroupUnclosed, 'offset' => 24];
+        yield 'line feed ends no comment under (*CR)' => ['pattern' => "/(*CR)(*pla:a#c\n[b/x", 'code' => ErrorCode::GroupUnclosed, 'offset' => 17];
+        yield 'NEL ends no comment under (*ANYCRLF)' => ['pattern' => "/(*ANYCRLF)(?x)(*pla:a#c\x85[b/", 'code' => ErrorCode::GroupUnclosed, 'offset' => 26];
+        // The others: the body is unclosed at the end of the pattern.
+        yield 'unclosed body around a closed one' => ['pattern' => '/(*pla:(*pla:a)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 14];
+        yield 'unclosed body around a closed one, text after it' => ['pattern' => '/(*pla:(*pla:a)b/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 15];
+        yield 'unclosed body around a closed one and an unclosed one' => ['pattern' => '/(*pla:(*pla:a)(*pla:b/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 21];
+        yield 'three unclosed bodies' => ['pattern' => '/(*pla:(*pla:(*pla:a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 19];
+        yield 'escaped parenthesis leaving the outer body unclosed' => ['pattern' => '/(*pla:(*pla:a\\))/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 16];
+        yield 'unclosed body around a closed short lookahead and body' => ['pattern' => '/(*pla:(?*a)(*pla:b)c/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 20];
+        yield 'unclosed body around a closed group' => ['pattern' => '/(*pla:(a)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'unclosed group around a closed body' => ['pattern' => '/((*pla:a)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'x comment hiding the parenthesis' => ['pattern' => '/(*pla:a#)/x', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'x comment hiding the parenthesis, a newline last' => ['pattern' => "/(*pla:a#)\n/x", 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'x comment hiding the parenthesis and a bracket' => ['pattern' => '/(*pla:a#c)[/x', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];
+        yield 'inline x comment hiding the parenthesis' => ['pattern' => '/(?x)(*pla:a#)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 13];
+        yield 'class under xx, a space before it' => ['pattern' => '/(?xx)(*pla: [a]/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 15];
+        yield 'quote running to the end in a nested body' => ['pattern' => '/(*pla:(*pla:\\Qa)b)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 18];
+        yield 'quote hiding a hash under x' => ['pattern' => '/(*pla:\\Q#)/x', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'quote hiding another opener' => ['pattern' => '/(*pla:a\\Q(*pla:/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 15];
+        yield 'NEL ends no comment under (*UTF) alone' => ['pattern' => "/(*UTF)(?x)(*pla:a#c\u{85}b/", 'code' => ErrorCode::GroupUnclosed, 'offset' => 22];
+    }
+
+    /**
+     * tokenize() reads a body that never closes in place: its opener is a
+     * token alone, a verb token whose value is the opener without "(" and
+     * its first character ("pla:" or "*"), then the tokens of the body as
+     * any text, and the lexer stops at the end of the pattern on the ")"
+     * PCRE misses there, at PCRE's offset. A body that closes is one token
+     * whole. The tokens read up to the refusal are what the lexer read.
+     *
+     * @param list<array{TokenType, string, int, int}> $tokens
+     */
+    #[Test]
+    #[DataProvider('provideTokensOfUnclosedBodies')]
+    public function test_tokenize_reads_an_unclosed_body_as_its_opener_then_its_text(string $pattern, string $flags, array $tokens): void
+    {
+        $pcre = self::pcreError('/'.$pattern.'/'.$flags);
+        $this->assertSame(['message' => 'missing closing parenthesis', 'offset' => \strlen($pattern)], $pcre, 'Oracle: '.$pattern);
+
+        $lexer = new Lexer();
+        $caught = null;
+
+        try {
+            $lexer->tokenize($pattern, $flags);
+        } catch (LexerException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertInstanceOf(LexerException::class, $caught, $pattern.' was read as closed.');
+        $this->assertSame([ErrorCode::GroupUnclosed, \strlen($pattern)], [$caught->getErrorCode(), $caught->getPosition()], $caught->getMessage());
+        $this->assertSame($tokens, array_map(static fn ($token): array => [$token->type, $token->value, $token->position, $token->end()], $lexer->tokensRead()), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate('/'.$pattern.'/'.$flags);
+        $this->assertSame([ErrorCode::GroupUnclosed, \strlen($pattern)], [$result->errorCode, $result->offset], (string) $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, flags: string, tokens: list<array{TokenType, string, int, int}>}>
+     */
+    public static function provideTokensOfUnclosedBodies(): iterable
+    {
+        yield 'alphabetic lookahead with text' => ['pattern' => '(*pla:a', 'flags' => '', 'tokens' => [[TokenType::PcreVerb, 'pla:', 0, 6], [TokenType::Literal, 'a', 6, 7]]];
+        yield 'alphabetic atomic group with nothing after it' => ['pattern' => '(*atomic:', 'flags' => '', 'tokens' => [[TokenType::PcreVerb, 'atomic:', 0, 9]]];
+        yield 'short lookahead with text' => ['pattern' => '(?*a', 'flags' => '', 'tokens' => [[TokenType::PcreVerb, '*', 0, 3], [TokenType::Literal, 'a', 3, 4]]];
+        yield 'short lookahead after a closed body' => ['pattern' => '(*pla:a)(?*b', 'flags' => '', 'tokens' => [[TokenType::PcreVerb, 'pla:a', 0, 8], [TokenType::PcreVerb, '*', 8, 11], [TokenType::Literal, 'b', 11, 12]]];
+        yield 'body around a closed body' => ['pattern' => '(*pla:(*pla:a)b', 'flags' => '', 'tokens' => [[TokenType::PcreVerb, 'pla:', 0, 6], [TokenType::PcreVerb, 'pla:a', 6, 14], [TokenType::Literal, 'b', 14, 15]]];
+        yield 'x comment hiding the parenthesis' => ['pattern' => '(*pla:a#)', 'flags' => 'x', 'tokens' => [[TokenType::PcreVerb, 'pla:', 0, 6], [TokenType::Literal, 'a', 6, 7], [TokenType::Literal, '#', 7, 8], [TokenType::Literal, ')', 8, 9]]];
+    }
+
+    /**
+     * The body is read in the state around it, as the body of "(?=" is:
+     * under "xx" the spaces and tabs of a class are no members, "(?-x)"
+     * inside the body clears it, "(?-x:" around the body too. Each body
+     * gives the tree of its "(?=" spelling, and the engine agrees on every
+     * subject between the two spellings.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideBodiesUnderXx')]
+    public function test_parse_reads_the_body_under_the_options_around_it(string $pattern, string $lookahead, array $subjects): void
+    {
+        foreach ($subjects as $subject) {
+            $this->assertSame(preg_match($lookahead, $subject), preg_match($pattern, $subject), \sprintf('Oracle: %s and %s on %s.', $pattern, $lookahead, json_encode($subject)));
+        }
+
+        $regex = Regex::create(['cache' => null]);
+        $this->assertTrue($regex->validate($pattern)->isValid, \sprintf('%s compiles: %s', $pattern, (string) $regex->validate($pattern)->error));
+
+        $tree = static fn (string $source): string => $regex->parse($source)->accept(new AsciiTreeRenderer());
+        $this->assertStringContainsString('CharClass', $tree($lookahead), 'The tree shows the class.');
+        $this->assertSame($tree($lookahead), $tree($pattern), $pattern);
+
+        $compiled = $regex->parse($pattern)->accept(new PatternPrinter());
+        foreach ($subjects as $subject) {
+            $this->assertSame(preg_match($pattern, $subject), preg_match($compiled, $subject), \sprintf('%s compiled to %s, which disagrees on %s.', $pattern, $compiled, json_encode($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, lookahead: string, subjects: list<string>}>
+     */
+    public static function provideBodiesUnderXx(): iterable
+    {
+        // PCRE: " x" → 0, "ax" → 1.
+        yield 'space before a member' => ['pattern' => '/(?xx)(*pla:[ a])./', 'lookahead' => '/(?xx)(?=[ a])./', 'subjects' => [' x', 'ax', 'x']];
+        yield 'tab before a member' => ['pattern' => "/(?xx)(*pla:[\ta])./", 'lookahead' => "/(?xx)(?=[\ta])./", 'subjects' => ["\tx", 'ax']];
+        yield 'space before a bracket read as a member' => ['pattern' => '/(?xx)(*pla:[ ]a)])./', 'lookahead' => '/(?xx)(?=[ ]a)])./', 'subjects' => [']x', ')x', 'ax', ' x']];
+        yield 'space before a member in a negative lookahead' => ['pattern' => '/(?xx)(*nla:[ a])./', 'lookahead' => '/(?xx)(?![ a])./', 'subjects' => [' x', 'ax']];
+        yield 'space before a member under (*UTF)' => ['pattern' => '/(*UTF)(?xx)(*pla:[ é])./', 'lookahead' => '/(*UTF)(?xx)(?=[ é])./', 'subjects' => [' x', 'éx']];
+        // Read as the engine reads them already: kept as guards.
+        yield 'a single x keeps the space a member' => ['pattern' => '/(?x)(*pla:[ ])./', 'lookahead' => '/(?x)(?=[ ])./', 'subjects' => [' x', 'ax']];
+        yield 'x cleared inside the body' => ['pattern' => '/(?xx)(*pla:(?-x)[ ]a)./', 'lookahead' => '/(?xx)(?=(?-x)[ ]a)./', 'subjects' => [' ax', 'ax']];
+        yield 'x cleared around the body' => ['pattern' => '/(?xx)(?-x:(*pla:[ ]a))./', 'lookahead' => '/(?xx)(?-x:(?=[ ]a))./', 'subjects' => [' ax', 'ax']];
+        yield 'xx set inside the body' => ['pattern' => '/(*pla:(?xx)[ a])./', 'lookahead' => '/(?=(?xx)[ a])./', 'subjects' => [' x', 'ax']];
+    }
+
+    /**
+     * A script run written in a body is a script run: the tree is the one
+     * of the "(?=" spelling, and the printed pattern agrees with the engine,
+     * which refuses a run mixing two scripts where "(?:" would take it.
+     *
+     * @param list<array{string, int}> $subjects each subject and whether the engine matches it
+     */
+    #[Test]
+    #[DataProvider('provideScriptRunsInBodies')]
+    public function test_parse_reads_a_script_run_in_a_body_as_its_lookahead_spelling(string $pattern, string $lookahead, array $subjects): void
+    {
+        $regex = Regex::create(['cache' => null]);
+        $tree = static fn (string $source): string => $regex->parse($source)->accept(new AsciiTreeRenderer());
+        $this->assertSame($tree($lookahead), $tree($pattern), $pattern);
+
+        $compiled = $regex->parse($pattern)->accept(new PatternPrinter());
+        foreach ($subjects as [$subject, $matches]) {
+            $this->assertSame($matches, preg_match($pattern, $subject), \sprintf('Oracle: %s on %s.', $pattern, json_encode($subject)));
+            $this->assertSame($matches, preg_match($compiled, $subject), \sprintf('%s compiled to %s, which disagrees on %s.', $pattern, $compiled, json_encode($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, lookahead: string, subjects: list<array{string, int}>}>
+     */
+    public static function provideScriptRunsInBodies(): iterable
+    {
+        yield 'script run in a lookahead' => ['pattern' => '/^(*pla:(*sr:\w+$))/u', 'lookahead' => '/^(?=(*sr:\w+$))/u', 'subjects' => [['ab', 1], ["a\u{3b1}", 0]]];
+        yield 'script run in a negative lookahead' => ['pattern' => '/^(*nla:(*sr:\w+$))/u', 'lookahead' => '/^(?!(*sr:\w+$))/u', 'subjects' => [['ab', 0], ["a\u{3b1}", 1]]];
+        yield 'atomic script run in a lookahead' => ['pattern' => '/^(*pla:(*asr:\w+$))/u', 'lookahead' => '/^(?=(*asr:\w+$))/u', 'subjects' => [['ab', 1], ["a\u{3b1}", 0]]];
+    }
+
+    /**
+     * The Python spelling of the body is the one of its "(?=" spelling: no
+     * space in the class that PCRE skips (" x" matches "(?=[ a])." but not
+     * the PCRE pattern).
+     */
+    #[Test]
+    public function test_transpile_reads_the_body_under_xx_as_its_lookahead_spelling(): void
+    {
+        $this->assertSame(0, preg_match('/(?xx)(*pla:[ a])./', ' x'), 'Oracle: the space is no member.');
+
+        $regex = Regex::create(['cache' => null]);
+
+        $this->assertSame(
+            $regex->transpile('/(?xx)(?=[ a])./', 'python')->literal,
+            $regex->transpile('/(?xx)(*pla:[ a])./', 'python')->literal,
+        );
+    }
+
+    /**
+     * tokenize() finds the end of the body under "xx": in "[ ]a)]" the "]"
+     * after the space is a member, so the body runs to the ")" after the
+     * class (PCRE compiles the pattern). A class that "xx" leaves unclosed
+     * is refused while tokenizing, where PCRE refuses it.
+     */
+    #[Test]
+    public function test_tokenize_reads_the_body_under_xx(): void
+    {
+        $this->assertSame(1, preg_match('/(?xx)(*pla:[ ]a)])./', ')x'), 'Oracle: the class holds ")".');
+
+        $tokens = Regex::tokenize('/(?xx)(*pla:[ ]a)])./')->getTokens();
+
+        $this->assertSame(
+            [[TokenType::PcreVerb, 'pla:[ ]a)]', 5], [TokenType::Dot, '.', 18], [TokenType::Eof, '', 19]],
+            array_map(static fn ($token): array => [$token->type, $token->value, $token->position], \array_slice($tokens, 4)),
+        );
+    }
+
+    #[Test]
+    public function test_tokenize_refuses_a_class_xx_leaves_open_in_a_body(): void
+    {
+        $this->assertSame(['message' => 'missing terminating ] for character class', 'offset' => 16], self::pcreError('/(?xx)(*pla:[ ])./'));
+
+        $caught = null;
+
+        try {
+            Regex::tokenize('/(?xx)(*pla:[ ])./');
+        } catch (LexerException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertInstanceOf(LexerException::class, $caught, 'The class is read as closed.');
+        $this->assertSame([ErrorCode::CharclassUnclosed, 16], [$caught->getErrorCode(), $caught->getPosition()]);
+    }
+
+    /**
+     * Looking for an earlier error inside each body does not read the
+     * bodies again for each one: an error after many closed bodies is
+     * found in linear time.
+     */
+    #[Test]
+    #[DataProvider('provideClosedBodiesBeforeAnError')]
+    public function test_validate_finds_an_error_after_many_bodies_in_linear_time(string $unit): void
+    {
+        $this->assertFalse(@preg_match('/'.$unit.')/', ''), 'Oracle: the stray parenthesis is refused.');
+
+        $this->assertLinearTime(
+            static function (int $size) use ($unit): void {
+                Regex::create(['cache' => null])->validate('/'.str_repeat($unit, $size).')/');
+            },
+            2_000,
+            $unit,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{unit: string}>
+     */
+    public static function provideClosedBodiesBeforeAnError(): iterable
+    {
+        yield 'text bodies' => ['unit' => '(*pla:a)'];
+        yield 'class bodies' => ['unit' => '(*pla:[a])'];
+        yield 'short lookaheads holding a POSIX class' => ['unit' => '(?*[[:alpha:]])'];
+    }
+
+    /**
+     * A name PCRE does not know opens no body: PCRE refuses it at its colon
+     * before reading what follows ("(*alpha_assertion) not recognized"),
+     * whether the body would close or not, and whatever it holds, a class
+     * or a quote left open included. The lexer reads no body for it and
+     * refuses the name where PCRE does.
+     *
+     * The library agrees with the running engine on every release, the
+     * offset and a code its message allows; the row holds what PCRE2 10.49
+     * reports, checked against the engine when it is 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideUnknownNamesWhoseBodyNeverCloses')]
+    public function test_validate_refuses_an_unknown_name_before_its_body_as_pcre_does(string $pattern, int $offset): void
+    {
+        $pcre = self::pcreError($pattern);
+        $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
+        if ('10.49' === self::runningRelease()) {
+            $this->assertSame(['message' => '(*alpha_assertion) not recognized', 'offset' => $offset], $pcre, 'Oracle: '.$pattern);
+        }
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
+        $this->assertSame($pcre['offset'], $result->offset, \sprintf('%s: PCRE says "%s" at %d, the library "%s".', $pattern, $pcre['message'], (int) $pcre['offset'], (string) $result->error));
+        $this->assertContains($result->errorCode?->value, PcreMessageCodes::CODES[$pcre['message']], \sprintf('%s: PCRE says "%s", the library "%s".', $pattern, $pcre['message'], (string) $result->error));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideUnknownNamesWhoseBodyNeverCloses(): iterable
+    {
+        yield 'text after the colon' => ['pattern' => '/(*foo:a/', 'offset' => 5];
+        yield 'nothing after the colon' => ['pattern' => '/(*foo:/', 'offset' => 5];
+        yield 'name with an underscore' => ['pattern' => '/(*foo_bar:a/', 'offset' => 9];
+        yield 'after text' => ['pattern' => '/a(*foo:(b)/', 'offset' => 6];
+        yield 'a closed body after it' => ['pattern' => '/(*foo:a(*pla:b)/', 'offset' => 5];
+        yield 'class left open after it' => ['pattern' => '/(*foo:[)/', 'offset' => 5];
+        yield 'quote left open after it' => ['pattern' => '/(*foo:\\Q)/', 'offset' => 5];
+        yield 'escaped backslash after it' => ['pattern' => '/(*foo:a\\\\/', 'offset' => 5];
+        yield 'under x, a comment hiding the parenthesis' => ['pattern' => '/(?x)(*foo: a # )/', 'offset' => 9];
+        yield 'under u' => ['pattern' => '/(*foo:a/u', 'offset' => 5];
+        yield 'in an alphabetic lookahead never closed' => ['pattern' => '/(*pla:(*foo:a/', 'offset' => 11];
+        yield 'in a short lookahead never closed' => ['pattern' => '/(?*(*foo:a/', 'offset' => 8];
+        yield 'after a closed body' => ['pattern' => '/(*pla:a)(*foo:b/', 'offset' => 13];
+        yield 'as the condition' => ['pattern' => '/(?(*foo:a/', 'offset' => 7];
+        yield 'as the condition, after a callout' => ['pattern' => '/(?(?C1)(*foo:a/', 'offset' => 12];
+    }
+
+    /**
+     * The refusal names the opener PCRE does not know, as written.
+     */
+    #[Test]
+    #[DataProvider('provideUnknownOpeners')]
+    public function test_validate_names_the_unknown_assertion_it_refuses(string $pattern, string $opener): void
+    {
+        $pcre = self::pcreError($pattern);
+        $this->assertContains(ErrorCode::VerbInvalid->value, PcreMessageCodes::CODES[$pcre['message']] ?? [], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertSame(ErrorCode::VerbInvalid, $result->errorCode, $pattern);
+        $this->assertStringContainsString('"'.$opener.'"', (string) $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, opener: string}>
+     */
+    public static function provideUnknownOpeners(): iterable
+    {
+        yield 'a name of letters' => ['pattern' => '/(*foo:a/', 'opener' => '(*foo:'];
+        yield 'a name with an underscore' => ['pattern' => '/(*foo_bar:a/', 'opener' => '(*foo_bar:'];
+        yield 'a known name with a letter more' => ['pattern' => '/(*plaa:/', 'opener' => '(*plaa:'];
+        yield 'in an alphabetic lookahead never closed' => ['pattern' => '/(*pla:(*foo:a/', 'opener' => '(*foo:'];
+    }
+
+    /**
+     * The lexer itself reads no body PCRE does not read, when the body never
+     * closes: an unknown name, or a name PCRE knows standing where the
+     * condition of "(?(" belongs and naming no lookaround there, after a
+     * callout or not. It refuses the name where PCRE does, so no token of
+     * the body and no ")" missing at the end is what stops it. The tokens
+     * read up to the refusal are what the lexer read.
+     *
+     * @param list<array{TokenType, string, int, int}> $tokens
+     */
+    #[Test]
+    #[DataProvider('provideBodiesTheLexerDoesNotRead')]
+    public function test_tokenize_refuses_a_body_pcre_does_not_read_where_pcre_does(string $pattern, ErrorCode $code, int $offset, array $tokens): void
+    {
+        $pcre = self::pcreError('/'.$pattern.'/');
+        $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
+        if ('10.49' === self::runningRelease()) {
+            $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
+            $this->assertContains($code->value, PcreMessageCodes::CODES[$pcre['message']], \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
+        }
+
+        $lexer = new Lexer();
+        $caught = null;
+
+        try {
+            $lexer->tokenize($pattern);
+        } catch (LexerException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertInstanceOf(LexerException::class, $caught, $pattern.' was read whole.');
+        $this->assertSame([$code, $offset], [$caught->getErrorCode(), $caught->getPosition()], $caught->getMessage());
+        $this->assertSame($tokens, array_map(static fn ($token): array => [$token->type, $token->value, $token->position, $token->end()], $lexer->tokensRead()), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int, tokens: list<array{TokenType, string, int, int}>}>
+     */
+    public static function provideBodiesTheLexerDoesNotRead(): iterable
+    {
+        // PCRE: "(*alpha_assertion) not recognized", at the colon.
+        yield 'unknown name after text' => ['pattern' => 'a(*foo:b', 'code' => ErrorCode::VerbInvalid, 'offset' => 6, 'tokens' => [[TokenType::Literal, 'a', 0, 1]]];
+        yield 'unknown name with nothing after the colon' => ['pattern' => '(*foo:', 'code' => ErrorCode::VerbInvalid, 'offset' => 5, 'tokens' => []];
+        // PCRE: "atomic assertion expected after (?( or (?(?C)", at the colon.
+        yield 'atomic group as the condition' => ['pattern' => '(?(*atomic:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 10, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'short script run as the condition' => ['pattern' => '(?(*sr:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 6, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'non-atomic lookahead as the condition' => ['pattern' => '(?(*napla:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'substring scan as the condition' => ['pattern' => '(?(*scs:(1)a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'atomic group as the condition after a callout' => ['pattern' => '(?(?C1)(*atomic:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 15, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2], [TokenType::Callout, '1', 2, 7]]];
+    }
+
+    /**
+     * A "\p{" or "\P{" that no "}" closes swallows the rest of the pattern
+     * for PCRE: an alphabetic assertion, a stray ")", a "(**", a class or a
+     * repeated name after it is never read, and PCRE reports the property
+     * ("malformed \P or \p sequence") at the end of the pattern.
+     *
+     * The library agrees with the running engine on every release, the
+     * offset and a code its message allows; the row holds what PCRE2 10.49
+     * reports, checked against the engine when it is 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideUnclosedPropertiesSwallowingTheRest')]
+    public function test_validate_reports_an_unclosed_property_before_what_it_swallows(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertRefusedAsTheEngineRefuses($pattern, $code, $offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideUnclosedPropertiesSwallowingTheRest(): iterable
+    {
+        // PCRE: "malformed \P or \p sequence", at the end of the pattern.
+        yield 'a body holding a stacked quantifier' => ['pattern' => '/\\p{(*pla:++/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 11];
+        yield 'a stray parenthesis and a double star' => ['pattern' => '/\\p{)(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 7];
+        yield 'a body holding a reversed range' => ['pattern' => '/\\p{(*pla:[z-a]/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 14];
+        yield 'a body holding a repeated name' => ['pattern' => '/\\p{(*pla:(?<n>a)(?<n>b)/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 23];
+        yield 'an unclosed verb and a double star' => ['pattern' => '/\\p{(*(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 8];
+        yield 'negated, a body holding a stacked quantifier' => ['pattern' => '/\\P{(*pla:++/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 11];
+        yield 'negated, a stray parenthesis and a double star' => ['pattern' => '/\\P{)(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 7];
+        yield 'negated, a body holding a repeated name' => ['pattern' => '/\\P{(*pla:(?<n>a)(?<n>b)/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 23];
+        yield 'in a group, a body holding a reversed range' => ['pattern' => '/(\\p{(*pla:[z-a]/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 15];
+        yield 'in a body, a body holding a stacked quantifier' => ['pattern' => '/(*pla:\\p{(*pla:++/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 17];
+        yield 'negated in a body, an unclosed verb and a double star' => ['pattern' => '/(*pla:\\P{(*(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 14];
+        // A "}" before the property closes nothing: it still swallows the rest.
+        yield 'negated after a brace, a double star' => ['pattern' => '/}\\P{(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 7];
+        // An escaped backslash then "P{" is text: nothing is swallowed.
+        // PCRE: "escape sequence is invalid in character class".
+        yield 'an escaped backslash, then P, a brace and a class holding \\K' => ['pattern' => '/\\\\P{[\\Q\\E\\K(/', 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 11];
+        // Reported where PCRE reports them already: kept as guards.
+        yield 'in a group, a stray parenthesis and a double star' => ['pattern' => '/(\\p{)(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 8];
+        yield 'in a body, a stray parenthesis and a double star' => ['pattern' => '/(*pla:\\p{)(**/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 13];
+    }
+
+    /**
+     * A body that never closes, ending in a construct cut short, is
+     * "missing closing parenthesis" at the end of the pattern for PCRE: an
+     * opener "(?(", "(?P" or "(?(?C1)" with nothing after it, or a verb name
+     * left open. A callout cut short before its ")" is PCRE's "closing
+     * parenthesis for (?C expected" instead.
+     *
+     * The library agrees with the running engine on every release, the
+     * offset and a code its message allows; the row holds what PCRE2 10.49
+     * reports, checked against the engine when it is 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideUnclosedBodiesEndingInAConstructCutShort')]
+    public function test_validate_refuses_an_unclosed_body_ending_in_a_construct_cut_short(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertRefusedAsTheEngineRefuses($pattern, $code, $offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideUnclosedBodiesEndingInAConstructCutShort(): iterable
+    {
+        // PCRE: "missing closing parenthesis", at the end of the pattern.
+        yield 'a condition opener' => ['pattern' => '/(*pla:(?(/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'a (?P opener' => ['pattern' => '/(*pla:(?P/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'a callout condition with nothing after it' => ['pattern' => '/(*pla:(?(?C1)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 13];
+        yield 'a callout condition then an assertion name left open' => ['pattern' => '/(*pla:(?(?C1)(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 17];
+        // A verb name left open is refused as one, as "/(*p/" is.
+        yield 'a verb name left open' => ['pattern' => '/(*pla:(*p/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 9];
+        // PCRE: "closing parenthesis for (?C expected".
+        yield 'a callout condition cut short' => ['pattern' => '/(*pla:(?(?C1/', 'code' => ErrorCode::CalloutUnclosed, 'offset' => 12];
+        // PCRE: "atomic assertion expected after (?( or (?(?C)", where the
+        // condition starts: a lookahead opener the pattern ends on.
+        yield 'a lookahead opener as the condition' => ['pattern' => '/(*pla:(?(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
+        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(*pla:(?(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 13];
+        yield 'a negative lookahead opener after a comment' => ['pattern' => '/(*pla:(?(?#c)(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
+        // Reported where PCRE reports them already: kept as guards.
+        yield 'an assertion name left open' => ['pattern' => '/(*pla:(*pla/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 11];
+        yield 'an assertion name left open as the condition' => ['pattern' => '/(*pla:(?(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 12];
+    }
+
+    /**
+     * The same constructs cut short at the end of the pattern, with no body
+     * around them: PCRE refuses them as it does inside a body.
+     */
+    #[Test]
+    #[DataProvider('provideConstructsCutShortOutsideABody')]
+    public function test_validate_refuses_a_construct_cut_short_outside_a_body(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertRefusedAsTheEngineRefuses($pattern, $code, $offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideConstructsCutShortOutsideABody(): iterable
+    {
+        // PCRE: "missing closing parenthesis", at the end of the pattern.
+        yield 'a condition opener' => ['pattern' => '/(?(/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 3];
+        yield 'a (?P opener' => ['pattern' => '/(?P/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 3];
+        yield 'a callout condition with nothing after it' => ['pattern' => '/(?(?C1)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 7];
+        yield 'a callout condition then an assertion name left open' => ['pattern' => '/(?(?C1)(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];
+        // PCRE: "closing parenthesis for (?C expected".
+        yield 'a callout condition cut short' => ['pattern' => '/(?(?C1/', 'code' => ErrorCode::CalloutUnclosed, 'offset' => 6];
+        // PCRE: "atomic assertion expected after (?( or (?(?C)": a lookahead
+        // opener the pattern ends on is no assertion yet. Reported where
+        // the condition starts, after any callout or comment before it.
+        yield 'a lookahead opener as the condition' => ['pattern' => '/(?(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
+        yield 'a negative lookahead opener as the condition' => ['pattern' => '/(?(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
+        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'a negative lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'a lookahead opener after a string callout condition' => ['pattern' => '/(?(?C"x")(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
+        yield 'a lookahead opener after a comment' => ['pattern' => '/(?(?#c)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
+        yield 'a lookahead opener after a callout then a comment' => ['pattern' => '/(?(?C1)(?#c)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 12];
+        yield 'a lookahead opener after a comment then a callout' => ['pattern' => '/(?(?#c)(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 12];
+        // PCRE: "missing closing parenthesis", at the end of the pattern: a
+        // lookbehind opener, or a lookahead holding anything, is read as
+        // the assertion. Reported there already: kept as guards.
+        yield 'a lookbehind opener as the condition' => ['pattern' => '/(?(?<=/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
+        yield 'a negative lookbehind opener as the condition' => ['pattern' => '/(?(?<!/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
+        yield 'a lookbehind opener after a callout condition' => ['pattern' => '/(?(?C1)(?<=/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];
+        yield 'a negative lookbehind opener after a comment' => ['pattern' => '/(?(?#c)(?<!/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];
+        yield 'a lookahead holding a letter as the condition' => ['pattern' => '/(?(?=a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
+        yield 'an empty lookahead as the condition' => ['pattern' => '/(?(?=)/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
+        // What PCRE says here depends on the release: compared with the
+        // running engine, PCRE2 10.49's verdict pinned. 10.49: "atomic
+        // assertion expected after (?( or (?(?C)" at 3.
+        yield 'a one-letter name left open as the condition' => ['pattern' => '/(?(*p/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
+        // 10.49: "missing closing parenthesis" at 6.
+        yield 'an assertion name left open as the condition' => ['pattern' => '/(?(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
+        // Reported where PCRE reports it already: kept as a guard.
+        yield 'a verb name left open' => ['pattern' => '/(*p/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 3];
+    }
+
+    /**
+     * The library refuses the pattern at the running engine's offset, with a
+     * code the engine's message allows; on PCRE2 10.49 the row's offset and
+     * code are the engine's and the library's.
+     */
+    private function assertRefusedAsTheEngineRefuses(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $pcre = self::pcreError($pattern);
+        $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
+        $allowed = PcreMessageCodes::CODES[$pcre['message']];
+        $pinned = '10.49' === self::runningRelease();
+        if ($pinned) {
+            $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
+            $this->assertContains($code->value, $allowed, \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
+        }
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+        $said = \sprintf('%s: PCRE says "%s" at %s, the library "%s" (%s) at %s.', $pattern, $pcre['message'], var_export($pcre['offset'], true), (string) $result->error, $result->errorCode?->value, var_export($result->offset, true));
+
+        $this->assertFalse($result->isValid, $said);
+        $this->assertSame($pcre['offset'], $result->offset, $said);
+        $this->assertContains($result->errorCode?->value, $allowed, $said);
+        if ($pinned) {
+            $this->assertSame($code, $result->errorCode, $said);
+        }
+    }
+
+    /**
+     * PCRE's message and offset for a pattern it refuses.
+     *
+     * @return array{message: string, offset: int|null}
+     */
+    private static function pcreError(string $pattern): array
+    {
+        return PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
+    }
+
+    /**
      * Reads $size units then twice as many, and asserts each read takes
      * less than the budget and the larger one less than three times the
      * smaller. Each size is timed at its best of three runs while it stays
@@ -731,5 +1403,13 @@ final class AlphaAssertionBodyTest extends TestCase
         }
 
         return $best;
+    }
+
+    /**
+     * The major.minor release of the PCRE2 the running PHP links.
+     */
+    private static function runningRelease(): string
+    {
+        return implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
     }
 }

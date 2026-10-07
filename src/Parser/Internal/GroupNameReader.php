@@ -107,6 +107,19 @@ final class GroupNameReader
         return $this->duplicatesAllowed;
     }
 
+    /**
+     * Share the names $other meets, with the groups they name, from the ones
+     * it met so far on: the body of an alphabetic assertion, read apart,
+     * shares its names with the pattern around it, as the body of "(?="
+     * does. Shared, not copied: a pattern of many bodies does not copy its
+     * names once per body.
+     */
+    public function shareNamesWith(self $other): void
+    {
+        $this->used = &$other->used;
+        $this->namesByNumber = &$other->namesByNumber;
+    }
+
     public function forget(): void
     {
         $this->used = [];
@@ -140,36 +153,12 @@ final class GroupNameReader
             throw $this->error(\sprintf('Expected group name at position %d', $nameStart), ErrorCode::GroupNameExpected, $nameStart);
         }
 
-        if (null !== $quote) {
-            $this->closeQuote($quote);
-        }
-
         // PCRE group names are word characters only and must not start with
         // a digit: PCRE reads the characters a name may hold, and wants what
         // closes the name right after them.
         $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+\z/u' : '/^[A-Za-z_]\w*+\z/';
         if (1 !== LibraryPcre::match($namePattern, $name)) {
-            $offset = $this->invalidNameOffset($nameStart);
-            $fault = $this->nameFault($nameStart, $offset);
-
-            // PCRE measures the name it read before it looks for what closes it.
-            if (ErrorCode::GroupNameUnterminated === $fault && $offset - $nameStart > $this->maxNameLength) {
-                throw $this->error(
-                    \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $offset - $nameStart, $this->maxNameLength),
-                    ErrorCode::GroupNameTooLong,
-                    $offset,
-                );
-            }
-
-            throw $this->error(
-                match ($fault) {
-                    ErrorCode::GroupNameExpected => \sprintf('Expected group name at position %d, found "%s".', $offset, $name),
-                    ErrorCode::GroupNameUnterminated => \sprintf('Invalid group name "%s": the name ends at position %d, and nothing closes it there.', $name, $offset),
-                    default => \sprintf('Invalid group name "%s": names must contain only word characters and must not start with a digit.', $name),
-                },
-                $fault,
-                $offset,
-            );
+            throw $this->invalidName($name, $nameStart);
         }
 
         if (\strlen($name) > $this->maxNameLength) {
@@ -178,6 +167,12 @@ final class GroupNameReader
                 ErrorCode::GroupNameTooLong,
                 $nameEnd,
             );
+        }
+
+        // Only then the quote: "(?'a-" is refused on the "-", and "(?'1" on
+        // the digit, though no quote closes either.
+        if (null !== $quote) {
+            $this->closeQuote($quote);
         }
 
         if ($register) {
@@ -266,6 +261,35 @@ final class GroupNameReader
         };
     }
 
+    /**
+     * The error for $name, which starts at $nameStart and holds a character
+     * no name may hold, reported where PCRE stops reading it.
+     */
+    private function invalidName(string $name, int $nameStart): SyntaxErrorException
+    {
+        $offset = $this->invalidNameOffset($nameStart);
+        $fault = $this->nameFault($nameStart, $offset);
+
+        // PCRE measures the name it read before it looks for what closes it.
+        if (ErrorCode::GroupNameUnterminated === $fault && $offset - $nameStart > $this->maxNameLength) {
+            return $this->error(
+                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $offset - $nameStart, $this->maxNameLength),
+                ErrorCode::GroupNameTooLong,
+                $offset,
+            );
+        }
+
+        return $this->error(
+            match ($fault) {
+                ErrorCode::GroupNameExpected => \sprintf('Expected group name at position %d, found "%s".', $offset, $name),
+                ErrorCode::GroupNameUnterminated => \sprintf('Invalid group name "%s": the name ends at position %d, and nothing closes it there.', $name, $offset),
+                default => \sprintf('Invalid group name "%s": names must contain only word characters and must not start with a digit.', $name),
+            },
+            $fault,
+            $offset,
+        );
+    }
+
     private function openingQuote(): ?string
     {
         if (!$this->stream->checkLiteral("'")) {
@@ -296,6 +320,16 @@ final class GroupNameReader
             // A name holds no escape: PCRE stops on the backslash.
             if (!$this->stream->check(TokenType::Literal)) {
                 $token = $this->stream->current();
+
+                // Or before it, on the first character read that no name
+                // holds: "(?<a-(" is refused on the "-", whatever follows.
+                // A name too long is too long on the token itself: PCRE
+                // measures the name before it looks at what stops it.
+                $stop = $this->invalidNameOffset($nameStart);
+                if ($stop < $token->position || $stop - $nameStart > $this->maxNameLength) {
+                    throw $this->invalidName($name, $nameStart);
+                }
+
                 $written = substr($this->stream->getPattern(), $token->position, max(1, $token->end() - $token->position));
 
                 throw $this->error(\sprintf('Unexpected token "%s" in group name', $written), $this->nameFault($nameStart, $token->position), $token->position);

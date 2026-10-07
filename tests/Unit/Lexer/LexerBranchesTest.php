@@ -754,6 +754,9 @@ final class LexerBranchesTest extends TestCase
     /**
      * A body handed to the lexer directly can end in a lone backslash, which
      * no delimited pattern can: there the backslash escapes the delimiter.
+     * PCRE reports it at the end of the pattern, past the backslash
+     * (pcre2test 10.49, the pattern given in hex: "\ at end of pattern" at
+     * 1, 2 and 3).
      */
     #[DataProvider('provideBodiesEndingInABackslash')]
     public function test_a_body_ending_in_a_lone_backslash_is_refused_with_its_own_code(string $body, int $position): void
@@ -772,8 +775,8 @@ final class LexerBranchesTest extends TestCase
      */
     public static function provideBodiesEndingInABackslash(): iterable
     {
-        yield 'backslash alone' => ['body' => '\\', 'position' => 0];
-        yield 'after a literal' => ['body' => 'a\\', 'position' => 1];
-        yield 'inside a class' => ['body' => '[a\\', 'position' => 2];
+        yield 'backslash alone' => ['body' => '\\', 'position' => 1];
+        yield 'after a literal' => ['body' => 'a\\', 'position' => 2];
+        yield 'inside a class' => ['body' => '[a\\', 'position' => 3];
     }
 }

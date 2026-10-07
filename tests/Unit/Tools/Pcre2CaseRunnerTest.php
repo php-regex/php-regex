@@ -126,17 +126,17 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "\c\\": error 101 at offset 4 on both 10.40 and 10.48 (PHP: "\ at
-        // end of pattern at offset 4"): "\c\" takes the first backslash, and
-        // the second one ends the pattern. The library reports it at offset
-        // 3, so this is an offset defect.
+        // "(?<*+a)": error 109 at offset 5, recorded alike for both versions
+        // (PCRE2 10.49: "quantifier does not follow a repeatable item at
+        // offset 5"). The library still reports a missing group name at 3, so
+        // this is an offset defect; swap the case once that one is fixed.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '\\c\\\\',
+            '(?<*+a)',
             'reject',
-            4,
-            '\\ at end of pattern',
-            pcre2Code: 101,
-            floor: ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 101],
+            5,
+            'quantifier does not follow a repeatable item',
+            pcre2Code: 109,
+            floor: ['verdict' => 'reject', 'offset' => 5, 'pcre2Code' => 109],
         ));
 
         $this->assertSame(3, $result['offset']);
@@ -265,11 +265,11 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // "\c\" takes the first backslash and the second ends the pattern
-        // (preg_match('/\c\\\\/', '') warns "\ at end of pattern at offset
-        // 4"); the library reports offset 3.
+        // preg_match('/(?<*+a)/', '') warns "quantifier does not follow a
+        // repeatable item at offset 5" (PCRE2 10.49); the library still
+        // reports a missing group name at 3. Swap the case once that is fixed.
         yield 'real suite error reported at a different position' => [
-            'case' => self::case('\\c\\\\', 'reject', 4, '\\ at end of pattern', pcre2Code: 101),
+            'case' => self::case('(?<*+a)', 'reject', 5, 'quantifier does not follow a repeatable item', pcre2Code: 109),
             'libraryOffset' => 3,
         ];
 

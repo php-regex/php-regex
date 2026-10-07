@@ -15,7 +15,10 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,6 +70,67 @@ final class HexEscapeCodePointTest extends TestCase
     }
 
     /**
+     * Between "\Q" and "\E" a backslash is text: "\Q\x\E" is the two
+     * characters "\x", no escape at all, whatever the release does with a
+     * bare "\x". preg_match('/\Q\x\E/', '\x') is 1 and on 'x' it is 0.
+     */
+    #[Test]
+    public function test_a_quoted_x_is_the_text_backslash_x(): void
+    {
+        $this->assertSame([1, 0], [preg_match('/\Q\x\E/', '\x'), preg_match('/\Q\x\E/', 'x')], 'Oracle.');
+
+        $regex = Regex::create(['cache' => null]);
+
+        $this->assertTrue($regex->validate('/\Q\x\E/')->isValid, (string) $regex->validate('/\Q\x\E/')->error);
+
+        $node = $regex->parse('/\Q\x\E/')->pattern;
+        $this->assertInstanceOf(LiteralNode::class, $node);
+        $this->assertSame('\x', $node->value);
+    }
+
+    /**
+     * Each pattern quotes a "\x": it is valid, holds no code point escape,
+     * and the printed pattern reads back to the same text, matching the
+     * subjects the original matches.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideQuotedX')]
+    public function test_a_quoted_x_is_no_code_point_and_its_printed_pattern_matches_the_same(string $pattern, array $subjects): void
+    {
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: '.$pattern.' compiles.');
+
+        $regex = Regex::create(['cache' => null]);
+        $result = $regex->validate($pattern);
+        $this->assertTrue($result->isValid, \sprintf('%s: %s', $pattern, (string) $result->error));
+
+        $tree = $regex->parse($pattern);
+        $this->assertSame([], self::charLiterals($tree->pattern), $pattern.' reads a code point escape.');
+
+        $printed = $tree->accept(new PatternPrinter());
+        $this->assertNotFalse(@preg_match($printed, ''), \sprintf('%s printed as %s, which does not compile.', $pattern, $printed));
+        foreach ($subjects as $subject) {
+            $this->assertSame(preg_match($pattern, $subject), preg_match($printed, $subject), \sprintf('%s printed as %s, which disagrees on %s.', $pattern, $printed, json_encode($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideQuotedX(): iterable
+    {
+        yield 'the quote alone' => ['pattern' => '/\Q\x\E/', 'subjects' => ['\x', 'x', "\0"]];
+        yield 'between two letters' => ['pattern' => '/a\Q\x\Eb/', 'subjects' => ['a\xb', 'axb', "a\0b"]];
+        yield 'quote running to the end' => ['pattern' => '/\Q\x/', 'subjects' => ['\x', 'x', "\0"]];
+        yield 'quantified after the quote' => ['pattern' => '/^\Q\x\E{2}$/', 'subjects' => ['\xx', '\x\x', 'xx']];
+        yield 'under the u flag' => ['pattern' => '/\Q\x\E/u', 'subjects' => ['\x', 'x']];
+        yield 'followed by braces inside the quote' => ['pattern' => '/\Q\x{41}\E/', 'subjects' => ['\x{41}', 'A']];
+        // A quote in a class is read as text already: kept as a guard.
+        yield 'inside a class' => ['pattern' => '/^[\Q\x\E]$/', 'subjects' => ['\\', 'x', "\0"]];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, subject: string, codePoint: int}>
      */
     public static function provideEscapes(): iterable
@@ -75,5 +139,18 @@ final class HexEscapeCodePointTest extends TestCase
         yield 'one letter digit' => ['pattern' => '/^\\xA$/', 'subject' => "\n", 'codePoint' => 10];
         yield 'one digit before a letter' => ['pattern' => '/^\\x4g$/', 'subject' => "\x04g", 'codePoint' => 4];
         yield 'two digits' => ['pattern' => '/^\\x41$/', 'subject' => 'A', 'codePoint' => 65];
+    }
+
+    /**
+     * @return list<CharLiteralNode>
+     */
+    private static function charLiterals(NodeInterface $node): array
+    {
+        $found = $node instanceof CharLiteralNode ? [$node] : [];
+        foreach ($node->getChildren() as $child) {
+            array_push($found, ...self::charLiterals($child));
+        }
+
+        return $found;
     }
 }

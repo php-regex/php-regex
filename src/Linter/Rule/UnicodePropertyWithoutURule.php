@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Detects Unicode properties used without the /u flag.
@@ -44,9 +45,11 @@ final class UnicodePropertyWithoutURule extends AbstractLintRule
             return [];
         }
 
+        // The property as the pattern spells it: "\P{L}", "\pL" and "\p{^L}"
+        // each stay themselves, the printer undoing the "^" the parser folds.
         return [new RuleViolation(
             'regex.lint.unicode.propertyWithoutU',
-            \sprintf('Without the /u flag, Unicode property "\\p{%s}" only covers the first 256 code points.', trim($node->prop, '^{}')),
+            \sprintf('Without the /u flag, Unicode property "%s" only covers the first 256 code points.', $node->accept(new PatternPrinter())),
             $node->startPosition,
             'Add the /u flag to match beyond the first 256 code points.',
             LintSeverity::Error,

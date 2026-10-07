@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerTest extends TestCase
@@ -239,6 +241,45 @@ final class LexerTest extends TestCase
         $this->expectException(LexerException::class);
         $this->expectExceptionMessage('Unable to tokenize');
         (new Lexer())->tokenize('foo\\');
+    }
+
+    /**
+     * PCRE reports a trailing backslash at the end of the pattern, not at
+     * the backslash: pcre2test 10.49, the pattern given in hex (no PHP
+     * pattern can end on a backslash, it would escape the delimiter), "\ at
+     * end of pattern" at each offset below.
+     */
+    #[Test]
+    #[DataProvider('provideTrailingBackslashes')]
+    public function test_tokenize_reports_a_trailing_backslash_where_pcre_does(string $pattern, int $offset): void
+    {
+        $caught = null;
+
+        try {
+            (new Lexer())->tokenize($pattern);
+        } catch (LexerException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertInstanceOf(LexerException::class, $caught, \sprintf('%s ends on a backslash but was read.', $pattern));
+        $this->assertSame([ErrorCode::EscapeTrailingBackslash, $offset], [$caught->getErrorCode(), $caught->getPosition()], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideTrailingBackslashes(): iterable
+    {
+        yield 'after a literal' => ['pattern' => 'a\\', 'offset' => 2];
+        yield 'in an open group' => ['pattern' => '(a\\', 'offset' => 3];
+        yield 'after three literals' => ['pattern' => 'foo\\', 'offset' => 4];
+        yield 'in an open non-capturing group' => ['pattern' => '(?:a\\', 'offset' => 5];
+        yield 'in an open named group' => ['pattern' => '(?<n>a\\', 'offset' => 7];
+        yield 'in an open lookahead' => ['pattern' => '(?=a\\', 'offset' => 5];
+        yield 'after an empty alternative' => ['pattern' => 'a|\\', 'offset' => 3];
+        yield 'after an empty quote' => ['pattern' => 'a\\Q\\E\\', 'offset' => 6];
+        yield 'after a two-byte character' => ['pattern' => "\u{e9}\\", 'offset' => 3];
+        yield 'after an x comment' => ['pattern' => "(?x)a #c\n\\", 'offset' => 10];
     }
 
     /**

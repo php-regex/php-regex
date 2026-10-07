@@ -140,6 +140,7 @@ final class PcreMessageCodes
         'disallowed Unicode code point (>= 0xd800 && <= 0xdfff)' => ['regex.unicode.surrogate'],
         '\\N{U+dddd} is supported only in Unicode (UTF) mode' => ['regex.unicode_named.requires_utf'],
         'unknown property after \\P or \\p' => ['regex.unicode.property_invalid'],
+        'malformed \\P or \\p sequence' => ['regex.unicode.property_malformed'],
 
         // Lookbehinds.
         'length of lookbehind assertion is not limited' => ['regex.lookbehind.unbounded'],

@@ -27,6 +27,7 @@ use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -64,7 +65,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-7586cb9d4460e3d4220757986d955e7d';
+    public const CACHE_VERSION = 'ast-a7b5c08e12f07282a5bcec48ab01a8f9';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -302,9 +303,18 @@ final readonly class RegexParser
      * tokenizes it whole, then parses it, then judges its escapes, so the
      * error it stops on may lie after one PCRE meets first: an escape PCRE
      * refuses, a class holding an unknown POSIX name or a reversed range,
-     * a version condition, or, when tokenizing failed, a syntax error in
-     * what was read before. The earliest of those before the error found is
-     * PCRE's.
+     * an extended class, a version condition; what the tree read before
+     * the error shows, a relative reference to no group, a reversed count,
+     * a code point too large, a verb out of place or unknown; or, when
+     * tokenizing failed or a name swallows the rest, a syntax error in what
+     * was read before. The earliest of those before the error found is
+     * PCRE's. What PCRE only finds once it has read the whole pattern, a
+     * lookbehind's length or a group a name or number points to that does
+     * not exist, is not.
+     *
+     * A "\p{" that no "}" closes, or a "(*" that no ")" closes, ends what is
+     * read: PCRE looks for the closing character to the end of the pattern,
+     * so nothing after it is judged, and it is judged last.
      */
     private function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
     {
@@ -325,40 +335,194 @@ final readonly class RegexParser
         }
 
         $tokens = $lexer->tokensRead();
-        $earlier = (new Validator($this->maxLookbehindLength, $pattern, $this->target))
-            ->firstEscapeErrorBefore($tokens, $pattern, $flags, $position);
 
-        $classErrors = [
-            $this->firstClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
-            $this->firstExtendedClassErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
-            $this->firstVersionConditionErrorBefore($tokens, $pattern, $flags, $delimiter, $position),
+        // The escapes, classes and conditions of an alphabetic assertion's
+        // body are judged where they stand, as PCRE reads them: in one pass
+        // reading each body in place, never again for the bodies inside it.
+        try {
+            $lexer->tokenizeInPlace($pattern, $flags);
+        } catch (LexerException) {
+            // The tokens read before the error are what is judged.
+        }
+
+        $inPlace = $lexer->tokensRead();
+
+        // A "\p{" that no "}" closes, or a "(*" that no ")" closes, read
+        // before the error: PCRE reads nothing past it, and refuses it at
+        // the end of the pattern or where its name goes wrong. What stands
+        // before it is judged, and it last.
+        $swallowing = self::readUpToAnUnclosedName($inPlace, $pattern, $position);
+        $read = $swallowing ?? $inPlace;
+        $limit = null === $swallowing ? $position : \strlen($pattern) + 1;
+
+        $earlier = (new Validator($this->maxLookbehindLength, $pattern, $this->target))
+            ->firstEscapeErrorBefore($read, $pattern, $flags, $limit);
+
+        $laterErrors = [
+            $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
+            $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
+            $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
+            $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
-        foreach ($classErrors as $classError) {
-            if (null !== $classError && (null === $earlier || ($classError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
-                $earlier = $classError;
+        foreach ($laterErrors as $laterError) {
+            if (null !== $laterError && (null === $earlier || ($laterError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
+                $earlier = $laterError;
             }
         }
 
-        if ($error instanceof LexerException) {
+        if (null !== $swallowing || $error instanceof LexerException) {
             // The pattern read as if it ended where tokenizing stopped: an
             // error that ending causes lies there, and is not taken. A "(?"
             // read last is read with what follows it, which is not read:
-            // what is refused past it is refused for want of that.
-            $stream = new TokenStream([...$tokens, new Token(TokenType::Eof, '', $position)], $pattern);
-            $last = [] === $tokens ? null : $tokens[array_key_last($tokens)];
-            $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $position;
+            // what is refused past it is refused for want of that. Read up
+            // to an unclosed name, the pattern is read whole.
+            $syntaxTokens = $swallowing ?? $tokens;
+            $stream = new TokenStream([...$syntaxTokens, new Token(TokenType::Eof, '', min($limit, \strlen($pattern)))], $pattern);
+            $last = [] === $syntaxTokens ? null : $syntaxTokens[array_key_last($syntaxTokens)];
+            $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $limit;
 
             try {
-                (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, $position);
+                (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|ParserException $syntaxError) {
                 $at = $syntaxError->getPosition() ?? $position;
-                if ($at < min($position, $readUpTo) && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
+                // A body that never closes is read to the end: an error met
+                // there, other than that ")" missing, comes first.
+                $atTheEnd = $at === $position && ErrorCode::GroupUnclosed === $error->getErrorCode()
+                    && ErrorCode::GroupUnclosed !== $syntaxError->getErrorCode();
+                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
                     return $syntaxError;
                 }
             }
         }
 
         return $earlier;
+    }
+
+    /**
+     * The tokens read up to the first "\p{" that no "}" closes, or "(*"
+     * that no ")" closes, before $position, where parsing failed, that one
+     * included; null when none stands there. PCRE reads nothing after it:
+     * it looks for the "}" or ")" to the end of the pattern.
+     *
+     * @param list<Token> $tokens
+     *
+     * @return list<Token>|null
+     */
+    private static function readUpToAnUnclosedName(array $tokens, string $pattern, int $position): ?array
+    {
+        $lastBrace = strrpos($pattern, '}');
+
+        foreach ($tokens as $index => $token) {
+            if ($token->position >= $position) {
+                break;
+            }
+
+            // The lexer reads "\p{" with no "}" after it as "\p" then "{".
+            if (TokenType::LiteralEscaped === $token->type && \in_array($token->value, ['p', 'P'], true)
+                && '{' === ($pattern[$token->end()] ?? '') && (false === $lastBrace || $lastBrace < $token->end())) {
+                return \array_slice($tokens, 0, $index + 1);
+            }
+
+            // And "(*MARK:a" with no ")" after it as "(" then "*".
+            $star = $tokens[$index + 1] ?? null;
+            if (TokenType::GroupOpen === $token->type && null !== $star && TokenType::Quantifier === $star->type
+                && $star->position === $token->end() && '*' === $star->value[0] && $star->position + 1 < \strlen($pattern)) {
+                return \array_slice($tokens, 0, $index + 2);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first error PCRE meets before $position, where parsing failed,
+     * that the library only finds in the tree: a relative reference to no
+     * group, a reversed count, a code point too large, a verb out of place
+     * or unknown. The tokens are parsed once to learn how far they are read
+     * whole; that much, its groups closed, is parsed and judged once.
+     *
+     * @param list<Token> $tokens the tokens read in place
+     */
+    private function firstErrorReadBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
+    {
+        if (!self::mayHoldAnErrorOfTheTree($tokens)) {
+            return null;
+        }
+
+        $length = \strlen($pattern);
+        $parser = new TokenParser($this->maxRecursionDepth, $this->target);
+
+        try {
+            $ast = $parser->parse(new TokenStream([...$tokens, new Token(TokenType::Eof, '', $length)], $pattern), $flags, $delimiter, $length);
+        } catch (LexerException|ParserException) {
+            $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
+            $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
+
+            // Each group still open there is closed where the text read ends.
+            $closers = [];
+            foreach ($read as $token) {
+                if (TokenType::GroupClose === $token->type) {
+                    array_pop($closers);
+                } elseif (self::opensGroup($token)) {
+                    $closers[] = new Token(TokenType::GroupClose, ')', $cutAt, 0);
+                }
+            }
+
+            try {
+                $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
+                    ->parse(new TokenStream([...$read, ...$closers, new Token(TokenType::Eof, '', $cutAt)], $pattern), $flags, $delimiter, $length);
+            } catch (LexerException|ParserException) {
+                // Not expected: these are the tokens the first parse read
+                // whole, each group they open closed. Kept should one throw.
+                return null;
+            }
+        }
+
+        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
+    }
+
+    /**
+     * Whether any of the tokens becomes a node the Validator may refuse as
+     * it walks the tree: text, plain groups, lookarounds, classes (judged
+     * apart), alternatives, dots, anchors, quotes, comments and repeats
+     * without a count never are, and a pattern of them alone is not parsed
+     * again.
+     *
+     * @param list<Token> $tokens
+     */
+    private static function mayHoldAnErrorOfTheTree(array $tokens): bool
+    {
+        foreach ($tokens as $token) {
+            $plain = match ($token->type) {
+                TokenType::Literal, TokenType::GroupOpen, TokenType::GroupClose, TokenType::Alternation,
+                TokenType::Dot, TokenType::Anchor, TokenType::CharClassOpen, TokenType::CharClassClose,
+                TokenType::Range, TokenType::Negation, TokenType::PosixClass, TokenType::QuoteModeStart,
+                TokenType::QuoteModeEnd, TokenType::CommentOpen => true,
+                TokenType::Quantifier => '{' !== $token->value[0],
+                TokenType::PcreVerb => self::opensGroup($token) && null !== PcreVerb::read($token->value)->assertion,
+                default => false,
+            };
+
+            if (!$plain) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the token opens a group a ")" closes: "(", "(?", "(?#", or the
+     * opener of a body read in place, "(*pla:" or "(?*", whose value is its
+     * text without the "(" and the character after it.
+     */
+    private static function opensGroup(Token $token): bool
+    {
+        return match ($token->type) {
+            TokenType::GroupOpen, TokenType::GroupModifierOpen, TokenType::CommentOpen => true,
+            TokenType::PcreVerb => $token->end() - $token->position === \strlen($token->value) + 2,
+            default => false,
+        };
     }
 
     /**
@@ -443,11 +607,12 @@ final readonly class RegexParser
                 continue;
             }
 
-            // The condition runs to the first ")".
+            // The condition runs to the first ")", read from where it opens,
+            // not from a copy of the rest of the tokens for each condition.
             $condition = [$open, $group];
-            foreach (\array_slice($tokens, $index + 2) as $token) {
-                $condition[] = $token;
-                if (TokenType::GroupClose === $token->type) {
+            for ($at = $index + 2; isset($tokens[$at]); $at++) {
+                $condition[] = $tokens[$at];
+                if (TokenType::GroupClose === $tokens[$at]->type) {
                     break;
                 }
             }

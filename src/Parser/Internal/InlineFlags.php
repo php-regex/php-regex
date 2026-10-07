@@ -17,8 +17,8 @@ namespace PHPRegex\Parser\Internal;
  * The modifiers a "(?...)" group turns on and off.
  *
  * PCRE spells this three ways in one place: "(?im)" turns two on, "(?im-sx)"
- * turns two on and two off, and "(?^im)" turns two on and everything else
- * off. Reading it is the same work for the lexer, which needs to know when
+ * turns two on and two off, and "(?^im)" turns two on and the other options
+ * of imnrsx off. Reading it is the same work for the lexer, which needs to know when
  * /x starts, for the parser, which builds the group, and for the compiler,
  * which writes it back out — so it is done here once.
  *
@@ -31,6 +31,12 @@ final readonly class InlineFlags
      * PCRE2 10.43 and the caller says whether it may be used.
      */
     public const LETTERS = 'imsxUJnud';
+
+    /**
+     * The options "^" turns off unless it lists them, as PCRE2 resets them:
+     * "(?^)" leaves ungreedy "U" and duplicate names "J" in force.
+     */
+    private const RESET_BY_CARET = 'imnrsx';
 
     private function __construct(
         /**
@@ -72,8 +78,10 @@ final readonly class InlineFlags
         $set = implode('', array_diff(str_split($set), str_split($unset)));
 
         if ($resetsOthers) {
-            // "(?^im)" turns on what it lists and turns off everything else.
-            $unset = implode('', array_diff(str_split($letters), str_split($set))).$unset;
+            // "(?^im)" turns on what it lists and turns off the rest of the
+            // options "^" resets; "U" and "J" stay as they are.
+            $reset = array_intersect(str_split($letters), str_split(self::RESET_BY_CARET));
+            $unset = implode('', array_diff($reset, str_split($set))).$unset;
         }
 
         return new self($set, $unset);
@@ -98,6 +106,17 @@ final readonly class InlineFlags
     public function turnsOff(string $flag): bool
     {
         return str_contains($this->unset, $flag);
+    }
+
+    /**
+     * Whether "(?xx)" is in force inside this group, given whether it was
+     * outside it: "xx" turns it on, a single "x" set or any "x" unset turns
+     * it off, as PCRE2 does.
+     */
+    public function extendedMoreInForce(bool $wasInForce): bool
+    {
+        return substr_count($this->set, 'x') >= 2
+            || (!$this->turnsOn('x') && !$this->turnsOff('x') && $wasInForce);
     }
 
     /**

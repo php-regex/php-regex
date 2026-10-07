@@ -155,6 +155,13 @@ final class TokenParser
     private bool $extendedMode = false;
 
     /**
+     * Whether "(?xx)" is in force, under which the lexer skips the spaces and
+     * tabs that open a class: the body of an alphabetic assertion is read
+     * apart in the mode around it.
+     */
+    private bool $extendedMoreMode = false;
+
+    /**
      * Whether "n" (NO_AUTO_CAPTURE) is in force: a plain "(...)" group then
      * captures nothing and takes no number; named groups still capture.
      */
@@ -198,11 +205,28 @@ final class TokenParser
     private int $depthBefore = 0;
 
     /**
+     * Whether "(?xx)" holds where the text this parser reads starts.
+     */
+    private bool $extendedMoreBefore = false;
+
+    /**
+     * The group names of the pattern around a body read apart, and whether
+     * "J" holds where it opens: PCRE judges a name in the body against the
+     * whole pattern.
+     */
+    private ?GroupNameReader $namesAround = null;
+
+    /**
      * Reads the bodies of the pattern read apart, shared with the parsers
      * of the bodies nested in them: what it found of one body is not read
      * again for the bodies inside it.
      */
     private ?Lexer $partLexer = null;
+
+    /**
+     * How many tokens of the stream the last item read whole ends past.
+     */
+    private int $tokensReadWhole = 0;
 
     /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
@@ -233,12 +257,19 @@ final class TokenParser
         $this->unicodeMode = str_contains($flags, 'u')
             || 1 === LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
         $this->groupNames->readUnicodeNames($this->unicodeMode);
+        if (null !== $this->namesAround) {
+            $this->groupNames->shareNamesWith($this->namesAround);
+            $this->groupNames->allowDuplicates($this->namesAround->duplicatesAllowed());
+        }
+
         $this->extendedMode = str_contains($flags, 'x');
+        $this->extendedMoreMode = $this->extendedMoreBefore;
         $this->noAutoCapture = str_contains($flags, 'n');
         $this->inQuoteMode = false;
         $this->recursionDepth = $this->depthBefore;
         $this->captureCount = $this->capturesBefore;
         $this->splitEscape = null;
+        $this->tokensReadWhole = 0;
 
         $patternNode = $this->parseAlternation();
 
@@ -256,6 +287,18 @@ final class TokenParser
     }
 
     /**
+     * How many tokens of the stream the items read whole so far end past,
+     * at any depth, the last parse failed or not: the stream up to there,
+     * its groups closed, parses where the rest did not.
+     *
+     * @internal
+     */
+    public function tokensReadWhole(): int
+    {
+        return $this->tokensReadWhole;
+    }
+
+    /**
      * Parse the body of a group. A "(?x)" setting holds until the end of the
      * enclosing group — crossing "|" — so the mode is restored here and not
      * per alternation branch, the way PCRE scopes it.
@@ -263,6 +306,7 @@ final class TokenParser
     private function parseScopedAlternation(): NodeInterface
     {
         $extendedMode = $this->extendedMode;
+        $extendedMoreMode = $this->extendedMoreMode;
         $noAutoCapture = $this->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
 
@@ -270,6 +314,7 @@ final class TokenParser
             return $this->parseAlternation();
         } finally {
             $this->extendedMode = $extendedMode;
+            $this->extendedMoreMode = $extendedMoreMode;
             $this->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
@@ -324,11 +369,11 @@ final class TokenParser
                 continue;
             }
 
-            if ($this->quantifyPreviousItem($nodes)) {
-                continue;
+            if (!$this->quantifyPreviousItem($nodes)) {
+                $nodes[] = $this->parseQuantifiedAtom();
             }
 
-            $nodes[] = $this->parseQuantifiedAtom();
+            $this->tokensReadWhole = $this->stream->getPosition();
         }
 
         if (empty($nodes)) {
@@ -499,8 +544,15 @@ final class TokenParser
         $target = $nodes[$index];
         array_splice($nodes, $index);
 
+        $last = $target instanceof SequenceNode ? $target->children[array_key_last($target->children)] ?? null : null;
         if ($target instanceof QuantifierNode) {
             $nodes[] = $this->modifyRepeatedQuantifier($target, $token);
+        } elseif ($target instanceof SequenceNode && $last instanceof QuantifierNode) {
+            // "é+" without /u, or "\1000*": the text before the character the
+            // quantifier took, then that one repeated, which a quantifier
+            // after it finds.
+            $modified = $this->modifyRepeatedQuantifier($last, $token);
+            $nodes[] = new SequenceNode([...\array_slice($target->children, 0, -1), $modified], $target->getStartPosition(), $modified->getEndPosition());
         } else {
             // "\Qab\E*" is "ab*": only the last quoted character repeats.
             [$prefix, $target] = $this->splitRepeatedCharacter($target);
@@ -594,6 +646,8 @@ final class TokenParser
     private function parseQuantifiedAtom(): NodeInterface
     {
         $node = $this->parseAtom();
+        // PCRE reads the item before what repeats it.
+        $this->tokensReadWhole = $this->stream->getPosition();
 
         // "\1000*": the octal escape, then the text "0" the quantifier repeats.
         if (null !== $this->splitEscape && $node === $this->splitEscape) {
@@ -799,6 +853,10 @@ final class TokenParser
 
             // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
             $unclosedVerb = $this->startsUnclosedVerb($position);
+            if ($unclosedVerb && '*' === $this->pattern[$position + 1]) {
+                throw $this->doubleStarError($position + 1);
+            }
+
             $namePosition = $position + 1;
             $position = $unclosedVerb
                 ? $this->unclosedVerbOffset($position - 1)
@@ -944,7 +1002,8 @@ final class TokenParser
         }
 
         return match ($type) {
-            TokenType::Literal,
+            // Between "\Q" and "\E" a backslash is text: "\Q\x\E" is "\x".
+            TokenType::Literal => new LiteralNode($token->value, $startPosition, $token->end()),
             // "\x" with no digit is NUL where PCRE takes it (up to 10.44).
             TokenType::LiteralEscaped => '\\x' === substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
                 && '{' !== ($this->pattern[$token->end()] ?? '')
@@ -1052,10 +1111,38 @@ final class TokenParser
             return null;
         }
 
-        $token = $this->stream->previous();
-        $endPosition = $startPosition + \strlen($token->value) + self::PCRE_VERB_WRAPPER_LENGTH;
+        return $this->verbNode($this->stream->previous(), $startPosition);
+    }
 
-        return $this->createPcreVerbNode($token->value, $startPosition, $endPosition);
+    /**
+     * The node of a verb token: a verb, or the group an alphabetic assertion
+     * or a script run stands for, its body read from its text. A body read
+     * in place by the lexer, one that never closes or any body when every
+     * one is read in place, has the opener alone for its token, with no ")"
+     * in its text, "(*pla:" or "(?*": the tokens after it are its body, up
+     * to its ")", or to the ")" PCRE misses at the end.
+     */
+    private function verbNode(Token $token, int $startPosition): NodeInterface
+    {
+        // "(**)" reads as "(?*)" does, a token whose value starts with "*":
+        // the text tells them apart.
+        if ('**' === substr($this->pattern, $token->position + 1, 2)) {
+            throw $this->doubleStarError($token->position + 2);
+        }
+
+        if ($token->end() - $token->position !== \strlen($token->value) + 2) {
+            return $this->createPcreVerbNode($token->value, $startPosition, $startPosition + \strlen($token->value) + self::PCRE_VERB_WRAPPER_LENGTH);
+        }
+
+        $read = PcreVerb::read($token->value);
+        $body = $this->parseScopedAlternation();
+        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+
+        // Reached only from the tokens of Lexer::tokenizeInPlace(), which
+        // reads a closed body in place too: "(*pla:(a))b". Lexer::tokenize()
+        // keeps a closed body in the opener's token, so there no ")" closes
+        // a body read here.
+        return $this->createGroupNode($body, $read->assertion ?? GroupType::NonCapturing, $startPosition, $endToken, null, $read->nonAtomic ? self::NON_ATOMIC_FLAG : null);
     }
 
     /**
@@ -1602,17 +1689,18 @@ final class TokenParser
             return $this->parseVerbConditional($startPosition, $this->stream->previous());
         }
 
-        if ($this->stream->match(TokenType::GroupModifierOpen)) {
-            return $this->parseConditionalBranches($startPosition, $this->parseLookaroundCondition($this->stream->previous()->position));
-        }
-
-        if ($this->stream->isAtEnd()) {
-            $position = $this->stream->current()->position;
-
-            throw $this->parserException(\sprintf('Missing ")" to close the conditional at position %d.', $position), ErrorCode::GroupUnclosed, $position);
-        }
-
+        $this->guardConditionCutShort();
         $position = $this->commentConditionErrorOffset();
+        if ($this->opensUnclosedVerb()) {
+            throw $this->unclosedVerbConditionError($this->stream->current()->position, $position);
+        }
+
+        if ($this->stream->match(TokenType::GroupModifierOpen)) {
+            $groupStart = $this->stream->previous()->position;
+            $this->guardCutShortAssertion($groupStart, $position);
+
+            return $this->parseConditionalBranches($startPosition, $this->parseLookaroundCondition($groupStart));
+        }
 
         throw $this->parserException(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
@@ -1640,7 +1728,18 @@ final class TokenParser
             }
         } while ($skipped > 0);
 
-        if (!$this->stream->match(TokenType::GroupModifierOpen)) {
+        $this->guardConditionCutShort();
+
+        // "(?(?C1)(*pla:a)b)": the assertion spelled as a verb, refused as
+        // anything else there is when it is no lookaround.
+        if ($this->stream->check(TokenType::PcreVerb)) {
+            $verbToken = $this->stream->current();
+            $this->guardVerbCondition($verbToken, $this->calloutConditionErrorOffset());
+            $this->stream->advance();
+            $assertion = $this->verbNode($verbToken, $verbToken->position);
+        } elseif ($this->opensUnclosedVerb()) {
+            throw $this->unclosedVerbConditionError($this->stream->current()->position, $this->calloutConditionErrorOffset());
+        } elseif (!$this->stream->match(TokenType::GroupModifierOpen)) {
             $position = $this->calloutConditionErrorOffset();
 
             throw $this->parserException(
@@ -1648,12 +1747,14 @@ final class TokenParser
                 ErrorCode::ConditionAssertionExpected,
                 $position,
             );
+        } else {
+            // A group that is no assertion is refused where it starts, as
+            // anything else there is.
+            $groupStart = $this->stream->previous()->position;
+            $this->guardCutShortAssertion($groupStart, $groupStart);
+            $assertion = $this->parseLookaroundCondition($groupStart, $groupStart);
         }
 
-        // A group that is no assertion is refused where it starts, as
-        // anything else there is.
-        $groupStart = $this->stream->previous()->position;
-        $assertion = $this->parseLookaroundCondition($groupStart, $groupStart);
         $condition = new SequenceNode([$callout, $assertion], $callout->getStartPosition(), $assertion->getEndPosition());
 
         return $this->parseConditionalBranches($startPosition, $condition);
@@ -1666,32 +1767,101 @@ final class TokenParser
      */
     private function parseVerbConditional(int $startPosition, Token $verbToken): NodeInterface
     {
-        $verbStartPosition = $verbToken->position;
-        $verbEndPosition = $verbStartPosition + \strlen($verbToken->value) + 3; // +3 for "(*)"
+        // PCRE stops at the "*", past it from PCRE2 10.47.
+        $this->guardVerbCondition($verbToken, $this->pastTheFault($verbToken->position + 1));
 
+        return $this->parseConditionalBranches($startPosition, $this->verbNode($verbToken, $verbToken->position));
+    }
+
+    /**
+     * Refuses the verb token where the assertion of a condition belongs,
+     * unless it is a lookaround: PCRE refuses a verb, an atomic group or a
+     * script run there, at the colon of a named one, at $unnamedAt for any
+     * other.
+     */
+    private function guardVerbCondition(Token $verbToken, int $unnamedAt): void
+    {
         $read = PcreVerb::read($verbToken->value);
-        if (null === $read->assertion || GroupType::Atomic === $read->assertion || $read->nonAtomic) {
-            $alphaError = $this->alphaNameConditionError($verbStartPosition + 2);
-            if (null !== $alphaError) {
-                throw $alphaError;
-            }
-
-            // PCRE stops at the colon of a named group, or at the "*", past
-            // it from PCRE2 10.47.
-            $position = 1 === LibraryPcre::match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
-                ? $verbStartPosition + 2 + \strlen($name[0])
-                : $this->pastTheFault($verbStartPosition + 1);
-
-            throw $this->parserException(
-                \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-                ErrorCode::ConditionAssertionExpected,
-                $position,
-            );
+        if (null !== $read->assertion && GroupType::Atomic !== $read->assertion && !$read->nonAtomic) {
+            return;
         }
 
-        return $this->parseConditionalBranches(
-            $startPosition,
-            $this->createPcreVerbNode($verbToken->value, $verbStartPosition, $verbEndPosition),
+        $alphaError = $this->alphaNameConditionError($verbToken->position + 2);
+        if (null !== $alphaError) {
+            throw $alphaError;
+        }
+
+        $position = 1 === LibraryPcre::match('/^[a-z_]++(?=:)/', $verbToken->value, $name)
+            ? $verbToken->position + 2 + \strlen($name[0])
+            : $unnamedAt;
+
+        throw $this->parserException(
+            \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
+            ErrorCode::ConditionAssertionExpected,
+            $position,
+        );
+    }
+
+    /**
+     * Refuses a condition the pattern ends in before its assertion: after
+     * "(?(?C1)" or "(?(?#c)", and what PCRE skips after them, it misses the
+     * ")" of the conditional.
+     */
+    private function guardConditionCutShort(): void
+    {
+        if (!$this->stream->isAtEnd()) {
+            return;
+        }
+
+        $position = $this->stream->current()->position;
+
+        throw $this->parserException(\sprintf('Missing ")" to close the conditional at position %d.', $position), ErrorCode::GroupUnclosed, $position);
+    }
+
+    /**
+     * Refuses the assertion of a condition opened at $open, its "(", that
+     * the pattern ends too soon after: PCRE reads one there only with at
+     * least three characters after the "(", and refuses "(?=" or "(*p" at
+     * the end at $faultAt, as anything else that is no assertion.
+     */
+    private function guardCutShortAssertion(int $open, int $faultAt): void
+    {
+        if (\strlen($this->pattern) - $open > 3) {
+            return;
+        }
+
+        throw $this->parserException(
+            \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $faultAt),
+            ErrorCode::ConditionAssertionExpected,
+            $faultAt,
+        );
+    }
+
+    /**
+     * Whether the current token is the "(" of a "(*" the lexer read as no
+     * verb, for want of a ")" after it.
+     */
+    private function opensUnclosedVerb(): bool
+    {
+        $token = $this->stream->current();
+
+        return TokenType::GroupOpen === $token->type && '*' === ($this->pattern[$token->position + 1] ?? '');
+    }
+
+    /**
+     * The error of a "(*" opened at $open, which no ")" closes, where the
+     * assertion of a condition is due: refused as an assertion cut short,
+     * then as an alphabetic name PCRE refuses there, else as no assertion,
+     * at $unnamedAt.
+     */
+    private function unclosedVerbConditionError(int $open, int $unnamedAt): ParserException
+    {
+        $this->guardCutShortAssertion($open, $unnamedAt);
+
+        return $this->alphaNameConditionError($open + 2) ?? $this->parserException(
+            \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $unnamedAt),
+            ErrorCode::ConditionAssertionExpected,
+            $unnamedAt,
         );
     }
 
@@ -1750,9 +1920,11 @@ final class TokenParser
         $this->partLexer ??= new Lexer($this->target);
 
         try {
-            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags);
+            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags, $this->extendedMoreMode);
         } catch (LexerException $error) {
-            // Not reached from a parsed pattern: the lexer read this text around it first.
+            // The lexer around it only found where the body ends: an escape
+            // it refuses in the body, as "\x{}", is met here, where the body
+            // is read, and placed in the whole pattern.
             throw $this->movedError($error, $absoluteOffset);
         }
 
@@ -1764,11 +1936,14 @@ final class TokenParser
         $inner = new TokenParser($this->maxRecursionDepth, $this->target);
         $inner->capturesBefore = $this->captureCount;
         $inner->depthBefore = $this->recursionDepth;
+        $inner->extendedMoreBefore = $this->extendedMoreMode;
+        $inner->namesAround = $this->groupNames;
         $inner->partLexer = $this->partLexer;
         $pattern = $inner->parse(new TokenStream($tokens, $this->pattern), $flags, '/', \strlen($this->pattern));
 
         // The groups it holds take numbers in the enclosing pattern: the
-        // body's parser counted on from those opened before it.
+        // body's parser counted on from those opened before it, and shared
+        // the names. A "(?J)" set in the body holds there only.
         $this->captureCount = $inner->captureCount;
 
         return $pattern->pattern;
@@ -2064,9 +2239,15 @@ final class TokenParser
             return new BackrefNode('\\k<'.$name.'>', $startPos, $endToken->position + 1);
         }
 
+        // A pattern that ends there misses the ")" of the group.
+        if ($pPos + 1 >= \strlen($this->pattern)) {
+            throw $this->parserException(\sprintf('Missing ")" to close "(?P" at position %d.', $pPos + 1), ErrorCode::GroupUnclosed, $pPos + 1);
+        }
+
         // PCRE reports it past the character it could not read from PCRE2
-        // 10.47, on it before; at the end of a pattern that ends there.
-        $position = $pPos + 1 >= \strlen($this->pattern) ? $pPos + 1 : $this->pastTheFault($pPos + 2);
+        // 10.47, all its bytes in UTF mode; on it before.
+        $length = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $pPos + 1) ? \strlen($character[0]) : 1;
+        $position = $this->pastTheFault($pPos + 1 + $length, $length);
 
         throw $this->parserException(
             \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $position),
@@ -2303,6 +2484,7 @@ final class TokenParser
     private function parseBranchReset(int $startPosition): GroupNode
     {
         $extendedMode = $this->extendedMode;
+        $extendedMoreMode = $this->extendedMoreMode;
         $noAutoCapture = $this->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
         $base = $this->captureCount;
@@ -2323,6 +2505,7 @@ final class TokenParser
         } finally {
             $this->recursionDepth--;
             $this->extendedMode = $extendedMode;
+            $this->extendedMoreMode = $extendedMoreMode;
             $this->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
@@ -2374,6 +2557,7 @@ final class TokenParser
         }
 
         $wasExtended = $this->extendedMode;
+        $wasExtendedMore = $this->extendedMoreMode;
         $wasNoAutoCapture = $this->noAutoCapture;
         $wasAllowingDuplicates = $this->groupNames->duplicatesAllowed();
 
@@ -2385,6 +2569,7 @@ final class TokenParser
         }
 
         $this->extendedMode = $modifiers?->inForce('x', $this->extendedMode) ?? $this->extendedMode;
+        $this->extendedMoreMode = $modifiers?->extendedMoreInForce($this->extendedMoreMode) ?? $this->extendedMoreMode;
         $this->noAutoCapture = $modifiers?->inForce('n', $this->noAutoCapture) ?? $this->noAutoCapture;
 
         // "(?iz)": the letters are read as far as PCRE knows them.
@@ -2397,6 +2582,7 @@ final class TokenParser
             $expr = $this->parseScopedAlternation();
             // "(?x:...)" only covers its own group; "(?x)" keeps going.
             $this->extendedMode = $wasExtended;
+            $this->extendedMoreMode = $wasExtendedMore;
             $this->noAutoCapture = $wasNoAutoCapture;
             $this->groupNames->allowDuplicates($wasAllowingDuplicates);
         }
@@ -2479,6 +2665,16 @@ final class TokenParser
         if ($isModifier) {
             // Inline Lookaround condition
             $conditionStartPos = $this->stream->previous()->position;
+            $this->guardCutShortAssertion($conditionStartPos, $this->pastTheFault($conditionStartPos + 1));
+
+            // "(?(?C1" that no ")" closes, the "(?" read alone: the callout
+            // is refused as anywhere else.
+            if ($this->stream->checkLiteral('C')) {
+                [$fault, $code] = $this->calloutFault($conditionStartPos) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed];
+
+                throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $fault, self::calloutProblem($code)), $code, $fault);
+            }
+
             $condition = $this->parseLookaroundCondition($conditionStartPos);
         } else {
             $condition = $this->parseConditionalCondition();
@@ -2770,6 +2966,11 @@ final class TokenParser
     {
         $startPosition = $this->stream->current()->position;
 
+        // "(?(" the pattern ends in misses its ")".
+        if ($this->stream->isAtEnd() && $startPosition >= \strlen($this->pattern)) {
+            throw $this->parserException(\sprintf('Missing ")" to close the conditional at position %d.', $startPosition), ErrorCode::GroupUnclosed, $startPosition);
+        }
+
         $condition = $this->parseDefineCondition($startPosition)
             ?? $this->parseVersionCondition($startPosition)
             ?? $this->parseNumericCondition($startPosition)
@@ -2787,18 +2988,7 @@ final class TokenParser
         // "(?(*" the lexer read as no verb, for want of a name or a ")", is
         // no assertion either: refused past the "(", on it before 10.47.
         if ($this->stream->check(TokenType::Quantifier) && '*' === ($this->pattern[$startPosition] ?? '')) {
-            $alphaError = $this->alphaNameConditionError($startPosition + 1);
-            if (null !== $alphaError) {
-                throw $alphaError;
-            }
-
-            $position = $this->pastTheFault($startPosition);
-
-            throw $this->parserException(
-                \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-                ErrorCode::ConditionAssertionExpected,
-                $position,
-            );
+            throw $this->unclosedVerbConditionError($startPosition - 1, $this->pastTheFault($startPosition));
         }
 
         // "(?(VERSION=10z)", or "(?(VERSIONx)": PCRE reads a version
@@ -3645,6 +3835,20 @@ final class TokenParser
     private function pastTheFault(int $offset, int $shift = 1): int
     {
         return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
+    }
+
+    /**
+     * "(**" opens no verb: a verb name never starts with "*", and "(?*" is
+     * the only short spelling of a lookahead. PCRE refuses it at the second
+     * "*", at $position.
+     */
+    private function doubleStarError(int $position): ParserException
+    {
+        return $this->parserException(
+            \sprintf('Unknown verb at position %d: "(**" opens no verb, PCRE wants a name after "(*".', $position),
+            ErrorCode::VerbInvalid,
+            $position,
+        );
     }
 
     /**

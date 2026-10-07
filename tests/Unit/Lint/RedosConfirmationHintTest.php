@@ -42,7 +42,7 @@ final class RedosConfirmationHintTest extends TestCase
 
         $this->assertIsString($hint);
         $this->assertSame($observed, str_contains($hint, self::OBSERVED), $hint);
-        $this->assertStringNotContainsString('found no evidence', $hint);
+        $this->assertStringNotContainsString('found no evidence', (string) $hint);
     }
 
     /**

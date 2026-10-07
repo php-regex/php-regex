@@ -176,6 +176,43 @@ final class LinterUnicodeRulesTest extends TestCase
         $this->assertHasIssue('/\\P{L}+/', 'regex.lint.unicode.propertyWithoutU');
     }
 
+    /**
+     * The message quotes the property as the pattern spells it: "\P{L}" and
+     * "\p{^L}" are the negation of "\p{L}", and naming "\p{L}" for them
+     * sends the reader to the opposite set. preg_match('/\P{L}/', 'A') is 0
+     * where preg_match('/\p{L}/', 'A') is 1; "\P{^L}" is "\p{L}" again (1).
+     */
+    #[Test]
+    #[DataProvider('providePropertySpellings')]
+    public function test_property_message_keeps_the_spelling_of_the_pattern(string $pattern, string $spelling, int $matchesA): void
+    {
+        $this->assertSame($matchesA, preg_match($pattern, 'A'), 'Oracle: '.$pattern);
+
+        $issues = array_values(array_filter(
+            $this->lint($pattern),
+            static fn (RuleViolation $issue): bool => 'regex.lint.unicode.propertyWithoutU' === $issue->id,
+        ));
+
+        $this->assertCount(1, $issues, $pattern);
+        $this->assertStringContainsString('"'.$spelling.'"', $issues[0]->message, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, spelling: string, matchesA: int}>
+     */
+    public static function providePropertySpellings(): iterable
+    {
+        yield 'negated with a capital P' => ['pattern' => '/\\P{L}/', 'spelling' => '\\P{L}', 'matchesA' => 0];
+        yield 'negated with a capital P, one letter' => ['pattern' => '/\\PL/', 'spelling' => '\\PL', 'matchesA' => 0];
+        yield 'negated with a caret' => ['pattern' => '/\\p{^L}/', 'spelling' => '\\p{^L}', 'matchesA' => 0];
+        yield 'negated twice' => ['pattern' => '/\\P{^L}/', 'spelling' => '\\P{^L}', 'matchesA' => 1];
+        yield 'one letter' => ['pattern' => '/\\pL/', 'spelling' => '\\pL', 'matchesA' => 1];
+        yield 'two letters negated' => ['pattern' => '/\\P{Lu}/', 'spelling' => '\\P{Lu}', 'matchesA' => 0];
+        // Spelled as the pattern spells them already: kept as guards.
+        yield 'braced' => ['pattern' => '/\\p{L}/', 'spelling' => '\\p{L}', 'matchesA' => 1];
+        yield 'braced with spaces' => ['pattern' => '/\\p{ L }/', 'spelling' => '\\p{ L }', 'matchesA' => 1];
+    }
+
     #[Test]
     public function test_multiple_shorthands_generate_multiple_issues(): void
     {
