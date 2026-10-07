@@ -152,6 +152,31 @@ final class RelativeConditionReferenceTest extends TestCase
         yield 'within the groups, the brace is due' => ['pattern' => '/(a)\g{-1/', 'offset' => 8];
     }
 
+    /**
+     * PCRE2 skips the spaces after a braced name, then wants the "}": it
+     * stops on the first character that is neither (error 142 at 5).
+     */
+    #[Test]
+    #[DataProvider('provideBracedNamesNotClosed')]
+    public function test_a_braced_name_not_closed_is_refused_past_its_padding(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideBracedNamesNotClosed(): iterable
+    {
+        yield 'space then a letter' => ['pattern' => '/\k{a b}/', 'offset' => 5];
+        yield 'space before the name, never closed' => ['pattern' => '/\k{ a/', 'offset' => 5];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {

@@ -211,7 +211,7 @@ host `setlocale()` can rebuild PCRE's case tables.
 - Name readers outside group definitions do not stop where PCRE stops:
   `\k<aé>` without `/u` (and `\k'`, `\k{`, `\g{`, `\g<`, `\g'`) is a
   missing named group at 10 (PCRE: syntax error in the name at 11);
-  `(?&aé)` likewise; `\k{a b}`, `\k{ a` one byte early; `(?&a(?:z)`
+  `(?&aé)` likewise; `(?&a(?:z)`
   and `(?P>a(?:z)` an unclosed group (PCRE: "expected capture group number
   or name"); the message for `\g{٣a}` quotes `\k{٣a}`.
 - `/[z-abcd/` is the unclosed class at 7; PCRE reports the reversed range

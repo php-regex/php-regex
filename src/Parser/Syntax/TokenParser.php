@@ -994,6 +994,10 @@ final class TokenParser
         }
 
         $nameStart = $token->position + 3;
+        // Inside braces PCRE skips the spaces before the name as well.
+        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+            $nameStart += strspn($this->pattern, " \t", $nameStart);
+        }
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
         $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
 
@@ -1013,11 +1017,18 @@ final class TokenParser
             );
         }
 
-        if ($closer !== ($this->pattern[$nameEnd] ?? '')) {
+        // Inside braces PCRE skips the spaces after the name, then wants
+        // the "}": it stops on the first character that is neither.
+        $closeAt = $nameEnd;
+        if ('}' === $closer && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+            $closeAt += strspn($this->pattern, " \t", $nameEnd);
+        }
+
+        if ($closer !== ($this->pattern[$closeAt] ?? '')) {
             throw $this->parserException(
-                \sprintf('Missing "%s" to close the group name after \k%s at position %d.', $closer, $opener, $nameEnd),
+                \sprintf('Missing "%s" to close the group name after \k%s at position %d.', $closer, $opener, $closeAt),
                 ErrorCode::GroupNameUnterminated,
-                $nameEnd,
+                $closeAt,
             );
         }
     }
