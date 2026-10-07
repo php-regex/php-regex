@@ -396,9 +396,6 @@ The follow-ups are merged too: the search cost's two false positives
 - Under `u`, a class of POSIX classes covering everything
   (`/[[:^alpha:][:alpha:]]*\d$/u`) is undecided, so the quadratic search is
   missed (1.35 s at n = 20,000).
-- `\P{ ^any}` (a space before the `^`, PCRE2 10.45 and later) reaches the
-  ReDoS analysis as `\p{^ ^any}`, an unsupported property: not analyzed,
-  where PCRE2 reads `\p{Any}`.
 
 ### Upstream, the maintainer's call
 

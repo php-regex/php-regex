@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A space before the `^` of a negated property name no longer hides the negation: `\P{ ^L}` is `\p{L}`, as PCRE2 reads it, where the library refused `\P{ ^any}` as an unknown property.
 - `u` and `d` after `(?` are refused, as PCRE2 refuses them ("unrecognized character after (? or (?-"): they are PHP modifiers, not inline options. `/(?u)a+b/` was accepted, and the ReDoS analysis called it safe.
 - A forward relative group number whose sum with the groups before it passes 65535, `\g{+65534}` after two groups, is refused on its opening bracket, as PCRE2 refuses it, where the error stood past the number.
 - The caret under a lint snippet stands under the character at fault when a multibyte character comes before it, where each one moved the caret one column right.

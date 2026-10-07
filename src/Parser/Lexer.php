@@ -1780,9 +1780,10 @@ final class Lexer
             $prop = substr($prop, self::PATTERN_UNICODE_PROP_BRACE_START, self::PATTERN_UNICODE_PROP_BRACE_END);
         }
 
-        $isPropNegated = str_starts_with($prop, '^');
+        // PCRE2 skips the spaces before the "^": "\P{ ^L}" is "\p{L}".
+        $isPropNegated = str_starts_with(ltrim($prop, " \t\n\v\f\r"), '^');
         if ($isPropNegated) {
-            $prop = substr($prop, self::PATTERN_UNICODE_PROP_NEGATION_START);
+            $prop = substr(ltrim($prop, " \t\n\v\f\r"), self::PATTERN_UNICODE_PROP_NEGATION_START);
         }
 
         if ('' === $prop) {
