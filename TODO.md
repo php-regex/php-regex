@@ -301,3 +301,110 @@ Draft:
 > lookahead that captures `(\2?)` as group 2 in the second. Under lldb the
 > fault is `EXC_BAD_ACCESS` in the JIT code, in the byte compare loop of the
 > `\2` backreference, which seems to read through a stale capture pointer.
+
+## The `ecosystem-roadmap` branch: what is left
+
+The branch carries ten pieces of work from the October 2026 ecosystem review
+(public API scope, capture shapes for PHPStan and Psalm, the JSON contract,
+the docs drift, `Regex::info()` / `Regex::compatibility()` and the PHP range
+in the linter, the Rector and Psalm packages, the ReDoS search cost). It is
+not rebased on `2.x` yet; merging it is a manual step.
+
+### Rebase onto `2.x` (blocked on one decision)
+
+`2.x` gained a48c101d and 8c03d93d after the branch started. A rebase onto
+8c03d93d resolves cleanly up to "Settle the capture shape before 2.0" and
+"Keep J and U on across a caret" (the same fix landed on both sides), then
+stops at "Write down the JSON every command prints": both lines of work
+redefined the same public contract.
+
+- **Baseline file.** `2.x` writes `{"version": 1, "issues": [...]}` (an
+  issue still matches when its line moved, `./src` and `src` share a
+  baseline, 1.x lists are read with a note, an unusable file is a
+  configuration error); the branch writes a flat list of `{file, line,
+  column, issue_id, message, severity}` matched on file, line and id (a file
+  that is not a list is a usage error). Each side has tests pinning its form.
+- **Lint JSON keys.** The branch renames them to snake_case (`severity`,
+  `issue_id`, `file_offset`); the new `2.x` tests read `type`, `issueId`,
+  `fileOffset`.
+
+Recommended: keep `2.x`'s versioned baseline (sturdier, and the
+compatibility page already promises that every 2.x reads a 2.0 baseline),
+written with the branch's snake_case keys, and move the `2.x` tests that
+read camelCase lint keys to the snake_case contract. Then resume the rebase
+(eight more commits after that one touch the same areas), run the full suite
+and check coverage.
+
+### Before merging into `2.x`
+
+- Create the GitHub repositories `php-regex/regex-rector` and
+  `php-regex/regex-psalm`, give `SPLIT_TOKEN` access to both, and add both
+  packages on Packagist: `bin/split` lists them, so every split fails until
+  they exist.
+- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) is above
+  its 5.0 ms p99 limit on `2.x` already (5.25 ms measured); the branch adds
+  about 0.15 ms. Raise the limit or speed up the per-attempt proof.
+
+### Still to build
+
+- Sonar parity lints (designed, not started): `regex.lint.quantifier.emptyRepeat`
+  (S5842), `regex.lint.anchor.alternationPrecedence` (S5850, silent on the
+  `^\s+|\s+$` trim idiom), `regex.lint.quantifier.possessiveImpossible`
+  (S5994), `regex.lint.anchor.impossible.boundary` (S5996, `\b`/`\B`),
+  `regex.lint.lookaround.impossible` (S6002), the wider
+  `regex.lint.quantifier.lazyEnd` (S6019), the PHPStan identifier
+  `regex.replacement.undefinedGroup` (S6328: `$10` with fewer groups,
+  `${name}` never substituted), `regex.lint.group.empty` (S6331, `(?:)` only),
+  and, off by default, `regex.lint.charclass.single` (S6397),
+  `regex.lint.literal.multipleSpaces` (S6326) and
+  `regex.lint.quantifier.lazyToClass` (S5857); plus `docs/reference/sonar.md`
+  mapping every Sonar regex rule on PHP. No new rule fails CI (warnings and
+  style only).
+
+### ReDoS search cost: two false positives
+
+- When every alternative ends with the same character (`/a+b|cb/`,
+  `/\s+=|x=/`), the reported attack lacks that character, which PCRE2 checks
+  before any attempt: the reported subject is linear (with `"!b"` appended it
+  is quadratic, 8 / 31 / 124 ms for n = 5k / 10k / 20k without the JIT).
+  `requiredCodeUnit()` reads only the mandatory runs. Some such patterns have
+  no attack at all (`/(.*)(?:ab)+|b/`).
+- A class covering every character under `/u` (`[\x00-\x{10FFFF}]*`) is not
+  read as PCRE2's any-character: `/[\x00-\x{10FFFF}]*\d$/u` is reported
+  quadratic, but the engine anchors it and stays linear.
+
+Both stay hidden by the default `high` threshold (the search cost is
+`medium`).
+
+### Smaller findings, each confirmed against the engine
+
+- The language server never runs the validator (only the parser), so it
+  misses every validation error and the PHP range check.
+- The linter validates each pattern at every PHP version of the range; a
+  pattern that reads no version-dependent rule could skip the extra runs (the
+  flag must travel with the cached tree, not in a side channel).
+- `\g{+65534}` with two groups: the "group number too big" offset is 16
+  where PCRE2 10.49 says 8 (`\g{+65535}`: 13 vs 5).
+- The parser accepts `/(?:(?:a{1000}){1000}){1000}/`, which PCRE2 refuses
+  ("regular expression is too large").
+- At `php_version` 8.1 the parser accepts a raw NUL in a pattern; PHP 8.1
+  refuses it.
+- Under `/J`, a name's offset type follows the first group bearing it:
+  `/(?J)(?<n>z)?(?<n>a)/` with offsets types `n`'s offset `int<-1, max>`
+  although group 2 is always set.
+- `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
+  for every release from 10.44 (right for 10.44); the release that relaxed it
+  is unknown.
+- The search cost gives no verdict when `m` is set inline (`/(?m)^\s+x/`).
+- `--disable-rule=regex.lint.<id>` with the full id is ignored for the
+  pattern lint rules (the short id works).
+- Capture case facts (`lowercase-string` / `uppercase-string` and caseless
+  values) were left out: Turkish casing, the Kelvin sign and the long s as
+  sources, locale tables.
+
+### Upstream, the maintainer's call
+
+- Psalm 6.19's type combiner turns `numeric-string|'a'` into `numeric-string`
+  (order-dependent); the Psalm plugin emits no `numeric-string` because of it.
+- Psalm's `preg_match_all` stub types `MARK` wrongly under
+  `PREG_OFFSET_CAPTURE`.
