@@ -308,9 +308,6 @@ The follow-ups are merged too: the search cost's two false positives
 
 - The Symfony route requirement normalizer is also used for the firewall and
   `access_control` patterns, with the same missing flags as below.
-- The parser accepts `\x` with no hex digit (`/(?:\x){41}/`, `/[\x]{2}/`),
-  which PCRE2 10.49 refuses ("digits missing after \x"); check what the
-  validator says for a 10.49 target.
 - The lint rules read characters with PCRE's C tables: after
   `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `/a\B\xE9/` matches `"a\xE9"`,
   and `regex.lint.anchor.impossible.boundary` calls it impossible.
