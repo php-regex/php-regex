@@ -106,6 +106,11 @@ final class RedosSearchCostTest extends TestCase
         // A caret under m holds at every line start, and a newline run makes
         // every position one.
         yield 'caret under m, newline run' => ['pattern' => '/^\s+x/m'];
+        // An inline m holds up to the end of its group, the alternatives
+        // after it included.
+        yield 'caret under an inline m, newline run' => ['pattern' => '/(?m)^\s+x/'];
+        yield 'caret in an option group setting m, newline run' => ['pattern' => '/(?m:^\s+x)/'];
+        yield 'caret after an inline m in an earlier alternative, newline run' => ['pattern' => '/(?m)z|^\s+x/'];
         // A leading dot-star without s is anchored at line starts only
         // (pcre2test: "First code unit at start or follows newline"): a
         // newline run makes every position one.
@@ -530,6 +535,7 @@ final class RedosSearchCostTest extends TestCase
         // Raw bytes: the two UTF-8 bytes of U+00E9.
         yield 'multibyte character under u' => ['pattern' => '/[é]+x/u', 'run' => 'é'];
         yield 'newline run under m' => ['pattern' => '/^\s+x/m', 'run' => "\n"];
+        yield 'newline run under an inline m' => ['pattern' => '/(?m)^\s+x/', 'run' => "\n"];
         yield 'newline run after a leading dot-star' => ['pattern' => '/.*\n+x/', 'run' => "\n"];
     }
 
@@ -593,6 +599,11 @@ final class RedosSearchCostTest extends TestCase
         yield 'leading dot-star in a capture under s, no back reference' => ['pattern' => '/(.*)[xy]/s'];
         // The run cannot hold a newline: one line start inside it.
         yield 'caret under m, newline-free run' => ['pattern' => '/^[a-z]+\d/m'];
+        // An inline option taking m off: "^" holds at the subject's start only.
+        yield 'caret under m taken off inline' => ['pattern' => '/(?-m)^\s+x/m'];
+        yield 'caret under m reset inline' => ['pattern' => '/(?^)^\s+x/m'];
+        // An option set inside a group ends with it.
+        yield 'caret after a group holding only an inline m' => ['pattern' => '/(?:(?m)(?#c))^\s+x/'];
         yield 'leading dot-star without s, newline-free run' => ['pattern' => '/.*[xy]/'];
         yield 'caret then a run, alternatives both anchored' => ['pattern' => '/^a+b|\Ac+d/'];
         // Without u, a class of every character is PCRE2's any character:

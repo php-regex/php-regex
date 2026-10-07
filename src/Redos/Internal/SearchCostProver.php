@@ -147,19 +147,11 @@ final readonly class SearchCostProver
             }
         }
 
-        // "^" holds at line starts under m: decided when no inline option
-        // moves m and no lookaround brings the other kind.
-        $multiline = match (true) {
-            !$pnfa->hasLineStart => false,
-            str_contains($regex->flags, 'm') && !self::setsMultiline($regex->pattern) => true,
-            default => null,
-        };
-
         // Whether a class may read the other case of its characters: "i"
         // set anywhere, or taken off.
         $caseless = str_contains($regex->flags, 'i')
             || self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'i'));
-        $start = self::start($regex->pattern, $sets, $multiline, $unicode, $caseless, false);
+        $start = self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false);
         if (null === $start || $start[0]) {
             return null;
         }
@@ -240,19 +232,25 @@ final readonly class SearchCostProver
     /**
      * Whether every attempt of the node is tied to the search start, and
      * whether it starts only at the subject's start or after a newline, read
-     * as PCRE2 reads the first item of each alternative; null when "^" may
-     * be either kind.
+     * as PCRE2 reads the first item of each alternative under the m option
+     * in force there; null when the start is undecided.
      *
      * @param array<int, CharSet> $sets the set the automaton reads for the atom at each offset
      *
      * @return array{bool, bool}|null
      */
-    private static function start(NodeInterface $node, array $sets, ?bool $multiline, bool $unicode, bool $caseless, bool $atomic): ?array
+    private static function start(NodeInterface $node, array $sets, bool $multiline, bool $unicode, bool $caseless, bool $atomic): ?array
     {
         if ($node instanceof SequenceNode) {
-            $items = self::items($node);
+            foreach ($node->children as $child) {
+                if (self::isOptionSetting($child)) {
+                    $multiline = self::multilineUnder((string) $child->flags, $multiline);
+                } elseif (!$child instanceof CommentNode && !($child instanceof LiteralNode && '' === $child->value)) {
+                    return self::start($child, $sets, $multiline, $unicode, $caseless, $atomic);
+                }
+            }
 
-            return [] === $items ? [false, false] : self::start($items[0], $sets, $multiline, $unicode, $caseless, $atomic);
+            return [false, false];
         }
 
         if ($node instanceof AlternationNode) {
@@ -264,6 +262,9 @@ final readonly class SearchCostProver
                     return null;
                 }
 
+                // "(?m)" inside a branch also holds in the branches after it.
+                $multiline = self::multilineAfter($alternative, $multiline);
+
                 $anchored = $anchored && $start[0];
                 $lineStart = $lineStart && $start[1];
             }
@@ -273,7 +274,8 @@ final readonly class SearchCostProver
 
         if ($node instanceof GroupNode) {
             return match ($node->type) {
-                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset, GroupType::InlineFlags => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic),
+                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic),
+                GroupType::InlineFlags => self::start($node->child, $sets, self::multilineUnder((string) $node->flags, $multiline), $unicode, $caseless, $atomic),
                 GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true),
                 default => [false, false],
             };
@@ -282,7 +284,7 @@ final readonly class SearchCostProver
         if ($node instanceof AnchorNode || $node instanceof AssertionNode) {
             return match ($node->value) {
                 // "^" without m holds where a line starts too; "\A" and "\G" are no line start for PCRE2.
-                '^' => null === $multiline ? null : [!$multiline, true],
+                '^' => [!$multiline, true],
                 'A', 'G' => [true, false],
                 default => [false, false],
             };
@@ -444,31 +446,53 @@ final readonly class SearchCostProver
     }
 
     /**
-     * The children of the sequence that are items: not an option setting
-     * such as "(?i)", nor a comment.
+     * Whether the node is an option setting such as "(?i)", which holds up
+     * to the end of the group around it.
      *
-     * @return list<NodeInterface>
+     * @phpstan-assert-if-true GroupNode $node
      */
-    private static function items(SequenceNode $node): array
+    private static function isOptionSetting(NodeInterface $node): bool
     {
-        return array_values(array_filter($node->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode
-            && !($child instanceof LiteralNode && '' === $child->value)
-            && !($child instanceof GroupNode && GroupType::InlineFlags === $child->type && $child->child instanceof LiteralNode && '' === $child->child->value)));
+        return $node instanceof GroupNode && GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value;
     }
 
-    private static function setsMultiline(NodeInterface $node): bool
+    /**
+     * Whether m holds after the node: an option setting changes it up to the
+     * end of the group around it, the branches after it included.
+     */
+    private static function multilineAfter(NodeInterface $node, bool $multiline): bool
     {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'm')) {
-            return true;
+        if (self::isOptionSetting($node)) {
+            return self::multilineUnder((string) $node->flags, $multiline);
         }
 
-        foreach ($node->getChildren() as $child) {
-            if (self::setsMultiline($child)) {
-                return true;
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $multiline = self::multilineAfter($child, $multiline);
             }
         }
 
-        return false;
+        return $multiline;
+    }
+
+    /**
+     * Whether m holds under the options: "^" takes it off, and its last
+     * letter sets it, or takes it off after "-".
+     */
+    private static function multilineUnder(string $options, bool $multiline): bool
+    {
+        if (str_starts_with($options, '^')) {
+            $multiline = false;
+        }
+
+        $letter = strrpos($options, 'm');
+        if (false === $letter) {
+            return $multiline;
+        }
+
+        $minus = strpos($options, '-');
+
+        return false === $minus || $letter < $minus;
     }
 
     /**

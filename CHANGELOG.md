@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The search cost of a pattern whose `^` comes under an inline `m` is priced: `/(?m)^\s+x/`, `/(?m:^\s+x)/` and `/(?m)z|^\s+x/` report the run of newlines as `/^\s+x/m` does, where they had no witness; under `/m`, a `^` after `(?-m)` or `(?^)` is read as tied to the subject's start.
 - An inline `(?-n)`, `(?^)` or `(?-n:...)` holds inside the body of an alphabetic assertion such as `(*atomic:...)` or `(*pla:...)`: `/(?-n)(*atomic:(a))/n` captures group 1, which the capture shape left out.
 - Under `/J`, the offset of a name several groups share is typed `int<0, max>` when one of them is always set, as the engine always gives it a set offset: it followed the first group bearing the name, `int<-1, max>` for `/(?J)(?<n>z)?(?<n>a)/`.
 - The Symfony security extractor reads a block-style list under `roles:`, `methods:` or `ips:` (`- ROLE_ADMIN` on the lines below): each dash line was taken for a new `access_control` rule, and the rule lost its roles, methods and addresses.

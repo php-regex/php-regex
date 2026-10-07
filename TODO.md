@@ -304,7 +304,6 @@ The follow-ups are merged too: the search cost's two false positives
 - `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
   for every release from 10.44 (right for 10.44); the release that relaxed it
   is unknown.
-- The search cost gives no verdict when `m` is set inline (`/(?m)^\s+x/`).
 - Capture case facts (`lowercase-string` / `uppercase-string` and caseless
   values) were left out: Turkish casing, the Kelvin sign and the long s as
   sources, locale tables.
