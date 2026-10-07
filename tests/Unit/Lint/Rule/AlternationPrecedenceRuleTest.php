@@ -78,6 +78,8 @@ final class AlternationPrecedenceRuleTest extends TestCase
         // The comment-only branch matches the empty string anywhere, as in
         // the pattern: the tip keeps it, empty.
         yield 'comment-only branch kept empty' => ['pattern' => '/^a|(?#c)|b/', 'grouped' => '^(?:a||b)'];
+        // SonarPHP reports this one too: the middle branch has no anchor.
+        yield 'outer branches anchored, middle one bare' => ['pattern' => '/^[_ ]|[\\r\\n\\t]|[_ ]$/', 'grouped' => '^(?:[_ ]|[\\r\\n\\t]|[_ ])$'];
     }
 
     /**
@@ -335,13 +337,16 @@ final class AlternationPrecedenceRuleTest extends TestCase
      * the tip's exact form is left to the rule.
      */
     #[Test]
-    public function test_a_bare_branch_between_two_anchored_ones_is_reported(): void
+    public function test_an_anchor_on_an_inner_side_silences_the_rule_as_sonar_does(): void
     {
-        // Oracle: "b" matches anywhere, "^c" only at the start.
+        // Oracle: "b" matches anywhere, "^c" only at the start. An anchor
+        // written on a branch other than the outer edges shows the anchors
+        // are placed branch by branch: SonarPHP stays silent, and so does
+        // the rule.
         $this->assertSame(1, preg_match('/^a|b|^c/', 'xb'));
         $this->assertSame(0, preg_match('/^a|b|^c/', 'xc'));
 
-        $this->assertInstanceOf(RuleViolation::class, $this->violation('/^a|b|^c/'));
+        $this->assertNull($this->violation('/^a|b|^c/'));
     }
 
     #[Test]
@@ -379,6 +384,16 @@ final class AlternationPrecedenceRuleTest extends TestCase
         yield 'lookahead asserting the end' => ['pattern' => '/^a|b(?=$)/'];
         yield 'lookbehind asserting the start' => ['pattern' => '/(?<=^)a|b$/'];
         yield 'options before the start anchor of every branch' => ['pattern' => '/(?i)^a|^b/'];
+        // An anchor on an inner side, as SonarPHP reads it: the anchors are
+        // placed branch by branch ("trim, and replace anywhere").
+        yield 'middle branch anchored at the end' => ['pattern' => '#^ +| +$|,#'];
+        yield 'middle branch anchored on both sides' => ['pattern' => '/^[$]|^\\d+$|[^0-9a-zA-Z$_]/'];
+        yield 'first branch anchored at both ends' => ['pattern' => '/^a$|b/'];
+        yield 'last branch anchored at both ends' => ['pattern' => '/a|^b$/'];
+        // Under A every branch starts at the start of the subject:
+        // preg_match('/__|this$/A', 'x__') is 0.
+        yield 'start anchored by the A modifier' => ['pattern' => '/__|this$/A'];
+        yield 'start anchored by the A modifier, several branches' => ['pattern' => '/ʟ_|__|GLOBALS$|this$/A'];
     }
 
     /**

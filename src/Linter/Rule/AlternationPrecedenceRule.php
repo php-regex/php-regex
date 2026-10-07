@@ -85,8 +85,20 @@ final class AlternationPrecedenceRule extends AbstractLintRule
         // the end": the anchor is the alternative, not one that slipped.
         $start = self::isOnlyAnAnchor($first) ? null : self::anchor($first, true);
         $end = self::isOnlyAnAnchor($last) ? null : self::anchor($last, false);
-        if (null === $start && null === $end) {
+        // Under A every alternative starts at the start of the subject.
+        if (null === $start && null === $end || str_contains($context->pattern->flags, 'A')) {
             return [];
+        }
+
+        // An anchor anywhere but the start of the first alternative and the
+        // end of the last shows the anchors are placed alternative by
+        // alternative, as in "^ +| +$|,": SonarPHP stays silent, and so does
+        // the rule.
+        $lastIndex = \count($alternatives) - 1;
+        foreach ($alternatives as $index => $alternative) {
+            if ((0 !== $index && null !== self::anchor($alternative, true)) || ($lastIndex !== $index && null !== self::anchor($alternative, false))) {
+                return [];
+            }
         }
 
         // A verb that cuts the match or fails, in an alternative that reads

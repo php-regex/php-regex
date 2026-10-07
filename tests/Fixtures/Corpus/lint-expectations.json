@@ -4380,7 +4380,6 @@
     {
         "pattern": "/^[$]|^\\d+$|[^0-9a-zA-Z$_\\x80-\\xffff]/",
         "issues": [
-            "regex.lint.anchor.alternationPrecedence",
             "regex.lint.charclass.redundant"
         ]
     },

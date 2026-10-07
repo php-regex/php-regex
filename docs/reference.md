@@ -178,7 +178,10 @@ alternative has an anchor on neither side. The anchor may sit inside a group tha
 nothing about where the alternative matches (`(?:b$)`, `(b$)`, `(?>b$)`, a one-alternative
 `(?|b$)`) or be all a positive lookaround asserts (`b(?=$)`). An alternation whose every
 alternative is anchored on one side is left alone, as the trim idiom `/^\s+|\s+$/` is, and so
-is an alternative that is the anchor alone (`/a|$/`: "or the end"). An alternative of verbs
+is an alternative that is the anchor alone (`/a|$/`: "or the end"). As in SonarPHP, an anchor anywhere
+but the start of the first alternative and the end of the last shows the anchors are placed
+alternative by alternative, and the rule stays silent (`/^ +| +$|,/`, `/^a|b|^c/`), as it does
+under the `A` modifier, which anchors every alternative at the start. An alternative of verbs
 and comments only, as `(*FAIL)`, is not counted, and an empty one (`/^a|/`) is
 `regex.lint.alternation.empty`'s. A verb that ends the match
 attempt on backtracking, accepts at once or fails (`(*COMMIT)`, `(*PRUNE)`, `(*SKIP)`,
