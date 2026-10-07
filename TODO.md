@@ -186,9 +186,6 @@ host `setlocale()` can rebuild PCRE's case tables.
     shows as `{{}x`);
   - a message quoting a pattern without `/u` spells a hidden character
     `\x{202E}`, which PCRE refuses in that pattern.
-- `regex redos` with `--jit`, `--backtrack-limit`, `--recursion-limit` or
-  `--time-limit` stops on a fatal error where `ini_set()` is in
-  `disable_functions`.
 - A railroad label spells quoted text as text, so `{2}` after an atom
   reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
   (PCRE2 10.44 and older) before `{` is not respelled either.

@@ -123,6 +123,21 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
 
         $target = $regex->target();
 
+        // These options set a setting: where ini_set() is disabled none can.
+        // disable_functions is set per process, so the test of this block
+        // runs the command in a PHP process of its own.
+        $setsASetting = null !== $jit || null !== $backtrackLimit || null !== $recursionLimit || (null !== $timeLimit && $timeLimit > 0);
+        if ($setsASetting && !\function_exists('ini_set')) {
+            $message = '--jit, --backtrack-limit, --recursion-limit and --time-limit set a setting, and ini_set() is disabled.';
+            if ($json) {
+                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+            } else {
+                $output->write($output->error("Error: {$message}\n"));
+            }
+
+            return self::INVALID;
+        }
+
         if (null !== $jit) {
             self::change($saved, 'pcre.jit', $jit);
         }
