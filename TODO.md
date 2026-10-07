@@ -163,9 +163,12 @@ host `setlocale()` can rebuild PCRE's case tables.
 - Printer round trips that change the meaning:
   - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
     `x`, so the NEL becomes whitespace;
-  - pretty mode rewrites `(?#x\ny)` as `#` lines in a pattern without `x`
-    (`/a(?#x\ny)b/` then no longer matches `"ab"`), and puts newlines before
-    `|` in a pattern without `x`.
+  - pretty mode lays out a pattern without `x` with newlines, and writes a
+    multi-line `(?#...)` as `#` lines, so its output is no longer the same
+    pattern (`/a(?#x\ny)b/` no longer matches `"ab"`). The tests pin that
+    layout as a display form: a decision, whether pretty output must stay a
+    pattern (lay out under `x` only) or is display only (say so where it is
+    documented).
 - The console form of a pattern does not always read back as itself:
   - an escape it inserts can hold an unusual delimiter (`}a\x{202E}b}u`
     with `}` as delimiter), and a control-byte delimiter is itself escaped
