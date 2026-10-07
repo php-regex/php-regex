@@ -84,8 +84,8 @@ the public API, so they go before the tag.
 
 ### Next steps
 
-- Merge the `before-2-0-defects` branch (frozen surfaces, then parser
-  errors) into `2.x` and push.
+- ~~Merge the `before-2-0-defects` branch (frozen surfaces, then parser
+  errors) into `2.x` and push.~~ (done: a48c101d, 8c03d93d)
 - Still to fix from this list, in this order: display, printer, language
   server and transpilers (comment bytes, printer round trips, LSP hover
   and completion, `\k'n'` in JavaScript); linter and extractors
@@ -302,26 +302,27 @@ Draft:
 > fault is `EXC_BAD_ACCESS` in the JIT code, in the byte compare loop of the
 > `\2` backreference, which seems to read through a stale capture pointer.
 
-## The `ecosystem-roadmap` branch: what is left
+## Ecosystem review: what is left
 
-The branch carries ten pieces of work from the October 2026 ecosystem review
-(public API scope, capture shapes for PHPStan and Psalm, the JSON contract,
-the docs drift, `Regex::info()` / `Regex::compatibility()` and the PHP range
-in the linter, the Rector and Psalm packages, the ReDoS search cost). It is
-rebased on `2.x` (8c03d93d); merging it is a manual step. Where both lines
-redefined the same contract, the lint baseline keeps `2.x`'s versioned
-format and matching, written with the branch's snake_case keys, and every
+Ten pieces of work from the October 2026 ecosystem review are merged into
+`2.x` (up to 3e568588): public API scope, capture shapes for PHPStan and
+Psalm, the JSON contract, the docs drift, `Regex::info()` /
+`Regex::compatibility()` and the PHP range in the linter, the Rector and
+Psalm packages, and the ReDoS search cost. Where the review and the 2.0
+defect fixes redefined the same contract, the lint baseline keeps the
+versioned format and its matching, written with snake_case keys, and every
 lint JSON key is snake_case.
 
-### Before merging into `2.x`
+### Before pushing `2.x`
 
 - Create the GitHub repositories `php-regex/regex-rector` and
   `php-regex/regex-psalm`, give `SPLIT_TOKEN` access to both, and add both
   packages on Packagist: `bin/split` lists them, so every split fails until
   they exist.
-- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) is above
-  its 5.0 ms p99 limit on `2.x` already (5.25 ms measured); the branch adds
-  about 0.15 ms. Raise the limit or speed up the per-attempt proof.
+- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) was
+  already above its 5.0 ms p99 limit before the merge (5.25 ms measured);
+  the search cost adds about 0.15 ms. Raise the limit or speed up the
+  per-attempt proof.
 
 ### Still to build
 
@@ -379,6 +380,13 @@ Both stay hidden by the default `high` threshold (the search cost is
 - Capture case facts (`lowercase-string` / `uppercase-string` and caseless
   values) were left out: Turkish casing, the Kelvin sign and the long s as
   sources, locale tables.
+- A baseline path always reads `\` as a separator, so one baseline serves
+  Windows and Unix; a file name holding a literal `\` on Unix matches the
+  subdirectory of the same name.
+- With Xdebug on (`debug,coverage`), the linear-time ReDoS tests go over
+  their one-second cap; they pass with `XDEBUG_MODE=off`.
+- `LintCommandBaselineFormatTest` prints the console banner into the PHPUnit
+  output (the forked lint workers seem to flush the output buffer on exit).
 
 ### Upstream, the maintainer's call
 
