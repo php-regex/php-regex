@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `explain()`, text and HTML, spells the bytes of a comment that are no UTF-8 as `\xHH`: `/a(?#\xE1)b/` gave an explanation `json_encode()` refuses, and the language server dropped its hover reply.
 - The Mermaid diagram cuts a long comment on a character boundary: cut inside a multibyte character, the comment came out empty.
 - A forked lint worker drops the output buffers it inherits: run under output buffering, `regex lint` with several jobs wrote what the caller had buffered once more for each worker.
 - A back reference in a lookbehind of a pattern that holds a branch reset anywhere is refused as not limited, as PCRE2 refuses it: `/(a)(?|b|c)(?<=\1)/` was measured and accepted.

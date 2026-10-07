@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -404,7 +405,8 @@ final class HtmlExplainer extends AbstractNodeVisitor
     {
         return \sprintf(
             '<li><span title="Comment" style="color: #888; font-style: italic;">Comment: %s</span></li>',
-            $this->e($node->comment),
+            // A byte-mode comment may hold bytes that are no UTF-8: spelled.
+            $this->e(mb_check_encoding($node->comment, 'UTF-8') ? $node->comment : DisplayEscaper::escapeText($node->comment)),
         );
     }
 
