@@ -265,8 +265,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   reads the same as the four characters `\xHH` already in a pattern.
 - The printer rewrites `(?P=אABC)`, a reference by a non-ASCII name, as
   `\k<אABC>`, where an ASCII name keeps its spelling.
-- `regex.lint.escape.suspicious` warns on `/\N{U+41}/u`, which is valid and
-  matches `"A"`.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
   on the lines under `roles:`, `methods:` or `ips:`): the dash lines are taken
   before the list is looked at, so they produce bogus rules, and the parent

@@ -61,7 +61,8 @@ final class SuspiciousEscapeRule extends AbstractLintRule
 
         if (CharLiteralType::UnicodeNamed === $node->type && class_exists(\IntlChar::class)) {
             $name = $node->originalRepresentation;
-            if (LibraryPcre::match('/^\\\\N\\{(.+)}$/', $name, $matches)) {
+            // \N{U+hh} spells a code point, not a name.
+            if (LibraryPcre::match('/^\\\\N\\{(.+)}$/', $name, $matches) && !LibraryPcre::match('/^U\\+[0-9A-Fa-f]+$/', $matches[1])) {
                 $char = \IntlChar::charFromName($matches[1]);
                 if (null === $char) {
                     return [new RuleViolation(

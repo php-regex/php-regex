@@ -276,6 +276,25 @@ final class LinterRulesTest extends TestCase
         yield 'unknown name' => ['pattern' => '/\\N{NO SUCH CHARACTER}/u', 'expected' => ['Unknown Unicode character name "NO SUCH CHARACTER".']];
     }
 
+    /**
+     * \N{U+hh} spells a code point, not a name: PCRE2 reads it under /u.
+     */
+    public function test_a_code_point_spelled_with_n_is_not_a_suspicious_escape(): void
+    {
+        $this->assertSame(1, preg_match('/^\\N{U+41}$/u', 'A'), 'Oracle: \N{U+41} is "A" under /u.');
+
+        $linter = new PatternLinter();
+        Regex::create(['cache' => null])->parse('/\\N{U+41}/u')->accept($linter);
+        $messages = [];
+        foreach ($linter->getIssues() as $issue) {
+            if ('regex.lint.escape.suspicious' === $issue->id) {
+                $messages[] = $issue->message;
+            }
+        }
+
+        $this->assertSame([], $messages);
+    }
+
     public function test_useless_flag_s_warning(): void
     {
         $issues = $this->lint('/no_dot/s');
