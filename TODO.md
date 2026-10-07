@@ -90,11 +90,6 @@ contract, and it must stay. What the check found instead is byte-versus-
 code-point confusions in byte mode (patterns without `/u`), each confirmed
 against the engine:
 
-- `isSingleCharacter()` counts UTF-8 characters whatever the mode:
-  `/(?:é)*x/` without `/u` is rewritten `/\xC3\xA9*x/`, which repeats the
-  last byte only — `^(?:\xC3\xA9)*\xC3$` matches `"\xC3"` where
-  `^\xC3\xA9*\xC3$` does not. The fix is to count in the mode's coordinates
-  (bytes without `/u`), never to normalize.
 - Auto-possessivation compares the last byte of a literal with the first
   byte of what follows: under `/u` a continuation byte never meets a lead
   byte, so every multibyte boundary looks exclusive (`/é+é/u` would become

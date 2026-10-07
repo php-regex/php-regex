@@ -577,7 +577,8 @@ final class Rewriter extends AbstractNodeVisitor
     private function isSingleCharacter(NodeInterface $node): bool
     {
         return match (true) {
-            $node instanceof LiteralNode => 1 === mb_strlen($node->value, 'UTF-8'),
+            // Without /u a character is a byte: "é" is two.
+            $node instanceof LiteralNode => 1 === ($this->unicodeMode ? mb_strlen($node->value, 'UTF-8') : \strlen($node->value)),
             $node instanceof CharLiteralNode, $node instanceof CharTypeNode, $node instanceof DotNode,
             $node instanceof CharClassNode, $node instanceof UnicodePropNode => true,
             default => false,

@@ -68,4 +68,18 @@ final class ByteModeCharClassTest extends TestCase
     {
         $this->assertSame('/[a-d]/', Regex::create()->optimize('/[abcd]/')->optimized);
     }
+
+    /**
+     * Without /u "é" is two bytes: a group around it repeats both, and
+     * dropping the group would repeat the last byte alone.
+     */
+    #[Test]
+    public function test_a_group_around_a_multibyte_letter_stays_without_u(): void
+    {
+        $optimized = Regex::create()->optimize('/^(?:é)*x$/')->optimized;
+
+        foreach (['ééx', 'éx', 'x', "\xC3\xA9\xA9x"] as $subject) {
+            $this->assertSame(preg_match('/^(?:é)*x$/', $subject), preg_match($optimized, $subject), $optimized.' on '.bin2hex($subject));
+        }
+    }
 }
