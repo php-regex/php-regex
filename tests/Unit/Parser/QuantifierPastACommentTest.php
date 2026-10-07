@@ -38,6 +38,21 @@ final class QuantifierPastACommentTest extends TestCase
     }
 
     /**
+     * An inline comment whose text starts with "#" stays inline: printed as
+     * "#..." under x it would run to the end and swallow what follows
+     * (preg_match('/^a(?##c)b$/x', 'a') is 0, '/^a#cb$/x' matches it).
+     */
+    #[Test]
+    public function test_an_inline_comment_starting_with_a_hash_keeps_its_parentheses(): void
+    {
+        $printed = Regex::create(['cache' => null])->parse('/^a(?##c)b$/x')->accept(new PatternPrinter());
+
+        foreach (['a', 'ab', 'b'] as $subject) {
+            $this->assertSame(preg_match('/^a(?##c)b$/x', $subject), preg_match($printed, $subject), $printed.' on '.$subject);
+        }
+    }
+
+    /**
      * @return iterable<string, array{pattern: string}>
      */
     public static function provideQuantifiersPastWhatPcreSkips(): iterable

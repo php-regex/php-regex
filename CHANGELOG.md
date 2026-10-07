@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The printer keeps the parentheses of an inline comment whose text starts with `#` under `/x`: `/a(?##c)b/x` printed as `/a#cb/x`, which turns `b` into comment.
 - The optimizer counts the characters of a literal in bytes without `/u`: `/(?:é)*x/` kept its group, where it was rewritten `/\xC3\xA9*x/`, which repeats the last byte alone.
 - `regex.lint.quantifier.possessiveImpossible` inside a negative lookaround says the lookaround always holds, where it said the pattern can never match: `/(?!a*+a)b/` matches `b`.
 - `regex redos` with `--jit`, `--backtrack-limit`, `--recursion-limit` or `--time-limit` where `ini_set()` is disabled says the option cannot be honoured and exits with 2 (the JSON envelope, stage `usage`, under `--format=json`), where it stopped on a fatal error.

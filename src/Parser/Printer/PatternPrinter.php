@@ -614,7 +614,9 @@ final class PatternPrinter extends AbstractNodeVisitor
         // We still indent them when pretty-printing so they line up with
         // surrounding constructs, but we keep the original "# ..." text and
         // trailing newline intact.
-        if ($isExtended && ($node->extended || str_starts_with($node->comment, '#'))) {
+        // An inline "(?##c)" keeps its parentheses: printed as "#c" it would
+        // run to the end of the line and swallow what follows.
+        if ($isExtended && $node->extended) {
             if ($this->pretty) {
                 $indent = str_repeat(' ', $this->indentLevel * 4);
                 $lines = explode("\n", rtrim($node->comment, "\n"));

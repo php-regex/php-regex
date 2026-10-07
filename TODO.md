@@ -161,9 +161,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   refuses, and the language server then drops its hover reply without a
   word. The Mermaid output also cuts a comment at 20 bytes, mid-character.
 - Printer round trips that change the meaning:
-  - `PatternPrinter` drops the wrapper of a `(?#...)` comment whose text
-    starts with `#` under `/x`: `/a(?##c)b/x` prints as `/a#cb/x`, which
-    turns `b` into comment;
   - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
     `x`, so the NEL becomes whitespace;
   - pretty mode rewrites `(?#x\ny)` as `#` lines in a pattern without `x`
