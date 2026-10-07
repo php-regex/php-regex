@@ -145,6 +145,16 @@ final class LastCodeUnitTest extends TestCase
         yield 'caseless alternatives ending with a k' => ['pattern' => '/[a-z]+k|\d+k/i', 'expected' => 'k', 'caseless' => true];
         // A character without another case is looked for as it is.
         yield 'caseless sign' => ['pattern' => '/x=/i', 'expected' => '=', 'caseless' => false];
+        // pcre2test marks A, Z, a and z "(caseless)", and none of the
+        // characters just outside the two letter ranges.
+        yield 'caseless at sign' => ['pattern' => '/x@/i', 'expected' => '@', 'caseless' => false];
+        yield 'caseless A' => ['pattern' => '/xA/i', 'expected' => 'A', 'caseless' => true];
+        yield 'caseless Z' => ['pattern' => '/xZ/i', 'expected' => 'Z', 'caseless' => true];
+        yield 'caseless opening bracket' => ['pattern' => '/x\\[/i', 'expected' => '[', 'caseless' => false];
+        yield 'caseless backtick' => ['pattern' => '/x`/i', 'expected' => '`', 'caseless' => false];
+        yield 'caseless a' => ['pattern' => '/xa/i', 'expected' => 'a', 'caseless' => true];
+        yield 'caseless z' => ['pattern' => '/xz/i', 'expected' => 'z', 'caseless' => true];
+        yield 'caseless opening brace' => ['pattern' => '/x\\{/i', 'expected' => '{', 'caseless' => false];
         yield 'caseless k under u and r' => ['pattern' => '/xk/iur', 'expected' => 'k', 'caseless' => true];
         yield 'case-sensitive alternatives' => ['pattern' => '/a+b|b$/', 'expected' => 'b', 'caseless' => false];
         yield 'two-byte character under u' => ['pattern' => '/xé/u', 'expected' => 'é', 'caseless' => false];

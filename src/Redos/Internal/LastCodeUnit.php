@@ -585,7 +585,9 @@ final class LastCodeUnit
     private function otherCase(int $codePoint): int
     {
         if ($codePoint < 0x80) {
-            return ctype_alpha(\chr($codePoint)) ? $codePoint ^ 0x20 : $codePoint;
+            $lower = $codePoint | 0x20;
+
+            return $lower >= 0x61 && $lower <= 0x7A ? $codePoint ^ 0x20 : $codePoint;
         }
 
         if (!$this->unicode) {
