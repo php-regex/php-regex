@@ -202,8 +202,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   (`/[a(?-1)/` at 7, PCRE "range out of order" at 6); `/(?((*foo:/` is
   `regex.verb.invalid` at 8 (PCRE "subpattern name expected" at 3);
   `/\g-1+/` at 5 (PCRE 4); `/a{3,2}(?#c)+/` at 10 (PCRE 5).
-- `/(a)\g-1+{2}/` is accepted; PCRE refuses the stacked quantifier at 11
-  (the `\g` token takes the `+`).
 - More error order off PCRE's (library vs PCRE2 10.49): 251 closed nested
   groups then `[` give the unclosed class at the end (PCRE "parentheses are
   too deeply nested" at 251); a callout number above 255 in a condition,
