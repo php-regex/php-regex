@@ -98,6 +98,33 @@ final class RelativeConditionReferenceTest extends TestCase
         yield 'callout before the assertion' => ['pattern' => '/(?(?C256)a)/', 'offset' => 8];
     }
 
+    /**
+     * A name already used, with no ">" after it, is refused on the missing
+     * terminator, as PCRE2 reads the name and what closes it first (error
+     * 142 "syntax error in subpattern name (missing terminator?)").
+     */
+    #[Test]
+    #[DataProvider('provideDuplicateNamesLeftOpen')]
+    public function test_a_duplicate_name_left_open_is_refused_on_the_terminator(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideDuplicateNamesLeftOpen(): iterable
+    {
+        yield 'end of the pattern' => ['pattern' => '/(?<n>a)(?<n/', 'offset' => 11];
+        yield 'group closed instead' => ['pattern' => '/(?<n>a)(?<n)/', 'offset' => 11];
+        yield 'python spelling' => ['pattern' => '/(?<n>a)(?P<n/', 'offset' => 12];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {

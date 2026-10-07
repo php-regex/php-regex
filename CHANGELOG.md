@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A name already used and left without its `>`, `/(?<n>a)(?<n/`, is refused on the missing terminator, as PCRE2 reports it, at 11, where it was refused as a duplicate at 12.
 - A callout number above 255 in a condition, `/(?(?C256)a)/`, is refused as PCRE2 reads it, at 8, before the assertion due after the callout, where the missing assertion was reported at 9.
 - A reversed count followed by a comment and then `+` or `?`, `/a{3,2}(?#c)+/`, is refused past its second number, at 5, as PCRE2 reports it, where the error stood at 10.
 - An unknown verb right after the `(` of a condition, `/(?((*foo:/`, is refused where PCRE2 expects a group name, at 3, where it was refused as an unknown verb at 8.

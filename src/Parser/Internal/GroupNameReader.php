@@ -185,7 +185,9 @@ final class GroupNameReader
             $this->closeQuote($quote);
         }
 
-        if ($register) {
+        // "(?<n" with no ">" after the name: PCRE refuses the missing
+        // terminator before it looks for a duplicate.
+        if ($register && (null !== $quote || '>' === $this->stream->current()->value)) {
             if (null !== $number && $name !== ($this->namesByNumber[$number] ?? $name)) {
                 // Only a branch reset gives two groups the same number.
                 throw $this->error(
