@@ -268,9 +268,9 @@ final class LookbehindLength
             return [0, null];
         }
 
-        // A back reference into a branch reset: PCRE cannot tell which of
-        // the groups sharing the number it points to.
-        if ($node instanceof BackrefNode && $this->groups->isInBranchReset($group)) {
+        // With a branch reset anywhere in the pattern, PCRE measures no back
+        // reference in a lookbehind: "(a)(?|b|c)(?<=\1)" is not limited.
+        if ($node instanceof BackrefNode && $this->groups->hasBranchReset()) {
             return [0, null];
         }
 

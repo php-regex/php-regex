@@ -45,6 +45,34 @@ final class LookbehindBackslashCUnderUtfTest extends TestCase
         yield 'utf verb' => ['pattern' => '/(*UTF)(?<=b\C)/', 'offset' => 6];
     }
 
+    /**
+     * With a branch reset anywhere in the pattern, PCRE2 measures no back
+     * reference in a lookbehind: "length of lookbehind assertion is not
+     * limited", where the lookbehind starts.
+     */
+    #[Test]
+    #[DataProvider('provideReferencesBesideABranchReset')]
+    public function test_a_back_reference_in_a_lookbehind_beside_a_branch_reset_is_not_limited(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideReferencesBesideABranchReset(): iterable
+    {
+        yield 'number' => ['pattern' => '/(a)(?|b|c)(?<=\1)/', 'offset' => 10];
+        yield 'name' => ['pattern' => '/(?<n>a)(?|b|c)(?<=\k<n>)/', 'offset' => 14];
+        yield 'g number' => ['pattern' => '/(a)(?|b|c)(?<=\g1)/', 'offset' => 10];
+        yield 'branch reset after the lookbehind' => ['pattern' => '/(a)(?<=\1)(?|b|c)/', 'offset' => 3];
+    }
+
     #[Test]
     public function test_backslash_c_outside_a_lookbehind_under_utf_compiles(): void
     {
