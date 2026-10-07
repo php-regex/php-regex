@@ -138,6 +138,12 @@ final class RedosSearchCostTest extends TestCase
         // Under u, \s and \S are Unicode properties: PCRE2 does not anchor
         // the leading [\s\S]* (pcre2test 10.49, utf and ucp: no "anchored").
         yield 'leading [\s\S]* under u' => ['pattern' => '/[\s\S]*\d$/u'];
+        // Under u, a POSIX class other than "[:ascii:]" and "[:blank:]" is a
+        // property, which counts for nothing there (pcre2test 10.49, utf and
+        // ucp: no "anchored").
+        yield 'leading class of POSIX classes under u' => ['pattern' => '/[[:^alpha:][:alpha:]]*\d$/u'];
+        yield 'leading class of "[:^cntrl:]" and a range under u' => ['pattern' => '/[[:^cntrl:]\x00-\x{FF}]*\d$/u'];
+        yield 'leading class of "[:^blank:]" and a range missing U+180E under u' => ['pattern' => '/[[:^blank:]\x00-\x{FF}\x{1680}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]*\d$/u'];
         // The dollar holds before a final newline, which \n then reads.
         yield 'dollar then a newline after digits' => ['pattern' => '/\d+$\n/'];
         yield 'dollar then a newline after whitespace' => ['pattern' => '/\s+$\n/'];
@@ -642,9 +648,16 @@ final class RedosSearchCostTest extends TestCase
         yield 'leading class of every code point and a property, the range first, under u' => ['pattern' => '/[\x00-\x{10FFFF}\pL]*\d$/u'];
         yield 'leading negated class of no character under u' => ['pattern' => '/[^\P{Any}]*\d$/u'];
         yield 'leading negated class of no character, loosely spelled, under u' => ['pattern' => '/[^\P{a_ny}]*\d$/u'];
-        // PCRE2 anchors these too; a POSIX class is not read, nor under i a
-        // class whose gaps the other cases may fill: undecided, no witness.
+        // Under u, "[:ascii:]" is U+0000-U+007F and "[:^ascii:]" every code
+        // point above, "[:blank:]" is "\h" and "[:^blank:]" is "\H"
+        // (pcre2test 10.49, utf and ucp: "anchored").
         yield 'leading class of POSIX classes under u' => ['pattern' => '/[[:^ascii:][:ascii:]]*\d$/u'];
+        yield 'leading class of "[:^ascii:]" and a range under u' => ['pattern' => '/[[:^ascii:]\x00-\x7F]*\d$/u'];
+        yield 'leading class of "[:^blank:]" and "\h" under u' => ['pattern' => '/[[:^blank:]\h]*\d$/u'];
+        yield 'leading class of "[:blank:]" and its negation under u' => ['pattern' => '/[[:blank:][:^blank:]]*\d$/u'];
+        yield 'leading class of "[:^blank:]" and a range under u' => ['pattern' => '/[[:^blank:]\x00-\x{FF}\x{1680}\x{180E}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}]*\d$/u'];
+        // PCRE2 anchors these too; under i a class whose gaps the other
+        // cases may fill is not read: undecided, no witness.
         yield 'leading caseless class whose gap the other case fills under u' => ['pattern' => '/[\x00-\x40\x42-\x{10FFFF}]*\d$/iu'];
     }
 

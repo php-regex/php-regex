@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Under `/u`, the search cost reads a leading class of POSIX classes as PCRE2 does: `[:ascii:]`, `[:blank:]` and their negations cover their characters, the others are properties, so `/[[:^alpha:][:alpha:]]*\d$/u` reports its quadratic search (1.35 s on 20,000 characters, `pcre.jit=0`) and `/[[:^ascii:][:ascii:]]*\d$/u` is anchored, where both had no verdict.
 - The search cost of a pattern whose `^` comes under an inline `m` is priced: `/(?m)^\s+x/`, `/(?m:^\s+x)/` and `/(?m)z|^\s+x/` report the run of newlines as `/^\s+x/m` does, where they had no witness; under `/m`, a `^` after `(?-m)` or `(?^)` is read as tied to the subject's start.
 - An inline `(?-n)`, `(?^)` or `(?-n:...)` holds inside the body of an alphabetic assertion such as `(*atomic:...)` or `(*pla:...)`: `/(?-n)(*atomic:(a))/n` captures group 1, which the capture shape left out.
 - Under `/J`, the offset of a name several groups share is typed `int<0, max>` when one of them is always set, as the engine always gives it a set offset: it followed the first group bearing the name, `int<-1, max>` for `/(?J)(?<n>z)?(?<n>a)/`.

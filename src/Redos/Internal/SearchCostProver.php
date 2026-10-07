@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -328,14 +329,14 @@ final readonly class SearchCostProver
      * repeated and moves to the end of the subject in one step when
      * possessive: the dot under s, "\p{Any}", and a class without u. Under u
      * (UTF and UCP) a class reads every item into a bitmap below U+0100,
-     * and above it only its characters, ranges, "\h", "\v" and their
-     * negations: it is that item when these cover every code point from
-     * U+0100, the surrogates included, when it holds "\p{Any}", or when it
-     * is the negation of "\P{Any}" alone (pcre2test 10.49). "\d", "\s",
-     * "\w", their negations and the other properties count for nothing
-     * there, so "[\s\S]" is no such class. A POSIX class or another negated
-     * class is undecided, and so is under i a class whose gaps the other
-     * cases may fill: null.
+     * and above it only its characters, ranges, "\h", "\v", "[:ascii:]",
+     * "[:blank:]" and their negations: it is that item when these cover
+     * every code point from U+0100, the surrogates included, when it holds
+     * "\p{Any}", or when it is the negation of "\P{Any}" alone (pcre2test
+     * 10.49). "\d", "\s", "\w", their negations, the other POSIX classes
+     * and the other properties count for nothing there, so "[\s\S]" is no
+     * such class. Another negated class is undecided, and so is under i a
+     * class whose gaps the other cases may fill: null.
      */
     private static function isAnyCharacter(NodeInterface $atom, bool $unicode, bool $caseless): ?bool
     {
@@ -428,6 +429,18 @@ final readonly class SearchCostProver
 
         if ($part instanceof UnicodePropNode) {
             return CharSet::empty();
+        }
+
+        // "[:ascii:]" stays a range and "[:blank:]" is "\h"; the other POSIX
+        // classes are properties.
+        if ($part instanceof PosixClassNode) {
+            return match ($part->class) {
+                'ascii' => CharSet::range(0, 0x7F),
+                '^ascii' => CharSet::range(0x80, 0x10FFFF),
+                'blank' => CharSet::fromRanges(self::HORIZONTAL_SPACES),
+                '^blank' => $every->subtract(CharSet::fromRanges(self::HORIZONTAL_SPACES)),
+                default => CharSet::empty(),
+            };
         }
 
         if (!$part instanceof CharTypeNode) {

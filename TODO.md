@@ -319,9 +319,6 @@ The follow-ups are merged too: the search cost's two false positives
   one-branch conditional (`/x(?(DEFINE)(*ACCEPT))b/`); unreachable today.
 - `(*UCP)` without `u`: `/(*UCP)xk/i` gives the last code unit `k`, where
   pcre2test gives none; unreachable today.
-- Under `u`, a class of POSIX classes covering everything
-  (`/[[:^alpha:][:alpha:]]*\d$/u`) is undecided, so the quadratic search is
-  missed (1.35 s at n = 20,000).
 
 ### Upstream, the maintainer's call
 
