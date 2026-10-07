@@ -1,79 +1,36 @@
 # TODO
 
-## Split into packages: the steps done by hand, in this order
+## Split into packages: what is left by hand
 
-The order matters: a new repository named `regex-parser` would take over the
-old URL, and Packagist would lose the 1.x tags of `yoeunes/regex-parser` if its
-source still pointed there.
+State on 2026-10-07, read from GitHub and Packagist:
 
-1. ~~**GitHub** — rename `php-regex/regex-parser` to `php-regex/php-regex`~~ (done 2026-10-01)
-   (Settings → General → Repository name). Stars, issues and history follow;
-   GitHub redirects the old URL until a repository takes the old name back.
-2. **Packagist** — `yoeunes/regex-parser` must read
-   `https://github.com/php-regex/php-regex`. The URL cannot be edited on the
-   site for a popular package: write to contact@packagist.org from the account
-   that maintains it, and wait for their answer. Until then nothing breaks
-   (GitHub redirects the old URL), but `php-regex/regex-parser` must not be
-   created. `bin/split` refuses to push into a repository that serves the
-   monorepo. `bin/status` shows a ✓ once Packagist has switched.
-3. **GitHub** — create the 16 read-only repositories (13 done 2026-10-01; `regex-rector` and `regex-psalm`, added after, not created yet; `regex-parser` only once step 2 is done: `gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki`), empty (no README, no
-   license, no .gitignore), each with issues and pull requests pointing to
-   `php-regex/php-regex`:
-   `regex-parser`, `regex-explain`, `regex-optimizer`, `regex-generator`,
-   `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`,
-   `regex-toolkit`, `regex-cli`, `regex-language-server`, `regex-phpstan`,
-   `regex-psalm`, `regex-rector`, `regex-symfony`, `regex-laravel`.
+- The 16 read-only repositories exist (`regex-rector` and `regex-psalm` since
+  2026-10-07) and `.github/workflows/split.yml` pushes `2.x` to every one of
+  them; the 16 packages and `php-regex/php-regex` are on Packagist
+  (`regex-psalm` as a `psalm-plugin`, `regex-rector` as a
+  `rector-extension`).
+- `yoeunes/regex-parser` now reads `https://github.com/php-regex/php-regex`,
+  as `php-regex/php-regex` does, and `php-regex/regex-parser` holds `2.x`
+  only.
 
-   **`regex-rector` comes first, before its branch is merged into `2.x`**:
-   the repository `php-regex/regex-rector`, its access in the `SPLIT_TOKEN`
-   token (step 4) and its Packagist entry (step 6) must all exist when
-   `src/Rector` reaches `2.x`. From that merge on, `bin/split` lists
-   `src/Rector:regex-rector`, cannot read a repository that does not exist,
-   counts it as failed, and the split job fails on every push to `2.x` (the
-   other packages are still pushed).
+Left:
 
-   **`regex-psalm` likewise, before its branch is merged into `2.x`**: the
-   repository `php-regex/regex-psalm`, its access in the `SPLIT_TOKEN` token
-   (step 4) and its Packagist entry (step 6, type `psalm-plugin`) must all
-   exist when `src/Psalm` reaches `2.x`, for the same reason: from that merge
-   on, `bin/split` lists `src/Psalm:regex-psalm`.
-3b. **GitHub, `php-regex/regex-parser`, once Packagist has switched** — every
-   `composer.lock` of 1.x points at
-   `api.github.com/repos/php-regex/regex-parser/zipball/<commit>` (~13k
-   installs a month): the new repository must hold those commits, under refs
-   Composer does not read (a `1.x` branch or `v1.*` tags there would be
-   imported as `php-regex/regex-parser` 1.x). Checked on a scratch repository:
-   GitHub keeps such refs and serves the zipball of a commit only they reach.
-   ```bash
-   gh repo create php-regex/regex-parser --public --disable-issues --disable-wiki \
-     --homepage https://github.com/php-regex/php-regex \
-     --description "[READ-ONLY] The PCRE2 regex parser. Split of php-regex/php-regex."
-   git fetch origin 1.x
-   git push git@github.com:php-regex/regex-parser.git \
-     refs/remotes/origin/1.x:refs/archive/1.x \
-     b14ef028:refs/archive/2.x-before-split
-   ```
-   Then add `regex-parser` to the `SPLIT_TOKEN` token: the next push to `2.x`
-   splits it (`bin/split` no longer skips it once it is a repository of its
-   own).
-4. ~~**GitHub** — create a fine-grained token~~ (done 2026-10-01; add `regex-rector` and `regex-psalm` to it before their branches are merged, and `regex-parser` once that repository exists) with *Contents: read and write* on
-   those 16 repositories only, and store it as the secret `SPLIT_TOKEN` of
-   `php-regex/php-regex` (Settings → Secrets and variables → Actions).
-5. ~~**Split**~~ (enabled 2026-10-01: 13 repositories split by CI; `regex-parser` is skipped until it exists) — first run `bin/split --dry-run` locally to read the plan, then
-   set the repository variable `SPLIT_ENABLED` to `true` (same page, tab
-   *Variables*): `.github/workflows/split.yml` then splits on every push to
-   `2.x` and every `v2.*` tag. Push once (or run `bin/split` locally with
-   splitsh-lite installed) and check each repository received `2.x`.
-6. **Packagist** — submit the 16 packages (`php-regex/regex-*`), from their
-   repositories, and `php-regex/php-regex` from the monorepo if the whole
-   library should be installable in one package.
-7. **Packagist** — enable updates on push for each package: the GitHub
-   integration on the Packagist account, or a webhook per repository
-   (`https://packagist.org/api/github?username=...`).
-8. **Packagist, on the 2.0.0 release** — mark `yoeunes/regex-parser` as
-   abandoned in favour of `php-regex/regex-toolkit`.
-9. **README badges** — the Packagist and CI badge URLs change with the names
-   (done with the README rewrite).
+1. **`SPLIT_TOKEN`** — give the fine-grained token *Workflows: read and
+   write* as well as *Contents*: GitHub refuses a push that creates or
+   changes a file under `.github/workflows/` without it, and every split
+   package carries `close-pull-request.yml`. The first push of
+   `regex-rector` and `regex-psalm` failed for that reason and was made over
+   SSH; a change to that workflow file would fail every split the same way.
+2. **The `v2.0.0` tag** — `yoeunes/regex-parser` and `php-regex/php-regex`
+   read the same repository, so a `v2.0.0` tag on the monorepo becomes a
+   stable 2.0.0 of both, and a bare `composer require yoeunes/regex-parser`
+   would install 2.x. Mark `yoeunes/regex-parser` abandoned in favour of
+   `php-regex/regex-toolkit`, or point it at a repository holding 1.x only,
+   before the tag.
+3. **Packagist** — check that updates on push are on for every package (the
+   GitHub integration on the Packagist account, or a webhook per
+   repository): without them Packagist crawls a repository about once a
+   week.
 
 ## Before 2.0.0: known defects to fix
 
@@ -120,6 +77,64 @@ Sound in both cases, but verdicts the proof could give:
   `/^(?xx)(?:[a b]|\x20)*$/` (linear) both get a heuristic verdict. Reading
   `xx` as the automata solver does (a lone `x` clears it, a class drops its
   space and tab) would prove both.
+
+### Byte mode and the Unicode-normalization invariant
+
+Checked whether the library should model Unicode normalization (NFC vs NFD),
+the way a text component would (October 2026). It should not: PCRE2 never
+normalizes, and neither does the library — a pattern written in NFC never
+matches an NFD subject (`/é/u` against `"e\u{0301}"`, `/ui` included),
+`/^\p{L}+$/u` does not match a decomposed é (U+0301 is `\p{M}`), and
+`/ß/iu` does not match `"ss"` (simple folding only). That absence is the
+contract, and it must stay. What the check found instead is byte-versus-
+code-point confusions in byte mode (patterns without `/u`), each confirmed
+against the engine:
+
+- The optimizer rewrites `'/[\xE9\xEA]/'` into `'/[\x00]/'`: `mb_ord()`
+  returns `false` on a lone byte that is not valid UTF-8, the `false`
+  becomes the array key 0, and two distinct high bytes collide there
+  (`normalizeCharClassParts()`). The engine matches `\xE9` on the original
+  and not on the rewrite, which is returned as an improvement.
+- `'/[\x80-\xBF]/'` without `/u` hangs the optimizer: the range loop
+  increments the `false` of `mb_ord()` for ever.
+- `isSingleCharacter()` counts UTF-8 characters whatever the mode:
+  `/(?:é)*x/` without `/u` is rewritten `/\xC3\xA9*x/`, which repeats the
+  last byte only — `^(?:\xC3\xA9)*\xC3$` matches `"\xC3"` where
+  `^\xC3\xA9*\xC3$` does not. The fix is to count in the mode's coordinates
+  (bytes without `/u`), never to normalize.
+- Auto-possessivation compares the last byte of a literal with the first
+  byte of what follows: under `/u` a continuation byte never meets a lead
+  byte, so every multibyte boundary looks exclusive (`/é+é/u` would become
+  `/é++é/u`, which matches nothing). The shipped optimizer rejects the
+  rewrite through its equivalence check; the rewriter alone does not.
+- The ReDoS adjacency analysis uses the same byte test, without the
+  multibyte quarantine the nested-loop lint rules have: it is skipped
+  whenever the seam bytes differ, which under `/u` happens across every
+  multibyte character even when the code points on both sides coincide
+  (`(?:xé)+é+` has é on both sides of the seam). No false "safe" has been
+  reproduced yet; the gate itself is unsound under `/u`.
+- Without `/u`, the transpilers re-read bytes ≥ 0x80 as code points of the
+  target: JavaScript `/caf\xC3\xA9/` matches `"Ã©"` where PCRE matched the
+  two raw bytes, and the Python output can hold a lone invalid byte whose
+  source does not parse at all.
+- docs/TROUBLESHOOTING.md still advises rejecting any pattern that is not
+  valid UTF-8; byte mode has been accepted and tokenized byte by byte for a
+  while.
+
+The normalization-free contract itself is untested: no decomposed pattern
+anywhere in the suite, and the multibyte round-trip rows (`[«»“”]`,
+`[\¡\¿]`) have no canonical decomposition, so a `Normalizer::normalize()`
+slipped into any layer would stay green. Worth adding: a round-trip row for
+`"/e\u{0301}/u"`, an engine row (NFC pattern, NFD subject: no match, `/ui`
+included), and a solver row refusing `/é/u` ≡ `/e\u{301}/u`.
+
+Smaller, same family: `mb_strlen()` on a class atom without an explicit
+encoding (the range-start check); the compiled-size floor compares code
+points through mbstring's lowercase, which misses case pairs PCRE2 folds
+(Greek `[ςσ]` is not seen as one); mbstring's full mappings (`ß` → `SS`,
+`İ` → two code points) only ever feed boolean checks, but its tables can
+drift from PCRE2's, and the `/i`-useless rule has no locale guard where a
+host `setlocale()` can rebuild PCRE's case tables.
 
 ### Other findings
 
@@ -313,19 +328,45 @@ defect fixes redefined the same contract, the lint baseline keeps the
 versioned format and its matching, written with snake_case keys, and every
 lint JSON key is snake_case.
 
-### Before pushing `2.x`
+The follow-ups are merged too: the search cost's two false positives
+(aa8747f6 to 52574b23) and the SonarPHP parity rules, with
+`regex.replacement.undefinedGroup` and the Symfony route requirement fix.
 
-- Create the GitHub repositories `php-regex/regex-rector` and
-  `php-regex/regex-psalm`, give `SPLIT_TOKEN` access to both, and add both
-  packages on Packagist: `bin/split` lists them, so every split fails until
-  they exist.
-- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) was
-  already above its 5.0 ms p99 limit before the merge (5.25 ms measured);
-  the search cost adds about 0.15 ms. Raise the limit or speed up the
-  per-attempt proof.
+### The maintainer's calls
+
+- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) is above
+  its 5.0 ms p99 limit: 5.25 ms before the search cost, about 5.5 ms with it.
+  Raise the limit or speed up the per-attempt proof.
+- The SonarPHP parity rules add about 37 % to the lint of the corpus fixture
+  (1.15 s to 1.6 s for 1,645 patterns, Xdebug off): many patterns ask the
+  automata one to three questions. A rule asks at most eight per pattern, a
+  cap the corpus never reaches. Keep it, or make the automata rules opt-in.
+- `tests/Support/LinearTimeAssertions.php` was loosened for shared runners
+  (budget 4 s, ratio 3.5, a ratio read only when both readings are above
+  0.05 s, best of 4): a quadratic regression whose small reading stays under
+  0.05 s is caught by the 4 s budget only. Keep the strict values locally and
+  the loose ones in CI (an environment variable), or lengthen the inputs.
 
 ### Smaller findings, each confirmed against the engine
 
+- The Symfony route requirement normalizer is also used for the firewall and
+  `access_control` patterns, with the same missing flags as below.
+- The parser accepts `\x` with no hex digit (`/(?:\x){41}/`, `/[\x]{2}/`),
+  which PCRE2 10.49 refuses ("digits missing after \x"); check what the
+  validator says for a 10.49 target.
+- The lint rules read characters with PCRE's C tables: after
+  `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `/a\B\xE9/` matches `"a\xE9"`,
+  and `regex.lint.anchor.impossible.boundary` calls it impossible.
+- `regex.lint.anchor.alternationPrecedence` keeps an emptied group in its tip
+  (`/(?:(?:^))a|b/` gives `^(?:(?:(?:))a|b)`, which `group.empty` reports
+  next), and stays silent on `(*SKIP:n)` with no `(*MARK:n)`, which the
+  engine ignores.
+- `regex.lint.quantifier.possessiveImpossible` inside a negative lookahead
+  says "the pattern can never match through here" (`/(?!a*+a)b/` matches
+  `b`): the lookahead body is dead, not the pattern.
+- `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
+- The automata solver refuses the `r` modifier ("Unsupported regex flags for
+  automata: r") but reads `(?r:...)`; the lint rules spell it inline.
 - The Symfony route requirement normalizer anchors and groups a requirement
   as the route compiler does, but leaves out the flags it compiles with:
   `sD`, plus `u` under the `utf8` option, after a leading `/`. A second
