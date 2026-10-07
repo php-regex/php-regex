@@ -74,6 +74,7 @@ parameters:
             - regexp.pattern
           paths:
             - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
+            - tests/Unit/Automata/DfaCacheKeyVersionTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
             - tests/Unit/Internal/InlineFlagsTest.php

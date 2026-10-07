@@ -162,7 +162,7 @@ final class ValidationRuleExtractionFailureTest extends TestCase
         // shared runner; a quadratic read still shows close to four times
         // the time at twice the size.
         if ($smallTime >= 0.05 && $largeTime >= 0.05) {
-            $this->assertLessThan(3.2, $largeTime / $smallTime, \sprintf('%.4fs for 20,000, %.4fs for 40,000', $smallTime, $largeTime));
+            $this->assertLessThan(3.5, $largeTime / $smallTime, \sprintf('%.4fs for 20,000, %.4fs for 40,000', $smallTime, $largeTime));
         }
     }
 

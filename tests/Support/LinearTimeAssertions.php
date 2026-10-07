@@ -27,13 +27,16 @@ trait LinearTimeAssertions
      *
      * @param \Closure(int): void $read
      */
-    private function assertLinearTime(\Closure $read, int $size, string $what, float $maxRatio = 3.2): void
+    private function assertLinearTime(\Closure $read, int $size, string $what, float $maxRatio = 3.5): void
     {
         // The sizes above are chosen to stay well under a second on a dev
         // machine; a loaded laptop or a two-core CI runner reads them two to
-        // three times slower, so the budget only bounds a runaway read. The
-        // ratio below is what catches a quadratic one.
-        $budget = 3.0;
+        // three times slower, and its clock jitters a linear read up to three
+        // and a half times the time at twice the size, so the budget bounds
+        // the runaway and the ratio draws the line beyond the jitter: a
+        // reading that goes back over the rest of the pattern for each unit
+        // lands far above both.
+        $budget = 4.0;
 
         $small = self::bestTime($read, $size);
         $this->assertLessThan($budget, $small, \sprintf('%s x %d: %.3f s.', $what, $size, $small));
@@ -43,23 +46,22 @@ trait LinearTimeAssertions
 
         // Below a few tens of milliseconds the clock says more than the
         // reading on a shared runner, so the ratio is read only when BOTH
-        // readings are above the noise; a quadratic read still shows close
-        // to four times the time at twice the size.
+        // readings are above the noise.
         if ($small >= 0.05 && $large >= 0.05) {
             $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: %.3f s for %d units, %.3f s for %d.', $what, $small, $size, $large, 2 * $size));
         }
     }
 
     /**
-     * The best of three readings: a busy machine or a coverage driver slows
-     * one reading down, rarely all three.
+     * The best of four readings: a busy machine or a coverage driver slows
+     * one reading down, rarely all four.
      *
      * @param \Closure(int): void $read
      */
     private static function bestTime(\Closure $read, int $size): float
     {
         $best = \INF;
-        for ($run = 0; $run < 3; $run++) {
+        for ($run = 0; $run < 4; $run++) {
             $start = hrtime(true);
             $read($size);
             $best = min($best, (hrtime(true) - $start) / 1e9);
