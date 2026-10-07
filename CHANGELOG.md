@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The "Invalid backreference syntax" message quotes the reference as written: for `\g{٣a}` it quoted `\k{٣a}`.
 - A `(` right after a called name, `/(?&a(?:z)/`, is refused past it as PCRE2 refuses it, a group name or number expected, where the library reported an unclosed call one byte early.
 - A braced name after `\k` skips the spaces around it as PCRE2 does before it reports what is missing: `/\k{a b}/` and `/\k{ a/` are refused at 5, where the library stopped one byte early or on the space.
 - `regex.lint.anchor.impossible.end` no longer reports a `$` before the newline of a convention other than LF, `/(*CR)a$\r/` or `/(*CRLF)a$\r\n/`, which match: it says nothing under such a convention.

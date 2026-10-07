@@ -1122,8 +1122,11 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
+        // "\g{name}" is kept as "\k{name}": the message quotes the source.
+        $written = null === $this->source ? $ref : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+
         $this->raiseSemanticError(
-            \sprintf('Invalid backreference syntax: "%s".', $ref),
+            \sprintf('Invalid backreference syntax: "%s".', '' === $written ? $ref : $written),
             $this->missingReferenceOffset($node),
             ErrorCode::BackrefInvalidSyntax,
         );

@@ -181,6 +181,15 @@ final class RelativeConditionReferenceTest extends TestCase
     }
 
     #[Test]
+    public function test_the_message_quotes_the_reference_as_written(): void
+    {
+        $result = Regex::create(['cache' => null])->validate("/\\g{\u{663}a}/u");
+
+        $this->assertFalse($result->isValid);
+        $this->assertStringContainsString("\\g{\u{663}a}", (string) $result->error);
+    }
+
+    #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {
         foreach (['/(a)(?(-1)a|b)/', '/((?(-1)a)b)/'] as $pattern) {
