@@ -275,7 +275,9 @@ final class MermaidRenderer extends AbstractNodeVisitor
     public function visitComment(CommentNode $node): string
     {
         $nodeId = $this->nextNodeId();
-        $comment = substr($node->comment, 0, 20);
+        // Cut at 20 bytes on a character boundary: a lone lead byte would
+        // leave the label invalid UTF-8, which the escape gives back empty.
+        $comment = mb_strcut($node->comment, 0, 20, 'UTF-8');
         $this->lines[] = \sprintf('    %s["Comment: %s"]', $nodeId, $this->escape($comment));
 
         return $nodeId;

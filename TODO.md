@@ -155,7 +155,7 @@ host `setlocale()` can rebuild PCRE's case tables.
   (`/a(?#\xE1)b/`, or `"/(*ANY)a#\u{5140}b/x"`, whose comment ends at the
   0x85 byte inside the character) gives an explanation `json_encode()`
   refuses, and the language server then drops its hover reply without a
-  word. The Mermaid output also cuts a comment at 20 bytes, mid-character.
+  word.
 - Printer round trips that change the meaning:
   - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
     `x`, so the NEL becomes whitespace;
