@@ -602,6 +602,12 @@ final class TokenParser
             // after it finds.
             $modified = $this->modifyRepeatedQuantifier($last, $token);
             $nodes[] = new SequenceNode([...\array_slice($target->children, 0, -1), $modified], $target->getStartPosition(), $modified->getEndPosition());
+        } elseif ($target instanceof SequenceNode && null !== $last) {
+            // "\1000(?#c)+": the octal "\100" then "0", and only the "0"
+            // repeats, as it does written right after it.
+            $this->assertQuantifierCanApply($last, $token);
+            $quantified = $this->quantify($last, $token);
+            $nodes[] = new SequenceNode([...\array_slice($target->children, 0, -1), $quantified], $target->getStartPosition(), $quantified->getEndPosition());
         } else {
             // "\Qab\E*" is "ab*": only the last quoted character repeats.
             [$prefix, $target] = $this->splitRepeatedCharacter($target);

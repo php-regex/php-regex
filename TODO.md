@@ -234,10 +234,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   or name"); the message for `\g{٣a}` quotes `\k{٣a}`.
 - `/[z-abcd/` is the unclosed class at 7; PCRE reports the reversed range
   at 4.
-- `\1000` (octal `\100` then `0`) followed by a comment, `\E` or an `x`
-  blank and a quantifier repeats both characters, where PCRE repeats the
-  `0` only: `/^\1000(?#c)+$/` matches `"@0@0"` once printed, and PCRE does
-  not.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
