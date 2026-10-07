@@ -123,10 +123,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 
 ### Other findings
 
-- With `possessive` on, the optimizer suggests `.*+` under `/x` where an
-  inline or start-of-pattern option makes the rewrite change the matches
-  (`/(*CR)[0-9][0-9]a.*\n/x`): the `/x` path skips the atomicity check, and
-  the rewriter ignores the newline convention.
 - `regex.lint.anchor.impossible.end` says nothing under a newline convention
   other than LF, where it gave false warnings: `/(*CR)a$\n/`, which never
   matches, is still missed. Reading `\r` and `\r\n` as the newline there
