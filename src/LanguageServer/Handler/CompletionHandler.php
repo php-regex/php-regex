@@ -209,7 +209,8 @@ final readonly class CompletionHandler
     private function getCompletionContext(RegexOccurrence $occurrence, int $character): array
     {
         // Get text from pattern start to cursor
-        $patternStart = $occurrence->start['character'];
+        // The occurrence starts at the opening quote, one before the pattern.
+        $patternStart = $occurrence->start['character'] + 1;
         $cursorInPattern = $character - $patternStart;
 
         if ($cursorInPattern < 0 || $cursorInPattern > \strlen($occurrence->pattern)) {

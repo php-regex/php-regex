@@ -84,6 +84,10 @@ final class CompletionHandlerTest extends TestCase
         yield 'inside a unicode property' => ['pattern' => '/\\p{Gr/', 'typed' => 5, 'offered' => ['\\p{L}', '\\p{Script=Greek}'], 'notOffered' => ['\\d', '[:alpha:]'], 'labelShape' => '/^\\\\[pP]\\{[^}]++\\}$/'];
         yield 'inside a POSIX class' => ['pattern' => '/[[:al]]/', 'typed' => 4, 'offered' => ['[:alnum:]', '[:alpha:]'], 'notOffered' => ['\\d', '\\p{L}'], 'labelShape' => '/^\\[:[a-z]++:\\]$/'];
         yield 'among the flags' => ['pattern' => '/abc/ix', 'typed' => 6, 'offered' => ['m', 's'], 'notOffered' => ['i', '\\d'], 'labelShape' => '/^[a-zA-Z]$/'];
+        // The cursor right at the end of what is typed: the occurrence
+        // starts at the opening quote, one character before the pattern.
+        yield 'right after the closing delimiter' => ['pattern' => '/abc/', 'typed' => 5, 'offered' => ['i', 'm'], 'notOffered' => ['\\d'], 'labelShape' => '/^[a-zA-Z]$/'];
+        yield 'right after a property name begins' => ['pattern' => '/\\p{Gr/', 'typed' => 6, 'offered' => ['\\p{Script=Greek}'], 'notOffered' => ['\\d'], 'labelShape' => '/^\\\\[pP]\\{[^}]++\\}$/'];
     }
 
     /**

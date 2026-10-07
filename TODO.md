@@ -258,9 +258,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   on the lines under `roles:`, `methods:` or `ips:`): the dash lines are taken
   before the list is looked at, so they produce bogus rules, and the parent
   rule loses its roles, methods and addresses.
-- The language server's flag completion is off by one (the occurrence starts
-  at the opening quote): with the cursor right after `/abc/`, no flag is
-  offered.
 
 ## Report the PCRE2 JIT crash upstream
 
