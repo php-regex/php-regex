@@ -132,7 +132,9 @@ $shape->groups[2]->digitsOnly;  // true
 in PHPStan's syntax: array shapes, constant strings, `int<a, b>`, `non-empty-string`,
 `non-falsy-string`, `numeric-string`, and a union of shapes when the pattern has
 [cases](#cases). The records it is written from, above, are engine-neutral: any other
-type system can be fed from them.
+type system can be fed from them. The [Psalm plugin](../guides/psalm.md) builds its
+types from them, key for key the same facts, but `numeric-string`: Psalm gets none,
+because Psalm 6.19's type combiner collapses `numeric-string|'a'` to `numeric-string`.
 
 It takes the flags `preg_match()` takes, `PREG_OFFSET_CAPTURE` and
 `PREG_UNMATCHED_AS_NULL`, and checks the rest as `preg_match()` does. A bit of the low
@@ -304,11 +306,21 @@ fills, in the same syntax. It takes the order, `PREG_PATTERN_ORDER` or `PREG_SET
 with `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`. `0` is read as
 `PREG_PATTERN_ORDER`, as PHP reads it.
 
-The shape holds for every result, a call that finds no match included: then
-`preg_match_all('/(a)(b)?(c)?/', 'x', $m)` writes `[[], [], [], []]`, and under
-`PREG_SET_ORDER` it writes `[]`. A list in the shape may therefore be empty. An adapter
-that knows the count is positive, after `preg_match_all(...) > 0`, narrows each list to
-`non-empty-list` itself.
+The shape holds where `preg_match_all()` returns an int, a call that finds no match
+included: then `preg_match_all('/(a)(b)?(c)?/', 'x', $m)` writes `[[], [], [], []]`, and
+under `PREG_SET_ORDER` it writes `[]`. A list in the shape may therefore be empty. An
+adapter that knows the count is positive, after `preg_match_all(...) > 0`, narrows each
+list to `non-empty-list` itself.
+
+Where it returns `false`, two cases leave `[]`, outside the shape: an offset past the
+subject (`preg_match_all('/(a)/', 'abc', $m, 0, 10)`), and a match that ends before it
+starts, `\K` in a lookahead (`preg_match_all('/a(?=b\K)/', 'xab', $m)`, with the warning
+"Get subpatterns list failed"). A match error, a subject that is not UTF-8 under `/u` or
+an exhausted backtrack limit, returns `false` too but stays within the shape: every key
+is written, its list holding the matches found before the error, none for
+`preg_match_all('/(a)/u', "\xff", $m)` (`[[], []]`). An adapter types the call only where
+neither case can happen: a pattern without `\K` and an offset absent or a constant ≤ 0
+(PHP reads a negative offset as 0).
 
 ### Pattern order
 
@@ -448,8 +460,8 @@ changes an answer, a fact or either string, the one `matchShape()` writes or the
   union order or another cap on the values it lists.
 - A patch release may widen an answer to make it sound again.
 
-Either way, a PHPStan baseline that prints the type may need regenerating. The CHANGELOG
-says when.
+Either way, a PHPStan or Psalm baseline that prints the type may need regenerating. The
+CHANGELOG says when.
 
 ## Group numbers
 

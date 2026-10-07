@@ -20,6 +20,7 @@ Start here:
 - [CLI Guide](guides/cli.md) - Command reference.
 - [LSP Integration](guides/lsp.md) - IDE integration via Language Server Protocol.
 - [PHPStan Guide](guides/phpstan.md) - Regex checks in static analysis.
+- [Psalm Guide](guides/psalm.md) - `$matches` typed from the pattern, invalid patterns reported.
 - [Rector Guide](guides/rector.md) - `preg_*` calls rewritten into the string functions they prove equal to.
 - [Laravel Guide](guides/laravel.md) - Service, facade, and artisan commands.
 - [Symfony Guide](guides/symfony.md) - Bundle, service, and console commands.

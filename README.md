@@ -68,6 +68,7 @@ with one version number. Install the one you need:
 | [`php-regex/regex-cli`](src/Cli) | the `regex` command |
 | [`php-regex/regex-language-server`](src/LanguageServer) | diagnostics in any LSP editor |
 | [`php-regex/regex-phpstan`](src/PHPStan) | the PHPStan extension |
+| [`php-regex/regex-psalm`](src/Psalm) | the Psalm plugin: `$matches` typed from the pattern, invalid patterns reported |
 | [`php-regex/regex-rector`](src/Rector) | Rector rules: `preg_*` calls to the string functions they prove equal to |
 | [`php-regex/regex-symfony`](src/Symfony) | the Symfony bundle |
 | [`php-regex/regex-laravel`](src/Laravel) | the Laravel integration |
@@ -256,6 +257,10 @@ PHPRegex integrates with common PHP tooling:
   `vendor/php-regex/regex-phpstan/extension.neon`. It reports a pattern your
   target PHP refuses while the PHP running PHPStan compiles it; lint rules and
   ReDoS analysis come with `rules.neon`. See [the PHPStan guide](docs/guides/phpstan.md)
+- **Psalm**: `vendor/bin/psalm-plugin enable php-regex/regex-psalm` types
+  `$matches` from the pattern where `preg_match()` returned 1 and after
+  `preg_match_all()`, and reports the patterns your target PHP refuses as
+  `InvalidRegexPattern`. See [the Psalm guide](docs/guides/psalm.md)
 - **Rector**: `RegexSetList::STRING_FUNCTIONS` rewrites `preg_match('/^https:/', $url)`
   into `\str_starts_with($url, 'https:')`, `preg_replace()` into `str_replace()` and
   `preg_split()` into `explode()`, only where the automata prove them equal.

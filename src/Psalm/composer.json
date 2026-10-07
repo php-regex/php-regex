@@ -1,0 +1,38 @@
+{
+    "name": "php-regex/regex-psalm",
+    "type": "psalm-plugin",
+    "description": "Psalm plugin that types $matches from the pattern of preg_match() and preg_match_all(), and reports the patterns your target PHP refuses.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "psalm",
+        "psalm-plugin",
+        "static-analysis"
+    ],
+    "homepage": "https://github.com/php-regex/php-regex",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "vimeo/psalm": "^6.19",
+        "php-regex/regex-parser": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Psalm\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        },
+        "psalm": {
+            "pluginClass": "PHPRegex\\Psalm\\Plugin"
+        }
+    }
+}

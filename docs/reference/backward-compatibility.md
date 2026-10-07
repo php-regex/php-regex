@@ -64,6 +64,7 @@ In short, the public surface is:
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule` |
+| `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
@@ -92,6 +93,11 @@ In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 The bridges and tools carry more than their classes:
 
 - `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
+- `regex-psalm`: the `InvalidRegexPattern` issue name and the plugin's
+  `<phpVersion>` and `<pcreVersion>` options stay for all of 2.x. The
+  `$matches` types follow the capture shape: a minor release may type a
+  pattern more narrowly than the one before, which may require regenerating
+  a Psalm baseline; its CHANGELOG says so.
 - `regex-rector`: the three rules keep their names for all of 2.x and take no
   configuration, and `RegexSetList::STRING_FUNCTIONS` names the set that
   registers them. Each rewrites only what the automata prove; a minor release

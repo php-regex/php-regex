@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\CaptureKey;
+use PHPRegex\Parser\Internal\CaptureLayout;
 
 /**
  * What a successful preg_match() writes into $matches, read from the pattern
@@ -26,14 +28,10 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
  */
 final readonly class CaptureShape
 {
-    private const MAX_RENDERED_VALUES = 16;
-
     /**
      * Mirrors PHPStan's ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT: past this many value types, nested arrays included, PHPStan generalises a union of array shapes.
      */
     private const PHPSTAN_ARRAY_COUNT_LIMIT = 256;
-
-    private const CONTROL_CHARACTERS = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F";
 
     /**
      * @internal built by CaptureShapeAnalyzer::analyze()
@@ -90,10 +88,18 @@ final readonly class CaptureShape
 
     /**
      * The array shape of $matches after preg_match_all(), written as a PHPStan
-     * type. It holds for every call, one that finds no match included, so a
-     * list it writes may be empty; a caller that knows the count is positive
-     * narrows it to non-empty-list. Like preg_match_all(), it ignores a bit
-     * above the low byte, under either order.
+     * type. It holds for every call that returns an int, one that finds no
+     * match included, so a list it writes may be empty; a caller that knows
+     * the count is positive narrows it to non-empty-list. Like
+     * preg_match_all(), it ignores a bit above the low byte, under either
+     * order.
+     *
+     * preg_match_all() returns false and leaves [] for an offset past the
+     * subject, and for a match that ends before it starts (\K in a
+     * lookahead): a caller types such a call only for a pattern without \K
+     * and an offset absent or <= 0. A match error (a subject that is not
+     * UTF-8 under /u, an exhausted backtrack limit) returns false but stays
+     * within the shape: every key, with the matches found before it.
      *
      * Under PREG_PATTERN_ORDER, the default, also read from 0: one array
      * shape, "array{0: list<'a'|'ab'>, 1: list<'a'>, 2: list<''|'b'>}" for
@@ -133,46 +139,19 @@ final readonly class CaptureShape
      */
     private function renderPatternOrder(int $flags): string
     {
-        $asNull = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL);
+        $unset = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL) ? 'null' : "''";
         $offsets = 0 !== ($flags & \PREG_OFFSET_CAPTURE);
 
-        // PHP writes a name at the place of its first group, with the list of its last one.
-        $lastByName = [];
-        foreach ($this->groups as $group) {
-            if (null !== $group->name) {
-                $lastByName[$group->name] = $group;
-            }
-        }
-
         $marks = 'array<int, '.implode('|', $this->markTypes()).'>';
-        $items = ['0: list<'.self::entry([self::valueType($this->whole)], true, $offsets).'>'];
-        foreach ($this->keys(static fn (): string => '') as [$key, $group, $name]) {
-            $items[] = $key.': '.match (true) {
-                null === $group => $marks,
-                null === $name => self::patternOrderList($group, $asNull, $offsets),
+        $items = [];
+        foreach (CaptureLayout::ofMatchAll($this)->keys as $key) {
+            $items[] = self::keyName($key).': '.($key->holdsMarksOnly()
+                ? $marks
                 // Once a match sets a mark, PHP writes the marks over the list of a group named MARK.
-                default => self::patternOrderList($lastByName[$name], $asNull, $offsets).('MARK' === $name && [] !== $this->marks ? '|'.$marks : ''),
-            };
+                : 'list<'.self::entry(self::groupTypes($key, $unset), $key->alwaysSet, $offsets).'>'.($key->marks ? '|'.$marks : ''));
         }
 
         return 'array{'.implode(', ', $items).'}';
-    }
-
-    /**
-     * What a group's key holds under PREG_PATTERN_ORDER: one value per match,
-     * the unset value included whenever some match may leave the group unset,
-     * since no key is trimmed.
-     */
-    private static function patternOrderList(CaptureGroupShape $group, bool $asNull, bool $offsets): string
-    {
-        $unset = $asNull ? 'null' : "''";
-        $types = match ($group->participation) {
-            Participation::Always => [self::valueType($group)],
-            Participation::Never => [$unset],
-            Participation::MayBeUnset => [self::valueType($group), $unset],
-        };
-
-        return 'list<'.self::entry($types, Participation::Always === $group->participation, $offsets).'>';
     }
 
     /**
@@ -185,143 +164,52 @@ final readonly class CaptureShape
     {
         $asNull = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL);
         $offsets = 0 !== ($flags & \PREG_OFFSET_CAPTURE);
-
-        // Read once, so each key below costs no scan of the other groups.
-        $lastAlways = 0;
-        $lastMaySet = 0;
-        $byName = [];
-        foreach ($this->groups as $group) {
-            if (Participation::Always === $group->participation) {
-                $lastAlways = $group->number;
-            }
-
-            if (Participation::Never !== $group->participation) {
-                $lastMaySet = $group->number;
-            }
-
-            if (null !== $group->name) {
-                $byName[$group->name][] = $group;
-            }
-        }
+        $unset = $asNull ? 'null' : "''";
 
         // Under PREG_OFFSET_CAPTURE every key holds a pair, but a mark verb's own key.
         $pair = $offsets ? 3 : 1;
-        $items = ['0: '.self::entry([self::valueType($this->whole)], true, $offsets)];
-        $values = $pair;
-        $presence = static fn (CaptureGroupShape $group): ?string => self::presence($group, $lastAlways, $lastMaySet, $asNull);
-        foreach ($this->keys($presence) as [$key, $group, $name]) {
-            if (null === $group) {
-                $items[] = $key.': '.implode('|', $this->markTypes());
+        $items = [];
+        $values = 0;
+        foreach (CaptureLayout::ofMatch($this, $asNull)->keys as $key) {
+            if ($key->holdsMarksOnly()) {
+                $items[] = self::keyName($key).': '.implode('|', $this->markTypes());
                 $values++;
 
                 continue;
             }
 
-            $always = Participation::Always === $group->participation;
-            $items[] = $key.': '.(null === $name
-                ? self::entry(self::types($group, $lastAlways, $lastMaySet, $asNull), $always, $offsets)
-                : $this->nameEntry($name, $byName[$name], $always, $offsets, $lastAlways, $lastMaySet, $asNull));
+            $types = self::groupTypes($key, $unset);
+            $items[] = self::keyName($key).': '.match (true) {
+                !$key->marks => self::entry($types, $key->alwaysSet, $offsets),
+                // A group named MARK shares its key with the mark verbs, whose names PHP writes as plain strings over it.
+                $offsets => self::entry($types, $key->alwaysSet, true).'|'.implode('|', $this->markTypes()),
+                default => self::entry([...$types, ...$this->markTypes()], $key->alwaysSet, false),
+            };
             $values += $pair;
         }
 
         return ['array{'.implode(', ', $items).'}', $values];
     }
 
-    /**
-     * The keys preg_match() writes past 0, in the order it writes them, shared
-     * by both renderings so the order is decided once: for each group its
-     * name, at the first group bearing it, before its number; then "MARK?"
-     * for the marks a verb leaves, unless a group named MARK already holds
-     * that key, which the marks then share.
-     *
-     * Each key comes with its group, null for the marks, and the group's name
-     * when the key is that name, null when it is the group's number.
-     *
-     * @param \Closure(CaptureGroupShape): ?string $presence the suffix of the group's keys, '' or '?', or null for a group whose keys are not written
-     *
-     * @return list<array{0: string, 1: CaptureGroupShape|null, 2: string|null}>
-     */
-    private function keys(\Closure $presence): array
+    private static function keyName(CaptureKey $key): string
     {
-        $keys = [];
-        $marked = false;
-        $named = [];
-        foreach ($this->groups as $group) {
-            $suffix = $presence($group);
-            if (null === $suffix) {
-                continue;
-            }
-
-            if (null !== $group->name && !isset($named[$group->name])) {
-                $named[$group->name] = true;
-                $keys[] = [$group->name.$suffix, $group, $group->name];
-                $marked = $marked || 'MARK' === $group->name;
-            }
-
-            $keys[] = [$group->number.$suffix, $group, null];
-        }
-
-        if ([] !== $this->marks && !$marked) {
-            $keys[] = ['MARK?', null, null];
-        }
-
-        return $keys;
+        return $key->key.($key->optional ? '?' : '');
     }
 
     /**
-     * ': ' for a key every match writes, '?: ' for one some matches write,
-     * null for one no match writes. $lastAlways is the highest group number
-     * every match sets, $lastMaySet the highest some match may set, 0 for none.
-     */
-    private static function presence(CaptureGroupShape $group, int $lastAlways, int $lastMaySet, bool $asNull): ?string
-    {
-        if ($asNull || $group->number <= $lastAlways) {
-            return '';
-        }
-
-        // Without the flag, PHP leaves out the groups past the last one set.
-        if (Participation::Never === $group->participation && $group->number >= $lastMaySet) {
-            return null;
-        }
-
-        return '?';
-    }
-
-    /**
+     * What the key holds from its groups: the value of each, and what an
+     * unset group reads when the key may hold it.
+     *
      * @return list<string>
      */
-    private static function types(CaptureGroupShape $group, int $lastAlways, int $lastMaySet, bool $asNull): array
+    private static function groupTypes(CaptureKey $key, string $unset): array
     {
-        $unset = $asNull ? 'null' : "''";
-
-        return match ($group->participation) {
-            Participation::Always => [self::valueType($group)],
-            Participation::Never => [$unset],
-            // Unset, the group reads '' only when a later group is set, or null.
-            Participation::MayBeUnset => $asNull || $group->number <= $lastAlways || $group->number < $lastMaySet
-                ? [self::valueType($group), $unset]
-                : [self::valueType($group)],
-        };
-    }
-
-    /**
-     * What the key of a name holds. A group named MARK shares that key with
-     * the mark verbs, whose names PHP writes as plain strings over it.
-     *
-     * @param non-empty-list<CaptureGroupShape> $sharing the groups that bear the name
-     */
-    private function nameEntry(string $name, array $sharing, bool $always, bool $offsets, int $lastAlways, int $lastMaySet, bool $asNull): string
-    {
-        $types = self::nameTypes($sharing, $lastAlways, $lastMaySet, $asNull);
-        if ('MARK' !== $name || [] === $this->marks) {
-            return self::entry($types, $always, $offsets);
+        $types = array_map(self::valueType(...), $key->groups);
+        if ($key->unset) {
+            $types[] = $unset;
         }
 
-        if ($offsets) {
-            return self::entry($types, $always, true).'|'.implode('|', $this->markTypes());
-        }
-
-        return self::entry([...$types, ...$this->markTypes()], $always, false);
+        return $types;
     }
 
     /**
@@ -329,39 +217,11 @@ final readonly class CaptureShape
      */
     private function markTypes(): array
     {
-        if (null === self::literals($this->marks)) {
+        if (!CaptureLayout::readsAsLiterals($this->marks)) {
             return ['non-empty-string'];
         }
 
         return array_map(self::literal(...), $this->marks);
-    }
-
-    /**
-     * A name holds the value of its group. A name several groups share (/J)
-     * holds the value of the highest-numbered of them that is set, or, when
-     * none is set, what an unset one reads: the union of what each holds
-     * covers both. When one of them is set by every match, the name always
-     * holds the value of a group that is set.
-     *
-     * @param non-empty-list<CaptureGroupShape> $sharing
-     *
-     * @return list<string>
-     */
-    private static function nameTypes(array $sharing, int $lastAlways, int $lastMaySet, bool $asNull): array
-    {
-        $set = array_filter($sharing, static fn (CaptureGroupShape $group): bool => Participation::Never !== $group->participation);
-        foreach ($set as $group) {
-            if (Participation::Always === $group->participation) {
-                return array_values(array_map(self::valueType(...), $set));
-            }
-        }
-
-        $types = [];
-        foreach ($sharing as $group) {
-            $types = [...$types, ...self::types($group, $lastAlways, $lastMaySet, $asNull)];
-        }
-
-        return $types;
     }
 
     /**
@@ -414,20 +274,7 @@ final readonly class CaptureShape
      */
     private static function literals(array $values): ?string
     {
-        if ([] === $values || \count($values) > self::MAX_RENDERED_VALUES) {
-            return null;
-        }
-
-        $literals = [];
-        foreach ($values as $value) {
-            if (!mb_check_encoding($value, 'UTF-8') || false !== strpbrk($value, self::CONTROL_CHARACTERS)) {
-                return null;
-            }
-
-            $literals[] = self::literal($value);
-        }
-
-        return implode('|', $literals);
+        return CaptureLayout::readsAsLiterals($values) ? implode('|', array_map(self::literal(...), $values)) : null;
     }
 
     private static function literal(string $value): string

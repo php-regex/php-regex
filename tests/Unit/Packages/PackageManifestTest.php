@@ -35,6 +35,7 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => 'regex-optimizer',
         'Parser' => 'regex-parser',
         'PHPStan' => 'regex-phpstan',
+        'Psalm' => 'regex-psalm',
         'Rector' => 'regex-rector',
         'Redos' => 'regex-redos',
         'Symfony' => 'regex-symfony',
@@ -100,9 +101,9 @@ final class PackageManifestTest extends TestCase
     {
         $manifest = self::manifest($directory);
         $declared = array_keys(self::strings(self::dig($manifest, 'require')) + self::strings(self::dig($manifest, 'suggest')));
-        // PHPStan ships nikic/php-parser inside its phar, and Rector ships
-        // the same parser with it.
-        if (\in_array('phpstan/phpstan', $declared, true) || \in_array('rector/rector', $declared, true)) {
+        // PHPStan ships nikic/php-parser inside its phar, Rector ships the
+        // same parser with it, and Psalm requires the parser it runs on.
+        if (\in_array('phpstan/phpstan', $declared, true) || \in_array('rector/rector', $declared, true) || \in_array('vimeo/psalm', $declared, true)) {
             $declared[] = 'nikic/php-parser';
         }
 
@@ -159,6 +160,20 @@ final class PackageManifestTest extends TestCase
     }
 
     #[Test]
+    public function test_psalm_package_is_a_psalm_plugin_on_psalm_6(): void
+    {
+        $manifest = self::manifest('Psalm');
+
+        $this->assertSame('psalm-plugin', self::dig($manifest, 'type'));
+        $this->assertSame('^6.19', self::dig($manifest, 'require', 'vimeo/psalm'));
+        $this->assertSame('PHPRegex\\Psalm\\Plugin', self::dig($manifest, 'extra', 'psalm', 'pluginClass'));
+        $this->assertFileExists(self::root().'/src/Psalm/Plugin.php');
+        // Psalm requires the parser it runs on: requiring another copy could
+        // only conflict with it.
+        $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));
+    }
+
+    #[Test]
     public function test_deptrac_has_a_layer_and_a_ruleset_per_package(): void
     {
         $config = (string) file_get_contents(self::root().'/deptrac.yaml');
@@ -210,6 +225,9 @@ final class PackageManifestTest extends TestCase
             'Linter' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions'],
             'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
             'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+            // The plugin reads the key layout CaptureShape renders for
+            // PHPStan, so both type systems say the same keys.
+            'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout'],
             'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
             'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
@@ -409,6 +427,7 @@ final class PackageManifestTest extends TestCase
             'PhpParser' => 'nikic/php-parser',
             'PHPStan' => 'phpstan/phpstan',
             'Rector' => 'rector/rector',
+            'Psalm' => 'vimeo/psalm',
             'Symfony' => 'Component' === $second && isset($segments[2]) ? 'symfony/'.$kebab($segments[2]) : null,
             'Illuminate' => 'illuminate/'.strtolower($second),
             default => null,

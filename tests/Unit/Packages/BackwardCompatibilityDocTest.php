@@ -92,6 +92,19 @@ final class BackwardCompatibilityDocTest extends TestCase
     }
 
     #[Test]
+    public function test_bc_doc_names_the_psalm_issue_and_options(): void
+    {
+        $doc = (string) file_get_contents(self::root().'/'.self::DOC);
+
+        // An issue name and XML options are no class: Psalm configurations,
+        // suppressions and baselines name them, so the text freezes them.
+        $this->assertStringContainsString('`InvalidRegexPattern`', $doc);
+        $this->assertStringContainsString('`<phpVersion>`', $doc);
+        $this->assertStringContainsString('`<pcreVersion>`', $doc);
+        $this->assertStringContainsString('Psalm baseline', $doc);
+    }
+
+    #[Test]
     public function test_bc_doc_lists_exactly_the_result_objects(): void
     {
         $labels = self::labels();

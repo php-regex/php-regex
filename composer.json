@@ -41,6 +41,7 @@
         "php-regex/regex-optimizer": "self.version",
         "php-regex/regex-parser": "self.version",
         "php-regex/regex-phpstan": "self.version",
+        "php-regex/regex-psalm": "self.version",
         "php-regex/regex-rector": "self.version",
         "php-regex/regex-redos": "self.version",
         "php-regex/regex-symfony": "self.version",
@@ -122,6 +123,7 @@
         "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
         "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
         "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
+        "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm).",
         "illuminate/support": "Required for Laravel integration.",
         "illuminate/console": "Required for Laravel Artisan commands.",
         "illuminate/routing": "Required for Laravel route analysis."

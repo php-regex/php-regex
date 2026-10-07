@@ -41,6 +41,8 @@ parameters:
         - tests/Benchmark/*
         - tests/Fixtures/*
         - tests/Integration/Bridge/PHPStan/Fixtures/
+        # Psalm reads these, invalid patterns and all
+        - tests/Integration/Bridge/Psalm/Fixtures/
         - tests/Tools/extract_pcre_tests.php
         - tests/Tools/validate_library.php
         # Laravel bridge - requires illuminate/* packages which are optional
@@ -90,5 +92,34 @@ parameters:
         - identifier: function.impossibleType
           path: tests/Integration/Bridge/Rector/RuleContractTest.php
           count: 2
+
+        # The Psalm plugin's tests drive Psalm in this process, through its
+        # project analyser, issue buffer and type comparator, which Psalm
+        # marks internal: there is no public API to run an analysis.
+        - identifiers:
+            - method.internalClass
+            - new.internalClass
+            - parameter.internalClass
+            - property.internal
+            - property.internalClass
+            - return.internalClass
+            - staticMethod.internalClass
+          path: tests/Integration/Bridge/Psalm/*
+
+        # The Psalm plugin narrows $matches through Psalm's node data and
+        # resolves a namespaced function name as Psalm does, through classes
+        # Psalm marks internal: no public API sets an assertion on a call. The
+        # instanceof and method_exists() guards are the point, should a minor
+        # Psalm release move them.
+        - identifier: instanceof.internalClass
+          path: src/Psalm/Internal/PregCallAnalyzer.php
+          count: 3
+        - identifier: method.internalClass
+          path: src/Psalm/Internal/PregCallAnalyzer.php
+          count: 5
+        - message: '#^Call to function method_exists\(\) with Psalm\\Internal\\#'
+          identifier: function.alreadyNarrowedType
+          path: src/Psalm/Internal/PregCallAnalyzer.php
+          count: 5
 
     reportUnmatchedIgnoredErrors: false
