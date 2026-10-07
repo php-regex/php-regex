@@ -2449,11 +2449,6 @@
          - :^\s*(/\*# sourceURL=\S+? \*/\s*)?$:s
          + :^\s*(/\*# sourceURL=\S+? \*/\s*)?$:
 
-  corpus/WordPress/wordpress-develop/src/wp-signup.php:980:66
-      → /^-|-$|[^-a-zA-Z0-9]/
-     WARN  An anchor holds for its own alternative only: "[^-a-zA-Z0-9]" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?:-|-$|[^-a-zA-Z0-9])".
-
   corpus/Yoast/wordpress-seo/inc/options/class-wpseo-option-social.php:274:20
       → `^http(?:s)?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -3169,11 +3164,6 @@
       → {^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$}D
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-  corpus/composer/composer/src/Composer/Command/InitCommand.php:609:31
-      → {^[_.-]+|[_.-]+$|[^a-z0-9_.-]}u
-     WARN  An anchor holds for its own alternative only: "[^a-z0-9_.-]" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?:[_.-]+|[_.-]+$|[^a-z0-9_.-])".
 
   corpus/composer/composer/src/Composer/Command/InitCommand.php:610:31
       → {([_.-]){2,}}u
@@ -6211,11 +6201,6 @@
          - #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s
          + #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#
 
-  corpus/mautic/mautic/app/bundles/CoreBundle/Helper/InputHelper.php:519:17
-      → #(<!--.*?-->)|(>)(?:\n*|\s{2,})(<)|^\s*|\s*$#s
-     WARN  An anchor holds for its own alternative only: "(<!--.*?-->)" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "(?:(<!--.*?-->)|(>)(?:\n*|\s{2,})(<)|^\s*|\s*)$".
-
   corpus/mautic/mautic/app/bundles/CoreBundle/Helper/InputHelper.php:556:29
       → /\/\*[^*]*\*+([^\/*][^*]*\*+)*\//
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -9238,16 +9223,6 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Quantifier "+" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to "".
 
-  corpus/nette/latte/src/Latte/Essential/Passes.php:70:20
-      → /ʟ_|__|GLOBALS$|this$/A
-     WARN  An anchor holds for its own alternative only: "ʟ_" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "(?:ʟ_|__|GLOBALS$|this)$".
-
-  corpus/nette/latte/src/Latte/Essential/Passes.php:72:20
-      → /__|this$/A
-     WARN  An anchor holds for its own alternative only: "__" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "(?:__|this)$".
-
   corpus/nette/latte/src/Latte/Runtime/Cache.php:111:22
       → #([/\\][\w@.-]{3,35}){1,3}$#D
      INFO  Quantified capturing group "(...)" with "{1,3}": only the last iteration's capture is retained.
@@ -9274,11 +9249,6 @@
       → #'\S(?:[^']|\\')*\S'|"\S(?:[^"]|\\")*\S"#
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
-  corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:563:22
-      → #^.+<body>|</body>.+\z|<hr />|<h1>Configuration</h1>#s
-     WARN  An anchor holds for its own alternative only: "<hr />" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?:.+<body>|</body>.+\z|<hr />|<h1>Configuration</h1>)".
 
   corpus/nette/tracy/src/Tracy/Helpers.php:441:21
       → #^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src(?:-elem)?\s+(?:[^;]+\s)?'nonce-([\w+/]+=*)'#mi
@@ -10109,8 +10079,6 @@
 
   corpus/phpmyadmin/sql-parser/src/Context.php:675:27
       → /^[$]|^\d+$|[^0-9a-zA-Z$_\x80-\xffff]/
-     WARN  An anchor holds for its own alternative only: "[^0-9a-zA-Z$_\x80-\xffff]" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?:[$]|^\d+$|[^0-9a-zA-Z$_\x80-\xffff])".
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 'f' (covered by range 'a'-'z'), 'f' (duplicate)
 
@@ -10125,11 +10093,6 @@
      TIP 
          - /\s{1,}/
          + /\s+/
-
-  corpus/phpseclib/phpseclib/phpseclib/Crypt/Common/Formats/Keys/OpenSSH.php:70:33
-      → #(?:^-.*?-[\r\n]*$)|\s#ms
-     WARN  An anchor holds for its own alternative only: "\s" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?:(?:-.*?-[\r\n]*$)|\s)".
 
   corpus/phpseclib/phpseclib/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php:65:24
       → #-*BEGIN EC PRIVATE KEY-*[^-]*-*END EC PRIVATE KEY-*#s
@@ -10153,11 +10116,6 @@
      TIP 
          - #-+END.*[\r\n ]*.*#ms
          + #-+END.*[\r\n ]*.*#s
-
-  corpus/phpseclib/phpseclib/phpseclib/File/Common/Traits/DN.php:519:33
-      → #^ +| +$|,#
-     WARN  An anchor holds for its own alternative only: "," matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "^(?: +| +$|,)".
 
   corpus/phpseclib/phpseclib/phpseclib/File/SPKAC.php:132:30
       → #(?:SPKAC=)|[ \r\n\\]#
@@ -11091,11 +11049,6 @@
      TIP 
          - #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s
          + #<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#
-
-  corpus/salesagility/SuiteCRM/include/Smarty/plugins/block.minify.php:33:21
-      → #(<!--.*?-->)|(>)(?:\n*|\s{2,})(<)|^\s*|\s*$#s
-     WARN  An anchor holds for its own alternative only: "(<!--.*?-->)" matches anywhere in the subject.
-         ↳ If the anchors are meant for every alternative, group them: "(?:(<!--.*?-->)|(>)(?:\n*|\s{2,})(<)|^\s*|\s*)$".
 
   corpus/salesagility/SuiteCRM/include/Smarty/plugins/block.minify.php:99:13
       → #:(0\s+){0,3}0(?=[!,;\)\}]|$)#
