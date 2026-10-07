@@ -195,8 +195,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   - a back reference in a lookbehind of a pattern with a branch reset is
     measured, where PCRE refuses it as not limited (`/(a)(?|b|c)(?<=\1)/`
     at 10);
-  - `\C` in a lookbehind under `(*UTF)` without `/u` is accepted
-    (`/(*UTF)(?<=b\C)/`, PCRE refuses it at 6);
   - `\X` is judged before the branches are measured, and a lookbehind used
     as a condition inside a lookbehind is not measured, so the first error
     is not PCRE's.

@@ -779,6 +779,17 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
+        // "(*UTF)" without the "u" flag: "\C" compiles, but not in a
+        // lookbehind, which PCRE refuses where it measures it.
+        $lookbehind = $this->lookbehinds[\count($this->lookbehinds) - 1] ?? null;
+        if ('C' === $node->value && $this->unicodeMode && null !== $lookbehind) {
+            $this->raiseSemanticError(
+                '\C is not allowed in a lookbehind in UTF-8 mode: the length of the lookbehind would not be known.',
+                $this->lookbehindErrorPosition($lookbehind),
+                ErrorCode::EscapeSingleByteInUtf,
+            );
+        }
+
         if (0 === $this->charClassDepth) {
             return;
         }
