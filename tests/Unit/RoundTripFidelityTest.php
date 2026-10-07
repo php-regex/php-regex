@@ -131,6 +131,10 @@ final class RoundTripFidelityTest extends TestCase
         yield 'escaped star in class' => ['/[\\s\\*]/'];
         yield 'bare star in class' => ['/[\\s*]/'];
         yield 'python backreference' => ['/(?<x>a)(?P=x)/'];
+        // A name of non-ASCII letters keeps its syntax as well
+        // (preg_match on "aa" is 1 for both).
+        yield 'python backreference by a non-ASCII name' => ['/(?<אABC>a)(?P=אABC)/u'];
+        yield 'braced backreference by a non-ASCII name' => ['/(?<éa>a)\\k{éa}/u'];
         yield 'k backreference' => ['/(?<x>a)\\k<x>/'];
         yield 'numeric backreference' => ['/(a)\\1/'];
         yield 'bell escape' => ['/[\\a-z]/'];

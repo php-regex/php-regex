@@ -257,8 +257,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   character before the fault moves it one column right.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
-- The printer rewrites `(?P=אABC)`, a reference by a non-ASCII name, as
-  `\k<אABC>`, where an ASCII name keeps its spelling.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
   on the lines under `roles:`, `methods:` or `ips:`): the dash lines are taken
   before the list is looked at, so they produce bogus rules, and the parent

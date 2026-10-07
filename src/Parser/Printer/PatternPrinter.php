@@ -989,8 +989,9 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function referenceName(string $reference): ?string
     {
         $matches = [];
-        // "\k{ name }" and "\g{ 1 }" may pad the braces.
-        $syntax = '/^(?:\\(\\?P=|\\\\k[<{\']?|\\\\g[<{\']?|\\\\)[ \t]*([A-Za-z_][A-Za-z0-9_]*|[0-9]+)/';
+        // "\k{ name }" and "\g{ 1 }" may pad the braces; under /u a name may
+        // hold non-ASCII letters, read here byte by byte.
+        $syntax = '/^(?:\\(\\?P=|\\\\k[<{\']?|\\\\g[<{\']?|\\\\)[ \t]*([A-Za-z_\x80-\xFF][A-Za-z0-9_\x80-\xFF]*|[0-9]+)/';
 
         return 1 === LibraryPcre::match($syntax, $reference, $matches) ? $matches[1] : null;
     }
