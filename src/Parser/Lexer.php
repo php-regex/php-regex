@@ -1849,6 +1849,52 @@ final class Lexer
     }
 
     /**
+     * The offset past the first reversed range of the class opened at
+     * $classStart, "z-a", between two plain ASCII characters; null when it
+     * has none. An escape or a POSIX class leaves the range alone.
+     */
+    private function reversedRangeEnd(int $classStart): ?int
+    {
+        $i = $classStart + 1;
+        if ('^' === ($this->pattern[$i] ?? '')) {
+            $i++;
+        }
+        if (']' === ($this->pattern[$i] ?? '')) {
+            $i++;
+        }
+
+        while ($i < $this->length) {
+            $char = $this->pattern[$i];
+            if ('\\' === $char) {
+                $i += 2;
+
+                continue;
+            }
+            if ('[' === $char && ':' === ($this->pattern[$i + 1] ?? '')) {
+                $close = strpos($this->pattern, ':]', $i + 2);
+                $i = false === $close ? $i + 1 : $close + 2;
+
+                continue;
+            }
+
+            $end = $this->pattern[$i + 2] ?? '';
+            if ('-' === ($this->pattern[$i + 1] ?? '') && '' !== $end && '\\' !== $end && '[' !== $end
+                && \ord($char) < 0x80 && \ord($end) < 0x80) {
+                if (\ord($char) > \ord($end)) {
+                    return $i + 3;
+                }
+                $i += 3;
+
+                continue;
+            }
+
+            $i++;
+        }
+
+        return null;
+    }
+
+    /**
      * Whether the class at $position is the "[" of "(?[", a Perl extended
      * class PCRE2 only reads from 10.45; before, PCRE2 refuses that "[",
      * whatever follows it.
@@ -1892,6 +1938,18 @@ final class Lexer
                     \sprintf('A backslash ends the pattern at position %d.', $this->length),
                     ErrorCode::EscapeTrailingBackslash,
                     $this->length,
+                    $this->pattern,
+                );
+            }
+
+            // PCRE reads the ranges of the class first: a reversed one
+            // between two plain ASCII characters is refused past its end.
+            $reversed = $this->reversedRangeEnd($classStart);
+            if (null !== $reversed) {
+                throw LexerException::withContext(
+                    'Range out of order in character class.',
+                    ErrorCode::RangeReversed,
+                    $reversed,
                     $this->pattern,
                 );
             }

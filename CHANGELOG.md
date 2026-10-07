@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- In a class left open at the end, a reversed range is refused first, as PCRE2 reports it: `/[z-abcd/` at 4, where the unclosed class was reported at 7.
 - The console and HTML highlighters spell the bytes of a comment that are no UTF-8 as `\xHH`: the console wrote the raw byte, and the HTML replaced it with U+FFFD.
 - `explain()`, text and HTML, spells the bytes of a comment that are no UTF-8 as `\xHH`: `/a(?#\xE1)b/` gave an explanation `json_encode()` refuses, and the language server dropped its hover reply.
 - The Mermaid diagram cuts a long comment on a character boundary: cut inside a multibyte character, the comment came out empty.

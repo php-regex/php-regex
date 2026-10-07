@@ -174,9 +174,9 @@ host `setlocale()` can rebuild PCRE's case tables.
 - A railroad label spells quoted text as text, so `{2}` after an atom
   reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
   (PCRE2 10.44 and older) before `{` is not respelled either.
-- Error order, still off PCRE's (each a library offset vs PCRE2 10.49):
-  an error in a class left open at the end is lost to the unclosed class
-  (`/[a(?-1)/` at 7, PCRE "range out of order" at 6).
+- Error order in a class left open at the end: a reversed range between
+  two plain ASCII characters is reported first, as PCRE2 does; one with an
+  escape at either end (`[\x7A-a`) still gives the unclosed class.
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch
@@ -197,8 +197,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   - a lookbehind called from a condition that holds another lookbehind can
     pass unmeasured: `/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` is
     accepted, PCRE refuses it as not limited at 28.
-- `/[z-abcd/` is the unclosed class at 7; PCRE reports the reversed range
-  at 4.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
