@@ -135,11 +135,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
   the witness is wrong.
-- The inline `n` state does not reach the body of an alphabetic assertion
-  (`(*pla:…)`, `(*atomic:…)`, …), as it reaches `(?=…)`:
-  `/(?-n)(*atomic:(a))/n` captures group 1 on the engine, and the library
-  numbers no group, so the capture shape misses key `1` (also `(?^)`,
-  `(?-n:…)`, and every alphabetic group name).
 - Under `(?J)`, PCRE accepts two names for one branch-reset number when the
   later name already exists: `/(?J)(?<n>a)(?|(?<m>b)|(?<n>c))/` on `ab`
   gives `{"0":"ab","n":"b","1":"a","2":"b"}`, with no `m` key. The library

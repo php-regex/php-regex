@@ -1993,8 +1993,8 @@ final class TokenParser
 
         // An inline "(?n)" or "(?x)" before the payload still holds inside
         // it, and a "(?-x)" still turns "x" off there.
-        $flags = str_replace('x', '', $this->flags).($this->extendedMode ? 'x' : '');
-        $flags = $this->noAutoCapture && !str_contains($flags, 'n') ? $flags.'n' : $flags;
+        // An inline "(?-n)" turns "n" off there as well.
+        $flags = str_replace(['x', 'n'], '', $this->flags).($this->extendedMode ? 'x' : '').($this->noAutoCapture ? 'n' : '');
 
         // The payload is read for the same target as the pattern around it,
         // its tokens moved to where they stand in the whole pattern.

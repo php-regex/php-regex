@@ -296,6 +296,17 @@ final class CaptureShapeAnalyzerTest extends TestCase
      * preg_match('/(?J)(?<n>z)?(?<n>a)/', 'a', $m, PREG_OFFSET_CAPTURE)
      * gives n = ['a', 0].
      */
+    /**
+     * An inline "(?-n)" holds inside an alphabetic assertion's body, as in
+     * "(?>...)": preg_match('/(?-n)(*atomic:(a))/n', 'a', $m) captures 1.
+     */
+    #[Test]
+    public function test_an_inline_capture_option_reaches_an_alphabetic_assertion(): void
+    {
+        $this->assertSame("array{0: 'a', 1: 'a'}", $this->analyze('/(?-n)(*atomic:(a))/n')->matchShape(0));
+        $this->assertSame("array{0: 'a', 1: 'a'}", $this->analyze('/(?-n)(*pla:(a))a/n')->matchShape(0));
+    }
+
     #[Test]
     public function test_a_shared_name_with_an_always_set_group_has_a_set_offset(): void
     {
