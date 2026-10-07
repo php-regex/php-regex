@@ -2783,9 +2783,14 @@ final class Validator extends AbstractNodeVisitor
         }
 
         if ($number > 65535) {
+            // A braced, angled or quoted number is refused on its bracket,
+            // even when only its sum with the groups before it overflows.
+            $text = null === $this->source ? '' : substr($this->source, $node->startPosition, 3);
+            $bracketed = 1 === LibraryPcre::match('/^\\\\g[{<\']/', $text);
+
             $this->raiseSemanticError(
                 \sprintf('Group number %s%s is too big: PCRE takes at most 65535.', $sign, $digits),
-                $this->missingReferenceOffset($node),
+                $bracketed ? $node->startPosition + 2 : $this->missingReferenceOffset($node),
                 ErrorCode::GroupNumberTooBig,
             );
         }

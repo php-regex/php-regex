@@ -365,8 +365,6 @@ The follow-ups are merged too: the search cost's two false positives
 - The linter validates each pattern at every PHP version of the range; a
   pattern that reads no version-dependent rule could skip the extra runs (the
   flag must travel with the cached tree, not in a side channel).
-- `\g{+65534}` with two groups: the "group number too big" offset is 16
-  where PCRE2 10.49 says 8 (`\g{+65535}`: 13 vs 5).
 - The parser accepts `/(?:(?:a{1000}){1000}){1000}/`, which PCRE2 refuses
   ("regular expression is too large").
 - At `php_version` 8.1 the parser accepts a raw NUL in a pattern; PHP 8.1

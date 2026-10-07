@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A forward relative group number whose sum with the groups before it passes 65535, `\g{+65534}` after two groups, is refused on its opening bracket, as PCRE2 refuses it, where the error stood past the number.
 - The caret under a lint snippet stands under the character at fault when a multibyte character comes before it, where each one moved the caret one column right.
 - The language server's completion reads the cursor from the start of the pattern, not from its opening quote: with the cursor right after `/abc/`, the flags are offered.
 - The "Lookbehind is too long" message says `length over 9223372036854775807` for a lookbehind longer than PHP's integers, where it printed `length=0` or a negative length.
