@@ -90,13 +90,6 @@ contract, and it must stay. What the check found instead is byte-versus-
 code-point confusions in byte mode (patterns without `/u`), each confirmed
 against the engine:
 
-- The optimizer rewrites `'/[\xE9\xEA]/'` into `'/[\x00]/'`: `mb_ord()`
-  returns `false` on a lone byte that is not valid UTF-8, the `false`
-  becomes the array key 0, and two distinct high bytes collide there
-  (`normalizeCharClassParts()`). The engine matches `\xE9` on the original
-  and not on the rewrite, which is returned as an improvement.
-- `'/[\x80-\xBF]/'` without `/u` hangs the optimizer: the range loop
-  increments the `false` of `mb_ord()` for ever.
 - `isSingleCharacter()` counts UTF-8 characters whatever the mode:
   `/(?:é)*x/` without `/u` is rewritten `/\xC3\xA9*x/`, which repeats the
   last byte only — `^(?:\xC3\xA9)*\xC3$` matches `"\xC3"` where

@@ -871,8 +871,10 @@ final class Rewriter extends AbstractNodeVisitor
         $changed = false;
 
         foreach ($parts as $part) {
-            if ($part instanceof LiteralNode && 1 === \strlen($part->value)) {
-                $ord = mb_ord($part->value);
+            // Only an ASCII byte is the same character in both modes: a lone
+            // byte above 0x7F (byte mode) is no code point, and stays as written.
+            if ($part instanceof LiteralNode && 1 === \strlen($part->value) && \ord($part->value) < 0x80) {
+                $ord = \ord($part->value);
                 if (isset($scalarChars[$ord])) {
                     $scalarChars[$ord]['start'] = min($scalarChars[$ord]['start'], $part->startPosition);
                     $scalarChars[$ord]['end'] = max($scalarChars[$ord]['end'], $part->endPosition);
@@ -889,9 +891,11 @@ final class Rewriter extends AbstractNodeVisitor
                 && $part->end instanceof LiteralNode
                 && 1 === \strlen($part->start->value)
                 && 1 === \strlen($part->end->value)
+                && \ord($part->start->value) < 0x80
+                && \ord($part->end->value) < 0x80
             ) {
-                $startOrd = mb_ord($part->start->value);
-                $endOrd = mb_ord($part->end->value);
+                $startOrd = \ord($part->start->value);
+                $endOrd = \ord($part->end->value);
                 if ($startOrd > $endOrd) {
                     [$startOrd, $endOrd] = [$endOrd, $startOrd];
                 }
