@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A forked lint worker drops the output buffers it inherits: run under output buffering, `regex lint` with several jobs wrote what the caller had buffered once more for each worker.
 - A back reference in a lookbehind of a pattern that holds a branch reset anywhere is refused as not limited, as PCRE2 refuses it: `/(a)(?|b|c)(?<=\1)/` was measured and accepted.
 - `\C` in a lookbehind under `(*UTF)` without the `u` flag is refused where PCRE2 measures the lookbehind, `/(*UTF)(?<=b\C)/` at 6, where it was accepted.
 - Without `/u`, a reference or call name holding a byte above 0x7F, `\k<aé>` or `(?&aé)`, is refused on that byte, as PCRE2 refuses it, where it was reported as a missing group one byte early.

@@ -88,6 +88,37 @@ final class ForkedWorkerPoolTest extends TestCase
         $this->assertSame(-1, $pool->fork(static fn (): null => null, $this->payloadFile()));
     }
 
+    /**
+     * A child inherits the output buffers of its parent: it drops them, so
+     * what the parent buffered is not written once more when the child
+     * ends. Run in a PHP process of its own, the fork ending the child.
+     */
+    #[Test]
+    public function test_a_child_does_not_write_out_what_its_parent_buffered(): void
+    {
+        $autoload = \dirname(__DIR__, 3).'/vendor/autoload.php';
+        $script = \sprintf(<<<'PHP_WRAP'
+            require %s;
+            $pool = new PHPRegex\Linter\Internal\ForkedWorkerPool();
+            ob_start();
+            echo "buffered by the parent";
+            $file = tempnam(sys_get_temp_dir(), 'pool');
+            $pid = $pool->fork(static fn (): int => 1, $file);
+            pcntl_waitpid($pid, $status);
+            ob_end_clean();
+            @unlink($file);
+            PHP_WRAP, var_export($autoload, true));
+
+        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        $this->assertSame('', $stdout);
+    }
+
     private function payloadFile(): string
     {
         $file = sys_get_temp_dir().'/regexparser_pool_'.uniqid('', true);

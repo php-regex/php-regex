@@ -333,8 +333,6 @@ The follow-ups are merged too: the search cost's two false positives
   subdirectory of the same name.
 - With Xdebug on (`debug,coverage`), the linear-time ReDoS tests go over
   their one-second cap; they pass with `XDEBUG_MODE=off`.
-- `LintCommandBaselineFormatTest` prints the console banner into the PHPUnit
-  output (the forked lint workers seem to flush the output buffer on exit).
 - Under `x` without `u`, PCRE2 skips byte 0x85 inside a raw multibyte literal
   (`/Å/x` matches `"\xC3"`), but the lexer keeps it; pcre2test gives the last
   code unit `\xc3`.

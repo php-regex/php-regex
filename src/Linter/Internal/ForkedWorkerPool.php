@@ -39,8 +39,14 @@ final class ForkedWorkerPool
             return $pid;
         }
 
-        // Unreachable from a test: only the forked child runs this line, and
-        // its coverage ends with it. Everything it runs is in runChild().
+        // Unreachable from a test: only the forked child runs these lines,
+        // and its coverage ends with it. Everything it runs is in runChild().
+        // The child drops the output buffers it inherited: what the parent
+        // buffered would be written once more when the child ends.
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         exit($this->runChild($work, $payloadFile));
     }
 
