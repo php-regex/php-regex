@@ -1766,6 +1766,14 @@ final class TokenParser
     {
         $callout = $this->parseCallout();
 
+        // PCRE refuses a number past 255 as it reads it, before it looks
+        // for the assertion due after the callout.
+        if (!$callout->isStringIdentifier && \is_int($callout->identifier) && $callout->identifier > 255) {
+            $position = $this->calloutFault($callout->startPosition)[0] ?? $callout->startPosition;
+
+            throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $position, self::calloutProblem(ErrorCode::CalloutOutOfRange)), ErrorCode::CalloutOutOfRange, $position);
+        }
+
         // PCRE skips a comment, an empty "\Q\E" and "x" whitespace there.
         do {
             $this->skipEmptyQuotes();

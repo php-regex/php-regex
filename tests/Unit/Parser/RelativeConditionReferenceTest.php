@@ -73,6 +73,31 @@ final class RelativeConditionReferenceTest extends TestCase
         yield 'unknown name closed' => ['pattern' => '/(?((*foo:a)b)/'];
     }
 
+    /**
+     * A callout number past 255 in a condition is refused as PCRE2 reads
+     * it, before the assertion due after the callout (error 138 at 8).
+     */
+    #[Test]
+    #[DataProvider('provideCalloutsPast255')]
+    public function test_a_callout_number_past_255_in_a_condition_is_refused_first(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid);
+        $this->assertSame($offset, $result->offset);
+        $this->assertStringContainsString('255', (string) $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideCalloutsPast255(): iterable
+    {
+        yield 'callout before the assertion' => ['pattern' => '/(?(?C256)a)/', 'offset' => 8];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {
