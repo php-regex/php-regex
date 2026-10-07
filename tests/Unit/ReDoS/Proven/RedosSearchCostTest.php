@@ -187,6 +187,28 @@ final class RedosSearchCostTest extends TestCase
         // character and a hyphen under \b.
         yield 'liberal URL regex' => ['pattern' => '/\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu'];
         yield 'word boundary before a non-space run and a word' => ['pattern' => '/\b\S+Exception/'];
+        // Every alternative ends with the same character, the last code unit
+        // PCRE2 requires (pcre2test 10.49): the breaker carries it. Without
+        // it the search fails before any attempt (0.0 ms on "a"x20k); with
+        // it, 6.2 / 23.9 / 97.9 ms on "a"x5k/10k/20k."!b" (pcre.jit=0).
+        yield 'alternatives ending with the same literal' => ['pattern' => '/a+b|cb/'];
+        yield 'alternatives ending with the same sign' => ['pattern' => '/\s+=|x=/'];
+        yield 'alternatives of classes ending with the same literal' => ['pattern' => '/[a-z]+;|\d+;/'];
+        yield 'group of alternatives ending with the same literal' => ['pattern' => '/a+(?:b|cb)/'];
+        // Without u, a caseless "k" is a required code unit: 115.8 / 463.6 /
+        // 1860.4 ms on "A"x5k/10k/20k."!k". Under u it matches the Kelvin
+        // sign too and PCRE2 requires nothing: 154.1 / 621.0 / 2465.4 ms on
+        // "A"x5k/10k/20k alone.
+        yield 'caseless alternatives ending with a k' => ['pattern' => '/[a-z]+k|\d+k/i'];
+        yield 'caseless alternatives ending with a k under u' => ['pattern' => '/[a-z]+k|\d+k/iu'];
+        // A class of every character but the surrogates is no universe for
+        // PCRE2, which reads its ranges over every code point: not anchored
+        // (pcre2test 10.49, utf and ucp), 153.7 / 623.7 / 2457.8 ms on
+        // "!"x5k/10k/20k (pcre.jit=0).
+        yield 'leading class of every character but the surrogates under u' => ['pattern' => '/[\x00-\x{D7FF}\x{E000}-\x{10FFFF}]*\d$/u'];
+        // Nor a class of a property and its negation (212.8 / 850.5 / 3402.6
+        // ms on "!"x5k/10k/20k).
+        yield 'leading class of a property and its negation under u' => ['pattern' => '/[\pL\PL]*\d$/u'];
     }
 
     /**
@@ -315,6 +337,33 @@ final class RedosSearchCostTest extends TestCase
     }
 
     /**
+     * PCRE2 requires the last code unit every alternative ends with, as it
+     * does the last literal of one alternative (pcre2test 10.49, "Last code
+     * unit"): the witness holds it, or the search fails before any attempt.
+     */
+    #[Test]
+    #[DataProvider('provideCodeUnitsEveryAlternativeEndsWith')]
+    public function test_search_cost_witness_holds_the_code_unit_every_alternative_ends_with(string $pattern, string $unit): void
+    {
+        $cost = (new RedosAnalyzer())->analyze($pattern)->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertStringContainsString($unit, $cost->build(1), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, unit: string}>
+     */
+    public static function provideCodeUnitsEveryAlternativeEndsWith(): iterable
+    {
+        yield 'same literal' => ['pattern' => '/a+b|cb/', 'unit' => 'b'];
+        yield 'same sign' => ['pattern' => '/\s+=|x=/', 'unit' => '='];
+        yield 'classes before the same literal' => ['pattern' => '/[a-z]+;|\d+;/', 'unit' => ';'];
+        yield 'group of alternatives' => ['pattern' => '/a+(?:b|cb)/', 'unit' => 'b'];
+        yield 'caseless k without u' => ['pattern' => '/[a-z]+k|\d+k/i', 'unit' => 'k'];
+    }
+
+    /**
      * The breakers come shortest first: one character after the run when
      * one character fails every attempt.
      */
@@ -425,6 +474,11 @@ final class RedosSearchCostTest extends TestCase
         yield 'possessive loop' => ['pattern' => '/a++b/', 'run' => 'a'];
         yield 'atomic loop repeated' => ['pattern' => '/(?>a+)+$/', 'run' => 'a'];
         yield 'atomic dot-star without s' => ['pattern' => '/(?>.*)[xy]/', 'run' => '!'];
+        // Under u PCRE2 reads these classes one character at a time, not as
+        // its any character, which moves to the end in one step: 96.4 /
+        // 385.8 / 1550.0 ms and 29.8 / 119.6 / 475.4 ms on "a"x5k/10k/20k."b".
+        yield 'possessive [\s\S]* under u' => ['pattern' => '/a[\s\S]*+b/u', 'run' => 'a'];
+        yield 'possessive class of every character but the surrogates under u' => ['pattern' => '/a[\x00-\x{D7FF}\x{E000}-\x{10FFFF}]*+b/u', 'run' => 'a'];
     }
 
     /**
@@ -535,6 +589,21 @@ final class RedosSearchCostTest extends TestCase
         yield 'comment before a leading dot-star under s' => ['pattern' => '/(?#c).*[xy]/s'];
         yield 'leading \N* under m, newline-free run' => ['pattern' => '/\N*\s+/m'];
         yield 'leading [\p{Any}]* under u' => ['pattern' => '/[\p{Any}]*\d$/u'];
+        // A class whose ranges cover every code point, the surrogates
+        // included, is PCRE2's any character under u, whatever else it holds
+        // (pcre2test 10.49, utf and ucp: "anchored"); so is a negated class
+        // of nothing, and under i a class whose gaps the other cases fill.
+        // Each row takes 0.1 / 0.1 / 0.2 ms on "!"x5k/10k/20k (pcre.jit=0).
+        yield 'leading class of every code point under u' => ['pattern' => '/[\x00-\x{10FFFF}]*\d$/u'];
+        yield 'leading class of every code point in braces under u' => ['pattern' => '/[\x{0}-\x{10FFFF}]*[xy]/u'];
+        yield 'leading class of every code point and a property under u' => ['pattern' => '/[\x00-\x{10FFFF}\d]*\d$/u'];
+        yield 'leading class of every horizontal space and the rest under u' => ['pattern' => '/[\h\H]*\d$/u'];
+        yield 'leading class of every vertical space and the rest under u' => ['pattern' => '/[\v\V]*\d$/u'];
+        yield 'leading class of every code point and a property, the range first, under u' => ['pattern' => '/[\x00-\x{10FFFF}\pL]*\d$/u'];
+        // A POSIX class is not read: undecided, no witness.
+        yield 'leading class of POSIX classes under u' => ['pattern' => '/[[:^ascii:][:ascii:]]*\d$/u'];
+        yield 'leading negated class of no character under u' => ['pattern' => '/[^\P{Any}]*\d$/u'];
+        yield 'leading caseless class whose gap the other case fills under u' => ['pattern' => '/[\x00-\x40\x42-\x{10FFFF}]*\d$/iu'];
     }
 
     /**
@@ -579,6 +648,14 @@ final class RedosSearchCostTest extends TestCase
         // pcre.jit=0 (measured, not asserted), against 62.8 / 251.2 ms for
         // the same pattern without s.
         yield 'atomic leading dot-star under s' => ['pattern' => '/(?>.*)[xy]/s'];
+        // PCRE2 requires the "b" every alternative ends with, and every
+        // subject holding one matches through the second alternative.
+        yield 'alternative matching the required code unit alone' => ['pattern' => '/(.*)(?:ab)+|b/'];
+        yield 'lazy dot-star alternative matching the required code unit alone' => ['pattern' => '/.*?(?:ab)+|b/s'];
+        // A class of every code point is PCRE2's any character under u: the
+        // possessive repeat moves to the end in one step (0.2 / 0.3 / 0.5 ms
+        // on "a"x5k/10k/20k."b", pcre.jit=0).
+        yield 'possessive class of every code point under u' => ['pattern' => '/a[\x00-\x{10FFFF}]*+b/u'];
     }
 
     /**

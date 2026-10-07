@@ -340,21 +340,6 @@ lint JSON key is snake_case.
   mapping every Sonar regex rule on PHP. No new rule fails CI (warnings and
   style only).
 
-### ReDoS search cost: two false positives
-
-- When every alternative ends with the same character (`/a+b|cb/`,
-  `/\s+=|x=/`), the reported attack lacks that character, which PCRE2 checks
-  before any attempt: the reported subject is linear (with `"!b"` appended it
-  is quadratic, 8 / 31 / 124 ms for n = 5k / 10k / 20k without the JIT).
-  `requiredCodeUnit()` reads only the mandatory runs. Some such patterns have
-  no attack at all (`/(.*)(?:ab)+|b/`).
-- A class covering every character under `/u` (`[\x00-\x{10FFFF}]*`) is not
-  read as PCRE2's any-character: `/[\x00-\x{10FFFF}]*\d$/u` is reported
-  quadratic, but the engine anchors it and stays linear.
-
-Both stay hidden by the default `high` threshold (the search cost is
-`medium`).
-
 ### Smaller findings, each confirmed against the engine
 
 - The language server never runs the validator (only the parser), so it

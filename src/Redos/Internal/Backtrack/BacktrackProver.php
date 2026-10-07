@@ -52,7 +52,7 @@ final class BacktrackProver
     private ?int $stepBound = null;
 
     /**
-     * @var array{ItemAutomaton, Budget, list<string>}|null
+     * @var array{ItemAutomaton, Budget}|null
      */
     private ?array $search = null;
 
@@ -118,7 +118,7 @@ final class BacktrackProver
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = (new AmbiguityFinder($automaton, $budget))->find($literals);
             if (null === $pnfa->parent) {
-                $this->search = [$automaton, $budget, self::mandatoryRuns($regex->pattern, $pnfa->unicode)];
+                $this->search = [$automaton, $budget];
             }
             unset($automaton);
             if (null === $verdict || null === $reach[$index]) {
@@ -184,11 +184,10 @@ final class BacktrackProver
     }
 
     /**
-     * The automaton of the pattern's own search from the last proof, the
-     * budget it shares, and the runs of literal characters every match
-     * reads, in order; null before a proof finished reading it.
+     * The automaton of the pattern's own search from the last proof and the
+     * budget it shares; null before a proof finished reading it.
      *
-     * @return array{ItemAutomaton, Budget, list<string>}|null
+     * @return array{ItemAutomaton, Budget}|null
      */
     public function search(): ?array
     {

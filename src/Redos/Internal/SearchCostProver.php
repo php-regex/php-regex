@@ -20,17 +20,19 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
@@ -102,6 +104,14 @@ final readonly class SearchCostProver
 
     private const MAX_BREAKER_LENGTH = 4;
 
+    /**
+     * The characters of "\h" and of "\v" (pcre2pattern, "Generic character
+     * types"), whatever u.
+     */
+    private const HORIZONTAL_SPACES = [[0x09, 0x09], [0x20, 0x20], [0xA0, 0xA0], [0x1680, 0x1680], [0x180E, 0x180E], [0x2000, 0x200A], [0x202F, 0x202F], [0x205F, 0x205F], [0x3000, 0x3000]];
+
+    private const VERTICAL_SPACES = [[0x0A, 0x0D], [0x85, 0x85], [0x2028, 0x2029]];
+
     public function __construct(private SearchCostReplayer $replayer = new SearchCostReplayer()) {}
 
     /**
@@ -128,7 +138,7 @@ final readonly class SearchCostProver
             return null;
         }
 
-        [$automaton, $budget, $literals] = $search;
+        [$automaton, $budget] = $search;
         $pnfa = $automaton->pnfa;
         $unicode = $pnfa->unicode;
         $sets = [];
@@ -146,17 +156,21 @@ final readonly class SearchCostProver
             default => null,
         };
 
-        $start = self::start($regex->pattern, $sets, $multiline, $unicode, false);
+        // Whether a class may read the other case of its characters: "i"
+        // set anywhere, or taken off.
+        $caseless = str_contains($regex->flags, 'i')
+            || self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'i'));
+        $start = self::start($regex->pattern, $sets, $multiline, $unicode, $caseless, false);
         if (null === $start || $start[0]) {
             return null;
         }
 
         $lineStart = $start[1];
         $jumps = [];
-        self::jumps($regex->pattern, $sets, $unicode, $jumps);
+        self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
 
         try {
-            $found = $this->witness($automaton, $budget, self::requiredCodeUnit($literals, $unicode), $lineStart, $jumps, $pnfa->readsFinalNewline);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::of($regex), $lineStart, $jumps, $pnfa->readsFinalNewline);
         } catch (ModelLimit) {
             return null;
         }
@@ -182,20 +196,6 @@ final readonly class SearchCostProver
         }
 
         return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, false) : null;
-    }
-
-    /**
-     * The last character of the last run of literal characters every match
-     * reads: the code unit PCRE2 requires in the subject before it tries an
-     * attempt (pcre2test's "Last code unit"), as a character.
-     *
-     * @param list<string> $literals
-     */
-    private static function requiredCodeUnit(array $literals, bool $unicode): ?int
-    {
-        $characters = [] === $literals ? null : Utf8::decode($literals[\count($literals) - 1], $unicode);
-
-        return null === $characters || [] === $characters ? null : $characters[\count($characters) - 1];
     }
 
     /**
@@ -250,19 +250,19 @@ final readonly class SearchCostProver
      *
      * @return array{bool, bool}|null
      */
-    private static function start(NodeInterface $node, array $sets, ?bool $multiline, bool $unicode, bool $atomic): ?array
+    private static function start(NodeInterface $node, array $sets, ?bool $multiline, bool $unicode, bool $caseless, bool $atomic): ?array
     {
         if ($node instanceof SequenceNode) {
             $items = self::items($node);
 
-            return [] === $items ? [false, false] : self::start($items[0], $sets, $multiline, $unicode, $atomic);
+            return [] === $items ? [false, false] : self::start($items[0], $sets, $multiline, $unicode, $caseless, $atomic);
         }
 
         if ($node instanceof AlternationNode) {
             $anchored = true;
             $lineStart = true;
             foreach ($node->alternatives as $alternative) {
-                $start = self::start($alternative, $sets, $multiline, $unicode, $atomic);
+                $start = self::start($alternative, $sets, $multiline, $unicode, $caseless, $atomic);
                 if (null === $start) {
                     return null;
                 }
@@ -276,8 +276,8 @@ final readonly class SearchCostProver
 
         if ($node instanceof GroupNode) {
             return match ($node->type) {
-                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset, GroupType::InlineFlags => self::start($node->child, $sets, $multiline, $unicode, $atomic),
-                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, true),
+                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset, GroupType::InlineFlags => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic),
+                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true),
                 default => [false, false],
             };
         }
@@ -297,7 +297,7 @@ final readonly class SearchCostProver
 
         $bounds = QuantifierBounds::parse($node->quantifier);
         if (null !== $bounds && $bounds->min > 0) {
-            return self::start($node->node, $sets, $multiline, $unicode, $atomic);
+            return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic);
         }
 
         // A leading ".*": PCRE2 anchors it under s, and starts it after a
@@ -312,8 +312,8 @@ final readonly class SearchCostProver
             return [false, false];
         }
 
-        if ($set->key() === $universe->key()) {
-            $anchored = self::isAnyCharacter($node->node, $unicode);
+        if ($universe->subtract($set)->isEmpty()) {
+            $anchored = self::isAnyCharacter($node->node, $unicode, $caseless);
 
             return null === $anchored ? null : [$anchored, false];
         }
@@ -326,13 +326,18 @@ final readonly class SearchCostProver
     /**
      * Whether PCRE2 reads the atom, which matches every character, as its
      * any-character item, which it anchors when it leads the pattern
-     * repeated: the dot under s, "\p{Any}", and a class without u. Under u
-     * (UTF and UCP) "\d", "\s", "\w" and their negations are Unicode
-     * properties, and a class of them only is not anchored ("[\s\S]",
-     * pcre2test 10.49 with utf and ucp); a class holding them beside other
-     * items, or a POSIX class, is undecided: null.
+     * repeated and moves to the end of the subject in one step when
+     * possessive: the dot under s, "\p{Any}", and a class without u. Under u
+     * (UTF and UCP) a class reads every item into a bitmap below U+0100,
+     * and above it only its characters, ranges, "\h", "\v" and their
+     * negations: it is that item when these cover every code point from
+     * U+0100, the surrogates included, or when it holds "\p{Any}"
+     * (pcre2test 10.49). "\d", "\s", "\w", their negations and the other
+     * properties count for nothing there, so "[\s\S]" is no such class. A
+     * POSIX class or a negated class is undecided, and so is under i a class
+     * whose gaps the other cases may fill: null.
      */
-    private static function isAnyCharacter(NodeInterface $atom, bool $unicode): ?bool
+    private static function isAnyCharacter(NodeInterface $atom, bool $unicode, bool $caseless): ?bool
     {
         if ($atom instanceof DotNode || $atom instanceof UnicodePropNode) {
             return true;
@@ -346,24 +351,88 @@ final readonly class SearchCostProver
             return true;
         }
 
-        $parts = $atom->expression instanceof AlternationNode ? $atom->expression->alternatives : [$atom->expression];
-        $properties = 0;
-        foreach ($parts as $part) {
-            if ($part instanceof PosixClassNode) {
-                return null;
+        if ($atom->isNegated) {
+            return null;
+        }
+
+        $every = CharSet::range(0, 0x10FFFF);
+        $covered = CharSet::empty();
+        $undecided = false;
+        foreach ($atom->expression instanceof AlternationNode ? $atom->expression->alternatives : [$atom->expression] as $part) {
+            if ($part instanceof UnicodePropNode && 0 === strcasecmp(trim($part->prop, '{}'), 'Any')) {
+                return true;
             }
 
-            if (($part instanceof CharTypeNode && \in_array($part->value, ['d', 'D', 's', 'S', 'w', 'W'], true))
-                || ($part instanceof UnicodePropNode && 'Any' !== trim($part->prop, '{}'))) {
-                $properties++;
+            $characters = self::classCharacters($part, $every);
+            if (null === $characters) {
+                $undecided = true;
+            } else {
+                $covered = $covered->union($characters);
             }
         }
 
-        return match ($properties) {
-            0 => true,
-            \count($parts) => false,
+        // Below U+0100 PCRE2 reads every item into a bitmap, which the set
+        // covering every character fills.
+        $gap = CharSet::range(0x100, 0x10FFFF)->subtract($covered);
+        if ($gap->isEmpty()) {
+            return true;
+        }
+
+        if ($undecided) {
+            return null;
+        }
+
+        // The other cases may fill a gap under i, never one among the
+        // surrogates, which have none.
+        return $caseless && $gap->intersect(CharSet::range(0xD800, 0xDFFF))->isEmpty() ? null : false;
+    }
+
+    /**
+     * The code points a part of a class under u covers as PCRE2 reads it;
+     * nothing for a property, null for a part not read here.
+     */
+    private static function classCharacters(NodeInterface $part, CharSet $every): ?CharSet
+    {
+        if ($part instanceof RangeNode) {
+            $from = self::classCharacter($part->start);
+            $to = self::classCharacter($part->end);
+
+            return null === $from || null === $to ? null : CharSet::range($from, $to);
+        }
+
+        $character = self::classCharacter($part);
+        if (null !== $character) {
+            return CharSet::single($character);
+        }
+
+        if ($part instanceof UnicodePropNode) {
+            return CharSet::empty();
+        }
+
+        if (!$part instanceof CharTypeNode) {
+            return null;
+        }
+
+        return match ($part->value) {
+            'h' => CharSet::fromRanges(self::HORIZONTAL_SPACES),
+            'H' => $every->subtract(CharSet::fromRanges(self::HORIZONTAL_SPACES)),
+            'v' => CharSet::fromRanges(self::VERTICAL_SPACES),
+            'V' => $every->subtract(CharSet::fromRanges(self::VERTICAL_SPACES)),
+            // Unicode properties under u.
+            'd', 'D', 's', 'S', 'w', 'W' => CharSet::empty(),
             default => null,
         };
+    }
+
+    private static function classCharacter(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return $node->codePoint;
+        }
+
+        $characters = $node instanceof LiteralNode ? Utf8::decode($node->value, true) : null;
+
+        return null !== $characters && 1 === \count($characters) ? $characters[0] : null;
     }
 
     /**
@@ -405,7 +474,7 @@ final readonly class SearchCostProver
      *
      * @param-out array<int, true> $jumps
      */
-    private static function jumps(NodeInterface $node, array $sets, bool $unicode, array &$jumps): void
+    private static function jumps(NodeInterface $node, array $sets, bool $unicode, bool $caseless, array &$jumps): void
     {
         $atomic = $node instanceof GroupNode && GroupType::Atomic === $node->type;
         $repeat = $atomic ? self::unwrap($node->child) : $node;
@@ -413,13 +482,14 @@ final readonly class SearchCostProver
             $bounds = QuantifierBounds::parse($repeat->quantifier);
             $offset = $repeat->node->getStartPosition();
             $set = $sets[$offset] ?? null;
-            if (null !== $bounds && null === $bounds->max && null !== $set && $set->key() === CharSet::universe($unicode)->key()) {
+            if (null !== $bounds && null === $bounds->max && null !== $set && CharSet::universe($unicode)->subtract($set)->isEmpty()
+                && false !== self::isAnyCharacter($repeat->node, $unicode, $caseless)) {
                 $jumps[$offset] = true;
             }
         }
 
         foreach ($node->getChildren() as $child) {
-            self::jumps($child, $sets, $unicode, $jumps);
+            self::jumps($child, $sets, $unicode, $caseless, $jumps);
         }
     }
 

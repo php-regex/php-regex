@@ -55,7 +55,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 **Search cost**
 - **Semantics:** For a pattern whose one attempt is proven linear, a witness `prefix . run x n . breaker` read from the
   same automaton: every attempt started inside the run reads to its end without matching, then fails on the breaker,
-  which holds the last code unit every match requires. The prefix keeps the first attempt from matching the bare run
+  which holds the last code unit PCRE2 requires before any attempt, read as its compiler reads it: the one every
+  alternative ends with included (`b` for `/a+b|cb/`). The prefix keeps the first attempt from matching the bare run
   (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in PCRE2's interpreter (`pcre.jit=0`,
   a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue `regex.lint.redos.search` and the PHPStan identifier
   `regex.redos.search`, at severity `medium`, a warning.
