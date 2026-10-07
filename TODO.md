@@ -308,32 +308,10 @@ The branch carries ten pieces of work from the October 2026 ecosystem review
 (public API scope, capture shapes for PHPStan and Psalm, the JSON contract,
 the docs drift, `Regex::info()` / `Regex::compatibility()` and the PHP range
 in the linter, the Rector and Psalm packages, the ReDoS search cost). It is
-not rebased on `2.x` yet; merging it is a manual step.
-
-### Rebase onto `2.x` (blocked on one decision)
-
-`2.x` gained a48c101d and 8c03d93d after the branch started. A rebase onto
-8c03d93d resolves cleanly up to "Settle the capture shape before 2.0" and
-"Keep J and U on across a caret" (the same fix landed on both sides), then
-stops at "Write down the JSON every command prints": both lines of work
-redefined the same public contract.
-
-- **Baseline file.** `2.x` writes `{"version": 1, "issues": [...]}` (an
-  issue still matches when its line moved, `./src` and `src` share a
-  baseline, 1.x lists are read with a note, an unusable file is a
-  configuration error); the branch writes a flat list of `{file, line,
-  column, issue_id, message, severity}` matched on file, line and id (a file
-  that is not a list is a usage error). Each side has tests pinning its form.
-- **Lint JSON keys.** The branch renames them to snake_case (`severity`,
-  `issue_id`, `file_offset`); the new `2.x` tests read `type`, `issueId`,
-  `fileOffset`.
-
-Recommended: keep `2.x`'s versioned baseline (sturdier, and the
-compatibility page already promises that every 2.x reads a 2.0 baseline),
-written with the branch's snake_case keys, and move the `2.x` tests that
-read camelCase lint keys to the snake_case contract. Then resume the rebase
-(eight more commits after that one touch the same areas), run the full suite
-and check coverage.
+rebased on `2.x` (8c03d93d); merging it is a manual step. Where both lines
+redefined the same contract, the lint baseline keeps `2.x`'s versioned
+format and matching, written with the branch's snake_case keys, and every
+lint JSON key is snake_case.
 
 ### Before merging into `2.x`
 
