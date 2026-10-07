@@ -62,7 +62,8 @@ final class InlineFlagsRule extends AbstractLintRule
             ? explode('-', $flags, 2)
             : [$flags, ''];
 
-        $baseFlags = $resetAll ? '' : $context->activeFlags();
+        // (?^ turns i, m, n, r, s and x off; U and J stay as they were.
+        $baseFlags = $resetAll ? str_replace(['i', 'm', 'n', 'r', 's', 'x'], '', $context->activeFlags()) : $context->activeFlags();
         $issues = [];
 
         foreach (str_split($set) as $flag) {
@@ -117,7 +118,7 @@ final class InlineFlagsRule extends AbstractLintRule
      */
     private function originOf(string $flag, LintContext $context, bool $resetAll): string
     {
-        return !$resetAll && str_contains($context->pattern->flags, $flag)
+        return (!$resetAll || !str_contains('imnrsx', $flag)) && str_contains($context->pattern->flags, $flag)
             ? 'set globally'
             : 'set by an earlier inline flag group';
     }

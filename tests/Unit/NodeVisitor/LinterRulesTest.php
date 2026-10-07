@@ -197,6 +197,18 @@ final class LinterRulesTest extends TestCase
         $this->assertContains('regex.lint.flag.redundant', $issues);
     }
 
+    /**
+     * (?^ turns i, m, n, r, s and x off, and leaves U and J on:
+     * preg_match('/(?^)a+/U', 'aaa') matches "a".
+     */
+    public function test_a_caret_keeps_u_and_j_on(): void
+    {
+        $this->assertContains('regex.lint.flag.redundant', $this->lint('/(?^U)a+/U'));
+        $this->assertContains("Inline flag 'U' is redundant; it is already set globally.", $this->lintMessages('/(?^U)a+/U'));
+        $this->assertContains('regex.lint.flag.redundant', $this->lint('/(?^J)(?<n>a)|(?<n>b)/J'));
+        $this->assertNotContains('regex.lint.flag.redundant', $this->lint('/(?^i)a/i'));
+    }
+
     public function test_inline_flag_override_warning(): void
     {
         $issues = $this->lint('/(?-i:foo)/i');

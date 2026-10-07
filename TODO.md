@@ -210,9 +210,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   `/(?(?C256)a)/`, is the missing assertion at 9 (PCRE 8); `/(?<n>a)(?<n/`
   is a duplicate name at 12 (PCRE unterminated name at 11); `/\g{-1/` is
   `regex.backref.invalid_syntax` at 5 (PCRE "non-existent subpattern" at 2).
-- `regex.lint.flag.redundant` reads `(?^` as turning every option off, where `J`
-  and `U` stay on: `/(?^U)a+/U` gets no redundant-flag warning
-  (`InlineFlagsRule`).
 - A lookbehind length past `PHP_INT_MAX` (64 levels of doubling calls)
   overflows to a float: the "too long" verdict and offset are right, but
   the message prints `length=0` or a negative number.

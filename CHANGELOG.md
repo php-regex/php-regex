@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex.lint.flag.redundant` reads `(?^` as PCRE does: it turns `i`, `m`, `n`, `r`, `s` and `x` off and leaves `U` and `J` on, so `/(?^U)a+/U` is reported, its message naming the global modifier.
 - `--disable-rule` and `--enable-rule` take a rule's full id as well as its short one: `--disable-rule=regex.lint.group.redundant` was stored under the full id, which no pattern lint rule reads, and turned nothing off.
 - The JavaScript transpiler writes `\k'n'` as `\k<n>`, and the Python one writes `\k'n'` and `\k{n}` as `(?P=n)`, where both refused them: they are the same backreference as `\k<n>`.
 - `regex.lint.escape.suspicious` no longer reads `\N{U+41}`, a code point, as an unknown character name: `/\N{U+41}/u` is valid and matches `"A"`.
