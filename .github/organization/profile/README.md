@@ -34,6 +34,8 @@ Every package is a read-only split of the [php-regex monorepo](https://github.co
 | [regex-cli](https://github.com/php-regex/regex-cli) | The `regex` command: validate, explain, analyze, lint and compare patterns from the terminal. |
 | [regex-phpstan](https://github.com/php-regex/regex-phpstan) | PHPStan extension that reports the regex patterns your target PHP refuses. |
 | [regex-language-server](https://github.com/php-regex/regex-language-server) | A Language Server for the regex patterns of PHP files — diagnostics, hovers and code actions. |
+| [regex-psalm](https://github.com/php-regex/regex-psalm) | Psalm plugin that types the matches of `preg_match()` and `preg_match_all()` from the pattern, and reports invalid patterns. |
+| [regex-rector](https://github.com/php-regex/regex-rector) | Rector rules that rewrite `preg_*` calls into the string functions the automata prove they match. |
 
 ## Integrations
 
