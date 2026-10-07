@@ -55,7 +55,7 @@ final class LookbehindLengthOverflowTest extends TestCase
     private static function pattern(int $levels): string
     {
         $groups = '';
-        for ($level = 1; $level < $levels; ++$level) {
+        for ($level = 1; $level < $levels; $level++) {
             $groups .= '((?'.($level + 1).')(?'.($level + 1).'))';
         }
 
