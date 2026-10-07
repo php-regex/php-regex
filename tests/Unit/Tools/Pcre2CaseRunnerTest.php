@@ -126,20 +126,20 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "(?<*+a)": error 109 at offset 5, recorded alike for both versions
-        // (PCRE2 10.49: "quantifier does not follow a repeatable item at
-        // offset 5"). The library still reports a missing group name at 3, so
-        // this is an offset defect; swap the case once that one is fixed.
+        // "[z-abcd": error 108 at offset 4, recorded alike for both versions
+        // (PCRE2 10.49: "range out of order in character class at offset
+        // 4"). The library still reports the unclosed class at 7, so this is
+        // an offset defect; swap the case once that one is fixed.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '(?<*+a)',
+            '[z-abcd',
             'reject',
-            5,
-            'quantifier does not follow a repeatable item',
-            pcre2Code: 109,
-            floor: ['verdict' => 'reject', 'offset' => 5, 'pcre2Code' => 109],
+            4,
+            'range out of order in character class',
+            pcre2Code: 108,
+            floor: ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 108],
         ));
 
-        $this->assertSame(3, $result['offset']);
+        $this->assertSame(7, $result['offset']);
         $this->assertSame('offset-defect', $result['outcome']);
 
         // Same agreement on "[abc" (106 at 4 on both): the library agrees too.
@@ -265,12 +265,12 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // preg_match('/(?<*+a)/', '') warns "quantifier does not follow a
-        // repeatable item at offset 5" (PCRE2 10.49); the library still
-        // reports a missing group name at 3. Swap the case once that is fixed.
+        // preg_match('/[z-abcd/', '') warns "range out of order in character
+        // class at offset 4" (PCRE2 10.49); the library still reports the
+        // unclosed class at 7. Swap the case once that is fixed.
         yield 'real suite error reported at a different position' => [
-            'case' => self::case('(?<*+a)', 'reject', 5, 'quantifier does not follow a repeatable item', pcre2Code: 109),
-            'libraryOffset' => 3,
+            'case' => self::case('[z-abcd', 'reject', 4, 'range out of order in character class', pcre2Code: 108),
+            'libraryOffset' => 7,
         ];
 
         // Same pattern, same PCRE2 error text, a recorded offset the library

@@ -195,8 +195,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 - PCRE's limit of 250 nested parentheses is not applied to a group left
   open: 300 `(` give `regex.group.unclosed` at the end, where PCRE says
   "parentheses are too deeply nested" at 251.
-- `/(?<*+a)/` is a missing group name at 3; PCRE reports the quantifier
-  that follows nothing at 5.
 - Error order, still off PCRE's (each a library offset vs PCRE2 10.49):
   an error in a class left open at the end is lost to the unclosed class
   (`/[a(?-1)/` at 7, PCRE "range out of order" at 6); `/(?((*foo:/` is

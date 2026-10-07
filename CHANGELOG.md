@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `(?<*+` and `(?<*?` open a non-atomic lookbehind whose `+` or `?` repeats nothing: the error is the quantifier without target past it, as PCRE2 reports it, where the library reported a missing group name.
 - A bare `\g` reference reads a sign and digits only, as PCRE2 does: in `/(a)\g-1+{2}/` the `+` is a quantifier and the count after it is refused, where the reference took the `+` and the pattern was accepted.
 - A space before the `^` of a negated property name no longer hides the negation: `\P{ ^L}` is `\p{L}`, as PCRE2 reads it, where the library refused `\P{ ^any}` as an unknown property.
 - `u` and `d` after `(?` are refused, as PCRE2 refuses them ("unrecognized character after (? or (?-"): they are PHP modifiers, not inline options. `/(?u)a+b/` was accepted, and the ReDoS analysis called it safe.

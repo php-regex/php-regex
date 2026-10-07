@@ -2314,7 +2314,19 @@ final class TokenParser
     private function parseStandardGroup(int $startPos): NodeInterface
     {
         // "(?<*...)" is the non-atomic lookbehind; the "*" arrives as a
-        // quantifier token.
+        // quantifier token. In "(?<*+" or "(?<*?" the "+" or "?" that came
+        // with it repeats nothing.
+        if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['*+', '*?'], true)) {
+            $token = $this->stream->current();
+            $position = $this->pastTheFault($token->position + \strlen($token->value));
+
+            throw $this->parserException(
+                \sprintf('Quantifier without target at position %d', $position),
+                ErrorCode::QuantifierNothingToRepeat,
+                $position,
+            );
+        }
+
         if ($this->stream->check(TokenType::Quantifier) && '*' === $this->stream->current()->value) {
             $this->stream->advance();
             $expr = $this->parseScopedAlternation();
