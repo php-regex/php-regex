@@ -453,7 +453,7 @@ final class RegexPatternRule implements Rule
             // One attempt proven linear, the search retrying it is not: its
             // own message, frozen like the three others, and identifier.
             if (self::ISSUE_ID_REDOS_SEARCH === ($issue['issueId'] ?? null)) {
-                $errors[] = RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', $this->truncatePattern($pattern)))
+                $errors[] = RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', self::displayPattern($pattern)))
                     ->line($lineNumber)
                     ->tip(self::getTipForSearchCost($issue['message'], $issue['hint'] ?? null))
                     ->identifier(self::IDENTIFIER_REDOS_SEARCH)
