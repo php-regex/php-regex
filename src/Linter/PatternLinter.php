@@ -62,6 +62,9 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private const DEFAULT_DISABLED_RULES = [
         'unicode.shorthandWithoutU' => false,
+        'charclass.single' => false,
+        'literal.multipleSpaces' => false,
+        'quantifier.lazyToClass' => false,
     ];
 
     /**

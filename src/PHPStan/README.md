@@ -18,11 +18,12 @@ Features
 
 * Reports the patterns your target PHP refuses while the engine running PHPStan compiles them; what that engine refuses stays with PHPStan core, never reported twice.
 * Reads the eight `preg_*` functions, patterns held in constants and constant expressions, and the array keys of `preg_replace_callback_array`.
-* Opt-in lint: the 32 lint rules of [php-regex/regex-linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter), each finding carrying its rule identifier and a tip.
+* Reports, always, a constant replacement of `preg_replace()` or `preg_filter()` that refers to a group the pattern does not have (`$2`, `${2}`, `\2`, and `$10`, which PHP reads as group 10, never group 1 then `0`), or that names a group (`${name}`, which PHP never substitutes). The replacement is read after PHP's string escapes, an array of patterns paired with the replacement of the same position. When both the pattern and the replacement may take several values, which may vary together (a ternary on one condition, two maps read with one key), a reference is reported only if no possible pattern defines its group.
+* Opt-in lint: the 40 lint rules of [php-regex/regex-linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter), each finding carrying its rule identifier and a tip.
 * Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds: a proven exponential or polynomial verdict, or a heuristic one, with the attack input in the tip, and, under `regex.redos.search`, the quadratic cost of an unanchored search whose every attempt is linear. A call whose subject PHPStan knows to be constant is not reported: no input can reach it.
 * Opt-in optimization suggestions behind a minimum-savings setting; every rewrite is proven equivalent by the automata solver before it is reported.
 * With optimizations on, a `preg_match($pattern, $subject)` a string function answers alike is reported with the function: `/^https:/` is `str_starts_with($subject, 'https:')`, `/^(?:GET|POST)\z/` an `in_array()`. Each is proven by the automata; `/^foo$/` is no `===`, as `$` also takes `"foo\n"`.
-* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`.
+* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
 
 Installation
@@ -84,6 +85,19 @@ Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid or unsupported PC
 🪪 regex.invalidForTarget
 ```
 
+A replacement that refers to a missing group is reported with no configuration
+either:
+
+```php
+preg_replace('/(a)/', '[$10]', $value); // "[]": there is no group 10
+```
+
+```
+Replacement reference $10 names group 10, but /(a)/ has 1 capturing group: preg_replace() substitutes an empty string.
+🪪 regex.replacement.undefinedGroup
+💡 Two digits are read after "$": write ${1}0 for group 1 followed by "0".
+```
+
 With `rules.neon`, lint and ReDoS findings appear:
 
 ```php
@@ -105,7 +119,7 @@ Exponential backtracking (ReDoS): /(a+)+$/
 
 A ReDoS message is `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`, then the pattern as the console shows it (escaped, on one line, cut after 50 characters); the text of each stays the same for all of 2.x, and the severity, how the verdict was reached and the attack (`str_repeat("a", $n) . "!"`) are in the tip. When the analysis improves, an error may appear, disappear or change class: regenerate the baseline after such an upgrade, and once after moving from 1.x.
 
-Every lint issue is a PHPStan error, whatever the rule's severity: an issue the `regex lint` console prints as `INFO`, such as `regex.lint.group.quantifiedCapture` on an unnamed group, is reported too, under its own identifier, so you can ignore it by identifier. Lint messages and the set of reported issues moved in 2.0.0: after upgrading, regenerate the baseline once with `vendor/bin/phpstan analyse --generate-baseline`.
+Every lint issue is a PHPStan error, whatever the rule's severity: an issue the `regex lint` console prints as `INFO`, such as `regex.lint.group.quantifiedCapture` on an unnamed group, is reported too, under its own identifier, so you can ignore it by identifier. The rules the linter leaves off by default, such as `regex.lint.unicode.shorthandWithoutU` or the style rule `regex.lint.charclass.single`, do not run here. Lint messages and the set of reported issues moved in 2.0.0: after upgrading, regenerate the baseline once with `vendor/bin/phpstan analyse --generate-baseline`.
 
 Optimizations, once enabled, suggest the shorter equivalent as a tip:
 

@@ -14,7 +14,7 @@ Lints the regex patterns of a PHP codebase: extraction from PHP sources, lint ru
 Features
 --------
 
-* 32 lint rules over the parsed AST: redundant groups and character classes, useless flags and quantifiers, lazy quantifiers that end the pattern, suspicious escapes and ranges, undefined backreferences, impossible anchors, multibyte text PCRE reads as bytes without `/u`.
+* 40 lint rules over the parsed AST: redundant and empty groups and character classes, useless flags and quantifiers, lazy quantifiers that end the pattern, repeats that can match the empty string, suspicious escapes and ranges, undefined backreferences, impossible anchors and word boundaries, anchors that bind to one alternative, possessive repeats and lookaheads that can never match (proven by the automata), multibyte text PCRE reads as bytes without `/u`; every SonarPHP regex rule is mapped to its id in the [SonarPHP Regex Rules](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/sonar.md) page.
 * Patterns are validated before they are linted: parse and semantic errors arrive with a position and a tip, not a guess.
 * Extraction from PHP sources: native `preg_*` calls, the composer/pcre, nette/utils, spatie/regex and Laravel `Str` wrappers, and your own helper functions — with `@regex-ignore` comments to suppress a finding inline.
 * ReDoS detection through php-regex/regex-redos: proven verdicts with their attack input, theoretical or confirmed mode, four severity thresholds, and `regex.lint.redos.search` for an unanchored search that retries a linear attempt along a run, quadratic in PCRE2's interpreter.
@@ -56,7 +56,7 @@ The lint command reads a `regex.json` (committed) or `regex.dist.json` (template
 | `checks.redos.mode`, `checks.redos.threshold` | `theoretical`, `high` | Analysis mode, and the lowest severity reported |
 | `checks.optimizations.enabled`, `checks.optimizations.minSavings` | `true`, `1` | Optimization suggestions, and the minimum characters saved to report one |
 | `checks.lint.enabled` | `true` | Lint rules |
-| `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU` defaults to `false` |
+| `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces` and `quantifier.lazyToClass` default to `false` |
 
 Usage
 -----

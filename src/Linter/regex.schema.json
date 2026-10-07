@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU.",
+          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces and quantifier.lazyToClass.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {
@@ -359,6 +359,51 @@
               "type": "boolean",
               "description": "Warn about overlapping character sets in alternations.",
               "default": true
+            },
+            "quantifier.emptyRepeat": {
+              "type": "boolean",
+              "description": "Warn about an unbounded quantifier on an item that can match the empty string.",
+              "default": true
+            },
+            "anchor.alternationPrecedence": {
+              "type": "boolean",
+              "description": "Warn when an anchor on the first or last alternative leaves another alternative unanchored, as in ^a|b.",
+              "default": true
+            },
+            "quantifier.possessiveImpossible": {
+              "type": "boolean",
+              "description": "Warn about a possessive repeat that takes every character the atom after it could read.",
+              "default": true
+            },
+            "anchor.impossible.boundary": {
+              "type": "boolean",
+              "description": "Warn about a word boundary its two neighbouring characters contradict.",
+              "default": true
+            },
+            "lookaround.impossible": {
+              "type": "boolean",
+              "description": "Warn about a lookahead the pattern after it contradicts.",
+              "default": true
+            },
+            "group.empty": {
+              "type": "boolean",
+              "description": "Warn about an empty non-capturing or atomic group.",
+              "default": true
+            },
+            "charclass.single": {
+              "type": "boolean",
+              "description": "Report a character class holding a single character (style).",
+              "default": false
+            },
+            "literal.multipleSpaces": {
+              "type": "boolean",
+              "description": "Report a run of literal spaces, clearer as a counted repeat (style).",
+              "default": false
+            },
+            "quantifier.lazyToClass": {
+              "type": "boolean",
+              "description": "Report a lazy dot before a single closing character, faster as a negated class (perf).",
+              "default": false
             },
             "redos.search": {
               "type": "boolean",

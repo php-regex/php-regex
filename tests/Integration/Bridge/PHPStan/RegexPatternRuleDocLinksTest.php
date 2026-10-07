@@ -46,6 +46,30 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     }
 
     /**
+     * The rules taken from SonarPHP's regex checks each link to their
+     * section of the reference.
+     */
+    #[Test]
+    public function test_the_sonar_parity_rules_have_a_doc_link(): void
+    {
+        $links = self::lintDocLinks();
+
+        foreach ([
+            'regex.lint.quantifier.emptyRepeat',
+            'regex.lint.anchor.alternationPrecedence',
+            'regex.lint.quantifier.possessiveImpossible',
+            'regex.lint.anchor.impossible.boundary',
+            'regex.lint.lookaround.impossible',
+            'regex.lint.group.empty',
+            'regex.lint.charclass.single',
+            'regex.lint.literal.multipleSpaces',
+            'regex.lint.quantifier.lazyToClass',
+        ] as $issueId) {
+            $this->assertArrayHasKey($issueId, $links, \sprintf('%s has no "Read more" link.', $issueId));
+        }
+    }
+
+    /**
      * The rules of error severity fail a lint run, so each one links to the
      * page that explains it.
      */

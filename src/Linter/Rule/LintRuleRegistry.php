@@ -64,6 +64,16 @@ final class LintRuleRegistry
         $this->register(new UselessIFlagRule());
         $this->register(new UselessSFlagRule());
         $this->register(new UselessMFlagRule());
+        // Added after the historical set, so that its emission order stays
+        // as it was.
+        $this->register(new EmptyRepeatRule());
+        $this->register(new AlternationPrecedenceRule());
+        $this->register(new PossessiveImpossibleRule());
+        $this->register(new ImpossibleLookaroundRule());
+        $this->register(new EmptyGroupRule());
+        $this->register(new SingleCharClassRule());
+        $this->register(new MultipleSpacesRule());
+        $this->register(new LazyToClassRule());
     }
 
     public function register(LintRuleInterface $rule): void

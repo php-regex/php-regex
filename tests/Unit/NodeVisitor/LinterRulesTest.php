@@ -59,6 +59,40 @@ final class LinterRulesTest extends TestCase
         $this->assertContains('regex.lint.group.redundant', $issues);
     }
 
+    /**
+     * Removing the group would join an escape and the digit after it into
+     * another escape: "(a)\1(?:)0" is not "(a)\10", "\01(?:)2" is not the
+     * newline "\012". The group is not redundant there.
+     */
+    #[DataProvider('provideGroupsKeepingAnEscapeFromADigit')]
+    public function test_redundant_group_warning_skips_a_group_that_keeps_an_escape_from_a_digit(string $pattern, string $withoutGroup, string $subject): void
+    {
+        // Oracle, PHP 8.4.26 / PCRE2 10.49.
+        $this->assertSame(1, preg_match($pattern, $subject), $pattern);
+        $this->assertSame(0, preg_match($withoutGroup, $subject), $withoutGroup);
+
+        $this->assertNotContains('regex.lint.group.redundant', $this->lint($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, withoutGroup: string, subject: string}>
+     */
+    public static function provideGroupsKeepingAnEscapeFromADigit(): iterable
+    {
+        yield 'empty group after a reference' => ['pattern' => '/^(a)\\1(?:)0$/', 'withoutGroup' => '/^(a)\\10$/', 'subject' => 'aa0'];
+        yield 'empty group after an octal escape' => ['pattern' => '/^\\01(?:)2$/', 'withoutGroup' => '/^\\012$/', 'subject' => "\x012"];
+        yield 'group around the digit after a reference' => ['pattern' => '/^(a)\\1(?:0)$/', 'withoutGroup' => '/^(a)\\10$/', 'subject' => 'aa0'];
+        yield 'group around the reference before a digit' => ['pattern' => '/^(a)(?:\\1)0$/', 'withoutGroup' => '/^(a)\\10$/', 'subject' => 'aa0'];
+        yield 'group around the hex digit after a short hex escape' => ['pattern' => '/^\\xa(?:b)$/', 'withoutGroup' => '/^\\xab$/', 'subject' => "\nb"];
+    }
+
+    public function test_redundant_group_warning_still_reports_a_group_beside_an_escape_it_does_not_extend(): void
+    {
+        // "(a)\1b" reads as "(a)\1(?:b)": the letter extends no escape.
+        $this->assertSame(1, preg_match('/^(a)\\1b$/', 'aab'));
+        $this->assertContains('regex.lint.group.redundant', $this->lint('/(a)\\1(?:b)/'));
+    }
+
     public function test_alternation_duplicate_warning(): void
     {
         $issues = $this->lint('/(a|a)/');

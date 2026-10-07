@@ -11,3 +11,7 @@ CHANGELOG
    and a JSON failure as the error envelope, with its `stage`.
  * `regex:transpile --format` values are case-insensitive (`--format=JSON`),
    as in `regex transpile` and `regex:lint`.
+ * A route requirement is linted as the route compiler reads it: anchors
+   stripped, a top-level alternation grouped, `en|fr|de` as
+   `#^(?:en|fr|de)$#`; a `#` in it picks another delimiter, kept as
+   written; a trailing `\z` stays a strict end.

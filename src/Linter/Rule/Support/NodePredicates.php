@@ -126,6 +126,12 @@ final class NodePredicates
         return true;
     }
 
+    /**
+     * Whether the node needs to read no character: an anchor, a
+     * lookaround or a verb counts as empty, even one that always fails,
+     * such as "(*FAIL)" or "(?!)" ("$(*SKIP)(*FAIL)" reads nothing after
+     * the anchor).
+     */
     public static function canBeEmpty(NodeInterface $node): bool
     {
         if ($node instanceof AnchorNode
@@ -184,6 +190,23 @@ final class NodePredicates
         }
 
         return false;
+    }
+
+    /**
+     * Whether the node fails wherever it stands: "(*FAIL)", "(*F)", with a
+     * mark name or not, or a negative lookaround with nothing inside, as
+     * "(?!)".
+     */
+    public static function alwaysFails(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return \in_array(explode(':', $node->verb, 2)[0], ['F', 'FAIL'], true);
+        }
+
+        return $node instanceof GroupNode
+            && \in_array($node->type, [GroupType::LookaheadNegative, GroupType::LookbehindNegative], true)
+            && (($node->child instanceof LiteralNode && '' === $node->child->value)
+                || ($node->child instanceof SequenceNode && [] === $node->child->children));
     }
 
     public static function isOptionalNode(NodeInterface $node): bool

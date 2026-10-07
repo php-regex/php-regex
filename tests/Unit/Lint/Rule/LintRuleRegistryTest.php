@@ -44,7 +44,7 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.alternation.empty'],
             ['regex.lint.alternation.duplicateDisjunction'],
             ['regex.lint.alternation.dotNewline', 'regex.lint.alternation.overlap', 'regex.lint.overlap.charset'],
-            ['regex.lint.anchor.impossible.start', 'regex.lint.anchor.impossible.end'],
+            ['regex.lint.anchor.impossible.start', 'regex.lint.anchor.impossible.end', 'regex.lint.anchor.impossible.boundary'],
             ['regex.lint.quantifier.concatenation'],
             ['regex.lint.quantifier.zero'],
             ['regex.lint.quantifier.useless'],
@@ -66,11 +66,21 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.flag.useless.i'],
             ['regex.lint.flag.useless.s'],
             ['regex.lint.flag.useless.m'],
+            // Added after the historical set, so that its emission order
+            // stays as it was.
+            ['regex.lint.quantifier.emptyRepeat'],
+            ['regex.lint.anchor.alternationPrecedence'],
+            ['regex.lint.quantifier.possessiveImpossible'],
+            ['regex.lint.lookaround.impossible'],
+            ['regex.lint.group.empty'],
+            ['regex.lint.charclass.single'],
+            ['regex.lint.literal.multipleSpaces'],
+            ['regex.lint.quantifier.lazyToClass'],
         ], $ruleIds);
     }
 
     #[Test]
-    public function test_all_36_rule_ids_are_covered(): void
+    public function test_all_45_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -80,6 +90,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(36, $ids);
+        $this->assertCount(45, $ids);
     }
 }

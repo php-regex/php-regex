@@ -5,6 +5,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 ## Core Reference
 
 - [Lint Rule Reference](../reference.md)
+- [SonarPHP Regex Rules](sonar.md)
 - [API Reference](api.md)
 - [Diagnostics](diagnostics.md)
 - [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md)

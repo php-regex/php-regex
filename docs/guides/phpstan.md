@@ -238,6 +238,7 @@ custom wiring, reads them in any case.
 | identifier | reported for |
 |---|---|
 | `regex.invalidForTarget` | a pattern the target refuses and the running PHP compiles |
+| `regex.replacement.undefinedGroup` | a constant replacement of `preg_replace()` or `preg_filter()` that refers to a group the pattern does not have, or names one (`${name}`, which PHP never substitutes); when the pattern and the replacement both vary, only a reference no possible pattern defines; always on |
 | `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the tip |
 | `regex.redos.search` | a pattern whose one attempt is proven linear and whose unanchored search is quadratic in PCRE2's interpreter, at the ReDoS threshold `medium` or below |
 | `regex.optimization` | a pattern with a shorter equivalent |

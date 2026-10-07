@@ -9,3 +9,8 @@ CHANGELOG
  * `regex.redos.search`, `Quadratic search (ReDoS): <pattern>`: the quadratic
    cost of an unanchored search whose every attempt is proven linear, under the
    ReDoS setting, from `threshold: medium`.
+ * `regex.replacement.undefinedGroup`, always reported: a constant replacement
+   of `preg_replace()` or `preg_filter()` refers to a group the pattern does
+   not have, or names a group (`${name}`), which PHP never substitutes. A
+   pattern and a replacement that both vary are not paired value by value: a
+   reference is reported only when no possible pattern defines its group.

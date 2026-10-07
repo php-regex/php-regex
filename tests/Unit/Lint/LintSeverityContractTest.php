@@ -45,9 +45,19 @@ final class LintSeverityContractTest extends TestCase
         // Warning rules stay warnings.
         yield 'lazy quantifier at the end' => ['pattern' => '/a\d+?/', 'issueId' => 'regex.lint.quantifier.lazyEnd', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
         yield 'named quantified capture' => ['pattern' => '/(?<n>a)+/', 'issueId' => 'regex.lint.group.quantifiedCapture', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        // The bug rules found by SonarPHP: warnings, none fails a run.
+        yield 'repeat of a nullable body' => ['pattern' => '/(?:a*)+/', 'issueId' => 'regex.lint.quantifier.emptyRepeat', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        yield 'anchor that skips a branch' => ['pattern' => '/^a|b/', 'issueId' => 'regex.lint.anchor.alternationPrecedence', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        yield 'possessive repeat that starves the next atom' => ['pattern' => '/a*+a/', 'issueId' => 'regex.lint.quantifier.possessiveImpossible', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        yield 'impossible word boundary' => ['pattern' => '/a\bb/', 'issueId' => 'regex.lint.anchor.impossible.boundary', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        yield 'contradictory lookahead' => ['pattern' => '/(?=a)b/', 'issueId' => 'regex.lint.lookaround.impossible', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
+        yield 'empty group' => ['pattern' => '/a(?:)b/', 'issueId' => 'regex.lint.group.empty', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
         // Info and Style rules are infos.
         yield 'unnamed quantified capture' => ['pattern' => '/(a)+/', 'issueId' => 'regex.lint.group.quantifiedCapture', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => []];
         yield 'shorthand without u, a style rule' => ['pattern' => '/\w/', 'issueId' => 'regex.lint.unicode.shorthandWithoutU', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['unicode.shorthandWithoutU' => true]];
+        yield 'single-character class, a style rule' => ['pattern' => '/[a]/', 'issueId' => 'regex.lint.charclass.single', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['charclass.single' => true]];
+        yield 'run of spaces, a style rule' => ['pattern' => '/a  b/', 'issueId' => 'regex.lint.literal.multipleSpaces', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['literal.multipleSpaces' => true]];
+        yield 'lazy dot before a delimiter, a perf rule' => ['pattern' => '/".*?"/', 'issueId' => 'regex.lint.quantifier.lazyToClass', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['quantifier.lazyToClass' => true]];
     }
 
     /**

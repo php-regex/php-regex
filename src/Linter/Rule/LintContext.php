@@ -18,13 +18,19 @@ use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal
@@ -178,6 +184,18 @@ final class LintContext
     }
 
     /**
+     * Whether only items that may match nothing, and hold nothing that can
+     * fail, can follow the node wherever it runs: "b*" or "(?:b|)", never
+     * an anchor, a lookaround, a verb or a reference. Whatever the node
+     * matches, the rest of the pattern then matches the empty string after
+     * it, at the first try.
+     */
+    public function onlyEmptyMatchesFollowForEveryCall(NodeInterface $node): bool
+    {
+        return $this->nothingFollows($node, false, true) && !$this->isReenteredBySubroutine($node);
+    }
+
+    /**
      * Whether a subroutine call can run the node again at another point of
      * the match: the node is, or sits inside, a group some call targets, or
      * the pattern recurses into itself whole. What follows the node where it
@@ -268,12 +286,12 @@ final class LintContext
      * The node is the one being checked; its ancestors are read from the
      * traversal cursor.
      */
-    private function nothingFollows(NodeInterface $node, bool $endAnchorsMayFollow): bool
+    private function nothingFollows(NodeInterface $node, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow = false): bool
     {
         $child = $node;
         foreach (array_reverse($this->parentStack) as $parent) {
             $last = match (true) {
-                $parent instanceof SequenceNode => self::onlyCommentsFollow($parent, $child, $endAnchorsMayFollow) ? $child : null,
+                $parent instanceof SequenceNode => self::onlyCommentsFollow($parent, $child, $endAnchorsMayFollow, $emptyMatchesMayFollow) ? $child : null,
                 $parent instanceof AlternationNode => $child,
                 $parent instanceof GroupNode && \in_array($parent->type, self::GROUPS_ENDING_WITH_THEIR_CHILD, true) => $parent->child,
                 default => null,
@@ -289,14 +307,54 @@ final class LintContext
         return true;
     }
 
-    private static function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item, bool $endAnchorsMayFollow): bool
+    private static function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow = false): bool
     {
         $after = \array_slice($sequence->children, (int) array_search($item, $sequence->children, true) + 1);
 
         return [] === array_filter(
             $after,
-            static fn (NodeInterface $next): bool => !$next instanceof CommentNode && !($endAnchorsMayFollow && NodePredicates::isEndAnchorNode($next)),
+            static fn (NodeInterface $next): bool => !$next instanceof CommentNode
+                && !($endAnchorsMayFollow && NodePredicates::isEndAnchorNode($next))
+                && !($emptyMatchesMayFollow && self::alwaysMatchesEmptyFirst($next)),
         );
+    }
+
+    /**
+     * Whether the node may match nothing and holds nothing that can fail
+     * where it stands: no anchor, lookaround, verb, reference or call.
+     */
+    private static function alwaysMatchesEmptyFirst(NodeInterface $node): bool
+    {
+        return NodePredicates::canBeEmpty($node) && !self::holdsATest($node);
+    }
+
+    /**
+     * Whether the node holds anything but structure, characters and
+     * comments: an anchor, an assertion, a lookaround, a verb, a callout, a
+     * conditional, a reference or a call can each fail where it stands.
+     */
+    private static function holdsATest(NodeInterface $node): bool
+    {
+        if ($node instanceof LiteralNode || $node instanceof CharClassNode || $node instanceof CharTypeNode
+            || $node instanceof DotNode || $node instanceof CharLiteralNode || $node instanceof UnicodePropNode
+            || $node instanceof CommentNode
+        ) {
+            return false;
+        }
+
+        if (!$node instanceof SequenceNode && !$node instanceof AlternationNode && !$node instanceof QuantifierNode
+            && !($node instanceof GroupNode && NodePredicates::isTransparentGroup($node->type))
+        ) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsATest($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

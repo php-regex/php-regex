@@ -21,7 +21,9 @@ use PHPRegex\Parser\Node\QuantifierType;
 /**
  * Detects a lazy quantifier nothing follows: the match ends as soon as it
  * may, so the quantifier matches its minimum and "/a\d+?/" matches "a1" of
- * "a123".
+ * "a123". The same holds when only items that may match nothing, and hold
+ * no anchor, lookaround or other test, follow it: "a+?b*" on "aab"
+ * matches "a", the "b*" matching nothing after the first "a".
  *
  * @internal
  */
@@ -49,15 +51,22 @@ final class LazyEndRule extends AbstractLintRule
         $bounds = QuantifierBounds::parse($node->quantifier);
         // A subroutine call runs the quantifier again where something may
         // follow it, and there it takes more than its minimum.
-        if (!$lazy || null === $bounds || $bounds->min === $bounds->max || !$context->endsThePatternForEveryCall($node)) {
+        if (!$lazy || null === $bounds || $bounds->min === $bounds->max) {
             return [];
         }
+
+        $endsThePattern = $context->endsThePatternForEveryCall($node);
+        if (!$endsThePattern && !$context->onlyEmptyMatchesFollowForEveryCall($node)) {
+            return [];
+        }
+
+        $where = $endsThePattern ? 'ends the pattern' : 'is followed only by what may match nothing';
 
         return [new RuleViolation(
             self::ID,
             QuantifierType::Lazy === $node->type
-                ? \sprintf('Lazy quantifier "%s?" ends the pattern, so it always matches its minimum.', $node->quantifier)
-                : \sprintf('Quantifier "%s" is lazy under the U flag and ends the pattern, so it always matches its minimum.', $node->quantifier),
+                ? \sprintf('Lazy quantifier "%s?" %s, so it always matches its minimum.', $node->quantifier, $where)
+                : \sprintf('Quantifier "%s" is lazy under the U flag and %s, so it always matches its minimum.', $node->quantifier, $where),
             $node->getStartPosition(),
             0 === $bounds->min
                 ? 'Remove the quantified item, make the quantifier greedy, or anchor what must follow it.'

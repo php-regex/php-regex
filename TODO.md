@@ -324,24 +324,28 @@ lint JSON key is snake_case.
   the search cost adds about 0.15 ms. Raise the limit or speed up the
   per-attempt proof.
 
-### Still to build
-
-- Sonar parity lints (designed, not started): `regex.lint.quantifier.emptyRepeat`
-  (S5842), `regex.lint.anchor.alternationPrecedence` (S5850, silent on the
-  `^\s+|\s+$` trim idiom), `regex.lint.quantifier.possessiveImpossible`
-  (S5994), `regex.lint.anchor.impossible.boundary` (S5996, `\b`/`\B`),
-  `regex.lint.lookaround.impossible` (S6002), the wider
-  `regex.lint.quantifier.lazyEnd` (S6019), the PHPStan identifier
-  `regex.replacement.undefinedGroup` (S6328: `$10` with fewer groups,
-  `${name}` never substituted), `regex.lint.group.empty` (S6331, `(?:)` only),
-  and, off by default, `regex.lint.charclass.single` (S6397),
-  `regex.lint.literal.multipleSpaces` (S6326) and
-  `regex.lint.quantifier.lazyToClass` (S5857); plus `docs/reference/sonar.md`
-  mapping every Sonar regex rule on PHP. No new rule fails CI (warnings and
-  style only).
-
 ### Smaller findings, each confirmed against the engine
 
+- The Symfony route requirement normalizer anchors and groups a requirement
+  as the route compiler does, but leaves out the flags it compiles with:
+  `sD`, plus `u` under the `utf8` option, after a leading `/`. A second
+  anchor (`^^a$$`, `x*|^y`, `(?m)^a$|b`) matches in the linted pattern and
+  never in the route; `.*+\n` under `s` is not reported. Mirroring the flags
+  changes the verdict on every route, so it is a decision of its own.
+  The compiler also strips a trailing `$` or `\z` that is escaped
+  (`a\$` compiles to `(?P<x>a\)`, which fails at run time), where the
+  normalizer keeps it as a literal and lints a valid pattern.
+- `NodePredicates::applyInlineFlags()` keeps a flag string that loses `xx`
+  (read as `x`), the ASCII options (`(?a)(?-aD)` keeps `\w` ASCII) and the
+  `r` a `(?^)` drops: the lint rules that ask the automata stay silent under
+  those options rather than carry them.
+- `regex.lint.quantifier.emptyRepeat` stays silent where `quantifier.nested`,
+  `quantifier.assertion`, `dotstar.nested` or `alternation.empty` report the
+  repeat, even when that rule is turned off: `LintContext` does not say which
+  rules are on.
+- An alternative of `(*COMMIT)`, `(*SKIP)` or `(*ACCEPT)` alone matches the
+  empty string, as an empty one does, but `regex.lint.alternation.empty` does
+  not report it.
 - The language server never runs the validator (only the parser), so it
   misses every validation error and the PHP range check.
 - The linter validates each pattern at every PHP version of the range; a

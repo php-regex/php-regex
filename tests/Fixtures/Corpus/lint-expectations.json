@@ -4380,6 +4380,7 @@
     {
         "pattern": "/^[$]|^\\d+$|[^0-9a-zA-Z$_\\x80-\\xffff]/",
         "issues": [
+            "regex.lint.anchor.alternationPrecedence",
             "regex.lint.charclass.redundant"
         ]
     },
@@ -6397,6 +6398,7 @@
     {
         "pattern": "/lbl_city|lbl_country|lbl_billing_address|lbl_alt_address|lbl_shipping_address|lbl_postal_code|lbl_state$/si",
         "issues": [
+            "regex.lint.anchor.alternationPrecedence",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -6646,7 +6648,8 @@
     {
         "pattern": "#% (\\d+) \\. (escape|modify(?:Content)?) ( \\( ([^()]*+|(?-2))+ \\) )#xi",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.emptyRepeat"
         ]
     },
     {
@@ -8024,7 +8027,8 @@
     {
         "pattern": "/(^|_|\\.)+(.)/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.emptyRepeat"
         ]
     },
     {
@@ -8930,7 +8934,8 @@
     {
         "pattern": "/(^|_|\\.)++(.)/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.emptyRepeat"
         ]
     },
     {
@@ -8996,7 +9001,8 @@
     {
         "pattern": "{\\(([^()]*+|(?R))*\\)(?: *: *[^ ]++)?|<([^<>]*+|(?R))*>|\\{([^{}]*+|(?R))*\\}}",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.emptyRepeat"
         ]
     },
     {

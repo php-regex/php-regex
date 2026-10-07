@@ -93,6 +93,10 @@ parameters:
           identifier: argument.type
           path: tests/Unit/Parser/CaptureShapeAnalyzerTest.php
           count: 2
+        # The replacement test asks the engine what a reference to a missing
+        # group gives: those calls are the ones the rule reports, on purpose.
+        - identifier: regex.replacement.undefinedGroup
+          path: tests/Integration/Bridge/PHPStan/RegexParserRuleReplacementGroupTest.php
         # The contract test pins what the types already say: the replace and
         # split rules have no PHP floor, and a later change must not add one.
         - identifier: function.impossibleType

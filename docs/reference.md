@@ -11,9 +11,11 @@ This comprehensive reference documents every diagnostic, lint rule, and optimiza
 | [Anchors](#anchors)                          | Anchor positioning issues         |
 | [Quantifiers](#quantifiers)                  | Quantifier-related patterns       |
 | [Groups](#groups)                            | Group-related diagnostics         |
+| [Lookarounds](#lookarounds)                  | Lookahead contradictions          |
 | [Alternation](#alternation)                  | Alternation patterns              |
 | [Character Classes](#character-classes)      | Character class issues            |
 | [Escapes](#escapes)                          | Escape sequence problems          |
+| [Literals](#literals)                        | Literal text that reads badly     |
 | [Bytes Without /u](#bytes-without-u)        | Multibyte text read as bytes      |
 | [Inline Flags](#inline-flags)                | Inline flag diagnostics           |
 | [ReDoS Security](#security-redos)            | Catastrophic backtracking         |
@@ -142,11 +144,12 @@ preg_match('/^\d{4}-\d{2}-\d{2}$/', $date);
 
 ### Anchor Conflicts
 
-**Identifier:** `regex.lint.anchor.impossible.start`, `regex.lint.anchor.impossible.end`
+**Identifier:** `regex.lint.anchor.impossible.start`, `regex.lint.anchor.impossible.end`, `regex.lint.anchor.impossible.boundary`
 
 **When it triggers:**
 - `^` appears after consuming tokens (without the `m` flag, including an inline `(?m)` scope) — cannot match start
 - `$` appears before consuming tokens that cannot continue a line end — asserts end too early. `$` and `\Z` still match before the subject's final newline (and a multiline `$` before any newline), so a tail such as `$\n` is fine; under the `D` modifier `$` is strict like `\z` (unless `m` is set, which disables `D`), and `\z` always is
+- `\b` sits between two word characters or two non-word characters, or `\B` between a word and a non-word character (`regex.lint.anchor.impossible.boundary`): `/a\bb/` and `/a\B!/` never match. Both neighbours must be items that read exactly one character (a letter, an escape, a class, a dot, `\d`...); an optional one may be absent, so `/a?\bb/` is not reported. What a word character is follows the pattern's mode: under `/u` PHP turns UCP on, so `é` is one and `/é\bx/u` is reported, while in byte mode the last byte of `é` is not, and `/é\bx/` matches `éx`. An ASCII character is a word character or not under every option, and is decided as such; any other atom is put to the automata, which the rule asks at most eight questions about one pattern, staying silent for the rest of it past them. The rule stays silent in a pattern that sets an ASCII option (`(?a)`, `(?aD)`, …) or `(?xx)`, or sets `r` beside a `(?^)`: the flags it reads do not say which of them is in force.
 
 **Visual Explanation:**
 ```
@@ -156,9 +159,45 @@ Valid:
 Invalid:
   /a^bc/  -> ^ after consuming 'a'
   /$abc/  -> $ before consuming anything
+  /a\bb/  -> no boundary between two letters
 ```
 
 **Fix:** Move anchors to the correct position.
+
+---
+
+### Anchor Precedence in Alternation
+
+**Identifier:** `regex.lint.anchor.alternationPrecedence`
+
+**When it triggers:** An anchor binds tighter than `|`: `/^a|b|c$/` is `^a`, or `b` anywhere,
+or `c$`. The rule speaks of intent and never says the pattern is wrong. It fires when the
+first alternative of the pattern starts with `^`, `\A` or `\G` (past the option settings,
+verbs and comments before it), or the last one ends with `$`, `\z` or `\Z`, and some
+alternative has an anchor on neither side. The anchor may sit inside a group that changes
+nothing about where the alternative matches (`(?:b$)`, `(b$)`, `(?>b$)`, a one-alternative
+`(?|b$)`) or be all a positive lookaround asserts (`b(?=$)`). An alternation whose every
+alternative is anchored on one side is left alone, as the trim idiom `/^\s+|\s+$/` is, and so
+is an alternative that is the anchor alone (`/a|$/`: "or the end"). An alternative of verbs
+and comments only, as `(*FAIL)`, is not counted, and an empty one (`/^a|/`) is
+`regex.lint.alternation.empty`'s. A verb that ends the match
+attempt on backtracking, accepts at once or fails (`(*COMMIT)`, `(*PRUNE)`, `(*SKIP)`,
+`(*ACCEPT)`, `(*FAIL)`), in an alternative that reads something, leaves the rule silent: it can
+keep the engine from the other alternatives (`/(*COMMIT)^a|b/` and `/^(*COMMIT)a|b/` never
+match `b`), and a failing verb would carry into the grouped form, which then matches nothing. The tip keeps the options before the anchor (`(?i)^(?:a|b)`), keeps text
+quoted with `\Q...\E` quoted (`^(?:a|\Qb)\E)` for `/^a|\Qb)\E/`), and leaves out the comments
+ending each alternative, so that it compiles under `/x`.
+
+**Example:**
+```php
+// WARNING: "b" matches anywhere
+preg_match('/^a|b|c$/', 'xbx');      // 1
+
+// PREFERRED, if the anchors are meant for every alternative
+preg_match('/^(?:a|b|c)$/', 'xbx');  // 0
+```
+
+**Fix:** Group the alternatives, as the tip shows, when the anchors are meant for all of them.
 
 ---
 
@@ -301,6 +340,10 @@ An atom guarded by a negative lookahead, as in `(?:.(?!x))*`, does not match eve
 
 **When it triggers:** A lazy quantifier, or a greedy one under `/U`, has nothing after it
 in the pattern. The match ends as soon as it may, so the quantifier matches its minimum.
+The same holds when only items that may match nothing follow it, and none of them holds an
+anchor, a lookaround or another test that can fail: in `/a+?b*/` on `aab`, `a+?` takes one
+`a`, `b*` matches nothing after it, and the match is `a`. A `$`, a `\b` or a lookahead after
+the suffix lets the quantifier take more, and the rule stays silent.
 Under `/U` the message says where the laziness comes from:
 `Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.`
 
@@ -322,6 +365,92 @@ preg_match('/id-\d+?$/', 'id-123', $m); // "id-123": something follows
 ```
 
 **Fix:** Make the quantifier greedy, write its minimum, or anchor what must follow it.
+
+---
+
+### Repeat That Can Match Empty
+
+**Identifier:** `regex.lint.quantifier.emptyRepeat`
+
+**When it triggers:** An unbounded quantifier (`*`, `+`, `{n,}`) repeats an item that can
+match the empty string: `(a*)*`, `(?:a|b?)+`, `(?:a{0,2})+`. PCRE ends the loop on an empty
+iteration, which matches nothing more. When every way the item matches the empty string goes
+through a capturing group, that last, empty iteration sets the capture to the empty string,
+and the message says so; in `(?:(a)|b?)*` the empty way goes around the group, and `$m[1]`
+keeps its `a`, and a capture inside a lookaround keeps what the lookaround read:
+`(?:x|(?=(a)))*` on `xa` captures `a`. An item that fails rather than match the empty string is sound:
+`(?:a|(*FAIL))*` and `(?:a|(?!))*` are not reported. Where another rule already reports the
+same repeat (an empty alternative, a quantified lookaround, a nested quantifier), this one
+stays silent, even when the configuration turns that other rule off: `(?:a*)*b` with
+`quantifier.nested` off is reported by neither.
+
+**Example:**
+```php
+// WARNING: the capture ends empty
+preg_match('/(a*)*/', 'aaa', $m);  // $m is ["aaa", ""]
+
+// PREFERRED
+preg_match('/(a*)/', 'aaa', $m);   // $m is ["aaa", "aaa"]
+```
+
+**Fix:** Make the repeated item read at least one character, or drop the outer quantifier.
+The tip gives a rewrite only where one matches the same text: `a*` for `(?:a*)+`, `(?:a?)*`
+or `(?:a{0,2})+`. Elsewhere, as for `(?:a|b?)+` (which is `(?:a|b)*`) or `(?:a{0})+` (which
+reads nothing), the issue comes without a tip.
+
+---
+
+### Impossible Possessive Quantifier
+
+**Identifier:** `regex.lint.quantifier.possessiveImpossible`
+
+**When it triggers:** A possessive repeat (`a*+`), or a greedy one inside an atomic group
+(`(?>a*)`), takes every character the atom right after it could read, and never gives one
+back: `/a*+a/`, `/\d++5/` and `/a*+A/i` never match through there. Decided on atoms that
+read exactly one character, under the flags in force at each, the automata comparing their
+sets: `/a*+A/` matches `A`, `/\w++é/` matches `aé` in byte mode, `/\w++é/u` never does. A
+bounded repeat stops at its bound (`/^a{0,3}+a$/` matches `aaaa`) and an atom that may match
+nothing (`/a*+a?/`) can step aside: neither is reported. Past the eighth repeat it asks the
+automata about in a pattern, the rule stays silent for the rest of it. The rule stays silent in a pattern that sets an ASCII option (`(?a)`, `(?aD)`, …) or `(?xx)`, or sets `r` beside a `(?^)`: the flags it reads do not say which of them is in force.
+
+**Example:**
+```php
+// WARNING: the repeat takes every digit, the "5" included
+preg_match('/\d++5/', '12345');  // 0
+
+// PREFERRED
+preg_match('/\d+5/', '12345');   // 1
+```
+
+**Fix:** Make the repeat greedy, or exclude from its set what must follow it.
+
+---
+
+### Lazy Quantifier Before a Delimiter
+
+**Identifier:** `regex.lint.quantifier.lazyToClass` (off by default)
+
+**When it triggers:** A lazy dot, `.*?` or `.+?`, is followed by one closing character and
+nothing that can fail comes after it: `/".*?"/` backtracks one character at a time where
+`/"[^"\n]*"/` reads the run at once, and the two write the same `$matches` on every subject.
+The tip spells the class: `[^"\n]*` without `s`, `[^"]*` under `s`. The automata prove the
+two patterns equivalent before the rule speaks; it stays silent when something follows the
+closing character (in `/".*?"x/` on `"a"b"x` the lazy dot crosses the middle quote, the class
+cannot), and under a newline convention other than `\n` (`(*CRLF)`, `(*ANYCRLF)`, `(*CR)`...),
+where the dot stops at another character, and past the eighth lazy dot it asks the automata
+about in a pattern. A perf rule: turn it on with
+`"quantifier.lazyToClass": true` under `checks.lint.rules`.
+
+**Example:**
+```php
+// INFO: backtracks at each character
+preg_match('/<.*?>/', '<a><b>', $m);       // "<a>"
+
+// PREFERRED: same match, read at once
+preg_match('/<[^>\n]*>/', '<a><b>', $m);  // "<a>"
+```
+
+**Fix:** Write the negated class the tip gives.
 
 ---
 
@@ -354,6 +483,13 @@ preg_match('/(?=\d)\w/', 'a');   // 0
 **Identifier:** `regex.lint.group.redundant`
 
 **When it triggers:** A non-capturing group wraps a single atomic token without changing precedence.
+An empty group is `regex.lint.group.empty`'s, and a group that keeps an escape apart from
+the digit after it is not redundant: `(a)\1(?:0)` matches `aa0`, `(a)\10` does not, and
+`(?:\N){U+41}` reads `{U+41}` as text where `\N{U+41}` is the code point under `/u`, and does
+not compile without it. Neither is a group that keeps braces from reading as a quantifier, `a{(?:2)}` (it matches `a{2}`,
+`a{2}` matches `aa`), nor a group a quantifier repeats around anything but one character:
+without the group, `(?:\Qab\E)+` repeats the `b` alone, `(?:é)+` without `/u` the last byte
+of the letter, and `(?:^)+` does not compile. `(?:a)+` is reported: `a+` is the same.
 
 **Example:**
 ```php
@@ -365,6 +501,64 @@ preg_match('/foo/', $input);
 ```
 
 **Fix:** Remove the unnecessary group.
+
+---
+
+### Empty Group
+
+**Identifier:** `regex.lint.group.empty`
+
+**When it triggers:** A non-capturing or atomic group is empty, `(?:)` or `(?>)`: it matches
+the empty string and changes nothing. An empty capturing group `()` is a placeholder that
+numbers a group and is left alone, as are empty lookarounds, which have rules of their own.
+So is a `(?:)` that keeps an escape apart from the digit after it, the form the library's own
+printer writes: `(a)\1(?:)0` is not `(a)\10`, and `\01(?:)2` is not the newline `\012`; one
+that keeps braces from a count, `a{(?:)2}`, `a{1,(?:)2}` or `a{(?:),2}` (`{,2}` is a
+quantifier since PCRE2 10.43); and one a quantifier repeats: `a(?:)?` matches `a` alone,
+`a?` the empty string too. An unbounded repeat of an empty group, `(?>)+`, is
+`regex.lint.quantifier.emptyRepeat`'s.
+
+**Example:**
+```php
+// WARNING: the group does nothing
+preg_match('/a(?:)b/', 'ab');  // 1
+
+// PREFERRED
+preg_match('/ab/', 'ab');      // 1
+```
+
+**Fix:** Remove the group.
+
+---
+
+## Lookarounds
+
+### Impossible Lookaround
+
+**Identifier:** `regex.lint.lookaround.impossible`
+
+**When it triggers:** A lookahead contradicts what the pattern reads after it: `(?=a)b` asks
+for an `a` where the pattern reads a `b`, `(?!a)a` forbids the `a` it reads. The automata
+decide it: what follows the lookahead runs through the enclosing groups and quantifiers
+(`/(?:x(?=a))+b/` is reported: another `x` or the `b` comes next, never an `a`), read for a
+few items. A contradiction in one alternative is reported though the pattern still matches
+through another (`/(?:x(?=a)|y)b/`). The rule stays silent where it cannot read: a
+backreference, a lookbehind or `\K` after the lookahead, a group a subroutine call runs from
+elsewhere, a pattern past the automata's work cap or past the eighth lookahead it asks them
+about, and in UTF mode a word boundary, `\w` or a
+Unicode property near the lookahead. A repeated lookahead is
+`regex.lint.quantifier.assertion`'s, and an empty negative lookahead `(?!)` fails on purpose. The rule stays silent in a pattern that sets an ASCII option (`(?a)`, `(?aD)`, …) or `(?xx)`, or sets `r` beside a `(?^)`: the flags it reads do not say which of them is in force.
+
+**Example:**
+```php
+// WARNING: a digit is required where a letter is read
+preg_match('/(?=\d)[a-z]+/', 'a1');  // 0
+
+// WARNING: the "a" is forbidden, then read
+preg_match('/(?!a)a/', 'aa');         // 0
+```
+
+**Fix:** Fix the lookahead or what follows it, or remove the alternative that cannot match.
 
 ---
 
@@ -628,6 +822,34 @@ preg_match('/^[\w\*]$/', '*');   // 1, not reported
 
 ---
 
+### Single-Character Class
+
+**Identifier:** `regex.lint.charclass.single` (off by default)
+
+**When it triggers:** A class holds one character, `[a]`, which reads the same without the
+class. A style rule: turn it on with `"charclass.single": true` under `checks.lint.rules`.
+A class holding one metacharacter (`[.]`, `[*]`, and under `x`, `[#]` or any white space `x`
+skips: a space, tab, line feed, vertical tab, form feed, carriage return or next line, and
+under `/u` U+200E, U+200F, U+2028 and U+2029) is the clearer escape and is left alone, as are a negated class `[^a]`, the delimiter `[\/]`, an escape a
+class reads otherwise (`[\b]` is a backspace, `[\1]` an octal escape where `\1` is a
+reference), a multibyte character without `/u`, whose bytes `[é]` reads one at a time, and a
+character that would join the text around the class: `\1[0]` is not `\10`, `a{[2]}` not
+`a{2}`. The message quotes the class as written, `[\Qa\E]`. `[aa]` is
+`regex.lint.charclass.redundant`'s.
+
+**Example:**
+```php
+// INFO: the class adds nothing
+preg_match('/x[a]y/', 'xay');  // 1
+
+// PREFERRED
+preg_match('/xay/', 'xay');    // 1
+```
+
+**Fix:** Write the character alone.
+
+---
+
 ## Escapes
 
 ### Suspicious Escapes
@@ -651,6 +873,31 @@ preg_match('/\8/', $input);  // Ambiguous: not a valid escape
 ```
 
 **Fix:** Correct the codepoint or use valid escapes.
+
+---
+
+## Literals
+
+### Multiple Spaces
+
+**Identifier:** `regex.lint.literal.multipleSpaces` (off by default)
+
+**When it triggers:** Two or more literal spaces in a row are hard to count; ` {n}` says how
+many. A style rule: turn it on with `"literal.multipleSpaces": true` under
+`checks.lint.rules`. Only spaces written bare are counted: under `x` or `xx`, or after
+`(?x)`, they are not literal, and quoted (`\Q  \E`), escaped or class spaces are not bare. A
+quantifier on the last space enters the count: the tip for `/a  +/` is ` {2,}`.
+
+**Example:**
+```php
+// INFO: how many spaces?
+preg_match('/a   b/', 'a   b');   // 1
+
+// PREFERRED
+preg_match('/a {3}b/', 'a   b');  // 1
+```
+
+**Fix:** Write the space once with its count.
 
 ---
 
@@ -937,24 +1184,31 @@ are a separate vocabulary: they name advice, not a refused pattern.
 
 ## Quick Reference Table
 
-Every lint rule reports at warning severity unless the table says otherwise. A rule of
+Every lint rule reports at warning severity unless the table says otherwise. The rules
+SonarPHP users know are mapped to these ids in [SonarPHP Regex Rules](reference/sonar.md). A rule of
 error severity fails `regex lint` (exit code 1); a warning is printed and leaves the code
 at 0; an info, `style` included, is printed under an `INFO` badge and leaves the code at 0.
 
 | Category    | Rule ID                                                                                   | Severity | Quick Fix                         |
 |-------------|-------------------------------------------------------------------------------------------|----------|-----------------------------------|
 | Flags       | `regex.lint.flag.useless.s`, `.m`, `.i`                                                   | warning  | Remove the unused flag            |
-| Anchors     | `regex.lint.anchor.impossible.start`, `.end`                                              | warning  | Move the anchor                   |
+| Anchors     | `regex.lint.anchor.impossible.start`, `.end`, `.boundary`                                 | warning  | Move the anchor                   |
+| Anchors     | `regex.lint.anchor.alternationPrecedence`                                                 | warning  | Group the alternatives            |
 | Quantifiers | `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested`                               | warning  | Use atomic groups                 |
 | Quantifiers | `regex.lint.quantifier.useless`, `.zero`, `.concatenation`, `.lazyEnd`, `.assertion`      | warning  | Simplify the quantifier           |
-| Groups      | `regex.lint.group.redundant`                                                              | warning  | Remove the group                  |
+| Quantifiers | `regex.lint.quantifier.emptyRepeat`, `.possessiveImpossible`                              | warning  | Fix the repeated item             |
+| Quantifiers | `regex.lint.quantifier.lazyToClass` (off by default)                                      | perf     | Use a negated class               |
+| Groups      | `regex.lint.group.redundant`, `.empty`                                                    | warning  | Remove the group                  |
+| Lookarounds | `regex.lint.lookaround.impossible`                                                        | warning  | Fix the lookahead                 |
 | Groups      | `regex.lint.group.quantifiedCapture`                                                      | info for an unnamed group, warning for a named one | Repeat a non-capturing group |
 | Alternation | `regex.lint.alternation.duplicateDisjunction`, `.empty`, `.overlap`, `.dotNewline`        | warning  | Simplify or use atomic            |
 | Alternation | `regex.lint.overlap.charset`                                                              | warning  | Use atomic or merge the sets      |
 | Backrefs    | `regex.lint.backref.useless`, `.undefined`                                                | warning  | Move or remove the backreference  |
 | Character   | `regex.lint.charclass.redundant`, `.duplicateChars`, `.suspiciousRange`, `.suspiciousPipe`, `.literalMetachar`, `.backrefAsOctal` | warning | Clean up the class |
+| Character   | `regex.lint.charclass.single` (off by default)                                            | style    | Write the character alone         |
 | Ranges      | `regex.lint.range.useless`                                                                | warning  | Replace with literals             |
 | Escapes     | `regex.lint.escape.suspicious`                                                            | warning  | Fix the escape sequence           |
+| Literals    | `regex.lint.literal.multipleSpaces` (off by default)                                      | style    | Count the spaces                  |
 | Unicode     | `regex.lint.unicode.multibyteInClassWithoutU`, `.quantifiedMultibyteWithoutU`, `.propertyWithoutU`, `.bracedHexWithoutU` | error | Add the `/u` flag |
 | Unicode     | `regex.lint.unicode.shorthandWithoutU` (off by default)                                   | style    | Add the `/u` flag                 |
 | Inline      | `regex.lint.flag.redundant`, `.override`                                                  | warning  | Remove or scope the inline flag   |

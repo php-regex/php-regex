@@ -82,6 +82,15 @@ final class LintConfigSchema
         'escape.suspicious' => ['Warn about suspicious escape sequences.', true],
         'range.useless' => ['Warn about useless character ranges.', true],
         'overlap.charset' => ['Warn about overlapping character sets in alternations.', true],
+        'quantifier.emptyRepeat' => ['Warn about an unbounded quantifier on an item that can match the empty string.', true],
+        'anchor.alternationPrecedence' => ['Warn when an anchor on the first or last alternative leaves another alternative unanchored, as in ^a|b.', true],
+        'quantifier.possessiveImpossible' => ['Warn about a possessive repeat that takes every character the atom after it could read.', true],
+        'anchor.impossible.boundary' => ['Warn about a word boundary its two neighbouring characters contradict.', true],
+        'lookaround.impossible' => ['Warn about a lookahead the pattern after it contradicts.', true],
+        'group.empty' => ['Warn about an empty non-capturing or atomic group.', true],
+        'charclass.single' => ['Report a character class holding a single character (style).', false],
+        'literal.multipleSpaces' => ['Report a run of literal spaces, clearer as a counted repeat (style).', false],
+        'quantifier.lazyToClass' => ['Report a lazy dot before a single closing character, faster as a negated class (perf).', false],
     ];
 
     /**
@@ -405,7 +414,7 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU.',
+                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces and quantifier.lazyToClass.',
                     'additionalProperties' => false,
                     'properties' => $rules,
                 ],

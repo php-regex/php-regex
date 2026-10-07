@@ -48,7 +48,7 @@ final class RegexAnalysisServiceTest extends TestCase
     public function test_trivial_alternation_skips_risk_checks(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
-        $pattern = new PatternOccurrence('#^en|fr|de$#', 'file.php', 1, 'route:test', 'en|fr|de');
+        $pattern = new PatternOccurrence('#^(?:en|fr|de)$#', 'file.php', 1, 'route:test', 'en|fr|de');
 
         $issues = $service->lint([$pattern]);
 

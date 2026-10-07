@@ -38,7 +38,9 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.alternation.duplicateDisjunction' => ['/foo|foo/', '/foo|bar/'],
         'regex.lint.alternation.empty' => ['/a|/', '/a|b/'],
         'regex.lint.alternation.overlap' => ['/(foo|foobar)+/', '/(foo|bar)+/'],
+        'regex.lint.anchor.alternationPrecedence' => ['/^a|b/', '/^(?:a|b)/'],
         'regex.lint.anchor.impossible.end' => ['/a$b/', '/ab$/'],
+        'regex.lint.anchor.impossible.boundary' => ['/a\bb/', '/a\b!/'],
         'regex.lint.anchor.impossible.start' => ['/^a^/', '/^ab/'],
         'regex.lint.backref.undefined' => ['/(a)\2/', '/(a)\1/'],
         'regex.lint.backref.useless' => ['/(a\1)/', '/(a)\1/'],
@@ -46,6 +48,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.charclass.duplicateChars' => ['/[0-9\d]/', '/[0-9a-f]/'],
         'regex.lint.charclass.literalMetachar' => ['/[\w+]/', '/\w+/'],
         'regex.lint.charclass.redundant' => ['/[aa]/', '/[ab]/'],
+        'regex.lint.charclass.single' => ['/[a]/', '/[^a]/'],
         'regex.lint.charclass.suspiciousPipe' => ['/[foo|bar]/', '/foo|bar/'],
         'regex.lint.charclass.suspiciousRange' => ['/[a-Z]/', '/[a-z]/'],
         'regex.lint.dotstar.nested' => ['/(?:.*)*/', '/.*/'],
@@ -55,13 +58,19 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.flag.useless.i' => ['/123/i', '/abc/i'],
         'regex.lint.flag.useless.m' => ['/abc/m', '/^abc/m'],
         'regex.lint.flag.useless.s' => ['/abc/s', '/a.c/s'],
+        'regex.lint.group.empty' => ['/a(?:)b/', '/a()b/'],
         'regex.lint.group.quantifiedCapture' => ['/(a)*/', '/(?:a)*/'],
         'regex.lint.group.redundant' => ['/(?:a)/', '/(?:ab)+/'],
+        'regex.lint.literal.multipleSpaces' => ['/a  b/', '/a {2}b/'],
+        'regex.lint.lookaround.impossible' => ['/(?=a)b/', '/(?=a)[ab]/'],
         'regex.lint.overlap.charset' => ['/([a-m]|[a-z])+/', '/([a-m]|[n-z])+/'],
         'regex.lint.quantifier.assertion' => ['/(?=a)?b/', '/(?=a)b/'],
         'regex.lint.quantifier.concatenation' => ['/.*.*x/', '/.*x/'],
+        'regex.lint.quantifier.emptyRepeat' => ['/(?:a*)+/', '/(?:a*b)+/'],
         'regex.lint.quantifier.lazyEnd' => ['/a.*?/', '/a.*?b/'],
+        'regex.lint.quantifier.lazyToClass' => ['/".*?"/', '/".*?"x/'],
         'regex.lint.quantifier.nested' => ['/(a+)+$/', '/(?>a+)+$/'],
+        'regex.lint.quantifier.possessiveImpossible' => ['/a*+a/', '/a*+b/'],
         'regex.lint.quantifier.useless' => ['/a{1}/', '/a{2}/'],
         'regex.lint.quantifier.zero' => ['/a{0}/', '/a{1,}/'],
         'regex.lint.range.useless' => ['/[a-a]/', '/[a-f]/'],
@@ -75,7 +84,12 @@ final class LintRuleExamplesTest extends TestCase
     /**
      * Rules the linter leaves off unless the configuration asks for them.
      */
-    private const ENABLE_ALL = ['unicode.shorthandWithoutU' => true];
+    private const ENABLE_ALL = [
+        'unicode.shorthandWithoutU' => true,
+        'charclass.single' => true,
+        'literal.multipleSpaces' => true,
+        'quantifier.lazyToClass' => true,
+    ];
 
     #[Test]
     #[DataProvider('provideExamples')]

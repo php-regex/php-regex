@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\EscapeJoin;
+use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -36,6 +38,12 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 
 /**
  * Detects non-capturing groups that wrap a single atom and can be removed.
+ * An empty group is group.empty's; a group that keeps an escape apart from
+ * the digit after it, as in "(a)\1(?:0)", or braces from a count, as in
+ * "a{(?:2)}", cannot go. A group a quantifier repeats goes only around one
+ * character, as in "(?:a)+": without the group, "(?:\Qab\E)+" repeats the
+ * "b" alone, "(?:é)+" without UTF mode the last byte of the letter, and
+ * "(?:^)+" is refused.
  *
  * @internal
  */
@@ -57,7 +65,12 @@ final class RedundantGroupRule extends AbstractLintRule
             return [];
         }
 
-        if (GroupType::NonCapturing !== $node->type || !$this->isRedundantGroup($node->child)) {
+        if (GroupType::NonCapturing !== $node->type
+            || ($node->child instanceof LiteralNode && '' === $node->child->value)
+            || !$this->isRedundantGroup($node->child)
+            || EscapeJoin::groupSeparatesAnEscape($node, $context)
+            || (self::isQuantified($context) && !self::readsOneCharacter($node->child, $context))
+        ) {
             return [];
         }
 
@@ -96,5 +109,41 @@ final class RedundantGroupRule extends AbstractLintRule
             || $node instanceof CommentNode
             || $node instanceof CalloutNode
             || $node instanceof ScriptRunNode;
+    }
+
+    /**
+     * Whether the atom reads one character, which a quantifier repeats
+     * whole: a literal written as one character (not quoted with \Q, one
+     * byte without UTF mode), an escape, a class, a dot or a property.
+     */
+    private static function readsOneCharacter(NodeInterface $node, LintContext $context): bool
+    {
+        if ($node instanceof SequenceNode) {
+            return self::readsOneCharacter($node->children[0], $context); // never taken: the parser folds a one-item sequence into its item
+        }
+
+        if ($node instanceof LiteralNode) {
+            $length = $context->pattern->unicodeMode ? mb_strlen($node->value, 'UTF-8') : \strlen($node->value);
+
+            return 1 === $length && !str_contains(LanguageQuestions::text($node, $context), '\Q');
+        }
+
+        return $node instanceof CharTypeNode
+            || $node instanceof CharClassNode
+            || $node instanceof CharLiteralNode
+            || $node instanceof DotNode
+            || $node instanceof UnicodePropNode
+            || $node instanceof ControlCharNode;
+    }
+
+    /**
+     * Whether the group being checked is the operand of a quantifier, read
+     * from the traversal cursor.
+     */
+    private static function isQuantified(LintContext $context): bool
+    {
+        $parents = $context->parents();
+
+        return end($parents) instanceof QuantifierNode;
     }
 }

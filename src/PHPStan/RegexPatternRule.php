@@ -28,7 +28,10 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepairer;
+use PHPRegex\Parser\Analysis\GroupNumbering;
+use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -43,6 +46,8 @@ use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\Type\Constant\ConstantArrayType;
+use PHPStan\Type\Type;
 
 /**
  * Reports, in `preg_*` calls, the patterns the targeted PHP and PCRE2 refuse
@@ -64,6 +69,12 @@ final class RegexPatternRule implements Rule
      * quadratic.
      */
     public const IDENTIFIER_REDOS_SEARCH = 'regex.redos.search';
+
+    /**
+     * A constant replacement of preg_replace() or preg_filter() refers to a
+     * group the pattern does not have; always reported.
+     */
+    public const IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP = 'regex.replacement.undefinedGroup';
 
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
     private const ISSUE_ID_REDOS_SEARCH = 'regex.lint.redos.search';
@@ -135,6 +146,15 @@ final class RegexPatternRule implements Rule
         'regex.lint.unicode.multibyteInClassWithoutU' => self::DOC_BASE_URL.'#multibyte-character-in-a-class',
         'regex.lint.unicode.quantifiedMultibyteWithoutU' => self::DOC_BASE_URL.'#quantifier-after-a-multibyte-character',
         'regex.lint.unicode.propertyWithoutU' => self::DOC_BASE_URL.'#bytes-without-u',
+        'regex.lint.quantifier.emptyRepeat' => self::DOC_BASE_URL.'#repeat-that-can-match-empty',
+        'regex.lint.anchor.alternationPrecedence' => self::DOC_BASE_URL.'#anchor-precedence-in-alternation',
+        'regex.lint.quantifier.possessiveImpossible' => self::DOC_BASE_URL.'#impossible-possessive-quantifier',
+        'regex.lint.anchor.impossible.boundary' => self::DOC_BASE_URL.'#anchor-conflicts',
+        'regex.lint.lookaround.impossible' => self::DOC_BASE_URL.'#impossible-lookaround',
+        'regex.lint.group.empty' => self::DOC_BASE_URL.'#empty-group',
+        'regex.lint.charclass.single' => self::DOC_BASE_URL.'#single-character-class',
+        'regex.lint.literal.multipleSpaces' => self::DOC_BASE_URL.'#multiple-spaces',
+        'regex.lint.quantifier.lazyToClass' => self::DOC_BASE_URL.'#lazy-quantifier-before-a-delimiter',
     ];
 
     /**
@@ -255,6 +275,11 @@ final class RegexPatternRule implements Rule
             }
         }
 
+        $replacementArg = 'preg_replace' === $functionName || 'preg_filter' === $functionName ? self::argument($args, 1, 'replacement') : null;
+        if (null !== $replacementArg) {
+            $errors = array_merge($errors, $this->undefinedReplacementGroups($scope->getType($patternArg), $scope->getType($replacementArg), $node->getLine(), $functionName));
+        }
+
         return $errors;
     }
 
@@ -321,6 +346,185 @@ final class RegexPatternRule implements Rule
             ->identifier(self::IDENTIFIER_TRIVIAL_MATCH)
             ->tip('Both say yes for exactly the same subjects, as the automata prove, and the function needs no regex engine; preg_match() returns 1 or 0 where the function returns true or false.')
             ->build()];
+    }
+
+    /**
+     * The references of a constant replacement to a group the pattern does
+     * not have, and the "${name}" PHP never substitutes. An array of patterns
+     * takes the replacement of the same position in an array of
+     * replacements (none: the empty string), or the one string replacement.
+     *
+     * When the pattern and the replacement both vary, they may vary together
+     * (a ternary on one condition, two maps read with one key), which the
+     * types do not keep: a reference is then reported only if no pattern
+     * the call may take defines its group. A single pattern or a single
+     * replacement meets every value of the other, and is fully checked.
+     *
+     * @return list<IdentifierRuleError>
+     */
+    private function undefinedReplacementGroups(Type $patternType, Type $replacementType, int $lineNumber, string $functionName): array
+    {
+        $stringReplacements = self::constantStrings($replacementType);
+
+        /** @var list<array{list<string>, list<string>}> $pairs the patterns a call may take, with the replacements they may take */
+        $pairs = [[self::constantStrings($patternType), $stringReplacements]];
+
+        $replacementArrays = $replacementType->getConstantArrays();
+        // A key that may be missing moves every entry after it.
+        $certainPositions = [] === array_filter($replacementArrays, static fn (ConstantArrayType $array): bool => [] !== $array->getOptionalKeys());
+
+        /** @var array<int, list<string>> $positions the patterns each position may hold */
+        $positions = [];
+        foreach ($patternType->getConstantArrays() as $patterns) {
+            if (!$certainPositions || [] !== $patterns->getOptionalKeys()) {
+                continue;
+            }
+
+            foreach ($patterns->getValueTypes() as $position => $patternValue) {
+                $positions[$position] = [...$positions[$position] ?? [], ...self::constantStrings($patternValue)];
+            }
+        }
+
+        foreach ($positions as $position => $patterns) {
+            $replacements = $stringReplacements;
+            foreach ($replacementArrays as $replacementArray) {
+                $replacements = [...$replacements, ...self::constantStrings($replacementArray->getValueTypes()[$position] ?? null)];
+            }
+
+            $pairs[] = [$patterns, $replacements];
+        }
+
+        $errors = [];
+        foreach ($pairs as [$patterns, $replacements]) {
+            $patterns = array_values(array_unique($patterns));
+            $replacements = array_values(array_unique($replacements));
+            if ([] === $replacements) {
+                continue;
+            }
+
+            $correlated = \count($patterns) > 1 && \count($replacements) > 1;
+            /** @var list<array{string, GroupNumbering}> $numberings */
+            $numberings = [];
+            foreach ($patterns as $pattern) {
+                $numbering = $this->groupNumbering($pattern);
+                if (null !== $numbering) {
+                    $numberings[] = [$pattern, $numbering];
+                } elseif ($correlated) {
+                    // A pattern that cannot be read may define any group.
+                    continue 2;
+                }
+            }
+
+            foreach ($replacements as $replacement) {
+                foreach (ReplacementReferences::of($replacement) as $reference) {
+                    $found = [];
+                    foreach ($numberings as [$pattern, $numbering]) {
+                        $error = self::undefinedReplacementGroup($reference, $numbering, $pattern, $functionName);
+                        if (null !== $error) {
+                            $found[] = $error;
+                        } elseif ($correlated) {
+                            // One of the patterns defines it.
+                            continue 2;
+                        }
+                    }
+
+                    foreach ($found as $error) {
+                        if (isset($errors[$error[0]])) {
+                            continue;
+                        }
+
+                        $builder = RuleErrorBuilder::message($error[0])
+                            ->line($lineNumber)
+                            ->identifier(self::IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP);
+                        if (null !== $error[1]) {
+                            $builder = $builder->tip($error[1]);
+                        }
+                        $errors[$error[0]] = $builder->build();
+                    }
+                }
+            }
+        }
+
+        return array_values($errors);
+    }
+
+    /**
+     * The message and tip for a reference to a group the pattern does not
+     * have, null for a reference to one of its groups.
+     *
+     * @param array{raw: string, group: int|null, name: string|null} $reference
+     *
+     * @return array{string, string|null}|null
+     */
+    private static function undefinedReplacementGroup(array $reference, GroupNumbering $numbering, string $pattern, string $functionName): ?array
+    {
+        $name = $reference['name'];
+        if (null !== $name) {
+            $numbers = $numbering->getNamedGroupNumbers($name);
+
+            return [
+                \sprintf('Replacement text %s is not a group reference: %s() reads group numbers only and leaves it in the result as written.', $reference['raw'], $functionName),
+                [] === $numbers
+                    ? \sprintf('%s has no group named "%s" either; refer to a group by its number, as in ${1}.', self::displayPattern($pattern), $name)
+                    : \sprintf('Write ${%d}, the number of the group "%s".', $numbers[0], $name),
+            ];
+        }
+
+        $group = (int) $reference['group'];
+        $count = $numbering->maxGroupNumber;
+        if ($group <= $count) {
+            return null;
+        }
+
+        $message = \sprintf(
+            'Replacement reference %s names group %d, but %s has %s: %s() substitutes an empty string.',
+            $reference['raw'],
+            $group,
+            self::displayPattern($pattern),
+            match ($count) {
+                0 => 'no capturing group',
+                1 => '1 capturing group',
+                default => $count.' capturing groups',
+            },
+            $functionName,
+        );
+
+        // "$10" is group 10: group 1 followed by a "0" is written "${1}0".
+        if ($group >= 10 && intdiv($group, 10) <= $count && !str_starts_with($reference['raw'], '${')) {
+            return [$message, \sprintf('Two digits are read after "%1$s": write ${%2$d}%3$d for group %2$d followed by "%3$d".', $reference['raw'][0], intdiv($group, 10), $group % 10)];
+        }
+
+        return [$message, null];
+    }
+
+    /**
+     * The group numbers of a pattern the running engine compiles, null for
+     * one it refuses: PHPStan core reports that one.
+     */
+    private function groupNumbering(string $pattern): ?GroupNumbering
+    {
+        if (!$this->runningEngineCompiles($pattern)) {
+            return null;
+        }
+
+        try {
+            return (new GroupNumberingCollector())->collect($this->regex->parse($pattern));
+        } catch (ExceptionInterface) {
+            return null;
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function constantStrings(?Type $type): array
+    {
+        $strings = [];
+        foreach ($type?->getConstantStrings() ?? [] as $constantString) {
+            $strings[] = $constantString->getValue();
+        }
+
+        return $strings;
     }
 
     /**
