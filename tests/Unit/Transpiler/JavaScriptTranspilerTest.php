@@ -43,6 +43,17 @@ final class JavaScriptTranspilerTest extends TestCase
     }
 
     #[Test]
+    public function test_transpiles_a_quoted_named_backreference(): void
+    {
+        // Oracle: \k'n' is \k<n> in PCRE2 (preg_match on "aa" is 1).
+        $this->assertSame(1, preg_match("/(?<n>a)\\k'n'/", 'aa'));
+
+        $result = Regex::create()->transpile("/(?<n>a)\\k'n'/", 'javascript');
+
+        $this->assertSame('/(?<n>a)\\k<n>/', $result->literal);
+    }
+
+    #[Test]
     public function test_transpiles_g_numeric_backreference(): void
     {
         $regex = Regex::create();

@@ -41,6 +41,17 @@ final class PythonTranspilerTest extends TestCase
     }
 
     #[Test]
+    public function test_converts_quoted_and_braced_named_backreferences(): void
+    {
+        // Oracle: \k'n' and \k{n} are \k<n> in PCRE2.
+        $this->assertSame(1, preg_match("/(?<n>a)\\k'n'/", 'aa'));
+        $this->assertSame(1, preg_match('/(?<n>a)\\k{n}/', 'aa'));
+
+        $this->assertSame("r'(?P<n>a)(?P=n)'", Regex::create()->transpile("/(?<n>a)\\k'n'/", 'python')->literal);
+        $this->assertSame("r'(?P<n>a)(?P=n)'", Regex::create()->transpile('/(?<n>a)\\k{n}/', 'python')->literal);
+    }
+
+    #[Test]
     public function test_converts_g_backreference_to_numeric(): void
     {
         $result = Regex::create()->transpile('/(a)\g{1}/', 'python');

@@ -508,7 +508,9 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return '\\'.$matches[1];
         }
 
-        if (LibraryPcre::match('/^\\\\k\\{([a-zA-Z0-9_]+)\\}$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k\\{([a-zA-Z0-9_]+)\\}$/', $ref, $matches)
+            || LibraryPcre::match("/^\\\\k'([a-zA-Z0-9_]+)'$/", $ref, $matches)
+        ) {
             return '\\k<'.$matches[1].'>';
         }
 

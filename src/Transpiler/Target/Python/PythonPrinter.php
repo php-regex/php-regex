@@ -402,7 +402,10 @@ final class PythonPrinter extends AbstractTargetPrinter
             return '\\'.$matches[1];
         }
 
-        if (LibraryPcre::match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref, $matches)) {
+        if (LibraryPcre::match('/^\\\\k<([a-zA-Z0-9_]+)>$/', $ref, $matches)
+            || LibraryPcre::match('/^\\\\k\\{([a-zA-Z0-9_]+)\\}$/', $ref, $matches)
+            || LibraryPcre::match("/^\\\\k'([a-zA-Z0-9_]+)'$/", $ref, $matches)
+        ) {
             return '(?P='.$matches[1].')';
         }
 

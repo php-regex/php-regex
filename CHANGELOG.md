@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The JavaScript transpiler writes `\k'n'` as `\k<n>`, and the Python one writes `\k'n'` and `\k{n}` as `(?P=n)`, where both refused them: they are the same backreference as `\k<n>`.
 - `regex.lint.escape.suspicious` no longer reads `\N{U+41}`, a code point, as an unknown character name: `/\N{U+41}/u` is valid and matches `"A"`.
 - The optimizer read a byte above 0x7F in a class of a pattern without `/u` as a code point: `[\xE9\xEA]` written with raw bytes came out `[\x00]` (two bytes `mb_ord()` read as `false`, so as 0), and a raw byte range such as `[\x80-\xBF]` never ended. Such bytes are now left as written; ASCII members are still merged into ranges.
 - The Symfony bridge lints a route requirement as the route compiler reads it: its leading `^` or `\A` and trailing `$` or `\z` are stripped, and a top-level alternation is grouped, so `en|fr|de` is linted as `#^(?:en|fr|de)$#`, where it was `#^en|fr|de$#`, whose `^` and `$` anchor only the first and the last alternative. A `#` in the requirement picks another delimiter instead of an escape, which turned `\#` into `\\#` and broke `(?#...)`. A trailing `\z` closes the pattern as a strict end, as the compiler's `$` under `D` does, and a comment under an inline `(?x)` is read as one.

@@ -272,8 +272,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 - The language server's flag completion is off by one (the occurrence starts
   at the opening quote): with the cursor right after `/abc/`, no flag is
   offered.
-- The JavaScript transpiler refuses `\k'n'`, the same backreference as
-  `\k<n>`.
 
 ## Report the PCRE2 JIT crash upstream
 
