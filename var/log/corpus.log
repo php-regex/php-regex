@@ -3465,7 +3465,7 @@
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1081:25
+  corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1087:25
       → /<!--(.|\s)*?-->/
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5394,7 +5394,7 @@
          - /@foo/sm
          + /@foo/
 
-  corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:301:29
+  corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:307:29
       → ~(\v|\t|\s{2,})~m
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
      TIP 
@@ -9108,7 +9108,7 @@
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-  corpus/nextcloud/all-in-one/php/src/Data/ConfigurationManager.php:936:25
+  corpus/nextcloud/all-in-one/php/src/Data/ConfigurationManager.php:950:25
       → #^[0-1][0-9]:[0-5][0-9]$#
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '0' and '1' explicitly instead of a range.
@@ -14259,7 +14259,7 @@
          - ~\[([^\]]*)\]\(([^\)]*)\)~
          + ~\[([^\]]*)\]\(([^)]*)\)~
 
-  corpus/woocommerce/woocommerce/plugins/woocommerce/includes/class-wc-download-handler.php:651:21
+  corpus/woocommerce/woocommerce/plugins/woocommerce/includes/class-wc-download-handler.php:658:21
       → /filename\*\s*=\s*[^']*'[^']*'(?<encoded_value>[^;]+)/i
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
