@@ -151,6 +151,57 @@ written `\x3C`, the same byte, so that no output format reads it as markup:
 A proven quadratic pattern is `medium`, below the default threshold; set
 `threshold: medium` to see it.
 
+## Quadratic search
+
+One attempt of `/\s+$/` is linear, but an unanchored `preg_match()` starts an
+attempt at each position of the subject, and on a run of spaces each one reads
+to the end of the run before it fails: PCRE2's interpreter takes a number of
+steps quadratic in the length of the run. `pcre.backtrack_limit` does not stop
+it, as the limit counts each attempt apart, and the JIT may avoid it for some
+patterns, not for all (see the [ReDoS guide](../REDOS_GUIDE.md#the-cost-of-an-unanchored-search)).
+Such a pattern is reported under its own identifier, `regex.redos.search`,
+with the message `Quadratic search (ReDoS): <pattern>`, frozen for 2.x like
+the three others. It has no setting of its own: it follows `checks.redos.enabled`
+and is `medium`, like a proven quadratic attempt, so `threshold: medium` or
+`low` shows it. A constant subject is not reported.
+
+```php
+function trailing(string $value): bool
+{
+    return 1 === preg_match('/\s+$/', $value);
+}
+```
+
+With `threshold: medium`:
+
+```
+ ------ -----------------------------------------------------------------------
+  Line   Validator.php
+ ------ -----------------------------------------------------------------------
+  5      Quadratic search (ReDoS): /\s+$/
+         🪪  regex.redos.search
+         💡  Quadratic search: one attempt is linear (proven); an unanchored
+         search is quadratic in PCRE2's interpreter (pcre.jit=0, a build
+         without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns.
+         Severity: MEDIUM.
+         💡  Attack: " " x n . "!". pcre.backtrack_limit does not stop it: the
+         limit counts each attempt apart. preg_match_all(), preg_replace() and
+         preg_split() retry the same way. Anchor the pattern when every match
+         starts at a known place (^, \A, \G or the A modifier), or bound the
+         length of the run.
+         💡
+         💡  Read more about catastrophic backtracking: …
+ ------ -----------------------------------------------------------------------
+```
+
+Ignore it by identifier where the length of the subject is bounded:
+
+```neon
+parameters:
+    ignoreErrors:
+        - identifier: regex.redos.search
+```
+
 ## Configuration
 
 ```neon
@@ -188,6 +239,7 @@ custom wiring, reads them in any case.
 |---|---|
 | `regex.invalidForTarget` | a pattern the target refuses and the running PHP compiles |
 | `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the tip |
+| `regex.redos.search` | a pattern whose one attempt is proven linear and whose unanchored search is quadratic in PCRE2's interpreter, at the ReDoS threshold `medium` or below |
 | `regex.optimization` | a pattern with a shorter equivalent |
 | `regex.trivialMatch` | a `preg_match($pattern, $subject)` a string function answers alike, `str_starts_with()` for `/^https:/`, proven by the automata; with `optimizations` on |
 | `regex.lint.<rule>` | a lint rule, as `regex.lint.flag.useless.i` |

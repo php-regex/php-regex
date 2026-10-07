@@ -753,6 +753,7 @@ final class PnfaBuilder
     private function endOrFinalNewline(int $next, Pnfa $pnfa): int
     {
         $none = CharSet::empty();
+        $pnfa->readsFinalNewline = true;
         $atEnd = $pnfa->peek($none, true, $next);
         $beforeNewline = $this->char($pnfa, CharSet::single(0x0A), $pnfa->peek($none, true, $next));
 

@@ -37,6 +37,8 @@ final class RedosJsonShapeTest extends TestCase
         // The verdict.
         'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions', 'pcre_version',
         'analysis_version',
+        // The search cost.
+        'search_cost',
     ];
 
     /**
@@ -90,6 +92,7 @@ final class RedosJsonShapeTest extends TestCase
             'proof' => 'proven',
             'replayed' => null,
             'abstractions' => [],
+            'search_cost' => null,
         ]];
         yield 'proven polynomial' => ['pattern' => '/a*a*a*$/', 'mode' => RedosMode::Theoretical, 'expected' => [
             'severity' => 'high',
@@ -99,10 +102,24 @@ final class RedosJsonShapeTest extends TestCase
             'proof' => 'proven',
             'replayed' => null,
             'abstractions' => [],
+            'search_cost' => null,
         ]];
+        // One attempt is linear, but the search retries it in a run of "a":
+        // 24.4 / 95.2 ms on "a"x10k/20k."x" with pcre.jit=0 (measured, not
+        // asserted). The search cost is checked below.
         yield 'proven safe' => ['pattern' => '/(?>a+)+$/', 'mode' => RedosMode::Theoretical, 'expected' => [
             'severity' => 'safe',
             'confidence' => 'high',
+            'complexity' => 'linear',
+            'degree' => null,
+            'proof' => 'proven',
+            'witness' => null,
+            'replayed' => null,
+            'abstractions' => [],
+        ]];
+        // One attempt is linear; the unanchored search retries it in the run.
+        yield 'proven safe attempt, quadratic search' => ['pattern' => '/\\s+$/', 'mode' => RedosMode::Theoretical, 'expected' => [
+            'severity' => 'safe',
             'complexity' => 'linear',
             'degree' => null,
             'proof' => 'proven',
@@ -118,6 +135,7 @@ final class RedosJsonShapeTest extends TestCase
             'proof' => 'heuristic',
             'witness' => null,
             'replayed' => null,
+            'search_cost' => null,
         ]];
         yield 'not analyzed' => ['pattern' => '/(a+)+$/', 'mode' => RedosMode::Off, 'expected' => [
             'severity' => 'safe',
@@ -127,6 +145,7 @@ final class RedosJsonShapeTest extends TestCase
             'witness' => null,
             'replayed' => null,
             'abstractions' => [],
+            'search_cost' => null,
         ]];
     }
 
@@ -151,6 +170,17 @@ final class RedosJsonShapeTest extends TestCase
         $this->assertNotSame('', $json['pcre_version']);
         $this->assertStringStartsWith($json['pcre_version'], \PCRE_VERSION);
         $this->assertIsArray($json['abstractions']);
+
+        if (null !== ($json['search_cost'] ?? null)) {
+            $this->assertIsArray($json['search_cost']);
+            $this->assertSame(['degree', 'witness', 'replayed'], array_keys($json['search_cost']));
+            $this->assertSame(2, $json['search_cost']['degree']);
+            $this->assertIsArray($json['search_cost']['witness']);
+            $this->assertSame(['prefix', 'run', 'breaker'], array_keys($json['search_cost']['witness']));
+            $this->assertContainsOnlyString($json['search_cost']['witness']);
+        } elseif (!\array_key_exists('search_cost', $expected)) {
+            $this->fail('A row expecting a search cost got none.');
+        }
 
         if (\array_key_exists('witness', $expected)) {
             return;

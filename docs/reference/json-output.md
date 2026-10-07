@@ -333,13 +333,13 @@ An issue repeats the location of its result, so it can be read alone.
 | `column` | int \| null | As in the result |
 | `file_offset` | int \| null | As in the result |
 | `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
-| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), a complexity warning (`regex.lint.complexity`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
 | `tip` | string \| null | A further suggestion for an invalid pattern |
 | `source` | string \| null | As in the result |
 | `validation` | object \| null | For an invalid pattern, why: a [validation](#validation-validation) object; `null` otherwise |
-| `analysis` | object \| null | For a ReDoS issue, the verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` otherwise |
+| `analysis` | object \| null | For a ReDoS issue, the verdict: a [ReDoS analysis](#redos-analysis-redos_analysis), whose `search_cost` holds the attack of a `regex.lint.redos.search` issue; `null` otherwise |
 | `target` | object \| null | For a pattern valid on the floor and refused by a later PHP of `lint.target.range`, the lowest PHP and PCRE2 that refuse it; `null` for every other issue, which the floor reports |
 
 An issue whose `target` is not `null` has severity `error`, and its
@@ -585,6 +585,7 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `abstractions` | list of strings | What the model analysed differently from the pattern as written |
 | `pcre_version` | string | The PCRE2 release the verdict was computed for, as `10.49` |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
+| `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
 
 ### Finding: `redos_analysis.findings[]`
 
@@ -619,6 +620,35 @@ is written as the body of a PHP double-quoted string, so
 | `prefix` | string | What comes before the repeated part |
 | `pump` | string | The part repeated to grow the attack |
 | `suffix` | string | What comes after, to make the match fail |
+
+### Search cost: `redos_analysis.search_cost`
+
+One attempt is proven linear, but an unanchored search starts one at each
+position of a run, and each reads to the end of the run before it fails: on the
+run repeated n times then the breaker, PCRE2's interpreter takes a number of
+steps quadratic in n. `preg_match_all()`, `preg_replace()` and `preg_split()`
+retry the same way. It is looked for only when one attempt is proven linear: a
+worse per-attempt verdict already covers the search. The JIT may avoid the cost
+for some patterns; it is not measured, as the analysis never runs a pattern
+under the JIT.
+
+| key | type | meaning |
+|---|---|---|
+| `degree` | int | The degree of the search's cost in the length of the run: `2` |
+| `witness` | object | The attack: a [search witness](#search-witness-redos_analysissearch_costwitness) |
+| `replayed` | bool \| null | Whether the step replay without the JIT found attempts that take more steps the further they start from the end of the run; `null` when no replay was made (theoretical mode, or a confirmed analysis whose threshold is above `medium`) |
+
+### Search witness: `redos_analysis.search_cost.witness`
+
+Each part is written as the body of a PHP double-quoted string, like the
+[witness](#witness-redos_analysiswitness): `"<prefix>" . str_repeat("<run>", $n) . "<breaker>"`
+builds the attack.
+
+| key | type | meaning |
+|---|---|---|
+| `prefix` | string | What comes before the run, often empty: the first attempt fails on it where it would match the bare run (`"!"` for `/^\s+\|\s+$/`) |
+| `run` | string | The part repeated: every attempt started in it reads to its end |
+| `breaker` | string | What comes after the run and fails every attempt; it holds the last code unit every match requires when the run does not, as PCRE2 gives up at once on a subject without it (`">"` for `/\s*=>/`) |
 
 ### Confirmation: `redos_analysis.confirmation`
 

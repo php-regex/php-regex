@@ -359,6 +359,11 @@
               "type": "boolean",
               "description": "Warn about overlapping character sets in alternations.",
               "default": true
+            },
+            "redos.search": {
+              "type": "boolean",
+              "description": "Report the quadratic cost of an unanchored search whose every attempt is proven linear. It runs under the ReDoS check and is medium: a threshold of medium or low shows it.",
+              "default": true
             }
           }
         }

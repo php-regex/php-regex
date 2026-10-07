@@ -40,7 +40,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
   `TrivialMatch`;
 - `regex-redos`: `RedosAnalysis`, `Finding`, `Hotspot`, `RedosWitness`,
-  `Confirmation`, `ConfirmationSample`;
+  `RedosSearchCost`, `Confirmation`, `ConfirmationSample`;
 - `regex-transpiler`: `TranspileResult`;
 - `regex-linter`: `Rule\RuleViolation`;
 - `regex-toolkit`: `AnalysisReport`.
@@ -59,7 +59,7 @@ In short, the public surface is:
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language` |
-| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
+| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `TranspileException` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
@@ -89,6 +89,10 @@ release may prove more patterns than the one before, and its CHANGELOG says so.
 In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 `RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
 `Confirmation::wasSkipped()` and `Confirmation::LIMITS_UNAVAILABLE`.
+`isProvenSafe()` and `headline()` speak of one match attempt: a pattern whose
+unanchored search is quadratic stays `safe (proven)`, and carries that cost in
+`RedosAnalysis::$searchCost`, a `RedosSearchCost` (`null` when no witness was
+found, never a proof of a linear search).
 
 The bridges and tools carry more than their classes:
 
@@ -203,10 +207,14 @@ add one to yet.
 
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
-  `regex.redos`, …): baselines and ignore lists keep working.
+  `regex.redos`, `regex.redos.search`, …), with the **lint issue ids**
+  (`regex.lint.redos`, `regex.lint.redos.search`, …): baselines and ignore
+  lists keep working.
 - The **text of the PHPStan ReDoS messages**: `Exponential backtracking
   (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
-  backtracking (ReDoS): %s`, followed by the pattern. The severity, the proof
+  backtracking (ReDoS): %s`, and the one of a quadratic unanchored search,
+  `Quadratic search (ReDoS): %s` under `regex.redos.search`, followed by the
+  pattern. The severity, the proof
   and the attack are in the tip, which may change. Which patterns get an error
   is not frozen: when the analysis improves, an error may appear, disappear or
   move to another class (Exponential, Polynomial, Potential). Regenerate the
@@ -218,7 +226,9 @@ add one to yet.
   configuration error).
 - The **JSON output** of the `regex` command: a key keeps its name, its type
   and its meaning, and a success document never gains a top-level `error`
-  (see [JSON output](json-output.md)).
+  (see [JSON output](json-output.md)). The ReDoS analysis' `search_cost`,
+  `null` or `{degree, witness: {prefix, run, breaker}, replayed}`,
+  is one of them.
 - The **severity of the lint rules**: a minor never raises an existing rule to
   error severity, the one that fails `regex lint`, and a new rule lands at
   warning severity or lower.

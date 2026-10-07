@@ -65,15 +65,19 @@ final readonly class PcreEngine
 
     /**
      * What preg_match() answers for the pattern and the subject, under the
-     * limits given (the ini ones when null).
+     * limits given (the ini ones when null), the search starting at the
+     * offset as preg_match() reads it: a byte offset in the whole subject,
+     * counted from its end when negative, so "\b" and a lookbehind still see
+     * what lies before it. An offset past the end of the subject is a null
+     * verdict, as preg_match() returns false for it.
      */
-    public function match(string $pattern, string $subject, ?PcreLimits $limits = null): PcreMatch
+    public function match(string $pattern, string $subject, ?PcreLimits $limits = null, int $offset = 0): PcreMatch
     {
         $groups = [];
         $outcome = $this->run(
             $pattern,
-            static function (string $prepared) use ($subject, &$groups): int|false {
-                return preg_match($prepared, $subject, $groups);
+            static function (string $prepared) use ($subject, $offset, &$groups): int|false {
+                return preg_match($prepared, $subject, $groups, 0, $offset);
             },
             $limits,
         );
@@ -88,7 +92,9 @@ final readonly class PcreEngine
     /**
      * What preg_match() answers when called without $matches, as most code
      * calls it: PHP then retries an empty match at the same offset with
-     * NOTEMPTY_ATSTART | ANCHORED, which match() does not do.
+     * NOTEMPTY_ATSTART | ANCHORED, which match() does not do. It takes no
+     * offset: preg_match() takes one only after $matches, and passing
+     * $matches, even skipped by a named offset, is what match() does.
      */
     public function test(string $pattern, string $subject, ?PcreLimits $limits = null): PcreMatch
     {

@@ -19,6 +19,7 @@ Features
 * One verdict per pattern, read straight from the AST: `safe`, `low`, `medium`, `high` or `critical` — or `unknown`, with the error, when the analysis itself fails.
 * A backtracking model proves the cost of one match attempt — linear, polynomial (with its degree) or exponential — and the verdict says who decided: `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`.
 * Every proven vulnerable verdict carries a witness: the prefix, pump and suffix of the input family that drives the worst case.
+* When one attempt is proven linear, the cost of the search that retries it is looked for too: `RedosSearchCost` holds the prefix, the run and the breaker on which an unanchored search is quadratic in PCRE2's interpreter, where `pcre.backtrack_limit`, counted per attempt, trips only when one attempt exceeds it.
 * Confirmation adds runtime evidence: the witness replayed pump by pump, or growing inputs — always without the JIT, under the limits you set, with the failing evidence named.
 * Outside the model, structural heuristics decide and say so: confidence level, false-positive risk, one `Finding` per risk with its message and suggested rewrite.
 * The verdict serializes to JSON with the PCRE2 release and the analysis version; `Hotspot` objects pin each risk to byte offsets, for `Heatmap` to paint.

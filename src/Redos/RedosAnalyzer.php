@@ -21,6 +21,7 @@ use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Internal\Backtrack\ModelLimit;
 use PHPRegex\Redos\Internal\Backtrack\ProofResult;
 use PHPRegex\Redos\Internal\Backtrack\WitnessReplayer;
+use PHPRegex\Redos\Internal\SearchCostProver;
 
 /**
  * The ReDoS verdict of a pattern. The backtracking model proves the
@@ -118,6 +119,13 @@ final class RedosAnalyzer
                 ? null
                 : new RedosWitness((string) $proof->prefix, $proof->pump, (string) $proof->suffix, $proof->unicode);
 
+            // One attempt proven linear: what the retries of the search cost,
+            // replayed in confirmed mode when its severity, that of a proven
+            // quadratic attempt, reaches the threshold.
+            $searchCost = RedosComplexity::Linear === $proof?->complexity
+                ? (new SearchCostProver())->find($regex, $ast, $prover, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank())
+                : null;
+
             $analysis = new RedosAnalysis(
                 $severity,
                 self::score($severity),
@@ -142,6 +150,7 @@ final class RedosAnalyzer
                     ? [...$prover->abstractions(), ...(null === $reason ? [] : [$reason])]
                     : [],
                 upperBoundDegree: $prover->stepBound(),
+                searchCost: $searchCost,
             );
 
             if (RedosMode::Confirmed !== $mode || !$analysis->exceedsThreshold($threshold)) {
@@ -285,6 +294,7 @@ final class RedosAnalyzer
             pcreVersion: $analysis->pcreVersion,
             analysisVersion: $analysis->analysisVersion,
             upperBoundDegree: $analysis->upperBoundDegree,
+            searchCost: $analysis->searchCost,
         );
     }
 

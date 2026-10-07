@@ -610,6 +610,31 @@ In JSON, the issue carries the whole analysis under `analysis`, with the keys
 `analyze --format=json` prints (see the
 [JSON output reference](../reference/json-output.md)).
 
+When one attempt is proven linear but the unanchored search retries it along a
+run, as `/\s+$/` on a run of spaces, the issue is `regex.lint.redos.search`: the
+search is quadratic in PCRE2's interpreter, `pcre.backtrack_limit` does not stop
+it, and the JIT may avoid it for some patterns (see the
+[ReDoS guide](../REDOS_GUIDE.md#the-cost-of-an-unanchored-search)). It runs
+under `--redos`, is `medium` like a proven quadratic attempt, so the default
+`high` threshold hides it, and is a warning in every mode:
+
+```bash
+vendor/bin/regex lint app --redos --redos-threshold=medium
+```
+
+```
+  app/Whitespace.php:3:12
+      → /\s+$/
+    WARN Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: MEDIUM.
+         ↳ Attack: " " x n . "!". pcre.backtrack_limit does not stop it: the limit counts each attempt apart. preg_match_all(), preg_replace() and preg_split() retry the same way. Anchor the pattern when ever...
+
+
+  PASS 1 warnings found, 0 optimizations available.
+```
+
+Its attack is in the analysis' `search_cost`; `--disable-rule=regex.lint.redos.search`,
+or `"redos.search": false` in `checks.lint.rules`, turns it off.
+
 ---
 
 ## Configuration File
@@ -669,7 +694,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
 | `checks.optimizations`          | object           | `enabled` (default `true`), `minSavings`, `options`      |
 | `checks.optimizations.options`  | object           | digits, word, ranges, canonicalizeCharClasses, possessive, factorize, minQuantifierCount, verifyWithAutomata |
-| `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false` |
+| `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false`; `redos.search` turns the search cost of the ReDoS check off |
 
 `checks.redos`, `checks.optimizations` and `checks.lint` are objects, and only
 their `enabled` key switches a check on or off: setting `threshold`, `mode`,

@@ -299,6 +299,105 @@ final class PcreEngineTest extends TestCase
         yield 'UTF-8 subject in UTF mode' => ['/(é)/u', 'café', true, ['é', 'é']];
     }
 
+    /**
+     * The offset is where the search starts in the whole subject, as
+     * preg_match() reads it: "\G" holds there, "^" does not, and "\b" and a
+     * lookbehind still see the character before it.
+     *
+     * @param array<int|string, string> $groups
+     */
+    #[Test]
+    #[DataProvider('provideMatchesAtAnOffset')]
+    public function test_match_starts_at_the_offset_preg_match_starts_at(string $pattern, string $subject, int $offset, bool $matched, array $groups): void
+    {
+        $oracle = $this->oracleMatch($pattern, $subject, $offset);
+        $this->assertSame($matched ? 1 : 0, $oracle['result'], 'The oracle disagrees with the case itself.');
+        $this->assertSame($groups, $oracle['groups'], 'The oracle disagrees with the case itself.');
+
+        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match($pattern, $subject, null, $offset));
+
+        $this->assertSame($matched, $match->matched);
+        $this->assertSame($groups, $match->groups);
+        $this->assertNull($match->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, offset: int, matched: bool, groups: array<int|string, string>}>
+     */
+    public static function provideMatchesAtAnOffset(): iterable
+    {
+        yield '\G holds at the offset' => ['pattern' => '/\Ga/', 'subject' => 'ba', 'offset' => 1, 'matched' => true, 'groups' => ['a']];
+        yield '\G fails before the offset is reached' => ['pattern' => '/\Ga/', 'subject' => 'ba', 'offset' => 0, 'matched' => false, 'groups' => []];
+        yield '^ does not hold at the offset' => ['pattern' => '/^a/', 'subject' => 'ba', 'offset' => 1, 'matched' => false, 'groups' => []];
+        yield 'the A modifier pins the attempt at the offset' => ['pattern' => '/a/A', 'subject' => 'ba', 'offset' => 1, 'matched' => true, 'groups' => ['a']];
+        yield 'a lookbehind sees the character before the offset' => ['pattern' => '/(?<=b)a/', 'subject' => 'ba', 'offset' => 1, 'matched' => true, 'groups' => ['a']];
+        yield '\b sees the character before the offset' => ['pattern' => '/\ba/', 'subject' => 'ba', 'offset' => 1, 'matched' => false, 'groups' => []];
+        yield 'the search skips what lies before the offset' => ['pattern' => '/(a)/', 'subject' => 'aba', 'offset' => 1, 'matched' => true, 'groups' => ['a', 'a']];
+        yield 'the offset at the end of the subject' => ['pattern' => '/$/', 'subject' => 'ba', 'offset' => 2, 'matched' => true, 'groups' => ['']];
+        yield 'a negative offset counts from the end' => ['pattern' => '/\Ga/', 'subject' => 'ba', 'offset' => -1, 'matched' => true, 'groups' => ['a']];
+        yield 'under a delimiter the verb holds' => ['pattern' => '*\Ga*', 'subject' => 'ba', 'offset' => 1, 'matched' => true, 'groups' => ['a']];
+    }
+
+    /**
+     * Oracle: preg_match('/a/', 'ba', $m, 0, 3) returns false with
+     * PREG_INTERNAL_ERROR ("Internal error") and raises no warning.
+     */
+    #[Test]
+    public function test_an_offset_past_the_subject_is_a_null_verdict(): void
+    {
+        $oracle = $this->oracleMatch('/a/', 'ba', 3);
+        $this->assertFalse($oracle['result']);
+
+        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match('/a/', 'ba', null, 3));
+
+        $this->assertNull($match->matched);
+        $this->assertSame([], $match->groups);
+        $this->assertSame($oracle['error'], $match->error);
+        $this->assertSame(\PREG_INTERNAL_ERROR, $match->errorCode);
+    }
+
+    /**
+     * preg_match() takes an offset only after $matches, and a call passing
+     * $matches, even skipped by a named offset, is no longer the call
+     * test() stands for. Oracle (JIT off): preg_match('/^(!+?)*?^/',
+     * '!' x 20) fails on the backtrack limit, the same call with "offset: 0"
+     * returns 1.
+     */
+    #[Test]
+    public function test_test_takes_no_offset(): void
+    {
+        $pattern = '/^(!+?)*?^/';
+        $subject = str_repeat('!', 20);
+        $limits = new PcreLimits(backtrackLimit: 1000000, recursionLimit: 100000);
+        $engine = new PcreEngine();
+
+        $this->assertCount(3, (new \ReflectionMethod(PcreEngine::class, 'test'))->getParameters());
+        $this->assertNull($this->withoutWarnings(static fn (): PcreMatch => $engine->test($pattern, $subject, $limits))->matched);
+        $this->assertTrue($engine->match($pattern, $subject, $limits, 0)->matched);
+    }
+
+    /**
+     * The offset runs under the limits given: an attempt pinned at the
+     * offset finishes under the limit its own steps need, not those of the
+     * attempts before it. Oracle (JIT off): "a*?b" pinned over fifty "a"
+     * then "b" takes 53 steps from offset 0, 8 from offset 45.
+     */
+    #[Test]
+    public function test_an_offset_runs_under_the_limits_given(): void
+    {
+        $pattern = '/(*NO_AUTO_POSSESS)a*?b/A';
+        $subject = str_repeat('a', 50).'b';
+        $engine = new PcreEngine();
+
+        $this->assertTrue($engine->match($pattern, $subject, new PcreLimits(backtrackLimit: 10, recursionLimit: 100000), 45)->matched);
+
+        $stopped = $this->withoutWarnings(static fn (): PcreMatch => $engine->match($pattern, $subject, new PcreLimits(backtrackLimit: 10, recursionLimit: 100000), 0));
+
+        $this->assertNull($stopped->matched);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $stopped->errorCode);
+        $this->assertSame($this->backtrackLimit, \ini_get('pcre.backtrack_limit'));
+    }
+
     #[Test]
     public function test_match_reports_an_engine_error_as_a_null_verdict(): void
     {
@@ -517,12 +616,12 @@ final class PcreEngineTest extends TestCase
     /**
      * @return array{result: int|false, error: string|null, groups: array<int|string, string>}
      */
-    private function oracleMatch(string $pattern, string $subject): array
+    private function oracleMatch(string $pattern, string $subject, int $offset = 0): array
     {
         set_error_handler(static fn (): bool => true);
 
         try {
-            $result = preg_match($pattern, $subject, $groups);
+            $result = preg_match($pattern, $subject, $groups, 0, $offset);
         } finally {
             restore_error_handler();
         }

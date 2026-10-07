@@ -38,6 +38,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -375,6 +376,23 @@ final readonly class AnalysisService
                         'issueId' => self::ISSUE_ID_REDOS,
                         'message' => $this->formatRedosMessage($redos),
                         'hint' => $this->getReDoSHint($redos, $occurrence->pattern),
+                        'source' => $source,
+                        'analysis' => $redos,
+                    ];
+                }
+
+                // One attempt proven linear, the search retrying it is not.
+                $searchCost = $redos->searchCost;
+                if (null !== $searchCost && $this->shouldReportSearchCost($searchCost)) {
+                    $riskIssues[] = [
+                        'type' => 'warning',
+                        'file' => $occurrence->file,
+                        'line' => $occurrence->line,
+                        'column' => $this->resolveColumn($occurrence),
+                        'fileOffset' => $occurrence->fileOffset,
+                        'issueId' => RedosVerdict::SEARCH_ISSUE_ID,
+                        'message' => RedosVerdict::searchMessage($searchCost),
+                        'hint' => implode(' ', RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion)),
                         'source' => $source,
                         'analysis' => $redos,
                     ];
@@ -791,7 +809,9 @@ final readonly class AnalysisService
         $fragment = $this->extractFragment($rawPattern);
         $body = $this->trimPatternBody($occurrence->pattern);
 
-        return $this->isIgnored($fragment)
+        // Patterns, fragments or full regexes, as the ignore list is documented.
+        return $this->isIgnored($occurrence->pattern)
+            || $this->isIgnored($fragment)
             || $this->isIgnored($body)
             || $this->isTriviallySafe($fragment)
             || $this->isTriviallySafe($body);
@@ -1219,6 +1239,22 @@ final readonly class AnalysisService
         }
 
         return RedosComplexity::Polynomial === $analysis->complexity && null === $analysis->replayed;
+    }
+
+    /**
+     * Whether a search cost is reported: at or above the threshold, unless
+     * its rule id is turned off, written in full or without "regex.lint."
+     * as the rules map of regex.json writes it. It is a warning in every
+     * mode: the per-attempt verdict behind it is linear.
+     */
+    private function shouldReportSearchCost(RedosSearchCost $cost): bool
+    {
+        if (false === ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
+            || false === ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null)) {
+            return false;
+        }
+
+        return RedosVerdict::searchSeverity($cost)->rank() >= $this->redosSeverityThreshold->rank();
     }
 
     private function isLikelyPartialRegexError(string $errorMessage): bool

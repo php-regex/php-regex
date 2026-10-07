@@ -516,6 +516,20 @@ final readonly class LintService
         }
 
         $analysis = $issue['analysis'] ?? null;
+        // A search cost stands beside a linear attempt: a warning, with its
+        // own attack and advice, never the per-attempt ones.
+        if ($analysis instanceof RedosAnalysis && null !== $analysis->searchCost && RedosVerdict::SEARCH_ISSUE_ID === ($issue['issueId'] ?? null)) {
+            return new Diagnostic(
+                DiagnosticType::Security,
+                $this->mapIssueSeverity($issue['type']),
+                $issue['message'],
+                $issue['issueId'],
+                null,
+                implode("\n", RedosVerdict::searchEvidence($analysis->searchCost, $analysis->pcreVersion)),
+                null,
+            );
+        }
+
         if ($analysis instanceof RedosAnalysis) {
             $suggestion = $analysis->recommendations[0] ?? null;
             // The attack, already escaped, and its replay: the reports that

@@ -85,6 +85,15 @@ final class LintConfigSchema
     ];
 
     /**
+     * The issues of an analysis the rules map turns off like a lint rule,
+     * though no lint rule reports them: what each reports, and whether it
+     * is on when regex.json does not mention it.
+     */
+    private const ANALYSIS_RULES = [
+        'redos.search' => ['Report the quadratic cost of an unanchored search whose every attempt is proven linear. It runs under the ReDoS check and is medium: a threshold of medium or low shows it.', true],
+    ];
+
+    /**
      * The wrapper libraries extraction.interop can name.
      */
     private const INTEROP_PRESETS = [
@@ -263,7 +272,8 @@ final class LintConfigSchema
     }
 
     /**
-     * The lint rule ids regex.json may name.
+     * The ids of the lint rules, which regex.json may name beside the
+     * analysis issues it turns off the same way.
      *
      * @return list<string>
      */
@@ -375,7 +385,7 @@ final class LintConfigSchema
     private static function checksLint(): array
     {
         $rules = [];
-        foreach (self::LINT_RULES as $id => [$description, $default]) {
+        foreach ([...self::LINT_RULES, ...self::ANALYSIS_RULES] as $id => [$description, $default]) {
             $rules[$id] = [
                 'type' => 'boolean',
                 'description' => $description,

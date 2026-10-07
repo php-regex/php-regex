@@ -168,6 +168,14 @@ final class Pnfa
     public bool $looksBehindStart = false;
 
     /**
+     * Whether the search holds "$" (without /m nor /D) or "\Z": the model
+     * reads the final newline it may stand before into the anchor, where
+     * an item after it may read that newline instead. A subject that does
+     * not end with a newline is read exactly.
+     */
+    public bool $readsFinalNewline = false;
+
+    /**
      * @param int|null $parent the search this one is a lookaround of, and the
      *                         mark where it stands there
      */

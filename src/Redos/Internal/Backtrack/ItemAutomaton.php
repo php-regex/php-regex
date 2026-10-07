@@ -203,6 +203,27 @@ final class ItemAutomaton
     }
 
     /**
+     * The items of a later attempt of an unanchored search, after a
+     * character that leaves the context: "\G" holds only where the search
+     * started, so it fails there. Without "\G" the paths are the ones of the
+     * attempt start in the same context, with it fewer: every item is among
+     * those built already. A search that looks at no character before its
+     * attempt starts the same way everywhere.
+     *
+     * @throws ModelLimit
+     *
+     * @return list<int>
+     */
+    public function laterStart(int $context): array
+    {
+        if (!$this->pnfa->looksBehindStart) {
+            return $this->initials[0]['items'];
+        }
+
+        return $this->closure($this->pnfa->start, $context, false)[0];
+    }
+
+    /**
      * Where the pattern writes the character the item reads.
      */
     public function offsetOf(int $item): int

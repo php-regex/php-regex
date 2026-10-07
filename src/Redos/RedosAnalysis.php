@@ -33,14 +33,15 @@ final readonly class RedosAnalysis implements \JsonSerializable
     /**
      * @internal built by RedosAnalyzer::analyze() and Regex::redos()
      *
-     * @param array<string>  $recommendations
-     * @param array<Finding> $findings
-     * @param array<Hotspot> $hotspots
-     * @param int|null       $degree           the degree of a polynomial verdict, 2 or more; null otherwise
-     * @param bool|null      $replayed         whether the witness made the running engine fail; null when no replay was attempted
-     * @param list<string>   $abstractions     what the model analysed differently from the pattern as written
-     * @param string|null    $pcreVersion      the PCRE2 release; the running one when null
-     * @param int|null       $upperBoundDegree the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
+     * @param array<string>        $recommendations
+     * @param array<Finding>       $findings
+     * @param array<Hotspot>       $hotspots
+     * @param int|null             $degree           the degree of a polynomial verdict, 2 or more; null otherwise
+     * @param bool|null            $replayed         whether the witness made the running engine fail; null when no replay was attempted
+     * @param list<string>         $abstractions     what the model analysed differently from the pattern as written
+     * @param string|null          $pcreVersion      the PCRE2 release; the running one when null
+     * @param int|null             $upperBoundDegree the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
+     * @param RedosSearchCost|null $searchCost       the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
      */
     public function __construct(
         public RedosSeverity $severity,
@@ -67,6 +68,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
         ?string $pcreVersion = null,
         public string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
         public ?int $upperBoundDegree = null,
+        public ?RedosSearchCost $searchCost = null,
     ) {
         $this->vulnerableSubpattern = $vulnerableSubpattern ?? $vulnerablePart;
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
@@ -97,8 +99,9 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * The verdict in a few words, the same for every consumer: whether it
-     * was proven, the class, or why there is none.
+     * The verdict of one match attempt in a few words, the same for every
+     * consumer: whether it was proven, the class, or why there is none. The
+     * cost of the search that retries the attempt is $searchCost.
      */
     public function headline(): string
     {
@@ -165,7 +168,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: array{prefix: string, pump: string, suffix: string}|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: array{prefix: string, pump: string, suffix: string}|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}|null}
      */
     public function jsonSerialize(): array
     {
@@ -193,6 +196,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
             'abstractions' => $this->abstractions,
             'pcre_version' => $this->pcreVersion,
             'analysis_version' => $this->analysisVersion,
+            'search_cost' => $this->searchCost?->toArray(),
         ];
     }
 }

@@ -17,6 +17,7 @@ use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -31,6 +32,11 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final class RedosVerdict
 {
+    /**
+     * The issue of a search cost, beside the per-attempt regex.lint.redos.
+     */
+    public const SEARCH_ISSUE_ID = 'regex.lint.redos.search';
+
     /**
      * The headline, then the severity and confidence, and what qualifies
      * them: a budget the model ran out of, a confirmation by sampling, an
@@ -105,6 +111,53 @@ final class RedosVerdict
         } elseif (false === $analysis->replayed) {
             $lines[] = \sprintf("Not reproduced on PCRE2 %s (PCRE's optimisations defuse it).", $analysis->pcreVersion);
         }
+
+        return $lines;
+    }
+
+    /**
+     * The severity of a search cost: that of a proven quadratic attempt,
+     * medium. The search cost is quadratic: it is looked for only when one
+     * attempt is linear.
+     */
+    public static function searchSeverity(RedosSearchCost $cost): RedosSeverity
+    {
+        return RedosSeverity::Medium;
+    }
+
+    /**
+     * What a search cost means: one attempt is linear, the search that
+     * retries it at each start position is not, in PCRE2's interpreter.
+     */
+    public static function searchMessage(RedosSearchCost $cost): string
+    {
+        return \sprintf(
+            "Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: %s.",
+            strtoupper(self::searchSeverity($cost)->value),
+        );
+    }
+
+    /**
+     * The attack in its escaped form, what the replay found, why
+     * pcre.backtrack_limit does not stop it, and how to remove it.
+     *
+     * @return list<string>
+     */
+    public static function searchEvidence(RedosSearchCost $cost, string $pcreVersion): array
+    {
+        $lines = [
+            'Attack: '.$cost->render().'.',
+            'pcre.backtrack_limit does not stop it: the limit counts each attempt apart.',
+        ];
+
+        if (true === $cost->replayed) {
+            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: an attempt started further from the end of the run takes more steps.', $pcreVersion);
+        } elseif (false === $cost->replayed) {
+            $lines[] = \sprintf('Not confirmed by the step replay on PCRE2 %s.', $pcreVersion);
+        }
+
+        $lines[] = 'preg_match_all(), preg_replace() and preg_split() retry the same way.';
+        $lines[] = 'Anchor the pattern when every match starts at a known place (^, \A, \G or the A modifier), or bound the length of the run.';
 
         return $lines;
     }

@@ -39,8 +39,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   optimizations can only lower that cost. The second search `preg_match()` runs without `$matches` after an empty
   match is covered. A proven vulnerable verdict is **not complete**: it certifies the class of the model, and
   confirmed mode reports whether the running PCRE2 reproduces it (`replayed`).
-- **Limits:** Per match attempt: the retries of an unanchored search and the every-match functions (`preg_match_all`,
-  `preg_replace`, `preg_split`) are not counted. Lookaround constraints are not evaluated (a lookaround may fail);
+- **Limits:** Per match attempt. An unanchored search retries the attempt at each start position, and the every-match
+  functions (`preg_match_all`, `preg_replace`, `preg_split`) retry the same way, so a degree-k per-attempt verdict
+  costs up to n^(k+1) steps over an unanchored search. When one attempt is proven linear, the search cost is looked for
+  apart (below). Lookaround constraints are not evaluated (a lookaround may fail);
   `{m,n}` above 16, and a bounded repeat whose copies can read the same input in two ways, are analysed as `{m,}`; an
   atomic body that is more than one run over one set is kept as written. Each abstraction is listed in
   `abstractions`. Verdicts are deterministic per analysis version and PCRE2 release.
@@ -49,6 +51,40 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   ambiguity the analysis cannot witness, and a witness crossing an over-approximated atomic body or character class
   are judged by the structural heuristics (best-effort, as in 1.x), with `proof: heuristic` or `budget_exceeded`. An
   invalid pattern is never proven safe: `proof: not_analyzed`, severity `unknown`.
+
+**Search cost**
+- **Semantics:** For a pattern whose one attempt is proven linear, a witness `prefix . run x n . breaker` read from the
+  same automaton: every attempt started inside the run reads to its end without matching, then fails on the breaker,
+  which holds the last code unit every match requires. The prefix keeps the first attempt from matching the bare run
+  (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in PCRE2's interpreter (`pcre.jit=0`,
+  a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue `regex.lint.redos.search` and the PHPStan identifier
+  `regex.redos.search`, at severity `medium`, a warning.
+- **Guarantee:** None in the other direction: `search_cost: null` means no witness was found, not that the search is
+  linear. A reported witness holds on the model; confirmed mode, from a threshold of `medium` or lower, replays it
+  without the JIT and counts the steps of attempts pinned at two offsets (`replayed`). Measured with PHP 8.4.26 and PCRE2 10.49:
+
+  | pattern, subject | `pcre.jit=0` | `pcre.jit=1` |
+  |---|---|---|
+  | `/\s+$/`, `" " x n . "x"`, n = 10,000 / 20,000 | 497 / 1,992 ms | 0.0 ms; 1.9 ms at n = 800,000 |
+  | `/^\s+\|\s+$/`, `"!" . " " x n . "!"`, n = 10,000 / 20,000 | 491 / 1,963 ms | 4.0 ms at n = 800,000 |
+  | `/a+b/`, `"a" x n . "cb"`, n = 10,000 / 20,000 | 24 / 97 ms | 0.0 ms |
+  | `/(?:ab)+c/`, 5,000 / 10,000 characters | 51 / 201 ms | 3.5 / 13.8 ms |
+  | `/(?:a\|b)+c/`, 5,000 / 10,000 characters | 331 / 1,325 ms | 27.5 ms / `false`, JIT stack limit exhausted |
+  | `/^\s+$/`, `" " x n . "x"`, n = 20,000 | 0.2 ms | 0.0 ms |
+
+- **Limits:** The JIT is neither modelled nor measured: it stayed linear on every loop over one character probed and
+  was quadratic, or gave up, on loops over a longer word, and the analysis never runs a pattern under it (some pattern
+  and subject pairs crash PHP there, PCRE2 10.40 to 10.49). `pcre.backtrack_limit` is counted per attempt and does not stop the cost: at the default limit `/\s+$/`
+  takes 123, 497 and 1,992 ms on 5,000, 10,000 and 20,000 spaces and an `x`, and returns `0` without an error. A
+  lookaround on the run is reported only once confirmed mode replays it, and a pattern holding `\G` is never confirmed
+  by that pinned replay (`\G` holds wherever an attempt is pinned); a pattern some attempt may match inside the run, a
+  run read through a bounded repeat above the unrolling cutoff (`\s{1,100}`, read as unbounded by the model, at most
+  its bound per attempt on the engine), a start verb such as `(*NO_DOTSTAR_ANCHOR)` (the per-attempt verdict is then
+  heuristic), and a search proof over the shared budget give no witness. The step replay counts nothing inside an
+  atomic or possessive repeat of a single character set (`/a++b/`): that witness, read exactly by the model, is
+  reported with `replayed: false`; a repeat of a longer word (`/(?:ab)++c/`, `/(?>a+b)+c/`) is counted. A library
+  failure inside the search proof leaves `search_cost` null and the per-attempt verdict as proven; any other error is a
+  bug, and the analysis reports it as an error.
 
 ## Automata Solver
 

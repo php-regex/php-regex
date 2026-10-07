@@ -51,6 +51,11 @@ final class BacktrackProver
 
     private ?int $stepBound = null;
 
+    /**
+     * @var array{ItemAutomaton, Budget, list<string>}|null
+     */
+    private ?array $search = null;
+
     public function __construct(
         private readonly int $maxStates,
         private readonly int $maxSteps,
@@ -64,11 +69,13 @@ final class BacktrackProver
     {
         $budget = new Budget($this->maxSteps, $this->maxStates);
         $this->stepBound = null;
+        $this->search = null;
         $builder = $this->builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff);
         $searches = $builder->build();
 
         // A search's automaton is kept only while a lookaround of it is still
-        // to analyse: the others are released as soon as they are read.
+        // to analyse: the others are released as soon as they are read, but
+        // the pattern's own, which search() hands to the search-cost proof.
         $parents = [];
         foreach ($searches as $pnfa) {
             if (null !== $pnfa->parent) {
@@ -110,6 +117,9 @@ final class BacktrackProver
             $stepBound = null === $stepBound ? null : self::boundOf($automaton, $stepBound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = (new AmbiguityFinder($automaton, $budget))->find($literals);
+            if (null === $pnfa->parent) {
+                $this->search = [$automaton, $budget, self::mandatoryRuns($regex->pattern, $pnfa->unicode)];
+            }
             unset($automaton);
             if (null === $verdict || null === $reach[$index]) {
                 continue;
@@ -171,6 +181,18 @@ final class BacktrackProver
     public function stepBound(): ?int
     {
         return $this->stepBound;
+    }
+
+    /**
+     * The automaton of the pattern's own search from the last proof, the
+     * budget it shares, and the runs of literal characters every match
+     * reads, in order; null before a proof finished reading it.
+     *
+     * @return array{ItemAutomaton, Budget, list<string>}|null
+     */
+    public function search(): ?array
+    {
+        return $this->search;
     }
 
     /**

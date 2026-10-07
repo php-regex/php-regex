@@ -801,6 +801,27 @@ preg_match('/(a++)+$/', $input);  // SAFE
 **Read more:**
 - [OWASP: Regular Expression Denial of Service](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 
+### Quadratic Search
+
+**Identifier:** `regex.lint.redos.search`; `regex.redos.search` in PHPStan, with the message `Quadratic search (ReDoS): <pattern>`
+
+**When it triggers:** One match attempt is proven linear, but the search is not anchored: `preg_match()` starts an attempt at each position of the subject, and on a run of characters each attempt reads to the end of the run before it fails. On the run repeated n times then a breaking character, PCRE2's interpreter takes a number of steps quadratic in n; `preg_match_all()`, `preg_replace()` and `preg_split()` retry the same way. An anchored alternative does not protect the others: the trim regex `/^\s+|\s+$/` is quadratic on `"!" . " " x n . "!"`. `pcre.backtrack_limit` does not stop it: the limit counts each attempt apart, and trips only when one attempt exceeds it. The JIT may avoid it for some patterns, not for all (see the [ReDoS guide](REDOS_GUIDE.md#the-cost-of-an-unanchored-search)).
+
+It runs under the ReDoS check, with no switch of its own. Its severity is that of a proven quadratic attempt, `medium`, so the default `high` threshold hides it: `--redos-threshold=medium` shows it. It is a warning in every mode, and `--disable-rule=regex.lint.redos.search` or `"redos.search": false` in the `checks.lint.rules` of `regex.json` turns it off.
+
+**Example:**
+```php
+// Quadratic search: on " " x n . "!" each attempt reads the rest of the run
+preg_match('/\s+$/', $input);
+
+// Linear, and the same answer: the characters \s matches without /u
+rtrim($input, " \t\n\v\f\r") !== $input;
+```
+
+The two agree on the characters `\s` matches without `/u` in the default C locale. PHP builds PCRE2's character tables from `LC_CTYPE` when a script sets another locale, which may change what `\s` matches; under `/u`, `\s` also matches Unicode spaces such as U+00A0 and U+2028, which this `rtrim()` keeps.
+
+**Fix:** Anchor the pattern when every match starts at a known place (`^`, `\A`, `\G` or the `A` modifier), or bound the length of the run, or do the work without a regex (`rtrim()` for trailing whitespace).
+
 ---
 
 ## Advanced Syntax
@@ -939,6 +960,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Inline      | `regex.lint.flag.redundant`, `.override`                                                  | warning  | Remove or scope the inline flag   |
 | Complexity  | `regex.lint.complexity`                                                                   | warning  | Split the pattern                 |
 | ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above or proves one it cannot replay | Use possessive quantifiers |
+| ReDoS       | `regex.lint.redos.search` (`regex.redos.search` in PHPStan)                               | warning in every mode; ReDoS severity `medium`, shown from `--redos-threshold=medium` | Anchor the pattern or bound the run |
 | Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted (Laravel `regex:lint`, for the `regex:` validation rules it reads) | error | Fix what the message names |
 
 ---

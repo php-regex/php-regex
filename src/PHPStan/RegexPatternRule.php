@@ -59,7 +59,14 @@ final class RegexPatternRule implements Rule
 
     public const IDENTIFIER_TRIVIAL_MATCH = 'regex.trivialMatch';
 
+    /**
+     * One attempt proven linear, the unanchored search that retries it
+     * quadratic.
+     */
+    public const IDENTIFIER_REDOS_SEARCH = 'regex.redos.search';
+
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
+    private const ISSUE_ID_REDOS_SEARCH = 'regex.lint.redos.search';
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
@@ -427,7 +434,7 @@ final class RegexPatternRule implements Rule
                     continue;
                 }
 
-                if (self::ISSUE_ID_REDOS === $issueId) {
+                if (self::ISSUE_ID_REDOS === $issueId || self::ISSUE_ID_REDOS_SEARCH === $issueId) {
                     $redosIssues[] = $issue;
 
                     continue;
@@ -440,6 +447,18 @@ final class RegexPatternRule implements Rule
         foreach ($constantSubject ? [] : $redosIssues as $issue) {
             $analysis = $issue['analysis'] ?? null;
             if (!$analysis instanceof RedosAnalysis) {
+                continue;
+            }
+
+            // One attempt proven linear, the search retrying it is not: its
+            // own message, frozen like the three others, and identifier.
+            if (self::ISSUE_ID_REDOS_SEARCH === ($issue['issueId'] ?? null)) {
+                $errors[] = RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', $this->truncatePattern($pattern)))
+                    ->line($lineNumber)
+                    ->tip(self::getTipForSearchCost($issue['message'], $issue['hint'] ?? null))
+                    ->identifier(self::IDENTIFIER_REDOS_SEARCH)
+                    ->build();
+
                 continue;
             }
 
@@ -684,6 +703,21 @@ final class RegexPatternRule implements Rule
         };
 
         return $analysis->severity->value.', '.$how;
+    }
+
+    /**
+     * What the search cost means and its attack, as the lint issue says
+     * them, then the documentation link. A "<" is written "\x3C", as in the
+     * per-attempt tip.
+     */
+    private static function getTipForSearchCost(string $message, ?string $hint): string
+    {
+        $lines = [str_replace('<', '\x3C', $message)];
+        if (null !== $hint && '' !== $hint) {
+            $lines[] = str_replace('<', '\x3C', $hint);
+        }
+
+        return implode("\n", $lines)."\n\nRead more about catastrophic backtracking: ".self::DOC_LINKS['catastrophic backtracking'];
     }
 
     /**

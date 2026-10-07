@@ -86,7 +86,7 @@ vendor/bin/regex analyze '/(\w*a\w+)+\b/'
 
 The limits of the guarantee, each one deliberate:
 
-- **One match attempt.** `preg_match()` retries an unanchored pattern at every start position, and `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply a linear attempt by the length of the subject: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication. PCRE's start-of-match optimizations defuse most of them (`/\s+$/` and `/\d+x/` stay instant on 80,000 characters), not all of them. The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential.
+- **One match attempt.** `preg_match()` retries an unanchored pattern at every start position, and `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply the cost of an attempt by the length of the subject: a degree-k per-attempt verdict costs up to n^(k+1) steps over an unanchored search (`/a*a*$/`, quadratic per attempt, takes 12, 87 and 659 ms on 500, 1,000 and 2,000 `a` and a `b` without the JIT, eight times as long each time the length doubles). When one attempt is proven linear, the analysis looks for the run that makes the search quadratic: see [The cost of an unanchored search](#the-cost-of-an-unanchored-search). A pattern that matches inside the run is not reported there: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication. The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential.
 - **The pattern as analysed.** A bounded repeat `{m,n}` whose `n` is above 16 is analysed as `{m,}`, and so is any bounded repeat whose copies can read the same input in two ways. An atomic group or possessive quantifier whose body is more than one run over one set is kept as written. Each of them is listed in `abstractions` and printed on a `Model:` line, so you can see what the proof is about. The class is the class of that model: a bounded repeat analysed as unbounded can be reported exponential where PCRE's cost stays polynomial, and confirmed mode then says the attack was not reproduced.
 - **Lookarounds may fail.** The model does not evaluate what a lookahead or lookbehind requires: it counts every run through one as possibly failing, so that the engine may keep backtracking past it. A lookaround never turns a vulnerable pattern into `safe (proven)` (`/(a+)+(?=b)/` is exponential, and PHP fails on it from 20 bytes); it can make a safe one look vulnerable, which confirmed mode then reports as not reproduced. The body of an atomic lookaround is analysed as its own search, and its class joins the pattern's.
 - **Word boundaries and anchors are exact.** `\b` and `\B` are modelled from the word class of the characters around them, at every attempt start and inside lookarounds; `^`, `$`, `\A`, `\z`, `\Z`, `/m` and `/D` as PCRE reads them, `^` under `/m` included.
@@ -211,6 +211,39 @@ Severities are ordered `safe` < `low` < `unknown` < `medium` < `high` < `critica
 
 A proven quadratic pattern (`/\d+\d+$/`, `/(\w+)(\w+)$/`) is `medium`: below the default thresholds. Lower the threshold to `medium` to see them.
 
+## The cost of an unanchored search
+
+The verdict is about one match attempt. An unanchored `preg_match()` starts an attempt at each position of the subject until one matches. When the attempt is proven linear, the analysis also looks for a **search-cost witness**: a prefix, a run repeated n times, then a breaker, such that every attempt started inside the run reads to its end and then fails. The search then costs about n²/2 steps in PCRE2's interpreter, and `preg_match_all()`, `preg_replace()` and `preg_split()` retry the same way. The prefix, often empty, is there when the first attempt would match the bare run: the trim regex `/^\s+|\s+$/` matches `" " x n` at once, not `"!" . " " x n . "!"`. The breaker holds the last code unit every match requires (`>` for `/\s*=>/`): PCRE2 gives up at once on a subject without it. Measured with PHP 8.4.26 and PCRE2 10.49:
+
+| pattern | attack | `pcre.jit=0` | `pcre.jit=1` |
+|---|---|---|---|
+| `/\s+$/` | `" " x n . "x"` | 123, 497, 1,992 ms for n = 5,000, 10,000, 20,000 | 1.9 ms for n = 800,000 |
+| `/^\s+\|\s+$/` | `"!" . " " x n . "!"` | 491, 1,963 ms for n = 10,000, 20,000 | 4.0 ms for n = 800,000 |
+| `/a+b/` | `"a" x n . "cb"` | 24, 97 ms for n = 10,000, 20,000 | 0.0 ms |
+| `/(?:ab)+c/` | `"ab" x n . "dc"`, 5,000 and 10,000 characters | 51, 201 ms | 3.5, 13.8 ms |
+| `/(?:a\|b)+c/` | `"ab" x n . "dc"`, 5,000 and 10,000 characters | 331, 1,325 ms | 27.5 ms, then `false` ("JIT stack limit exhausted") |
+| `/^\s+$/` | `" " x n . "x"` | 0.2 ms for n = 20,000 | 0.0 ms |
+
+The cost is stated for the interpreter: `pcre.jit=0`, a PHP built without JIT, or a pattern that starts with `(*NO_JIT)`. The JIT may avoid it for some patterns, here every loop on one character, not for all. `pcre.backtrack_limit` does not stop it: the limit counts each attempt apart, so with the default limit `/\s+$/` spends two seconds on 20,000 spaces and returns `0` without an error; it trips only when one attempt exceeds it.
+
+An attempt tied to the start of the search is immune when every alternative is: `^` without `m`, `\A`, `\G`, the `A` modifier, and a leading `.*` under `s` (PCRE2 anchors it; so is a leading class of every character without `/u`, such as `[\s\S]*`, but not under `/u`, where `\s` and `\S` are Unicode properties), as are `^` under `m` and a leading `.*` without `s` when the run cannot hold a newline. A possessive or atomic `.*` under `s` jumps to the end of the subject in one step: a run read through it costs nothing, a run another loop reads still does (`/\s+$|x.*+y/s` is quadratic). A bounded repeat above 16, such as `\s{1,100}`, reads at most its bound per attempt: no run is read through it. A witness is looked for only when one attempt is proven linear: a worse per-attempt verdict already covers the search. When none is found, `search_cost` is `null`, which does not prove the search linear: the search proof reports a run through a lookaround only once confirmed mode replayed it, never a run some attempt may match inside, and stops at the analysis budget.
+
+The result is `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`degree` 2, the `prefix`, the `run` and the `breaker`, `replayed`; `build($n)` gives the attack, `render()` writes it), and the `search_cost` key of the JSON output. The severity is that of a proven quadratic attempt, `medium`, below the default thresholds, and it is a warning, never an error:
+
+- `regex lint --redos` reports it as `regex.lint.redos.search` from `--redos-threshold=medium` (or `checks.redos.threshold` set to `medium` in `regex.json`); `--disable-rule=regex.lint.redos.search`, or `"redos.search": false` in `checks.lint.rules`, turns it off. The per-attempt verdict keeps its own id, `regex.lint.redos`.
+- PHPStan reports it as `regex.redos.search`, with the message `Quadratic search (ReDoS): <pattern>`, from `threshold: medium`.
+
+`vendor/bin/regex lint app --redos --redos-threshold=medium -v` on `preg_match('/\s+$/', $subject);` prints the whole hint:
+
+```
+  app/Whitespace.php:3:12
+      → /\s+$/
+    WARN Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: MEDIUM.
+         ↳ Attack: " " x n . "!". pcre.backtrack_limit does not stop it: the limit counts each attempt apart. preg_match_all(), preg_replace() and preg_split() retry the same way. Anchor the pattern when every match starts at a known place (^, \A, \G or the A modifier), or bound the length of the run.
+```
+
+In confirmed mode, when the threshold is `medium` or lower, the witness is replayed without the JIT: `replayed` says whether an attempt started further from the end of the run takes more steps. The JIT is not measured: some pattern and subject pairs crash PHP under it (PCRE2 10.40 to 10.49), so the analysis never runs your pattern with it; the table above is how it fared on these probes, not a verdict. The step counter sees nothing inside an atomic or possessive repeat of a single character set, such as `/a++b/`: that witness, which the model reads exactly, stays reported with `replayed: false`. A witness that crosses a lookaround is reported only once that replay confirms it, and a pattern holding `\G`, which holds wherever the replay pins an attempt, is never confirmed that way.
+
 ## Outside the model: heuristics and budget
 
 A pattern holding a construct the model does not cover is judged by the structural heuristics, as in 1.x, and says so:
@@ -307,6 +340,7 @@ patterns left `unknown` into ones with a polynomial ceiling.
 | `abstractions` | `list<string>` | what the model analysed differently from the pattern as written |
 | `pcreVersion` | `string` | the PCRE2 release the verdict was computed with |
 | `analysisVersion` | `string` | `RedosAnalyzer::ANALYSIS_VERSION`, raised when the model changes |
+| `searchCost` | `?RedosSearchCost` | the witness of a quadratic unanchored search, looked for when one attempt is proven linear; `null` when none was found, never a proof of a linear search |
 
 `isSafe()` keeps its meaning (`safe` or `low`); `isProvenSafe()` is true only for a proven linear verdict:
 
@@ -318,7 +352,7 @@ $analyzer->analyze('/(a)?(?(1)a|b)/')->isSafe();         // true:  no risk found
 $analyzer->analyze('/(a)?(?(1)a|b)/')->isProvenSafe();   // false
 ```
 
-The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`), and the witness as its three escaped parts; the [JSON output reference](reference/json-output.md#redos-analysis-redos_analysis) lists every key:
+The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`), and the witness as its three escaped parts; the [JSON output reference](reference/json-output.md#redos-analysis-redos_analysis) lists every key:
 
 ```json
 "complexity": "exponential",
@@ -332,7 +366,8 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "replayed": true,
 "abstractions": [],
 "pcre_version": "10.49",
-"analysis_version": "1"
+"analysis_version": "1",
+"search_cost": null
 ```
 
 ## On real code

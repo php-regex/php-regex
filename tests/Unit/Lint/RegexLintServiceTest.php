@@ -27,6 +27,7 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexLintServiceTest extends TestCase
@@ -587,6 +588,24 @@ final class RegexLintServiceTest extends TestCase
 
         $this->assertNotContains('regex.lint.overlap.charset', $ids);
         $this->assertNotContains('regex.lint.quantifier.nested', $ids);
+    }
+
+    /**
+     * The ReDoS ignore list takes patterns, fragments or full regexes: a full
+     * regex, delimiters and modifiers included, skips its verdict too.
+     */
+    #[Test]
+    public function test_analysis_skips_the_redos_verdict_of_an_ignored_full_regex(): void
+    {
+        $occurrence = new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match');
+        $redosIds = static fn (AnalysisService $analysis): array => array_values(array_filter(
+            array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $analysis->lint([$occurrence])),
+            static fn (string $id): bool => 'regex.lint.redos' === $id,
+        ));
+
+        $this->assertSame(['regex.lint.redos'], $redosIds(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true)), 'control: reported when not ignored');
+
+        $this->assertSame([], $redosIds(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosIgnoredPatterns: ['/(a+)+$/'], redosEnabled: true)));
     }
 
     public function test_analyze_with_route_pattern_filters_charset_overlap(): void

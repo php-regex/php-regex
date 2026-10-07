@@ -103,13 +103,20 @@ $engine = new PcreEngine();
 
 $engine->compile('/(?1)a/')?->message;  // "reference to non-existent subpattern at offset 3"
 $engine->match('/a(b)/', 'xab')->groups; // ['ab', 'b']
+$engine->match('/\Ga/', 'ba', null, 1)->matched; // true: the search starts at byte 1
 $engine->match('/(a+)+$/', str_repeat('a', 20).'!', new PcreLimits(10, 100000))->error;
 // "Backtrack limit exhausted"
 ```
 
 `compile()` returns a `PcreError` (message and offset, as PHP reports them for
 the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
-`matched` is `null` when the engine gave no answer.
+`matched` is `null` when the engine gave no answer. The offset `match()` takes
+is the one `preg_match()` takes: the byte the search starts at in the whole
+subject, so `\b` and a lookbehind still see what lies before it, and `^` does
+not hold there; past the end of the subject the answer is `null`, with the
+error `Internal error`. `test()` calls `preg_match()` without `$matches`, as
+most code does, and takes no offset: `preg_match()` takes one only after
+`$matches`.
 
 ### LanguageSolver
 

@@ -104,6 +104,22 @@ final class BackwardCompatibilityDocTest extends TestCase
         $this->assertStringContainsString('Psalm baseline', $doc);
     }
 
+    /**
+     * The search cost adds a lint issue id, a PHPStan identifier, a JSON key
+     * and a result object: baselines, ignore lists and JSON readers name
+     * them, so the document freezes them.
+     */
+    #[Test]
+    public function test_bc_doc_names_the_search_cost_contract(): void
+    {
+        $doc = (string) file_get_contents(self::root().'/'.self::DOC);
+
+        $this->assertStringContainsString('`regex.lint.redos.search`', $doc);
+        $this->assertStringContainsString('`regex.redos.search`', $doc);
+        $this->assertStringContainsString('`search_cost`', $doc);
+        $this->assertStringContainsString('`RedosSearchCost`', $doc);
+    }
+
     #[Test]
     public function test_bc_doc_lists_exactly_the_result_objects(): void
     {

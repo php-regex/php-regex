@@ -9,3 +9,6 @@ CHANGELOG
  * The lint command reads the file of `--baseline` and `--generate-baseline`
    after a space too (`--baseline base.json`); either option with no file is a
    usage error.
+ * `regex.lint.redos.search`: the quadratic cost of an unanchored search whose
+   every attempt is proven linear, under the ReDoS check, at severity `medium`;
+   `redos.search` in the rules map of `regex.json` turns it off.
