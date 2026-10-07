@@ -28,4 +28,16 @@ final class LintArgumentParserTest extends TestCase
         $this->assertTrue($result->help);
         $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
     }
+
+    /**
+     * A rule reads its setting under its short id, as regex.json writes it:
+     * the full id on the command line names the same rule.
+     */
+    public function test_a_rule_named_by_its_full_id_is_stored_under_its_short_id(): void
+    {
+        $result = (new LintArgumentParser())->parse(['--disable-rule=regex.lint.group.redundant', '--enable-rule=regex.lint.charclass.single', '--disable-rule=flag.useless.s']);
+
+        $this->assertInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame(['group.redundant' => false, 'charclass.single' => true, 'flag.useless.s' => false], $result->arguments->lintRules);
+    }
 }

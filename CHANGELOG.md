@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `--disable-rule` and `--enable-rule` take a rule's full id as well as its short one: `--disable-rule=regex.lint.group.redundant` was stored under the full id, which no pattern lint rule reads, and turned nothing off.
 - The JavaScript transpiler writes `\k'n'` as `\k<n>`, and the Python one writes `\k'n'` and `\k{n}` as `(?P=n)`, where both refused them: they are the same backreference as `\k<n>`.
 - `regex.lint.escape.suspicious` no longer reads `\N{U+41}`, a code point, as an unknown character name: `/\N{U+41}/u` is valid and matches `"A"`.
 - The optimizer read a byte above 0x7F in a class of a pattern without `/u` as a code point: `[\xE9\xEA]` written with raw bytes came out `[\x00]` (two bytes `mb_ord()` read as `false`, so as 0), and a raw byte range such as `[\x80-\xBF]` never ended. Such bytes are now left as written; ASCII members are still merged into ranges.

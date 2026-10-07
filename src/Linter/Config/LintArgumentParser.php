@@ -982,6 +982,11 @@ final class LintArgumentParser
 
     private function withLintRule(LintArguments $arguments, string $ruleId, bool $enabled): LintArguments
     {
+        // A rule reads its setting under its short id, as regex.json writes it.
+        if (str_starts_with($ruleId, 'regex.lint.')) {
+            $ruleId = substr($ruleId, \strlen('regex.lint.'));
+        }
+
         $lintRules = $arguments->lintRules;
         $lintRules[$ruleId] = $enabled;
 

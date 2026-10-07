@@ -391,8 +391,6 @@ The follow-ups are merged too: the search cost's two false positives
   for every release from 10.44 (right for 10.44); the release that relaxed it
   is unknown.
 - The search cost gives no verdict when `m` is set inline (`/(?m)^\s+x/`).
-- `--disable-rule=regex.lint.<id>` with the full id is ignored for the
-  pattern lint rules (the short id works).
 - Capture case facts (`lowercase-string` / `uppercase-string` and caseless
   values) were left out: Turkish casing, the Kelvin sign and the long s as
   sources, locale tables.
