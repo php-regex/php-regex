@@ -2922,6 +2922,14 @@ final class TokenParser
             throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: with the groups before it, it goes past 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
         }
 
+        // "(?(-n)" counts back over the groups opened so far: PCRE refuses a
+        // count past them as it reads it, before any later error.
+        if ('-' === $sign && (int) $num > $this->captureCount) {
+            $position = $this->stream->current()->position;
+
+            throw $this->parserException(\sprintf('Condition relative reference -%s is outside the range of available capture groups.', $num), ErrorCode::BackrefRelative, $position);
+        }
+
         return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
     }
 

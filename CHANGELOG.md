@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `(?(-n)` counting back past the groups opened so far is refused as PCRE2 reads it, before any later error: `/(?(-1)(/` reports the reference at 5, where it reported the unclosed group at 7.
 - `(?<*+` and `(?<*?` open a non-atomic lookbehind whose `+` or `?` repeats nothing: the error is the quantifier without target past it, as PCRE2 reports it, where the library reported a missing group name.
 - A bare `\g` reference reads a sign and digits only, as PCRE2 does: in `/(a)\g-1+{2}/` the `+` is a quantifier and the count after it is refused, where the reference took the `+` and the pattern was accepted.
 - A space before the `^` of a negated property name no longer hides the negation: `\P{ ^L}` is `\p{L}`, as PCRE2 reads it, where the library refused `\P{ ^any}` as an unknown property.

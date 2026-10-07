@@ -243,9 +243,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   blank and a quantifier repeats both characters, where PCRE repeats the
   `0` only: `/^\1000(?#c)+$/` matches `"@0@0"` once printed, and PCRE does
   not.
-- A relative condition reference before any whole item is reported after
-  the next error: `/(?(-1)(/` is the unclosed group at 7, PCRE "reference
-  to non-existent subpattern" at 5.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
