@@ -1040,6 +1040,7 @@ final class Validator extends AbstractNodeVisitor
         // Optimized named backreference validation
         if (LibraryPcre::match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             $name = $matches['name'];
+            $this->guardByteModeName($node, $name, ErrorCode::GroupNameUnterminated);
             if (!$this->groupNumbering->hasNamedGroup($name)) {
                 $suggestions = $this->getNameSuggestions($name);
                 $this->raiseMissingReference(
@@ -1709,6 +1710,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // Named reference: (?&name), (?P>name), \g<name>
+        $this->guardByteModeName($node, $ref, ErrorCode::GroupUnclosed);
         if (!$this->groupNumbering->hasNamedGroup($ref)) {
             $this->raiseMissingReference(
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
@@ -3841,6 +3843,26 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $this->lateErrors[$this->lookbehindDepth > 0 ? 0 : 1] ??= $error;
+    }
+
+    /**
+     * Without UTF mode a name holds ASCII word characters only: PCRE stops
+     * reading it on the first byte above 0x7F and refuses what follows there.
+     */
+    private function guardByteModeName(BackrefNode|SubroutineNode $node, string $name, ErrorCode $code): void
+    {
+        if ($this->unicodeMode || null === $this->source || 1 !== LibraryPcre::match('/[\x80-\xFF]/', $name)) {
+            return;
+        }
+
+        $text = substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        $position = $node->startPosition + strcspn($text, implode('', array_map(chr(...), range(0x80, 0xFF))));
+
+        $this->raiseSemanticError(
+            \sprintf('Group name "%s" holds a byte past ASCII, which ends a name without UTF mode.', $name),
+            $position,
+            $code,
+        );
     }
 
     private function raiseSemanticError(string $message, int $position, ErrorCode $code, ?string $hint = null): never

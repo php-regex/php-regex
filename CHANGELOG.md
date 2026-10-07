@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Without `/u`, a reference or call name holding a byte above 0x7F, `\k<aé>` or `(?&aé)`, is refused on that byte, as PCRE2 refuses it, where it was reported as a missing group one byte early.
 - The "Invalid backreference syntax" message quotes the reference as written: for `\g{٣a}` it quoted `\k{٣a}`.
 - A `(` right after a called name, `/(?&a(?:z)/`, is refused past it as PCRE2 refuses it, a group name or number expected, where the library reported an unclosed call one byte early.
 - A braced name after `\k` skips the spaces around it as PCRE2 does before it reports what is missing: `/\k{a b}/` and `/\k{ a/` are refused at 5, where the library stopped one byte early or on the space.

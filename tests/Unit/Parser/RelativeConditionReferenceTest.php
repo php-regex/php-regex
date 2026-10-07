@@ -189,10 +189,40 @@ final class RelativeConditionReferenceTest extends TestCase
         $this->assertStringContainsString("\\g{\u{663}a}", (string) $result->error);
     }
 
+    /**
+     * Without /u a name holds ASCII word characters only: PCRE2 stops the
+     * name on the first byte above 0x7F and refuses what follows there.
+     */
+    #[Test]
+    #[DataProvider('provideByteModeNames')]
+    public function test_a_non_ascii_name_in_byte_mode_is_refused_on_its_first_high_byte(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), $pattern);
+
+        $result = Regex::create(['cache' => null])->validate($pattern);
+
+        $this->assertFalse($result->isValid, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideByteModeNames(): iterable
+    {
+        yield 'angled reference' => ['pattern' => "/\\k<a\u{e9}>/", 'offset' => 4];
+        yield 'quoted reference' => ['pattern' => "/\\k'a\u{e9}'/", 'offset' => 4];
+        yield 'braced reference' => ['pattern' => "/\\k{a\u{e9}}/", 'offset' => 4];
+        yield 'braced g reference' => ['pattern' => "/\\g{a\u{e9}}/", 'offset' => 4];
+        yield 'call' => ['pattern' => "/(?&a\u{e9})/", 'offset' => 4];
+        yield 'python call' => ['pattern' => "/(?P>a\u{e9})/", 'offset' => 5];
+    }
+
     #[Test]
     public function test_a_backward_count_within_the_open_groups_is_accepted(): void
     {
-        foreach (['/(a)(?(-1)a|b)/', '/((?(-1)a)b)/'] as $pattern) {
+        // Under /u a name holds non-ASCII letters too.
+        foreach (['/(a)(?(-1)a|b)/', '/((?(-1)a)b)/', "/(?<a\u{e9}>x)\\k<a\u{e9}>/u"] as $pattern) {
             $this->assertNotFalse(preg_match($pattern, ''), $pattern);
             $this->assertTrue(Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);
         }

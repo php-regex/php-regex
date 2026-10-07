@@ -208,10 +208,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   - a lookbehind called from a condition that holds another lookbehind can
     pass unmeasured: `/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` is
     accepted, PCRE refuses it as not limited at 28.
-- Name readers outside group definitions do not stop where PCRE stops:
-  `\k<aé>` without `/u` (and `\k'`, `\k{`, `\g{`, `\g<`, `\g'`) is a
-  missing named group at 10 (PCRE: syntax error in the name at 11);
-  `(?&aé)` likewise.
 - `/[z-abcd/` is the unclosed class at 7; PCRE reports the reversed range
   at 4.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
