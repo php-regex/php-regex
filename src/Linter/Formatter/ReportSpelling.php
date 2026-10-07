@@ -111,7 +111,8 @@ final class ReportSpelling
         [, $label, $excerpt, $indent] = $match;
         $caretOffset = max(0, \strlen($indent) - \strlen($label));
         $before = substr($excerpt, 0, $caretOffset);
-        $column = \strlen(self::displayFragment($before, $pattern)) + max(0, $caretOffset - \strlen($excerpt));
+        // The caret comes placed in bytes; it is shown in characters.
+        $column = mb_strlen(self::displayFragment($before, $pattern), 'UTF-8') + max(0, $caretOffset - \strlen($excerpt));
 
         return $label.self::displayFragment($excerpt, $pattern)."\n".str_repeat(' ', \strlen($label) + $column).'^';
     }

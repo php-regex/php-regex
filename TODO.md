@@ -250,8 +250,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 - A relative condition reference before any whole item is reported after
   the next error: `/(?(-1)(/` is the unclosed group at 7, PCRE "reference
   to non-existent subpattern" at 5.
-- The caret under a lint snippet is placed by bytes, so each multi-byte
-  character before the fault moves it one column right.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
 - The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`

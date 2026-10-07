@@ -243,6 +243,12 @@ final class ReportSpellingTest extends TestCase
             'snippet' => "Line 1: ab\u{202E}c\n".str_repeat(' ', 10).'^',
             'expected' => "Line 1: ab\\x{202E}c\n".str_repeat(' ', 10).'^',
         ];
+        // The caret comes placed in bytes; it stands under the same
+        // character once shown, one column for "é".
+        yield 'a multibyte character before the caret' => [
+            'snippet' => "Line 1: éa\n".str_repeat(' ', 10).'^',
+            'expected' => "Line 1: éa\n".str_repeat(' ', 9).'^',
+        ];
         yield 'the caret past the excerpt' => [
             'snippet' => "Line 1: ab\n".str_repeat(' ', 12).'^',
             'expected' => "Line 1: ab\n".str_repeat(' ', 12).'^',
