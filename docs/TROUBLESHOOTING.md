@@ -156,16 +156,19 @@ PHPRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position
 ```
 
 **Causes:**
-- Malformed UTF-8 input
+- Malformed UTF-8 in a pattern read as UTF-8 (`/u` or a leading `(*UTF)`)
 - Unsupported PCRE syntax
 - Invalid character class nesting
 
 **Solutions:**
 
-1. Validate UTF-8 encoding:
+1. Check the encoding of a UTF-8 pattern. Without `/u` a pattern is read as
+   bytes, as PCRE reads it, and any byte is accepted (`/\xE9/` written with
+   a raw byte is valid); with `/u` the pattern must be valid UTF-8, as PCRE
+   requires:
 ```php
-if (!preg_match('//u', $pattern)) {
-    throw new \RuntimeException('Pattern must be valid UTF-8');
+if (str_contains($flags, 'u') && !mb_check_encoding($pattern, 'UTF-8')) {
+    throw new \RuntimeException('A /u pattern must be valid UTF-8');
 }
 ```
 

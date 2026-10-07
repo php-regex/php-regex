@@ -110,9 +110,6 @@ against the engine:
   target: JavaScript `/caf\xC3\xA9/` matches `"Ã©"` where PCRE matched the
   two raw bytes, and the Python output can hold a lone invalid byte whose
   source does not parse at all.
-- docs/TROUBLESHOOTING.md still advises rejecting any pattern that is not
-  valid UTF-8; byte mode has been accepted and tokenized byte by byte for a
-  while.
 
 The normalization-free contract itself is untested: no decomposed pattern
 anywhere in the suite, and the multibyte round-trip rows (`[«»“”]`,
