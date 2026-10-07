@@ -143,6 +143,18 @@ final readonly class SecurityConfigExtractor
                 continue;
             }
 
+            // A dash line deeper than an open "roles:", "methods:" or "ips:"
+            // is an item of that block list, not a new rule.
+            if (null !== $currentRuleIndex && null !== $currentListKey && null !== $currentListIndent
+                && $indent > $currentListIndent && LibraryPcre::match('/^\s*-\s*(.+)$/', $line, $matches)) {
+                $value = $this->stripQuotes(trim($matches[1]));
+                if ('' !== $value) {
+                    $rules[$currentRuleIndex][$currentListKey][] = $value;
+                }
+
+                continue;
+            }
+
             if (LibraryPcre::match('/^\s*-\s*(.*)$/', $line, $matches)) {
                 $currentRuleIndex = \count($rules);
                 $currentRuleIndent = $indent;
@@ -183,20 +195,9 @@ final readonly class SecurityConfigExtractor
                 continue;
             }
 
-            if (null !== $currentListKey && null !== $currentListIndent) {
-                if ($indent > $currentListIndent && LibraryPcre::match('/^\s*-\s*(.+)$/', $line, $matches)) {
-                    $value = $this->stripQuotes(trim($matches[1]));
-                    if ('' !== $value) {
-                        $rules[$currentRuleIndex][$currentListKey][] = $value;
-                    }
-
-                    continue;
-                }
-
-                if ($indent <= $currentListIndent) {
-                    $currentListKey = null;
-                    $currentListIndent = null;
-                }
+            if (null !== $currentListKey && null !== $currentListIndent && $indent <= $currentListIndent) {
+                $currentListKey = null;
+                $currentListIndent = null;
             }
 
             $pair = $this->extractKeyValueFromLine($line);

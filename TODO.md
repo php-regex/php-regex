@@ -199,10 +199,6 @@ host `setlocale()` can rebuild PCRE's case tables.
     accepted, PCRE refuses it as not limited at 28.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
-- The Symfony security extractor never reads a block-style list (`- ROLE_ADMIN`
-  on the lines under `roles:`, `methods:` or `ips:`): the dash lines are taken
-  before the list is looked at, so they produce bogus rules, and the parent
-  rule loses its roles, methods and addresses.
 
 ## Report the PCRE2 JIT crash upstream
 

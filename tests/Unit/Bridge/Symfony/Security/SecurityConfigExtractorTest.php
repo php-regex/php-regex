@@ -99,6 +99,16 @@ final class SecurityConfigExtractorTest extends TestCase
             'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          roles:\n          methods: [GET, POST]\n",
             'expected' => ['roles' => [], 'methods' => ['GET', 'POST'], 'ips' => []],
         ];
+        // A block list: the dash lines under the key are its items, not new
+        // rules.
+        yield 'block list of roles' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          roles:\n              - ROLE_ADMIN\n              - ROLE_EDITOR\n",
+            'expected' => ['roles' => ['ROLE_ADMIN', 'ROLE_EDITOR'], 'methods' => [], 'ips' => []],
+        ];
+        yield 'block lists of methods and addresses' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          methods:\n              - GET\n          ips:\n              - 127.0.0.1\n              - '::1'\n",
+            'expected' => ['roles' => [], 'methods' => ['GET'], 'ips' => ['127.0.0.1', '::1']],
+        ];
         yield 'empty flow list on the line after the key' => [
             'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          ips:\n              []\n          methods: [GET]\n",
             'expected' => ['roles' => [], 'methods' => ['GET'], 'ips' => []],
