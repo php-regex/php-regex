@@ -109,7 +109,9 @@ final readonly class CaptureLayout
                 $named[$name] = true;
                 $marked = $marked || 'MARK' === $name;
                 [$groups, $unset] = self::nameValue($byName[$name], $unmatchedAsNull, $lastAlways, $lastMaySet);
-                $keys[] = new CaptureKey($name, $optional, $groups, $unset, 'MARK' === $name && [] !== $shape->marks, $always);
+                // A name several groups share (/J) is set whenever one of them always is.
+                $nameAlways = [] !== array_filter($byName[$name], static fn (CaptureGroupShape $shared): bool => Participation::Always === $shared->participation);
+                $keys[] = new CaptureKey($name, $optional, $groups, $unset, 'MARK' === $name && [] !== $shape->marks, $nameAlways);
             }
 
             $keys[] = new CaptureKey($group->number, $optional, self::setGroups([$group]), self::readsUnset($group, $unmatchedAsNull, $lastAlways, $lastMaySet), false, $always);

@@ -291,6 +291,18 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * Under /J a name holds a set group's value whenever one of the groups
+     * bearing it is always set: its offset is never -1.
+     * preg_match('/(?J)(?<n>z)?(?<n>a)/', 'a', $m, PREG_OFFSET_CAPTURE)
+     * gives n = ['a', 0].
+     */
+    #[Test]
+    public function test_a_shared_name_with_an_always_set_group_has_a_set_offset(): void
+    {
+        $this->assertStringContainsString("n: array{'z'|'a', int<0, max>}", $this->analyze('/(?J)(?<n>z)?(?<n>a)/')->matchShape(\PREG_OFFSET_CAPTURE));
+    }
+
+    /**
      * preg_match() ignores a bit above the low byte: '/(a)/' with 1024 writes
      * ["a","a"], with 256|1024 [["a",0],["a",0]] (PHP 8.4.26). matchShape()
      * ignores it too, so a later flag that leaves $matches alone needs no

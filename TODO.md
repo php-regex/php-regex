@@ -306,9 +306,6 @@ The follow-ups are merged too: the search cost's two false positives
   ("regular expression is too large").
 - At `php_version` 8.1 the parser accepts a raw NUL in a pattern; PHP 8.1
   refuses it.
-- Under `/J`, a name's offset type follows the first group bearing it:
-  `/(?J)(?<n>z)?(?<n>a)/` with offsets types `n`'s offset `int<-1, max>`
-  although group 2 is always set.
 - `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
   for every release from 10.44 (right for 10.44); the release that relaxed it
   is unknown.
