@@ -106,7 +106,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
   modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
   language says. `A` is refused, and so is a start option such as `(*CRLF)` when `$`, `\Z` or `/m` would
-  read the newline it sets. `matchEquivalent()` reads the same flags except `m`, which it refuses.
+  read the newline it sets. `matchEquivalent()` reads the same flags except `m`, which it refuses, and refuses
+  `(*CRLF)`, under which the dot reads a `\r` alone but not one before a `\n`.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
   as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:
   `/(?:^|,)a/` and `/^\d+$/m` are answered. A lookaround inside a lookaround, an anchor or word boundary inside a

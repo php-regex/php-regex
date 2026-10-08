@@ -30,6 +30,7 @@ use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\RegexParser;
 
 /**
@@ -238,6 +239,10 @@ final readonly class LanguageSolver
         $unsupported = array_diff(str_split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X', 'r']);
         if ([] !== array_filter($unsupported, static fn (string $flag): bool => '' !== $flag)) {
             throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
+        }
+
+        if ('CRLF' === StartOptions::newline($ast->source ?? '')) {
+            throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
         }
 
         return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator())->translate($ast), $ast->isUnicode());

@@ -223,6 +223,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `LanguageSolver::matchEquivalent()` refuses a pattern under `(*CRLF)`: the dot there reads a `\r` alone but not one before a `\n`, which it did not model, so `/(*CRLF)(.*)(\r?)\n/` and `/(*CRLF)(.*)()\n/` were called equivalent.
 - `TestCaseGenerator` checks every case against the running engine: `preg_match()` gives 1 on each matching case and 0 on each non-matching one, so `/foo|bar/` no longer lists `bar` as non-matching. A case the engine contradicts is dropped; strings near the matching ones, and samples from `SampleGenerator` when no matching case survives (`/(a)\1/` gets `aa`), fill the lists. A pattern the engine refuses has no case, and one that matches every subject has no non-matching case.
 - `regex.lint.alternation.overlap` reads a literal branch under `i` in either case: `/^(?:a|A)+$/i`, exponential, is reported, and so is a branch made caseless by `(?i:…)`.
 - A lookbehind's length is measured as PCRE2 measures it: a call or a reference has no bound when it stands inside the group it names or names a group the measure reached through calls, not because a group around the lookbehind is being measured, so `/(a(?2))(c(?(DEFINE)(?<=(?1))))/` is valid and `/(a(?<=(?3)))(b(?<=(c(?2))))/` refused at 2, not 14. A lookbehind asserted as a condition is measured with the group around it (`/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` was accepted), and `\X` is judged in branch order, after a nested lookbehind met first.

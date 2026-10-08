@@ -173,6 +173,10 @@ final class MatchEquivalenceTest extends TestCase
         yield 'anchor before an optional letter' => ['left' => '/a$(?:b|)/', 'right' => '/a/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'multiline flag' => ['left' => '/a/m', 'right' => '/a/', 'reason' => 'Unsupported regex flags for the match solver: m.'];
         yield 'utf mode on one side' => ['left' => '/a/u', 'right' => '/a/', 'reason' => 'Both patterns must read the subject the same way'];
+        // PHP 8.4.26 / PCRE2 10.49: on "ab\r\n" the left one captures "\r"
+        // in $2 and the right one does not match: the dot reads a "\r"
+        // alone but not one before a "\n".
+        yield 'a dot under (*CRLF)' => ['left' => '/(*CRLF)(.*)(\r?)\n/', 'right' => '/(*CRLF)(.*)()\n/', 'reason' => 'Under (*CRLF)'];
     }
 
     /**
