@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -56,6 +57,38 @@ final class ExtendedWhitespaceTest extends TestCase
     }
 
     /**
+     * Without UTF mode PCRE reads bytes: under "x" it skips a 0x85 byte
+     * inside a multibyte character too, outside a class, a quote and a group
+     * turning "x" off.
+     */
+    #[Test]
+    #[DataProvider('provideNextLineBytesInsideACharacter')]
+    public function test_extended_mode_skips_the_next_line_byte_inside_a_character_without_utf(string $pattern, string $subject, string $literals): void
+    {
+        // Oracle, PHP 8.4.26 / PCRE2 10.49.
+        $this->assertSame(1, preg_match($pattern, $subject));
+
+        $ast = Regex::create(['cache' => null])->parse($pattern);
+
+        $this->assertSame(bin2hex($literals), bin2hex(self::literals($ast->pattern)));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, literals: string}>
+     */
+    public static function provideNextLineBytesInsideACharacter(): iterable
+    {
+        yield 'two-byte character' => ['pattern' => '/^Å$/x', 'subject' => "\xC3", 'literals' => "\xC3"];
+        yield 'three-byte character holding two' => ['pattern' => "/^\u{2145}$/x", 'subject' => "\xE2", 'literals' => "\xE2"];
+        yield 'quantified character' => ['pattern' => '/^Å+$/x', 'subject' => "\xC3\xC3", 'literals' => "\xC3"];
+        yield 'character beside text' => ['pattern' => '/^aÅb$/x', 'subject' => "a\xC3b", 'literals' => "a\xC3b"];
+        yield 'kept in a class' => ['pattern' => '/^[Å]+$/x', 'subject' => "\xC3\x85", 'literals' => "\xC3\x85"];
+        yield 'kept in a quote' => ['pattern' => '/^\QÅ\E$/x', 'subject' => "\xC3\x85", 'literals' => "\xC3\x85"];
+        yield 'kept where x is turned off' => ['pattern' => '/^(?-x:Å)$/x', 'subject' => "\xC3\x85", 'literals' => "\xC3\x85"];
+        yield 'kept in UTF mode' => ['pattern' => '/^Å$/xu', 'subject' => 'Å', 'literals' => 'Å'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string}>
      */
     public static function provideSkippedCharacters(): iterable
@@ -66,5 +99,15 @@ final class ExtendedWhitespaceTest extends TestCase
         yield 'line separator' => ['pattern' => "/a\u{2028}b/xu"];
         yield 'paragraph separator' => ['pattern' => "/a\u{2029}b/xu"];
         yield 'next-line byte without UTF' => ['pattern' => "/a\x85b/x"];
+    }
+
+    private static function literals(NodeInterface $node): string
+    {
+        $text = $node instanceof LiteralNode ? $node->value : '';
+        foreach ($node->getChildren() as $child) {
+            $text .= self::literals($child);
+        }
+
+        return $text;
     }
 }

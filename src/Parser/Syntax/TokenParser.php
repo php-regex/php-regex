@@ -949,6 +949,12 @@ final class TokenParser
         $this->guardNamedReferenceEscape();
 
         if (null !== $atom = $this->matchAtom($startPosition, self::OUTSIDE_ATOM_TYPES)) {
+            // Without UTF mode "x" skips a 0x85 byte inside a character too.
+            if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->inQuoteMode
+                && TokenType::Literal === $this->stream->previous()->type && \strlen($atom->value) > 1 && str_contains($atom->value, "\x85")) {
+                return new LiteralNode(str_replace("\x85", '', $atom->value), $atom->getStartPosition(), $atom->getEndPosition(), $atom->isRaw);
+            }
+
             return $atom;
         }
 
