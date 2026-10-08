@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex lint` reads a PHP file that holds a byte of invalid UTF-8 as its bytes, as PHP does: the file was re-encoded from Latin-1 as a whole, which double-encoded its UTF-8 patterns, moved `column` and `file_offset`, and turned a raw Latin-1 byte in a `/u` pattern, which fails at run time, into a valid `é`.
 - `regex.lint.anchor.impossible.end` reads the newline of `(*CR)` and `(*NUL)`: `/(*CR)a$\n/`, which never matches, is reported, and `/(*CR)a$\r/` is not.
 - In a class left open at the end, a reversed range whose bound is an escape, quoted or a multibyte character (`[\x7A-a`, `[\Qz\E-a`, `[é-a`) is reported first, as PCRE2 does, where the library reported the missing `]`; `[\x{41}-a`, `[\cz-a` and a quoted `[\Qz-a\E`, which hold no reversed range, report the missing `]` again.
 - A multibyte character before `\E-` in a class is one range start whatever encoding the host sets for mbstring: under `mb_internal_encoding('ISO-8859-1')`, `/[ÿ\E-é]/u` was reported valid, where PHP refuses the reversed range.

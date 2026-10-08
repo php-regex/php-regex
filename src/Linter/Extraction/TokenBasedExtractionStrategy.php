@@ -83,7 +83,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        $content = $this->ensureValidUtf8($content);
+        $content = $this->readableContent($content);
         if (null === $content) {
             return [];
         }
@@ -1375,28 +1375,12 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * Ensure the content is valid UTF-8, attempting conversion if needed.
-     * Returns null if the content is binary or cannot be converted.
+     * The content as PHP reads it, its bytes untouched: preg_match() gets
+     * the bytes of the source, valid UTF-8 or not. Null for a binary file,
+     * one that holds a NUL byte.
      */
-    private function ensureValidUtf8(string $content): ?string
+    private function readableContent(string $content): ?string
     {
-        if (mb_check_encoding($content, 'UTF-8')) {
-            if (str_contains($content, "\x00")) {
-                return null;
-            }
-
-            return $content;
-        }
-
-        $converted = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
-        if (\is_string($converted) && mb_check_encoding($converted, 'UTF-8')) {
-            if (str_contains($converted, "\x00")) {
-                return null;
-            }
-
-            return $converted;
-        }
-
-        return null;
+        return str_contains($content, "\x00") ? null : $content;
     }
 }

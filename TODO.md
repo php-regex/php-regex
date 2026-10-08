@@ -122,10 +122,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 - `regex.lint.anchor.impossible.end` says nothing under `(*CRLF)`,
   `(*ANYCRLF)` and `(*ANY)`, whose newlines are not one character:
   `/(*CRLF)a$\n/`, which never matches, is missed.
-- A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
-  whole before extraction, which double-encodes its UTF-8 patterns. It also
-  shifts `column` and `file_offset` and changes `pattern` in the JSON report
-  for that file.
 - A lookahead before a loop yields a ReDoS witness with an empty suffix, which
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only

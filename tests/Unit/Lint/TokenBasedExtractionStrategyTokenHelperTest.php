@@ -131,29 +131,29 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertNull($this->invoke($strategy, 'findArrayStartIndex', $tokens));
     }
 
-    public function test_ensure_valid_utf8_handles_null_and_conversion(): void
+    public function test_readable_content_skips_a_nul_byte_and_keeps_every_other(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
 
-        $this->assertSame('hello', $this->invoke($strategy, 'ensureValidUtf8', 'hello'));
-        $this->assertNull($this->invoke($strategy, 'ensureValidUtf8', "a\0b"));
+        $this->assertSame('hello', $this->invoke($strategy, 'readableContent', 'hello'));
+        $this->assertNull($this->invoke($strategy, 'readableContent', "a\0b"));
 
         $latin1 = "\xE9";
-        $converted = $this->invoke($strategy, 'ensureValidUtf8', $latin1);
-        $this->assertIsString($converted);
+        $kept = $this->invoke($strategy, 'readableContent', $latin1);
+        $this->assertSame($latin1, $kept);
 
         $latin1WithNull = "\xE9\0";
-        $this->assertNull($this->invoke($strategy, 'ensureValidUtf8', $latin1WithNull));
+        $this->assertNull($this->invoke($strategy, 'readableContent', $latin1WithNull));
     }
 
-    public function test_ensure_valid_utf8_returns_null_when_conversion_fails(): void
+    public function test_readable_content_keeps_bytes_that_are_not_utf8(): void
     {
         LintFunctionOverrides::$mbCheckEncodingResult = false;
         LintFunctionOverrides::$mbConvertEncodingResult = false;
 
         $strategy = new TokenBasedExtractionStrategy();
 
-        $this->assertNull($this->invoke($strategy, 'ensureValidUtf8', 'data'));
+        $this->assertSame('data', $this->invoke($strategy, 'readableContent', 'data'));
     }
 
     private function invoke(TokenBasedExtractionStrategy $strategy, string $method, mixed ...$args): mixed
