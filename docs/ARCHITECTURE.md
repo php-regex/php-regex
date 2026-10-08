@@ -225,7 +225,7 @@ The code falls into layers, each allowed to use only those below it, and
 | generator | sample and test-case generation | core |
 | automata | the solver: equivalence, intersection, subset | core |
 | ReDoS | ReDoS analysis | core |
-| transpiler | JavaScript and Python output | core |
+| transpiler | JavaScript, HTML `pattern` attribute and Python output | core |
 | linter | lint rules, pattern extraction, reports | core, explain, optimizer, automata, ReDoS |
 | toolkit | the `Regex` facade | every library above |
 | CLI, language server, bridges | applications and integrations | the toolkit and the libraries |

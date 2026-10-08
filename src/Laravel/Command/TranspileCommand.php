@@ -37,7 +37,7 @@ final class TranspileCommand extends Command
      */
     protected $signature = 'regex:transpile
         {pattern : The regex pattern to transpile}
-        {--target=javascript : Target dialect (javascript, js, python, py)}
+        {--target=javascript : Target dialect (javascript, js, html-pattern, html, python, py)}
         {--format=console : Output format (console, json)}';
 
     /**

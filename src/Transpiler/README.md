@@ -9,12 +9,12 @@
 PHPRegex Transpiler
 ===================
 
-Transpiles PCRE patterns to JavaScript and Python regular expressions, with the losses reported.
+Transpiles PCRE patterns to JavaScript regular expressions, HTML `pattern` attributes and Python regular expressions, with the losses reported.
 
 Features
 --------
 
-- Two targets, `javascript` (alias `js`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
+- Three targets, `javascript` (alias `js`), `html-pattern` (alias `html`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
 - Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes, atomic groups are emulated in Python
 - Flags are mapped per target: JavaScript keeps `i`, `m`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/x` applied then dropped; Python keeps `i`, `m`, `s`, `x` and spells flags inline or as `re` constants
 - Warnings list every rewrite to review; notes list run-time caveats, such as ASCII-based `\w` in JavaScript
@@ -74,6 +74,20 @@ try {
     echo $e->getMessage(); // Possessive quantifiers are not supported in JavaScript.
 }
 ```
+
+For an HTML form, the `pattern` attribute matches the whole value under the
+`v` flag; the `html-pattern` target pads an unanchored side so the attribute
+accepts what `preg_match()` finds, and escapes in classes what `v` reserves:
+
+```php
+$result = $transpiler->transpile('/^[\w.-]+@[\w-]+\.[a-z]{2,}$/u', 'html-pattern');
+
+echo $result->literal;     // ^[\w\.\-]+@[\w\-]+\.[a-z]{2,}$
+echo $transpiler->transpile('/\d{4}/', 'html')->literal; // [\s\S]*(?:\d{4})[\s\S]*
+```
+
+No flag reaches the attribute: `/i` is refused, `/s`, `/m` and `/D` change
+nothing in a field value, which holds no line break.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
 multibyte character written whole (`/café/`) stays that character; a byte above

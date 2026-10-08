@@ -515,7 +515,7 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 
 | key | type | meaning |
 |---|---|---|
-| `target` | string | The dialect, by its full name: `javascript` or `python`; an open set |
+| `target` | string | The dialect, by its full name: `javascript`, `html-pattern` or `python`; an open set |
 | `source` | string | The PCRE pattern given |
 | `pattern` | string | The pattern body in the target dialect |
 | `flags` | string | The target's flags |

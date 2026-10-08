@@ -471,7 +471,7 @@ supported regular subset. Unsupported patterns fall back to the original behavio
 
 ### transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
 
-Transpiles a PCRE literal to another regex dialect: JavaScript or Python.
+Transpiles a PCRE literal to another regex dialect: JavaScript, the HTML `pattern` attribute, or Python.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -492,7 +492,12 @@ Notes:
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - `/x` is dropped after comments/whitespace are normalized.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
-- Available targets: `javascript` (alias: `js`) and `python` (alias: `py`).
+- Available targets: `javascript` (alias: `js`), `html-pattern` (alias: `html`) and `python` (alias: `py`).
+- `html-pattern` gives the value of an HTML `pattern` attribute, which the browser matches whole under the `v` flag
+  (`new RegExp("^(?:" + value + ")$", "v")`): an unanchored side is padded with `[\s\S]*`, so the attribute accepts
+  what `preg_match()` finds, `\A`, `\z` and `\Z` become `^` and `$`, and classes escape what the `v` flag reserves.
+  No flag can be passed: `/i` is refused; `/s`, `/m` and `/D` change nothing in a field value, which holds no line
+  break. `$result->flags` is `v`, `$result->literal` the attribute value, `$result->constructor` the browser's RegExp.
 
 ---
 
@@ -665,7 +670,7 @@ foreach ($result->changes as $change) {
 
 ### TranspileResult
 
-Returned by `transpile()`. Includes the output for the target, JavaScript or Python, and diagnostics.
+Returned by `transpile()`. Includes the output for the target, JavaScript, the HTML `pattern` attribute or Python, and diagnostics.
 
 ```php
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');

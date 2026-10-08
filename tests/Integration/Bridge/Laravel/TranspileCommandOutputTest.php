@@ -64,7 +64,7 @@ final class TranspileCommandOutputTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $status);
-        $this->assertStringContainsString("Invalid target 'ruby'. Supported targets: javascript, js, py, python", $output);
+        $this->assertStringContainsString("Invalid target 'ruby'. Supported targets: html, html-pattern, javascript, js, py, python", $output);
     }
 
     #[Test]

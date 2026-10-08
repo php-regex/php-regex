@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target;
 
+use PHPRegex\Transpiler\Target\JavaScript\HtmlPatternTarget;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
 use PHPRegex\Transpiler\Target\Python\PythonTarget;
 use PHPRegex\Transpiler\TranspileException;
@@ -39,6 +40,7 @@ final class TargetRegistry
         }
 
         $this->register(new JavaScriptTarget());
+        $this->register(new HtmlPatternTarget());
         $this->register(new PythonTarget());
     }
 

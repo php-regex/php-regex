@@ -17,7 +17,7 @@ Features
 - Lints a whole codebase: patterns extracted from `preg_*` calls and four wrapper libraries, judged by 40 rules.
 - ReDoS verdicts proven on a model of PCRE's backtracking, with the input that triggers a vulnerable pattern; confirmed mode replays it on the running PCRE — plus a benchmark command.
 - Automata comparison of two patterns: intersection, subset, equivalence, with counter-examples.
-- Transpiles PCRE patterns to JavaScript and Python; renders the AST as text or SVG and the NFA as DOT or Mermaid.
+- Transpiles PCRE patterns to JavaScript, HTML `pattern` attributes and Python; renders the AST as text or SVG and the NFA as DOT or Mermaid.
 - CI-ready reports in five formats with three stable exit codes, and a self-updating `regex.phar`.
 
 Installation

@@ -47,7 +47,7 @@ PHPRegex CLI provides these commands:
 | `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA        |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
-| `transpile`   | Transpile a PCRE regex to JavaScript (`js`) or Python (`py`) |
+| `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |
 | `lint`        | Lint entire codebase for regex issues                    |
 | `clear-cache` | Clear the regex parser cache                             |
 | `version`     | Display version information                              |

@@ -42,7 +42,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
 
     public function getDescription(): string
     {
-        return 'Transpile PCRE regex to other dialects (js, python, etc.)';
+        return 'Transpile PCRE regex to other dialects (js, html, python)';
     }
 
     public function run(Input $input, Output $output): int
@@ -51,7 +51,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         $args = $this->parseArguments($input->args);
 
         if (null !== $args['error']) {
-            return $this->usageError($output, $args['error'], "Usage: regex transpile <pattern> [--target=js|python] [--format=json]\n", $json);
+            return $this->usageError($output, $args['error'], "Usage: regex transpile <pattern> [--target=js|html|python] [--format=json]\n", $json);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);

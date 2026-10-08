@@ -75,7 +75,7 @@ with one version number. Install the one you need:
 | [`php-regex/regex-generator`](src/Generator) | sample strings and test cases |
 | [`php-regex/regex-automata`](src/Automata) | language equivalence, intersection and subset |
 | [`php-regex/regex-redos`](src/Redos) | catastrophic backtracking (ReDoS) analysis |
-| [`php-regex/regex-transpiler`](src/Transpiler) | JavaScript and Python targets |
+| [`php-regex/regex-transpiler`](src/Transpiler) | JavaScript, HTML `pattern` and Python targets |
 | [`php-regex/regex-linter`](src/Linter) | lint rules and pattern extraction from PHP sources |
 | [`php-regex/regex-cli`](src/Cli) | the `regex` command |
 | [`php-regex/regex-language-server`](src/LanguageServer) | diagnostics in any LSP editor |

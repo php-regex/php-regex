@@ -66,6 +66,17 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
 
+    /**
+     * What a class escapes under the v flag: the syntax characters, "/",
+     * "-", and the reserved punctuators, every one a legal escape there.
+     */
+    private const CLASS_SET_META = [
+        '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true, '(' => true, ')' => true,
+        '{' => true, '}' => true, '/' => true, '|' => true, '$' => true, '.' => true, '*' => true,
+        '+' => true, '?' => true, '&' => true, '!' => true, '#' => true, '%' => true, ',' => true,
+        ':' => true, ';' => true, '<' => true, '=' => true, '>' => true, '@' => true, '`' => true, '~' => true,
+    ];
+
     private const SUPPORTED_CHAR_TYPES = ['d', 's', 'w', 'D', 'S', 'W'];
 
     private bool $inCharClass = false;
@@ -74,10 +85,15 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private string $flags;
 
+    /**
+     * @param bool $unicodeSets print for the v flag (the HTML pattern attribute): classes escape
+     *                          what the v flag reserves, "\A" reads as "^", "\z" and "\Z" as "$"
+     */
     public function __construct(
         TranspileContext $context,
         private readonly bool $allowLookbehind,
         private readonly string $delimiter,
+        private readonly bool $unicodeSets = false,
     ) {
         parent::__construct($context);
 
@@ -261,6 +277,11 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return '\\'.$node->value;
         }
 
+        // A field value holds no line break: "\Z" ends it as "\z" does.
+        if ($this->unicodeSets && \in_array($node->value, ['A', 'z', 'Z'], true)) {
+            return 'A' === $node->value ? '^' : '$';
+        }
+
         return $this->unsupported('Unsupported assertion in JavaScript: \\'.$node->value.'.', $node);
     }
 
@@ -403,7 +424,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $value;
         }
 
-        $meta = $this->inCharClass ? self::CHAR_CLASS_META : self::META_CHARACTERS;
+        $meta = $this->inCharClass ? ($this->unicodeSets ? self::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
         $needsEscape = false;
 
         $len = \strlen($value);
@@ -453,7 +474,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private function compileCharClassNode(NodeInterface $node, ?NodeInterface $next): string
     {
         if ($node instanceof LiteralNode && '[' === $node->value) {
-            return $this->shouldEscapeCharClassOpen($next) ? '\\[' : '[';
+            // The v flag reads a bare "[" in a class as a nested class.
+            return $this->unicodeSets || $this->shouldEscapeCharClassOpen($next) ? '\\[' : '[';
         }
 
         if ($node instanceof RangeNode) {
