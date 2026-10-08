@@ -510,6 +510,32 @@ preg_match('/<[^>\n]*>/', '<a><b>', $m);  // "<a>"
 
 ---
 
+### Useless Lazy Quantifier
+
+**Identifier:** `regex.lint.quantifier.uselessLazy` (off by default)
+
+**When it triggers:** A lazy quantifier writes the same `$matches` as its greedy form on every
+subject: `/(a+?)b/` and `/(a+)b/` stop at the same `b`, since the run cannot take one, and a
+fixed count such as `a{3}?` has nothing to choose. The automata prove the two patterns
+equivalent before the rule speaks. It stays silent where the lazy marker matters
+(`/(a+?)a/` on `aaa` captures `a`, the greedy form `aa`), under `U`, where `+?` is the greedy
+one, where nothing that can fail follows a variable count (`quantifier.lazyEnd` reports that),
+and past the eighth question it asks the automata about in a pattern. A style rule: turn it
+on with `"quantifier.uselessLazy": true` under `checks.lint.rules`.
+
+**Example:**
+```php
+// INFO: lazy for nothing
+preg_match('/(\d+?)\D/', 'ab12x', $m);  // "12x", "12"
+
+// PREFERRED: the same $matches
+preg_match('/(\d+)\D/', 'ab12x', $m);   // "12x", "12"
+```
+
+**Fix:** Drop the `?`.
+
+---
+
 ### Quantified Assertion
 
 **Identifier:** `regex.lint.quantifier.assertion`
@@ -1254,6 +1280,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Quantifiers | `regex.lint.quantifier.useless`, `.zero`, `.concatenation`, `.lazyEnd`, `.assertion`      | warning  | Simplify the quantifier           |
 | Quantifiers | `regex.lint.quantifier.emptyRepeat`, `.possessiveImpossible`                              | warning  | Fix the repeated item             |
 | Quantifiers | `regex.lint.quantifier.lazyToClass` (off by default)                                      | perf     | Use a negated class               |
+| Quantifiers | `regex.lint.quantifier.uselessLazy` (off by default)                                      | style    | Drop the `?`                      |
 | Groups      | `regex.lint.group.redundant`, `.empty`                                                    | warning  | Remove the group                  |
 | Lookarounds | `regex.lint.lookaround.impossible`                                                        | warning  | Fix the lookahead                 |
 | Groups      | `regex.lint.group.quantifiedCapture`                                                      | info for an unnamed group, warning for a named one | Repeat a non-capturing group |

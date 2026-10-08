@@ -93,6 +93,7 @@ final class LintConfigSchema
         'charclass.single' => ['Report a character class holding a single character (style).', false],
         'literal.multipleSpaces' => ['Report a run of literal spaces, clearer as a counted repeat (style).', false],
         'quantifier.lazyToClass' => ['Report a lazy dot before a single closing character, faster as a negated class (perf).', false],
+        'quantifier.uselessLazy' => ['Report a lazy quantifier that matches what the greedy one matches (style).', false],
     ];
 
     /**
@@ -416,7 +417,7 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces and quantifier.lazyToClass.',
+                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass and quantifier.uselessLazy.',
                     'additionalProperties' => false,
                     'properties' => $rules,
                 ],

@@ -44,8 +44,12 @@ CHANGELOG
    at severity `style`, off by default.
  * `regex.lint.quantifier.lazyToClass`: `".*?"` where `"[^"\n]*"` matches the
    same text, at severity `perf`, off by default.
+ * `regex.lint.quantifier.uselessLazy`: a lazy quantifier whose greedy form
+   writes the same `$matches`, `(a+?)b`, proven by the automata, at severity
+   `style`, off by default.
  * The rules off by default are `unicode.shorthandWithoutU`,
-   `charclass.single`, `literal.multipleSpaces` and `quantifier.lazyToClass`;
+   `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass` and
+   `quantifier.uselessLazy`;
    `true` for its id in the rules map of `regex.json` turns one on.
  * `regex.lint.quantifier.lazyEnd` also reports a lazy quantifier followed
    only by items that may match nothing and hold no test that can fail,

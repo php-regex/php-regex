@@ -76,6 +76,7 @@ final class LintRuleRegistry
         $this->register(new LazyToClassRule());
         $this->register(new UselessDFlagRule());
         $this->register(new UselessXFlagRule());
+        $this->register(new UselessLazyRule());
     }
 
     public function register(LintRuleInterface $rule): void

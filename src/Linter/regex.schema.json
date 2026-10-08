@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces and quantifier.lazyToClass.",
+          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass and quantifier.uselessLazy.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {
@@ -413,6 +413,11 @@
             "quantifier.lazyToClass": {
               "type": "boolean",
               "description": "Report a lazy dot before a single closing character, faster as a negated class (perf).",
+              "default": false
+            },
+            "quantifier.uselessLazy": {
+              "type": "boolean",
+              "description": "Report a lazy quantifier that matches what the greedy one matches (style).",
               "default": false
             },
             "redos.search": {

@@ -74,6 +74,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.quantifier.nested' => ['/(a+)+$/', '/(?>a+)+$/'],
         'regex.lint.quantifier.possessiveImpossible' => ['/a*+a/', '/a*+b/'],
         'regex.lint.quantifier.useless' => ['/a{1}/', '/a{2}/'],
+        'regex.lint.quantifier.uselessLazy' => ['/a+?b/', '/a+?a/'],
         'regex.lint.quantifier.zero' => ['/a{0}/', '/a{1,}/'],
         'regex.lint.range.useless' => ['/[a-a]/', '/[a-f]/'],
         'regex.lint.unicode.bracedHexWithoutU' => ['/\x{100}/', '/\x{100}/u'],
@@ -91,6 +92,7 @@ final class LintRuleExamplesTest extends TestCase
         'charclass.single' => true,
         'literal.multipleSpaces' => true,
         'quantifier.lazyToClass' => true,
+        'quantifier.uselessLazy' => true,
     ];
 
     #[Test]

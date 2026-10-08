@@ -66,6 +66,7 @@ final class PatternLinter extends AbstractNodeVisitor
         'charclass.single' => false,
         'literal.multipleSpaces' => false,
         'quantifier.lazyToClass' => false,
+        'quantifier.uselessLazy' => false,
     ];
 
     /**
