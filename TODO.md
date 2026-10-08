@@ -39,43 +39,8 @@ ReDoS proof and the lexer (October 2026). Each one is confirmed against
 `preg_match()` or measured, and predates the fixes made then. 2.0.0 freezes
 the public API, so they go before the tag.
 
-### The character-set analysis
-
-- Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
-  byte above it. The nested-loop rules and `quantifier.concatenation` refuse
-  to decide in that case, which costs them findings.
-- Lookarounds are ignored: `(?:,a*(?:(?!z)a)*)+$` gets no nested warning.
-
-### Byte mode and the Unicode-normalization invariant
-
-Checked whether the library should model Unicode normalization (NFC vs NFD),
-the way a text component would (October 2026). It should not: PCRE2 never
-normalizes, and neither does the library — a pattern written in NFC never
-matches an NFD subject (`/é/u` against `"e\u{0301}"`, `/ui` included),
-`/^\p{L}+$/u` does not match a decomposed é (U+0301 is `\p{M}`), and
-`/ß/iu` does not match `"ss"` (simple folding only). That absence is the
-contract, and it must stay. What the check found instead is byte-versus-
-code-point confusions in byte mode (patterns without `/u`), each confirmed
-against the engine:
-
-
-The normalization-free contract is pinned by
-`tests/Unit/NormalizationInvariantTest.php`: the engine, the printer and the
-solver each keep `/é/u` and `/e\u{301}/u` apart.
-
-Smaller, same family: the compiled-size floor compares code
-points through mbstring's lowercase, which misses case pairs PCRE2 folds
-(Greek `[ςσ]` is not seen as one); mbstring's full mappings (`ß` → `SS`,
-`İ` → two code points) only ever feed boolean checks, but its tables can
-drift from PCRE2's, and the `/i`-useless rule has no locale guard where a
-host `setlocale()` can rebuild PCRE's case tables.
-
-### Other findings
-
-- `regex.lint.anchor.impossible.end` says nothing under `(*ANY)`, whose
-  newlines reach above ASCII, where the character sets stop; under
-  `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
-  end, so `/(*CRLF)a$\r\r/` is missed.
+Nothing is left open in this list: every finding was fixed, or settled
+below with what it costs.
 
 ## Settled by design (2026-10-08)
 
@@ -165,6 +130,33 @@ Decided without the maintainer, as asked; each can be reopened.
   in many places: the knowledge would have to come from routing every such
   read through one method first. Correctness of the range comes first.
 
+- **The character sets stop at 0x7F.** Above it a dot or a negated class
+  holds nothing the sets can show, so the nested-loop rules and
+  `quantifier.concatenation` refuse to decide there: they lose findings,
+  never report a false one. Sets over every byte and code point would be a
+  rewrite of `ByteCharSet` and of every rule that reads it.
+- **The lint rules read no lookaround in a loop:** `(?:,a*(?:(?!z)a)*)+$`,
+  exponential on the engine, gets no nested warning; the ReDoS check reports
+  it ("Potential backtracking"), which is where a backtracking verdict
+  belongs.
+- **The compiled-size floor stays a floor.** It misses case pairs mbstring
+  does not lower alike (`[ςσ]`), so it counts them as a class; measured on
+  PCRE2 10.49 under `/u`, `(?:[ςσ]){4096}`, `(?:[σΣ]){3855}` and
+  `(?:[kK]){1681}` are refused by PCRE and accepted by the floor, and no
+  repeat is ever refused that PCRE accepts. A floor that missed less would
+  have to read PCRE2's case sets.
+- **`impossible.end` stays silent under `(*ANY)`**, whose newlines reach
+  above ASCII, and under `(*CRLF)` and `(*ANYCRLF)` it checks only that the
+  tail can start a line end (`/(*CRLF)a$\r\r/` is missed): both lose a
+  finding, never report a false one.
+
+- **The library never normalizes Unicode.** PCRE2 does not: a pattern in
+  NFC never matches an NFD subject (`/é/u` against `"e\u{0301}"`, `/ui`
+  included), `/^\p{L}+$/u` does not match a decomposed é, and `/ß/iu` does
+  not match `"ss"` (simple folding only). That absence is the contract,
+  pinned by `tests/Unit/NormalizationInvariantTest.php`. mbstring's full
+  case mappings (`ß` → `SS`) only ever feed boolean checks.
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
@@ -215,6 +207,7 @@ The follow-ups are merged too: the search cost's two false positives
 
 ### Smaller findings, each confirmed against the engine
 
+All fixed or settled (see "Settled by design").
 
 ### Upstream, the maintainer's call
 
