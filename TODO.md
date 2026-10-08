@@ -201,6 +201,14 @@ Decided without the maintainer, as asked; each can be reopened.
   without `u`:** both differ from pcre2test only on paths no caller reaches;
   left as they are until one does.
 
+- **The SonarPHP parity rules stay on.** They add about 37 % to the lint
+  of the corpus fixture (1.15 s to 1.6 s for 1,645 patterns), about
+  0.27 ms a pattern, for defects found against the engine; a rule asks the
+  automata eight questions at most per pattern.
+- **The ReDoS latency limit is 6 ms at the 99th percentile** (it was 5 ms):
+  the search cost, added on purpose, took the analysis to about 5.5 ms, and
+  no single hot spot stands out to win the difference back.
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
@@ -248,16 +256,6 @@ lint JSON key is snake_case.
 The follow-ups are merged too: the search cost's two false positives
 (aa8747f6 to 52574b23) and the SonarPHP parity rules, with
 `regex.replacement.undefinedGroup` and the Symfony route requirement fix.
-
-### The maintainer's calls
-
-- The ReDoS latency check (`php tests/Tools/redos-verdict-gate.php`) is above
-  its 5.0 ms p99 limit: 5.25 ms before the search cost, about 5.5 ms with it.
-  Raise the limit or speed up the per-attempt proof.
-- The SonarPHP parity rules add about 37 % to the lint of the corpus fixture
-  (1.15 s to 1.6 s for 1,645 patterns, Xdebug off): many patterns ask the
-  automata one to three questions. A rule asks at most eight per pattern, a
-  cap the corpus never reaches. Keep it, or make the automata rules opt-in.
 
 ### Smaller findings, each confirmed against the engine
 

@@ -137,7 +137,7 @@ bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
 The first command analyses every pattern of the repository corpus the way
 PHPStan and the linter do, and prints the median and 99th-percentile time per
 pattern and the share of each ReDoS proof. It exits with 1 when the 99th
-percentile is above 5 ms (`--max-p99=<ms>` sets another limit); a release
+percentile is above 6 ms (`--max-p99=<ms>` sets another limit); a release
 waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 The tag triggers the split workflow, which tags every `php-regex/regex-*`

@@ -21,17 +21,19 @@ use PHPRegex\Redos\RedosProof;
  * repository corpus analysed once to warm the caches, then each one warmed
  * again and timed, the theoretical way PHPStan and the linter run it.
  *
- * Usage: php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php [--max-p99=5]
+ * Usage: php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php [--max-p99=6]
  *
  * Prints the 50th and 99th percentiles of the per-pattern time, the share of
  * each proof and of the patterns over the analysis budget, and exits 1 when
- * the 99th percentile is above the limit (5 ms unless given).
+ * the 99th percentile is above the limit (6 ms unless given: 5 ms until
+ * the search cost joined the theoretical analysis, which took it to about
+ * 5.5 ms).
  */
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
 $argv = $_SERVER['argv'] ?? [];
-$limit = 5.0;
+$limit = 6.0;
 foreach (\is_array($argv) ? \array_slice($argv, 1) : [] as $argument) {
     if (\is_string($argument) && 1 === preg_match('/^--max-p99=(\d+(?:\.\d+)?)$/', $argument, $match)) {
         $limit = (float) $match[1];
