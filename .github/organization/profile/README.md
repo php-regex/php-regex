@@ -12,6 +12,9 @@
     please open issues and pull requests there.</em>
 </p>
 
+<p align="center"><strong>2.0 is coming</strong> — try the dev builds and bring
+your wishes to the <a href="https://github.com/php-regex/php-regex/discussions">discussions</a>.</p>
+
 ## Start here
 
 - **[`regex-toolkit`](https://github.com/php-regex/regex-toolkit)** — one entry point to every PHPRegex library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.
