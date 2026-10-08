@@ -258,11 +258,6 @@ The follow-ups are merged too: the search cost's two false positives
   (1.15 s to 1.6 s for 1,645 patterns, Xdebug off): many patterns ask the
   automata one to three questions. A rule asks at most eight per pattern, a
   cap the corpus never reaches. Keep it, or make the automata rules opt-in.
-- `tests/Support/LinearTimeAssertions.php` was loosened for shared runners
-  (budget 4 s, ratio 3.5, a ratio read only when both readings are above
-  0.05 s, best of 4): a quadratic regression whose small reading stays under
-  0.05 s is caught by the 4 s budget only. Keep the strict values locally and
-  the loose ones in CI (an environment variable), or lengthen the inputs.
 
 ### Smaller findings, each confirmed against the engine
 

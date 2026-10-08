@@ -27,7 +27,7 @@ trait LinearTimeAssertions
      *
      * @param \Closure(int): void $read
      */
-    private function assertLinearTime(\Closure $read, int $size, string $what, float $maxRatio = 3.5): void
+    private function assertLinearTime(\Closure $read, int $size, string $what, ?float $maxRatio = null): void
     {
         // The sizes above are chosen to stay well under a second on a dev
         // machine; a loaded laptop or a two-core CI runner reads them two to
@@ -36,7 +36,13 @@ trait LinearTimeAssertions
         // the runaway and the ratio draws the line beyond the jitter: a
         // reading that goes back over the rest of the pattern for each unit
         // lands far above both.
-        $budget = 4.0;
+        // A shared runner (CI set) gets those loose lines; a dev machine
+        // keeps the strict ones, under which a quadratic read whose small
+        // reading stays below the CI noise floor is still caught.
+        $shared = false !== getenv('CI') && '' !== getenv('CI');
+        $budget = $shared ? 4.0 : 3.0;
+        $maxRatio ??= $shared ? 3.5 : 3.2;
+        $noise = $shared ? 0.05 : 0.02;
 
         $small = self::bestTime($read, $size);
         $this->assertLessThan($budget, $small, \sprintf('%s x %d: %.3f s.', $what, $size, $small));
@@ -47,7 +53,7 @@ trait LinearTimeAssertions
         // Below a few tens of milliseconds the clock says more than the
         // reading on a shared runner, so the ratio is read only when BOTH
         // readings are above the noise.
-        if ($small >= 0.05 && $large >= 0.05) {
+        if ($small >= $noise && $large >= $noise) {
             $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: %.3f s for %d units, %.3f s for %d.', $what, $small, $size, $large, 2 * $size));
         }
     }
