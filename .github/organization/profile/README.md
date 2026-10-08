@@ -1,8 +1,8 @@
 <p align="center">
-    <img src="org-icon.svg?v=1" alt="PHP Regex" width="140">
+    <img src="org-icon.svg?v=1" alt="PHPRegex" width="140">
 </p>
 
-<h1 align="center">PHP Regex</h1>
+<h1 align="center">PHPRegex</h1>
 
 <h3 align="center">Static analysis, linter & logic solver for PHP regular expressions</h3>
 
