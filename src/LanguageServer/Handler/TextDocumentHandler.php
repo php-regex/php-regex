@@ -178,6 +178,20 @@ final readonly class TextDocumentHandler
             try {
                 $ast = $this->regex->parse($occurrence->pattern);
 
+                // A pattern PCRE refuses gets that error, and no lint issue.
+                $validation = $this->regex->validate($occurrence->pattern);
+                if (!$validation->isValid && null !== $validation->errorCode) {
+                    $diagnostics[] = $this->diagnosticConverter->fromValidationError(
+                        $validation->error ?? 'Invalid regex.',
+                        $validation->errorCode,
+                        $bodyStart,
+                        $bodyLength,
+                        $validation->offset,
+                    );
+
+                    continue;
+                }
+
                 // Run linter
                 $linter = new PatternLinter();
                 $ast->accept($linter);

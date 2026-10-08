@@ -255,8 +255,8 @@ The follow-ups are merged too: the search cost's two false positives
   `quantifier.assertion`, `dotstar.nested` or `alternation.empty` report the
   repeat, even when that rule is turned off: `LintContext` does not say which
   rules are on.
-- The language server never runs the validator (only the parser), so it
-  misses every validation error and the PHP range check.
+- The language server judges a pattern for the PHP running it: it does not
+  read the project's PHP range from `composer.json`, as `regex lint` does.
 - The linter validates each pattern at every PHP version of the range; a
   pattern that reads no version-dependent rule could skip the extra runs (the
   flag must travel with the cached tree, not in a side channel).

@@ -94,6 +94,54 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * A pattern that parses yet fails validation is published with the
+     * validator's error, and no lint issue beside it.
+     *
+     * @return iterable<string, array{pattern: string, code: string, character: int}>
+     */
+    public static function provideInvalidPatterns(): iterable
+    {
+        // "preg_match('/" is 13 characters: the body starts at 13.
+        yield 'unbounded lookbehind' => ['pattern' => '/(?<=a+)b/', 'code' => 'regex.lookbehind.unbounded', 'character' => 13];
+        yield 'reference to a missing name' => ['pattern' => '/\\k<n>/', 'code' => 'regex.backref.missing_named_group', 'character' => 16];
+    }
+
+    #[Test]
+    #[DataProvider('provideInvalidPatterns')]
+    public function test_a_pattern_that_fails_validation_is_published_with_its_error_code(string $pattern, string $code, int $character): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $this->assertCount(1, $diagnostics);
+        $this->assertIsArray($diagnostics[0]);
+        $this->assertSame($code, $diagnostics[0]['code'] ?? null);
+        $range = $diagnostics[0]['range'] ?? null;
+        $this->assertIsArray($range);
+        $this->assertSame(['line' => 1, 'character' => $character], $range['start'] ?? null);
+    }
+
+    /**
      * Offsets count from the pattern body: the diagnostic starts on the
      * character at fault, past the quote and the opening delimiter.
      */

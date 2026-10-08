@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The language server runs the validator: a pattern that parses but that PCRE refuses, such as `/(?<=a+)b/`, is published with its error code where it only got lint issues.
 - `Rewriter` with `autoPossessify` no longer makes a repeat possessive next to a character above ASCII, which its character sets do not hold: `/.+é/` and `/é+é/u` became patterns that match nothing. The `Optimizer` already refused those rewrites through its equivalence check.
 - The transpilers no longer re-read the bytes of a pattern without `u` as code points: JavaScript `/caf\xC3\xA9/` matched `"Ã©"`, and the Python output could hold a lone invalid byte. A multibyte character written whole stays that character; a byte above 0x7F on its own, as an escape or as invalid UTF-8, is refused, the targets reading characters.
 - Under a `php_version` below 8.2, a pattern holding a NUL byte, as its delimiter, in its body or among its modifiers, is refused with the new error code `regex.pattern.nul_byte`, as PHP before 8.2 refuses it ("Null byte in regex"); it was accepted.

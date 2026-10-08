@@ -16,7 +16,7 @@ The server reads PHP source over stdio, finds the regex literals in it — the p
 Features
 --------
 
-- Diagnostics on open and on change: every pattern of the file is parsed and linted, and the findings are published to the editor.
+- Diagnostics on open and on change: every pattern of the file is parsed, validated and linted, and the findings are published to the editor; a pattern PCRE refuses gets that error alone.
 - Hovers in plain English: hold the pointer on a pattern to read what it matches, token by token.
 - Completions inside patterns: shorthands after a backslash, Unicode properties after `\p{`, POSIX classes after `[:`, groups after `(?`, flags after the closing delimiter.
 - Code actions: one action adds the `u` flag a Unicode pattern lacks, one applies the optimizer's rewrite — `/[0-9]{1,}/` becomes `/\d+/`.
