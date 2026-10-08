@@ -119,10 +119,9 @@ host `setlocale()` can rebuild PCRE's case tables.
 
 ### Other findings
 
-- `regex.lint.anchor.impossible.end` says nothing under a newline convention
-  other than LF, where it gave false warnings: `/(*CR)a$\n/`, which never
-  matches, is still missed. Reading `\r` and `\r\n` as the newline there
-  would report it.
+- `regex.lint.anchor.impossible.end` says nothing under `(*CRLF)`,
+  `(*ANYCRLF)` and `(*ANY)`, whose newlines are not one character:
+  `/(*CRLF)a$\n/`, which never matches, is missed.
 - A PHP file holding one byte of invalid UTF-8 is re-encoded from Latin-1 as a
   whole before extraction, which double-encodes its UTF-8 patterns. It also
   shifts `column` and `file_offset` and changes `pattern` in the JSON report

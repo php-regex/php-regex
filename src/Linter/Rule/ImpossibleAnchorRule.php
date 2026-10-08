@@ -282,9 +282,15 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $multiline = str_contains($flags, 'm');
         $dotAll = str_contains($flags, 's');
 
-        // The checks below know the "\n" newline only: under "(*CR)",
-        // "(*CRLF)" and the like the rule says nothing.
-        if ('LF' !== StartOptions::newline($context->pattern->source)) {
+        // The checks below know a newline of one character: under
+        // "(*CRLF)", "(*ANYCRLF)" and "(*ANY)" the rule says nothing.
+        $newline = match (StartOptions::newline($context->pattern->source)) {
+            'LF' => "\n",
+            'CR' => "\r",
+            'NUL' => "\0",
+            default => null,
+        };
+        if (null === $newline) {
             return true;
         }
 
@@ -293,7 +299,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 return false;
             }
 
-            return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll)
+            return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline)
                 && $this->sequenceEndsPattern($sequence, $context);
         }
 
@@ -302,10 +308,10 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         }
 
         if ($multiline) {
-            return NodePredicates::tailCanStartWithNewline($nodes, $context->charSetAnalyzer, $dotAll);
+            return NodePredicates::tailCanStartWithNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline);
         }
 
-        return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll)
+        return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline)
             && $this->sequenceEndsPattern($sequence, $context);
     }
 

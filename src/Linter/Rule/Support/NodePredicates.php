@@ -406,9 +406,9 @@ final class NodePredicates
      *
      * @param array<int, NodeInterface> $nodes
      */
-    public static function tailCanStartWithNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    public static function tailCanStartWithNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll, string $newline = "\n"): bool
     {
-        $newline = ByteCharSet::fromChar("\n");
+        $newlineSet = ByteCharSet::fromChar($newline);
 
         foreach ($nodes as $node) {
             if ($node instanceof GroupNode
@@ -446,7 +446,7 @@ final class NodePredicates
                 return false;
             }
 
-            if ($set->intersects($newline)) {
+            if ($set->intersects($newlineSet)) {
                 return true;
             }
 
@@ -470,7 +470,7 @@ final class NodePredicates
      *
      * @param array<int, NodeInterface> $nodes
      */
-    public static function tailCanMatchNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    public static function tailCanMatchNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll, string $newline = "\n"): bool
     {
         // Right-to-left and left-to-right aggregates so the loop below stays
         // linear: a tail of thousands of optional siblings must not become
@@ -499,7 +499,7 @@ final class NodePredicates
                 continue;
             }
 
-            if (!self::canMatchNewline($node, $analyzer, $dotAll)) {
+            if (!self::canMatchNewline($node, $analyzer, $dotAll, $newline)) {
                 continue;
             }
 
@@ -514,14 +514,14 @@ final class NodePredicates
     /**
      * Whether a node's language contains the single string "\n".
      */
-    public static function canMatchNewline(NodeInterface $node, CharSetAnalyzer $analyzer, bool $dotAll): bool
+    public static function canMatchNewline(NodeInterface $node, CharSetAnalyzer $analyzer, bool $dotAll, string $newline = "\n"): bool
     {
         if ($node instanceof LiteralNode) {
-            return "\n" === $node->value;
+            return $newline === $node->value;
         }
 
         if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
-            return 0x0A === $node->codePoint;
+            return \ord($newline) === $node->codePoint;
         }
 
         if ($node instanceof DotNode) {
@@ -538,13 +538,13 @@ final class NodePredicates
             // inside a CharClassNode, whose own set already includes them.
             $set = $analyzer->firstChars($node);
 
-            return !$set->isUnknown() && $set->intersects(ByteCharSet::fromChar("\n"));
+            return !$set->isUnknown() && $set->intersects(ByteCharSet::fromChar($newline));
         }
 
         if ($node instanceof QuantifierNode) {
             [$min, $max] = QuantifierMath::parseRange($node->quantifier);
 
-            return $min <= 1 && (null === $max || $max >= 1) && self::canMatchNewline($node->node, $analyzer, $dotAll);
+            return $min <= 1 && (null === $max || $max >= 1) && self::canMatchNewline($node->node, $analyzer, $dotAll, $newline);
         }
 
         if ($node instanceof GroupNode) {
@@ -557,12 +557,12 @@ final class NodePredicates
                 $innerDotAll = str_contains(self::applyInlineFlags($innerDotAll ? 's' : '', $node->flags), 's');
             }
 
-            return self::canMatchNewline($node->child, $analyzer, $innerDotAll);
+            return self::canMatchNewline($node->child, $analyzer, $innerDotAll, $newline);
         }
 
         if ($node instanceof AlternationNode) {
             foreach ($node->alternatives as $alternative) {
-                if (self::canMatchNewline($alternative, $analyzer, $dotAll)) {
+                if (self::canMatchNewline($alternative, $analyzer, $dotAll, $newline)) {
                     return true;
                 }
             }
@@ -571,12 +571,12 @@ final class NodePredicates
         }
 
         if ($node instanceof SequenceNode) {
-            return self::tailCanMatchNewline(array_values($node->children), $analyzer, $dotAll);
+            return self::tailCanMatchNewline(array_values($node->children), $analyzer, $dotAll, $newline);
         }
 
         if ($node instanceof ConditionalNode) {
-            return self::canMatchNewline($node->yes, $analyzer, $dotAll)
-                || self::canMatchNewline($node->no, $analyzer, $dotAll);
+            return self::canMatchNewline($node->yes, $analyzer, $dotAll, $newline)
+                || self::canMatchNewline($node->no, $analyzer, $dotAll, $newline);
         }
 
         // Assertions, keep marks, comments, backrefs and other constructs
