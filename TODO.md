@@ -134,21 +134,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   at a low `memory_limit` (6 MB, `--jobs=1`) the JSON report reads
   `results: []` with exit 0, a clean run that is not one. A skipped file should
   be reported.
-- The console form of a pattern does not always read back as itself:
-  - an escape it inserts can hold an unusual delimiter (`}a\x{202E}b}u`
-    with `}` as delimiter), and a control-byte delimiter is itself escaped
-    (`\x01a b\x01x`);
-  - an invalid pattern can read back as a valid one: `\c` before a control
-    or non-ASCII byte (`/\c\u{85}/` shows as `\c\xC2\x85`), invalid UTF-8
-    under `/u` (`\xA0` compiles once shown);
-  - with a bracket delimiter, a `#` comment dropped under `x` can hold a
-    bracket PHP counted, so the shown form no longer closes (`{{#,x} }x`
-    shows as `{{}x`);
-  - a message quoting a pattern without `/u` spells a hidden character
-    `\x{202E}`, which PCRE refuses in that pattern.
-- A railroad label spells quoted text as text, so `{2}` after an atom
-  reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
-  (PCRE2 10.44 and older) before `{` is not respelled either.
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch
@@ -171,6 +156,26 @@ host `setlocale()` can rebuild PCRE's case tables.
     accepted, PCRE refuses it as not limited at 28.
 - In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
   reads the same as the four characters `\xHH` already in a pattern.
+
+## Settled by design (2026-10-08)
+
+Decided without the maintainer, as asked; each can be reopened.
+
+- **Railroad labels show text, not syntax.** A box holds the characters it
+  matches and a quantifier is drawn as a loop, so `a\Q{2}\E` shows a box
+  "a{2}" and `a\.b` a box "a.b": nothing inside a box is read as syntax.
+- **The console form of a pattern favours showing hidden characters over
+  reading back exactly.** It may not read back as itself with a plain `}`
+  or a control byte as delimiter, an invalid pattern (`\c` before a control
+  byte, invalid UTF-8 under `/u`), or an `x` comment dropped inside bracket
+  delimiters: every such case is rare, an invalid pattern is printed beside
+  its error, and the JSON, Checkstyle and JUnit reports carry the pattern
+  exactly as written.
+- **Pretty printing lays a pattern out under `x` only** (545d5949): without
+  `x` the output stays on one line, so it is always the same pattern.
+- **Symfony patterns are linted as Symfony matches them** (352887c7): a
+  route requirement as `{^...$}sD` (plus `u` under `utf8`), a security path
+  as `{...}s`, a host as `{...}i`; never as a delimited regex.
 
 ## Report the PCRE2 JIT crash upstream
 

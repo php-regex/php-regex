@@ -102,7 +102,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                         if (str_starts_with($a, $b) || str_starts_with($b, $a)) {
                             $issues[] = new RuleViolation(
                                 'regex.lint.alternation.overlap',
-                                \sprintf('Alternation branches "%s" and "%s" overlap.', DisplayEscaper::escapeText($a), DisplayEscaper::escapeText($b)),
+                                \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($a, $context), self::spell($b, $context)),
                                 $node->startPosition,
                                 'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
                             );
@@ -234,5 +234,15 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return false;
+    }
+
+    /**
+     * A branch's text as the pattern could hold it: a backslash doubled, a
+     * hidden character "\x{HEX}" in UTF mode and its bytes "\xHH"
+     * otherwise.
+     */
+    private static function spell(string $text, LintContext $context): string
+    {
+        return DisplayEscaper::escapeFragment(str_replace('\\', '\\\\', $text), $context->pattern->unicodeMode);
     }
 }
