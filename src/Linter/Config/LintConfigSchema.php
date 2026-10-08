@@ -105,6 +105,7 @@ final class LintConfigSchema
      */
     private const ANALYSIS_RULES = [
         'redos.search' => ['Report the quadratic cost of an unanchored search whose every attempt is proven linear. It runs under the ReDoS check and is medium: a threshold of medium or low shows it.', true],
+        'compat.meaningChanges' => ['Warn when a later PHP of the project range parses the pattern into another meaning, as "a{,3}" (text before PCRE2 10.43, a quantifier from it).', true],
     ];
 
     /**

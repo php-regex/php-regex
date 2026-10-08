@@ -47,6 +47,9 @@ CHANGELOG
  * `regex.lint.quantifier.uselessLazy`: a lazy quantifier whose greedy form
    writes the same `$matches`, `(a+?)b`, proven by the automata, at severity
    `style`, off by default.
+ * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the
+   project's range parses into another meaning, `/a{,3}/` from PHP 8.4, at
+   severity `warning`, on by default.
  * `regex.lint.group.alwaysEmptyCapture`: a capturing group that is empty or
    unset wherever the pattern matches, `a+(a*)`, proven by the automata, at
    severity `warning`, on by default.

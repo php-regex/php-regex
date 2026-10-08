@@ -29,6 +29,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -51,6 +52,8 @@ final readonly class AnalysisService
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
+
+    private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
     private const RISK_LINT_ISSUE_IDS = [
         'regex.lint.quantifier.nested' => true,
         'regex.lint.dotstar.nested' => true,
@@ -319,6 +322,25 @@ final readonly class AnalysisService
             }
 
             $ast = $this->regex->parse($occurrence->pattern);
+
+            // Accepted everywhere, the pattern may still read otherwise on a
+            // later PHP: the same text, another tree.
+            $readsOtherwise = null === $rangeError ? $this->readsOtherwise($occurrence, $ast) : null;
+            if (null !== $readsOtherwise) {
+                $issues[] = [
+                    'type' => 'warning',
+                    'file' => $occurrence->file,
+                    'line' => $occurrence->line,
+                    'column' => $this->resolveColumn($occurrence),
+                    'fileOffset' => $occurrence->fileOffset,
+                    'issueId' => self::ISSUE_ID_MEANING_CHANGES,
+                    'message' => \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($readsOtherwise->phpVersionId), $readsOtherwise->pcreVersion),
+                    'hint' => 'Write the part that differs in a form every PHP of the range reads alike: "a{0,3}" for a quantifier, "a\{,3}" for the text.',
+                    'source' => $source,
+                    'target' => ProjectTarget::describe($readsOtherwise),
+                ];
+            }
+
             $skipRiskAnalysis = $this->shouldSkipRiskAnalysis($occurrence);
             $lintIssues = [];
 
@@ -466,6 +488,30 @@ final readonly class AnalysisService
         }
 
         return [$lowest[0], implode('; ', $runs), $lowest[1]];
+    }
+
+    /**
+     * The lowest PHP of the range after the floor that accepts the pattern
+     * but parses it into another tree, as "a{,3}", text before PCRE2 10.43
+     * and a quantifier from it; null when every one reads it as the floor
+     * does, or when the rules map turns the check off.
+     */
+    private function readsOtherwise(PatternOccurrence $occurrence, NodeInterface $floor): ?PcreTarget
+    {
+        if ([] === $this->range
+            || false === ($this->lintRules[self::ISSUE_ID_MEANING_CHANGES] ?? null)
+            || false === ($this->lintRules[substr(self::ISSUE_ID_MEANING_CHANGES, \strlen('regex.lint.'))] ?? null)) {
+            return null;
+        }
+
+        $tree = $floor->accept(new NodeDumper());
+        foreach ($this->range as $parser) {
+            if ($parser->parse($occurrence->pattern)->accept(new NodeDumper()) !== $tree) {
+                return $parser->target();
+            }
+        }
+
+        return null;
     }
 
     /**

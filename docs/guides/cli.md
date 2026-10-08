@@ -821,6 +821,13 @@ What runs where:
     FAIL On PHP 8.5 and later: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
 ```
 
+- **A pattern every version accepts but one reads otherwise** is a warning,
+  `regex.lint.compat.meaningChanges`, naming the first version that parses it
+  into another meaning: `/a{,3}/` is the text `a{,3}` under PCRE2 before 10.43
+  (PHP 8.2 and 8.3) and `a` zero to three times from 10.43 (PHP 8.4). Write
+  `a{0,3}` or `a\{,3}`, which every version reads alike; `"compat.meaningChanges":
+  false` in `checks.lint.rules` turns the check off.
+
 The console banner still names the floor. The JSON report lists every PHP and
 PCRE2 it validated at under `target.range`, and the issue carries the lowest
 one that refuses the pattern under `target`

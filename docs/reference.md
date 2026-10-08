@@ -1194,6 +1194,23 @@ preg_match('/(a++)+$/', $input);  // SAFE
 **Read more:**
 - [OWASP: Regular Expression Denial of Service](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 
+### Meaning That Changes Across PHP Versions
+
+**Identifier:** `regex.lint.compat.meaningChanges`
+
+**When it triggers:** `regex lint` judges a project over the PHP range of its `composer.json`.
+A pattern every version of the range accepts may still be parsed into another meaning by a
+later one: `/a{,3}/` is the text `a{,3}` under PCRE2 before 10.43 (PHP 8.2 and 8.3) and `a`
+zero to three times from 10.43 (PHP 8.4); `/a{ 2 }/` likewise. The warning names the first
+version that reads the pattern otherwise, under `target` in the JSON report. Changes that keep
+the parse and move the engine's semantics are not covered. `"compat.meaningChanges": false` in
+`checks.lint.rules` turns it off.
+
+**Message:** `From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.`
+
+**Fix:** Write the part that differs in a form every version reads alike: `a{0,3}` for the
+quantifier, `a\{,3}` for the text.
+
 ### Quadratic Search
 
 **Identifier:** `regex.lint.redos.search`; `regex.redos.search` in PHPStan, with the message `Quadratic search (ReDoS): <pattern>`
@@ -1363,6 +1380,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Inline      | `regex.lint.flag.redundant`, `.override`                                                  | warning  | Remove or scope the inline flag   |
 | Complexity  | `regex.lint.complexity`                                                                   | warning  | Split the pattern                 |
 | ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above or proves one it cannot replay | Use possessive quantifiers |
+| Targets     | `regex.lint.compat.meaningChanges`                                                        | warning  | Write it alike for every PHP      |
 | ReDoS       | `regex.lint.redos.search` (`regex.redos.search` in PHPStan)                               | warning in every mode; ReDoS severity `medium`, shown from `--redos-threshold=medium` | Anchor the pattern or bound the run |
 | Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted: a PHP file that cannot be read or does not fit in `memory_limit` (every `lint` command), or the `regex:` validation rules Laravel `regex:lint` reads | error | Fix what the message names: raise `memory_limit`, or exclude the file |
 

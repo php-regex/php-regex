@@ -100,6 +100,47 @@ final class AnalysisServiceRangeTest extends TestCase
     }
 
     /**
+     * PCRE2 reads "{,3}" as text before 10.43 and as a quantifier from 10.43
+     * (ChangeLog 10.43, pcre2compat), and a space inside braces likewise:
+     * PHP 8.2 bundles 10.40, PHP 8.4 10.44.
+     */
+    #[Test]
+    public function test_a_pattern_a_later_php_reads_otherwise_gives_one_warning(): void
+    {
+        $analysis = $this->analysis('8.2', [['8.4', null]]);
+
+        foreach (['/a{,3}/', '/a{ 2 }/'] as $pattern) {
+            $issues = $this->rangeIssues($analysis, $pattern);
+
+            $this->assertCount(1, $issues, $pattern);
+            $this->assertSame('warning', $issues[0]['type']);
+            $this->assertSame('regex.lint.compat.meaningChanges', $issues[0]['issueId'] ?? null);
+            $this->assertSame('From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.', $issues[0]['message']);
+            $this->assertSame(['php' => '8.4', 'pcre' => '10.44'], $issues[0]['target'] ?? null);
+            $this->assertSame(3, $issues[0]['line']);
+        }
+    }
+
+    #[Test]
+    public function test_a_pattern_every_php_of_the_range_reads_alike_gives_no_warning(): void
+    {
+        $analysis = $this->analysis('8.2', [['8.4', null]]);
+
+        $this->assertSame([], $this->rangeIssues($analysis, '/a{0,3}/'));
+        $this->assertSame([], $this->rangeIssues($analysis, '/a\{,3}/'));
+        // PHP 8.4 and 8.5 bundle the same PCRE2.
+        $this->assertSame([], $this->rangeIssues($this->analysis('8.4', [['8.5', null]]), '/a{,3}/'));
+    }
+
+    #[Test]
+    public function test_the_rules_map_turns_the_warning_off(): void
+    {
+        $analysis = new AnalysisService(RegexParser::create(['php_version' => '8.2']), lintRules: ['compat.meaningChanges' => false], range: [RegexParser::create(['php_version' => '8.4'])]);
+
+        $this->assertSame([], $this->rangeIssues($analysis, '/a{,3}/'));
+    }
+
+    /**
      * @param list<array{string, string|null}> $range PHP version, PCRE2 release (null: the bundled one)
      */
     private function analysis(string $floor, array $range): AnalysisService
