@@ -116,10 +116,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   refuses it. Accepting it needs the capture shape to stop naming the shared
   record after the first branch that names it, and the `(?J)` rule of
   `capture-shapes.md` to say which name PHP keeps.
-- `lint` skips a file that does not fit in its memory budget without saying so:
-  at a low `memory_limit` (6 MB, `--jobs=1`) the JSON report reads
-  `results: []` with exit 0, a clean run that is not one. A skipped file should
-  be reported.
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch

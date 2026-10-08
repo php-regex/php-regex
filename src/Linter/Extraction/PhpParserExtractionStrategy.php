@@ -111,21 +111,21 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
                 return [];
             }
 
-            if (!is_file($file) || !is_readable($file)) {
+            if (!is_file($file)) {
                 return [];
             }
 
-            $content = file_get_contents($file);
-            if (false === $content || '' === $content) {
-                return [];
+            $content = is_readable($file) ? @file_get_contents($file) : false;
+            if (false === $content) {
+                return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
             }
 
-            if (!$this->registry->matchesContent($content)) {
+            if ('' === $content || !$this->registry->matchesContent($content)) {
                 return [];
             }
 
             if (!MemoryBudget::allows($content, MemoryBudget::PARSE_FACTOR)) {
-                return [];
+                return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::PARSE_FACTOR))];
             }
 
             $ast = $this->parser->parse($content);

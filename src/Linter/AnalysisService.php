@@ -246,6 +246,25 @@ final readonly class AnalysisService
                 continue;
             }
 
+            // A file the extractor could not read holds patterns no one linted.
+            if (null !== $occurrence->unread) {
+                $issues[] = [
+                    'type' => 'error',
+                    'file' => $occurrence->file,
+                    'line' => 1,
+                    'column' => 1,
+                    'message' => $occurrence->unread,
+                    'issueId' => 'regex.lint.source.unreadable',
+                    'source' => $occurrence->source,
+                ];
+
+                if ($progress) {
+                    $progress();
+                }
+
+                continue;
+            }
+
             $validation = $this->regex->validate($occurrence->pattern);
             $source = $occurrence->source;
             if (!$validation->isValid) {
@@ -468,7 +487,7 @@ final readonly class AnalysisService
         $issues = [];
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored) {
+            if ($occurrence->isIgnored || null !== $occurrence->unread) {
                 continue;
             }
 
@@ -511,7 +530,7 @@ final readonly class AnalysisService
         $verifyWithAutomata = $options->verifyWithAutomata;
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored) {
+            if ($occurrence->isIgnored || null !== $occurrence->unread) {
                 continue;
             }
 

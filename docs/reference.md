@@ -1226,7 +1226,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Complexity  | `regex.lint.complexity`                                                                   | warning  | Split the pattern                 |
 | ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above or proves one it cannot replay | Use possessive quantifiers |
 | ReDoS       | `regex.lint.redos.search` (`regex.redos.search` in PHPStan)                               | warning in every mode; ReDoS severity `medium`, shown from `--redos-threshold=medium` | Anchor the pattern or bound the run |
-| Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted (Laravel `regex:lint`, for the `regex:` validation rules it reads) | error | Fix what the message names |
+| Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted: a PHP file that cannot be read or does not fit in `memory_limit` (every `lint` command), or the `regex:` validation rules Laravel `regex:lint` reads | error | Fix what the message names: raise `memory_limit`, or exclude the file |
 
 ---
 

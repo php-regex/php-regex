@@ -66,21 +66,21 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      */
     private function extractFromFile(string $file): array
     {
-        if (!is_file($file) || !is_readable($file)) {
+        if (!is_file($file)) {
             return [];
         }
 
-        $content = file_get_contents($file);
-        if (false === $content || '' === $content) {
-            return [];
+        $content = is_readable($file) ? @file_get_contents($file) : false;
+        if (false === $content) {
+            return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
         }
 
-        if ($this->shouldSkipContent($content)) {
+        if ('' === $content || $this->shouldSkipContent($content)) {
             return [];
         }
 
         if (!MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR)) {
-            return [];
+            return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::TOKENIZE_FACTOR))];
         }
 
         $content = $this->readableContent($content);

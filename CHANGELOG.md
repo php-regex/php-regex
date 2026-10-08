@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex lint` and the bridges' lint commands report a PHP file they could not read, or that does not fit in `memory_limit`, as `regex.lint.source.unreadable`, an error: such a file was left out, and a run under a low `memory_limit` read as clean (`results: []`, exit code 0).
 - `regex.lint.quantifier.emptyRepeat` defers to `quantifier.nested`, `quantifier.assertion`, `dotstar.nested` and `alternation.empty` only while the configuration turns them on: with `quantifier.nested` off, `/(?:a*)*b/` is reported once, where it was not reported at all.
 - The language server runs the validator: a pattern that parses but that PCRE refuses, such as `/(?<=a+)b/`, is published with its error code where it only got lint issues.
 - `Rewriter` with `autoPossessify` no longer makes a repeat possessive next to a character above ASCII, which its character sets do not hold: `/.+é/` and `/é+é/u` became patterns that match nothing. The `Optimizer` already refused those rewrites through its equivalence check.

@@ -36,6 +36,14 @@ final class MemoryBudget
      */
     public const PARSE_FACTOR = 110;
 
+    /**
+     * Why a file the budget refuses was not read, for the report.
+     */
+    public static function refusal(string $content, int $factor): string
+    {
+        return \sprintf('Not linted: reading this file needs about %d MB, more than memory_limit leaves. Raise memory_limit, or exclude the file.', (int) ceil(\strlen($content) * $factor / 1_048_576));
+    }
+
     public static function allows(string $content, int $factor): bool
     {
         $limit = self::limitInBytes();
