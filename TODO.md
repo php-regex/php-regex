@@ -56,12 +56,10 @@ the public API, so they go before the tag.
 ### The character-set analysis
 
 - Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
-  byte above it. The nested-loop rules now refuse to decide in that case, but
-  `regex.lint.quantifier.concatenation` still suggests rewrites that change
-  the matches (`/^b+[é]+\z/u`, `/^\h+[\t ]+\z/` on a no-break space).
+  byte above it. The nested-loop rules and `quantifier.concatenation` refuse
+  to decide in that case, which costs them findings.
 - Case-insensitivity and lookarounds are ignored: `/(?:a|A)+$/i` (exponential)
-  gets no overlap warning, `(?:,a*(?:(?!z)a)*)+$` no nested warning, and
-  `/^A?[^a]*\z/i` a concatenation hint that loses `"a"`.
+  gets no overlap warning, and `(?:,a*(?:(?!z)a)*)+$` no nested warning.
 - `(*UCP)` without `/u` is not seen: `\w` and `\d` stay ASCII.
 
 ### The ReDoS proof: precision

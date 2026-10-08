@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex.lint.quantifier.concatenation` no longer suggests a rewrite that loses matches: a run that may take a character above ASCII is a subset of the next only when that one takes every such character (`/^\h{1,3}[\t ]+\z/` lost `"\xA0\xA0 "`, `/^b+[é]+\z/u` lost `"béé"`), and under `i` a negated class is read with both cases of its letters (`/^A?[^a]*\z/i` lost `"a"`).
 - The printer escapes a quoted U+0085, U+200E, U+200F, U+2028 or U+2029 under `x` in UTF mode, which PCRE2 would skip written raw: `/a\Q\u{85}\Eb/xu` prints as `/a\x{85}b/xu`, where it wrote the character raw and the printed pattern matched `"ab"`.
 - `regex lint` reads a PHP file that holds a byte of invalid UTF-8 as its bytes, as PHP does: the file was re-encoded from Latin-1 as a whole, which double-encoded its UTF-8 patterns, moved `column` and `file_offset`, and turned a raw Latin-1 byte in a `/u` pattern, which fails at run time, into a valid `é`.
 - `regex.lint.anchor.impossible.end` reads the newline of `(*CR)` and `(*NUL)`: `/(*CR)a$\n/`, which never matches, is reported, and `/(*CR)a$\r/` is not.

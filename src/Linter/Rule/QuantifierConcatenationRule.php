@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CharClassSets;
+use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
@@ -106,7 +107,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             // each: it does when one of them still follows (the other side
             // keeps at least one) and what the guard refuses cannot start
             // with a character of that set.
-            if (null === $rightMax && CharClassSets::isSubset($leftSet, $rightSet) && [] === $rightGuards) {
+            if (null === $rightMax && $this->isKnownSubset($left->node, $leftSet, $right->node, $rightSet, $context, $flags[$i]) && [] === $rightGuards) {
                 $issues[] = new RuleViolation(
                     'regex.lint.quantifier.concatenation',
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
@@ -123,7 +124,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            if (null === $leftMax && CharClassSets::isSubset($rightSet, $leftSet)
+            if (null === $leftMax && $this->isKnownSubset($right->node, $rightSet, $left->node, $leftSet, $context, $flags[$i])
                 && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
             ) {
                 $issues[] = new RuleViolation(
@@ -142,6 +143,56 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         }
 
         return $issues;
+    }
+
+    /**
+     * Whether every character the run takes is one the other run takes. The
+     * sets stop at 0x7F and fold no case. Above ASCII the run is known to
+     * fit only when it is held to ASCII, or the other takes every character
+     * there: "\\h" takes "\\xA0", which "[\\t ]" does not. Under i a
+     * negated class refuses both cases of a letter it holds, which its set
+     * does not say: "A" also takes "a", which "[^a]" refuses.
+     */
+    private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
+    {
+        if (LoopShape::mayTakeACharacterAboveAscii($run, $context) && !LoopShape::takesEveryCharacterAboveAscii($other, $context)) {
+            return false;
+        }
+
+        if (str_contains($flags, 'i') && self::holdsANegatedClass($other) && !self::isCaseClosed($otherSet)) {
+            return false;
+        }
+
+        return CharClassSets::isSubset($set, $otherSet);
+    }
+
+    private static function holdsANegatedClass(NodeInterface $node): bool
+    {
+        if ($node instanceof CharClassNode && $node->isNegated) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsANegatedClass($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the set holds both cases of each ASCII letter it holds.
+     */
+    private static function isCaseClosed(ByteCharSet $set): bool
+    {
+        for ($upper = 0x41; $upper <= 0x5A; $upper++) {
+            if ($set->intersects(ByteCharSet::fromChar(\chr($upper))) !== $set->intersects(ByteCharSet::fromChar(\chr($upper + 0x20)))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -203,6 +203,31 @@ final class LoopShape
     }
 
     /**
+     * Whether the node takes every character above ASCII, so that the sets,
+     * which stop at 0x7F, say all it takes there: a dot, a negated class of
+     * ASCII members, and without u "\\D", "\\W" and "\\S".
+     */
+    public static function takesEveryCharacterAboveAscii(NodeInterface $node, LintContext $context): bool
+    {
+        $node = NodePredicates::unwrapTransparentNode($node);
+        if ($node instanceof DotNode) {
+            return true;
+        }
+
+        if ($node instanceof CharClassNode) {
+            return $node->isNegated && !self::mayTakeAboveAscii($node->expression, true);
+        }
+
+        if (!$node instanceof CharTypeNode) {
+            return false;
+        }
+
+        $unicode = str_contains($context->pattern->flags, 'u') || self::patternStartsWithVerb($context);
+
+        return !$unicode && \in_array($node->value, ['D', 'W', 'S'], true);
+    }
+
+    /**
      * Whether the item matches its text one way: a literal, or one character
      * of a set.
      */

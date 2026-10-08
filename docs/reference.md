@@ -319,6 +319,10 @@ preg_match('/ac/', $input);
 **Identifier:** `regex.lint.quantifier.concatenation`
 
 **When it triggers:** Two adjacent quantified tokens can be simplified because one character set is a subset of the other.
+The rule speaks only when it knows the subset holds: a token that may take a character above
+ASCII fits only a dot, a negated class of ASCII members or, without `u`, `\D`, `\W` and `\S`
+(`/^\h{1,3}[\t ]+\z/` stays silent, `\h` takes `"\xA0"`), and under `i` a negated class must
+hold both cases of its letters (`/^A?[^a]*\z/i` stays silent).
 
 **Example:**
 ```php
