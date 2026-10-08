@@ -58,3 +58,47 @@ Draft:
   (order-dependent); the Psalm plugin emits no `numeric-string` because of it.
 - Psalm's `preg_match_all` stub types `MARK` wrongly under
   `PREG_OFFSET_CAPTURE`.
+
+## Fix the example scripts
+
+Each script under `examples/` requires
+`__DIR__.'/../vendor/autoload.php'`, which resolves to `examples/vendor/` — a
+directory that does not exist. The invocation documented in
+`examples/README.md` (`php examples/basic/validate.php` from the project root)
+therefore fatals on the first try. One-line fix per script: point at the
+repo-root autoloader.
+
+## Align the feature support matrix with the solver
+
+`docs/reference/feature-support-matrix.md` (lines 28 and 41-42) and the
+`LanguageSolver` docblock still show lookarounds as refused; the solver has
+read plain lookarounds since f66a0669
+(`src/Automata/Transform/LookaroundProduct.php`, documented in
+`docs/reference/logic-solver.md`).
+
+## Type the literal path of the Toolkit facade
+
+`src/Toolkit/Regex.php:517-601` receives its own `LiteralSet` as `mixed` and
+probes it with `property_exists`/`method_exists`, and
+`determineConfidenceLevel()` (line 587) returns a raw `'high'|'medium'|'low'`
+string where the rest of the library uses string-backed enums. One
+`instanceof` would type the whole path.
+
+## Ship a ready-made validation rule
+
+No Laravel `Rule` and no Symfony Validator `Constraint` combines `validate()`
+and `redos()` for "a user submits a regex" forms; the extractors only read
+such rules for linting.
+
+## Refresh SECURITY.md for 2.x
+
+The supported-versions table lists 1.x only, and no 1.x branch exists in this
+repository anymore; disclosure is email-only, with no GitHub Private
+Vulnerability Reporting configured.
+
+## Give the phar a build provenance
+
+`bin/release` builds `bin/regex.phar` locally and derives the `.sha256` from
+that same build: no CI-built artifact, no signing, no attestation. A compiled
+354 KB `regex.phar` also sits tracked in git history (export-ignored at
+`.gitattributes:75`) — decide whether it stays.
