@@ -192,6 +192,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $node->value;
         }
 
+        $this->refuseALoneByte($node->value, $node);
+
         return $this->escapeString($node->value);
     }
 
@@ -199,6 +201,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $codePoint = $node->codePoint;
+        $this->refuseAByteEscape($codePoint, $node);
 
         if (CharLiteralType::UnicodeNamed === $node->type) {
             $this->context->addWarning('Converted Unicode named character to code point escape.');
@@ -401,7 +404,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         }
 
         $meta = $this->inCharClass ? self::CHAR_CLASS_META : self::META_CHARACTERS;
-        $unicodeMode = $this->isUnicodeMode();
         $needsEscape = false;
 
         $len = \strlen($value);
@@ -413,7 +415,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
                 || isset($meta[$char])
                 || $ord < 32
                 || 127 === $ord
-                || (!$unicodeMode && $ord >= 128)
             ) {
                 $needsEscape = true;
 
@@ -431,7 +432,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $ord = \ord($char);
             if ($char === $this->delimiter || isset($meta[$char])) {
                 $result .= '\\'.$char;
-            } elseif ($ord < 32 || 127 === $ord || (!$unicodeMode && $ord >= 128)) {
+            } elseif ($ord < 32 || 127 === $ord) {
                 $result .= match ($ord) {
                     8 => $this->inCharClass ? '\\b' : '\\x08',
                     9 => '\\t',
@@ -527,11 +528,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $position,
             $this->context->sourcePattern,
         );
-    }
-
-    private function isUnicodeMode(): bool
-    {
-        return str_contains($this->flags, 'u') || $this->context->requiresFlag('u');
     }
 
     private function noteUnicodeWordBoundary(): void

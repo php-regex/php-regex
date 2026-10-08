@@ -6,3 +6,6 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Without `u`, a byte above 0x7F on its own (`\xE9`, `[\x80-\xFF]`, invalid
+   UTF-8) is refused for JavaScript and Python, which read characters; a
+   multibyte character written whole stays that character.

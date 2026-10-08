@@ -521,7 +521,8 @@ final class JsonOutputContractTest extends TestCase
         yield 'analyze' => ['arguments' => ['analyze', "/a\xFF/", '--format=json'], 'key' => 'pattern', 'expected' => '/a\xFF/'];
         yield 'debug' => ['arguments' => ['debug', "/a\xFF/", '--format=json'], 'key' => 'pattern', 'expected' => '/a\xFF/'];
         yield 'redos' => ['arguments' => ['redos', "/a\xFF/", ...self::REDOS], 'key' => 'pattern', 'expected' => '/a\xFF/'];
-        yield 'transpile' => ['arguments' => ['transpile', "/a\xFF/", '--format=json'], 'key' => 'source', 'expected' => '/a\xFF/'];
+        // A lone byte has no equivalent in JavaScript: the error envelope.
+        yield 'transpile' => ['arguments' => ['transpile', "/a\xFF/", '--format=json'], 'key' => 'stage', 'expected' => 'pattern'];
         yield 'lint' => ['arguments' => ['lint', 'src', '--format=json', '--jobs=1'], 'key' => 'lint', 'expected' => '/(a\xFF+)+$/'];
     }
 

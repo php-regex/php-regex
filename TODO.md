@@ -99,10 +99,6 @@ against the engine:
   multibyte character even when the code points on both sides coincide
   (`(?:xé)+é+` has é on both sides of the seam). No false "safe" has been
   reproduced yet; the gate itself is unsound under `/u`.
-- Without `/u`, the transpilers re-read bytes ≥ 0x80 as code points of the
-  target: JavaScript `/caf\xC3\xA9/` matches `"Ã©"` where PCRE matched the
-  two raw bytes, and the Python output can hold a lone invalid byte whose
-  source does not parse at all.
 
 The normalization-free contract is pinned by
 `tests/Unit/NormalizationInvariantTest.php`: the engine, the printer and the

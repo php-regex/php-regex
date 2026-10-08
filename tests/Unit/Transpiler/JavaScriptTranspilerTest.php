@@ -94,13 +94,13 @@ final class JavaScriptTranspilerTest extends TestCase
     }
 
     #[Test]
-    public function test_adds_unicode_flag_for_codepoint_escapes(): void
+    public function test_keeps_the_unicode_flag_for_codepoint_escapes(): void
     {
         $regex = Regex::create();
-        $result = $regex->transpile('/\\x{1F600}/', 'javascript');
+        $result = $regex->transpile('/\\x{1F600}/u', 'javascript');
 
         $this->assertSame('/\\u{1F600}/u', $result->literal);
-        $this->assertContains('Added /u for Unicode code point escapes.', $result->warnings);
+        $this->assertSame([], $result->warnings);
     }
 
     #[Test]

@@ -175,6 +175,8 @@ final class PythonPrinter extends AbstractTargetPrinter
             return $node->value;
         }
 
+        $this->refuseALoneByte($node->value, $node);
+
         return $this->escapeString($node->value);
     }
 
@@ -182,6 +184,7 @@ final class PythonPrinter extends AbstractTargetPrinter
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $codePoint = $node->codePoint;
+        $this->refuseAByteEscape($codePoint, $node);
 
         if (CharLiteralType::UnicodeNamed === $node->type) {
             $this->context->addWarning('Converted Unicode named character to code point escape.');

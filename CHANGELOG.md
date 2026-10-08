@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The transpilers no longer re-read the bytes of a pattern without `u` as code points: JavaScript `/caf\xC3\xA9/` matched `"Ã©"`, and the Python output could hold a lone invalid byte. A multibyte character written whole stays that character; a byte above 0x7F on its own, as an escape or as invalid UTF-8, is refused, the targets reading characters.
 - Under a `php_version` below 8.2, a pattern holding a NUL byte, as its delimiter, in its body or among its modifiers, is refused with the new error code `regex.pattern.nul_byte`, as PHP before 8.2 refuses it ("Null byte in regex"); it was accepted.
 - `regex.lint.alternation.overlap` quotes its branches as the pattern could hold them: a hidden character is `\xE2\x80\xAE` without `/u`, where `\x{202E}` would not compile, and a backslash is doubled.
 - `PatternPrinter` in pretty mode lays a pattern out over lines under `x` only: without `x` its newlines, its indents and the `#` lines it wrote for a multi-line `(?#...)` changed what the pattern matched (`/a(?#x\ny)b/` no longer matched `"ab"`). Without `x` the pretty output stays on one line.

@@ -75,6 +75,11 @@ try {
 }
 ```
 
+JavaScript and Python read characters, where PCRE without `u` reads bytes. A
+multibyte character written whole (`/café/`) stays that character; a byte above
+0x7F on its own, as an escape (`\xE9`, `[\x80-\xFF]`) or as invalid UTF-8, has
+no equivalent there and is refused: add `u`, or write the character itself.
+
 Documentation
 -------------
 
