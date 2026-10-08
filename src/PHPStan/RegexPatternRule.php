@@ -103,6 +103,8 @@ final class RegexPatternRule implements Rule
         'Flag \'s\' is useless' => self::DOC_BASE_URL.'#useless-flag-s-dotall',
         'Flag \'m\' is useless' => self::DOC_BASE_URL.'#useless-flag-m-multiline',
         'Flag \'i\' is useless' => self::DOC_BASE_URL.'#useless-flag-i-caseless',
+        'Flag \'D\' is useless' => self::DOC_BASE_URL.'#useless-flag-d-dollar-end-only',
+        'Flag \'x\' is useless' => self::DOC_BASE_URL.'#useless-flag-x-extended',
 
         // Security & Concepts - The authority on explaining regex mechanics
         'catastrophic backtracking' => self::DOC_BASE_URL.'#catastrophic-backtracking',
@@ -120,6 +122,8 @@ final class RegexPatternRule implements Rule
         'regex.lint.flag.useless.s' => self::DOC_BASE_URL.'#useless-flag-s-dotall',
         'regex.lint.flag.useless.m' => self::DOC_BASE_URL.'#useless-flag-m-multiline',
         'regex.lint.flag.useless.i' => self::DOC_BASE_URL.'#useless-flag-i-caseless',
+        'regex.lint.flag.useless.D' => self::DOC_BASE_URL.'#useless-flag-d-dollar-end-only',
+        'regex.lint.flag.useless.x' => self::DOC_BASE_URL.'#useless-flag-x-extended',
         'regex.lint.anchor.impossible.start' => self::DOC_BASE_URL.'#anchor-conflicts',
         'regex.lint.anchor.impossible.end' => self::DOC_BASE_URL.'#anchor-conflicts',
         'regex.lint.quantifier.nested' => self::DOC_BASE_URL.'#nested-quantifiers-redos-risk',

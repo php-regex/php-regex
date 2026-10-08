@@ -220,6 +220,16 @@
               "description": "Warn when /s flag is used but pattern has no unescaped dot outside a character class.",
               "default": true
             },
+            "flag.useless.D": {
+              "type": "boolean",
+              "description": "Warn when /D flag is used but no $ anchor is read without m.",
+              "default": true
+            },
+            "flag.useless.x": {
+              "type": "boolean",
+              "description": "Warn when /x flag is used but pattern has no whitespace and no # comment.",
+              "default": true
+            },
             "flag.redundant": {
               "type": "boolean",
               "description": "Warn about redundant flag modifiers.",

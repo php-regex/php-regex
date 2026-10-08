@@ -33,6 +33,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
@@ -242,6 +243,14 @@ final class PatternLinter extends AbstractNodeVisitor
 
     #[\Override]
     public function visitLiteral(LiteralNode $node): NodeInterface
+    {
+        $this->dispatch($node);
+
+        return $node;
+    }
+
+    #[\Override]
+    public function visitComment(CommentNode $node): NodeInterface
     {
         $this->dispatch($node);
 

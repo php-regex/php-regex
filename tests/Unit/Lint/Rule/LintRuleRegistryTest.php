@@ -76,11 +76,13 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.charclass.single'],
             ['regex.lint.literal.multipleSpaces'],
             ['regex.lint.quantifier.lazyToClass'],
+            ['regex.lint.flag.useless.D'],
+            ['regex.lint.flag.useless.x'],
         ], $ruleIds);
     }
 
     #[Test]
-    public function test_all_45_rule_ids_are_covered(): void
+    public function test_all_47_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -90,6 +92,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(45, $ids);
+        $this->assertCount(47, $ids);
     }
 }

@@ -74,6 +74,8 @@ final class LintRuleRegistry
         $this->register(new SingleCharClassRule());
         $this->register(new MultipleSpacesRule());
         $this->register(new LazyToClassRule());
+        $this->register(new UselessDFlagRule());
+        $this->register(new UselessXFlagRule());
     }
 
     public function register(LintRuleInterface $rule): void

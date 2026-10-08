@@ -754,7 +754,8 @@
     {
         "pattern": "#\\n\\t\\t\\t(?<block>```php(?<code>[^`]++)```)\\n\\t\\t\\t\\s*\\n\\t\\t\\t(?<open>```\\w*|<pre>(?:<code>)?)\\n\\t\\t\\t(?<output>[^`]*)\\n\\t\\t\\t(?<close>```|</code></pre>)(?=\\n|$)\\n\\t\\t#sx",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.flag.useless.s",
+            "regex.lint.flag.useless.x"
         ]
     },
     {
@@ -908,6 +909,7 @@
     {
         "pattern": "/^https?:\\/\\/(([\\w-]+\\.)*woocommerce\\.com|([\\w-]+\\.)*woocommerce\\.test|([\\w-]+\\.)*WordPress\\.com|([\\w-]+\\.)*wp\\.com)/ix",
         "issues": [
+            "regex.lint.flag.useless.x",
             "regex.lint.group.quantifiedCapture"
         ]
     },
@@ -3742,6 +3744,7 @@
     {
         "pattern": "%[^:/@?&=#]+%usD",
         "issues": [
+            "regex.lint.flag.useless.D",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -5085,6 +5088,7 @@
     {
         "pattern": "/SELECT(\\s*DISTINCT)?/Dsi",
         "issues": [
+            "regex.lint.flag.useless.D",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -5378,7 +5382,8 @@
     {
         "pattern": "/^(\\s*<p>\\s*)([^:]+):\\s*/sxi",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.flag.useless.s",
+            "regex.lint.flag.useless.x"
         ]
     },
     {
@@ -5419,7 +5424,8 @@
     {
         "pattern": "/^(\\s*<p>\\s*)([a-z]+):\\s*/sxi",
         "issues": [
-            "regex.lint.flag.useless.s"
+            "regex.lint.flag.useless.s",
+            "regex.lint.flag.useless.x"
         ]
     },
     {
@@ -6840,7 +6846,8 @@
     {
         "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)\\s*(?:--DATA--\\s*(.*))?\\s*--EXCEPTION--\\s*(.*)/sx",
         "issues": [
-            "regex.lint.dotstar.nested"
+            "regex.lint.dotstar.nested",
+            "regex.lint.flag.useless.x"
         ]
     },
     {
@@ -8982,6 +8989,7 @@
     {
         "pattern": "/^(contactListName=)*(?<ContactListName>[^;]+)(;\\s?topicName=(?<TopicName>.+))?$/ix",
         "issues": [
+            "regex.lint.flag.useless.x",
             "regex.lint.group.quantifiedCapture"
         ]
     },
@@ -9747,7 +9755,8 @@
     {
         "pattern": "/<\\s*x[-:]([\\w\\-:.]*)/mx",
         "issues": [
-            "regex.lint.flag.useless.m"
+            "regex.lint.flag.useless.m",
+            "regex.lint.flag.useless.x"
         ]
     },
     {

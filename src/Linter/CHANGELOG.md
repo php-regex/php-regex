@@ -12,6 +12,9 @@ CHANGELOG
  * The lint command reads the file of `--baseline` and `--generate-baseline`
    after a space too (`--baseline base.json`); either option with no file is a
    usage error.
+ * `regex.lint.flag.useless.D` and `regex.lint.flag.useless.x`: a `D`
+   modifier with no `$` read without `m`, an `x` modifier on a pattern with
+   no whitespace and no `#` comment, at severity `warning`, on by default.
  * `regex.lint.redos.search`: the quadratic cost of an unanchored search whose
    every attempt is proven linear, under the ReDoS check, at severity `medium`;
    `redos.search` in the rules map of `regex.json` turns it off.

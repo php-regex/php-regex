@@ -291,6 +291,12 @@ preg_match('/^\d{4}-\d{2}-\d{2}$/i', $input);
 
 // FIX: Remove
 preg_match('/^\d{4}-\d{2}-\d{2}$/', $input);
+
+// WARNING: 'D' flag does nothing (no $, or every $ under m)
+preg_match('/^\d+\z/D', $input);
+
+// WARNING: 'x' flag does nothing (no whitespace, no # comment)
+preg_match('/^\d+$/x', $input);
 ```
 
 ---

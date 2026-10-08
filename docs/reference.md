@@ -140,6 +140,51 @@ preg_match('/^\d{4}-\d{2}-\d{2}$/', $date);
 
 ---
 
+### Useless Flag 'D' (Dollar End Only)
+
+**Identifier:** `regex.lint.flag.useless.D`
+
+**When it triggers:** The pattern sets the `D` modifier, which only stops a `$` from matching before a final newline, but no `$` is read without `m`: there is no `$` at all (`\Z` and a `$` in a class are not read by `D`), or every `$` is under `m`, set as a modifier or inline, which overrides `D`.
+
+**Message:** `Flag 'D' is useless: the pattern contains no $ anchor.` or `Flag 'D' is useless: every $ anchor is read under m, which overrides D.`
+
+**Example:**
+```php
+// Warning: no $ for D to read
+preg_match('/^[a-z]+\z/D', $input);
+
+// Warning: m overrides D on every $
+preg_match('/^[a-z]+$/mD', $input);
+
+// Preferred: drop the flag
+preg_match('/^[a-z]+\z/', $input);
+```
+
+**Fix:** Drop the flag, or write `\z` and drop it.
+
+---
+
+### Useless Flag 'x' (Extended)
+
+**Identifier:** `regex.lint.flag.useless.x`
+
+**When it triggers:** The pattern sets the `x` modifier, which only drops whitespace and `#` comments, but holds no whitespace and no `#` comment. A `#` in a class, escaped, or in a `(?#...)` group opens no comment. Whitespace is looked for in the pattern as written: a space in a class or after a backslash, which `x` keeps, silences the rule too, and so does a no-break space, which `x` drops under a UTF-8 `LC_CTYPE` locale. A pattern holding both a `#` and a NUL byte is left alone: under `(*NUL)` a NUL ends a comment.
+
+**Message:** `Flag 'x' is useless: the pattern contains no whitespace and no # comment.`
+
+**Example:**
+```php
+// Warning: nothing for x to drop
+preg_match('/^\d{4}-\d{2}$/x', $input);
+
+// Preferred
+preg_match('/^\d{4}-\d{2}$/', $input);
+```
+
+**Fix:** Drop the flag, or lay the pattern out with spaces and comments.
+
+---
+
 ## Anchors
 
 ### Anchor Conflicts
@@ -1202,7 +1247,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 
 | Category    | Rule ID                                                                                   | Severity | Quick Fix                         |
 |-------------|-------------------------------------------------------------------------------------------|----------|-----------------------------------|
-| Flags       | `regex.lint.flag.useless.s`, `.m`, `.i`                                                   | warning  | Remove the unused flag            |
+| Flags       | `regex.lint.flag.useless.s`, `.m`, `.i`, `.D`, `.x`                                       | warning  | Remove the unused flag            |
 | Anchors     | `regex.lint.anchor.impossible.start`, `.end`, `.boundary`                                 | warning  | Move the anchor                   |
 | Anchors     | `regex.lint.anchor.alternationPrecedence`                                                 | warning  | Group the alternatives            |
 | Quantifiers | `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested`                               | warning  | Use atomic groups                 |
