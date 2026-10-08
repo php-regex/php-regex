@@ -81,7 +81,12 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        return $this->analyzeFilesWithPhpStan($files);
+        // The functions the files mark with #[Pattern] join the registry for
+        // this run.
+        $specs = PatternAttributeScanner::specs($files);
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
+
+        return $strategy->analyzeFilesWithPhpStan($files);
     }
 
     /**

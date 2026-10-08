@@ -510,6 +510,26 @@ vendor/bin/regex lint src/ --pattern-function='App\Support\Str::matches#1'
 }
 ```
 
+Or mark the parameter at the source, with the attribute
+`PHPRegex\Parser\Attribute\Pattern`: every linted file is first read for the
+functions and static methods that declare one, and their calls are then read
+as if they were configured. An instance call (`$str->matches(...)`) names no
+class the linter can know, and is not read.
+
+```php
+use PHPRegex\Parser\Attribute\Pattern;
+
+final class Str
+{
+    public static function matches(string $subject, #[Pattern] string $regex): bool
+    {
+        return 1 === preg_match($regex, $subject);
+    }
+}
+
+Str::matches($input, '/(a+)+$/'); // linted as preg_match('/(a+)+$/', ...)
+```
+
 Functions republished under another namespace with the same signature — as
 `thecodingmachine/safe` does with `Safe\preg_match()` — are recognised
 without any configuration.

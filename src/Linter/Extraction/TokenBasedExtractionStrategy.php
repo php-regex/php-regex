@@ -52,8 +52,22 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
     public function extract(array $files): array
     {
-        $occurrences = [];
+        // The functions the files mark with #[Pattern] join the registry for
+        // this run.
+        $specs = PatternAttributeScanner::specs($files);
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
 
+        return $strategy->extractFiles($files);
+    }
+
+    /**
+     * @param array<string> $files
+     *
+     * @return array<PatternOccurrence>
+     */
+    private function extractFiles(array $files): array
+    {
+        $occurrences = [];
         foreach ($files as $file) {
             $this->appendOccurrences($occurrences, $this->extractFromFile($file));
         }
