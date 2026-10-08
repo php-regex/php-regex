@@ -24,6 +24,7 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -35,6 +36,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
@@ -184,24 +186,36 @@ final class RegexPatternRule implements Rule
 
     private readonly OptimizerOptions $optimizationOptions;
 
+    /**
+     * The later PHP versions of PHPStan's range a pattern is validated at
+     * too, each with its label ("PHP 8.5 with PCRE2 10.44").
+     *
+     * @var list<array{RegexParser, string}>
+     */
+    private readonly array $range;
+
     private ?AnalysisService $analysis = null;
 
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
-     * @param array<string, mixed> $config     the "phpRegex" parameter: "phpVersion", "pcreVersion" and
-     *                                         "checks" ("lint", "redos", "optimizations"), every key optional
-     * @param PhpVersion|null      $phpVersion the PHP version PHPStan analyses the project for: patterns are
-     *                                         judged for it, with the PCRE2 it bundles, unless "phpVersion"
-     *                                         is "runtime" or names a version, and "pcreVersion" a release
+     * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion" and
+     *                                              "checks" ("lint", "redos", "optimizations"), every key optional
+     * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for: patterns are
+     *                                              judged for it, with the PCRE2 it bundles, unless "phpVersion"
+     *                                              is "runtime" or names a version, and "pcreVersion" a release
+     * @param mixed                $phpVersionRange PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
+     *                                              also validated at each later PHP up to max where a rule of the
+     *                                              library changes, unless "phpVersion" names one version
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
-    public function __construct(array $config = [], ?PhpVersion $phpVersion = null)
+    public function __construct(array $config = [], ?PhpVersion $phpVersion = null, mixed $phpVersionRange = null)
     {
         // Built now, so that an unreadable version stops PHPStan before any file is read.
         $this->regex = RegexParser::create(self::targetOptions($config, $phpVersion));
         $target = $this->regex->target();
+        $this->range = self::rangeParsers($config, $target, $phpVersionRange);
         $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
             'PHP %d.%d with PCRE2 %s',
             intdiv($target->phpVersionId, 10000),
@@ -590,7 +604,7 @@ final class RegexPatternRule implements Rule
      */
     private function validatePattern(string $pattern, int $lineNumber, Scope $scope, string $functionName, bool $constantSubject): array
     {
-        if (null === $this->targetLabel && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
+        if (null === $this->targetLabel && [] === $this->range && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
             return [];
         }
 
@@ -599,13 +613,16 @@ final class RegexPatternRule implements Rule
             return [];
         }
 
-        if (null !== $this->targetLabel) {
-            $validation = $this->regex->validate($pattern);
+        // The floor first, then the later PHPs of PHPStan's range: the first
+        // that refuses the pattern is reported.
+        $targets = null === $this->targetLabel ? $this->range : [[$this->regex, $this->targetLabel], ...$this->range];
+        foreach ($targets as [$parser, $label]) {
+            $validation = $parser->validate($pattern);
             if (!$validation->isValid) {
                 $reason = $this->firstLine($validation->error ?? 'Invalid regex.');
                 $builder = RuleErrorBuilder::message(\sprintf(
                     'Regex pattern is invalid for %s: %s%s',
-                    $this->targetLabel,
+                    $label,
                     $reason,
                     str_ends_with($reason, '.') ? '' : '.',
                 ))
@@ -830,6 +847,40 @@ final class RegexPatternRule implements Rule
         }
 
         return $options;
+    }
+
+    /**
+     * A parser and its label for each PHP where a rule of the library
+     * changes, above the floor and up to the max of PHPStan's range; none
+     * when "phpVersion" names the version patterns are judged for, or when
+     * PHPStan names one version.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @return list<array{RegexParser, string}>
+     */
+    private static function rangeParsers(array $config, PcreTarget $floor, mixed $phpVersionRange): array
+    {
+        $max = \is_array($phpVersionRange) ? ($phpVersionRange['max'] ?? null) : null;
+        if (null !== ($config['phpVersion'] ?? null) || !\is_int($max)) {
+            return [];
+        }
+
+        $pcreVersion = $config['pcreVersion'] ?? null;
+        $parsers = [];
+        foreach (PcreTarget::phpVersionBoundaries() as $phpVersionId) {
+            if ($phpVersionId <= $floor->phpVersionId || $phpVersionId > $max) {
+                continue;
+            }
+
+            $pcre = \is_string($pcreVersion) ? $pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
+            $parsers[] = [
+                RegexParser::create(['php_version' => $phpVersionId, 'pcre_version' => $pcre, 'runtime_pcre_validation' => false]),
+                \sprintf('PHP %s with PCRE2 %s', ProjectTarget::phpLabel($phpVersionId), $pcre),
+            ];
+        }
+
+        return $parsers;
     }
 
     /**

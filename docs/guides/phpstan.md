@@ -34,6 +34,19 @@ configuration sets it; the lowest version of a range) with the PCRE2 that PHP
 bundles. When the target is the PHP running PHPStan and the PCRE2 it links,
 there is nothing PHPStan misses, and the extension reports no invalid pattern.
 
+A range, `phpVersion: {min: 80400, max: 80599}`, is read whole: a pattern the
+lowest version accepts is also validated at each later PHP up to `max` where
+a rule of the library changes (8.4.25, 8.5, 8.5.10…), as `regex lint` reads a
+`composer.json` range, and the first that refuses it is reported under the
+same identifier:
+
+```text
+Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
+🪪 regex.invalidForTarget
+```
+
+A `phpRegex.phpVersion` naming one version judges that version alone.
+
 ## Lint rules and ReDoS analysis
 
 `rules.neon` turns them on:

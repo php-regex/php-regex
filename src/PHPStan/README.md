@@ -60,7 +60,7 @@ in `ignoreErrors`, as with any PHPStan rule. The defaults as shipped:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `phpVersion` | `null` | PHP the patterns are judged for: `null` for PHPStan's `phpVersion`, `'runtime'` for the PHP running the analysis, `'8.2'` or `80200` for a release |
+| `phpVersion` | `null` | PHP the patterns are judged for: `null` for PHPStan's `phpVersion` (a `{min, max}` range there is validated at each later PHP up to `max` where a rule changes), `'runtime'` for the PHP running the analysis, `'8.2'` or `80200` for a release |
 | `pcreVersion` | `null` | PCRE2 release the patterns are judged for, `'10.42'`; `null` for the one the PHP version bundles |
 | `checks.lint.enabled` | `false` | lint rules |
 | `checks.redos.enabled` | `false` | ReDoS analysis |

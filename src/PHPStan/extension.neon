@@ -67,5 +67,8 @@ services:
         class: PHPRegex\PHPStan\RegexPatternRule
         arguments:
             config: %phpRegex%
+            # PHPStan's own phpVersion: with {min, max}, each later PHP of
+            # the range validates the patterns too.
+            phpVersionRange: %phpVersion%
         tags:
             - phpstan.rules.rule
