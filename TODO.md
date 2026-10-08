@@ -137,8 +137,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   `results: []` with exit 0, a clean run that is not one. A skipped file should
   be reported.
 - Printer round trips that change the meaning:
-  - the preserving printer drops `\Q` before a quoted NEL under `(*UTF)` and
-    `x`, so the NEL becomes whitespace;
   - pretty mode lays out a pattern without `x` with newlines, and writes a
     multi-line `(?#...)` as `#` lines, so its output is no longer the same
     pattern (`/a(?#x\ny)b/` no longer matches `"ab"`). The tests pin that

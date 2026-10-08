@@ -75,6 +75,12 @@ final class PatternPrinter extends AbstractNodeVisitor
         '|' => true, '*' => true, '+' => true, '?' => true, '{' => true, '}' => true,
     ];
 
+    /**
+     * The characters besides ASCII white space that "x" skips in UTF mode,
+     * each with the escape that keeps it.
+     */
+    private const UTF_PATTERN_WHITE_SPACE = ["\u{85}" => '\\x{85}', "\u{200E}" => '\\x{200E}', "\u{200F}" => '\\x{200F}', "\u{2028}" => '\\x{2028}', "\u{2029}" => '\\x{2029}'];
+
     private const CHAR_CLASS_META = [
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
@@ -1260,7 +1266,9 @@ final class PatternPrinter extends AbstractNodeVisitor
         $meta = $this->inCharClass ? self::CHAR_CLASS_META : self::META_CHARACTERS;
         $escapeExtended = str_contains($this->flags, 'x') && !$this->inCharClass;
         $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
-        $needsEscape = false;
+        // In UTF mode "x" also skips these written raw.
+        $skipped = $escapeExtended && $unicodeMode ? self::UTF_PATTERN_WHITE_SPACE : [];
+        $needsEscape = [] !== $skipped && \strlen($value) !== \strlen(strtr($value, $skipped));
 
         // Fast pre-scan to check if escaping is needed
         $len = \strlen($value);
@@ -1316,7 +1324,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             }
         }
 
-        return $result;
+        return [] === $skipped ? $result : strtr($result, $skipped);
     }
 
     /**

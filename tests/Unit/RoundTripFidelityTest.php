@@ -166,5 +166,37 @@ final class RoundTripFidelityTest extends TestCase
         yield 'quoted hash under x' => ['/\\Q#\\E/x', '/\\#/x'];
         yield 'quoted character class' => ['/\\Q[a-z]\\E/', '/\\[a-z\\]/'];
         yield 'quoted metacharacters' => ['/\\Qa+b\\E/', '/a\\+b/'];
+        // Under x in UTF mode PCRE also skips U+0085, U+200E, U+200F,
+        // U+2028 and U+2029 written raw.
+        yield 'quoted next line under x and (*UTF)' => ["/(*UTF)a\\Q\u{85}\\Eb/x", '/(*UTF)a\\x{85}b/x'];
+        yield 'quoted next line under x and u' => ["/a\\Q\u{85}\\Eb/xu", '/a\\x{85}b/xu'];
+        yield 'quoted left-to-right mark under x and u' => ["/a\\Q\u{200E}\\Eb/xu", '/a\\x{200E}b/xu'];
+        yield 'quoted right-to-left mark under x and u' => ["/a\\Q\u{200F}\\Eb/xu", '/a\\x{200F}b/xu'];
+        yield 'quoted line separator under x and u' => ["/a\\Q\u{2028}\\Eb/xu", '/a\\x{2028}b/xu'];
+        yield 'quoted paragraph separator under x and u' => ["/a\\Q\u{2029}\\Eb/xu", '/a\\x{2029}b/xu'];
+    }
+
+    /**
+     * Oracle, PHP 8.4.26 / PCRE2 10.49: the quoted character is matched,
+     * where written raw under x it would be skipped.
+     */
+    #[Test]
+    #[DataProvider('provideQuotedPatternWhiteSpace')]
+    public function test_quoted_pattern_white_space_keeps_its_meaning(string $pattern, string $subject): void
+    {
+        $recompiled = Regex::create()->parse($pattern)->accept(new PatternPrinter());
+
+        $this->assertSame(1, preg_match($pattern, $subject));
+        $this->assertSame(1, preg_match($recompiled, $subject), $recompiled);
+        $this->assertSame(0, preg_match($recompiled, 'ab'), $recompiled);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string}>
+     */
+    public static function provideQuotedPatternWhiteSpace(): iterable
+    {
+        yield 'next line under (*UTF)' => ['pattern' => "/(*UTF)^a\\Q\u{85}\\Eb$/x", 'subject' => "a\u{85}b"];
+        yield 'line separator under u' => ['pattern' => "/^a\\Q\u{2028}\\Eb$/xu", 'subject' => "a\u{2028}b"];
     }
 }
