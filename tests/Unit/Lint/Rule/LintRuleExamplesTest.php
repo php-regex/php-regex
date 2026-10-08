@@ -60,6 +60,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.flag.useless.m' => ['/abc/m', '/^abc/m'],
         'regex.lint.flag.useless.s' => ['/abc/s', '/a.c/s'],
         'regex.lint.flag.useless.x' => ['/abc/x', '/a b/x'],
+        'regex.lint.group.alwaysEmptyCapture' => ['/a+(a*)/', '/a+(b*)/'],
         'regex.lint.group.empty' => ['/a(?:)b/', '/a()b/'],
         'regex.lint.group.quantifiedCapture' => ['/(a)*/', '/(?:a)*/'],
         'regex.lint.group.redundant' => ['/(?:a)/', '/(?:ab)+/'],

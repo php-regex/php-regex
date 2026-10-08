@@ -89,6 +89,7 @@ final class LintConfigSchema
         'quantifier.possessiveImpossible' => ['Warn about a possessive repeat that takes every character the atom after it could read.', true],
         'anchor.impossible.boundary' => ['Warn about a word boundary its two neighbouring characters contradict.', true],
         'lookaround.impossible' => ['Warn about a lookahead the pattern after it contradicts.', true],
+        'group.alwaysEmptyCapture' => ['Warn about a capturing group that always captures an empty string.', true],
         'group.empty' => ['Warn about an empty non-capturing or atomic group.', true],
         'charclass.single' => ['Report a character class holding a single character (style).', false],
         'literal.multipleSpaces' => ['Report a run of literal spaces, clearer as a counted repeat (style).', false],

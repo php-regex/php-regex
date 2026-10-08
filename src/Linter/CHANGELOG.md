@@ -47,6 +47,9 @@ CHANGELOG
  * `regex.lint.quantifier.uselessLazy`: a lazy quantifier whose greedy form
    writes the same `$matches`, `(a+?)b`, proven by the automata, at severity
    `style`, off by default.
+ * `regex.lint.group.alwaysEmptyCapture`: a capturing group that is empty or
+   unset wherever the pattern matches, `a+(a*)`, proven by the automata, at
+   severity `warning`, on by default.
  * `regex.lint.lookaround.edgeQuantifier`: a repeat past its minimum at the
    end of a lookahead or the start of a lookbehind, `(?=a{2,6})`, proven by
    the automata, at severity `perf`, off by default.

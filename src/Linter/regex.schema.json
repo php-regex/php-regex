@@ -395,6 +395,11 @@
               "description": "Warn about a lookahead the pattern after it contradicts.",
               "default": true
             },
+            "group.alwaysEmptyCapture": {
+              "type": "boolean",
+              "description": "Warn about a capturing group that always captures an empty string.",
+              "default": true
+            },
             "group.empty": {
               "type": "boolean",
               "description": "Warn about an empty non-capturing or atomic group.",

@@ -480,6 +480,7 @@ No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
 | `regex.lint.unicode.multibyteInClassWithoutU` | Error | `[é]` without `/u` |
 | `regex.lint.unicode.quantifiedMultibyteWithoutU` | Error | `é+` without `/u` |
 | `regex.lint.group.quantifiedCapture` | Information, Warning for a named group | `(a)+` keeps only the last iteration |
+| `regex.lint.group.alwaysEmptyCapture` | Warning | `a+(a*)`: `$1` is always empty |
 | `regex.lint.charclass.single` | Information | `[a]` is `a` (style, off by default) |
 | `regex.lint.literal.multipleSpaces` | Information | a run of literal spaces, ` {2}` (style, off by default) |
 | `regex.lint.quantifier.uselessLazy` | Information | `(a+?)b` matches as `(a+)b` (style, off by default) |

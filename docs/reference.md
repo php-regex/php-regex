@@ -644,6 +644,33 @@ preg_match('/ab/', 'ab');      // 1
 
 ---
 
+### Capture That Never Captures Text
+
+**Identifier:** `regex.lint.group.alwaysEmptyCapture`
+
+**When it triggers:** A capturing group is empty or unset wherever the pattern matches: in
+`/a+(a*)/` the greedy `a+` takes every `a`, so `$1` is always `""`; in `/^\w+(\d*)$/` `\w+`
+takes the digits. The automata prove it: the pattern with the group's body removed writes the
+same `$matches` on every subject. It stays silent on a group with nothing in it (`()` is a
+marker), in a pattern that may match the empty string (`preg_match_all()` tries again after an
+empty match, where another path may fill the group), where `quantifier.lazyEnd` or
+`quantifier.zero` already says why the group stays empty (`/^L_(.*?)/`, `/(b){0}/`), on a group
+a reference or a call reads, which the automata do not follow, and past the eighth question it
+asks them about in a pattern.
+
+**Example:**
+```php
+// WARNING: $1 is always ""
+preg_match('/^(\w+)(\d*)$/', 'abc123', $m);  // ["abc123", "abc123", ""]
+
+// PREFERRED
+preg_match('/^([a-z]+)(\d*)$/', 'abc123', $m);  // ["abc123", "abc", "123"]
+```
+
+**Fix:** Remove the group, or narrow what precedes it so the group can read text.
+
+---
+
 ## Lookarounds
 
 ### Impossible Lookaround
@@ -1314,6 +1341,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Quantifiers | `regex.lint.quantifier.uselessLazy` (off by default)                                      | style    | Drop the `?`                      |
 | Lookarounds | `regex.lint.lookaround.edgeQuantifier` (off by default)                                   | perf     | Keep the minimum count            |
 | Groups      | `regex.lint.group.redundant`, `.empty`                                                    | warning  | Remove the group                  |
+| Groups      | `regex.lint.group.alwaysEmptyCapture`                                                     | warning  | Narrow what precedes the group    |
 | Lookarounds | `regex.lint.lookaround.impossible`                                                        | warning  | Fix the lookahead                 |
 | Groups      | `regex.lint.group.quantifiedCapture`                                                      | info for an unnamed group, warning for a named one | Repeat a non-capturing group |
 | Alternation | `regex.lint.alternation.duplicateDisjunction`, `.empty`, `.overlap`, `.dotNewline`        | warning  | Simplify or use atomic            |
