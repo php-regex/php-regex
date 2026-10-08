@@ -74,6 +74,42 @@ final class RoundTripFidelityTest extends TestCase
         $this->assertNotSame('/a  b/x', $ast->accept(new PatternPrinter(pretty: true)));
     }
 
+    /**
+     * Pretty output stays the same pattern: only "x" makes its newlines and
+     * indents ignorable, so without it the layout is not applied.
+     * Oracle, PHP 8.4.26 / PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('providePatternsWithoutExtendedMode')]
+    public function test_pretty_printing_keeps_a_pattern_without_x_as_it_matches(string $pattern, string $subject): void
+    {
+        $ast = Regex::create()->parse($pattern);
+        $printed = $ast->accept(new PatternPrinter(pretty: true));
+
+        $this->assertSame($ast->accept(new PatternPrinter()), $printed);
+        $this->assertSame(preg_match($pattern, $subject), preg_match($printed, $subject), $printed);
+        $this->assertSame(1, preg_match($printed, $subject), $printed);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string}>
+     */
+    public static function providePatternsWithoutExtendedMode(): iterable
+    {
+        yield 'alternation' => ['pattern' => '/^(?:a|b)c$/', 'subject' => 'bc'];
+        yield 'groups' => ['pattern' => '/^(a(b))$/', 'subject' => 'ab'];
+        yield 'multi-line comment' => ['pattern' => "/^a(?#x\ny)b$/", 'subject' => 'ab'];
+    }
+
+    #[Test]
+    public function test_pretty_printing_lays_out_a_pattern_under_x(): void
+    {
+        $printed = Regex::create()->parse('/^(?:a|b)c$/x')->accept(new PatternPrinter(pretty: true));
+
+        $this->assertStringContainsString("\n", $printed);
+        $this->assertSame(1, preg_match($printed, 'bc'), $printed);
+    }
+
     #[Test]
     public function test_an_ast_built_without_a_source_still_compiles(): void
     {

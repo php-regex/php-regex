@@ -130,12 +130,24 @@ final class PatternPrinter extends AbstractNodeVisitor
     private int $indentLevel;
 
     /**
+     * Whether the pattern is laid out over lines: in pretty mode, under x
+     * only, where newlines and indents are ignored. Without x the layout
+     * would change what the pattern matches.
+     */
+    private bool $layout;
+
+    /**
      * Capturing groups written so far: whether "\NN" is read as a reference
      * where it is written depends on them.
      */
     private int $capturesOpened = 0;
 
     public function __construct(
+        /**
+         * When true, escapes are normalized and, under x only, the pattern
+         * is laid out over lines; without x it is written on one line, as
+         * newlines and indents would change what it matches.
+         */
         private readonly bool $pretty = false,
         /**
          * When true, comments in extended (/x) mode are collapsed to a generic
@@ -151,6 +163,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         private readonly bool $preserveSpelling = true
     ) {
         $this->indentLevel = 0;
+        $this->layout = $this->pretty;
     }
 
     public function resetState(): void
@@ -171,6 +184,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     public function visitRegex(RegexNode $node): string
     {
         $this->capturesOpened = 0;
+        $this->layout = $this->pretty && str_contains($node->flags, 'x');
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
         $this->utfVerb = self::startsWithUtfVerb($node->pattern);
@@ -208,7 +222,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $this->compileCharClassMembers($alternatives);
         }
 
-        if ($this->pretty) {
+        if ($this->layout) {
             $result = $alternatives[0]->accept($this);
             for ($i = 1, $count = \count($alternatives); $i < $count; $i++) {
                 $this->indentLevel++;
@@ -274,7 +288,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         $flags = $node->flags ?? '';
 
-        if ($this->pretty) {
+        if ($this->layout) {
             $opening = match ($node->type) {
                 GroupType::Capturing => '(',
                 GroupType::NonCapturing => '(?:',
@@ -623,7 +637,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // An inline "(?##c)" keeps its parentheses: printed as "#c" it would
         // run to the end of the line and swallow what follows.
         if ($isExtended && $node->extended) {
-            if ($this->pretty) {
+            if ($this->layout) {
                 $indent = str_repeat(' ', $this->indentLevel * 4);
                 $lines = explode("\n", rtrim($node->comment, "\n"));
                 $formatted = [];
@@ -640,7 +654,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // Multi-line inline comments from (?# ... ) are rendered as a block of
         // "# "-prefixed lines for readability when pretty-printing. This is
         // only used outside of extended mode so we don't change semantics.
-        if ($this->pretty && str_contains($node->comment, "\n")) {
+        if ($this->layout && str_contains($node->comment, "\n")) {
             $indent = str_repeat(' ', $this->indentLevel * 4);
             $lines = explode("\n", rtrim($node->comment, "\n"));
             $formatted = [];
@@ -653,7 +667,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         // Single-line inline comments that already start with '#' can be
         // indented in pretty mode for nicer alignment.
-        if ($this->pretty && str_starts_with($node->comment, '#')) {
+        if ($this->layout && str_starts_with($node->comment, '#')) {
             $indent = str_repeat(' ', $this->indentLevel * 4);
 
             return $indent.$node->comment;
@@ -685,7 +699,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // "(?(?<!x)yes|no)", not "(?((?<!x))yes|no)".
         $condition = $this->isAssertionCondition($node->condition) ? $cond : '('.$cond.')';
 
-        if ($this->pretty) {
+        if ($this->layout) {
             $indent = str_repeat(' ', $this->indentLevel * 4);
             if ('' === $no) {
                 return $indent.'(?'.$condition."\n".$yes."\n".$indent.')';
@@ -732,7 +746,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): string
     {
-        if ($this->pretty) {
+        if ($this->layout) {
             $this->indentLevel++;
             $content = $node->content->accept($this);
             $this->indentLevel--;

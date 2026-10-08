@@ -134,13 +134,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   at a low `memory_limit` (6 MB, `--jobs=1`) the JSON report reads
   `results: []` with exit 0, a clean run that is not one. A skipped file should
   be reported.
-- Printer round trips that change the meaning:
-  - pretty mode lays out a pattern without `x` with newlines, and writes a
-    multi-line `(?#...)` as `#` lines, so its output is no longer the same
-    pattern (`/a(?#x\ny)b/` no longer matches `"ab"`). The tests pin that
-    layout as a display form: a decision, whether pretty output must stay a
-    pattern (lay out under `x` only) or is display only (say so where it is
-    documented).
 - The console form of a pattern does not always read back as itself:
   - an escape it inserts can hold an unusual delimiter (`}a\x{202E}b}u`
     with `}` as delimiter), and a control-byte delimiter is itself escaped

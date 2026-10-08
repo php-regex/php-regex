@@ -219,12 +219,12 @@ final class CompilerNodeVisitorTest extends TestCase
     {
         // "(?i)" turns "i" on for what follows it; "(?i:)" would turn it on
         // for nothing.
-        $compiled = $this->compilePretty('/(?i)abc/');
+        $compiled = $this->compilePretty('/(?i)abc/x');
 
         $this->assertStringContainsString('(?i)', $compiled);
         $this->assertStringNotContainsString('(?i:', $compiled);
         // Nested, it keeps the indentation of its level.
-        $this->assertSame("/(?:\n    (?i)a\n)/", $this->compilePretty('/(?:(?i)a)/'));
+        $this->assertSame("/(?:\n    (?i)a\n)/x", $this->compilePretty('/(?:(?i)a)/x'));
     }
 
     public function test_compile_escaped_literal_metacharacters(): void

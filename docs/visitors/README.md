@@ -169,6 +169,11 @@ $pattern = $ast->accept(new PatternPrinter());
 echo $pattern;  // '/foo/i'
 ```
 
+`new PatternPrinter(pretty: true)` normalizes the escapes and, under `x`
+only, lays the pattern out over lines. Without `x` the newlines and indents
+would change what the pattern matches, so it stays on one line: the output
+is always the same pattern.
+
 **Use Cases:**
 - Normalize patterns (remove unnecessary whitespace, standardize escapes)
 - Round-trip parsing and compilation

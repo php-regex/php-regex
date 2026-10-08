@@ -86,7 +86,7 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new PatternPrinter(true);
         $comment = new CommentNode("line1\nline2\n", 0, 0);
-        $regex = new RegexNode($comment, '', '/', 0, 0);
+        $regex = new RegexNode($comment, 'x', '/', 0, 0);
 
         $compiled = $regex->accept($visitor);
 
@@ -98,9 +98,9 @@ final class CompilerNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new PatternPrinter(true);
         $comment = new CommentNode('# note', 0, 0);
-        $regex = new RegexNode($comment, '', '/', 0, 0);
+        $regex = new RegexNode($comment, 'x', '/', 0, 0);
 
-        $this->assertSame('/# note/', $regex->accept($visitor));
+        $this->assertSame('/# note/x', $regex->accept($visitor));
     }
 
     public function test_pretty_define_block_includes_newlines(): void
