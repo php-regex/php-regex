@@ -19,14 +19,11 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\BackrefNode;
-use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
-use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
-use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LimitMatchNode;
@@ -34,7 +31,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
-use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
@@ -319,77 +315,6 @@ final class ValidatorNodeVisitorEdgeCasesTest extends TestCase
         $this->expectExceptionMessage('Invalid legacy octal codepoint');
 
         $node->accept($validator);
-    }
-
-    public function test_calculate_fixed_length_helpers(): void
-    {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('calculateFixedLength');
-
-        $this->assertSame(1, $method->invoke($validator, new LiteralNode('a', 0, 0)));
-        $this->assertSame(1, $method->invoke($validator, new CharTypeNode('d', 0, 0)));
-        $this->assertSame(1, $method->invoke($validator, new DotNode(0, 0)));
-        $this->assertSame(0, $method->invoke($validator, new AssertionNode('A', 0, 0)));
-
-        $sequence = new SequenceNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
-        $this->assertSame(2, $method->invoke($validator, $sequence));
-
-        $group = new GroupNode(new LiteralNode('a', 0, 0), GroupType::Capturing, null, null, 0, 0);
-        $this->assertSame(1, $method->invoke($validator, $group));
-
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{2}', QuantifierType::Greedy, 0, 0);
-        $this->assertSame(2, $method->invoke($validator, $quantifier));
-
-        $charClass = new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0);
-        $this->assertSame(1, $method->invoke($validator, $charClass));
-
-        $alternation = new AlternationNode([
-            new LiteralNode('a', 0, 0),
-            new LiteralNode('b', 0, 0),
-        ], 0, 0);
-        $this->assertNull($method->invoke($validator, $alternation));
-    }
-
-    public function test_calculate_sequence_length_variable_returns_null(): void
-    {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('calculateSequenceLength');
-
-        $sequence = new SequenceNode([
-            new LiteralNode('a', 0, 0),
-            new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::Greedy, 0, 0),
-        ], 0, 0);
-
-        $this->assertNull($method->invoke($validator, $sequence));
-    }
-
-    public function test_calculate_quantifier_length_variable_returns_null(): void
-    {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
-
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
-        $this->assertNull($method->invoke($validator, $quantifier));
-    }
-
-    public function test_calculate_quantifier_length_child_null_returns_null(): void
-    {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
-
-        $child = new AlternationNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
-        $quantifier = new QuantifierNode($child, '{2}', QuantifierType::Greedy, 0, 0);
-
-        $this->assertNull($method->invoke($validator, $quantifier));
-    }
-
-    public function test_calculate_quantifier_length_fixed_returns_value(): void
-    {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('calculateQuantifierLength');
-
-        $quantifier = new QuantifierNode(new LiteralNode('a', 0, 0), '{3}', QuantifierType::Greedy, 0, 0);
-        $this->assertSame(3, $method->invoke($validator, $quantifier));
     }
 
     public function test_quantifier_bounds_cache_eviction_runs(): void

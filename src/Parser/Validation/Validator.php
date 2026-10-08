@@ -2200,52 +2200,6 @@ final class Validator extends AbstractNodeVisitor
         return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max ?? -1];
     }
 
-    private function calculateFixedLength(NodeInterface $node): ?int
-    {
-        return match (true) {
-            $node instanceof LiteralNode => mb_strlen($node->value),
-            $node instanceof CharTypeNode, $node instanceof DotNode => 1,
-            $node instanceof AnchorNode, $node instanceof AssertionNode => 0,
-            $node instanceof SequenceNode => $this->calculateSequenceLength($node),
-            $node instanceof GroupNode => $this->calculateFixedLength($node->child),
-            $node instanceof QuantifierNode => $this->calculateQuantifierLength($node),
-            $node instanceof CharClassNode => 1,
-            $node instanceof AlternationNode => null, // Handled separately
-            default => null, // Unknown or variable
-        };
-    }
-
-    private function calculateSequenceLength(SequenceNode $node): ?int
-    {
-        $total = 0;
-        foreach ($node->children as $child) {
-            $length = $this->calculateFixedLength($child);
-            if (null === $length) {
-                return null; // Variable length
-            }
-            $total += $length;
-        }
-
-        return $total;
-    }
-
-    private function calculateQuantifierLength(QuantifierNode $node): ?int
-    {
-        [$min, $max] = $this->parseQuantifierBounds($node->quantifier);
-
-        // Only fixed if min == max (and both are not -1)
-        if ($min !== $max || -1 === $max) {
-            return null; // Variable length
-        }
-
-        $childLength = $this->calculateFixedLength($node->node);
-        if (null === $childLength) {
-            return null;
-        }
-
-        return $min * $childLength;
-    }
-
     /**
      * @param array<int, true>|null $expanding the groups being measured, by
      *                                         node, when the lookbehind sits
