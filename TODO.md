@@ -41,17 +41,9 @@ the public API, so they go before the tag.
 
 ### Next steps
 
-- ~~Merge the `before-2-0-defects` branch (frozen surfaces, then parser
-  errors) into `2.x` and push.~~ (done: a48c101d, 8c03d93d)
-- Still to fix from this list, in this order: display, printer, language
-  server and transpilers (comment bytes, printer round trips, LSP hover
-  and completion, `\k'n'` in JavaScript); linter and extractors
-  (character sets, `.*+` under `/x`, newline conventions in anchors,
-  Latin-1 re-encoding, Symfony block lists, `\N{U+…}` warning), then
-  regenerate the corpus files; ReDoS precision (atomic unions, `xx`, the
-  empty witness suffix).
-- Then the lookbehind validation, name reader and error-order entries
-  below, found while fixing the parser errors.
+- Left from this list, in this order: ReDoS precision (atomic unions,
+  `xx`, the empty witness suffix), then the lookbehind validation and the
+  `(?J)` branch-reset names below.
 
 ### The character-set analysis
 
@@ -60,7 +52,6 @@ the public API, so they go before the tag.
   to decide in that case, which costs them findings.
 - Case-insensitivity and lookarounds are ignored: `/(?:a|A)+$/i` (exponential)
   gets no overlap warning, and `(?:,a*(?:(?!z)a)*)+$` no nested warning.
-- `(*UCP)` without `/u` is not seen: `\w` and `\d` stay ASCII.
 
 ### The ReDoS proof: precision
 
@@ -136,8 +127,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   - a lookbehind called from a condition that holds another lookbehind can
     pass unmeasured: `/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` is
     accepted, PCRE refuses it as not limited at 28.
-- In the JSON, Checkstyle and JUnit reports, a stray byte written `\xHH`
-  reads the same as the four characters `\xHH` already in a pattern.
 
 ## Settled by design (2026-10-08)
 
@@ -199,6 +188,14 @@ Decided without the maintainer, as asked; each can be reopened.
 - **`quantifier.lazyToClass` keeps no DFA cache:** it asks match
   equivalence, which explores two priority NFAs and builds no DFA, and each
   of its questions is about one pattern.
+
+- **A stray byte in a report is written `\xHH`,** the same text as the
+  escape `\xHH` written in a pattern: both stand for that byte in PCRE, so
+  the report still says what the pattern matches; the bytes themselves would
+  make the JSON invalid.
+- **`(*UCP)` without `/u` needs nothing in the character sets:** `\w`, `\d`
+  and `\s` keep the same ASCII members under it (checked byte by byte), the
+  sets stop at 0x7F, and the rules that look above ASCII read the verb.
 
 ## Report the PCRE2 JIT crash upstream
 
