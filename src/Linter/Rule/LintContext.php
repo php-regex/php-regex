@@ -60,12 +60,26 @@ final class LintContext
 
     private string $activeFlags;
 
+    /**
+     * @param (\Closure(string): bool)|null $ruleEnabled whether the configuration turns a rule on, by its
+     *                                                   id; every rule when none is given
+     */
     public function __construct(
         public readonly PatternInfo $pattern,
         public readonly GroupIndex $groups,
         public readonly CharSetAnalyzer $charSetAnalyzer,
+        private readonly ?\Closure $ruleEnabled = null,
     ) {
         $this->activeFlags = $pattern->flags;
+    }
+
+    /**
+     * Whether the configuration turns the rule on, so that a rule deferring
+     * to it knows its finding will be reported.
+     */
+    public function isRuleEnabled(string $ruleId): bool
+    {
+        return null === $this->ruleEnabled || ($this->ruleEnabled)($ruleId);
     }
 
     /**

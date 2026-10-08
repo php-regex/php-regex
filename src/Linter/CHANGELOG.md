@@ -16,7 +16,7 @@ CHANGELOG
    that can match the empty string, `(a*)*`, `(?:a|b?)+`, at severity
    `warning`, on by default; silent where `alternation.empty`,
    `quantifier.assertion`, `quantifier.nested` or `dotstar.nested` reports the
-   same repeat, even when the rules map turns that rule off.
+   same repeat, as long as the rules map turns that rule on.
  * `regex.lint.anchor.alternationPrecedence`: an anchor on the first or last
    alternative while another alternative has none, `/^a|b|c$/`, at severity
    `warning`, on by default.

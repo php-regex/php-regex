@@ -38,8 +38,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  *
  * One defect, one issue: where an empty alternative, a quantified
  * lookaround or a nested quantifier already reports the repeat, this rule
- * stays silent. It defers to those rules whether or not the configuration
- * turns them on: a rule does not see the configuration.
+ * stays silent, as long as the configuration turns that rule on.
  *
  * @internal
  */
@@ -74,13 +73,19 @@ final class EmptyRepeatRule extends AbstractLintRule
         }
 
         $bounds = QuantifierBounds::parse($node->quantifier);
-        if (null === $bounds || null !== $bounds->max || !self::matchesEmpty($node->node, false) || self::holdsAnEmptyAlternative($node->node)) {
+        if (null === $bounds || null !== $bounds->max || !self::matchesEmpty($node->node, false)) {
+            return [];
+        }
+
+        if (self::holdsAnEmptyAlternative($node->node) && $context->isRuleEnabled('regex.lint.alternation.empty')) {
             return [];
         }
 
         foreach ($this->owners as $owner) {
-            if ([] !== $owner->check($node, $context)) {
-                return [];
+            foreach ($owner->check($node, $context) as $violation) {
+                if ($context->isRuleEnabled($violation->id)) {
+                    return [];
+                }
             }
         }
 

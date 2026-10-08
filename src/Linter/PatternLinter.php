@@ -465,6 +465,7 @@ final class PatternLinter extends AbstractNodeVisitor
                 $this->recurses,
             ),
             $this->charSetAnalyzer,
+            $this->isRuleEnabled(...),
         );
     }
 

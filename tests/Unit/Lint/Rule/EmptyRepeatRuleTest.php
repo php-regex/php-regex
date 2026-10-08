@@ -328,17 +328,16 @@ final class EmptyRepeatRuleTest extends TestCase
     }
 
     /**
-     * The rule defers to the rules that report the same repeat whether or
-     * not they are enabled: it does not see the configuration. Turning
-     * quantifier.nested off leaves "(?:a*)*b" unreported.
+     * With quantifier.nested turned off, "(?:a*)*b" is still reported once,
+     * by this rule.
      */
     #[Test]
-    public function test_the_rule_defers_to_a_disabled_owner_as_documented(): void
+    public function test_the_rule_reports_a_repeat_whose_owner_is_off_once(): void
     {
         $linter = new PatternLinter(['quantifier.nested' => false]);
         Regex::create()->parse('/(?:a*)*b/')->accept($linter);
 
-        $this->assertSame([], $linter->getIssues());
+        $this->assertSame([self::ID], array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
     }
 
     #[Test]
@@ -359,6 +358,33 @@ final class EmptyRepeatRuleTest extends TestCase
         // Like quantifier.lazyEnd: the offset of the quantified item, the
         // group at 1 in "x(?:a*)+".
         $this->assertSame(1, $violation->offset);
+    }
+
+    /**
+     * The rule defers to the rule that owns the repeat only while that rule
+     * is on: turned off, the defect is still reported once.
+     *
+     * @param array<string, bool> $rules
+     */
+    #[Test]
+    #[DataProvider('provideOwnersTurnedOff')]
+    public function test_a_repeat_whose_owner_is_turned_off_is_reported(string $pattern, array $rules): void
+    {
+        $linter = new PatternLinter($rules);
+        Regex::create()->parse($pattern)->accept($linter);
+        $ids = array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues());
+
+        $this->assertContains(self::ID, $ids, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, rules: array<string, bool>}>
+     */
+    public static function provideOwnersTurnedOff(): iterable
+    {
+        yield 'nested quantifier off' => ['pattern' => '/(?:a*)*b/', 'rules' => ['quantifier.nested' => false]];
+        yield 'quantified assertion off' => ['pattern' => '/(?=a)*b/', 'rules' => ['quantifier.assertion' => false]];
+        yield 'empty alternative off' => ['pattern' => '/(?:|a)+/', 'rules' => ['alternation.empty' => false]];
     }
 
     /**

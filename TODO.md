@@ -251,10 +251,6 @@ The follow-ups are merged too: the search cost's two false positives
 ### Smaller findings, each confirmed against the engine
 
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
-- `regex.lint.quantifier.emptyRepeat` stays silent where `quantifier.nested`,
-  `quantifier.assertion`, `dotstar.nested` or `alternation.empty` report the
-  repeat, even when that rule is turned off: `LintContext` does not say which
-  rules are on.
 - The language server judges a pattern for the PHP running it: it does not
   read the project's PHP range from `composer.json`, as `regex lint` does.
 - The linter validates each pattern at every PHP version of the range; a

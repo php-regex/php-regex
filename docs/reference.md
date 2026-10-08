@@ -392,8 +392,8 @@ keeps its `a`, and a capture inside a lookaround keeps what the lookaround read:
 `(?:x|(?=(a)))*` on `xa` captures `a`. An item that fails rather than match the empty string is sound:
 `(?:a|(*FAIL))*` and `(?:a|(?!))*` are not reported. Where another rule already reports the
 same repeat (an empty alternative, a quantified lookaround, a nested quantifier), this one
-stays silent, even when the configuration turns that other rule off: `(?:a*)*b` with
-`quantifier.nested` off is reported by neither.
+stays silent, as long as the configuration turns that other rule on: `(?:a*)*b` with
+`quantifier.nested` off is reported by this rule.
 
 **Example:**
 ```php
