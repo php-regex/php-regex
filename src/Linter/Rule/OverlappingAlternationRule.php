@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -73,14 +74,18 @@ final class OverlappingAlternationRule extends AbstractLintRule
             );
         }
 
+        // Each literal branch, and whether it reads its letters in either
+        // case: under i, or through a group turning i on.
         $literals = [];
-        foreach ($node->alternatives as $alt) {
+        $flags = $context->flagsAtEachChild($node);
+        foreach ($node->alternatives as $index => $alt) {
             $literal = $this->extractLiteralSequence($alt);
             if (null === $literal) {
                 continue;
             }
 
-            $literals[] = $literal;
+            $caseless = str_contains($flags[$index] ?? '', 'i') || NodePredicates::turnsCaselessOn($alt);
+            $literals[$literal.'|'.($caseless ? 'i' : '')] = [$literal, $caseless];
         }
 
         // Check for literal-based overlaps
@@ -89,17 +94,19 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // Overlapping alternations without a quantifier (e.g., /\r\n|\r|\n/ or /^(978|979)/)
             // do not pose a ReDoS risk because there's no exponential backtracking.
             if ($context->isInsideUnboundedQuantifier()) {
-                $unique = array_values(array_unique($literals));
+                $unique = array_values($literals);
                 $total = \count($unique);
                 for ($i = 0; $i < $total; $i++) {
                     for ($j = $i + 1; $j < $total; $j++) {
-                        $a = $unique[$i];
-                        $b = $unique[$j];
+                        [$a, $aCaseless] = $unique[$i];
+                        [$b, $bCaseless] = $unique[$j];
                         if ('' === $a || '' === $b) {
                             continue;
                         }
 
-                        if (str_starts_with($a, $b) || str_starts_with($b, $a)) {
+                        // A caseless branch meets the other in either case.
+                        [$readA, $readB] = $aCaseless || $bCaseless ? [self::fold($a, $context), self::fold($b, $context)] : [$a, $b];
+                        if (str_starts_with($readA, $readB) || str_starts_with($readB, $readA)) {
                             $issues[] = new RuleViolation(
                                 'regex.lint.alternation.overlap',
                                 \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($a, $context), self::spell($b, $context)),
@@ -234,6 +241,15 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return false;
+    }
+
+    /**
+     * The text with its letters in one case, as PCRE folds them: every
+     * letter under u, ASCII ones without.
+     */
+    private static function fold(string $text, LintContext $context): string
+    {
+        return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : strtolower($text);
     }
 
     /**

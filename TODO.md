@@ -44,8 +44,7 @@ the public API, so they go before the tag.
 - Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
   byte above it. The nested-loop rules and `quantifier.concatenation` refuse
   to decide in that case, which costs them findings.
-- Case-insensitivity and lookarounds are ignored: `/(?:a|A)+$/i` (exponential)
-  gets no overlap warning, and `(?:,a*(?:(?!z)a)*)+$` no nested warning.
+- Lookarounds are ignored: `(?:,a*(?:(?!z)a)*)+$` gets no nested warning.
 
 ### Byte mode and the Unicode-normalization invariant
 
