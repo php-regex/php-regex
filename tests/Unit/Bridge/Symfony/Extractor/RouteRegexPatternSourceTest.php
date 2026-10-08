@@ -110,7 +110,7 @@ final class RouteRegexPatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('#^\d+$#', $result[0]->pattern);
+        $this->assertSame('{^\d+$}sD', $result[0]->pattern);
         $this->assertSame('Symfony routes', $result[0]->file);
         $this->assertSame('route:test_route:id', $result[0]->source);
         $this->assertSame('\d+', $result[0]->displayPattern);
@@ -179,8 +179,8 @@ final class RouteRegexPatternSourceTest extends TestCase
 
         $this->assertCount(2, $result);
         $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-        $this->assertContains('#^\d+$#', $patterns);
-        $this->assertContains('#^[a-z-]+$#', $patterns);
+        $this->assertContains('{^\d+$}sD', $patterns);
+        $this->assertContains('{^[a-z-]+$}sD', $patterns);
     }
 
     public function test_extract_ignores_empty_requirements(): void
@@ -203,7 +203,7 @@ final class RouteRegexPatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('#^\d+$#', $result[0]->pattern);
+        $this->assertSame('{^\d+$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_yaml_resources(): void
@@ -232,7 +232,7 @@ final class RouteRegexPatternSourceTest extends TestCase
 
             $this->assertCount(1, $result);
             // Should extract the pattern
-            $this->assertSame('#^\d+$#', $result[0]->pattern);
+            $this->assertSame('{^\d+$}sD', $result[0]->pattern);
         } finally {
             unlink($tempYaml);
         }
@@ -306,13 +306,31 @@ final class RouteRegexPatternSourceTest extends TestCase
         }
     }
 
-    public function test_extract_with_already_delimited_patterns(): void
+    /**
+     * The route compiler adds u to the route's pattern under its utf8
+     * option: the requirement is read in UTF-8 mode there.
+     */
+    public function test_extract_reads_a_requirement_under_u_with_the_utf8_option(): void
+    {
+        $router = $this->createStub(RouterInterface::class);
+        $collection = new RouteCollection();
+        $collection->add('utf8_route', new Route('/{name}', [], ['name' => '[äöü]+'], ['utf8' => true]));
+        $collection->add('byte_route', new Route('/{name}', [], ['name' => '[a-z]+']));
+        $router->method('getRouteCollection')->willReturn($collection);
+
+        $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
+
+        $this->assertSame(['{^[äöü]+$}sDu', '{^[a-z]+$}sD'], array_map(static fn ($occurrence): string => $occurrence->pattern, $result));
+    }
+
+    public function test_extract_reads_a_requirement_starting_with_a_slash_as_a_fragment(): void
     {
         $router = $this->createStub(RouterInterface::class);
         $collection = new RouteCollection();
 
         $route = new Route('/test/{id}');
-        $route->setRequirements(['id' => '/\d+/']); // Already delimited
+        // Symfony compiles it to (?P<id>/\d+/): a requirement is never a delimited pattern.
+        $route->setRequirements(['id' => '/\d+/']);
         $collection->add('test_route', $route);
 
         $router->method('getRouteCollection')->willReturn($collection);
@@ -323,7 +341,7 @@ final class RouteRegexPatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('/\d+/', $result[0]->pattern); // Should remain unchanged
+        $this->assertSame('{^/\d+/$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_anchor_patterns(): void
@@ -343,7 +361,7 @@ final class RouteRegexPatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('#^[\w-]+$#', $result[0]->pattern); // Should be wrapped with #
+        $this->assertSame('{^[\w-]+$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_yaml_route_definitions(): void
@@ -373,8 +391,8 @@ final class RouteRegexPatternSourceTest extends TestCase
             // Should extract patterns from YAML
             $this->assertGreaterThanOrEqual(2, \count($result));
             $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-            $this->assertContains('#^\d+$#', $patterns);
-            $this->assertContains('#^[a-z-]+$#', $patterns);
+            $this->assertContains('{^\d+$}sD', $patterns);
+            $this->assertContains('{^[a-z-]+$}sD', $patterns);
         } finally {
             unlink($tempYaml);
         }
@@ -537,7 +555,7 @@ final class RouteRegexPatternSourceTest extends TestCase
             // Should extract patterns from YAML, handling when@ conditions
             $this->assertGreaterThanOrEqual(1, \count($result));
             $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-            $this->assertContains('#^[a-z0-9_-]+$#', $patterns);
+            $this->assertContains('{^[a-z0-9_-]+$}sD', $patterns);
         } finally {
             unlink($tempYaml);
         }

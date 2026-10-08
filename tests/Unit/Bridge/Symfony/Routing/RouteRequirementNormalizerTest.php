@@ -18,6 +18,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Symfony's RouteCompiler strips a requirement's leading ^ or \A and its
+ * trailing $ or \z (Route::sanitizeRequirement()), puts it in a group of
+ * its own and matches the route with "{^...$}sD", plus u under the route's
+ * utf8 option. The normalized pattern is that pattern, so the engine reads
+ * it as the compiled route reads the requirement.
+ */
 final class RouteRequirementNormalizerTest extends TestCase
 {
     private RouteRequirementNormalizer $normalizer;
@@ -27,188 +34,52 @@ final class RouteRequirementNormalizerTest extends TestCase
         $this->normalizer = new RouteRequirementNormalizer();
     }
 
-    public function test_normalize_already_delimited_pattern(): void
+    #[Test]
+    #[DataProvider('provideRequirements')]
+    public function test_normalize_writes_the_pattern_the_route_compiler_matches_with(string $requirement, string $expected): void
     {
-        $patterns = [
-            '/^test$/',
-            '#^test$#',
-            '~^test$~',
-            '%^test$%',
-        ];
-
-        foreach ($patterns as $pattern) {
-            $result = $this->normalizer->normalize($pattern);
-            $this->assertSame($pattern, $result, "Pattern {$pattern} should remain unchanged");
-        }
-    }
-
-    public function test_normalize_pattern_starting_with_anchor(): void
-    {
-        $pattern = '^test$';
-        $expected = '#^test$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_simple_pattern(): void
-    {
-        $pattern = 'test';
-        $expected = '#^test$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_pattern_with_special_chars(): void
-    {
-        $pattern = 'test[0-9]+';
-        $expected = '#^test[0-9]+$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_pattern_with_delimiter_in_body(): void
-    {
-        $pattern = 'test#with#hashes';
-        $expected = '~^test#with#hashes$~';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_pattern_with_other_delimiters_in_body(): void
-    {
-        $patterns = [
-            'test/with/slashes' => '#^test/with/slashes$#',
-            'test~with~tildes' => '#^test~with~tildes$#',
-            'test%with%percent' => '#^test%with%percent$#',
-        ];
-
-        foreach ($patterns as $input => $expected) {
-            $result = $this->normalizer->normalize($input);
-            $this->assertSame($expected, $result, "Pattern '{$input}' should be normalized to '{$expected}'");
-        }
-    }
-
-    public function test_normalize_pattern_starting_with_anchor_but_not_ending(): void
-    {
-        $pattern = '^test';
-        $expected = '#^test$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_pattern_ending_with_anchor_but_not_starting(): void
-    {
-        $pattern = 'test$';
-        $expected = '#^test$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_empty_pattern(): void
-    {
-        $pattern = '';
-        $expected = '#^$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_pattern_with_regex_special_chars(): void
-    {
-        $patterns = [
-            '[a-z]+' => '#^[a-z]+$#',
-            '\d{2,4}' => '#^\d{2,4}$#',
-            '(foo|bar)' => '#^(foo|bar)$#',
-            '.*' => '#^.*$#',
-            '^already^anchored$' => '#^already^anchored$#',
-        ];
-
-        foreach ($patterns as $input => $expected) {
-            $result = $this->normalizer->normalize($input);
-            $this->assertSame($expected, $result, "Pattern '{$input}' should be normalized to '{$expected}'");
-        }
-    }
-
-    public function test_normalize_pattern_with_unicode_chars(): void
-    {
-        $pattern = 'test[äöü]';
-        $expected = '#^test[äöü]$#';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_normalize_preserves_delimiter_choice(): void
-    {
-        // The normalizer always uses # as delimiter, regardless of what's in the pattern
-        $pattern = 'test/with/slashes';
-
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertSame('#^test/with/slashes$#', $result);
-        $this->assertStringStartsWith('#', $result);
-        $this->assertStringEndsWith('#', $result);
-    }
-
-    public function test_normalize_handles_edge_cases(): void
-    {
-        $patterns = [
-            'a' => '#^a$#',
-            '123' => '#^123$#',
-            'a-b_c.d' => '#^a-b_c.d$#',
-            'test_' => '#^test_$#',
-            '#' => '#', // Already has delimiter
-        ];
-
-        foreach ($patterns as $input => $expected) {
-            $result = $this->normalizer->normalize((string) $input);
-            $this->assertSame($expected, $result, "Pattern '{$input}' should be normalized to '{$expected}'");
-        }
-    }
-
-    public function test_normalize_with_various_anchor_combinations(): void
-    {
-        $patterns = [
-            'test' => '#^test$#',
-            '^test' => '#^test$#',
-            'test$' => '#^test$#',
-            '^test$' => '#^test$#', // This one gets special treatment
-            '^anchored^pattern$' => '#^anchored^pattern$#',
-        ];
-
-        foreach ($patterns as $input => $expected) {
-            $result = $this->normalizer->normalize($input);
-            $this->assertSame($expected, $result, "Pattern '{$input}' should be normalized to '{$expected}'");
-        }
-    }
-
-    public function test_normalize_uses_hash_as_default_delimiter(): void
-    {
-        $pattern = 'simple';
-        $result = $this->normalizer->normalize($pattern);
-
-        $this->assertStringStartsWith('#', $result);
-        $this->assertStringEndsWith('#', $result);
-        $this->assertStringContainsString('^simple$', $result);
+        $this->assertSame($expected, $this->normalizer->normalize($requirement));
     }
 
     /**
-     * Symfony's RouteCompiler puts a requirement in its own group, once its
-     * leading ^ or \A and its trailing $ or \z are stripped: "en|fr|de"
+     * @return iterable<string, array{requirement: string, expected: string}>
+     */
+    public static function provideRequirements(): iterable
+    {
+        yield 'simple' => ['requirement' => 'test', 'expected' => '{^test$}sD'];
+        yield 'class' => ['requirement' => 'test[0-9]+', 'expected' => '{^test[0-9]+$}sD'];
+        yield 'leading caret' => ['requirement' => '^test', 'expected' => '{^test$}sD'];
+        yield 'trailing dollar' => ['requirement' => 'test$', 'expected' => '{^test$}sD'];
+        yield 'both anchors' => ['requirement' => '^test$', 'expected' => '{^test$}sD'];
+        yield 'string anchors' => ['requirement' => '\\Atest\\z', 'expected' => '{^test$}sD'];
+        yield 'empty' => ['requirement' => '', 'expected' => '{^$}sD'];
+        yield 'counted repeat' => ['requirement' => '\\d{2,4}', 'expected' => '{^\\d{2,4}$}sD'];
+        yield 'inner anchors kept' => ['requirement' => '^already^anchored$', 'expected' => '{^already^anchored$}sD'];
+        yield 'multibyte class' => ['requirement' => 'test[äöü]', 'expected' => '{^test[äöü]$}sD'];
+        // A requirement is a fragment, never a delimited pattern: Symfony
+        // compiles "/^test$/" to (?P<x>/^test$/).
+        yield 'leading slash' => ['requirement' => '/^test$/', 'expected' => '{^/^test$/$}sD'];
+        yield 'leading hash' => ['requirement' => '#', 'expected' => '{^#$}sD'];
+        yield 'leading percent' => ['requirement' => '%^test$%', 'expected' => '{^%^test$%$}sD'];
+        // Braces delimit nothing but themselves, as in the compiled route.
+        yield 'hashes and slashes' => ['requirement' => 'a#b/c~d', 'expected' => '{^a#b/c~d$}sD'];
+        yield 'escaped hash' => ['requirement' => '^a\\#b$', 'expected' => '{^a\\#b$}sD'];
+        yield 'comment under an inline x' => ['requirement' => '(?x)a #c', 'expected' => '{^(?x)a #c$}sD'];
+        // sanitizeRequirement() strips a trailing $ even escaped, and a \z
+        // only where it first stands.
+        yield 'escaped dollar stripped' => ['requirement' => 'a\\$', 'expected' => '{^a\\$}sD'];
+        yield 'string end anchor standing twice' => ['requirement' => 'a\\zb\\z', 'expected' => '{^a\\zb\\z$}sD'];
+    }
+
+    #[Test]
+    public function test_normalize_adds_u_under_the_utf8_option(): void
+    {
+        $this->assertSame('{^[äöü]+$}sDu', $this->normalizer->normalize('[äöü]+', true));
+        $this->assertSame('{^[äöü]+$}sD', $this->normalizer->normalize('[äöü]+'));
+    }
+
+    /**
+     * Symfony's RouteCompiler puts a requirement in its own group: "en|fr|de"
      * compiles to (?P<x>en|fr|de), so every alternative is anchored.
      */
     #[Test]
@@ -223,44 +94,39 @@ final class RouteRequirementNormalizerTest extends TestCase
      */
     public static function provideRequirementsWithAlternatives(): iterable
     {
-        yield 'bare alternation' => ['requirement' => 'en|fr|de', 'expected' => '#^(?:en|fr|de)$#'];
-        yield 'anchored alternation' => ['requirement' => '^en|fr$', 'expected' => '#^(?:en|fr)$#'];
-        // The compiler strips \z and ends with $ under D: the end stays strict.
-        yield 'string anchors' => ['requirement' => '\\Aen|fr\\z', 'expected' => '#^(?:en|fr)\\z#'];
+        yield 'bare alternation' => ['requirement' => 'en|fr|de', 'expected' => '{^(?:en|fr|de)$}sD'];
+        yield 'anchored alternation' => ['requirement' => '^en|fr$', 'expected' => '{^(?:en|fr)$}sD'];
+        yield 'string anchors' => ['requirement' => '\\Aen|fr\\z', 'expected' => '{^(?:en|fr)$}sD'];
         // Under an inline x, a comment runs to the newline: its parentheses are text.
-        yield 'parenthesis in an x comment' => ['requirement' => "(?x)a # (\n|b", 'expected' => "~^(?:(?x)a # (\n|b)$~"];
-        yield 'closing parenthesis in an x comment' => ['requirement' => "(?x)a # )\n|b", 'expected' => "~^(?:(?x)a # )\n|b)$~"];
-        yield 'x turned off before the hash' => ['requirement' => '(?x)(?-x)a#(|b', 'expected' => '~^(?x)(?-x)a#(|b$~'];
-        yield 'x in a group of its own' => ['requirement' => "(?x:a # (\n)|b", 'expected' => "~^(?:(?x:a # (\n)|b)$~"];
+        yield 'parenthesis in an x comment' => ['requirement' => "(?x)a # (\n|b", 'expected' => "{^(?:(?x)a # (\n|b)$}sD"];
+        yield 'closing parenthesis in an x comment' => ['requirement' => "(?x)a # )\n|b", 'expected' => "{^(?:(?x)a # )\n|b)$}sD"];
+        yield 'x turned off before the hash' => ['requirement' => '(?x)(?-x)a#(|b', 'expected' => '{^(?x)(?-x)a#(|b$}sD'];
+        yield 'x in a group of its own' => ['requirement' => "(?x:a # (\n)|b", 'expected' => "{^(?:(?x:a # (\n)|b)$}sD"];
         // (?^ resets x: the # after it is a literal.
-        yield 'x reset by a caret' => ['requirement' => '(?x)(?^i)a#|b', 'expected' => '~^(?:(?x)(?^i)a#|b)$~'];
-        yield 'option setting never closed' => ['requirement' => '(?i', 'expected' => '#^(?i$#'];
-        yield 'delimiter in an alternative' => ['requirement' => 'a#b|c', 'expected' => '~^(?:a#b|c)$~'];
-        yield 'empty alternative' => ['requirement' => 'a|', 'expected' => '#^(?:a|)$#'];
-        // preg_match('#^(?:a|b\$)$#', 'b$') is 1: the escaped $ is a literal, kept.
-        yield 'escaped dollar kept' => ['requirement' => 'a|b\\$', 'expected' => '#^(?:a|b\\$)$#'];
-        yield 'bar after a negated class' => ['requirement' => '[^|]|y', 'expected' => '#^(?:[^|]|y)$#'];
-        // A comment's parentheses are text: preg_match('~^(?:(?#(x)|b)$~', 'x') is 0.
-        yield 'parenthesis in a comment' => ['requirement' => '(?#(x)|b', 'expected' => '~^(?:(?#(x)|b)$~'];
+        yield 'x reset by a caret' => ['requirement' => '(?x)(?^i)a#|b', 'expected' => '{^(?:(?x)(?^i)a#|b)$}sD'];
+        yield 'option setting never closed' => ['requirement' => '(?i', 'expected' => '{^(?i$}sD'];
+        yield 'empty alternative' => ['requirement' => 'a|', 'expected' => '{^(?:a|)$}sD'];
+        yield 'bar after a negated class' => ['requirement' => '[^|]|y', 'expected' => '{^(?:[^|]|y)$}sD'];
+        yield 'parenthesis in a comment' => ['requirement' => '(?#(x)|b', 'expected' => '{^(?:(?#(x)|b)$}sD'];
         // [: with a ] before any :] is no POSIX class: the class ends at that ].
-        yield 'bracket before a POSIX close' => ['requirement' => '[[:a]|b:]', 'expected' => '#^(?:[[:a]|b:])$#'];
+        yield 'bracket before a POSIX close' => ['requirement' => '[[:a]|b:]', 'expected' => '{^(?:[[:a]|b:])$}sD'];
         // An alternation that is already grouped, or that is no alternation.
-        yield 'grouped' => ['requirement' => '(foo|bar)', 'expected' => '#^(foo|bar)$#'];
-        yield 'bar in a class' => ['requirement' => '[a|b]x', 'expected' => '#^[a|b]x$#'];
-        yield 'bar first in a class' => ['requirement' => '[]|]x', 'expected' => '#^[]|]x$#'];
-        yield 'bar after a POSIX class' => ['requirement' => '[[:alpha:]|]x', 'expected' => '#^[[:alpha:]|]x$#'];
-        yield 'escaped bar' => ['requirement' => 'a\|b', 'expected' => '#^a\|b$#'];
-        yield 'quoted bar' => ['requirement' => '\Qa|b\E', 'expected' => '#^\Qa|b\E$#'];
-        yield 'quoted to the end' => ['requirement' => '\Qa|b', 'expected' => '#^\Qa|b$#'];
-        yield 'escaped bracket in a class' => ['requirement' => '[\\]|]x', 'expected' => '#^[\\]|]x$#'];
-        yield 'class never closed' => ['requirement' => '[a|b', 'expected' => '#^[a|b$#'];
-        yield 'comment never closed' => ['requirement' => '(?#x|b', 'expected' => '~^(?#x|b$~'];
-        yield 'POSIX class never closed' => ['requirement' => '[[:alpha|b', 'expected' => '#^[[:alpha|b$#'];
+        yield 'grouped' => ['requirement' => '(foo|bar)', 'expected' => '{^(foo|bar)$}sD'];
+        yield 'bar in a class' => ['requirement' => '[a|b]x', 'expected' => '{^[a|b]x$}sD'];
+        yield 'bar first in a class' => ['requirement' => '[]|]x', 'expected' => '{^[]|]x$}sD'];
+        yield 'bar after a POSIX class' => ['requirement' => '[[:alpha:]|]x', 'expected' => '{^[[:alpha:]|]x$}sD'];
+        yield 'escaped bar' => ['requirement' => 'a\|b', 'expected' => '{^a\|b$}sD'];
+        yield 'quoted bar' => ['requirement' => '\Qa|b\E', 'expected' => '{^\Qa|b\E$}sD'];
+        yield 'quoted to the end' => ['requirement' => '\Qa|b', 'expected' => '{^\Qa|b$}sD'];
+        yield 'escaped bracket in a class' => ['requirement' => '[\\]|]x', 'expected' => '{^[\\]|]x$}sD'];
+        yield 'class never closed' => ['requirement' => '[a|b', 'expected' => '{^[a|b$}sD'];
+        yield 'comment never closed' => ['requirement' => '(?#x|b', 'expected' => '{^(?#x|b$}sD'];
+        yield 'POSIX class never closed' => ['requirement' => '[[:alpha|b', 'expected' => '{^[[:alpha|b$}sD'];
     }
 
     /**
-     * The engine reads the normalized pattern as Symfony's compiled route
-     * reads the requirement.
+     * Oracle, PHP 8.4.26 / PCRE2 10.49: the engine reads the normalized
+     * pattern as the compiled route reads the requirement.
      */
     #[Test]
     #[DataProvider('provideRequirementSubjects')]
@@ -278,38 +144,23 @@ final class RouteRequirementNormalizerTest extends TestCase
         yield 'first alternative with a suffix' => ['requirement' => 'en|fr|de', 'subject' => 'enx', 'matches' => false];
         yield 'last alternative with a prefix' => ['requirement' => 'en|fr|de', 'subject' => 'xde', 'matches' => false];
         yield 'anchored, middle with a prefix' => ['requirement' => '^en|fr$', 'subject' => 'xfr', 'matches' => false];
-        yield 'string end anchor before a newline' => ['requirement' => '\\Aa\\z', 'subject' => "a\n", 'matches' => false];
-        yield 'string end anchor' => ['requirement' => '\\Aa\\z', 'subject' => 'a', 'matches' => true];
         yield 'alternative after an x comment' => ['requirement' => "(?x)a # (\n|b", 'subject' => 'ab', 'matches' => false];
+        // D: the end holds at the very end only.
+        yield 'dollar before a final newline' => ['requirement' => 'a', 'subject' => "a\n", 'matches' => false];
+        yield 'string end anchor before a final newline' => ['requirement' => '\\Aa\\z', 'subject' => "a\n", 'matches' => false];
+        // s: the dot takes a newline.
+        yield 'dot over a newline' => ['requirement' => '.+', 'subject' => "a\nb", 'matches' => true];
+        yield 'escaped hash' => ['requirement' => '^a\\#b$', 'subject' => 'a#b', 'matches' => true];
+        yield 'comment under an inline x' => ['requirement' => '(?x)a #c', 'subject' => 'a', 'matches' => true];
     }
 
     /**
-     * A # in the requirement picks another delimiter rather than an escape:
-     * an escape would double \#, break (?#...) and turn a comment under an
-     * inline (?x) into a literal. Symfony's {...} delimiters escape nothing.
+     * sanitizeRequirement() strips the escaped $ of "a\$": the compiled
+     * route ends with "\)", and the pattern no longer compiles, as here.
      */
     #[Test]
-    #[DataProvider('provideRequirementsHoldingTheDelimiter')]
-    public function test_normalize_keeps_a_hash_as_written(string $requirement, string $expected, string $subject): void
+    public function test_a_requirement_ending_with_an_escaped_dollar_does_not_compile(): void
     {
-        $pattern = $this->normalizer->normalize($requirement);
-
-        $this->assertSame($expected, $pattern);
-        $this->assertSame(1, preg_match($pattern, $subject));
-    }
-
-    /**
-     * @return iterable<string, array{requirement: string, expected: string, subject: string}>
-     */
-    public static function provideRequirementsHoldingTheDelimiter(): iterable
-    {
-        yield 'escaped hash' => ['requirement' => '^a\\#b$', 'expected' => '~^a\\#b$~', 'subject' => 'a#b'];
-        yield 'comment' => ['requirement' => '^(?#c)a$', 'expected' => '~^(?#c)a$~', 'subject' => 'a'];
-        yield 'comment under an inline x' => ['requirement' => '(?x)a #c', 'expected' => '~^(?x)a #c$~', 'subject' => 'a'];
-        yield 'tilde taken too' => ['requirement' => 'a#~', 'expected' => '%^a#~$%', 'subject' => 'a#~'];
-        // Every delimiter is taken: the unescaped # is escaped, the escaped one kept.
-        yield 'six delimiters taken' => ['requirement' => '\\Q#\\E~%!@;', 'expected' => '+^\\Q#\\E~%!@;$+', 'subject' => '#~%!@;'];
-        // Every delimiter is taken: the unescaped # is escaped, the escaped one kept.
-        yield 'every delimiter taken' => ['requirement' => '\\##~%!@;\\+=,:&"\'`', 'expected' => '#^\\#\\#~%!@;\\+=,:&"\'`$#', 'subject' => '##~%!@;+=,:&"\'`'];
+        $this->assertFalse(@preg_match($this->normalizer->normalize('a|b\\$'), ''));
     }
 }

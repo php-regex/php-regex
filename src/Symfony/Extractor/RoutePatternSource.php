@@ -77,7 +77,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                $normalized = $this->patternNormalizer->normalize($pattern);
+                $normalized = $this->patternNormalizer->normalize($pattern, (bool) $route->getOption('utf8'));
                 $patterns[] = new PatternOccurrence(
                     $normalized,
                     $file,
@@ -102,11 +102,11 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                         continue;
                     }
                     $value = trim($matches[1], " \t\n\r\0\x0B'\"");
-                    $normalized = $this->patternNormalizer->normalize($value);
                     $route = $collection->get($routeName);
                     if (null === $route) {
                         continue;
                     }
+                    $normalized = $this->patternNormalizer->normalize($value, (bool) $route->getOption('utf8'));
                     $patterns[] = new PatternOccurrence(
                         $normalized,
                         $yamlFile,

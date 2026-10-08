@@ -69,6 +69,20 @@ they are the verdicts a pattern gets.
 regexes the risk analysis skips, such as the requirement constants of
 Symfony routes.
 
+## How route requirements and security patterns are read
+
+Each one is read as the pattern Symfony runs:
+
+- A route requirement is a fragment of the compiled route. Its leading `^`
+  or `\A` and its trailing `$` or `\z` are stripped as
+  `Route::sanitizeRequirement()` does, and it is matched with
+  `{^...$}sD`, plus `u` when the route sets its `utf8` option: `\d+`
+  is linted as `{^\d+$}sD`. A requirement that starts with `/` or `#` is
+  no delimited regex there either.
+- A security `path` (in `access_control` or as a firewall `pattern`) is
+  matched with `{...}s`, and a `host` with `{...}i`, without anchors:
+  `path: /api` matches `/v1/api` too.
+
 ## The service and the lint judge for different targets
 
 The `php_regex.regex` service (autowired as `PHPRegex\Toolkit\Regex`) runs in

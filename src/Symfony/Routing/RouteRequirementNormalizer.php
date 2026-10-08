@@ -14,96 +14,50 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Routing;
 
 /**
- * Normalizes Symfony route requirements into full regex patterns.
- *
- * The route compiler strips a requirement's leading ^ or \A and its trailing
- * $ or \z, then puts it in a group of its own: a top-level alternation is
- * grouped here too, so that every alternative stays anchored.
+ * The pattern Symfony's route compiler matches a requirement with. The
+ * compiler strips the requirement's leading ^ or \A and its trailing $ or
+ * \z as Route::sanitizeRequirement() does, puts it in a group of its own
+ * and matches the route with "{^...$}sD", plus u under the route's utf8
+ * option. A top-level alternation is grouped here, so that every
+ * alternative stays anchored; a requirement is a fragment, never a
+ * delimited pattern.
  *
  * @internal
  */
 final readonly class RouteRequirementNormalizer
 {
-    private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
-
-    private const BODY_DELIMITERS = ['#', '~', '%', '!', '@', ';', '+', '=', ',', ':', '&', '"', "'", '`'];
-
-    public function normalize(string $pattern): string
+    public function normalize(string $requirement, bool $utf8 = false): string
     {
-        $firstChar = $pattern[0] ?? '';
-
-        if (\in_array($firstChar, self::PATTERN_DELIMITERS, true)) {
-            return $pattern;
-        }
-
-        [$body, $end] = $this->stripAnchors($pattern);
+        $body = $this->sanitize($requirement);
 
         if ($this->hasTopLevelAlternation($body)) {
             $body = '(?:'.$body.')';
         }
 
-        // A delimiter the requirement does not hold leaves it as written: an
-        // escape would double \#, break (?#...) and make a comment under an
-        // inline (?x) a literal.
-        foreach (self::BODY_DELIMITERS as $delimiter) {
-            if (!str_contains($body, $delimiter)) {
-                return $delimiter.'^'.$body.$end.$delimiter;
-            }
-        }
-
-        return '#^'.$this->escapeHashes($body).$end.'#';
-    }
-
-    private function escapeHashes(string $body): string
-    {
-        $escaped = '';
-        $length = \strlen($body);
-
-        for ($i = 0; $i < $length; $i++) {
-            if ('#' === $body[$i] && !$this->isEscaped($body, $i)) {
-                $escaped .= '\\';
-            }
-            $escaped .= $body[$i];
-        }
-
-        return $escaped;
+        return '{^'.$body.'$}sD'.($utf8 ? 'u' : '');
     }
 
     /**
-     * The requirement without its leading and trailing anchors, and the end
-     * anchor to close it with: the compiler ends with $ under D, so a \z it
-     * strips stays a strict end here.
-     *
-     * @return array{string, string}
+     * The requirement as Route::sanitizeRequirement() leaves it: a trailing
+     * $ goes even escaped, and a \z only where it first stands.
      */
-    private function stripAnchors(string $pattern): array
+    private function sanitize(string $requirement): string
     {
-        if (str_starts_with($pattern, '^')) {
-            $pattern = substr($pattern, 1);
-        } elseif (str_starts_with($pattern, '\A')) {
-            $pattern = substr($pattern, 2);
+        if (str_starts_with($requirement, '^')) {
+            $requirement = substr($requirement, 1);
+        } elseif (str_starts_with($requirement, '\\A')) {
+            $requirement = substr($requirement, 2);
         }
 
-        // An escaped $ is a literal, not the anchor.
-        if (str_ends_with($pattern, '$') && !$this->isEscaped($pattern, \strlen($pattern) - 1)) {
-            return [substr($pattern, 0, -1), '$'];
+        if (str_ends_with($requirement, '$')) {
+            return substr($requirement, 0, -1);
         }
 
-        if (str_ends_with($pattern, '\z') && !$this->isEscaped($pattern, \strlen($pattern) - 2)) {
-            return [substr($pattern, 0, -2), '\z'];
+        if (\strlen($requirement) - 2 === strpos($requirement, '\\z')) {
+            return substr($requirement, 0, -2);
         }
 
-        return [$pattern, '$'];
-    }
-
-    private function isEscaped(string $pattern, int $offset): bool
-    {
-        $backslashes = 0;
-        while ($offset - $backslashes > 0 && '\\' === $pattern[$offset - $backslashes - 1]) {
-            $backslashes++;
-        }
-
-        return 1 === $backslashes % 2;
+        return $requirement;
     }
 
     private function hasTopLevelAlternation(string $body): bool

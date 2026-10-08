@@ -56,8 +56,8 @@ final class SecurityAccessControlMatchModeTest extends TestCase
     public function test_detects_shadowing_with_regex_path(): void
     {
         $rules = $this->buildRules([
-            ['#^/api/.*#', ['PUBLIC_ACCESS']],
-            ['#^/api/admin#', ['ROLE_ADMIN']],
+            ['^/api/.*', ['PUBLIC_ACCESS']],
+            ['^/api/admin', ['ROLE_ADMIN']],
         ]);
 
         $report = $this->analyze($rules);

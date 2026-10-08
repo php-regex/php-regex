@@ -38,6 +38,46 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame('critical', $report->conflicts[0]['severity']);
     }
 
+    /**
+     * Symfony matches a host with preg_match('{'.$host.'}i', ...): two hosts
+     * that differ in case only overlap, and the second rule is shadowed.
+     */
+    #[Test]
+    public function test_hosts_are_compared_without_case(): void
+    {
+        $rules = [
+            [
+                'file' => 'security.yaml',
+                'line' => 10,
+                'path' => '^/admin',
+                'host' => '^ADMIN\\.example\\.com$',
+                'roles' => ['PUBLIC_ACCESS'],
+                'methods' => [],
+                'ips' => [],
+                'allowIf' => null,
+                'requestMatcher' => null,
+                'requiresChannel' => null,
+            ],
+            [
+                'file' => 'security.yaml',
+                'line' => 12,
+                'path' => '^/admin',
+                'host' => '^admin\\.example\\.com$',
+                'roles' => ['ROLE_ADMIN'],
+                'methods' => [],
+                'ips' => [],
+                'allowIf' => null,
+                'requestMatcher' => null,
+                'requiresChannel' => null,
+            ],
+        ];
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze($rules);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame([], $report->skippedRules);
+    }
+
     #[Test]
     public function test_detects_prefix_shadowing_with_search_semantics(): void
     {
@@ -77,11 +117,12 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
-     * The automata read "i" and "s" only: a rule whose path needs another
-     * flag is skipped, and the report says which flag.
+     * Symfony matches a path with preg_match('{'.$path.'}s', ...): a path
+     * that looks delimited is a fragment like any other, "#^/admin#x"
+     * starting with a "#", and the rule is analysed, not skipped.
      */
     #[Test]
-    public function test_a_path_with_a_flag_the_automata_do_not_read_is_skipped_with_that_flag(): void
+    public function test_a_path_that_looks_delimited_is_read_as_a_fragment(): void
     {
         $analyzer = new SecurityAccessControlAnalyzer(Regex::create());
         $report = $analyzer->analyze([[
@@ -97,7 +138,7 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
             'requiresChannel' => null,
         ]]);
 
-        $this->assertCount(1, $report->skippedRules);
-        $this->assertSame('Unsupported regex flags: x.', $report->skippedRules[0]['reason']);
+        $this->assertCount(0, $report->skippedRules);
+        $this->assertSame(1, $report->stats['rules']);
     }
 }

@@ -40,10 +40,6 @@ final readonly class SecurityAccessControlAnalyzer
     private const LEVEL_CONDITIONAL = 'conditional';
     private const LEVEL_UNKNOWN = 'unknown';
 
-    private const SUPPORTED_FLAGS = ['i', 's'];
-
-    private const IGNORED_FLAGS = ['D'];
-
     private LanguageSolver $solver;
 
     public function __construct(
@@ -281,7 +277,7 @@ final readonly class SecurityAccessControlAnalyzer
         $host = $rule['host'];
         if (null !== $host && '' !== trim($host)) {
             try {
-                $hostPattern = $this->normalizePattern($host);
+                $hostPattern = $this->normalizePattern($host, true);
             } catch (\Throwable) {
                 $hostUnsupported = true;
                 $rulesWithUnsupportedHosts[] = $index;
@@ -426,49 +422,16 @@ final readonly class SecurityAccessControlAnalyzer
         return $left === $right;
     }
 
-    private function normalizePattern(string $pattern): string
+    /**
+     * The pattern Symfony matches the path, or the host, of a rule with,
+     * read as a whole-subject match: a side left unanchored takes any text
+     * there, as a search does.
+     */
+    private function normalizePattern(string $pattern, bool $host = false): string
     {
-        $trimmed = trim($pattern);
-        if ('' === $trimmed) {
-            return '#.*#';
-        }
+        $regexPattern = DelimitedPattern::fromDelimited($this->patternNormalizer->normalize($pattern, $host));
 
-        $first = $trimmed[0] ?? '';
-        if (\in_array($first, ['/', '#', '~', '%'], true)) {
-            $regexPattern = DelimitedPattern::fromDelimited($trimmed);
-            $flags = $regexPattern->flags;
-            $normalizedFlags = '';
-            $unsupportedFlags = [];
-
-            foreach (\str_split($flags) as $flag) {
-                if (\in_array($flag, self::SUPPORTED_FLAGS, true)) {
-                    $normalizedFlags .= $flag;
-
-                    continue;
-                }
-
-                if (\in_array($flag, self::IGNORED_FLAGS, true)) {
-                    continue;
-                }
-
-                $unsupportedFlags[] = $flag;
-            }
-
-            if ([] !== $unsupportedFlags) {
-                throw new ComplexityException('Unsupported regex flags: '.implode(', ', $unsupportedFlags).'.');
-            }
-
-            $normalizedBody = $this->normalizeSearchPattern($regexPattern->pattern);
-            $normalized = DelimitedPattern::fromRaw($normalizedBody, $normalizedFlags, $regexPattern->delimiter);
-
-            return $normalized->toString();
-        }
-
-        $normalized = $this->patternNormalizer->normalize($trimmed);
-        $regexPattern = DelimitedPattern::fromDelimited($normalized);
-        $normalizedBody = $this->normalizeSearchPattern($regexPattern->pattern);
-
-        return DelimitedPattern::fromRaw($normalizedBody, $regexPattern->flags, $regexPattern->delimiter)->toString();
+        return DelimitedPattern::fromRaw($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter)->toString();
     }
 
     private function normalizeSearchPattern(string $pattern): string

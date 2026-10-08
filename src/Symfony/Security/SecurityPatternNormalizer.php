@@ -14,29 +14,17 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Security;
 
 /**
- * Normalizes Symfony security regex patterns into full regex strings.
+ * The pattern Symfony matches a security path or host with:
+ * preg_match('{'.$path.'}s', ...) in PathRequestMatcher and
+ * preg_match('{'.$host.'}i', ...) in HostRequestMatcher. A path or a host
+ * is a fragment, never a delimited pattern, and gets no anchor.
  *
  * @internal
  */
 final readonly class SecurityPatternNormalizer
 {
-    private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
-
-    public function normalize(string $pattern): string
+    public function normalize(string $pattern, bool $host = false): string
     {
-        $trimmed = trim($pattern);
-        if ('' === $trimmed) {
-            return '#.*#';
-        }
-
-        $firstChar = $trimmed[0] ?? '';
-        if (\in_array($firstChar, self::PATTERN_DELIMITERS, true)) {
-            return $trimmed;
-        }
-
-        $delimiter = '#';
-        $body = str_replace($delimiter, '\\'.$delimiter, $trimmed);
-
-        return $delimiter.$body.$delimiter;
+        return '{'.trim($pattern).'}'.($host ? 'i' : 's');
     }
 }

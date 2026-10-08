@@ -244,21 +244,10 @@ The follow-ups are merged too: the search cost's two false positives
 
 ### Smaller findings, each confirmed against the engine
 
-- The Symfony route requirement normalizer is also used for the firewall and
-  `access_control` patterns, with the same missing flags as below.
 - The lint rules read characters with PCRE's C tables: after
   `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `/a\B\xE9/` matches `"a\xE9"`,
   and `regex.lint.anchor.impossible.boundary` calls it impossible.
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
-- The Symfony route requirement normalizer anchors and groups a requirement
-  as the route compiler does, but leaves out the flags it compiles with:
-  `sD`, plus `u` under the `utf8` option, after a leading `/`. A second
-  anchor (`^^a$$`, `x*|^y`, `(?m)^a$|b`) matches in the linted pattern and
-  never in the route; `.*+\n` under `s` is not reported. Mirroring the flags
-  changes the verdict on every route, so it is a decision of its own.
-  The compiler also strips a trailing `$` or `\z` that is escaped
-  (`a\$` compiles to `(?P<x>a\)`, which fails at run time), where the
-  normalizer keeps it as a literal and lints a valid pattern.
 - `NodePredicates::applyInlineFlags()` keeps a flag string that loses `xx`
   (read as `x`) and the ASCII options (`(?a)(?-aD)` keeps `\w` ASCII; the
   letters after `a` clash with the `D` and `S` modifiers): the lint rules
