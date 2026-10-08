@@ -42,8 +42,8 @@ the public API, so they go before the tag.
 ### Next steps
 
 - Left from this list, in this order: ReDoS precision (atomic unions,
-  `xx`, the empty witness suffix), then the lookbehind validation and the
-  `(?J)` branch-reset names below.
+  `xx`), then the lookbehind validation and the `(?J)` branch-reset names
+  below.
 
 ### The character-set analysis
 
@@ -97,10 +97,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   newlines reach above ASCII, where the character sets stop; under
   `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
   end, so `/(*CRLF)a$\r\r/` is missed.
-- A lookahead before a loop yields a ReDoS witness with an empty suffix, which
-  then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
-  right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
-  the witness is wrong.
 - Under `(?J)`, PCRE accepts two names for one branch-reset number when the
   later name already exists: `/(?J)(?<n>a)(?|(?<m>b)|(?<n>c))/` on `ab`
   gives `{"0":"ab","n":"b","1":"a","2":"b"}`, with no `m` key. The library

@@ -90,6 +90,10 @@ final class RedosWitnessReplayTest extends TestCase
         yield 'word class and e acute under u' => ['/(\w|é)+$/u'];
         // a…a\n! fails at 19 pumps: the rejecting suffix needs a newline.
         yield 'dot before a newline' => ['/(.+)+$/'];
+        // A lookahead before the loop: the end of the input still accepts,
+        // so the rejecting suffix is no empty one.
+        yield 'empty lookahead before identical alternatives' => ['/^(?=)(?:a|a)*$/'];
+        yield 'empty lookahead before e acute or a non-word character' => ['/^(?=)(?:é|\W)*$/'];
     }
 
     #[Test]

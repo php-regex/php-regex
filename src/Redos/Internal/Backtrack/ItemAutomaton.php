@@ -138,6 +138,13 @@ final class ItemAutomaton
     private array $uncertain = [];
 
     /**
+     * @var array<int, true> the final items reached through an undecided
+     *                       check: the model does not count their success,
+     *                       but the engine may succeed there
+     */
+    private array $undecidedFinals = [];
+
+    /**
      * @var array<string, int>
      */
     private array $ids = [];
@@ -366,6 +373,24 @@ final class ItemAutomaton
         ksort($next);
 
         return $next;
+    }
+
+    /**
+     * Whether the items may succeed at the end of the subject on the
+     * engine: they do, or one of them is a success through an undecided
+     * check, such as a lookahead, which the model does not count.
+     *
+     * @param array<int, true> $items
+     */
+    public function mayAcceptAtEnd(array $items): bool
+    {
+        foreach ($items as $item => $_) {
+            if (isset($this->undecidedFinals[$item])) {
+                return true;
+            }
+        }
+
+        return $this->acceptsAtEnd($items);
     }
 
     /**
@@ -692,7 +717,8 @@ final class ItemAutomaton
 
     private function item(int $state, ?CharSet $label, ?CharSet $peek, bool $end, bool $whole, int $context, bool $uncertain): int
     {
-        if (null === $label && $uncertain) {
+        $undecidedFinal = null === $label && $uncertain;
+        if ($undecidedFinal) {
             // A success through an undecided check is not counted.
             $peek = CharSet::empty();
             $end = false;
@@ -702,6 +728,7 @@ final class ItemAutomaton
         $key = match (true) {
             $whole => 'S'.$state.'|'.$tail,
             null !== $label => $state.'|'.$label->key().'|'.$tail,
+            $undecidedFinal => 'U',
             default => 'F|'.($peek?->key() ?? '*').'|'.($end ? '1' : '0'),
         };
 
@@ -720,6 +747,9 @@ final class ItemAutomaton
         } else {
             $this->peekSets[$item] = $peek;
             $this->ends[$item] = $end;
+            if ($undecidedFinal) {
+                $this->undecidedFinals[$item] = true;
+            }
         }
 
         return $item;

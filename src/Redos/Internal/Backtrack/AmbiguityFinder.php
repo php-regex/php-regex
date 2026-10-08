@@ -1123,6 +1123,12 @@ final class AmbiguityFinder
         // replayed too, and so is one followed by a literal PCRE requires.
         $alternatives = [];
         $nonEmpty = [] === $suffix ? $this->rejectingSuffix($after, true) : $suffix;
+        // An end the model only rejects for want of deciding a lookahead may
+        // accept on the engine: the witness then reads a character more.
+        if ([] === $suffix && null !== $nonEmpty && $automaton->mayAcceptAtEnd($after)) {
+            $suffix = $nonEmpty;
+        }
+
         if (null !== $nonEmpty && $nonEmpty !== $suffix) {
             $alternatives[] = $this->representativesOf($nonEmpty);
         }
