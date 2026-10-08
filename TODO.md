@@ -88,11 +88,6 @@ contract, and it must stay. What the check found instead is byte-versus-
 code-point confusions in byte mode (patterns without `/u`), each confirmed
 against the engine:
 
-- Auto-possessivation compares the last byte of a literal with the first
-  byte of what follows: under `/u` a continuation byte never meets a lead
-  byte, so every multibyte boundary looks exclusive (`/é+é/u` would become
-  `/é++é/u`, which matches nothing). The shipped optimizer rejects the
-  rewrite through its equivalence check; the rewriter alone does not.
 - The ReDoS adjacency analysis uses the same byte test, without the
   multibyte quarantine the nested-loop lint rules have: it is skipped
   whenever the seam bytes differ, which under `/u` happens across every

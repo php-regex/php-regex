@@ -280,6 +280,11 @@ final class Rewriter extends AbstractNodeVisitor
                         continue;
                     }
 
+                    // The sets stop at 0x7F: above it nothing is known disjoint.
+                    if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix)) {
+                        continue;
+                    }
+
                     try {
                         $currentLastChars = $this->charSetAnalyzer->lastChars($current->node);
                         $suffixFirstChars = $this->charSetAnalyzer->firstChars($suffixNode);
@@ -647,6 +652,61 @@ final class Rewriter extends AbstractNodeVisitor
      * scope can change what a node matches without the disjointness check
      * seeing it; possessification then stays out.
      */
+    /**
+     * Whether the node may take a character above ASCII, which the
+     * character sets, stopping at 0x7F, do not hold: a byte or a code point
+     * above it, a dot, a negated class, a type but \\d, \\w and \\s held to
+     * ASCII without u, a property, a POSIX class, and anything not read here.
+     */
+    private function mayTakeAboveAscii(NodeInterface $node): bool
+    {
+        return match (true) {
+            $node instanceof LiteralNode => '' !== trim($node->value, "\x00..\x7F"),
+            $node instanceof CharLiteralNode, $node instanceof ControlCharNode => $node->codePoint > 0x7F,
+            $node instanceof CharTypeNode => $this->unicodeMode || !\in_array($node->value, ['d', 'w', 's'], true),
+            $node instanceof DotNode, $node instanceof UnicodePropNode, $node instanceof PosixClassNode => true,
+            $node instanceof CharClassNode && $node->isNegated => true,
+            $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode, $node instanceof KeepNode => false,
+            [] === $node->getChildren() => true,
+            default => $this->anyMayTakeAboveAscii($node->getChildren()),
+        };
+    }
+
+    /**
+     * @param array<NodeInterface> $nodes
+     */
+    private function anyMayTakeAboveAscii(array $nodes): bool
+    {
+        foreach ($nodes as $node) {
+            if ($this->mayTakeAboveAscii($node)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the items may start with a character above ASCII: the first
+     * that cannot match empty decides, with every optional one before it.
+     *
+     * @param array<NodeInterface> $suffix
+     */
+    private function suffixMayStartAboveAscii(array $suffix): bool
+    {
+        foreach ($suffix as $item) {
+            if ($this->mayTakeAboveAscii($item)) {
+                return true;
+            }
+
+            if (!$this->canMatchEmpty($item)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     private function containsInlineFlags(NodeInterface $node): bool
     {
         if ($node instanceof GroupNode && null !== $node->flags) {
