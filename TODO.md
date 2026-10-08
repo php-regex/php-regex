@@ -154,6 +154,17 @@ Decided without the maintainer, as asked; each can be reopened.
   bundles 10.44, which refuses both, and a pattern that silently loses a
   name deserves the error.
 
+- **The language server judges at the floor of the project's range**,
+  resolved at `initialize` (its options, `regex.json`, then `composer.json`);
+  the other boundaries of the range are `regex lint`'s.
+- **The linter validates a pattern at every boundary of the PHP range.**
+  Measured on the corpus fixture (1,645 patterns, warm): 0.44 ms a pattern
+  for one target, about 1.4 ms more for three more. Skipping the runs a
+  pattern does not need would take knowing that its validation read no
+  version-dependent rule, but `PcreTarget::$phpVersionId` is read directly
+  in many places: the knowledge would have to come from routing every such
+  read through one method first. Correctness of the range comes first.
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
@@ -204,11 +215,6 @@ The follow-ups are merged too: the search cost's two false positives
 
 ### Smaller findings, each confirmed against the engine
 
-- The language server judges a pattern for the PHP running it: it does not
-  read the project's PHP range from `composer.json`, as `regex lint` does.
-- The linter validates each pattern at every PHP version of the range; a
-  pattern that reads no version-dependent rule could skip the extra runs (the
-  flag must travel with the cached tree, not in a side channel).
 
 ### Upstream, the maintainer's call
 
