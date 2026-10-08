@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Generator\TestCaseGenerator;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -191,29 +192,35 @@ final class TestCaseGeneratorNodeVisitorTest extends TestCase
 
     public function test_conditional(): void
     {
+        // PCRE refuses the pattern: no string is a case for it.
+        $this->assertNotNull((new PcreEngine())->compile('/(?(condition)yes|no)/'));
         $ast = Regex::create()->parse('/(?(condition)yes|no)/');
         $cases = $ast->accept($this->visitor);
 
-        $this->assertNotEmpty($cases['matching']);
-        $this->assertNotEmpty($cases['non_matching']);
+        $this->assertSame([], $cases['matching']);
+        $this->assertSame([], $cases['non_matching']);
     }
 
     public function test_subroutine(): void
     {
+        // PCRE refuses the pattern: no string is a case for it.
+        $this->assertNotNull((new PcreEngine())->compile('/(?1)/'));
         $ast = Regex::create()->parse('/(?1)/');
         $cases = $ast->accept($this->visitor);
 
-        $this->assertNotEmpty($cases['matching']);
-        $this->assertNotEmpty($cases['non_matching']);
+        $this->assertSame([], $cases['matching']);
+        $this->assertSame([], $cases['non_matching']);
     }
 
     public function test_pcre_verb(): void
     {
+        // PCRE refuses the pattern: no string is a case for it.
+        $this->assertNotNull((new PcreEngine())->compile('/(*VERB)a/'));
         $ast = Regex::create()->parse('/(*VERB)a/');
         $cases = $ast->accept($this->visitor);
 
-        $this->assertNotEmpty($cases['matching']);
-        $this->assertNotEmpty($cases['non_matching']);
+        $this->assertSame([], $cases['matching']);
+        $this->assertSame([], $cases['non_matching']);
     }
 
     public function test_define(): void
@@ -221,8 +228,9 @@ final class TestCaseGeneratorNodeVisitorTest extends TestCase
         $ast = Regex::create()->parse('/(?(DEFINE)...)/');
         $cases = $ast->accept($this->visitor);
 
+        // The DEFINE group reads nothing: every subject matches.
         $this->assertNotEmpty($cases['matching']);
-        $this->assertNotEmpty($cases['non_matching']);
+        $this->assertSame([], $cases['non_matching']);
     }
 
     public function test_limit_match(): void

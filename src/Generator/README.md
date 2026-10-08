@@ -55,7 +55,8 @@ $generator->setSeed(42);
 echo RegexParser::create()->parse('/[A-Z]{3}-\d{4}/')->accept($generator); // "VEL-0403"
 ```
 
-Test cases, matching and not:
+Test cases, matching and not, each one checked against the running engine (`preg_match()`
+gives 1 on every matching case, 0 on every non-matching one):
 
 ```php
 use PHPRegex\Generator\TestCaseGenerator;

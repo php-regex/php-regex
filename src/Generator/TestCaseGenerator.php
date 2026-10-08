@@ -62,7 +62,10 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     /**
-     * Visits a RegexNode and generates test cases for its pattern.
+     * Visits a RegexNode and generates test cases for its pattern, each one
+     * checked against the running engine: preg_match() gives 1 on every
+     * matching case and 0 on every non-matching one. A pattern the engine
+     * refuses has no case.
      *
      * @param RegexNode $node the `RegexNode` representing the entire regular expression
      *
@@ -71,7 +74,43 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
-        return $node->pattern->accept($this);
+        $candidates = $node->pattern->accept($this);
+        $pattern = $node->accept(new PatternPrinter());
+
+        $matching = $this->kept($pattern, $candidates['matching'], true);
+        if ([] === $matching) {
+            // The sample generator reads what the heuristics skip, such as a
+            // reference to a group; fixed seeds keep the cases stable.
+            $samples = [];
+            foreach ([1, 2, 3] as $seed) {
+                $generator = new SampleGenerator(engine: $this->engine);
+                $generator->setSeed($seed);
+
+                try {
+                    $samples[] = $node->accept($generator);
+                } catch (SampleGenerationException) {
+                    break;
+                }
+            }
+            $matching = $this->kept($pattern, [...$matching, ...$samples], true);
+        }
+
+        $nonMatching = $this->kept($pattern, $candidates['non_matching'], false);
+        if (\count($nonMatching) < self::MAX_SAMPLES) {
+            // Strings near the matching ones, each checked the same way.
+            $near = [''];
+            foreach ($matching as $sample) {
+                $near[] = substr($sample, 0, -1);
+                $near[] = substr($sample, 1);
+            }
+            $near[] = "\x00";
+            $nonMatching = $this->kept($pattern, [...$nonMatching, ...$near], false);
+        }
+
+        return [
+            'matching' => $matching,
+            'non_matching' => $nonMatching,
+        ];
     }
 
     /**
@@ -515,6 +554,27 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             'matching' => [''],
             'non_matching' => [''],
         ];
+    }
+
+    /**
+     * The candidates preg_match() matches (or does not, for $matching
+     * false), duplicates and those the engine errors on left out; three at
+     * most. A pattern the engine refuses keeps none.
+     *
+     * @param array<string> $candidates
+     *
+     * @return list<string>
+     */
+    private function kept(string $pattern, array $candidates, bool $matching): array
+    {
+        $kept = [];
+        foreach (array_unique($candidates) as $candidate) {
+            if (\count($kept) < self::MAX_SAMPLES && $matching === $this->engine->match($pattern, $candidate)->matched) {
+                $kept[] = $candidate;
+            }
+        }
+
+        return $kept;
     }
 
     /**

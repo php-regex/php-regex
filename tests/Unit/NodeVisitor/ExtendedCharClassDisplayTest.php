@@ -214,7 +214,9 @@ final class ExtendedCharClassDisplayTest extends TestCase
 
         // Printable ASCII is scanned, from the space to the tilde.
         $this->assertSame(['matching' => ['b'], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [ab] - [a] ])/')->accept(new TestCaseGenerator()));
-        $this->assertSame(['matching' => [], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [\x1f\x7f] ])/')->accept(new TestCaseGenerator()));
+        // No printable member: the sample generator supplies them, each one
+        // checked by the engine.
+        $this->assertSame(['matching' => ["\x7f", "\x1f"], 'non_matching' => [' ', '!', '"']], $regex->parse('/(?[ [\x1f\x7f] ])/')->accept(new TestCaseGenerator()));
     }
 
     #[Test]

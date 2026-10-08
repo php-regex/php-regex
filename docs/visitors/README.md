@@ -440,7 +440,10 @@ echo $sample;  // e.g., "Word12"
 
 ### TestCaseGenerator
 
-**Purpose:** Generates test cases for the pattern, useful for QA tooling.
+**Purpose:** Generates test cases for the pattern, useful for QA tooling. Every case is
+checked against the running engine: `preg_match()` gives 1 on each matching case and 0 on each
+non-matching one. A pattern the engine refuses has no case, and one that matches every subject
+(`/a*/`) has no non-matching case.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -449,19 +452,7 @@ use PHPRegex\Generator\TestCaseGenerator;
 $ast = Regex::create()->parse('/\d{3}-\d{4}/');
 $cases = $ast->accept(new TestCaseGenerator());
 
-print_r($cases);
-/*
-Array (
-    [valid] => Array (
-        [0] => 123-4567
-        [1] => 000-0000
-    )
-    [invalid] => Array (
-        [0] => 12-34567
-        [1] => 1234-567
-    )
-)
-*/
+// ['matching' => ['000-0000'], 'non_matching' => ['00.000', '00.00000', '0000.000']]
 ```
 
 ---
