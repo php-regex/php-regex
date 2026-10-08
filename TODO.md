@@ -88,12 +88,6 @@ contract, and it must stay. What the check found instead is byte-versus-
 code-point confusions in byte mode (patterns without `/u`), each confirmed
 against the engine:
 
-- The ReDoS adjacency analysis uses the same byte test, without the
-  multibyte quarantine the nested-loop lint rules have: it is skipped
-  whenever the seam bytes differ, which under `/u` happens across every
-  multibyte character even when the code points on both sides coincide
-  (`(?:xé)+é+` has é on both sides of the seam). No false "safe" has been
-  reproduced yet; the gate itself is unsound under `/u`.
 
 The normalization-free contract is pinned by
 `tests/Unit/NormalizationInvariantTest.php`: the engine, the printer and the
@@ -199,6 +193,12 @@ Decided without the maintainer, as asked; each can be reopened.
 - **The ReDoS latency limit is 6 ms at the 99th percentile** (it was 5 ms):
   the search cost, added on purpose, took the analysis to about 5.5 ms, and
   no single hot spot stands out to win the difference back.
+
+- **The byte test of the heuristic ReDoS profile stays.** Under `/u` it
+  skips an adjacency across a multibyte seam, but the verdict comes from the
+  proof, which reads code points (`/^é+é+$/u` is proven polynomial,
+  `/^(?:xé)+é+$/u` proven linear, both right); the profile only speaks when
+  the proof gives up.
 
 ## Report the PCRE2 JIT crash upstream
 
