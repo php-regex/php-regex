@@ -44,7 +44,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   costs up to n^(k+1) steps over an unanchored search. When one attempt is proven linear, the search cost is looked for
   apart (below). Lookaround constraints are not evaluated (a lookaround may fail);
   `{m,n}` above 16, and a bounded repeat whose copies can read the same input in two ways, are analysed as `{m,}`; an
-  atomic body that is more than one run over one set is kept as written. Each abstraction is listed in
+  atomic body that is more than one run over one set, or than an alternation of one-character branches, is kept as written. Each abstraction is listed in
   `abstractions`. Verdicts are deterministic per analysis version and PCRE2 release.
 - **Fallbacks:** Backreferences, conditionals, recursion, subroutine calls, verbs, callouts, `\X`, `\R`, non-atomic
   lookarounds, `\b` and `\B` under two different ASCII scopes in one pattern, bounded repeats whose body can match empty, a pattern over the analysis budget, an

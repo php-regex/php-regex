@@ -57,12 +57,12 @@ final class RedosAtomicAbstractionTest extends TestCase
      */
     public static function provideCrossedAtomicBodies(): iterable
     {
-        // a…a! never fails up to 64 bytes: the atomic group commits to the first "a" each time.
-        yield 'ambiguous loop inside an atomic group' => ['/(?>(a|a)+)$/', 0];
-        // x a…a! never fails up to 64 bytes.
-        yield 'ambiguous loop inside an atomic group after a literal' => ['/x(?>(a|a)+)$/', 1];
-        // a…a! never fails up to 64 bytes: each atomic step reads one "a", one way.
-        yield 'atomic alternation repeated' => ['/(?>a|a)+$/', 0];
+        // a…a! never fails up to 60 "a": the atomic group commits to the first way each time.
+        yield 'ambiguous loop inside an atomic group' => ['/(?>(a|aa)+)$/', 0];
+        // x a…a! never fails up to 60 "a".
+        yield 'ambiguous loop inside an atomic group after a literal' => ['/x(?>(a|aa)+)$/', 1];
+        // a…a! never fails up to 60 "a": each atomic step reads one "a", one way.
+        yield 'atomic alternation repeated' => ['/(?>a|aa)+$/', 0];
     }
 
     /**
@@ -88,8 +88,8 @@ final class RedosAtomicAbstractionTest extends TestCase
      */
     public static function provideCrossedPossessiveBodies(): iterable
     {
-        yield 'possessive alternation' => ['/(a|a)++$/', 0];
-        yield 'possessive alternation after a literal' => ['/x(a|a)++$/', 1];
+        yield 'possessive alternation' => ['/(a|aa)++$/', 0];
+        yield 'possessive alternation after a literal' => ['/x(a|aa)++$/', 1];
     }
 
     /**
@@ -128,6 +128,13 @@ final class RedosAtomicAbstractionTest extends TestCase
         yield 'atomic run' => ['/(?>a+)+$/'];
         yield 'possessive run' => ['/(a++)+$/'];
         yield 'atomic run over a class' => ['/(?>[ab]+)+$/'];
+        // An alternation of one-character branches reads one character of
+        // their union, given back to no other branch.
+        yield 'ambiguous loop of one-character branches inside an atomic group' => ['/(?>(a|a)+)$/'];
+        yield 'same after a literal' => ['/x(?>(a|a)+)$/'];
+        yield 'atomic alternation of one-character branches repeated' => ['/(?>a|a)+$/'];
+        yield 'possessive alternation of one-character branches' => ['/(a|a)++$/'];
+        yield 'same after a literal, possessive' => ['/x(a|a)++$/'];
     }
 
     /**

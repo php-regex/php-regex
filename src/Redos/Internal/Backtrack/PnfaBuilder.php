@@ -167,6 +167,12 @@ final class PnfaBuilder
      */
     private array $atomicAbstractions = [];
 
+    /**
+     * @var array<int, CharSet> the alternations read as one character of the
+     *                          union of their branches, by node
+     */
+    private array $unions = [];
+
     private ?CharSet $wordSet = null;
 
     /**
@@ -262,6 +268,7 @@ final class PnfaBuilder
 
         return match (true) {
             $node instanceof SequenceNode => $this->sequence($node, $next, $flags, $pnfa, $search),
+            $node instanceof AlternationNode && isset($this->unions[spl_object_id($node)]) => $this->char($pnfa, $this->unions[spl_object_id($node)], $next),
             $node instanceof AlternationNode => $this->alternation($node, $next, $flags, $pnfa, $search),
             $node instanceof GroupNode => $this->group($node, $next, $flags, $pnfa, $search),
             $node instanceof QuantifierNode => $this->quantifier($node, $next, $flags, $pnfa, $search),
@@ -441,8 +448,13 @@ final class PnfaBuilder
                 // A run of one character set: the atomic group keeps its longest
                 // run, or its shortest when the quantifier is lazy (under (?U)
                 // too), exactly the minimum.
+                $union = $this->unionOf($node->child, $flags);
+                if (null !== $union) {
+                    return $this->char($pnfa, $union, $next);
+                }
+
                 $child = $this->unwrap($node->child);
-                if ($child instanceof QuantifierNode && null !== $this->runSet($child->node, $flags)) {
+                if ($child instanceof QuantifierNode && null !== ($this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags))) {
                     if (!$this->isLazy($child, $flags)) {
                         return $this->quantifier($child, $next, $flags, $pnfa, $search, true);
                     }
@@ -512,7 +524,7 @@ final class PnfaBuilder
 
         // A possessive run of one character set leaves only before a
         // character outside the set: the one way PCRE reads it.
-        $run = $possessive ? $this->runSet($node->node, $flags) : null;
+        $run = $possessive ? $this->runSet($node->node, $flags) ?? $this->unionOf($node->node, $flags) : null;
         $leave = $next;
         if (null !== $run) {
             $greedy = true;
@@ -879,6 +891,58 @@ final class PnfaBuilder
         }
 
         return null;
+    }
+
+    /**
+     * The one character set an alternation of one-character branches reads
+     * where it gives nothing back, inside an atomic group or a possessive
+     * repeat: one character of the union of the branches, the options an
+     * earlier branch sets holding in the later ones. The alternation is
+     * then read as that one set. Null for any other node.
+     */
+    private function unionOf(NodeInterface $node, int $flags): ?CharSet
+    {
+        $node = $this->unwrap($node);
+        if (!$node instanceof AlternationNode) {
+            return null;
+        }
+
+        $union = null;
+        foreach ($node->alternatives as $alternative) {
+            $atom = null;
+            $atomFlags = $flags;
+            foreach ($alternative instanceof SequenceNode ? $alternative->children : [$alternative] as $child) {
+                if ($child instanceof GroupNode && GroupType::InlineFlags === $child->type && $this->isBareOptionSetting($child)) {
+                    $atomFlags = null === $atom ? $this->applyOptions($atomFlags, $child->flags ?? '') : $atomFlags;
+
+                    continue;
+                }
+
+                if ($child instanceof CommentNode || ($child instanceof LiteralNode && '' === $child->value)) {
+                    continue;
+                }
+
+                if (null !== $atom) {
+                    return null;
+                }
+
+                $atom = $child;
+            }
+
+            $set = null === $atom ? null : $this->runSet($atom, $atomFlags);
+            if (null === $set) {
+                return null;
+            }
+
+            $union = $union?->union($set) ?? $set;
+            $flags = $this->flagsAfter($alternative, $flags);
+        }
+
+        if (null !== $union) {
+            $this->unions[spl_object_id($node)] = $union;
+        }
+
+        return $union;
     }
 
     private function unwrap(NodeInterface $node): NodeInterface

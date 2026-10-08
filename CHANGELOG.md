@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The ReDoS proof reads an atomic or possessive alternation of one-character branches as one character of their union, which it gives back to no branch: `/^(?>a|a)+$/`, `/^(?>z(?i)|a|A)*$/` and `/(a|a)++$/` are proven linear, where they got a heuristic verdict.
 - The ReDoS proof reads the `xx` option as PCRE2 does, where it gave a heuristic verdict: a class skips its unescaped spaces and tabs, and a lone `x` takes `xx` off, so `/^(?xx)(?x)(?:[ a]|\x20)*$/` is proven exponential and `/^(?xx)(?:[a b]|\x20)*$/` proven linear.
 - A ReDoS witness through a lookahead before the loop no longer ends with an empty suffix the engine accepts: `/^(?=)(?:é|\W)*$/` gave the attack `"éé…"`, which matches; it now ends with a character that makes every attempt fail.
 - `regex lint` and the bridges' lint commands report a PHP file they could not read, or that does not fit in `memory_limit`, as `regex.lint.source.unreadable`, an error: such a file was left out, and a run under a low `memory_limit` read as clean (`results: []`, exit code 0).

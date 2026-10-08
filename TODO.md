@@ -41,8 +41,8 @@ the public API, so they go before the tag.
 
 ### Next steps
 
-- Left from this list, in this order: ReDoS precision (atomic unions),
-  then the lookbehind validation and the `(?J)` branch-reset names below.
+- Left from this list, in this order: the lookbehind validation and the
+  `(?J)` branch-reset names below.
 
 ### The character-set analysis
 
@@ -51,15 +51,6 @@ the public API, so they go before the tag.
   to decide in that case, which costs them findings.
 - Case-insensitivity and lookarounds are ignored: `/(?:a|A)+$/i` (exponential)
   gets no overlap warning, and `(?:,a*(?:(?!z)a)*)+$` no nested warning.
-
-### The ReDoS proof: precision
-
-Sound in both cases, but verdicts the proof could give:
-
-- It does not read an atomic or possessive alternation of one-character
-  branches as the union of their sets: `/^(?>z(?i)|a|A)*$/` and
-  `/^(?>a|a)+$/` get a heuristic verdict where the engine is linear, a gain
-  to make with its own soundness check against the engine.
 
 ### Byte mode and the Unicode-normalization invariant
 
