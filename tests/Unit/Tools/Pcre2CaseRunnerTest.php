@@ -126,21 +126,20 @@ final class Pcre2CaseRunnerTest extends TestCase
     #[Test]
     public function test_runner_scores_the_offset_when_both_versions_agree_on_it(): void
     {
-        // "(a(?<=(?3)))(b(?<=(c(?2))))": error 125 at offset 2, recorded
-        // alike for both versions (PCRE2 10.49: "length of lookbehind
-        // assertion is not limited at offset 2"). The library still reports
-        // it at 14, so this is an offset defect; swap the case once that one
-        // is fixed.
+        // No case of the suite is an offset defect any more: this one is
+        // made up. "(a" is refused at 2 (PCRE2 10.49: "missing closing
+        // parenthesis at offset 2"); recorded at 1 for both versions, the
+        // library's 2 is an offset defect.
         $result = (new Pcre2CaseRunner())->run(self::case(
-            '(a(?<=(?3)))(b(?<=(c(?2))))',
+            '(a',
             'reject',
-            2,
-            'length of lookbehind assertion is not limited',
-            pcre2Code: 125,
-            floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 125],
+            1,
+            'missing closing parenthesis',
+            pcre2Code: 114,
+            floor: ['verdict' => 'reject', 'offset' => 1, 'pcre2Code' => 114],
         ));
 
-        $this->assertSame(14, $result['offset']);
+        $this->assertSame(2, $result['offset']);
         $this->assertSame('offset-defect', $result['outcome']);
 
         // Same agreement on "[abc" (106 at 4 on both): the library agrees too.
@@ -266,12 +265,11 @@ final class Pcre2CaseRunnerTest extends TestCase
      */
     public static function provideDifferentOffsetRejections(): iterable
     {
-        // preg_match('/(a(?<=(?3)))(b(?<=(c(?2))))/', '') warns "length of
-        // lookbehind assertion is not limited at offset 2" (PCRE2 10.49); the
-        // library still reports it at 14. Swap the case once that is fixed.
-        yield 'real suite error reported at a different position' => [
-            'case' => self::case('(a(?<=(?3)))(b(?<=(c(?2))))', 'reject', 2, 'length of lookbehind assertion is not limited', pcre2Code: 125),
-            'libraryOffset' => 14,
+        // Made up, as no case of the suite is an offset defect any more:
+        // "(a" is refused at 2, recorded at 1.
+        yield 'an error recorded at another position' => [
+            'case' => self::case('(a', 'reject', 1, 'missing closing parenthesis', pcre2Code: 114),
+            'libraryOffset' => 2,
         ];
 
         // Same pattern, same PCRE2 error text, a recorded offset the library

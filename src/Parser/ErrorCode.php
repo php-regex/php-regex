@@ -336,7 +336,7 @@ enum ErrorCode: string
     case KeepInLookaround = 'regex.keep.in_lookaround';
 
     /**
-     * A lookbehind is too complicated for PCRE to measure.
+     * PCRE gave up measuring the lookbehinds: past 2,001 branches measured for all of them, a group counted again at each call after a branch reset.
      */
     case LookbehindTooComplex = 'regex.lookbehind.too_complex';
 

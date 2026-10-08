@@ -39,10 +39,6 @@ ReDoS proof and the lexer (October 2026). Each one is confirmed against
 `preg_match()` or measured, and predates the fixes made then. 2.0.0 freezes
 the public API, so they go before the tag.
 
-### Next steps
-
-- Left from this list: the lookbehind validation below.
-
 ### The character-set analysis
 
 - Sets cover bytes 0x00-0x7F only: a dot or a negated class never meets a
@@ -81,18 +77,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   newlines reach above ASCII, where the character sets stop; under
   `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
   end, so `/(*CRLF)a$\r\r/` is missed.
-- Lookbehind validation (each against PCRE2 10.49):
-  - `\X` is judged before the branches are measured, and a lookbehind used
-    as a condition inside a lookbehind is not measured, so the first error
-    is not PCRE's.
-  - a group around a lookbehind counts as being measured, where PCRE only
-    counts a call from inside the group it calls and skips `(?(DEFINE)…)`:
-    `/(a(?2))(c(?(DEFINE)(?<=(?1))))/` is refused as not limited at 19
-    (PCRE compiles it); `/(a(?<=(?3)))(b(?<=(c(?2))))/` is refused at 14
-    (PCRE at 2).
-  - a lookbehind called from a condition that holds another lookbehind can
-    pass unmeasured: `/(?<=(?1))((?(?<!(?2))x)b)((?(?<!(?1)c?)x))/` is
-    accepted, PCRE refuses it as not limited at 28.
 
 ## Settled by design (2026-10-08)
 

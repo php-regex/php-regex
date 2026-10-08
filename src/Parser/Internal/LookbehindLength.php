@@ -30,8 +30,9 @@ use PHPRegex\Parser\Node\SubroutineNode;
 /**
  * The length range of a lookbehind branch, the way PCRE measures it: a call
  * or a reference is as long as the group it names, a lookaround is
- * zero-width however often it is repeated, and a call back into a group
- * being measured has no bound. Lengths count bytes, or characters in UTF
+ * zero-width however often it is repeated, and a call that stands inside
+ * the group it calls, or that calls a group the measure reached through
+ * calls, has no bound. Lengths count bytes, or characters in UTF
  * mode.
  *
  * The validator, which raises PCRE's errors as it measures, hears about
@@ -172,6 +173,12 @@ final class LookbehindLength
         }
 
         if ($node instanceof AlternationNode || $node instanceof ConditionalNode) {
+            // An assertion as the condition is measured with the group: a
+            // lookbehind there is checked like one in a branch.
+            if ($node instanceof ConditionalNode) {
+                $this->conditionAssertions($node->condition, $expanding);
+            }
+
             $alternatives = $node instanceof AlternationNode ? $node->alternatives : [$node->yes, $node->no];
             [$min, $max] = [\PHP_INT_MAX, 0];
             foreach ($alternatives as $alternative) {
@@ -262,7 +269,10 @@ final class LookbehindLength
 
         $group = $groups[0];
         $id = spl_object_id($group);
-        if (isset($expanding[$id])) {
+        // A call inside the group it calls, or to a group the calls reached
+        // already: PCRE finds no bound.
+        $inside = $node->getStartPosition() >= $group->getStartPosition() && $node->getStartPosition() < $group->getEndPosition();
+        if ($inside || isset($expanding[$id])) {
             $this->recursions++;
 
             return [0, null];
@@ -298,6 +308,21 @@ final class LookbehindLength
         $this->called += $calledAround;
 
         return $length;
+    }
+
+    /**
+     * Tell of the lookaround a condition asserts, after a callout too:
+     * "(?(?<=a)…)", "(?(?C1)(?<=a)…)".
+     *
+     * @param array<int, true> $expanding
+     */
+    private function conditionAssertions(NodeInterface $condition, array $expanding): void
+    {
+        foreach ($condition instanceof SequenceNode ? $condition->children : [$condition] as $item) {
+            if ($item instanceof GroupNode && \in_array($item->type, self::LOOKAROUNDS, true) && null !== $this->onLookaround) {
+                ($this->onLookaround)($item, $expanding);
+            }
+        }
     }
 
     /**

@@ -325,14 +325,6 @@ final class Validator extends AbstractNodeVisitor
      */
     private LookbehindLength $lookbehindLength;
 
-    /**
-     * The capturing groups around the node being visited, by node: calling
-     * one of them from a lookbehind inside it is a recursion.
-     *
-     * @var array<int, true>
-     */
-    private array $enclosingGroups = [];
-
     private int $lookbehindBranchMeasures = 0;
 
     /**
@@ -630,11 +622,6 @@ final class Validator extends AbstractNodeVisitor
             $this->enterPayload($node->startPosition, $node->endPosition);
         }
 
-        $enclosingGroups = $this->enclosingGroups;
-        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-            $this->enclosingGroups[spl_object_id($node)] = true;
-        }
-
         if ($isLookbehind) {
             $this->lookbehindDepth++;
             $this->lookbehinds[] = $node;
@@ -656,7 +643,6 @@ final class Validator extends AbstractNodeVisitor
         } finally {
             $this->source = $source;
             $this->positionOffset = $positionOffset;
-            $this->enclosingGroups = $enclosingGroups;
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -1603,7 +1589,6 @@ final class Validator extends AbstractNodeVisitor
         $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
-        $this->enclosingGroups = [];
         $this->groups = GroupIndex::of($node->pattern);
         $this->lookbehindBranchMeasures = 0;
         // A measure of its own: what an earlier pattern measured is gone.
@@ -2215,8 +2200,9 @@ final class Validator extends AbstractNodeVisitor
      */
     private function validateLookbehindLength(GroupNode $node, ?array $expanding = null): void
     {
-        // A group the lookbehind sits in is being measured already.
-        $measuring = $expanding ?? $this->enclosingGroups;
+        // Only the groups the measure reached through calls are being
+        // measured: those around the lookbehind are not.
+        $measuring = $expanding ?? [];
 
         // A lookbehind measured inside another is not measured again, unless
         // it calls a group being measured here and was not there.
@@ -2235,16 +2221,6 @@ final class Validator extends AbstractNodeVisitor
      */
     private function measureLookbehindBranches(GroupNode $node, array $measuring): void
     {
-        // "\X" matches a whole grapheme cluster, of no bounded length.
-        if ($this->containsGraphemeCluster($node->child)) {
-            $this->raiseSemanticError(
-                'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
-                $this->lookbehindErrorPosition($node),
-                ErrorCode::LookbehindUnbounded,
-                'Match the characters the cluster may hold instead of \X.',
-            );
-        }
-
         // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
         // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
         $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
@@ -2258,8 +2234,19 @@ final class Validator extends AbstractNodeVisitor
                 $length = $this->lookbehindLength->of($branch, $measuring);
                 $lengths[] = $length;
 
-                // PCRE stops at the first branch it cannot bound.
+                // PCRE stops at the first branch it cannot bound, met in
+                // order: a nested lookbehind before it was judged first.
                 if (null === $length[1]) {
+                    // "\X" matches a whole grapheme cluster, of no bounded length.
+                    if ($this->containsGraphemeCluster($branch)) {
+                        $this->raiseSemanticError(
+                            'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
+                            $this->lookbehindErrorPosition($node),
+                            ErrorCode::LookbehindUnbounded,
+                            'Match the characters the cluster may hold instead of \X.',
+                        );
+                    }
+
                     $this->validateLookbehindBranchLength($node, $length, true);
                 }
             }
