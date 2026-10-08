@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A multibyte character before `\E-` in a class is one range start whatever encoding the host sets for mbstring: under `mb_internal_encoding('ISO-8859-1')`, `/[ÿ\E-é]/u` was reported valid, where PHP refuses the reversed range.
 - Under `x` without `u`, the parser skips a 0x85 byte inside a multibyte character, as PCRE2 does outside a class and a quote: `/Å/x` is the byte `\xC3`, and `/Å+/x` repeats it, where the tree kept `\xC3\x85` and repeated the 0x85.
 - The lint rules read `(?^)` as turning `r` off, as PCRE2 does: `regex.lint.lookaround.impossible` and the other rules that ask the automata now check a pattern that sets `r` and `(?^)`, such as `/(?r)(?^i)(?!k)\x{212A}/u`, where they stayed silent.
 - `regex.lint.anchor.alternationPrecedence` takes a group holding the anchor alone out of its tip with the anchor: `/(?:(?:^))a|b/` gives `^(?:a|b)`, where it left `^(?:(?:(?:))a|b)`; a capturing group stays, and a group setting `m` moves as written, `(?m:^)(?:a|b)`, where the tip lost the option. It no longer stays silent on a `(*SKIP:n)` no `(*MARK:n)` names, which the engine ignores.

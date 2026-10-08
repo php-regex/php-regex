@@ -110,8 +110,7 @@ The normalization-free contract is pinned by
 `tests/Unit/NormalizationInvariantTest.php`: the engine, the printer and the
 solver each keep `/é/u` and `/e\u{301}/u` apart.
 
-Smaller, same family: `mb_strlen()` on a class atom without an explicit
-encoding (the range-start check); the compiled-size floor compares code
+Smaller, same family: the compiled-size floor compares code
 points through mbstring's lowercase, which misses case pairs PCRE2 folds
 (Greek `[ςσ]` is not seen as one); mbstring's full mappings (`ß` → `SS`,
 `İ` → two code points) only ever feed boolean checks, but its tables can

@@ -3466,7 +3466,7 @@ final class TokenParser
         // keeps its members apart.
         $beforeQuotes = $this->stream->getPosition();
         $wasInQuoteMode = $this->inQuoteMode;
-        $singleCharacterStart = !($startNode instanceof LiteralNode && mb_strlen($startNode->value) > 1);
+        $singleCharacterStart = !($startNode instanceof LiteralNode && mb_strlen($startNode->value, 'UTF-8') > 1);
         // A class escape before them, "[\w\E-a]", keeps a member "-" up to
         // PCRE2 10.44, the newest any PHP release bundles; from 10.45 the
         // range forms and fails, so only a newer linked PCRE2 refuses it.

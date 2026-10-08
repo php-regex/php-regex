@@ -44,6 +44,37 @@ final class RangeThroughQuoteEndTest extends TestCase
     }
 
     /**
+     * A multibyte range start is one character under u whatever encoding the
+     * host gives mbstring: "/[ÿ\E-é]/u" stays refused (PHP 8.4.26, PCRE2
+     * 10.49: "range out of order").
+     */
+    #[Test]
+    #[DataProvider('provideMultibyteReversedRanges')]
+    public function test_a_multibyte_range_start_is_one_character_whatever_the_mbstring_encoding(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $encoding = mb_internal_encoding();
+        mb_internal_encoding('ISO-8859-1');
+
+        try {
+            $valid = Regex::create(['cache' => null])->validate($pattern)->isValid;
+        } finally {
+            mb_internal_encoding($encoding);
+        }
+
+        $this->assertFalse($valid, \sprintf('%s is refused by PHP but was reported valid.', $pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideMultibyteReversedRanges(): iterable
+    {
+        yield 'two-byte start through \\E' => ['pattern' => '/[ÿ\E-é]/u'];
+    }
+
+    /**
      * @param list<string> $subjects
      */
     #[Test]
