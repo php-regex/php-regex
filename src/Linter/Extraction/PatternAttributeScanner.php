@@ -15,7 +15,8 @@ namespace PHPRegex\Linter\Extraction;
 
 /**
  * Finds the functions and methods that declare a parameter with the
- * PHPRegex\Parser\Attribute\Pattern attribute, as pattern function specs
+ * PHPRegex\Parser\Attribute\RegexPattern attribute, or with PhpStorm's
+ * JetBrains\PhpStorm\Language('RegExp'), as pattern function specs
  * ("App\grep#0", "App\Support\Str::matches#1"): the extractors then read
  * their calls as if the project had configured them.
  *
@@ -28,7 +29,9 @@ namespace PHPRegex\Linter\Extraction;
  */
 final class PatternAttributeScanner
 {
-    private const ATTRIBUTE = 'phpregex\parser\attribute\pattern';
+    private const ATTRIBUTE = 'phpregex\parser\attribute\regexpattern';
+
+    private const PHPSTORM_LANGUAGE = 'jetbrains\phpstorm\language';
 
     private const IGNORED = [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT];
 
@@ -41,10 +44,10 @@ final class PatternAttributeScanner
     {
         $specs = [];
         foreach ($files as $file) {
-            // The attribute is reached through its namespace, imported or
-            // written in full: a file without it declares none.
+            // An attribute is reached through its namespace, imported or
+            // written in full: a file naming neither declares none.
             $content = is_file($file) && is_readable($file) ? file_get_contents($file) : false;
-            if (\is_string($content) && false !== stripos($content, 'PHPRegex\Parser\Attribute')) {
+            if (\is_string($content) && (false !== stripos($content, 'PHPRegex\Parser\Attribute') || false !== stripos($content, 'JetBrains\PhpStorm\Language'))) {
                 array_push($specs, ...self::scan($content));
             }
         }
@@ -203,13 +206,36 @@ final class PatternAttributeScanner
             } elseif (',' === $token->text && 0 === $nesting) {
                 $index++;
             } elseif ($inAttribute === $nesting && $inAttribute > 0
-                && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])
-                && self::ATTRIBUTE === strtolower(self::resolve($token, $namespace, $uses))) {
-                return $index;
+                && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
+                $name = strtolower(self::resolve($token, $namespace, $uses));
+                if (self::ATTRIBUTE === $name || (self::PHPSTORM_LANGUAGE === $name && self::namesRegExp($tokens, $i + 1))) {
+                    return $index;
+                }
             }
         }
 
         return null;
+    }
+
+    /**
+     * Whether the argument list that opens at $i, if any, holds the string
+     * "RegExp", PhpStorm's name for a regex: #[Language('RegExp')].
+     *
+     * @param list<\PhpToken> $tokens
+     */
+    private static function namesRegExp(array $tokens, int $i): bool
+    {
+        if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
+            return false;
+        }
+
+        for ($i++; isset($tokens[$i]) && ')' !== $tokens[$i]->text; $i++) {
+            if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING) && 'regexp' === strtolower(substr($tokens[$i]->text, 1, -1))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -18,49 +18,49 @@ use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
-use PHPRegex\Parser\Attribute\Pattern;
+use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A parameter marked #[Pattern] makes its function a pattern function, as
+ * A parameter marked #[RegexPattern] makes its function a pattern function, as
  * if it were configured: a call to it in any linted file is read.
  */
-final class PatternAttributeTest extends TestCase
+final class RegexPatternAttributeTest extends TestCase
 {
     private const DECLARATIONS = <<<'CODE'
         <?php
 
         namespace App\Support;
 
-        use PHPRegex\Parser\Attribute\Pattern;
+        use PHPRegex\Parser\Attribute\RegexPattern;
         use PHPRegex\Parser\Attribute as Regex;
 
         final class Str
         {
-            public static function matches(string $subject, #[Pattern] string $regex): bool
+            public static function matches(string $subject, #[RegexPattern] string $regex): bool
             {
                 return 1 === preg_match($regex, $subject);
             }
 
-            public static function first(#[\PHPRegex\Parser\Attribute\Pattern] string $regex, array $lines): ?string
+            public static function first(#[\PHPRegex\Parser\Attribute\RegexPattern] string $regex, array $lines): ?string
             {
                 return null;
             }
 
-            public static function aliased(string $a, string $b, #[Regex\Pattern] string $regex): void
+            public static function aliased(string $a, string $b, #[Regex\RegexPattern] string $regex): void
             {
             }
 
-            public function onInstance(#[Pattern] string $regex): void
+            public function onInstance(#[RegexPattern] string $regex): void
             {
             }
         }
 
-        function grep(#[Pattern] string $regex, array $lines): array
+        function grep(#[RegexPattern] string $regex, array $lines): array
         {
-            $filter = static fn (#[Pattern] string $inner): bool => true;
+            $filter = static fn (#[RegexPattern] string $inner): bool => true;
 
             return [];
         }
@@ -102,7 +102,7 @@ final class PatternAttributeTest extends TestCase
     #[DataProvider('provideStrategies')]
     public function test_a_call_to_a_function_marked_with_the_attribute_is_read(\Closure $strategy): void
     {
-        $this->assertTrue(class_exists(Pattern::class));
+        $this->assertTrue(class_exists(RegexPattern::class));
         $declarations = $this->write(self::DECLARATIONS);
         $calls = $this->write(self::CALLS);
 
@@ -117,7 +117,7 @@ final class PatternAttributeTest extends TestCase
     }
 
     /**
-     * A class of another namespace named Pattern is not the attribute.
+     * A class of another namespace named RegexPattern is not the attribute.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -130,9 +130,9 @@ final class PatternAttributeTest extends TestCase
 
             namespace App;
 
-            use Other\Pattern;
+            use Other\RegexPattern;
 
-            function look(#[Pattern] string $text): void
+            function look(#[RegexPattern] string $text): void
             {
             }
             CODE);
@@ -153,15 +153,15 @@ final class PatternAttributeTest extends TestCase
 
             use function strlen;
             use const PHP_EOL;
-            use PHPRegex\Parser\{Attribute\Pattern, RegexParser};
+            use PHPRegex\Parser\{Attribute\RegexPattern, RegexParser};
 
-            function &byReference(#[Pattern] string $regex) {}
+            function &byReference(#[RegexPattern] string $regex) {}
             function plain(string $text) {}
-            function defaults(array $options = [1, 2], string $mode = PHP_EOL, int $n = strlen('ab'), #[Pattern] string $regex = '/x/') {}
-            function relative(#[namespace\Pattern] string $regex) {}
+            function defaults(array $options = [1, 2], string $mode = PHP_EOL, int $n = strlen('ab'), #[RegexPattern] string $regex = '/x/') {}
+            function relative(#[namespace\RegexPattern] string $regex) {}
             function unimported(#[Unknown] string $regex) {}
             $closure = function () use ($x) { return 1; };
-            function afterClosure(#[Pattern] string $regex) {}
+            function afterClosure(#[RegexPattern] string $regex) {}
             CODE);
 
         $this->assertSame(['App\byReference#0', 'App\defaults#3', 'App\afterClosure#0'], $specs);
@@ -179,11 +179,62 @@ final class PatternAttributeTest extends TestCase
 
             namespace PHPRegex\Parser\Attribute;
 
-            function bare(#[Pattern] string $regex) {}
-            function relative(#[namespace\Pattern] string $regex) {}
+            function bare(#[RegexPattern] string $regex) {}
+            function relative(#[namespace\RegexPattern] string $regex) {}
             CODE);
 
         $this->assertSame(['PHPRegex\Parser\Attribute\bare#0', 'PHPRegex\Parser\Attribute\relative#0'], $specs);
+    }
+
+    /**
+     * PhpStorm's #[Language('RegExp')] (jetbrains/phpstorm-attributes) marks
+     * a regex parameter too; any other language is not one.
+     */
+    #[Test]
+    public function test_phpstorms_language_attribute_marks_a_regex_parameter(): void
+    {
+        $specs = PatternAttributeScanner::scan(<<<'CODE'
+            <?php
+
+            namespace App;
+
+            use JetBrains\PhpStorm\Language;
+
+            function single(#[Language('RegExp')] string $regex) {}
+            function double(string $subject, #[Language("RegExp")] string $regex) {}
+            function named(#[Language(languageName: 'RegExp')] string $regex) {}
+            function qualified(#[\JetBrains\PhpStorm\Language('RegExp')] string $regex) {}
+            function sql(#[Language('SQL')] string $query) {}
+            function bare(#[Language] string $text) {}
+            CODE);
+
+        $this->assertSame(['App\single#0', 'App\double#1', 'App\named#0', 'App\qualified#0'], $specs);
+    }
+
+    /**
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_call_to_a_function_marked_for_phpstorm_is_read(\Closure $strategy): void
+    {
+        $declarations = $this->write(<<<'CODE'
+            <?php
+
+            namespace App;
+
+            use JetBrains\PhpStorm\Language;
+
+            function grep(#[Language('RegExp')] string $regex, array $lines): array
+            {
+                return [];
+            }
+            CODE);
+        $calls = $this->write("<?php\n\\App\\grep('/(a+)+$/', []);\n");
+
+        $patterns = array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $strategy()->extract([$declarations, $calls]));
+
+        $this->assertContains('/(a+)+$/', $patterns);
     }
 
     /**
@@ -192,7 +243,7 @@ final class PatternAttributeTest extends TestCase
     #[Test]
     public function test_the_scan_reads_a_truncated_file(): void
     {
-        $this->assertSame([], PatternAttributeScanner::scan("<?php\nuse PHPRegex\\Parser\\Attribute\\Pattern"));
+        $this->assertSame([], PatternAttributeScanner::scan("<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern"));
         $this->assertSame([], PatternAttributeScanner::scan("<?php\nfunction f"));
         $this->assertSame([], PatternAttributeScanner::scan("<?php\nfunction f(string \$a, array \$b = [1"));
     }

@@ -511,17 +511,19 @@ vendor/bin/regex lint src/ --pattern-function='App\Support\Str::matches#1'
 ```
 
 Or mark the parameter at the source, with the attribute
-`PHPRegex\Parser\Attribute\Pattern`: every linted file is first read for the
-functions and static methods that declare one, and their calls are then read
-as if they were configured. An instance call (`$str->matches(...)`) names no
-class the linter can know, and is not read.
+`PHPRegex\Parser\Attribute\RegexPattern`, or with PhpStorm's
+`#[Language('RegExp')]` (`jetbrains/phpstorm-attributes`) if the code already
+carries it: every linted file is first read for the functions and static
+methods that declare one, and their calls are then read as if they were
+configured. An instance call (`$str->matches(...)`) names no class the linter
+can know, and is not read.
 
 ```php
-use PHPRegex\Parser\Attribute\Pattern;
+use PHPRegex\Parser\Attribute\RegexPattern;
 
 final class Str
 {
-    public static function matches(string $subject, #[Pattern] string $regex): bool
+    public static function matches(string $subject, #[RegexPattern] string $regex): bool
     {
         return 1 === preg_match($regex, $subject);
     }

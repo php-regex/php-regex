@@ -17,14 +17,15 @@ namespace PHPRegex\Parser\Attribute;
  * Marks a parameter that receives a regex pattern, as a project's own
  * wrapper around preg_match() takes one:
  *
- *     public static function matches(string $subject, #[Pattern] string $regex): bool
+ *     public static function matches(string $subject, #[RegexPattern] string $regex): bool
  *
  * `regex lint` then reads the pattern of every call to the function, or to
- * the static method, as it reads the one of a preg_*() call. PHP never loads
- * the class unless the attribute is instantiated by reflection, so requiring
- * the package as a dev dependency is enough.
+ * the static method, as it reads the one of a preg_*() call; PhpStorm's
+ * #[Language('RegExp')] is read the same way. PHP never loads the class
+ * unless the attribute is instantiated by reflection, so requiring the
+ * package as a dev dependency is enough.
  *
  * @api
  */
 #[\Attribute(\Attribute::TARGET_PARAMETER)]
-final readonly class Pattern {}
+final readonly class RegexPattern {}

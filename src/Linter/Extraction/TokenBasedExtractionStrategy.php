@@ -52,8 +52,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
     public function extract(array $files): array
     {
-        // The functions the files mark with #[Pattern] join the registry for
-        // this run.
+        // The functions the files mark with #[RegexPattern] join the
+        // registry for this run.
         $specs = PatternAttributeScanner::specs($files);
         $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
 

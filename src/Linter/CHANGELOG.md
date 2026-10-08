@@ -48,7 +48,8 @@ CHANGELOG
    writes the same `$matches`, `(a+?)b`, proven by the automata, at severity
    `style`, off by default.
  * A function or static method declaring a parameter with the attribute
-   `PHPRegex\Parser\Attribute\Pattern` is a pattern function, as if
+   `PHPRegex\Parser\Attribute\RegexPattern`, or PhpStorm's
+   `#[Language('RegExp')]`, is a pattern function, as if
    configured: the files are read for such declarations before extraction.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the
    project's range parses into another meaning, `/a{,3}/` from PHP 8.4, at
