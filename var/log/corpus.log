@@ -805,7 +805,7 @@
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-  corpus/PHPOffice/PHPWord/src/PhpWord/TemplateProcessor.php:480:25
+  corpus/PHPOffice/PHPWord/src/PhpWord/TemplateProcessor.php:481:25
       → /^([0-9\.]*(cm|mm|in|pt|pc|px|%|em|ex|)|auto)$/i
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -2290,25 +2290,25 @@
          - |<title>([^<]*?)</title>|is
          + |<title>([^<]*?)</title>|i
 
-  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3878:26
+  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3880:26
       → /\((?!\s*select)[^(]*?\)/is
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /\((?!\s*select)[^(]*?\)/is
          + /\((?!\s*select)[^(]*?\)/i
 
-  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3885:4
+  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3887:4
       → /^\s*(?:SELECT.*?\s+FROM|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:.+?FROM)?)\s+((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)/is
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3910:20
+  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3912:20
       → /^\s*SHOW\s+(?:TABLE\s+STATUS|(?:FULL\s+)?TABLES)\s+(?:WHERE\s+Name\s+)?LIKE\s*("|')((?:[\\0-9a-zA-Z$_.-]|[\xC2-\xDF][\x80-\xBF])+)%?\1/is
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
 
-  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3916:4
+  corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3918:4
       → /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
      WARN  Redundant non-capturing group; it can be removed without changing behavior.
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -3545,7 +3545,7 @@
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1087:25
+  corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1086:25
       → /<!--(.|\s)*?-->/
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -6033,7 +6033,7 @@
       → #(^[0-9])#i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/matomo-org/matomo/plugins/AIProviders/Provider/Google.php:303:13
+  corpus/matomo-org/matomo/plugins/AIProviders/Provider/Google.php:310:13
       → ~^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$~i
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
