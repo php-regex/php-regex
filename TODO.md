@@ -165,9 +165,6 @@ host `setlocale()` can rebuild PCRE's case tables.
 - A railroad label spells quoted text as text, so `{2}` after an atom
   reads back as a quantifier (`a\Q{2}\E` shows as `a{2}`); a bare `\x`
   (PCRE2 10.44 and older) before `{` is not respelled either.
-- Error order in a class left open at the end: a reversed range between
-  two plain ASCII characters is reported first, as PCRE2 does; one with an
-  escape at either end (`[\x7A-a`) still gives the unclosed class.
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch
