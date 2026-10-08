@@ -408,7 +408,11 @@ final class NodePredicates
      */
     public static function tailCanStartWithNewline(array $nodes, CharSetAnalyzer $analyzer, bool $dotAll, string $newline = "\n"): bool
     {
-        $newlineSet = ByteCharSet::fromChar($newline);
+        // A newline of several kinds starts with any of the characters given.
+        $newlineSet = ByteCharSet::empty();
+        foreach (str_split($newline) as $character) {
+            $newlineSet = $newlineSet->union(ByteCharSet::fromChar($character));
+        }
 
         foreach ($nodes as $node) {
             if ($node instanceof GroupNode

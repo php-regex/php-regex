@@ -266,6 +266,36 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     }
 
     /**
+     * Under "(*CRLF)" a newline starts with "\r", under "(*ANYCRLF)" with
+     * "\r" or "\n": a tail that can continue a line end starts with one of
+     * them, which is all this checks. Under "(*ANY)" some newlines lie above
+     * ASCII, which the sets do not hold: the rule says nothing.
+     *
+     * @param array<int, NodeInterface> $nodes
+     */
+    private function tailCanStartALineEnd(NodeInterface $anchor, array $nodes, string $flags, string $convention, LintContext $context): bool
+    {
+        $starts = match ($convention) {
+            'CRLF' => "\r",
+            'ANYCRLF' => "\r\n",
+            default => null,
+        };
+        if (null === $starts) {
+            return true;
+        }
+
+        if ($anchor instanceof AssertionNode && 'z' === $anchor->value) {
+            return false;
+        }
+
+        if (!$anchor instanceof AssertionNode && $context->pattern->hasFlag('D') && !str_contains($flags, 'm')) {
+            return false;
+        }
+
+        return NodePredicates::tailCanStartWithNewline($nodes, $context->charSetAnalyzer, str_contains($flags, 's'), $starts);
+    }
+
+    /**
      * `$` and `\Z` also match just before the subject's final newline (and
      * a multiline `$` before any newline), so a tail that can continue one
      * of those newline matches is not impossible. `\z` only matches at the
@@ -282,16 +312,15 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $multiline = str_contains($flags, 'm');
         $dotAll = str_contains($flags, 's');
 
-        // The checks below know a newline of one character: under
-        // "(*CRLF)", "(*ANYCRLF)" and "(*ANY)" the rule says nothing.
-        $newline = match (StartOptions::newline($context->pattern->source)) {
+        $convention = StartOptions::newline($context->pattern->source);
+        $newline = match ($convention) {
             'LF' => "\n",
             'CR' => "\r",
             'NUL' => "\0",
             default => null,
         };
         if (null === $newline) {
-            return true;
+            return $this->tailCanStartALineEnd($anchor, $nodes, $flags, $convention, $context);
         }
 
         if ($anchor instanceof AssertionNode) {

@@ -56,6 +56,9 @@ final class EndAnchorNewlineConventionTest extends TestCase
         yield 'optional carriage return' => ['pattern' => '/(*CR)a$\r?/', 'subject' => "a\r"];
         yield 'carriage return repeated once' => ['pattern' => '/(*CR)a$\r{1}/', 'subject' => "a\r"];
         yield 'line feed by default' => ['pattern' => "/a\$\n/", 'subject' => "a\n"];
+        yield 'line feed under (*ANYCRLF)' => ['pattern' => "/(*ANYCRLF)a\$\n/", 'subject' => "a\n"];
+        yield 'line feed under (*ANY)' => ['pattern' => "/(*ANY)a\$\n/", 'subject' => "a\n"];
+        yield 'carriage return and line feed under m' => ['pattern' => "/(*CRLF)a\$\r\n/m", 'subject' => "a\r\n"];
         yield 'carriage return in a group' => ['pattern' => '/(*CR)a$(?:\r)/', 'subject' => "a\r"];
         yield 'carriage return in an alternation' => ['pattern' => '/(*CR)a$(?:xy|\r)/', 'subject' => "a\r"];
         yield 'carriage return in a conditional' => ['pattern' => '/(*CR)(a)$(?(1)\r|x)/', 'subject' => "a\r"];
@@ -90,5 +93,14 @@ final class EndAnchorNewlineConventionTest extends TestCase
         yield 'carriage return under m' => ['pattern' => "/(*CR)a\$\n/m"];
         yield 'carriage return before capital Z' => ['pattern' => "/(*CR)a\\Z\n/"];
         yield 'NUL' => ['pattern' => "/(*NUL)a\$\n/"];
+        // Under (*CRLF) a newline starts with "\r", under (*ANYCRLF) with
+        // "\r" or "\n".
+        yield 'line feed under (*CRLF)' => ['pattern' => "/(*CRLF)a\$\n/"];
+        yield 'line feed under (*CRLF) and m' => ['pattern' => "/(*CRLF)a\$\n/m"];
+        yield 'letter after capital Z under (*CRLF)' => ['pattern' => '/(*CRLF)a\Zx/'];
+        yield 'dot under (*CRLF)' => ['pattern' => '/(*CRLF)a$./'];
+        yield 'letter under (*ANYCRLF)' => ['pattern' => '/(*ANYCRLF)a$y/'];
+        yield 'letter after small z under (*CRLF)' => ['pattern' => '/(*CRLF)a\zx/'];
+        yield 'carriage return and line feed under D and (*CRLF)' => ['pattern' => "/(*CRLF)a\$\r\n/D"];
     }
 }

@@ -117,9 +117,10 @@ host `setlocale()` can rebuild PCRE's case tables.
 
 ### Other findings
 
-- `regex.lint.anchor.impossible.end` says nothing under `(*CRLF)`,
-  `(*ANYCRLF)` and `(*ANY)`, whose newlines are not one character:
-  `/(*CRLF)a$\n/`, which never matches, is missed.
+- `regex.lint.anchor.impossible.end` says nothing under `(*ANY)`, whose
+  newlines reach above ASCII, where the character sets stop; under
+  `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
+  end, so `/(*CRLF)a$\r\r/` is missed.
 - A lookahead before a loop yields a ReDoS witness with an empty suffix, which
   then matches: `/^(?=)(?:é|\W)*$/` gives `["", "éé", ""]`. The verdict is
   right (with the suffix `a` the engine goes 95, 1,535, 24,575 steps), only
