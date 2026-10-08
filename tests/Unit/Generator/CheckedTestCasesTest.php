@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Generator;
 
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreError;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -85,7 +86,7 @@ final class CheckedTestCasesTest extends TestCase
     {
         // A lookbehind of unbounded length: it parses, PCRE refuses it.
         $pattern = '/(?<=b+a)x/';
-        $this->assertNotNull((new PcreEngine())->compile($pattern));
+        $this->assertInstanceOf(PcreError::class, (new PcreEngine())->compile($pattern));
 
         $this->assertSame(['matching' => [], 'non_matching' => []], $this->cases($pattern));
     }
