@@ -112,6 +112,17 @@ final class AlternationPrecedenceRuleTest extends TestCase
         yield 'options before the start anchor' => ['pattern' => '(?i)^a|b', 'flags' => '', 'grouped' => '(?i)^(?:a|b)', 'subject' => 'xB'];
         yield 'comment opening a middle branch' => ['pattern' => '^a|(?#c)b|c', 'flags' => '', 'grouped' => '^(?:a|b|c)', 'subject' => 'xb'];
         yield 'end anchor inside a non-capturing group' => ['pattern' => '^a|b|(?:c$)', 'flags' => '', 'grouped' => '^(?:a|b|(?:c))$', 'subject' => 'xbx'];
+        // A group that holds the anchor alone goes with it; a capturing group
+        // stays, as its number does, and so does a group setting m.
+        yield 'start anchor alone in nested groups' => ['pattern' => '(?:(?:^))a|b', 'flags' => '', 'grouped' => '^(?:a|b)', 'subject' => 'xb'];
+        yield 'start anchor alone in an atomic group' => ['pattern' => '(?>^)a|b', 'flags' => '', 'grouped' => '^(?:a|b)', 'subject' => 'xb'];
+        yield 'start anchor beside a comment in a group' => ['pattern' => '(?:(?#c)^)a|b', 'flags' => '', 'grouped' => '^(?:a|b)', 'subject' => 'xb'];
+        yield 'start anchor alone in a group setting i' => ['pattern' => '(?i:^)a|b', 'flags' => '', 'grouped' => '^(?:a|b)', 'subject' => 'xb'];
+        yield 'end anchor alone in a group' => ['pattern' => 'a|b(?:$)', 'flags' => '', 'grouped' => '(?:a|b)$', 'subject' => 'ax'];
+        yield 'lookahead asserting the end alone in a group' => ['pattern' => 'a|b(?:(?=$))', 'flags' => '', 'grouped' => '(?:a|b)$', 'subject' => 'ax'];
+        yield 'start anchor alone in a capturing group' => ['pattern' => '(^)a|b', 'flags' => '', 'grouped' => '^(?:()a|b)', 'subject' => 'xb'];
+        yield 'start anchor alone in a group setting m' => ['pattern' => '(?m:^)a|b', 'flags' => '', 'grouped' => '(?m:^)(?:a|b)', 'subject' => 'xb'];
+        yield 'start anchor alone in a group resetting the options' => ['pattern' => '(?^:^)a|b', 'flags' => 'm', 'grouped' => '(?^:^)(?:a|b)', 'subject' => "x\nb"];
     }
 
     /**
@@ -202,6 +213,9 @@ final class AlternationPrecedenceRuleTest extends TestCase
         yield 'commit after a mark' => ['pattern' => '/(*MARK:m)(*COMMIT)^a|b/'];
         yield 'commit inside the group holding the anchor' => ['pattern' => '/(?:(*COMMIT)^a)|b/'];
         yield 'prune inside an atomic group holding the anchor' => ['pattern' => '/(?>(*PRUNE)^a)|b/'];
+        yield 'skip to the name of a mark' => ['pattern' => '/(*MARK:n)(*SKIP:n)^a|b/'];
+        yield 'skip to the name of a short mark' => ['pattern' => '/(*:n)(*SKIP:n)^a|b/'];
+        yield 'skip to an empty name' => ['pattern' => '/(*SKIP:)^a|b/'];
     }
 
     /**
@@ -258,6 +272,10 @@ final class AlternationPrecedenceRuleTest extends TestCase
         yield 'mark' => ['pattern' => '/(*MARK:m)^a|b/', 'grouped' => '(*MARK:m)^(?:a|b)'];
         yield 'short mark' => ['pattern' => '/(*:m)^a|b/', 'grouped' => '(*:m)^(?:a|b)'];
         yield 'then' => ['pattern' => '/(*THEN)^a|b/', 'grouped' => '(*THEN)^(?:a|b)'];
+        // The engine ignores a (*SKIP:n) when no (*MARK:n) is set before it.
+        yield 'skip to a name no mark sets' => ['pattern' => '/(*SKIP:n)^a|b/', 'grouped' => '(*SKIP:n)^(?:a|b)'];
+        yield 'skip to a name no mark sets, in the bare branch' => ['pattern' => '/^a|(*SKIP:n)b/', 'grouped' => '^(?:a|(*SKIP:n)b)'];
+        yield 'skip to a name only a then sets' => ['pattern' => '/(*THEN:n)(*SKIP:n)^a|b/', 'grouped' => '(*THEN:n)(*SKIP:n)^(?:a|b)'];
     }
 
     /**

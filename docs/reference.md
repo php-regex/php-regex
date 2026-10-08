@@ -187,9 +187,13 @@ and comments only, as `(*FAIL)`, is not counted, and an empty one (`/^a|/`) is
 attempt on backtracking, accepts at once or fails (`(*COMMIT)`, `(*PRUNE)`, `(*SKIP)`,
 `(*ACCEPT)`, `(*FAIL)`), in an alternative that reads something, leaves the rule silent: it can
 keep the engine from the other alternatives (`/(*COMMIT)^a|b/` and `/^(*COMMIT)a|b/` never
-match `b`), and a failing verb would carry into the grouped form, which then matches nothing. The tip keeps the options before the anchor (`(?i)^(?:a|b)`), keeps text
+match `b`), and a failing verb would carry into the grouped form, which then matches nothing.
+A `(*SKIP:n)` that no `(*MARK:n)` names is ignored by the engine, and by the rule. The tip
+keeps the options before the anchor (`(?i)^(?:a|b)`), keeps text
 quoted with `\Q...\E` quoted (`^(?:a|\Qb)\E)` for `/^a|\Qb)\E/`), and leaves out the comments
-ending each alternative, so that it compiles under `/x`.
+ending each alternative, so that it compiles under `/x`. A group holding the anchor alone
+leaves with it (`^(?:a|b)` for `/(?:^)a|b/`), but a capturing group stays, keeping its number,
+and a group setting `m` moves as written (`(?m:^)(?:a|b)`).
 
 **Example:**
 ```php

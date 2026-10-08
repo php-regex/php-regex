@@ -265,10 +265,6 @@ The follow-ups are merged too: the search cost's two false positives
 - The lint rules read characters with PCRE's C tables: after
   `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `/a\B\xE9/` matches `"a\xE9"`,
   and `regex.lint.anchor.impossible.boundary` calls it impossible.
-- `regex.lint.anchor.alternationPrecedence` keeps an emptied group in its tip
-  (`/(?:(?:^))a|b/` gives `^(?:(?:(?:))a|b)`, which `group.empty` reports
-  next), and stays silent on `(*SKIP:n)` with no `(*MARK:n)`, which the
-  engine ignores.
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
 - The Symfony route requirement normalizer anchors and groups a requirement
   as the route compiler does, but leaves out the flags it compiles with:

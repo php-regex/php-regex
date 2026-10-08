@@ -104,8 +104,9 @@ final class AlternationPrecedenceRule extends AbstractLintRule
         // A verb that cuts the match or fails, in an alternative that reads
         // something, leaves the rule silent; one of verbs and comments only,
         // as "(*F)" in "^a|(*F)|b", is passed over.
+        $marks = self::marks($node);
         foreach ($alternatives as $alternative) {
-            if ([] !== self::items($alternative) && self::holdsACuttingVerb($alternative)) {
+            if ([] !== self::items($alternative) && self::holdsACuttingVerb($alternative, $marks)) {
                 return [];
             }
         }
@@ -146,8 +147,11 @@ final class AlternationPrecedenceRule extends AbstractLintRule
 
     /**
      * The anchor the node opens ($start) or closes with, and the node the
-     * grouped form leaves out of its alternative: the anchor itself, or the
-     * lookaround asserting it.
+     * grouped form leaves out of its alternative: the anchor itself, the
+     * lookaround asserting it, or a group holding nothing else, which would
+     * be left empty. A capturing group stays, as its number does. A group
+     * setting m or resetting the options moves with the anchor as written,
+     * since they change where "^" and "$" hold.
      *
      * @return array{NodeInterface, NodeInterface}|null
      */
@@ -168,7 +172,15 @@ final class AlternationPrecedenceRule extends AbstractLintRule
         }
 
         if (\in_array($item->type, self::TRANSPARENT_GROUPS, true)) {
-            return self::anchor($item->child, $start);
+            $inner = self::anchor($item->child, $start);
+            if (null === $inner || GroupType::Capturing === $item->type || GroupType::Named === $item->type || !self::holdsOnly($item->child, $inner[1])) {
+                return $inner;
+            }
+
+            $flags = (string) $item->flags;
+            $moves = GroupType::InlineFlags === $item->type && (str_contains($flags, 'm') || str_starts_with($flags, '^'));
+
+            return [$moves ? $item : $inner[0], $item];
         }
 
         $asserted = self::isPositiveLookaround($item) && self::isOnlyAnAnchor($item->child) ? self::anchor($item->child, $start) : null;
@@ -177,19 +189,59 @@ final class AlternationPrecedenceRule extends AbstractLintRule
     }
 
     /**
-     * Whether a verb that ends the match attempt, accepts or fails sits
-     * anywhere in the node: "(*COMMIT)^a|b" and "^(*COMMIT)a|b" never match
-     * "b" in "xb", and the grouped form of "(*F)^a|b" matches nothing.
-     * "(*MARK:m)" and "(*THEN)" leave the bare alternative free.
+     * The names the marks of the node set.
+     *
+     * @return array<string, true>
      */
-    private static function holdsACuttingVerb(NodeInterface $node): bool
+    private static function marks(NodeInterface $node): array
     {
-        if ($node instanceof PcreVerbNode && \in_array(explode(':', $node->verb, 2)[0], self::CUTTING_VERBS, true)) {
-            return true;
+        $marks = [];
+        if ($node instanceof PcreVerbNode && str_starts_with($node->verb, 'MARK:')) {
+            $marks[substr($node->verb, 5)] = true;
         }
 
         foreach ($node->getChildren() as $child) {
-            if (self::holdsACuttingVerb($child)) {
+            $marks += self::marks($child);
+        }
+
+        return $marks;
+    }
+
+    /**
+     * Whether the node is the hole, alone or beside comments.
+     */
+    private static function holdsOnly(NodeInterface $node, NodeInterface $hole): bool
+    {
+        foreach ($node instanceof SequenceNode ? $node->children : [$node] as $child) {
+            if ($child !== $hole && !$child instanceof CommentNode && !($child instanceof LiteralNode && '' === $child->value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether a verb that ends the match attempt, accepts or fails sits
+     * anywhere in the node: "(*COMMIT)^a|b" and "^(*COMMIT)a|b" never match
+     * "b" in "xb", and the grouped form of "(*F)^a|b" matches nothing.
+     * "(*MARK:m)" and "(*THEN)" leave the bare alternative free, and so does
+     * a "(*SKIP:n)" no "(*MARK:n)" of the pattern names, which the engine
+     * ignores.
+     *
+     * @param array<string, true> $marks
+     */
+    private static function holdsACuttingVerb(NodeInterface $node, array $marks): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            [$verb, $name] = explode(':', $node->verb, 2) + [1 => ''];
+            if (\in_array($verb, self::CUTTING_VERBS, true) && ('SKIP' !== $verb || '' === $name || isset($marks[$name]))) {
+                return true;
+            }
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsACuttingVerb($child, $marks)) {
                 return true;
             }
         }
