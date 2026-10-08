@@ -200,6 +200,10 @@ Decided without the maintainer, as asked; each can be reopened.
   `/^(?:xé)+é+$/u` proven linear, both right); the profile only speaks when
   the proof gives up.
 
+- **`quantifier.lazyToClass` keeps no DFA cache:** it asks match
+  equivalence, which explores two priority NFAs and builds no DFA, and each
+  of its questions is about one pattern.
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
@@ -250,7 +254,6 @@ The follow-ups are merged too: the search cost's two false positives
 
 ### Smaller findings, each confirmed against the engine
 
-- `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
 - The language server judges a pattern for the PHP running it: it does not
   read the project's PHP range from `composer.json`, as `regex lint` does.
 - The linter validates each pattern at every PHP version of the range; a
