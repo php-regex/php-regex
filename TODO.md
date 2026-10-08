@@ -177,6 +177,29 @@ Decided without the maintainer, as asked; each can be reopened.
 - **Symfony patterns are linted as Symfony matches them** (352887c7): a
   route requirement as `{^...$}sD` (plus `u` under `utf8`), a security path
   as `{...}s`, a host as `{...}i`; never as a delimited regex.
+- **The lint rules read characters with PCRE's C tables.** PHP builds
+  locale tables only after `setlocale(LC_CTYPE, …)` to a non-C locale, which
+  few applications do and which PHP 8 itself discourages: under such a
+  locale `/a\B\xE9/` may match where `impossible.boundary` says it cannot.
+  A known limit rather than a model per locale.
+- **Rules stay silent under `xx` and the ASCII options** (`(?a)`, `(?aD)`…)
+  rather than ask the automata under the wrong flags: losing a finding there
+  is the safe side, and those options are rare.
+- **An alternative of a verb alone is not an empty alternative.** `a|(*ACCEPT)`
+  or `x|(*COMMIT)` matches the empty string, but the verb says it on
+  purpose: `alternation.empty` keeps reporting only alternatives with
+  nothing in them.
+- **Capture types carry no case facts.** `lowercase-string` and caseless
+  values would have to model Turkish casing, the Kelvin sign, the long s and
+  locale tables; the types say less rather than something wrong.
+- **A baseline path reads `\` as a separator,** so one baseline serves
+  Windows and Unix; a Unix file name holding a literal `\` is not worth
+  breaking that.
+- **The linear-time ReDoS tests time the engine:** with Xdebug on they go
+  over their cap, so they run with `XDEBUG_MODE=off`, as the suite does.
+- **The last code unit through `(*ACCEPT)` in `DEFINE`, and under `(*UCP)`
+  without `u`:** both differ from pcre2test only on paths no caller reaches;
+  left as they are until one does.
 
 ## Report the PCRE2 JIT crash upstream
 
@@ -243,22 +266,11 @@ The follow-ups are merged too: the search cost's two false positives
 
 ### Smaller findings, each confirmed against the engine
 
-- The lint rules read characters with PCRE's C tables: after
-  `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `/a\B\xE9/` matches `"a\xE9"`,
-  and `regex.lint.anchor.impossible.boundary` calls it impossible.
 - `regex.lint.quantifier.lazyToClass` asks the automata without a DFA cache.
-- `NodePredicates::applyInlineFlags()` keeps a flag string that loses `xx`
-  (read as `x`) and the ASCII options (`(?a)(?-aD)` keeps `\w` ASCII; the
-  letters after `a` clash with the `D` and `S` modifiers): the lint rules
-  that ask the automata stay silent under those options rather than carry
-  them.
 - `regex.lint.quantifier.emptyRepeat` stays silent where `quantifier.nested`,
   `quantifier.assertion`, `dotstar.nested` or `alternation.empty` report the
   repeat, even when that rule is turned off: `LintContext` does not say which
   rules are on.
-- An alternative of `(*COMMIT)`, `(*SKIP)` or `(*ACCEPT)` alone matches the
-  empty string, as an empty one does, but `regex.lint.alternation.empty` does
-  not report it.
 - The language server never runs the validator (only the parser), so it
   misses every validation error and the PHP range check.
 - The linter validates each pattern at every PHP version of the range; a
@@ -271,18 +283,6 @@ The follow-ups are merged too: the search cost's two false positives
 - `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
   for every release from 10.44 (right for 10.44); the release that relaxed it
   is unknown.
-- Capture case facts (`lowercase-string` / `uppercase-string` and caseless
-  values) were left out: Turkish casing, the Kelvin sign and the long s as
-  sources, locale tables.
-- A baseline path always reads `\` as a separator, so one baseline serves
-  Windows and Unix; a file name holding a literal `\` on Unix matches the
-  subdirectory of the same name.
-- With Xdebug on (`debug,coverage`), the linear-time ReDoS tests go over
-  their one-second cap; they pass with `XDEBUG_MODE=off`.
-- The last code unit is not read through `(*ACCEPT)` inside `DEFINE` or a
-  one-branch conditional (`/x(?(DEFINE)(*ACCEPT))b/`); unreachable today.
-- `(*UCP)` without `u`: `/(*UCP)xk/i` gives the last code unit `k`, where
-  pcre2test gives none; unreachable today.
 
 ### Upstream, the maintainer's call
 
