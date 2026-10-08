@@ -6,7 +6,11 @@
 
 <h3 align="center">Static analysis, linter & logic solver for PHP regular expressions</h3>
 
-Every package is a read-only split of the [php-regex monorepo](https://github.com/php-regex/php-regex) — please open issues and pull requests there.
+<p align="center">
+    <em>Every package is a read-only split of the
+    <a href="https://github.com/php-regex/php-regex">php-regex monorepo</a> —
+    please open issues and pull requests there.</em>
+</p>
 
 ## Start here
 
@@ -35,3 +39,9 @@ Every package is a read-only split of the [php-regex monorepo](https://github.co
 
 - [`regex-symfony`](https://github.com/php-regex/regex-symfony) — Symfony bundle: the Regex service and the regex:* commands.
 - [`regex-laravel`](https://github.com/php-regex/regex-laravel) — Laravel integration: the Regex facade and the regex:* artisan commands.
+
+## Documentation
+
+- [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — install and parse your first pattern in two minutes.
+- [Tutorial](https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/README.md) — a guided walk through regex syntax, concept by concept.
+- [PCRE2 conformance](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/pcre2-conformance.md) — how closely the parser follows the real engine, case by case.
