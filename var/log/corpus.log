@@ -272,6 +272,10 @@
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:1211:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:1330:33
       → { < (?:mailto:)? ( (?: [-!#$%&'*+/=?^_`.{|}~\w\x80-\xFF]+ | ".*?" ) \@ (?: [-a-z0-9\x80-\xFF]+(\.[-a-z0-9\x80-\xFF]+)*\.[a-z]+ | \[[\d.a-fA-F:]+\] ) ) >}xi
      WARN  Character class contains duplicate elements that do not add new matches.
@@ -696,6 +700,10 @@
       → /([^\w.\-+\/])+/
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/MyIntervals/PHP-CSS-Parser/src/Parsing/ParserState.php:119:40
+      → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/MyIntervals/PHP-CSS-Parser/src/Parsing/ParserState.php:157:44
       → /\s/isSu
@@ -3971,6 +3979,14 @@
          - #(\[|\]\[|\])#
          + #(\[|\]\[|])#
 
+  corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:233:33
+      → ~^url\(\s*['"]\s*(.*)\s*['"]\s*\)$~xi
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:239:22
+      → ~^((https?|ftp|file):)?//~xi
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/elementor/elementor/includes/db.php:609:31
       → /(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/
      WARN  Character class contains duplicate elements that do not add new matches.
@@ -4096,6 +4112,10 @@
       → / ( (?> ^[ ]*>[ ]? .+\n (.+\n)* \n* )+ )/xm
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1458:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1618:33
       → { < (?:mailto:)? ( (?: [-!#$%&'*+/=?^_`.{|}~\w\x80-\xFF]+ | ".*?" ) \@ (?: [-a-z0-9\x80-\xFF]+(\.[-a-z0-9\x80-\xFF]+)*\.[a-z]+ | \[[\d.a-fA-F:]+\] ) ) >}xi
@@ -4524,6 +4544,7 @@
 
   corpus/getgrav/grav/system/src/Grav/Common/Uri.php:1032:13
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -4531,6 +4552,7 @@
 
   corpus/getgrav/grav/system/src/Grav/Common/Utils.php:2019:13
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -4635,6 +4657,7 @@
 
   corpus/google/site-kit-wp/includes/Core/Util/URL.php:86:4
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -4692,8 +4715,13 @@
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '(' and ')' explicitly instead of a range.
 
+  corpus/guzzle/psr7/src/Rfc9112.php:101:27
+      → /^[A-Za-z][A-Za-z0-9+.-]*:\/\//D
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
   corpus/guzzle/psr7/src/UriParser.php:73:21
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -4701,6 +4729,7 @@
 
   corpus/guzzle/psr7/src/UriParser.php:93:13
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -4774,6 +4803,10 @@
       → ~(\s|\x{3164}|\x{1160})+~u
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/hyperf/hyperf/src/view-engine/src/Compiler/BladeCompiler.php:379:26
+      → /^\w+(?:::\w+)?$/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/ibexa/core/src/contracts/Repository/Values/Content/Query/Aggregation/Location/SubtreeTermAggregation.php:41:27
       → /^(\/\w+)+\/$/
@@ -5052,6 +5085,10 @@
       → #^([0-9\.]+)(|.*)$#
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+
+  corpus/joomla/joomla-cms/libraries/loader.php:616:29
+      → /(?<=[a-z0-9])(?=[A-Z])/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/joomla/joomla-cms/libraries/src/Console/SetConfigurationCommand.php:286:56
       → #^[a-zA-Z]+[a-zA-Z0-9_]*$#
@@ -5361,6 +5398,7 @@
   corpus/laravel/framework/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php:260:13
       → /<\s*x[-:]([\w\-:.]*)/mx
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      TIP 
            /<\s*x[\-:](
            [\w\-:.]*
@@ -5370,11 +5408,13 @@
 
   corpus/laravel/framework/src/Illuminate/Mail/Transport/SesTransport.php:105:28
       → /^(contactListName=)*(?<ContactListName>[^;]+)(;\s?topicName=(?<TopicName>.+))?$/ix
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/laravel/framework/src/Illuminate/Mail/Transport/SesV2Transport.php:109:28
       → /^(contactListName=)*(?<ContactListName>[^;]+)(;\s?topicName=(?<TopicName>.+))?$/ix
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -5407,6 +5447,10 @@
       → /^[\{\[][-?\d|*,\.*]*[\}\]]/
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '*' (duplicate)
+
+  corpus/laravel/framework/src/Illuminate/View/Compilers/BladeCompiler.php:987:26
+      → /^\w+(?:::\w+)?$/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:693:13
       → /@(class)(\( ( (?>[^()]+) | (?2) )* \))/x
@@ -6566,6 +6610,10 @@
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/michelf/php-markdown/Michelf/Markdown.php:1453:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/michelf/php-markdown/Michelf/Markdown.php:1613:33
       → { < (?:mailto:)? ( (?: [-!#$%&'*+/=?^_`.{|}~\w\x80-\xFF]+ | ".*?" ) \@ (?: [-a-z0-9\x80-\xFF]+(\.[-a-z0-9\x80-\xFF]+)*\.[a-z]+ | \[[\d.a-fA-F:]+\] ) ) >}xi
      WARN  Character class contains duplicate elements that do not add new matches.
@@ -7271,6 +7319,7 @@
 
   corpus/moodle/moodle/public/lib/guzzlehttp/psr7/src/Uri.php:118:13
       → %[^:/@?&=#]+%usD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - %[^:/@?&=#]+%usD
@@ -7325,6 +7374,10 @@
       → / ( (?> ^[ ]*>[ ]? .+\n (.+\n)* \n* )+ )/xm
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/moodle/moodle/public/lib/markdown/Michelf/Markdown.php:1453:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/moodle/moodle/public/lib/markdown/Michelf/Markdown.php:1613:33
       → { < (?:mailto:)? ( (?: [-!#$%&'*+/=?^_`.{|}~\w\x80-\xFF]+ | ".*?" ) \@ (?: [-a-z0-9\x80-\xFF]+(\.[-a-z0-9\x80-\xFF]+)*\.[a-z]+ | \[[\d.a-fA-F:]+\] ) ) >}xi
@@ -7502,6 +7555,10 @@
       → /([ \t\n\r]*)?<!-- BEGIN required -->(\s|\S)*<!-- END required -->([ \t\n\r]*)?/i
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/moodle/moodle/public/lib/php-css-parser/src/Parsing/ParserState.php:156:28
+      → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/moodle/moodle/public/lib/php-css-parser/src/Parsing/ParserState.php:196:32
       → /\s/isSu
@@ -8228,6 +8285,50 @@
      TIP 
          - /<\/(table|tr|td|th|blockquote|dd|dt|dl|div|dt|h1|h2|h3|h4|h5|h6|hr|li|ol|ul|p)>[\s]+</
          + /<\/(table|tr|td|th|blockquote|dd|dt|dl|div|h1|h2|h3|h4|h5|h6|hr|li|ol|ul|p)>[\s]+</
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:16622:24
+      → /<img([^\>]*)>[\s]+([^\<])/xi
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:16623:24
+      → /<img([^\>]*)>/xi
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:16625:24
+      → /<textarea([^\>]*)>([^\<]*)<\/textarea>/xi
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:17935:33
+      → /[\\][\(]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:17936:33
+      → /[\\][\)]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:17938:27
+      → /\[\(([^\)]*)\)\]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:17975:27
+      → /([0-9\.\+\-]*)[\s](Td|cm|m|l|c|re)[\s]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:18150:31
+      → /[\\][\(]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:18151:31
+      → /[\\][\)]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:18152:29
+      → /\[\(([^\)]*)\)\]/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:18180:31
+      → /\[\(/x
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/moodle/moodle/public/lib/tcpdf/tcpdf.php:19140:25
       → /<svg\s+[^>]*[^>]*>.*<\/svg>/is
@@ -9247,6 +9348,10 @@
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Quantifier "+" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to "".
 
+  corpus/nette/latte/src/Latte/Compiler/TemplateParser.php:430:42
+      → #^[a-z]#iD
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
   corpus/nette/latte/src/Latte/Runtime/Cache.php:111:22
       → #([/\\][\w@.-]{3,35}){1,3}$#D
      INFO  Quantified capturing group "(...)" with "{1,3}": only the last iteration's capture is retained.
@@ -9609,6 +9714,18 @@
          - /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
          + /\?(?=(?:[^'\\']*'[^'']*')*[^'\\']*$)\?/
 
+  corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Example.php:91:25
+      → /^\s*(?:(\"[^\"]+\")|(\S+))(?:\s+(.*))?$/sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Example.php:111:28
+      → /^([1-9]\d*)(?:\s+((?1))\s*)?(.*)$/sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
+  corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Source.php:63:24
+      → /^([1-9]\d*)\s*(?:((?1))\s+)?(.*)$/sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/phpDocumentor/ReflectionDocBlock/src/DocBlockFactory.php:177:13
       → / \A (?:(\#\@\+|\#\@\-)\n?)? (?: (?! @\pL ) ( [^\n.]+ (?: (?! \. \n | \n{2} ) [\n.]* (?! [ \t]* @\pL ) [^\n.]+ )* \.? )? ) (?: \s* (?! @\pL ) ( [^\n]+ (?: \n+ (?! [ \t]* @\pL ) [^\n]+ )* ) )? (\s+ [\s\S]*)?/ux
      WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -9869,6 +9986,7 @@
 
   corpus/phpbb/phpbb/phpBB/phpbb/db/driver/mssqlnative.php:210:27
       → /SELECT(\s*DISTINCT)?/Dsi
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /SELECT(\s*DISTINCT)?/Dsi
@@ -9876,6 +9994,7 @@
 
   corpus/phpbb/phpbb/phpBB/phpbb/db/driver/mssqlnative.php:215:26
       → /SELECT(\s*DISTINCT)?/Dsi
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /SELECT(\s*DISTINCT)?/Dsi
@@ -13314,11 +13433,13 @@
 
   corpus/symfony/symfony/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php:131:28
       → /^(contactListName=)*(?<ContactListName>[^;]+)(;\s?topicName=(?<TopicName>.+))?$/ix
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/symfony/symfony/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php:104:32
       → /^(contactListName=)*(?<ContactListName>[^;]+)(;\s?topicName=(?<TopicName>.+))?$/ix
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -13627,6 +13748,7 @@
 
   corpus/twigphp/Twig/src/Test/IntegrationTestCase.php:191:28
       → /--TEST--\s*(.*?)\s*(?:--CONDITION--\s*(.*))?\s*(?:--DEPRECATION--\s*(.*?))?\s*((?:--TEMPLATE(?:\(.*?\))?--(?:.*?))+)\s*(?:--DATA--\s*(.*))?\s*--EXCEPTION--\s*(.*)/sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
          ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
 
@@ -14433,6 +14555,10 @@
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+  corpus/woocommerce/woocommerce/.github/workflows/scripts/post-request-shared.php:119:29
+      → /^\d+\.\d+\.\d+/D
+     WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
   corpus/woocommerce/woocommerce/packages/php/email-editor/src/Engine/Renderer/class-html2text.php:148:27
       → / *\t */im
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -14517,6 +14643,10 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
+  corpus/woocommerce/woocommerce/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php:158:28
+      → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/woocommerce/woocommerce/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php:200:32
       → /\s/isSu
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -14553,6 +14683,7 @@
 
   corpus/woocommerce/woocommerce/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php:49:6
       → /^https?:\/\/(([\w-]+\.)*woocommerce\.com|([\w-]+\.)*woocommerce\.test|([\w-]+\.)*WordPress\.com|([\w-]+\.)*wp\.com)/ix
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -14579,6 +14710,10 @@
   corpus/woocommerce/woocommerce/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php:170:24
       → /\(.*\)\//i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/woocommerce/woocommerce/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php:158:28
+      → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/woocommerce/woocommerce/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php:200:32
       → /\s/isSu
@@ -14795,9 +14930,14 @@
      WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
          ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
 
+  corpus/yiisoft/yii/build/commands/markdown/MarkdownParser.php:46:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/yiisoft/yii/build/commands/markdown/MarkdownParser.php:50:31
       → /^(\s*<p>\s*)([a-z]+):\s*/sxi
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      TIP 
            /^(
            \s*<p>\s*
@@ -14814,9 +14954,14 @@
          - /public static function getVersion.*?return '(.*?)'/ms
          + /public static function getVersion.*?return '(.*?)'/s
 
+  corpus/yiisoft/yii/docs/viewer/components/MarkdownParser.php:53:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+
   corpus/yiisoft/yii/docs/viewer/components/MarkdownParser.php:57:31
       → /^(\s*<p>\s*)([^:]+):\s*/sxi
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
      TIP 
            /^(
            \s*<p>\s*
@@ -14902,6 +15047,10 @@
       → / ( (?> ^[ ]*>[ ]? .+\n (.+\n)* \n* )+ )/xm
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1132:31
+      → {(\s*<pre>.+?</pre>)}sx
+     WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
 
   corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1252:33
       → { < (?:mailto:)? ( (?: [-!#$%&'*+/=?^_`.{|}~\w\x80-\xFF]+ | ".*?" ) \@ (?: [-a-z0-9\x80-\xFF]+(\.[-a-z0-9\x80-\xFF]+)*\.[a-z]+ | \[[\d.a-fA-F:]+\] ) ) >}xi
