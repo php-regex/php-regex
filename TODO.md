@@ -41,8 +41,7 @@ the public API, so they go before the tag.
 
 ### Next steps
 
-- Left from this list, in this order: the lookbehind validation and the
-  `(?J)` branch-reset names below.
+- Left from this list: the lookbehind validation below.
 
 ### The character-set analysis
 
@@ -82,12 +81,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   newlines reach above ASCII, where the character sets stop; under
   `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
   end, so `/(*CRLF)a$\r\r/` is missed.
-- Under `(?J)`, PCRE accepts two names for one branch-reset number when the
-  later name already exists: `/(?J)(?<n>a)(?|(?<m>b)|(?<n>c))/` on `ab`
-  gives `{"0":"ab","n":"b","1":"a","2":"b"}`, with no `m` key. The library
-  refuses it. Accepting it needs the capture shape to stop naming the shared
-  record after the first branch that names it, and the `(?J)` rule of
-  `capture-shapes.md` to say which name PHP keeps.
 - Lookbehind validation (each against PCRE2 10.49):
   - the "lookbehind assertion is too complicated" budget is not PCRE's:
     PCRE counts past 2000 across the whole compile, with or without a branch
@@ -178,6 +171,14 @@ Decided without the maintainer, as asked; each can be reopened.
   and `\s` keep the same ASCII members under it (checked byte by byte), the
   sets stop at 0x7F, and the rules that look above ASCII read the verb.
 
+- **Two names for one branch-reset number stay refused, whatever the
+  release.** PCRE2 10.49 accepts `/(?J)(?<n>a)(?|(?<m>b)|(?<n>c))/` and
+  `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` when the later name already exists,
+  but drops the earlier one: `$matches` has no `m` key. No ChangeLog entry
+  from 10.45 to 10.50 announces it (10.47 rewrote the name lookup), every PHP
+  bundles 10.44, which refuses both, and a pattern that silently loses a
+  name deserves the error.
+
 ## Report the PCRE2 JIT crash upstream
 
 Not filed yet. No issue about it existed on
@@ -233,9 +234,6 @@ The follow-ups are merged too: the search cost's two false positives
 - The linter validates each pattern at every PHP version of the range; a
   pattern that reads no version-dependent rule could skip the extra runs (the
   flag must travel with the cached tree, not in a side channel).
-- `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
-  for every release from 10.44 (right for 10.44); the release that relaxed it
-  is unknown.
 
 ### Upstream, the maintainer's call
 
