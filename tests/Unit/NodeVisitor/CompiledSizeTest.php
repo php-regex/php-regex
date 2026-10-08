@@ -121,6 +121,7 @@ final class CompiledSizeTest extends TestCase
         yield 'lookahead' => ['pattern' => '/(?=a){8192}/'];
         yield 'two branches' => ['pattern' => '/(?:a|b){5041}/'];
         yield 'open maximum' => ['pattern' => '/(?:a){8192,}/'];
+        yield 'nested counted groups' => ['pattern' => '/(?:(?:a{1000}){1000}){1000}/'];
         yield 'optional copies' => ['pattern' => '/(?:a){0,4370}/'];
         yield 'mandatory then optional copies' => ['pattern' => '/(?:a){2,4370}/'];
         yield 'lazy count' => ['pattern' => '/(?:a){10000}?/'];

@@ -269,8 +269,6 @@ The follow-ups are merged too: the search cost's two false positives
 - The linter validates each pattern at every PHP version of the range; a
   pattern that reads no version-dependent rule could skip the extra runs (the
   flag must travel with the cached tree, not in a side channel).
-- The parser accepts `/(?:(?:a{1000}){1000}){1000}/`, which PCRE2 refuses
-  ("regular expression is too large").
 - `/(?<n3>a)(?|(?<n1>x)|(?<n3>y))/J` compiles on PCRE2 10.49 but is refused
   for every release from 10.44 (right for 10.44); the release that relaxed it
   is unknown.
