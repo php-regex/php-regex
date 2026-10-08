@@ -96,6 +96,48 @@ final class UselessLazyTest extends TestCase
         $this->assertSame([], $this->messages('/(?U)(a+?)b/', true));
     }
 
+    /**
+     * After an empty match, preg_match_all(), preg_replace() and
+     * preg_split() try again at the same offset for a non-empty one, where
+     * the lazy and the greedy forms part: preg_match() alone agrees.
+     */
+    #[Test]
+    #[DataProvider('provideEmptyMatchingPatterns')]
+    public function test_a_pattern_that_may_match_the_empty_string_is_not_reported(string $pattern, string $greedy, string $subject): void
+    {
+        preg_match_all($pattern, $subject, $lazyMatches);
+        preg_match_all($greedy, $subject, $greedyMatches);
+        $this->assertNotSame($greedyMatches, $lazyMatches, $pattern);
+
+        $this->assertSame([], $this->messages($pattern, true));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, greedy: string, subject: string}>
+     */
+    public static function provideEmptyMatchingPatterns(): iterable
+    {
+        yield 'an optional group' => ['pattern' => '/(\d+?,?)??/', 'greedy' => '/(\d+,?)??/', 'subject' => '12'];
+        yield 'an optional group of an optional tail' => ['pattern' => '/(?:a+?b?)??/', 'greedy' => '/(?:a+b?)??/', 'subject' => 'aa'];
+        yield 'an empty alternative' => ['pattern' => '/|b{1,2}?./', 'greedy' => '/|b{1,2}./', 'subject' => 'bba'];
+    }
+
+    /**
+     * A match limit the pattern sets is reached by the form that backtracks
+     * more first: "(a+?)b" gives up where "(a+)b" matches.
+     */
+    #[Test]
+    public function test_a_pattern_that_sets_a_limit_is_not_reported(): void
+    {
+        $subject = str_repeat('a', 30).'b';
+        $this->assertFalse(@preg_match('/(*LIMIT_MATCH=20)(a+?)b/', $subject));
+        $this->assertSame(1, preg_match('/(*LIMIT_MATCH=20)(a+)b/', $subject));
+
+        $this->assertSame([], $this->messages('/(*LIMIT_MATCH=20)(a+?)b/', true));
+        $this->assertSame([], $this->messages('/(*LIMIT_DEPTH=20)(a+?)b/', true));
+        $this->assertSame([], $this->messages('/(*LIMIT_HEAP=20)(a+?)b/', true));
+    }
+
     #[Test]
     public function test_the_rule_is_off_by_default(): void
     {

@@ -520,7 +520,11 @@ fixed count such as `a{3}?` has nothing to choose. The automata prove the two pa
 equivalent before the rule speaks. It stays silent where the lazy marker matters
 (`/(a+?)a/` on `aaa` captures `a`, the greedy form `aa`), under `U`, where `+?` is the greedy
 one, where nothing that can fail follows a variable count (`quantifier.lazyEnd` reports that),
-and past the eighth question it asks the automata about in a pattern. A style rule: turn it
+in a pattern that may match the empty string (after an empty match, `preg_match_all()`,
+`preg_replace()` and `preg_split()` try again for a non-empty one, where the two forms part:
+`/(\d+?,?)??/` finds `1` and `2` in `12`, the greedy form `12`) or that sets a
+`(*LIMIT_MATCH=…)`, `(*LIMIT_DEPTH=…)` or `(*LIMIT_HEAP=…)`, which the lazy form, backtracking
+more, may reach first, and past the eighth question it asks the automata about in a pattern. A style rule: turn it
 on with `"quantifier.uselessLazy": true` under `checks.lint.rules`.
 
 **Example:**
