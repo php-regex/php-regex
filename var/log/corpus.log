@@ -9613,8 +9613,6 @@
       → / \A (?:(\#\@\+|\#\@\-)\n?)? (?: (?! @\pL ) ( [^\n.]+ (?: (?! \. \n | \n{2} ) [\n.]* (?! [ \t]* @\pL ) [^\n.]+ )* \.? )? ) (?: \s* (?! @\pL ) ( [^\n]+ (?: \n+ (?! [ \t]* @\pL ) [^\n]+ )* ) )? (\s+ [\s\S]*)?/ux
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-         ↳ Consider tightening the first quantifier to its minimum.
 
   corpus/phpactor/phpactor/lib/CodeTransform/Adapter/TolerantParser/Refactor/TolerantExtractExpression.php:152:24
       → /(\t| )*$/
