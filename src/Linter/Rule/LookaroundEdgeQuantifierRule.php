@@ -15,8 +15,11 @@ namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
+use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\CommentNode;
@@ -79,6 +82,14 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
         // What the body sets or reads beyond its language: a capture, a
         // reference, a call, a verb, a callout, \K.
         if (self::holdsMoreThanALanguage($node->child)) {
+            return [];
+        }
+
+        // A lookbehind of variable length reads the end of the subject at
+        // its own position ("\z", "$", "\b", a lookahead see nothing past
+        // it), one of fixed length the real end: cutting a repeat may turn
+        // the first into the second.
+        if ($behind && self::testsAPosition($node->child)) {
             return [];
         }
 
@@ -169,6 +180,21 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
 
         foreach ($node->getChildren() as $child) {
             if (self::holdsMoreThanALanguage($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function testsAPosition(NodeInterface $node): bool
+    {
+        if ($node instanceof AnchorNode || $node instanceof AssertionNode || ($node instanceof GroupNode && !NodePredicates::isTransparentGroup($node->type))) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::testsAPosition($child)) {
                 return true;
             }
         }

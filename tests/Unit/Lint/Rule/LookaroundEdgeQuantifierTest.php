@@ -82,6 +82,13 @@ final class LookaroundEdgeQuantifierTest extends TestCase
         yield 'a capture keeps the run' => ['pattern' => '/(?=(a{2,6}))/', 'rewrite' => '/(?=(a{2}))/'];
         yield 'an anchor follows the repeat' => ['pattern' => '/(?=a{2,6}$)/', 'rewrite' => '/(?=a{2}$)/'];
         yield 'the repeat starts a lookahead' => ['pattern' => '/(?=a{1,3}b)/', 'rewrite' => '/(?=ab)/'];
+        // A lookbehind of variable length reads the end of the subject at
+        // its own position, one of fixed length the real one: cutting the
+        // repeat may turn the first into the second.
+        yield 'an end anchor in a lookbehind' => ['pattern' => '/(?<=b{1,2}\z)a/', 'rewrite' => '/(?<=b\z)a/'];
+        yield 'a lookahead in a lookbehind' => ['pattern' => '/(?<=b{1,2}(?=a))a/', 'rewrite' => '/(?<=b(?=a))a/'];
+        yield 'an end anchor in another branch of a lookbehind' => ['pattern' => '/(?<!\z|b?c)/', 'rewrite' => '/(?<!\z|c)/'];
+        yield 'a word boundary in a lookbehind' => ['pattern' => '/(?<=b{1,2}\b)/', 'rewrite' => '/(?<=b\b)/'];
     }
 
     #[Test]

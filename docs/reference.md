@@ -549,7 +549,10 @@ the body repeated past its minimum changes nothing: `(?=a{2,6})` asserts what `(
 asserts, `(?=ab*)` what `(?=a)` asserts. The same holds for the first item of a lookbehind,
 `(?<=a{2,6})`. The automata prove that the two bodies hold at the same positions before the
 rule speaks. It stays silent on a body holding a capture (`(?=(a{2,6}))` keeps the whole run
-in `$1`), a reference, a call, a verb, a callout or `\K`, in a non-atomic lookahead
+in `$1`), a reference, a call, a verb, a callout or `\K`, on a lookbehind whose body tests a
+position (`\z`, `$`, `\b`, a lookahead...: a lookbehind of variable length reads the end of the
+subject at its own position, one of fixed length the real end, and `(?<=b{1,2}\z)a` matches
+`ba` where `(?<=b\z)a` does not), in a non-atomic lookahead
 (`(*napla:...)`), on a possessive repeat, which the automata do not read, and past the eighth
 question it asks them about in a pattern. A perf rule: turn it on with
 `"lookaround.edgeQuantifier": true` under `checks.lint.rules`.
