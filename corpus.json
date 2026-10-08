@@ -105,6 +105,7 @@
         "michelf/php-markdown": { "url": "https://github.com/michelf/php-markdown.git", "branch": "lib", "commit": "98b12b84b11c3fe488015b11e3b84bd1aaa7d719" },
         "minkphp/Mink": { "url": "https://github.com/minkphp/Mink.git", "branch": "master", "commit": "1efa659944300f34e4109178fab1118472370df6" },
         "mockery/mockery": { "url": "https://github.com/mockery/mockery.git", "branch": "1.6.x", "commit": "ac940d7c4bbe4f6566c22386688c3079bad601a4" },
+        "modelcontextprotocol/php-sdk": { "url": "https://github.com/modelcontextprotocol/php-sdk.git", "branch": "main", "commit": "9d0ff74b4e75482e7f104709e3fdbf19f23d4ae7" },
         "moodle/moodle": { "url": "https://github.com/moodle/moodle.git", "branch": "main", "commit": "f20534726a59a4b64d168bc4a70fc9518251613e" },
         "mpdf/mpdf": { "url": "https://github.com/mpdf/mpdf.git", "branch": "development", "commit": "dc48e76f6b961ebdd8d3734c686809400e39ee15" },
         "mustangostang/spyc": { "url": "https://github.com/mustangostang/spyc.git", "branch": "master", "commit": "daf9fa4ef675519386b4f556c9d5ab5f9c14055a" },

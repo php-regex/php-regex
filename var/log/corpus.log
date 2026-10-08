@@ -6617,6 +6617,23 @@
          - /public function __destruct\(\)\s+\{.*?\}/sm
          + /public function __destruct\(\)\s+\{.*?\}/s
 
+  corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:775:24
+      → /^int\s*<\s*[^<>]+\s*>$/i
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+
+  corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:816:24
+      → /^(\??)([\w\\]+)\s*\[\]$/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:832:27
+      → /^(\??)([\w\\]+)\s*\[\]\[\]$/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:929:31
+      → /^([\w\\]+)\s*\[\]$/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
   corpus/moodle/moodle/public/admin/classes/setting/setting/configcolourpicker.php:113:25
       → /^#?([[:xdigit:]]{3}){1,2}$/
      INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
