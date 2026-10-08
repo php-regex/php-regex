@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector;
 
+use PHPRegex\Rector\EscapeLiteralBraceRector;
 use PHPRegex\Rector\PregMatchToStringComparisonRector;
 use PHPRegex\Rector\PregReplaceToStrReplaceRector;
 use PHPRegex\Rector\PregSplitToExplodeRector;
@@ -26,8 +27,8 @@ use Rector\ValueObject\PhpVersion;
 use Rector\VersionBonding\Contract\MinPhpVersionInterface;
 
 /**
- * The rules are frozen for 2.x: three Rector rules, none configurable, one
- * set that names them; only the preg_match() rule has a PHP floor, the one
+ * The rules are frozen for 2.x: four Rector rules, none configurable, two
+ * sets that name them; only the preg_match() rule has a PHP floor, the one
  * str_contains() and its siblings need.
  */
 final class RuleContractTest extends TestCase
@@ -49,6 +50,7 @@ final class RuleContractTest extends TestCase
 
         $this->assertFalse(is_subclass_of(PregReplaceToStrReplaceRector::class, MinPhpVersionInterface::class));
         $this->assertFalse(is_subclass_of(PregSplitToExplodeRector::class, MinPhpVersionInterface::class));
+        $this->assertFalse(is_subclass_of(EscapeLiteralBraceRector::class, MinPhpVersionInterface::class));
     }
 
     #[Test]
@@ -60,6 +62,15 @@ final class RuleContractTest extends TestCase
         $this->assertSame($expected, realpath(RegexSetList::STRING_FUNCTIONS));
     }
 
+    #[Test]
+    public function test_set_list_points_at_the_pcre_upgrade_set(): void
+    {
+        $expected = realpath(\dirname(__DIR__, 4).'/src/Rector/config/sets/pcre-upgrade.php');
+
+        $this->assertIsString($expected);
+        $this->assertSame($expected, realpath(RegexSetList::PCRE_UPGRADE));
+    }
+
     /**
      * @return iterable<string, array{rule: string}>
      */
@@ -68,5 +79,6 @@ final class RuleContractTest extends TestCase
         yield 'preg_match' => ['rule' => PregMatchToStringComparisonRector::class];
         yield 'preg_replace' => ['rule' => PregReplaceToStrReplaceRector::class];
         yield 'preg_split' => ['rule' => PregSplitToExplodeRector::class];
+        yield 'literal brace' => ['rule' => EscapeLiteralBraceRector::class];
     }
 }

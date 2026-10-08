@@ -26,7 +26,8 @@ tools/rector/vendor/bin/rector process
 
 ## Configuration
 
-The set registers the three rules:
+The string functions set registers the three rules that turn a `preg_*` call
+into a string function:
 
 ```php
 use PHPRegex\Rector\Set\RegexSetList;
@@ -36,6 +37,21 @@ return RectorConfig::configure()
     ->withPaths([__DIR__.'/src'])
     ->withSets([RegexSetList::STRING_FUNCTIONS]);
 ```
+
+Before raising a project to PHP 8.4, the PCRE upgrade set readies the patterns
+PHP 8.4's PCRE2 reads otherwise: `EscapeLiteralBraceRector` turns `/a{,3}/`,
+the text `a{,3}` before PCRE2 10.43 and a quantifier from it, into `/a\{,3}/`,
+which reads as the text on both. It runs only while the PHP Rector targets is
+below 8.4:
+
+```php
+return RectorConfig::configure()
+    ->withPaths([__DIR__.'/src'])
+    ->withSets([RegexSetList::PCRE_UPGRADE]);
+```
+
+`regex lint` reports the same patterns as `regex.lint.compat.meaningChanges`
+when the project's `require.php` reaches PHP 8.4.
 
 One rule alone is registered with `withRules()`:
 

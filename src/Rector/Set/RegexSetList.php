@@ -24,4 +24,10 @@ final class RegexSetList
      * to str_replace(), preg_split() to explode().
      */
     public const STRING_FUNCTIONS = __DIR__.'/../config/sets/string-functions.php';
+
+    /**
+     * The patterns PCRE2 10.43 (PHP 8.4) reads otherwise, rewritten so they
+     * mean on PHP 8.4 what they mean today: "/a{,3}/" to "/a\{,3}/".
+     */
+    public const PCRE_UPGRADE = __DIR__.'/../config/sets/pcre-upgrade.php';
 }

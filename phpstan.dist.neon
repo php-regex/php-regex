@@ -97,11 +97,12 @@ parameters:
         # group gives: those calls are the ones the rule reports, on purpose.
         - identifier: regex.replacement.undefinedGroup
           path: tests/Integration/Bridge/PHPStan/RegexParserRuleReplacementGroupTest.php
-        # The contract test pins what the types already say: the replace and
-        # split rules have no PHP floor, and a later change must not add one.
+        # The contract test pins what the types already say: the replace,
+        # split and brace rules have no PHP floor, and a later change must
+        # not add one.
         - identifier: function.impossibleType
           path: tests/Integration/Bridge/Rector/RuleContractTest.php
-          count: 2
+          count: 3
 
         # The Psalm plugin's tests drive Psalm in this process, through its
         # project analyser, issue buffer and type comparator, which Psalm

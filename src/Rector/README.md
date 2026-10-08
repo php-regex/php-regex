@@ -2,7 +2,9 @@ PHPRegex Rector
 ===============
 
 Rector rules that rewrite a `preg_*` call into the string function that does
-the same thing, only when the automata prove it: no proof, no change.
+the same thing, only when the automata prove it: no proof, no change. One more
+rule readies patterns for the PCRE2 of PHP 8.4, which reads some of them
+otherwise.
 
 Requires PHP 8.2+ to run and Rector 2.x. MIT licensed.
 
@@ -22,8 +24,11 @@ Features
 * The functions are called fully qualified, `\str_contains()`: in a
   namespace that declares or imports a function of the same name, an
   unqualified call would reach that one.
-* Three rules and one set, `RegexSetList::STRING_FUNCTIONS`. The rule names
-  and the set stay the same for all of 2.x; the rules take no configuration.
+* A pattern PHP 8.4 reads otherwise, `/a{,3}/` (text before PCRE2 10.43, a
+  quantifier from it), is rewritten to keep its meaning: `/a\{,3}/`.
+* Four rules and two sets, `RegexSetList::STRING_FUNCTIONS` and
+  `RegexSetList::PCRE_UPGRADE`. The rule names and the sets stay the same for
+  all of 2.x; the rules take no configuration.
 
 Installation
 ------------
@@ -237,6 +242,29 @@ Left alone, and why:
   is rewritten); a subject that may be something else than a string; the pattern modifiers and constructs refused above.
 * A pattern the target PHP refuses or reads otherwise, as for
   `preg_match()`. The rule has no other version floor.
+
+### `EscapeLiteralBraceRector`
+
+In the `RegexSetList::PCRE_UPGRADE` set. Before PCRE2 10.43 (PHP 8.2 and 8.3)
+`{,3}` and `{ 2 }` are text; from 10.43 (PHP 8.4) they are quantifiers. For
+code that targets a PHP below 8.4,
+
+```php
+preg_match('/a{,3}/', $subject);   // finds "a{,3}" on PHP 8.3, "a" on PHP 8.4
+```
+
+becomes
+
+```php
+preg_match('/a\{,3}/', $subject);  // finds "a{,3}" on both
+```
+
+A backslash goes before each brace read as text outside a class, and the call
+changes only when the rewritten pattern then reads alike on the project's PHP
+and on PHP 8.4. Left alone: code that targets PHP 8.4 or later, where the
+pattern already means what it says there; a pattern built from more than one
+string; a pattern holding `\Q`, or delimited by `{}`; one either PHP refuses.
+Run it before raising the PHP version in `composer.json`.
 
 Documentation
 -------------

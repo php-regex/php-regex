@@ -88,6 +88,13 @@ final class EngineReplayTest extends TestCase
         sort($fixtures);
 
         foreach ($fixtures as $fixture) {
+            // The brace rule, alone and in its set, keeps the reading of a
+            // PCRE2 older than the one running here, on purpose: its own test
+            // replays it against the text the older release matched.
+            if (str_contains($fixture, '/EscapeLiteralBraceRector/') || str_contains($fixture, '/FixturePcreUpgrade/')) {
+                continue;
+            }
+
             if (str_contains((string) file_get_contents($fixture), self::SPLIT)) {
                 yield substr($fixture, \strlen(__DIR__) + 1) => ['fixture' => $fixture];
             }
