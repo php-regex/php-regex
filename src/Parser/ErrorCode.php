@@ -381,6 +381,11 @@ enum ErrorCode: string
     case PatternEmpty = 'regex.pattern.empty';
 
     /**
+     * The pattern holds a NUL byte, which PHP refuses before 8.2.
+     */
+    case PatternNulByte = 'regex.pattern.nul_byte';
+
+    /**
      * The pattern compiles to more than PCRE's 64 KiB.
      */
     case PatternTooLarge = 'regex.pattern.too_large';

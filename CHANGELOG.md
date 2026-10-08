@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Under a `php_version` below 8.2, a pattern holding a NUL byte, as its delimiter, in its body or among its modifiers, is refused with the new error code `regex.pattern.nul_byte`, as PHP before 8.2 refuses it ("Null byte in regex"); it was accepted.
 - `regex.lint.alternation.overlap` quotes its branches as the pattern could hold them: a hidden character is `\xE2\x80\xAE` without `/u`, where `\x{202E}` would not compile, and a backslash is doubled.
 - `PatternPrinter` in pretty mode lays a pattern out over lines under `x` only: without `x` its newlines, its indents and the `#` lines it wrote for a multi-line `(?#...)` changed what the pattern matched (`/a(?#x\ny)b/` no longer matched `"ab"`). Without `x` the pretty output stays on one line.
 - The Symfony bridge reads a route requirement as the route compiler matches it, `{^...$}sD` plus `u` under the route's `utf8` option, with its anchors stripped as `Route::sanitizeRequirement()` does: `$` holds at the very end only, `.` takes a newline, and a requirement that starts with `/`, `#`, `~` or `%` is no delimited regex. A security `path` is read as `{...}s` and a `host` as `{...}i`, without anchors, as `PathRequestMatcher` and `HostRequestMatcher` match them: `path: /api` was read as a regex delimited by `/` and reported invalid. A lint baseline that holds a route requirement is generated once more, its pattern being written another way.

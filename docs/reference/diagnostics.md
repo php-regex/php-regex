@@ -575,6 +575,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.octal.missing_brace` | `OctalMissingBrace` | "\o" is not followed by "{". |
 | `regex.octal.out_of_range` | `OctalOutOfRange` | An octal escape names a code point past the allowed maximum. |
 | `regex.pattern.empty` | `PatternEmpty` | The pattern is empty, or only whitespace. |
+| `regex.pattern.nul_byte` | `PatternNulByte` | The pattern holds a NUL byte, which PHP refuses before 8.2. |
 | `regex.pattern.too_large` | `PatternTooLarge` | The pattern compiles to more than PCRE's 64 KiB. |
 | `regex.pattern.too_long` | `PatternTooLong` | The pattern is longer than the configured maximum length. |
 | `regex.pcre.runtime` | `PcreRuntime` | PHP refused to compile the pattern. |

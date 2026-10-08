@@ -36,6 +36,12 @@ final class PhpVersionGates
     public const NO_AUTO_CAPTURE_MODIFIER = 80200;
 
     /**
+     * PHP reads a NUL byte in a pattern from 8.2: before, it stops at the
+     * first one and refuses the pattern ("Null byte in regex").
+     */
+    public const NUL_IN_PATTERN = 80200;
+
+    /**
      * PHP dropped the "e" modifier in 7.0.
      */
     public const EVAL_MODIFIER_REMOVED = 70000;
