@@ -8,11 +8,11 @@
 
 Every package is a read-only split of the [php-regex monorepo](https://github.com/php-regex/php-regex) — please open issues and pull requests there.
 
-## 🧰 Start here
+## Start here
 
 - **[`regex-toolkit`](https://github.com/php-regex/regex-toolkit)** — one entry point to every PHPRegex library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.
 
-## 📚 Libraries
+## Libraries
 
 - [`regex-parser`](https://github.com/php-regex/regex-parser) — lexer, immutable AST, printers and validators for PCRE-style patterns.
 - [`regex-linter`](https://github.com/php-regex/regex-linter) — lints the regex patterns of a PHP code base; console, JSON, GitHub, Checkstyle and JUnit reports.
@@ -23,7 +23,7 @@ Every package is a read-only split of the [php-regex monorepo](https://github.co
 - [`regex-generator`](https://github.com/php-regex/regex-generator) — generates sample strings and test cases a pattern matches or rejects.
 - [`regex-transpiler`](https://github.com/php-regex/regex-transpiler) — transpiles PCRE patterns to JavaScript and Python, with the losses reported.
 
-## 🛠️ Tooling
+## Tooling
 
 - [`regex-cli`](https://github.com/php-regex/regex-cli) — the `regex` command: validate, explain, analyze, lint and compare patterns from the terminal.
 - [`regex-phpstan`](https://github.com/php-regex/regex-phpstan) — PHPStan extension that reports the regex patterns your target PHP refuses.
@@ -31,7 +31,7 @@ Every package is a read-only split of the [php-regex monorepo](https://github.co
 - [`regex-rector`](https://github.com/php-regex/regex-rector) — Rector rules that rewrite `preg_*` calls into the string functions the automata prove they match.
 - [`regex-language-server`](https://github.com/php-regex/regex-language-server) — a Language Server for the regex patterns of PHP files: diagnostics, hovers and code actions.
 
-## 🧩 Integrations
+## Integrations
 
 - [`regex-symfony`](https://github.com/php-regex/regex-symfony) — Symfony bundle: the Regex service and the regex:* commands.
 - [`regex-laravel`](https://github.com/php-regex/regex-laravel) — Laravel integration: the Regex facade and the regex:* artisan commands.
