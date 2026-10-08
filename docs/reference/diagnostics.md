@@ -566,7 +566,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.internal.pcre_failure` | `InternalPcreFailure` | PCRE failed while the library was reading the pattern. |
 | `regex.internal.unexpected_state` | `InternalUnexpectedState` | The library reached a state it does not expect, which is a bug to report. |
 | `regex.keep.in_lookaround` | `KeepInLookaround` | "\K" is used inside a lookaround, which the targeted PHP refuses. |
-| `regex.lookbehind.too_complex` | `LookbehindTooComplex` | A lookbehind is too complicated for PCRE to measure. |
+| `regex.lookbehind.too_complex` | `LookbehindTooComplex` | PCRE gave up measuring the lookbehinds: past 2,001 branches measured for all of them, a group counted again at each call after a branch reset. |
 | `regex.lookbehind.too_long` | `LookbehindTooLong` | A lookbehind is longer than PCRE allows. |
 | `regex.lookbehind.unbounded` | `LookbehindUnbounded` | A lookbehind can match text of unbounded length. |
 | `regex.lookbehind.variable_length_not_supported` | `LookbehindVariableLengthNotSupported` | A lookbehind of variable length needs a newer PCRE than the target. |

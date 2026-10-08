@@ -304,6 +304,59 @@ final class LookbehindMeasureTimeTest extends TestCase
     }
 
     /**
+     * PCRE counts every branch it measures for the lookbehinds of a pattern,
+     * those of the lookbehinds and those of the groups they reach, in one
+     * count, and gives up at the 2,002nd ("lookbehind is too complicated",
+     * at the lookbehind it was measuring). Without a branch reset a
+     * capturing group is measured once. PCRE2 10.49 gives each row below.
+     */
+    #[Test]
+    #[DataProvider('provideMeasureCounts')]
+    public function test_validate_counts_the_branches_measured_across_every_lookbehind(string $pattern, ?int $offset): void
+    {
+        if ('10.49' === self::runningRelease()) {
+            $refused = PcreMessageCodes::warningOf($pattern);
+            $this->assertSame(null === $offset ? null : 'lookbehind is too complicated', null === $refused ? null : PcreMessageCodes::read($refused)['message'], 'Oracle.');
+        }
+
+        $result = Regex::create(['cache' => null, 'pcre_version' => '10.49', 'php_version' => '8.4'])->validate($pattern);
+        if (null === $offset) {
+            $this->assertTrue($result->isValid, (string) $result->error);
+
+            return;
+        }
+
+        $this->assertSame(ErrorCode::LookbehindTooComplex, $result->errorCode, (string) $result->error);
+        $this->assertSame($offset, $result->offset);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int|null}>
+     */
+    public static function provideMeasureCounts(): iterable
+    {
+        yield '2,001 lookbehinds' => ['pattern' => '/'.str_repeat('(?<=a)', 2001).'/', 'offset' => null];
+        yield '2,002 lookbehinds' => ['pattern' => '/'.str_repeat('(?<=a)', 2002).'/', 'offset' => 12006];
+        yield 'two branches a lookbehind, then one' => ['pattern' => '/'.str_repeat('(?<=a|b)', 1000).'(?<=c)/', 'offset' => null];
+        yield 'two branches a lookbehind, then two' => ['pattern' => '/'.str_repeat('(?<=a|b)', 1000).'(?<=c)(?<=d)/', 'offset' => 8006];
+        yield 'a group called from 1,500 lookbehinds, measured once' => ['pattern' => '/(a)'.str_repeat('(?<=(?1))', 1500).'/', 'offset' => null];
+        yield 'the same after a branch reset, measured each time' => ['pattern' => '/(a)(?|x)'.str_repeat('(?<=(?1))', 1500).'/', 'offset' => 9008];
+        yield 'calls doubled ten levels down after a branch reset' => ['pattern' => self::doublingCalls(10), 'offset' => null];
+        yield 'calls doubled eleven levels down after a branch reset' => ['pattern' => self::doublingCalls(11), 'offset' => 0];
+    }
+
+    /**
+     * Deep doubling calls after a branch reset stop at the budget, in no
+     * time: 2^30 branches are never measured.
+     */
+    #[Test]
+    public function test_validate_stops_measuring_doubling_calls_at_the_budget(): void
+    {
+        $this->assertLessThan(self::BUDGET, self::bestValidationTime(self::doublingCalls(30)));
+        $this->assertSame(ErrorCode::LookbehindTooComplex, Regex::create(['cache' => null])->validate(self::doublingCalls(30))->errorCode);
+    }
+
+    /**
      * "(?(DEFINE)" holding $levels groups: group i is "((?i+1)(?i+1))", the
      * last "(a)", so group 1 is 2^($levels - 1) letters long.
      */
@@ -337,6 +390,20 @@ final class LookbehindMeasureTimeTest extends TestCase
         if ($large >= 0.02) {
             $this->assertLessThan(self::MAX_GROWTH, $large / $small, \sprintf('%s: %.3f s for %d levels, %.3f s for %d.', $what, $small, $levels, $large, $levels + 2));
         }
+    }
+
+    /**
+     * A lookbehind calling group 1, each group calling the next twice, the
+     * last one "a", after a branch reset: 2^$depth branches to measure.
+     */
+    private static function doublingCalls(int $depth): string
+    {
+        $groups = '';
+        for ($group = 1; $group < $depth; $group++) {
+            $groups .= '((?'.($group + 1).')(?'.($group + 1).'))';
+        }
+
+        return '/(?<=(?1))(?|x)'.$groups.'(a)/';
     }
 
     /**

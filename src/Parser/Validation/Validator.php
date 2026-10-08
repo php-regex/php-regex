@@ -217,11 +217,12 @@ final class Validator extends AbstractNodeVisitor
     private const MAX_FIXED_LOOKBEHIND_LENGTH = 65535;
 
     /**
-     * How many branches PCRE measures for one lookbehind before it gives up,
-     * which it only reaches in a pattern with a branch reset: there it cannot
-     * keep the length of a group once measured.
+     * How many branches PCRE measures across all the lookbehinds of a
+     * pattern before it gives up: each branch of a lookbehind, and each
+     * branch of a group it reaches. Without a branch reset it measures a
+     * capturing group once; with one, each time it meets it.
      */
-    private const MAX_LOOKBEHIND_BRANCH_MEASURES = 1000;
+    private const MAX_LOOKBEHIND_BRANCH_MEASURES = 2001;
 
     /**
      * A group name in Unicode mode, and in any mode once read by the lexer.
@@ -333,6 +334,12 @@ final class Validator extends AbstractNodeVisitor
     private array $enclosingGroups = [];
 
     private int $lookbehindBranchMeasures = 0;
+
+    /**
+     * The lookbehind being measured, where PCRE reports the measure it gave
+     * up.
+     */
+    private ?GroupNode $measuredLookbehind = null;
 
     /**
      * Whether the walk judges the part of a pattern read before a syntax
@@ -1598,6 +1605,7 @@ final class Validator extends AbstractNodeVisitor
         $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->enclosingGroups = [];
         $this->groups = GroupIndex::of($node->pattern);
+        $this->lookbehindBranchMeasures = 0;
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindLength = $this->measuring($this->groups);
         $this->captureSequence = $this->groupNumbering->captureSequence;
@@ -2216,7 +2224,7 @@ final class Validator extends AbstractNodeVisitor
             $node,
             $measuring,
             null === $expanding,
-            fn () => $this->measureLookbehindBranches($node, $measuring, null === $expanding),
+            fn () => $this->measureLookbehindBranches($node, $measuring),
         );
     }
 
@@ -2224,9 +2232,8 @@ final class Validator extends AbstractNodeVisitor
      * Measure each branch of a lookbehind, raising the errors PCRE raises.
      *
      * @param array<int, true> $measuring the groups being measured, by node
-     * @param bool             $outermost whether the lookbehind sits in no group being measured
      */
-    private function measureLookbehindBranches(GroupNode $node, array $measuring, bool $outermost): void
+    private function measureLookbehindBranches(GroupNode $node, array $measuring): void
     {
         // "\X" matches a whole grapheme cluster, of no bounded length.
         if ($this->containsGraphemeCluster($node->child)) {
@@ -2241,27 +2248,23 @@ final class Validator extends AbstractNodeVisitor
         // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
         // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
         $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-        if ($outermost) {
-            $this->lookbehindBranchMeasures = 0;
-        }
+        $around = $this->measuredLookbehind;
+        $this->measuredLookbehind = $node;
         $lengths = [];
-        foreach ($branches as $branch) {
-            $length = $this->lookbehindLength->of($branch, $measuring);
-            $lengths[] = $length;
 
-            // PCRE stops at the first branch it cannot bound.
-            if (null === $length[1]) {
-                $this->validateLookbehindBranchLength($node, $length, true);
-            }
+        try {
+            foreach ($branches as $branch) {
+                $this->countLookbehindMeasures(1);
+                $length = $this->lookbehindLength->of($branch, $measuring);
+                $lengths[] = $length;
 
-            if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES) {
-                $this->raiseSemanticError(
-                    'Lookbehind is too complicated: in a pattern with a branch reset, PCRE gives up measuring it.',
-                    $this->lookbehindErrorPosition($node),
-                    ErrorCode::LookbehindTooComplex,
-                    'Call fewer groups from the lookbehind, or drop the branch reset.',
-                );
+                // PCRE stops at the first branch it cannot bound.
+                if (null === $length[1]) {
+                    $this->validateLookbehindBranchLength($node, $length, true);
+                }
             }
+        } finally {
+            $this->measuredLookbehind = $around;
         }
 
         // One branch of variable length makes the whole lookbehind variable,
@@ -2431,13 +2434,28 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Count the branches of a group PCRE measures for a lookbehind; it only
-     * gives up once a branch reset stops it from reusing a measure.
+     * Count the branches of a group PCRE measures for a lookbehind.
      */
     private function countLookbehindBranches(NodeInterface $groupBody): void
     {
-        if ($this->groups->hasBranchReset()) {
-            $this->lookbehindBranchMeasures += $groupBody instanceof AlternationNode ? \count($groupBody->alternatives) : 1;
+        $this->countLookbehindMeasures($groupBody instanceof AlternationNode ? \count($groupBody->alternatives) : 1);
+    }
+
+    /**
+     * PCRE counts each branch it measures and gives up past its budget at
+     * once, at the lookbehind it is measuring: the measure stops there,
+     * however much is left of it.
+     */
+    private function countLookbehindMeasures(int $branches): void
+    {
+        $this->lookbehindBranchMeasures += $branches;
+        if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES && null !== $this->measuredLookbehind) {
+            $this->raiseSemanticError(
+                'Lookbehind is too complicated: PCRE gives up past 2,001 branches measured for the lookbehinds of a pattern.',
+                $this->lookbehindErrorPosition($this->measuredLookbehind),
+                ErrorCode::LookbehindTooComplex,
+                'Call fewer groups from the lookbehinds, use fewer lookbehinds, or drop the branch reset, which makes PCRE measure a group again each time.',
+            );
         }
     }
 

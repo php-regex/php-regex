@@ -82,14 +82,6 @@ host `setlocale()` can rebuild PCRE's case tables.
   `(*CRLF)` and `(*ANYCRLF)` it checks only that the tail can start a line
   end, so `/(*CRLF)a$\r\r/` is missed.
 - Lookbehind validation (each against PCRE2 10.49):
-  - the "lookbehind assertion is too complicated" budget is not PCRE's:
-    PCRE counts past 2000 across the whole compile, with or without a branch
-    reset; the library caps at 1000 per lookbehind and only with a branch
-    reset, so `/(?<=(?1))…(?|x)/` with ten levels of doubling calls is
-    refused (PCRE accepts it) and 2002 `(?<=a)` are accepted (PCRE refuses);
-  - with a branch reset, measuring a lookbehind through doubling calls is
-    still exponential (266 bytes take 19 s): the budget is checked only
-    after a whole branch;
   - `\X` is judged before the branches are measured, and a lookbehind used
     as a condition inside a lookbehind is not measured, so the first error
     is not PCRE's.
