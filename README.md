@@ -28,14 +28,14 @@ This architecture allows for advanced static analysis:
 - **Safety:** Prove a pattern safe from catastrophic backtracking (ReDoS), or hand you the input that triggers it.
 - **Logic:** Compare patterns via NFA/DFA (Intersection, Equivalence, Subset) for the regular subset it supports.
 
-Built for learning, validation, and robust tooling in PHP projects.
+Built for robust regex tooling in PHP projects.
 
-> ⚠️ **What this is and is not.** PHPRegex is a side project and a learning
-> exercise. It is **not** a hardened security product and should not be your
-> only line of defense. A ReDoS verdict is proven only for the subset of PCRE
-> the analysis models, one match attempt at a time; outside it, structural
-> heuristics decide, and the verdict says so. The parser aims for PCRE
-> compatibility but does not cover every edge case of the PCRE engine.
+> ⚠️ **How to read the verdicts.** ReDoS analysis proves safety for the
+> subset of PCRE it models, one match attempt at a time; outside that subset,
+> structural heuristics decide — and the verdict says so. The parser follows
+> PCRE closely (see the [conformance page](docs/reference/pcre2-conformance.md))
+> without covering every edge of the engine. Treat findings as leads to
+> investigate, not as a guarantee.
 
 If you are new to regex, start with the [Regex Tutorial](docs/tutorial/README.md). If you want a short overview, see the [Quick Start Guide](docs/QUICK_START.md).
 
