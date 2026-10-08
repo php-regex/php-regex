@@ -276,9 +276,10 @@ The follow-ups are merged too: the search cost's two false positives
   (`a\$` compiles to `(?P<x>a\)`, which fails at run time), where the
   normalizer keeps it as a literal and lints a valid pattern.
 - `NodePredicates::applyInlineFlags()` keeps a flag string that loses `xx`
-  (read as `x`), the ASCII options (`(?a)(?-aD)` keeps `\w` ASCII) and the
-  `r` a `(?^)` drops: the lint rules that ask the automata stay silent under
-  those options rather than carry them.
+  (read as `x`) and the ASCII options (`(?a)(?-aD)` keeps `\w` ASCII; the
+  letters after `a` clash with the `D` and `S` modifiers): the lint rules
+  that ask the automata stay silent under those options rather than carry
+  them.
 - `regex.lint.quantifier.emptyRepeat` stays silent where `quantifier.nested`,
   `quantifier.assertion`, `dotstar.nested` or `alternation.empty` report the
   repeat, even when that rule is turned off: `LintContext` does not say which

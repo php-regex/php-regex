@@ -144,6 +144,26 @@ final class ImpossibleLookaroundRuleTest extends TestCase
     }
 
     /**
+     * "(?^)" turns "r" off with the other options, set inline or by the
+     * modifier: under "(?^i)" the lookahead forbids the Kelvin sign again.
+     */
+    #[Test]
+    public function test_caseless_restrict_reset_by_a_caret_is_read(): void
+    {
+        // Oracle, PHP 8.4.26 / PCRE2 10.49.
+        foreach (['/(?r)(?^i)(?!k)\x{212A}/u', '/(?^i)(?!k)\x{212A}/ur'] as $pattern) {
+            foreach (["\u{212A}", 'k', 'K', ''] as $subject) {
+                $this->assertSame(0, preg_match($pattern, $subject), $pattern.' '.var_export($subject, true));
+            }
+
+            $this->assertInstanceOf(RuleViolation::class, $this->violation($pattern), $pattern);
+        }
+
+        $this->assertSame(1, preg_match('/(?r)(?i)(?!k)\x{212A}/u', "\u{212A}"));
+        $this->assertNull($this->violation('/(?r)(?i)(?!k)\x{212A}/u'));
+    }
+
+    /**
      * Deliberate loss of recall: each pattern below never matches (the
      * engine agrees), but its continuation leaves the regular subset the
      * automata decide, so the rule stays silent rather than guess.

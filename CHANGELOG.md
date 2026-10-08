@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The lint rules read `(?^)` as turning `r` off, as PCRE2 does: `regex.lint.lookaround.impossible` and the other rules that ask the automata now check a pattern that sets `r` and `(?^)`, such as `/(?r)(?^i)(?!k)\x{212A}/u`, where they stayed silent.
 - `regex.lint.anchor.alternationPrecedence` takes a group holding the anchor alone out of its tip with the anchor: `/(?:(?:^))a|b/` gives `^(?:a|b)`, where it left `^(?:(?:(?:))a|b)`; a capturing group stays, and a group setting `m` moves as written, `(?m:^)(?:a|b)`, where the tip lost the option. It no longer stays silent on a `(*SKIP:n)` no `(*MARK:n)` names, which the engine ignores.
 - The automata solver and `matchEquivalent()` read the `r` modifier, as they read `(?r)`: `/k/iur` is equivalent to `/[kK]/u`, where both refused it ("Unsupported regex flags for automata: r.").
 - Under `/u`, the search cost reads a leading class of POSIX classes as PCRE2 does: `[:ascii:]`, `[:blank:]` and their negations cover their characters, the others are properties, so `/[[:^alpha:][:alpha:]]*\d$/u` reports its quadratic search (1.35 s on 20,000 characters, `pcre.jit=0`) and `/[[:^ascii:][:ascii:]]*\d$/u` is anchored, where both had no verdict.

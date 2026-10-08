@@ -94,8 +94,9 @@ final class LanguageQuestionsTest extends TestCase
         yield 'caseless restrict modifier' => ['pattern' => '/k/ir', 'spelled' => 'imsxr'];
         yield 'caseless restrict group' => ['pattern' => '/(?r)k/i', 'spelled' => 'imsxr'];
         yield 'caseless restrict turned off' => ['pattern' => '/(?-r:k)/ir', 'spelled' => 'imsxr'];
-        // "(?^)" turns "r" off, which the flags in force keep.
-        yield 'caseless restrict beside a caret' => ['pattern' => '/(?r)(?^i)k/', 'spelled' => null];
+        // "(?^)" turns "r" off, as the flags in force do.
+        yield 'caseless restrict beside a caret' => ['pattern' => '/(?r)(?^i)k/', 'spelled' => 'imsxr'];
+        yield 'caseless restrict modifier beside a caret' => ['pattern' => '/(?^i)k/r', 'spelled' => 'imsxr'];
         yield 'caret without caseless restrict' => ['pattern' => '/(?^i)k/', 'spelled' => 'imsx'];
         // The flags in force keep none of the ASCII options, and "xx" as "x".
         yield 'ASCII options' => ['pattern' => '/(?a)\w/u', 'spelled' => null];

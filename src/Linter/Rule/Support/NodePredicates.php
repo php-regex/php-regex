@@ -309,14 +309,14 @@ final class NodePredicates
 
     /**
      * Fold an inline (?flags-flags) marker into the flags accumulated so
-     * far. A leading ^ first resets i, m, n, s and x; the other modifiers,
-     * such as U, u and D, stay.
+     * far. A leading ^ first resets i, m, n, r, s and x; the other
+     * modifiers, such as U, u and D, stay.
      */
     public static function applyInlineFlags(string $baseFlags, string $inlineFlags): string
     {
         $resetAll = str_starts_with($inlineFlags, '^');
         if ($resetAll) {
-            $baseFlags = str_replace(['i', 'm', 'n', 's', 'x'], '', $baseFlags);
+            $baseFlags = str_replace(['i', 'm', 'n', 'r', 's', 'x'], '', $baseFlags);
             $inlineFlags = substr($inlineFlags, 1);
         }
 

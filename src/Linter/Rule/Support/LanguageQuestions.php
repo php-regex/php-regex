@@ -77,8 +77,7 @@ final class LanguageQuestions
      * a PCRE2 older than 10.43 refuses the letter). Null when the pattern
      * sets an option the flags in force do not follow, whose questions
      * would then be asked under the wrong one: the ASCII options ("(?a)",
-     * "(?aD)", ...), kept to none of the flags, "(?xx)", kept as "x", and
-     * "r" beside a "(?^)", which turns it off while the flags keep it.
+     * "(?aD)", ...), kept to none of the flags, and "(?xx)", kept as "x".
      *
      * @param NodeInterface $node the node the rule checks, the root when no
      *                            parent holds it
@@ -86,7 +85,6 @@ final class LanguageQuestions
     public static function spelledFlags(LintContext $context, NodeInterface $node): ?string
     {
         $restricted = str_contains($context->pattern->flags, self::CASELESS_RESTRICT);
-        $reset = false;
         foreach (self::optionSettings($context->parents()[0] ?? $node) as $setting) {
             $set = explode('-', $setting, 2)[0];
             if (str_contains($setting, 'a') || str_contains($set, 'xx')) {
@@ -94,11 +92,6 @@ final class LanguageQuestions
             }
 
             $restricted = $restricted || str_contains($setting, self::CASELESS_RESTRICT);
-            $reset = $reset || str_starts_with($setting, '^');
-        }
-
-        if ($restricted && $reset) {
-            return null;
         }
 
         return self::INLINE_FLAGS.($restricted ? self::CASELESS_RESTRICT : '');
