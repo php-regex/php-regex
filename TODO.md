@@ -27,8 +27,8 @@ Left:
    would install 2.x. Mark `yoeunes/regex-parser` abandoned in favour of
    `php-regex/regex-toolkit`, or point it at a repository holding 1.x only,
    before the tag.
-3. **Packagist** — check that updates on push are on for every package (the
-   GitHub integration on the Packagist account, or a webhook per
+3. **Packagist** — check that every package receives its updates on each
+   push (the GitHub integration on the Packagist account, or a webhook per
    repository): without them Packagist crawls a repository about once a
    week.
 
@@ -43,8 +43,6 @@ Nothing is left open in this list: every finding was fixed, or settled
 below with what it costs.
 
 ## Settled by design (2026-10-08)
-
-Decided without the maintainer, as asked; each can be reopened.
 
 - **Railroad labels show text, not syntax.** A box holds the characters it
   matches and a quantifier is drawn as a loop, so `a\Q{2}\E` shows a box
