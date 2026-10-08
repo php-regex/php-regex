@@ -85,6 +85,11 @@ final class PnfaBuilder
     private const ASCII_POSIX_DIGIT = 1024;
 
     /**
+     * "xx": a class skips its unescaped spaces and tabs.
+     */
+    private const EXTENDED_MORE = 2048;
+
+    /**
      * The ASCII options by the letter after "a": "(?aD)" for "\d", "(?aS)"
      * for "\s", "(?aW)" for "\w" and "\b", "(?aP)" for the POSIX classes,
      * the digit ones with them, "(?aT)" for the POSIX digit classes only.
@@ -774,7 +779,9 @@ final class PnfaBuilder
         }
 
         if ($node instanceof CharClassNode) {
-            $direct = 0 === ($flags & self::CASELESS) ? $this->directClass($node) : null;
+            // Under xx "[a b]" is "[ab]": the engine reads such a class.
+            $readsItsSpaces = 0 === ($flags & self::EXTENDED_MORE) || false === strpbrk($this->text($node), " \t");
+            $direct = 0 === ($flags & self::CASELESS) && $readsItsSpaces ? $this->directClass($node) : null;
             if (null !== $direct) {
                 return $direct;
             }
@@ -929,7 +936,7 @@ final class PnfaBuilder
     {
         $modifiers = (0 !== ($flags & self::CASELESS) ? 'i' : '')
             .(0 !== ($flags & self::DOT_ALL) ? 's' : '')
-            .(0 !== ($flags & self::EXTENDED) ? 'x' : '')
+            .(0 !== ($flags & self::EXTENDED_MORE) ? 'xx' : (0 !== ($flags & self::EXTENDED) ? 'x' : ''))
             .(0 !== ($flags & self::RESTRICT) ? 'r' : '');
         foreach (['D' => self::ASCII_DIGIT, 'S' => self::ASCII_SPACE, 'W' => self::ASCII_WORD, 'P' => self::ASCII_POSIX] as $letter => $bit) {
             if (0 !== ($flags & $bit)) {
@@ -982,25 +989,29 @@ final class PnfaBuilder
 
     private function applyOptions(int $flags, string $options): int
     {
-        // "xx" also ignores white space inside classes: outside the model.
-        if (str_contains($options, 'xx')) {
-            throw ModelLimit::outOfModel('The xx option');
-        }
-
-        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY, 'r' => self::RESTRICT];
+        $bits = ['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'U' => self::UNGREEDY, 'r' => self::RESTRICT];
         if (str_starts_with($options, '^')) {
             // "(?^" takes i, m, n, s, x, xx and r back off; U and the ASCII
             // options stay.
-            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::RESTRICT);
+            $flags &= ~(self::CASELESS | self::DOT_ALL | self::MULTILINE | self::EXTENDED | self::EXTENDED_MORE | self::RESTRICT);
             $options = substr($options, 1);
         }
 
+        // The group's letters are gathered first and applied together, as
+        // PCRE does: "x" alone takes xx off, so "(?xx)(?x)" leaves a class's
+        // spaces in, while "(?xxix)" keeps xx. "-x" takes both off.
+        $set = 0;
+        $unset = 0;
         $on = true;
+        $previous = '';
         $length = \strlen($options);
         for ($index = 0; $index < $length; $index++) {
             $letter = $options[$index];
+            $bit = 0;
             if ('-' === $letter) {
                 $on = false;
+            } elseif ('x' === $letter) {
+                $bit = $on && 'x' !== $previous ? self::EXTENDED : self::EXTENDED | self::EXTENDED_MORE;
             } elseif ('a' === $letter) {
                 // "a" alone, or "a" and the one letter naming its option.
                 $ascii = self::ASCII_OPTIONS[$options[$index + 1] ?? ''] ?? null;
@@ -1008,12 +1019,24 @@ final class PnfaBuilder
                     $index++;
                 }
 
-                $flags = $on ? $flags | ($ascii ?? self::ASCII_ALL) : $flags & ~($ascii ?? self::ASCII_ALL);
+                $bit = $ascii ?? self::ASCII_ALL;
             } elseif (isset($bits[$letter])) {
-                $flags = $on ? $flags | $bits[$letter] : $flags & ~$bits[$letter];
+                $bit = $bits[$letter];
             }
+
+            if ($on) {
+                $set |= $bit;
+            } else {
+                $unset |= $bit;
+            }
+
+            $previous = $letter;
         }
 
-        return $flags;
+        if (self::EXTENDED === ($set & (self::EXTENDED | self::EXTENDED_MORE))) {
+            $unset |= self::EXTENDED_MORE;
+        }
+
+        return ($flags | $set) & ~$unset;
     }
 }

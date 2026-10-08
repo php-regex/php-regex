@@ -153,9 +153,38 @@ final class RedosSoundnessRegressionTest extends TestCase
         // Both compile on PCRE2 10.49 (preg_match on '' returns 0).
         yield 'A4 non-atomic lookbehind, short form' => ['pattern' => '/(?<*a|ab)c/'];
         yield 'A4 non-atomic lookbehind, naplb' => ['pattern' => '/(*naplb:a|ab)c/'];
-        yield 'A6 extended-more flag at the start' => ['pattern' => '/(?xx)^(?:[^x\x20]+)+(?:[ x]|$)/i'];
-        yield 'A6 extended-more flag scoped to a group' => ['pattern' => '/^(?:[^x\x20]+)+(?xx:[ x]|$)/i'];
-        yield 'A6 extended-more flag on a pattern without a class' => ['pattern' => '/(?xx)a b/'];
+    }
+
+    /**
+     * A6: the proof reads xx as PCRE does: a class skips its unescaped
+     * spaces and tabs, and a lone x takes xx off. Engine, JIT off, on 30
+     * spaces then "!": /^(?xx)(?x)(?:[ a]|\x20)*$/ exhausts the backtrack
+     * limit, /^(?xx)(?:[a b]|\x20)*$/ fails at once.
+     */
+    #[Test]
+    #[DataProvider('provideExtendedMorePatterns')]
+    public function test_the_xx_option_is_read_by_the_proof(string $pattern, RedosComplexity $complexity): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern.' is "'.$analysis->headline().'"');
+        $this->assertSame($complexity, $analysis->complexity, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, complexity: RedosComplexity}>
+     */
+    public static function provideExtendedMorePatterns(): iterable
+    {
+        yield 'a lone x takes xx off: the class keeps its space' => ['pattern' => '/^(?xx)(?x)(?:[ a]|\x20)*$/', 'complexity' => RedosComplexity::Exponential];
+        yield 'the class drops its space under xx' => ['pattern' => '/^(?xx)(?:[a b]|\x20)*$/', 'complexity' => RedosComplexity::Linear];
+        yield 'a caret takes xx off' => ['pattern' => '/^(?xx)(?^)(?:[ a]|\x20)*$/', 'complexity' => RedosComplexity::Exponential];
+        yield 'minus x takes xx off' => ['pattern' => '/^(?xx)(?-x)(?:[ a]|\x20)*$/', 'complexity' => RedosComplexity::Exponential];
+        yield 'xx beside i' => ['pattern' => '/^(?xxi)(?:[a b]|\x20)*$/', 'complexity' => RedosComplexity::Linear];
+        yield 'xx beside an ASCII option' => ['pattern' => '/^(?xxaD)(?:[a b]|\x20)*$/', 'complexity' => RedosComplexity::Linear];
+        yield 'A6 extended-more flag at the start' => ['pattern' => '/(?xx)^(?:[^x\x20]+)+(?:[ x]|$)/i', 'complexity' => RedosComplexity::Exponential];
+        yield 'A6 extended-more flag scoped to a group' => ['pattern' => '/^(?:[^x\x20]+)+(?xx:[ x]|$)/i', 'complexity' => RedosComplexity::Exponential];
+        yield 'A6 extended-more flag on a pattern without a class' => ['pattern' => '/(?xx)a b/', 'complexity' => RedosComplexity::Linear];
     }
 
     /**

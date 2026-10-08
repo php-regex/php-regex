@@ -47,7 +47,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   atomic body that is more than one run over one set is kept as written. Each abstraction is listed in
   `abstractions`. Verdicts are deterministic per analysis version and PCRE2 release.
 - **Fallbacks:** Backreferences, conditionals, recursion, subroutine calls, verbs, callouts, `\X`, `\R`, non-atomic
-  lookarounds, the `xx` option, `\b` and `\B` under two different ASCII scopes in one pattern, bounded repeats whose body can match empty, a pattern over the analysis budget, an
+  lookarounds, `\b` and `\B` under two different ASCII scopes in one pattern, bounded repeats whose body can match empty, a pattern over the analysis budget, an
   ambiguity the analysis cannot witness, and a witness crossing an over-approximated atomic body or character class
   are judged by the structural heuristics (best-effort, as in 1.x), with `proof: heuristic` or `budget_exceeded`. An
   invalid pattern is never proven safe: `proof: not_analyzed`, severity `unknown`.

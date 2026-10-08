@@ -41,9 +41,8 @@ the public API, so they go before the tag.
 
 ### Next steps
 
-- Left from this list, in this order: ReDoS precision (atomic unions,
-  `xx`), then the lookbehind validation and the `(?J)` branch-reset names
-  below.
+- Left from this list, in this order: ReDoS precision (atomic unions),
+  then the lookbehind validation and the `(?J)` branch-reset names below.
 
 ### The character-set analysis
 
@@ -61,11 +60,6 @@ Sound in both cases, but verdicts the proof could give:
   branches as the union of their sets: `/^(?>z(?i)|a|A)*$/` and
   `/^(?>a|a)+$/` get a heuristic verdict where the engine is linear, a gain
   to make with its own soundness check against the engine.
-- It steps out of its model at the first `xx` option:
-  `/^(?xx)(?x)(?:[ a]|\x20)*$/` (exponential on the engine) and
-  `/^(?xx)(?:[a b]|\x20)*$/` (linear) both get a heuristic verdict. Reading
-  `xx` as the automata solver does (a lone `x` clears it, a class drops its
-  space and tab) would prove both.
 
 ### Byte mode and the Unicode-normalization invariant
 
