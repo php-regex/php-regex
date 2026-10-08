@@ -106,12 +106,9 @@ against the engine:
   two raw bytes, and the Python output can hold a lone invalid byte whose
   source does not parse at all.
 
-The normalization-free contract itself is untested: no decomposed pattern
-anywhere in the suite, and the multibyte round-trip rows (`[«»“”]`,
-`[\¡\¿]`) have no canonical decomposition, so a `Normalizer::normalize()`
-slipped into any layer would stay green. Worth adding: a round-trip row for
-`"/e\u{0301}/u"`, an engine row (NFC pattern, NFD subject: no match, `/ui`
-included), and a solver row refusing `/é/u` ≡ `/e\u{301}/u`.
+The normalization-free contract is pinned by
+`tests/Unit/NormalizationInvariantTest.php`: the engine, the printer and the
+solver each keep `/é/u` and `/e\u{301}/u` apart.
 
 Smaller, same family: `mb_strlen()` on a class atom without an explicit
 encoding (the range-start check); the compiled-size floor compares code
