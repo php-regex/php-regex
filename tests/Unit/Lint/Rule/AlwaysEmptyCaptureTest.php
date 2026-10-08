@@ -98,6 +98,17 @@ final class AlwaysEmptyCaptureTest extends TestCase
         $this->assertSame([], $this->messages('/a+()/'));
         $this->assertSame([], $this->messages('/a*(a*)/'));
         $this->assertSame([], $this->messages('/a+(a*)\1/'));
+        // In a branch reset the proof reads the slot, which another
+        // alternative may fill: "x12y" puts "12" in $1 through "(\d*)".
+        $this->assertSame(1, preg_match('/x(?|(\d*)|(\d+))y/', 'x12y', $matches));
+        $this->assertSame('12', $matches[1]);
+        $this->assertSame([], $this->messages('/x(?|(\d*)|(\d+))y/'));
+        // A start anchor holds at offset 0 only: preg_match_all() goes on
+        // past it, where "(c)" captures "c" in "acc".
+        $this->assertSame(2, preg_match_all('/^.|.(c)/s', 'acc', $all, \PREG_SET_ORDER));
+        $this->assertSame('c', $all[1][1] ?? null);
+        $this->assertSame([], $this->messages('/^.|.(c)/s'));
+        $this->assertSame([], $this->messages('/\A.|.(c)/s'));
         // A lookahead or a condition around the group: beyond the automata.
         $this->assertSame([], $this->messages('/x(?=(a*?))/'));
         $this->assertSame([], $this->messages('/(?(?=x)x(a*?)|y)/'));

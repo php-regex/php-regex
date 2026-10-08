@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -75,17 +74,19 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             return [];
         }
 
-        if (NodePredicates::canBeEmpty($context->parents()[0] ?? $node) || self::anotherRuleExplains($node, $context) || !$this->questions->allows($context)) {
+        // In a branch reset another alternative fills the same slot, which
+        // is all the proof reads.
+        $root = $context->parents()[0] ?? $node;
+        $inBranchReset = array_filter($context->parents(), static fn (NodeInterface $parent): bool => $parent instanceof GroupNode && GroupType::BranchReset === $parent->type);
+        if ([] !== $inBranchReset) {
             return [];
         }
 
-        $pattern = $context->pattern;
-        $start = $node->child->getStartPosition();
-        $end = $node->child->getEndPosition();
-        $closing = PatternParser::closingDelimiter($pattern->delimiter);
-        $original = $pattern->delimiter.$pattern->source.$closing.$pattern->flags;
-        $emptied = $pattern->delimiter.substr($pattern->source, 0, $start).substr($pattern->source, $end).$closing.$pattern->flags;
-        if (true !== LanguageQuestions::matchTheSame($original, $emptied)) {
+        if (NodePredicates::canBeEmpty($root) || self::anotherRuleExplains($node, $context) || !$this->questions->allows($context)) {
+            return [];
+        }
+
+        if (true !== LanguageQuestions::matchTheSameFromAnyOffset($context, $node->child->getStartPosition(), $node->child->getEndPosition(), '')) {
             return [];
         }
 

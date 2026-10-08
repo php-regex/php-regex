@@ -138,6 +138,26 @@ final class UselessLazyTest extends TestCase
         $this->assertSame([], $this->messages('/(*LIMIT_HEAP=20)(a+?)b/', true));
     }
 
+    /**
+     * A start anchor holds at offset 0 only: the pattern is proven with it
+     * and again with it failing, as preg_match_all() goes on past it. Here
+     * both forms write the same $matches either way.
+     */
+    #[Test]
+    public function test_a_pattern_that_reads_the_start_is_proven_from_any_offset(): void
+    {
+        foreach (['xaab', 'aab', 'xab'] as $subject) {
+            foreach ([0, 1] as $offset) {
+                preg_match('/^x|(a+?)b/', $subject, $lazy, 0, $offset);
+                preg_match('/^x|(a+)b/', $subject, $greedy, 0, $offset);
+                $this->assertSame($greedy, $lazy, $subject.' at '.$offset);
+            }
+        }
+
+        $this->assertSame(['Lazy quantifier "a+?" matches what "a+" matches: the lazy marker changes nothing.'], $this->messages('/^x|(a+?)b/', true));
+        $this->assertSame(['Lazy quantifier "a+?" matches what "a+" matches: the lazy marker changes nothing.'], $this->messages('/\Ax|(a+?)b/', true));
+    }
+
     #[Test]
     public function test_the_rule_is_off_by_default(): void
     {

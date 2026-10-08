@@ -517,7 +517,8 @@ preg_match('/<[^>\n]*>/', '<a><b>', $m);  // "<a>"
 **When it triggers:** A lazy quantifier writes the same `$matches` as its greedy form on every
 subject: `/(a+?)b/` and `/(a+)b/` stop at the same `b`, since the run cannot take one, and a
 fixed count such as `a{3}?` has nothing to choose. The automata prove the two patterns
-equivalent before the rule speaks. It stays silent where the lazy marker matters
+equivalent before the rule speaks, from any offset (a pattern with a start anchor is asked
+again with the anchor failing). It stays silent where the lazy marker matters
 (`/(a+?)a/` on `aaa` captures `a`, the greedy form `aa`), under `U`, where `+?` is the greedy
 one, where nothing that can fail follows a variable count (`quantifier.lazyEnd` reports that),
 in a pattern that may match the empty string (after an empty match, `preg_match_all()`,
@@ -654,8 +655,10 @@ preg_match('/ab/', 'ab');      // 1
 **When it triggers:** A capturing group is empty or unset wherever the pattern matches: in
 `/a+(a*)/` the greedy `a+` takes every `a`, so `$1` is always `""`; in `/^\w+(\d*)$/` `\w+`
 takes the digits. The automata prove it: the pattern with the group's body removed writes the
-same `$matches` on every subject. It stays silent on a group with nothing in it (`()` is a
-marker), in a pattern that may match the empty string (`preg_match_all()` tries again after an
+same `$matches` on every subject, from offset 0 and, for a pattern with a start anchor, again
+with the anchor failing, as it does where `preg_match_all()` goes on (`/^.|.(c)/s` fills `$1`
+there). It stays silent on a group with nothing in it (`()` is a marker), on a group in a branch
+reset (`(?|...)`), whose number another alternative may fill, in a pattern that may match the empty string (`preg_match_all()` tries again after an
 empty match, where another path may fill the group), where `quantifier.lazyEnd` or
 `quantifier.zero` already says why the group stays empty (`/^L_(.*?)/`, `/(b){0}/`), on a group
 a reference or a call reads, which the automata do not follow, and past the eighth question it

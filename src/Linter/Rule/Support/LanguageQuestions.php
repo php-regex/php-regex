@@ -206,6 +206,65 @@ final class LanguageQuestions
     }
 
     /**
+     * Whether the linted pattern and the same pattern with the bytes from
+     * $start to $end replaced write the same $matches wherever the search
+     * starts. matchTheSame() reads a search from offset 0, where a start
+     * anchor holds; preg_match_all() goes on, and an offset starts, where
+     * none does, so a pattern holding one is asked again with every start
+     * anchor made to fail ("[^\s\S]" reads nothing). Null when the automata
+     * cannot say.
+     */
+    public static function matchTheSameFromAnyOffset(LintContext $context, int $start, int $end, string $replacement): ?bool
+    {
+        $pattern = $context->pattern;
+        $wrap = static fn (string $body): string => $pattern->delimiter.$body.PatternParser::closingDelimiter($pattern->delimiter).$pattern->flags;
+        $edit = [$start, $end, $replacement];
+
+        $same = self::matchTheSame($wrap($pattern->source), $wrap(self::spliced($pattern->source, [$edit])));
+        $root = $context->parents()[0] ?? null;
+        if (true !== $same || null === $root || !NodePredicates::holdsAStartAnchor($root)) {
+            return $same;
+        }
+
+        $anchors = [];
+        foreach (self::startAnchors($root) as $anchor) {
+            $anchors[] = [$anchor->getStartPosition(), $anchor->getEndPosition(), '[^\s\S]'];
+        }
+        $outside = array_values(array_filter($anchors, static fn (array $anchor): bool => $anchor[1] <= $start || $anchor[0] >= $end));
+
+        return self::matchTheSame($wrap(self::spliced($pattern->source, $anchors)), $wrap(self::spliced($pattern->source, [...$outside, $edit])));
+    }
+
+    /**
+     * @return list<NodeInterface>
+     */
+    private static function startAnchors(NodeInterface $node): array
+    {
+        $found = NodePredicates::isStartAnchorNode($node) ? [$node] : [];
+        foreach ($node->getChildren() as $child) {
+            array_push($found, ...self::startAnchors($child));
+        }
+
+        return $found;
+    }
+
+    /**
+     * The source with each [start, end, replacement] applied; the ranges do
+     * not overlap.
+     *
+     * @param list<array{int, int, string}> $edits
+     */
+    private static function spliced(string $source, array $edits): string
+    {
+        usort($edits, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
+        foreach ($edits as [$start, $end, $replacement]) {
+            $source = substr($source, 0, $start).$replacement.substr($source, $end);
+        }
+
+        return $source;
+    }
+
+    /**
      * The option settings of the inline flag groups under the node, as
      * written: "i-s", "^x", "aD".
      *

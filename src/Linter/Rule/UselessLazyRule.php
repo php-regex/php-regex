@@ -17,7 +17,6 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierBounds;
@@ -71,7 +70,7 @@ final class UselessLazyRule extends AbstractLintRule
             return [];
         }
 
-        // The automata compare one preg_match() call. After an empty match,
+        // The automata compare preg_match() calls. After an empty match,
         // preg_match_all(), preg_replace() and preg_split() try again at the
         // same offset for a non-empty one, where the two forms part; and a
         // match limit the pattern sets stops the one that backtracks more.
@@ -86,10 +85,7 @@ final class UselessLazyRule extends AbstractLintRule
             return [];
         }
 
-        $closing = PatternParser::closingDelimiter($pattern->delimiter);
-        $original = $pattern->delimiter.$pattern->source.$closing.$pattern->flags;
-        $greedy = $pattern->delimiter.substr($pattern->source, 0, $end - 1).substr($pattern->source, $end).$closing.$pattern->flags;
-        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSame($original, $greedy)) {
+        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSameFromAnyOffset($context, $end - 1, $end, '')) {
             return [];
         }
 

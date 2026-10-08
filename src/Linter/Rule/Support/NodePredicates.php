@@ -372,6 +372,26 @@ final class NodePredicates
         return false;
     }
 
+    /**
+     * Whether a start anchor ("^", "\A", "\G") stands anywhere under the
+     * node: a search from offset 0 then says nothing of the searches
+     * preg_match_all() goes on with, nor of one given an offset.
+     */
+    public static function holdsAStartAnchor(NodeInterface $node): bool
+    {
+        if (self::isStartAnchorNode($node)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsAStartAnchor($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function isEndAnchorNode(NodeInterface $node): bool
     {
         if ($node instanceof AnchorNode) {
