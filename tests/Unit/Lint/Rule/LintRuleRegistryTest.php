@@ -79,11 +79,12 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.flag.useless.D'],
             ['regex.lint.flag.useless.x'],
             ['regex.lint.quantifier.uselessLazy'],
+            ['regex.lint.lookaround.edgeQuantifier'],
         ], $ruleIds);
     }
 
     #[Test]
-    public function test_all_48_rule_ids_are_covered(): void
+    public function test_all_49_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -93,6 +94,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(48, $ids);
+        $this->assertCount(49, $ids);
     }
 }

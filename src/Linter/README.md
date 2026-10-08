@@ -56,7 +56,7 @@ The lint command reads a `regex.json` (committed) or `regex.dist.json` (template
 | `checks.redos.mode`, `checks.redos.threshold` | `theoretical`, `high` | Analysis mode, and the lowest severity reported |
 | `checks.optimizations.enabled`, `checks.optimizations.minSavings` | `true`, `1` | Optimization suggestions, and the minimum characters saved to report one |
 | `checks.lint.enabled` | `true` | Lint rules |
-| `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass` and `quantifier.uselessLazy` default to `false` |
+| `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass`, `quantifier.uselessLazy` and `lookaround.edgeQuantifier` default to `false` |
 
 Usage
 -----

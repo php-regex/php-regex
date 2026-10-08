@@ -540,6 +540,33 @@ preg_match('/(\d+)\D/', 'ab12x', $m);   // "12x", "12"
 
 ---
 
+### Repeat at the Edge of a Lookaround
+
+**Identifier:** `regex.lint.lookaround.edgeQuantifier` (off by default)
+
+**When it triggers:** A lookahead only checks that its body can match, so the last item of
+the body repeated past its minimum changes nothing: `(?=a{2,6})` asserts what `(?=a{2})`
+asserts, `(?=ab*)` what `(?=a)` asserts. The same holds for the first item of a lookbehind,
+`(?<=a{2,6})`. The automata prove that the two bodies hold at the same positions before the
+rule speaks. It stays silent on a body holding a capture (`(?=(a{2,6}))` keeps the whole run
+in `$1`), a reference, a call, a verb, a callout or `\K`, in a non-atomic lookahead
+(`(*napla:...)`), on a possessive repeat, which the automata do not read, and past the eighth
+question it asks them about in a pattern. A perf rule: turn it on with
+`"lookaround.edgeQuantifier": true` under `checks.lint.rules`.
+
+**Example:**
+```php
+// INFO: the x past the first is never checked
+preg_match('/\d+(?=px{1,3})/', '12pxx', $m);  // "12"
+
+// PREFERRED
+preg_match('/\d+(?=px)/', '12pxx', $m);       // "12"
+```
+
+**Fix:** Write the minimum count the tip gives.
+
+---
+
 ### Quantified Assertion
 
 **Identifier:** `regex.lint.quantifier.assertion`
@@ -1285,6 +1312,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Quantifiers | `regex.lint.quantifier.emptyRepeat`, `.possessiveImpossible`                              | warning  | Fix the repeated item             |
 | Quantifiers | `regex.lint.quantifier.lazyToClass` (off by default)                                      | perf     | Use a negated class               |
 | Quantifiers | `regex.lint.quantifier.uselessLazy` (off by default)                                      | style    | Drop the `?`                      |
+| Lookarounds | `regex.lint.lookaround.edgeQuantifier` (off by default)                                   | perf     | Keep the minimum count            |
 | Groups      | `regex.lint.group.redundant`, `.empty`                                                    | warning  | Remove the group                  |
 | Lookarounds | `regex.lint.lookaround.impossible`                                                        | warning  | Fix the lookahead                 |
 | Groups      | `regex.lint.group.quantifiedCapture`                                                      | info for an unnamed group, warning for a named one | Repeat a non-capturing group |

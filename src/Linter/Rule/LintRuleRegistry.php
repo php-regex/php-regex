@@ -77,6 +77,7 @@ final class LintRuleRegistry
         $this->register(new UselessDFlagRule());
         $this->register(new UselessXFlagRule());
         $this->register(new UselessLazyRule());
+        $this->register(new LookaroundEdgeQuantifierRule());
     }
 
     public function register(LintRuleInterface $rule): void

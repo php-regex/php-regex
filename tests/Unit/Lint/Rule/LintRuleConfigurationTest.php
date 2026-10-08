@@ -89,7 +89,7 @@ final class LintRuleConfigurationTest extends TestCase
 
         sort($off);
         sort($named);
-        $this->assertSame(['charclass.single', 'literal.multipleSpaces', 'quantifier.lazyToClass', 'quantifier.uselessLazy', 'unicode.shorthandWithoutU'], $off);
+        $this->assertSame(['charclass.single', 'literal.multipleSpaces', 'lookaround.edgeQuantifier', 'quantifier.lazyToClass', 'quantifier.uselessLazy', 'unicode.shorthandWithoutU'], $off);
         $this->assertSame($off, $named);
     }
 

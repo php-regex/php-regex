@@ -47,9 +47,12 @@ CHANGELOG
  * `regex.lint.quantifier.uselessLazy`: a lazy quantifier whose greedy form
    writes the same `$matches`, `(a+?)b`, proven by the automata, at severity
    `style`, off by default.
+ * `regex.lint.lookaround.edgeQuantifier`: a repeat past its minimum at the
+   end of a lookahead or the start of a lookbehind, `(?=a{2,6})`, proven by
+   the automata, at severity `perf`, off by default.
  * The rules off by default are `unicode.shorthandWithoutU`,
-   `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass` and
-   `quantifier.uselessLazy`;
+   `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass`,
+   `quantifier.uselessLazy` and `lookaround.edgeQuantifier`;
    `true` for its id in the rules map of `regex.json` turns one on.
  * `regex.lint.quantifier.lazyEnd` also reports a lazy quantifier followed
    only by items that may match nothing and hold no test that can fail,
