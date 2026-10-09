@@ -115,15 +115,15 @@ final class RedosVerdictConsoleTest extends TestCase
     }
 
     /**
-     * (?=b) and a+ never hold together, so PCRE never backtracks (a…a! and
-     * a…a!b never fail up to 64 bytes on 10.49); the model ignores the
-     * lookahead's constraint and keeps an exponential verdict.
+     * A proven witness the engine defuses: the quotes of a SQL string never
+     * let the run fail as the witness says it should (PCRE2 10.49). The
+     * verdict stays proven, the replay says so.
      */
     #[Test]
     #[DataProvider('provideCommands')]
     public function test_console_verdict_not_reproduced_line(string $command): void
     {
-        [$exitCode, $buffer] = $this->runCommand($command, ['/(?=b)(a+)+$/', '--redos-mode=confirmed']);
+        [$exitCode, $buffer] = $this->runCommand($command, ["/'(?:\\\\.|''|[^'])*'/s", '--redos-mode=confirmed']);
 
         $this->assertStringContainsString('Not reproduced on PCRE2 '.self::pcreRelease()." (PCRE's optimisations defuse it)", $buffer);
         $this->assertSame(0, $exitCode, $buffer);
