@@ -490,6 +490,8 @@ echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.IGNORECASE)
 Notes:
 - Unsupported PCRE constructs throw `TranspileException`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
+- A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
+  `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused.
 - `/x` is dropped after comments/whitespace are normalized.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
 - Available targets: `javascript` (alias: `js`), `html-pattern` (alias: `html`) and `python` (alias: `py`).

@@ -410,6 +410,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         }
 
         $this->context->requireFlag('u', 'Added /u for Unicode property escapes.');
+        $prop = $this->javaScriptProperty($prop, $node);
         $printed = $isNegated ? '\\P{'.$prop.'}' : '\\p{'.$prop.'}';
 
         return $this->caseless && !$this->inCharClass ? $this->caselessAtom($printed, $this->text($node), $node) : $printed;
@@ -613,6 +614,43 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $position,
             $this->context->sourcePattern,
         );
+    }
+
+    /**
+     * A property as JavaScript names it. PCRE2 reads a bare script name as
+     * its Script_Extensions, "sc:" as its Script, and a name loosely;
+     * JavaScript wants "Script_Extensions=Han" or "Script=Han", spelled as
+     * Unicode does. Common and Inherited are their Script either way in
+     * PCRE2. A general category or a binary property is kept as written.
+     */
+    private function javaScriptProperty(string $prop, UnicodePropNode $node): string
+    {
+        $separator = strcspn($prop, ':=');
+        if ($separator === \strlen($prop)) {
+            $script = ScriptNames::javaScriptName($prop);
+
+            return null === $script ? $prop : self::scriptProperty($script, true);
+        }
+
+        $name = ScriptNames::looseKey(substr($prop, 0, $separator));
+        $value = substr($prop, $separator + 1);
+        $extensions = \in_array($name, ['scx', 'scriptextensions'], true);
+        if (!$extensions && !\in_array($name, ['sc', 'script'], true)) {
+            // PCRE2 also reads "bc:" and "bidiclass:", and nothing else.
+            return $this->unsupported(\in_array($name, ['bc', 'bidiclass'], true) ? 'Bidi_Class properties are not supported in JavaScript.' : 'Unsupported Unicode property in JavaScript: '.$prop.'.', $node);
+        }
+
+        $script = ScriptNames::javaScriptName($value);
+        if (null === $script) {
+            return $this->unsupported('The script '.$value.' has no JavaScript name.', $node);
+        }
+
+        return self::scriptProperty($script, $extensions);
+    }
+
+    private static function scriptProperty(string $script, bool $extensions): string
+    {
+        return ($extensions && !\in_array($script, ['Common', 'Inherited'], true) ? 'Script_Extensions=' : 'Script=').$script;
     }
 
     /**

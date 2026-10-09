@@ -14,3 +14,7 @@ CHANGELOG
    so it accepts what `preg_match()` finds, and classes escape what `v`
    reserves. `/i` and `(?i)` are spelled out, each letter written with every
    case PCRE takes for it (`[aA]`, `[kK\u212A]` under `u`).
+ * A script property is written as JavaScript reads it: `\p{Han}`, which
+   PCRE2 reads as the script's extensions, is `\p{Script_Extensions=Han}`,
+   `\p{sc:Han}` is `\p{Script=Han}`, a name written loosely takes its
+   Unicode spelling. A Bidi_Class is refused.

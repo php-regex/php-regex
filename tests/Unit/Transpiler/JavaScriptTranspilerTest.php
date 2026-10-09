@@ -115,6 +115,63 @@ final class JavaScriptTranspilerTest extends TestCase
         $this->assertContains('Dropped /x comments during transpilation.', $result->notes);
     }
 
+    /**
+     * PCRE2 reads a bare script name as its Script_Extensions ("\p{Han}"
+     * takes U+3001, whose script is Common), "sc:" as its Script, and a
+     * name loosely; JavaScript wants "\p{Script_Extensions=Han}" or
+     * "\p{Script=Han}", spelled as Unicode does. Common and Inherited read
+     * as their Script either way in PCRE2. A general category or a binary
+     * property is kept. Each literal was checked with node on the same
+     * subjects.
+     *
+     * @param array<int|string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideProperties')]
+    public function test_transpiles_a_property_to_its_javascript_name(string $pattern, string $literal, array $subjects): void
+    {
+        foreach ($subjects as $subject => $matches) {
+            $this->assertSame($matches, preg_match($pattern, (string) $subject), \sprintf('Oracle: %s on %s.', $pattern, $subject));
+        }
+
+        $this->assertSame($literal, Regex::create(['cache' => null])->transpile($pattern, 'javascript')->literal);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, literal: string, subjects: array<int|string, int>}>
+     */
+    public static function provideProperties(): iterable
+    {
+        yield 'a bare script' => ['pattern' => '/^\p{Han}$/u', 'literal' => '/^\p{Script_Extensions=Han}$/u', 'subjects' => ['中' => 1, '、' => 1, 'a' => 0]];
+        yield 'a script by its Script' => ['pattern' => '/^\p{sc:Han}$/u', 'literal' => '/^\p{Script=Han}$/u', 'subjects' => ['中' => 1, '、' => 0]];
+        yield 'a script by its short name' => ['pattern' => '/^\p{Script=Hani}$/u', 'literal' => '/^\p{Script=Han}$/u', 'subjects' => ['中' => 1, '、' => 0]];
+        yield 'a script by its Script_Extensions' => ['pattern' => '/^\p{scx:Hira}$/u', 'literal' => '/^\p{Script_Extensions=Hiragana}$/u', 'subjects' => ['ー' => 1, 'あ' => 1, 'ア' => 0]];
+        yield 'a script spelled loosely' => ['pattern' => '/^\P{greek}$/u', 'literal' => '/^\P{Script_Extensions=Greek}$/u', 'subjects' => ['α' => 0, 'a' => 1]];
+        yield 'a script negated with a caret' => ['pattern' => '/^\p{^Latin}$/u', 'literal' => '/^\P{Script_Extensions=Latin}$/u', 'subjects' => ['a' => 0, 'α' => 1]];
+        yield 'the Common script' => ['pattern' => '/^\p{Common}$/u', 'literal' => '/^\p{Script=Common}$/u', 'subjects' => ['、' => 1, '1' => 1, 'a' => 0]];
+        yield 'a script in a class' => ['pattern' => '/^[\p{Han}\d]+$/u', 'literal' => '/^[\p{Script_Extensions=Han}\d]+$/u', 'subjects' => ['中1' => 1, 'a' => 0]];
+        yield 'general categories' => ['pattern' => '/^\p{L}\p{Lu}\pN$/u', 'literal' => '/^\p{L}\p{Lu}\p{N}$/u', 'subjects' => ['aB1' => 1, 'ab1' => 0]];
+        yield 'a binary property' => ['pattern' => '/^\p{Alphabetic}$/u', 'literal' => '/^\p{Alphabetic}$/u', 'subjects' => ['a' => 1, '1' => 0]];
+    }
+
+    #[Test]
+    public function test_rejects_a_bidi_class(): void
+    {
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessage('Bidi_Class properties are not supported in JavaScript.');
+
+        Regex::create(['cache' => null])->transpile('/\p{bc:L}/u', 'javascript');
+    }
+
+    #[Test]
+    public function test_rejects_a_script_javascript_does_not_name(): void
+    {
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessage('The script Nope has no JavaScript name.');
+
+        Regex::create(['cache' => null])->transpile('/\p{sc:Nope}/u', 'javascript');
+    }
+
     #[Test]
     public function test_rejects_possessive_quantifiers(): void
     {

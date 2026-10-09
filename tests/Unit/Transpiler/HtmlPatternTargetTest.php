@@ -59,6 +59,7 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'an alternation anchored on one side each' => ['pattern' => '/^a|b$/', 'attribute' => '[\s\S]*(?:^a|b$)[\s\S]*', 'verdicts' => ['ax' => true, 'xb' => true, 'xa' => false]];
         yield 'brackets in a class' => ['pattern' => '/^[\w\[\]]+$/', 'attribute' => '^[\w\[\]]+$', 'verdicts' => ['a[b]' => true, 'a(b)' => false]];
         yield 'an opening bracket alone in a class' => ['pattern' => '/^[^[]+$/', 'attribute' => '^[^\[]+$', 'verdicts' => ['ab' => true, 'a[b' => false]];
+        yield 'a script' => ['pattern' => '/^\p{Han}+$/u', 'attribute' => '^\p{Script_Extensions=Han}+$', 'verdicts' => ['中、' => true, '中a' => false]];
         yield 'a property' => ['pattern' => '/^\p{L}+$/u', 'attribute' => '^\p{L}+$', 'verdicts' => ['été' => true, 'é1' => false]];
     }
 
