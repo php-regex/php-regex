@@ -84,7 +84,9 @@ lints it and checks it for ReDoS as it does in a `preg_*()` call. A variadic
 parameter has each of its arguments read. PHPStan reads the arguments of an
 attribute only when it knows its class: `#[Language('RegExp')]` is read when
 `jetbrains/phpstorm-attributes` is installed, and `#[RegexPattern]`, which
-takes none, always.
+takes none, always. Parameter attributes come from PHPStan's reflection,
+which offers them from PHPStan 2.1.31 at least: on an older 2.x release that
+lacks them, no parameter is read as a pattern, and nothing is reported.
 
 ## Lint rules and ReDoS analysis
 

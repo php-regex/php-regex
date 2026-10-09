@@ -216,6 +216,12 @@ final readonly class RegexPatternArgumentRule implements Rule
         $marked = [];
         foreach ($variants as $variant) {
             foreach ($variant->getParameters() as $position => $parameter) {
+                // PHPStan reads parameter attributes from 2.1.31 at least; a
+                // release older than that may offer none: nothing is marked.
+                if (!method_exists($parameter, 'getAttributes')) {
+                    continue;
+                }
+
                 foreach ($parameter->getAttributes() as $attribute) {
                     if (self::marksRegex($attribute)) {
                         $marked[$position] = [$parameter->getName(), $parameter->isVariadic()];

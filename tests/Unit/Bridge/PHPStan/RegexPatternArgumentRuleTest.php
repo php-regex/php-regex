@@ -13,15 +13,20 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
+use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\VariadicPlaceholder;
 use PHPRegex\PHPStan\RegexPatternArgumentRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ExtendedParametersAcceptor;
+use PHPStan\Reflection\FunctionReflection;
+use PHPStan\Reflection\ParameterReflection;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -48,5 +53,30 @@ final class RegexPatternArgumentRuleTest extends TestCase
         $rule = new RegexPatternArgumentRule($this->createStub(ReflectionProvider::class));
 
         $this->assertSame(CallLike::class, $rule->getNodeType());
+    }
+
+    #[Test]
+    public function test_a_phpstan_without_parameter_attributes_reads_nothing(): void
+    {
+        // Before 2.1.31 at least, a parameter of PHPStan's reflection may not
+        // offer getAttributes(): such a parameter is marked by nothing.
+        $parameter = $this->createStub(ParameterReflection::class);
+        $this->assertFalse(method_exists($parameter, 'getAttributes'));
+
+        $variant = $this->createStub(ExtendedParametersAcceptor::class);
+        $variant->method('getParameters')->willReturn([$parameter, $parameter]);
+        $function = $this->createStub(FunctionReflection::class);
+        $function->method('isBuiltin')->willReturn(false);
+        $function->method('getName')->willReturn('App\matches');
+        $function->method('getVariants')->willReturn([$variant]);
+        $reflectionProvider = $this->createStub(ReflectionProvider::class);
+        $reflectionProvider->method('hasFunction')->willReturn(true);
+        $reflectionProvider->method('getFunction')->willReturn($function);
+
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = $this->createStub(Scope::class);
+        $node = new FuncCall(new Name('matches'), [new Arg(new String_('x')), new Arg(new String_('/(foo/'))]);
+
+        $this->assertSame([], (new RegexPatternArgumentRule($reflectionProvider))->processNode($node, $scope));
     }
 }

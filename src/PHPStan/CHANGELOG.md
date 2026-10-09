@@ -14,7 +14,8 @@ CHANGELOG
    `#[JetBrains\PhpStorm\Language('RegExp')]`, in calls to functions, static
    and instance methods and constructors: `regexp.pattern` for a pattern the
    running engine refuses, `regex.invalidForTarget`, then lint and ReDoS as
-   for `preg_*()` calls.
+   for `preg_*()` calls. On a PHPStan older than 2.1.31 that offers no
+   parameter attributes, no parameter is read.
  * `regex.redos.search`, `Quadratic search (ReDoS): <pattern>`: the quadratic
    cost of an unanchored search whose every attempt is proven linear, under the
    ReDoS setting, from `threshold: medium`.
