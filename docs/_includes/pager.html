@@ -38,12 +38,12 @@
   {% endfor %}
   <nav class="pager" aria-label="Pagination">
     {% if prev_url != '' %}
-      <a class="pager-prev" rel="prev" href="{{ prev_url }}"><span class="pager-label">Previous</span><span class="pager-title">{{ prev_title }}</span></a>
+      <a class="pager-prev" rel="prev" href="{{ prev_url }}"><span class="pager-label"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3 5 8l5 5"/></svg>Previous</span><span class="pager-title">{{ prev_title }}</span></a>
     {% else %}
       <span class="pager-prev" aria-hidden="true"></span>
     {% endif %}
     {% if next_url != '' %}
-      <a class="pager-next" rel="next" href="{{ next_url }}"><span class="pager-label">Next</span><span class="pager-title">{{ next_title }}</span></a>
+      <a class="pager-next" rel="next" href="{{ next_url }}"><span class="pager-label">Next<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></span><span class="pager-title">{{ next_title }}</span></a>
     {% else %}
       <span class="pager-next" aria-hidden="true"></span>
     {% endif %}
@@ -51,7 +51,7 @@
 {% endif %}
 {% if page.path %}
   <p class="page-meta">
-    <a class="edit-link" href="https://github.com/php-regex/php-regex/edit/2.x/docs/{{ page.path }}">Edit on GitHub</a>
-    <button type="button" class="copy-source" data-source="/{{ page.path }}">Copy as Markdown</button>
+    <a class="edit-link" href="https://github.com/php-regex/php-regex/edit/2.x/docs/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 13l.8-2.8L11 3l2 2-7.2 7.2L3 13z"/></svg>Edit on GitHub</a>
+    <button type="button" class="copy-source" data-source="/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8"/><path d="M10.5 3.5h-7v7"/></svg>Copy as Markdown</button>
   </p>
 {% endif %}

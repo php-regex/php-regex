@@ -42,15 +42,11 @@
     }
     setHidden(false);
     sidebar.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('drawer-open');
     toggle.setAttribute('aria-expanded', 'true');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.className = 'drawer-overlay';
-      // Minimal fallback so the overlay still blocks the page before the
-      // stylesheet ships its own .drawer-overlay styling.
-      overlay.style.position = 'fixed';
-      overlay.style.inset = '0';
       overlay.addEventListener('click', function () { closeDrawer(true); });
       document.body.appendChild(overlay);
     }
@@ -98,7 +94,7 @@
       return;
     }
     sidebar.classList.remove('open');
-    document.body.style.overflow = '';
+    document.body.classList.remove('drawer-open');
     toggle.setAttribute('aria-expanded', 'false');
     if (overlay) {
       overlay.remove();

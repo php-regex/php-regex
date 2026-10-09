@@ -242,6 +242,8 @@ main h2 {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 2.5em 0 .75em;
+  padding-bottom: .35em;
+  border-bottom: 1px solid var(--line);
 }
 
 main h3 {
@@ -293,8 +295,9 @@ main a:hover {
 
 main blockquote {
   margin: 1.5em 0;
-  padding: .25em 0 .25em 1.25em;
+  padding: .5em 1.25em;
   border-left: 3px solid var(--amber);
+  background: var(--code-bg);
   color: var(--ink-soft);
 }
 
@@ -375,6 +378,10 @@ main td {
   padding: .6em .9em;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
+}
+
+main tbody tr:hover {
+  background: var(--code-bg);
 }
 
 main caption {
@@ -464,6 +471,8 @@ main pre code,
    for a brief amber flash if the confirmation ever carries a state
    attribute. The one transition is opacity, so reduced-motion users get
    an instant, complete state. */
+/* The copy button stays out of sight until the block is hovered or
+   focused from within - the code is the hero, not the chrome. */
 .copy-btn {
   position: absolute;
   top: .5rem;
@@ -479,7 +488,20 @@ main pre code,
   color: var(--ink-soft);
   border: 1px solid var(--line);
   cursor: pointer;
+  opacity: 0;
   transition: opacity .15s ease;
+}
+
+.has-copy:hover .copy-btn,
+.has-copy:focus-within .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .copy-btn {
+    opacity: 1;
+  }
 }
 
 .copy-btn:hover {
@@ -732,6 +754,19 @@ main pre code,
   max-width: 70ch;
 }
 
+/* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */
+
+.icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
 /* ---- Sidebar (sticky rail on wide screens, drawer below 1024px) ---- */
 
 .site-sidebar {
@@ -804,10 +839,15 @@ main pre code,
 }
 
 .nav-section + .nav-section {
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
 }
 
 .nav-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
   margin: 0 0 .5rem;
   padding-inline: .75rem;
   font-size: .72rem;
@@ -815,6 +855,14 @@ main pre code,
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+/* Each section title carries the amber square - the mark's node. */
+.nav-title::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  background: var(--amber);
 }
 
 .nav-list {
@@ -836,17 +884,21 @@ main pre code,
 
 .nav-list a:hover {
   color: var(--ink);
+  background: var(--code-bg);
 }
 
 .nav-list a[aria-current='page'] {
   color: var(--ink);
   font-weight: 600;
   border-left-color: var(--amber);
+  background: var(--code-bg);
 }
 
-/* Nested lists (tutorial chapters): indented, slightly smaller. */
+/* Nested lists (tutorial chapters): a guide line carries the indent. */
 .nav-list .nav-list {
   margin-left: .75rem;
+  padding-left: .75rem;
+  border-left: 1px solid var(--line);
 }
 
 .nav-list .nav-list a {
@@ -1604,6 +1656,12 @@ main > section:not([class]) {
   }
 }
 
+/* Drawer-open scroll lock: set as a body class so no inline style exists
+   outside this stylesheet. */
+body.drawer-open {
+  overflow: hidden;
+}
+
 /* ---- Page meta: edit link and copy-source, under the pager ---- */
 
 .page-meta {
@@ -1631,4 +1689,21 @@ main > section:not([class]) {
 
 .copy-source:hover {
   color: var(--amber);
+}
+
+/* ---- Icon-carrying controls: label and glyph read as one ---- */
+
+.search-toggle,
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.pager-label,
+.edit-link,
+.copy-source {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
 }

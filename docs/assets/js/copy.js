@@ -22,6 +22,12 @@
     if (!container || container.querySelector('.copy-btn')) {
       return;
     }
+    // Trivial blocks do not earn a button: a one-liner under 80
+    // characters is faster to select than to click for.
+    var text = code.innerText.trim();
+    if (!container.classList.contains('install') && text.indexOf('\n') === -1 && text.length < 80) {
+      return;
+    }
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'copy-btn';
