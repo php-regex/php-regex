@@ -332,7 +332,7 @@ $pattern = "/\d{3}-\d{4}/"; // Also works but harder to read
 ## Related concepts
 
 - **[ReDoS Deep Dive](redos.md)** - PCRE's backtracking vulnerabilities
-- **[Architecture](../ARCHITECTURE.md)** - How PHPRegex handles PCRE
+- **[Architecture](../architecture.md)** - How PHPRegex handles PCRE
 - **[Regex in PHP Guide](../guides/regex-in-php.md)** - PHP-specific regex details
 
 ## Further reading

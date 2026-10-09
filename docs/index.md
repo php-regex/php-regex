@@ -97,7 +97,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Parser</h4>
       <p class="component-desc">The PCRE2 regex parser: lexer, immutable AST, a validator that answers as PHP's engine would.</p>
-      <a href="/ARCHITECTURE/">Read more →</a>
+      <a href="/architecture/">Read more →</a>
     </article>
     <article class="component">
       <h4 class="component-name">Explain</h4>
@@ -107,7 +107,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Generator</h4>
       <p class="component-desc">Generates sample strings and test cases a regex matches or rejects.</p>
-      <a href="/QUICK_START/">Read more →</a>
+      <a href="/quick-start/">Read more →</a>
     </article>
   </div>
   <h3>Prove</h3>

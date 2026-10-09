@@ -16,12 +16,12 @@ These concept guides are designed to help you understand specific topics in dept
 - **New to regex?** Start with the main [Tutorial](../tutorial/README.md) first
 - **Confused about a term?** Check the [FAQ & Glossary](../reference/faq-glossary.md)
 - **Need deeper understanding?** Read the relevant concept guide
-- **Building tools?** Study the [Architecture](../ARCHITECTURE.md) and [Extending Guide](../EXTENDING_GUIDE.md)
+- **Building tools?** Study the [Architecture](../architecture.md) and [Extending Guide](../extending.md)
 
 ## Related resources
 
 - [FAQ & Glossary](../reference/faq-glossary.md) - Quick definitions
-- [Architecture](../ARCHITECTURE.md) - Technical deep dive
+- [Architecture](../architecture.md) - Technical deep dive
 - [Tutorial](../tutorial/README.md) - Hands-on learning
 
 ---

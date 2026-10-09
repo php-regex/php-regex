@@ -192,7 +192,7 @@ a+a+         -> a+         or a++a+
 ## Related concepts
 
 - **[ReDoS Guide](../guides/redos.md)** - The verdict, the witness, confirmed mode and the guarantee
-- **[Architecture](../ARCHITECTURE.md)** - Where the analysis sits in the library
+- **[Architecture](../architecture.md)** - Where the analysis sits in the library
 - **[FAQ & Glossary](../reference/faq-glossary.md)** - Common ReDoS questions
 
 ## Further reading

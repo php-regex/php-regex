@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /design/AST_TRAVERSAL/
+  - /design/AST_TRAVERSAL.html
+---
 # AST Traversal Design
 
 Understanding how PHPRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
@@ -336,7 +341,7 @@ class SafeVisitor extends AbstractNodeVisitor
 |-----------------------|------------------------------------------------|
 | AST Node Reference    | [nodes](../nodes/README.md)                    |
 | AST Visitor Reference | [visitors](../visitors/README.md)              |
-| Architecture Overview | [ARCHITURE](../ARCHITECTURE.md)                |
+| Architecture Overview | [ARCHITURE](../architecture.md)                |
 | Tutorial: Basics      | [tutorial/01-basics](../tutorial/01-basics.md) |
 
 ---
@@ -390,4 +395,4 @@ Write a visitor that extracts all anchors (`^`, `$`, `\b`, `\B`, `(?=...)`, etc.
 
 ---
 
-Previous: [Architecture](../ARCHITECTURE.md) | Next: [External resources](../reference/resources.md)
+Previous: [Architecture](../architecture.md) | Next: [External resources](../reference/resources.md)

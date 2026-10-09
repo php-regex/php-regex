@@ -3,7 +3,7 @@
     - title: Documentation
       url: /docs/
     - title: Quick Start
-      url: /QUICK_START/
+      url: /quick-start/
     - title: Tutorial
       url: /tutorial/
       pages:
@@ -46,11 +46,11 @@
     - title: Regex in PHP
       url: /guides/regex-in-php/
     - title: Cookbook
-      url: /COOKBOOK/
+      url: /cookbook/
     - title: ReDoS guide
       url: /guides/redos/
     - title: Troubleshooting
-      url: /TROUBLESHOOTING/
+      url: /troubleshooting/
 - title: Concepts
   pages:
     - title: Key concepts
@@ -100,16 +100,16 @@
 - title: Internals
   pages:
     - title: Architecture
-      url: /ARCHITECTURE/
+      url: /architecture/
     - title: AST traversal
-      url: /design/AST_TRAVERSAL/
+      url: /design/ast-traversal/
     - title: Nodes
       url: /nodes/
     - title: Visitors
       url: /visitors/
     - title: Extending
-      url: /EXTENDING_GUIDE/
+      url: /extending/
     - title: Maintainers guide
-      url: /MAINTAINERS_GUIDE/
+      url: /maintainers/
     - title: External resources
       url: /reference/resources/

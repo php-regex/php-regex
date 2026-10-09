@@ -215,10 +215,10 @@ When referencing these sources in documentation or code comments:
 | Topic         | File                                |
 |---------------|-------------------------------------|
 | ReDoS Guide   | [ReDoS guide](../guides/redos.md) |
-| Cookbook      | [COOKBOOK.md](../COOKBOOK.md)       |
+| Cookbook      | [cookbook.md](../cookbook.md)       |
 | API Reference | [api.md](api.md)                    |
 | Diagnostics   | [diagnostics.md](diagnostics.md)    |
 
 ---
 
-Previous: [AST Traversal Design](../design/AST_TRAVERSAL.md) | Next: [Docs Home](/docs/)
+Previous: [AST Traversal Design](../design/ast-traversal.md) | Next: [Docs Home](/docs/)

@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /QUICK_START/
+  - /QUICK_START.html
+---
 # Quick Start Guide
 
 This guide gets you from installation to a first analysis in a few steps. It is intentionally brief; the tutorial covers concepts in depth.
@@ -397,14 +402,14 @@ For beginners:
 
 For users:
 - [CLI Guide](guides/cli.md)
-- [Cookbook](COOKBOOK.md)
+- [Cookbook](cookbook.md)
 - [ReDoS Guide](guides/redos.md)
 
 For developers:
-- [Architecture](ARCHITECTURE.md)
+- [Architecture](architecture.md)
 - [AST Reference](nodes/README.md)
 - [Visitors Guide](visitors/README.md)
-- [Extending Guide](EXTENDING_GUIDE.md)
+- [Extending Guide](extending.md)
 
 Reference:
 - [API Reference](reference/api.md)

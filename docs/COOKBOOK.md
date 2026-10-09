@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /COOKBOOK/
+  - /COOKBOOK.html
+---
 # Regex Cookbook: Practical Patterns for PHP
 
 This cookbook collects patterns for common validation and parsing tasks. PHPRegex's ReDoS analyzer proves every pattern here safe (`safe (proven)`: no input makes one match attempt backtrack beyond a linear number of steps), but you should still review and adapt them for your context.
@@ -630,4 +635,4 @@ if (preg_match($pattern, $input) !== 1) {
 
 ---
 
-Previous: [ReDoS Guide](guides/redos.md) | Next: [Architecture](ARCHITECTURE.md)
+Previous: [ReDoS Guide](guides/redos.md) | Next: [Architecture](architecture.md)

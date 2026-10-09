@@ -1301,7 +1301,7 @@ vendor/bin/regex highlight '/test/' --ansi
 - **[Regex Tutorial](../tutorial/README.md)** - Learn regex from scratch
 - **[Regex in PHP](regex-in-php.md)** - PHP regex fundamentals
 - **[ReDoS Guide](redos.md)** - Preventing catastrophic backtracking
-- **[Cookbook](../COOKBOOK.md)** - Ready-to-use patterns
+- **[Cookbook](../cookbook.md)** - Ready-to-use patterns
 
 ---
 

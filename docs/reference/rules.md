@@ -1390,4 +1390,4 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 
 ---
 
-Previous: [Quick Start](../QUICK_START.md) | Next: [ReDoS Guide](../guides/redos.md)
+Previous: [Quick Start](../quick-start.md) | Next: [ReDoS Guide](../guides/redos.md)

@@ -251,7 +251,7 @@ lookaround). The test asserts that:
 - `maxLookbehind` never exceeds PCRE2's.
 
 The fixture was written by PCRE2 10.49; the
-[Maintainers Guide](../MAINTAINERS_GUIDE.md#pattern-info-next-to-pcre2test)
+[Maintainers Guide](../maintainers.md#pattern-info-next-to-pcre2test)
 says how to regenerate it. The compatibility verdicts are checked against
 `preg_match()` wherever the running engine is a point of the matrix.
 

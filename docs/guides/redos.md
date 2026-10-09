@@ -528,4 +528,4 @@ a+a+         -> a+         or a++a+
 
 ---
 
-Previous: [Cookbook](COOKBOOK.md) | Next: [Architecture](ARCHITECTURE.md)
+Previous: [Cookbook](cookbook.md) | Next: [Architecture](architecture.md)

@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /TROUBLESHOOTING/
+  - /TROUBLESHOOTING.html
+---
 # Troubleshooting Guide
 
 This guide helps you resolve common issues when using PHPRegex.
@@ -460,7 +465,7 @@ composer phpunit --display-deprecations
 1. Check Quick Start Guide:
 
 ```bash
-# docs/QUICK_START.md
+# docs/quick-start.md
 ```
 
 2. Check API Reference:
@@ -499,10 +504,10 @@ https://stackoverflow.com/questions/tagged/regexparser
 
 ## Additional Resources
 
-- [Quick Start Guide](QUICK_START.md)
+- [Quick Start Guide](quick-start.md)
 - [API Reference](reference/rules.md)
 - [ReDoS Guide](guides/redos.md)
-- [Architecture Documentation](ARCHITECTURE.md)
+- [Architecture Documentation](architecture.md)
 - [Contributing Guide](https://github.com/php-regex/php-regex/blob/2.x/CONTRIBUTING.md)
 - [Upgrading to 2.0](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
 

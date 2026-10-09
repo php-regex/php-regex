@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /MAINTAINERS_GUIDE/
+  - /MAINTAINERS_GUIDE.html
+---
 # Maintainers Guide
 
 This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PHPRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
@@ -6,7 +11,7 @@ This guide is for framework maintainers, library maintainers, and tooling author
 
 If you are new to the codebase, this short checklist helps you get oriented quickly:
 
-- Read [docs/ARCHITECTURE.md](ARCHITECTURE.md) and [docs/EXTENDING_GUIDE.md](EXTENDING_GUIDE.md).
+- Read [docs/architecture.md](architecture.md) and [docs/extending.md](extending.md).
 - Run `composer install` and verify `composer phpunit` passes before changes.
 - When touching Lexer/Parser or AST nodes, update relevant visitors and add tests.
 - Preserve byte offsets in diagnostics and update [docs/reference/diagnostics.md](reference/diagnostics.md) for new codes.
@@ -618,8 +623,8 @@ fails when their counts or their order differ.
 | API Reference   | [api.md](reference/api.md)                 |
 | Diagnostics     | [diagnostics.md](reference/diagnostics.md) |
 | ReDoS Guide     | [guides/redos.md](guides/redos.md)           |
-| Architecture    | [ARCHITECTURE.md](ARCHITECTURE.md)         |
-| Extending Guide | [EXTENDING_GUIDE.md](EXTENDING_GUIDE.md)   |
+| Architecture    | [architecture.md](architecture.md)         |
+| Extending Guide | [extending.md](extending.md)   |
 
 ---
 
@@ -635,4 +640,4 @@ fails when their counts or their order differ.
 
 ---
 
-Previous: [Architecture](ARCHITECTURE.md) | Next: [Extending Guide](EXTENDING_GUIDE.md)
+Previous: [Architecture](architecture.md) | Next: [Extending Guide](extending.md)

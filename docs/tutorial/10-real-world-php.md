@@ -369,7 +369,7 @@ Tutorial summary:
 
 ### Next Steps
 
-- **[Cookbook](../COOKBOOK.md)** - More pattern examples
+- **[Cookbook](../cookbook.md)** - More pattern examples
 - **[ReDoS Guide](../guides/redos.md)** - Deep dive on risk and mitigation
 - **[API Reference](../reference/api.md)** - API documentation
 - Apply what you've learned in your own project

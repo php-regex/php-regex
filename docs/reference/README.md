@@ -22,7 +22,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 - [AST Nodes](../nodes/README.md)
 - [AST Visitors](../visitors/README.md)
-- [AST Traversal Design](../design/AST_TRAVERSAL.md)
+- [AST Traversal Design](../design/ast-traversal.md)
 
 ## External Resources
 

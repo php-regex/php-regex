@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /ARCHITECTURE/
+  - /ARCHITECTURE.html
+---
 # PHPRegex Architecture
 
 This document explains how PHPRegex works under the hood. It is written for future maintainers and contributors who want to understand the AST, the parsing pipeline, and the analysis algorithms.
@@ -132,7 +137,7 @@ Built-in visitors live in the package that owns their concern, and include:
 - `Redos\RedosProfiler` (`src/Redos/`)
 - `Optimizer\Rewriter` (`src/Optimizer/`)
 
-Traversal details are in [docs/design/AST_TRAVERSAL.md](design/AST_TRAVERSAL.md).
+Traversal details are in [docs/design/ast-traversal.md](design/ast-traversal.md).
 
 ## The Normalized Form (HIR)
 
@@ -254,8 +259,8 @@ When you add a new PCRE construct, you typically update:
 - `src/Parser/NodeVisitorInterface.php` and every visitor that implements it, to support traversal
 - Tests and fixtures for valid/invalid cases
 
-See [docs/EXTENDING_GUIDE.md](EXTENDING_GUIDE.md) for the full workflow.
+See [docs/extending.md](extending.md) for the full workflow.
 
 ---
 
-Previous: [Cookbook](COOKBOOK.md) | Next: [Maintainers Guide](MAINTAINERS_GUIDE.md)
+Previous: [Cookbook](cookbook.md) | Next: [Maintainers Guide](maintainers.md)

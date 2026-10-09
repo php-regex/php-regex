@@ -413,9 +413,9 @@ echo $email;  // Example: "user@example.com"
 ## Learn More
 
 - **[Regex Tutorial](../tutorial/README.md)** - Step-by-step guide
-- **[Quick Start](../QUICK_START.md)** - Get productive in 5 minutes
+- **[Quick Start](../quick-start.md)** - Get productive in 5 minutes
 - **[ReDoS Guide](redos.md)** - Prevent catastrophic backtracking
-- **[Cookbook](../COOKBOOK.md)** - Ready-to-use patterns
+- **[Cookbook](../cookbook.md)** - Ready-to-use patterns
 
 ---
 

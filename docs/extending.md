@@ -1,3 +1,8 @@
+---
+redirect_from:
+  - /EXTENDING_GUIDE/
+  - /EXTENDING_GUIDE.html
+---
 # Extending PHPRegex
 
 This guide shows how to add new PCRE features, build custom visitors, and integrate PHPRegex into tools.
@@ -488,7 +493,7 @@ Verify parser logic:
 
 - **[AST Nodes](nodes/README.md)** - Node reference
 - **[Visitors](visitors/README.md)** - Visitor patterns
-- **[AST Traversal](design/AST_TRAVERSAL.md)** - Traversal design
+- **[AST Traversal](design/ast-traversal.md)** - Traversal design
 - **Source code** - Learn from existing implementations
 
 ---
@@ -507,4 +512,4 @@ End of extending guide.
 
 ---
 
-Previous: [Architecture](ARCHITECTURE.md) | Next: [Maintainers Guide](MAINTAINERS_GUIDE.md)
+Previous: [Architecture](architecture.md) | Next: [Maintainers Guide](maintainers.md)

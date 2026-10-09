@@ -12,15 +12,15 @@ This documentation covers regex fundamentals and how to use PHPRegex in PHP proj
 
 Start here:
 - [Regex Tutorial](tutorial/README.md)
-- [Quick Start](QUICK_START.md)
-- [Architecture](ARCHITECTURE.md)
+- [Quick Start](quick-start.md)
+- [Architecture](architecture.md)
 
 ## Documentation map
 
 ### Learning path (beginners)
 
 - [Regex Tutorial](tutorial/README.md) - Learn regex step by step.
-- [Quick Start](QUICK_START.md) - Short, practical overview.
+- [Quick Start](quick-start.md) - Short, practical overview.
 - [Regex in PHP](guides/regex-in-php.md) - PHP-specific behavior.
 
 ### Using PHPRegex
@@ -32,17 +32,17 @@ Start here:
 - [Rector Guide](guides/rector.md) - `preg_*` calls rewritten into the string functions they prove equal to.
 - [Laravel Guide](guides/laravel.md) - Service, facade, and artisan commands.
 - [Symfony Guide](guides/symfony.md) - Bundle, service, and console commands.
-- [Cookbook](COOKBOOK.md) - Practical patterns and examples.
+- [Cookbook](cookbook.md) - Practical patterns and examples.
 - [ReDoS Guide](guides/redos.md) - Security and performance guidance.
-- [Troubleshooting](TROUBLESHOOTING.md) - Common errors and how to fix them.
+- [Troubleshooting](troubleshooting.md) - Common errors and how to fix them.
 
 ### For developers and contributors
 
-- [Architecture](ARCHITECTURE.md) - Internal design.
-- [AST Traversal](design/AST_TRAVERSAL.md) - How the tree is processed.
+- [Architecture](architecture.md) - Internal design.
+- [AST Traversal](design/ast-traversal.md) - How the tree is processed.
 - [Nodes Reference](nodes/README.md) - AST node types.
 - [Visitors Reference](visitors/README.md) - Built-in visitors and custom visitors.
-- [Extending Guide](EXTENDING_GUIDE.md) - How to add features or integrations.
+- [Extending Guide](extending.md) - How to add features or integrations.
 
 ### Reference materials
 
@@ -54,7 +54,7 @@ Start here:
 - [Correctness Contracts](reference/correctness-contracts.md) - Soundness/completeness guarantees by feature.
 - [Backward Compatibility Promise](reference/backward-compatibility.md) - What each release may change.
 - [FAQ and Glossary](reference/faq-glossary.md) - Common terms and questions.
-- [Maintainers Guide](MAINTAINERS_GUIDE.md) - Project maintenance notes.
+- [Maintainers Guide](maintainers.md) - Project maintenance notes.
 
 ## How PHPRegex works in brief
 
@@ -89,4 +89,4 @@ Every example in these docs uses PHPRegex as the reference implementation.
 
 ---
 
-Previous: [Main README](https://github.com/php-regex/php-regex) | Next: [Quick Start](QUICK_START.md)
+Previous: [Main README](https://github.com/php-regex/php-regex) | Next: [Quick Start](quick-start.md)
