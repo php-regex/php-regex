@@ -28,6 +28,7 @@ use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -231,7 +232,9 @@ final class LintCommand extends Command
 
         $unreadFiles = $skipValidators ? [] : $this->unreadFileResults();
 
-        $patternCount = \count($patterns);
+        // A file read with the tokenizer holds no pattern of its own: it is
+        // counted in the stats only.
+        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
         if ($showProgress) {
             $this->newLine();
             $this->line('  <fg=gray>Scanned '.$fileCount.' files, found '.$patternCount.' patterns.</>');
@@ -269,7 +272,7 @@ final class LintCommand extends Command
         $results = [...$report->results, ...$unreadFiles];
         $report = new LintReport(
             $this->sortResultsByFileAndLine($results),
-            LintStatsCounter::count($results),
+            LintStatsCounter::count($results, $patterns),
         );
 
         $stats = $report->stats;

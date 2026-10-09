@@ -48,6 +48,21 @@ final class LintConsoleOutputTest extends TestCase
     }
 
     /**
+     * A file read with the tokenizer because the PHP parser could not is no
+     * pattern of its own.
+     */
+    #[Test]
+    public function test_console_pattern_count_leaves_parser_fallbacks_out(): void
+    {
+        $project = $this->makeProject(['src/Broken.php' => "<?php\npreg_match('/a+/', \$s);\nfunction (\n"]);
+
+        $status = Artisan::call('regex:lint', $this->arguments($project.'/src'));
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString('found 1 patterns.', Artisan::output());
+    }
+
+    /**
      * @param \Closure(self): void $breakRun
      */
     #[Test]

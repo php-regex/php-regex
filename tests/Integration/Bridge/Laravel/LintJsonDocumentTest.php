@@ -99,6 +99,26 @@ final class LintJsonDocumentTest extends TestCase
         yield 'mixed case' => ['format' => 'Json'];
     }
 
+    /**
+     * A file the PHP parser cannot read is read with the tokenizer and
+     * counted, never reported.
+     */
+    #[Test]
+    public function test_json_stats_count_a_parser_fallback(): void
+    {
+        $project = $this->makeProject(['src/Broken.php' => "<?php\npreg_match('/a+/', \$s);\nfunction (\n"]);
+
+        $status = Artisan::call('regex:lint', $this->arguments($project.'/src'));
+
+        $this->assertSame(0, $status);
+        $document = $this->decodeDocument(Artisan::output());
+        JsonContract::assertShape('lint', $document);
+        $this->assertIsArray($document['stats'] ?? null);
+        $this->assertSame(1, $document['stats']['parser_fallbacks'] ?? null);
+        $this->assertSame(0, $document['stats']['errors'] ?? null);
+        $this->assertSame([], $document['results'] ?? null);
+    }
+
     #[Test]
     public function test_invalid_config_prints_the_envelope(): void
     {
