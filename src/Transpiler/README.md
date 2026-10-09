@@ -86,8 +86,19 @@ echo $result->literal;     // ^[\w\.\-]+@[\w\-]+\.[a-z]{2,}$
 echo $transpiler->transpile('/\d{4}/', 'html')->literal; // [\s\S]*(?:\d{4})[\s\S]*
 ```
 
-No flag reaches the attribute: `/i` is refused, `/s`, `/m` and `/D` change
-nothing in a field value, which holds no line break.
+No flag reaches the attribute. `/i`, `(?i)` and `(?i:…)` are spelled out:
+each letter, class or property is written with every character the running
+PCRE takes for it caselessly, so the attribute works in every browser that
+has the `v` flag, and under `u` the Kelvin sign and the long s come along:
+
+```php
+echo $transpiler->transpile('/^[a-z]+-\d+$/i', 'html')->literal;  // ^[a-zA-Z]+-\d+$
+echo $transpiler->transpile('/^ok$/iu', 'html')->literal;         // ^[oO][kK\u212A]$
+```
+
+A backreference under `/i` is refused: it would match its group's text in
+one case only. `/s`, `/m` and `/D` change nothing in a field value, which
+holds no line break.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
 multibyte character written whole (`/café/`) stays that character; a byte above

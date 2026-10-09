@@ -232,7 +232,9 @@ final class PackageManifestTest extends TestCase
             'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
             'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
-            'Transpiler' => ['Parser\Internal\LibraryPcre'],
+            // The HTML pattern attribute takes no flag: /i is spelled out
+            // with the characters the running PCRE takes for each atom.
+            'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\LibraryPcre'],
         ];
 
         $found = [];

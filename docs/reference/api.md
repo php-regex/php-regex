@@ -496,7 +496,9 @@ Notes:
 - `html-pattern` gives the value of an HTML `pattern` attribute, which the browser matches whole under the `v` flag
   (`new RegExp("^(?:" + value + ")$", "v")`): an unanchored side is padded with `[\s\S]*`, so the attribute accepts
   what `preg_match()` finds, `\A`, `\z` and `\Z` become `^` and `$`, and classes escape what the `v` flag reserves.
-  No flag can be passed: `/i` is refused; `/s`, `/m` and `/D` change nothing in a field value, which holds no line
+  No flag can be passed: `/i`, `(?i)` and `(?i:…)` are spelled out, each atom written with the characters the running
+  PCRE takes for it caselessly (`/^ab$/i` is `^[aA][bB]$`, `[a-z]` under `/iu` is `[a-zA-Z\u017F\u212A]`), and a
+  backreference under `/i` is refused; `/s`, `/m` and `/D` change nothing in a field value, which holds no line
   break. `$result->flags` is `v`, `$result->literal` the attribute value, `$result->constructor` the browser's RegExp.
 
 ---

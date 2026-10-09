@@ -28,7 +28,8 @@ use PHPRegex\Transpiler\TranspileException;
  * whole value against "^(?:" . pattern . ")$" under the v flag alone
  * (WHATWG HTML), where preg_match() searches. The value is padded with
  * "[\s\S]*" on each side the pattern does not anchor, and printed with the
- * class escapes the v flag requires.
+ * class escapes the v flag requires. No flag can be passed: /i and "(?i)"
+ * are spelled out, each letter written with every case PCRE takes for it.
  *
  * @internal
  */
@@ -56,7 +57,7 @@ final readonly class HtmlPatternTarget implements TargetInterface
         $body = $ast->accept(new JavaScriptPrinter($context, $context->options->allowLookbehind, $this->getDefaultDelimiter(), true));
 
         $items = $ast->pattern instanceof SequenceNode
-            ? array_values(array_filter($ast->pattern->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode))
+            ? array_values(array_filter($ast->pattern->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode && !JavaScriptPrinter::isBareOptionSetting($child)))
             : [$ast->pattern];
         $first = $items[0] ?? null;
         $last = $items[\count($items) - 1] ?? null;
@@ -73,8 +74,8 @@ final readonly class HtmlPatternTarget implements TargetInterface
     public function mapFlags(string $flags, TranspileContext $context): string
     {
         // The v flag reads code points, as /u does; a value holds no line
-        // break for /s, /m or /D to matter.
-        $unsupported = array_diff(str_split($flags), ['', 'u', 'D', 's', 'm', 'x']);
+        // break for /s, /m or /D to matter; /i is spelled out by the printer.
+        $unsupported = array_diff(str_split($flags), ['', 'i', 'u', 'D', 's', 'm', 'x']);
         if (str_contains($flags, 'x')) {
             $context->addNote('Applied /x (extended mode): whitespace and comments were removed during compilation.');
         }
@@ -84,7 +85,7 @@ final readonly class HtmlPatternTarget implements TargetInterface
         }
 
         if ([] !== $unsupported) {
-            throw new TranspileException('The HTML pattern attribute takes no flags: /'.implode('', $unsupported).' cannot be carried'.(\in_array('i', $unsupported, true) ? '; spell both cases out, as [aA].' : '.'));
+            throw new TranspileException('The HTML pattern attribute takes no flags: /'.implode('', $unsupported).' cannot be carried.');
         }
 
         return 'v';

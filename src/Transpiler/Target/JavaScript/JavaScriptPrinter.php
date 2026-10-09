@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Hir\ClassSetProvider;
+use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -86,8 +89,21 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private string $flags;
 
     /**
+     * Whether /i holds where the printer stands, under the v flag only.
+     */
+    private bool $caseless = false;
+
+    private bool $unicode = false;
+
+    private bool $unicodeFlag = false;
+
+    private string $source = '';
+
+    /**
      * @param bool $unicodeSets print for the v flag (the HTML pattern attribute): classes escape
-     *                          what the v flag reserves, "\A" reads as "^", "\z" and "\Z" as "$"
+     *                          what the v flag reserves, "\A" reads as "^", "\z" and "\Z" as "$",
+     *                          and /i or "(?i)" is spelled out, each atom written with the
+     *                          characters PCRE takes for it caselessly, as "[kK]"
      */
     public function __construct(
         TranspileContext $context,
@@ -104,8 +120,26 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitRegex(RegexNode $node): string
     {
         $this->flags = $node->flags;
+        if ($this->unicodeSets) {
+            $this->caseless = str_contains($node->flags, 'i');
+            $this->unicode = $node->isUnicode();
+            $this->unicodeFlag = str_contains($node->flags, 'u');
+            $this->source = $node->source ?? '';
+        }
 
         return $node->pattern->accept($this);
+    }
+
+    /**
+     * Whether the group is a bare "(?flags)", which sets its flags for what
+     * follows it up to the end of the enclosing group, the alternatives
+     * after it included. "(?i:)" holds the same empty child one byte longer.
+     */
+    public static function isBareOptionSetting(NodeInterface $node): bool
+    {
+        return $node instanceof GroupNode
+            && GroupType::InlineFlags === $node->type
+            && $node->getEndPosition() - $node->getStartPosition() === \strlen((string) $node->flags) + 3;
     }
 
     #[\Override]
@@ -161,7 +195,22 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
+        // An option set inside a group ends with it.
+        $caseless = $this->caseless;
+        if ($this->unicodeSets && GroupType::InlineFlags === $node->type) {
+            $this->caseless = $this->caselessAfter((string) $node->flags, $node);
+            if (self::isBareOptionSetting($node)) {
+                return '';
+            }
+
+            $child = $node->child->accept($this);
+            $this->caseless = $caseless;
+
+            return '(?:'.$child.')';
+        }
+
         $child = $node->child->accept($this);
+        $this->caseless = $caseless;
 
         return match ($node->type) {
             GroupType::Capturing => '('.$child.')',
@@ -210,6 +259,10 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         $this->refuseALoneByte($node->value, $node);
 
+        if ($this->caseless && !$this->inCharClass) {
+            return $this->caselessLiteral($node->value, $node);
+        }
+
         return $this->escapeString($node->value);
     }
 
@@ -225,6 +278,10 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         if (CharLiteralType::Octal === $node->type || CharLiteralType::OctalLegacy === $node->type) {
             $this->context->addWarning('Converted octal escape to hex/Unicode escape for JavaScript.');
+        }
+
+        if ($this->caseless && !$this->inCharClass) {
+            return $this->caselessCharacter($codePoint, $this->formatCodePoint($codePoint), $node);
         }
 
         return $this->formatCodePoint($codePoint);
@@ -299,8 +356,9 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         try {
             $negation = $node->isNegated ? '^' : '';
+            $body = $node->expression->accept($this);
 
-            return '['.$negation.$node->expression->accept($this).']';
+            return $this->caseless && !$wasInCharClass ? $this->caselessClass($body, $node) : '['.$negation.$body.']';
         } finally {
             $this->inCharClass = $wasInCharClass;
         }
@@ -315,6 +373,10 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitBackref(BackrefNode $node): string
     {
+        if ($this->caseless) {
+            return $this->unsupported('A backreference under /i cannot be carried into the HTML pattern attribute: it would match its group\'s text in one case only.', $node);
+        }
+
         return $this->normalizeBackreference($node->ref, $node->getStartPosition());
     }
 
@@ -348,8 +410,9 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         }
 
         $this->context->requireFlag('u', 'Added /u for Unicode property escapes.');
+        $printed = $isNegated ? '\\P{'.$prop.'}' : '\\p{'.$prop.'}';
 
-        return $isNegated ? '\\P{'.$prop.'}' : '\\p{'.$prop.'}';
+        return $this->caseless && !$this->inCharClass ? $this->caselessAtom($printed, $this->text($node), $node) : $printed;
     }
 
     #[\Override]
@@ -550,6 +613,199 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $position,
             $this->context->sourcePattern,
         );
+    }
+
+    /**
+     * Whether /i holds after an inline "(?flags)": a leading "^" takes it
+     * off, then the letters before "-" set and those after it unset. The
+     * attribute takes "i" spelled out; "m" and "s" change nothing in a
+     * field value, and the parser has applied "x".
+     */
+    private function caselessAfter(string $flags, GroupNode $node): bool
+    {
+        if ('' !== trim($flags, '^-imsx') || str_contains($flags, 'xx')) {
+            throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->sourcePattern);
+        }
+
+        $caseless = !str_starts_with($flags, '^') && $this->caseless;
+        [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
+        if (str_contains($set, 'i')) {
+            $caseless = true;
+        }
+
+        return $caseless && !str_contains($unset, 'i');
+    }
+
+    /**
+     * A caseless literal, each character that PCRE takes in more than one
+     * case written as a class of them: "ab" under /i is "[aA][bB]". Without
+     * /u only an ASCII letter has a pair.
+     */
+    private function caselessLiteral(string $value, LiteralNode $node): string
+    {
+        $codePoints = Utf8::decode($value, $this->unicode) ?? [];
+        $result = '';
+        $run = '';
+        $spelled = false;
+        foreach ($codePoints as $codePoint) {
+            $character = Utf8::character($codePoint, $this->unicode);
+            $partners = $this->unicode || $codePoint < 0x80 ? $this->partners($codePoint, $node) : CharSet::empty();
+            if ($partners->isEmpty()) {
+                $run .= $character;
+
+                continue;
+            }
+
+            $result .= ('' === $run ? '' : $this->escapeString($run)).'['.$this->classCharacter($codePoint, $character).$this->classSet($partners).']';
+            $run = '';
+            $spelled = true;
+        }
+
+        if (!$spelled) {
+            return $this->escapeString($value);
+        }
+
+        $this->noteCaselessSpelled();
+
+        return $result.('' === $run ? '' : $this->escapeString($run));
+    }
+
+    private function caselessCharacter(int $codePoint, string $printed, NodeInterface $node): string
+    {
+        $partners = $this->partners($codePoint, $node);
+        if ($partners->isEmpty()) {
+            return $printed;
+        }
+
+        $this->noteCaselessSpelled();
+
+        return '['.$printed.$this->classSet($partners).']';
+    }
+
+    /**
+     * The characters PCRE takes for the code point under /i besides itself.
+     */
+    private function partners(int $codePoint, NodeInterface $node): CharSet
+    {
+        return $this->caselessSets(\sprintf('\\x{%X}', $codePoint), $node)[1]->subtract(CharSet::single($codePoint));
+    }
+
+    /**
+     * A caseless property, "\p{Lu}": what PCRE takes under /i and not
+     * without it joins it in a class, and what it no longer takes is
+     * subtracted. Since PCRE2 10.45 "\p{Lu}" under /i takes every cased
+     * letter, "\P{Lu}" none. "\d", "\s", "\w" and the like never change
+     * under /i and are printed as they are.
+     */
+    private function caselessAtom(string $printed, string $atom, NodeInterface $node): string
+    {
+        [$sensitive, $caseless] = $this->caselessSets($atom, $node);
+        if ($caseless->key() === $sensitive->key()) {
+            return $printed;
+        }
+
+        $this->noteCaselessSpelled();
+
+        $added = $caseless->subtract($sensitive);
+
+        return $this->subtracted($added->isEmpty() ? $printed : '['.$printed.$this->classSet($added).']', $sensitive->subtract($caseless));
+    }
+
+    /**
+     * A caseless class: what PCRE takes under /i and not without it joins
+     * the class, or, for a negated class, what it no longer takes joins the
+     * characters it excludes. "[a-z]" under /i is "[a-zA-Z]", "[^a-z]" is
+     * "[^a-zA-Z]". A class that also loses characters, as "[\P{Lu}k]" does
+     * since PCRE2 10.45, has them subtracted, a v class operation.
+     */
+    private function caselessClass(string $body, CharClassNode $node): string
+    {
+        $negation = $node->isNegated ? '^' : '';
+        [$sensitive, $caseless] = $this->caselessSets($this->text($node), $node);
+        if ($caseless->key() === $sensitive->key()) {
+            return '['.$negation.$body.']';
+        }
+
+        $this->noteCaselessSpelled();
+        $added = $caseless->subtract($sensitive);
+        $removed = $sensitive->subtract($caseless);
+        if (!$node->isNegated) {
+            return $this->subtracted('['.$body.$this->classSet($added).']', $removed);
+        }
+
+        if ($added->isEmpty()) {
+            return '[^'.$body.$this->classSet($removed).']';
+        }
+
+        return $this->subtracted('[[^'.$body.']'.$this->classSet($added).']', $removed);
+    }
+
+    /**
+     * A class with the characters of the set taken out, "[A--[B]]".
+     */
+    private function subtracted(string $class, CharSet $removed): string
+    {
+        return $removed->isEmpty() ? $class : '['.$class.'--['.$this->classSet($removed).']]';
+    }
+
+    /**
+     * What the atom matches without /i and with it, as the running PCRE
+     * says.
+     *
+     * @return array{CharSet, CharSet}
+     */
+    private function caselessSets(string $atom, NodeInterface $node): array
+    {
+        $sensitive = ClassSetProvider::query($atom, $this->unicode, '', '', $this->unicodeFlag);
+        $caseless = ClassSetProvider::query($atom, $this->unicode, 'i', '', $this->unicodeFlag);
+        if (null === $sensitive || null === $caseless) {
+            throw new TranspileException('PCRE cannot tell which characters '.$atom.' matches under /i.', $node->getStartPosition(), $this->context->sourcePattern);
+        }
+
+        return [$sensitive, $caseless];
+    }
+
+    /**
+     * The characters of a set, written inside a v class: ranges joined by
+     * "-", every character outside printable ASCII as an escape, so a
+     * Kelvin sign reads "\u212A".
+     */
+    private function classSet(CharSet $set): string
+    {
+        $written = '';
+        foreach ($set->ranges as [$from, $to]) {
+            $written .= $this->classCharacter($from);
+            if ($to > $from) {
+                $written .= ($to > $from + 1 ? '-' : '').$this->classCharacter($to);
+            }
+        }
+
+        return $written;
+    }
+
+    /**
+     * One character inside a v class: as written when it is printable ASCII
+     * or the given text, escaped otherwise.
+     */
+    private function classCharacter(int $codePoint, ?string $asWritten = null): string
+    {
+        if ($codePoint > 0x20 && $codePoint < 0x7F) {
+            $character = \chr($codePoint);
+
+            return isset(self::CLASS_SET_META[$character]) ? '\\'.$character : $character;
+        }
+
+        return $codePoint > 0x7F && null !== $asWritten ? $asWritten : $this->formatCodePoint($codePoint);
+    }
+
+    private function noteCaselessSpelled(): void
+    {
+        $this->context->addNote('Spelled /i out: each letter is written with every case it matches, as [aA].');
+    }
+
+    private function text(NodeInterface $node): string
+    {
+        return substr($this->source, $node->getStartPosition(), $node->getEndPosition() - $node->getStartPosition());
     }
 
     private function noteUnicodeWordBoundary(): void
