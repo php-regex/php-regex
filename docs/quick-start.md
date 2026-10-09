@@ -421,7 +421,3 @@ Reference:
 - Issues and bug reports: <https://github.com/php-regex/php-regex/issues>
 - Real-world examples: see `tests/Integration/`
 - Interactive playground: <https://regex101.com> (PCRE2 mode)
-
----
-
-Previous: [Docs Home](README.md) | Next: [Regex Tutorial](tutorial/README.md)

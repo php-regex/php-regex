@@ -332,8 +332,3 @@ You now understand:
 - Common pitfalls and fixes
 
 **Next:** [Chapter 4: Quantifiers and Greediness](04-quantifiers.md)
-
----
-
-
-Previous: [Character Classes](02-character-classes.md) | Next: [Quantifiers](04-quantifiers.md)

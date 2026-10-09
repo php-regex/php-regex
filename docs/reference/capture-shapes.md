@@ -504,7 +504,3 @@ The two branches of the branch reset share group 2, as in PCRE: `preg_match()` o
 `2026-oct-06` writes `oct` under key `2` and `06` under key `3`. A name used twice under
 `J` stands for both groups: in `/(?<n>a)|(?<n>b)/J`, `getNamedGroupNumbers('n')` is
 `[1, 2]`.
-
----
-
-Previous: [Reference Index](README.md) | Next: [API Reference](api.md)

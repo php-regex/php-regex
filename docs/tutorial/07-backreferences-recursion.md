@@ -287,8 +287,3 @@ You now understand:
 - When to use each feature
 
 **Next:** [Chapter 8: Performance and ReDoS](08-performance-redos.md)
-
----
-
-
-Previous: [Lookarounds](06-lookarounds.md) | Next: [Performance & ReDoS](08-performance-redos.md)

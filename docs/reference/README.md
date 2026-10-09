@@ -39,7 +39,3 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - Build a custom visitor: [../nodes/README.md](../nodes/README.md) and [../visitors/README.md](../visitors/README.md)
 - Learn regex patterns: [../tutorial/README.md](../tutorial/README.md)
 - Check ReDoS safety: [ReDoS guide](../guides/redos.md)
-
----
-
-Previous: [Docs Home](/docs/) | Next: [Lint Rule Reference](rules.md)

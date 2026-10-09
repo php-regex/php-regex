@@ -525,7 +525,3 @@ a+a+         -> a+         or a++a+
 - Check the return value of `preg_*` for `false`, and `preg_last_error()`: a vulnerable pattern fails silently.
 - Limit the length of untrusted input before matching it.
 - Prefer deterministic patterns, possessive quantifiers and atomic groups in hot paths.
-
----
-
-Previous: [Cookbook](cookbook.md) | Next: [Architecture](architecture.md)

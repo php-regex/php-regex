@@ -1,0 +1,39 @@
+{% comment %}
+  Breadcrumb generated from the sidebar order: nav.yml is the single
+  source of the section structure. Liquid has no variable indexing, so
+  the flat arrays are walked with matching captures.
+{% endcomment %}
+{% assign flat_urls = '' %}
+{% assign flat_titles = '' %}
+{% assign flat_sections = '' %}
+{% for s in site.data.nav %}
+  {% for p in s.pages %}
+    {% assign flat_urls = flat_urls | append: p.url | append: '|' %}
+    {% assign flat_titles = flat_titles | append: p.title | append: '|' %}
+    {% assign flat_sections = flat_sections | append: s.title | append: '|' %}
+    {% for c in p.pages %}
+      {% assign flat_urls = flat_urls | append: c.url | append: '|' %}
+      {% assign flat_titles = flat_titles | append: c.title | append: '|' %}
+      {% assign flat_sections = flat_sections | append: s.title | append: '|' %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+{% assign urls = flat_urls | split: '|' %}
+{% assign sections = flat_sections | split: '|' %}
+{% assign idx = -1 %}
+{% for u in urls %}
+  {% if u == page.url %}{% assign idx = forloop.index0 %}{% endif %}
+{% endfor %}
+{% if idx >= 0 %}
+  {% assign sec = '' %}
+  {% for s in sections %}
+    {% if forloop.index0 == idx %}{% assign sec = s %}{% endif %}
+  {% endfor %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/docs/">Documentation</a></li>
+      <li>{{ sec }}</li>
+      <li aria-current="page">{{ page.title }}</li>
+    </ol>
+  </nav>
+{% endif %}

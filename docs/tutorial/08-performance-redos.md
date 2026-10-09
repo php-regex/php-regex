@@ -330,8 +330,3 @@ You now understand:
 - Using PHPRegex to detect issues
 
 **Next:** [Chapter 9: Testing and Debugging](09-testing-debugging.md)
-
----
-
-
-Previous: [Backreferences](07-backreferences-recursion.md) | Next: [Testing & Debugging](09-testing-debugging.md)

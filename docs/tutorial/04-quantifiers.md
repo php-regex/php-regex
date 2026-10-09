@@ -351,8 +351,3 @@ You now understand:
 - Common pitfalls and fixes
 
 **Next:** [Chapter 5: Groups and Alternation](05-groups-alternation.md)
-
----
-
-
-Previous: [Anchors & Boundaries](03-anchors-boundaries.md) | Next: [Groups & Alternation](05-groups-alternation.md)

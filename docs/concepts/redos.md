@@ -200,7 +200,3 @@ a+a+         -> a+         or a++a+
 - [OWASP ReDoS Guide](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS) - Security best practices
 - [Regex Performance](https://sw.kovidgoyal.net/kitty/conf/#regex-performance) - Optimization techniques
 - [Catastrophic Backtracking](https://www.regular-expressions.info/catastrophic.html) - Detailed explanation
-
----
-
-Previous: [Understanding Visitors](visitors.md) | Next: [PCRE vs Other Engines](pcre.md)

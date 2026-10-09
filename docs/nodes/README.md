@@ -920,7 +920,3 @@ Understanding nodes is essential for working with the AST directly. Key takeaway
 3. **GroupNode is versatile** — handles many group types
 4. **QuantifierNode has types** — greedy, lazy, possessive
 5. **Character classes are complex** — can contain ranges, operations, POSIX classes
-
----
-
-Previous: [Docs Home](/docs/) | Next: [AST Visitors](../visitors/README.md)

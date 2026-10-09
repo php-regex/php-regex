@@ -566,7 +566,3 @@ Found a bug or want to add a feature? Contributions are welcome!
 1. Fork the repository
 2. Create a feature branch
 3. Submit a pull request
-
----
-
-Previous: [CLI Guide](cli.md) | Next: [Diagnostics Reference](../reference/diagnostics.md)

@@ -7,10 +7,12 @@
   <div class="page-shell">
     {% include sidebar.html %}
     <div class="page-main">
+      {% include breadcrumb.html %}
       <main id="main" tabindex="-1">
         {{ content }}
       </main>
       {% include toc.html %}
+      {% include pager.html %}
     </div>
   </div>
   {% include footer.html %}

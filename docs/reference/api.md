@@ -788,7 +788,3 @@ try {
 | `highlight($regex)`     | string                  | Syntax highlight  |
 | `generate($regex)`      | string                  | Generate sample   |
 | `literals($regex)`      | LiteralExtractionResult | Extract literals  |
-
----
-
-Previous: [Reference Index](README.md) | Next: [Diagnostics](diagnostics.md)

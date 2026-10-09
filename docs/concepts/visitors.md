@@ -187,7 +187,3 @@ class GroupNameCollector extends AbstractNodeVisitor
 - [Visitor Pattern (Wikipedia)](https://en.wikipedia.org/wiki/Visitor_pattern) - Design pattern explanation
 - [PHPRegex Architecture](../architecture.md) - Technical implementation details
 - [Extending Guide](../extending.md) - Building custom tools
-
----
-
-Previous: [What is an AST?](ast.md) | Next: [ReDoS Deep Dive](redos.md)

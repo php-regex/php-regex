@@ -637,7 +637,3 @@ fails when their counts or their order differ.
 | JSON Output   | Schema includes stats, results, issues, optimizations |
 | Integration   | Build wrappers, visitors, or Symfony integrations     |
 | Memory        | Clear caches in long-running processes                |
-
----
-
-Previous: [Architecture](architecture.md) | Next: [Extending Guide](extending.md)

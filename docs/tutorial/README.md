@@ -214,8 +214,3 @@ To match a literal dollar sign: `/\$/`
 - [Cookbook](../cookbook.md) - Ready-to-use patterns
 - [ReDoS Guide](../guides/redos.md) - Security and performance
 - [Regex101](https://regex101.com) - Interactive regex tester
-
----
-
-
-Previous: [Docs Home](/docs/) | Next: [Chapter 1: Basics](01-basics.md)

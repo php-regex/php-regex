@@ -392,7 +392,3 @@ Write a visitor that extracts all anchors (`^`, `$`, `\b`, `\B`, `(?=...)`, etc.
 | Stateless vs Stateful | Return values vs accumulate in properties          |
 | Transformations       | Create new nodes, preserve positions               |
 | Best Practices        | Return nodes, preserve positions, handle all types |
-
----
-
-Previous: [Architecture](../architecture.md) | Next: [External resources](../reference/resources.md)

@@ -86,7 +86,3 @@ Every example in these docs uses PHPRegex as the reference implementation.
 - [Understanding Visitors](concepts/visitors.md)
 - [ReDoS Deep Dive](concepts/redos.md)
 - [PCRE vs Other Engines](concepts/pcre.md)
-
----
-
-Previous: [Main README](https://github.com/php-regex/php-regex) | Next: [Quick Start](quick-start.md)

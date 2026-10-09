@@ -1316,7 +1316,3 @@ regex self-update
 ---
 
 End of CLI guide.
-
----
-
-Previous: [Regex in PHP](regex-in-php.md) | Next: [Diagnostics](../reference/diagnostics.md)

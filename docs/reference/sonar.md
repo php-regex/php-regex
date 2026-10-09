@@ -39,7 +39,3 @@ by `regex lint`, the language server and the Symfony and Laravel commands only.
 | S6395 | a non-capturing group without a quantifier | `regex.lint.group.redundant` | partial: a group around one atom only |
 | S6396 | a superfluous curly-brace quantifier | `regex.lint.quantifier.useless`, `regex.lint.quantifier.zero` | covered |
 | S6397 | a class of a single character | `regex.lint.charclass.single` (off by default) | covered; a class of one metacharacter, the delimiter, a multibyte character without `/u`, or a character that reads otherwise bare (`[\1]`, the `[0]` of `\1[0]`) is left alone |
-
----
-
-Previous: [Lint Rule Reference](rules.md) | Next: [Reference Index](README.md)

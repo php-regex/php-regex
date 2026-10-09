@@ -23,7 +23,3 @@ These concept guides are designed to help you understand specific topics in dept
 - [FAQ & Glossary](../reference/faq-glossary.md) - Quick definitions
 - [Architecture](../architecture.md) - Technical deep dive
 - [Tutorial](../tutorial/README.md) - Hands-on learning
-
----
-
-Previous: [Docs Home](/docs/) | Next: [What is an AST?](ast.md)

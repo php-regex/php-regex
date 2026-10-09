@@ -309,8 +309,3 @@ You now understand:
 - Common pitfalls and fixes
 
 **Next:** [Chapter 7: Backreferences and Recursion](07-backreferences-recursion.md)
-
----
-
-
-Previous: [Groups & Alternation](05-groups-alternation.md) | Next: [Backreferences](07-backreferences-recursion.md)

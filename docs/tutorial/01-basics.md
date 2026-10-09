@@ -362,8 +362,3 @@ You now understand:
 - Escaping special characters
 
 **Next:** [Chapter 2: Character Classes](02-character-classes.md)
-
----
-
-
-Previous: [Tutorial Home](README.md) | Next: [Character Classes](02-character-classes.md)

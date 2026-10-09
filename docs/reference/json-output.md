@@ -730,7 +730,3 @@ that is missing or holds neither form is a usage error.
 | `severity` | string | As in the issue |
 | `pattern` | string | The pattern of the issue's result, for people |
 | `pattern_hash` | string | A hash of the exact bytes of the pattern; what a baseline matches on |
-
----
-
-Previous: [CLI Guide](../guides/cli.md) | Next: [Reference Index](README.md)

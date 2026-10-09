@@ -433,7 +433,3 @@ echo $email;  // Example: "user@example.com"
 ---
 
 **Next:** [CLI Guide](cli.md)
-
----
-
-Previous: [Docs Home](/docs/) | Next: [CLI Guide](cli.md)

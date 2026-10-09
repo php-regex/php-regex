@@ -769,7 +769,3 @@ Presentation and visualization:
 | Analyze   | `ComplexityScorer`, `MetricsCollector`           |
 | Generate  | `SampleGenerator`, `TestCaseGenerator` |
 | Visualize | `TextExplainer`, `MermaidRenderer`, `AsciiTreeRenderer`, `RailroadSvgRenderer` |
-
----
-
-Previous: [AST Nodes](../nodes/README.md) | Next: [Docs Home](/docs/)

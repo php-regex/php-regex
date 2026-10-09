@@ -1,0 +1,51 @@
+{% comment %}
+  Previous/next pager generated from the sidebar order (nav.yml is the
+  single source of reading order). Liquid has no variable indexing, so
+  the flat arrays are walked with matching captures.
+{% endcomment %}
+{% assign flat_urls = '' %}
+{% assign flat_titles = '' %}
+{% for s in site.data.nav %}
+  {% for p in s.pages %}
+    {% assign flat_urls = flat_urls | append: p.url | append: '|' %}
+    {% assign flat_titles = flat_titles | append: p.title | append: '|' %}
+    {% for c in p.pages %}
+      {% assign flat_urls = flat_urls | append: c.url | append: '|' %}
+      {% assign flat_titles = flat_titles | append: c.title | append: '|' %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+{% assign urls = flat_urls | split: '|' %}
+{% assign titles = flat_titles | split: '|' %}
+{% assign idx = -1 %}
+{% for u in urls %}
+  {% if u == page.url %}{% assign idx = forloop.index0 %}{% endif %}
+{% endfor %}
+{% if idx >= 0 %}
+  {% assign prev_idx = idx | minus: 1 %}
+  {% assign next_idx = idx | plus: 1 %}
+  {% assign prev_url = '' %}
+  {% assign prev_title = '' %}
+  {% assign next_url = '' %}
+  {% assign next_title = '' %}
+  {% for u in urls %}
+    {% if forloop.index0 == prev_idx %}{% assign prev_url = u %}{% endif %}
+    {% if forloop.index0 == next_idx %}{% assign next_url = u %}{% endif %}
+  {% endfor %}
+  {% for t in titles %}
+    {% if forloop.index0 == prev_idx %}{% assign prev_title = t %}{% endif %}
+    {% if forloop.index0 == next_idx %}{% assign next_title = t %}{% endif %}
+  {% endfor %}
+  <nav class="pager" aria-label="Pagination">
+    {% if prev_url != '' %}
+      <a class="pager-prev" rel="prev" href="{{ prev_url }}"><span class="pager-label">Previous</span><span class="pager-title">{{ prev_title }}</span></a>
+    {% else %}
+      <span class="pager-prev" aria-hidden="true"></span>
+    {% endif %}
+    {% if next_url != '' %}
+      <a class="pager-next" rel="next" href="{{ next_url }}"><span class="pager-label">Next</span><span class="pager-title">{{ next_title }}</span></a>
+    {% else %}
+      <span class="pager-next" aria-hidden="true"></span>
+    {% endif %}
+  </nav>
+{% endif %}

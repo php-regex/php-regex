@@ -362,8 +362,3 @@ Topics covered:
 - Testing and debugging
 
 **Next:** [Chapter 10: Real-World Patterns in PHP](10-real-world-php.md)
-
----
-
-
-Previous: [Performance & ReDoS](08-performance-redos.md) | Next: [Real-World Patterns](10-real-world-php.md)

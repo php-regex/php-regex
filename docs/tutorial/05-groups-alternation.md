@@ -280,8 +280,3 @@ You now understand:
 - Common pitfalls and fixes
 
 **Next:** [Chapter 6: Lookarounds and Assertions](06-lookarounds.md)
-
----
-
-
-Previous: [Quantifiers](04-quantifiers.md) | Next: [Lookarounds](06-lookarounds.md)

@@ -260,7 +260,3 @@ When you add a new PCRE construct, you typically update:
 - Tests and fixtures for valid/invalid cases
 
 See [docs/extending.md](extending.md) for the full workflow.
-
----
-
-Previous: [Cookbook](cookbook.md) | Next: [Maintainers Guide](maintainers.md)

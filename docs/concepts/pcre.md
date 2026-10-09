@@ -340,7 +340,3 @@ $pattern = "/\d{3}-\d{4}/"; // Also works but harder to read
 - [PCRE Documentation](https://www.pcre.org/) - Official PCRE docs
 - [PHP Regex Functions](https://www.php.net/manual/en/book.pcre.php) - PHP manual
 - [Regex101 PCRE Reference](https://regex101.com/) - Interactive tester
-
----
-
-Previous: [ReDoS Deep Dive](redos.md) | Next: [Concepts Home](README.md)

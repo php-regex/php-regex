@@ -117,7 +117,3 @@ $classifier->matchedLiteral('/(?:a|a){20}b/'); // null: one string, 2^20 paths
 
 The Rector rules of `php-regex/regex-rector` rewrite the code with both methods: see
 [the Rector guide](../guides/rector.md).
-
----
-
-Previous: [Reference Index](README.md) | Next: [API Reference](api.md)

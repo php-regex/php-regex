@@ -632,7 +632,3 @@ if (preg_match($pattern, $input) !== 1) {
 | Credit Card | Low        | Medium     |
 | Hex Color   | Low        | Low        |
 | SemVer      | High       | Low        |
-
----
-
-Previous: [ReDoS Guide](guides/redos.md) | Next: [Architecture](architecture.md)

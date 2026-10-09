@@ -509,7 +509,3 @@ Verify parser logic:
 ---
 
 End of extending guide.
-
----
-
-Previous: [Architecture](architecture.md) | Next: [Maintainers Guide](maintainers.md)

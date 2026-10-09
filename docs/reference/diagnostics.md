@@ -633,7 +633,3 @@ backslash, or NUL byte.`
 | Duplicate name       | Use unique names or `(?J)`           |
 | Invalid range        | Swap min/max in `{min,max}`          |
 | Useless flag         | Remove unused flag                   |
-
----
-
-Previous: [CLI Guide](../guides/cli.md) | Next: [Lint Rule Reference](rules.md)

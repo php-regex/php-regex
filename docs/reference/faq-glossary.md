@@ -310,7 +310,3 @@ $regex = Regex::create([
 | `\1`       | Backreference                | `/(\w+)\1/`  |
 | `(?>...)`  | Atomic group                 | `/(?>a+)/`   |
 | `*+`       | Possessive quantifier        | `/a*+/`      |
-
----
-
-Previous: [Diagnostics](diagnostics.md) | Next: [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md)

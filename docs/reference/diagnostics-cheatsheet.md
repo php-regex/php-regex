@@ -364,7 +364,3 @@ $regex = Regex::create(['max_pattern_length' => 500000]);
 | Diagnostics deep dive | [docs/reference/diagnostics.md](diagnostics.md) |
 | ReDoS patterns        | [ReDoS guide](../guides/redos.md)        |
 | API reference         | [docs/reference/api.md](api.md)                 |
-
----
-
-Previous: [FAQ and Glossary](faq-glossary.md) | Next: [Reference Index](README.md)

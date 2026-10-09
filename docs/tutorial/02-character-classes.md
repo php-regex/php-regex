@@ -358,8 +358,3 @@ You now understand:
 - Common pitfalls and how to avoid them
 
 **Next:** [Chapter 3: Anchors and Boundaries](03-anchors-boundaries.md)
-
----
-
-
-Previous: [Basics](01-basics.md) | Next: [Anchors & Boundaries](03-anchors-boundaries.md)

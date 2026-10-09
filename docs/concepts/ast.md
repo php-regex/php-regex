@@ -107,7 +107,3 @@ $analysis = Regex::create()->redos('/(a+)+$/');
 - [PHPRegex Architecture](../architecture.md) - Technical deep dive
 - [AST Traversal Design](../design/ast-traversal.md) - How trees are processed
 - [Nodes Reference](../nodes/README.md) - All available node types
-
----
-
-Previous: [Concepts Home](README.md) | Next: [Understanding Visitors](visitors.md)
