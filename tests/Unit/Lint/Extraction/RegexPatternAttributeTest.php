@@ -282,6 +282,53 @@ final class RegexPatternAttributeTest extends TestCase
     }
 
     /**
+     * A file too large to tokenize in the memory left is not even read: a
+     * huge file of vendor/ cannot exhaust memory_limit while its size alone
+     * says so. A stream wrapper stands for a file of 1 GB.
+     */
+    #[Test]
+    public function test_the_scan_does_not_read_a_file_too_large_for_the_memory_left(): void
+    {
+        $wrapper = new class {
+            public static bool $opened = false;
+
+            /**
+             * @var resource|null
+             */
+            public $context;
+
+            /**
+             * @return array<string, int>
+             */
+            public function url_stat(string $path, int $flags): array
+            {
+                return ['mode' => 0o100644, 'size' => 1024 ** 3];
+            }
+
+            public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+            {
+                self::$opened = true;
+
+                return false;
+            }
+        };
+        $limit = ini_get('memory_limit');
+        $this->assertTrue(stream_wrapper_register('regex-huge-file', $wrapper::class));
+        ini_set('memory_limit', (string) (memory_get_usage(true) + 32 * 1024 * 1024));
+
+        try {
+            $this->assertTrue(is_file('regex-huge-file://huge.php'));
+            $specs = PatternAttributeScanner::specs(['regex-huge-file://huge.php']);
+        } finally {
+            ini_set('memory_limit', \is_string($limit) ? $limit : '-1');
+            stream_wrapper_unregister('regex-huge-file');
+        }
+
+        $this->assertSame([], $specs);
+        $this->assertFalse($wrapper::$opened);
+    }
+
+    /**
      * @return iterable<string, array{strategy: \Closure(): ExtractorInterface}>
      */
     public static function provideStrategies(): iterable

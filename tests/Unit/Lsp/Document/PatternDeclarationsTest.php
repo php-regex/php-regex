@@ -85,6 +85,30 @@ final class PatternDeclarationsTest extends TestCase
     }
 
     /**
+     * A file of the workspace too large to tokenize in the memory left is
+     * passed over silently, and the scan goes on with the others.
+     */
+    #[Test]
+    public function test_a_file_too_large_for_the_memory_left_is_passed_over(): void
+    {
+        $this->write('src/Grep.php', self::GREP);
+        $this->write('src/Huge.php', str_replace('grep', 'huge', self::GREP).str_repeat("// padding\n", 100_000));
+        $declarations = new PatternDeclarations();
+        $limit = ini_get('memory_limit');
+        ini_set('memory_limit', (string) (memory_get_usage(true) + 32 * 1024 * 1024));
+
+        try {
+            $complete = $declarations->scanWorkspace($this->root, ['src'], []);
+        } finally {
+            ini_set('memory_limit', \is_string($limit) ? $limit : '-1');
+        }
+
+        $this->assertTrue($complete);
+        $this->assertSame(1, $declarations->functionArgument('App\grep'));
+        $this->assertNull($declarations->functionArgument('App\huge'));
+    }
+
+    /**
      * The scan stops at the file limit, and says so.
      */
     #[Test]

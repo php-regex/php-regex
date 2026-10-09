@@ -456,7 +456,7 @@ final class RegexPatternExtractorTest extends TestCase
         LintFunctionOverrides::queueTempnam(false);
         $this->extractor->method('extract')->willReturn([]);
 
-        $result = $this->invokePrivate('extractParallel', ['a.php', 'b.php'], 2, null);
+        $result = $this->invokePrivate('extractParallel', ['a.php', 'b.php'], 2, null, $this->extractor);
 
         $this->assertSame([], $result);
     }
@@ -483,6 +483,7 @@ final class RegexPatternExtractorTest extends TestCase
             static function (int $current, int $total) use (&$progressCalls): void {
                 $progressCalls[] = [$current, $total];
             },
+            $this->extractor,
         );
 
         $this->assertIsArray($result);
@@ -502,7 +503,7 @@ final class RegexPatternExtractorTest extends TestCase
         $this->expectException(LintException::class);
         $this->expectExceptionMessage('Parallel collection failed: RuntimeException: Boom');
 
-        $this->invokePrivate('extractParallel', ['a.php'], 1, null);
+        $this->invokePrivate('extractParallel', ['a.php'], 1, null, $this->extractor);
     }
 
     public function test_extract_parallel_skips_non_array_results(): void
@@ -514,7 +515,7 @@ final class RegexPatternExtractorTest extends TestCase
         LintFunctionOverrides::queuePcntlForkResult(111);
         LintFunctionOverrides::$pcntlWaitpidResult = 0;
 
-        $result = $this->invokePrivate('extractParallel', ['a.php'], 1, null);
+        $result = $this->invokePrivate('extractParallel', ['a.php'], 1, null, $this->extractor);
 
         $this->assertSame([], $result);
     }

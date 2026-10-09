@@ -17,6 +17,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -160,6 +161,79 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
+     * A child of the scan that fails is reported once every child is waited
+     * for and every payload file removed.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_a_failing_scan_worker_is_reported_after_every_worker_is_cleaned_up(): void
+    {
+        $project = $this->makeProject([
+            'lib/a_helper.php' => self::HELPER,
+            'lib/b_caller.php' => self::CALLER,
+            'payload/a' => serialize(['ok' => false, 'error' => ['message' => 'Boom', 'class' => \RuntimeException::class]]),
+            'payload/b' => serialize(['ok' => true, 'result' => []]),
+        ]);
+        LintFunctionOverrides::queueTempnam($project.'/payload/a');
+        LintFunctionOverrides::queueTempnam($project.'/payload/b');
+        LintFunctionOverrides::queuePcntlForkResult(111);
+        LintFunctionOverrides::queuePcntlForkResult(222);
+        LintFunctionOverrides::$pcntlWaitpidResult = 0;
+
+        try {
+            (new PatternExtractor(new TokenBasedExtractionStrategy()))->extract([$project.'/lib'], [], null, 2);
+            $this->fail('The failure of the child is reported.');
+        } catch (LintException $e) {
+            $this->assertSame('Parallel collection failed: RuntimeException: Boom', $e->getMessage());
+        }
+
+        $this->assertFileDoesNotExist($project.'/payload/a');
+        $this->assertFileDoesNotExist($project.'/payload/b');
+    }
+
+    /**
+     * The progress starts, at zero of the files to lint, before the
+     * declarations are read: a large vendor/ does not leave the progress
+     * unshown.
+     */
+    #[Test]
+    public function test_the_progress_starts_before_the_declarations_are_read(): void
+    {
+        $project = $this->makeProject(['lib/caller.php' => self::CALLER]);
+        $calls = new \ArrayObject();
+        $extractor = new class($calls) implements ExtractorInterface, PatternFunctionAwareInterface {
+            /**
+             * @var array<int, array{int, int}>|null
+             */
+            public ?array $callsWhenGiven = null;
+
+            /**
+             * @param \ArrayObject<int, array{int, int}> $calls
+             */
+            public function __construct(private readonly \ArrayObject $calls) {}
+
+            public function withPatternFunctions(array $specs): static
+            {
+                $this->callsWhenGiven = $this->calls->getArrayCopy();
+
+                return $this;
+            }
+
+            public function extract(array $files): array
+            {
+                return [];
+            }
+        };
+
+        (new PatternExtractor($extractor))->extract([$project.'/lib'], [], static function (int $current, int $total) use ($calls): void {
+            $calls[] = [$current, $total];
+        });
+
+        $this->assertSame([[0, 1]], $extractor->callsWhenGiven);
+        $this->assertSame([[0, 1], [1, 1]], $calls->getArrayCopy());
+    }
+
+    /**
      * A progress callback has the files extracted one at a time.
      *
      * @param \Closure(): ExtractorInterface $strategy
@@ -278,24 +352,25 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
-     * What the run excludes is excluded from the declarations too, apart
-     * from vendor/ when it is named as a declaration path itself.
+     * What the run excludes stays out of the lint, not out of the
+     * declarations: a helper declared under an excluded directory is known.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
     #[Test]
     #[DataProvider('provideStrategies')]
-    public function test_an_excluded_directory_of_a_declaration_path_is_not_read(\Closure $strategy): void
+    public function test_an_excluded_directory_of_a_declaration_path_is_still_read(\Closure $strategy): void
     {
         $project = $this->makeProject(['lib/caller.php' => self::CALLER, 'lib/Fixtures/helper.php' => self::HELPER]);
 
         $occurrences = (new PatternExtractor($strategy()))->extract(
-            [$project.'/lib/caller.php'],
+            [$project.'/lib'],
             ['Fixtures'],
             declarationPaths: [$project.'/lib'],
         );
 
-        $this->assertSame([], self::patterns($occurrences));
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame([$project.'/lib/caller.php'], array_values(array_unique(array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $occurrences))));
     }
 
     /**
@@ -309,11 +384,12 @@ final class PatternFunctionPrescanTest extends TestCase
     public function test_a_vendor_file_that_cannot_be_read_is_skipped(\Closure $strategy): void
     {
         $project = $this->makeProject([
-            'lib/caller.php' => self::CALLER,
+            'lib/caller.php' => self::CALLER."\\App\\locked('/locked(/', 'x');\n",
             'vendor/acme/helper.php' => self::HELPER,
             'vendor/acme/locked.php' => str_replace('grep', 'locked', self::HELPER),
         ]);
         chmod($project.'/vendor/acme/locked.php', 0o000);
+        $readable = is_readable($project.'/vendor/acme/locked.php');
 
         try {
             $occurrences = (new PatternExtractor($strategy()))->extract(
@@ -325,6 +401,14 @@ final class PatternFunctionPrescanTest extends TestCase
             chmod($project.'/vendor/acme/locked.php', 0o600);
         }
 
+        $this->assertContains('/b02(/', self::patterns($occurrences));
+        if ($readable) {
+            // Running as root, which reads a file whatever its mode: the
+            // file is no unreadable one there.
+            $this->assertTrue(\function_exists('posix_geteuid') && 0 === posix_geteuid());
+
+            return;
+        }
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
     }
 

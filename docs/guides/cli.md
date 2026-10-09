@@ -520,9 +520,10 @@ configured `paths` and in `vendor/` of the working directory. With no `paths`
 configured, the linted paths and `vendor/` are read, never the whole working
 directory. `exclude` and `--exclude` keep files out of the lint, not out of
 this reading: a helper declared under an excluded directory, or in a library,
-is still known, and `regex lint $(git diff --name-only)` still knows a helper
-declared in a file it does not lint. A declaration file that cannot be read,
-or is too large for `memory_limit`, is skipped silently. A call written
+is still known. With `paths` configured, `regex lint $(git diff --name-only)`
+still knows a helper declared in a project file it does not lint. A
+declaration file that cannot be read, or is too large for `memory_limit`, is
+skipped silently. A call written
 unqualified in the function's own namespace, `grep()` in `namespace App`, is
 read, as PHP calls `App\grep()` first. An instance call (`$str->matches(...)`)
 names no class the linter can know, and is not read; the PHPStan extension,

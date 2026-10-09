@@ -24,3 +24,7 @@ CHANGELOG
    written; a trailing `\z` stays a strict end.
  * `regex:security` reads a block-style list of roles, methods or
    addresses in an `access_control` rule, where each item became a rule.
+ * `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
+   `#[Language('RegExp')]`) in the configured `paths` and in the project's
+   `vendor/`, whatever paths are linted and whatever `exclude` says: a call to
+   one is read as a `preg_*()` call.

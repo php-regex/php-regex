@@ -46,6 +46,14 @@ final class MemoryBudget
 
     public static function allows(string $content, int $factor): bool
     {
+        return self::allowsSize(\strlen($content), $factor);
+    }
+
+    /**
+     * Whether a source of $bytes bytes fits, judged before it is read.
+     */
+    public static function allowsSize(int $bytes, int $factor): bool
+    {
         $limit = self::limitInBytes();
         if ($limit <= 0) {
             // No limit configured, or none readable: nothing to stay under.
@@ -54,7 +62,7 @@ final class MemoryBudget
 
         $available = $limit - memory_get_usage(true);
 
-        return $available > 0 && \strlen($content) * $factor <= $available;
+        return $available > 0 && $bytes * $factor <= $available;
     }
 
     /**

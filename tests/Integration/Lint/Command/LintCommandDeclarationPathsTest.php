@@ -100,10 +100,15 @@ final class LintCommandDeclarationPathsTest extends TestCase
     }
 
     /**
-     * With no paths configured, the project is the working directory.
+     * With no paths configured, the declarations are read in the linted
+     * paths and in vendor/, never in the whole working directory.
+     *
+     * @param list<string> $linted
+     * @param list<string> $expected
      */
     #[Test]
-    public function test_lint_reads_declarations_of_the_working_directory_without_configuration(): void
+    #[DataProvider('provideRunsWithoutConfiguration')]
+    public function test_lint_without_configuration_reads_declarations_of_the_linted_paths_and_vendor(array $linted, array $expected): void
     {
         $this->enterProject([
             'lib/Support/helper.php' => self::PROJECT_HELPER,
@@ -111,10 +116,23 @@ final class LintCommandDeclarationPathsTest extends TestCase
             'vendor/acme/search/helper.php' => self::VENDOR_HELPER,
         ]);
 
-        [$exitCode, $document] = $this->lintJson(['lib/caller.php', '--no-redos', '--format=json', '--jobs=1']);
+        [, $document] = $this->lintJson([...$linted, '--no-redos', '--format=json', '--jobs=1']);
 
-        $this->assertSame(1, $exitCode);
-        $this->assertCount(2, JsonContract::asArray($document['results'] ?? null));
+        $patterns = [];
+        foreach (JsonContract::asArray($document['results'] ?? null) as $result) {
+            $patterns[] = JsonContract::asArray($result)['pattern'] ?? null;
+        }
+        sort($patterns);
+        $this->assertSame($expected, $patterns);
+    }
+
+    /**
+     * @return iterable<string, array{linted: list<string>, expected: list<string>}>
+     */
+    public static function provideRunsWithoutConfiguration(): iterable
+    {
+        yield 'the directory of both files' => ['linted' => ['lib'], 'expected' => ['/b02(/', '/c03(/']];
+        yield 'the caller alone' => ['linted' => ['lib/caller.php'], 'expected' => ['/c03(/']];
     }
 
     /**

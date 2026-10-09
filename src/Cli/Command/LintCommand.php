@@ -259,7 +259,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 checkOptimizations: $checkOptimizations,
                 analysisWorkers: $jobs,
                 optimizations: OptimizerOptions::fromCamelCaseArray($arguments->optimizations + ['verifyWithAutomata' => true]),
-                declarationPaths: self::declarationPaths($lintDefaults),
+                declarationPaths: self::declarationPaths($lintDefaults, $paths),
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {
@@ -497,20 +497,21 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
     /**
      * Where the functions marked #[RegexPattern] are read, whatever paths
-     * the run lints: the configured paths (the working directory when none
-     * are), and vendor/ of the working directory, the project root as for
-     * regex.json.
+     * the run lints: the configured paths (the linted ones when none are,
+     * never the whole working directory), and vendor/ of the working
+     * directory, the project root as for regex.json.
      *
      * @param array<string, mixed> $lintDefaults
+     * @param array<string>        $linted
      *
      * @return list<string>
      */
-    private static function declarationPaths(array $lintDefaults): array
+    private static function declarationPaths(array $lintDefaults, array $linted): array
     {
         $configured = $lintDefaults['paths'] ?? null;
         $paths = \is_array($configured) ? array_values(array_filter($configured, static fn (mixed $path): bool => \is_string($path) && '' !== $path)) : [];
 
-        return [...([] === $paths ? ['.'] : $paths), (getcwd() ?: '.').'/vendor'];
+        return [...([] === $paths ? array_values($linted) : $paths), (getcwd() ?: '.').'/vendor'];
     }
 
     /**
