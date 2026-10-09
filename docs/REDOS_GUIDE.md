@@ -88,7 +88,7 @@ The limits of the guarantee, each one deliberate:
 
 - **One match attempt.** `preg_match()` retries an unanchored pattern at every start position, and `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply the cost of an attempt by the length of the subject: a degree-k per-attempt verdict costs up to n^(k+1) steps over an unanchored search (`/a*a*$/`, quadratic per attempt, takes 12, 87 and 659 ms on 500, 1,000 and 2,000 `a` and a `b` without the JIT, eight times as long each time the length doubles). When one attempt is proven linear, the analysis looks for the run that makes the search quadratic: see [The cost of an unanchored search](#the-cost-of-an-unanchored-search). A pattern that matches inside the run is not reported there: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication. The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential.
 - **The pattern as analysed.** A bounded repeat `{m,n}` whose `n` is above 16 is analysed as `{m,}`, and so is any bounded repeat whose copies can read the same input in two ways. An atomic group or possessive quantifier whose body is more than one run over one set, or than an alternation of one-character branches (read as one character of their union, `(?>a|\d)`), is kept as written. Each of them is listed in `abstractions` and printed on a `Model:` line, so you can see what the proof is about. The class is the class of that model: a bounded repeat analysed as unbounded can be reported exponential where PCRE's cost stays polynomial, and confirmed mode then says the attack was not reproduced.
-- **Lookarounds may fail.** The model does not evaluate what a lookahead or lookbehind requires: it counts every run through one as possibly failing, so that the engine may keep backtracking past it. A lookaround never turns a vulnerable pattern into `safe (proven)` (`/(a+)+(?=b)/` is exponential, and PHP fails on it from 20 bytes); it can make a safe one look vulnerable, which confirmed mode then reports as not reproduced. The body of an atomic lookaround is analysed as its own search, and its class joins the pattern's.
+- **Lookarounds may fail.** The model does not evaluate what a lookahead or lookbehind requires: it counts every run through one as possibly failing, so that the engine may keep backtracking past it. A lookaround never turns a vulnerable pattern into `safe (proven)` (`/(a+)+(?=b)/` is exponential, and PHP fails on it from 20 bytes). A witness of a pattern holding a lookaround is asked of the running PCRE2 before it proves anything, on a few pumps, its attempt pinned where it starts: the attempt must fail there, and, when the way to the loop crosses a lookaround, it must match once the suffix is replaced with one the pattern accepts, so the lookarounds on the way hold. A lookbehind at the start of the pattern leads the witness with what it asks for (`/(?<=\[)…/` gives `"[" . "**" x n . "\n"`). When no witness passes, a lookaround the attempt crosses before the loop, and never after it, is taken to hold, so that a success after it counts, and the witness is looked for again; when none passes still, the heuristics decide. So `/(?<![a-z-])background-color\s*:\s*[^;]+;?/i`, whose witness PHP matched at once, is no longer proven polynomial. The body of an atomic lookaround is analysed as its own search, and its class joins the pattern's.
 - **Word boundaries and anchors are exact.** `\b` and `\B` are modelled from the word class of the characters around them, at every attempt start and inside lookarounds; `^`, `$`, `\A`, `\z`, `\Z`, `/m` and `/D` as PCRE reads them, `^` under `/m` included.
 - **Inline options as PCRE reads them.** An option set inside one alternative also holds in the alternatives after it, up to the end of the group around it: in `/x(?s)|(?:.*\n.*\n)+x/` the dots of the second alternative cross newlines, and the pattern is exponential. `r` (caseless restrict) and the ASCII options `a`, `aD`, `aS`, `aW`, `aP` and `aT` are read per scope, like `i` and `s`, so `/^(?r)(?:k|\x{212A})*$/iu` is `safe (proven)` (the Kelvin sign no longer matches `k`) and `/^(?^i)(?:k|\x{212A})*$/ur` is exponential. `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r`, and keeps `U` and the ASCII options. Under `xx` a class skips its unescaped spaces and tabs, and a lone `x` takes `xx` off: `/^(?xx)(?:[a b]|\x20)*$/` is proven linear, `/^(?xx)(?x)(?:[ a]|\x20)*$/` exponential. `\b` and `\B` under `aW` read the ASCII `\w`.
 - **One engine.** Character classes under `/u` and `/i` are computed by asking the running PCRE2, so `(\p{L}|\d)+$` is proven safe under `/u` and `(\w|é)+$` exponential (`é` is a word character there). A class the analysis can only over-approximate is listed in `abstractions`, and then never yields `safe (proven)`. A verdict is deterministic for one PHPRegex analysis version and one PCRE2 release; the result carries both. The probes for `r` and the ASCII options need PCRE2 10.43: a running PCRE2 older than that, judging a pattern for a newer target, cannot compile them, so each such class is read as any character and listed in `abstractions`. The pattern is then never `safe (proven)`, and usually gets a heuristic verdict: two CI rows on different PCRE2 releases can disagree on it.
@@ -131,11 +131,13 @@ echo preg_last_error_msg(), "\n";                                 // Backtrack l
 
 `toArray()` gives the three parts, escaped and unquoted, as the JSON output carries them.
 
+A short witness can look harmless on the engine and still be the attack. PCRE2 looks for the last code unit every match needs (`;` in `/color\s*:\s*[^;]+;/`) before it tries the pattern, and gives up at once on a subject without it, but only on a subject shorter than a cap: 5,000 code units for an anchored pattern, 5,000,000 for an unanchored one (PCRE2 10.49). Past it the search is skipped and the cost is paid. Measured without the JIT, `/^color\s*:\s*[^;]+;/` on its witness `"color:" . " " x n` takes 0.00 ms at 4,996 bytes, 6.4 ms at 5,016 and 75 to 200 ms at 16,006; `/color\s*:\s*[^;]+;/` 0.16 ms at 4,999,006 bytes, and was stopped after 8 seconds at 5,000,106. When no failing subject can hold that code unit (any `;` lets `[^;]+;` match), the witness is still the attack: it needs a subject past the cap, which PHP's default `post_max_size` of 8M lets in. The verdict stays proven.
+
 ## Confirmed mode
 
 ReDoS analysis defaults to **theoretical** mode: the pattern is read, never run. **Confirmed** mode runs the patterns at or above the threshold on the running PCRE, without the JIT and under the limits of `ConfirmationOptions` (backtrack limit 100,000 by default):
 
-- an **exponential** witness is replayed: built with one pump, then two, up to 64, until `preg_match()` fails. PCRE gives up at once on a subject that lacks a literal every match needs, so the replay tries several suffixes (the bare one, the shortest one the loop cannot take, and that one followed by each required literal) and publishes the one that reproduced. Only a failure on the backtrack limit counts as reproduced; the replay stops at a fixed amount of work, and then reports `replayed: false`;
+- an **exponential** witness is replayed: built with one pump, then two, up to 64, until `preg_match()` fails. PCRE gives up at once on a subject that lacks a literal every match needs, so the replay tries several suffixes (the bare one, the shortest one the loop cannot take, and that one followed by each required literal) and publishes the one that reproduced. Each is then tried once more at 5,000 bytes or just past, where PCRE2 stops looking for the code unit an anchored pattern requires (`#^<iframe(?:"[^"]*"|'[^']*'|[^>])*>#i` reproduces only there: its witness holds no `>`). Only a failure on the backtrack limit counts as reproduced; the replay stops at a fixed amount of work, and then reports `replayed: false`;
 - a **polynomial** verdict is not replayed: the backtrack counter does not measure polynomial work, and a timing would depend on the machine. It is still reported, with `replayed: null`;
 - a **heuristic** verdict is run on inputs of growing length, as in 1.x.
 
@@ -174,7 +176,7 @@ replayed the way it was proven.
 When the replay never fails, the verdict stays and its confidence stays `medium`:
 
 ```bash
-vendor/bin/regex analyze '/(a+)+(?!a)/' --redos-mode=confirmed
+vendor/bin/regex analyze '/^(-?[a-z]+){1,7}\.json$/i' --redos-mode=confirmed
 ```
 
 ```
@@ -182,11 +184,12 @@ vendor/bin/regex analyze '/(a+)+(?!a)/' --redos-mode=confirmed
   Severity   : CRITICAL (score 10)
   Mode       : CONFIRMED
   Confidence : MEDIUM
-  Attack: "a" x n
+  Model: {1,7} at offset 1 analysed as {1,} (its copies read the same input in two ways)
+  Attack: "-AA" x n . "!.json"
   Not reproduced on PCRE2 10.49 (PCRE's optimisations defuse it).
 ```
 
-Here the model counted the negative lookahead as possibly failing, while after `(a+)+` has taken every `a` it always succeeds: PHP matches at once.
+Here the model read `{1,7}` as `{1,}`; PCRE, held to seven copies, never reached the backtrack limit on the replayed inputs.
 
 In PHP:
 
@@ -374,7 +377,7 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 
 On the repository's corpus of real-world patterns, the model proves the class of about 95 % of them; the heuristics decide for about 5 %, mostly patterns outside the model, a few with an ambiguity the analysis could not witness, almost none because of the budget. Analysing a pattern takes about a third of a millisecond at the median and about 5 ms at the 99th percentile.
 
-Compared with the 1.x heuristics, many former `medium` findings, most of them on unanchored patterns, are now proven safe, and a smaller number of patterns rate higher, each with its attack. In confirmed mode, about five in six of the corpus' proven exponential verdicts reproduce on PCRE2; the others are reported as not reproduced, half of them through a bounded repeat analysed as unbounded, the rest through a lookaround or a lazy loop that PCRE's optimizations defuse.
+Compared with the 1.x heuristics, many former `medium` findings, most of them on unanchored patterns, are now proven safe, and a smaller number of patterns rate higher, each with its attack. In confirmed mode, about seven in eight of the corpus' proven exponential verdicts reproduce on PCRE2; the others are reported as not reproduced, through a bounded repeat analysed as unbounded or a loop that PCRE's optimizations defuse.
 
 ## Using PHPRegex
 

@@ -65,7 +65,7 @@ final class BacktrackProver
     /**
      * @throws ModelLimit
      */
-    public function prove(RegexNode $regex): ProofResult
+    public function prove(RegexNode $regex, ?string $pattern = null): ProofResult
     {
         $budget = new Budget($this->maxSteps, $this->maxStates);
         $this->stepBound = null;
@@ -116,7 +116,9 @@ final class BacktrackProver
             }
             $stepBound = null === $stepBound ? null : self::boundOf($automaton, $stepBound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
-            $verdict = (new AmbiguityFinder($automaton, $budget))->find($literals);
+            $verdict = null === $pnfa->parent && null !== $pattern && [] !== $pnfa->marks
+                ? self::throughLookarounds($pattern, $searches, $index, $automaton, $contexts, $budget, $literals)
+                : (new AmbiguityFinder($automaton, $budget))->find($literals);
             if (null === $pnfa->parent) {
                 $this->search = [$automaton, $budget];
             }
@@ -203,6 +205,80 @@ final class BacktrackProver
     public function abstractions(): array
     {
         return $this->builder?->abstractions() ?? [];
+    }
+
+    /**
+     * The verdict of the pattern's own search when it holds a lookaround,
+     * which the model leaves undecided: each witness is asked of the engine.
+     * When none holds, the lookarounds the attempt crosses on its way to the
+     * ambiguity, and never after it, are taken to hold, so that a success
+     * after them counts, and the witness is looked for again: once crossed,
+     * such a lookaround held, or the attempt failed before any backtracking.
+     * That search only ever proves a class; a verdict it finds linear stays
+     * unwitnessed.
+     *
+     * @param list<Pnfa>      $searches
+     * @param list<int>       $contexts
+     * @param list<list<int>> $literals
+     *
+     * @throws ModelLimit
+     *
+     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
+     */
+    private static function throughLookarounds(string $pattern, array $searches, int $index, ItemAutomaton $automaton, array $contexts, Budget $budget, array $literals): ?array
+    {
+        $pnfa = $automaton->pnfa;
+        $check = new WitnessCheck($pattern);
+        $leads = [];
+        $ahead = [];
+        $atStart = [];
+        foreach ($automaton->initials as $start) {
+            $atStart += array_fill_keys($start['marks'], true);
+        }
+
+        foreach ($searches as $search => $sub) {
+            if ($index !== $sub->parent || $sub->negative) {
+                continue;
+            }
+
+            $word = $sub->shortestWord();
+            if (null === $word || [] === $word) {
+                continue;
+            }
+
+            if (!$sub->lookbehind) {
+                $ahead[] = $word;
+            } elseif (isset($atStart[$search]) && !\in_array($word, $leads, true)) {
+                $leads[] = $word;
+            }
+        }
+
+        $finder = new AmbiguityFinder($automaton, $budget);
+        $verdict = $finder->find($literals, $check, $leads, $ahead);
+        $item = null === $verdict || null === $verdict['unwitnessed'] ? null : $finder->unwitnessedItem($verdict['unwitnessed']);
+        if (null === $verdict || null === $item) {
+            return $verdict;
+        }
+
+        $state = $automaton->states[$item];
+        $after = $pnfa->reachableFrom($state);
+        $held = [];
+        foreach ($pnfa->marks as $mark => $search) {
+            if (!isset($after[$mark]) && isset($pnfa->reachableFrom($mark)[$state])) {
+                $held[] = $search;
+            }
+        }
+
+        if ([] === $held) {
+            return $verdict;
+        }
+
+        $again = (new AmbiguityFinder(new ItemAutomaton($pnfa, $budget, $contexts, $held), $budget))->find($literals, $check, $leads, $ahead);
+        if (null === $again || null !== $again['unwitnessed'] || self::outranks($verdict['complexity'], $verdict['degree'], $again['complexity'], $again['degree'])) {
+            return $verdict;
+        }
+
+        return $again;
     }
 
     /**

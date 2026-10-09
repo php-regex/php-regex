@@ -42,7 +42,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Limits:** Per match attempt. An unanchored search retries the attempt at each start position, and the every-match
   functions (`preg_match_all`, `preg_replace`, `preg_split`) retry the same way, so a degree-k per-attempt verdict
   costs up to n^(k+1) steps over an unanchored search. When one attempt is proven linear, the search cost is looked for
-  apart (below). Lookaround constraints are not evaluated (a lookaround may fail);
+  apart (below). Lookaround constraints are not evaluated (a lookaround may fail); a witness through one is
+  checked on the running PCRE2 instead, on a few pumps: its attempt fails, and the lookarounds on its way to the loop
+  hold. A witness may need a subject past PCRE2's cap on its search for a required code unit (5,000 code units
+  anchored, 5,000,000 unanchored) before its cost shows;
   `{m,n}` above 16, and a bounded repeat whose copies can read the same input in two ways, are analysed as `{m,}`; an
   atomic body that is more than one run over one set, or than an alternation of one-character branches, is kept as written. Each abstraction is listed in
   `abstractions`. Verdicts are deterministic per analysis version and PCRE2 release.

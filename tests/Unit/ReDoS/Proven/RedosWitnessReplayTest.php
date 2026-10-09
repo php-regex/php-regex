@@ -179,16 +179,18 @@ final class RedosWitnessReplayTest extends TestCase
     /**
      * The model ignores the lookahead's constraint: (?=b) then a+ can never
      * both hold, so PCRE never backtracks (a…a! and a…a!b never fail up to
-     * 64 bytes on 10.49). The verdict stays exponential, unreplayed.
+     * 64 bytes on 10.49). The engine, asked about the witness, finds no
+     * continuation that gets the attempt past the lookahead: nothing is
+     * proven, and no witness is replayed.
      */
     #[Test]
-    public function test_witness_the_engine_defuses_is_not_replayed(): void
+    public function test_witness_the_engine_defuses_proves_nothing(): void
     {
         $analysis = (new RedosAnalyzer())->analyze('/(?=b)(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
 
-        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
-        $this->assertFalse($analysis->replayed);
-        $this->assertSame(RedosConfidence::Medium, $analysis->confidenceLevel());
+        $this->assertSame(RedosComplexity::Unknown, $analysis->complexity);
+        $this->assertNull($analysis->replayed);
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof);
     }
 
     /**

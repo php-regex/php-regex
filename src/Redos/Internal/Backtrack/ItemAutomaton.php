@@ -158,11 +158,14 @@ final class ItemAutomaton
 
     /**
      * @param list<int> $startContexts the contexts the search's attempts start in
+     * @param list<int> $held          the sub-searches whose lookaround is taken
+     *                                 to hold: a success after one is counted
      */
     public function __construct(
         public readonly Pnfa $pnfa,
         private readonly Budget $budget,
         array $startContexts,
+        private readonly array $held = [],
     ) {
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
@@ -384,13 +387,41 @@ final class ItemAutomaton
      */
     public function mayAcceptAtEnd(array $items): bool
     {
+        return $this->holdsUndecided($items) || $this->acceptsAtEnd($items);
+    }
+
+    /**
+     * Whether one of the items is a success through an undecided check.
+     *
+     * @param array<int, true> $items
+     */
+    public function holdsUndecided(array $items): bool
+    {
         foreach ($items as $item => $_) {
             if (isset($this->undecidedFinals[$item])) {
                 return true;
             }
         }
 
-        return $this->acceptsAtEnd($items);
+        return false;
+    }
+
+    /**
+     * The context an attempt starts in after the character: a word
+     * character, a newline, another one; read only when the search looks at
+     * the character before.
+     */
+    public function contextAfter(int $codePoint): int
+    {
+        if (null !== $this->pnfa->wordSet && $this->pnfa->wordSet->contains($codePoint)) {
+            return self::CONTEXT_WORD;
+        }
+
+        if ($this->pnfa->hasLineStart && 0x0A === $codePoint) {
+            return self::CONTEXT_NEWLINE;
+        }
+
+        return self::CONTEXT_OTHER;
     }
 
     /**
@@ -637,10 +668,12 @@ final class ItemAutomaton
 
                 case Pnfa::MARK:
                     // A lookaround: its constraint is not kept, so the paths
-                    // after it may fail. Its body starts in this context.
+                    // after it may fail, unless it is taken to hold. Its body
+                    // starts in this context.
                     $marks[$pnfa->marks[$current]] = true;
                     $this->markContexts[$pnfa->marks[$current]][$context] = true;
-                    $stack[] = [$pnfa->next[$current], $peek, $end, $entered, true, $edge | self::EDGE_LOOKAROUND];
+                    $held = \in_array($pnfa->marks[$current], $this->held, true);
+                    $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided || !$held, $edge | self::EDGE_LOOKAROUND];
 
                     break;
 

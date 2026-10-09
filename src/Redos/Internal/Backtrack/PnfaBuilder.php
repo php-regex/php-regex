@@ -438,7 +438,15 @@ final class PnfaBuilder
                 }
 
                 $index = \count($this->searches);
-                $sub = new Pnfa($this->unicode, $this->budget, $node->child, $search, $index);
+                $sub = new Pnfa(
+                    $this->unicode,
+                    $this->budget,
+                    $node->child,
+                    $search,
+                    $index,
+                    \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true),
+                    \in_array($node->type, [GroupType::LookaheadNegative, GroupType::LookbehindNegative], true),
+                );
                 $this->searches[] = $sub;
                 $sub->start = $this->node($node->child, $sub->final, $flags, $sub, $index);
 

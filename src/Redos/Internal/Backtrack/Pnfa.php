@@ -176,8 +176,10 @@ final class Pnfa
     public bool $readsFinalNewline = false;
 
     /**
-     * @param int|null $parent the search this one is a lookaround of, and the
-     *                         mark where it stands there
+     * @param int|null $parent     the search this one is a lookaround of, and the
+     *                             mark where it stands there
+     * @param bool     $lookbehind whether the lookaround looks behind its mark
+     * @param bool     $negative   whether it holds where its body does not match
      */
     public function __construct(
         public readonly bool $unicode,
@@ -185,8 +187,70 @@ final class Pnfa
         public readonly NodeInterface $body,
         public readonly ?int $parent = null,
         public readonly ?int $mark = null,
+        public readonly bool $lookbehind = false,
+        public readonly bool $negative = false,
     ) {
         $this->final = $this->add(self::FINAL);
+    }
+
+    /**
+     * The states a path from the state may reach, the state included.
+     *
+     * @return array<int, true>
+     */
+    public function reachableFrom(int $state): array
+    {
+        $seen = [$state => true];
+        $queue = [$state];
+        for ($head = 0; $head < \count($queue); $head++) {
+            $this->budget->step();
+            foreach ($this->movesFrom($queue[$head]) as [$next]) {
+                if (!isset($seen[$next])) {
+                    $seen[$next] = true;
+                    $queue[] = $next;
+                }
+            }
+        }
+
+        return $seen;
+    }
+
+    /**
+     * A short word the search reads to its success, each character the
+     * representative of its set, its checks left aside; null when no path
+     * reaches it.
+     *
+     * @return list<int>|null
+     */
+    public function shortestWord(): ?array
+    {
+        $words = [$this->start => []];
+        $queue = [$this->start];
+        // Breadth first by length: a move that reads nothing goes to the
+        // front of the length it stands at.
+        while ([] !== $queue) {
+            $this->budget->step();
+            $state = array_shift($queue);
+            if (self::FINAL === $this->kinds[$state]) {
+                return $words[$state];
+            }
+
+            foreach ($this->movesFrom($state) as [$next, $character]) {
+                if (isset($words[$next])) {
+                    continue;
+                }
+
+                if (null === $character) {
+                    $words[$next] = $words[$state];
+                    array_unshift($queue, $next);
+                } else {
+                    $words[$next] = [...$words[$state], $character];
+                    $queue[] = $next;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -294,6 +358,23 @@ final class Pnfa
         $this->next[$state] = $next;
 
         return $state;
+    }
+
+    /**
+     * The moves out of a state: the next state, and the character read on
+     * the way, null for none.
+     *
+     * @return list<array{int, int|null}>
+     */
+    private function movesFrom(int $state): array
+    {
+        return match ($this->kinds[$state]) {
+            self::FINAL => [],
+            self::EPSILON => array_map(static fn (int $target): array => [$target, null], $this->targets[$state]),
+            self::LEAVE => [[$this->next[$state], null], [$this->exits[$state], null]],
+            self::CHAR => null === $this->sets[$state]->representative() ? [] : [[$this->next[$state], $this->sets[$state]->representative()]],
+            default => [[$this->next[$state], null]],
+        };
     }
 
     private function add(int $kind): int

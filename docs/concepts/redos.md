@@ -45,14 +45,14 @@ Each pattern below was run through `RedosAnalyzer` and, for the vulnerable ones,
 
 ## How PHPRegex detects ReDoS
 
-PHPRegex reads the pattern, never runs it (unless you ask for [confirmed mode](../REDOS_GUIDE.md#confirmed-mode)):
+PHPRegex reads the pattern, and runs it only to check a witness through a lookaround on a few short inputs (or in [confirmed mode](../REDOS_GUIDE.md#confirmed-mode)):
 
 1. The lexer and parser build a `RegexNode` AST.
 2. `RedosAnalyzer` builds from it a **prioritized NFA**: an automaton whose ε-transitions are ordered as PCRE tries them. Atomic groups, possessive quantifiers and atomic lookaround bodies are separate automata, analysed on their own and seen from outside as one step.
 3. It looks for **ambiguity** in that automaton, after the method of Weideman et al. ("Analyzing Matching Time Behavior of Backtracking Regular Expression Matchers by Using Ambiguous NFA", 2016):
    - a state with two different loops reading the same word means **exponential** cost;
    - a chain of k states, each looping on a word and reaching the next on that same word, means **polynomial** cost of degree k.
-4. From the ambiguous loop it builds the **witness**: a prefix that reaches it, the word to pump, and the shortest suffix that makes the attempt fail. Characters are chosen deterministically: the smallest printable ASCII character of each set, then the other sets of the loop, before giving up.
+4. From the ambiguous loop it builds the **witness**: a prefix that reaches it, the word to pump, and the shortest suffix that makes the attempt fail. Characters are chosen deterministically: the smallest printable ASCII character of each set, then the other sets of the loop, before giving up. The model does not decide a lookaround: a witness through one is checked on the running PCRE2, its attempt pinned where it starts.
 5. The pattern's class is the worst class over the pattern and its sub-searches.
 
 A pattern is `safe (proven)` only when the automaton holds no ambiguity at all. An ambiguity for which no witness can be built is not taken as safe: the heuristics decide, and `abstractions` lists `ambiguity without witness at offset N`.

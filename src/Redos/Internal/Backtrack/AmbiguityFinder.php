@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Internal\Backtrack;
 
+use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Redos\RedosComplexity;
 
 /**
@@ -34,6 +35,14 @@ final class AmbiguityFinder
     private const MAX_PUMPS = 8;
 
     private const MAX_PREFIXES = 8;
+
+    /**
+     * The most continuations a witness through a lookaround is tried with,
+     * and the most sets searched for them.
+     */
+    private const MAX_CONTINUATIONS = 8;
+
+    private const MAX_CONTINUATION_SETS = 64;
 
     /**
      * The most ways an acyclic stretch may read one input: a margin under
@@ -62,6 +71,30 @@ final class AmbiguityFinder
      * @var list<list<int>>
      */
     private array $literals = [];
+
+    /**
+     * The engine, asked about a witness through a lookaround; null when the
+     * search holds none, or no pattern is given.
+     */
+    private ?WitnessCheck $check = null;
+
+    /**
+     * @var list<list<int>> what a lookbehind at the attempt start asks to
+     *                      read before it, tried before the prefix
+     */
+    private array $leads = [];
+
+    /**
+     * @var list<list<int>> what a lookahead asks to read after it, tried
+     *                      after a success the model leaves undecided
+     */
+    private array $ahead = [];
+
+    /**
+     * @var array<int, int> an item of each ambiguity left without witness,
+     *                      by its offset in the pattern
+     */
+    private array $unwitnessedItems = [];
 
     /**
      * @var array<int, true>|null the components whose links alone are
@@ -159,17 +192,29 @@ final class AmbiguityFinder
      * without witness (then the class is that ambiguity's, not proven);
      * null when every attempt is linear.
      *
+     * When the search holds a lookaround, the model leaves it undecided: a
+     * witness is then asked of the engine too, its attempt pinned where it
+     * starts. It must fail there, and, when the way to the ambiguity
+     * crosses a lookaround, match once the suffix is replaced with one the
+     * search accepts: the lookarounds on the way hold.
+     *
      * @param list<list<int>> $literals literals every match of the search
      *                                  holds, which PCRE looks for before it
      *                                  backtracks, the likeliest first
+     * @param list<list<int>> $leads    what a lookbehind at the attempt start
+     *                                  asks to read before it
+     * @param list<list<int>> $ahead    what a lookahead asks to read after it
      *
      * @throws ModelLimit
      *
      * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
      */
-    public function find(array $literals = []): ?array
+    public function find(array $literals = [], ?WitnessCheck $check = null, array $leads = [], array $ahead = []): ?array
     {
         $this->literals = $literals;
+        $this->check = $check;
+        $this->leads = $leads;
+        $this->ahead = $ahead;
         $this->components(false);
         $this->checkAcyclicAmbiguity();
         $cyclic = $this->cyclic;
@@ -245,6 +290,15 @@ final class AmbiguityFinder
         $this->onlyWithin = null;
 
         return self::worse($split, $whole);
+    }
+
+    /**
+     * An item of the ambiguity left without witness at the offset, from the
+     * last search.
+     */
+    public function unwitnessedItem(int $offset): ?int
+    {
+        return $this->unwitnessedItems[$offset] ?? null;
     }
 
     /**
@@ -481,6 +535,8 @@ final class AmbiguityFinder
      */
     private function unwitnessed(RedosComplexity $complexity, ?int $degree, int $state): array
     {
+        $this->unwitnessedItems[$this->automaton->offsetOf($state)] ??= $state;
+
         return [
             'complexity' => $complexity,
             'degree' => $degree,
@@ -1051,11 +1107,20 @@ final class AmbiguityFinder
      */
     private function witness(int $state, array $pumps): ?array
     {
-        foreach ($this->prefixes($state) as [$initial, $context, $prefix, $refusing]) {
-            foreach ($pumps as $pump) {
-                $found = $this->witnessFrom($state, $initial, $context, $prefix, $pump);
-                if (null !== $found) {
-                    return [...$found, 'withoutMatches' => $refusing];
+        // A lookbehind at the attempt start may fail where the subject
+        // starts: the witness may then be led by what it asks for.
+        foreach ([[], ...$this->leads] as $lead) {
+            $context = [] === $lead ? null : $this->automaton->contextAfter($lead[\count($lead) - 1]);
+            foreach ($this->prefixes($state) as [$initial, $start, $prefix, $refusing]) {
+                if (null !== $context && \count($this->automaton->initials) > 1 && $start !== $context) {
+                    continue;
+                }
+
+                foreach ($pumps as $pump) {
+                    $found = $this->witnessFrom($state, $initial, $start, $prefix, $pump, $lead, $refusing);
+                    if (null !== $found) {
+                        return [...$found, 'withoutMatches' => $refusing];
+                    }
                 }
             }
         }
@@ -1067,16 +1132,32 @@ final class AmbiguityFinder
      * @param list<int> $initial the attempt start's items
      * @param list<int> $prefix  classes
      * @param list<int> $pump    classes
+     * @param list<int> $lead    characters read before the attempt starts
      *
      * @return array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>}|null
      */
-    private function witnessFrom(int $state, array $initial, int $context, array $prefix, array $pump): ?array
+    private function witnessFrom(int $state, array $initial, int $context, array $prefix, array $pump, array $lead = [], bool $refusing = false): ?array
     {
         $automaton = $this->automaton;
         $threads = array_values(array_unique($initial));
+        // Whether the way to the ambiguity may cross a lookaround.
+        $crosses = [] !== $lead;
+        foreach ($automaton->initials as $start) {
+            $crosses = $crosses || ($start['context'] === $context && [] !== $start['marks']);
+        }
+
+        // Whether a path met may succeed where the model leaves it undecided.
+        $undecided = false;
         foreach ($prefix as $class) {
+            foreach ($threads as $thread) {
+                $crosses = $crosses || ([] !== ($automaton->marksAfter[$thread] ?? []));
+            }
+
+            $undecided = $undecided || $automaton->holdsUndecided(array_fill_keys($threads, true));
             $threads = $automaton->stepOrdered($threads, $class);
         }
+
+        $undecided = $undecided || $automaton->holdsUndecided(array_fill_keys($threads, true));
 
         $position = array_search($state, $threads, true);
         if (false === $position) {
@@ -1094,6 +1175,8 @@ final class AmbiguityFinder
                 if (null === $current) {
                     return null;
                 }
+
+                $undecided = $undecided || $automaton->holdsUndecided($current);
             }
 
             $key = self::key($current);
@@ -1134,7 +1217,8 @@ final class AmbiguityFinder
         }
 
         $contextCharacter = $automaton->contextCharacter($context);
-        $characters = [...(null === $contextCharacter ? [] : [$contextCharacter]), ...$this->representativesOf($prefix)];
+        $before = [] !== $lead ? $lead : (null === $contextCharacter ? [] : [$contextCharacter]);
+        $characters = [...$before, ...$this->representativesOf($prefix)];
         $pumpCharacters = $this->representativesOf($pump);
         $withLiterals = $this->suffixesBeforeLiterals($after, $suffix, [...$characters, ...$pumpCharacters, ...$pumpCharacters]);
         foreach ($withLiterals as [$classes, $literal]) {
@@ -1142,16 +1226,178 @@ final class AmbiguityFinder
         }
 
         $suffixCharacters = $this->representativesOf($suffix);
-
-        return [
+        // When PCRE requires a literal, the witness carrying it is the one
+        // likely to reproduce.
+        $published = [] === $withLiterals ? $suffixCharacters : $alternatives[\count($alternatives) - \count($withLiterals)];
+        $found = [
             'prefix' => $characters,
             'pump' => $pumpCharacters,
             'suffix' => $suffixCharacters,
             'alternatives' => $alternatives,
-            // When PCRE requires a literal, the witness carrying it is the one
-            // likely to reproduce.
-            'published' => [] === $withLiterals ? $suffixCharacters : $alternatives[\count($alternatives) - \count($withLiterals)],
+            'published' => $published,
         ];
+
+        foreach ([$suffixCharacters, $published, ...$alternatives] as $candidate) {
+            $undecided = $undecided || $this->meetsUndecided($after, $candidate);
+        }
+
+        return null === $this->check ? $found : $this->checked($this->check, $found, \count($before), $after, $crosses, $undecided && !$refusing);
+    }
+
+    /**
+     * The witness as the engine sees it, its attempt pinned after the
+     * characters before it: null when the way to the ambiguity crosses a
+     * lookaround and no accepting continuation makes the attempt match.
+     * When the witness fails only for a success the model leaves undecided,
+     * the suffixes on which the attempt fails, the published one first;
+     * null when it fails on none. Otherwise the model decided the failure
+     * of every path tried up to the ambiguity, and a later one may still
+     * match after the cost is paid: the witness stands as found.
+     *
+     * Without $matches, PHP retries an empty match, which the pinned
+     * attempt does not: such a witness is not asked to fail.
+     *
+     * @param array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>} $found
+     * @param array<int, true>                                                                                                  $after
+     *
+     * @return array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>}|null
+     */
+    private function checked(WitnessCheck $check, array $found, int $before, array $after, bool $crosses, bool $undecided): ?array
+    {
+        $unicode = $this->automaton->pnfa->unicode;
+        $offset = \strlen(Utf8::encode(\array_slice($found['prefix'], 0, $before), $unicode));
+        $head = Utf8::encode($found['prefix'], $unicode);
+        $pump = Utf8::encode($found['pump'], $unicode);
+
+        if ($crosses) {
+            $reached = false;
+            foreach ($this->continuations($after) as $continuation) {
+                if (true === $check->matches($head.$pump.$pump.Utf8::encode($continuation, $unicode), $offset)) {
+                    $reached = true;
+
+                    break;
+                }
+            }
+
+            if (!$reached) {
+                return null;
+            }
+        }
+
+        if (!$undecided) {
+            return $found;
+        }
+
+        // The suffix with a literal PCRE requires is published when it
+        // fails: the model may have picked the character before the literal
+        // on a success it leaves undecided, so each one is tried.
+        $candidates = [$found['published']];
+        $held = ','.implode(',', [...$found['prefix'], ...$found['pump'], ...$found['pump']]).',';
+        foreach (\array_slice($this->literals, 0, 2) as $literal) {
+            if (!str_contains($held, ','.implode(',', $literal).',')) {
+                foreach ($this->automaton->representatives as $character) {
+                    $candidates[] = [...$found['suffix'], $character, ...$literal];
+                }
+            }
+        }
+
+        $failing = [];
+        foreach ([...$candidates, $found['suffix'], ...$found['alternatives']] as $suffix) {
+            if (\in_array($suffix, $failing, true)) {
+                continue;
+            }
+
+            $tail = Utf8::encode($suffix, $unicode);
+            foreach ([1, 2, 3] as $pumps) {
+                if (false !== $check->matches($head.str_repeat($pump, $pumps).$tail, $offset)) {
+                    continue 2;
+                }
+            }
+
+            $failing[] = $suffix;
+        }
+
+        if ([] === $failing) {
+            return null;
+        }
+
+        return [
+            'prefix' => $found['prefix'],
+            'pump' => $found['pump'],
+            'suffix' => $failing[0],
+            'alternatives' => \array_slice($failing, 1),
+            'published' => $failing[0],
+        ];
+    }
+
+    /**
+     * Whether reading the characters from the set meets a success the model
+     * leaves undecided.
+     *
+     * @param array<int, true> $items
+     * @param list<int>        $characters
+     */
+    private function meetsUndecided(array $items, array $characters): bool
+    {
+        $automaton = $this->automaton;
+        foreach ($characters as $character) {
+            if ($automaton->holdsUndecided($items)) {
+                return true;
+            }
+
+            $items = $automaton->stepSet($items, $automaton->classOf($character)) ?? [];
+        }
+
+        return $automaton->holdsUndecided($items);
+    }
+
+    /**
+     * Continuations, as characters, after which the set may succeed: one
+     * the model accepts, or one reaching a success it leaves undecided,
+     * alone and followed by what each lookahead asks to read.
+     *
+     * @param array<int, true> $items
+     *
+     * @return list<list<int>>
+     */
+    private function continuations(array $items): array
+    {
+        $automaton = $this->automaton;
+        $found = [];
+        $queue = [[$items, []]];
+        $seen = [self::key($items) => true];
+        for ($head = 0; $head < \count($queue) && $head < self::MAX_CONTINUATION_SETS && \count($found) < self::MAX_CONTINUATIONS; $head++) {
+            $this->budget->step();
+            [$current, $path] = $queue[$head];
+            $characters = $this->representativesOf($path);
+            if ($automaton->acceptsAtEnd($current)) {
+                $found[] = $characters;
+            }
+
+            if ($automaton->holdsUndecided($current)) {
+                $found[] = $characters;
+                foreach ($this->ahead as $word) {
+                    $found[] = [...$characters, ...$word];
+                }
+            }
+
+            for ($class = 0; $class < $automaton->classCount(); $class++) {
+                $next = $automaton->stepSet($current, $class);
+                if (null === $next) {
+                    $found[] = [...$characters, $automaton->representatives[$class]];
+
+                    continue;
+                }
+
+                $key = self::key($next);
+                if (!isset($seen[$key])) {
+                    $seen[$key] = true;
+                    $queue[] = [$next, [...$path, $class]];
+                }
+            }
+        }
+
+        return $found;
     }
 
     /**
