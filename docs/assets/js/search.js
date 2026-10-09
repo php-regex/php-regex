@@ -122,7 +122,9 @@
       title.textContent = hit.title;
       var path = document.createElement('small');
       path.className = 'result-url';
-      path.textContent = hit.url;
+      // Show the site path, not the absolute URL with whatever host
+      // served the index (dev serve and production differ).
+      path.textContent = hit.url.replace(/^https?:\/\/[^/]+/, '');
       link.appendChild(title);
       link.appendChild(path);
       item.appendChild(link);

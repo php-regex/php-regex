@@ -552,7 +552,7 @@ main pre code,
   margin: 0;
   border: 0;
   background: transparent;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem 1.5rem;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: .95rem;
@@ -1706,4 +1706,44 @@ body.drawer-open {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
+}
+
+/* ---- 404: the pattern that matched nothing ---- */
+
+.error-code {
+  margin: 1.5rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--amber);
+}
+
+.error-page h1 {
+  margin: .5rem 0 .75rem;
+}
+
+.error-sub {
+  max-width: 44ch;
+  color: var(--ink-soft);
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .75rem;
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+/* ---- Header on narrow screens: the search toggle keeps its icon ---- */
+
+@media (max-width: 639px) {
+  .search-toggle .search-label,
+  .search-toggle kbd {
+    display: none;
+  }
 }
