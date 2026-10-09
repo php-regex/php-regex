@@ -65,7 +65,7 @@ In short, the public surface is:
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule` |
 | `regex-psalm` | `Plugin` |
-| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `Set\RegexSetList` |
+| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
 | `regex-cli` | no PHP class is public |

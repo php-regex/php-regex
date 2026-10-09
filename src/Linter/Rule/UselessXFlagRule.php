@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\NodeInterface;
 
@@ -67,7 +68,7 @@ final class UselessXFlagRule extends AbstractLintRule
     public function finish(LintContext $context): array
     {
         $source = $context->pattern->source;
-        if (!$context->pattern->hasFlag('x') || $this->hasComment || '' === $source || 1 === preg_match(self::WHITESPACE, $source)) {
+        if (!$context->pattern->hasFlag('x') || $this->hasComment || '' === $source || 1 === LibraryPcre::match(self::WHITESPACE, $source)) {
             return [];
         }
 

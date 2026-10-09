@@ -42,7 +42,7 @@ final class PublicSurface
         'Linter' => ['PatternLinter', 'LintSeverity', 'LintException', 'Rule/RuleViolation'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
-            'RegexParser', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
+            'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
             'TolerantParseResult', 'NodeVisitorInterface', 'AbstractNodeVisitor', 'AbstractTraversingVisitor',
             'NodeWalker', 'NodeFinder', 'TraversalAction',
             'Token/Token', 'Token/TokenStream', 'Token/TokenType',
@@ -66,7 +66,7 @@ final class PublicSurface
         ],
         'PHPStan' => ['RegexPatternRule'],
         'Psalm' => ['Plugin'],
-        'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'Set/RegexSetList'],
+        'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'Set/RegexSetList'],
         'Redos' => [
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Heatmap', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
