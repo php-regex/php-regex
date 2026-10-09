@@ -89,7 +89,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int} $stats
      */
     public function getSummary(array $stats): string
     {

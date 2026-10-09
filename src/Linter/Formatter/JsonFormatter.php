@@ -58,6 +58,7 @@ final class JsonFormatter extends AbstractOutputFormatter
                 'redos_errors' => $report->stats['redos'] ?? 0,
                 'infos' => $report->stats['infos'] ?? 0,
                 'lint_errors' => $report->stats['lintErrors'] ?? 0,
+                'parser_fallbacks' => $report->stats['parserFallbacks'] ?? 0,
             ],
             'results' => $this->mapResults($report->results),
         ];

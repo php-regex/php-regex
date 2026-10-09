@@ -241,7 +241,9 @@ final readonly class AnalysisService
         $issues = [];
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored) {
+            // A file read with the tokenizer instead of the PHP parser is
+            // counted in the stats, never reported.
+            if ($occurrence->isIgnored || null !== $occurrence->parserFallback) {
                 if ($progress) {
                     $progress();
                 }
@@ -533,7 +535,7 @@ final readonly class AnalysisService
         $issues = [];
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored || null !== $occurrence->unread) {
+            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
                 continue;
             }
 
@@ -576,7 +578,7 @@ final readonly class AnalysisService
         $verifyWithAutomata = $options->verifyWithAutomata;
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored || null !== $occurrence->unread) {
+            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
                 continue;
             }
 

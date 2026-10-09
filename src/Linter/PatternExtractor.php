@@ -344,7 +344,9 @@ final readonly class PatternExtractor
         $suppressedCache = [];
         $result = [];
         foreach ($occurrences as $occurrence) {
-            if (!$occurrence instanceof PatternOccurrence) {
+            // A file read with the tokenizer, or not read at all, holds no
+            // pattern a marker could silence.
+            if (!$occurrence instanceof PatternOccurrence || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
                 $result[] = $occurrence;
 
                 continue;

@@ -970,7 +970,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "optimizations": 0,
         "redos_errors": 1,
         "infos": 0,
-        "lint_errors": 0
+        "lint_errors": 0,
+        "parser_fallbacks": 0
     },
     "results": [
         {
@@ -1025,7 +1026,9 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
 
 `stats.errors` counts every error; `stats.redos_errors` counts the ReDoS errors
 among them and `stats.lint_errors` the lint rules of error severity that fired;
-`stats.infos` counts the issues of severity `info`. Every key is always present,
+`stats.infos` counts the issues of severity `info`; `stats.parser_fallbacks` counts
+the files the PHP parser could not read, whose patterns the tokenizer read instead.
+Every key is always present,
 `0` when there is none, and every issue carries every key, `null` when it does
 not apply. An issue's `severity` is `error`, `warning` or `info`, from the
 severity of the rule that reported it (see
@@ -1103,6 +1106,18 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 `--no-redos` to skip the analysis; the confirmation always runs without JIT.
 Either one is now a usage error (exit code 2), as is an unknown `--format`.
 `analyze` and `debug` refuse `--redos-no-jit` too, for the same reason.
+
+A file the PHP parser cannot read (a syntax error, for one) is read again
+with PHP's tokenizer, so its patterns are still linted. The run counts such
+files in `stats.parser_fallbacks` of the JSON report, never as an error, and
+`--verbose` names each one with the parser's message:
+
+```text
+  Parsed with the tokenizer: src/Broken.php (Syntax error, unexpected EOF on line 12)
+```
+
+Outside the console format, that line goes to stderr, so that stdout holds
+the report alone.
 
 ### Baseline
 

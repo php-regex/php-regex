@@ -40,7 +40,7 @@ use PHPRegex\Redos\RedosSeverity;
  *     source?: string
  * }
  * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int}
  */
 final readonly class LintService
 {
@@ -95,7 +95,7 @@ final readonly class LintService
 
         $results = $this->combineResults($issues, $optimizations, $patterns);
 
-        $stats = LintStatsCounter::count($results);
+        $stats = LintStatsCounter::count($results, $patterns);
 
         return new LintReport($results, $stats);
     }

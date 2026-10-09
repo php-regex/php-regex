@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PhpParser\Error;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
@@ -111,28 +112,28 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function analyzeFileWithPhpStan(string $file): array
     {
+        if (null === $this->parser) {
+            return [];
+        }
+
+        if (!is_file($file)) {
+            return [];
+        }
+
+        $content = is_readable($file) ? @file_get_contents($file) : false;
+        if (false === $content) {
+            return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
+        }
+
+        if ('' === $content || !$this->registry->matchesContent($content)) {
+            return [];
+        }
+
+        if (!MemoryBudget::allows($content, MemoryBudget::PARSE_FACTOR)) {
+            return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::PARSE_FACTOR))];
+        }
+
         try {
-            if (null === $this->parser) {
-                return [];
-            }
-
-            if (!is_file($file)) {
-                return [];
-            }
-
-            $content = is_readable($file) ? @file_get_contents($file) : false;
-            if (false === $content) {
-                return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
-            }
-
-            if ('' === $content || !$this->registry->matchesContent($content)) {
-                return [];
-            }
-
-            if (!MemoryBudget::allows($content, MemoryBudget::PARSE_FACTOR)) {
-                return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::PARSE_FACTOR))];
-            }
-
             $ast = $this->parser->parse($content);
             if (!\is_array($ast)) {
                 return [];
@@ -141,12 +142,17 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             $traverser = new NodeTraverser();
             $traverser->addVisitor(new NameResolver());
             $ast = $traverser->traverse($ast);
-
-            return $this->extractFromTokens($ast, $file, $content);
-        } catch (\Throwable) {
-            // If analysis fails for this file, return empty results
-            return [];
+        } catch (Error $e) {
+            // A file PHP cannot parse still holds patterns: the tokenizer
+            // reads them, and the run counts the file. Anything else thrown
+            // here is a defect of ours, and is not caught.
+            return [
+                PatternOccurrence::parserFallback($file, $e->getMessage()),
+                ...(new TokenBasedExtractionStrategy([], $this->registry))->extract([$file]),
+            ];
         }
+
+        return $this->extractFromTokens($ast, $file, $content);
     }
 
     /**
@@ -201,7 +207,8 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function extractFromFuncCall(FuncCall $funcCall, string $file, string $content): array
     {
-        if (!$funcCall->name instanceof Name) {
+        // preg_match(...) holds no pattern, and has no arguments to read.
+        if (!$funcCall->name instanceof Name || $funcCall->isFirstClassCallable()) {
             return [];
         }
 
@@ -222,7 +229,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function extractFromStaticCall(StaticCall $staticCall, string $file, string $content): array
     {
-        if (!$staticCall->class instanceof Name || !$staticCall->name instanceof Identifier) {
+        if (!$staticCall->class instanceof Name || !$staticCall->name instanceof Identifier || $staticCall->isFirstClassCallable()) {
             return [];
         }
 

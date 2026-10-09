@@ -175,6 +175,84 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Scanned 1 files, found 1 patterns', $buffer);
     }
 
+    /**
+     * A file the PHP parser cannot read is linted through the tokenizer and
+     * counted, never reported as an issue.
+     */
+    public function test_json_stats_count_parser_fallbacks(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/broken.php', "<?php\npreg_match('/a+/', \$s);\nfunction (\n");
+        file_put_contents($dir.'/no-pattern.php', "<?php\npreg_match(\$pattern\n");
+        file_put_contents($dir.'/clean.php', "<?php\npreg_match('/b+/', \$s);\n");
+
+        $command = $this->makeLintCommand();
+        $output = $this->makeOutput();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
+            $dir,
+            '--format=json',
+            '--no-redos',
+            '--no-optimize',
+            '--jobs=2',
+        ]), $output), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $document = json_decode(substr($buffer, 0, strrpos($buffer, '}') + 1), true);
+        $this->assertIsArray($document);
+        $this->assertIsArray($document['stats']);
+        $this->assertSame(2, $document['stats']['parser_fallbacks'] ?? null);
+        $this->assertSame(0, $document['stats']['errors']);
+        $this->assertSame([], $document['results']);
+    }
+
+    /**
+     * --verbose names each file read with the tokenizer, and why.
+     */
+    public function test_the_verbose_console_names_each_parser_fallback(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/broken.php', "<?php\npreg_match('/a+/', \$s);\nfunction (\n");
+
+        $command = $this->makeLintCommand();
+        $output = $this->makeOutput();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
+            $dir,
+            '--format=console',
+            '--no-redos',
+            '--no-optimize',
+            '--verbose',
+        ]), $output), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Parsed with the tokenizer: '.$dir.'/broken.php (Syntax error, unexpected EOF', $buffer);
+        $this->assertStringContainsString('found 1 patterns', $buffer);
+    }
+
+    public function test_the_normal_console_keeps_the_parser_fallbacks_quiet(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/broken.php', "<?php\npreg_match('/a+/', \$s);\nfunction (\n");
+
+        $command = $this->makeLintCommand();
+        $output = $this->makeOutput();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([
+            $dir,
+            '--format=console',
+            '--no-redos',
+            '--no-optimize',
+        ]), $output), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringNotContainsString('Parsed with the tokenizer', $buffer);
+        $this->assertStringContainsString('found 1 patterns', $buffer);
+    }
+
     public function test_lint_command_reports_collection_failure(): void
     {
         $dir = $this->makeTempDir();

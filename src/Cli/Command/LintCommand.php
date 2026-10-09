@@ -34,6 +34,7 @@ use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -278,8 +279,18 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return self::SUCCESS;
         }
 
+        // A file read with the tokenizer holds no pattern of its own: it is
+        // counted in the stats, and named under --verbose.
+        $parserFallbacks = array_values(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null !== $pattern->parserFallback));
+        if ([] !== $parserFallbacks && \in_array($verbosity, [OutputConfiguration::VERBOSITY_VERBOSE, OutputConfiguration::VERBOSITY_DEBUG], true) && !$output->isQuiet()) {
+            $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
+            foreach ($parserFallbacks as $fallback) {
+                $status(\sprintf("  Parsed with the tokenizer: %s (%s)\n", $fallback->file, $fallback->parserFallback));
+            }
+        }
+
         if ('console' === $format) {
-            $patternCount = \count($patterns);
+            $patternCount = \count($patterns) - \count($parserFallbacks);
             $output->write('  '.$output->dim("Scanned {$fileCount} files, found {$patternCount} patterns.\n\n"));
         }
 

@@ -188,7 +188,13 @@ final readonly class LintBaseline
             $results[] = $result;
         }
 
-        return new LintReport($results, LintStatsCounter::count($results));
+        // The files read with the tokenizer are no issue a baseline knows.
+        $stats = LintStatsCounter::count($results);
+        if (isset($report->stats['parserFallbacks'])) {
+            $stats['parserFallbacks'] = $report->stats['parserFallbacks'];
+        }
+
+        return new LintReport($results, $stats);
     }
 
     /**

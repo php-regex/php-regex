@@ -138,7 +138,7 @@ final class SummaryLineRenderingTest extends TestCase
         $json = json_decode((new JsonFormatter())->format(new LintReport([], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos' => 1])), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($json);
 
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 1, 'infos' => 0, 'lint_errors' => 0], $json['stats'] ?? null);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 1, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0], $json['stats'] ?? null);
     }
 
     /**

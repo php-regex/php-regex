@@ -9,6 +9,10 @@ CHANGELOG
  * A PHP file the lint cannot read, or that does not fit in `memory_limit`,
    is reported as `regex.lint.source.unreadable`, an error, instead of being
    left out.
+ * A PHP file the PHP parser cannot read is read with the tokenizer instead
+   of being left out, and counted in `stats.parser_fallbacks` of the JSON
+   report; a first-class callable such as `preg_match(...)` no longer drops
+   the other patterns of its file.
  * The lint command reads the file of `--baseline` and `--generate-baseline`
    after a space too (`--baseline base.json`); either option with no file is a
    usage error.

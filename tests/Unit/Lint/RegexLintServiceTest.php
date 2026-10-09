@@ -68,6 +68,25 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $result->stats);
     }
 
+    /**
+     * A file read again with the tokenizer is counted, never reported: no
+     * result, no error, one fallback in the stats.
+     */
+    public function test_analyze_counts_a_parser_fallback_without_reporting_it(): void
+    {
+        $request = new LintRequest(['.'], [], 0);
+        $patterns = [
+            new PatternOccurrence('/a+/', 'test.php', 2, 'preg_match()'),
+            PatternOccurrence::parserFallback('test.php', 'Syntax error, unexpected EOF on line 3'),
+        ];
+
+        $service = new LintService($this->analysis, $this->sources);
+        $result = $service->analyze($patterns, $request, null);
+
+        $this->assertSame([], $result->results);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'parserFallbacks' => 1], $result->stats);
+    }
+
     public function test_analyze_with_invalid_pattern(): void
     {
         $request = new LintRequest(['.'], [], 0);

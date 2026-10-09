@@ -217,7 +217,7 @@ short for `--format=json`.
         "source": "composer.json require.php",
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
-    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0},
+    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0},
     "results": [
         {
             "file": "src/Example.php",
@@ -306,6 +306,7 @@ Every count is present on every run, `0` when there is none.
 | `redos_errors` | int | ReDoS issues of severity `error`, counted among `errors` |
 | `infos` | int | Issues of severity `info` |
 | `lint_errors` | int | Lint rules of error severity that fired, counted among `errors` |
+| `parser_fallbacks` | int | Files the PHP parser could not read, read with the tokenizer instead; their patterns are linted, and the count is no error (`--verbose` names each file) |
 
 ### Result: `lint.results[]`
 

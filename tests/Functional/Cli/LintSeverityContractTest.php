@@ -256,7 +256,7 @@ final class LintSeverityContractTest extends TestCase
         [, $withoutBaseline] = $this->runLint(['src', '--jobs=1', '--format=json']);
         [, $json] = $this->runLint(['src', '--jobs=1', '--format=json', '--baseline=baseline.json']);
 
-        $expected = ['errors' => 1, 'warnings' => 1, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 1];
+        $expected = ['errors' => 1, 'warnings' => 1, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 1, 'parser_fallbacks' => 0];
         $this->assertSame($expected, self::stats($withoutBaseline));
         $this->assertSame($expected, self::stats($json));
     }

@@ -148,8 +148,19 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_malformed.php';
 
         $result = $this->strategy->extract([$file]);
-        // Malformed PHP should not crash and should return empty
-        $this->assertSame([], $result);
+
+        if (!$this->isPhpParserAvailable()) {
+            $this->assertSame([], $result);
+
+            return;
+        }
+
+        // Malformed PHP does not crash: the file is read again with the
+        // tokenizer, and marked so. The tokenizer reads no pattern in a call
+        // whose first argument runs into the second without a comma.
+        $this->assertCount(1, $result);
+        $this->assertSame($file, $result[0]->file);
+        $this->assertNotNull($result[0]->parserFallback);
     }
 
     public function test_extract_with_multiple_files(): void

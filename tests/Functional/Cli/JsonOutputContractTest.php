@@ -324,7 +324,7 @@ final class JsonOutputContractTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
-            ['errors' => 1, 'warnings' => 3, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 0],
+            ['errors' => 1, 'warnings' => 3, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 0, 'parser_fallbacks' => 0],
             $document['stats'],
         );
 
@@ -381,7 +381,7 @@ final class JsonOutputContractTest extends TestCase
         $this->assertSame(0, $exitCode);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame([], $document['results']);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0], $document['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0], $document['stats']);
     }
 
     /**

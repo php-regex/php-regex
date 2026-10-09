@@ -240,7 +240,8 @@ vendor/bin/regex lint app/ --format=json
         "optimizations": 1,
         "redos_errors": 0,
         "infos": 0,
-        "lint_errors": 0
+        "lint_errors": 0,
+        "parser_fallbacks": 0
     },
     "results": [
         {
@@ -324,6 +325,7 @@ is none:
 | `redos_errors`  | The ReDoS errors, among `errors`                                              |
 | `infos`         | Every issue of severity `info`                                                |
 | `lint_errors`   | The lint rules of error severity that fired, among `errors`                   |
+| `parser_fallbacks` | The files the PHP parser could not read, read with the tokenizer instead   |
 
 The console summary names each kind of error apart: `1 invalid patterns, 1 ReDoS errors,
 1 lint errors, 2 warnings, 0 optimizations.` An invalid pattern is one PCRE refuses to

@@ -25,13 +25,13 @@ use PHPRegex\Redos\RedosAnalysis;
  * @phpstan-type LintIssue array{type: string, message: string, file: string, line: int, column?: int|null, fileOffset?: int|null, position?: int|null, issueId?: string, hint?: string|null, tip?: string|null, source?: string, pattern?: string, regex?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}|null}
  * @phpstan-type OptimizationEntry array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}
  * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int}
  */
 final readonly class LintReport
 {
     /**
      * @param array<LintResult> $results
-     * @param LintStats         $stats   "redos" counts the errors that are ReDoS verdicts and "lintErrors" the lint rules at Error, both among "errors"; "infos" counts the info issues. Each optional count is left out at zero; the JSON report always carries them, 0 when there are none
+     * @param LintStats         $stats   "redos" counts the errors that are ReDoS verdicts and "lintErrors" the lint rules at Error, both among "errors"; "infos" counts the info issues; "parserFallbacks" counts the files the tokenizer read because the PHP parser could not. Each optional count is left out at zero; the JSON report always carries them, 0 when there are none
      */
     public function __construct(
         /**

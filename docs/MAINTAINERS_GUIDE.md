@@ -217,7 +217,8 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
     "optimizations": 1,
     "redos_errors": 0,
     "infos": 0,
-    "lint_errors": 0
+    "lint_errors": 0,
+    "parser_fallbacks": 0
   },
   "results": [
     {

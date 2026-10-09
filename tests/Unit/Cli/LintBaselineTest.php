@@ -195,6 +195,23 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * The files read again with the tokenizer are no issue a baseline can
+     * know: their count stays.
+     */
+    #[Test]
+    public function test_filter_keeps_the_parser_fallback_count(): void
+    {
+        $known = self::issue('regex.lint.known', 'Known issue', 'error');
+        $baseline = $this->baselineOf(self::report([self::lintResult([$known], [])]));
+        $results = [self::lintResult([$known], [])];
+
+        $filtered = $baseline->filter(new LintReport($results, ['parserFallbacks' => 1] + LintStatsCounter::count($results)));
+
+        $this->assertSame([], $filtered->results);
+        $this->assertSame(1, $filtered->stats['parserFallbacks'] ?? null);
+    }
+
+    /**
      * With "/" as the working directory there is no prefix to take off: an
      * absolute path is written, and matched, as it is.
      */

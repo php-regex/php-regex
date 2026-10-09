@@ -93,7 +93,7 @@ report carries it as a top-level `target` object:
 ```json
 {
     "target": {"php": "8.2", "pcre": "10.40", "source": "config php-regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
-    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0},
+    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0},
     "results": []
 }
 ```
