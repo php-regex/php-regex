@@ -69,11 +69,14 @@ final class MemoryBudgetTest extends TestCase
     public function test_the_limit_is_read_in_every_shorthand(): void
     {
         $content = str_repeat('a', 1024 * 1024);
+        // A gigabyte above what the process already holds, which a full run
+        // under coverage brings close to a gigabyte itself.
+        $gigabytes = (int) ceil(memory_get_usage(true) / 1024 ** 3) + 1;
 
-        ini_set('memory_limit', '1G');
+        ini_set('memory_limit', $gigabytes.'G');
         $this->assertTrue(MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR));
 
-        ini_set('memory_limit', '1048576K');
+        ini_set('memory_limit', ($gigabytes * 1024 * 1024).'K');
         $this->assertTrue(MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR));
 
         // Plain byte counts are read as-is.
