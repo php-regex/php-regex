@@ -173,6 +173,18 @@ final class JavaScriptTranspilerTest extends TestCase
     }
 
     #[Test]
+    public function test_drops_the_study_flag(): void
+    {
+        // Oracle: /S changes nothing since PHP 7.3.
+        $this->assertSame(1, preg_match('/ab+c/S', 'xabbc'));
+
+        $result = Regex::create(['cache' => null])->transpile('/ab+c/S', 'javascript');
+
+        $this->assertSame('/ab+c/', $result->literal);
+        $this->assertContains('Dropped /S: PHP has ignored it since 7.3, under PCRE2.', $result->notes);
+    }
+
+    #[Test]
     public function test_rejects_possessive_quantifiers(): void
     {
         $regex = Regex::create();

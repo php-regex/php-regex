@@ -493,6 +493,7 @@ Notes:
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused.
 - `/x` is dropped after comments/whitespace are normalized.
+- `/S` is dropped with a note in the JavaScript and `html-pattern` targets: PHP has ignored it since 7.3.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
 - Available targets: `javascript` (alias: `js`), `html-pattern` (alias: `html`) and `python` (alias: `py`).
 - `html-pattern` gives the value of an HTML `pattern` attribute, which the browser matches whole under the `v` flag

@@ -101,7 +101,8 @@ echo $transpiler->transpile('/^ok$/iu', 'html')->literal;         // ^[oO][kK\u2
 
 A backreference under `/i` is refused: it would match its group's text in
 one case only. `/s`, `/m` and `/D` change nothing in a field value, which
-holds no line break.
+holds no line break. `/S`, which PHP has ignored since 7.3, is dropped with a
+note, there as for JavaScript.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
 multibyte character written whole (`/café/`) stays that character; a byte above

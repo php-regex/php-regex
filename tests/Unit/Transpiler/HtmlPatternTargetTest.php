@@ -166,6 +166,15 @@ final class HtmlPatternTargetTest extends TestCase
     }
 
     #[Test]
+    public function test_the_study_flag_is_dropped(): void
+    {
+        $result = Regex::create(['cache' => null])->transpile('/^ab+c$/S', 'html-pattern');
+
+        $this->assertSame('^ab+c$', $result->pattern);
+        $this->assertContains('Dropped /S: PHP has ignored it since 7.3, under PCRE2.', $result->notes);
+    }
+
+    #[Test]
     public function test_extended_mode_is_applied_and_noted(): void
     {
         $result = Regex::create(['cache' => null])->transpile('/^ a b $/x', 'html-pattern');

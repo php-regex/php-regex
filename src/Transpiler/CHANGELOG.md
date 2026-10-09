@@ -18,3 +18,5 @@ CHANGELOG
    PCRE2 reads as the script's extensions, is `\p{Script_Extensions=Han}`,
    `\p{sc:Han}` is `\p{Script=Han}`, a name written loosely takes its
    Unicode spelling. A Bidi_Class is refused.
+ * The JavaScript and `html-pattern` targets drop `/S`, which PHP has
+   ignored since 7.3, with a note.
