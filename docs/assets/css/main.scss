@@ -1529,3 +1529,77 @@ main > section:not([class]) {
     animation: none !important;
   }
 }
+
+/* ---- Print: the paper tokens, literally ---- */
+
+@media print {
+  :root,
+  [data-theme='dark'] {
+    --paper: #fff;
+    --ink: #182b45;
+    --amber: #a84a08;
+    --ink-soft: #46586e;
+    --line: #64748b;
+    --code-bg: #f4f2ec;
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: var(--ink);
+  }
+
+  /* Navigation chrome and interactive controls never print. */
+  .site-header,
+  .site-sidebar,
+  .toc,
+  .search-dialog,
+  .drawer-overlay,
+  .skip-link,
+  .pager,
+  .copy-btn,
+  .anchor,
+  .site-footer {
+    display: none !important;
+  }
+
+  .page-shell,
+  .page-main {
+    display: block;
+    padding: 0;
+    max-width: none;
+  }
+
+  main {
+    width: 100%;
+  }
+
+  /* Code and tables wrap instead of being sliced by the page edge. */
+  pre,
+  code,
+  table {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  pre,
+  table,
+  figure {
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  a {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  .terminal {
+    border: 1px solid var(--line);
+  }
+}
