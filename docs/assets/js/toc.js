@@ -10,9 +10,10 @@
     return;
   }
 
-  // 64em matches the stylesheet breakpoint (em-based, so it follows the
-  // user default font size the same way the CSS does).
-  var desktop = window.matchMedia('(min-width: 64em)');
+  // 1024px matches the stylesheet breakpoint; a px breakpoint keeps the
+  // drawer choice tied to the real viewport, whatever the user's font
+  // size preference is.
+  var desktop = window.matchMedia('(min-width: 1024px)');
   var overlay = null;
 
   function isOpen() {
