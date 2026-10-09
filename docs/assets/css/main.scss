@@ -707,9 +707,12 @@ main pre code,
    Page shell — sidebar | content | toc
    ========================================================================== */
 
+/* Full-bleed + gutter is the alignment system: the gutter (50vw minus half
+   the measure) alone constrains the content column to 87.5rem, centered,
+   at every viewport width — and keeps it aligned with the header. Adding
+   max-width on top of it collapses the box on wide screens (the padding
+   outgrows the cap). */
 .page-shell {
-  max-width: 87.5rem;
-  margin-inline: auto;
   padding-inline: var(--gutter);
   padding-block: 2rem 4rem;
   display: grid;
@@ -1100,8 +1103,6 @@ main pre code,
 }
 
 .hero-inner {
-  max-width: 87.5rem;
-  margin-inline: auto;
   padding-inline: var(--gutter);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1215,8 +1216,6 @@ main pre code,
 }
 
 .facts-list {
-  max-width: 87.5rem;
-  margin-inline: auto;
   padding-inline: var(--gutter);
   list-style: none;
   display: grid;
@@ -1258,8 +1257,6 @@ main pre code,
 .constellation,
 .proof,
 main > section:not([class]) {
-  max-width: 87.5rem;
-  margin-inline: auto;
   padding-inline: var(--gutter);
   padding-block: var(--pad-section);
 }
@@ -1405,8 +1402,6 @@ main > section:not([class]) {
    ========================================================================== */
 
 .error-page {
-  max-width: 87.5rem;
-  margin-inline: auto;
   padding: var(--pad-hero) var(--gutter);
   display: flex;
   flex-direction: column;
