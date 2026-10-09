@@ -94,6 +94,9 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'a byte letter stays as written' => ['pattern' => '/^é$/i', 'attribute' => '^é$', 'verdicts' => ['é' => true, 'É' => false]];
         yield 'a letter under u' => ['pattern' => '/^é$/iu', 'attribute' => '^[é\xC9]$', 'verdicts' => ['É' => true, 'e' => false]];
         yield 'a dash between letters' => ['pattern' => '/^a-1$/i', 'attribute' => '^[aA]-1$', 'verdicts' => ['A-1' => true, 'a1' => false]];
+        yield 'a caret resetting the options' => ['pattern' => '/^(?i)a(?^)b$/', 'attribute' => '^[aA]b$', 'verdicts' => ['Ab' => true, 'AB' => false]];
+        yield 'an ungreedy pattern' => ['pattern' => '/^a+?b*$/U', 'attribute' => '^a+b*?$', 'verdicts' => ['aab' => true, 'ac' => false]];
+        yield 'an inline ungreedy switch' => ['pattern' => '/^a(?Ui)b+$/', 'attribute' => '^a[bB]+?$', 'verdicts' => ['aBb' => true, 'Ab' => false]];
         yield 'a dot-all group' => ['pattern' => '/^(?s:a.)$/', 'attribute' => '^(?:a.)$', 'verdicts' => ['ab' => true, 'a' => false]];
         yield 'a hex escape with no other case' => ['pattern' => '/^\x31$/i', 'attribute' => '^\x31$', 'verdicts' => ['1' => true, '2' => false]];
         yield 'a property closed under case' => ['pattern' => '/^\p{L}+$/iu', 'attribute' => '^\p{L}+$', 'verdicts' => ['ÉtÉ' => true, 'a1' => false]];
@@ -142,18 +145,18 @@ final class HtmlPatternTargetTest extends TestCase
     public function test_an_inline_flag_the_attribute_cannot_take_is_refused(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('The HTML pattern attribute cannot carry the inline flags (?U).');
+        $this->expectExceptionMessage('The HTML pattern attribute cannot carry the inline flags (?n).');
 
-        Regex::create(['cache' => null])->transpile('/a(?U)b+/', 'html-pattern');
+        Regex::create(['cache' => null])->transpile('/a(?n)(b)+/', 'html-pattern');
     }
 
     #[Test]
     public function test_a_flag_the_attribute_cannot_take_is_refused(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('The HTML pattern attribute takes no flags: /U cannot be carried.');
+        $this->expectExceptionMessage('The HTML pattern attribute takes no flags: /A cannot be carried.');
 
-        Regex::create(['cache' => null])->transpile('/ab+/iU', 'html-pattern');
+        Regex::create(['cache' => null])->transpile('/ab+/iA', 'html-pattern');
     }
 
     #[Test]

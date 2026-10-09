@@ -71,6 +71,12 @@ final readonly class JavaScriptTarget implements TargetInterface
                 continue;
             }
 
+            if ('U' === $flag) {
+                $context->addNote('Applied /U (ungreedy): greedy and lazy quantifiers were swapped.');
+
+                continue;
+            }
+
             if ('S' === $flag) {
                 $context->addNote('Dropped /S: PHP has ignored it since 7.3, under PCRE2.');
 

@@ -93,6 +93,11 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
      */
     private bool $caseless = false;
 
+    /**
+     * Whether /U holds where the printer stands: greedy and lazy swap.
+     */
+    private bool $ungreedy = false;
+
     private bool $unicode = false;
 
     private bool $unicodeFlag = false;
@@ -120,6 +125,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitRegex(RegexNode $node): string
     {
         $this->flags = $node->flags;
+        $this->ungreedy = str_contains($node->flags, 'U');
         if ($this->unicodeSets) {
             $this->caseless = str_contains($node->flags, 'i');
             $this->unicode = $node->isUnicode();
@@ -196,21 +202,20 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitGroup(GroupNode $node): string
     {
         // An option set inside a group ends with it.
-        $caseless = $this->caseless;
-        if ($this->unicodeSets && GroupType::InlineFlags === $node->type) {
-            $this->caseless = $this->caselessAfter((string) $node->flags, $node);
+        [$caseless, $ungreedy] = [$this->caseless, $this->ungreedy];
+        if (GroupType::InlineFlags === $node->type && $this->carriesInlineFlags((string) $node->flags, $node)) {
             if (self::isBareOptionSetting($node)) {
                 return '';
             }
 
             $child = $node->child->accept($this);
-            $this->caseless = $caseless;
+            [$this->caseless, $this->ungreedy] = [$caseless, $ungreedy];
 
             return '(?:'.$child.')';
         }
 
         $child = $node->child->accept($this);
-        $this->caseless = $caseless;
+        [$this->caseless, $this->ungreedy] = [$caseless, $ungreedy];
 
         return match ($node->type) {
             GroupType::Capturing => '('.$child.')',
@@ -240,7 +245,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $nodeCompiled = '(?:'.$nodeCompiled.')';
         }
 
-        $suffix = QuantifierType::Lazy === $node->type ? '?' : '';
+        $suffix = (QuantifierType::Lazy === $node->type) !== $this->ungreedy ? '?' : '';
         $quantifier = $this->normalizeQuantifier($node->quantifier);
 
         return $nodeCompiled.$quantifier.$suffix;
@@ -654,24 +659,33 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     }
 
     /**
-     * Whether /i holds after an inline "(?flags)": a leading "^" takes it
-     * off, then the letters before "-" set and those after it unset. The
-     * attribute takes "i" spelled out; "m" and "s" change nothing in a
-     * field value, and the parser has applied "x".
+     * Applies an inline "(?flags)" the target can carry, and says whether it
+     * can: a leading "^" takes i off (not U), then the letters before "-"
+     * set and those after it unset. JavaScript carries "U", swapping greedy
+     * and lazy; the HTML attribute also takes "i" spelled out, and "m" and
+     * "s", which change nothing in a field value, and "x", which the parser
+     * has applied. Under JavaScript any other letter is left to the group's
+     * refusal.
      */
-    private function caselessAfter(string $flags, GroupNode $node): bool
+    private function carriesInlineFlags(string $flags, GroupNode $node): bool
     {
-        if ('' !== trim($flags, '^-imsx') || str_contains($flags, 'xx')) {
+        if ('' !== trim($flags, $this->unicodeSets ? '^-imsxU' : '-U') || str_contains($flags, 'xx')) {
+            if (!$this->unicodeSets) {
+                return false;
+            }
+
             throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->sourcePattern);
         }
 
-        $caseless = !str_starts_with($flags, '^') && $this->caseless;
-        [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
-        if (str_contains($set, 'i')) {
-            $caseless = true;
+        if (str_starts_with($flags, '^')) {
+            $this->caseless = false;
         }
 
-        return $caseless && !str_contains($unset, 'i');
+        [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
+        $this->caseless = (str_contains($set, 'i') || $this->caseless) && !str_contains($unset, 'i');
+        $this->ungreedy = (str_contains($set, 'U') || $this->ungreedy) && !str_contains($unset, 'U');
+
+        return true;
     }
 
     /**

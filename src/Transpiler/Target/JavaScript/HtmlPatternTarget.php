@@ -75,9 +75,13 @@ final readonly class HtmlPatternTarget implements TargetInterface
     {
         // The v flag reads code points, as /u does; a value holds no line
         // break for /s, /m or /D to matter; /i is spelled out by the printer.
-        $unsupported = array_diff(str_split($flags), ['', 'i', 'u', 'D', 's', 'm', 'x', 'S']);
+        $unsupported = array_diff(str_split($flags), ['', 'i', 'u', 'D', 's', 'm', 'x', 'S', 'U']);
         if (str_contains($flags, 'x')) {
             $context->addNote('Applied /x (extended mode): whitespace and comments were removed during compilation.');
+        }
+
+        if (str_contains($flags, 'U')) {
+            $context->addNote('Applied /U (ungreedy): greedy and lazy quantifiers were swapped.');
         }
 
         if (str_contains($flags, 'S')) {

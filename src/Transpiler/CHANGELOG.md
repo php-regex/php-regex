@@ -20,3 +20,5 @@ CHANGELOG
    Unicode spelling. A Bidi_Class is refused.
  * The JavaScript and `html-pattern` targets drop `/S`, which PHP has
    ignored since 7.3, with a note.
+ * The JavaScript and `html-pattern` targets carry `/U` and `(?U)` by
+   swapping greedy and lazy in the quantifiers they govern.

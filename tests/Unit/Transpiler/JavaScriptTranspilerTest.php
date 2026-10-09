@@ -184,6 +184,55 @@ final class JavaScriptTranspilerTest extends TestCase
         $this->assertContains('Dropped /S: PHP has ignored it since 7.3, under PCRE2.', $result->notes);
     }
 
+    /**
+     * /U and "(?U)" swap greedy and lazy: each quantifier in their scope is
+     * printed the other way. Each literal was checked with node: exec() on
+     * the subject gives the groups preg_match() gives.
+     *
+     * @param list<string> $groups
+     */
+    #[Test]
+    #[DataProvider('provideUngreedyPatterns')]
+    public function test_carries_the_ungreedy_flag(string $pattern, string $literal, string $subject, array $groups): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject, $matches));
+        $this->assertSame($groups, $matches);
+
+        $result = Regex::create(['cache' => null])->transpile($pattern, 'javascript');
+
+        $this->assertSame($literal, $result->literal);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, literal: string, subject: string, groups: list<string>}>
+     */
+    public static function provideUngreedyPatterns(): iterable
+    {
+        yield 'a greedy quantifier' => ['pattern' => '/<.+>/U', 'literal' => '/<.+?>/', 'subject' => '<a><b>', 'groups' => ['<a>']];
+        yield 'a lazy quantifier' => ['pattern' => '/(a+?)/U', 'literal' => '/(a+)/', 'subject' => 'aaa', 'groups' => ['aaa', 'aaa']];
+        yield 'a counted quantifier' => ['pattern' => '/a{2,}/U', 'literal' => '/a{2,}?/', 'subject' => 'aaaa', 'groups' => ['aa']];
+        yield 'an inline switch' => ['pattern' => '/a(?U)b+/', 'literal' => '/ab+?/', 'subject' => 'abbb', 'groups' => ['ab']];
+        yield 'a scoped group' => ['pattern' => '/x(?U:a+)/', 'literal' => '/x(?:a+?)/', 'subject' => 'xaaa', 'groups' => ['xa']];
+        yield 'an inline switch turning it off' => ['pattern' => '/(?-U)a+/U', 'literal' => '/a+/', 'subject' => 'aaa', 'groups' => ['aaa']];
+    }
+
+    #[Test]
+    public function test_notes_the_ungreedy_flag(): void
+    {
+        $result = Regex::create(['cache' => null])->transpile('/a+/U', 'javascript');
+
+        $this->assertContains('Applied /U (ungreedy): greedy and lazy quantifiers were swapped.', $result->notes);
+    }
+
+    #[Test]
+    public function test_rejects_inline_flags_beyond_ungreedy(): void
+    {
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessage('Inline flags groups are not supported in JavaScript.');
+
+        Regex::create(['cache' => null])->transpile('/a(?Ui)b/', 'javascript');
+    }
+
     #[Test]
     public function test_rejects_possessive_quantifiers(): void
     {
