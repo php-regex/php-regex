@@ -315,7 +315,14 @@ main blockquote {
   padding: .5em 1.25em;
   border-left: 3px solid var(--amber);
   background: var(--code-bg);
-  color: var(--ink-soft);
+  /* A callout is content, not a whisper: the amber rule and the cream
+     panel already mark it as an aside, so the text keeps full ink. */
+  color: var(--ink);
+}
+
+/* "Note:", "Warning:" - the label carries the accent the frame promises. */
+main blockquote strong:first-child {
+  color: var(--amber);
 }
 
 main blockquote p {
@@ -703,6 +710,15 @@ main table::-webkit-scrollbar-thumb {
   line-height: 1.4;
 }
 
+/* The panel wears the same amber node the eyebrow labels carry. */
+.terminal-bar::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  flex: none;
+  background: var(--tk-key);
+}
+
 /* The terminal body is itself a <pre>; strip the standalone-block chrome. */
 .terminal-body {
   margin: 0;
@@ -779,6 +795,11 @@ main table::-webkit-scrollbar-thumb {
   height: 28px;
   flex: none;
   color: currentColor;
+}
+
+/* The mark takes the accent when the wordmark is the target. */
+.brand:hover .mark {
+  color: var(--amber);
 }
 
 .mark-node {
@@ -1093,6 +1114,10 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
+.breadcrumbs a:hover {
+  color: var(--ink);
+}
+
 .breadcrumbs [aria-current='page'] {
   color: var(--ink);
 }
@@ -1225,12 +1250,24 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .footer-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
   margin: 0 0 .75rem;
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+/* The footer speaks the sidebar's eyebrow language, amber square included. */
+.footer-title::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  flex: none;
+  background: var(--amber);
 }
 
 .footer-list {
@@ -1572,6 +1609,50 @@ main > section:not([class]) {
   padding-block: var(--pad-section);
 }
 
+/* Lede: the paragraph that follows a section title is the section's own
+   sentence, so it is set larger and softer than the body it introduces. */
+.pipeline > p,
+.constellation > p,
+.proof > p,
+main > section:not([class]) > p:not(:has(a.button)) {
+  max-width: 60ch;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* The constellation groups - Understand, Prove, Fix, Integrate - label a
+   taxonomy, so they are drawn in the eyebrow language of the sidebar
+   titles instead of falling back to the article h3. The rule runs to the
+   edge of the grid, which keeps the groups of cards visually contained. */
+.constellation > h3 {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 2rem 0 1.25rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.constellation > h3:first-of-type {
+  margin-top: 0;
+}
+
+.constellation > h3::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  flex: none;
+  background: var(--amber);
+}
+
 /* Pipeline: three steps, the mark is a bordered square holding the
    amber circle (drawn with a gradient so no radius token exists). The step
    number is counted out of the <ol> itself, so the markup stays plain:
@@ -1689,6 +1770,13 @@ main > section:not([class]) {
   margin-top: .5rem;
   font-size: .9rem;
   color: var(--amber);
+}
+
+.component-link:hover,
+.component > a:hover {
+  color: var(--amber-deep);
+  text-decoration: underline;
+  text-underline-offset: .25em;
 }
 
 /* Proof cards. */
@@ -1877,6 +1965,25 @@ main > section:not([class]) {
   a {
     color: var(--ink);
     text-decoration: underline;
+  }
+
+  /* A printed page cannot look an address up, so external links carry
+     their own. */
+  main a[href^='http']::after {
+    content: ' ' attr(href);
+    font-size: .85em;
+    color: var(--ink-soft);
+    word-break: break-all;
+  }
+
+  /* The code language caption earns its place on paper: there is no hover
+     to reveal it and no page to ask. */
+  main div.highlighter-rouge::after {
+    position: static;
+    display: block;
+    margin-top: .35rem;
+    text-align: right;
+    opacity: 1;
   }
 
   .terminal {

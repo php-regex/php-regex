@@ -1,3 +1,6 @@
+---
+description: "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what the plugin leaves to Psalm, and the PHP version patterns are judged for."
+---
 # Psalm
 
 `php-regex/regex-psalm` is a Psalm plugin that reads the pattern of every
@@ -6,14 +9,9 @@
 `$matches` is the shape of the pattern, and after `preg_match_all()` too. The
 plugin also reports the patterns the PHP you target refuses.
 
-## Installation
+{% include install-prerelease.html package="php-regex/regex-psalm" %}
 
-```bash
-composer require --dev php-regex/regex-psalm
-vendor/bin/psalm-plugin enable php-regex/regex-psalm
-```
-
-or, in `psalm.xml`:
+Then declare the plugin in `psalm.xml`:
 
 ```xml
 <plugins>
@@ -21,8 +19,11 @@ or, in `psalm.xml`:
 </plugins>
 ```
 
-The plugin needs Psalm 6.19 or later, run with PHP 8.2 or later; Psalm 6
-itself runs on PHP 8.1, which cannot load the plugin.
+From the 2.0.0 tag and the split package, `vendor/bin/psalm-plugin enable
+php-regex/regex-psalm` writes that line for you.
+
+The plugin needs Psalm 6.19 or later (`vimeo/psalm ^6.19`), run with PHP 8.2
+or later; Psalm 6 itself runs on PHP 8.1, which cannot load the plugin.
 
 ## The shape of `$matches`
 
@@ -124,8 +125,8 @@ comparison.
 - A pattern the PHP running Psalm does not compile, or the target PHP refuses
   (the second is reported): it leaves `$matches` as it was, so no branch can
   say what it holds.
-- A pattern past the library's length limit
-  (`RegexParser::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
+- A pattern past the library's length limit (100,000 bytes,
+  `RegexParser::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
 - A shape of more keys than `maxShapedArraySize`: Psalm keeps no such shape.
 - A `preg_match_all()` call whose pattern holds `\K`, or whose offset is not
   a constant ≤ 0: it may return `false` and leave `[]`.

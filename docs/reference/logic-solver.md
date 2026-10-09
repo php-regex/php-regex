@@ -1,4 +1,13 @@
+---
+description: "Compare two patterns as languages — intersection, subset, equivalence, prefix — answered on a DFA built from the pattern, with the engine's own character sets."
+---
+
 # Regex Logic & Automata Solver
+
+{% include install-prerelease.html package="php-regex/regex-automata" %}
+
+The `vendor/bin/regex` commands on this page are the CLI (`composer require --dev php-regex/regex-cli`, part of the
+same monorepo install above), and the PHP API lives in `php-regex/regex-automata`, PHP 8.2+ with `ext-mbstring`.
 
 ## The Concept
 
@@ -18,7 +27,7 @@ vendor/bin/regex compare '/edit/' '/[a-z]+/'
 
 ## Use Case 1: Route Conflict Detection (The "Intersection" Problem)
 
-Scenario: Route A is `/order/\d+` and Route B is `/order/[a-z0-9]+`. They look different, but can they match the same string?
+Route A is `/order/\d+` and Route B is `/order/[a-z0-9]+`. They look different, but can they match the same string?
 
 Command:
 
@@ -36,11 +45,11 @@ Result:
 
 Interpretation: conflict detected on input `order/0`.
 
-Educational value: **Intersection** asks "is there a string that matches BOTH patterns?" If the answer is yes, your routes can shadow each other.
+**Intersection** asks "is there a string that matches BOTH patterns?" If the answer is yes, your routes can shadow each other.
 
 ## Use Case 2: Security Audits (The "Subset" Problem)
 
-Scenario: A security policy allows `[a-zA-Z0-9]+`. A developer writes `\w+`, which includes `_` and might be forbidden.
+A security policy allows `[a-zA-Z0-9]+`. A developer writes `\w+`, which includes `_` and might be forbidden.
 
 Command:
 
@@ -58,11 +67,11 @@ Result:
 
 Interpretation: FAIL. Counter-example: `_`.
 
-Educational value: **Subset** asks "does pattern 1 allow ONLY what pattern 2 allows?" If not, the counter-example shows the exact violation.
+**Subset** asks "does pattern 1 allow ONLY what pattern 2 allows?" If not, the counter-example shows the exact violation.
 
 ## Use Case 3: Safe Refactoring (The "Equivalence" Problem)
 
-Scenario: You want to simplify `[0-9]` to `\d` and prove it is safe.
+You want to simplify `[0-9]` to `\d` and prove it is safe.
 
 Command:
 
@@ -76,11 +85,11 @@ Result:
   PASS Patterns are mathematically equivalent.
 ```
 
-Educational value: **Equivalence** asks "do these patterns accept the exact same set of strings?"
+**Equivalence** asks "do these patterns accept the exact same set of strings?"
 
 ## Use Case 4: Rewrites that Keep $matches (The "Match Equivalence" Problem)
 
-Scenario: two patterns match the same strings, yet one replaces the other only if
+Two patterns match the same strings, yet one replaces the other only if
 `preg_match()` writes the same `$matches` for them. PCRE takes the first alternative that
 leads to a match, not the longest: on `ab`, `/a|ab/` matches `a` and `/ab|a/` matches `ab`.
 
@@ -95,7 +104,7 @@ $result->counterExample;                                             // "ab": $1
 $solver->matchEquivalent('/a|ab/', '/a(?:b)??/')->isEquivalent;      // true
 ```
 
-Educational value: **Match equivalence** asks "does `preg_match()` give the same answer,
+**Match equivalence** asks "does `preg_match()` give the same answer,
 the same match and the same groups for every subject?" The solver runs both patterns side
 by side the way a leftmost-first matcher runs one, its threads in the order PCRE tries
 its paths, a new start at each position until a match is found. It keeps positions only
@@ -112,7 +121,7 @@ write different `$matches`.
 
 ## Use Case 5: Live Input Validation (The "Prefix" Problem)
 
-Scenario: a form field checks a date as it is typed. `preg_match()` says `0` for `2026`
+A form field checks a date as it is typed. `preg_match()` says `0` for `2026`
 and for `202a` alike: neither is a whole date, and nothing tells the user which one can
 still become one.
 
@@ -124,7 +133,7 @@ $solver->acceptsPrefix('/^\d{4}-\d{2}-\d{2}$/', '202a');    // false: nothing do
 $solver->acceptsPrefix('/^\d{4}-\d{2}-\d{2}$/', '2026-10-031'); // false: one digit too many
 ```
 
-Educational value: **Prefix** asks "does some string starting with this input belong to
+**Prefix** asks "does some string starting with this input belong to
 the language?" The solver reads the input on the pattern's DFA, then asks whether an
 accepting state can still be reached. In UTF mode an input that ends in the middle of a
 character is viable when one way to finish the character is.

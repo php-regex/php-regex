@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Control repetition with *, +, ?, {n,m}: greedy versus lazy matching, possessive quantifiers, and why nested quantifiers — not missing bounds — cause ReDoS."
+---
+
 # Chapter 4: Quantifiers and Greediness
 
 > **Goal:** Control how many times a pattern should match using quantifiers like `*`, `+`, `?`, and `{n,m}`.
@@ -135,6 +140,12 @@ Text: `"<p>hello</p>"`
 - `+` repeats one or more times.
 - Greedy matching consumes the longest possible span, so the match is `"<p>hello</p>"`.
 
+### What Happens When Greedy Fails: Backtracking
+
+Greedy does not mean stubborn. If the rest of the pattern fails after a greedy quantifier has eaten too much, the engine gives characters back — one at a time, right to left — and retries. This "giving back" is called **backtracking**, and it is the engine's normal way of working: with `/<.+>/` on `"<p>a</p>"`, the `.+` first eats `p>a</p`, then gives characters back until `>` can match. Lazy quantifiers simply start small and grow, instead of starting big and shrinking.
+
+Backtracking becomes a security problem only when a failing input leaves the engine exponentially many ways to split the text — that is [ReDoS](../guides/redos.md) (Regular Expression Denial of Service), the subject of [Chapter 8](08-performance-redos.md).
+
 ---
 
 ## Lazy (Non-Greedy) Matching
@@ -171,22 +182,30 @@ echo $matches[1];  // Output: "hello" (first paragraph only)
 
 // Get all paragraphs (need preg_match_all)
 preg_match_all('/<p>(.+?)<\/p>/', '<p>hello</p><p>world</p>', $matches);
-print_r($matches[1]);  // Output: Array ( [0] => "hello", [1] => "world" )
+print_r($matches[1]);
+// Output:
+// Array
+// (
+//     [0] => hello
+//     [1] => world
+// )
 ```
 
 ---
 
 ## Possessive Quantifiers (Performance)
 
-Add `++`, `*+`, `?+` to prevent backtracking (great for ReDoS prevention):
+Add `++`, `*+`, `?+` to forbid backtracking (a first line of defense against [ReDoS](../guides/redos.md)):
 
 ```php
 // Regular quantifier (can backtrack)
-preg_match('/a+b/', 'aaab');  // Match: yes (but may cause ReDoS)
+preg_match('/a+b/', 'aaab');  // Match: yes
 
-// Possessive (never backtracks - faster, safer)
+// Possessive (never backtracks - faster when it matches)
 preg_match('/a++b/', 'aaab');  // Match: yes (no backtracking)
 ```
+
+A possessive quantifier keeps every character it has matched — on failure it does not give anything back. `a+b` is perfectly safe here (a single linear quantifier); possessive matters when a quantifier sits inside another one, as in Chapter 8.
 
 ### When to Use Possessive
 
@@ -220,17 +239,13 @@ preg_match('/a++b/', 'aaab');  // Match: yes (no backtracking)
 
 ```php
 // Too greedy - matches too much
-'/.*/
+'/.*/'
 
 // Nested quantifiers - ReDoS risk!
-'/(a+)+$/
-
-// Missing bounds on user input
-preg_match('/x{0,}/', $userInput);  // Could be huge!
-
-// Better: Set reasonable limits
-preg_match('/x{1,100}/', $userInput);  // Reasonable limit
+'/(a+)+$/'
 ```
+
+What about "unbounded" quantifiers like `/x{1,}/` on user input? A **single** quantifier is linear, bound or not — `/x{1,}/` is no more dangerous than `/x{1,100}/`. The danger above comes from the **nesting**, where the engine can split the input between two quantifiers in exponentially many ways.
 
 ---
 
@@ -269,8 +284,15 @@ $pattern1 = '/\d+/';
 // Solution 2
 $pattern2 = '/\d{10}/';
 
-// Solution 3
-$pattern3 = '/\.[a-z]+/i';  // With . prefix for extension
+// Solution 3 — the ? group makes the extension optional, and the dot
+// lives only inside that group, so a trailing dot is refused
+$pattern3 = '/^[\w-]+(\.[a-z]+)?$/i';
+// "file"     => Match: yes
+// "file.txt" => Match: yes
+// "file."    => Match: no
+
+// Not an answer: /\.[a-z]+/i — nothing optional about it; it matches
+// ".xxx" anywhere in any string
 
 // Solution 4
 $pattern4 = '/>(.+?)</';
@@ -299,7 +321,8 @@ echo "Lazy: " . $m[0] . "\n";
 5. **`{n,m}`** = exact range
 6. **Greedy** = matches maximum (default)
 7. **Lazy** = matches minimum (add `?`)
-8. **Possessive** = no backtracking (add `++`, `*+`, `?+`)
+8. **Backtracking** = how the engine retries by giving characters back
+9. **Possessive** = no backtracking (add `++`, `*+`, `?+`)
 
 ---
 
@@ -330,15 +353,23 @@ echo $m[0];  // "123 4" (the trailing \d+? stops after one digit)
 '/a+$/'       // Even better - simplify!
 ```
 
-### Error: Unbounded User Input
+### Error: Thinking a Bound Fixes Nesting
 
 ```php
-// Dangerous: No limit
-preg_match('/a{1,}/', $userInput);
+// Dangerous: nested quantifiers, exponential backtracking
+'/(a+)+$/'
 
-// Safe: Set reasonable limit
-preg_match('/a{1,100}/', $userInput);
+// Just as dangerous: the outer {1,100} does not cap the number of
+// ways to split the input between the two quantifiers
+'/(a+){1,100}$/'
+
+// Safe: one quantifier (linear), or an inner quantifier that cannot backtrack
+'/a+$/'
+'/(a++)+$/'
+'/(?>a+)+$/'
 ```
+
+An upper bound like `{1,100}` is still useful — it limits what a match may consume, a sane length policy — but it is **not** a security fix. The risk comes from the nesting, and only removing the nesting or locking the inner quantifier removes it. PHPRegex confirms the verdicts above: the first two patterns are critical, the last three safe.
 
 ---
 
@@ -347,7 +378,7 @@ preg_match('/a{1,100}/', $userInput);
 You now understand:
 - All quantifier types (`*`, `+`, `?`, `{n,m}`)
 - Greedy vs lazy matching
-- Possessive quantifiers for performance
+- Backtracking and possessive quantifiers
 - Common pitfalls and fixes
 
 **Next:** [Chapter 5: Groups and Alternation](05-groups-alternation.md)

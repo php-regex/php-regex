@@ -1,12 +1,15 @@
 {% comment %}
   Breadcrumb generated from the sidebar order: nav.yml is the single
-  source of the section structure. Liquid has no variable indexing, so
-  the flat arrays are walked with matching captures.
+  source of the section structure; the tutorial layout passes its own
+  track (nav-tutorial.yml) so the chapters land under their section too.
+  Liquid has no variable indexing, so the flat arrays are walked with
+  matching captures.
 {% endcomment %}
+{% assign nav_source = include.nav | default: site.data.nav %}
 {% assign flat_urls = '' %}
 {% assign flat_titles = '' %}
 {% assign flat_sections = '' %}
-{% for s in site.data.nav %}
+{% for s in nav_source %}
   {% for p in s.pages %}
     {% assign flat_urls = flat_urls | append: p.url | append: '|' %}
     {% assign flat_titles = flat_titles | append: p.title | append: '|' %}

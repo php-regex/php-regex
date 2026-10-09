@@ -1,4 +1,5 @@
 ---
+description: "Fixes for the errors PHPRegex actually prints: lexer messages, ReDoS verdicts, cache and memory issues, CLI and Symfony bridge problems."
 redirect_from:
   - /TROUBLESHOOTING/
   - /TROUBLESHOOTING.html
@@ -120,45 +121,52 @@ vendor/bin/regex analyze '/(a{1,20})+$/'
 **Problem:**
 
 ```
-PHPRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at position 5
+PHPRegex\Parser\Exception\LexerException: \c must be followed by a printable ASCII character.
 ```
 
 **Causes:**
-- Using PCRE escape syntax not supported by your PHP version
+- An escape sequence cut short, as `\c` dangling at the end of the pattern (`'/ab\c/'`)
+- Using PCRE escape syntax your target PHP version does not support
 - Typo in escape sequence
-- Confusing escape with literal character
 
 **Solutions:**
 
-1. Check PHP version:
+1. Check the PCRE2 version your PHP runs:
 
 ```bash
-php -v
-php --re
-# Output PCRE library version
-# PHP 8.2 uses PCRE2 10.30+
-# Newer versions support more escape sequences
+php --ri pcre
+# PCRE Library Version => 10.49 2026-09-28
 ```
 
 2. Use correct escape syntax:
 
 ```php
-// Wrong
-$pattern = '\cA';           // Control character A
+// Wrong: '\c' dangles at the end of the pattern
+$pattern = '/ab\c/';
 
-// Correct
-$pattern = '\x01';          // Hexadecimal (recommended)
-$pattern = '\x{41}';        // Hexadecimal with braces
+// Correct: '\c' followed by a printable ASCII letter
+$pattern = '/ab\cA/';       // matches "ab" . "\x01"
+
+// Or use the hexadecimal escape instead
+$pattern = '/\x01/';        // Hexadecimal (recommended)
+$pattern = '/\x{41}';       // Hexadecimal with braces
 ```
 
 3. Fix common typos:
 
 ```php
 // Wrong                        Correct
-'\d'   →  '\\d'          // Double backslash
 '\N{'   →  '\N{U+XXXX}'    // Full Unicode name
-'\p{'   →  '\p{...}'       // Property needs braces
-'\u{'   →  '\u{...}'       // Hex needs braces for > 2 digits
+'\p{'   →  '\p{...}'       // Property needs a letter or a braced name
+'\u{'   →  '\x{...}'       // Portable hex escape; \u{...} only exists on the newest PCRE2 releases
+```
+
+Run the validator to see these messages for your target PHP version:
+
+```bash
+vendor/bin/regex validate '/\u{41}/' --php-version 8.2
+#   Status : INVALID
+#   PCRE does not support the escape "\u" (\F, \L, \l, \N{name}, \U and \u are not supported).
 ```
 
 ---
@@ -292,7 +300,7 @@ echo "Cache enabled: " . ($regex->getCacheStats()['hits']) . " hits\n";
 # CLI
 vendor/bin/regex clear-cache
 
-# Programatically
+# Programmatically
 $cache = $regex->getCache();
 if ($cache instanceof RemovableCacheInterface) {
     $cache->clear();
@@ -334,7 +342,7 @@ vendor/bin/regex help
 ```bash
 composer update
 # or
-composer require php-regex/regex-toolkit:^2.0
+composer require --dev php-regex/regex-cli:^2.0
 ```
 
 3. Check if command is deprecated:
@@ -383,16 +391,16 @@ linting:
 1. Verify bundle is installed:
 
 ```bash
-composer show php-regex/regex-toolkit
-# Check if Symfony bridge is listed
+composer show php-regex/regex-symfony
+# Check if the Symfony bundle is listed
 ```
 
 2. Register bundle in Symfony:
 
-```yaml
-# config/bundles.php
+```php
+// config/bundles.php
 return [
-    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['dev' => true, 'test' => true],
 ];
 ```
 
@@ -462,17 +470,9 @@ composer phpunit --display-deprecations
 
 **Solutions:**
 
-1. Check Quick Start Guide:
+1. Check the [Quick Start guide](quick-start.md).
 
-```bash
-# docs/quick-start.md
-```
-
-2. Check API Reference:
-
-```bash
-# docs/reference.md
-```
+2. Check the [reference index](reference/README.md): rules, API, diagnostics and JSON output each have their own page.
 
 3. Look at examples:
 
@@ -490,15 +490,7 @@ https://github.com/php-regex/php-regex/issues
 # Create new issue with question
 ```
 
-5. Join community:
-
-```bash
-# GitHub Discussions
-https://github.com/php-regex/php-regex/discussions
-
-# Stack Overflow
-https://stackoverflow.com/questions/tagged/regexparser
-```
+5. Join the community on [GitHub Discussions](https://github.com/php-regex/php-regex/discussions).
 
 ---
 

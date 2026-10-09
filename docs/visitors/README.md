@@ -1,3 +1,7 @@
+---
+permalink: /visitors/
+description: "The built-in PHPRegex visitors — print, rewrite, modernize, validate, explain, render — each with its real output, and the base classes to extend for your own."
+---
 # AST Visitor Reference
 
 Visitors are the algorithms that process the AST. They implement all the interesting behaviors — validation, optimization, explanation, visualization, and more. This reference documents every built-in visitor and shows how to build custom ones.
@@ -187,12 +191,14 @@ is always the same pattern.
 
 **Optimizations Applied:**
 
-| Before   | After | Why                  |
-|----------|-------|----------------------|
-| `[0-9]`  | `\d`  | Shorthand is faster  |
-| `(?:a)`  | `a`   | Unnecessary group    |
-| `a{1}`   | `a`   | Redundant quantifier |
-| `\x{61}` | `a`   | Unnecessary escape   |
+| Before          | After  | Why                   |
+|-----------------|--------|-----------------------|
+| `[0-9]`         | `\d`   | Shorthand is faster   |
+| `[a-zA-Z_0-9]`  | `\w`   | Same set, shorter     |
+| `[0123456789]`  | `[0-9]`| Digits fold into a range |
+| `(?:a)`         | `a`    | Unnecessary group     |
+| `a{1}`          | `a`    | Redundant quantifier  |
+| `a{0,1}`        | `a?`   | Same bounds, shorter  |
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -213,21 +219,25 @@ echo $pattern;  // '/foo/'
 
 **Transformations:**
 
-| Before         | After             |
-|----------------|-------------------|
-| `(?i)foo(?-i)` | `(?i:foo)`        |
-| `(?:foo)`      | `foo` (when safe) |
-| `\0`           | `\x{00}`          |
+| Before     | After       | Why                                       |
+|------------|-------------|-------------------------------------------|
+| `[0-9]`    | `\d`        | The shorthand says it shorter             |
+| `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing |
+| `\-`       | `-`         | An escape of a character that needs none  |
+
+Its scope is deliberately narrow: it leaves inline flags (`(?i)foo`), legacy
+escapes that PCRE2 still reads (`\0`) and redundant quantifiers (`a{1}`) alone —
+those pass through unchanged.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Optimizer\Modernizer;
 
-$ast = Regex::create()->parse('/(?i)foo/');
+$ast = Regex::create()->parse('/[0-9](?:foo)/');
 $modernized = $ast->accept(new Modernizer());
 
 $pattern = $modernized->accept(new PatternPrinter());
-echo $pattern;  // Modernized version
+echo $pattern;  // '/\dfoo/'
 ```
 
 ---
@@ -327,7 +337,7 @@ use PHPRegex\Parser\Analysis\ComplexityScorer;
 $ast = Regex::create()->parse('/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/');
 $score = $ast->accept(new ComplexityScorer());
 
-echo $score;  // e.g., 42
+echo $score;  // 65
 ```
 
 **Interpretation:**
@@ -338,6 +348,8 @@ echo $score;  // e.g., 42
 | 21-50  | Moderate     |
 | 51-100 | Complex      |
 | 100+   | Very Complex |
+
+The IPv4 pattern above lands at 65 — Complex.
 
 ---
 
@@ -472,7 +484,10 @@ $explanation = $ast->accept(new TextExplainer());
 
 echo $explanation;
 /*
-Match exactly 3 digits, then hyphen, then exactly 4 digits.
+Regex matches
+    Character Type: A digit: [0-9] (exactly 3 times)
+  '-'
+    Character Type: A digit: [0-9] (exactly 4 times)
 */
 ```
 
@@ -490,7 +505,14 @@ $ast = Regex::create()->parse('/\w+@\w+\.\w+/');
 $html = $ast->accept(new HtmlExplainer());
 
 echo $html;
-// <span class="regex-token regex-literal">...</span>
+// <div class="regex-explain">
+// <strong>Regex matches:</strong>
+// <ul><li>(one or more times) <span title="Character Type: A word character: [a-zA-Z_0-9]">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9])</span></li>
+// <li><span title="Literal: &#039;@&#039;">Literal: <strong>&#039;@&#039;</strong></span></li>
+// <li>(one or more times) <span title="Character Type: A word character: [a-zA-Z_0-9]">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9])</span></li>
+// <li><span title="Literal: &#039;.&#039;">Literal: <strong>&#039;.&#039;</strong></span></li>
+// <li>(one or more times) <span title="Character Type: A word character: [a-zA-Z_0-9]">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9])</span></li></ul>
+// </div>
 ```
 
 ---
@@ -508,17 +530,11 @@ $dump = $ast->accept(new NodeDumper());
 
 echo $dump;
 /*
-RegexNode {
-    delimiter: "/"
-    pattern: SequenceNode {
-        children: [
-            LiteralNode {
-                value: "foo"
-            }
-        ]
-    }
-    flags: ""
-}
+Regex(delimiter: /, flags: )
+  Sequence:
+    Literal('f')
+    Literal('o')
+    Literal('o')
 */
 ```
 
@@ -537,12 +553,14 @@ $mermaid = $ast->accept(new MermaidRenderer());
 
 echo $mermaid;
 /*
-graph TD
-    RegexNode
-    RegexNode --> SequenceNode
-    SequenceNode --> AlternationNode
-    AlternationNode --> Sequence0
-    AlternationNode --> Sequence1
+graph TD;
+    node0["Regex: none"]
+    node1{"Alternation"}
+    node2["Literal: a"]
+    node1 --> node2
+    node3["Literal: b"]
+    node1 --> node3
+    node0 --> node1
 */
 ```
 

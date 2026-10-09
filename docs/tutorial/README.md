@@ -1,3 +1,9 @@
+---
+layout: tutorial
+permalink: /tutorial/
+description: "A ten-chapter hands-on regex course for PHP developers — from first patterns to recursion and ReDoS, every example explained and verified with the PHPRegex toolkit."
+---
+
 # Regex Tutorial (PHPRegex Edition)
 
 This tutorial takes you from your first pattern to PCRE features used in production. It uses the PHPRegex CLI and API throughout, so you learn regex and the parser at the same time.
@@ -19,15 +25,44 @@ This tutorial takes you from your first pattern to PCRE features used in product
 
 ---
 
-## Tools We Use
+## Before You Start
 
-### CLI (Explains and Diagrams)
+Every chapter mixes two things: regex concepts you can use with `preg_match()` today, and the PHPRegex tools that explain and validate them. Install the library once — the `regex` CLI and the `Regex` facade used throughout both come with it.
+
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
+### Prerequisites
+
+- PHP 8.2 or newer
+- the `mbstring` extension
+- nothing else: the regex engine (PCRE2) ships inside PHP itself
+
+Under the pre-release monorepo install, the `vendor/bin/regex` binary is available immediately; in the split layout it ships as the `php-regex/regex-cli` package.
+
+---
+
+## The Tools You Will Use
+
+### The regex CLI
+
+Every chapter asks you to run the CLI to see what a pattern does:
 
 ```bash
 vendor/bin/regex explain '/^cat.*dog$/'
 ```
 
 ```
+PHPRegex 2.0.0-DEV by Younes ENNAJI
+
+Runtime : PHP 8.4.26
+Command : explain
+Format  : text
+
+  [1/2] Pattern
+  Pattern
+      → /^cat.*dog$/
+
+  [2/2] Explanation
 Regex matches
   Anchor: the beginning of a line
   'c'
@@ -45,6 +80,16 @@ vendor/bin/regex diagram '/^cat.*dog$/'
 ```
 
 ```
+PHPRegex 2.0.0-DEV by Younes ENNAJI
+
+Runtime : PHP 8.4.26
+Command : diagram
+Format  : text
+
+  [1/1] Rendering diagram
+  Pattern
+      → /^cat.*dog$/
+
 Regex
 \-- Sequence
     |-- Anchor (^)
@@ -59,14 +104,27 @@ Regex
     \-- Anchor ($)
 ```
 
-### PHP API
+Two more commands show up later in the track — `highlight` for colorized output, and `analyze` for [ReDoS](../guides/redos.md) risk checks:
+
+```bash
+vendor/bin/regex analyze '/(a+)+$/'
+```
+
+### The PHP API
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
-$ast = $regex->parse('/^cat.*dog$/');
-$explanation = $regex->explain('/^cat.*dog$/');
+
+// Validate what you wrote
+$result = $regex->validate('/your-pattern/');
+
+// Get explanations
+echo $regex->explain('/your-pattern/');
+
+// Generate test data
+$sample = $regex->generate('/your-pattern/');
 ```
 
 ---
@@ -104,45 +162,6 @@ Imagine you're in a library looking for a specific book:
 
 ---
 
-## Tools You Will Use
-
-### PHPRegex CLI
-
-Throughout this tutorial, use the CLI to visualize patterns:
-
-```bash
-# Explain a pattern in plain English
-vendor/bin/regex explain '/\w+@\w+\.\w+/'
-
-# Show pattern structure as a tree
-vendor/bin/regex diagram '/\w+@\w+\.\w+/'
-
-# Highlight syntax
-vendor/bin/regex highlight '/\w+@\w+\.\w+/'
-
-# Check for security issues
-vendor/bin/regex analyze '/(a+)+$/'
-```
-
-### In Your PHP Code
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-// Validate what you wrote
-$result = $regex->validate('/your-pattern/');
-
-// Get explanations
-echo $regex->explain('/your-pattern/');
-
-// Generate test data
-$sample = $regex->generate('/your-pattern/');
-```
-
----
-
 ## How to Use This Tutorial
 
 ### For Absolute Beginners
@@ -159,36 +178,7 @@ $sample = $regex->generate('/your-pattern/');
 3. Learn how PHPRegex can validate and explain patterns
 4. Pay special attention to the [Performance chapter](08-performance-redos.md)
 
----
-
-## Quick Reference
-
-### Most Common Patterns
-
-| Pattern    | Matches                     |
-|------------|-----------------------------|
-| `/hello/`  | The word "hello"            |
-| `/[0-9]/`  | Any single digit            |
-| `/[a-z]/`  | Any lowercase letter        |
-| `/\w+/`    | One or more word characters |
-| `/^start/` | "start" at the beginning    |
-| `/end$/`   | "end" at the end            |
-| `/a?b/`    | "ab" or just "b"            |
-| `/a*/`     | Zero or more "a"s           |
-| `/a+/`     | One or more "a"s            |
-| `/a{3}/`   | Exactly three "a"s          |
-| `/a{2,4}/` | Two to four "a"s            |
-
-### Special Characters (Need Escaping)
-
-These characters have special meaning and must be escaped with `\` to match literally:
-
-```
-. ^ $ * + ? ( ) [ ] { } | \
-```
-
-To match a literal dot: `/\./`
-To match a literal dollar sign: `/\$/`
+For a compact list of everyday patterns and the special characters that need escaping, see [Chapter 1](01-basics.md#escaping-special-characters) and the [diagnostics cheatsheet](../reference/diagnostics-cheatsheet.md).
 
 ---
 
@@ -203,7 +193,7 @@ To match a literal dollar sign: `/\$/`
 1. **Use the explain command**: `vendor/bin/regex explain '/your-pattern/'`
 2. **Visualize it**: `vendor/bin/regex diagram '/your-pattern/'`
 3. **Check for errors**: `vendor/bin/regex validate '/your-pattern/'`
-4. **Read the FAQ**: [docs/reference/faq-glossary.md](../reference/faq-glossary.md)
+4. **Read the FAQ**: [FAQ & glossary](../reference/faq-glossary.md)
 5. **Ask questions**: [GitHub Issues](https://github.com/php-regex/php-regex/issues)
 
 ---

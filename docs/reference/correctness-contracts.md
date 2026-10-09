@@ -1,3 +1,7 @@
+---
+description: "The formal guarantee of each PHPRegex analysis — parser, lint, optimizer, the ReDoS model, the automata solver — sound, complete or best-effort."
+---
+
 # Safety and Correctness Contracts
 
 This page documents the formal guarantees of each analysis feature: what language is modeled, and whether the results
@@ -61,8 +65,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   which holds the last code unit PCRE2 requires before any attempt, read as its compiler reads it: the one every
   alternative ends with included (`b` for `/a+b|cb/`). The prefix keeps the first attempt from matching the bare run
   (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in PCRE2's interpreter (`pcre.jit=0`,
-  a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue `regex.lint.redos.search` and the PHPStan identifier
-  `regex.redos.search`, at severity `medium`, a warning.
+  a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
+  [`regex.lint.redos.search`](rules.md) and the PHPStan identifier
+  [`regex.redos.search`](../guides/phpstan.md), at severity `medium`, a warning.
 - **Guarantee:** None in the other direction: `search_cost: null` means no witness was found, not that the search is
   linear. A reported witness holds on the model; confirmed mode, from a threshold of `medium` or lower, replays it
   without the JIT and counts the steps of attempts pinned at two offsets (`replayed`). Measured with PHP 8.4.26 and PCRE2 10.49:
@@ -76,19 +81,24 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   | `/(?:a\|b)+c/`, 5,000 / 10,000 characters | 331 / 1,325 ms | 27.5 ms / `false`, JIT stack limit exhausted |
   | `/^\s+$/`, `" " x n . "x"`, n = 20,000 | 0.2 ms | 0.0 ms |
 
-- **Limits:** The JIT is neither modelled nor measured: it stayed linear on every loop over one character probed and
-  was quadratic, or gave up, on loops over a longer word, and the analysis never runs a pattern under it (some pattern
-  and subject pairs crash PHP there, PCRE2 10.40 to 10.49). `pcre.backtrack_limit` is counted per attempt and does not stop the cost: at the default limit `/\s+$/`
-  takes 123, 497 and 1,992 ms on 5,000, 10,000 and 20,000 spaces and an `x`, and returns `0` without an error. A
-  lookaround on the run is reported only once confirmed mode replays it, and a pattern holding `\G` is never confirmed
-  by that pinned replay (`\G` holds wherever an attempt is pinned); a pattern some attempt may match inside the run, a
-  run read through a bounded repeat above the unrolling cutoff (`\s{1,100}`, read as unbounded by the model, at most
-  its bound per attempt on the engine), a start verb such as `(*NO_DOTSTAR_ANCHOR)` (the per-attempt verdict is then
-  heuristic), and a search proof over the shared budget give no witness. The step replay counts nothing inside an
-  atomic or possessive repeat of a single character set (`/a++b/`): that witness, read exactly by the model, is
-  reported with `replayed: false`; a repeat of a longer word (`/(?:ab)++c/`, `/(?>a+b)+c/`) is counted. A library
-  failure inside the search proof leaves `search_cost` null and the per-attempt verdict as proven; any other error is a
-  bug, and the analysis reports it as an error.
+- **Limits:**
+  - **The JIT** is neither modelled nor measured: it stayed linear on every loop over one character probed and was
+    quadratic, or gave up, on loops over a longer word, and the analysis never runs a pattern under it (some pattern
+    and subject pairs crash PHP there, PCRE2 10.40 to 10.49).
+  - **`pcre.backtrack_limit`** is counted per attempt and does not stop the cost: at the default limit `/\s+$/` takes
+    123, 497 and 1,992 ms on 5,000, 10,000 and 20,000 spaces and an `x`, and returns `0` without an error.
+  - **A lookaround on the run** is reported only once confirmed mode replays it.
+  - **`\G`** never is: a pattern holding `\G` is not confirmed by that pinned replay, because `\G` holds wherever an
+    attempt is pinned.
+  - **No witness** is found for a pattern some attempt may match inside the run; a run read through a bounded repeat
+    above the unrolling cutoff (`\s{1,100}`, read as unbounded by the model, at most its bound per attempt on the
+    engine); a start verb such as `(*NO_DOTSTAR_ANCHOR)` (the per-attempt verdict is then heuristic); and a search
+    proof over the shared budget.
+  - **Atomic repeats**: the step replay counts nothing inside an atomic or possessive repeat of a single character
+    set (`/a++b/`) — that witness, read exactly by the model, is reported with `replayed: false` — while a repeat of
+    a longer word (`/(?:ab)++c/`, `/(?>a+b)+c/`) is counted.
+  - **Errors**: a library failure inside the search proof leaves `search_cost` null and the per-attempt verdict as
+    proven; any other error is a bug, and the analysis reports it as an error.
 
 ## Automata Solver
 
@@ -117,8 +127,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   lookaround, and a non-atomic lookaround (`(?*...)`, `(*napla:...)`) are refused.
 - **Fallbacks:** None — there is no approximation. A construct outside the subset raises `ComplexityException` with
   one message per reason (backreferences, subroutines, callouts and control verbs, conditionals, nested lookarounds,
-  anchors inside a lookaround, non-atomic lookarounds, atomic groups, `\K` and `\G`, unsafe possessives, the flags `A`
-  and `r`, a newline convention other than `\n`, a surrogate code point named under `/u`, which PCRE refuses to
+  anchors inside a lookaround, non-atomic lookarounds, atomic groups, `\K` and `\G`, unsafe possessives, the flag `A`,
+  a newline convention other than `\n`, a surrogate code point named under `/u`, which PCRE refuses to
   compile); the list is in
   [the logic solver reference](logic-solver.md#what-the-solver-refuses). Atomic groups and possessive quantifiers commit to
   what they first matched and never retry — ordered behaviour the solver cannot read as a pure language

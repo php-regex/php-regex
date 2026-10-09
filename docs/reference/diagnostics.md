@@ -1,18 +1,22 @@
+---
+description: "How PHPRegex reports errors: validation layers, ValidationResult fields, CLI and JSON output, error-code categories and the fixes for each diagnostic."
+---
 # Diagnostics and Error Messages
 
 This comprehensive guide explains how PHPRegex reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
 
 ## Table of Contents
 
-| Section                                             | Description           |
-|-----------------------------------------------------|-----------------------|
-| [Validation Layers](#validation-layers)             | How validation works  |
-| [Reading Diagnostics](#reading-diagnostics)         | Understanding output  |
-| [ValidationResult Fields](#validationresult-fields) | Result object details |
-| [CLI Examples](#cli-examples)                       | Command-line output   |
-| [Lint Diagnostics](#lint-diagnostics)               | Linting output        |
-| [Common Fixes](#common-fixes)                       | Quick solutions       |
-| [Error Codes](#error-codes)                         | Every stable code     |
+| Section                                             | Description                          |
+|-----------------------------------------------------|--------------------------------------|
+| [Validation Layers](#validation-layers)             | How validation works                 |
+| [Reading Diagnostics](#reading-diagnostics)         | Output and ValidationResult fields   |
+| [CLI Examples](#cli-examples)                       | Command-line output                  |
+| [CLI Output Types](#cli-output-types)               | What each command prints             |
+| [Lint Diagnostics](#lint-diagnostics)               | Linting output                       |
+| [Common Fixes](#common-fixes)                       | Quick solutions                      |
+| [Error Code Categories](#error-code-categories)     | Which layer refused the pattern      |
+| [Error Codes](#error-codes)                         | Every stable code                    |
 
 ---
 
@@ -56,7 +60,7 @@ if (!$result->isValid) {
     echo $result->offset;           // 9
     echo $result->caretSnippet;     // See below
     echo $result->hint;             // null: no hint for this one
-    echo $result->complexityScore;  // 1
+    echo $result->complexityScore;  // 0
     echo $result->category->value;  // "syntax"
 }
 ```
@@ -71,7 +75,7 @@ if (!$result->isValid) {
 | `offset`          | int\|null               | Byte offset from the body | `9`                              |
 | `caretSnippet`    | string\|null            | Visual snippet with caret | See below                        |
 | `hint`            | string\|null            | Suggested fix             | `"Use \g<0> for recursion..."`   |
-| `complexityScore` | int                     | Pattern complexity        | `1`                              |
+| `complexityScore` | int                     | Pattern complexity        | `0`                              |
 | `category`        | ValidationErrorCategory | Error type                | `syntax`                         |
 
 ### Understanding Caret Snippets
@@ -88,6 +92,8 @@ This visual representation helps you quickly locate and fix issues.
 ---
 
 ## CLI Examples
+
+The `regex` binary ships with php-regex/regex-cli: `composer require --dev php-regex/regex-cli` (see [Quick Start](../quick-start.md)).
 
 ### Validation Error with Caret
 
@@ -357,17 +363,17 @@ Quick solutions for frequently encountered diagnostics:
 
 **Problem:** `Lookbehind is unbounded`
 
-**Solution:** Make the lookbehind bounded or use lookahead
+**Solution:** Make the lookbehind bounded, or restart the match after the run
 
 ```php
 // ERROR: (?<=a+) is unbounded
 preg_match('/(?<=a+)b/', $input);
 
-// FIX 1: Use bounded quantifier
+// FIX 1: Use bounded quantifier (variable length needs PCRE2 10.43+, PHP 8.4)
 preg_match('/(?<=a{1,10})b/', $input);
 
-// FIX 2: Use lookahead + capture
-preg_match('/(?=(a+))b\1/', $input);
+// FIX 2: Restart the match after the run
+preg_match('/a+\Kb/', $input);  // matches "b" on "aaab"
 ```
 
 ---
@@ -464,6 +470,8 @@ preg_match('/[error|failure]/', $input);
 // FIX: Use alternation
 preg_match('/(error|failure)/', $input);
 ```
+
+For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md).
 
 ---
 
@@ -620,16 +628,3 @@ leading whitespace before it (space, tab, newline, carriage return, vertical tab
 is skipped, as PHP does. `"\f/a/"` is the pattern `a`; `"\0/a/"` is refused with
 `regex.delimiter.invalid`: `Invalid delimiter "\x00". Delimiters must not be alphanumeric,
 backslash, or NUL byte.`
-
----
-
-## Quick Reference
-
-| Error                | Fix                                  |
-|----------------------|--------------------------------------|
-| Lookbehind unbounded | Add bounds `{1,10}` or use lookahead |
-| Bad backreference    | Check group numbers/names            |
-| Nested quantifiers   | Use atomic groups or simplify        |
-| Duplicate name       | Use unique names or `(?J)`           |
-| Invalid range        | Swap min/max in `{min,max}`          |
-| Useless flag         | Remove unused flag                   |

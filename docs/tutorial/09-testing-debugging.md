@@ -1,6 +1,19 @@
+---
+layout: tutorial
+description: "Test and debug regex patterns with PHPRegex: explain them in plain English, validate syntax, get proven ReDoS verdicts, generate samples and diagram the AST."
+---
+
 # Chapter 9: Testing and Debugging with PHPRegex
 
 > **Goal:** Use PHPRegex to understand, validate, and test your patterns.
+
+---
+
+## Prerequisites
+
+This chapter uses the `Regex` facade and the `vendor/bin/regex` binary. Both come from one install (the binary ships as `php-regex/regex-cli` in the split layout). You need PHP 8.2 or newer with the `mbstring` extension. The [Quick Start](../quick-start.md) walks through the same setup in full.
+
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
 
 ---
 
@@ -39,13 +52,16 @@ echo $regex->explain('/^(?<user>\w+)@(?<host>\w+)$/');
 
 **Output:**
 ```
-Start of string
-  Named group 'user':
-    One or more word characters
-  Literal '@'
-  Named group 'host':
-    One or more word characters
-End of string
+Regex matches
+  Anchor: the beginning of a line
+  Capturing group (named: 'user')
+        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+  End group
+  '@'
+  Capturing group (named: 'host')
+        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+  End group
+  Anchor: the end of a line
 ```
 
 ### 2. Validate Syntax
@@ -70,7 +86,7 @@ Error: Lookbehind is unbounded. PCRE requires a bounded maximum length.
 Hint: Use a bounded quantifier instead of "+".
 Snippet:
 Line 1: (?<=a+)b
-            ^
+        ^
 ```
 
 ### 3. Visualize Pattern Structure
@@ -82,19 +98,27 @@ vendor/bin/regex diagram '/^(?<user>\w+)@(?<host>\w+)$/'
 
 **Output:**
 ```
+PHPRegex 2.0.0-DEV by Younes ENNAJI
+
+Runtime : PHP 8.4.26
+Command : diagram
+Format  : text
+
+  [1/1] Rendering diagram
+  Pattern
+      → /^(?<user>\w+)@(?<host>\w+)$/
+
 Regex
-└── Sequence
-    ├── Anchor (^)
-    ├── Group (named: user)
-    │   └── Sequence
-    │       └── QuantifierNode (+)
-    │           └── CharTypeNode (\w)
-    ├── Literal (@)
-    ├── Group (named: host)
-    │   └── Sequence
-    │       └── QuantifierNode (+)
-    │           └── CharTypeNode (\w)
-    └── Anchor ($)
+\-- Sequence
+    |-- Anchor (^)
+    |-- Group (named) name="user"
+    |   \-- Quantifier (+, greedy)
+    |       \-- CharType (\w)
+    |-- Literal ('@')
+    |-- Group (named) name="host"
+    |   \-- Quantifier (+, greedy)
+    |       \-- CharType (\w)
+    \-- Anchor ($)
 ```
 
 ### 4. Syntax Highlighting
@@ -113,7 +137,7 @@ $regex = Regex::create();
 
 // Generate sample that matches pattern
 $sample = $regex->generate('/[a-z]{3}\d{2}/');
-echo $sample;  // Example output: "abc12"
+echo $sample;  // Example output: "bjv69" (random — yours will differ)
 ```
 
 ---
@@ -139,16 +163,17 @@ echo $regex->explain($pattern);
 
 **Output:**
 ```
-Start of string
-  One or more characters from: a-z, 0-9, ., _, %, +, -
-  Literal '@'
-  One or more characters from: a-z, 0-9, ., -
-  Literal '.'
-  Two or more characters from: a-z
-End of string (case-insensitive)
+Regex matches (with flags: i)
+  Anchor: the beginning of a line
+    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '_',   '%',   '+',   '-' ] (one or more times)
+  '@'
+    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '-' ] (one or more times)
+  '.'
+    Character Class: any character in [   Range: from 'a' to 'z' ] (at least 2 times)
+  Anchor: the end of a line
 ```
 
-### Step 3: Check for ReDoS Risk (Theoretical)
+### Step 3: Check for ReDoS Risk
 
 ```php
 $analysis = $regex->redos($pattern);
@@ -159,6 +184,13 @@ echo "Score: " . $analysis->score . "\n";
 if ($analysis->severity->value === 'safe') {
     echo "No structural ReDoS risk detected.\n";
 }
+```
+
+**Output:**
+```
+Severity: safe
+Score: 0
+No structural ReDoS risk detected.
 ```
 
 ### Step 4: Generate Test Cases
@@ -173,6 +205,18 @@ $validSamples = [
 
 print_r($validSamples);
 ```
+
+**Output** (the generator is random — yours will differ):
+```
+Array
+(
+    [0] => t@.6-h.mcvcc
+    [1] => %.%e@.d.zpdz
+    [2] => _@7-.jmj
+)
+```
+
+Every sample satisfies the pattern — which is exactly the point: it gives you concrete inputs your test suite can assert on.
 
 ### Step 5: Validate in PHP
 
@@ -189,6 +233,15 @@ foreach ($testCases as $email) {
     $result = preg_match($pattern, $email) ? 'VALID' : 'INVALID';
     echo "$email: $result\n";
 }
+```
+
+**Output:**
+```
+test@example.com: VALID
+user.name@domain.org: VALID
+admin@sub.domain.co.uk: VALID
+invalid-email: INVALID
+@missing-local.com: INVALID
 ```
 
 ---
@@ -214,7 +267,10 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain($pattern);
-// "One or more digits from 0-9, from start to end"
+// Regex matches
+//   Anchor: the beginning of a line
+//     Character Class: any character in [   Range: from '0' to '9' ] (one or more times)
+//   Anchor: the end of a line
 
 echo "Input: '$input'\n";
 echo "The pattern requires ALL characters to be digits.\n";
@@ -243,9 +299,10 @@ echo $analysis->headline() . "\n";
 // Output: "Exponential backtracking (proven)"
 
 echo "Attack: " . $analysis->witness->render() . "\n";
-// Output: Attack: "a" x n . "!", the input that triggers it
+// Output: Attack: "a" x n . "!"
 
-echo "Suggestion (verify behavior): " . $analysis->recommendations[0] . "\n";
+echo $analysis->recommendations[1] . "\n";
+// Output: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).
 ```
 
 **Fix:**
@@ -326,6 +383,40 @@ for ($i = 0; $i < 3; $i++) {
 }
 ```
 
+Output (the samples are random — yours will differ):
+
+```
+=== Pattern Explanation ===
+Regex matches
+  Anchor: the beginning of a line
+  Positive lookahead
+        Wildcard: any character (may or may not match line terminators) (zero or more times)
+    Character Class: any character in [     Range: from 'A' to 'Z' ]
+  End group
+  Positive lookahead
+        Wildcard: any character (may or may not match line terminators) (zero or more times)
+    Character Class: any character in [     Range: from 'a' to 'z' ]
+  End group
+  Positive lookahead
+        Wildcard: any character (may or may not match line terminators) (zero or more times)
+    Character Type: A digit: [0-9]
+  End group
+    Character Class: any character in [   Range: from 'A' to 'Z',   Range: from 'a' to 'z',   Character Type: A digit: [0-9] ] (at least 8 times)
+  Anchor: the end of a line
+
+=== Syntax Validation ===
+Valid
+
+=== ReDoS Analysis ===
+Severity: safe
+Score: 0
+
+=== Sample Matching Strings ===
+- 9u7iUao9
+- Aj0Ek4sT5
+- FV0Fo5q6jC
+```
+
 ---
 
 ## Key Takeaways
@@ -342,23 +433,21 @@ for ($i = 0; $i < 3; $i++) {
 
 1. **Use the CLI** - `vendor/bin/regex explain <pattern>`
 2. **Try diagram** - `vendor/bin/regex diagram <pattern>`
-3. **Check documentation** - `docs/guides/regex-in-php.md`
+3. **Check documentation** - [Regex in PHP guide](../guides/regex-in-php.md)
 4. **Ask for help** - [GitHub Issues](https://github.com/php-regex/php-regex/issues)
 
 ---
 
 ## Recap
 
-Topics covered:
+In this chapter you used every testing tool the library offers:
 
-- Pattern basics and structure
-- Character classes and escapes
-- Anchors and boundaries
-- Quantifiers and greediness
-- Groups and alternation
-- Lookarounds and assertions
-- Backreferences and recursion
-- Performance and ReDoS prevention
-- Testing and debugging
+- **explain()** and the `explain` command — plain-English walkthroughs
+- **validate()** — syntax errors with hints and caret snippets
+- **redos()** and the `debug` command — proven risk verdicts with attack inputs
+- **generate()** — sample strings your tests can assert on
+- **diagram** — the AST as a tree
+
+Combined with the testing checklist above, that is the full loop: explain, validate, analyze, generate, assert.
 
 **Next:** [Chapter 10: Real-World Patterns in PHP](10-real-world-php.md)

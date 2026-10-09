@@ -1,7 +1,16 @@
+---
+description: "When a string function can answer before preg_match() runs: the literals every match holds, and the patterns the automata prove equal to str_contains() and friends."
+---
+
 # Prefilters
 
 A regex engine is fast, and a `str_contains()` is faster. Two analyses tell when a cheap
 string function can answer before, or instead of, `preg_match()`.
+
+The two live in separate packages: `RequiredLiteralAnalyzer` in `php-regex/regex-parser`,
+`TrivialMatchClassifier` in `php-regex/regex-automata` — which requires `regex-parser`
+itself, so `composer require php-regex/regex-automata` (PHP 8.2+, `ext-mbstring`) brings
+both.
 
 ## Required literals
 

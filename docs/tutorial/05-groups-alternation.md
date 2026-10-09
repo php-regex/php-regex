@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Group patterns with (...), (?:...) and named groups, use alternation, and see why option order — not grouping — decides which alternative wins."
+---
+
 # Chapter 5: Groups and Alternation
 
 > **Goal:** Group patterns together and match one of several alternatives.
@@ -21,7 +26,9 @@ With groups:     (ab)+  means "ab" as a unit, repeated one or more times
 |----------------------|-------------------------|----------------------|
 | Phone with area code | `5551234567`            | `(555) 123-4567`     |
 | HTTP URL             | `http: / / example.com` | `http://example.com` |
-| Repeated phrase      | "hello hello hello"     | `(hello ){3}`        |
+| Repeated phrase      | "hello hello hello"     | `(hello ){2}hello`   |
+
+Note the last row: `(hello ){3}` requires the trailing space after **every** repetition, so it matches `"hello hello hello "` — with a final space. To match the phrase without one, the last repetition must drop it: `(hello ){2}hello`.
 
 ---
 
@@ -154,12 +161,15 @@ echo $m['domain'];  // "example.com"
 
 ### Nested Groups
 
+Numbering follows the **opening** parenthesis, left to right:
+
 ```php
 // Outer group contains inner groups
 preg_match('/((?<outer>hello) (?<inner>world))/', 'hello world', $m);
 echo $m[0];         // "hello world" (full match)
-echo $m['outer'];   // "hello" (first group)
-echo $m['inner'];   // "world" (second group)
+echo $m[1];         // "hello world" (group 1: the outer anonymous group)
+echo $m['outer'];   // "hello" (group 2)
+echo $m['inner'];   // "world" (group 3)
 ```
 
 ---
@@ -217,16 +227,22 @@ echo $m['month'];  // "01"
 echo $m['day'];    // "15"
 ```
 
-### Exercise 3: Test Alternation Precedence
+### Exercise 3: Test Alternation Order
+
+Alternation tries options from left to right; the first alternative that matches wins. Grouping does **not** change that order — it only bounds the scope.
 
 ```php
-// Without grouping
+// "foo" is tried first and matches, so "foobar" is never tried
 preg_match('/foo|foobar/', 'foobar', $m);
-echo "Without grouping: " . $m[0] . "\n";  // "foo"
+echo "Left first: " . $m[0] . "\n";  // "foo"
 
-// With grouping
-preg_match('/(?:foo|foo)bar/', 'foobar', $m);
-echo "With grouping: " . $m[0] . "\n";     // "foobar"
+// Grouping changes nothing here — the order still decides
+preg_match('/(?:foo|foobar)/', 'foobar', $m);
+echo "Grouped: " . $m[0] . "\n";     // "foo"
+
+// Put the longer alternative first to get the longer match
+preg_match('/(?:foobar|foo)/', 'foobar', $m);
+echo "Long first: " . $m[0] . "\n";  // "foobar"
 ```
 
 ---
@@ -238,7 +254,7 @@ echo "With grouping: " . $m[0] . "\n";     // "foobar"
 3. **Non-capturing groups** `(?:...)` don't store (faster)
 4. **Named groups** `(?<name>...)` use names instead of numbers
 5. **Alternation** `|` matches one of several alternatives
-6. **Group alternation** with `()` to control scope
+6. **Group alternation** with `()` to control scope; **order** decides which option wins
 
 ---
 

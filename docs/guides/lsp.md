@@ -1,3 +1,7 @@
+---
+description: "Point any LSP editor at the PHPRegex language server: install it, configure VS Code, PhpStorm, Neovim or Zed, pick its target PHP and PCRE2, and debug it."
+---
+
 # LSP Integration Guide
 
 This guide covers PHPRegex's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
@@ -17,27 +21,19 @@ The PHPRegex LSP server provides:
 
 ## Quick Start
 
-### 1. Install PHPRegex
+The server requires PHP 8.2 or later.
+
+{% include install-prerelease.html package="php-regex/regex-language-server" %}
+
+The server binary is `vendor/bin/regex-lsp` (the monorepo install provides it
+too: Composer links it from `src/LanguageServer/bin/regex-lsp`). Run it with
+`--help` for its options, `--version` for the release it was built from:
 
 ```bash
-composer require --dev php-regex/regex-language-server
+vendor/bin/regex-lsp --help
 ```
 
-### 2. Locate the LSP Server
-
-The LSP server is available at:
-
-```bash
-vendor/bin/regex-lsp
-```
-
-Or via the PHAR:
-
-```bash
-regex-lsp
-```
-
-### 3. Configure Your IDE
+### Configure Your IDE
 
 See the IDE-specific sections below for configuration instructions.
 
@@ -217,31 +213,38 @@ the server.
 
 ### VS Code
 
-1. Install the **PHP Intelephense** or **phpactor** extension (or any LSP client extension)
+VS Code has no setting that points at an arbitrary language server: the
+supported path is a small extension built on the
+[vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient)
+npm package. The official
+[Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+walks through the whole process; for PHPRegex, the client boils down to:
 
-2. Create `.vscode/settings.json`:
+```ts
+// src/extension.ts
+import * as vscode from 'vscode';
+import { LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
-```json
-{
-  "lsp.servers": {
-    "php-regex": {
-      "command": ["vendor/bin/regex-lsp"],
-      "filetypes": ["php"]
-    }
-  }
+const server = {
+  command: 'vendor/bin/regex-lsp', // resolved from the workspace root
+  transport: TransportKind.stdio,
+};
+
+export function activate(context: vscode.ExtensionContext): void {
+  const client = new LanguageClient(
+    'php-regex',
+    'PHPRegex',
+    { run: server, debug: server },
+    { documentSelector: [{ scheme: 'file', language: 'php' }] },
+  );
+
+  context.subscriptions.push(client.start());
 }
 ```
 
-**Alternative: Using a generic LSP client**
-
-Install [vscode-languageclient](https://marketplace.visualstudio.com/items?itemName=AlanWalk.ls-server) or create a custom extension:
-
-```json
-{
-  "languageServerExample.trace.server": "verbose",
-  "languageServerExample.serverPath": "vendor/bin/regex-lsp"
-}
-```
+Installing a PHP editor extension such as Intelephense or phpactor is not an
+alternative: those are language servers of their own, not clients that host
+others, so they cannot run `regex-lsp` for you.
 
 ### PhpStorm / IntelliJ IDEA
 
@@ -458,11 +461,32 @@ Add to your settings:
    chmod +x vendor/bin/regex-lsp
    ```
 
-3. Test it directly:
+3. Test it directly. The server speaks LSP over stdio, where a message is a
+   `Content-Length` header followed by its JSON body — a bare `echo` prints
+   nothing: the server reads headers, finds no `Content-Length`, and exits
+   without a message to answer. Frame the message:
 
    ```bash
-   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | vendor/bin/regex-lsp
+   MSG='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{},"rootUri":null}}'
+   printf 'Content-Length: %d\r\n\r\n%s' "$(printf '%s' "$MSG" | wc -c)" "$MSG" \
+     | vendor/bin/regex-lsp
    ```
+
+   The server answers with its capabilities, then logs its target, and exits
+   when the input ends:
+
+   ```text
+   Content-Length: 369
+
+   {"jsonrpc":"2.0","id":1,"result":{"capabilities":{"textDocumentSync":{"openClose":true,"change":1,"save":{"includeText":true}},"hoverProvider":true,"codeActionProvider":{"codeActionKinds":["quickfix","refactor.rewrite"]},"completionProvider":{"triggerCharacters":["\\","[","(","/"],"resolveProvider":false}},"serverInfo":{"name":"php-regex-lsp","version":"2.0.0-DEV"}}}
+   Content-Length: 124
+
+   {"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Target: PHP 8.4.26, PCRE2 10.49 (running PHP)"}}
+   ```
+
+   The `Target:` line is the PHP and PCRE2 release the server judges for (see
+   [Target PHP and PCRE2](#target-php-and-pcre2)). Silence here means the
+   framing is wrong, not that the server is broken.
 
 ### No Diagnostics Appearing
 
@@ -554,8 +578,9 @@ No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
 
 - **[CLI Guide](cli.md)** - Command-line usage
 - **[Diagnostics Reference](../reference/diagnostics.md)** - All diagnostic codes
-- **[Regex Tutorial](../tutorial/README.md)** - Learn regex patterns
 - **[PCRE Reference](../concepts/pcre.md)** - PCRE compatibility
+
+New to regex? Start with [the tutorial](../tutorial/README.md).
 
 ---
 

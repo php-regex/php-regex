@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Ten production-ready PHP patterns — email, dates, phones, URLs, logs, tags, passwords — each explained, usage shown, and ReDoS-rated before you ship it."
+---
+
 # Chapter 10: Real-World Patterns in PHP
 
 > **Goal:** Apply everything you've learned to common, practical use cases.
@@ -55,10 +60,10 @@ use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create();
 
-// Validate
+// Validate the pattern itself before using it
 $result = $regex->validate($pattern);
 if (!$result->isValid) {
-    echo "Invalid email: " . $result->error;
+    echo "Invalid pattern: " . $result->error;
     return;
 }
 
@@ -151,7 +156,7 @@ Start of string
   Optional: +1 (country code)
   Optional: whitespace
   Optional: (
-  Area code: 3 digits
+  Area code: 3 digits (captured as group 1)
   Optional: )
   Optional: whitespace or hyphen
   Prefix: 3 digits
@@ -197,6 +202,14 @@ End of string
 if (preg_match($pattern, $url)) {
     echo "Valid URL format";
 }
+```
+
+### A Note on Risk
+
+PHPRegex rates this pattern **medium** — "Polynomial backtracking, degree 2 (proven)". A quadratic pattern turns 10× the input into 100× the work; the backtrack limit does not catch it. If URLs come from untrusted sources and can be long, tighten the pattern (the two character classes overlap on many characters) or cap the input length first. Check yours the same way:
+
+```bash
+vendor/bin/regex debug '/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/'
 ```
 
 ---
@@ -302,13 +315,17 @@ if (preg_match($pattern, $password)) {
 
 ## Comparison Table
 
-| Use Case | Pattern                                                                                                           | Anchored          | ReDoS Safe | Named Groups |
-|----------|-------------------------------------------------------------------------------------------------------------------|-------------------|------------|--------------|
-| Email    | `/^[a-z0-9]+(?:[._%+-][a-z0-9]+)*+@[a-z0-9-]+(?:\.[a-z0-9-]+)*+$/i`                                               | Yes                 | Yes          | No            |
-| Date     | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12]\d\|3[01])$/`                                                          | Yes                 | Yes          | No            |
-| URL      | `/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/` | Yes                 | Yes          | No            |
-| Phone    | `/^\+?1?\s*\(?[0-9]{3}\)?\s*-?[0-9]{3}\s*-?[0-9]{4}$/`                                                            | Yes                 | Yes          | No            |
-| Password | `/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/`                                          | Yes                 | Yes          | No            |
+Verdicts generated with `$regex->redos()` on the exact patterns above:
+
+| Use Case | Pattern from this chapter                                                                                           | Anchored | ReDoS verdict               | Capture                          |
+|----------|---------------------------------------------------------------------------------------------------------------------|----------|-----------------------------|----------------------------------|
+| Email    | `/^[a-z0-9]+(?:[._%+-][a-z0-9]+)*+@[a-z0-9-]+(?:\.[a-z0-9-]+)*+$/i`                                                 | Yes      | safe (proven)               | none                             |
+| Date     | `/^(?<year>\d{4})-(?<month>0[1-9]\|1[0-2])-(?<day>0[1-9]\|[12][0-9]\|3[01])$/`                                       | Yes      | safe (proven)               | named (`year`, `month`, `day`)   |
+| URL      | `/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/` | Yes      | medium — quadratic (proven) | none                             |
+| Phone    | `/^\+?1?\s*\(?([0-9]{3})\)?\s*-?[0-9]{3}\s*-?[0-9]{4}$/`                                                             | Yes      | safe (proven)               | numbered (1: area code)          |
+| Password | `/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/`                                            | Yes      | safe (proven)               | none                             |
+
+The URL row is the one to remember: a pattern can look reasonable, anchor everything, and still carry a proven quadratic cost — the verdict column is why you run the analysis instead of eyeballing it.
 
 ---
 
@@ -325,6 +342,8 @@ Create a pattern to validate a **GitHub username**:
 ### Solution
 
 ```php
+use PHPRegex\Toolkit\Regex;
+
 $pattern = '/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/';
 
 // Explanation
@@ -347,7 +366,7 @@ echo $regex->explain($pattern);
 1. **Production patterns** need anchors (`^...$`) for exact matching
 2. **Use named groups** for clarity and maintainability
 3. **Validate format first**, then validate logic separately
-4. **Always check ReDoS risk** before using patterns
+4. **Always check ReDoS risk** before using patterns — with a tool, not by eye
 5. **Lookaheads** are great for validation without consuming
 
 ---

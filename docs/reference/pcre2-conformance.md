@@ -1,7 +1,13 @@
+---
+description: "How often Regex::validate() reaches the same compile verdict as PHP's own PCRE2 engine, measured on PCRE2's official test suite, pinned to 10.48."
+---
+
 # PCRE2 Conformance
 
 This page measures how often `Regex::validate()` reaches the same compile verdict as PHP's own PCRE2 engine, using the
-PCRE2 project's official test suite. It is the audit behind the "Tested against the real engine" section of the README.
+PCRE2 project's official test suite. It is the measurement behind the
+["Tested against the real engine"](https://github.com/php-regex/php-regex#tested-against-the-real-engine)
+section of the README.
 
 ## What is measured
 
@@ -13,6 +19,12 @@ options — static parsing, `runtimePcreValidation` off — and compared with th
   PCRE2's error?
 
 Subject lines are ignored: this is a compile-level measurement, not a match-level one.
+
+Why these four files: `testinput1` is the main suite, `testinput2` the error suite — its every case is a compile
+verdict, the object of this page — and `testinput4` and `testinput5` the two Unicode suites. `testinput3` drives
+locale-dependent matches through pcre2test's own locale machinery, so its outcomes ride on the host's locales rather
+than the pattern text; no verdict reproducible everywhere can be pinned for it. The
+[wider sweep below](#beyond-the-four-pinned-files) covers it with the rest.
 
 ## How to read the numbers
 

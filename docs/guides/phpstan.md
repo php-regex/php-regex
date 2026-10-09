@@ -1,3 +1,6 @@
+---
+description: "Install the PHPRegex PHPStan extension: the invalid-for-target check that runs by default, plus lint, ReDoS and optimization checks on demand."
+---
 # PHPStan
 
 The PHPStan extension reads the regex patterns passed to `preg_*` functions,
@@ -6,17 +9,25 @@ and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.
 
-## Installation
+{% include install-prerelease.html package="php-regex/regex-phpstan" %}
+
+The extension runs on PHP 8.2 or later and PHPStan 2.x
+(`phpstan/phpstan ^2.0`); reading a parameter attribute needs PHPStan
+2.1.31 at least ([Pattern parameters](#pattern-parameters)).
 
 With [phpstan/extension-installer](https://github.com/phpstan/extension-installer),
-there is nothing to do: installing the package enables the extension.
-
-Without it, include the extension in your `phpstan.neon`:
+there is nothing to do: installing the package enables the extension. Without
+it, include the extension in your `phpstan.neon`:
 
 ```neon
 includes:
-    - vendor/php-regex/regex-phpstan/extension.neon
+    - vendor/php-regex/php-regex/src/PHPStan/extension.neon
 ```
+
+Under the pre-release monorepo install, the extension's neon files live
+under `vendor/php-regex/php-regex/src/PHPStan/`; from the 2.0.0 tag and the
+split package, under `vendor/php-regex/regex-phpstan/`. The rest of this
+guide writes the pre-release path.
 
 ## What it reports by default
 
@@ -37,9 +48,10 @@ there is nothing PHPStan misses, and the extension reports no invalid pattern.
 
 A range, `phpVersion: {min: 80400, max: 80599}`, is read whole: a pattern the
 lowest version accepts is also validated at each later PHP up to `max` where
-a rule of the library changes (8.4.25, 8.5, 8.5.10…), as `regex lint` reads a
-`composer.json` range, and the first that refuses it is reported under the
-same identifier:
+the PCRE2 that PHP bundles or the library's compat rules change (8.4.25,
+8.5, 8.5.10…). [`regex lint`](cli.md) reads a `composer.json` range the same
+way; the first version that refuses the pattern is reported under the same
+identifier:
 
 ```text
 Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
@@ -94,7 +106,7 @@ lacks them, no parameter is read as a pattern, and nothing is reported.
 
 ```neon
 includes:
-    - vendor/php-regex/regex-phpstan/rules.neon
+    - vendor/php-regex/php-regex/src/PHPStan/rules.neon
 ```
 
 Without extension-installer, include both `extension.neon` and `rules.neon`.
@@ -102,6 +114,20 @@ Each check can also be switched on its own (see below).
 
 ReDoS analysis in PHPStan is theoretical: it reads the pattern and never runs
 it inside PHPStan.
+
+## Cost
+
+With the opt-in checks off, the extension parses and validates each distinct
+constant pattern once — the parse lands in an in-memory cache, so a pattern
+that appears in a hundred files is not parsed a hundred times. On the
+project's benchmark corpus, 1,645 patterns collected from real PHP projects,
+the whole corpus validates in about a third of a second: an everyday pattern
+validates in a few tens of microseconds once warm, a pathological one in
+about 1.5 milliseconds. ReDoS analysis is the expensive check: the same
+corpus judged for ReDoS takes about 4 seconds, 2.4 milliseconds per pattern
+on average, and its worst real-world pattern about 230 milliseconds.
+PHPStan's result cache does the rest: a file it does not analyse again costs
+the extension nothing.
 
 ## ReDoS findings
 
@@ -122,12 +148,11 @@ PHPStan. PHPStan's result cache does not know when a distribution upgrades
 libpcre2 under an unchanged PHP: clear it (`vendor/bin/phpstan clear-result-cache`)
 after such an upgrade.
 
-`<pattern>` is the pattern as the console shows it, cut after 50
-characters: C1 controls, Unicode format characters (bidirectional overrides,
-zero-width spaces, tag characters…) and line separators
-are written as escapes (`\x{202E}` under `/u`, `\xE2\x80\xAE` otherwise), a
-pattern under `x` is written on one line without its `#` comments, and the cut
-never splits a character or an escape.
+`<pattern>` is the pattern as the console shows it, cut after 50 characters —
+never mid-character or mid-escape — with invisible characters (C1 controls,
+bidirectional overrides, zero-width spaces…) written as escapes (`\x{202E}`
+under `/u`, `\xE2\x80\xAE` otherwise) and a pattern under `x` on one line
+without its `#` comments, so no output format reads it as markup.
 
 The message holds the verdict class and the pattern only, and the text of each
 of the three stays the same for all of 2.x. The severity, how the verdict was

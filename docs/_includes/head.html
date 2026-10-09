@@ -7,9 +7,10 @@
   <meta property="og:title" content="{% if page.title %}{{ page.title | strip_html }} — {% endif %}PHPRegex">
   <meta property="og:description" content="{{ page.description | default: site.description | strip_html }}">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PHPRegex">
   <meta property="og:url" content="{{ page.url | absolute_url }}">
-  <meta property="og:image" content="{{ '/assets/img/social.png' | absolute_url }}">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="{{ '/assets/img/social.png' | absolute_url }}?v={{ site.time | date: '%s' }}">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.png" sizes="512x512">
   <link rel="apple-touch-icon" href="/favicon.png">

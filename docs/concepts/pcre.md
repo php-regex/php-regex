@@ -1,3 +1,6 @@
+---
+description: "How PCRE2 relates to PHP and other engines: syntax by PCRE2 release, target versioning, a known JIT crash, and the engine comparison matrix."
+---
 # PCRE vs Other Engines
 
 **PCRE** (Perl Compatible Regular Expressions) is the regex engine used by PHP's `preg_*` functions. Understanding PCRE helps you write better patterns and avoid compatibility issues.
@@ -13,15 +16,7 @@ PCRE is a regular expression engine that:
 
 ## PCRE in PHP
 
-### PHP's Regex Functions
-
-```php
-// PCRE functions in PHP
-preg_match('/pattern/', $subject);      // Match pattern
-preg_replace('/pattern/', 'replacement', $subject); // Replace
-preg_split('/pattern/', $subject);      // Split by pattern
-preg_match_all('/pattern/', $subject, $matches); // Find all matches
-```
+The `preg_*` family - what each function returns, with examples - is tabulated in the [Regex in PHP guide](../guides/regex-in-php.md#php-regex-functions).
 
 ### PCRE Version in PHP
 
@@ -249,14 +244,19 @@ and gets the same verdict under a tiny limit as under the default.
 | Feature               | PCRE (PHP) | JavaScript | Python | .NET |
 |-----------------------|------------|------------|--------|------|
 | Lookaheads            | Yes        | Yes        | Yes    | Yes  |
-| Lookbehinds           | Yes        | No         | Yes    | Yes  |
-| Variable-length lookbehind | PCRE2 10.43+, up to 255 per branch | No | No | Yes |
-| Recursion             | Yes        | No         | No     | Yes  |
+| Lookbehinds           | Yes        | Yes (ES2018) | Yes  | Yes  |
+| Variable-length lookbehind | PCRE2 10.43+, up to 255 per branch | Yes (unbounded) | No | Yes |
+| Recursion             | Yes        | No         | No     | Yes (balancing groups) |
 | Atomic groups         | Yes        | No         | Yes    | Yes  |
 | Possessive quantifiers| Yes        | No         | No     | Yes  |
 | Unicode properties    | Yes        | Yes        | Yes    | Yes  |
 | Named groups          | Yes        | Yes        | Yes    | Yes  |
 | Branch reset          | Yes        | No         | No     | No   |
+
+Two nuances that matter when transpiling to JavaScript: its lookbehind arrived with
+ES2018 and is unbounded - `/(?<=a+)b/` compiles where PCRE2 would refuse a branch
+longer than 255 characters - and .NET recursion means balancing groups, not `(?R)`
+or `(?1)`.
 
 ## PCRE-specific features
 
@@ -292,42 +292,7 @@ $pattern = '/a++b/';
 preg_match($pattern, 'aaaa!', $matches); // Fails quickly
 ```
 
-## PCRE best practices
-
-### 1. Use Delimiters
-
-```php
-// Always include delimiters
-$pattern = '/^hello$/i'; // Good
-$pattern = '^hello$';     // Bad - missing delimiters
-```
-
-### 2. Specify Flags
-
-```php
-// Common flags
-$pattern = '/hello/i';  // Case-insensitive
-$pattern = '/hello/s';  // Dot matches newline
-$pattern = '/hello/m';  // Multiline mode
-$pattern = '/hello/u';  // Unicode mode
-$pattern = '/hello/x';  // Extended (ignore whitespace)
-```
-
-### 3. Escape Special Characters
-
-```php
-// Escape regex metacharacters
-$literal = preg_quote('user@input.com', '/');
-$pattern = '/' . $literal . '/';
-```
-
-### 4. Use Raw Patterns
-
-```php
-// Use single quotes to avoid escaping
-$pattern = '/\d{3}-\d{4}/'; // Good
-$pattern = "/\d{3}-\d{4}/"; // Also works but harder to read
-```
+For the PHP basics - delimiters, pattern modifiers and `preg_quote()` - see the [Regex in PHP guide](../guides/regex-in-php.md).
 
 ## Related concepts
 

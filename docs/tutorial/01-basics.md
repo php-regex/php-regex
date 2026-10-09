@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Write your first PHP regex patterns — delimiters, flags and escaping — and validate and explain every one of them with PHPRegex before you run it."
+---
+
 # Chapter 1: Regex Basics
 
 > **Goal:** Write your first patterns and understand how regex works.
@@ -28,6 +33,12 @@ Think of a pattern like a **wanted poster** for text. You describe what you're l
 
 ## Your First Pattern
 
+The examples below use the PHPRegex facade. If you have not installed it yet, see [Before You Start](README.md#installation) — one `composer require` is enough. From here on, **every PHP block in this chapter assumes this import** at the top of your script:
+
+```php
+use PHPRegex\Toolkit\Regex;
+```
+
 ### The Simplest Pattern: Literal Text
 
 ```php
@@ -54,13 +65,20 @@ if ($result->isValid) {
     echo "Pattern is valid!\n";
 
     // See what it means
-    echo "Explanation: " . $regex->explain('/hello/') . "\n";
+    echo $regex->explain('/hello/') . "\n";
 }
 
 // Output:
 // Pattern is valid!
-// Explanation: Literal 'hello'
+// Regex matches
+//   'h'
+//   'e'
+//   'l'
+//   'l'
+//   'o'
 ```
+
+The explanation walks the pattern piece by piece — here, five literal characters, one per line.
 
 ### Using in PHP
 
@@ -107,8 +125,16 @@ preg_match($pattern, 'heLLo');        // Match: yes
 $regex = Regex::create();
 
 echo $regex->explain('/hello/i');
-// Output: "Literal 'hello' (case-insensitive)"
+// Output:
+// Regex matches (with flags: i)
+//   'h'
+//   'e'
+//   'l'
+//   'l'
+//   'o'
 ```
+
+The flags in use are announced on the first line — here the `i`.
 
 ---
 
@@ -127,14 +153,27 @@ Every PHP regex pattern needs **delimiters** - characters that mark the beginnin
 
 ### Valid Delimiters
 
+Any character that is **not alphanumeric, not a backslash and not whitespace** can serve as a delimiter. The most common choices:
+
 ```
 / # ~ % , ; : ! ' " ( ) [ ] { } < > |
 ```
 
+but `+ - . = @ * ?` and others work just as well.
+
 **Rules:**
 - Delimiter cannot be alphanumeric
-- Delimiter cannot be backslash `\`
+- Delimiter cannot be a backslash `\`
+- Delimiter cannot be whitespace
 - Opening and closing delimiter must match
+
+```php
+// Wrong: spaces cannot delimit — this is not a pattern
+preg_match(' hello ', 'hello');  // false ("Internal error")
+
+// Right: a real delimiter
+preg_match('/hello/', 'hello');  // 1
+```
 
 ### Example: URL Pattern
 
@@ -153,8 +192,30 @@ Every PHP regex pattern needs **delimiters** - characters that mark the beginnin
 $regex = Regex::create();
 
 echo $regex->explain('#https://example\.com#');
-// Output: "Literal 'https://example.com'"
+// Output:
+// Regex matches
+//   'h'
+//   't'
+//   't'
+//   'p'
+//   's'
+//   ':'
+//   '/'
+//   '/'
+//   'e'
+//   'x'
+//   'a'
+//   'm'
+//   'p'
+//   'l'
+//   'e'
+//   '.'
+//   'c'
+//   'o'
+//   'm'
 ```
+
+The escaped `\.` appears in the explanation as a plain `'.'` — it matched a literal dot, not "any character".
 
 ---
 
@@ -179,12 +240,14 @@ Some characters have special meaning in regex. To match them literally, use `\`:
 
 ### Without Escaping (Special Meaning)
 
-| Pattern | Meaning                           |
-|---------|-----------------------------------|
-| `/./`   | **Any single character**          |
-| `/^/`   | Start of string                   |
-| `/$/`   | End of string                     |
-| `/\*/`  | Zero or more (the `*` quantifier) |
+| Pattern | Meaning                              |
+|---------|--------------------------------------|
+| `/./`   | **Any single character**             |
+| `/^/`   | Start of string                      |
+| `/$/`   | End of string                        |
+| `/a*/`  | Zero or more `a`s (the `*` quantifier) |
+
+The quantifiers need something to repeat: `a*` is "zero or more `a`s". The pattern `/*/` is not that — `\*` is the *escaped* form from the table above, a literal star.
 
 ### Try It
 
@@ -193,10 +256,14 @@ $regex = Regex::create();
 
 // Literal dot vs any character
 echo $regex->explain('/\./');
-// Output: "Literal '.'"
+// Output:
+// Regex matches
+//   '.'
 
 echo $regex->explain('/./');
-// Output: "Any single character"
+// Output:
+// Regex matches
+//   Wildcard: any character (may or may not match line terminators)
 ```
 
 ---
@@ -331,21 +398,25 @@ echo $regex->explain('/\$\d+\.\d{2}/');
 
 ## Common Errors
 
-### Error: "Unknown modifier"
+### Error: Unknown regex flag(s) found: "a"
 
 ```php
-// Wrong: /hello/a is invalid
+// Wrong: 'a' after the closing / is read as a flag — and no such flag exists
 $result = $regex->validate('/hello/a');
+echo $result->error;
+// Output: Unknown regex flag(s) found: "a"
 
-// Right: Put flags after the closing /
+// Right: Put real flags after the closing /
 $result = $regex->validate('/hello/i');
 ```
 
-### Error: "Unmatched parentheses"
+### Error: Expected ) at end of input (found eof)
 
 ```php
 // Wrong: Unclosed parenthesis
 $result = $regex->validate('/(hello/');
+echo $result->error;
+// Output: Expected ) at end of input (found eof)
 
 // Right: Matching parentheses
 $result = $regex->validate('/(hello)/');

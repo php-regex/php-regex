@@ -1,3 +1,7 @@
+---
+permalink: /nodes/
+description: "Every AST node type in PHPRegex with its fields and runnable examples — groups, quantifiers, classes, verbs — and the position rules all nodes share."
+---
 # AST Node Reference
 
 This reference documents every node type in the PHPRegex AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
@@ -95,9 +99,9 @@ $newSequence = new SequenceNode($newChildren, $sequence->startPosition, $sequenc
 
 **Fields:**
 
-| Field          | Type  | Description                        |
-|----------------|-------|------------------------------------|
-| `alternatives` | array | Array of SequenceNode alternatives |
+| Field          | Type  | Description                                                   |
+|----------------|-------|---------------------------------------------------------------|
+| `alternatives` | array | The alternative nodes: a multi-item branch is a `SequenceNode`, a single atom stands bare |
 
 **Example:**
 ```php
@@ -107,8 +111,11 @@ $ast = Regex::create()->parse('/foo|bar|baz/');
 $alternation = $ast->pattern;
 
 foreach ($alternation->alternatives as $index => $alt) {
-    echo "Alternative $index: ";
-    echo $alt->children[0]->value . "\n";
+    $text = '';
+    foreach ($alt->children as $child) {
+        $text .= $child->value;
+    }
+    echo "Alternative $index: $text\n";
 }
 // Output:
 // Alternative 0: foo
@@ -118,20 +125,17 @@ foreach ($alternation->alternatives as $index => $alt) {
 
 **Common Errors:**
 ```php
-// WRONG: Assuming alternation contains LiteralNodes
-// Pattern: /foo|bar/ contains SEQUENCE nodes, not literals!
+// WRONG: Assuming every alternative is a SequenceNode
+// Pattern: /a|b/ holds two bare LiteralNodes, one per alternative;
+// only a multi-item branch such as "foo" in /foo|bar/ is a SequenceNode.
 foreach ($alternation->alternatives as $alt) {
-    // This crashes if alternative has multiple children
-    echo $alt->children[0]->value;  // Safe for single-char alternatives
+    echo $alt->children[0]->value;  // fails on /a|b/: a LiteralNode has no children
 }
 
-// RIGHT: Handle sequences
+// RIGHT: Compile an alternative when you need its text
+$printer = new \PHPRegex\Parser\Printer\PatternPrinter();
 foreach ($alternation->alternatives as $alt) {
-    $text = '';
-    foreach ($alt->children as $child) {
-        $text .= $child->value ?? '...';
-    }
-    echo $text . "\n";
+    echo $alt->accept($printer), "\n";  // 'a', 'b' for /a|b/
 }
 ```
 
@@ -176,9 +180,10 @@ use PHPRegex\Parser\Node\GroupType;
 $ast = Regex::create()->parse('/(?<year>\d{4})-(?<month>\d{2})/');
 $group = $ast->pattern->children[0];  // First child is GroupNode
 
-echo $group->type === GroupType::Named;  // true
-echo $group->name;  // 'year'
-echo $group->child->children[0]->value;  // '4 digits'
+echo $group->type === GroupType::Named;   // true
+echo $group->name;                        // 'year'
+echo $group->child->quantifier;           // '{4}' — the group holds a QuantifierNode over \d
+echo $group->child->node->value;          // 'd' — the CharTypeNode being quantified
 ```
 
 **Common Errors:**
@@ -202,13 +207,15 @@ echo $lookahead->type === GroupType::LookaheadPositive;  // true
 
 **Fields:**
 
-| Field        | Type           | Description                                     |
-|--------------|----------------|-------------------------------------------------|
-| `node`       | NodeInterface  | The node being quantified                       |
-| `quantifier` | string         | The quantifier string (e.g., `+`, `*`, `{2,5}`) |
-| `type`       | QuantifierType | Greedy, lazy, or possessive                     |
-| `min`        | int            | Minimum repetitions                             |
-| `max`        | int\|null      | Maximum repetitions (null = unbounded)          |
+| Field        | Type           | Description                                                       |
+|--------------|----------------|-------------------------------------------------------------------|
+| `node`       | NodeInterface  | The node being quantified                                         |
+| `quantifier` | string         | The quantifier token, without its greed suffix: `+`, `*`, `{2,4}` |
+| `type`       | QuantifierType | Greedy, lazy, or possessive — the greed suffix                    |
+
+The repetition bounds are not fields. `QuantifierBounds` parses them from the
+token — the same way the parser does, for `{n}`, `{n,}`, `{n,m}`, `{,m}` and
+the `*` / `+` / `?` shorthands alike.
 
 **Quantifier Types:**
 
@@ -221,14 +228,19 @@ echo $lookahead->type === GroupType::LookaheadPositive;  // true
 **Example:**
 ```php
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
 
 $ast = Regex::create()->parse('/a{2,4}?/');  // Lazy quantifier
 $quantifier = $ast->pattern;
 
-echo $quantifier->min;      // 2
-echo $quantifier->max;      // 4
+echo $quantifier->quantifier;  // '{2,4}' — the lazy '?' lives in the type
 echo $quantifier->type === QuantifierType::Lazy;  // true
+
+$bounds = QuantifierBounds::parse($quantifier->quantifier);
+echo $bounds->min;   // 2
+echo $bounds->max;   // 4
+var_dump($bounds->max);  // int(4); null when unbounded, as in '{2,}'
 ```
 
 **Common Errors:**
@@ -249,14 +261,14 @@ echo $quantifier->node->value;  // 'a'
 
 ### LiteralNode
 
-**Purpose:** Represents literal (unescaped) characters or escaped literal sequences.
+**Purpose:** One literal character — unescaped, or an escaped form of one (`\.`, `\-`): `value` holds the character itself.
 
 
 **Fields:**
 
-| Field   | Type   | Description      |
-|---------|--------|------------------|
-| `value` | string | The literal text |
+| Field   | Type   | Description                   |
+|---------|--------|-------------------------------|
+| `value` | string | The character itself, one long |
 
 **Example:**
 ```php
@@ -265,17 +277,22 @@ use PHPRegex\Toolkit\Regex;
 $ast = Regex::create()->parse('/hello/');
 $literal = $ast->pattern->children[0];
 
-echo $literal->value;  // 'hello'
+echo $literal->value;  // 'h'
 ```
 
 **Common Errors:**
 ```php
-// WRONG: Assuming LiteralNode only for single characters
-// Pattern: /hello/ creates ONE LiteralNode with value "hello"
-echo count($ast->pattern->children);  // 1 (one literal for "hello")
+// WRONG: Expecting one LiteralNode per run of text
+// The parser emits one LiteralNode per character: /hello/ holds five
+// ('h', 'e', 'l', 'l', 'o'), and /he l lo/ holds seven, spaces included.
+echo count($ast->pattern->children);  // 5 for /hello/
 
-// Pattern: /he l lo/ creates THREE LiteralNodes
-// "he", "l", "lo"
+// RIGHT: Concatenate the values when you need the text
+$text = '';
+foreach ($ast->pattern->children as $child) {
+    $text .= $child->value;
+}
+echo $text;  // 'hello'
 ```
 
 ---
@@ -295,12 +312,12 @@ echo count($ast->pattern->children);  // 1 (one literal for "hello")
 
 **CharLiteralType Values:**
 
-| Value           | Example                    | Description                  |
-|-----------------|----------------------------|------------------------------|
-| `UNICODE`       | `\x{1F600}`                | Unicode code point escape (`\x{...}`, `\u{...}`, `\uFFFF`, `\xFF`) |
-| `UNICODE_NAMED` | `\N{LATIN SMALL LETTER A}` | Named Unicode character      |
-| `OCTAL`         | `\o{141}`                  | Octal representation         |
-| `OCTAL_LEGACY`  | `\141`, `\012`             | Legacy octal: up to 3 octal digits, `\0` first or a number past the groups opened before it (`\101` before group 101 exists is `A`, `\1000` is `@` then `0`) |
+| Value                        | Example                    | Description                  |
+|------------------------------|----------------------------|------------------------------|
+| `Unicode`                    | `\x{1F600}`                | Unicode code point escape (`\x{...}`, `\u{...}`, `\uFFFF`, `\xFF`) |
+| `UnicodeNamed`               | `\N{LATIN SMALL LETTER A}` | Named Unicode character      |
+| `Octal`                      | `\o{141}`                  | Octal representation         |
+| `OctalLegacy`                | `\141`, `\012`             | Legacy octal: up to 3 octal digits, `\0` first or a number past the groups opened before it (`\101` before group 101 exists is `A`, `\1000` is `@` then `0`) |
 
 **Example:**
 ```php
@@ -311,6 +328,31 @@ $char = $ast->pattern;
 
 echo $char->codePoint;        // 128512
 echo $char->originalRepresentation;  // '\x{1F600}'
+```
+
+---
+
+### ControlCharNode
+
+**Purpose:** A control-character escape `\cX`: the letter after `\c`, as written, with the control code point it produces.
+
+
+**Fields:**
+
+| Field      | Type   | Description                            |
+|------------|--------|----------------------------------------|
+| `char`     | string | The letter after `\c`, as written      |
+| `codePoint`| int    | The control character it stands for    |
+
+**Example:**
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/\cM/');
+$ctrl = $ast->pattern;
+
+echo $ctrl->char;      // 'M'
+echo $ctrl->codePoint; // 13 — \cM is CR
 ```
 
 ---
@@ -400,8 +442,8 @@ preg_match('/./s', "\n", $matches);  // Match: yes
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/^foo$/');
-$startAnchor = $ast->pattern->children[0];
-$endAnchor = $ast->pattern->children[1];
+$startAnchor = $ast->pattern->children[0];  // the sequence starts with '^'
+$endAnchor = $ast->pattern->children[4];    // after 'f', 'o', 'o'
 
 echo $startAnchor->value;  // '^'
 echo $endAnchor->value;    // '$'
@@ -545,7 +587,7 @@ echo $range->end->value;    // 'z'
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/[[:digit:]]/');
-$posix = $ast->pattern;
+$posix = $ast->pattern->expression;  // the class content, under the CharClassNode
 
 echo $posix->class;  // 'digit'
 ```
@@ -559,10 +601,10 @@ echo $posix->class;  // 'digit'
 
 **Fields:**
 
-| Field       | Type   | Description                       |
-|-------------|--------|-----------------------------------|
-| `prop`      | string | The property specifier            |
-| `hasBraces` | bool   | True for `\p{L}`, false for `\pL` |
+| Field       | Type   | Description                                        |
+|-------------|--------|----------------------------------------------------|
+| `prop`      | string | The property specifier, as written (`{L}`, `L`)    |
+| `hasBraces` | bool   | True for `\p{L}`, false for `\pL`                  |
 
 **Common Unicode Properties:**
 
@@ -582,9 +624,9 @@ echo $posix->class;  // 'digit'
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/^\p{L}+$/u');  // Unicode letters only
-$prop = $ast->pattern->children[0];
+$prop = $ast->pattern->children[1]->node;  // the \p{L} under its '+' quantifier
 
-echo $prop->prop;       // 'L'
+echo $prop->prop;       // '{L}' — kept as written; bare '\pL' would give 'L'
 echo $prop->hasBraces;  // true
 ```
 
@@ -640,7 +682,7 @@ use PHPRegex\Toolkit\Regex;
 $ast = Regex::create(['pcre_version' => '10.45'])->parse('/(?[ \p{L} - [aeiou] ])/u');
 $difference = $ast->pattern->expression;
 
-echo $difference->operator->name;  // 'DIFFERENCE'
+echo $difference->operator->name;  // 'Difference'
 ```
 
 ---
@@ -654,9 +696,9 @@ echo $difference->operator->name;  // 'DIFFERENCE'
 
 **Fields:**
 
-| Field | Type   | Description              |
-|-------|--------|--------------------------|
-| `ref` | string | The group number or name |
+| Field | Type   | Description                                       |
+|-------|--------|---------------------------------------------------|
+| `ref` | string | The group number or name, as written (`\1`, `\k<name>`) |
 
 **Example:**
 ```php
@@ -665,8 +707,11 @@ use PHPRegex\Toolkit\Regex;
 $ast = Regex::create()->parse('/(\w+)\1/');  // Match doubled word
 $backref = $ast->pattern->children[1];
 
-echo $backref->ref;  // '1'
+echo $backref->ref;  // '\1' — the reference keeps its original spelling
 ```
+
+The same node serves as a conditional's group test, where `ref` holds the bare
+number: in `/(?(1)b|c)/` the condition is a `BackrefNode` whose `ref` is `'1'`.
 
 **Common Errors:**
 ```php
@@ -704,10 +749,36 @@ or `R2`, before or after the condition: `/(?<R2>a)(?(R2)b|c)/` holds a
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(a)?(?(1)b|c)/');  // If 'a' captured, expect 'b'; else expect 'c'
-$conditional = $ast->pattern;
+$conditional = $ast->pattern->children[1];  // after the quantified (a)?
 
 echo $conditional->condition instanceof \PHPRegex\Parser\Node\BackrefNode;  // true
 echo $conditional->condition->ref;  // '1'
+echo $conditional->yes->value;      // 'b'
+```
+
+---
+
+### VersionConditionNode
+
+**Purpose:** The PCRE2 version condition, `(?(VERSION=10.44)...)` or `(?(VERSION>=10.44)...)`: the engine tests its own version before choosing a branch.
+
+
+**Fields:**
+
+| Field     | Type   | Description                          |
+|-----------|--------|--------------------------------------|
+| `operator`| string | `=` or `>=`                          |
+| `version` | string | The version compared against         |
+
+**Example:**
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/(?(VERSION>=10.44)a|b)/');
+$condition = $ast->pattern->condition;  // the ConditionalNode's condition
+
+echo $condition->operator;  // '>='
+echo $condition->version;   // '10.44'
 ```
 
 ---
@@ -719,10 +790,10 @@ echo $conditional->condition->ref;  // '1'
 
 **Fields:**
 
-| Field       | Type   | Description              |
-|-------------|--------|--------------------------|
-| `reference` | string | The group number or name |
-| `syntax`    | string | The original syntax used |
+| Field       | Type   | Description                                                       |
+|-------------|--------|-------------------------------------------------------------------|
+| `reference` | string | The group number or name                                          |
+| `syntax`    | string | The call marker: `''` for `(?1)`, `'&'` for `(?&name)`, `'g'` for `\g{...}`, `'P>'` for `(?P>name)` |
 
 **Example:**
 ```php
@@ -730,10 +801,15 @@ use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/(?<paren>\((?:[^()]++|(?&paren))*\))/');
 // Match balanced parentheses using recursion
-$subroutine = $ast->pattern->children[0]->child->children[1];  // The (?&paren) part
+$subroutine = $ast->pattern              // the (?<paren>...) group
+    ->child                              // its sequence: \( ... \)
+    ->children[1]                        // the quantified (?:...)*
+    ->node                               // the non-capturing group
+    ->child                              // the alternation [^()]++ | (?&paren)
+    ->alternatives[1];                   // the (?&paren) call
 
 echo $subroutine->reference;  // 'paren'
-echo $subroutine->syntax;     // '?&paren'
+echo $subroutine->syntax;     // '&', the (?&name) call marker
 ```
 
 ---
@@ -790,7 +866,7 @@ echo $define->content instanceof \PHPRegex\Parser\Node\SequenceNode;  // true
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo(*FAIL)bar/');
-$verb = $ast->pattern->children[1];
+$verb = $ast->pattern->children[3];  // after 'f', 'o', 'o'
 
 echo $verb->verb;  // 'FAIL'
 ```
@@ -846,6 +922,85 @@ var_dump($run->atomic);     // bool(true)
 
 ---
 
+### KeepNode
+
+**Purpose:** The `\K` keep assertion: everything matched before it stays out of the reported match, which starts at this position instead. It is zero-width, and does not change the length range of a match (see [LengthRangeCalculator](../visitors/README.md#lengthrangecalculator)).
+
+**Fields:** none of its own — every node carries `startPosition` and `endPosition`.
+
+**Example:**
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/foo\Kbar/');
+$keep = $ast->pattern->children[3];  // after 'f', 'o', 'o'
+
+var_dump($keep instanceof \PHPRegex\Parser\Node\KeepNode);  // bool(true)
+```
+
+---
+
+### CommentNode
+
+**Purpose:** A comment in the pattern: a `(?#...)` group, or a `# ...` line under the `x` flag.
+
+
+**Fields:**
+
+| Field      | Type   | Description                                       |
+|------------|--------|---------------------------------------------------|
+| `comment`  | string | The comment text, as written                      |
+| `extended` | bool   | True for a `# ...` line under `x`, false for `(?#...)` |
+
+**Example:**
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/a(?# a note)b/');
+$comment = $ast->pattern->children[1];
+
+echo $comment->comment;         // ' a note'
+var_dump($comment->extended);   // bool(false)
+
+$ast = Regex::create()->parse('/a # trailing note/x');
+$comment = $ast->pattern->children[1];
+
+echo $comment->comment;         // '# trailing note'
+var_dump($comment->extended);   // bool(true)
+```
+
+---
+
+### CalloutNode
+
+**Purpose:** A callout — `(?C)`, `(?C1)` or `(?C"name")` — where PCRE2 hands control to the embedder's callback mid-match.
+
+
+**Fields:**
+
+| Field                | Type              | Description                              |
+|----------------------|-------------------|------------------------------------------|
+| `identifier`         | int\|string\|null | The callout number or name, null for `(?C)` |
+| `isStringIdentifier` | bool              | Whether the identifier was a quoted name |
+
+**Example:**
+```php
+use PHPRegex\Toolkit\Regex;
+
+$ast = Regex::create()->parse('/a(?C1)b(?C"tag")/');
+$numbered = $ast->pattern->children[1];
+
+var_dump($numbered->identifier);          // int(1)
+var_dump($numbered->isStringIdentifier);  // bool(false)
+
+$named = $ast->pattern->children[3];
+
+var_dump($named->identifier);          // string(3) "tag"
+var_dump($named->isStringIdentifier);  // bool(true)
+```
+
+---
+
 ## Supporting Types
 
 ### NodeInterface
@@ -873,41 +1028,58 @@ interface NodeInterface
 | `endPosition`   | int  | Offset in pattern where node ends   |
 
 **Position Reference:**
+
+Positions are byte offsets into the pattern body — the text between the
+delimiters, flags excluded — and they are 0-based. `endPosition` is exclusive:
+one past the node's last byte.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $ast = Regex::create()->parse('/foo/');
 $literal = $ast->pattern->children[0];
 
-echo $literal->startPosition;  // 1 (after '/')
-echo $literal->endPosition;    // 4 (position of last 'o' + 1)
-echo strlen('/foo/');          // 6
-echo $literal->startPosition;  // positions are 0-based
+echo $literal->startPosition;  // 0 — the body 'foo' starts at 0
+echo $literal->endPosition;    // 1 — one past the node's single byte
+
+echo $ast->pattern->children[2]->endPosition;  // 3, the body's length
 ```
 
 ---
 
 ## Quick Reference Table
 
-| Node              | Purpose         | Key Fields                                 |
-|-------------------|-----------------|--------------------------------------------|
-| `RegexNode`       | Root of AST     | `delimiter`, `pattern`, `flags`            |
-| `SequenceNode`    | Ordered list    | `children[]`                               |
-| `AlternationNode` | Branches        | `alternatives[]`                           |
-| `GroupNode`       | Grouping        | `child`, `type`, `name`                    |
-| `QuantifierNode`  | Repetition      | `node`, `quantifier`, `type`, `min`, `max` |
-| `LiteralNode`     | Literal text    | `value`                                    |
-| `CharLiteralNode` | Escaped char    | `codePoint`, `type`                        |
-| `CharTypeNode`    | Type escape     | `value`                                    |
-| `DotNode`         | Any char        | (none)                                     |
-| `AnchorNode`      | Position anchor | `value`                                    |
-| `AssertionNode`   | Assertion       | `value`                                    |
-| `CharClassNode`   | Character set   | `expression`, `isNegated`                  |
-| `RangeNode`       | Range in class  | `start`, `end`                             |
-| `ExtendedCharClassNode` | Extended class | `expression`                        |
-| `ClassSetOperationNode` | Set operation  | `operator`, `left`, `right`         |
-| `BackrefNode`     | Backreference   | `ref`                                      |
-| `ConditionalNode` | Conditional     | `condition`, `yes`, `no`                   |
+| Node                       | Purpose          | Key Fields                                |
+|----------------------------|------------------|-------------------------------------------|
+| `RegexNode`                | Root of AST      | `delimiter`, `pattern`, `flags`           |
+| `SequenceNode`             | Ordered list     | `children[]`                              |
+| `AlternationNode`          | Branches         | `alternatives[]`                          |
+| `GroupNode`                | Grouping         | `child`, `type`, `name`, `flags`          |
+| `QuantifierNode`           | Repetition       | `node`, `quantifier`, `type`              |
+| `LiteralNode`              | Literal char     | `value`                                   |
+| `CharLiteralNode`          | Escaped char     | `codePoint`, `type`                       |
+| `ControlCharNode`          | `\cX` escape     | `char`, `codePoint`                       |
+| `CharTypeNode`             | Type escape      | `value`                                   |
+| `DotNode`                  | Any char         | (none)                                    |
+| `AnchorNode`               | Position anchor  | `value`                                   |
+| `AssertionNode`            | Assertion        | `value`                                   |
+| `KeepNode`                 | `\K` keep        | (none)                                    |
+| `CharClassNode`            | Character set    | `expression`, `isNegated`                 |
+| `RangeNode`                | Range in class   | `start`, `end`                            |
+| `PosixClassNode`           | `[:alpha:]` etc. | `class`                                   |
+| `UnicodePropNode`          | `\p{...}`        | `prop`, `hasBraces`                       |
+| `ExtendedCharClassNode`    | Extended class   | `expression`, `text`                      |
+| `ClassSetOperationNode`    | Set operation    | `operator`, `left`, `right`               |
+| `BackrefNode`              | Backreference    | `ref`                                     |
+| `ConditionalNode`          | Conditional      | `condition`, `yes`, `no`                  |
+| `VersionConditionNode`     | VERSION test     | `operator`, `version`                     |
+| `SubroutineNode`           | Group call       | `reference`, `syntax`                     |
+| `DefineNode`               | `(?DEFINE...)`   | `content`                                 |
+| `CommentNode`              | Comment          | `comment`, `extended`                     |
+| `CalloutNode`              | `(?C...)`        | `identifier`, `isStringIdentifier`        |
+| `PcreVerbNode`             | `(*VERB)`        | `verb`                                    |
+| `LimitMatchNode`           | `(*LIMIT_MATCH=)`| `limit`                                   |
+| `ScriptRunNode`            | `(*sr:...)`      | `script`, `content`, `atomic`             |
 
 ---
 
@@ -916,7 +1088,8 @@ echo $literal->startPosition;  // positions are 0-based
 Understanding nodes is essential for working with the AST directly. Key takeaways:
 
 1. **Nodes are immutable** — create new instances to transform
-2. **Positions are important** — preserved for diagnostics
-3. **GroupNode is versatile** — handles many group types
-4. **QuantifierNode has types** — greedy, lazy, possessive
-5. **Character classes are complex** — can contain ranges, operations, POSIX classes
+2. **Positions are important** — 0-based byte offsets into the pattern body, preserved for diagnostics
+3. **Literals are per character** — one `LiteralNode` per character, escaped or not
+4. **GroupNode is versatile** — handles many group types
+5. **QuantifierNode has types** — greedy, lazy, possessive; bounds come from `QuantifierBounds`
+6. **Character classes are complex** — can contain ranges, operations, POSIX classes

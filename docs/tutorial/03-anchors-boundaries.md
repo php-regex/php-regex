@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Control where matches occur with ^, $, \\A, \\z and word boundaries — including why $ also matches before a final newline, and when to prefer \\z."
+---
+
 # Chapter 3: Anchors and Boundaries
 
 > **Goal:** Control where your pattern matches using start/end markers and word boundaries.
@@ -22,11 +27,11 @@ Pattern: /world$/
 
 ### Real-World Analogy
 
-| Anchor | Analogy           | Matches                   |
-|--------|-------------------|---------------------------|
-| `^`    | Start of the line | Beginning of text         |
-| `$`    | End of the line   | End of text               |
-| `\b`   | Fence post        | Between word and non-word |
+| Anchor | Analogy           | Matches                                               |
+|--------|-------------------|-------------------------------------------------------|
+| `^`    | Start of the line | Start of the string (or of any line, with `/m`)       |
+| `$`    | End of the line   | End of the string (or of any line, with `/m`)         |
+| `\b`   | Fence post        | Between word and non-word                             |
 
 ---
 
@@ -84,10 +89,10 @@ Unlike `^`, `\A` never matches at line boundaries (even with `/m` flag):
 $text = "line1\nline2\nline3";
 
 // ^ matches at start of ANY line with /m
-preg_match('/^line/m', $text);  // Match: yes (line1)
+preg_match('/^line2/m', $text);  // Match: yes (line2 starts a line)
 
 // \A ONLY matches at the absolute start
-preg_match('/\Aline/m', $text); // Match: yes (line1 only)
+preg_match('/\Aline2/m', $text); // Match: no (the string starts with line1)
 ```
 
 ### `\z` - End of Subject (Always)
@@ -104,6 +109,18 @@ preg_match('/line3$/m', $text);  // Match: yes
 preg_match('/line3\z/m', $text); // Match: yes
 preg_match('/line2\z/m', $text); // Match: no (not at absolute end)
 ```
+
+### The Trailing-Newline Trap
+
+Even **without** `/m`, `$` matches in one extra place: just before a single newline at the very end of the string.
+
+```php
+// The subject is "hello\n" — six characters
+preg_match('/^hello$/', "hello\n");  // Match: yes! ($ also matches before the final newline)
+preg_match('/^hello\z/', "hello\n"); // Match: no  (\z matches at the very end only)
+```
+
+If you validate user input with `/^...$/`, a trailing newline slips through. When "the whole input, exactly" is what you mean, `\A...\z` is the honest spelling. `\Z` sits between the two: like `$` without `/m`, it matches at the end of the string **or** before one final newline.
 
 ### When to Use Absolute Anchors
 
@@ -274,10 +291,10 @@ foreach ($patterns as $pattern) {
 ## Key Takeaways
 
 1. **Anchors** `^`, `$`, `\A`, `\z` match positions, not characters
-2. **`^`** matches start of string (every line with `/m`)
-3. **`$`** matches end of string (every line with `/m`)
-4. **`\A`** always matches absolute start
-5. **`\z`** always matches absolute end
+2. **`^`** matches the start of the string (or of any line, with `/m`)
+3. **`$`** matches the end of the string (or of any line, with `/m`) — and, even alone, just before a final newline
+4. **`\A`** always matches the absolute start
+5. **`\z`** always matches the absolute end (`\Z`: end, or before a final newline)
 6. **`\b`** matches word boundaries (between `\w` and `\W`)
 7. **Combine anchors** `^` and `$` for exact matches
 
@@ -306,6 +323,16 @@ preg_match('/line2$/m', $text);  // Match: yes (line2 is end of a line)
 
 // \z only matches the absolute end
 preg_match('/line2\z/m', $text); // Match: no (line2 is not at end)
+```
+
+The same trap without `/m`: a single newline at the end of the string.
+
+```php
+// $ matches before the final newline
+preg_match('/^hello$/', "hello\n");  // Match: yes
+
+// \z does not
+preg_match('/^hello\z/', "hello\n"); // Match: no
 ```
 
 ### Error: Word Boundary Confusion

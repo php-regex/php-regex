@@ -26,3 +26,10 @@ defaults:
       type: pages
     values:
       layout: default
+  # The tutorial track navigates within itself: sidebar, pager and
+  # breadcrumb read nav-tutorial.yml, not the global nav.
+  - scope:
+      path: "tutorial"
+      type: pages
+    values:
+      layout: tutorial

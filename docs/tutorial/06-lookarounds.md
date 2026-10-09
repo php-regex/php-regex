@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Match context without consuming it: the four lookaround types, zero-width behavior, and PCRE's bounded-lookbehind rule with its per-PHP-version limits."
+---
+
 # Chapter 6: Lookarounds and Assertions
 
 > **Goal:** Match based on what comes before or after, without including it in the match.
@@ -40,8 +45,15 @@ echo $matches[0];  // "100" (USD is not included!)
 
 // Match words followed by a number
 preg_match('/\w+(?=\d)/', 'test123', $matches);
+echo $matches[0];  // "test12" — \w+ is greedy: it keeps the longest
+                   // prefix whose next character is still a digit
+
+// Lazy \w+? starts small instead — the shortest prefix followed by a digit
+preg_match('/\w+?(?=\d)/', 'test123', $matches);
 echo $matches[0];  // "test"
 ```
+
+The greedy/lazy distinction matters here more than anywhere: the lookahead only checks the position where the previous part stopped.
 
 #### Negative Lookahead `(?!...)`
 
@@ -82,18 +94,6 @@ Match only if **NOT preceded by** something:
 preg_match('/(?<!\$)\d{3}/', 'cost: 100', $matches);
 echo $matches[0];  // "100"
 ```
-
----
-
-## Lookaround behavior example
-
-Text: `"price is $100"`
-
-Pattern: `/(?<=\$)\d+/`
-
-- The engine checks each digit position for a preceding `$`.
-- It matches `"100"`.
-- The `$` is asserted by the lookbehind but not included in the match.
 
 ---
 
@@ -171,7 +171,7 @@ if (!$result->isValid) {
 
 ### Good: Proper Lookarounds
 
-```php
+```
 // Match word before period (period not included)
 /\w+(?=\.)/
 
@@ -184,7 +184,7 @@ if (!$result->isValid) {
 
 ### Bad: Invalid or Confusing
 
-```php
+```
 // Unbounded lookbehind (invalid in PCRE)
 /(?<=a+)b/
 
@@ -210,7 +210,7 @@ For each pattern, what matches?
 
 ```php
 // Answers:
-// 1. "test" (word followed by digit)
+// 1. "test12" (greedy \w+ keeps the longest prefix followed by a digit)
 // 2. "50" (digits preceded by $)
 // 3. "hello" (word not followed by digit)
 ```
@@ -241,11 +241,11 @@ use PHPRegex\Toolkit\Regex;
 
 $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-$pattern = '/(?<=a{1,3})b/';
+$pattern = '/(?<=\d{2,4})\w/';  // Bounded: 2 to 4 digits
 $result = $regex->validate($pattern);
 echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 
-$pattern = '/(?<=a+)b/';
+$pattern = '/(?<=\d+)\w/';      // Unbounded
 $result = $regex->validate($pattern);
 echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 ```
@@ -268,16 +268,7 @@ echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 
 ### Error: Variable-Length Lookbehind
 
-```php
-// Invalid in PCRE
-preg_match('/(?<=a+)b/', 'aaab');  // Error: unbounded lookbehind
-
-// Valid: Specify bounds (a variable length needs PCRE2 10.43, bundled from PHP 8.4)
-preg_match('/(?<=a{1,10})b/', 'aaab');  // Match: yes
-
-// Valid on every PHP version: a fixed length
-preg_match('/(?<=a{3})b/', 'aaab');  // Match: yes
-```
+`/(?<=a+)b/` fails to compile — see [Lookbehind Limitations](#important-lookbehind-limitations) above. In short: give the lookbehind a bounded maximum (`(?<=a{1,3})b`, needs PCRE2 10.43 / PHP 8.4+) or a fixed length (`(?<=a{3})b`, works on every PHP version).
 
 ### Error: Forgetting Lookaround is Zero-Width
 
@@ -289,7 +280,7 @@ echo $matches[0];  // "5" (same position checked twice!)
 
 ### Error: Using Lookbehind When Lookahead Is Better
 
-```php
+```
 // Checking if "foo" comes after "bar"
 // Unnatural: Lookbehind reads backward (matches "foo")
 /(?<=bar)foo/

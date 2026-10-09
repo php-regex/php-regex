@@ -4,51 +4,30 @@
       url: /docs/
     - title: Quick Start
       url: /quick-start/
-    - title: Tutorial
+    - title: Regex 101 tutorial
       url: /tutorial/
-      pages:
-        - title: "01 · Regex basics"
-          url: /tutorial/01-basics/
-        - title: "02 · Character classes & escapes"
-          url: /tutorial/02-character-classes/
-        - title: "03 · Anchors & boundaries"
-          url: /tutorial/03-anchors-boundaries/
-        - title: "04 · Quantifiers & greediness"
-          url: /tutorial/04-quantifiers/
-        - title: "05 · Groups & alternation"
-          url: /tutorial/05-groups-alternation/
-        - title: "06 · Lookarounds & assertions"
-          url: /tutorial/06-lookarounds/
-        - title: "07 · Backreferences & recursion"
-          url: /tutorial/07-backreferences-recursion/
-        - title: "08 · Performance & ReDoS"
-          url: /tutorial/08-performance-redos/
-        - title: "09 · Testing & debugging"
-          url: /tutorial/09-testing-debugging/
-        - title: "10 · Real-world PHP"
-          url: /tutorial/10-real-world-php/
-- title: Use PHPRegex
+    - title: Regex in PHP
+      url: /guides/regex-in-php/
+- title: Integrations
   pages:
-    - title: CLI
-      url: /guides/cli/
     - title: PHPStan
       url: /guides/phpstan/
     - title: Psalm
       url: /guides/psalm/
     - title: Rector
       url: /guides/rector/
-    - title: LSP
-      url: /guides/lsp/
     - title: Laravel
       url: /guides/laravel/
     - title: Symfony
       url: /guides/symfony/
-    - title: Regex in PHP
-      url: /guides/regex-in-php/
-    - title: Cookbook
-      url: /cookbook/
+    - title: LSP
+      url: /guides/lsp/
+    - title: CLI
+      url: /guides/cli/
     - title: ReDoS guide
       url: /guides/redos/
+    - title: Cookbook
+      url: /cookbook/
     - title: Troubleshooting
       url: /troubleshooting/
 - title: Concepts
@@ -95,8 +74,10 @@
       url: /reference/sonar/
     - title: Logic solver
       url: /reference/logic-solver/
-    - title: FAQ & glossary
+    - title: FAQ and Glossary
       url: /reference/faq-glossary/
+    - title: External References
+      url: /reference/resources/
 - title: Internals
   pages:
     - title: Architecture
@@ -111,5 +92,3 @@
       url: /extending/
     - title: Maintainers guide
       url: /maintainers/
-    - title: External resources
-      url: /reference/resources/

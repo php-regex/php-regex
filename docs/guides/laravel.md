@@ -1,13 +1,22 @@
+---
+description: "Wire PHPRegex into a Laravel 12 app: the Regex service and facade, the regex:* artisan commands, lint targets, ReDoS findings and the 1.x upgrade."
+---
+
 # Laravel Guide
 
 The service provider registers a `Regex` service (and the `Regex` facade) for
 your application and the `php artisan regex:*` commands. Package discovery
 enables it on install.
 
-## Installation
+Requires Laravel 12 and PHP 8.2 or later.
+
+{% include install-prerelease.html package="php-regex/regex-laravel" %}
+
+Publishing the configuration is optional: a key missing from your file takes
+the package default, so publish it only to customize it:
 
 ```bash
-composer require --dev php-regex/regex-laravel
+# Optional: publish config/php-regex.php
 php artisan vendor:publish --tag=php-regex-config
 ```
 
@@ -69,6 +78,51 @@ The `automata` settings are the defaults of `regex:compare`; its
 An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`
 are not thresholds: they are the verdicts a pattern gets.
+
+## Using the service
+
+The `Regex` facade forwards to the `PHPRegex\Toolkit\Regex` service the
+provider registers:
+
+```php
+use PHPRegex\Laravel\Facades\Regex;
+
+Regex::validate('/^[a-z0-9-]{3,}$/')->isValid; // true
+
+$invalid = Regex::validate('/^(unclosed/');
+
+$invalid->error; // "Expected ) at end of input (found eof)"
+echo $invalid->caretSnippet;
+// Line 1: ^(unclosed
+//                   ^
+```
+
+Explain a pattern in plain English:
+
+```php
+echo Regex::explain('/^\d{4}$/');
+// Regex matches
+//   Anchor: the beginning of a line
+//     Character Type: A digit: [0-9] (exactly 4 times)
+//   Anchor: the end of a line
+```
+
+Check one for ReDoS:
+
+```php
+$analysis = Regex::redos('/^(a+)+$/');
+
+$analysis->isSafe();                  // false
+$analysis->severity->value;           // 'critical'
+$analysis->getVulnerableSubpattern(); // 'a+'
+$analysis->headline();                // 'Exponential backtracking (proven)'
+$analysis->witness->render();         // '"a" x n . "!"', the input that triggers it
+```
+
+The facade also exposes `parse`, `parseTolerant`, `analyze`, `optimize`,
+`highlight`, `literals`, `generate` and `parsePattern`; [the API
+reference](../reference/api.md) documents each. Type-hinting
+`PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
 ## The service and the lint judge for different targets
 

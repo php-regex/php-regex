@@ -1,4 +1,5 @@
 ---
+description: "Embed PHPRegex in your own tool: configuration options, the exception surface, machine-readable lint JSON for CI gates, and the wrapper and visitor integration patterns."
 redirect_from:
   - /MAINTAINERS_GUIDE/
   - /MAINTAINERS_GUIDE.html
@@ -7,12 +8,16 @@ redirect_from:
 
 This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PHPRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
 
+The PHP snippets below use the `Regex` facade, which ships in `regex-toolkit`. It needs PHP 8.2 or later and the `mbstring` extension (PCRE ships with PHP); the [Quick Start](quick-start.md) covers the first steps if you are new here.
+
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
 ## Contributor Checklist
 
 If you are new to the codebase, this short checklist helps you get oriented quickly:
 
 - Read [docs/architecture.md](architecture.md) and [docs/extending.md](extending.md).
-- Run `composer install` and verify `composer phpunit` passes before changes.
+- Install everything with `task -t taskfile.dist.yaml install` — Composer dependencies plus the dev tools, each in its own vendor under `tools/` — then verify `composer phpunit` passes before changes.
 - When touching Lexer/Parser or AST nodes, update relevant visitors and add tests.
 - Preserve byte offsets in diagnostics and update [docs/reference/diagnostics.md](reference/diagnostics.md) for new codes.
 - Keep docs in sync with behavior changes, especially [docs/reference/rules.md](reference/rules.md).
@@ -25,7 +30,7 @@ For first-time contributors, this is a good entry path:
 - Read `src/Parser/Lexer.php`, `src/Parser/Syntax/TokenParser.php`, and `src/Parser/Validation/Validator.php` for the core pipeline.
 - Use `tests/Fixtures/*` and `tests/Unit/*` to see real patterns and expected behavior.
 - Scan `tests/Fixtures/pcre_patterns.php` for real-world patterns to reuse in examples.
-- Run `vendor/bin/regex parse '/^hello$/'` and `vendor/bin/regex analyze '/(a+)+$/'` to connect CLI output with AST behavior.
+- Run `php src/Cli/bin/regex parse '/^hello$/'` and `php src/Cli/bin/regex analyze '/(a+)+$/'` from the repository root to connect CLI output with AST behavior (a Composer-installed dependency links the same binary as `vendor/bin/regex`).
 
 ## The Integration Landscape
 
@@ -124,7 +129,9 @@ $regex = Regex::create([
 ]);
 
 // FIX: Use valid version string or integer
-$regex = Regex::create(['php_version' => '8.2']);   // $regex = Regex::create(['php_version' => 80200]);   // (PHP_VERSION_ID)
+$regex = Regex::create(['php_version' => '8.2']);
+// or a PHP_VERSION_ID integer:
+$regex = Regex::create(['php_version' => 80200]);
 ```
 
 ---
@@ -139,10 +146,12 @@ Exception hierarchy (simplified):
     - `LexerException`
     - `ParserException`
       - `SyntaxErrorException`
-      - `SemanticErrorException`
-    - `RecursionLimitException`
-    - `ResourceLimitException`
-- `ExceptionInterface` (implemented by parser/lexer exceptions)
+      - `RecursionLimitException`
+      - `ResourceLimitException`
+    - `SemanticErrorException`
+- `InvalidRegexOptionException` extends `\InvalidArgumentException`, and `CacheException` extends `\RuntimeException` — both outside `RegexException`, both implementing `ExceptionInterface`
+
+Every exception above implements `ExceptionInterface`, the catch-all.
 
 Catch-all:
 - `ExceptionInterface`
@@ -150,6 +159,9 @@ Catch-all:
 Specific catches:
 - `LexerException`
 - `ParserException`
+
+Note that `SemanticErrorException` sits beside `ParserException`, directly
+under `RegexException`: a `catch (ParserException)` block does not intercept it.
 
 ### Exception Handling Examples
 
@@ -323,7 +335,8 @@ jobs:
         run: vendor/bin/regex lint src/ --format=json > regex-issues.json
       - name: Check for critical issues
         run: |
-          ERRORS=$(jq '[.results[] | .issues[] | select(.type == "error")] | length' regex-issues.json)
+          # "critical" and "error" both surface with severity "error" in the JSON
+          ERRORS=$(jq '[.results[] | .issues[] | select(.severity == "error")] | length' regex-issues.json)
           if [ "$ERRORS" -gt 0 ]; then
             echo "Found $ERRORS critical regex issues"
             cat regex-issues.json | jq '.results[] | select(.issues | length > 0) | {file, line, issues: [.issues[].message]}'
@@ -373,29 +386,15 @@ class RegexValidator
 
 ### Integration Pattern 2: Custom Visitor
 
+The full walkthrough of a typical visitor — the `LiteralCollector` class, what
+extending `AbstractTraversingVisitor` buys you, how to skip one subtree — lives
+in the [visitor reference](visitors/README.md#abstracttraversingvisitor). From
+an integration, the shape is:
+
 ```php
 namespace MyApp\Regex;
 
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\AbstractTraversingVisitor;
-use PHPRegex\Parser\Node;
-
-class LiteralCollector extends AbstractTraversingVisitor
-{
-    private array $literals = [];
-
-    public function visitLiteral(Node\LiteralNode $node)
-    {
-        $this->literals[] = $node->value;
-
-        return parent::visitLiteral($node);
-    }
-
-    public function getLiterals(): array
-    {
-        return $this->literals;
-    }
-}
 
 class PatternAnalyzer
 {
@@ -404,6 +403,7 @@ class PatternAnalyzer
         $ast = Regex::create()->parse($pattern);
         $visitor = new LiteralCollector();
         $ast->accept($visitor);
+
         return $visitor->getLiterals();
     }
 }
@@ -472,6 +472,7 @@ For long-running processes (daemons, workers), manage memory carefully:
 
 ```php
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Cache\FilesystemCache;
 
 class RegexProcessor
 {

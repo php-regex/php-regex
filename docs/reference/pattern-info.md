@@ -1,3 +1,7 @@
+---
+description: "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths — and the PHP and PCRE2 versions it is valid on."
+---
+
 # Pattern Info and Compatibility
 
 PCRE2 computes a handful of facts on every compiled pattern, through
@@ -21,7 +25,8 @@ $info->anchoredStart;  // true
 $info->anchoredEnd;    // true
 ```
 
-A static analysis extension needs only `php-regex/regex-parser`: the analyzer
+A static analysis extension needs only `php-regex/regex-parser`
+(`composer require php-regex/regex-parser`, PHP 8.2+ with `ext-mbstring`): the analyzer
 and its result live there. It reads a tree the parser built:
 
 ```php

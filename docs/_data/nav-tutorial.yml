@@ -1,0 +1,24 @@
+- title: Tutorial
+  pages:
+    - title: Introduction
+      url: /tutorial/
+    - title: "01 · Regex basics"
+      url: /tutorial/01-basics/
+    - title: "02 · Character classes & escapes"
+      url: /tutorial/02-character-classes/
+    - title: "03 · Anchors & boundaries"
+      url: /tutorial/03-anchors-boundaries/
+    - title: "04 · Quantifiers & greediness"
+      url: /tutorial/04-quantifiers/
+    - title: "05 · Groups & alternation"
+      url: /tutorial/05-groups-alternation/
+    - title: "06 · Lookarounds & assertions"
+      url: /tutorial/06-lookarounds/
+    - title: "07 · Backreferences & recursion"
+      url: /tutorial/07-backreferences-recursion/
+    - title: "08 · Performance & ReDoS"
+      url: /tutorial/08-performance-redos/
+    - title: "09 · Testing & debugging"
+      url: /tutorial/09-testing-debugging/
+    - title: "10 · Real-world PHP"
+      url: /tutorial/10-real-world-php/

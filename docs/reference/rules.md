@@ -1,52 +1,39 @@
 ---
-redirect_from:
-  - /reference.html
+description: "Every PHPRegex lint rule — when each fires, its message, its severity and its fix — from flags and anchors to ReDoS and Unicode byte traps."
 ---
 # PHPRegex Rule Reference
 
-This comprehensive reference documents every diagnostic, lint rule, and optimization that PHPRegex produces. It serves as the authoritative guide for understanding what PHPRegex checks and how to fix issues.
+This reference documents every lint rule that PHPRegex produces. It serves as the authoritative guide for understanding what PHPRegex checks and how to fix issues. Validation error codes live in [Diagnostics: Error Codes](diagnostics.md#error-codes), and the optimizer's rewrite suggestions in [the API reference](api.md).
 
 ## Table of Contents
 
 | Section                                      | Description                       |
 |----------------------------------------------|-----------------------------------|
-| [Validation Layers](#validation-layers)      | How PHPRegex analyzes patterns |
+| [Validation Layers](#validation-layers)      | How PHPRegex analyzes patterns    |
 | [Flags](#flags)                              | Flag-related diagnostics          |
 | [Anchors](#anchors)                          | Anchor positioning issues         |
 | [Quantifiers](#quantifiers)                  | Quantifier-related patterns       |
 | [Groups](#groups)                            | Group-related diagnostics         |
 | [Lookarounds](#lookarounds)                  | Lookahead contradictions          |
 | [Alternation](#alternation)                  | Alternation patterns              |
+| [Backreferences](#backreferences)            | Reference diagnostics             |
 | [Character Classes](#character-classes)      | Character class issues            |
 | [Escapes](#escapes)                          | Escape sequence problems          |
 | [Literals](#literals)                        | Literal text that reads badly     |
 | [Bytes Without /u](#bytes-without-u)        | Multibyte text read as bytes      |
 | [Inline Flags](#inline-flags)                | Inline flag diagnostics           |
+| [Pattern Complexity](#pattern-complexity)    | When a pattern is too complex     |
 | [ReDoS Security](#security-redos)            | Catastrophic backtracking         |
-| [Advanced Syntax](#advanced-syntax)          | Optimizations and assertions      |
+| [Advanced Syntax](#advanced-syntax)          | Pointers to the tutorial          |
 | [Compatibility](#compatibility--limitations) | PHP and PCRE2 support             |
-| [Diagnostics Catalog](#diagnostics-catalog)  | Error code reference     |
+| [Diagnostics Catalog](#diagnostics-catalog)  | Error code reference              |
+| [Quick Reference Table](#quick-reference-table) | One line per rule              |
 
 ---
 
 ## Validation Layers
 
-PHPRegex validates patterns through four layers, each catching different types of issues:
-
-```
-Pattern literal
-  -> Parse (Lexer + Parser): syntax errors, malformed patterns
-  -> Semantic validation: PCRE rules, group and reference checks
-  -> Runtime validation (optional): preg_match compilation
-  -> Linting & analysis: ReDoS, performance, best practices
-```
-
-Examples by layer:
-
-- Parse: unbalanced brackets, invalid escapes, missing delimiters
-- Semantic: unbounded lookbehinds, invalid backreferences, duplicate group names
-- Runtime: engine-specific compilation errors
-- Linting & analysis: ReDoS hotspots, risky quantifiers, optimization hints
+PHPRegex validates patterns through four layers — parse, semantic, runtime (optional), lint — each catching different types of issues. The diagram, one example per layer and the category each refused pattern carries live in [Diagnostics: Validation Layers](diagnostics.md#validation-layers). The layers below this one are the last of the four: the lint rules this page documents.
 
 ### PCRE2 Compatibility Contract
 
@@ -130,6 +117,8 @@ preg_match('/search_term/', $text);
 **Identifier:** `regex.lint.flag.useless.i`
 
 **When it triggers:** The pattern sets the `i` (case-insensitive) modifier but contains no case-sensitive characters.
+
+**Message:** `Flag 'i' is useless: the pattern contains no case-sensitive characters.`
 
 **Example:**
 ```php
@@ -681,6 +670,26 @@ preg_match('/^([a-z]+)(\d*)$/', 'abc123', $m);  // ["abc123", "abc", "123"]
 
 ---
 
+### Quantified Capturing Group
+
+**Identifier:** `regex.lint.group.quantifiedCapture`
+
+**When it triggers:** A repeatable quantifier (`*`, `+`, `{n,}`…) sits on a capturing group: each iteration overwrites the capture, and only the last one survives. An unnamed group is reported at info severity, a named one at warning.
+
+**Example:**
+```php
+// INFO: Quantified capturing group "(...)" with "+":
+//      only the last iteration's capture is retained.
+preg_match('/(a)+/', 'aaa', $m);  // $m is ["aaa", "a"]
+
+// PREFERRED: the repetition does not need to capture
+preg_match('/(?:a)+/', 'aaa', $m);
+```
+
+**Fix:** Use a non-capturing group `(?:...)` for the repetition and capture the whole match, or restructure the pattern.
+
+---
+
 ## Lookarounds
 
 ### Impossible Lookaround
@@ -782,6 +791,23 @@ preg_match('/a+b/', $input);  // Often equivalent
 
 ---
 
+### Dot or Newline Alternation
+
+**Identifier:** `regex.lint.alternation.dotNewline`
+
+**When it triggers:** An alternation reads `(.|\n)`, the anti-pattern for "any character including newlines". The dot already matches every character but a newline, so the branch adds nothing but a slower, two-way choice.
+
+**Example** (real `regex lint` output):
+```
+      → /(.|\n)/
+    WARN Alternation (.|\n) is an anti-pattern for matching any character including newlines.
+         ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
+```
+
+**Fix:** Use the `s` flag so the dot crosses newlines, or write `[\s\S]`.
+
+---
+
 ### Overlapping Character Sets
 
 **Identifier:** `regex.lint.overlap.charset`
@@ -825,6 +851,25 @@ preg_match('/(a)\1/', $input);
 ```
 
 **Fix:** Move the backreference after the capturing group or remove it if it adds no constraint.
+
+---
+
+### Undefined Backreference
+
+**Identifier:** `regex.lint.backref.undefined`
+
+**When it triggers:** A numbered or named backreference points to a group the pattern does not have: `\2` with a single group, `\k<name>` with no group of that name. A `\NN` of two digits or more that names no group and starts with an octal digit is an octal escape instead (`\11` is a tab), and is not reported. Validation refuses the same defect first (`regex.backref.missing_group`, `regex.backref.missing_named_group`), so `regex lint` reports the pattern as invalid; the lint id is what the linter reports on a parsed tree.
+
+**Example:**
+```php
+// FAIL (validation): Backreference to non-existent group: \2.
+preg_match('/(a)\2/', $input);
+
+// PREFERRED: refer to a group that exists
+preg_match('/(a)\1/', $input);
+```
+
+**Fix:** Number or name the group the reference points to, or drop the reference.
 
 ---
 
@@ -972,6 +1017,23 @@ preg_match('/^[\w\*]$/', '*');   // 1, not reported
 
 ---
 
+### Backreference Written Inside a Character Class
+
+**Identifier:** `regex.lint.charclass.backrefAsOctal`
+
+**When it triggers:** A class holds `\1`-`\9` while a group of that number exists. Inside a class the escape is octal, not a backreference: `[\1]` is the byte `\x01`. Without a group of that number the escape is plain octal and nothing is reported.
+
+**Example** (real `regex lint` output):
+```
+      → /(a)[\1]/
+    WARN Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
+         ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.
+```
+
+**Fix:** Match the same text as the group outside the class (`(a)\1`), or write the byte you mean (`[\x01]`).
+
+---
+
 ### Single-Character Class
 
 **Identifier:** `regex.lint.charclass.single` (off by default)
@@ -1006,23 +1068,20 @@ preg_match('/xay/', 'xay');    // 1
 
 **Identifier:** `regex.lint.escape.suspicious`
 
-**When it triggers:** Escapes that are likely typos or out-of-range values.
+**When it triggers:** An escape names a value PCRE cannot read: a `\x{...}` code point past U+10FFFF, an octal escape past `\377` in byte mode (`\777` without `/u`), or a `\N{name}` no character answers to (the name lookup needs `intl`). `\d` and the other shorthands are never suspicious, and `\8` is not an escape question at all: PCRE reads it as a backreference, and validation refuses it as `regex.backref.missing_group`.
 
-**Example:**
-```php
-// WARNING: Out of range Unicode
-preg_match('/\x{110000}/', $input);  // Max is 0x10FFFF
+The same defects are refused at validation first — `regex.unicode.out_of_range`, `regex.octal.out_of_range`, `regex.escape.unsupported` — so `regex lint` reports the pattern as invalid rather than printing a warning. The lint id is what the linter reports on a parsed tree.
 
-// FIX: Use valid code point
-preg_match('/\x{10FFFF}/', $input);
+**Example** (real `regex lint` output):
+```
+      → /\x{110000}/
+    FAIL Invalid Unicode codepoint "\x{110000}" (out of range).
 
-// WARNING: Suspicious escape
-preg_match('/\d/', $input);  // Valid: digit
-
-preg_match('/\8/', $input);  // Ambiguous: not a valid escape
+      → /\777/
+    FAIL Invalid legacy octal codepoint "\777" (out of range).
 ```
 
-**Fix:** Correct the codepoint or use valid escapes.
+**Fix:** Write a value in range: `\x{10FFFF}` under `/u`, `\777` under `/u`, or `\377` in byte mode.
 
 ---
 
@@ -1061,7 +1120,9 @@ code points.
 
 The three rules report at error severity: the pattern compiles, but does not do what it
 says, so `regex lint` exits with 1. Turn one off under `checks.lint.rules` in `regex.json`
-(`"unicode.multibyteInClassWithoutU": false`) when bytes are really meant.
+(`"unicode.multibyteInClassWithoutU": false`) when bytes are really meant. Two further
+rules watch byte mode: the braced hex escape PCRE2 refuses outright, and — off by
+default — the ASCII-only shorthands.
 
 ### Multibyte Character in a Class
 
@@ -1126,6 +1187,48 @@ preg_match('/^\p{L}+$/u', 'é');  // 1
 
 ---
 
+### Braced Hex Escape Without /u
+
+**Identifier:** `regex.lint.unicode.bracedHexWithoutU`
+
+**When it triggers:** A braced escape `\x{...}` names a code point above U+FF, and the pattern has neither `/u` nor `(*UTF)`. Unlike the three rules above, the pattern does not even compile in byte mode — PCRE2 refuses it — so validation reports it first, and the lint id names the same defect on a parsed tree, at error severity.
+
+**Example:**
+```php
+// FAIL (validation): Invalid code point "\x{100}":
+//      without the "u" flag, a character is at most \xFF.
+preg_match('/\x{100}/', $input);
+
+// PREFERRED
+preg_match('/\x{100}/u', $input);
+```
+
+**Fix:** Add `/u`.
+
+---
+
+### Unicode Shorthand Without /u
+
+**Identifier:** `regex.lint.unicode.shorthandWithoutU` (off by default)
+
+**When it triggers:** A `\w`, `\d`, `\s` or one of their negations runs without `/u`: each matches ASCII only, so `é` is no `\w` match. A style rule: turn it on with `"unicode.shorthandWithoutU": true` under `checks.lint.rules`, or `--enable-rule=unicode.shorthandWithoutU` on the command line.
+
+**Example** (real `regex lint` output):
+```
+      → /\w+/
+    INFO Shorthand "\w" matches only ASCII without /u flag.
+         ↳ Add /u flag for Unicode support, or use \p{L} for letters.
+```
+
+```php
+preg_match('/^\w+$/', 'é');    // 0: é is no ASCII word character
+preg_match('/^\w+$/u', 'é');   // 1
+```
+
+**Fix:** Add `/u`, or write the property you mean (`\p{L}`).
+
+---
+
 ## Inline Flags
 
 ### Inline Flag Redundant
@@ -1159,6 +1262,29 @@ preg_match('/(?-i:foo)/i', $input);
 // CONSIDER: Scope the flag instead
 preg_match('/(?i:foo)bar/', $input);
 ```
+
+---
+
+## Pattern Complexity
+
+### Complexity Threshold
+
+**Identifier:** `regex.lint.complexity`
+
+**When it triggers:** The analysis' complexity score for the pattern — the same number `Regex::validate()` returns as `complexityScore` — reaches the warning threshold, 50 by default.
+
+**Message:** `Pattern is complex (score: 74).` — here for `/((a|b)+c?){3}(x|y)*[0-9]{2,4}(p|q|r)+\s*z{5,}/`:
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$result = Regex::create()->validate('/((a|b)+c?){3}(x|y)*[0-9]{2,4}(p|q|r)+\s*z{5,}/');
+echo $result->complexityScore;  // 74
+```
+
+`regex lint` and the PHPStan rule leave this one out of their report: read the score itself. The Symfony route analysis reports it, with its own threshold under `php_regex.analysis.warning_threshold`.
+
+**Fix:** Split the pattern, or factor its repeated parts out.
 
 ---
 
@@ -1198,22 +1324,7 @@ preg_match('/(a++)+$/', $input);  // SAFE
 **Read more:**
 - [OWASP: Regular Expression Denial of Service](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 
-### Meaning That Changes Across PHP Versions
-
-**Identifier:** `regex.lint.compat.meaningChanges`
-
-**When it triggers:** `regex lint` judges a project over the PHP range of its `composer.json`.
-A pattern every version of the range accepts may still be parsed into another meaning by a
-later one: `/a{,3}/` is the text `a{,3}` under PCRE2 before 10.43 (PHP 8.2 and 8.3) and `a`
-zero to three times from 10.43 (PHP 8.4); `/a{ 2 }/` likewise. The warning names the first
-version that reads the pattern otherwise, under `target` in the JSON report. Changes that keep
-the parse and move the engine's semantics are not covered. `"compat.meaningChanges": false` in
-`checks.lint.rules` turns it off.
-
-**Message:** `From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.`
-
-**Fix:** Write the part that differs in a form every version reads alike: `a{0,3}` for the
-quantifier, `a\{,3}` for the text.
+---
 
 ### Quadratic Search
 
@@ -1240,81 +1351,14 @@ The two agree on the characters `\s` matches without `/u` in the default C local
 
 ## Advanced Syntax
 
-### Possessive Quantifiers
-
-**What they are:** Quantifiers with trailing `+` (`*+`, `++`, `?+`, `{m,n}+`) that consume text without backtracking.
-
-**Visual Comparison:**
-```
-Greedy: /".*"/
-  -> matches as much as possible
-  -> backtracks on failure
-
-Possessive: /".*+"/
-  -> matches as much as possible
-  -> never backtracks
-```
-
-**Example:**
-```php
-// Greedy: may backtrack heavily
-preg_match('/".*"/', $input);
-
-// Possessive: consumes once and fails fast
-preg_match('/".*+"/', $input);
-```
-
----
-
-### Atomic Groups
-
-**What they are:** Groups of the form `(?>...)` that disallow backtracking into their contents once matched.
-
-**Example:**
-```php
-// Risky: catastrophic backtracking on repeated 'a'
-preg_match('/(a+)+!/', $input);
-
-// Atomic: once inside the group matches, it cannot backtrack
-preg_match('/(?>a+)+!/', $input);
-```
-
----
-
-### Assertions
-
-**What they are:** Zero-width lookarounds like `(?=...)` / `(?!...)` / `(?<=...)` / `(?<!...)`.
-
-**Example:**
-```php
-// Lookahead: require a trailing digit without consuming it
-preg_match('/^[A-Z]{2}(?=\d$)/', $input);
-
-// Lookbehind: ensure the match is preceded by "ID-"
-preg_match('/(?<=ID-)\d+/', $input);
-```
-
----
-
-## Real-World Patterns (from Fixtures)
-
-These examples are copied from `tests/Fixtures/pcre_patterns.php` to show the kinds of patterns PHPRegex parses in tests.
-
-### HTML Hex Entities
-
-```
-#(&\#x*)([0-9A-F]+);*#iu
-```
-
-Matches hex entities like `&#x1F4A9;`, capturing the prefix and hex digits. Case-insensitive (`i`) and Unicode-aware (`u`).
-
-### Nested [indent] Tags (Recursive)
-
-```
-#\[indent]((?:[^[]|\[(?!/?indent])|(?R))+)\[/indent]#
-```
-
-Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-enter the whole pattern.
+The fixes above lean on three constructs this reference does not teach from scratch:
+possessive quantifiers (`a++`), atomic groups (`(?>a+)`) and lookarounds
+(`(?=…)`, `(?<=…)`). The tutorial covers each in depth —
+[Quantifiers and Greediness](../tutorial/04-quantifiers.md) and
+[Performance and ReDoS](../tutorial/08-performance-redos.md) for the first two,
+[Lookarounds and Assertions](../tutorial/06-lookarounds.md) for the third, and
+[Backreferences, Subroutines, and Recursion](../tutorial/07-backreferences-recursion.md)
+for the recursive `(?R)` calls some fixes keep working.
 
 ---
 
@@ -1336,8 +1380,26 @@ Recursively matches nested `[indent]...[/indent]` blocks using `(?R)` to re-ente
 | Feature           | PCRE2        | Note                  |
 |-------------------|--------------|-----------------------|
 | `\p{...}` Unicode | Supported    |                       |
-| `\g{0}`           | Invalid      | Use `\g<0>` or `(?R)` |
 | Branch reset `(?\|...)` | Supported    | |
+
+---
+
+### Meaning That Changes Across PHP Versions
+
+**Identifier:** `regex.lint.compat.meaningChanges`
+
+**When it triggers:** `regex lint` judges a project over the PHP range of its `composer.json`.
+A pattern every version of the range accepts may still be parsed into another meaning by a
+later one: `/a{,3}/` is the text `a{,3}` under PCRE2 before 10.43 (PHP 8.2 and 8.3) and `a`
+zero to three times from 10.43 (PHP 8.4); `/a{ 2 }/` likewise. The warning names the first
+version that reads the pattern otherwise, under `target` in the JSON report. Changes that keep
+the parse and move the engine's semantics are not covered. `"compat.meaningChanges": false` in
+`checks.lint.rules` turns it off.
+
+**Message:** `From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.`
+
+**Fix:** Write the part that differs in a form every version reads alike: `a{0,3}` for the
+quantifier, `a\{,3}` for the text.
 
 ---
 
@@ -1386,4 +1448,4 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | ReDoS       | `regex.lint.redos` (`regex.redos` in PHPStan)                                             | warning; error when `--redos-mode=confirmed` reproduces a verdict at `high` or above or proves one it cannot replay | Use possessive quantifiers |
 | Targets     | `regex.lint.compat.meaningChanges`                                                        | warning  | Write it alike for every PHP      |
 | ReDoS       | `regex.lint.redos.search` (`regex.redos.search` in PHPStan)                               | warning in every mode; ReDoS severity `medium`, shown from `--redos-threshold=medium` | Anchor the pattern or bound the run |
-| Sources     | `regex.lint.source.unreadable`: a source file an extractor could not read, so the patterns it holds were not linted: a PHP file that cannot be read or does not fit in `memory_limit` (every `lint` command), or the `regex:` validation rules Laravel `regex:lint` reads | error | Fix what the message names: raise `memory_limit`, or exclude the file |
+| Sources     | `regex.lint.source.unreadable`                                                       | error    | A source file could not be read, so its patterns were not linted — fix what the message names: raise `memory_limit`, or exclude the file |

@@ -1,3 +1,6 @@
+---
+description: "One fix per common PHPRegex diagnostic: unbounded lookbehinds, bad backreferences, nested quantifiers, useless flags and delimiter traps."
+---
 # Diagnostics Cheat Sheet
 
 Fast fixes for the most common PHPRegex diagnostics. Use this as a quick reference when you encounter an issue.
@@ -6,7 +9,7 @@ Fast fixes for the most common PHPRegex diagnostics. Use this as a quick referen
 
 | Diagnostic                                                                  | Quick Fix                   |
 |-----------------------------------------------------------------------------|-----------------------------|
-| [Lookbehind is unbounded](#lookbehind-is-unbounded)                         | Add bounds or use lookahead |
+| [Lookbehind is unbounded](#lookbehind-is-unbounded)                         | Add bounds or use `\K`      |
 | [Backreference to non-existent group](#backreference-to-non-existent-group) | Check group numbers/names   |
 | [Duplicate group name](#duplicate-group-name)                               | Use unique names            |
 | [Invalid quantifier range](#invalid-quantifier-range)                       | Swap min/max                |
@@ -22,6 +25,8 @@ Fast fixes for the most common PHPRegex diagnostics. Use this as a quick referen
 | [Concatenated quantifiers](#concatenated-quantifiers)                       | Tighten or drop quantifier  |
 | [Useless flag](#useless-flag)                                               | Remove flag                 |
 | [Invalid delimiter](#invalid-delimiter)                                     | Use proper delimiter        |
+| [Delimiter inside a class or comment](#delimiter-inside-a-class-or-comment) | Escape it or change delimiter |
+| [Pattern Too Long](#pattern-too-long)                                       | Raise the limit or shorten  |
 
 ---
 
@@ -39,8 +44,8 @@ preg_match('/(?<=a{100})b/', $input);
 // FIX 2: Use a bounded quantifier (variable length needs PCRE2 10.43+, PHP 8.4)
 preg_match('/(?<=a{1,100})b/', $input);
 
-// FIX 3: Use lookahead instead
-preg_match('/(?=(a+))b\1/', $input);
+// FIX 3: Restart the match after the run
+preg_match('/a+\Kb/', $input);  // matches "b" on "aaab"
 ```
 
 ---
@@ -126,14 +131,13 @@ preg_match('/a+b/', $input);
 
 ```php
 // RISKY: .* in + repetition
-preg_match('/(?:.*)+x/', $input);
+preg_match('/(?:.*)+/', $input);
 
-// FIX 1: Make atomic or possessive
-preg_match('/(?>.*)x/', $input);
-preg_match('/.*+x/', $input);
+// FIX 1: A possessive dot-star reads the run once, no outer repetition
+preg_match('/.*+/', $input);
 
-// FIX 2: Use specific character class
-preg_match('/[^x]*x/', $input);  // If matching until 'x'
+// FIX 2: Use a specific character class
+preg_match('/[^x]*x/', $input);  // Reads up to the next 'x' at once
 ```
 
 ---
@@ -177,8 +181,8 @@ preg_match('/foo/', $input);
 // WARNING: Empty alternative
 preg_match('/foo|/', $input);
 
-// FIX: Use a quantifier instead
-preg_match('/foo?/', $input);
+// FIX: Use a quantifier instead — the whole branch becomes optional
+preg_match('/(?:foo)?/', $input);
 ```
 
 ---
@@ -303,21 +307,22 @@ preg_match('/^\d+$/x', $input);
 
 ## Invalid delimiter
 
-**Problem:** The delimiter character is not valid.
+**Problem:** The pattern opens with a character PHP refuses as a delimiter: alphanumeric, a backslash or a NUL byte.
 
 ```php
-// ERROR: Space not valid as delimiter
-preg_match('/^pattern $/', $input);
+// ERROR: "a" is alphanumeric and cannot delimit
+preg_match('a{2}b{2}a', $input);
+// PHP warning: Delimiter must not be alphanumeric, backslash, or NUL byte
 
-// FIX 1: Use valid delimiter
-preg_match('/^pattern$/', $input);
+// FIX 1: Use a non-alphanumeric delimiter
+preg_match('/a{2}b{2}a/', $input);
 
-// FIX 2: Escape the delimiter
-preg_match('!^pattern$!', $input);
-
-// FIX 3: Use different delimiter
-preg_match('#^pattern$#', $input);
+// FIX 2: Use a delimiter the pattern does not contain
+preg_match('#a{2}b{2}a#', $input);
 ```
+
+A space inside the pattern is not a delimiter problem: `/^pattern $/` is valid
+and matches `"pattern "` — the space is a literal character of the pattern.
 
 ---
 
@@ -344,6 +349,8 @@ preg_replace('#([[:alnum:]]+)://([[:alnum:]\#?/&=]+)#i', '<$0>', $text);
 **Problem:** Pattern exceeds configured maximum length.
 
 ```php
+use PHPRegex\Toolkit\Regex;
+
 // ERROR: Pattern too long
 preg_match('/very long pattern.../', $input);
 
@@ -360,7 +367,7 @@ $regex = Regex::create(['max_pattern_length' => 500000]);
 
 | Topic                 | Resource                                        |
 |-----------------------|-------------------------------------------------|
-| Rule reference        | [docs/reference.md](rules.md)            |
-| Diagnostics deep dive | [docs/reference/diagnostics.md](diagnostics.md) |
-| ReDoS patterns        | [ReDoS guide](../guides/redos.md)        |
-| API reference         | [docs/reference/api.md](api.md)                 |
+| Rule reference        | [Lint rule reference](rules.md)                 |
+| Diagnostics deep dive | [Diagnostics and error messages](diagnostics.md) |
+| ReDoS patterns        | [ReDoS guide](../guides/redos.md)               |
+| API reference         | [API reference](api.md)                         |

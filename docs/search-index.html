@@ -17,10 +17,7 @@ sitemap: false
   Not indexed:
     - the landing page (url "/"), the 404 page, and this file itself;
     - anything that is not an HTML page (the stylesheet, sitemap.xml,
-      robots.txt, redirects.json) or is a redirect placeholder page;
-    - reference/README.md: the readme-index plugin serves it under /reference/,
-      the same URL as reference.md, so only the latter is indexed and the
-      duplicate entry is dropped.
+      robots.txt, redirects.json) or is a redirect placeholder page.
 {% endcomment %}
 [
 {% assign emitted = false %}
@@ -32,11 +29,7 @@ sitemap: false
   {% if last_char == '/' or ext == 'html' %}
     {% assign html_page = true %}
   {% endif %}
-  {% assign duplicate_reference_index = false %}
-  {% if p.name == 'README.md' and p.dir == '/reference/' %}
-    {% assign duplicate_reference_index = true %}
-  {% endif %}
-  {% unless html_page == false or p.layout == 'redirect' or u == '/' or u contains '404' or u contains 'search-index' or duplicate_reference_index %}
+  {% unless html_page == false or p.layout == 'redirect' or u == '/' or u contains '404' or u contains 'search-index' %}
     {% if emitted %},{% endif %}{% assign emitted = true %}
     {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
   {% endunless %}

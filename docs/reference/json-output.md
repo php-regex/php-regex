@@ -1,6 +1,12 @@
+---
+description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile — frozen for all of 2.x."
+---
+
 # JSON Output
 
 The `regex` command prints JSON when it is given `--format=json` or `--json`.
+It ships in `php-regex/regex-cli` (`composer require --dev php-regex/regex-cli`,
+installed with the [CLI guide](../guides/cli.md)).
 These documents are part of the
 [backward compatibility promise](backward-compatibility.md): for all of 2.x,
 a key keeps its name, its type and its meaning. A minor release adds keys and
@@ -18,7 +24,9 @@ This page lists every key of every document.
 | `regex transpile` | the [transpile document](#transpile) |
 
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
-`regex:transpile` the same transpile document, with the same error envelope.
+`regex:transpile` the same transpile document, with the same error envelope —
+the commands come with their bundles ([Symfony](../guides/symfony.md),
+[Laravel](../guides/laravel.md)).
 An argument error their console framework catches before the command runs,
 such as an unknown option or a missing argument, is reported by the framework
 in its own form, not as the envelope.
@@ -49,7 +57,7 @@ in its own form, not as the envelope.
   and `--json` count wherever they sit on the command line, so a mistake in
   another option is reported as JSON too. An unknown command, or `--json`
   placed before the command, is reported as JSON as well. `"format": "json"`
-  in `regex.json` asks for JSON once `lint` reads its options: the report and
+  in [`regex.json`](../guides/cli.md#configuration-file) asks for JSON once `lint` reads its options: the report and
   the errors `lint` finds are JSON, but an error in a global option, read
   before `regex.json`, is reported as text unless the command line asks for
   JSON too.

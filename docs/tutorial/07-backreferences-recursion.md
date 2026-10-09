@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Reuse matched text with backreferences, replay group patterns with subroutines, recurse into nested structures, and write (?(group)yes|no) conditionals."
+---
+
 # Chapter 7: Backreferences, Subroutines, and Recursion
 
 > **Goal:** Match repeated patterns and create self-referential expressions.
@@ -80,6 +85,8 @@ preg_match($pattern, '[a[b]c]', $matches);
 echo $matches[0];  // "[a[b]c]"
 ```
 
+The `(?(DEFINE)...)` block parks groups on a shelf: nothing inside it matches on its own — only what comes after the block is matched against the subject. `(?&brackets)` then replays the shelved recipe wherever it is called.
+
 ---
 
 ## Recursion: Pattern Calls Itself
@@ -114,13 +121,15 @@ Text: `"(a(b)c)"`
 ### Basic Conditional `(?(group)yes|no)`
 
 ```php
-// If group 1 matched, require 'X', else require 'Y'
+// If group 1 matched, require 'b', else require 'c'
 $pattern = '/^(a)?(?(1)b|c)/';
 
 preg_match($pattern, 'ab', $matches);  // Match: yes (group 1=a, so 'b')
 preg_match($pattern, 'c', $matches);   // Match: yes (no group 1, so 'c')
 preg_match($pattern, 'ac', $matches);  // Match: no (group 1=a, expected 'b')
 ```
+
+The condition must reference a group that exists in the pattern — `(?(1)yes|no)` alone does not compile, because there is no group 1.
 
 ### Named Conditionals
 
@@ -149,22 +158,36 @@ preg_match_all($pattern, 'the the quick brown fox ran run', $matches);
 ### 2. Match HTML Tags
 
 ```php
-// Match opening and closing tag pairs
+// Opening tag, then a subroutine that replays the tag-name pattern
 $pattern = '/<(?<tag>\w+)[^>]*>(?:[^<]|(?<nested><(?&tag)[^>]*>)|(?<closing><\/(?&tag)>))*/';
 
-preg_match($pattern, '<div><span>text</span></div>', $matches);
-echo $matches[0];  // "<div><span>text</span></div>"
+preg_match($pattern, '<div><span>text</bogus></div>', $matches);
+echo $matches[0];  // "<div><span>text</bogus></div>"
 ```
+
+Careful with that result: `(?&tag)` replays the **pattern** `\w+`, not the name the group happened to capture — so `</bogus>` happily closes `<span>`. To force the closing tag to repeat the opening one, use a backreference:
+
+```php
+$pattern = '/<(?<tag>\w+)[^>]*>[^<]*<\/\k<tag>>/';
+
+preg_match($pattern, '<div>text</div>', $matches);   // Match: "<div>text</div>"
+preg_match($pattern, '<div>text</span>', $matches);  // Match: no (close must repeat the open)
+```
+
+This simpler pattern does not handle nesting — for nested markup, reach for a real HTML parser.
 
 ### 3. Validate Paired Delimiters
 
 ```php
-// Match text in balanced quotes (single or double)
-$pattern = '/(?<quote>[\'"])(?:(?&quote)|[^\\1])*\1/';
+// Match text between matching quotes (single or double)
+$pattern = '/(?<q>["\'])(?:(?!\k<q>).)*\k<q>/';
 
-preg_match($pattern, '"hello"', $matches);   // Match: yes
-preg_match($pattern, "'world'", $matches);   // Match: yes
+preg_match($pattern, '"hello"', $matches);          // Match: '"hello"'
+preg_match($pattern, "'world'", $matches);          // Match: "'world'"
+preg_match($pattern, '"say "hi" now"', $matches);   // Match: '"say "' — stops at the inner quote
 ```
+
+The engine is `(?!\k<q>).`: consume one character that is not the closing quote. Note what is **not** written: a backreference inside a character class. `[^\1]` looks like "any character except the group-1 match", but inside a class `\1` is the octal escape `\x01` — the class would mean "any character except chr(1)". A backreference only works where a match can be tested: outside classes.
 
 ---
 
@@ -179,21 +202,20 @@ preg_match($pattern, "'world'", $matches);   // Match: yes
 // Balanced parentheses with recursion
 '/\((?:[^()]|(?R))*\)/'
 
-// Conditional based on capture
-'/(?(1)yes|no)/'
+// Conditional based on an existing capture
+'/^(a)?(?(1)b|c)/'
 ```
 
 ### Bad: Complex or Dangerous
 
-```php
+```
 // Deep recursion without limits (ReDoS risk)
 /\((?:[^()]|(?R))*\)/  // On deeply nested input!
 
 // Overly complex conditionals
 '/(?(1)(?(2)(?(3)yes|no)|maybe)|no)/'
 
-// Missing base case in recursion
-// This will cause issues with certain inputs
+// Recursion without a base case — never matches, see Common Errors below
 ```
 
 ---
@@ -210,22 +232,22 @@ preg_match($pattern, 'test test', $matches);
 echo $matches[0];  // "test test"
 ```
 
-### Exercise 2: Match Balanced Parentheses
+### Exercise 2: Match Balanced Brackets
 
-Write a recursive pattern:
+Write a pattern that matches `[a[b]c]` using a named subroutine:
 
 ```php
-$pattern = '/\((?:[^()]|(?R))*\)/';
-preg_match($pattern, '(a(b)c)', $matches);
-echo $matches[0];  // "(a(b)c)"
+$pattern = '/(?(DEFINE)(?<brackets>\[(?:[^\[\]]|(?&brackets))*\]))(?&brackets)/';
+preg_match($pattern, '[a[b]c]', $matches);
+echo $matches[0];  // "[a[b]c]"
 ```
 
-### Exercise 3: Conditional Pattern
+### Exercise 3: Conditional on a Named Group
 
-Write a pattern that matches "ab" if there's an "a", or "c" otherwise:
+Write a pattern that matches "ab" when the group catches an "a", or "c" otherwise:
 
 ```php
-$pattern = '/(a)?(?(1)b|c)/';
+$pattern = '/(?<has_a>a)?(?(has_a)b|c)/';
 preg_match($pattern, 'ab', $m);  // Match: yes
 preg_match($pattern, 'c', $m);   // Match: yes
 ```
@@ -258,12 +280,15 @@ preg_match($pattern, 'c', $m);   // Match: yes
 ### Error: Missing Base Case in Recursion
 
 ```php
-// Infinite recursion risk
-'/(?:a|(?R))*/'  // Example match: "", "a", "aa" (may hang on some engines)
+// No branch can finish without recursing: every path calls (?R) again,
+// and the pattern dies with "JIT stack limit exhausted" instead of matching
+'/(?:a|(?R))*/'  // Matches nothing on any input — an error, not a match
 
-// With base case
-'/(?:a|(?R))+?/'  // Better controlled
+// Rule: a recursive pattern needs a branch that matches WITHOUT recursing
+'/\((?:[^()]|(?R))*\)/'  // [^()] is the base case
 ```
+
+A lazy quantifier does not add a base case: `/(?:a|(?R))+?/` fails exactly the same way.
 
 ### Error: Backreference Outside Group
 

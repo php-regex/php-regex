@@ -1,3 +1,7 @@
+---
+permalink: /reference/
+description: "The PHPRegex reference index: pick the right page by task — lint rules, diagnostics, the API surface, JSON output, capture shapes and the logic solver."
+---
 # Reference Index
 
 This section contains the reference material for PHPRegex. Use it when you need specific details, error codes, or API behavior.
@@ -12,6 +16,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - [JSON Output](json-output.md)
 - [Feature Support Matrix](feature-support-matrix.md)
 - [Correctness Contracts](correctness-contracts.md)
+- [Backward Compatibility Promise](backward-compatibility.md)
 - [Capture Shapes](capture-shapes.md)
 - [Pattern Info and Compatibility](pattern-info.md)
 - [Prefilters](prefilters.md)
@@ -31,13 +36,13 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ## Quick Access by Task
 
-- Understand a lint warning: [reference.md](rules.md)
-- Fix a validation error: [diagnostics-cheatsheet.md](diagnostics-cheatsheet.md)
-- Use the library in code: [api.md](api.md)
-- Read the JSON of the `regex` command: [json-output.md](json-output.md)
-- Know what `preg_match()` writes into `$matches`: [capture-shapes.md](capture-shapes.md)
-- Read a pattern's capture count, names, lengths and limits, or the PHP and PCRE2 versions it is valid on: [pattern-info.md](pattern-info.md)
-- Build a custom visitor: [../nodes/README.md](../nodes/README.md) and [../visitors/README.md](../visitors/README.md)
-- Learn regex patterns: [../tutorial/README.md](../tutorial/README.md)
-- Check ReDoS safety: [ReDoS guide](../guides/redos.md)
-- Compare two patterns (equivalence, intersection, subset) or get an example string: [logic-solver.md](logic-solver.md)
+- Understand a lint warning: [the lint rule reference](rules.md)
+- Fix a validation error: [the diagnostics cheat sheet](diagnostics-cheatsheet.md)
+- Use the library in code: [the API reference](api.md)
+- Read the JSON of the `regex` command: [the JSON output reference](json-output.md)
+- Know what `preg_match()` writes into `$matches`: [capture shapes](capture-shapes.md)
+- Read a pattern's capture count, names, lengths and limits, or the PHP and PCRE2 versions it is valid on: [pattern info and compatibility](pattern-info.md)
+- Build a custom visitor: [AST nodes](../nodes/README.md) and [AST visitors](../visitors/README.md)
+- Learn regex patterns: [the tutorial](../tutorial/README.md)
+- Check ReDoS safety: [the ReDoS guide](../guides/redos.md)
+- Compare two patterns (equivalence, intersection, subset) or get an example string: [the logic solver reference](logic-solver.md)

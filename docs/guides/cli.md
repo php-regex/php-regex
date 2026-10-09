@@ -1,21 +1,23 @@
+---
+description: "Install the PHPRegex CLI and drive it end to end: parse, explain, analyze and lint patterns, with every option, exit code, output format and CI recipe."
+---
+
 # CLI Guide
 
 This guide covers PHPRegex's command-line tool and the workflows it enables.
+The binary requires PHP 8.2 or later.
 
----
+{% include install-prerelease.html package="php-regex/regex-cli" %}
 
-## Quick Start
-
-### Installation
-
-**Via Composer (recommended):**
+Once installed, the binary is `vendor/bin/regex`:
 
 ```bash
-# After installing the package
 vendor/bin/regex --help
 ```
 
 **Via PHAR (standalone):**
+
+The PHAR needs no PHP project and no Composer:
 
 ```bash
 # Download the PHAR
@@ -64,7 +66,11 @@ PHPRegex CLI provides these commands:
 | `--silent`            | Same as `--quiet`                 |
 | `--php-version <ver>` | Target PHP version for validation |
 | `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
+| `--no-visuals`         | Disable banner and section visuals (aliases: `--no-art`, `--no-splash`) |
 | `--help`              | Show help                         |
+
+Options may come before or after the pattern; `--` ends them, so that what
+follows is read as the pattern even when it starts with `-`.
 
 ### Exit Codes
 
@@ -76,87 +82,8 @@ Every command exits with one of three codes:
 | `1`  | The patterns or the files it judged have a problem                        |
 | `2`  | The command line or the configuration cannot be used; nothing was judged |
 
-What each command counts as a problem (code 1):
-
-| Command                                      | Exits with 1 when                                                                  |
-|----------------------------------------------|------------------------------------------------------------------------------------|
-| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read |
-| `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
-| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
-| `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
-| `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
-| `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
-| `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
-| `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
-| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
-| `self-update`                                | The update fails                                                                   |
-
-The lint rules of error severity target patterns that compile but do not do
-what they say without `/u`: a multibyte character in a class, a quantified
-multibyte character, a Unicode property. The `lint` summary counts them as lint
-errors (`FAIL 1 lint errors, 2 warnings, 0 optimizations.`), apart from the
-invalid patterns, which PCRE refuses to compile. Every other rule is a warning or
-an info, printed without changing the code.
-
-A theoretical ReDoS verdict is a warning, as it is for `lint`: it is printed
-and leaves the code at 0, proven or not. A verdict the confirmed mode did not
-reproduce (`Not reproduced on PCRE2 …`), and a polynomial verdict, which is
-never replayed, leave 0 too.
-
-Code 2 covers an unknown command or option, an option without its value or
-with a value the command does not accept (an unknown `--format`, `--target`,
-`--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
-a missing pattern, a removed option such as `--redos-no-jit`, an
-`--input-file` that cannot be read, an `--output` file that cannot be written,
-and a `regex.json` that cannot be read (`lint` and `debug`). `regex` run
-without a command prints the help and exits with 2, as `regex help` with an
-unknown command does.
-
-For `lint`, code 2 also covers the paths it is given:
-
-| Case                                                         | Exit code | JSON `stage` |
-|--------------------------------------------------------------|-----------|--------------|
-| A path on the command line that does not exist               | `2`       | `usage`      |
-| A path listed in `regex.json` that does not exist            | `2`       | `config`     |
-| A `--baseline` file that is missing, cannot be read, or is not a baseline | `2` | `usage` |
-| A `--generate-baseline` file that cannot be written          | `2`       | `usage`      |
-| A path that exists but holds no pattern                      | `0`       | none         |
-
-Options may come before or after the pattern; `--` ends them, so that what
-follows is read as the pattern even when it starts with `-`.
-
----
-
-## Symfony Bundle Commands
-
-When using the Symfony bundle, you also get these `bin/console` commands
-(configuration and target: [the Symfony guide](symfony.md); the Laravel
-commands: [the Laravel guide](laravel.md)):
-
-| Command                 | Description                                           |
-|-------------------------|-------------------------------------------------------|
-| `regex:lint`            | Lint regex patterns in your PHP code                  |
-| `regex:compare`         | Compare two regex patterns via automata               |
-| `regex:routes`          | Detect route conflicts and overlaps in your router    |
-| `regex:security`        | Analyze access control ordering and firewall regexes  |
-| `regex:analyze`         | Run Symfony bridge analyzers (routes + security)      |
-
-Examples:
-
-```bash
-bin/console regex:routes
-bin/console regex:routes --show-overlaps
-bin/console regex:security
-bin/console regex:security --show-overlaps
-bin/console regex:analyze
-bin/console regex:analyze --only=routes
-bin/console regex:analyze --fail-on=any --format=json
-```
-
-These commands, like the Laravel ones, exit with the same codes as the
-binary: `Command::INVALID` (2) for an option or a configuration they cannot
-use, `Command::FAILURE` (1) for what they found, such as a route conflict or
-an invalid pattern.
+What each command counts as a problem, and everything code 2 covers, is
+detailed in [Errors and Exit Codes](#errors-and-exit-codes).
 
 ---
 
@@ -171,13 +98,15 @@ Parse and show the recompiled pattern:
 vendor/bin/regex parse '/^[a-z]+@[a-z]+\.[a-z]+$/i'
 
 # Parse with validation
-vendor/bin/regex parse '/^hello/' --validate
+vendor/bin/regex parse '/^hello/' --validate --no-visuals
 ```
 
 **Output:**
 ```
-Pattern:    /^hello/
-Recompiled: /^hello/
+  Pattern: /^hello/
+  Parse: OK
+  Recompiled: /^hello/
+  Status: OK
 ```
 
 ---
@@ -409,12 +338,12 @@ vendor/bin/regex highlight '/^[a-z]+@[a-z]+\.[a-z]+$/i'
 **HTML output:**
 
 ```bash
-vendor/bin/regex highlight '/^hello$/' --format=html
+vendor/bin/regex highlight '/^hello$/' --format=html --no-visuals
 ```
 
 **Output (HTML):**
 ```html
-<span class="regex-token regex-anchor">^</span><span class="regex-token regex-literal">hello</span><span class="regex-token regex-anchor">$</span>
+<span class="regex-token regex-anchor">^</span><span class="regex-token regex-literal">h</span><span class="regex-token regex-literal">e</span><span class="regex-token regex-literal">l</span><span class="regex-token regex-literal">l</span><span class="regex-token regex-literal">o</span><span class="regex-token regex-anchor">$</span>
 ```
 
 ---
@@ -425,23 +354,25 @@ Check pattern syntax:
 
 ```bash
 # Valid pattern
-vendor/bin/regex validate '/^[a-z]+$/'
+vendor/bin/regex validate '/^[a-z]+$/' --no-visuals
 
 # Invalid pattern (unbounded lookbehind)
-vendor/bin/regex validate '/(?<=a+)b/'
+vendor/bin/regex validate '/(?<=a+)b/' --no-visuals
 ```
 
 **Valid Output:**
 ```
-/^[a-z]+$/
+  Pattern: /^[a-z]+$/
+  Status: OK
 ```
 
 **Invalid Output:**
 ```
-INVALID  /(?<=a+)b/
-  Variable-length lookbehind is not supported in PCRE.
+  Pattern: /(?<=a+)b/
+  Status: INVALID
+  Lookbehind is unbounded. PCRE requires a bounded maximum length.
 Line 1: (?<=a+)b
-            ^
+        ^
 ```
 
 ---
@@ -687,6 +618,16 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 ---
 
+## Symfony and Laravel Commands
+
+The Symfony bundle and the Laravel package expose the same engine as console
+commands — `bin/console regex:lint`, `regex:routes`, `regex:security` and
+`regex:analyze`, or `php artisan regex:lint` — and exit with the same codes as
+the binary. See [the Symfony guide](symfony.md#commands) and
+[the Laravel guide](laravel.md#commands) for their full list and configuration.
+
+---
+
 ## Configuration File
 
 Create `regex.json` or `regex.dist.json` in your project root:
@@ -904,12 +845,51 @@ passed.
 ### Errors and Exit Codes
 
 `lint` exits with the codes every command uses (see
-[Exit Codes](#exit-codes)): 1 when a pattern does not compile, when a ReDoS
-verdict is reproduced at high or above, or when a lint rule of error severity
-fires (a multibyte character in a class, a quantified multibyte character or a
-Unicode property, each without `/u`); 2 when the configuration or the command
-line cannot be used, in which case nothing is scanned. Warnings and infos
-leave 0.
+[Exit Codes](#exit-codes)). What each command counts as a problem (code 1):
+
+| Command                                      | Exits with 1 when                                                                  |
+|----------------------------------------------|------------------------------------------------------------------------------------|
+| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read |
+| `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
+| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
+| `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
+| `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
+| `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
+| `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
+| `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
+| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
+| `self-update`                                | The update fails                                                                   |
+
+The lint rules of error severity target patterns that compile but do not do
+what they say without `/u`: a multibyte character in a class, a quantified
+multibyte character, a Unicode property. The `lint` summary counts them as lint
+errors (`FAIL 1 lint errors, 2 warnings, 0 optimizations.`), apart from the
+invalid patterns, which PCRE refuses to compile. Every other rule is a warning or
+an info, printed without changing the code.
+
+A theoretical ReDoS verdict is a warning, as it is for `lint`: it is printed
+and leaves the code at 0, proven or not. A verdict the confirmed mode did not
+reproduce (`Not reproduced on PCRE2 …`), and a polynomial verdict, which is
+never replayed, leave 0 too.
+
+Code 2 covers an unknown command or option, an option without its value or
+with a value the command does not accept (an unknown `--format`, `--target`,
+`--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
+a missing pattern, a removed option such as `--redos-no-jit`, an
+`--input-file` that cannot be read, an `--output` file that cannot be written,
+and a `regex.json` that cannot be read (`lint` and `debug`) — in which case
+nothing was scanned. `regex` run without a command prints the help and exits
+with 2, as `regex help` with an unknown command does.
+
+For `lint`, code 2 also covers the paths it is given:
+
+| Case                                                         | Exit code | JSON `stage` |
+|--------------------------------------------------------------|-----------|--------------|
+| A path on the command line that does not exist               | `2`       | `usage`      |
+| A path listed in `regex.json` that does not exist            | `2`       | `config`     |
+| A `--baseline` file that is missing, cannot be read, or is not a baseline | `2` | `usage` |
+| A `--generate-baseline` file that cannot be written          | `2`       | `usage`      |
+| A path that exists but holds no pattern                      | `0`       | none         |
 
 With `--format=json`, a configuration or command-line error is printed on
 stdout as the error envelope, `{"error": "...", "stage": "config"}` (stage
@@ -1203,6 +1183,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+      # php-regex/regex-cli is a dev dependency of composer.json
+      # (composer require --dev php-regex/regex-cli)
       - run: composer install --no-interaction --no-progress
       - run: vendor/bin/regex lint src/ --format=github
 ```
@@ -1265,10 +1247,12 @@ vendor/bin/regex highlight '/^your-pattern$/' --format=html
 
 ### "Unknown command"
 
-Make sure you're using the correct command name:
+Every command name is listed in the [command table](#command-overview). An
+unknown name prints `Unknown command: <name>`, then the help, and exits
+with 2:
 ```bash
 # Wrong
-vendor/bin/regex explain '/test/'
+vendor/bin/regex check '/test/'
 
 # Correct
 vendor/bin/regex analyze '/test/'
@@ -1298,10 +1282,11 @@ vendor/bin/regex highlight '/test/' --ansi
 ## Learn More
 
 - **[LSP Integration](lsp.md)** - IDE integration via Language Server Protocol
-- **[Regex Tutorial](../tutorial/README.md)** - Learn regex from scratch
-- **[Regex in PHP](regex-in-php.md)** - PHP regex fundamentals
 - **[ReDoS Guide](redos.md)** - Preventing catastrophic backtracking
 - **[Cookbook](../cookbook.md)** - Ready-to-use patterns
+
+New to regex? Start with [the tutorial](../tutorial/README.md), or read
+[Regex in PHP](regex-in-php.md) for the PHP fundamentals first.
 
 ---
 

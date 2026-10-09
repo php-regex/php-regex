@@ -1,3 +1,6 @@
+---
+description: "Why backtracking blows up: ambiguity, witnesses and the proof model behind PHPRegex's ReDoS verdicts, with the fix cookbook in the ReDoS guide."
+---
 # ReDoS Deep Dive
 
 **ReDoS** (Regular Expression Denial of Service) is a vulnerability where a crafted input makes a backtracking regex engine do exponential or high polynomial work before it gives up. In PHP, that work usually ends in a silent failure: `preg_match()` returns `false` once PCRE's backtrack limit is exhausted.
@@ -68,6 +71,10 @@ The model covers characters and classes (exact sets under `/u` and `/i`, compute
 
 The result says which of the two decided: `proof` is `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`. The [ReDoS guide](../guides/redos.md#the-guarantee) states what a proof guarantees, and its limits.
 
+{% include install-prerelease.html package="php-regex/regex-cli" %}
+
+The commands below need the CLI package; the PHP API needs `php-regex/regex-toolkit`. The pre-release monorepo above installs both, binary included.
+
 ## Using PHPRegex for ReDoS protection
 
 ### CLI usage
@@ -113,81 +120,14 @@ foreach ($analysis->recommendations as $recommendation) {
 
 ## Fixing vulnerable patterns
 
-Each rewrite below is proven safe by the analyzer. Verify that it still matches and captures what you need.
+Every fix works the same way: it removes the ambiguity the automaton found, leaving one way to read each repetition instead of many. Possessive quantifiers and atomic groups commit to the first match and never revisit it; simplifying `(a+)+` to `a+` deletes the second way to split the same text; bounding a repeat caps the work even when overlap remains.
 
-### 1. Use possessive quantifiers
+The rewrite cookbook - each repair proven safe (or not) by the analyzer, the quick-reference table of vulnerable vs safer pairs, and the defense-in-depth checklist - lives in the [ReDoS guide](../guides/redos.md#repairs-with-proofs):
 
-```
-Vulnerable: /(a+)+b/
-Safer:      /a++b/
-```
-
-Possessive quantifiers (`*+`, `++`, `?+`, `{m,n}+`) never give back what they matched.
-
-### 2. Use atomic groups
-
-```
-Vulnerable: /(a+)+b/
-Safer:      /(?>a+)b/
-```
-
-An atomic group `(?>...)` commits to the first way its body matched.
-
-### 3. Simplify nested repeats
-
-```
-Vulnerable: /(a+)+b/
-Equivalent: /a+b/
-```
-
-### 4. Remove overlapping alternatives
-
-```
-Vulnerable: /(a|aa)+$/
-Safer:      /a+$/
-```
-
-### 5. Avoid repeating a group that can match nothing
-
-```
-Vulnerable: /(a*)*$/
-Safer:      /a*$/
-```
-
-### 6. Separate adjacent quantifiers
-
-```
-Vulnerable: /a+a+$/
-Safer:      /a+$/
-Safer:      /a++a+$/   (if the split must be preserved)
-```
-
-### 7. Bound your repeats
-
-```
-Vulnerable: /(\d+)+$/
-Safer:      /\d{1,10}$/
-```
-
-## Quick reference: vulnerable vs safer patterns
-
-```
-(a+)+        -> a++        or (?>a+)
-(a|aa)+      -> a+
-(\d+)+       -> \d++       or \d{1,10}
-(.+)+        -> .++        or .{1,100}
-(a*)*        -> a*
-a+a+         -> a+         or a++a+
-(\w+\d+)+    -> (?>\w+\d+)+
-```
-
-## Defense in depth
-
-1. **Analyze patterns early**: run `regex lint --redos` or PHPStan in CI.
-2. **Check for `false`**: a vulnerable pattern makes `preg_*` fail silently; read `preg_last_error()`.
-3. **Limit input length**: bound what reaches a regex from outside.
-4. **Prefer deterministic patterns**: possessive quantifiers and atomic groups.
-5. **Mind every-match functions**: the guarantee covers one match attempt; `preg_match_all()`, `preg_replace()` and `preg_split()` make many.
+- [Repairs with proofs](../guides/redos.md#repairs-with-proofs) - `RedosRepairer` rewrites a pattern and certifies the rewrites
+- [Fixing Vulnerable Patterns](../guides/redos.md#fixing-vulnerable-patterns-verify-behavior) - the seven rewrites, each with its verdict
+- [Quick Reference: Vulnerable vs Safer](../guides/redos.md#quick-reference-vulnerable-vs-safer-verify-behavior) - the pairs at a glance
+- [Defense in Depth](../guides/redos.md#defense-in-depth) - the checklist beyond rewriting
 
 ## Related concepts
 
@@ -197,6 +137,6 @@ a+a+         -> a+         or a++a+
 
 ## Further reading
 
-- [OWASP ReDoS Guide](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS) - Security best practices
-- [Regex Performance](https://sw.kovidgoyal.net/kitty/conf/#regex-performance) - Optimization techniques
+- [OWASP ReDoS Guide](https://community.owasp.org/attacks/Regular_expression_Denial_of_Service_-_ReDoS) - Security best practices
+- [Weideman et al. 2016](https://link.springer.com/article/10.1007/s10009-016-0445-y) - The ambiguity analysis this library implements
 - [Catastrophic Backtracking](https://www.regular-expressions.info/catastrophic.html) - Detailed explanation

@@ -1,4 +1,5 @@
 ---
+description: "The external sources PHPRegex trusts: PCRE2 and PHP manuals, ReDoS references, engine theory, testers and Unicode standards."
 redirect_from:
   - /references/
   - /references.html
@@ -126,8 +127,7 @@ Tools to test, debug, and visualize regex patterns.
 |--------------------------------|-----------------------------------|---------------------------|
 | **regex101**                   | Popular tester with PCRE2 support | https://regex101.com/     |
 | **regexper**                   | Railroad diagram visualization    | https://regexper.com/     |
-| **Debuggex**                   | Visual regex matcher              | https://www.debuggex.com/ |
-| **Regexr](https://regexr.com/) | Another popular tester            | https://regexr.com/       |
+| **Regexr**                     | Another popular tester            | https://regexr.com/       |
 
 **regex101 tips:**
 1. Set flavor to "PCRE (PHP)"
@@ -144,8 +144,8 @@ Unicode support in regex patterns.
 | Resource                                                                   | Description                |
 |----------------------------------------------------------------------------|----------------------------|
 | [Unicode Regular Expressions (UTS #18)](https://unicode.org/reports/tr18/) | Unicode technical standard |
-| [Unicode Blocks](https://unicode.org/cldr/utility/blocks.jsp)              | Unicode character blocks   |
-| [Unicode Categories](https://unicode.org/cldr/utility/category.jsp)        | Character categories       |
+| [Unicode Code Charts](https://www.unicode.org/charts/)                     | Code charts per block      |
+| [General Category Values (UAX #44)](https://www.unicode.org/reports/tr44/#General_Category_Values) | Character categories |
 
 **Common Unicode patterns:**
 ```php

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+{% comment %}
+  The tutorial track: same chrome as the default layout, but the sidebar,
+  the breadcrumb and the pager all read nav-tutorial.yml, so the ten
+  chapters navigate within the track instead of the global reading order.
+{% endcomment %}
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% include header.html %}
+  {% assign tutorial_nav = site.data['nav-tutorial'] %}
+  <div class="page-shell">
+    {% include sidebar.html nav=tutorial_nav %}
+    <div class="page-main">
+      <main id="main" tabindex="-1">
+        {% include breadcrumb.html nav=tutorial_nav %}
+        <aside class="tutorial-banner">
+          <p>New to regex? You are in the right place. Building a static-analysis tool? <a href="/quick-start/">Start with the Quick Start</a>.</p>
+        </aside>
+        {{ content }}
+        {% include pager.html nav=tutorial_nav %}
+      </main>
+      {% include toc.html %}
+    </div>
+  </div>
+  {% include footer.html %}
+  {% include search-dialog.html %}
+  <style>
+    .tutorial-banner { margin-block: 0 2rem; padding: .75rem 1rem; border: 1px solid var(--line); background: var(--amber-tint); }
+    .tutorial-banner p { margin: 0; font-size: .92rem; line-height: 1.5; color: var(--ink-soft); }
+    .tutorial-banner a { color: var(--amber); }
+  </style>
+  <script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/toc.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/copy.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>
+</body>
+</html>

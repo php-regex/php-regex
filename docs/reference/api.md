@@ -1,6 +1,13 @@
+---
+description: "The PHPRegex facade — Regex::create() and every method, validate to transpile — with executed examples, result objects and the exception map."
+---
 # API Reference
 
 This reference documents the public API surface of PHPRegex: entry points, configuration options, return objects, and the exception hierarchy.
+
+The `Regex` facade lives in `php-regex/regex-toolkit` and needs PHP 8.2 or later with the `mbstring` extension. See [Quick Start](../quick-start.md) for a first tour.
+
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
 
 ## Entry Points
 
@@ -36,17 +43,22 @@ echo $result->isValid ? 'Valid' : 'Invalid';
 
 ### Regex::tokenize(string $regex, ?PcreTarget $target = null): TokenStream
 
-Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging.
+Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging. The stream is a cursor over the tokens, not an iterator: walk it with `current()`, `next()`, `peek()` and `hasMore()`, or read the whole array with `getTokens()`. Each `Token` exposes its `type`, its `value`, its `position` and `end()`, the offset just past it.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $stream = Regex::tokenize('/foo|bar/i');
 
-foreach ($stream as $token) {
+foreach ($stream->getTokens() as $token) {
     echo "Type: {$token->type->value}, Value: '{$token->value}'\n";
-    echo "Position: {$token->start} - {$token->end}\n";
+    echo "Position: {$token->position} - {$token->end()}\n";
 }
+// Type: literal, Value: 'f'
+// Position: 0 - 1
+// Type: literal, Value: 'o'
+// Position: 1 - 2
+// ... the same for 'o', '|', 'b', 'a', 'r', then the eof token
 ```
 
 ---
@@ -170,8 +182,6 @@ instance judges for. `PcreTarget::runtime()` is the running engine,
 `new PcreTarget(80400, '10.42')` any pair; `Lexer`, `Parser`,
 and `Validator` take one.
 
----
-
 A rule that depends on the release asks the target for a behaviour, named in
 `PcreFeature`, rather than for a release written by hand:
 
@@ -221,7 +231,7 @@ $ast = Regex::create()->parsePattern($pattern, $flags, $delimiter);
 
 echo $ast->flags;      // 'i'
 echo $ast->delimiter;  // '/'
-echo $ast->pattern;    // SequenceNode or AlternationNode
+echo $ast->pattern::class;  // PHPRegex\Parser\Node\AlternationNode
 ```
 
 ---
@@ -242,7 +252,7 @@ echo $ast->delimiter;  // '/'
 // Tolerant parsing - returns AST even with errors
 $result = Regex::create()->parseTolerant('/[unclosed/i');
 
-echo $result->ast;          // Partial AST
+echo $result->ast::class;             // PHPRegex\Parser\Node\RegexNode (partial)
 echo $result->errors[0]->getMessage();  // First error
 ```
 
@@ -260,8 +270,8 @@ use PHPRegex\Toolkit\Regex;
 $result = Regex::create()->validate('/foo|bar/');
 
 echo $result->isValid;             // true
-echo $result->complexityScore;     // int
-echo $result->category->value;     // ValidationErrorCategory enum
+echo $result->complexityScore;     // 7
+var_dump($result->category);       // NULL: no error, no category
 ```
 
 **ValidationResult Fields:**
@@ -275,7 +285,7 @@ echo $result->category->value;     // ValidationErrorCategory enum
 | `caretSnippet`    | string\|null            | Snippet with caret       |
 | `hint`            | string\|null            | Fix suggestion           |
 | `complexityScore` | int                     | Pattern complexity       |
-| `category`        | ValidationErrorCategory | Error category           |
+| `category`        | ValidationErrorCategory\|null | Error category, `null` when valid |
 
 ---
 
@@ -298,15 +308,15 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 
 **AnalysisReport Fields:**
 
-| Field           | Type          | Description                    |
-|-----------------|---------------|--------------------------------|
-| `isValid`       | bool          | Pattern is syntactically valid |
-| `errors`        | array         | Validation errors              |
-| `lintIssues`    | array         | Linting warnings               |
-| `redos`         | RedosAnalysis | ReDoS analysis result          |
-| `optimizations` | array         | Suggested optimizations        |
-| `explain`       | string        | Human explanation              |
-| `highlighted`   | string        | Highlighted pattern            |
+| Field           | Type                 | Description                    |
+|-----------------|----------------------|--------------------------------|
+| `isValid`       | bool                 | Pattern is syntactically valid |
+| `errors`        | array\<string\>      | Validation error messages      |
+| `lintIssues`    | array                | Lint findings                  |
+| `redos`         | RedosAnalysis        | ReDoS analysis result          |
+| `optimizations` | OptimizationResult   | Suggested optimizations        |
+| `explain`       | string               | Human explanation              |
+| `highlighted`   | string               | Highlighted pattern            |
 
 ---
 
@@ -553,43 +563,56 @@ echo $sample;  // e.g., "Word12"
 
 ---
 
-### explain(string $regex, string $format = 'text'): string
+### explain(string $regex, string|OutputFormat $format = OutputFormat::Text): string
 
-Generates a human-readable explanation of the pattern.
+Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\OutputFormat` cases — `Text`, `Html`, `Console` — or the matching string (`'text'`, `'html'`, `'console'`).
 
 ```php
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Toolkit\OutputFormat;
 
-// Plain text explanation
+// Plain text explanation (the default)
 $text = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $text;
 /*
-Match exactly 3 digits, then hyphen, then exactly 4 digits.
+Regex matches
+    Character Type: A digit: [0-9] (exactly 3 times)
+  '-'
+    Character Type: A digit: [0-9] (exactly 4 times)
 */
 
 // HTML explanation for docs/UIs
-$html = Regex::create()->explain('/\w+@\w+\.\w+/', 'html');
+$html = Regex::create()->explain('/\d{3}-\d{4}/', OutputFormat::Html);
 echo $html;
-// <p>Match one or more word characters, then @, then...
+/*
+<div class="regex-explain">
+<strong>Regex matches:</strong>
+<ul><li>(exactly 3 times) <span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li>
+<li><span title="Literal: &#039;-&#039;">Literal: <strong>&#039;-&#039;</strong></span></li>
+<li>(exactly 4 times) <span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li></ul>
+</div>
+*/
 ```
 
 ---
 
-### highlight(string $regex, string $format = 'console'): string
+### highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
 
-Generates syntax-highlighted output.
+Generates syntax-highlighted output, one span per token in the HTML format.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
-// ANSI colors for console
+// ANSI colors for console (the default)
 $highlighted = Regex::create()->highlight('/\d+/', 'console');
 echo $highlighted;  // "\033[38;2;78;201;176m\\d\033[0m\033[38;2;215;186;125m+\033[0m"
 
 // HTML for web
 $html = Regex::create()->highlight('/[a-z]+/', 'html');
 echo $html;
-// <span class="regex-token regex-literal">[a-z]</span>...
+// <span class="regex-token regex-meta">[</span><span class="regex-token regex-literal">a</span>
+// <span class="regex-token regex-meta">-</span><span class="regex-token regex-literal">z</span>
+// <span class="regex-token regex-meta">]</span><span class="regex-token regex-quantifier">+</span>
 ```
 
 ---
@@ -624,7 +647,7 @@ $result = Regex::create()->parseTolerant('/[broken/i');
 
 echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
 echo count($result->errors);  // 1
-echo $result->errors[0]->getMessage();  // "Unterminated character class"
+echo $result->errors[0]->getMessage();  // Unclosed character class "]" at end of input.
 ```
 
 ---
@@ -637,9 +660,9 @@ Returned by `analyze()`. Comprehensive pattern analysis.
 $report = Regex::create()->analyze('/(a+)+b/');
 
 if (!$report->isValid) {
-    // Handle validation errors
+    // Handle validation errors: each entry is the message string
     foreach ($report->errors as $error) {
-        echo $error['message'];
+        echo $error, "\n";
     }
 }
 
@@ -669,8 +692,7 @@ foreach ($result->changes as $change) {
     echo "- $change\n";
 }
 // Output:
-// - Replaced [0-9] with \d
-// - Saved 5 characters
+// - Optimized pattern.
 ```
 
 ---
@@ -774,6 +796,7 @@ try {
 | Method                  | Returns                 | Purpose           |
 |-------------------------|-------------------------|-------------------|
 | `create($options)`      | Regex                   | Factory method    |
+| `tokenize($regex, $target)` (static) | TokenStream | Lex into tokens |
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
 | `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
@@ -788,3 +811,6 @@ try {
 | `highlight($regex)`     | string                  | Syntax highlight  |
 | `generate($regex)`      | string                  | Generate sample   |
 | `literals($regex)`      | LiteralExtractionResult | Extract literals  |
+| `parser()`              | RegexParser             | The parser the facade uses |
+| `target()`              | PcreTarget              | The PHP and PCRE2 judged for |
+| `clearCaches()`         | void                    | Empty every process-wide cache |

@@ -1,6 +1,9 @@
 <nav class="site-sidebar" id="site-sidebar" aria-label="Documentation">
   <button type="button" class="sidebar-close" id="sidebar-close">Close menu</button>
-  {% for section in site.data.nav %}
+  {% comment %}No parameter falls back to the main navigation (nav.yml); the
+  tutorial layout passes its own track (nav-tutorial.yml).{% endcomment %}
+  {% assign nav_sections = include.nav | default: site.data.nav %}
+  {% for section in nav_sections %}
   <div class="nav-section">
     <h2 class="nav-title">{{ section.title }}</h2>
     <ul class="nav-list">

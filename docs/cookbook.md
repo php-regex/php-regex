@@ -1,26 +1,42 @@
 ---
+description: "Copy-ready PHP regex patterns for emails, URLs, dates, phones and more — each one proven safe against ReDoS by the analyzer, with matched and rejected examples."
 redirect_from:
   - /COOKBOOK/
   - /COOKBOOK.html
 ---
 # Regex Cookbook: Practical Patterns for PHP
 
-This cookbook collects patterns for common validation and parsing tasks. PHPRegex's ReDoS analyzer proves every pattern here safe (`safe (proven)`: no input makes one match attempt backtrack beyond a linear number of steps), but you should still review and adapt them for your context.
+This cookbook collects patterns for common validation and parsing tasks. Every pattern below is `safe (proven)`: the ReDoS analyzer proved that no input makes one match attempt backtrack beyond a linear number of steps. The only unsafe patterns here are the bad examples in [Building Your Own Patterns](#building-your-own-patterns), each shown as the thing to avoid. Review and adapt each pattern for your context.
 
 > These recipes include a short explanation and a quick validation call so you can use them in tooling or code reviews.
 >
 > Always validate and run `redos()` before accepting user-defined patterns.
 
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
+Requires PHP 8.2 or later and the `mbstring` extension. The PHP examples use the `Regex` facade installed above; the [Quick Start](quick-start.md) walks through a first analysis.
+
 ## Quick Reference
 
-| Pattern | Matches |
-|---------|---------|
-| `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` | Email (basic) |
-| `/^\d{4}-\d{2}-\d{2}$/` | ISO Date |
-| `/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i` | UUID v4 |
-| `/^(?:25[0-5]\|2[0-4]\d\|[01]?\d\d?)(?:\.(?:25[0-5]\|2[0-4]\d\|[01]?\d\d?)){3}$/` | IPv4 |
-| `/^[a-z0-9-]+$/` | URL Slug |
-| `/^#(?:[0-9a-f]{3}\|[0-9a-f]{6})$/i` | Hex Color |
+One row per recipe: the pattern, its section, and the verdict `Regex::redos()` returns for it.
+
+| Task | Pattern | Analyzer verdict |
+|------|---------|------------------|
+| [Email](#email-rfc-5322-simplified) | `/^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i` | `safe (proven)` |
+| [URL](#url) | `/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(\/[^\s]*)?$/i` | `safe (proven)` |
+| [UUID](#uuid-v1-v5) | `/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i` | `safe (proven)` |
+| [IPv4](#ip-address) | `/^(?:25[0-5]\|2[0-4][0-9]\|1[0-9][0-9]\|[1-9][0-9]\|[0-9])(?:\.(?:25[0-5]\|2[0-4][0-9]\|1[0-9][0-9]\|[1-9][0-9]\|[0-9])){3}$/` | `safe (proven)` |
+| [IPv6](#ip-address) | `/^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i` | `safe (proven)` |
+| [ISO date](#date-formats) | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12][0-9]\|3[01])$/` | `safe (proven)` |
+| [Time (24h)](#time-formats) | `/^(?:[01]?[0-9]\|2[0-3]):[0-5][0-9]$/` | `safe (proven)` |
+| [DateTime](#datetime-iso-8601) | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12][0-9]\|3[01])T(?:[01]?[0-9]\|2[0-3]):[0-5][0-9](?::[0-5][0-9])?(?:Z\|[+-](?:[01]?[0-9]\|2[0-3]):[0-5][0-9])?$/u` | `safe (proven)` |
+| [Slug](#slug) | `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` | `safe (proven)` |
+| [Username](#username) | `/^[a-zA-Z][a-zA-Z0-9_-]{2,31}$/` | `safe (proven)` |
+| [Password](#password-strength) | `/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$/` | `safe (proven)` |
+| [Phone (E.164)](#phone-number) | `/^\+[1-9]\d{6,14}$/` | `safe (proven)` |
+| [Credit card](#credit-card) | `/^[0-9]{13,19}$/` | `safe (proven)` |
+| [Hex color](#hex-color) | `/^#(?:[0-9a-fA-F]{3}){1,2}$/` | `safe (proven)` |
+| [SemVer](#semantic-versioning) | `/^(0\|[1-9]\d*)\.(0\|[1-9]\d*)\.(0\|[1-9]\d*)(?:-((?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/` | `safe (proven)` |
 
 ## How to Use This Cookbook
 
@@ -29,34 +45,14 @@ Each pattern includes:
 - **What it matches** — examples of valid input
 - **What it rejects** — examples of invalid input
 - **Why it's safe** — ReDoS analysis notes
-- **PHP example** — ready-to-run code
-
-## Table of Patterns
-
-| Category                                       | Pattern              | Risk Level |
-|------------------------------------------------|----------------------|------------|
-| [Email](#email-rfc-5322-simplified)            | Email addresses      | Low        |
-| [URL](#url)                                    | HTTP/HTTPS URLs      | Low        |
-| [UUID](#uuid-v1-v5)                            | UUID identifiers     | Low        |
-| [IP Address](#ip-address)                      | IPv4 and IPv6        | Low        |
-| [Date](#date-formats)                          | Various date formats | Low        |
-| [Time](#time-formats)                          | Various time formats | Low        |
-| [DateTime](#datetime-iso-8601)                 | ISO 8601 timestamps  | Low        |
-| [Slug](#slug)                                  | URL-friendly slugs   | Low        |
-| [Username](#username)                          | System usernames     | Low        |
-| [Password](#password-strength)                 | Password strength    | Medium     |
-| [Phone](#phone-number)                         | Phone numbers        | Medium     |
-| [Credit Card](#credit-card)                    | Card numbers         | Medium     |
-| [Hex Color](#hex-color)                        | Hex color codes      | Low        |
-| [SemVer](#semantic-versioning)                 | Version strings      | Low        |
-| [Custom Patterns](#building-your-own-patterns) | Guidelines           | —          |
+- **PHP example** — ready-to-run code, where the recipe needs one
 
 ---
 
 ## Email (RFC 5322 Simplified)
 
 ```
-/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
+/^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
 ```
 
 ### What It Matches
@@ -80,7 +76,7 @@ Each pattern includes:
 
 ### Why It's Safe
 
-- Local part starts with an alphanumeric and allows dots, underscores, and hyphens in the middle.
+- Local part starts with an alphanumeric and allows dots, underscores, percent signs, plus signs, and hyphens in the middle — so Gmail-style `user+tag` addresses pass.
 - Domain starts with an alphanumeric and allows hyphenated parts.
 - Requires at least one dot-separated TLD.
 - Quantifiers are bounded by character classes; there are no nested or overlapping repeats.
@@ -91,18 +87,18 @@ Each pattern includes:
 use PHPRegex\Toolkit\Regex;
 
 $email = 'user@example.com';
-$pattern = '/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i';
+$pattern = '/^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i';
 
 $regex = Regex::create();
 $result = $regex->validate($pattern);
-echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';
+echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';  // Valid pattern
 
 $isMatch = preg_match($pattern, $email) === 1;
-echo $isMatch ? 'Matches' : 'Does not match';
+echo $isMatch ? 'Matches' : 'Does not match';                  // Matches
 
 // ReDoS check
 $analysis = Regex::create()->redos($pattern);
-echo $analysis->headline();  // Output: safe (proven)
+echo $analysis->headline();                                    // safe (proven)
 ```
 
 ---
@@ -110,7 +106,7 @@ echo $analysis->headline();  // Output: safe (proven)
 ## URL
 
 ```
-/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\/[^\s]*)?$/i
+/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(\/[^\s]*)?$/i
 ```
 
 ### What It Matches
@@ -133,7 +129,7 @@ echo $analysis->headline();  // Output: safe (proven)
 ### Why It's Safe
 
 - Accepts `http` or `https`, then `://`.
-- Host starts with an alphanumeric and allows dots or hyphens.
+- Host starts with an alphanumeric and allows dots or hyphens; an optional port is bounded to at most five digits.
 - Optional path is limited to non-space characters.
 - Repeats are bounded by character classes and string anchors.
 
@@ -143,14 +139,14 @@ echo $analysis->headline();  // Output: safe (proven)
 use PHPRegex\Toolkit\Regex;
 
 $url = 'https://example.com/path?query=1';
-$pattern = '/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(\/[^\s]*)?$/i';
+$pattern = '/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(\/[^\s]*)?$/i';
 
 $regex = Regex::create();
 $result = $regex->validate($pattern);
-echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';
+echo $result->isValid ? 'Valid pattern' : 'Invalid pattern';  // Valid pattern
 
 $isMatch = preg_match($pattern, $url) === 1;
-echo $isMatch ? 'Matches' : 'Does not match';
+echo $isMatch ? 'Matches' : 'Does not match';                 // Matches
 ```
 
 ---
@@ -190,8 +186,10 @@ echo $isMatch ? 'Matches' : 'Does not match';
 ### IPv4
 
 ```
-/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+/^(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])){3}$/
 ```
+
+Each octet alternative is deterministic — one way to read it — which is what lets the analyzer prove the whole pattern linear.
 
 ### IPv6
 
@@ -203,14 +201,22 @@ echo $isMatch ? 'Matches' : 'Does not match';
 
 ```
 ✓ IPv4: 192.168.1.1, 10.0.0.1, 255.255.255.255
-✓ IPv6: 2001:db8::1, ::1, fe80::1
+✓ IPv6: 2001:0db8:0000:0000:0000:0000:0000:0001, fe80:0000:0000:0000:0000:0000:0000:0001, 0000:0000:0000:0000:0000:0000:0000:0001
 ```
 
 ### What It Rejects
 
 ```
-✗ IPv4: 256.1.1.1, 1.2.3, 1.2.3.4.5
-✗ IPv6: 12345::1, 1:2:3:4:5:6:7:8:9
+✗ IPv4: 256.1.1.1 (octet above 255), 1.2.3 (too few octets), 1.2.3.4.5 (too many), 01.2.3.4 (leading zero)
+✗ IPv6: 2001:db8::1 (compressed form, see the note below), 12345::1, 1:2:3:4:5:6:7:8:9
+```
+
+### Note on Compressed IPv6
+
+The pattern above only accepts the full eight-group form. Compressed addresses such as `2001:db8::1`, `::1` or `fe80::1` are valid IPv6 but need the full RFC 4291 grammar; for validation prefer PHP's own validator, which accepts both forms:
+
+```php
+$valid = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
 ```
 
 ---
@@ -260,13 +266,13 @@ echo $isMatch ? 'Matches' : 'Does not match';
 
 ### Note on Calendar Correctness
 
-These patterns validate **format**, not calendar validity. For example, `2024-02-29` passes but 2024 is a leap year only if divisible by 4. Use PHP's `checkdate()` for true calendar validation:
+These patterns validate **format**, not calendar validity. `2023-02-29` passes although 2023 is not a leap year, and `1900-02-29` passes although century years must be divisible by 400. Use PHP's `checkdate()` for true calendar validation:
 
 ```php
-$date = '2024-02-29';
+$date = '2023-02-29';
 if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date)) {
     [$y, $m, $d] = explode('-', $date);
-    $valid = checkdate((int)$m, (int)$d, (int)$y);
+    $valid = checkdate((int)$m, (int)$d, (int)$y);  // false: 2023 is not a leap year
 }
 ```
 
@@ -306,6 +312,7 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 ✓ 2024-12-25T10:30:00Z
 ✓ 2024-12-25T10:30:00+05:00
 ✓ 2024-12-25T10:30:00
+✓ 2024-12-25T10:30             (seconds are optional)
 ```
 
 ### What It Rejects
@@ -313,7 +320,6 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 ```
 ✗ 2024-12-25 10:30:00       (space instead of T)
 ✗ 2024-12-25T25:30:00       (invalid hour)
-✗ 2024-12-25T10:30          (missing seconds)
 ```
 
 ---
@@ -352,7 +358,7 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 ## Username
 
 ```
-/^[a-zA-Z][a-z0-9_-]{2,31}$/
+/^[a-zA-Z][a-zA-Z0-9_-]{2,31}$/
 ```
 
 ### What It Matches
@@ -407,7 +413,8 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 ```
 ✗ password      (no uppercase, no number)
 ✗ PASSWORD      (no lowercase, no number)
-✗ Passw0rd      (too short - 8+ chars required)
+✗ Passw0d       (too short - 8+ chars required)
+✗ Password      (no digit)
 ```
 
 ### Pattern Breakdown
@@ -417,7 +424,7 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 - `(?=.*[0-9])` requires at least one digit.
 - `(?=.*[!@#$%...])` requires at least one special character (strong pattern).
 - `.{8,}` enforces minimum length.
-- Lookaheads do not consume characters, so they do not introduce backtracking.
+- Lookaheads do not consume characters, but their bodies still backtrack: keep them free of nested quantifiers. The two patterns above are `safe (proven)`.
 
 ---
 
@@ -439,7 +446,7 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 
 ```
 ✓ E.164: +14155552671, +442071838750
-✓ US: 4155552671, 1-415-555-2671
+✓ US: 4155552671, 14155552671
 ```
 
 ### What It Rejects
@@ -447,12 +454,12 @@ if (preg_match('/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/', $date))
 ```
 ✗ 415555267            (too short)
 ✗ +04155552671         (country code can't start with 0)
-✗ 1-415-555-267        (missing digit)
+✗ 415-555-2671         (separators not allowed)
 ```
 
 ### Note on Phone Numbers
 
-Phone number validation is complex due to varying international formats. Consider using a dedicated library like `libphonenumber-for-php` for production applications.
+Phone number validation is complex due to varying international formats. The patterns above are digits-only: strip separators before matching, or write a separator-aware pattern. Consider using a dedicated library like `libphonenumber-for-php` for production applications.
 
 ---
 
@@ -546,7 +553,7 @@ function luhnCheck(string $number): bool
 ✓ 1.0.0+build.123, 1.0.0-alpha+build.123
 ```
 
-### What It Reverts
+### What It Rejects
 
 ```
 ✗ 01.0.0          (leading zero)
@@ -613,22 +620,3 @@ if (preg_match($pattern, $input) !== 1) {
 | `(?=...)`        | Lookahead              | Low        |
 | `(?!...)`        | Negative lookahead     | Low        |
 | `\|`             | Alternation            | Medium     |
-
----
-
-## Summary
-
-| Pattern     | Complexity | Risk Level |
-|-------------|------------|------------|
-| Email       | Medium     | Low        |
-| URL         | Medium     | Low        |
-| UUID        | Low        | Low        |
-| IP Address  | Low        | Low        |
-| Date/Time   | Low        | Low        |
-| Slug        | Low        | Low        |
-| Username    | Low        | Low        |
-| Password    | Low        | Medium     |
-| Phone       | Medium     | Medium     |
-| Credit Card | Low        | Medium     |
-| Hex Color   | Low        | Low        |
-| SemVer      | High       | Low        |

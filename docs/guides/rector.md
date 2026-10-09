@@ -1,3 +1,6 @@
+---
+description: "PHPRegex Rector rules that turn a preg_* call into the string function the automata prove equivalent: sets, single rules, and what each rewrite proves."
+---
 # Rector
 
 `php-regex/regex-rector` adds Rector rules that rewrite a `preg_*` call into
@@ -7,22 +10,25 @@ becomes `\str_starts_with($url, 'https:')`, `preg_split('/;/', $csv)` becomes
 Rector runs, that the two answer alike on every subject. When they cannot,
 the code is left as it is.
 
-## Installation
+{% include install-prerelease.html package="php-regex/regex-rector" %}
 
-```bash
-composer require --dev php-regex/regex-rector
-```
-
-The package runs on PHP 8.2 or later. A project that targets an older PHP can
-still use it: install Rector and the rules in a directory of their own, run
-them with PHP 8.2 or later, and let Rector read the target from your
-`composer.json` (`require.php`) or from `withPhpVersion()`.
+The package runs on PHP 8.2 or later and requires Rector 2.x
+(`rector/rector ^2.0`). A project that targets an older PHP can still use it:
+install Rector and the rules in a directory of their own, run them with
+PHP 8.2 or later, and let Rector read the target from your `composer.json`
+(`require.php`) or from `withPhpVersion()`. The recipe below reads a
+`rector.php` at the project root, next to that `composer.json` — the next
+section shows one:
 
 ```bash
 mkdir -p tools/rector
 composer require --working-dir=tools/rector --dev rector/rector php-regex/regex-rector
 tools/rector/vendor/bin/rector process
 ```
+
+Under the pre-release monorepo install, the rules already sit in your
+project's vendor: Rector alone goes in that directory,
+`composer require --working-dir=tools/rector --dev rector/rector`.
 
 ## Configuration
 
@@ -50,8 +56,9 @@ return RectorConfig::configure()
     ->withSets([RegexSetList::PCRE_UPGRADE]);
 ```
 
-`regex lint` reports the same patterns as `regex.lint.compat.meaningChanges`
-when the project's `require.php` reaches PHP 8.4.
+[`regex lint`](cli.md) reports the same patterns as
+`regex.lint.compat.meaningChanges` when the project's `require.php` reaches
+PHP 8.4.
 
 One rule alone is registered with `withRules()`:
 

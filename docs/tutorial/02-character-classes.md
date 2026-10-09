@@ -1,3 +1,8 @@
+---
+layout: tutorial
+description: "Match sets of characters with [abc], ranges, negated classes, shorthands and Unicode properties — plus the escaping rules that apply inside the brackets."
+---
+
 # Chapter 2: Character Classes and Escapes
 
 > **Goal:** Match specific sets of characters like digits, letters, or any character except certain ones.
@@ -51,6 +56,30 @@ Use `-` to specify a range of characters:
 /[a-zA-Z]/ // Any letter (case-insensitive without flag)
 ```
 
+### Inside the Brackets
+
+Inside `[...]`, most special characters lose their power. A `.` in a class is a **literal dot** — no backslash needed:
+
+```php
+preg_match('/[.]/', 'a.b');            // Match: yes ('.' — literal dot)
+preg_match('/file[.]txt/', 'file.txt'); // Match: yes (equivalent to /file\.txt/)
+```
+
+Four characters stay special:
+
+```php
+// ']' closes the class — escape it to match a literal ']'
+'/[\]]/'   // Matches ']'
+
+// '\' stays the escape character — write \\ to match a literal backslash
+
+// '-' still builds ranges — put it first or last to make it literal
+'/[a-]/'   // Matches 'a' or '-'
+
+// '^' negates the class, but only in first position — elsewhere it is literal
+'/[a^]/'   // Matches 'a' or '^'
+```
+
 ### Try It
 
 ```php
@@ -59,13 +88,19 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/[aeiou]/');
-// Output: "Any one character in: a, e, i, o, u"
+// Output:
+// Regex matches
+//   Character Class: any character in [   'a',   'e',   'i',   'o',   'u' ]
 
 echo $regex->explain('/[0-9]/');
-// Output: "Any digit from 0 to 9"
+// Output:
+// Regex matches
+//   Character Class: any character in [   Range: from '0' to '9' ]
 
 echo $regex->explain('/[a-zA-Z]/');
-// Output: "Any letter from a-z or A-Z"
+// Output:
+// Regex matches
+//   Character Class: any character in [   Range: from 'a' to 'z',   Range: from 'A' to 'Z' ]
 ```
 
 ---
@@ -95,7 +130,9 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/[^0-9]/');
-// Output: "Any character that is NOT a digit from 0 to 9"
+// Output:
+// Regex matches
+//   Character Class: any character except [   Range: from '0' to '9' ]
 ```
 
 ---
@@ -135,13 +172,19 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/\d+/');
-// Output: "One or more digits"
+// Output:
+// Regex matches
+//     Character Type: A digit: [0-9] (one or more times)
 
 echo $regex->explain('/\w+/');
-// Output: "One or more word characters (letters, digits, underscore)"
+// Output:
+// Regex matches
+//     Character Type: A word character: [a-zA-Z_0-9] (one or more times)
 
 echo $regex->explain('/\s+/');
-// Output: "One or more whitespace characters"
+// Output:
+// Regex matches
+//     Character Type: A whitespace character: [ \t\n\x0B\f\r] (one or more times)
 ```
 
 ---
@@ -163,14 +206,22 @@ preg_match('/\p{Emoji}/u', 'Hello 👋');  // Match: yes ('👋')
 
 ### Common Unicode Properties
 
-| Property | Meaning               | Example             |
-|----------|-----------------------|---------------------|
-| `\p{L}`  | Any letter            | `a`, `Z`, `ç`, `Ω`  |
-| `\p{N}`  | Any number            | `1`, `５`, `Ⅶ`       |
-| `\p{P}`  | Any punctuation       | `!`, `,`, `。`       |
-| `\p{S}`  | Any symbol            | `$`, `€`, `©`       |
-| `\p{Z}`  | Any separator         | space, tab, newline |
-| `\p{C}`  | Any control character | NULL, BELL          |
+| Property | Meaning                              | Example                      |
+|----------|--------------------------------------|------------------------------|
+| `\p{L}`  | Any letter                           | `a`, `Z`, `ç`, `Ω`           |
+| `\p{N}`  | Any number                           | `1`, `５`, `Ⅶ`                |
+| `\p{P}`  | Any punctuation                      | `!`, `,`, `。`                |
+| `\p{S}`  | Any symbol                           | `$`, `€`, `©`                |
+| `\p{Z}`  | Any separator (spaces)               | ` ` U+0020, U+00A0, U+2028  |
+| `\p{C}`  | Other (controls, formats, unassigned) | `\x00`, `\x07` (BELL), U+200B |
+
+One surprise worth memorizing: **tab and newline are not `\p{Z}`** — they are control characters, so they belong to `\p{Cc}` (a sub-group of `\p{C}`):
+
+```php
+preg_match('/\p{Z}/u', "\t");   // Match: no (tab is a control character)
+preg_match('/\p{Z}/u', "\n");   // Match: no (so is newline)
+preg_match('/\p{Cc}/u', "\t");  // Match: yes
+```
 
 ### Try It
 
@@ -180,7 +231,11 @@ use PHPRegex\Toolkit\Regex;
 $regex = Regex::create();
 
 echo $regex->explain('/^\p{L}+$/u');
-// Output: "Start of string, one or more Unicode letters, end of string"
+// Output:
+// Regex matches (with flags: u)
+//   Anchor: the beginning of a line
+//     Unicode Property: any character matching "L" (one or more times)
+//   Anchor: the end of a line
 ```
 
 ---
@@ -222,18 +277,21 @@ preg_match('/file\.txt/', 'myfile.txt');  // Match: yes ("file.txt")
 
 ---
 
-## Pattern structure
+## Anatomy: A Realistic Email Pattern
 
-Pattern: `/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i`
+The classic local-part class shows this chapter's rules working together:
 
-Structure:
+```
+Pattern: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i
+```
+
 - Start anchor `^`.
-- Local part: `[a-z0-9._%+-]+`.
+- Local part: `[a-z0-9._%+-]+` — letters, digits and `.` `_` `%` `+` `-`. The `.` sits **inside** a class, so it matches a literal dot with no escaping, and the `-` at the end is a literal hyphen, not a range operator.
 - Literal `@`.
-- Domain: `[a-z0-9.-]+`.
-- Literal dot `\.`.
+- Domain: `[a-z0-9.-]+` — the trailing `-` is literal again.
+- `\.` — outside a class, the dot must be escaped (the trap from "Bad: Common Mistakes" above).
 - TLD: `[a-z]{2,}`.
-- End anchor `$`.
+- End anchor `$`, with the `i` flag covering uppercase.
 
 This pattern matches email addresses like `user@example.com`.
 

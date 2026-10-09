@@ -1,0 +1,35 @@
+{% comment %}
+  The one installation story shared by every guide: the target command
+  first, then the pre-release path — the monorepo — until the 2.0.0 tag.
+  Parameter: package, the target Composer package of the guide. Never
+  inline the repositories block in a page; this include owns it.
+{% endcomment %}
+<section class="install-block">
+  <h2 id="installation">Installation</h2>
+  <div class="install"><pre><code>composer require --dev {{ include.package }}</code></pre></div>
+  <details class="prerelease">
+    <summary>PHPRegex 2.x is a pre-release</summary>
+    <p>The split packages are not on Packagist yet — install the monorepo until the 2.0.0 tag:</p>
+    <ol>
+      <li>
+        <p>Declare the repository in your <code>composer.json</code>:</p>
+        <pre><code class="language-json">{"repositories":[{"type":"vcs","url":"https://github.com/php-regex/php-regex"}],"minimum-stability":"dev","prefer-stable":true}</code></pre>
+      </li>
+      <li>
+        <p>Require the monorepo package:</p>
+        <div class="install"><pre><code>composer require --dev php-regex/php-regex:2.x-dev</code></pre></div>
+      </li>
+    </ol>
+    <p>The monorepo ships every split package, with the vendor paths under <code>vendor/php-regex/php-regex/src/</code>. From the 2.0.0 release, <code>composer require --dev {{ include.package }}</code> works as-is.</p>
+  </details>
+</section>
+<style>
+  .install-block .prerelease { margin-top: 1rem; border: 1px solid var(--line); }
+  .install-block .prerelease > summary { padding: .7rem 1rem; cursor: pointer; font-weight: 600; color: var(--ink-soft); }
+  .install-block .prerelease > summary:hover { color: var(--ink); }
+  .install-block .prerelease[open] > summary { border-bottom: 1px solid var(--line); }
+  .install-block .prerelease > :not(summary) { margin-inline: 1.25rem; }
+  .install-block .prerelease > :first-of-type { margin-top: 1.25rem; }
+  .install-block .prerelease > :last-child { margin-bottom: 1.25rem; }
+  .install-block .prerelease pre { margin-block: .5rem; }
+</style>

@@ -1,9 +1,15 @@
+---
+description: "The PHPRegex identifier behind each of SonarPHP's 25 regex rules — covered, covered in part, or out of scope — for teams moving from Sonar or running both."
+---
+
 # SonarPHP Regex Rules
 
 SonarPHP checks the regular expressions of PHP code with 25 rules. This page names, for
 each of them, the PHPRegex identifier that reports the same defect, says whether PHPRegex
 covers it fully or in part, and why a rule is left out. A team moving from SonarPHP, or
-running both, can find every Sonar finding here and silence it once.
+running both, can find every Sonar finding here and silence it once. Each rule's official
+page, with its compliance examples, lives at
+[rules.sonarsource.com/php](https://rules.sonarsource.com/php/) — the S-ids below match it.
 
 Lint identifiers (`regex.lint.*`) are reported by `regex lint`, the PHPStan rule with lint
 enabled, the language server and the framework commands; each is described in the

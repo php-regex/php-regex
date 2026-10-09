@@ -1,4 +1,5 @@
 ---
+description: "Install PHPRegex and run a first analysis in a few runnable steps: parse and validate patterns, explain them, and get a proven ReDoS verdict."
 redirect_from:
   - /QUICK_START/
   - /QUICK_START.html
@@ -18,25 +19,25 @@ This is the fast hands-on tour: every step is a command or snippet you can run a
 - Check a pattern for ReDoS, and get the input that triggers it.
 - Build custom analysis tools.
 
-## Installation
+Requires PHP 8.2 or later and the `mbstring` extension (PCRE ships with PHP).
+
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
+`regex-toolkit` is the parser and the PHP API. The pre-release monorepo above also installs the `vendor/bin/regex` binary used throughout this guide; from the 2.0.0 release, the CLI is its own package (`composer require --dev php-regex/regex-cli`).
+
+No Composer? The CLI also ships as a self-contained PHAR:
 
 ```bash
-composer require php-regex/regex-toolkit
-composer require --dev php-regex/regex-cli
+curl -Ls https://github.com/php-regex/php-regex/releases/latest/download/regex.phar \
+  -o ~/.local/bin/regex
+chmod +x ~/.local/bin/regex
 ```
 
-`regex-toolkit` is the parser and the PHP API. `regex-cli` is optional and installs the `vendor/bin/regex` binary used throughout this guide.
-
-If you want to experiment without installing, use <https://regex101.com> in PCRE2 mode.
+To explore what a pattern matches without installing anything, use <https://regex101.com> in PCRE2 mode — for the semantics. Proven verdicts, witnesses and equivalence stay PHPRegex's job: `vendor/bin/regex analyze '/(a+)+$/'`.
 
 ## How PHPRegex Works (Short Version)
 
-- The literal is split into pattern and flags.
-- The lexer emits a token stream.
-- The parser builds an AST.
-- Visitors walk the AST to validate, explain, analyze, or transform.
-
-You do not need these details to use the API. For background, see [What is an AST?](concepts/ast.md).
+You do not need the pipeline details to use the API: the literal is split from its flags, lexed, parsed into an immutable AST, and visitors walk that AST to validate, explain, analyze, or transform. For background, see [What is an AST?](concepts/ast.md).
 
 ## CLI Quick Start
 
@@ -113,10 +114,10 @@ $result = $regex->validate('/(?<year>\d{4})-(?<month>\d{2})/');
 
 if ($result->isValid) {
     echo "Pattern is valid.\n";
-    echo "Complexity score: " . $result->getComplexityScore() . "\n";
+    echo "Complexity score: " . $result->complexityScore . "\n";
 } else {
     echo "Error: " . $result->error . "\n";
-    echo "Hint: " . $result->getHint() . "\n";
+    echo "Hint: " . $result->hint . "\n";
 }
 ```
 
@@ -286,9 +287,15 @@ echo "Quantifiers: " . $counter->getCount(); // "3"
 
 Learn more: [Understanding Visitors](concepts/visitors.md)
 
----
-
 ## Common Pattern Examples
+
+Each block assumes the primer below — copy it once, then any block works on its own:
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$regex = Regex::create();
+```
 
 ### Email Validation
 
@@ -318,9 +325,7 @@ $pattern = '/^(?<year>\d{4})-(?<month>0[1-9]|1[0-2])-(?<day>0[1-9]|[12][0-9]|3[0
 $result = $regex->validate($pattern);
 ```
 
----
-
-## ⚠️ Error Handling
+## Error Handling
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -329,7 +334,7 @@ use PHPRegex\Parser\Exception\ParserException;
 $regex = Regex::create();
 
 try {
-    $ast = $regex->parse('/invalid[/');  // Unclosed character class
+    $ast = $regex->parse('/(?P<1x>a)/');  // Invalid group name
 } catch (ParserException $e) {
     echo "Parse error: " . $e->getMessage() . "\n";
     echo "Position: " . $e->getPosition() . "\n";
@@ -337,17 +342,13 @@ try {
 }
 ```
 
----
-
-## ⚡ Performance Tips
+## Performance Tips
 
 1. **Parse Once, Reuse AST**: Don't re-parse the same pattern repeatedly
 2. **Validate Early**: Check patterns during development, not in production
 3. **Cache Results**: Store validated patterns and analysis results
 4. **Reuse Regex Instance**: Create one `Regex` instance and reuse it
 5. **Avoid Complex Patterns**: Simple patterns parse faster
-
----
 
 ## Advanced Features
 
@@ -390,26 +391,26 @@ $pattern = '/a++b/';
 $result = $regex->validate($pattern);
 ```
 
----
-
 ## Next Steps
 
 Now that you've seen what PHPRegex can do, here's where to go next:
 
-For beginners:
-- [Learn Regex from Scratch](tutorial/README.md)
-- [Regex in PHP Guide](guides/regex-in-php.md)
+For tool authors:
+- [PHPStan Guide](guides/phpstan.md) - Regex findings inside static analysis
+- [Psalm Guide](guides/psalm.md) - `$matches` typed from the pattern
+- [Rector Guide](guides/rector.md) - `preg_*` calls rewritten when provably equal
+- [Architecture](architecture.md)
+- [Extending Guide](extending.md)
 
-For users:
-- [CLI Guide](guides/cli.md)
+For app developers:
+- [Laravel Guide](guides/laravel.md) and [Symfony Guide](guides/symfony.md)
+- [CLI Guide](guides/cli.md) - Lint your code base in CI
 - [Cookbook](cookbook.md)
 - [ReDoS Guide](guides/redos.md)
 
-For developers:
-- [Architecture](architecture.md)
-- [AST Reference](nodes/README.md)
-- [Visitors Guide](visitors/README.md)
-- [Extending Guide](extending.md)
+New to regex:
+- [Learn Regex from Scratch](tutorial/README.md)
+- [Regex in PHP Guide](guides/regex-in-php.md)
 
 Reference:
 - [API Reference](reference/api.md)
@@ -418,6 +419,4 @@ Reference:
 
 ## Getting Help
 
-- Issues and bug reports: <https://github.com/php-regex/php-regex/issues>
-- Real-world examples: see `tests/Integration/`
-- Interactive playground: <https://regex101.com> (PCRE2 mode)
+Issues, real-world examples and the playground are listed on the [documentation home page](README.md#getting-help).

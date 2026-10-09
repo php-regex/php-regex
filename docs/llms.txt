@@ -2,35 +2,79 @@
 
 > Static analysis, linter & logic solver for PHP regular expressions. PHPRegex parses PCRE-style regexes into an immutable AST and answers questions about them: validity ruled as PHP's own engine would rule it, ReDoS safety with a proof or a witness, lint findings with fixes, provably equivalent rewrites, sample strings a pattern matches, and pattern-to-pattern logic (equivalence, intersection, subset) via automata.
 
-Install: composer require php-regex/regex-toolkit:2.x-dev
+Install: composer require --dev php-regex/regex-toolkit — until the 2.0.0 tag, install the monorepo instead: composer require php-regex/php-regex:2.x-dev with the repositories block from the Quick Start
 Docs: https://php-regex.com/docs/
 Repository: https://github.com/php-regex/php-regex
 License: MIT
 
-## Start here
+## Learn
 
+- [Documentation](https://php-regex.com/docs/): the documentation map, organized by task
 - [Quick Start](https://php-regex.com/quick-start/): install and first analysis in a few runnable steps
-- [Tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
-- [Architecture](https://php-regex.com/architecture/): the lexer/parser/AST/visitor pipeline
+- [Regex 101 tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
+- [Regex in PHP](https://php-regex.com/guides/regex-in-php/): how PCRE behaves inside preg_* — delimiters, flags, the functions and their return values
 
-## Guides
+## Integrations
 
-- [CLI](https://php-regex.com/guides/cli/): sixteen subcommands, config files, output formats, CI recipes
+- [Guides index](https://php-regex.com/guides/): every integration on one page, with its install command
 - [PHPStan](https://php-regex.com/guides/phpstan/): regex findings inside static analysis
 - [Psalm](https://php-regex.com/guides/psalm/): $matches typed from the pattern
 - [Rector](https://php-regex.com/guides/rector/): preg_* calls rewritten to the string functions they provably equal
+- [Laravel](https://php-regex.com/guides/laravel/): Regex service, facade, artisan commands
+- [Symfony](https://php-regex.com/guides/symfony/): bundle, service, console commands
 - [LSP](https://php-regex.com/guides/lsp/): diagnostics, hovers and code actions in any editor
-- [Laravel](https://php-regex.com/guides/laravel/) and [Symfony](https://php-regex.com/guides/symfony/): service, commands, configuration
+- [CLI](https://php-regex.com/guides/cli/): sixteen subcommands, config files, output formats, CI recipes
 - [ReDoS guide](https://php-regex.com/guides/redos/): verdicts, guarantees, confirmed mode, fixes
 - [Cookbook](https://php-regex.com/cookbook/): ready-made patterns with their safety verdicts
 - [Troubleshooting](https://php-regex.com/troubleshooting/): common errors and their fixes
 
+## Concepts
+
+- [Key concepts](https://php-regex.com/concepts/): the fundamental ideas behind PHPRegex, explained for beginners
+- [What is an AST?](https://php-regex.com/concepts/ast/): the structured representation of a pattern every analysis walks
+- [Understanding Visitors](https://php-regex.com/concepts/visitors/): how operations run over the tree without changing it
+- [ReDoS Deep Dive](https://php-regex.com/concepts/redos/): why patterns backtrack catastrophically and what is provable
+- [PCRE vs Other Engines](https://php-regex.com/concepts/pcre/): where PHP's engine sits among the others
+
 ## Reference
 
+- [Reference index](https://php-regex.com/reference/): the reference material on one page
 - [Lint rules](https://php-regex.com/reference/rules/): every diagnostic, rule and optimization
 - [API](https://php-regex.com/reference/api/): entry points, return objects, exceptions
-- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature
-- [PCRE2 conformance](https://php-regex.com/reference/pcre2-conformance/): measured against PHP's engine on the official test suite
-- [Logic solver](https://php-regex.com/reference/logic-solver/): equivalence, intersection, subset, example strings
-- [Capture shapes](https://php-regex.com/reference/capture-shapes/): what preg_match() writes into $matches
+- [Diagnostics](https://php-regex.com/reference/diagnostics/): error types, messages, and how to map them to fixes
+- [Diagnostics cheat sheet](https://php-regex.com/reference/diagnostics-cheatsheet/): fast fixes for the most common diagnostics
 - [JSON output](https://php-regex.com/reference/json-output/): every key the regex command prints
+- [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/): which PCRE construct each analysis layer supports
+- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature
+- [Backward compatibility](https://php-regex.com/reference/backward-compatibility/): what each release may change
+- [Capture shapes](https://php-regex.com/reference/capture-shapes/): what preg_match() writes into $matches
+- [Pattern info](https://php-regex.com/reference/pattern-info/): the facts PCRE2 computes on every compiled pattern
+- [Prefilters](https://php-regex.com/reference/prefilters/): when a string function can answer before preg_match()
+- [PCRE2 conformance](https://php-regex.com/reference/pcre2-conformance/): measured against PHP's engine on the official test suite
+- [Sonar](https://php-regex.com/reference/sonar/): where each SonarPHP regex rule maps to a PHPRegex identifier
+- [Logic solver](https://php-regex.com/reference/logic-solver/): equivalence, intersection, subset, example strings
+- [FAQ and Glossary](https://php-regex.com/reference/faq-glossary/): short answers and quick definitions
+- [External References](https://php-regex.com/reference/resources/): the sources PHPRegex verifies diagnostics against
+
+## Internals
+
+- [Architecture](https://php-regex.com/architecture/): the lexer/parser/AST/visitor pipeline under the hood
+- [AST traversal](https://php-regex.com/design/ast-traversal/): how the tree is walked, and in what order
+- [Nodes](https://php-regex.com/nodes/): every AST node type, one per construct
+- [Visitors](https://php-regex.com/visitors/): every built-in visitor, and how to build custom ones
+- [Extending](https://php-regex.com/extending/): adding new PCRE features, visitors and integrations
+- [Maintainers guide](https://php-regex.com/maintainers/): embedding PHPRegex in a tool as a first-class component
+
+## Tutorial track
+
+- [Introduction](https://php-regex.com/tutorial/): what the tutorial covers and the tools it uses
+- [Chapter 1, Regex basics](https://php-regex.com/tutorial/01-basics/)
+- [Chapter 2, Character classes & escapes](https://php-regex.com/tutorial/02-character-classes/)
+- [Chapter 3, Anchors & boundaries](https://php-regex.com/tutorial/03-anchors-boundaries/)
+- [Chapter 4, Quantifiers & greediness](https://php-regex.com/tutorial/04-quantifiers/)
+- [Chapter 5, Groups & alternation](https://php-regex.com/tutorial/05-groups-alternation/)
+- [Chapter 6, Lookarounds & assertions](https://php-regex.com/tutorial/06-lookarounds/)
+- [Chapter 7, Backreferences & recursion](https://php-regex.com/tutorial/07-backreferences-recursion/)
+- [Chapter 8, Performance & ReDoS](https://php-regex.com/tutorial/08-performance-redos/)
+- [Chapter 9, Testing & debugging](https://php-regex.com/tutorial/09-testing-debugging/)
+- [Chapter 10, Real-world PHP](https://php-regex.com/tutorial/10-real-world-php/)

@@ -1,15 +1,12 @@
 ---
+description: "How PHPRegex walks the AST: double dispatch, choosing a visitor base class, transformations that preserve positions, and guards against deep recursion."
 redirect_from:
   - /design/AST_TRAVERSAL/
   - /design/AST_TRAVERSAL.html
 ---
 # AST Traversal Design
 
-Understanding how PHPRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities.
-
-## The Tour Guide Analogy
-
-Think of the AST as a museum floor plan and the visitor as a tour guide. The visitor follows a fixed path through each room (node), visiting every exhibit (child node) in order. The guide does not change the layout; it observes, records, or transforms as needed.
+Understanding how PHPRegex walks through the Abstract Syntax Tree (AST) is essential for building custom visitors, debugging traversal issues, or extending the library's analysis capabilities. The walk is a fixed route: each node hands the visitor its children in pattern order, and the visitor observes, records, or transforms as it goes.
 
 ## Why Use the Visitor Pattern?
 
@@ -50,11 +47,15 @@ $result = $ast->accept(new TextExplainer());
 echo $result;
 /*
 Output:
-AlternationNode
-├── Alternative 1 (SequenceNode)
-│   └── LiteralNode("foo")
-└── Alternative 2 (SequenceNode)
-    └── LiteralNode("bar")
+Regex matches
+    EITHER
+      'f'
+      'o'
+      'o'
+    OR
+      'b'
+      'a'
+      'r'
 */
 ```
 
@@ -79,28 +80,25 @@ PHPRegex uses depth-first traversal with explicit control in the visitor. Typica
 
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\Node;
 
 $regex = Regex::create();
 $ast = $regex->parse('/(a(b(c)))+/');
 
-class DepthTrackingVisitor extends AbstractNodeVisitor
+class DepthTrackingVisitor extends AbstractTraversingVisitor
 {
     private int $maxDepth = 0;
     private int $currentDepth = 0;
 
-    public function visitSequence(Node\SequenceNode $node): Node\SequenceNode
+    public function visitGroup(Node\GroupNode $node)
     {
         $this->currentDepth++;
         $this->maxDepth = max($this->maxDepth, $this->currentDepth);
-        
-        $children = [];
-        foreach ($node->children as $child) {
-            $children[] = $child->accept($this);
-        }
-        
+
+        parent::visitGroup($node);  // keep descending into the group
+
         $this->currentDepth--;
-        return new Node\SequenceNode($children, $node->startPosition, $node->endPosition);
     }
 
     public function getMaxDepth(): int
@@ -111,8 +109,14 @@ class DepthTrackingVisitor extends AbstractNodeVisitor
 
 $visitor = new DepthTrackingVisitor();
 $ast->accept($visitor);
-echo "Maximum nesting depth: " . $visitor->getMaxDepth(); // Output: 3
+echo 'Maximum nesting depth: ' . $visitor->getMaxDepth(); // Output: Maximum nesting depth: 3
 ```
+
+The base class does the walking: `AbstractTraversingVisitor` visits every
+node's children in pattern order, so the override only counts. Extending
+`AbstractNodeVisitor` instead would mean writing the descent by hand — and a
+node type you do not override then hides its subtree, which is why a visitor
+like this one built on that base reported a depth of 0 for every pattern.
 
 ## Return Types: Stateless vs Stateful
 
@@ -146,40 +150,10 @@ $metrics = Regex::create()->parse('/foo|bar/')->accept(new MetricsCollector());
 
 Two base classes give every `visitX()` method a default, so a visitor that
 extends one keeps working when a minor release adds a node type:
-
-- `AbstractTraversingVisitor` visits the children of every node, in pattern
-  order, and returns `null`. Extend it to collect or check something wherever
-  it stands: override the node types you care about and call the parent
-  method to keep descending (return without calling it to skip the subtree).
-  A node type added later is walked through, so the nodes below it still
-  reach your overrides.
-- `AbstractNodeVisitor` returns the default value (`null`, or what
-  `defaultReturn()` gives) and visits no children. Extend it when each method
-  computes the node's value and you choose which children to visit, as the
-  compiler does. A node you do not override hides its subtree, a node type
-  added later included.
-
-```php
-use PHPRegex\Parser\Node;
-use PHPRegex\Parser\AbstractTraversingVisitor;
-
-class OnlyLiteralVisitor extends AbstractTraversingVisitor
-{
-    private array $literals = [];
-
-    public function visitLiteral(Node\LiteralNode $node)
-    {
-        $this->literals[] = $node->value;
-
-        return parent::visitLiteral($node);
-    }
-
-    public function getLiterals(): array
-    {
-        return $this->literals;
-    }
-}
-```
+`AbstractTraversingVisitor` walks every node's children in pattern order,
+`AbstractNodeVisitor` returns a default value and visits none, leaving the
+descent to you. The [visitor reference](../visitors/README.md#which-base-to-extend)
+shows both side by side, with the example each one fits.
 
 ## Transformations: Creating New Nodes
 
@@ -260,7 +234,11 @@ public function visitGroup(Node\GroupNode $node): Node\GroupNode
     return new Node\GroupNode(
         $node->child->accept($this),  // Visit child, not group
         $node->type,
-        $node->name
+        $node->name,
+        $node->flags,             // keep inline flags: dropping them
+                                   // would change what the group means
+        $node->startPosition,     // preserve source positions
+        $node->endPosition
     );
 }
 ```
@@ -268,7 +246,8 @@ public function visitGroup(Node\GroupNode $node): Node\GroupNode
 ### Error 3: Not Handling All Node Types
 
 ```php
-// WRONG - crashes when visiting unhandled node types
+// WRONG - loses the positions, and a child of an unhandled type
+// maps to the default (null) inside the new sequence
 public function visitSequence(Node\SequenceNode $node): Node\SequenceNode
 {
     return new Node\SequenceNode(
@@ -276,8 +255,9 @@ public function visitSequence(Node\SequenceNode $node): Node\SequenceNode
     );
 }
 
-// RIGHT - AbstractNodeVisitor returns $node for unhandled types
-// Or explicitly handle all expected types
+// RIGHT - AbstractNodeVisitor returns defaultReturn() (null by default)
+// for unhandled types: handle every type you will meet, or override
+// defaultReturn(), or extend AbstractTraversingVisitor to keep descending
 ```
 
 ### Error 4: Mixing Up Child Iteration Order
@@ -306,34 +286,29 @@ foreach ($node->alternatives as $index => $alternative) {
 
 ## Performance Considerations
 
-For large patterns or adversarial input:
+For large patterns or adversarial input, bound the depth of the walk. With
+`NodeWalker`, the callback receives the ancestors of every node, so the depth
+check is one `count()`:
 
 ```php
-class SafeVisitor extends AbstractNodeVisitor
-{
-    private const MAX_DEPTH = 100;
-    private int $currentDepth = 0;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\TraversalAction;
 
-    public function beforeTraversal(Node\RegexNode $node): void
-    {
-        // Reset state
-        $this->currentDepth = 0;
+NodeWalker::walk($ast, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
+    // $ancestors holds the nodes from the root down to $node's parent:
+    // its length is the depth of $node.
+    if (count($ancestors) > 100) {
+        return TraversalAction::Stop;  // abandon the walk, keep what was collected
     }
 
-    public function enterNode(Node\NodeInterface $node): void
-    {
-        $this->currentDepth++;
-        if ($this->currentDepth > self::MAX_DEPTH) {
-            throw new \RuntimeException('Maximum traversal depth exceeded');
-        }
-    }
-
-    public function leaveNode(Node\NodeInterface $node): void
-    {
-        $this->currentDepth--;
-    }
-}
+    return null;  // keep walking; SkipChildren would prune this subtree
+});
 ```
+
+Inside a visitor, the same guard is a depth counter maintained in an
+overridden `visitX()` that calls the parent method — the shape
+`DepthTrackingVisitor` uses above.
 
 ## Related Documentation
 
@@ -341,44 +316,18 @@ class SafeVisitor extends AbstractNodeVisitor
 |-----------------------|------------------------------------------------|
 | AST Node Reference    | [nodes](../nodes/README.md)                    |
 | AST Visitor Reference | [visitors](../visitors/README.md)              |
-| Architecture Overview | [ARCHITURE](../architecture.md)                |
+| Architecture Overview | [Architecture](../architecture.md)            |
 | Tutorial: Basics      | [tutorial/01-basics](../tutorial/01-basics.md) |
 
 ---
 
-## Exercises
+## Practice
 
-### Exercise 1: Count the Groups
-
-Write a visitor that counts all capturing groups in a pattern.
-
-**Hint:** Look for `GroupNode` with type `GroupType::Capturing` or `GroupType::Named`.
-
-```php
-// Starter code:
-class GroupCountingVisitor extends AbstractNodeVisitor
-{
-    // Your code here
-}
-
-// Test:
-$ast = Regex::create()->parse('/(a)(?:b)(?<name>c)(d)/');
-$visitor = new GroupCountingVisitor();
-$ast->accept($visitor);
-// Should output: 3 capturing groups
-```
-
-### Exercise 2: Find Deepest Quantifier
-
-Write a visitor that finds the quantifier with the deepest nesting.
-
-**Hint:** Track depth while traversing, and record the deepest quantifier's position.
-
-### Exercise 3: Extract All Anchors
-
-Write a visitor that extracts all anchors (`^`, `$`, `\b`, `\B`, `(?=...)`, etc.) in order.
-
-**Hint:** Collect anchors during traversal and return an ordered list.
+The [visitor reference](../visitors/README.md#building-custom-visitors) walks
+through working visitors that do what this page preaches — `GroupCollectorVisitor`
+collects named groups, `LiteralCollector` gathers literals, `UppercaserVisitor`
+transforms nodes — and the [cookbook](../cookbook.md) holds complete patterns
+to run them on.
 
 ---
 

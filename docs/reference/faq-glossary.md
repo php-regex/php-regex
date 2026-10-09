@@ -1,3 +1,7 @@
+---
+description: "Short answers to common PHPRegex questions — CI integration, caching, exceptions — plus a glossary of the terms used across the documentation."
+---
+
 # FAQ and Glossary
 
 Short answers to common questions plus quick definitions of core terms used throughout PHPRegex documentation.
@@ -65,7 +69,7 @@ Tolerant parsing returns a partial AST plus errors, allowing tools to continue e
 use PHPRegex\Toolkit\Regex;
 
 // Strict parsing - throws on error
-$ast = Regex::create()->parse('/[broken/');  // Throws ParserException
+$ast = Regex::create()->parse('/[broken/');  // Throws LexerException (extends RegexException)
 
 // Tolerant parsing - returns partial AST
 $result = Regex::create()->parseTolerant('/[broken/');
@@ -83,11 +87,11 @@ echo count($result->errors);  // 1
 # CLI linting
 vendor/bin/regex lint src/ --format=json > regex-issues.json
 
-# Check for critical issues
-if jq '[.results[] | .issues[] | select(.type == "error")] | length' regex-issues.json | grep -q 0; then
-    echo "No critical regex issues found"
+# Fail on any error-severity issue
+if [ "$(jq '[.results[] | .issues[] | select(.severity == "error")] | length' regex-issues.json)" -eq 0 ]; then
+    echo "No error-severity regex issues found"
 else
-    echo "Critical issues found!"
+    echo "Error-severity regex issues found!"
     exit 1
 fi
 ```
@@ -95,13 +99,11 @@ fi
 ```yaml
 # GitHub Actions example
 - name: Run PHPRegex
-  run: vendor/bin/regex lint src/ --format=json > regex-report.json
-- name: Check report
-  uses: dawidd6/action-json-to-coverage@v1
-  with:
-    report: regex-report.json
-    min_coverage: 95
+  run: vendor/bin/regex lint src/ --format=github
 ```
+
+The exit code fails the job: `0` clean, `1` errors found, `2` unusable configuration or command line. See
+[the CLI guide](../guides/cli.md) for the report formats and the exit codes.
 
 ---
 
@@ -136,7 +138,7 @@ use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 
-echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'medium', 'high', 'unknown')
+echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'medium', 'unknown', 'high', 'critical')
 echo $analysis->headline();               // 'Exponential backtracking (proven)'
 echo $analysis->confidenceLevel()->value; // 'medium' ('high' once replayed on PCRE)
 echo $analysis->recommendations[0];       // Suggested fix
@@ -155,7 +157,10 @@ $result = Regex::create()->optimize('/[0-9]+/');
 
 echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'
-echo $result->changes[0];  // 'Replaced [0-9] with \d'
+var_export($result->changes);
+// array (
+//   0 => 'Optimized pattern.',
+// )
 ```
 
 ---
@@ -168,7 +173,10 @@ use PHPRegex\Toolkit\Regex;
 $explanation = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $explanation;
 /*
-Match exactly 3 digits, then hyphen, then exactly 4 digits.
+Regex matches
+    Character Type: A digit: [0-9] (exactly 3 times)
+  '-'
+    Character Type: A digit: [0-9] (exactly 4 times)
 */
 ```
 
@@ -200,7 +208,7 @@ use PHPRegex\Toolkit\Regex;
 // parse() - throws
 try {
     $ast = Regex::create()->parse('/[broken/');
-} catch (\Exception $e) {
+} catch (\PHPRegex\Parser\Exception\ExceptionInterface $e) {
     echo "Parse failed: {$e->getMessage()}";
 }
 
@@ -259,8 +267,8 @@ $regex = Regex::create([
 | **Atomic group**          | `(?>...)` - prevents backtracking inside the group             |
 | **Possessive quantifier** | `*+`, `++`, `{m,n}+` - no backtracking                         |
 | **Branch reset**          | `(?\|...)` - resets capture numbering per branch |
-| **Subroutine**            | `(?1)` or `(?&uses a group definition                          |
-| **Lexer**                 | Tokenizesname)` - re the pattern string into tokens            |
+| **Subroutine**            | `(?1)` or `(?&name)` - reuses a group definition               |
+| **Lexer**                 | Tokenizes the pattern string into tokens                       |
 | **Parser**                | Builds the AST from tokens                                     |
 | **Tokenizer**             | Same as Lexer                                                  |
 | **Delimiter**             | Character marking pattern boundaries (e.g., `/` in `/pattern/`) |
@@ -285,28 +293,5 @@ $regex = Regex::create([
 
 ## Pattern Quick Reference
 
-| Pattern    | Meaning                      | Example      |
-|------------|------------------------------|--------------|
-| `.`        | Any character except newline | `/.+/`       |
-| `\d`       | Digit [0-9]                  | `/\d{3}/`    |
-| `\w`       | Word character [a-zA-Z0-9_]  | `/\w+/`      |
-| `\s`       | Whitespace                   | `/\s*/`      |
-| `\b`       | Word boundary                | `/\bword\b/` |
-| `^`        | Start of string              | `/^start/`   |
-| `$`        | End of string                | `/end$/`     |
-| `*`        | 0 or more                    | `/a*/`       |
-| `+`        | 1 or more                    | `/a+/`       |
-| `?`        | 0 or 1                       | `/a?/`       |
-| `{n,m}`    | Between n and m              | `/a{2,4}/`   |
-| `[abc]`    | Any of a, b, c               | `/[abc]/`    |
-| `[^abc]`   | Not a, b, or c               | `/[^abc]/`   |
-| `(...)`    | Capturing group              | `/(\w+)/`    |
-| `(?:...)`  | Non-capturing                | `/(?:foo)/`  |
-| `(?=...)`  | Positive lookahead           | `/(?=\d)/`   |
-| `(?!...)`  | Negative lookahead           | `/(?!\d)/`   |
-| `(?<=...)` | Positive lookbehind          | `/(?<=\d)/`  |
-| `(?<!...)` | Negative lookbehind          | `/(?<!\d)/`  |
-| `\|`       | Alternation                  | `/a\|b/`     |
-| `\1`       | Backreference                | `/(\w+)\1/`  |
-| `(?>...)`  | Atomic group                 | `/(?>a+)/`   |
-| `*+`       | Possessive quantifier        | `/a*+/`      |
+The regex basics — from `.` and `\d` to possessive quantifiers — are taught by the
+[tutorial](../tutorial/README.md), which starts at [the atoms of a pattern](../tutorial/01-basics.md).

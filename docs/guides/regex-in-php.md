@@ -1,3 +1,6 @@
+---
+description: "A PHP regex primer: how PCRE2 powers preg_match(), delimiters, flags, limits and common mistakes, plus the PHPRegex calls that analyze each pattern."
+---
 # Regex in PHP
 
 This guide explains how PCRE works in PHP and how PHPRegex interprets the same syntax. Examples use full regex literals (`/pattern/flags`).
@@ -6,7 +9,7 @@ This guide explains how PCRE works in PHP and how PHPRegex interprets the same s
 
 ## What Is PCRE?
 
-PHP uses **PCRE2** (Perl Compatible Regular Expressions) for regex operations. This is the same engine used by Perl, and it is widely used and well-tested.
+PHP uses **PCRE2** (Perl Compatible Regular Expressions) for regex operations: a reimplementation of Perl's regular expression syntax, widely used and well-tested.
 
 ```
 PCRE = Perl Compatible Regular Expressions
@@ -72,7 +75,7 @@ $pattern = '/https://example.com/';  // Error: unescaped delimiter
 // Solution: Use # as delimiter
 $pattern = '#https://example\.com#';
 
-// Or ~ or any non-alphanumeric character
+// Or ~ or any non-alphanumeric, non-backslash, non-whitespace ASCII character
 $pattern = '~https://example\.com~';
 $pattern = '%https://example\.com%';
 ```
@@ -213,7 +216,7 @@ echo $pattern;  // "/test\+/"
 ### Syntax
 
 ```php
-preg_quote(string $pattern, string $delimiter = null): string
+preg_quote(string $str, ?string $delimiter = null): string
 ```
 
 ---
@@ -248,19 +251,19 @@ if (preg_last_error() === PREG_NO_ERROR) {
 
 ## Performance: PCRE Limits
 
-For untrusted input, set limits to prevent runaway patterns:
+For untrusted input, lower the limits to prevent runaway patterns. PHP's defaults are `pcre.backtrack_limit = 1000000` and `pcre.recursion_limit = 100000` — setting them to their defaults protects nothing:
 
 ```php
-// Set limits (php.ini or runtime)
-ini_set('pcre.backtrack_limit', '1000000');  // 1 million
-ini_set('pcre.recursion_limit', '100000');   // 100 thousand
+// Lower the limits (php.ini or runtime)
+ini_set('pcre.backtrack_limit', '100000');  // down from the 1,000,000 default
+ini_set('pcre.recursion_limit', '10000');   // down from the 100,000 default
 
-// What happens when limits are reached?
+// What happens when the backtrack limit is reached?
 $result = preg_match('/(a+)+$/m', str_repeat('a', 1000000) . '!');
 
 if ($result === false) {
     echo "Pattern too complex or input too long";
-    echo "Error: " . preg_last_error_msg();
+    echo "Error: " . preg_last_error_msg();  // Backtrack limit exhausted
 }
 ```
 
@@ -270,6 +273,8 @@ Without limits, malicious input can cause:
 - **CPU exhaustion** (exponential backtracking)
 - **Memory exhaustion** (deep recursion)
 - **Service denial** (application hangs)
+
+The limit only caps a single match attempt; the [ReDoS guide](redos.md) explains the real cost model and what PHPRegex can prove about a pattern before it reaches production.
 
 ---
 
@@ -326,6 +331,10 @@ echo $m[0];  // "<p>Hello</p>"
 
 ## Where PHPRegex Helps
 
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
+The examples below use the `Regex` facade; the [Quick Start](../quick-start.md) covers a first full analysis.
+
 ### 1. Validate Patterns Before Use
 
 ```php
@@ -350,13 +359,16 @@ echo $regex->explain('/^(?<email>[^@]+)@(?<domain>[^@]+)$/');
 
 **Output:**
 ```
-Start of string
-  Named group 'email':
-    One or more characters that are not @
-  Literal @
-  Named group 'domain':
-    One or more characters that are not @
-End of string
+Regex matches
+  Anchor: the beginning of a line
+  Capturing group (named: 'email')
+        Character Class: any character except [     '@' ] (one or more times)
+  End group
+  '@'
+  Capturing group (named: 'domain')
+        Character Class: any character except [     '@' ] (one or more times)
+  End group
+  Anchor: the end of a line
 ```
 
 ### 3. Detect ReDoS Vulnerabilities
@@ -375,7 +387,7 @@ if ($analysis->severity->value === 'critical') {
 ```php
 // Generate a valid email for testing
 $email = $regex->generate('/^[a-z]+@[a-z]+\.[a-z]+$/i');
-echo $email;  // Example: "user@example.com"
+echo $email;  // Example output: "vfd@jlbj.k" (random each run)
 ```
 
 ---

@@ -1,11 +1,14 @@
 {% comment %}
-  Previous/next pager generated from the sidebar order (nav.yml is the
-  single source of reading order). Liquid has no variable indexing, so
-  the flat arrays are walked with matching captures.
+  Previous/next pager generated from the sidebar order. No parameter
+  falls back to the main navigation (nav.yml, the single source of
+  reading order); the tutorial layout passes its own track
+  (nav-tutorial.yml). Liquid has no variable indexing, so the flat
+  arrays are walked with matching captures.
 {% endcomment %}
+{% assign nav_source = include.nav | default: site.data.nav %}
 {% assign flat_urls = '' %}
 {% assign flat_titles = '' %}
-{% for s in site.data.nav %}
+{% for s in nav_source %}
   {% for p in s.pages %}
     {% assign flat_urls = flat_urls | append: p.url | append: '|' %}
     {% assign flat_titles = flat_titles | append: p.title | append: '|' %}
@@ -52,6 +55,6 @@
 {% if page.path %}
   <p class="page-meta">
     <a class="edit-link" href="https://github.com/php-regex/php-regex/edit/2.x/docs/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 13l.8-2.8L11 3l2 2-7.2 7.2L3 13z"/></svg>Edit on GitHub</a>
-    <button type="button" class="copy-source" data-source="/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8"/><path d="M10.5 3.5h-7v7"/></svg>Copy as Markdown</button>
+    <button type="button" class="copy-source" data-source="https://raw.githubusercontent.com/php-regex/php-regex/2.x/docs/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8"/><path d="M10.5 3.5h-7v7"/></svg>Copy as Markdown</button>
   </p>
 {% endif %}

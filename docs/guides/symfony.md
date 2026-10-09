@@ -1,14 +1,18 @@
+---
+description: "Register the PHPRegex bundle in Symfony 7.4 or 8.x: the php_regex.regex service, regex:* console commands, route and firewall analysis, the 1.x upgrade."
+---
+
 # Symfony Bundle Guide
 
 The bundle registers a `Regex` service for your application and the
 `bin/console regex:*` commands. Its configuration lives under the
 `php_regex` key.
 
-## Installation
+Requires PHP 8.2 or later and Symfony 7.4 or 8.x — 6.4 LTS is not supported.
+The bundle ships no Symfony Flex recipe: register it by hand in
+`config/bundles.php`.
 
-```bash
-composer require --dev php-regex/regex-symfony
-```
+{% include install-prerelease.html package="php-regex/regex-symfony" %}
 
 ```php
 // config/bundles.php
@@ -68,6 +72,31 @@ they are the verdicts a pattern gets.
 `redos.ignored_patterns` lists patterns, fragments of patterns or whole
 regexes the risk analysis skips, such as the requirement constants of
 Symfony routes.
+
+## Using the service
+
+The container registers `php_regex.regex`, autowirable as
+`PHPRegex\Toolkit\Regex` — inject it like any other service:
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+final class PatternSupport
+{
+    public function __construct(private readonly Regex $regex) {}
+
+    public function check(string $pattern): bool
+    {
+        return $this->regex->validate($pattern)->isValid;
+    }
+}
+```
+
+`validate()` returns the object [the Laravel facade
+returns](laravel.md#using-the-service): `$result->isValid`, `$result->error`,
+`$result->caretSnippet`. [The API reference](../reference/api.md) lists every
+method of the service — `parse`, `explain`, `redos`, `optimize`, `transpile`
+and the rest.
 
 ## How route requirements and security patterns are read
 

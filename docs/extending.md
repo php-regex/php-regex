@@ -1,4 +1,5 @@
 ---
+description: "Add a new PCRE construct to the parser — node, lexer token, parser rule, visitor method, tests — with the callout syntax (?C) as the worked example."
 redirect_from:
   - /EXTENDING_GUIDE/
   - /EXTENDING_GUIDE.html
@@ -334,8 +335,13 @@ $ast = $regex->parse('/^(?:[a-z]+|\d{3,})+$/');
 $visitor = new ComplexityVisitor();
 $ast->accept($visitor);
 
-echo "Complexity: " . $visitor->getScore();  // Output: Complexity: 25
+echo "Complexity: " . $visitor->getScore();  // Output: Complexity: 30
+// 10 for the alternation, 3 x 5 for the quantifiers, 5 for the character class
 ```
+
+The library ships its own scorer for this job — [ComplexityScorer](visitors/README.md#complexityscorer),
+with bands calibrated for CI gates; the visitor above is a small cousin whose
+weights you control.
 
 ---
 
@@ -359,18 +365,19 @@ class CalloutNodeTest extends TestCase
 {
     public function testCreateWithNumber(): void
     {
-        $node = new CalloutNode(42, 0, 10);
+        $node = new CalloutNode(42, false, 0, 10);
 
-        $this->assertSame(42, $node->number);
+        $this->assertSame(42, $node->identifier);
+        $this->assertFalse($node->isStringIdentifier);
         $this->assertSame(0, $node->startPosition);
         $this->assertSame(10, $node->endPosition);
     }
 
     public function testCreateWithoutNumber(): void
     {
-        $node = new CalloutNode(null, 0, 5);
+        $node = new CalloutNode(null, false, 0, 5);
 
-        $this->assertNull($node->number);
+        $this->assertNull($node->identifier);
     }
 }
 ```

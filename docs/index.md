@@ -1,6 +1,7 @@
 ---
 layout: landing
 title: "Static analysis, linter & logic solver for PHP regular expressions"
+description: "PHPRegex parses every PCRE pattern into an AST and answers what it means, whether it is safe, and how to make it shorter or provably equivalent."
 ---
 
 <div class="hero">
@@ -14,8 +15,10 @@ title: "Static analysis, linter & logic solver for PHP regular expressions"
     <p class="hero-sub">PHPRegex reads the regexes already living in your code — every preg_* pattern, every route constraint — and tells you what they really mean, whether they are safe, and how to make them shorter, faster, or provably equivalent.</p>
     <div class="hero-ctas">
       <a class="button" href="/docs/">Read the docs</a>
-      <div class="install"><pre><code>composer require php-regex/regex-toolkit:2.x-dev</code></pre></div>
+      <a class="button" href="/quick-start/">Get started</a>
+      <div class="install"><pre><code>composer require php-regex/php-regex:2.x-dev</code></pre></div>
     </div>
+    <p class="hero-sub">New to regex? There is a <a href="/tutorial/">ten-chapter tutorial</a>.</p>
     <div class="terminal">
       <div class="terminal-bar">regex analyze</div>
       <pre class="terminal-body"><span class="command">$ vendor/bin/regex analyze '/^(?:a+)+$/'</span>
@@ -102,7 +105,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Explain</h4>
       <p class="component-desc">Explains, highlights and draws regex ASTs — plain text, HTML, Mermaid, railroad diagrams.</p>
-      <a href="/guides/cli/">Read more →</a>
+      <a href="/guides/cli/#command-examples">Read more →</a>
     </article>
     <article class="component">
       <h4 class="component-name">Generator</h4>
@@ -138,7 +141,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Transpiler</h4>
       <p class="component-desc">Transpiles PCRE patterns to JavaScript and Python, with the losses reported.</p>
-      <a href="/guides/cli/">Read more →</a>
+      <a href="/guides/cli/#command-overview">Read more →</a>
     </article>
   </div>
   <h3>Integrate</h3>
@@ -176,12 +179,12 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Linter</h4>
       <p class="component-desc">Lints the regexes of a whole code base — validity, lint rules and ReDoS — with console, JSON and CI reports.</p>
-      <a href="/guides/cli/">Read more →</a>
+      <a href="/guides/cli/#7-lint-your-codebase">Read more →</a>
     </article>
     <article class="component">
       <h4 class="component-name">Toolkit</h4>
       <p class="component-desc">One entry point to every analysis: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.</p>
-      <a href="/docs/">Read more →</a>
+      <a href="/reference/api/">Read more →</a>
     </article>
   </div>
 </section>
@@ -204,9 +207,34 @@ Regex matches
   </ul>
 </section>
 
-<section>
-  <h2 class="section-title">Start with the tutorial</h2>
-  <p>A ten-chapter walk from the first literal to the patterns running in production PHP.</p>
-  <p>Every example is checked against the same PCRE2 engine the library reasons about — no idealized dialect.</p>
-  <p><a class="button" href="/tutorial/">Open the tutorial</a></p>
+<section class="constellation">
+  <h2 class="section-title">Wire it into your stack</h2>
+  <p>Three packages turn the analysis into findings where you already work. Until the 2.0.0 tag, the <a href="/quick-start/">Quick Start</a> explains the pre-release monorepo install behind these commands.</p>
+  <div class="component-grid">
+    <article class="component">
+      <h4 class="component-name">PHPStan</h4>
+      <p class="component-desc">Reports the regex patterns your target PHP refuses — lint, ReDoS and optimization findings on demand.</p>
+      <pre><code class="language-bash">composer require --dev php-regex/regex-phpstan</code></pre>
+      <pre><code class="language-neon">includes:
+    - vendor/php-regex/php-regex/src/PHPStan/extension.neon</code></pre>
+      <a href="/guides/phpstan/">Read the guide →</a>
+    </article>
+    <article class="component">
+      <h4 class="component-name">Psalm</h4>
+      <p class="component-desc">Types $matches from the pattern, and reports the patterns your target PHP refuses.</p>
+      <pre><code class="language-bash">composer require --dev php-regex/regex-psalm
+vendor/bin/psalm-plugin enable php-regex/regex-psalm</code></pre>
+      <a href="/guides/psalm/">Read the guide →</a>
+    </article>
+    <article class="component">
+      <h4 class="component-name">Rector</h4>
+      <p class="component-desc">Rewrites a preg_* call into the string function that does the same, only when the automata prove it.</p>
+      <pre><code class="language-bash">composer require --dev php-regex/regex-rector</code></pre>
+      <pre><code class="language-php">// inside RectorConfig::configure()
+-&gt;withSets([RegexSetList::STRING_FUNCTIONS]);</code></pre>
+
+      <a href="/guides/rector/">Read the guide →</a>
+    </article>
+  </div>
+  <p>Every framework and editor integration — Laravel, Symfony, the language server, the CLI — has its card on the <a href="/guides/">guides index</a>.</p>
 </section>

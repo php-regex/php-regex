@@ -1,3 +1,7 @@
+---
+description: "Which PCRE constructs each PHPRegex layer reads: the parser, the lint and optimizer rules, the ReDoS model, and the automata solver's regular subset."
+---
+
 # Feature Support Matrix
 
 This matrix summarizes which PCRE constructs are parsed and which are supported by each analysis layer.
@@ -18,14 +22,14 @@ Legend:
 | Dot (`.`)                                     | Yes    | Yes              | Yes   | Yes             |
 | Alternation (`\|`)                            | Yes    | Yes              | Yes   | Yes             |
 | Quantifiers (`* + ? {m,n}`)                   | Yes    | Yes              | Yes   | Yes             |
-| Lazy / possessive quantifiers                 | Yes    | Partial          | Partial | Yes           |
+| Lazy / possessive quantifiers                 | Yes    | Partial          | Partial | Partial (possessive only) |
 | Capturing groups                              | Yes    | Yes              | Yes   | Yes             |
 | Non-capturing groups                          | Yes    | Yes              | Yes   | Yes             |
 | Named groups                                  | Yes    | Yes              | Yes   | Yes             |
 | Inline flags (`(?i)`, `(?-i)`)                | Yes    | Partial          | Partial | Partial        |
-| Anchors (`^`, `$`)                            | Yes    | Yes              | Yes   | Yes (outer boundaries) |
-| Assertions (`\b`, `\B`, `\A`, `\z`, `\G`)      | Yes    | Partial          | Partial | Partial (outer boundaries) |
-| Lookahead / lookbehind                        | Yes    | Partial          | Partial | No             |
+| Anchors (`^`, `$`)                            | Yes    | Yes              | Yes   | Yes             |
+| Assertions (`\b`, `\B`, `\A`, `\z`, `\Z`, `\G`) | Yes    | Partial          | Partial | Partial (`\G` only) |
+| Lookahead / lookbehind                        | Yes    | Partial          | Partial | Partial        |
 | Backreferences (`\1`, `\k<name>`)             | Yes    | Partial          | Partial | No             |
 | Subroutines (`(?&name)`, `(?R)`)              | Yes    | Partial          | Partial | No             |
 | Conditionals                                  | Yes    | Partial          | Partial | No             |
@@ -36,13 +40,14 @@ Legend:
 | `\K` keep reset                               | Yes    | Partial          | Partial | No             |
 
 Notes:
-- **Automata solver** supports the regular subset: literals, character classes and ranges, dot, POSIX classes,
-  Unicode properties, extended classes, `\C`, alternation, groups and quantifiers, with the `i`, `s` and `u` flags
-  (inline flags applied where they hold). It rejects lookarounds, backreferences, subroutines, conditionals, verbs
-  and `\K`, with one message per reason — see
-  [the logic solver reference](logic-solver.md#what-the-solver-refuses).
+- **Automata solver**: lookarounds, anchors, `\b` and `\B` are read wherever they stand. The `Partial` cells of its
+  column mean part of the row is refused: a lookaround inside a lookaround, an anchor or word boundary inside a
+  lookaround, the non-atomic `(*napla:...)`, a possessive quantifier the solver cannot prove inert, `\G` (with
+  `\K`), atomic groups, backreferences, subroutines, conditionals, verbs and the flag `A` — one message per reason.
+  The constructs it reads, the flags it takes (`i`, `s`, `u`, `D`, `m` and `r`; `x`, `U`, `n`, `J`, `S` and `X`
+  change nothing a language says) and every refusal are stated once, in
+  [the logic solver reference](logic-solver.md) and [Correctness Contracts](correctness-contracts.md).
 - **Automata solver** asks every character set from the running PCRE2, so its verdicts are engine-relative and each
-  result carries the release that answered (`pcreVersion`). Without `/u` the alphabet is the 256 bytes; with `/u` it
-  is the code points minus the surrogate block `U+D800`-`U+DFFF`.
+  result carries the release that answered (`pcreVersion`).
 - **Lint / Optimizer / ReDoS** rules are intentionally conservative and may skip unsupported constructs rather than
   fail the whole analysis.

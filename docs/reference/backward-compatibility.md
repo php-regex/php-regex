@@ -1,3 +1,7 @@
+---
+description: "What a PHPRegex minor or patch release may change, what stays for all of 2.x, and what only the next major release may touch."
+---
+
 # Backward Compatibility Promise
 
 PHPRegex follows [semantic versioning](https://semver.org/). Every package of
@@ -255,6 +259,23 @@ holds no ambiguity; a pattern given that verdict on which the running engine
 exhausts its backtrack limit in one match attempt is a soundness bug. Its fix
 ships in a patch, with `RedosAnalyzer::ANALYSIS_VERSION` raised, even though
 it changes a severity, and may move the pattern to `proof: heuristic`.
+
+## What only the next major release may change
+
+3.0 may change anything this page does not promise:
+
+- code marked `@internal`, which may already change in any release (see
+  [What the promise covers](#what-the-promise-covers));
+- the constructors of the result objects, `@internal` today — read them,
+  never build them;
+- any name the tables above leave out. 2.0 itself removed names when the
+  `@internal` surface changed;
+  [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
+  maps every one of them, and 3.0 ships the same kind of map.
+
+Nothing promised disappears silently: anything removed from the promised
+surface in 3.0 is deprecated in a 2.x minor first, with the replacement named
+(see [Deprecations](#what-a-minor-release-may-change)).
 
 ## Caches
 

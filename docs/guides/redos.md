@@ -1,4 +1,5 @@
 ---
+description: "How PHPRegex proves a regex safe from ReDoS or hands you the attack that kills it: verdicts, witnesses, confirmed mode, and the fixes that keep patterns linear."
 redirect_from:
   - /REDOS_GUIDE/
   - /REDOS_GUIDE.html
@@ -11,9 +12,11 @@ ReDoS (Regular Expression Denial of Service) happens when a regex takes exponent
 
 PHPRegex proves a pattern safe, or hands you the input that kills it. Where it cannot do either, it says so, and its structural heuristics decide.
 
+{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+
 > **Note:** ReDoS analysis is disabled by default in the linter and the integrations. Enable it explicitly:
 > - CLI: `vendor/bin/regex lint src/ --redos`, or `checks.redos.enabled: true` in `regex.json`
-> - PHPStan: include `rules.neon`, or set `phpRegex.checks.redos.enabled: true` (see [the PHPStan guide](guides/phpstan.md))
+> - PHPStan: include `rules.neon`, or set `phpRegex.checks.redos.enabled: true` (see [the PHPStan guide](phpstan.md))
 > - Symfony: `php_regex.redos.enabled: true`; Laravel: `redos.enabled` in `config/php-regex.php`
 >
 > `Regex::redos()`, `vendor/bin/regex analyze` and `vendor/bin/regex debug` always run it.
@@ -362,7 +365,7 @@ $analyzer->analyze('/(a)?(?(1)a|b)/')->isSafe();         // true:  no risk found
 $analyzer->analyze('/(a)?(?(1)a|b)/')->isProvenSafe();   // false
 ```
 
-The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`), and the witness as its three escaped parts; the [JSON output reference](reference/json-output.md#redos-analysis-redos_analysis) lists every key:
+The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`), and the witness as its three escaped parts; the [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis) lists every key:
 
 ```json
 "complexity": "exponential",
@@ -404,7 +407,7 @@ vendor/bin/regex debug '/(a+)+$/'
 vendor/bin/regex lint src/ --redos --no-lint --no-optimize
 ```
 
-See [the CLI guide](guides/cli.md) for the output of each command.
+See [the CLI guide](cli.md) for the output of each command.
 
 ### PHP
 

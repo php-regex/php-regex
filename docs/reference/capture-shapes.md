@@ -1,3 +1,7 @@
+---
+description: "What CaptureShapeAnalyzer reads from a pattern alone: which groups every match sets, their values, lengths and facts, and the $matches type it writes."
+---
+
 # Capture Shapes
 
 `CaptureShapeAnalyzer` reads, from the pattern alone, what a successful `preg_match()`
@@ -33,7 +37,8 @@ use PHPRegex\Toolkit\Regex;
 $shape = Regex::create()->captureShape('/(GET|POST) (\S+)/');
 ```
 
-A static analysis extension needs only `php-regex/regex-parser`: the analyzer and its
+A static analysis extension needs only `php-regex/regex-parser`
+(`composer require php-regex/regex-parser`, PHP 8.2+ with `ext-mbstring`): the analyzer and its
 results live there. The facade, in `php-regex/regex-toolkit`, is for applications.
 
 ## What a group record holds
