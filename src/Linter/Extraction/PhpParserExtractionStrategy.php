@@ -21,14 +21,20 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
+use PhpParser\Node\Expr\Cast\Array_ as ArrayCast;
+use PhpParser\Node\Expr\Cast\Object_;
+use PhpParser\Node\Expr\Clone_;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\UnaryMinus;
+use PhpParser\Node\Expr\UnaryPlus;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeTraverser;
@@ -290,12 +296,24 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * Whether an argument is a callable whatever its value: a closure, an
-     * arrow function, a first-class callable, an array or an object.
+     * Whether an argument is an object or an array whatever its value, as
+     * Nette's Strings::replace() tests its replacement: a closure, an arrow
+     * function, a first-class callable, an array, a new object, $this, an
+     * (object) or (array) cast, a clone, or Closure::fromCallable().
      */
     private function isCallableExpr(Expr $expr): bool
     {
-        if ($expr instanceof Closure || $expr instanceof ArrowFunction || $expr instanceof Array_ || $expr instanceof New_) {
+        if ($expr instanceof Closure || $expr instanceof ArrowFunction || $expr instanceof Array_ || $expr instanceof New_
+            || $expr instanceof Object_ || $expr instanceof ArrayCast || $expr instanceof Clone_) {
+            return true;
+        }
+
+        if ($expr instanceof Variable) {
+            return 'this' === $expr->name;
+        }
+
+        if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier
+            && 'closure' === $expr->class->toLowerString() && 'fromcallable' === $expr->name->toLowerString()) {
             return true;
         }
 
@@ -404,11 +422,16 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function isStringKey(Expr $key): bool
     {
-        if ($key instanceof UnaryMinus) {
+        // An int, a float, true or false, signed or not: PHP stores an int.
+        while ($key instanceof UnaryMinus || $key instanceof UnaryPlus) {
             $key = $key->expr;
         }
 
-        if ($key instanceof Int_) {
+        if ($key instanceof Int_ || $key instanceof Float_) {
+            return false;
+        }
+
+        if ($key instanceof ConstFetch && \in_array($key->name->toLowerString(), ['true', 'false'], true)) {
             return false;
         }
 

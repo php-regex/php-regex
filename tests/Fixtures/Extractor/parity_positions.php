@@ -16,6 +16,15 @@ final class Positions
             /heredoc/
             RE, $subject);
         preg_match('/concat-' . 'enated/', $subject);
+        preg_match(('/paren-concat/') . 'i', $subject);
+        preg_match(
+            (
+                '/paren-concat-multiline/'
+            ) . 'i',
+            $subject,
+        );
+        preg_replace([('/key-paren-concat/') . 'i'], '', $subject);
+        preg_match(((('/nested-paren-concat/')) . 'i'), $subject);
         Strings::replace($subject, ['/key/' => 'x']);
         Strings::match($subject, '/second/');
     }

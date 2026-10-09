@@ -159,19 +159,19 @@ final class ExtractionStrategyParityTest extends TestCase
         yield 'nette_replace_keys' => [
             'fixture' => 'parity_nette_replace_keys.php',
             'presets' => ['nette-utils'],
-            'expected' => ['/keys-no-replacement/', '/keys-string-a/', '/keys-string-b/', '01', '/keys-unknown-replacement/', '/keys-property-of-new/'],
+            'expected' => ['/keys-no-replacement/', '/keys-string-a/', '/keys-string-b/', '01', '/keys-unknown-replacement/', '/keys-property-of-new/', '/keys-coalesce-callable/', '/keys-ternary-callable/', '/keys-closure-called/', '/keys-property-of-this/', '/keys-unimported-closure/', '/keys-after-null/'],
         ];
 
         yield 'nette_replace_list' => [
             'fixture' => 'parity_nette_replace_list.php',
             'presets' => ['nette-utils'],
-            'expected' => ['/list-a/', '/list-b/', '/list-int-key/', '/list-numeric-string-key/', '/list-array-syntax/', '/list-negative-key/'],
+            'expected' => ['/list-a/', '/list-b/', '/list-int-key/', '/list-numeric-string-key/', '/list-array-syntax/', '/list-negative-key/', '/list-parenthesized-key/', '/list-parenthesized-negative-key/', '/list-bool-key/', '/list-false-key/', '/list-float-key/', '/list-plus-key/', '/list-negative-float-key/'],
         ];
 
         yield 'nette_replace_callback' => [
             'fixture' => 'parity_nette_replace_callback.php',
             'presets' => ['nette-utils'],
-            'expected' => ['/callback-closure/', '/callback-arrow/', '/callback-static/', '/callback-first-class/', '/callback-array/', '/callback-invokable/', '/callback-parenthesized/', '/callback-array-syntax/', '/callback-named/'],
+            'expected' => ['/callback-closure/', '/callback-arrow/', '/callback-static/', '/callback-first-class/', '/callback-array/', '/callback-invokable/', '/callback-parenthesized/', '/callback-array-syntax/', '/callback-this/', '/callback-object-cast/', '/callback-array-cast/', '/callback-clone/', '/callback-from-callable/', '/callback-imported-from-callable/', '/callback-static-first-class/', '/callback-attribute/', '/callback-named/'],
         ];
 
         yield 'escapes_and_newlines' => [
@@ -377,12 +377,15 @@ final class ExtractionStrategyParityTest extends TestCase
             Strings::replace($s, ['/property/' => 'a'], new Suffix()->value);
             Strings::replace($s, ['/offset/' => 'a'], new Suffix()['value']);
             Strings::replace($s, ['/constant/' => 'a'], new Suffix()::VALUE);
+            Strings::replace($s, ['/anonymous-class-property/' => 'a'], new class { public $p = 'x'; }->p);
+            Strings::replace($s, ['/class-from-array/' => 'a'], new $classes['a']);
             PHP);
         $registry = PatternFunctionRegistry::create(['nette-utils']);
 
-        $this->assertSame(['/property/', '/offset/', '/constant/'], $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
+        $expected = ['/property/', '/offset/', '/constant/', '/anonymous-class-property/', 'a'];
+        $this->assertSame($expected, $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
         if (\PHP_VERSION_ID >= 80400 && class_exists(ParserFactory::class)) {
-            $this->assertSame(['/property/', '/offset/', '/constant/'], $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
+            $this->assertSame($expected, $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
         }
     }
 
@@ -395,6 +398,25 @@ final class ExtractionStrategyParityTest extends TestCase
         $depth = 1000;
         $file = $this->write("<?php\nuse Nette\\Utils\\Strings;\n"
             .str_repeat('Strings::match(subject: ', $depth).'$s'.str_repeat(", pattern: '/n/')", $depth).";\n");
+        $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
+
+        $start = hrtime(true);
+        $patterns = $this->patterns($strategy, $file);
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertCount($depth, $patterns);
+        $this->assertLessThan(3.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
+    }
+
+    /**
+     * The replacement of each call holds the next one: telling whether it is
+     * a callable must not read it again for each call around it.
+     */
+    public function test_nested_replace_calls_with_callable_replacements_are_read_in_linear_time(): void
+    {
+        $depth = 1000;
+        $file = $this->write("<?php\nuse Nette\\Utils\\Strings;\n"
+            .str_repeat("Strings::replace(\$s, ['/a/' => 'x'], function (\$m) { return ", $depth).'$m'.str_repeat('; });', $depth)."\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
 
         $start = hrtime(true);

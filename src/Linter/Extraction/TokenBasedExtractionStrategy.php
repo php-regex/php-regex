@@ -150,6 +150,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                 $tokenOffsets,
                 $content,
                 $closers,
+                $context,
             ));
         }
 
@@ -441,6 +442,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         array $tokenOffsets,
         string $content,
         ?array $closers = null,
+        ?NameResolutionContext $context = null,
     ): array {
         $closers ??= $this->matchBrackets($tokens);
         $argument = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex, PatternFunction::PATTERN_PARAMETER_NAMES, $closers);
@@ -449,15 +451,17 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         }
 
         // Nette's Strings::replace() reads the values of the array when the
-        // replacement is a callable.
+        // replacement is an object or an array: a callable.
         if (null !== $patternFunction->replacementIndex) {
             $replacement = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES, $closers);
-            if (null !== $replacement && $this->isCallableExpression($replacement[0], $replacement[1])) {
+            if (null !== $replacement && $this->isObjectOrArray($tokens, $replacement[0], $replacement[1], $closers, $context ?? new NameResolutionContext())) {
                 $patternFunction = $patternFunction->readingValues();
             }
         }
 
-        return $this->extractFromArgumentTokens($argument[0], $argument[1], $tokenOffsets, $content, $file, $patternFunction);
+        [$argumentTokens, $argumentIndexes] = $this->sliceTokens($tokens, $argument[0], $argument[1]);
+
+        return $this->extractFromArgumentTokens($argumentTokens, $argumentIndexes, $tokenOffsets, $content, $file, $patternFunction);
     }
 
     /**
@@ -488,15 +492,15 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      *
      * A positional argument at the position wins; otherwise the first
      * argument passed under one of the names. A spread before that position
-     * makes it unknowable. Only the argument found is copied, and a bracket
-     * is stepped over whole, so that a call nested in another is not read
-     * again for each call around it.
+     * makes it unknowable. Nothing is copied, and a bracket is stepped over
+     * whole, so that a call nested in another is not read again for each
+     * call around it.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param list<string>                               $names   lowercase parameter names
      * @param array<int, int>                            $closers the closing index of each bracket
      *
-     * @return array{0: list<array{int, string, int}|string>, 1: list<int>}|null the argument's value tokens and their indexes
+     * @return array{0: int, 1: int}|null where the argument's value starts and where it ends, past its last token
      */
     private function findArgument(array $tokens, int $startIndex, int $totalTokens, int $targetArgIndex, array $names, array $closers): ?array
     {
@@ -519,12 +523,12 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                     }
 
                     if ($position === $targetArgIndex) {
-                        return $this->sliceTokens($tokens, $argument['valueStart'], $i);
+                        return [$argument['valueStart'], $i];
                     }
 
                     $position++;
                 } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), $names, true)) {
-                    $named = $this->sliceTokens($tokens, $argument['valueStart'], $i);
+                    $named = [$argument['valueStart'], $i];
                 }
 
                 if ($closesCall) {
@@ -584,79 +588,214 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
-     * Whether an argument is a callable whatever its value: a closure, an
-     * arrow function, a first-class callable, an array or an object.
+     * Whether the argument in [$start, $end) is an object or an array
+     * whatever its value, as Nette's Strings::replace() tests its
+     * replacement: a closure, an arrow function, a first-class callable, an
+     * array, a new object, $this, an (object) or (array) cast, a clone, or
+     * Closure::fromCallable(). Each counts only when it is the whole
+     * argument: $cb ?? strtoupper(...) is not one.
+     *
+     * Read in place with the bracket map, so a closure holding the next call
+     * is not read again.
      *
      * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
+     * @param array<int, int>                            $closers the closing index of each bracket
      */
-    private function isCallableExpression(array $tokens, array $tokenIndexes): bool
+    private function isObjectOrArray(array $tokens, int $start, int $end, array $closers, NameResolutionContext $context): bool
     {
-        [$tokens] = $this->stripOuterParentheses($tokens, $tokenIndexes);
-        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
-        $count = \count($significant);
-        // An empty value reads as a statement end: no callable.
-        $first = $significant[0] ?? ';';
-        $last = $significant[$count - 1] ?? ';';
-
-        // foo(...), Foo::bar(...), $this->bar(...)
-        $ellipsis = $significant[$count - 2] ?? null;
-        if (')' === $last && \is_array($ellipsis) && \T_ELLIPSIS === $ellipsis[0] && '(' === ($significant[$count - 3] ?? null)) {
-            return true;
+        // An empty value leaves $first past $last: nothing below matches.
+        $first = $this->nextSignificantTokenIndex($tokens, $start, $end) ?? $end;
+        $last = $this->previousSignificantTokenIndex($tokens, $end - 1) ?? $start;
+        while ('(' === ($tokens[$first] ?? null) && ($closers[$first] ?? null) === $last) {
+            $first = $this->nextSignificantTokenIndex($tokens, $first + 1, $last) ?? $last;
+            $last = $this->previousSignificantTokenIndex($tokens, $last - 1) ?? $first;
         }
 
-        if ('[' === $first) {
-            return ($this->matchBrackets($significant)[0] ?? null) === $count - 1;
+        $token = $tokens[$first] ?? ';';
+        $next = $this->nextSignificantTokenIndex($tokens, $first + 1, $last + 1) ?? $last + 1;
+
+        if ('[' === $token) {
+            return ($closers[$first] ?? null) === $last;
         }
 
-        if (!\is_array($first)) {
+        if (!\is_array($token)) {
             return false;
         }
 
-        if (\T_ARRAY === $first[0]) {
-            return ($this->matchBrackets($significant)[1] ?? null) === $count - 1;
-        }
+        $whole = match ($token[0]) {
+            \T_ARRAY => '(' === ($tokens[$next] ?? null) && ($closers[$next] ?? null) === $last,
+            \T_VARIABLE => '$this' === $token[1] && $first === $last,
+            \T_OBJECT_CAST, \T_ARRAY_CAST, \T_CLONE => $this->isMemberChain($tokens, $next, $last, $closers),
+            \T_NEW => $this->constructionEnd($tokens, $next, $last, $closers) === $last,
+            \T_ATTRIBUTE, \T_STATIC, \T_FUNCTION, \T_FN => $this->closureEnd($tokens, $first, $last, $closers) === $last,
+            default => $this->isClosureFromCallable($tokens, $first, $next, $last, $closers, $context),
+        };
 
-        if (\T_STATIC === $first[0]) {
-            $next = $significant[1] ?? null;
-
-            return \is_array($next) && \in_array($next[0], [\T_FUNCTION, \T_FN], true);
-        }
-
-        if (\T_NEW === $first[0]) {
-            return !$this->readsMemberOfNewObject($significant);
-        }
-
-        return \in_array($first[0], [\T_FUNCTION, \T_FN, \T_ATTRIBUTE], true);
+        return $whole || $this->isFirstClassCallable($tokens, $first, $last, $closers);
     }
 
     /**
-     * Whether a member is read or called on the object a new expression
-     * builds: ->, ?->, :: or [ after its argument list, outside any bracket
-     * (PHP 8.4). Before the argument list they build the class name, as in
-     * new $classes['a'].
+     * Where a closure or an arrow function starting at $index ends: an arrow
+     * function runs to the end of the argument, a closure to the brace
+     * closing its body. Null when the tokens start no closure.
      *
-     * @param list<array{int, string, int}|string> $tokens
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
      */
-    private function readsMemberOfNewObject(array $tokens): bool
+    private function closureEnd(array $tokens, int $index, int $last, array $closers): ?int
     {
-        $closers = $this->matchBrackets($tokens);
-        $count = \count($tokens);
-        $constructed = false;
+        // Attributes, then static; past $last stands the comma or the
+        // parenthesis ending the argument.
+        while (\is_array($tokens[$index] ?? null) && \in_array($tokens[$index][0], [\T_ATTRIBUTE, \T_STATIC], true)) {
+            $after = \T_ATTRIBUTE === $tokens[$index][0] ? ($closers[$index] ?? $last) : $index;
+            $index = $this->nextSignificantTokenIndex($tokens, $after + 1, $last + 1) ?? $last + 1;
+        }
 
-        for ($i = 1; $i < $count; $i++) {
-            $token = $tokens[$i];
-            if ($constructed && ('[' === $token || $this->isObjectOrStaticOperator($token))) {
-                return true;
+        $token = $tokens[$index] ?? ';';
+        if (\is_array($token) && \T_FN === $token[0]) {
+            return $last;
+        }
+
+        if (!\is_array($token) || \T_FUNCTION !== $token[0]) {
+            return null;
+        }
+
+        return $this->bodyEnd($tokens, $index + 1, $last, $closers);
+    }
+
+    /**
+     * Where the object a new expression builds ends, from the token after
+     * "new": the brace closing an anonymous class, the parenthesis closing
+     * the arguments, or the end of the argument when there are none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function constructionEnd(array $tokens, int $index, int $last, array $closers): ?int
+    {
+        $token = $tokens[$index] ?? null;
+        if (\is_array($token) && \T_CLASS === $token[0]) {
+            return $this->bodyEnd($tokens, $index + 1, $last, $closers);
+        }
+
+        for ($i = $index; $i <= $last; $i++) {
+            if ('(' === $tokens[$i]) {
+                return $closers[$i] ?? null;
             }
 
-            if ($this->opensNesting($token)) {
-                $constructed = $constructed || '(' === $token;
-                $i = $closers[$i] ?? $count;
+            // new $classes['a'] names its class with a bracket.
+            if ($this->opensNesting($tokens[$i])) {
+                $i = $closers[$i] ?? $last;
             }
         }
 
-        return false;
+        return $last;
+    }
+
+    /**
+     * The brace closing the first body opened from $index, stepping over
+     * the parameter list and use() before it.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function bodyEnd(array $tokens, int $index, int $last, array $closers): ?int
+    {
+        // With no body, $i passes $last, where no bracket opens.
+        $i = $index;
+        while ($i <= $last && '{' !== $tokens[$i]) {
+            $i = ($this->opensNesting($tokens[$i]) ? ($closers[$i] ?? $last) : $i) + 1;
+        }
+
+        return $closers[$i] ?? null;
+    }
+
+    /**
+     * Whether $tokens[$from..$to] is a variable, a name or a member chain on
+     * them, with nothing else: $a, $this->b['c'], Foo::$d, strtoupper(...).
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function isMemberChain(array $tokens, int $from, int $to, array $closers): bool
+    {
+        // A keyword is a member name after -> or :: only: "$a or $b" is no chain.
+        $afterOperator = false;
+        for ($i = $from; $i <= $to; $i++) {
+            $token = $tokens[$i];
+            if ($this->isIgnorableToken($token) || '$' === $token) {
+                continue;
+            }
+
+            if ($this->opensNesting($token)) {
+                $i = $closers[$i] ?? $to + 1;
+                $afterOperator = false;
+
+                continue;
+            }
+
+            if ($afterOperator ? null === $this->readIdentifierToken($token) && !$this->isVariableToken($token) : !$this->startsMemberChain($token)) {
+                return false;
+            }
+
+            $afterOperator = $this->isObjectOrStaticOperator($token);
+        }
+
+        return $from <= $to && $i === $to + 1;
+    }
+
+    /**
+     * @param array{0:int, 1:string, 2?:int}|string $token
+     */
+    private function startsMemberChain(array|string $token): bool
+    {
+        return $this->isVariableToken($token) || $this->isObjectOrStaticOperator($token)
+            || null !== $this->readNameToken($token) || (\is_array($token) && \T_STATIC === $token[0]);
+    }
+
+    /**
+     * @param array{0:int, 1:string, 2?:int}|string $token
+     */
+    private function isVariableToken(array|string $token): bool
+    {
+        return \is_array($token) && \T_VARIABLE === $token[0];
+    }
+
+    /**
+     * foo(...), Foo::bar(...), $this->bar(...): a member chain whose last
+     * call takes "..." alone.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function isFirstClassCallable(array $tokens, int $first, int $last, array $closers): bool
+    {
+        $ellipsis = $this->previousSignificantTokenIndex($tokens, $last - 1) ?? $last;
+        $open = $this->previousSignificantTokenIndex($tokens, $ellipsis - 1) ?? $ellipsis;
+        $token = $tokens[$ellipsis];
+
+        return \is_array($token) && \T_ELLIPSIS === $token[0] && ($closers[$open] ?? null) === $last
+            && $open > $first && $this->isMemberChain($tokens, $first, $last, $closers);
+    }
+
+    /**
+     * Closure::fromCallable(...), with the class resolved as PHP does.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function isClosureFromCallable(array $tokens, int $first, int $next, int $last, array $closers, NameResolutionContext $context): bool
+    {
+        $class = $this->readNameToken($tokens[$first]);
+        if (null === $class || 'closure' !== strtolower($context->resolveClass($class)) || !$this->isDoubleColonToken($tokens[$next] ?? '')) {
+            return false;
+        }
+
+        $method = $this->nextSignificantTokenIndex($tokens, $next + 1, $last + 1) ?? $last;
+        $open = $this->nextSignificantTokenIndex($tokens, $method + 1, $last + 1) ?? $last;
+
+        return 'fromcallable' === strtolower($this->readIdentifierToken($tokens[$method]) ?? '')
+            && '(' === $tokens[$open] && ($closers[$open] ?? null) === $last;
     }
 
     /**
@@ -698,8 +837,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         // Outside an array literal a keys-function still gets one pattern:
         // Nette's Strings::replace($s, '/re/', 'x') takes a plain string.
-        $patternInfo = $this->parseRegexExpression($tokens, $tokenIndexes, $tokenOffsets, $content)
-            ?? $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
+        $patternInfo = $this->parseRegexExpression($stripped, $strippedIndexes, $tokenOffsets, $content)
+            ?? $this->parseConstantStringExpression($stripped, $strippedIndexes, $tokenOffsets, $content);
 
         if (null === $patternInfo || '' === $patternInfo['pattern']) {
             return [];
@@ -845,10 +984,22 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      */
     private function isStringKey(array $tokens, array $tokenIndexes, array $tokenOffsets, string $content): bool
     {
+        [$tokens, $tokenIndexes] = $this->stripOuterParentheses($tokens, $tokenIndexes);
         $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
-        $number = '-' === ($significant[0] ?? null) ? ($significant[1] ?? null) : ($significant[0] ?? null);
-        if (\is_array($number) && \T_LNUMBER === $number[0] && \count($significant) <= 2) {
-            return false;
+
+        // An int, a float, true or false, signed or not: PHP stores an int.
+        $sign = 0;
+        while ('+' === ($significant[$sign] ?? null) || '-' === ($significant[$sign] ?? null)) {
+            $sign++;
+        }
+
+        $scalar = $significant[$sign] ?? null;
+        if (\is_array($scalar) && $sign + 1 === \count($significant)) {
+            $isNumber = \T_LNUMBER === $scalar[0] || \T_DNUMBER === $scalar[0];
+            $isBool = 0 === $sign && null !== $this->readNameToken($scalar) && \in_array(strtolower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
+            if ($isNumber || $isBool) {
+                return false;
+            }
         }
 
         $key = $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
@@ -871,6 +1022,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         string $file,
         PatternFunction $patternFunction
     ): void {
+        [$tokens, $tokenIndexes] = $this->stripOuterParentheses($tokens, $tokenIndexes);
         $patternInfo = $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
         if (null === $patternInfo || '' === $patternInfo['pattern']) {
             return;
@@ -1038,6 +1190,15 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         if ($expectString || null === $firstLine) {
             return null;
+        }
+
+        // ('/a/') . 'i' starts at its parenthesis, as php-parser places it.
+        $lead = $this->nextSignificantTokenIndex($tokens, 0, \count($tokens));
+        $leadOffset = '(' === $tokens[$lead ?? 0] ? ($tokenOffsets[$tokenIndexes[$lead] ?? -1] ?? null) : null;
+        if (null !== $leadOffset && null !== $firstTokenOffset) {
+            $firstLine -= substr_count($content, "\n", $leadOffset, $firstTokenOffset - $leadOffset);
+            $firstTokenOffset = $leadOffset;
+            $firstTokenColumn = $this->columnFromOffset($content, $leadOffset);
         }
 
         $pattern = implode('', $parts);

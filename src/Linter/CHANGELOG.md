@@ -94,7 +94,10 @@ CHANGELOG
    string, `b'/a/'`, is read as PHP reads it.
  * `Strings::replace()` of nette/utils is read as Nette reads it: the keys of
    an array of patterns only when its first key is a string and the
-   replacement is no callable, the values otherwise.
+   replacement is no callable, the values otherwise. A key PHP stores as an
+   int (an int, a float, `true`, `false`) makes a list; a replacement that is
+   always an object or an array (`$this`, a cast, `clone`,
+   `Closure::fromCallable()`) counts as a callable.
  * Without `nikic/php-parser`, `\X41` is read as `A`, a newline after the
    closing delimiter is kept, an attribute or an interpolation inside an
    array of patterns no longer hides or invents a key, and nested wrapper
