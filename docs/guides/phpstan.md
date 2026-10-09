@@ -21,13 +21,13 @@ it, include the extension in your `phpstan.neon`:
 
 ```neon
 includes:
-    - vendor/php-regex/php-regex/src/PHPStan/extension.neon
+    - vendor/php-regex/regex-phpstan/extension.neon
 ```
 
-Under the pre-release monorepo install, the extension's neon files live
-under `vendor/php-regex/php-regex/src/PHPStan/`; from the 2.0.0 tag and the
-split package, under `vendor/php-regex/regex-phpstan/`. The rest of this
-guide writes the pre-release path.
+This guide writes the split-package paths — what the command above installs
+from the 2.0.0 release. Until then, under the pre-release monorepo install
+(see the note above), the same neon files live under
+`vendor/php-regex/php-regex/src/PHPStan/`.
 
 ## What it reports by default
 
@@ -106,7 +106,7 @@ lacks them, no parameter is read as a pattern, and nothing is reported.
 
 ```neon
 includes:
-    - vendor/php-regex/php-regex/src/PHPStan/rules.neon
+    - vendor/php-regex/regex-phpstan/rules.neon
 ```
 
 Without extension-installer, include both `extension.neon` and `rules.neon`.

@@ -20,7 +20,7 @@
         <div class="install"><pre><code>composer require --dev php-regex/php-regex:2.x-dev</code></pre></div>
       </li>
     </ol>
-    <p>The monorepo ships every split package, with the vendor paths under <code>vendor/php-regex/php-regex/src/</code>. From the 2.0.0 release, <code>composer require --dev {{ include.package }}</code> works as-is.</p>
+    <p>The monorepo ships every split package. During the pre-release, any <code>vendor/php-regex/regex-&lt;name&gt;/…</code> path shown in these docs lives under <code>vendor/php-regex/php-regex/src/…</code> instead — the PHPStan neon files, for instance, at <code>vendor/php-regex/php-regex/src/PHPStan/</code>. From the 2.0.0 release, <code>composer require --dev {{ include.package }}</code> works as-is and every shown path is literal.</p>
   </details>
 </section>
 <style>

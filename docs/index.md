@@ -216,7 +216,7 @@ Regex matches
       <p class="component-desc">Reports the regex patterns your target PHP refuses — lint, ReDoS and optimization findings on demand.</p>
       <pre><code class="language-bash">composer require --dev php-regex/regex-phpstan</code></pre>
       <pre><code class="language-neon">includes:
-    - vendor/php-regex/php-regex/src/PHPStan/extension.neon</code></pre>
+    - vendor/php-regex/regex-phpstan/extension.neon</code></pre>
       <a href="/guides/phpstan/">Read the guide →</a>
     </article>
     <article class="component">
