@@ -380,4 +380,4 @@ Tutorial finished.
 
 ---
 
-Previous: [Testing & Debugging](09-testing-debugging.md) | Next: [Docs Home](../README.md)
+Previous: [Testing & Debugging](09-testing-debugging.md) | Next: [Docs Home](/docs/)

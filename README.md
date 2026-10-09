@@ -290,6 +290,8 @@ See the [maintainers guide](docs/MAINTAINERS_GUIDE.md#benchmarks) for the inputs
 
 ## Documentation
 
+Read the docs online at <https://php-regex.com/docs/>, or browse them in this repository.
+
 Start here:
 - [Docs Home](docs/README.md)
 - [Quick Start](docs/QUICK_START.md)

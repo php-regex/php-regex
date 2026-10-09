@@ -197,4 +197,4 @@ Re-publish the file to pick up the new keys and comments:
 php artisan vendor:publish --tag=php-regex-config --force
 ```
 
-See [UPGRADE-2.0.md](../../UPGRADE-2.0.md) for the rest.
+See [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md) for the rest.

@@ -1,0 +1,28 @@
+title: PHPRegex
+description: "Static analysis, linter & logic solver for PHP regular expressions."
+url: https://php-regex.com
+
+# Keep every existing docs URL in its directory form (/guides/cli/), the
+# style GitHub Pages serves; plain Jekyll 3 would emit .html URLs instead.
+permalink: pretty
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-redirect-from
+  - jekyll-titles-from-headings
+  - jekyll-readme-index
+  - jekyll-optional-front-matter
+  - jekyll-relative-links
+
+kramdown:
+  input: GFM
+
+sass:
+  style: compressed
+
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default

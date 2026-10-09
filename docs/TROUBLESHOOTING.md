@@ -7,6 +7,7 @@ This guide helps you resolve common issues when using PHPRegex.
 ### "Pattern exceeds maximum length"
 
 **Problem:**
+
 ```
 PHPRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
 ```
@@ -18,6 +19,7 @@ PHPRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum 
 **Solutions:**
 
 1. Increase limit:
+
 ```php
 $regex = Regex::create([
     'max_pattern_length' => 1_000_000,  // 1 million characters
@@ -25,6 +27,7 @@ $regex = Regex::create([
 ```
 
 2. Validate pattern before storing:
+
 ```php
 $regex = Regex::create();
 $validation = $regex->validate($pattern);
@@ -35,6 +38,7 @@ if (!$validation->isValid) {
 ```
 
 3. Use cache to skip parsing:
+
 ```php
 $regex = Regex::create([
     'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
@@ -43,6 +47,7 @@ $regex = Regex::create([
 ```
 
 4. Check pattern length before parsing:
+
 ```php
 if (strlen($pattern) > 100_000) {
     throw new \RuntimeException("Pattern too long: " . strlen($pattern) . " characters");
@@ -63,6 +68,7 @@ if (strlen($pattern) > 100_000) {
 **Solutions:**
 
 1. Run confirmed mode: the attack is replayed on your PCRE, without the JIT.
+
 ```php
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosMode;
@@ -83,6 +89,7 @@ echo 'Confidence: ', $result->confidenceLevel()->value, "\n";
 A proven verdict PCRE does not reproduce keeps `medium` confidence, and the CLI says `Not reproduced on PCRE2 …`. It is never an error in confirmed mode.
 
 2. Add to ignore list:
+
 ```php
 $regex = Regex::create([
     'redos_ignored_patterns' => [
@@ -93,6 +100,7 @@ $regex = Regex::create([
 ```
 
 3. Check what the verdict is about:
+
 ```bash
 bin/regex analyze '/(a{1,20})+$/'
 #   Status     : Exponential backtracking (proven)
@@ -105,6 +113,7 @@ bin/regex analyze '/(a{1,20})+$/'
 ## Invalid Escape Sequences
 
 **Problem:**
+
 ```
 PHPRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at position 5
 ```
@@ -117,6 +126,7 @@ PHPRegex\Parser\Exception\LexerException: Invalid escape sequence '\c' at positi
 **Solutions:**
 
 1. Check PHP version:
+
 ```bash
 php -v
 php --re
@@ -126,6 +136,7 @@ php --re
 ```
 
 2. Use correct escape syntax:
+
 ```php
 // Wrong
 $pattern = '\cA';           // Control character A
@@ -136,6 +147,7 @@ $pattern = '\x{41}';        // Hexadecimal with braces
 ```
 
 3. Fix common typos:
+
 ```php
 // Wrong                        Correct
 '\d'   →  '\\d'          // Double backslash
@@ -151,6 +163,7 @@ $pattern = '\x{41}';        // Hexadecimal with braces
 ### "Unable to tokenize pattern at position X"
 
 **Problem:**
+
 ```
 PHPRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position 15. Context: "abc..."
 ```
@@ -166,6 +179,7 @@ PHPRegex\Parser\Exception\LexerException: Unable to tokenize pattern at position
    bytes, as PCRE reads it, and any byte is accepted (`/\xE9/` written with
    a raw byte is valid); with `/u` the pattern must be valid UTF-8, as PCRE
    requires:
+
 ```php
 if (str_contains($flags, 'u') && !mb_check_encoding($pattern, 'UTF-8')) {
     throw new \RuntimeException('A /u pattern must be valid UTF-8');
@@ -173,6 +187,7 @@ if (str_contains($flags, 'u') && !mb_check_encoding($pattern, 'UTF-8')) {
 ```
 
 2. Check for obvious syntax errors:
+
 ```php
 // Check for unmatched brackets
 $openBrackets = substr_count($pattern, '[');
@@ -202,6 +217,7 @@ if ($openParens !== $closeParens) {
 **Diagnosis:**
 
 1. Check for catastrophic backtracking:
+
 ```bash
 bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 
@@ -210,6 +226,7 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 ```
 
 2. Check for unnecessary backtracking:
+
 ```bash
 bin/regex debug '/.*a.*b.*a.*/'
 
@@ -217,6 +234,7 @@ bin/regex debug '/.*a.*b.*a.*/'
 ```
 
 3. Test with realistic data:
+
 ```php
 // Test with your actual data, not edge cases
 
@@ -229,6 +247,7 @@ echo "Time: " . ($elapsed * 1000) . " ms\n";
 ```
 
 4. Use caching:
+
 ```php
 $regex = Regex::create([
     'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
@@ -249,6 +268,7 @@ $ast = $regex->parse($pattern);
 **Solutions:**
 
 1. Verify cache is configured:
+
 ```php
 $regex = Regex::create([
     'cache' => new \PHPRegex\Parser\Cache\FilesystemCache(__DIR__.'/var/cache/regex'),
@@ -262,6 +282,7 @@ echo "Cache enabled: " . ($regex->getCacheStats()['hits']) . " hits\n";
 ```
 
 2. Clear cache for long-running processes:
+
 ```bash
 # CLI
 bin/regex clear-cache
@@ -274,6 +295,7 @@ if ($cache instanceof RemovableCacheInterface) {
 ```
 
 3. Check cache key generation:
+
 ```php
 // Cache keys include pattern, flags, and PHP version
 // Make sure these are correct for your use case
@@ -289,6 +311,7 @@ echo "Cache key: {$cacheKey}\n";
 ### Command Not Found
 
 **Problem:**
+
 ```
 Command "regex:test" is not defined.
 ```
@@ -296,11 +319,13 @@ Command "regex:test" is not defined.
 **Solutions:**
 
 1. Use `help` command to list available commands:
+
 ```bash
 bin/regex help
 ```
 
 2. Update to latest version:
+
 ```bash
 composer update
 # or
@@ -308,6 +333,7 @@ composer require php-regex/regex-toolkit:^2.0
 ```
 
 3. Check if command is deprecated:
+
 ```bash
 bin/regex help | grep -i deprecated
 
@@ -350,12 +376,14 @@ linting:
 **Solutions:**
 
 1. Verify bundle is installed:
+
 ```bash
 composer show php-regex/regex-toolkit
 # Check if Symfony bridge is listed
 ```
 
 2. Register bundle in Symfony:
+
 ```yaml
 # config/bundles.php
 return [
@@ -364,6 +392,7 @@ return [
 ```
 
 3. Clear Symfony cache:
+
 ```bash
 php bin/console cache:clear
 # Or
@@ -381,6 +410,7 @@ rm -rf var/cache/*
 **Solutions:**
 
 1. Run tests after upgrade:
+
 ```bash
 composer phpunit
 
@@ -389,6 +419,7 @@ composer phpunit tests/Unit/Parser/ParserTest.php
 ```
 
 2. Update test expectations:
+
 ```php
 // Check if test needs updating after API changes
 
@@ -408,6 +439,7 @@ public function test_parse_handles_new_feature(): void
 ```
 
 3. Check deprecation warnings:
+
 ```bash
 # Run with error reporting
 composer phpunit --display-deprecations
@@ -426,22 +458,26 @@ composer phpunit --display-deprecations
 **Solutions:**
 
 1. Check Quick Start Guide:
+
 ```bash
 # docs/QUICK_START.md
 ```
 
 2. Check API Reference:
+
 ```bash
 # docs/reference.md
 ```
 
 3. Look at examples:
+
 ```bash
 ls -la examples/
 php examples/basic/validate.php
 ```
 
 4. Search issues:
+
 ```bash
 # Search GitHub issues
 https://github.com/php-regex/php-regex/issues
@@ -450,6 +486,7 @@ https://github.com/php-regex/php-regex/issues
 ```
 
 5. Join community:
+
 ```bash
 # GitHub Discussions
 https://github.com/php-regex/php-regex/discussions
@@ -466,14 +503,15 @@ https://stackoverflow.com/questions/tagged/regexparser
 - [API Reference](reference.md)
 - [ReDoS Guide](REDOS_GUIDE.md)
 - [Architecture Documentation](ARCHITECTURE.md)
-- [Contributing Guide](../CONTRIBUTING.md)
-- [Upgrading to 2.0](../UPGRADE-2.0.md)
+- [Contributing Guide](https://github.com/php-regex/php-regex/blob/2.x/CONTRIBUTING.md)
+- [Upgrading to 2.0](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
 
 ## Still Need Help?
 
 1. Check the [GitHub Issues](https://github.com/php-regex/php-regex/issues) for similar problems
 2. Search for your specific error message in the codebase
 3. Enable verbose mode for more details:
+
 ```bash
 bin/regex analyze '/pattern/' -v
 ```

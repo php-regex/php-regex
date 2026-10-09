@@ -1,0 +1,113 @@
+- title: Learn
+  pages:
+    - title: Documentation
+      url: /docs/
+    - title: Quick Start
+      url: /QUICK_START/
+    - title: Tutorial
+      url: /tutorial/
+      pages:
+        - title: "01 · Regex basics"
+          url: /tutorial/01-basics/
+        - title: "02 · Character classes & escapes"
+          url: /tutorial/02-character-classes/
+        - title: "03 · Anchors & boundaries"
+          url: /tutorial/03-anchors-boundaries/
+        - title: "04 · Quantifiers & greediness"
+          url: /tutorial/04-quantifiers/
+        - title: "05 · Groups & alternation"
+          url: /tutorial/05-groups-alternation/
+        - title: "06 · Lookarounds & assertions"
+          url: /tutorial/06-lookarounds/
+        - title: "07 · Backreferences & recursion"
+          url: /tutorial/07-backreferences-recursion/
+        - title: "08 · Performance & ReDoS"
+          url: /tutorial/08-performance-redos/
+        - title: "09 · Testing & debugging"
+          url: /tutorial/09-testing-debugging/
+        - title: "10 · Real-world PHP"
+          url: /tutorial/10-real-world-php/
+- title: Use PHPRegex
+  pages:
+    - title: CLI
+      url: /guides/cli/
+    - title: PHPStan
+      url: /guides/phpstan/
+    - title: Psalm
+      url: /guides/psalm/
+    - title: Rector
+      url: /guides/rector/
+    - title: LSP
+      url: /guides/lsp/
+    - title: Laravel
+      url: /guides/laravel/
+    - title: Symfony
+      url: /guides/symfony/
+    - title: Regex in PHP
+      url: /guides/regex-in-php/
+    - title: Cookbook
+      url: /COOKBOOK/
+    - title: ReDoS guide
+      url: /REDOS_GUIDE/
+    - title: Troubleshooting
+      url: /TROUBLESHOOTING/
+- title: Concepts
+  pages:
+    - title: Key concepts
+      url: /concepts/
+    - title: AST
+      url: /concepts/ast/
+    - title: Visitors
+      url: /concepts/visitors/
+    - title: ReDoS
+      url: /concepts/redos/
+    - title: PCRE
+      url: /concepts/pcre/
+- title: Reference
+  pages:
+    - title: Reference index
+      url: /reference/
+    - title: API
+      url: /reference/api/
+    - title: Diagnostics
+      url: /reference/diagnostics/
+    - title: Diagnostics cheat sheet
+      url: /reference/diagnostics-cheatsheet/
+    - title: JSON output
+      url: /reference/json-output/
+    - title: Feature support matrix
+      url: /reference/feature-support-matrix/
+    - title: Correctness contracts
+      url: /reference/correctness-contracts/
+    - title: Backward compatibility
+      url: /reference/backward-compatibility/
+    - title: Capture shapes
+      url: /reference/capture-shapes/
+    - title: Pattern info
+      url: /reference/pattern-info/
+    - title: Prefilters
+      url: /reference/prefilters/
+    - title: PCRE2 conformance
+      url: /reference/pcre2-conformance/
+    - title: Sonar
+      url: /reference/sonar/
+    - title: Logic solver
+      url: /reference/logic-solver/
+    - title: FAQ & glossary
+      url: /reference/faq-glossary/
+- title: Internals
+  pages:
+    - title: Architecture
+      url: /ARCHITECTURE/
+    - title: AST traversal
+      url: /design/AST_TRAVERSAL/
+    - title: Nodes
+      url: /nodes/
+    - title: Visitors
+      url: /visitors/
+    - title: Extending
+      url: /EXTENDING_GUIDE/
+    - title: Maintainers guide
+      url: /MAINTAINERS_GUIDE/
+    - title: External resources
+      url: /references/

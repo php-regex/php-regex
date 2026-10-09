@@ -1,0 +1,27 @@
+<header class="site-header">
+  <a class="brand" href="/">
+    <svg class="mark" viewBox="-168 -120 336 240" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-width="27" stroke-linecap="round">
+        <path d="M-112-120H-168V120H-112"/>
+        <path d="M112-120H168V120H112"/>
+      </g>
+      <g transform="translate(0 14)">
+        <path d="M0-78L-64 58M0-78L64 58" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"/>
+        <circle class="mark-node" cx="0" cy="-78" r="38"/>
+        <circle class="mark-node" cx="-64" cy="58" r="30"/>
+        <circle class="mark-node" cx="64" cy="58" r="30"/>
+      </g>
+    </svg>
+    <span class="brand-name">PHPRegex</span>
+  </a>
+  <nav aria-label="Main">
+    <a href="/docs/">Docs</a>
+    <a href="/guides/cli/">Guides</a>
+    <a href="https://github.com/php-regex/php-regex">GitHub</a>
+  </nav>
+  <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog">Search <kbd>⌘K</kbd></button>
+  <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>
+  {% unless page.layout == 'landing' %}
+  <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar">Menu</button>
+  {% endunless %}
+</header>

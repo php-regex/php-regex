@@ -42,4 +42,4 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ---
 
-Previous: [Docs Home](../README.md) | Next: [Lint Rule Reference](../reference.md)
+Previous: [Docs Home](/docs/) | Next: [Lint Rule Reference](../reference.md)

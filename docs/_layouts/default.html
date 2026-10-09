@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% include header.html %}
+  <div class="page-shell">
+    {% include sidebar.html %}
+    <div class="page-main">
+      <main id="main" tabindex="-1">
+        {{ content }}
+      </main>
+      {% include toc.html %}
+    </div>
+  </div>
+  {% include footer.html %}
+  {% include search-dialog.html %}
+  <script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/toc.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/copy.js?v={{ site.time | date: '%s' }}"></script>
+  <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>
+</body>
+</html>

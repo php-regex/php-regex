@@ -1,0 +1,30 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title | strip_html }} — {% endif %}PHPRegex</title>
+  <meta name="description" content="{{ page.description | default: site.description | strip_html }}">
+  <link rel="canonical" href="{{ page.url | absolute_url }}">
+  <meta property="og:title" content="{% if page.title %}{{ page.title | strip_html }} — {% endif %}PHPRegex">
+  <meta property="og:description" content="{{ page.description | default: site.description | strip_html }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ page.url | absolute_url }}">
+  <meta property="og:image" content="{{ '/assets/img/social.png' | absolute_url }}">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <meta name="theme-color" content="#F8F7F2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F1B2E" media="(prefers-color-scheme: dark)">
+  <script>
+    (function () {
+      var theme = 'system';
+      try { theme = localStorage.getItem('theme') || 'system'; } catch (e) {}
+      var dark = theme === 'dark' ||
+        (theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/css/main.css?v={{ site.time | date: '%s' }}">
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter-var.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/jetbrains-mono-var.woff2" crossorigin>
+</head>

@@ -26,4 +26,4 @@ These concept guides are designed to help you understand specific topics in dept
 
 ---
 
-Previous: [Docs Home](../README.md) | Next: [What is an AST?](ast.md)
+Previous: [Docs Home](/docs/) | Next: [What is an AST?](ast.md)

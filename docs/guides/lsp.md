@@ -447,16 +447,19 @@ Add to your settings:
 ### Server Not Starting
 
 1. Verify the binary exists:
+
    ```bash
    ls -la vendor/bin/regex-lsp
    ```
 
 2. Check it's executable:
+
    ```bash
    chmod +x vendor/bin/regex-lsp
    ```
 
 3. Test it directly:
+
    ```bash
    echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | vendor/bin/regex-lsp
    ```

@@ -218,4 +218,4 @@ To match a literal dollar sign: `/\$/`
 ---
 
 
-Previous: [Docs Home](../README.md) | Next: [Chapter 1: Basics](01-basics.md)
+Previous: [Docs Home](/docs/) | Next: [Chapter 1: Basics](01-basics.md)

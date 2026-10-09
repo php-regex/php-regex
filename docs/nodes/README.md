@@ -923,4 +923,4 @@ Understanding nodes is essential for working with the AST directly. Key takeaway
 
 ---
 
-Previous: [Docs Home](../README.md) | Next: [AST Visitors](../visitors/README.md)
+Previous: [Docs Home](/docs/) | Next: [AST Visitors](../visitors/README.md)

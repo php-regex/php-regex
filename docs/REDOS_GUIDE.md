@@ -419,7 +419,7 @@ Before filing a security issue:
 2. Include the pattern, the input lengths, the timings, the JIT setting and the PCRE limits.
 3. Verify the issue in the real code path (not just synthetic tests).
 
-See [SECURITY.md](../SECURITY.md) for reporting channels.
+See [SECURITY.md](https://github.com/php-regex/php-regex/blob/2.x/SECURITY.md) for reporting channels.
 
 ## Repairs with proofs
 

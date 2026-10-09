@@ -1,0 +1,44 @@
+---
+permalink: /search-index.json
+layout: none
+sitemap: false
+---
+{% comment %}
+  Search index for the docs search dialog. The dialog fetches this file once,
+  on the first search, never at page load. One entry per documentation page;
+  every field is escaped on its own so JSON quoting stays the engine's job.
+
+  Excerpts: most pages enter the page list through the no-front-matter and
+  readme-index generators and have not been converted to HTML yet when this
+  file renders. Running the content through markdownify first yields clean
+  text for those pages, and is idempotent for the rare page that was already
+  converted earlier in the render order.
+
+  Not indexed:
+    - the landing page (url "/"), the 404 page, and this file itself;
+    - anything that is not an HTML page (the stylesheet, sitemap.xml,
+      robots.txt, redirects.json) or is a redirect placeholder page;
+    - reference/README.md: the readme-index plugin serves it under /reference/,
+      the same URL as reference.md, so only the latter is indexed and the
+      duplicate entry is dropped.
+{% endcomment %}
+[
+{% assign emitted = false %}
+{% for p in site.pages %}
+  {% assign u = p.url %}
+  {% assign ext = u | split: '.' | last %}
+  {% assign last_char = u | slice: -1 %}
+  {% assign html_page = false %}
+  {% if last_char == '/' or ext == 'html' %}
+    {% assign html_page = true %}
+  {% endif %}
+  {% assign duplicate_reference_index = false %}
+  {% if p.name == 'README.md' and p.dir == '/reference/' %}
+    {% assign duplicate_reference_index = true %}
+  {% endif %}
+  {% unless html_page == false or p.layout == 'redirect' or u == '/' or u contains '404' or u contains 'search-index' or duplicate_reference_index %}
+    {% if emitted %},{% endif %}{% assign emitted = true %}
+    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+  {% endunless %}
+{% endfor %}
+]

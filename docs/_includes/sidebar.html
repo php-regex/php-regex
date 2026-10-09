@@ -1,0 +1,22 @@
+<nav class="site-sidebar" id="site-sidebar" aria-label="Documentation">
+  <button type="button" class="sidebar-close" id="sidebar-close">Close menu</button>
+  {% for section in site.data.nav %}
+  <div class="nav-section">
+    <h2 class="nav-title">{{ section.title }}</h2>
+    <ul class="nav-list">
+      {% for item in section.pages %}
+      <li>
+        <a href="{{ item.url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
+        {% if item.pages %}
+        <ul class="nav-list">
+          {% for child in item.pages %}
+          <li><a href="{{ child.url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.title }}</a></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</nav>

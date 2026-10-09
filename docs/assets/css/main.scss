@@ -1,0 +1,1467 @@
+---
+---
+/* PHPRegex.com — paper-and-ink design system.
+ *
+ * Identity rules that hold everywhere in this file:
+ *   - square corners only: no border-radius anywhere;
+ *   - flat: no drop shadows, 1px borders carry the structure;
+ *   - generous whitespace, sentence case, rem-only text sizes;
+ *   - raw colors live ONLY in the token sections below (theme palettes,
+ *     code-token palette, terminal palette) — never inline.
+ *
+ * Compiled by the GitHub Pages Jekyll (old Sass engine): plain nesting and
+ * custom properties only. Fluid values (clamp/max with mixed units) are
+ * always declared as custom properties, which that engine passes through
+ * verbatim; in normal declarations they would be evaluated and rejected.
+ */
+
+/* ==========================================================================
+   Fonts — self-hosted variable woff2, latin subset, swap
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Inter Var';
+  src: url('/assets/fonts/inter-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  src: url('/assets/fonts/inter-display-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/jetbrains-mono-var.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ==========================================================================
+   Tokens — the theme palettes. The only raw colors in this stylesheet,
+   together with the code-token block and the terminal block below.
+ *
+ * Contrast (WCAG 2.2, measured): light — ink/paper 13.32, amber/paper 5.37,
+ * ink-soft/paper 6.79, line/paper 4.44 (>= 3, non-text); dark — ink/paper
+ * 15.23, amber/paper 5.82, ink-soft/paper 7.86, line/paper 4.41. The ambers
+ * never cross themes: ember on light paper is 2.76, rust on navy is 3.00 —
+ * both below every threshold we honor, so each theme keeps its own.
+   ========================================================================== */
+
+@mixin tokens-light {
+  color-scheme: light;
+  --paper: #F8F7F2;
+  --ink: #182B45;
+  --amber: #A84A08;
+  --ink-soft: #46586E;
+  --line: #64748B;
+  --code-bg: #EFEDE4;
+  --code-ink: #22344E;
+  --link-line: #AD6430;
+  --scrim: rgba(24, 43, 69, 0.55);
+}
+
+@mixin tokens-dark {
+  color-scheme: dark;
+  --paper: #0F1B2E;
+  --ink: #EDF1F7;
+  --amber: #E97625;
+  --ink-soft: #A3B0C4;
+  --line: #6E82A0;
+  --code-bg: #0B1524;
+  --code-ink: #E4EAF2;
+  --link-line: #B8763A;
+  --scrim: rgba(2, 6, 12, 0.62);
+}
+
+/* Code-token palette (the second raw-color block): one restrained,
+ * ink-adjacent set per theme, every role measured >= 4.5:1 on --code-bg.
+ * light: key 4.91, string 5.52, number 6.27, comment 6.21;
+ * dark: key 6.18, string 9.20, number 8.07, comment 8.34. */
+@mixin code-tokens-light {
+  --tk-key: var(--amber);
+  --tk-str: #336852;
+  --tk-num: #7C4A1D;
+  --tk-com: var(--ink-soft);
+  --tk-fn: var(--code-ink);
+  --tk-punct: var(--ink-soft);
+}
+
+@mixin code-tokens-dark {
+  --tk-key: var(--amber);
+  --tk-str: #8CC4A5;
+  --tk-num: #D2A468;
+  --tk-com: var(--ink-soft);
+  --tk-fn: var(--code-ink);
+  --tk-punct: var(--ink-soft);
+}
+
+:root {
+  @include tokens-light;
+  @include code-tokens-light;
+}
+
+[data-theme='light'] {
+  @include tokens-light;
+  @include code-tokens-light;
+}
+
+[data-theme='dark'] {
+  @include tokens-dark;
+  @include code-tokens-dark;
+}
+
+/* Font stacks and fluid sizes. Fluid values stay in custom properties:
+ * the Pages Sass engine evaluates arithmetic in normal declarations and
+ * cannot reconcile rem with vw. */
+:root {
+  --font-body: 'Inter Var', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-display: 'Inter Display', 'Inter Var', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fs-h1: clamp(1.75rem, 1.3rem + 2vw, 2.25rem);
+  --fs-hero: clamp(2rem, 1.4rem + 3.2vw, 3.4rem);
+  --fs-section: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --pad-hero: clamp(3.5rem, 2rem + 6vw, 6.5rem);
+  --pad-section: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+
+  --header-h: 4rem;
+  /* Page gutter: flush on small screens, aligned to the centered 87.5rem
+     column on wide ones (43.75rem = half the column). */
+  --gutter: max(1rem, calc(50vw - 43.75rem));
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  font-optical-sizing: auto;
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* Anchor targets clear the sticky header. */
+[id] {
+  scroll-margin-top: calc(var(--header-h) + 1.5rem);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 100;
+  padding: .75rem 1.25rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--amber);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ==========================================================================
+   Prose — documentation content lives in <main>
+   ========================================================================== */
+
+main {
+  min-width: 0;
+}
+
+main h1,
+main h2,
+main h3,
+main h4,
+main h5,
+main h6 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+main h1 {
+  font-size: var(--fs-h1);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0 0 1em;
+}
+
+main h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 2.5em 0 .75em;
+}
+
+main h3 {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 2em 0 .6em;
+}
+
+main h4,
+main h5,
+main h6 {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.5em 0 .5em;
+}
+
+main p {
+  margin: 0 0 1.1em;
+}
+
+main ul,
+main ol {
+  margin: 0 0 1.1em;
+  padding-inline-start: 1.5em;
+}
+
+main li {
+  margin-block: .25em;
+}
+
+main li > ul,
+main li > ol {
+  margin-block: .25em;
+}
+
+main a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .2em;
+}
+
+main a:hover {
+  text-decoration-color: var(--amber);
+}
+
+main blockquote {
+  margin: 1.5em 0;
+  padding: .25em 0 .25em 1.25em;
+  border-left: 3px solid var(--amber);
+  color: var(--ink-soft);
+}
+
+main blockquote p {
+  margin-bottom: .5em;
+}
+
+main hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 3em 0;
+}
+
+/* Per-heading anchor links (added to h2/h3 by the page script): quiet
+   until the heading is hovered or the link itself is focused. */
+main .anchor {
+  margin-inline-start: .4em;
+  font-family: var(--font-mono);
+  font-size: .8em;
+  font-weight: 400;
+  color: var(--ink-soft);
+  text-decoration: none;
+  opacity: 0;
+}
+
+main h2:hover .anchor,
+main h3:hover .anchor,
+main .anchor:focus-visible {
+  opacity: 1;
+}
+
+main img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inline code, keyboard chips. */
+main code,
+main kbd,
+main samp {
+  font-family: var(--font-mono);
+}
+
+main :not(pre) > code,
+main :not(pre) > samp {
+  font-size: .95em;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: .15em .4em;
+}
+
+main kbd {
+  font-size: .85em;
+  background: var(--code-bg);
+  color: var(--ink);
+  padding: .15em .45em;
+  border: 1px solid var(--line);
+}
+
+/* Tables — horizontal rules only, wide ones scroll inside the cell box. */
+main table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 2em 0;
+}
+
+main th {
+  text-align: left;
+  font-weight: 600;
+  padding: .6em .9em;
+  border-top: 1px solid var(--line);
+  border-bottom: 2px solid var(--ink);
+}
+
+main td {
+  padding: .6em .9em;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+main caption {
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: .9rem;
+  padding-bottom: .75em;
+}
+
+/* ==========================================================================
+   Code blocks — Rouge output and bare <pre>
+   ========================================================================== */
+
+.highlighter-rouge {
+  position: relative;
+  margin: 1.75em 0;
+}
+
+main pre,
+.terminal pre {
+  position: relative; /* anchors the copy button */
+  margin: 0;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  padding: 1.1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  line-height: 1.7;
+  color: var(--code-ink);
+}
+
+/* Keep the first line clear of the copy chip. */
+main pre.has-copy {
+  padding-right: 4.5rem;
+}
+
+main pre code,
+.terminal pre code {
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* Rouge token roles. */
+.highlight .c, .highlight .cm, .highlight .c1, .highlight .cs,
+.highlight .cp, .highlight .cpf {
+  color: var(--tk-com);
+  font-style: italic;
+}
+
+.highlight .k, .highlight .kd, .highlight .kn, .highlight .kp,
+.highlight .kr, .highlight .kt, .highlight .kc, .highlight .ow {
+  color: var(--tk-key);
+}
+
+.highlight .s, .highlight .sa, .highlight .sb, .highlight .sc,
+.highlight .dl, .highlight .sd, .highlight .s2, .highlight .se,
+.highlight .sh, .highlight .si, .highlight .sx, .highlight .sr,
+.highlight .ss, .highlight .s1 {
+  color: var(--tk-str);
+}
+
+.highlight .m, .highlight .mb, .highlight .mf, .highlight .mh,
+.highlight .mi, .highlight .il, .highlight .mo, .highlight .mx,
+.highlight .l, .highlight .ld, .highlight .no {
+  color: var(--tk-num);
+}
+
+.highlight .n, .highlight .na, .highlight .nb, .highlight .bp,
+.highlight .nc, .highlight .nd, .highlight .ni, .highlight .ne,
+.highlight .nf, .highlight .fm, .highlight .nl, .highlight .nn,
+.highlight .nx, .highlight .nt, .highlight .nv, .highlight .vc,
+.highlight .vg, .highlight .vi, .highlight .vm {
+  color: var(--tk-fn);
+  font-weight: 600;
+}
+
+.highlight .o, .highlight .p {
+  color: var(--tk-punct);
+}
+
+/* Copy buttons injected into code blocks (and .install blocks). The
+   script swaps the label to "Copied"; [data-copied] is the styling hook
+   for a brief amber flash if the confirmation ever carries a state
+   attribute. The one transition is opacity, so reduced-motion users get
+   an instant, complete state. */
+.copy-btn {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  z-index: 1;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: .3rem .55rem;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1;
+  background: var(--paper);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: opacity .15s ease;
+}
+
+.copy-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.copy-btn[data-copied] {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* ==========================================================================
+   Terminal — the fixed ink panel, identical in both themes
+   (third raw-color block): text 12.60, soft/bar 6.51, keyword 5.72,
+   string 7.79, number 6.97 — all >= 4.5:1 on the #182B45 panel.
+   ========================================================================== */
+
+.terminal {
+  --code-bg: #182B45;
+  --code-ink: #EDF1F7;
+  --ink-soft: #A3B0C4;
+  --tk-key: #F08A3C;
+  --tk-str: #93CCAA;
+  --tk-num: #D9AE72;
+  --tk-com: #A3B0C4;
+  --tk-fn: #EDF1F7;
+  --tk-punct: #A3B0C4;
+  --term-hairline: rgba(237, 241, 247, 0.18);
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 1.25rem;
+  border-bottom: 1px solid var(--term-hairline);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+/* The terminal body is itself a <pre>; strip the standalone-block chrome. */
+.terminal-body {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  line-height: 1.7;
+  color: var(--code-ink);
+}
+
+/* Rouge wrappers that might appear inside a terminal panel; the terminal
+   body itself keeps its own padding (see above — the selector here must
+   stay more specific than a bare .terminal pre, which would also match
+   the .terminal-body element). */
+.terminal pre.highlight {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.terminal .highlighter-rouge {
+  margin: 0;
+}
+
+/* Semantic spans used inside the captured CLI output. */
+.terminal-body .command {
+  font-weight: 600;
+}
+
+.terminal-body .t-key {
+  color: var(--tk-key);
+}
+
+.terminal-body .t-str {
+  color: var(--tk-str);
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: var(--header-h);
+  padding-inline: var(--gutter);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 44px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: currentColor;
+}
+
+.mark-node {
+  fill: var(--amber);
+}
+
+.brand-name {
+  white-space: nowrap;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+.site-header nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: .75rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.site-header nav a:hover,
+.site-header nav a:focus-visible {
+  color: var(--ink);
+}
+
+.site-header button {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 44px;
+  padding-inline: .875rem;
+  font-family: var(--font-body);
+  font-size: .95rem;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.site-header button:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.site-header button + button {
+  margin-inline-start: .5rem;
+}
+
+.theme-toggle {
+  width: 44px;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* The toggle carries no markup of its own, so the sheet paints its glyph:
+   a masked line-drawing filled with currentColor (moon on light paper, sun
+   on dark), matching the stroke language of the brand mark. No radius is
+   involved and no color is hard-coded — the mask is alpha only. */
+.theme-toggle::before {
+  content: '';
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+[data-theme='dark'] .theme-toggle::before {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.search-toggle kbd,
+.search-dialog kbd {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  padding: .15em .4em;
+  border: 1px solid var(--line);
+  background: var(--code-bg);
+  color: var(--ink-soft);
+}
+
+/* On narrow screens the header nav steps aside: the drawer and the footer
+   carry the same destinations at comfortable sizes. */
+@media (max-width: 39.99em) {
+  .site-header nav {
+    display: none;
+  }
+}
+
+@media (min-width: 64em) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Page shell — sidebar | content | toc
+   ========================================================================== */
+
+.page-shell {
+  max-width: 87.5rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: 2rem 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.page-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+
+/* Documentation column: generous but bounded line length. */
+.page-main > main {
+  max-width: 70ch;
+}
+
+/* ---- Sidebar (sticky rail on wide screens, drawer below 64em) ---- */
+
+.site-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: min(20rem, 85vw);
+  padding: 1.25rem;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+}
+
+.site-sidebar.open {
+  transform: translateX(0);
+}
+
+/* Drawer-only close control: the header toggle sits under the scrim while
+   the drawer is open, so the drawer carries its own visible close button. */
+.sidebar-close {
+  display: block;
+  min-height: 44px;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: .5rem .75rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  padding: 0;
+  border: 0;
+  background: var(--scrim);
+}
+
+@media (min-width: 64em) {
+  .site-sidebar {
+    position: sticky;
+    inset: auto;
+    top: calc(var(--header-h) + 1rem);
+    z-index: auto;
+    width: auto;
+    max-height: calc(100vh - var(--header-h) - 2rem);
+    padding: 0;
+    background: transparent;
+    border-right: 0;
+    transform: none;
+    transition: none;
+  }
+
+  .drawer-overlay {
+    display: none;
+  }
+
+  .sidebar-close {
+    display: none;
+  }
+
+  .page-shell {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    column-gap: 3rem;
+  }
+}
+
+.nav-section + .nav-section {
+  margin-top: 1.75rem;
+}
+
+.nav-title {
+  margin: 0 0 .5rem;
+  padding-inline: .75rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: .25rem .75rem;
+  border-left: 3px solid transparent;
+  color: var(--ink-soft);
+  font-size: .95rem;
+  text-decoration: none;
+}
+
+.nav-list a:hover {
+  color: var(--ink);
+}
+
+.nav-list a[aria-current='page'] {
+  color: var(--ink);
+  font-weight: 600;
+  border-left-color: var(--amber);
+}
+
+/* Nested lists (tutorial chapters): indented, slightly smaller. */
+.nav-list .nav-list {
+  margin-left: .75rem;
+}
+
+.nav-list .nav-list a {
+  min-height: 40px;
+  font-size: .9rem;
+}
+
+/* ---- On this page ---- */
+
+.toc {
+  display: none;
+  position: sticky;
+  top: calc(var(--header-h) + 1rem);
+  max-height: calc(100vh - var(--header-h) - 2rem);
+  overflow-y: auto;
+  font-size: .9rem;
+}
+
+/* The list is built at run time; "no headings on this page" hides the
+   whole aside and must win over the wide-screen display rule. */
+.toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc ul ul {
+  padding-inline-start: .75rem;
+}
+
+.toc[hidden] {
+  display: none;
+}
+
+.toc a {
+  display: block;
+  padding: .3rem .5rem .3rem .75rem;
+  border-left: 2px solid transparent;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.toc a:hover {
+  color: var(--ink);
+}
+
+.toc a[aria-current='location'] {
+  color: var(--ink);
+  font-weight: 600;
+  border-left-color: var(--amber);
+}
+
+@media (min-width: 80em) {
+  .toc {
+    display: block;
+  }
+
+  .page-main {
+    grid-template-columns: minmax(0, 1fr) 14rem;
+  }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding-block: 2.5rem 3rem;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 2rem;
+}
+
+.footer-title {
+  margin: 0 0 .75rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-list a {
+  display: inline-block;
+  padding-block: .3rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.footer-list a:hover {
+  color: var(--ink);
+}
+
+.footer-install code {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: .9rem;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border: 1px solid var(--line);
+  padding: .6rem .8rem;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Search dialog
+   ========================================================================== */
+
+.search-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8vh 1rem 2rem;
+  background: var(--scrim);
+  overflow-y: auto;
+}
+
+.search-dialog[hidden] {
+  display: none;
+}
+
+.search-dialog input[type='search'] {
+  width: min(40rem, 100%);
+  padding: .8rem 1rem;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.search-dialog input[type='search']::placeholder {
+  color: var(--ink-soft);
+}
+
+.search-dialog ul {
+  width: min(40rem, 100%);
+  list-style: none;
+  margin: -1px 0 0;
+  padding: 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.search-dialog ul:empty {
+  display: none;
+}
+
+.search-dialog li a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .15rem;
+  min-height: 44px;
+  padding: .5rem 1rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.search-dialog li + li a {
+  border-top: 1px solid var(--line);
+}
+
+.search-dialog li a:hover,
+.search-dialog li a:focus-visible,
+.search-dialog li.active a,
+.search-dialog li[aria-selected='true'] a {
+  background: var(--code-bg);
+}
+
+.search-dialog li a strong {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.search-dialog li a .result-url {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.search-dialog li.no-results {
+  padding: .75rem 1rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 44px;
+  padding: .6rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--code-bg);
+}
+
+.button-primary,
+.button--primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.button-primary:hover,
+.button--primary:hover {
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: underline;
+  text-underline-offset: .25em;
+}
+
+.button-secondary,
+.button--secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+
+/* ==========================================================================
+   Landing
+   ========================================================================== */
+
+.hero {
+  padding-block: var(--pad-hero);
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-inner {
+  max-width: 87.5rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem 3rem;
+  align-items: center;
+}
+
+/* Desktop: text stack in column one, terminal panel in column two. */
+@media (min-width: 64em) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hero-inner > :not(.terminal) {
+    grid-column: 1;
+  }
+
+  .hero-inner > .terminal {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: center;
+    min-width: 0;
+  }
+}
+
+.wordmark {
+  display: block;
+  width: min(560px, 100%);
+  height: auto;
+  color: var(--ink);
+}
+
+.wordmark-php {
+  fill: var(--ink);
+}
+
+.wordmark-regex {
+  fill: var(--amber);
+}
+
+.hero-claim {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-hero);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.hero-sub {
+  max-width: 60ch;
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 0;
+}
+
+/* The install line shares the CTA row; inside it, the <pre> is chromeless
+   (the .install box is the whole panel). */
+.hero-ctas .install {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.install {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  padding: 1rem 4rem 1rem 1.25rem;
+  overflow-x: auto;
+}
+
+.install pre {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  overflow-x: auto;
+  font-size: inherit;
+}
+
+.install code {
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+  padding: 0;
+  color: var(--code-ink);
+}
+
+/* The install box already reserves room for the copy chip. */
+.install pre.has-copy {
+  padding-right: 0;
+}
+
+/* Facts strip. */
+.facts {
+  border-block: 1px solid var(--line);
+  padding-block: 2.5rem;
+}
+
+.facts-list {
+  max-width: 87.5rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1.5rem 2.5rem;
+  margin-block: 0;
+}
+
+.fact strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.fact span {
+  display: block;
+  margin-top: .25rem;
+  font-size: .9rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* Sections shared by pipeline / constellation / proof — the section itself
+   is the aligned column (max-width + gutter), the grids fill it. */
+.section-title {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-section);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.pipeline,
+.constellation,
+.proof,
+main > section:not([class]) {
+  max-width: 87.5rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: var(--pad-section);
+}
+
+/* Pipeline: three steps, the mark is a bordered square holding the
+   amber circle (drawn with a gradient so no radius token exists). */
+.pipeline-steps {
+  list-style: none;
+  margin-block: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+
+@media (min-width: 64em) {
+  .pipeline-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.step-mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+}
+
+.step-mark::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle 5px at center, var(--amber) 99%, transparent 100%);
+}
+
+.step h3 {
+  margin: .25rem 0 .5rem;
+}
+
+.step p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* Constellation of components. */
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.25rem;
+}
+
+.component {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.component:hover {
+  border-color: var(--amber);
+}
+
+.component-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.component-desc {
+  margin: 0;
+  flex-grow: 1;
+  color: var(--ink-soft);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.component-link,
+.component > a {
+  margin-top: .5rem;
+  font-size: .9rem;
+  color: var(--amber);
+}
+
+/* Proof cards. */
+.proof-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+@media (min-width: 64em) {
+  .proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.proof-card {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+}
+
+.proof-card-title {
+  margin: 0 0 .5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.proof-card p {
+  margin: 0 0 .75rem;
+  color: var(--ink-soft);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.proof-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.proof-card ul a {
+  display: inline-block;
+  padding-block: .3rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.proof-card ul a:hover {
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   404
+   ========================================================================== */
+
+.error-page {
+  max-width: 87.5rem;
+  margin-inline: auto;
+  padding: var(--pad-hero) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  text-align: center;
+}
+
+.mark-large {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+  color: var(--ink);
+}
+
+.error-page h1 {
+  margin-bottom: .5em;
+}
+
+.error-page p {
+  color: var(--ink-soft);
+  max-width: 50ch;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .75rem 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.error-actions a {
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Motion — nothing loops, nothing bounces; the drawer slides and the copy
+   flash fades, and both stand still when the user asks for stillness.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}

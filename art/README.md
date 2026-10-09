@@ -81,6 +81,17 @@ small formats:
   against its tile at the node's center pixel; org-icon additionally
   requires zero mark ink outside the inscribed circle.
 
+## Site copies
+
+The documentation site (php-regex.com, served from `docs/`) consumes copies of
+three assets: `favicon.svg` + `favicon.png` (as `docs/favicon.svg` /
+`docs/favicon.png`) and `social.png` (as `docs/assets/img/social.png`). The
+wordmark and mark themselves are embedded inline in the site's layout as SVG
+paths, themed through CSS variables. Any change to these three assets — or to
+the wordmark path data — must update the `docs/` copies (and, for path data,
+`docs/index.md` / `docs/_includes/header.html`) in the SAME commit: the site
+build does not read `art/` at render time.
+
 ## Regenerating the PNGs
 
 ```console

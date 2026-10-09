@@ -47,7 +47,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
 
 `@internal` still means removable. The 2.0.0 release removed `Automata\Alphabet\CharSet`
 (use `Parser\Hir\CharSet`) and the AST-walking transformer behind the solver
-(now `Transform\HirToNfaTransformer`); [UPGRADE-2.0.md](../../UPGRADE-2.0.md)
+(now `Transform\HirToNfaTransformer`); [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
 maps every removed name.
 
 In short, the public surface is:

@@ -1,3 +1,11 @@
+---
+title: Documentation
+permalink: /docs/
+redirect_from:
+  - /README/
+  - /README.html
+---
+
 # PHPRegex Documentation
 
 This documentation covers regex fundamentals and how to use PHPRegex in PHP projects. It is written for both newcomers and experienced developers.
@@ -81,4 +89,4 @@ Every example in these docs uses PHPRegex as the reference implementation.
 
 ---
 
-Previous: [Main README](../README.md) | Next: [Quick Start](QUICK_START.md)
+Previous: [Main README](https://github.com/php-regex/php-regex) | Next: [Quick Start](QUICK_START.md)

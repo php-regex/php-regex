@@ -216,4 +216,4 @@ When referencing these sources in documentation or code comments:
 
 ---
 
-Previous: [AST Traversal Design](../design/AST_TRAVERSAL.md) | Next: [Docs Home](../README.md)
+Previous: [AST Traversal Design](../design/AST_TRAVERSAL.md) | Next: [Docs Home](/docs/)

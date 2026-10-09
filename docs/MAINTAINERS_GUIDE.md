@@ -430,7 +430,7 @@ class RegexConstraintValidator extends ConstraintValidator
 
         if (!$result->isValid) {
             $this->context->buildViolation($constraint->message)
-                ->setParameter('{{ error }}', $result->error)
+                ->setParameter(':error', $result->error)
                 ->addViolation();
             return;
         }
@@ -439,7 +439,7 @@ class RegexConstraintValidator extends ConstraintValidator
         $analysis = $regex->redos($constraint->pattern);
         if ($analysis->severity->value !== 'safe') {
             $this->context->buildViolation($constraint->redosMessage)
-                ->setParameter('{{ severity }}', $analysis->severity->value)
+                ->setParameter(':severity', $analysis->severity->value)
                 ->addViolation();
         }
     }

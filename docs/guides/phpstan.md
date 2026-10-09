@@ -317,7 +317,7 @@ A baseline written before 2.0 holds a 1.x ReDoS message, `Potential ReDoS
 risk (theoretical) (severity: …, confidence: …): …` or `Confirmed ReDoS risk
 (…): …`, which no longer matches:
 regenerate it with `vendor/bin/phpstan analyse --generate-baseline` (see
-[UPGRADE-2.0.md](../../UPGRADE-2.0.md)).
+[UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)).
 
 Regenerate it once after upgrading to 2.0.0 as well, whatever version wrote it:
 lint messages were reworded (the useless `m` and `s` flags, a lazy quantifier

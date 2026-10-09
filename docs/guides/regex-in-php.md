@@ -436,4 +436,4 @@ echo $email;  // Example: "user@example.com"
 
 ---
 
-Previous: [Docs Home](../README.md) | Next: [CLI Guide](cli.md)
+Previous: [Docs Home](/docs/) | Next: [CLI Guide](cli.md)
