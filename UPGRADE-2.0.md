@@ -970,8 +970,8 @@ formats print the same line on stderr. Single-pattern commands, such as
   `// @regex-ignore-next-line` above the call when bytes are meant.
 - The issues follow the severity of their rule in every format: the JSON
   `severity` is `error`, `warning` or `info`, and `stats` always carries
-  `errors`, `warnings`, `optimizations`, `redos_errors`, `infos` and
-  `lint_errors`;
+  `errors`, `warnings`, `optimizations`, `redos_errors`, `infos`,
+  `lint_errors` and `parser_fallbacks`;
   GitHub writes an info as `notice` and Checkstyle as `info`, where `style`
   and `perf` rules were warnings. The language server sends an info as
   Information, where it sent a Hint, which editors tend to show faintly or
@@ -1021,8 +1021,8 @@ not change.
   unknown, where 1.x printed `1`.
 - The lint report ends with a newline, lists its results sorted by file, line
   and column whatever `--jobs` says, and gives `file` relative to the working
-  directory with `/`. `stats` gains `redos_errors`, `infos` and `lint_errors`;
-  the report gains `target`.
+  directory with `/`. `stats` gains `redos_errors`, `infos`, `lint_errors`
+  and `parser_fallbacks`; the report gains `target`.
 - `analyze` on an invalid pattern prints its document, with `parse.ok` false,
   `validation` saying why, and `redos` and `explain` null. `debug` always
   carries `validation`; on an invalid pattern its `analysis` is null and it

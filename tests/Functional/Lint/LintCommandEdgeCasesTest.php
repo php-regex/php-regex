@@ -232,6 +232,56 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('found 1 patterns', $buffer);
     }
 
+    /**
+     * A file given twice, by its path and inside its directory, is one
+     * file read with the tokenizer: counted once, named once.
+     */
+    public function test_a_parser_fallback_given_twice_is_counted_once(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/broken.php', "<?php\npreg_match('/a+/', \$s);\nfunction (\n");
+        $paths = [$dir, $dir.'/broken.php', $dir];
+
+        $command = $this->makeLintCommand();
+        $exitCode = 0;
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([...$paths, '--format=json', '--no-redos', '--no-optimize']), $this->makeOutput()), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $document = json_decode(substr($buffer, 0, strrpos($buffer, '}') + 1), true);
+        $this->assertIsArray($document);
+        $this->assertIsArray($document['stats']);
+        $this->assertSame(1, $document['stats']['parser_fallbacks'] ?? null);
+
+        $command = $this->makeLintCommand();
+        $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([...$paths, '--format=console', '--no-redos', '--no-optimize', '--verbose']), $this->makeOutput()), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame(1, substr_count($buffer, 'Parsed with the tokenizer: '), $buffer);
+    }
+
+    /**
+     * --verbose names the file as the results do: relative to the working
+     * directory when it lies under it.
+     */
+    public function test_the_verbose_line_names_the_file_relative_to_the_working_directory(): void
+    {
+        $dir = $this->makeTempDir();
+        file_put_contents($dir.'/broken.php', "<?php\npreg_match('/a+/', \$s);\nfunction (\n");
+        $previous = (string) getcwd();
+        $this->assertTrue(chdir($dir));
+
+        try {
+            $command = $this->makeLintCommand();
+            $exitCode = 0;
+            $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([$dir, '--format=console', '--no-redos', '--no-optimize', '--verbose']), $this->makeOutput()), $exitCode);
+        } finally {
+            chdir($previous);
+        }
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('  Parsed with the tokenizer: broken.php (Syntax error', $buffer);
+    }
+
     public function test_the_normal_console_keeps_the_parser_fallbacks_quiet(): void
     {
         $dir = $this->makeTempDir();

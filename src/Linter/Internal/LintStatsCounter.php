@@ -81,11 +81,34 @@ final class LintStatsCounter
             $stats['lintErrors'] = $lintErrors;
         }
 
-        $parserFallbacks = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null !== $pattern->parserFallback));
+        $parserFallbacks = \count(self::parserFallbacks($patterns));
         if ($parserFallbacks > 0) {
             $stats['parserFallbacks'] = $parserFallbacks;
         }
 
         return $stats;
+    }
+
+    /**
+     * The files the tokenizer read because the PHP parser could not, one
+     * marker each: a file a run is given twice (by its path and inside its
+     * directory) is read twice, and is one file.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<PatternOccurrence>
+     */
+    public static function parserFallbacks(array $patterns): array
+    {
+        $fallbacks = [];
+        foreach ($patterns as $pattern) {
+            if (null === $pattern->parserFallback) {
+                continue;
+            }
+
+            $fallbacks[realpath($pattern->file) ?: $pattern->file] ??= $pattern;
+        }
+
+        return array_values($fallbacks);
     }
 }

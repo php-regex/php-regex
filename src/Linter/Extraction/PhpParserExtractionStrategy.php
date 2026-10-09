@@ -19,6 +19,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\StaticCall;
@@ -142,10 +143,15 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             $traverser = new NodeTraverser();
             $traverser->addVisitor(new NameResolver());
             $ast = $traverser->traverse($ast);
-        } catch (Error $e) {
+        } catch (Error|\RangeException $e) {
             // A file PHP cannot parse still holds patterns: the tokenizer
-            // reads them, and the run counts the file. Anything else thrown
-            // here is a defect of ours, and is not caught.
+            // reads them, and the run counts the file. A RangeException is
+            // the parser meeting a token of a PHP newer than itself. Anything
+            // else thrown here is a defect of ours, and is not caught.
+            if (TokenBasedExtractionStrategy::holdsNulByte($content)) {
+                return [PatternOccurrence::unread($file, \sprintf('Not linted: the PHP parser failed (%s), and the tokenizer does not read a file holding a NUL byte.', $e->getMessage()))];
+            }
+
             return [
                 PatternOccurrence::parserFallback($file, $e->getMessage()),
                 ...(new TokenBasedExtractionStrategy([], $this->registry))->extract([$file]),
@@ -207,8 +213,8 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function extractFromFuncCall(FuncCall $funcCall, string $file, string $content): array
     {
-        // preg_match(...) holds no pattern, and has no arguments to read.
-        if (!$funcCall->name instanceof Name || $funcCall->isFirstClassCallable()) {
+        $args = self::ordinaryArgs($funcCall);
+        if (!$funcCall->name instanceof Name || null === $args) {
             return [];
         }
 
@@ -221,7 +227,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        return $this->extractFromArgs($funcCall->getArgs(), $patternFunction, $file, $content);
+        return $this->extractFromArgs($args, $patternFunction, $file, $content);
     }
 
     /**
@@ -229,7 +235,8 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
      */
     private function extractFromStaticCall(StaticCall $staticCall, string $file, string $content): array
     {
-        if (!$staticCall->class instanceof Name || !$staticCall->name instanceof Identifier || $staticCall->isFirstClassCallable()) {
+        $args = self::ordinaryArgs($staticCall);
+        if (!$staticCall->class instanceof Name || !$staticCall->name instanceof Identifier || null === $args) {
             return [];
         }
 
@@ -238,7 +245,28 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        return $this->extractFromArgs($staticCall->getArgs(), $patternFunction, $file, $content);
+        return $this->extractFromArgs($args, $patternFunction, $file, $content);
+    }
+
+    /**
+     * The arguments of a call, null for a first-class callable,
+     * preg_match(...), or a partial application, preg_match(?, $s): their
+     * placeholders are no arguments, and getArgs() asserts on them.
+     *
+     * @return list<Arg>|null
+     */
+    private static function ordinaryArgs(CallLike $call): ?array
+    {
+        $args = [];
+        foreach ($call->getRawArgs() as $arg) {
+            if (!$arg instanceof Arg) {
+                return null;
+            }
+
+            $args[] = $arg;
+        }
+
+        return $args;
     }
 
     /**

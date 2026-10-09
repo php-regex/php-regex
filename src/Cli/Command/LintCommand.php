@@ -31,6 +31,7 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -281,16 +282,19 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         // A file read with the tokenizer holds no pattern of its own: it is
         // counted in the stats, and named under --verbose.
-        $parserFallbacks = array_values(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null !== $pattern->parserFallback));
+        // A file read twice is named once, as results name it.
+        $parserFallbacks = LintStatsCounter::parserFallbacks($patterns);
         if ([] !== $parserFallbacks && \in_array($verbosity, [OutputConfiguration::VERBOSITY_VERBOSE, OutputConfiguration::VERBOSITY_DEBUG], true) && !$output->isQuiet()) {
-            $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
+            $writeLine = 'console' === $format ? $output->write(...) : $output->writeError(...);
+            $workingDirectory = getcwd();
             foreach ($parserFallbacks as $fallback) {
-                $status(\sprintf("  Parsed with the tokenizer: %s (%s)\n", $fallback->file, $fallback->parserFallback));
+                $file = LintService::displayPath($fallback->file, false === $workingDirectory ? null : $workingDirectory);
+                $writeLine(\sprintf("  Parsed with the tokenizer: %s (%s)\n", $file, $fallback->parserFallback));
             }
         }
 
         if ('console' === $format) {
-            $patternCount = \count($patterns) - \count($parserFallbacks);
+            $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
             $output->write('  '.$output->dim("Scanned {$fileCount} files, found {$patternCount} patterns.\n\n"));
         }
 

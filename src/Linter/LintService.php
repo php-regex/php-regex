@@ -101,6 +101,41 @@ final readonly class LintService
     }
 
     /**
+     * Relative to the working directory, with "/" separators, when the file
+     * lies under it; absolute otherwise. "./src", "src/", "../project/src"
+     * and the absolute path all give the same value. A name that is not a
+     * path (a stream URL, a route collection) is left as it is.
+     */
+    public static function displayPath(string $file, ?string $workingDirectory): string
+    {
+        if ('' === $file || null === $workingDirectory || str_contains($file, '://')) {
+            return $file;
+        }
+
+        $path = self::slashes($file);
+        $base = self::collapse(self::slashes($workingDirectory));
+        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
+
+        $relative = self::under($absolute, $base);
+        if (null !== $relative) {
+            return $relative;
+        }
+
+        // Through a symbolic link ($PWD may name the working directory by a
+        // link, getcwd() never does): compare the resolved paths.
+        $resolvedFile = realpath($file);
+        $resolvedBase = realpath($workingDirectory);
+        if (false !== $resolvedFile && false !== $resolvedBase) {
+            $relative = self::under(self::slashes($resolvedFile), self::slashes($resolvedBase));
+            if (null !== $relative) {
+                return $relative;
+            }
+        }
+
+        return $absolute;
+    }
+
+    /**
      * Apply high-level toggles from the lint request (validation / ReDoS).
      *
      * @phpstan-param array<LintIssue> $issues
@@ -266,41 +301,6 @@ final readonly class LintService
     private static function nullFirst(int|string|null $value): array
     {
         return null === $value ? [0, 0] : [1, $value];
-    }
-
-    /**
-     * Relative to the working directory, with "/" separators, when the file
-     * lies under it; absolute otherwise. "./src", "src/", "../project/src"
-     * and the absolute path all give the same value. A name that is not a
-     * path (a stream URL, a route collection) is left as it is.
-     */
-    private static function displayPath(string $file, ?string $workingDirectory): string
-    {
-        if ('' === $file || null === $workingDirectory || str_contains($file, '://')) {
-            return $file;
-        }
-
-        $path = self::slashes($file);
-        $base = self::collapse(self::slashes($workingDirectory));
-        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
-
-        $relative = self::under($absolute, $base);
-        if (null !== $relative) {
-            return $relative;
-        }
-
-        // Through a symbolic link ($PWD may name the working directory by a
-        // link, getcwd() never does): compare the resolved paths.
-        $resolvedFile = realpath($file);
-        $resolvedBase = realpath($workingDirectory);
-        if (false !== $resolvedFile && false !== $resolvedBase) {
-            $relative = self::under(self::slashes($resolvedFile), self::slashes($resolvedBase));
-            if (null !== $relative) {
-                return $relative;
-            }
-        }
-
-        return $absolute;
     }
 
     private static function slashes(string $path): string

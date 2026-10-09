@@ -61,6 +61,14 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     }
 
     /**
+     * Whether the tokenizer passes the content over as binary.
+     */
+    public static function holdsNulByte(string $content): bool
+    {
+        return str_contains($content, "\x00");
+    }
+
+    /**
      * @param array<string> $files
      *
      * @return array<PatternOccurrence>
@@ -1399,6 +1407,6 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      */
     private function readableContent(string $content): ?string
     {
-        return str_contains($content, "\x00") ? null : $content;
+        return self::holdsNulByte($content) ? null : $content;
     }
 }
