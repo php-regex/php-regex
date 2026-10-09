@@ -2,7 +2,7 @@
 
 > Static analysis, linter & logic solver for PHP regular expressions. PHPRegex parses PCRE-style regexes into an immutable AST and answers questions about them: validity ruled as PHP's own engine would rule it, ReDoS safety with a proof or a witness, lint findings with fixes, provably equivalent rewrites, sample strings a pattern matches, and pattern-to-pattern logic (equivalence, intersection, subset) via automata.
 
-Install: composer require --dev php-regex/regex-toolkit — until the 2.0.0 tag, install the monorepo instead: composer require php-regex/php-regex:2.x-dev with the repositories block from the Quick Start
+Install: composer require --dev php-regex/php-regex:2.x-dev — the 2.x monorepo; the split packages (php-regex/regex-toolkit, regex-phpstan, ...) land on Packagist with 2.0.0
 Docs: https://php-regex.com/docs/
 Repository: https://github.com/php-regex/php-regex
 License: MIT

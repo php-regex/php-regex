@@ -209,7 +209,7 @@ Regex matches
 
 <section class="constellation">
   <h2 class="section-title">Wire it into your stack</h2>
-  <p>Three packages turn the analysis into findings where you already work. Until the 2.0.0 tag, the <a href="/quick-start/">Quick Start</a> explains the pre-release monorepo install behind these commands.</p>
+  <p>Three packages turn the analysis into findings where you already work. Until the 2.0.0 tag, the monorepo install covers all three — see the <a href="/quick-start/">Quick Start</a>.</p>
   <div class="component-grid">
     <article class="component">
       <h4 class="component-name">PHPStan</h4>

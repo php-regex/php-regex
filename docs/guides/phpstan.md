@@ -24,10 +24,10 @@ includes:
     - vendor/php-regex/regex-phpstan/extension.neon
 ```
 
-This guide writes the split-package paths — what the command above installs
-from the 2.0.0 release. Until then, under the pre-release monorepo install
-(see the note above), the same neon files live under
-`vendor/php-regex/php-regex/src/PHPStan/`.
+This guide writes the split-package paths — what
+`composer require --dev php-regex/regex-phpstan` installs from the 2.0.0
+release. Until then, the monorepo install above puts the same neon files
+under `vendor/php-regex/php-regex/src/PHPStan/`.
 
 ## What it reports by default
 

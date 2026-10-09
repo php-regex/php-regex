@@ -23,7 +23,7 @@ Requires PHP 8.2 or later and the `mbstring` extension (PCRE ships with PHP).
 
 {% include install-prerelease.html package="php-regex/regex-toolkit" %}
 
-`regex-toolkit` is the parser and the PHP API. The pre-release monorepo above also installs the `vendor/bin/regex` binary used throughout this guide; from the 2.0.0 release, the CLI is its own package (`composer require --dev php-regex/regex-cli`).
+`regex-toolkit` is the parser and the PHP API. The monorepo install above also provides the `vendor/bin/regex` binary used throughout this guide; from the 2.0.0 release, the CLI is its own package (`composer require --dev php-regex/regex-cli`).
 
 No Composer? The CLI also ships as a self-contained PHAR:
 
