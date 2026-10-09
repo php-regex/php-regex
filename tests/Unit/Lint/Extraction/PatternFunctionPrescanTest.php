@@ -226,6 +226,11 @@ final class PatternFunctionPrescanTest extends TestCase
                 return $this;
             }
 
+            public function customGlobalFunctions(): array
+            {
+                return [];
+            }
+
             public function extract(array $files): array
             {
                 return [];
@@ -734,6 +739,28 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
+     * A global function the configuration names captures no more than one
+     * a library marks: an unqualified call in a namespace that declares its
+     * own function of that name, in another file, calls that one.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategiesConfiguringGrep')]
+    public function test_a_configured_global_function_does_not_capture_a_namespaced_project_function(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'app/own.php' => "<?php\nnamespace App;\nfunction grep(string \$haystack) {}\n",
+            'app/caller.php' => "<?php\nnamespace App;\ngrep('a(b');\n",
+            'app/Other/elsewhere.php' => "<?php\nnamespace App\\Other;\ngrep('/c(/');\n",
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app']);
+
+        $this->assertSame(['/c(/'], self::patterns($occurrences));
+    }
+
+    /**
      * A file the PHP parser refuses is read with the tokenizer, which knows
      * the functions declared in the other files, and the plain namespaced
      * ones that keep a global declaration from capturing a call.
@@ -775,6 +802,12 @@ final class PatternFunctionPrescanTest extends TestCase
     {
         yield 'tokens' => ['strategy' => static fn (): TokenBasedExtractionStrategy => new TokenBasedExtractionStrategy()];
         yield 'php-parser' => ['strategy' => static fn (): PhpParserExtractionStrategy => new PhpParserExtractionStrategy()];
+    }
+
+    public static function provideStrategiesConfiguringGrep(): iterable
+    {
+        yield 'tokens' => ['strategy' => static fn (): TokenBasedExtractionStrategy => new TokenBasedExtractionStrategy(['grep#0'])];
+        yield 'php-parser' => ['strategy' => static fn (): PhpParserExtractionStrategy => new PhpParserExtractionStrategy(['grep#0'])];
     }
 
     /**

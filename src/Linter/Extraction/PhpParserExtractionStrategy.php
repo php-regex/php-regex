@@ -84,6 +84,11 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead());
     }
 
+    public function customGlobalFunctions(): array
+    {
+        return $this->registry->customGlobalFunctions();
+    }
+
     public function extract(array $files): array
     {
         if (empty($files)) {
@@ -155,10 +160,6 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
             // reads them, and the run counts the file. A RangeException is
             // the parser meeting a token of a PHP newer than itself. Anything
             // else thrown here is a defect of ours, and is not caught.
-            if (TokenBasedExtractionStrategy::holdsNulByte($content)) {
-                return [PatternOccurrence::unread($file, \sprintf('Not linted: the PHP parser failed (%s), and the tokenizer does not read a file holding a NUL byte.', $e->getMessage()))];
-            }
-
             return [
                 PatternOccurrence::parserFallback($file, $e->getMessage()),
                 ...(new TokenBasedExtractionStrategy([], $this->registry))->extract([$file]),

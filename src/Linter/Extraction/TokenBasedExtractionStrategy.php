@@ -54,6 +54,11 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead());
     }
 
+    public function customGlobalFunctions(): array
+    {
+        return $this->registry->customGlobalFunctions();
+    }
+
     public function extract(array $files): array
     {
         // Used on its own, the functions the files mark with #[RegexPattern]
@@ -62,14 +67,6 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
 
         return $strategy->extractFiles($files);
-    }
-
-    /**
-     * Whether the tokenizer passes the content over as binary.
-     */
-    public static function holdsNulByte(string $content): bool
-    {
-        return str_contains($content, "\x00");
     }
 
     /**
@@ -109,11 +106,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::TOKENIZE_FACTOR))];
         }
 
-        $content = $this->readableContent($content);
-        if (null === $content) {
-            return [];
-        }
-
+        // PHP hands preg_match() the bytes of its source, valid UTF-8 or not,
+        // a NUL byte among them: the tokenizer reads them as they stand.
         $tokens = token_get_all($content);
         $tokenOffsets = $this->buildTokenOffsets($tokens);
         $closers = $this->matchBrackets($tokens);
@@ -1566,15 +1560,5 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         }
 
         return null;
-    }
-
-    /**
-     * The content as PHP reads it, its bytes untouched: preg_match() gets
-     * the bytes of the source, valid UTF-8 or not. Null for a binary file,
-     * one that holds a NUL byte.
-     */
-    private function readableContent(string $content): ?string
-    {
-        return self::holdsNulByte($content) ? null : $content;
     }
 }

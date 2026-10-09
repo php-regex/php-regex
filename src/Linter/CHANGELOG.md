@@ -13,9 +13,12 @@ CHANGELOG
    of being left out, and counted once in `stats.parser_fallbacks` of the
    JSON report; a first-class callable such as `preg_match(...)` or a
    partial application such as `preg_match(?, $s)` no longer drops the other
-   patterns of its file. A file neither reader takes, one holding a NUL
-   byte, is reported as `regex.lint.source.unreadable`, and an inline ignore
-   on its first line no longer silences that error.
+   patterns of its file. A file holding a NUL byte is read as PHP reads it:
+   in a comment, a string or a pattern the file is valid and linted, where
+   both readers skipped it; anywhere else the NUL is a syntax error, read
+   with the tokenizer. An inline ignore on the first line of a file the lint
+   could not read no longer silences its `regex.lint.source.unreadable`
+   error.
  * The lint command reads the file of `--baseline` and `--generate-baseline`
    after a space too (`--baseline base.json`); either option with no file is a
    usage error.
@@ -64,7 +67,9 @@ CHANGELOG
    found that way, a project declaration over a copy in `vendor/`, and
    project declarations marking different parameters are all read.
    A call written unqualified in a namespace, `grep()` in `namespace App`, is
-   matched first as that namespace's function, `App\grep()`, as PHP calls it.
+   matched first as that namespace's function, `App\grep()`, as PHP calls it;
+   where the namespace declares its own `grep()`, marked or not, a global
+   `grep()`, declared or configured, does not capture the call.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the
    project's range parses into another meaning, `/a{,3}/` from PHP 8.4, at
    severity `warning`, on by default.

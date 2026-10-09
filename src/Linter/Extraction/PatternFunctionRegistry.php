@@ -228,6 +228,20 @@ final readonly class PatternFunctionRegistry
     }
 
     /**
+     * The global pattern functions the registry reads that are no native
+     * one, in lower case: those a configuration or a declaration added.
+     *
+     * @return list<string>
+     */
+    public function customGlobalFunctions(): array
+    {
+        return array_values(array_filter(
+            array_keys($this->functions),
+            fn (string $name): bool => !str_contains($name, '\\') && !isset($this->dropIns[$name]),
+        ));
+    }
+
+    /**
      * The pattern function a call to a function reaches. $namespaced is
      * the name an unqualified call has in its namespace, which PHP calls
      * first when it is declared, marked or not; $name the global one PHP

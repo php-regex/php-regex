@@ -204,8 +204,10 @@ final readonly class PatternExtractor
 
         // An unqualified call in a namespace reaches that namespace's own
         // function, marked or not, before a global one: the namespaced
-        // functions named as a declared global one are read too.
-        $globals = array_values(array_filter(array_map(self::specName(...), $specs), static fn (string $name): bool => !str_contains($name, '\\') && !str_contains($name, ':')));
+        // functions named as a configured or declared global one are read
+        // too.
+        $declaredGlobals = array_filter(array_map(self::specName(...), $specs), static fn (string $name): bool => !str_contains($name, '\\') && !str_contains($name, ':'));
+        $globals = array_values(array_unique([...$extractor->customGlobalFunctions(), ...$declaredGlobals]));
         $plain = [] === $globals ? [] : $this->scanInWorkers(
             [...$projectFiles, ...$vendorFiles],
             $workers,

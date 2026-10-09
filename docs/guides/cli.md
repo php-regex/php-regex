@@ -540,7 +540,8 @@ jobs.
 A call written unqualified in the function's own namespace, `grep()` in
 `namespace App`, is read, as PHP calls `App\grep()` first; and when the
 namespace declares its own `grep()`, marked or not, a global `grep()` marked
-in a library does not capture the call. An instance call (`$str->matches(...)`)
+in a library or named with `--pattern-function` or `extraction.functions` does
+not capture the call. An instance call (`$str->matches(...)`)
 names no class the linter can know, and is not read; the PHPStan extension,
 which knows the type of `$str`, reads it (see
 [the PHPStan guide](phpstan.md#pattern-parameters)).

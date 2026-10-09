@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\TestCase;
 
@@ -131,29 +132,43 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertNull($this->invoke($strategy, 'findArrayStartIndex', $tokens));
     }
 
-    public function test_readable_content_skips_a_nul_byte_and_keeps_every_other(): void
+    public function test_the_source_reaches_the_tokenizer_byte_for_byte(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
+        $occurrences = $this->extractSource("<?php\npreg_match('/caf\xE9\0/', \$s);\n");
 
-        $this->assertSame('hello', $this->invoke($strategy, 'readableContent', 'hello'));
-        $this->assertNull($this->invoke($strategy, 'readableContent', "a\0b"));
-
-        $latin1 = "\xE9";
-        $kept = $this->invoke($strategy, 'readableContent', $latin1);
-        $this->assertSame($latin1, $kept);
-
-        $latin1WithNull = "\xE9\0";
-        $this->assertNull($this->invoke($strategy, 'readableContent', $latin1WithNull));
+        $this->assertCount(1, $occurrences);
+        $this->assertSame(bin2hex("/caf\xE9\0/"), bin2hex($occurrences[0]->pattern));
+        $this->assertNull($occurrences[0]->unread);
+        $this->assertSame(2, $occurrences[0]->line);
     }
 
-    public function test_readable_content_keeps_bytes_that_are_not_utf8(): void
+    public function test_the_source_is_read_whatever_the_encoding_checks_answer(): void
     {
         LintFunctionOverrides::$mbCheckEncodingResult = false;
         LintFunctionOverrides::$mbConvertEncodingResult = false;
 
-        $strategy = new TokenBasedExtractionStrategy();
+        $occurrences = $this->extractSource("<?php preg_match('/data/', \$s);\n");
 
-        $this->assertSame('data', $this->invoke($strategy, 'readableContent', 'data'));
+        $this->assertCount(1, $occurrences);
+        $this->assertSame('/data/', $occurrences[0]->pattern);
+    }
+
+    /**
+     * @return list<PatternOccurrence>
+     */
+    private function extractSource(string $content): array
+    {
+        $base = tempnam(sys_get_temp_dir(), 'regex-bytes-');
+        $this->assertIsString($base);
+        unlink($base);
+        $file = $base.'.php';
+        file_put_contents($file, $content);
+
+        try {
+            return array_values((new TokenBasedExtractionStrategy())->extract([$file]));
+        } finally {
+            unlink($file);
+        }
     }
 
     private function invoke(TokenBasedExtractionStrategy $strategy, string $method, mixed ...$args): mixed

@@ -225,14 +225,18 @@ final class PatternExtractorTest extends TestCase
     }
 
     /**
-     * Test that files with binary content (null bytes) are skipped.
+     * A NUL byte in a comment is valid PHP: the file is read as PHP reads
+     * it, and the pattern after the NUL is found where it stands.
      */
-    public function test_binary_content_is_ignored(): void
+    public function test_a_nul_byte_in_a_comment_hides_no_pattern(): void
     {
-        $fixtureFile = __DIR__.'/../Fixtures/Functional/binary_content.php';
+        $fixtureFile = __DIR__.'/../Fixtures/Functional/nul_byte_in_comment.php';
 
         $result = $this->extractor->extract([$fixtureFile]);
 
-        $this->assertEmpty($result, 'Files with binary content should be skipped entirely');
+        $this->assertCount(1, $result);
+        $this->assertSame('/read-past-the-nul/', $result[0]->pattern);
+        $this->assertSame(3, $result[0]->line);
+        $this->assertNull($result[0]->unread);
     }
 }

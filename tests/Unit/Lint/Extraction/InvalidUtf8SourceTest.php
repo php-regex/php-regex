@@ -55,10 +55,24 @@ final class InvalidUtf8SourceTest extends TestCase
         $this->assertSame($ascii[0]->line, $latin1[0]->line);
     }
 
+    /**
+     * A NUL byte in a comment is valid PHP, which keeps every pattern of the
+     * file: it is read, and its offsets stand where a byte of the same length
+     * would leave them.
+     */
     #[Test]
-    public function test_a_file_holding_a_nul_byte_is_still_skipped(): void
+    public function test_a_nul_byte_beside_a_latin1_byte_moves_no_offset(): void
     {
-        $this->assertSame([], $this->extract("<?php\n// caf\xE9\0\npreg_match('/a+/', \$s);\n"));
+        $nul = $this->extract("<?php\n// caf\xE9\0\npreg_match('/a+/', \$s);\n");
+        $plain = $this->extract("<?php\n// caf\xE9x\npreg_match('/a+/', \$s);\n");
+
+        $this->assertCount(1, $nul);
+        $this->assertCount(1, $plain);
+        $this->assertSame('/a+/', $nul[0]->pattern);
+        $this->assertNull($nul[0]->unread);
+        $this->assertSame($plain[0]->fileOffset, $nul[0]->fileOffset);
+        $this->assertSame($plain[0]->column, $nul[0]->column);
+        $this->assertSame($plain[0]->line, $nul[0]->line);
     }
 
     /**

@@ -79,7 +79,10 @@ final class PatternAttributeScanner
         $wanted = array_fill_keys(array_map(strtolower(...), $identifiers), true);
 
         // A file is tokenized only when it declares a function of one of the
-        // names, which a search tells far more cheaply.
+        // names, which a search tells far more cheaply. Only whitespace may
+        // stand between `function`, `&` and the name: `function /* */ grep(`
+        // is not seen, and a global pattern function then captures the
+        // calls its namespace makes to it.
         $declares = '/\\bfunction\\s+&?\\s*(?:'.implode('|', array_keys($wanted)).')\\s*\\(/i';
         $functions = [];
         foreach ($files as $file) {

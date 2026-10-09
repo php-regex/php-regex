@@ -187,4 +187,15 @@ final class PatternFunctionRegistryTest extends TestCase
         $declared = PatternFunctionRegistry::native()->withCustomFunctions(['App\RegexHelper::m']);
         $this->assertFalse($declared->matchesContent('<?php namespace App\Http; final class X {}'));
     }
+
+    public function test_the_custom_global_functions_leave_out_natives_namespaced_functions_and_methods(): void
+    {
+        $this->assertSame([], PatternFunctionRegistry::native()->customGlobalFunctions());
+
+        $registry = PatternFunctionRegistry::native()
+            ->withCustomFunctions(['Grep#0', 'App\match#1', 'App\Str::is#0', 'preg_match#1'])
+            ->withDeclaredFunctions(['find#0', 'App\locate#0']);
+
+        $this->assertSame(['grep', 'find'], $registry->customGlobalFunctions());
+    }
 }

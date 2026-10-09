@@ -164,15 +164,23 @@ final class ParserFallbackTest extends TestCase
     }
 
     /**
-     * The tokenizer passes over a file holding a NUL byte: a file the parser
-     * refuses for the same reason is then not linted at all, and said so.
+     * A NUL byte is read as PHP reads it. In a comment, a string or the
+     * pattern itself the file is valid PHP, and both strategies read it;
+     * anywhere else it is a syntax error, and the parser strategy reads the
+     * file with the tokenizer, as any file it refuses. Installing the parser
+     * changes no pattern the lint reports, and no such file is unread.
+     *
+     * @param list<string> $patterns
      */
     #[Test]
-    public function test_a_file_neither_reader_takes_is_reported_unread(): void
+    #[DataProvider('provideNulByteFiles')]
+    public function test_a_file_holding_a_nul_byte_is_read_as_php_reads_it(string $content, array $patterns, bool $fallback): void
     {
-        $file = $this->writeFile("<?php preg_match(\"/(nul/\", \$s); \$x=1;\x00");
+        $file = $this->writeFile($content);
 
-        $this->assertSame([], (new TokenBasedExtractionStrategy())->extract([$file]));
+        $tokenized = (new TokenBasedExtractionStrategy())->extract([$file]);
+        $this->assertSame($patterns, self::patternsOf($tokenized));
+        $this->assertCount(\count($patterns), $tokenized);
 
         $occurrences = (new PhpParserExtractionStrategy())->extract([$file]);
         if (!self::parserAvailable()) {
@@ -181,10 +189,25 @@ final class ParserFallbackTest extends TestCase
             return;
         }
 
-        $this->assertCount(1, $occurrences);
-        $this->assertNull($occurrences[0]->parserFallback);
-        $this->assertStringStartsWith('Not linted: ', (string) $occurrences[0]->unread);
-        $this->assertStringContainsString('NUL byte', (string) $occurrences[0]->unread);
+        $this->assertSame($patterns, self::patternsOf($occurrences));
+        $fallbacks = array_values(array_filter($occurrences, static fn (PatternOccurrence $occurrence): bool => null !== $occurrence->parserFallback));
+        $this->assertCount($fallback ? 1 : 0, $fallbacks);
+        $this->assertCount(\count($patterns) + \count($fallbacks), $occurrences);
+        foreach ($occurrences as $occurrence) {
+            $this->assertNull($occurrence->unread);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{content: string, patterns: list<string>, fallback: bool}>
+     */
+    public static function provideNulByteFiles(): iterable
+    {
+        yield 'outside any literal' => ['content' => "<?php preg_match(\"/(nul/\", \$s); \$x=1;\x00", 'patterns' => ['/(nul/'], 'fallback' => true];
+        yield 'in a comment' => ['content' => "<?php\n// \x00\npreg_match('/a+/', \$s);\n", 'patterns' => ['/a+/'], 'fallback' => false];
+        yield 'in a string' => ['content' => "<?php preg_match('/(a/', \$s); \$y = \"x\x00y\";\n", 'patterns' => ['/(a/'], 'fallback' => false];
+        yield 'in the pattern' => ['content' => "<?php preg_match('/a\x00b/', \$s);\n", 'patterns' => ["/a\x00b/"], 'fallback' => false];
+        yield 'in a file calling no pattern function' => ['content' => "<?php \$x = 1;\x00", 'patterns' => [], 'fallback' => false];
     }
 
     #[Test]

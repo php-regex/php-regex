@@ -39,4 +39,15 @@ interface PatternFunctionAwareInterface
      * @param array<string> $plain
      */
     public function withPatternFunctions(array $specs, array $plain = []): static;
+
+    /**
+     * The global functions configured as pattern functions ("grep"), in
+     * lower case: a namespaced function of the same name, marked or not,
+     * answers an unqualified call in its namespace before them. A native
+     * function is not among them: a namespaced copy of it keeps its
+     * signature.
+     *
+     * @return list<string>
+     */
+    public function customGlobalFunctions(): array;
 }
