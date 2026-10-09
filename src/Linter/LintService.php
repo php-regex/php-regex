@@ -73,6 +73,7 @@ final readonly class LintService
             $request->getDisabledSources(),
             $progress,
             $request->analysisWorkers,
+            $request->declarationPaths,
         );
 
         return $this->sources->collect($context);

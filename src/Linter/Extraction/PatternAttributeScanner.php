@@ -46,8 +46,12 @@ final class PatternAttributeScanner
         foreach ($files as $file) {
             // An attribute is reached through its namespace, imported or
             // written in full: a file naming neither declares none.
+            // A file that cannot be read, or that would exhaust the memory
+            // left to tokenize it, declares nothing here: the extraction
+            // reports a linted one as unread, and vendor/ is not linted.
             $content = is_file($file) && is_readable($file) ? file_get_contents($file) : false;
-            if (\is_string($content) && (false !== stripos($content, 'PHPRegex\Parser\Attribute') || false !== stripos($content, 'JetBrains\PhpStorm\Language'))) {
+            if (\is_string($content) && (false !== stripos($content, 'PHPRegex\Parser\Attribute') || false !== stripos($content, 'JetBrains\PhpStorm\Language'))
+                && MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR)) {
                 array_push($specs, ...self::scan($content));
             }
         }

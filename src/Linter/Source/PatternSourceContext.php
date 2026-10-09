@@ -30,6 +30,8 @@ final readonly class PatternSourceContext
      * @param array<string>                 $excludePaths
      * @param array<string>                 $disabledSources
      * @param callable(int, int): void|null $progress
+     * @param array<string>                 $declarationPaths where the functions marked #[RegexPattern] are read,
+     *                                                        besides the paths linted: the project's paths, its vendor/
      */
     public function __construct(
         public array $paths,
@@ -37,6 +39,7 @@ final readonly class PatternSourceContext
         private array $disabledSources = [],
         ?callable $progress = null,
         public int $workers = 1,
+        public array $declarationPaths = [],
     ) {
         $this->progress = $progress;
     }

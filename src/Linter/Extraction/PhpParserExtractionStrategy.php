@@ -58,17 +58,22 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final readonly class PhpParserExtractionStrategy implements ExtractorInterface
+final readonly class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
     private ?Parser $parser;
 
     private PatternFunctionRegistry $registry;
 
     /**
-     * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param array<int, string> $customFunctions   Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param bool               $scansDeclarations whether extract() reads the #[RegexPattern] declarations of
+     *                                              its files; not once the pattern functions are given
      */
-    public function __construct(array $customFunctions = [], ?PatternFunctionRegistry $registry = null)
-    {
+    public function __construct(
+        array $customFunctions = [],
+        ?PatternFunctionRegistry $registry = null,
+        private bool $scansDeclarations = true
+    ) {
         $parser = null;
         if (class_exists(ParserFactory::class)) {
             $parserFactory = new ParserFactory();
@@ -79,15 +84,20 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
     }
 
+    public function withPatternFunctions(array $specs): static
+    {
+        return new self([], $this->registry->withCustomFunctions(array_values($specs)), false);
+    }
+
     public function extract(array $files): array
     {
         if (empty($files)) {
             return [];
         }
 
-        // The functions the files mark with #[RegexPattern] join the
-        // registry for this run.
-        $specs = PatternAttributeScanner::specs($files);
+        // Used on its own, the functions the files mark with #[RegexPattern]
+        // join the registry for this run.
+        $specs = $this->scansDeclarations ? PatternAttributeScanner::specs($files) : [];
         $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
 
         return $strategy->analyzeFilesWithPhpStan($files);

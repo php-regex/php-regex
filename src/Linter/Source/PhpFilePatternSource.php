@@ -43,6 +43,7 @@ final readonly class PhpFilePatternSource implements PatternSourceInterface
             $context->excludePaths,
             $progress,
             $context->workers,
+            $context->declarationPaths,
         );
     }
 }

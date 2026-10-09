@@ -513,13 +513,21 @@ vendor/bin/regex lint src/ --pattern-function='App\Support\Str::matches#1'
 Or mark the parameter at the source, with the attribute
 `PHPRegex\Parser\Attribute\RegexPattern`, or with PhpStorm's
 `#[Language('RegExp')]` (`jetbrains/phpstorm-attributes`) if the code already
-carries it: every linted file is first read for the functions and static
-methods that declare one, and their calls are then read as if they were
-configured. A call written unqualified in the function's own namespace,
-`grep()` in `namespace App`, is read, as PHP calls `App\grep()` first. An
-instance call (`$str->matches(...)`) names no class the linter can know, and
-is not read; the PHPStan extension, which knows the type of `$str`, reads it
-(see [the PHPStan guide](phpstan.md#pattern-parameters)).
+carries it: the functions and static methods that declare one are read first,
+and their calls are then read as if they were configured. The declarations
+are read project-wide, whatever paths are linted: in the linted paths, in the
+configured `paths` and in `vendor/` of the working directory. With no `paths`
+configured, the linted paths and `vendor/` are read, never the whole working
+directory. `exclude` and `--exclude` keep files out of the lint, not out of
+this reading: a helper declared under an excluded directory, or in a library,
+is still known, and `regex lint $(git diff --name-only)` still knows a helper
+declared in a file it does not lint. A declaration file that cannot be read,
+or is too large for `memory_limit`, is skipped silently. A call written
+unqualified in the function's own namespace, `grep()` in `namespace App`, is
+read, as PHP calls `App\grep()` first. An instance call (`$str->matches(...)`)
+names no class the linter can know, and is not read; the PHPStan extension,
+which knows the type of `$str`, reads it (see
+[the PHPStan guide](phpstan.md#pattern-parameters)).
 
 ```php
 use PHPRegex\Parser\Attribute\RegexPattern;

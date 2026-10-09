@@ -57,7 +57,9 @@ CHANGELOG
  * A function or static method declaring a parameter with the attribute
    `PHPRegex\Parser\Attribute\RegexPattern`, or PhpStorm's
    `#[Language('RegExp')]`, is a pattern function, as if
-   configured: the files are read for such declarations before extraction.
+   configured: the linted paths, the configured paths and `vendor/` are read
+   once for such declarations, whatever `exclude` says, before the files are
+   shared out between the workers.
    A call written unqualified in a namespace, `grep()` in `namespace App`, is
    matched first as that namespace's function, `App\grep()`, as PHP calls it.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the

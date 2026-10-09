@@ -26,9 +26,11 @@ final readonly class LintRequest
      * @param array<string>       $paths
      * @param array<string>       $excludePaths
      * @param array<string>       $disabledSources
-     * @param OptimizerOptions    $optimizations   what an optimization may rewrite; lint checks every
-     *                                             rewrite with the automata unless told otherwise
+     * @param OptimizerOptions    $optimizations    what an optimization may rewrite; lint checks every
+     *                                              rewrite with the automata unless told otherwise
      * @param array<string, bool> $lintRules
+     * @param array<string>       $declarationPaths where the functions marked #[RegexPattern] are read, besides
+     *                                              the paths linted: the project's paths, its vendor/
      */
     public function __construct(
         public array $paths,
@@ -42,6 +44,7 @@ final readonly class LintRequest
         public int $analysisWorkers = 1,
         public OptimizerOptions $optimizations = new OptimizerOptions(verifyWithAutomata: true),
         public array $lintRules = [],
+        public array $declarationPaths = [],
     ) {}
 
     /**

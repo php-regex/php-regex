@@ -186,6 +186,47 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame('regex:lint', $command->getName());
     }
 
+    /**
+     * The functions marked #[RegexPattern] are read in the configured paths
+     * and in the project's vendor/, whatever paths the run lints; with no
+     * project directory, the working directory is the project.
+     */
+    public function test_execute_reads_declarations_in_the_configured_paths_and_vendor(): void
+    {
+        $source = new class implements PatternSourceInterface {
+            /**
+             * @var list<array<string>>
+             */
+            public array $declarationPaths = [];
+
+            public function getName(): string
+            {
+                return 'recording';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                $this->declarationPaths[] = $context->declarationPaths;
+
+                return [];
+            }
+        };
+        $analysis = new AnalysisService(RegexParser::create());
+        $lint = new LintService($analysis, new PatternSourceCollection([$source]));
+
+        foreach (['/app', null] as $projectDir) {
+            $command = new LintCommand(lint: $lint, analysis: $analysis, defaultPaths: ['src', 'lib'], projectDir: $projectDir);
+            (new CommandTester($command))->execute(['paths' => ['src/Controller/One.php'], '--format' => 'json']);
+        }
+
+        $this->assertSame([['src', 'lib', '/app/vendor'], ['src', 'lib', getcwd().'/vendor']], $source->declarationPaths);
+    }
+
     public function test_execute_rejects_invalid_jobs_value(): void
     {
         $command = $this->createCommand();

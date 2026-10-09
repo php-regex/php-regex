@@ -15,6 +15,8 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\MemoryBudget;
+use PHPRegex\Linter\Extraction\PatternAttributeScanner;
+use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 
 /**
@@ -58,14 +60,17 @@ final readonly class PatternExtractor
     /**
      * Extract regex patterns from the given paths.
      *
-     * @param array<string>                 $paths        Paths to scan for PHP files
-     * @param array<string>|null            $excludePaths Optional paths to exclude (falls back to ['vendor'])
-     * @param callable(int, int): void|null $progress     Reports collection progress as (current, total)
-     * @param int                           $workers      Number of worker processes to use when supported
+     * @param array<string>                 $paths            Paths to scan for PHP files
+     * @param array<string>|null            $excludePaths     Optional paths to exclude (falls back to ['vendor'])
+     * @param callable(int, int): void|null $progress         Reports collection progress as (current, total)
+     * @param int                           $workers          Number of worker processes to use when supported
+     * @param array<string>                 $declarationPaths Paths read, besides the linted files, for the functions a
+     *                                                        parameter marked #[RegexPattern] makes pattern functions (the
+     *                                                        project's paths, its vendor/); what they hold is not linted
      *
      * @return array<PatternOccurrence>
      */
-    public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1): array
+    public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1, array $declarationPaths = []): array
     {
         $excludePaths ??= ['vendor'];
         $phpFiles = $this->collectPhpFiles($paths, $excludePaths);
@@ -79,11 +84,22 @@ final readonly class PatternExtractor
             return [];
         }
 
-        if ($workers > 1 && $total > 1 && self::supportsParallel()) {
-            return $this->applyInlineIgnores($this->extractParallel($phpFiles, $workers, $progress));
+        $parallel = $workers > 1 && self::supportsParallel();
+
+        // The declarations are read once, before the files are shared out:
+        // a call and the declaration it needs may land in two chunks, or the
+        // declaration in a file the run does not lint.
+        $extractor = $this->extractor;
+        if ($extractor instanceof PatternFunctionAwareInterface) {
+            $declarationFiles = $this->collectDeclarationFiles($phpFiles, $declarationPaths, $excludePaths);
+            $extractor = $extractor->withPatternFunctions($this->declaredPatternFunctions($declarationFiles, $parallel ? $workers : 1));
         }
 
-        return $this->applyInlineIgnores($this->extractSerial($phpFiles, $progress));
+        if ($parallel && $total > 1) {
+            return $this->applyInlineIgnores($this->extractParallel($phpFiles, $workers, $progress, $extractor));
+        }
+
+        return $this->applyInlineIgnores($this->extractSerial($phpFiles, $progress, $extractor));
     }
 
     /**
@@ -92,10 +108,11 @@ final readonly class PatternExtractor
      *
      * @return array<PatternOccurrence>
      */
-    private function extractSerial(array $phpFiles, ?callable $progress = null): array
+    private function extractSerial(array $phpFiles, ?callable $progress = null, ?ExtractorInterface $extractor = null): array
     {
+        $extractor ??= $this->extractor;
         if (null === $progress) {
-            return $this->extractor->extract($phpFiles);
+            return $extractor->extract($phpFiles);
         }
 
         $total = \count($phpFiles);
@@ -105,7 +122,7 @@ final readonly class PatternExtractor
         $current = 0;
 
         foreach ($phpFiles as $file) {
-            foreach ($this->extractor->extract([$file]) as $occurrence) {
+            foreach ($extractor->extract([$file]) as $occurrence) {
                 $occurrences[] = $occurrence;
             }
             $current++;
@@ -121,16 +138,89 @@ final readonly class PatternExtractor
      *
      * @return array<PatternOccurrence>
      */
-    private function extractParallel(array $phpFiles, int $workers, ?callable $progress = null): array
+    private function extractParallel(array $phpFiles, int $workers, ?callable $progress = null, ?ExtractorInterface $extractor = null): array
     {
+        $extractor ??= $this->extractor;
         $total = \count($phpFiles);
         if (null !== $progress) {
             $progress(0, $total);
         }
 
+        $processed = 0;
+        $resultsByIndex = $this->runInWorkers(
+            $phpFiles,
+            $workers,
+            static fn (array $chunk): array => $extractor->extract($chunk),
+            static function (int $count) use (&$processed, $total, $progress): void {
+                if (null !== $progress) {
+                    $processed += $count;
+                    $progress($processed, $total);
+                }
+            },
+        );
+
+        if (null === $resultsByIndex) {
+            return $this->extractSerial($phpFiles, $progress, $extractor);
+        }
+
+        /** @var array<PatternOccurrence> $results */
+        $results = [];
+        foreach ($resultsByIndex as $chunkResults) {
+            /** @var PatternOccurrence $item */
+            foreach (\is_array($chunkResults) ? $chunkResults : [] as $item) {
+                $results[] = $item;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * The pattern function specs the files declare, read on the workers
+     * when there are several.
+     *
+     * @param array<string> $files
+     *
+     * @return list<string>
+     */
+    private function declaredPatternFunctions(array $files, int $workers): array
+    {
+        $resultsByIndex = $workers > 1 && \count($files) > 1
+            ? $this->runInWorkers($files, $workers, static fn (array $chunk): array => PatternAttributeScanner::specs($chunk))
+            : null;
+
+        if (null === $resultsByIndex) {
+            return PatternAttributeScanner::specs($files);
+        }
+
+        $specs = [];
+        foreach ($resultsByIndex as $chunkSpecs) {
+            foreach (\is_array($chunkSpecs) ? $chunkSpecs : [] as $spec) {
+                if (\is_string($spec)) {
+                    $specs[] = $spec;
+                }
+            }
+        }
+
+        return array_values(array_unique($specs));
+    }
+
+    /**
+     * Shares the files out between forked children, each running the work
+     * on its chunk.
+     *
+     * @param array<string>                  $files
+     * @param \Closure(array<string>): mixed $work
+     * @param (\Closure(int): void)|null     $chunkDone called with the number of files of each chunk read back
+     *
+     * @return array<int, mixed>|null what the work gave for each chunk, in order; null when a child could not be started
+     */
+    private function runInWorkers(array $files, int $workers, \Closure $work, ?\Closure $chunkDone = null): ?array
+    {
+        $total = \count($files);
         $workerCount = max(1, min($workers, $total));
         $chunkSize = max(1, (int) ceil($total / $workerCount));
-        $chunks = array_chunk($phpFiles, $chunkSize);
+        $chunks = array_chunk($files, $chunkSize);
         $children = [];
         $failed = false;
 
@@ -143,10 +233,11 @@ final readonly class PatternExtractor
             }
 
             $pid = (new ForkedWorkerPool())->fork(
-                fn (): array => $this->extractor->extract($chunk),
+                static fn (): mixed => $work($chunk),
                 $tmpFile,
             );
             if (-1 === $pid) {
+                @unlink($tmpFile);
                 $failed = true;
 
                 break;
@@ -165,11 +256,10 @@ final readonly class PatternExtractor
                 @unlink($meta['file']);
             }
 
-            return $this->extractSerial($phpFiles, $progress);
+            return null;
         }
 
         $resultsByIndex = [];
-        $processed = 0;
 
         foreach ($children as $pid => $meta) {
             pcntl_waitpid($pid, $status);
@@ -185,27 +275,52 @@ final readonly class PatternExtractor
             }
 
             $resultsByIndex[$meta['index']] = $payload['result'] ?? [];
-            if (null !== $progress) {
-                $processed += $meta['count'];
-                $progress($processed, $total);
+            if (null !== $chunkDone) {
+                $chunkDone($meta['count']);
             }
         }
 
         ksort($resultsByIndex);
-        /** @var array<PatternOccurrence> $results */
-        $results = [];
-        foreach ($resultsByIndex as $chunkResults) {
-            if (!\is_array($chunkResults)) {
-                continue;
-            }
 
-            /** @var PatternOccurrence $item */
-            foreach ($chunkResults as $item) {
-                $results[] = $item;
+        return $resultsByIndex;
+    }
+
+    /**
+     * The files read for declarations: the linted files, and the PHP files
+     * under each declaration path. An excluded directory is read as the run
+     * reads it, below the declaration path: vendor/ named as a declaration
+     * path is read, though "vendor" is excluded.
+     *
+     * @param array<string> $phpFiles
+     * @param array<string> $declarationPaths
+     * @param array<string> $excludePaths
+     *
+     * @return list<string>
+     */
+    private function collectDeclarationFiles(array $phpFiles, array $declarationPaths, array $excludePaths): array
+    {
+        $files = [];
+        $add = static function (string $file) use (&$files): void {
+            $files[realpath($file) ?: $file] ??= $file;
+        };
+
+        foreach ($phpFiles as $file) {
+            $add($file);
+        }
+
+        foreach ($declarationPaths as $root) {
+            // A file is read as it is and a missing path passed over; below
+            // a directory, what the run excludes is skipped.
+            $root = is_dir($root) ? rtrim($root, '/\\') : $root;
+            $below = is_dir($root) ? \strlen($root) : null;
+            foreach ($this->collectPhpFiles([$root], []) as $file) {
+                if (null === $below || !$this->isExcluded(substr($file, $below), $excludePaths)) {
+                    $add($file);
+                }
             }
         }
 
-        return $results;
+        return array_values($files);
     }
 
     /**
@@ -216,14 +331,6 @@ final readonly class PatternExtractor
      */
     private function collectPhpFiles(array $paths, array $excludePaths): array
     {
-        $normalizedExcludePaths = [];
-        foreach ($excludePaths as $excludePath) {
-            $excludePath = trim($excludePath, '/\\');
-            if ('' !== $excludePath) {
-                $normalizedExcludePaths[] = $excludePath;
-            }
-        }
-
         $files = [];
         foreach ($paths as $path) {
             if ('' === $path) {
@@ -258,22 +365,29 @@ final readonly class PatternExtractor
                 }
 
                 // Skip excluded directories
-                $excluded = false;
-                foreach ($normalizedExcludePaths as $excludePath) {
-                    if (str_contains($filePath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($filePath, $excludePath.\DIRECTORY_SEPARATOR)) {
-                        $excluded = true;
-
-                        break;
-                    }
-                }
-
-                if (!$excluded) {
+                if (!$this->isExcluded($filePath, $excludePaths)) {
                     $files[] = $filePath;
                 }
             }
         }
 
         return $files;
+    }
+
+    /**
+     * @param array<string> $excludePaths
+     */
+    private function isExcluded(string $filePath, array $excludePaths): bool
+    {
+        foreach ($excludePaths as $excludePath) {
+            $excludePath = trim($excludePath, '/\\');
+            if ('' !== $excludePath
+                && (str_contains($filePath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($filePath, $excludePath.\DIRECTORY_SEPARATOR))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -24,7 +24,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
+final readonly class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
     private const IGNORABLE_TOKENS = [
         \T_WHITESPACE => true,
@@ -42,18 +42,28 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     private PatternFunctionRegistry $registry;
 
     /**
-     * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param array<int, string> $customFunctions   Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param bool               $scansDeclarations whether extract() reads the #[RegexPattern] declarations of
+     *                                              its files; not once the pattern functions are given
      */
-    public function __construct(array $customFunctions = [], ?PatternFunctionRegistry $registry = null)
-    {
+    public function __construct(
+        array $customFunctions = [],
+        ?PatternFunctionRegistry $registry = null,
+        private bool $scansDeclarations = true
+    ) {
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
+    }
+
+    public function withPatternFunctions(array $specs): static
+    {
+        return new self([], $this->registry->withCustomFunctions(array_values($specs)), false);
     }
 
     public function extract(array $files): array
     {
-        // The functions the files mark with #[RegexPattern] join the
-        // registry for this run.
-        $specs = PatternAttributeScanner::specs($files);
+        // Used on its own, the functions the files mark with #[RegexPattern]
+        // join the registry for this run.
+        $specs = $this->scansDeclarations ? PatternAttributeScanner::specs($files) : [];
         $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
 
         return $strategy->extractFiles($files);
