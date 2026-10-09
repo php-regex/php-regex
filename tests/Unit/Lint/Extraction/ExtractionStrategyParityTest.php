@@ -331,7 +331,12 @@ final class ExtractionStrategyParityTest extends TestCase
 
         $this->assertSame([], $this->patterns(new TokenBasedExtractionStrategy(), $file));
         if (class_exists(ParserFactory::class)) {
-            $this->assertSame([], $this->patterns(new PhpParserExtractionStrategy(), $file));
+            // The parser refuses the file too, falls back to the tokenizer,
+            // and marks the file: one fallback, no pattern.
+            $occurrences = (new PhpParserExtractionStrategy())->extract([$file]);
+            $this->assertCount(1, $occurrences);
+            $this->assertNotNull($occurrences[0]->parserFallback);
+            $this->assertSame('', $occurrences[0]->pattern);
         }
     }
 
