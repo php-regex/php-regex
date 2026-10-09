@@ -90,7 +90,7 @@ final class InteropPresets
                 'nette\utils\strings::match' => new PatternFunction('Strings::match', 1),
                 'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1),
                 'nette\utils\strings::split' => new PatternFunction('Strings::split', 1),
-                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true),
+                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2),
             ],
             self::SPATIE_REGEX => [
                 'spatie\regex\regex::match' => new PatternFunction('Regex::match'),

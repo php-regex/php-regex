@@ -27,21 +27,21 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
 
     public function test_decode_double_quoted_string_handles_control_escapes(): void
     {
-        $decoded = $this->invoke('decodeDoubleQuotedString', '\\r\\t\\v\\e\\f\\\\\\"');
+        $decoded = $this->invoke('decodeStringToken', '"\\r\\t\\v\\e\\f\\\\\\""');
 
         $this->assertSame("\r\t\v\e\f\\\"", $decoded);
     }
 
     public function test_decode_double_quoted_string_handles_octal_escape(): void
     {
-        $decoded = $this->invoke('decodeDoubleQuotedString', '\\101');
+        $decoded = $this->invoke('decodeStringToken', '"\\101"');
 
         $this->assertSame('A', $decoded);
     }
 
     public function test_decode_double_quoted_string_handles_multiple_octal_cases(): void
     {
-        $decoded = $this->invoke('decodeDoubleQuotedString', '\\2\\3\\4\\5\\6\\7');
+        $decoded = $this->invoke('decodeStringToken', '"\\2\\3\\4\\5\\6\\7"');
 
         $this->assertIsString($decoded);
         $this->assertSame('020304050607', bin2hex((string) $decoded));
@@ -49,55 +49,43 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
 
     public function test_decode_double_quoted_string_handles_unknown_escape(): void
     {
-        $decoded = $this->invoke('decodeDoubleQuotedString', '\\q');
+        $decoded = $this->invoke('decodeStringToken', '"\\q"');
 
         $this->assertSame('\\q', $decoded);
     }
 
     public function test_decode_double_quoted_string_handles_trailing_backslash(): void
     {
-        $decoded = $this->invoke('decodeDoubleQuotedString', '\\');
+        $decoded = $this->invoke('decodeStringToken', '"\\"');
 
         $this->assertSame('\\', $decoded);
     }
 
     public function test_parse_hex_escape_edge_cases(): void
     {
-        $result = $this->invoke('parseHexEscape', '\\x', 0, 2);
-        $this->assertSame(['value' => '\\x', 'newIndex' => 2], $result);
-
-        $result = $this->invoke('parseHexEscape', '\\x{', 0, 3);
-        $this->assertSame(['value' => '\\x{', 'newIndex' => 3], $result);
-
-        $result = $this->invoke('parseHexEscape', '\\xg', 0, 3);
-        $this->assertSame(['value' => '\\x', 'newIndex' => 2], $result);
+        $this->assertSame('\\x', $this->invoke('decodeStringToken', '"\\x"'));
+        $this->assertSame('\\x{', $this->invoke('decodeStringToken', '"\\x{"'));
+        $this->assertSame('\\xg', $this->invoke('decodeStringToken', '"\\xg"'));
     }
 
     public function test_parse_unicode_escape_edge_cases(): void
     {
-        $result = $this->invoke('parseUnicodeEscape', '\\u', 0, 2);
-        $this->assertSame(['value' => '\\u', 'newIndex' => 2], $result);
-
-        $result = $this->invoke('parseUnicodeEscape', '\\u{', 0, 3);
-        $this->assertSame(['value' => '\\u{', 'newIndex' => 3], $result);
-
-        $result = $this->invoke('parseUnicodeEscape', '\\u{ZZ}', 0, 6);
-        $this->assertSame(['value' => '\\u{ZZ}', 'newIndex' => 6], $result);
+        $this->assertSame('\\u', $this->invoke('decodeStringToken', '"\\u"'));
+        $this->assertSame('\\u{', $this->invoke('decodeStringToken', '"\\u{"'));
+        $this->assertSame('\\u{ZZ}', $this->invoke('decodeStringToken', '"\\u{ZZ}"'));
     }
 
     public function test_parse_octal_escape_no_digits(): void
     {
-        $result = $this->invoke('parseOctalEscape', '\\9', 0, 2);
-
-        $this->assertSame(['value' => '\\', 'newIndex' => 1], $result);
+        $this->assertSame('\\9', $this->invoke('decodeStringToken', '"\\9"'));
     }
 
     public function test_codepoint_to_utf8_branches(): void
     {
-        $this->assertSame("\x7f", $this->invoke('codepointToUtf8', 0x7F));
-        $this->assertSame("\xdf\xbf", $this->invoke('codepointToUtf8', 0x7FF));
-        $this->assertSame("\xef\xbf\xbf", $this->invoke('codepointToUtf8', 0xFFFF));
-        $this->assertSame("\xf0\x90\x80\x80", $this->invoke('codepointToUtf8', 0x10000));
+        $this->assertSame("\x7f", $this->invoke('decodeStringToken', '"\\u{7F}"'));
+        $this->assertSame("\xdf\xbf", $this->invoke('decodeStringToken', '"\\u{7FF}"'));
+        $this->assertSame("\xef\xbf\xbf", $this->invoke('decodeStringToken', '"\\u{FFFF}"'));
+        $this->assertSame("\xf0\x90\x80\x80", $this->invoke('decodeStringToken', '"\\u{10000}"'));
     }
 
     private function invoke(string $method, mixed ...$args): mixed

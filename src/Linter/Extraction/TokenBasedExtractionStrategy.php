@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\PatternOccurrence;
-use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -39,16 +38,6 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      * still read as one.
      */
     private const IDENTIFIER_PATTERN = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
-
-    /**
-     * Parameter names accepted when a call passes the pattern by name, the
-     * same as PhpParserExtractionStrategy's.
-     */
-    private const PATTERN_PARAMETER_NAMES = [
-        'pattern',
-        'patterns',
-        'regex',
-    ];
 
     private PatternFunctionRegistry $registry;
 
@@ -122,6 +111,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         $tokens = token_get_all($content);
         $tokenOffsets = $this->buildTokenOffsets($tokens);
+        $closers = $this->matchBrackets($tokens);
         $occurrences = [];
         $totalTokens = \count($tokens);
         $context = new NameResolutionContext();
@@ -151,18 +141,16 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
             [$patternFunction, $openParenIndex] = $match;
 
-            $occurrences = [
-                ...$occurrences,
-                ...$this->extractFromCall(
-                    $tokens,
-                    $openParenIndex + 1,
-                    $totalTokens,
-                    $patternFunction,
-                    $file,
-                    $tokenOffsets,
-                    $content,
-                ),
-            ];
+            $this->appendOccurrences($occurrences, $this->extractFromCall(
+                $tokens,
+                $openParenIndex + 1,
+                $totalTokens,
+                $patternFunction,
+                $file,
+                $tokenOffsets,
+                $content,
+                $closers,
+            ));
         }
 
         return $occurrences;
@@ -440,6 +428,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
     /**
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $tokenOffsets
+     * @param array<int, int>|null                       $closers      the closing index of each bracket, from matchBrackets()
      *
      * @return array<PatternOccurrence>
      */
@@ -451,114 +440,223 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         string $file,
         array $tokenOffsets,
         string $content,
+        ?array $closers = null,
     ): array {
-        $argument = $this->findPatternArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex);
+        $closers ??= $this->matchBrackets($tokens);
+        $argument = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex, PatternFunction::PATTERN_PARAMETER_NAMES, $closers);
         if (null === $argument) {
             return [];
+        }
+
+        // Nette's Strings::replace() reads the values of the array when the
+        // replacement is a callable.
+        if (null !== $patternFunction->replacementIndex) {
+            $replacement = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES, $closers);
+            if (null !== $replacement && $this->isCallableExpression($replacement[0], $replacement[1])) {
+                $patternFunction = $patternFunction->readingValues();
+            }
         }
 
         return $this->extractFromArgumentTokens($argument[0], $argument[1], $tokenOffsets, $content, $file, $patternFunction);
     }
 
     /**
-     * Locate the pattern argument of a call, passed positionally or by name.
-     *
-     * A positional argument at the pattern's position wins; otherwise the
-     * first argument named like a pattern parameter. A spread before that
-     * position makes it unknowable.
+     * The index of the token closing each bracket: ( [ { and the "{$", "${"
+     * and "#[" a plain "}" or "]" closes. An opener left open has none.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      *
-     * @return array{0: array<int, array{int, string, int}|string>, 1: array<int, int>}|null the argument's value tokens and their indexes
+     * @return array<int, int>
      */
-    private function findPatternArgument(array $tokens, int $startIndex, int $totalTokens, int $targetArgIndex): ?array
+    private function matchBrackets(array $tokens): array
+    {
+        $closers = [];
+        $open = [];
+        foreach ($tokens as $index => $token) {
+            if ($this->opensNesting($token)) {
+                $open[] = $index;
+            } elseif ((')' === $token || ']' === $token || '}' === $token) && [] !== $open) {
+                $closers[array_pop($open)] = $index;
+            }
+        }
+
+        return $closers;
+    }
+
+    /**
+     * Locate an argument of a call, passed positionally or by name.
+     *
+     * A positional argument at the position wins; otherwise the first
+     * argument passed under one of the names. A spread before that position
+     * makes it unknowable. Only the argument found is copied, and a bracket
+     * is stepped over whole, so that a call nested in another is not read
+     * again for each call around it.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param list<string>                               $names   lowercase parameter names
+     * @param array<int, int>                            $closers the closing index of each bracket
+     *
+     * @return array{0: list<array{int, string, int}|string>, 1: list<int>}|null the argument's value tokens and their indexes
+     */
+    private function findArgument(array $tokens, int $startIndex, int $totalTokens, int $targetArgIndex, array $names, array $closers): ?array
     {
         $position = 0;
         $named = null;
-        $depth = 0;
-        $argTokens = [];
-        $argTokenIndexes = [];
+        $argumentStart = $startIndex;
+        $i = $startIndex;
 
-        for ($i = $startIndex; $i <= $totalTokens; $i++) {
+        while (true) {
             // Running out of tokens closes the call: the source is cut short.
-            $token = $tokens[$i] ?? ')';
-            $closesCall = $i === $totalTokens || (0 === $depth && ')' === $token);
+            $token = $i < $totalTokens ? $tokens[$i] : ')';
+            $closesCall = ')' === $token;
 
-            if ($closesCall || (0 === $depth && ',' === $token)) {
+            if ($closesCall || ',' === $token) {
                 // Null for the empty slot a trailing comma leaves.
-                $argument = $this->readArgument($argTokens, $argTokenIndexes);
+                $argument = $this->readArgument($tokens, $argumentStart, $i);
                 if (null !== $argument && null === $argument['name']) {
                     if ($argument['spread']) {
                         return null;
                     }
 
                     if ($position === $targetArgIndex) {
-                        return [$argument['tokens'], $argument['indexes']];
+                        return $this->sliceTokens($tokens, $argument['valueStart'], $i);
                     }
 
                     $position++;
-                } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), self::PATTERN_PARAMETER_NAMES, true)) {
-                    $named = [$argument['tokens'], $argument['indexes']];
+                } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), $names, true)) {
+                    $named = $this->sliceTokens($tokens, $argument['valueStart'], $i);
                 }
 
                 if ($closesCall) {
-                    break;
+                    return $named;
                 }
 
-                $argTokens = [];
-                $argTokenIndexes = [];
-
-                continue;
+                $argumentStart = $i + 1;
+            } elseif ($this->opensNesting($token)) {
+                // Step over the bracket; one left open runs to the end.
+                $i = $closers[$i] ?? $totalTokens;
             }
 
-            if ($this->opensNesting($token)) {
-                $depth++;
-            } elseif (')' === $token || ']' === $token || '}' === $token) {
-                $depth = max(0, $depth - 1);
-            }
-
-            $argTokens[] = $token;
-            $argTokenIndexes[] = $i;
+            $i++;
         }
-
-        return $named;
     }
 
     /**
-     * Split one argument into its name, if passed by name, and its value.
+     * What an argument is, from its first tokens: a spread, an argument
+     * passed by name, or a positional one.
      *
      * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
      *
-     * @return array{name: string|null, spread: bool, tokens: array<int, array{int, string, int}|string>, indexes: array<int, int>}|null null for an empty slot
+     * @return array{name: string|null, spread: bool, valueStart: int}|null null for an empty slot
      */
-    private function readArgument(array $tokens, array $tokenIndexes): ?array
+    private function readArgument(array $tokens, int $start, int $end): ?array
     {
-        $count = \count($tokens);
-        $first = $this->nextSignificantTokenIndex($tokens, 0, $count);
+        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
         if (null === $first) {
             return null;
         }
 
         $token = $tokens[$first];
         if (\is_array($token) && \T_ELLIPSIS === $token[0]) {
-            return ['name' => null, 'spread' => true, 'tokens' => $tokens, 'indexes' => $tokenIndexes];
+            return ['name' => null, 'spread' => true, 'valueStart' => $start];
         }
 
         // "pattern: '/re/'": an identifier, any reserved word included,
         // followed by a single colon.
         $name = $this->readIdentifierToken($token);
-        $colon = $this->nextSignificantTokenIndex($tokens, $first + 1, $count);
-        if (null !== $name && null !== $colon && ':' === $tokens[$colon]) {
-            return [
-                'name' => $name,
-                'spread' => false,
-                'tokens' => \array_slice($tokens, $colon + 1),
-                'indexes' => \array_slice($tokenIndexes, $colon + 1),
-            ];
+        $colon = null === $name ? null : $this->nextSignificantTokenIndex($tokens, $first + 1, $end);
+        if (null !== $colon && ':' === $tokens[$colon]) {
+            return ['name' => $name, 'spread' => false, 'valueStart' => $colon + 1];
         }
 
-        return ['name' => null, 'spread' => false, 'tokens' => $tokens, 'indexes' => $tokenIndexes];
+        return ['name' => null, 'spread' => false, 'valueStart' => $start];
+    }
+
+    /**
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{0: list<array{int, string, int}|string>, 1: list<int>}
+     */
+    private function sliceTokens(array $tokens, int $start, int $end): array
+    {
+        // A name with no value after it, "pattern:)", leaves nothing.
+        return [array_values(\array_slice($tokens, $start, $end - $start)), $end > $start ? range($start, $end - 1) : []];
+    }
+
+    /**
+     * Whether an argument is a callable whatever its value: a closure, an
+     * arrow function, a first-class callable, an array or an object.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $tokenIndexes
+     */
+    private function isCallableExpression(array $tokens, array $tokenIndexes): bool
+    {
+        [$tokens] = $this->stripOuterParentheses($tokens, $tokenIndexes);
+        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        $count = \count($significant);
+        // An empty value reads as a statement end: no callable.
+        $first = $significant[0] ?? ';';
+        $last = $significant[$count - 1] ?? ';';
+
+        // foo(...), Foo::bar(...), $this->bar(...)
+        $ellipsis = $significant[$count - 2] ?? null;
+        if (')' === $last && \is_array($ellipsis) && \T_ELLIPSIS === $ellipsis[0] && '(' === ($significant[$count - 3] ?? null)) {
+            return true;
+        }
+
+        if ('[' === $first) {
+            return ($this->matchBrackets($significant)[0] ?? null) === $count - 1;
+        }
+
+        if (!\is_array($first)) {
+            return false;
+        }
+
+        if (\T_ARRAY === $first[0]) {
+            return ($this->matchBrackets($significant)[1] ?? null) === $count - 1;
+        }
+
+        if (\T_STATIC === $first[0]) {
+            $next = $significant[1] ?? null;
+
+            return \is_array($next) && \in_array($next[0], [\T_FUNCTION, \T_FN], true);
+        }
+
+        if (\T_NEW === $first[0]) {
+            return !$this->readsMemberOfNewObject($significant);
+        }
+
+        return \in_array($first[0], [\T_FUNCTION, \T_FN, \T_ATTRIBUTE], true);
+    }
+
+    /**
+     * Whether a member is read or called on the object a new expression
+     * builds: ->, ?->, :: or [ after its argument list, outside any bracket
+     * (PHP 8.4). Before the argument list they build the class name, as in
+     * new $classes['a'].
+     *
+     * @param list<array{int, string, int}|string> $tokens
+     */
+    private function readsMemberOfNewObject(array $tokens): bool
+    {
+        $closers = $this->matchBrackets($tokens);
+        $count = \count($tokens);
+        $constructed = false;
+
+        for ($i = 1; $i < $count; $i++) {
+            $token = $tokens[$i];
+            if ($constructed && ('[' === $token || $this->isObjectOrStaticOperator($token))) {
+                return true;
+            }
+
+            if ($this->opensNesting($token)) {
+                $constructed = $constructed || '(' === $token;
+                $i = $closers[$i] ?? $count;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -633,7 +731,9 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        $useKeys = $patternFunction->keysArePatterns;
+        // Null until the first item says: a key that is a string selects the
+        // keys, no key or an int key the values.
+        $useKeys = $patternFunction->keysArePatterns ? (null === $patternFunction->replacementIndex ? true : null) : false;
         $occurrences = [];
         $totalTokens = \count($tokens);
         $stack = [$this->closingTokenFor($tokens[$startIndex])];
@@ -669,7 +769,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                 }
             }
 
-            if ('(' === $token || '[' === $token || '{' === $token) {
+            if ($this->opensNesting($token)) {
                 $stack[] = $this->closingTokenFor($token);
                 if ($collecting) {
                     $segmentTokens[] = $token;
@@ -704,6 +804,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                     $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
                 }
 
+                $useKeys ??= false;
                 $collecting = true;
                 $segmentTokens = [];
                 $segmentTokenIndexes = [];
@@ -712,6 +813,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             }
 
             if ($atTopLevel && $this->isDoubleArrowToken($token)) {
+                $useKeys ??= $this->isStringKey($segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content);
                 if ($useKeys) {
                     $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
                     $collecting = false;
@@ -731,6 +833,27 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         }
 
         return $occurrences;
+    }
+
+    /**
+     * Whether an array key is a string once PHP stores it: an int literal or
+     * a numeric string is not; a key that is no literal is taken for one.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $tokenIndexes
+     * @param array<int, int>                            $tokenOffsets
+     */
+    private function isStringKey(array $tokens, array $tokenIndexes, array $tokenOffsets, string $content): bool
+    {
+        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        $number = '-' === ($significant[0] ?? null) ? ($significant[1] ?? null) : ($significant[0] ?? null);
+        if (\is_array($number) && \T_LNUMBER === $number[0] && \count($significant) <= 2) {
+            return false;
+        }
+
+        $key = $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
+
+        return null === $key || PatternFunction::isStringKey($key['pattern']);
     }
 
     /**
@@ -791,7 +914,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
 
         // Check if this looks like a regex with flags (e.g., "/pattern/m" or "{pattern}u")
         // Need to handle escaped delimiters in the string
-        if (LibraryPcre::match('/^([\'"{}\/#~%])(.*?)([\'"{}\/#~%])([A-Za-z]*)$/', $pattern, $matches)) {
+        if (LibraryPcre::match('/^([\'"{}\/#~%])(.*?)([\'"{}\/#~%])([A-Za-z]*)\z/', $pattern, $matches)) {
             $delimiter = $matches[1];
             $regexBody = $matches[2];
             $flags = $matches[4];
@@ -856,7 +979,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                     return null;
                 }
 
-                $decoded = $this->decodeHeredoc($heredoc[0], $heredoc[1], $token[1]);
+                $decoded = PhpStringLiteral::decodeHeredoc($heredoc[0], $heredoc[1], $token[1]);
                 if (null === $decoded) {
                     return null;
                 }
@@ -975,318 +1098,18 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         return $offset - $lastNewline;
     }
 
+    /**
+     * The value of a quoted string token, as PHP reads it. The b of a binary
+     * string, b'/a/' or B"/a/", changes nothing.
+     */
     private function decodeStringToken(string $token): string
     {
-        if (\strlen($token) < 2) {
-            return '';
+        if ('b' === strtolower($token[0] ?? '')) {
+            $token = substr($token, 1);
         }
 
-        $quote = $token[0];
-        $body = substr($token, 1, -1);
-
-        if ("'" === $quote) {
-            return str_replace(['\\\\', "\\'"], ['\\', "'"], $body);
-        }
-
-        if ('"' === $quote) {
-            return $this->decodeDoubleQuotedString($body);
-        }
-
-        return $body;
-    }
-
-    /**
-     * Decode a heredoc or nowdoc body as PHP does: drop the newline before
-     * the closing marker, remove the marker's indentation from every line,
-     * then, for a heredoc, apply the double-quoted escapes but \".
-     *
-     * Null when PHP refuses the body (a line indented less than the marker,
-     * tabs and spaces mixed).
-     */
-    private function decodeHeredoc(string $start, string $body, string $end): ?string
-    {
-        $indentation = \strlen($end) - \strlen(ltrim($end, " \t"));
-        $indent = substr($end, 0, $indentation);
-        if (str_contains($indent, ' ') && str_contains($indent, "\t")) {
-            return null;
-        }
-
-        if (str_ends_with($body, "\r\n")) {
-            $body = substr($body, 0, -2);
-        } elseif (str_ends_with($body, "\n") || str_ends_with($body, "\r")) {
-            $body = substr($body, 0, -1);
-        }
-
-        if ($indentation > 0) {
-            $body = $this->removeHeredocIndentation($body, $indentation, $indent[0]);
-            if (null === $body) {
-                return null;
-            }
-        }
-
-        // The quote sits around the label of a nowdoc only: <<<'RE'.
-        if (str_contains($start, "'")) {
-            return $body;
-        }
-
-        return $this->decodeDoubleQuotedString($body, '');
-    }
-
-    /**
-     * @param string $char the indentation character, a space or a tab
-     */
-    private function removeHeredocIndentation(string $body, int $indentation, string $char): ?string
-    {
-        $result = '';
-        $length = \strlen($body);
-        $i = 0;
-
-        while ($i <= $length) {
-            // A line ends at \n, \r or \r\n; the last one at the end of the body.
-            $lineEnd = $i;
-            while ($lineEnd < $length && "\n" !== $body[$lineEnd] && "\r" !== $body[$lineEnd]) {
-                $lineEnd++;
-            }
-
-            $newline = 0;
-            if ($lineEnd < $length) {
-                $newline = "\r" === $body[$lineEnd] && "\n" === ($body[$lineEnd + 1] ?? '') ? 2 : 1;
-            }
-
-            for ($skip = 0; $skip < $indentation && $i < $lineEnd; $skip++, $i++) {
-                // A whitespace-only line may be indented less; any other may not.
-                if (' ' !== $body[$i] && "\t" !== $body[$i]) {
-                    return null;
-                }
-
-                if ($char !== $body[$i]) {
-                    return null;
-                }
-            }
-
-            $result .= substr($body, $i, $lineEnd - $i + $newline);
-            if (0 === $newline) {
-                break;
-            }
-
-            $i = $lineEnd + $newline;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $quote the delimiter its backslash escapes: '"' in a
-     *                      double-quoted string, none in a heredoc
-     */
-    private function decodeDoubleQuotedString(string $body, string $quote = '"'): string
-    {
-        $result = '';
-        $length = \strlen($body);
-        $i = 0;
-
-        while ($i < $length) {
-            $char = $body[$i];
-
-            if ('\\' !== $char) {
-                $result .= $char;
-                $i++;
-
-                continue;
-            }
-
-            if ($i + 1 >= $length) {
-                $result .= $char;
-                $i++;
-
-                continue;
-            }
-
-            $nextChar = $body[$i + 1];
-
-            switch ($nextChar) {
-                case 'n':
-                    $result .= "\n";
-                    $i += 2;
-
-                    break;
-                case 'r':
-                    $result .= "\r";
-                    $i += 2;
-
-                    break;
-                case 't':
-                    $result .= "\t";
-                    $i += 2;
-
-                    break;
-                case 'v':
-                    $result .= "\v";
-                    $i += 2;
-
-                    break;
-                case 'e':
-                    $result .= "\e";
-                    $i += 2;
-
-                    break;
-                case 'f':
-                    $result .= "\f";
-                    $i += 2;
-
-                    break;
-                case '\\':
-                    $result .= '\\';
-                    $i += 2;
-
-                    break;
-                case '$':
-                    $result .= '$';
-                    $i += 2;
-
-                    break;
-                case $quote:
-                    $result .= $quote;
-                    $i += 2;
-
-                    break;
-                case 'x':
-                    $hexResult = $this->parseHexEscape($body, $i, $length);
-                    $result .= $hexResult['value'];
-                    $i = $hexResult['newIndex'];
-
-                    break;
-                case 'u':
-                    $unicodeResult = $this->parseUnicodeEscape($body, $i, $length);
-                    $result .= $unicodeResult['value'];
-                    $i = $unicodeResult['newIndex'];
-
-                    break;
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                    $octalResult = $this->parseOctalEscape($body, $i, $length);
-                    $result .= $octalResult['value'];
-                    $i = $octalResult['newIndex'];
-
-                    break;
-                default:
-                    $result .= '\\'.$nextChar;
-                    $i += 2;
-
-                    break;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return array{value: string, newIndex: int}
-     */
-    private function parseHexEscape(string $body, int $i, int $length): array
-    {
-        $startPos = $i + 2;
-
-        if ($startPos >= $length) {
-            return ['value' => '\\x', 'newIndex' => $startPos];
-        }
-
-        if ('{' === $body[$startPos]) {
-            $closeBrace = strpos($body, '}', $startPos);
-            if (false !== $closeBrace) {
-                $sequence = substr($body, $i, $closeBrace - $i + 1);
-
-                return ['value' => $sequence, 'newIndex' => $closeBrace + 1];
-            }
-
-            return ['value' => '\\x{', 'newIndex' => $startPos + 1];
-        }
-
-        $hexDigits = '';
-        $pos = $startPos;
-        while ($pos < $length && $pos < $startPos + 2 && Ascii::isHexDigit($body[$pos])) {
-            $hexDigits .= $body[$pos];
-            $pos++;
-        }
-
-        if ('' === $hexDigits) {
-            return ['value' => '\\x', 'newIndex' => $startPos];
-        }
-
-        $charCode = (int) hexdec($hexDigits);
-
-        return ['value' => \chr($charCode & 0xFF), 'newIndex' => $pos];
-    }
-
-    /**
-     * @return array{value: string, newIndex: int}
-     */
-    private function parseUnicodeEscape(string $body, int $i, int $length): array
-    {
-        $startPos = $i + 2;
-
-        if ($startPos >= $length || '{' !== $body[$startPos]) {
-            return ['value' => '\\u', 'newIndex' => $startPos];
-        }
-
-        $closeBrace = strpos($body, '}', $startPos);
-        if (false === $closeBrace) {
-            return ['value' => '\\u{', 'newIndex' => $startPos + 1];
-        }
-
-        $hexPart = substr($body, $startPos + 1, $closeBrace - $startPos - 1);
-
-        if ('' === $hexPart || !Ascii::isHexDigit($hexPart)) {
-            return ['value' => substr($body, $i, $closeBrace - $i + 1), 'newIndex' => $closeBrace + 1];
-        }
-
-        $codepoint = (int) hexdec($hexPart);
-
-        return ['value' => $this->codepointToUtf8($codepoint), 'newIndex' => $closeBrace + 1];
-    }
-
-    /**
-     * @return array{value: string, newIndex: int}
-     */
-    private function parseOctalEscape(string $body, int $i, int $length): array
-    {
-        $startPos = $i + 1;
-        $octalDigits = '';
-        $pos = $startPos;
-
-        while ($pos < $length && $pos < $startPos + 3 && $body[$pos] >= '0' && $body[$pos] <= '7') {
-            $octalDigits .= $body[$pos];
-            $pos++;
-        }
-
-        if ('' === $octalDigits) {
-            return ['value' => '\\', 'newIndex' => $startPos];
-        }
-
-        $charCode = (int) octdec($octalDigits);
-
-        return ['value' => \chr($charCode & 0xFF), 'newIndex' => $pos];
-    }
-
-    private function codepointToUtf8(int $codepoint): string
-    {
-        if ($codepoint < 0x80) {
-            return \chr($codepoint & 0x7F);
-        }
-        if ($codepoint < 0x800) {
-            return \chr((0xC0 | ($codepoint >> 6)) & 0xFF).\chr(0x80 | ($codepoint & 0x3F));
-        }
-        if ($codepoint < 0x10000) {
-            return \chr((0xE0 | ($codepoint >> 12)) & 0xFF).\chr(0x80 | (($codepoint >> 6) & 0x3F)).\chr(0x80 | ($codepoint & 0x3F));
-        }
-
-        return \chr((0xF0 | ($codepoint >> 18)) & 0xFF).\chr(0x80 | (($codepoint >> 12) & 0x3F)).\chr(0x80 | (($codepoint >> 6) & 0x3F)).\chr(0x80 | ($codepoint & 0x3F));
+        // A token that is no quoted literal: what lies between its ends.
+        return PhpStringLiteral::decode($token) ?? substr($token, 1, -1);
     }
 
     /**
@@ -1441,6 +1264,11 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      */
     private function closingTokenFor(array|string $token): string
     {
+        if (\is_array($token)) {
+            // "{$x}" and "${x}" in a string close on "}", "#[" on "]".
+            return \T_ATTRIBUTE === $token[0] ? ']' : '}';
+        }
+
         return match ($token) {
             '(' => ')',
             '[' => ']',

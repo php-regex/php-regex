@@ -18,13 +18,18 @@ use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
+use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Expr\UnaryMinus;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -49,15 +54,6 @@ use PHPRegex\Linter\PatternOccurrence;
  */
 final readonly class PhpParserExtractionStrategy implements ExtractorInterface
 {
-    /**
-     * Parameter names accepted when a call passes the pattern by name.
-     */
-    private const PATTERN_PARAMETER_NAMES = [
-        'pattern',
-        'patterns',
-        'regex',
-    ];
-
     private ?Parser $parser;
 
     private PatternFunctionRegistry $registry;
@@ -281,15 +277,39 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             return [];
         }
 
+        // Nette's Strings::replace() reads the values of the array when the
+        // replacement is a callable.
+        if (null !== $patternFunction->replacementIndex) {
+            $replacement = $this->findPatternArg($args, $patternFunction->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES);
+            if (null !== $replacement && $this->isCallableExpr($replacement->value)) {
+                $patternFunction = $patternFunction->readingValues();
+            }
+        }
+
         return $this->extractPatternFromArg($arg, $patternFunction, $file, $content);
+    }
+
+    /**
+     * Whether an argument is a callable whatever its value: a closure, an
+     * arrow function, a first-class callable, an array or an object.
+     */
+    private function isCallableExpr(Expr $expr): bool
+    {
+        if ($expr instanceof Closure || $expr instanceof ArrowFunction || $expr instanceof Array_ || $expr instanceof New_) {
+            return true;
+        }
+
+        // foo(...), Foo::bar(...), $this->bar(...); New_ is a CallLike too.
+        return $expr instanceof CallLike && $expr->isFirstClassCallable();
     }
 
     /**
      * Locate the pattern argument, whether it was passed positionally or by name.
      *
-     * @param array<Arg> $args
+     * @param array<Arg>   $args
+     * @param list<string> $names lowercase parameter names
      */
-    private function findPatternArg(array $args, int $argumentIndex): ?Arg
+    private function findPatternArg(array $args, int $argumentIndex, array $names = PatternFunction::PATTERN_PARAMETER_NAMES): ?Arg
     {
         $position = 0;
 
@@ -315,7 +335,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
                 continue;
             }
 
-            if (\in_array(strtolower($arg->name->toString()), self::PATTERN_PARAMETER_NAMES, true)) {
+            if (\in_array(strtolower($arg->name->toString()), $names, true)) {
                 return $arg;
             }
         }
@@ -351,13 +371,20 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
     private function extractPatternsFromArray(Array_ $array, PatternFunction $patternFunction, string $file, string $content): array
     {
         $occurrences = [];
+        $useKeys = $patternFunction->keysArePatterns;
+        if ($useKeys && null !== $patternFunction->replacementIndex) {
+            // A key that is a string selects the keys, no key or an int key
+            // the values.
+            $first = $array->items[0] ?? null;
+            $useKeys = null !== $first && null !== $first->key && $this->isStringKey($first->key);
+        }
 
         foreach ($array->items as $item) {
             if (null === $item) {
                 continue;
             }
 
-            $expr = $patternFunction->keysArePatterns ? $item->key : $item->value;
+            $expr = $useKeys ? $item->key : $item->value;
             if (null === $expr) {
                 continue;
             }
@@ -369,6 +396,25 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
         }
 
         return $occurrences;
+    }
+
+    /**
+     * Whether an array key is a string once PHP stores it: an int literal or
+     * a numeric string is not; a key that is no literal is taken for one.
+     */
+    private function isStringKey(Expr $key): bool
+    {
+        if ($key instanceof UnaryMinus) {
+            $key = $key->expr;
+        }
+
+        if ($key instanceof Int_) {
+            return false;
+        }
+
+        $value = $this->extractStringValue($key);
+
+        return null === $value || PatternFunction::isStringKey($value);
     }
 
     private function extractPatternFromExpr(Expr $expr, PatternFunction $patternFunction, string $file, string $content): ?PatternOccurrence

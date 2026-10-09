@@ -21,6 +21,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -49,7 +50,7 @@ final class ExtractionStrategyParityTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, array<int, string>, array<int, string>}>
+     * @return iterable<string, array{string, array<int, string>, array<int, string>}|array{fixture: string, presets: array<int, string>, expected: array<int, string>}>
      */
     public static function provideFixtures(): iterable
     {
@@ -92,9 +93,9 @@ final class ExtractionStrategyParityTest extends TestCase
         // The expected values are the same literals as the fixtures, so PHP
         // decodes them, not the test.
         yield 'nowdoc' => [
-            'parity_nowdoc.php',
-            [],
-            [<<<'RE'
+            'fixture' => 'parity_nowdoc.php',
+            'presets' => [],
+            'expected' => [<<<'RE'
                 /nowdoc
                   (\d+) \. \\x \' $x " {$y} \u{41}
 
@@ -103,9 +104,9 @@ final class ExtractionStrategyParityTest extends TestCase
         ];
 
         yield 'heredoc_plain' => [
-            'parity_heredoc_plain.php',
-            [],
-            [<<<RE
+            'fixture' => 'parity_heredoc_plain.php',
+            'presets' => [],
+            'expected' => [<<<RE
                 /heredoc
                   (\d+) \. \\x \" \$ \x41 \101 \u{42} \t {x} $) a$
 
@@ -114,33 +115,82 @@ final class ExtractionStrategyParityTest extends TestCase
         ];
 
         yield 'heredoc_interpolated' => [
-            'parity_heredoc_interpolated.php',
-            [],
-            [],
+            'fixture' => 'parity_heredoc_interpolated.php',
+            'presets' => [],
+            'expected' => [],
         ];
 
         yield 'named_pattern_first' => [
-            'parity_named_pattern_first.php',
-            [],
-            ['/named-first/i'],
+            'fixture' => 'parity_named_pattern_first.php',
+            'presets' => [],
+            'expected' => ['/named-first/i'],
         ];
 
         yield 'named_pattern_second' => [
-            'parity_named_pattern_second.php',
-            [],
-            ['/named-second/', '/named-wrapper/', '/named-trailing-comma/'],
+            'fixture' => 'parity_named_pattern_second.php',
+            'presets' => [],
+            'expected' => ['/named-second/', '/named-wrapper/', '/named-trailing-comma/'],
         ];
 
         yield 'nette_replace_string_form' => [
-            'parity_nette_replace_string_form.php',
-            ['nette-utils'],
-            ['/nette-string/'],
+            'fixture' => 'parity_nette_replace_string_form.php',
+            'presets' => ['nette-utils'],
+            'expected' => ['/nette-string/'],
         ];
 
         yield 'spread_before_pattern' => [
-            'parity_spread_before_pattern.php',
-            ['nette-utils'],
-            ['/before-spread/'],
+            'fixture' => 'parity_spread_before_pattern.php',
+            'presets' => ['nette-utils'],
+            'expected' => ['/before-spread/'],
+        ];
+
+        yield 'binary_prefix' => [
+            'fixture' => 'parity_binary_prefix.php',
+            'presets' => [],
+            'expected' => ['/binary-single/', '/binary-upper/', "/binary-\d\x41/", <<<'RE'
+                /binary-nowdoc\d/
+                RE, '/binary-in-array/'],
+        ];
+
+        // Nette's Strings::replace() reads the keys of an array whose first
+        // key is a string when the replacement is no callable, and the
+        // values otherwise (Strings.php, replace()). A replacement that is
+        // not a literal is taken for a string.
+        yield 'nette_replace_keys' => [
+            'fixture' => 'parity_nette_replace_keys.php',
+            'presets' => ['nette-utils'],
+            'expected' => ['/keys-no-replacement/', '/keys-string-a/', '/keys-string-b/', '01', '/keys-unknown-replacement/', '/keys-property-of-new/'],
+        ];
+
+        yield 'nette_replace_list' => [
+            'fixture' => 'parity_nette_replace_list.php',
+            'presets' => ['nette-utils'],
+            'expected' => ['/list-a/', '/list-b/', '/list-int-key/', '/list-numeric-string-key/', '/list-array-syntax/', '/list-negative-key/'],
+        ];
+
+        yield 'nette_replace_callback' => [
+            'fixture' => 'parity_nette_replace_callback.php',
+            'presets' => ['nette-utils'],
+            'expected' => ['/callback-closure/', '/callback-arrow/', '/callback-static/', '/callback-first-class/', '/callback-array/', '/callback-invokable/', '/callback-parenthesized/', '/callback-array-syntax/', '/callback-named/'],
+        ];
+
+        yield 'escapes_and_newlines' => [
+            'fixture' => 'parity_escapes_and_newlines.php',
+            'presets' => [],
+            'expected' => ["/upper-\X41\X4/", <<<RE
+                /heredoc-upper-\X41/
+                RE, "/trailing-newline/\n", <<<'RE'
+                /heredoc-blank-line/
+
+                RE, "/flags-then-newline/i\n"],
+        ];
+
+        // Each opener a closure, an attribute or an interpolation brings is
+        // closed before the next key is read.
+        yield 'array_openers' => [
+            'fixture' => 'parity_array_openers.php',
+            'presets' => [],
+            'expected' => ['/attr-a/', '/attr-b/', '/real/'],
         ];
     }
 
@@ -285,6 +335,76 @@ final class ExtractionStrategyParityTest extends TestCase
         }
     }
 
+    /**
+     * @return iterable<string, array{fixture: string, presets: array<int, string>}>
+     */
+    public static function providePositionFixtures(): iterable
+    {
+        yield 'braces, interpolation, parentheses and every literal form' => [
+            'fixture' => 'parity_positions.php',
+            'presets' => ['nette-utils'],
+        ];
+
+        foreach (self::provideFixtures() as $name => $row) {
+            yield $name => ['fixture' => $row['fixture'] ?? $row[0], 'presets' => $row['presets'] ?? $row[1]];
+        }
+    }
+
+    /**
+     * @param array<int, string> $presets
+     */
+    #[DataProvider('providePositionFixtures')]
+    #[RequiresMethod(ParserFactory::class, 'createForHostVersion')]
+    public function test_both_strategies_place_occurrences_the_same_way(string $fixture, array $presets): void
+    {
+        $file = __DIR__.'/../../../Fixtures/Extractor/'.$fixture;
+        $registry = PatternFunctionRegistry::create(['composer-pcre', ...$presets]);
+
+        $fromAst = $this->positions(new PhpParserExtractionStrategy([], $registry), $file);
+
+        $this->assertSame($fromAst, $this->positions(new TokenBasedExtractionStrategy([], $registry), $file));
+    }
+
+    /**
+     * PHP 8.4 reads a member of a new object without parentheses: the
+     * replacement is then that member, no callable.
+     */
+    public function test_a_member_of_a_new_object_is_no_callable_replacement(): void
+    {
+        $file = $this->write(<<<'PHP'
+            <?php
+            use Nette\Utils\Strings;
+            Strings::replace($s, ['/property/' => 'a'], new Suffix()->value);
+            Strings::replace($s, ['/offset/' => 'a'], new Suffix()['value']);
+            Strings::replace($s, ['/constant/' => 'a'], new Suffix()::VALUE);
+            PHP);
+        $registry = PatternFunctionRegistry::create(['nette-utils']);
+
+        $this->assertSame(['/property/', '/offset/', '/constant/'], $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
+        if (\PHP_VERSION_ID >= 80400 && class_exists(ParserFactory::class)) {
+            $this->assertSame(['/property/', '/offset/', '/constant/'], $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
+        }
+    }
+
+    /**
+     * A wrapper call nested in the subject of another is read once per call,
+     * not once per enclosing call.
+     */
+    public function test_deeply_nested_calls_are_read_in_linear_time(): void
+    {
+        $depth = 1000;
+        $file = $this->write("<?php\nuse Nette\\Utils\\Strings;\n"
+            .str_repeat('Strings::match(subject: ', $depth).'$s'.str_repeat(", pattern: '/n/')", $depth).";\n");
+        $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
+
+        $start = hrtime(true);
+        $patterns = $this->patterns($strategy, $file);
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertCount($depth, $patterns);
+        $this->assertLessThan(3.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
+    }
+
     public function test_both_strategies_label_occurrences_the_same_way(): void
     {
         if (!class_exists(ParserFactory::class)) {
@@ -326,6 +446,17 @@ final class ExtractionStrategyParityTest extends TestCase
     {
         return array_values(array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->pattern,
+            $strategy->extract([$file]),
+        ));
+    }
+
+    /**
+     * @return list<array{string, int, int|null, int|null}>
+     */
+    private function positions(ExtractorInterface $strategy, string $file): array
+    {
+        return array_values(array_map(
+            static fn (PatternOccurrence $occurrence): array => [$occurrence->pattern, $occurrence->line, $occurrence->column, $occurrence->fileOffset],
             $strategy->extract([$file]),
         ));
     }

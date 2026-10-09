@@ -89,3 +89,13 @@ CHANGELOG
    interpolation, a pattern passed by name, and the string form of a call
    whose array form holds patterns in its keys (`Strings::replace($s, '/a/',
    'b')`), as the AST extractor does.
+ * Without `nikic/php-parser`, the column and offset of a pattern are right
+   after an argument holding braces (a closure body, `"{$x}"`), and a binary
+   string, `b'/a/'`, is read as PHP reads it.
+ * `Strings::replace()` of nette/utils is read as Nette reads it: the keys of
+   an array of patterns only when its first key is a string and the
+   replacement is no callable, the values otherwise.
+ * Without `nikic/php-parser`, `\X41` is read as `A`, a newline after the
+   closing delimiter is kept, an attribute or an interpolation inside an
+   array of patterns no longer hides or invents a key, and nested wrapper
+   calls are read in linear time.
