@@ -148,6 +148,12 @@ bin/console regex:analyze --redos-threshold=medium
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
 
+`regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
+`#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, and
+in `%kernel.project_dir%/vendor`, whatever `exclude` says; a project
+declaration wins over a copy in `vendor/`. A call to one is linted as a
+`preg_*()` call (see [the CLI guide](cli.md#patterns-behind-a-wrapper)).
+
 ## ReDoS findings
 
 With `redos.enabled: true`, `regex:lint` adds the ReDoS issue,

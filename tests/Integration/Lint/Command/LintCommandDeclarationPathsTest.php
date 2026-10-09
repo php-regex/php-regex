@@ -136,6 +136,25 @@ final class LintCommandDeclarationPathsTest extends TestCase
     }
 
     /**
+     * A plain `regex lint` lints the working directory: what regex.json
+     * excludes there, var/cache/ here, is not read for declarations either.
+     */
+    #[Test]
+    public function test_a_plain_lint_of_the_working_directory_does_not_read_excluded_declarations(): void
+    {
+        $this->enterProject([
+            'regex.json' => '{"exclude": ["var", "vendor"]}',
+            'var/cache/helper.php' => self::PROJECT_HELPER,
+            'caller.php' => "<?php\n\\App\\grep('/b02(/', 'x');\n",
+        ]);
+
+        [$exitCode, $document] = $this->lintJson(['--no-redos', '--format=json', '--jobs=1']);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame([], JsonContract::asArray($document['results'] ?? null));
+    }
+
+    /**
      * A function configured in regex.json keeps its configuration, ":keys"
      * included, though a library declares it with the attribute.
      */

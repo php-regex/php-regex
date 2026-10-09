@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * Finds the functions and methods that declare a parameter with the
  * PHPRegex\Parser\Attribute\RegexPattern attribute, or with PhpStorm's
@@ -71,14 +73,18 @@ final class PatternAttributeScanner
      */
     public static function namespacedFunctions(array $files, array $names): array
     {
-        $wanted = array_fill_keys(array_map(strtolower(...), $names), true);
+        // Only identifiers name a function, and none holds a character a
+        // pattern reads apart: they go into the search as written.
+        $identifiers = array_filter($names, static fn (string $name): bool => 1 === LibraryPcre::match(self::IDENTIFIER, $name));
+        $wanted = array_fill_keys(array_map(strtolower(...), $identifiers), true);
+
         // A file is tokenized only when it declares a function of one of the
         // names, which a search tells far more cheaply.
-        $declares = '/\\bfunction\\s+&?\\s*(?:'.implode('|', array_map(static fn (string $name): string => preg_quote($name, '/'), array_keys($wanted))).')\\s*\\(/i';
+        $declares = '/\\bfunction\\s+&?\\s*(?:'.implode('|', array_keys($wanted)).')\\s*\\(/i';
         $functions = [];
         foreach ($files as $file) {
             $content = self::read($file);
-            if (null === $content || false === stripos($content, 'namespace') || 1 !== preg_match($declares, $content)) {
+            if (null === $content || false === stripos($content, 'namespace') || 1 !== LibraryPcre::match($declares, $content)) {
                 continue;
             }
 
@@ -164,7 +170,7 @@ final class PatternAttributeScanner
                     $next++;
                 }
                 // A method may be named with a reserved word: match, list.
-                if (!isset($tokens[$next]) || 1 !== preg_match(self::IDENTIFIER, $tokens[$next]->text)) {
+                if (!isset($tokens[$next]) || 1 !== LibraryPcre::match(self::IDENTIFIER, $tokens[$next]->text)) {
                     continue; // a closure
                 }
 

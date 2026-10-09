@@ -341,6 +341,26 @@ final class ExtractionStrategyParityTest extends TestCase
     }
 
     /**
+     * A partial application of a pattern function is no call: neither
+     * strategy reads its pattern, a placeholder for any argument, passed by
+     * position or by name; the file's other calls are read.
+     */
+    public function test_both_strategies_skip_a_partial_application(): void
+    {
+        $file = $this->write("<?php\npreg_match('/ok1/', \$s);\n"
+            ."\$f = preg_replace(\"/(a/\", ?, ?);\n"
+            ."\$g = preg_match(\"/(b/\", ?);\n"
+            ."\$h = preg_match(subject: ?, pattern: \"/(c/\");\n"
+            ."preg_replace('/ok2/', '', \$s);\n");
+
+        $this->assertSame(['/ok1/', '/ok2/'], $this->patterns(new TokenBasedExtractionStrategy(), $file));
+        if (class_exists(ParserFactory::class)) {
+            $occurrences = array_filter((new PhpParserExtractionStrategy())->extract([$file]), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->parserFallback);
+            $this->assertSame(['/ok1/', '/ok2/'], array_values(array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences)));
+        }
+    }
+
+    /**
      * @return iterable<string, array{fixture: string, presets: array<int, string>}>
      */
     public static function providePositionFixtures(): iterable
@@ -400,7 +420,7 @@ final class ExtractionStrategyParityTest extends TestCase
      */
     public function test_deeply_nested_calls_are_read_in_linear_time(): void
     {
-        $depth = 1000;
+        $depth = 3000;
         $file = $this->write("<?php\nuse Nette\\Utils\\Strings;\n"
             .str_repeat('Strings::match(subject: ', $depth).'$s'.str_repeat(", pattern: '/n/')", $depth).";\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
@@ -410,7 +430,9 @@ final class ExtractionStrategyParityTest extends TestCase
         $seconds = (hrtime(true) - $start) / 1e9;
 
         $this->assertCount($depth, $patterns);
-        $this->assertLessThan(3.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
+        // A quadratic reading takes 70 s and more at this depth, a linear
+        // one under a second: 20 s tells them apart under coverage too.
+        $this->assertLessThan(20.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
     }
 
     /**
@@ -419,7 +441,7 @@ final class ExtractionStrategyParityTest extends TestCase
      */
     public function test_nested_replace_calls_with_callable_replacements_are_read_in_linear_time(): void
     {
-        $depth = 1000;
+        $depth = 3000;
         $file = $this->write("<?php\nuse Nette\\Utils\\Strings;\n"
             .str_repeat("Strings::replace(\$s, ['/a/' => 'x'], function (\$m) { return ", $depth).'$m'.str_repeat('; });', $depth)."\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
@@ -429,7 +451,9 @@ final class ExtractionStrategyParityTest extends TestCase
         $seconds = (hrtime(true) - $start) / 1e9;
 
         $this->assertCount($depth, $patterns);
-        $this->assertLessThan(3.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
+        // A quadratic reading takes 70 s and more at this depth, a linear
+        // one under a second: 20 s tells them apart under coverage too.
+        $this->assertLessThan(20.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
     }
 
     public function test_both_strategies_label_occurrences_the_same_way(): void

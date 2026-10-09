@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -95,6 +100,64 @@ final class LintCommandDeclarationPathsTest extends TestCase
     {
         yield 'null' => ['setting' => null, 'expected' => 0];
         yield 'a single path' => ['setting' => 'app', 'expected' => 1];
+    }
+
+    /**
+     * With no php-regex.paths, the declarations are read in the linted
+     * paths, as `regex lint` reads them; vendor/ is read apart.
+     *
+     * @param list<string>|null $setting
+     */
+    #[Test]
+    #[DataProvider('provideNoPathSettings')]
+    public function test_lint_reads_declarations_in_the_linted_paths_when_no_path_is_configured(?array $setting): void
+    {
+        $project = $this->makeProject(['app/caller.php' => "<?php\n"]);
+        $this->app?->setBasePath($project);
+        config(['php-regex.paths' => $setting]);
+        $source = new class implements PatternSourceInterface {
+            public ?PatternSourceContext $context = null;
+
+            public function getName(): string
+            {
+                return 'recording';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                $this->context = $context;
+
+                return [];
+            }
+        };
+        $analysis = $this->app?->make('php-regex.analysis');
+        $this->assertInstanceOf(AnalysisService::class, $analysis);
+        $this->app?->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
+
+        Artisan::call('regex:lint', [
+            'paths' => [$project.'/app'],
+            '--format' => 'json',
+            '--no-routes' => true,
+            '--no-validators' => true,
+            '--jobs' => '1',
+        ]);
+
+        $this->assertSame([$project.'/app'], $source->context?->declarationPaths);
+        $this->assertSame([$project.'/vendor'], $source->context?->vendorPaths);
+    }
+
+    /**
+     * @return iterable<string, array{setting: list<string>|null}>
+     */
+    public static function provideNoPathSettings(): iterable
+    {
+        yield 'null' => ['setting' => null];
+        yield 'an empty list' => ['setting' => []];
     }
 
     /**

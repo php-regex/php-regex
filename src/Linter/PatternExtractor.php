@@ -75,8 +75,7 @@ final readonly class PatternExtractor
     public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
     {
         $excludePaths ??= ['vendor'];
-        $excludedFiles = [];
-        $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $excludedFiles);
+        $phpFiles = $this->collectPhpFiles($paths, $excludePaths);
 
         $total = \count($phpFiles);
         if (0 === $total) {
@@ -100,7 +99,7 @@ final readonly class PatternExtractor
         // declaration in a file the run does not lint.
         $extractor = $this->extractor;
         if ($extractor instanceof PatternFunctionAwareInterface) {
-            $projectFiles = $this->collectDeclarationFiles($paths, $phpFiles, $excludedFiles, $declarationPaths, $vendorPaths);
+            $projectFiles = $this->collectDeclarationFiles($paths, $phpFiles, $declarationPaths);
             $extractor = $this->withDeclarations($extractor, $projectFiles, $this->walkDeclarationPaths($vendorPaths), $parallel ? $workers : 1);
         }
 
@@ -346,95 +345,77 @@ final readonly class PatternExtractor
 
     /**
      * The project files read for declarations: the linted files, and the PHP
-     * files under each declaration path, whatever the run excludes: an
-     * excluded directory is kept out of the lint, not out of the
-     * declarations. A declaration path below a linted one is not walked
-     * again: the lint's own walk listed its files, the excluded ones apart.
-     * vendor/ is left to its own walk.
+     * files under each declaration path. Below a linted path, the
+     * declarations are read as the lint reads the files, so what the run
+     * excludes there is not read, and a declaration path at or below a
+     * linted one is not walked again. A declaration path the run does not
+     * lint is read whatever the run excludes. vendor/ is left to its own
+     * walk.
      *
      * @param array<string> $paths            the linted paths
      * @param array<string> $phpFiles         the linted files
-     * @param array<string> $excludedFiles    the PHP files the lint's walk excluded
      * @param array<string> $declarationPaths
-     * @param array<string> $vendorPaths
      *
      * @return list<string>
      */
-    private function collectDeclarationFiles(array $paths, array $phpFiles, array $excludedFiles, array $declarationPaths, array $vendorPaths): array
+    private function collectDeclarationFiles(array $paths, array $phpFiles, array $declarationPaths): array
     {
         $linted = [];
         foreach ($paths as $path) {
             $real = '' !== $path && is_dir($path) ? realpath($path) : false;
             if (false !== $real) {
-                $linted[$real] = rtrim($path, '/\\');
+                $linted[$real] = true;
             }
         }
 
-        $vendorPrefixes = [];
-        foreach ($vendorPaths as $vendorPath) {
-            $spelled = self::spelledBelow($vendorPath, $linted);
-            if (null !== $spelled) {
-                $vendorPrefixes[] = $spelled.\DIRECTORY_SEPARATOR;
-            }
-        }
-
-        $files = $phpFiles;
         $walk = [];
         foreach ($declarationPaths as $root) {
-            $spelled = self::spelledBelow($root, $linted);
-            if (null === $spelled) {
+            if (!self::isBelow($root, $linted)) {
                 $walk[] = $root;
-
-                continue;
-            }
-
-            foreach ($excludedFiles as $file) {
-                if (str_starts_with($file, $spelled.\DIRECTORY_SEPARATOR) && [] === array_filter($vendorPrefixes, static fn (string $prefix): bool => str_starts_with($file, $prefix))) {
-                    $files[] = $file;
-                }
             }
         }
 
         // Keys dedupe in one pass, without a call to the filesystem per file.
-        return array_keys(array_flip([...$files, ...$this->walkDeclarationPaths($walk)]));
+        return array_keys(array_flip([...$phpFiles, ...$this->walkDeclarationPaths($walk, $linted)]));
     }
 
     /**
-     * How the lint's walk spells a directory below (or at) a linted path,
-     * null when it is below none.
+     * Whether a directory is at or below one of the linted directories.
      *
-     * @param array<string, string> $linted the real path of each linted directory => as it was given
+     * @param array<string, true> $linted the real path of each linted directory
      */
-    private static function spelledBelow(string $directory, array $linted): ?string
+    private static function isBelow(string $directory, array $linted): bool
     {
         $real = is_dir($directory) ? realpath($directory) : false;
         if (false === $real) {
-            return null;
+            return false;
         }
 
-        foreach ($linted as $lintedReal => $spelled) {
+        foreach (array_keys($linted) as $lintedReal) {
             if ($real === $lintedReal || str_starts_with($real, $lintedReal.\DIRECTORY_SEPARATOR)) {
-                return $spelled.substr($real, \strlen($lintedReal));
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     /**
      * The PHP files under the paths, read for declarations only: a directory
      * that cannot be read is passed over, and a symlinked directory (a
      * package Composer links from a path repository) is followed, each real
-     * directory once, so a symlink loop ends.
+     * directory once, so a symlink loop ends. A linted directory is not
+     * entered: the lint's own walk listed its files.
      *
-     * @param array<string> $roots
+     * @param array<string>       $roots
+     * @param array<string, true> $linted the real path of each linted directory
      *
      * @return list<string>
      */
-    private function walkDeclarationPaths(array $roots): array
+    private function walkDeclarationPaths(array $roots, array $linted = []): array
     {
         $files = [];
-        $visited = [];
+        $visited = $linted;
         foreach ($roots as $root) {
             if (!is_dir($root)) {
                 array_push($files, ...$this->collectPhpFiles([$root], []));
@@ -472,13 +453,10 @@ final readonly class PatternExtractor
     /**
      * @param array<string> $paths
      * @param array<string> $excludePaths
-     * @param list<string>  $excludedFiles filled with the PHP files an excluded directory holds
-     *
-     * @param-out list<string> $excludedFiles
      *
      * @return array<string>
      */
-    private function collectPhpFiles(array $paths, array $excludePaths, array &$excludedFiles = []): array
+    private function collectPhpFiles(array $paths, array $excludePaths): array
     {
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
@@ -533,8 +511,6 @@ final readonly class PatternExtractor
 
                 if (!$excluded) {
                     $files[] = $filePath;
-                } else {
-                    $excludedFiles[] = $filePath;
                 }
             }
         }

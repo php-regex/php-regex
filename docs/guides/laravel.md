@@ -126,6 +126,13 @@ Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
+`regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
+`#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, the
+linted paths when `paths` names none, and in the application's `vendor/`,
+whatever `exclude` says; a project declaration wins over a copy in
+`vendor/`. A call to one is linted as a `preg_*()` call (see
+[the CLI guide](cli.md#patterns-behind-a-wrapper)).
+
 ## ReDoS findings
 
 With `'redos' => ['enabled' => true]`, `regex:lint` adds the ReDoS issue,

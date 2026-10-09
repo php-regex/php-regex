@@ -130,6 +130,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
+            $this->invoke($strategy, 'matchBrackets', $tokens),
+            new NameResolutionContext(),
         );
 
         $this->assertIsArray($occurrences);
@@ -160,6 +162,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
+            $this->invoke($strategy, 'matchBrackets', $tokens),
+            new NameResolutionContext(),
         );
 
         $this->assertSame([], $occurrences);
@@ -184,6 +188,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
+            $this->invoke($strategy, 'matchBrackets', $tokens),
+            new NameResolutionContext(),
         );
 
         $this->assertIsArray($occurrences);
@@ -211,6 +217,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
+            $this->invoke($strategy, 'matchBrackets', $tokens),
+            new NameResolutionContext(),
         );
 
         $this->assertSame([], $occurrences);
@@ -235,6 +243,8 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
+            $this->invoke($strategy, 'matchBrackets', $tokens),
+            new NameResolutionContext(),
         );
 
         $this->assertSame([], $occurrences);

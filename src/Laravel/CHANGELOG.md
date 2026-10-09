@@ -19,6 +19,6 @@ CHANGELOG
    transpiled, are gone; an unknown target is a usage error (exit 2, `stage`
    `usage` in JSON). `--format` values are case-insensitive.
  * `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
-   `#[Language('RegExp')]`) in the configured `paths` and in `vendor/`,
-   whatever paths are linted and whatever `exclude` says: a call to one is
-   read as a `preg_*()` call.
+   `#[Language('RegExp')]`) in the configured `paths` (the linted ones when
+   none are), with `exclude` where they are linted, and in `vendor/` whatever
+   `exclude` says: a call to one is read as a `preg_*()` call.

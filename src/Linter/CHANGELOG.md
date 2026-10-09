@@ -58,8 +58,9 @@ CHANGELOG
    `PHPRegex\Parser\Attribute\RegexPattern`, or PhpStorm's
    `#[Language('RegExp')]`, is a pattern function, as if
    configured: the linted paths, the configured paths and `vendor/` are read
-   once for such declarations, whatever `exclude` says, before the files are
-   shared out between the workers. A configured spec wins over a declaration
+   once for such declarations before the files are shared out between the
+   workers; below a linted path `exclude` applies, `vendor/` and a configured
+   path the run does not lint are read whatever it says. A configured spec wins over a declaration
    found that way, a project declaration over a copy in `vendor/`, and
    project declarations marking different parameters are all read.
    A call written unqualified in a namespace, `grep()` in `namespace App`, is

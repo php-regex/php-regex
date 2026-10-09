@@ -146,6 +146,12 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
 
             [$patternFunction, $openParenIndex] = $match;
 
+            // A partial application, preg_match('/re/', ?), is no call, as
+            // the parser strategy reads it; the calls in its arguments are.
+            if ($this->isPartialApplication($tokens, $openParenIndex + 1, $totalTokens, $closers)) {
+                continue;
+            }
+
             foreach ($patternFunction->eachArgument() as $function) {
                 $this->appendOccurrences($occurrences, $this->extractFromCall(
                     $tokens,
@@ -435,7 +441,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     /**
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $tokenOffsets
-     * @param array<int, int>|null                       $closers      the closing index of each bracket, from matchBrackets()
+     * @param array<int, int>                            $closers      the closing index of each bracket, from matchBrackets()
      *
      * @return array<PatternOccurrence>
      */
@@ -447,10 +453,9 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         string $file,
         array $tokenOffsets,
         string $content,
-        ?array $closers = null,
-        ?NameResolutionContext $context = null,
+        array $closers,
+        NameResolutionContext $context,
     ): array {
-        $closers ??= $this->matchBrackets($tokens);
         $argument = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex, PatternFunction::PATTERN_PARAMETER_NAMES, $closers);
         if (null === $argument) {
             return [];
@@ -460,7 +465,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         // replacement is an object or an array: a callable.
         if (null !== $patternFunction->replacementIndex) {
             $replacement = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES, $closers);
-            if (null !== $replacement && $this->isObjectOrArray($tokens, $replacement[0], $replacement[1], $closers, $context ?? new NameResolutionContext())) {
+            if (null !== $replacement && $this->isObjectOrArray($tokens, $replacement[0], $replacement[1], $closers, $context)) {
                 $patternFunction = $patternFunction->readingValues();
             }
         }
@@ -491,6 +496,38 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         }
 
         return $closers;
+    }
+
+    /**
+     * Whether a call is a partial application: one of its arguments, by
+     * position or by name, is only a placeholder, "?" or "...".
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private function isPartialApplication(array $tokens, int $startIndex, int $totalTokens, array $closers): bool
+    {
+        $argumentStart = $startIndex;
+        for ($i = $startIndex; $i < $totalTokens; $i++) {
+            $token = $tokens[$i];
+            if (')' === $token || ',' === $token) {
+                $argument = $this->readArgument($tokens, $argumentStart, $i);
+                $value = null === $argument ? null : $this->nextSignificantTokenIndex($tokens, $argument['valueStart'], $i);
+                if (null !== $value && ('?' === $tokens[$value] || (\is_array($tokens[$value]) && \T_ELLIPSIS === $tokens[$value][0]))
+                    && null === $this->nextSignificantTokenIndex($tokens, $value + 1, $i)) {
+                    return true;
+                }
+                if (')' === $token) {
+                    return false;
+                }
+
+                $argumentStart = $i + 1;
+            } elseif ($this->opensNesting($token)) {
+                $i = $closers[$i] ?? $totalTokens;
+            }
+        }
+
+        return false;
     }
 
     /**

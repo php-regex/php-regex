@@ -94,9 +94,7 @@ final class ParserFallbackTest extends TestCase
     {
         $file = $this->writeFile("<?php\npreg_match('/a+/', \$s);\n\$f = {$call};\npreg_replace('/b+/', '', \$s);\n");
 
-        $tokens = self::patternsOf((new TokenBasedExtractionStrategy())->extract([$file]));
-        $this->assertContains('/a+/', $tokens);
-        $this->assertContains('/b+/', $tokens);
+        $this->assertSame(['/a+/', '/b+/'], self::patternsOf((new TokenBasedExtractionStrategy())->extract([$file])));
 
         $occurrences = (new PhpParserExtractionStrategy())->extract([$file]);
         if (!self::parserAvailable()) {

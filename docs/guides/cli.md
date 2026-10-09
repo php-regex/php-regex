@@ -516,11 +516,14 @@ Or mark the parameter at the source, with the attribute
 carries it: the functions and static methods that declare one are read first,
 and their calls are then read as if they were configured. The declarations
 are read project-wide, whatever paths are linted: in the linted paths, in the
-configured `paths` and in `vendor/` of the working directory. With no `paths`
-configured, the linted paths and `vendor/` are read, never the whole working
-directory. `exclude` and `--exclude` keep files out of the lint, not out of
-this reading: a helper declared under an excluded directory, or in a library,
-is still known. With `paths` configured, `regex lint $(git diff --name-only)`
+configured `paths` and in `vendor/` of the working directory; with no `paths`
+configured, in the linted paths and `vendor/`. Below a linted path they are
+read as the lint reads the files: what `exclude` and `--exclude` keep out of
+the lint there is not read, so a plain `regex lint`, which lints `.` with
+`"exclude": ["var", "vendor"]`, reads nothing under `var/cache/`. A configured
+path the run does not lint, and `vendor/`, are read whatever `exclude` says:
+a helper declared there, or in a library, is still known. With `paths`
+configured, `regex lint $(git diff --name-only)`
 still knows a helper declared in a project file it does not lint. The
 `vendor/` and the `regex.json` used are those of the directory the lint runs
 from. A declaration file or directory that cannot be read, or a file too
@@ -1128,7 +1131,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 Either one is now a usage error (exit code 2), as is an unknown `--format`.
 `analyze` and `debug` refuse `--redos-no-jit` too, for the same reason.
 
-A file the PHP parser cannot read (a syntax error, for one) is read again
+When `nikic/php-parser` is installed, and the lint reads files with it, a
+file the PHP parser cannot read (a syntax error, for one) is read again
 with PHP's tokenizer, so its patterns are still linted. The run counts such
 files in `stats.parser_fallbacks` of the JSON report, never as an error, and
 `--verbose` names each one with the parser's message:

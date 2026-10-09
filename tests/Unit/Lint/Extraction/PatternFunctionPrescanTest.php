@@ -279,7 +279,8 @@ final class PatternFunctionPrescanTest extends TestCase
         $occurrences = (new PatternExtractor($strategy()))->extract(
             [$project],
             ['vendor'],
-            declarationPaths: [$project, $project.'/vendor'],
+            declarationPaths: [$project],
+            vendorPaths: [$project.'/vendor'],
         );
 
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
@@ -359,8 +360,8 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
-     * What the run excludes stays out of the lint, not out of the
-     * declarations: a helper declared under an excluded directory is known.
+     * A configured path the run does not lint is read whatever the run
+     * excludes: a helper declared under an excluded directory is known.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -371,7 +372,7 @@ final class PatternFunctionPrescanTest extends TestCase
         $project = $this->makeProject(['lib/caller.php' => self::CALLER, 'lib/Fixtures/helper.php' => self::HELPER]);
 
         $occurrences = (new PatternExtractor($strategy()))->extract(
-            [$project.'/lib'],
+            [$project.'/lib/caller.php'],
             ['Fixtures'],
             declarationPaths: [$project.'/lib'],
         );
@@ -491,20 +492,33 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
-     * Below a linted path, what the run excludes is still read for
-     * declarations, though the declaration path is not walked twice.
+     * Below a linted path, the declarations are read as the lint reads the
+     * files: what the run excludes there is not read, whether the
+     * declaration path is the linted one, below it or above it.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
     #[Test]
-    #[DataProvider('provideStrategies')]
-    public function test_an_excluded_directory_is_read_below_a_linted_path(\Closure $strategy): void
+    #[DataProvider('provideExcludedBelowLinted')]
+    public function test_an_excluded_directory_below_a_linted_path_is_not_read(\Closure $strategy, string $linted, string $declared): void
     {
         $project = $this->makeProject(['lib/caller.php' => self::CALLER, 'lib/Fixtures/helper.php' => self::HELPER]);
 
-        $occurrences = (new PatternExtractor($strategy()))->extract([$project], ['Fixtures'], declarationPaths: [$project.'/lib']);
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.$linted], ['Fixtures'], declarationPaths: [$project.$declared]);
 
-        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame([], self::patterns($occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{strategy: \Closure(): (ExtractorInterface&PatternFunctionAwareInterface), linted: string, declared: string}>
+     */
+    public static function provideExcludedBelowLinted(): iterable
+    {
+        foreach (self::provideStrategies() as $name => $row) {
+            yield $name.', the linted path' => ['strategy' => $row['strategy'], 'linted' => '/lib', 'declared' => '/lib'];
+            yield $name.', below the linted path' => ['strategy' => $row['strategy'], 'linted' => '', 'declared' => '/lib'];
+            yield $name.', above the linted path' => ['strategy' => $row['strategy'], 'linted' => '/lib', 'declared' => ''];
+        }
     }
 
     /**
