@@ -30,32 +30,70 @@ final class DocumentManager
      */
     private array $occurrences = [];
 
-    public function __construct(private readonly RegexFinder $finder) {}
+    public function __construct(private readonly RegexFinder $finder, private readonly PatternDeclarations $declarations = new PatternDeclarations()) {}
 
     /**
      * Open a document.
+     *
+     * @return list<string> the other open documents whose patterns changed,
+     *                      as the declarations of this one count now
      */
-    public function open(string $uri, string $content): void
+    public function open(string $uri, string $content): array
     {
-        $this->documents[$uri] = $content;
-        $this->occurrences[$uri] = $this->finder->find($content);
+        return $this->update($uri, $content);
     }
 
     /**
      * Update a document's content.
+     *
+     * @return list<string> the other open documents whose patterns changed
+     *                      with the declarations of this one
      */
-    public function update(string $uri, string $content): void
+    public function update(string $uri, string $content): array
     {
         $this->documents[$uri] = $content;
-        $this->occurrences[$uri] = $this->finder->find($content);
+        if ($this->declarations->readDocument($uri, $content)) {
+            return array_values(array_diff($this->refresh(), [$uri]));
+        }
+
+        $this->occurrences[$uri] = $this->finder->find($content, $this->declarations);
+
+        return [];
     }
 
     /**
      * Close a document.
+     *
+     * @return list<string> the open documents whose patterns changed, as its
+     *                      file on the disk declares otherwise
      */
-    public function close(string $uri): void
+    public function close(string $uri): array
     {
         unset($this->documents[$uri], $this->occurrences[$uri]);
+
+        return $this->declarations->closeDocument($uri) ? $this->refresh() : [];
+    }
+
+    /**
+     * The declarations the documents are read with.
+     */
+    public function declarations(): PatternDeclarations
+    {
+        return $this->declarations;
+    }
+
+    /**
+     * Read every open document again, after the declarations changed.
+     *
+     * @return list<string> the open documents
+     */
+    public function refresh(): array
+    {
+        foreach ($this->documents as $uri => $content) {
+            $this->occurrences[$uri] = $this->finder->find($content, $this->declarations);
+        }
+
+        return array_map(strval(...), array_keys($this->documents));
     }
 
     /**

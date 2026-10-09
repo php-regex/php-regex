@@ -11,7 +11,7 @@ PHPRegex Language Server
 
 A language server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.
 
-The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls and of wrapper calls such as `Preg::match()` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
+The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls, of wrapper calls such as `Preg::match()`, and of the calls to functions whose parameter is marked `#[RegexPattern]` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
 
 Features
 --------
@@ -20,6 +20,7 @@ Features
 - Hovers in plain English: hold the pointer on a pattern to read what it matches, token by token.
 - Completions inside patterns: shorthands after a backslash, Unicode properties after `\p{`, POSIX classes after `[:`, groups after `(?`, flags after the closing delimiter.
 - Code actions: one action adds the `u` flag a Unicode pattern lacks, one applies the optimizer's rewrite — `/[0-9]{1,}/` becomes `/\d+/`.
+- Functions marked `#[RegexPattern]` (or PhpStorm's `#[Language('RegExp')]`): their calls are checked at that argument, the declarations read from the workspace's PHP files at start-up (under `paths`, out of `exclude` in `regex.json`) and from the open documents as you type.
 - One target per workspace: patterns are judged for one PHP and PCRE2 pair, resolved from the editor settings, `regex.json`, `composer.json` or the running PHP.
 
 Installation

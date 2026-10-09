@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer;
 
 use PHPRegex\LanguageServer\Document\DocumentManager;
+use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
@@ -38,6 +39,11 @@ use PHPRegex\Toolkit\Regex;
  * initializationOptions.phpVersion / pcreVersion, then regex.json there, then
  * composer.json there, then the running PHP. A Regex handed to the
  * constructor is used as it is.
+ *
+ * The functions and static methods that declare a pattern parameter with
+ * #[RegexPattern] are read then too, from the PHP files under regex.json's
+ * "paths" (the root by default) and out of its "exclude" entries (vendor/ by
+ * default), and from each open document as it changes.
  *
  * @internal
  */
@@ -74,14 +80,19 @@ final class Server
     private readonly CompletionHandler $completionHandler;
 
     /**
-     * @param Regex|null    $givenRegex judges every pattern; null judges for the
-     *                                  workspace's target
-     * @param resource|null $input      stream the messages are read from, or null
-     *                                  for stdin
+     * @param Regex|null               $givenRegex   judges every pattern; null judges for the
+     *                                               workspace's target
+     * @param resource|null            $input        stream the messages are read from, or null
+     *                                               for stdin
+     * @param PatternDeclarations|null $declarations the declarations the
+     *                                               workspace is read into
      */
-    public function __construct(private readonly ?Regex $givenRegex = null, private $input = null)
-    {
-        $this->documents = new DocumentManager(new RegexFinder());
+    public function __construct(
+        private readonly ?Regex $givenRegex = null,
+        private $input = null,
+        ?PatternDeclarations $declarations = null
+    ) {
+        $this->documents = new DocumentManager(new RegexFinder(), $declarations ?? new PatternDeclarations());
 
         $this->initHandler = new InitializeHandler();
         $this->completionHandler = new CompletionHandler($this->documents);
@@ -198,7 +209,8 @@ final class Server
             'textDocument/didOpen' => $this->textDocHandler->didOpen($message),
             'textDocument/didChange' => $this->textDocHandler->didChange($message),
             'textDocument/didClose' => $this->textDocHandler->didClose($message),
-            'textDocument/didSave' => null, // Optional, we handle on change
+            'textDocument/didSave' => $this->textDocHandler->didSave($message),
+            'workspace/didChangeWatchedFiles' => $this->textDocHandler->didChangeWatchedFiles($message),
             'textDocument/hover' => $this->textDocHandler->hover($message),
             'textDocument/codeAction' => $this->codeActionHandler->handle($message),
             'textDocument/completion' => $this->completionHandler->handle($message),
@@ -212,39 +224,82 @@ final class Server
         $this->initHandler->handle($message);
         $this->initialized = true;
 
+        $params = $message->params ?? [];
+        $root = self::rootDirectory($params);
+        $config = null === $root ? [] : self::loadConfig($root);
+
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
+        } else {
+            $target = $this->resolveTarget($params, $root, $config);
+            foreach ($target->notices() as $notice) {
+                self::log(self::LOG_INFO, $notice);
+            }
+            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
 
-            return;
+            $this->judgeWith(Regex::create($target->regexOptions()));
         }
 
-        $target = $this->resolveTarget($message->params ?? []);
-        foreach ($target->notices() as $notice) {
-            self::log(self::LOG_INFO, $notice);
+        if (null !== $root) {
+            $this->readDeclarations($root, $config);
         }
-        self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
+    }
 
-        $this->judgeWith(Regex::create($target->regexOptions()));
+    /**
+     * regex.json at the root; what cannot be read is a warning, and no
+     * configuration.
+     *
+     * @return array<string, mixed>
+     */
+    private static function loadConfig(string $root): array
+    {
+        $loaded = (new LintConfigLoader())->load($root);
+        if (null !== $loaded->error) {
+            self::log(self::LOG_WARNING, 'regex.json ignored: '.$loaded->error);
+
+            return [];
+        }
+
+        return $loaded->config;
+    }
+
+    /**
+     * Reads the workspace for the functions that declare a pattern parameter,
+     * under the "paths" and out of the "exclude" entries `regex lint` reads.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function readDeclarations(string $root, array $config): void
+    {
+        $paths = self::stringList($config['paths'] ?? null);
+        $exclude = \array_key_exists('exclude', $config) ? self::stringList($config['exclude']) : ['vendor'];
+
+        $declarations = $this->documents->declarations();
+        if (!$declarations->scanWorkspace($root, [] === $paths ? ['.'] : $paths, $exclude)) {
+            self::log(self::LOG_WARNING, 'Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function stringList(mixed $value): array
+    {
+        if (\is_string($value)) {
+            return [$value];
+        }
+
+        return \is_array($value) ? array_values(array_filter($value, \is_string(...))) : [];
     }
 
     /**
      * @param array<string, mixed> $params the "initialize" params
+     * @param array<string, mixed> $config regex.json
      */
-    private function resolveTarget(array $params): ProjectTarget
+    private function resolveTarget(array $params, ?string $root, array $config): ProjectTarget
     {
-        $root = self::rootDirectory($params);
         $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
-
-        $config = [];
-        if (null !== $root) {
-            $loaded = (new LintConfigLoader())->load($root);
-            if (null === $loaded->error) {
-                $config = $loaded->config;
-            } else {
-                self::log(self::LOG_WARNING, 'regex.json ignored: '.$loaded->error);
-            }
-        }
 
         $configPhp = $config['phpVersion'] ?? null;
         $configPcre = $config['pcreVersion'] ?? null;

@@ -160,6 +160,59 @@ server.
 
 ---
 
+## Functions Marked `#[RegexPattern]`
+
+A parameter marked with the attribute `PHPRegex\Parser\Attribute\RegexPattern`,
+or with PhpStorm's `#[Language('RegExp')]`, makes its function or static method
+a pattern function, as for `regex lint` (see
+[the CLI guide](cli.md#patterns-behind-a-wrapper)): the string literal passed at that
+argument is checked like the pattern of a `preg_*()` call.
+
+```php
+namespace App\Support;
+
+use PHPRegex\Parser\Attribute\RegexPattern;
+
+final class Str
+{
+    public static function matches(string $subject, #[RegexPattern] string $regex): bool
+    {
+        return 1 === preg_match($regex, $subject);
+    }
+}
+
+Str::matches($input, '/(a/'); // reported: missing closing parenthesis
+```
+
+The server finds the declarations in two places:
+
+- the PHP files of the workspace, read once at `initialize`: those under
+  `paths` in `regex.json` (the root folder when unset), but those under an
+  `exclude` entry (`vendor` when unset) and templates (`.blade.php`,
+  `.tpl.php`, `.twig.php`). Only a file that names
+  `PHPRegex\Parser\Attribute` or `JetBrains\PhpStorm\Language` is tokenized;
+  the scan stops after 20,000 PHP files and logs a warning, so a larger
+  workspace narrows `paths` or `exclude`;
+- the open documents, read on every change: an open document stands for its
+  file, saved or not, and when its declarations change, the other open
+  documents are checked again.
+
+A saved document (`textDocument/didSave`) and a file the editor reports as
+created, changed or deleted (`workspace/didChangeWatchedFiles`, when the
+editor is set to send it) are read again. A file changed outside the editor
+that it does not report keeps its declarations until the server restarts.
+
+The calls are read as `regex lint` reads them: function calls and static
+calls, their names resolved through the namespace and the `use` imports; an
+unqualified call in the function's own namespace, `grep()` in
+`namespace App`, is read, as PHP calls `App\grep()` first. An instance call
+(`$str->matches(...)`), a call through `self::` or `static::`, and an argument
+that is not one string literal (a concatenation, a variable, a named
+argument) are not read. `extraction.functions` in `regex.json` is not read by
+the server.
+
+---
+
 ## IDE Configuration
 
 ### VS Code
@@ -358,6 +411,8 @@ Add to your settings:
 | `textDocument/didOpen` | Document opened |
 | `textDocument/didChange` | Document changed |
 | `textDocument/didClose` | Document closed |
+| `textDocument/didSave` | Document saved: its declarations are read again |
+| `workspace/didChangeWatchedFiles` | Files changed outside the editor: their declarations are read again |
 | `textDocument/hover` | Hover information |
 | `textDocument/codeAction` | Code actions (quick fixes) |
 | `textDocument/completion` | Completion suggestions |
@@ -451,6 +506,8 @@ The LSP server automatically detects regex patterns in:
 - `preg_split()`
 - `preg_grep()`
 - `preg_filter()`
+- wrapper calls such as `Preg::match()`
+- the calls to the [functions marked `#[RegexPattern]`](#functions-marked-regexpattern)
 
 Both single-quoted and double-quoted strings are supported.
 

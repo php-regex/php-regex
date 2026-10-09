@@ -16,6 +16,7 @@ namespace PHPRegex\LanguageServer\Handler;
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
+use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\PatternLinter;
@@ -30,6 +31,11 @@ use PHPRegex\Toolkit\Regex;
  */
 final readonly class TextDocumentHandler
 {
+    /**
+     * FileChangeType.Deleted.
+     */
+    private const FILE_DELETED = 3;
+
     private DiagnosticConverter $diagnosticConverter;
 
     public function __construct(private DocumentManager $documents, private Regex $regex)
@@ -52,8 +58,7 @@ final readonly class TextDocumentHandler
             return;
         }
 
-        $this->documents->open($uri, $text);
-        $this->publishDiagnostics($uri);
+        $this->publishDiagnostics($uri, ...$this->documents->open($uri, $text));
     }
 
     /**
@@ -78,8 +83,7 @@ final readonly class TextDocumentHandler
             return;
         }
 
-        $this->documents->update($uri, $text);
-        $this->publishDiagnostics($uri);
+        $this->publishDiagnostics($uri, ...$this->documents->update($uri, $text));
     }
 
     /**
@@ -96,13 +100,63 @@ final readonly class TextDocumentHandler
             return;
         }
 
-        $this->documents->close($uri);
+        $affected = $this->documents->close($uri);
 
         // Clear diagnostics
         Response::notification('textDocument/publishDiagnostics', [
             'uri' => $uri,
             'diagnostics' => [],
         ]);
+
+        $this->publishDiagnostics(...$affected);
+    }
+
+    /**
+     * Handle textDocument/didSave notification: the saved text holds the
+     * declarations of its file once the document is closed.
+     */
+    public function didSave(Message $message): void
+    {
+        $params = $message->params ?? [];
+        /** @var array<string, mixed> $textDocument */
+        $textDocument = $params['textDocument'] ?? [];
+        $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
+        $path = null === $uri ? null : PatternDeclarations::pathOf($uri);
+        $text = isset($params['text']) && \is_string($params['text']) ? $params['text'] : null;
+
+        // The open document stands for its file until it is closed: nothing
+        // is checked again before then.
+        if (null !== $path) {
+            $this->documents->declarations()->readFile($path, $text);
+        }
+    }
+
+    /**
+     * Handle workspace/didChangeWatchedFiles notification: a file created,
+     * changed or deleted outside the editor.
+     */
+    public function didChangeWatchedFiles(Message $message): void
+    {
+        $changes = $message->params['changes'] ?? null;
+        if (!\is_array($changes)) {
+            return;
+        }
+
+        $changed = false;
+        foreach ($changes as $change) {
+            $uri = \is_array($change) && \is_string($change['uri'] ?? null) ? $change['uri'] : null;
+            $path = null === $uri ? null : PatternDeclarations::pathOf($uri);
+            if (null === $path) {
+                continue;
+            }
+
+            $declarations = $this->documents->declarations();
+            $changed = (self::FILE_DELETED === ($change['type'] ?? null) ? $declarations->forgetFile($path) : $declarations->readFile($path)) || $changed;
+        }
+
+        if ($changed) {
+            $this->publishDiagnostics(...$this->documents->refresh());
+        }
     }
 
     /**
@@ -159,9 +213,16 @@ final readonly class TextDocumentHandler
     }
 
     /**
-     * Publish diagnostics for a document.
+     * Publish diagnostics for documents.
      */
-    private function publishDiagnostics(string $uri): void
+    private function publishDiagnostics(string ...$uris): void
+    {
+        foreach ($uris as $uri) {
+            $this->publishDocument($uri);
+        }
+    }
+
+    private function publishDocument(string $uri): void
     {
         $diagnostics = [];
 
