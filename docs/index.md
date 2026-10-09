@@ -120,7 +120,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Redos</h4>
       <p class="component-desc">Finds the patterns that backtrack catastrophically — with the exact input that proves it.</p>
-      <a href="/REDOS_GUIDE/">Read more →</a>
+      <a href="/guides/redos/">Read more →</a>
     </article>
   </div>
   <h3>Fix</h3>

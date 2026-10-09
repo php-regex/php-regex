@@ -559,7 +559,7 @@ gives these keys, in this order.
 
 A ReDoS verdict: `analyze.redos`, `debug.analysis` and the `analysis` of a
 lint issue. It is the JSON form of `RedosAnalysis`; the
-[ReDoS guide](../REDOS_GUIDE.md#reading-the-result) explains how to read it.
+[ReDoS guide](../guides/redos.md#reading-the-result) explains how to read it.
 
 | key | type | meaning |
 |---|---|---|

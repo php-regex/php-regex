@@ -189,7 +189,7 @@ The tip starts with the severity and how it was reached: `exponential
 (proven)`, `polynomial degree N (proven)`, `heuristic`, or `heuristic (budget
 exceeded)`. A proven verdict adds the attack, `"0" x n . "!"`: the input
 `str_repeat("0", $n) . "!"` that drives the worst case. The recommendations and
-the documentation links follow. The [ReDoS guide](../REDOS_GUIDE.md) explains
+the documentation links follow. The [ReDoS guide](redos.md) explains
 each part of the verdict.
 
 The attack is a PHP expression that pastes back into code. A `<` in it is
@@ -212,7 +212,7 @@ attempt at each position of the subject, and on a run of spaces each one reads
 to the end of the run before it fails: PCRE2's interpreter takes a number of
 steps quadratic in the length of the run. `pcre.backtrack_limit` does not stop
 it, as the limit counts each attempt apart, and the JIT may avoid it for some
-patterns, not for all (see the [ReDoS guide](../REDOS_GUIDE.md#the-cost-of-an-unanchored-search)).
+patterns, not for all (see the [ReDoS guide](redos.md#the-cost-of-an-unanchored-search)).
 Such a pattern is reported under its own identifier, `regex.redos.search`,
 with the message `Quadratic search (ReDoS): <pattern>`, frozen for 2.x like
 the three others. It has no setting of its own: it follows `checks.redos.enabled`

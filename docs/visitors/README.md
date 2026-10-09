@@ -292,7 +292,7 @@ The lint rules read the shape of the pattern. The ReDoS verdict comes from `Rege
 
 ### RedosProfiler (Internal)
 
-**Purpose:** Internal visitor behind the structural heuristics of `Regex::redos()`. The verdict itself comes from a model of PCRE's backtracking built from the AST; the heuristics decide for the constructs outside that model (see [the ReDoS guide](../REDOS_GUIDE.md)).
+**Purpose:** Internal visitor behind the structural heuristics of `Regex::redos()`. The verdict itself comes from a model of PCRE's backtracking built from the AST; the heuristics decide for the constructs outside that model (see [the ReDoS guide](../guides/redos.md)).
 
 **Severities:**
 

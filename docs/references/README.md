@@ -209,7 +209,7 @@ When referencing these sources in documentation or code comments:
 
 | Topic         | File                                |
 |---------------|-------------------------------------|
-| ReDoS Guide   | [REDOS_GUIDE.md](../REDOS_GUIDE.md) |
+| ReDoS Guide   | [ReDoS guide](../guides/redos.md) |
 | Cookbook      | [COOKBOOK.md](../COOKBOOK.md)       |
 | API Reference | [api.md](../reference/api.md)                    |
 | Diagnostics   | [diagnostics.md](../reference/diagnostics.md)    |

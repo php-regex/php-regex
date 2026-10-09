@@ -630,4 +630,4 @@ if (preg_match($pattern, $input) !== 1) {
 
 ---
 
-Previous: [ReDoS Guide](REDOS_GUIDE.md) | Next: [Architecture](ARCHITECTURE.md)
+Previous: [ReDoS Guide](guides/redos.md) | Next: [Architecture](ARCHITECTURE.md)

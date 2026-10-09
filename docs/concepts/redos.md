@@ -45,7 +45,7 @@ Each pattern below was run through `RedosAnalyzer` and, for the vulnerable ones,
 
 ## How PHPRegex detects ReDoS
 
-PHPRegex reads the pattern, and runs it only to check a witness through a lookaround on a few short inputs (or in [confirmed mode](../REDOS_GUIDE.md#confirmed-mode)):
+PHPRegex reads the pattern, and runs it only to check a witness through a lookaround on a few short inputs (or in [confirmed mode](../guides/redos.md#confirmed-mode)):
 
 1. The lexer and parser build a `RegexNode` AST.
 2. `RedosAnalyzer` builds from it a **prioritized NFA**: an automaton whose ε-transitions are ordered as PCRE tries them. Atomic groups, possessive quantifiers and atomic lookaround bodies are separate automata, analysed on their own and seen from outside as one step.
@@ -57,7 +57,7 @@ PHPRegex reads the pattern, and runs it only to check a witness through a lookar
 
 A pattern is `safe (proven)` only when the automaton holds no ambiguity at all. An ambiguity for which no witness can be built is not taken as safe: the heuristics decide, and `abstractions` lists `ambiguity without witness at offset N`.
 
-The model covers characters and classes (exact sets under `/u` and `/i`, computed from the running PCRE2), alternation, groups, every quantifier, atomic groups, possessive quantifiers, atomic lookarounds, anchors and word boundaries. It reads inline options as PCRE does: an option set inside one alternative also holds in the alternatives after it, `r` (caseless restrict) and the ASCII options (`a`, `aD`, `aS`, `aW`, `aP`, `aT`) are read per scope, `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r` but keeps `U` and the ASCII options, `xx` drops a class's spaces and tabs, and `\b` under `aW` reads the ASCII `\w`. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, `\b` and `\B` under two different ASCII scopes in one pattern (`(?aW:\b)…\b`), and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../REDOS_GUIDE.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide, as in 1.x:
+The model covers characters and classes (exact sets under `/u` and `/i`, computed from the running PCRE2), alternation, groups, every quantifier, atomic groups, possessive quantifiers, atomic lookarounds, anchors and word boundaries. It reads inline options as PCRE does: an option set inside one alternative also holds in the alternatives after it, `r` (caseless restrict) and the ASCII options (`a`, `aD`, `aS`, `aW`, `aP`, `aT`) are read per scope, `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r` but keeps `U` and the ASCII options, `xx` drops a class's spaces and tabs, and `\b` under `aW` reads the ASCII `\w`. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, `\b` and `\B` under two different ASCII scopes in one pattern (`(?aW:\b)…\b`), and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../guides/redos.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide, as in 1.x:
 
 - star height: nested unbounded quantifiers;
 - overlapping alternatives inside a repetition, through `CharSetAnalyzer`;
@@ -66,7 +66,7 @@ The model covers characters and classes (exact sets under `/u` and `/i`, compute
 - adjacent quantifiers over overlapping character sets;
 - atomic groups and possessive quantifiers lowering the severity.
 
-The result says which of the two decided: `proof` is `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`. The [ReDoS guide](../REDOS_GUIDE.md#the-guarantee) states what a proof guarantees, and its limits.
+The result says which of the two decided: `proof` is `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`. The [ReDoS guide](../guides/redos.md#the-guarantee) states what a proof guarantees, and its limits.
 
 ## Using PHPRegex for ReDoS protection
 
@@ -191,7 +191,7 @@ a+a+         -> a+         or a++a+
 
 ## Related concepts
 
-- **[ReDoS Guide](../REDOS_GUIDE.md)** - The verdict, the witness, confirmed mode and the guarantee
+- **[ReDoS Guide](../guides/redos.md)** - The verdict, the witness, confirmed mode and the guarantee
 - **[Architecture](../ARCHITECTURE.md)** - Where the analysis sits in the library
 - **[FAQ & Glossary](../reference/faq-glossary.md)** - Common ReDoS questions
 

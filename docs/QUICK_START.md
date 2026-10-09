@@ -169,7 +169,7 @@ $confirmed = $regex->redos('/(a+)+b/', mode: RedosMode::Confirmed);
 echo $confirmed->isConfirmed() ? "confirmed\n" : "theoretical\n"; // confirmed
 ```
 
-ReDoS (Regular Expression Denial of Service) is a performance risk where certain inputs can make a backtracking engine take a very long time; in PHP, `preg_match()` then gives up and returns `false`. `validate()` does not check for it: call `redos()`. The [ReDoS guide](REDOS_GUIDE.md) explains the verdicts.
+ReDoS (Regular Expression Denial of Service) is a performance risk where certain inputs can make a backtracking engine take a very long time; in PHP, `preg_match()` then gives up and returns `false`. `validate()` does not check for it: call `redos()`. The [ReDoS guide](guides/redos.md) explains the verdicts.
 
 Learn more: [ReDoS Deep Dive](concepts/redos.md)
 
@@ -398,7 +398,7 @@ For beginners:
 For users:
 - [CLI Guide](guides/cli.md)
 - [Cookbook](COOKBOOK.md)
-- [ReDoS Guide](REDOS_GUIDE.md)
+- [ReDoS Guide](guides/redos.md)
 
 For developers:
 - [Architecture](ARCHITECTURE.md)

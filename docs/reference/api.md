@@ -312,7 +312,7 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 
 ### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
 
-Analyzes ReDoS risk without an analysis report. Default mode is **theoretical**: the pattern is read, never run, and the verdict is proven where the backtracking model covers the pattern, heuristic elsewhere. **Confirmed** mode replays the attack on the running PCRE (see [the ReDoS guide](../REDOS_GUIDE.md)).
+Analyzes ReDoS risk without an analysis report. Default mode is **theoretical**: the pattern is read, never run, and the verdict is proven where the backtracking model covers the pattern, heuristic elsewhere. **Confirmed** mode replays the attack on the running PCRE (see [the ReDoS guide](../guides/redos.md)).
 
 ```php
 use PHPRegex\Toolkit\Regex;

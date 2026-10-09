@@ -219,7 +219,7 @@ Regex matches (with flags: i)
 backtracking (proven)`, `Polynomial backtracking, degree N (proven)`,
 `Potential backtracking (heuristic)`, `no risk found (heuristic)`, `not
 analyzed (budget exceeded)` or `not analyzed (analysis error)` (see
-[the ReDoS guide](../REDOS_GUIDE.md#what-the-verdict-means)). Up to three lines
+[the ReDoS guide](redos.md#what-the-verdict-means)). Up to three lines
 follow it:
 
 - `Model:` what the analysis read differently from the pattern as written, as
@@ -664,7 +664,7 @@ When one attempt is proven linear but the unanchored search retries it along a
 run, as `/\s+$/` on a run of spaces, the issue is `regex.lint.redos.search`: the
 search is quadratic in PCRE2's interpreter, `pcre.backtrack_limit` does not stop
 it, and the JIT may avoid it for some patterns (see the
-[ReDoS guide](../REDOS_GUIDE.md#the-cost-of-an-unanchored-search)). It runs
+[ReDoS guide](redos.md#the-cost-of-an-unanchored-search)). It runs
 under `--redos`, is `medium` like a proven quadratic attempt, so the default
 `high` threshold hides it, and is a warning in every mode:
 
@@ -1300,7 +1300,7 @@ vendor/bin/regex highlight '/test/' --ansi
 - **[LSP Integration](lsp.md)** - IDE integration via Language Server Protocol
 - **[Regex Tutorial](../tutorial/README.md)** - Learn regex from scratch
 - **[Regex in PHP](regex-in-php.md)** - PHP regex fundamentals
-- **[ReDoS Guide](../REDOS_GUIDE.md)** - Preventing catastrophic backtracking
+- **[ReDoS Guide](redos.md)** - Preventing catastrophic backtracking
 - **[Cookbook](../COOKBOOK.md)** - Ready-to-use patterns
 
 ---

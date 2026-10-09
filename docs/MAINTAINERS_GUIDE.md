@@ -617,7 +617,7 @@ fails when their counts or their order differ.
 |-----------------|--------------------------------------------|
 | API Reference   | [api.md](reference/api.md)                 |
 | Diagnostics     | [diagnostics.md](reference/diagnostics.md) |
-| ReDoS Guide     | [REDOS_GUIDE.md](REDOS_GUIDE.md)           |
+| ReDoS Guide     | [guides/redos.md](guides/redos.md)           |
 | Architecture    | [ARCHITECTURE.md](ARCHITECTURE.md)         |
 | Extending Guide | [EXTENDING_GUIDE.md](EXTENDING_GUIDE.md)   |
 

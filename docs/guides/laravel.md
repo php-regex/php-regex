@@ -174,7 +174,7 @@ Security Warning:
 The first line is the verdict's headline, then its severity; `Attack` is the input that drives
 the worst case, as PHP: `str_repeat("a", $n) . "!"`. A pattern the structural
 heuristics judge, such as one with a backreference, shows `Potential
-backtracking (heuristic)` and no attack. The [ReDoS guide](../REDOS_GUIDE.md)
+backtracking (heuristic)` and no attack. The [ReDoS guide](redos.md)
 explains each verdict.
 
 ## Upgrading from 1.x

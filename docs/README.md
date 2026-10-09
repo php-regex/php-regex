@@ -33,7 +33,7 @@ Start here:
 - [Laravel Guide](guides/laravel.md) - Service, facade, and artisan commands.
 - [Symfony Guide](guides/symfony.md) - Bundle, service, and console commands.
 - [Cookbook](COOKBOOK.md) - Practical patterns and examples.
-- [ReDoS Guide](REDOS_GUIDE.md) - Security and performance guidance.
+- [ReDoS Guide](guides/redos.md) - Security and performance guidance.
 - [Troubleshooting](TROUBLESHOOTING.md) - Common errors and how to fix them.
 
 ### For developers and contributors

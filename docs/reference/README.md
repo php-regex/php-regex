@@ -38,7 +38,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - Read a pattern's capture count, names, lengths and limits, or the PHP and PCRE2 versions it is valid on: [pattern-info.md](pattern-info.md)
 - Build a custom visitor: [../nodes/README.md](../nodes/README.md) and [../visitors/README.md](../visitors/README.md)
 - Learn regex patterns: [../tutorial/README.md](../tutorial/README.md)
-- Check ReDoS safety: [../REDOS_GUIDE.md](../REDOS_GUIDE.md)
+- Check ReDoS safety: [ReDoS guide](../guides/redos.md)
 
 ---
 

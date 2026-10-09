@@ -216,7 +216,7 @@ under PHP's default limits. `regex:analyze` prints the same finding as
 }
 ```
 
-The [ReDoS guide](../REDOS_GUIDE.md) explains the verdicts and the attack.
+The [ReDoS guide](redos.md) explains the verdicts and the attack.
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration

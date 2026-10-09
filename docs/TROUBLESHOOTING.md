@@ -501,7 +501,7 @@ https://stackoverflow.com/questions/tagged/regexparser
 
 - [Quick Start Guide](QUICK_START.md)
 - [API Reference](reference.md)
-- [ReDoS Guide](REDOS_GUIDE.md)
+- [ReDoS Guide](guides/redos.md)
 - [Architecture Documentation](ARCHITECTURE.md)
 - [Contributing Guide](https://github.com/php-regex/php-regex/blob/2.x/CONTRIBUTING.md)
 - [Upgrading to 2.0](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)

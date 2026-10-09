@@ -1175,7 +1175,7 @@ preg_match('/(?i:foo)bar/', $input);
 | `medium`   | polynomial, degree 2 (quadratic) | Monitor and plan fix |
 | `low`      | heuristic finding only           | Accept with logging  |
 
-See the [ReDoS guide](REDOS_GUIDE.md) for the guarantee and its limits.
+See the [ReDoS guide](guides/redos.md) for the guarantee and its limits.
 
 **Example:**
 ```php
@@ -1215,7 +1215,7 @@ quantifier, `a\{,3}` for the text.
 
 **Identifier:** `regex.lint.redos.search`; `regex.redos.search` in PHPStan, with the message `Quadratic search (ReDoS): <pattern>`
 
-**When it triggers:** One match attempt is proven linear, but the search is not anchored: `preg_match()` starts an attempt at each position of the subject, and on a run of characters each attempt reads to the end of the run before it fails. On the run repeated n times then a breaking character, PCRE2's interpreter takes a number of steps quadratic in n; `preg_match_all()`, `preg_replace()` and `preg_split()` retry the same way. An anchored alternative does not protect the others: the trim regex `/^\s+|\s+$/` is quadratic on `"!" . " " x n . "!"`. `pcre.backtrack_limit` does not stop it: the limit counts each attempt apart, and trips only when one attempt exceeds it. The JIT may avoid it for some patterns, not for all (see the [ReDoS guide](REDOS_GUIDE.md#the-cost-of-an-unanchored-search)).
+**When it triggers:** One match attempt is proven linear, but the search is not anchored: `preg_match()` starts an attempt at each position of the subject, and on a run of characters each attempt reads to the end of the run before it fails. On the run repeated n times then a breaking character, PCRE2's interpreter takes a number of steps quadratic in n; `preg_match_all()`, `preg_replace()` and `preg_split()` retry the same way. An anchored alternative does not protect the others: the trim regex `/^\s+|\s+$/` is quadratic on `"!" . " " x n . "!"`. `pcre.backtrack_limit` does not stop it: the limit counts each attempt apart, and trips only when one attempt exceeds it. The JIT may avoid it for some patterns, not for all (see the [ReDoS guide](guides/redos.md#the-cost-of-an-unanchored-search)).
 
 It runs under the ReDoS check, with no switch of its own. Its severity is that of a proven quadratic attempt, `medium`, so the default `high` threshold hides it: `--redos-threshold=medium` shows it. It is a warning in every mode, and `--disable-rule=regex.lint.redos.search` or `"redos.search": false` in the `checks.lint.rules` of `regex.json` turns it off.
 
@@ -1386,4 +1386,4 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 
 ---
 
-Previous: [Quick Start](QUICK_START.md) | Next: [ReDoS Guide](REDOS_GUIDE.md)
+Previous: [Quick Start](QUICK_START.md) | Next: [ReDoS Guide](guides/redos.md)

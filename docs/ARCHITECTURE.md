@@ -189,7 +189,7 @@ ReDoS analysis uses the AST and never executes the regex (unless confirmed mode 
 - Large bounded quantifiers (low risk, but flagged)
 - Atomic groups and possessive quantifiers lowering severity
 
-Analysis results are wrapped in `RedosAnalysis` and include the severity, the complexity class, the proof, the witness, findings and suggested rewrites. See [docs/REDOS_GUIDE.md](REDOS_GUIDE.md) for user-facing guidance.
+Analysis results are wrapped in `RedosAnalysis` and include the severity, the complexity class, the proof, the witness, findings and suggested rewrites. See [docs/guides/redos.md](guides/redos.md) for user-facing guidance.
 
 ### ReDoS Heuristics in Practice
 

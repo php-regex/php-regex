@@ -212,7 +212,7 @@ To match a literal dollar sign: `/\$/`
 
 - [Regex in PHP Guide](../guides/regex-in-php.md) - PHP-specific regex details
 - [Cookbook](../COOKBOOK.md) - Ready-to-use patterns
-- [ReDoS Guide](../REDOS_GUIDE.md) - Security and performance
+- [ReDoS Guide](../guides/redos.md) - Security and performance
 - [Regex101](https://regex101.com) - Interactive regex tester
 
 ---

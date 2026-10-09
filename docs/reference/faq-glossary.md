@@ -40,7 +40,7 @@ preg_match('/\p{L}/u', $text);  // Unicode properties
 
 #### Does this guarantee ReDoS safety?
 
-**Within limits.** For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The guarantee is per match attempt (the retries of an unanchored search and `preg_match_all()` are not counted), about the pattern as analysed (see `abstractions`), and for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so. The [ReDoS guide](../REDOS_GUIDE.md#the-guarantee) lists every limit.
+**Within limits.** For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The guarantee is per match attempt (the retries of an unanchored search and `preg_match_all()` are not counted), about the pattern as analysed (see `abstractions`), and for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so. The [ReDoS guide](../guides/redos.md#the-guarantee) lists every limit.
 
 ```php
 $analysis = Regex::create()->redos('/(a+)+b/');

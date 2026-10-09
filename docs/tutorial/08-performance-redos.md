@@ -2,6 +2,10 @@
 
 > **Goal:** Write fast, safe regex patterns and understand catastrophic backtracking.
 
+> **Reference:** the [ReDoS guide](../guides/redos.md) is the canonical page
+> for verdicts, guarantees, confirmed mode and fixes. This chapter teaches
+> the intuition; when the two differ, the guide wins.
+
 ---
 
 ## What is ReDoS?
