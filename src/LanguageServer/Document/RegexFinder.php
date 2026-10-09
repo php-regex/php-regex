@@ -15,6 +15,7 @@ namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\Linter\Extraction\NameResolutionContext;
+use PHPRegex\Linter\Extraction\PhpStringLiteral;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -364,28 +365,8 @@ final class RegexFinder
      */
     private function extractPattern(string $tokenValue): ?string
     {
-        if (\strlen($tokenValue) < 2) {
-            return null;
-        }
-
-        $quote = $tokenValue[0];
-        if ("'" === $quote || '"' === $quote) {
-            // Remove quotes
-            $pattern = substr($tokenValue, 1, -1);
-
-            // For double-quoted strings, handle escape sequences
-            if ('"' === $quote) {
-                // Basic unescaping
-                $pattern = stripcslashes($pattern);
-            } else {
-                // Single quotes only escape \' and \\
-                $pattern = str_replace(["\\'", '\\\\'], ["'", '\\'], $pattern);
-            }
-
-            return $pattern;
-        }
-
-        return null;
+        // As PHP reads it: "/\d+/" keeps its \d.
+        return PhpStringLiteral::decode($tokenValue);
     }
 
     /**

@@ -474,6 +474,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `J` modifier reached further than PCRE lets it: `(?J:(?<n>a))(?<n>b)` and `(?:(?J)(?<n>a))(?<n>b)` were accepted, though the second name is written outside the group the modifier covers.
 - The language server's quick fixes wrapped the new pattern in quotes without escaping, so applying one to a pattern holding a `'` left the file unparseable.
 - `bin/regex-lsp --version` reported a version of its own instead of the library's.
+- The language server reads a double-quoted pattern as PHP reads it: an escape PHP keeps as written, the `\d` and `\.` of `"/\d+\.x/"`, lost its backslash, so the pattern checked, hovered and rewritten by a quick fix was `/d+.x/`.
 - Recompiling a version condition produced a pattern PCRE refuses: `(?(VERSION>=10.4)y|n)` came back as `(?((?(VERSION>=10.4))y|n)`.
 - `(?(VERSION=10.4)...)` is parsed; PCRE accepts that spelling alongside `VERSION>=`.
 - A pattern that is not valid UTF-8 lost everything after a `\Q...\E` run or a `(?#...)` comment: the lexer read those two with a UTF-8 regex, and took PCRE's refusal for the end of the pattern. `/\Q\xFFabc\E]/` came back as `//`.

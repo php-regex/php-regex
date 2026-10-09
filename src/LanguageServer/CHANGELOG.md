@@ -16,3 +16,5 @@ CHANGELOG
    `exclude`, `vendor` left out by default, 20,000 files at most) and from
    the open documents on every change; `textDocument/didSave` and
    `workspace/didChangeWatchedFiles` read a file again.
+ * A double-quoted pattern is read as PHP reads it: `"/\d+\.x/"` is
+   `/\d+\.x/`, where the escapes PHP keeps as written lost their backslash.

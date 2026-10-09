@@ -106,8 +106,26 @@ final class RegexFinderTest extends TestCase
         $occurrences = $this->finder->find($content);
 
         $this->assertCount(1, $occurrences);
-        // Note: \d in double quotes becomes just d
-        $this->assertSame('/d+/', $occurrences[0]->pattern);
+        // PHP keeps an unknown escape such as \d as written.
+        $this->assertSame('/\d+/', $occurrences[0]->pattern);
+    }
+
+    /**
+     * A double-quoted pattern is read as PHP reads it: "/\d+\.x\/y/" is
+     * /\d+\.x\/y/, and "\t" a tab.
+     */
+    #[Test]
+    public function test_a_double_quoted_pattern_is_read_as_php_reads_it(): void
+    {
+        $occurrences = $this->finder->find(<<<'PHP'
+            <?php
+            preg_match("/\d+\.x\/y/", $a);
+            preg_match("/a\tb\x41\\$/", $b);
+            PHP);
+
+        $this->assertCount(2, $occurrences);
+        $this->assertSame("/\d+\.x\/y/", $occurrences[0]->pattern);
+        $this->assertSame("/a\tb\x41\\$/", $occurrences[1]->pattern);
     }
 
     #[Test]
