@@ -71,4 +71,29 @@
       status.textContent = message;
     }, 50);
   }
+
+  // "Copy as Markdown": fetch the page's own source and put it on the
+  // clipboard. The markdown sources are served next to their pages.
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('.copy-source');
+    if (!button) {
+      return;
+    }
+    var source = button.getAttribute('data-source');
+    fetch(source).then(function (response) {
+      if (!response.ok) {
+        throw new Error('source HTTP ' + response.status);
+      }
+      return response.text();
+    }).then(function (text) {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).then(function () {
+          announce('Page copied as Markdown.');
+        });
+      }
+      throw new Error('clipboard unavailable');
+    }).catch(function () {
+      announce('Copy is unavailable, the source is at ' + source + '.');
+    });
+  });
 })();

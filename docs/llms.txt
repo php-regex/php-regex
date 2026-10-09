@@ -1,0 +1,36 @@
+# PHPRegex
+
+> Static analysis, linter & logic solver for PHP regular expressions. PHPRegex parses PCRE-style regexes into an immutable AST and answers questions about them: validity ruled as PHP's own engine would rule it, ReDoS safety with a proof or a witness, lint findings with fixes, provably equivalent rewrites, sample strings a pattern matches, and pattern-to-pattern logic (equivalence, intersection, subset) via automata.
+
+Install: composer require php-regex/regex-toolkit:2.x-dev
+Docs: https://php-regex.com/docs/
+Repository: https://github.com/php-regex/php-regex
+License: MIT
+
+## Start here
+
+- [Quick Start](https://php-regex.com/quick-start/): install and first analysis in a few runnable steps
+- [Tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
+- [Architecture](https://php-regex.com/architecture/): the lexer/parser/AST/visitor pipeline
+
+## Guides
+
+- [CLI](https://php-regex.com/guides/cli/): sixteen subcommands, config files, output formats, CI recipes
+- [PHPStan](https://php-regex.com/guides/phpstan/): regex findings inside static analysis
+- [Psalm](https://php-regex.com/guides/psalm/): $matches typed from the pattern
+- [Rector](https://php-regex.com/guides/rector/): preg_* calls rewritten to the string functions they provably equal
+- [LSP](https://php-regex.com/guides/lsp/): diagnostics, hovers and code actions in any editor
+- [Laravel](https://php-regex.com/guides/laravel/) and [Symfony](https://php-regex.com/guides/symfony/): service, commands, configuration
+- [ReDoS guide](https://php-regex.com/guides/redos/): verdicts, guarantees, confirmed mode, fixes
+- [Cookbook](https://php-regex.com/cookbook/): ready-made patterns with their safety verdicts
+- [Troubleshooting](https://php-regex.com/troubleshooting/): common errors and their fixes
+
+## Reference
+
+- [Lint rules](https://php-regex.com/reference/rules/): every diagnostic, rule and optimization
+- [API](https://php-regex.com/reference/api/): entry points, return objects, exceptions
+- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature
+- [PCRE2 conformance](https://php-regex.com/reference/pcre2-conformance/): measured against PHP's engine on the official test suite
+- [Logic solver](https://php-regex.com/reference/logic-solver/): equivalence, intersection, subset, example strings
+- [Capture shapes](https://php-regex.com/reference/capture-shapes/): what preg_match() writes into $matches
+- [JSON output](https://php-regex.com/reference/json-output/): every key the regex command prints

@@ -49,3 +49,9 @@
     {% endif %}
   </nav>
 {% endif %}
+{% if page.path %}
+  <p class="page-meta">
+    <a class="edit-link" href="https://github.com/php-regex/php-regex/edit/2.x/docs/{{ page.path }}">Edit on GitHub</a>
+    <button type="button" class="copy-source" data-source="/{{ page.path }}">Copy as Markdown</button>
+  </p>
+{% endif %}
