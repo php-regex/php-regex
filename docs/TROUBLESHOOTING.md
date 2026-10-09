@@ -500,7 +500,7 @@ https://stackoverflow.com/questions/tagged/regexparser
 ## Additional Resources
 
 - [Quick Start Guide](QUICK_START.md)
-- [API Reference](reference.md)
+- [API Reference](reference/rules.md)
 - [ReDoS Guide](guides/redos.md)
 - [Architecture Documentation](ARCHITECTURE.md)
 - [Contributing Guide](https://github.com/php-regex/php-regex/blob/2.x/CONTRIBUTING.md)

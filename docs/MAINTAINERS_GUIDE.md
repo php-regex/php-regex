@@ -10,7 +10,7 @@ If you are new to the codebase, this short checklist helps you get oriented quic
 - Run `composer install` and verify `composer phpunit` passes before changes.
 - When touching Lexer/Parser or AST nodes, update relevant visitors and add tests.
 - Preserve byte offsets in diagnostics and update [docs/reference/diagnostics.md](reference/diagnostics.md) for new codes.
-- Keep docs in sync with behavior changes, especially [docs/reference.md](reference.md).
+- Keep docs in sync with behavior changes, especially [docs/reference/rules.md](reference/rules.md).
 
 ## Where to Start
 

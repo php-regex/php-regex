@@ -390,4 +390,4 @@ Write a visitor that extracts all anchors (`^`, `$`, `\b`, `\B`, `(?=...)`, etc.
 
 ---
 
-Previous: [Architecture](../ARCHITECTURE.md) | Next: [External References](../references/README.md)
+Previous: [Architecture](../ARCHITECTURE.md) | Next: [External resources](../reference/resources.md)

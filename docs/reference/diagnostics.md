@@ -345,7 +345,7 @@ Each lint rule declares a severity, and every output format maps it the same way
 An issue of severity `error` makes `regex lint` exit with 1; warnings and infos leave 0. In
 JUnit, a `critical` problem is an `<error>` element and an `error` one a `<failure>`; a
 warning or an info is a passing test case that carries the message in `system-out`.
-See the [severity table](../reference.md#quick-reference-table) for the severity of each rule.
+See the [severity table](rules.md#quick-reference-table) for the severity of each rule.
 
 ---
 
@@ -636,4 +636,4 @@ backslash, or NUL byte.`
 
 ---
 
-Previous: [CLI Guide](../guides/cli.md) | Next: [Lint Rule Reference](../reference.md)
+Previous: [CLI Guide](../guides/cli.md) | Next: [Lint Rule Reference](rules.md)

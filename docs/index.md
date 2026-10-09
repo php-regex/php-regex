@@ -128,7 +128,7 @@ Regex matches
     <article class="component">
       <h4 class="component-name">Optimizer</h4>
       <p class="component-desc">Rewrites patterns into shorter equivalents and modernizes old syntax — equivalence provable, opt-in.</p>
-      <a href="/reference/">Read more →</a>
+      <a href="/reference/rules/">Read more →</a>
     </article>
     <article class="component">
       <h4 class="component-name">Rector</h4>

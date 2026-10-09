@@ -270,7 +270,7 @@ echo $result->errorCode?->value;  // regex.backref.missing_named_group
 | `regex.lint.group.redundant`         | A group that changes nothing                      | warning                          |
 | `regex.lint.escape.suspicious`       | An escape that does not mean what it looks like   | warning                          |
 
-Every rule id is listed in the [Rule Reference](../reference.md#quick-reference-table).
+Every rule id is listed in the [Rule Reference](../reference/rules.md#quick-reference-table).
 
 ```php
 use PHPRegex\Toolkit\Regex;

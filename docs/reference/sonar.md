@@ -7,7 +7,7 @@ running both, can find every Sonar finding here and silence it once.
 
 Lint identifiers (`regex.lint.*`) are reported by `regex lint`, the PHPStan rule with lint
 enabled, the language server and the framework commands; each is described in the
-[Lint Rule Reference](../reference.md). A rule marked off by default runs once
+[Lint Rule Reference](rules.md). A rule marked off by default runs once
 `checks.lint.rules` in `regex.json` turns it on. The PHPStan rule never runs those: it
 lints with no rule turned on beyond the defaults, so S5857, S6326 and S6397 are reported
 by `regex lint`, the language server and the Symfony and Laravel commands only.
@@ -42,4 +42,4 @@ by `regex lint`, the language server and the Symfony and Laravel commands only.
 
 ---
 
-Previous: [Lint Rule Reference](../reference.md) | Next: [Reference Index](README.md)
+Previous: [Lint Rule Reference](rules.md) | Next: [Reference Index](README.md)

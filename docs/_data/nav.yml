@@ -67,6 +67,8 @@
   pages:
     - title: Reference index
       url: /reference/
+    - title: Lint rules
+      url: /reference/rules/
     - title: API
       url: /reference/api/
     - title: Diagnostics
@@ -110,4 +112,4 @@
     - title: Maintainers guide
       url: /MAINTAINERS_GUIDE/
     - title: External resources
-      url: /references/
+      url: /reference/resources/

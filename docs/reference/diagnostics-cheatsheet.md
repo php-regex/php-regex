@@ -360,7 +360,7 @@ $regex = Regex::create(['max_pattern_length' => 500000]);
 
 | Topic                 | Resource                                        |
 |-----------------------|-------------------------------------------------|
-| Rule reference        | [docs/reference.md](../reference.md)            |
+| Rule reference        | [docs/reference.md](rules.md)            |
 | Diagnostics deep dive | [docs/reference/diagnostics.md](diagnostics.md) |
 | ReDoS patterns        | [ReDoS guide](../guides/redos.md)        |
 | API reference         | [docs/reference/api.md](api.md)                 |

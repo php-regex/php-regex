@@ -4,7 +4,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ## Core Reference
 
-- [Lint Rule Reference](../reference.md)
+- [Lint Rule Reference](rules.md)
 - [SonarPHP Regex Rules](sonar.md)
 - [API Reference](api.md)
 - [Diagnostics](diagnostics.md)
@@ -26,11 +26,11 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ## External Resources
 
-- [External References](../references/README.md)
+- [External resources](resources.md)
 
 ## Quick Access by Task
 
-- Understand a lint warning: [reference.md](../reference.md)
+- Understand a lint warning: [reference.md](rules.md)
 - Fix a validation error: [diagnostics-cheatsheet.md](diagnostics-cheatsheet.md)
 - Use the library in code: [api.md](api.md)
 - Read the JSON of the `regex` command: [json-output.md](json-output.md)
@@ -42,4 +42,4 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ---
 
-Previous: [Docs Home](/docs/) | Next: [Lint Rule Reference](../reference.md)
+Previous: [Docs Home](/docs/) | Next: [Lint Rule Reference](rules.md)
