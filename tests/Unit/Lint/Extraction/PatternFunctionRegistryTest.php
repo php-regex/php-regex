@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Extraction;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PatternFunctionRegistryTest extends TestCase
@@ -124,5 +125,52 @@ final class PatternFunctionRegistryTest extends TestCase
 
         $this->assertTrue($registry->matchesContent('<?php Str::matches("/a/");'));
         $this->assertFalse($registry->matchesContent('<?php echo strtoupper($s);'));
+    }
+
+    /**
+     * @return iterable<string, array{preset: string, content: string}>
+     */
+    public static function provideAliasedPresetImports(): iterable
+    {
+        yield 'composer/pcre' => ['preset' => InteropPresets::COMPOSER_PCRE, 'content' => '<?php use Composer\Pcre\Preg as P; P::match("/a/", $s);'];
+        yield 'composer/pcre, group use' => ['preset' => InteropPresets::COMPOSER_PCRE, 'content' => '<?php use Composer\Pcre\{Regex as R}; R::match("/a/", $s);'];
+        yield 'nette/utils' => ['preset' => InteropPresets::NETTE_UTILS, 'content' => '<?php use Nette\Utils\Strings as S; S::match($s, "/a/");'];
+        yield 'spatie/regex' => ['preset' => InteropPresets::SPATIE_REGEX, 'content' => '<?php use Spatie\Regex\Regex as R; R::match("/a/", $s);'];
+        yield 'laravel Str' => ['preset' => InteropPresets::LARAVEL_STR, 'content' => '<?php use ILLUMINATE\Support\Str as S; S::match("/a/", $s);'];
+    }
+
+    #[DataProvider('provideAliasedPresetImports')]
+    public function test_an_aliased_import_of_a_preset_class_opens_the_file(string $preset, string $content): void
+    {
+        $registry = PatternFunctionRegistry::native()->withPresets([$preset]);
+
+        $this->assertTrue($registry->matchesContent($content));
+        $this->assertFalse($registry->matchesContent('<?php use App\Support\Helpers as H; H::run($s);'));
+    }
+
+    public function test_presets_contribute_the_namespace_of_their_classes(): void
+    {
+        $this->assertSame(['preg::', 'regex::', 'composer\\pcre\\'], InteropPresets::needles(InteropPresets::COMPOSER_PCRE));
+        $this->assertSame(['strings::', 'nette\\utils\\'], InteropPresets::needles(InteropPresets::NETTE_UTILS));
+        $this->assertSame(['regex::', 'spatie\\regex\\'], InteropPresets::needles(InteropPresets::SPATIE_REGEX));
+        $this->assertSame(['str::', 'illuminate\\support\\'], InteropPresets::needles(InteropPresets::LARAVEL_STR));
+        $this->assertSame([], InteropPresets::needles('unknown'));
+    }
+
+    public function test_a_declared_namespaced_class_contributes_its_namespace(): void
+    {
+        $registry = PatternFunctionRegistry::native()->withCustomFunctions(['\\App\\Support\\Re::m#1']);
+
+        $this->assertTrue($registry->matchesContent('<?php use App\Support\Re as R; R::m($s, "/a/");'));
+        $this->assertTrue($registry->matchesContent('<?php Re::m($s, "/a/");'));
+        $this->assertFalse($registry->matchesContent('<?php use Vendor\Re as R; R::run($s);'));
+    }
+
+    public function test_a_declared_global_class_adds_no_namespace(): void
+    {
+        $registry = PatternFunctionRegistry::native()->withCustomFunctions(['Re::m']);
+
+        $this->assertTrue($registry->matchesContent('<?php Re::m("/a/");'));
+        $this->assertFalse($registry->matchesContent('<?php use App\Support\Helpers as H; H::run($s);'));
     }
 }

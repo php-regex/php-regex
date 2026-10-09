@@ -134,7 +134,7 @@ final readonly class PatternFunctionRegistry
                 continue;
             }
 
-            [$key, $isMethod, $function, $needle] = $parsed;
+            [$key, $isMethod, $function, $specNeedles] = $parsed;
 
             if ($isMethod) {
                 $methods[$key] = $function;
@@ -142,7 +142,7 @@ final readonly class PatternFunctionRegistry
                 $functions[$key] = $function;
             }
 
-            $needles[] = $needle;
+            $needles = [...$needles, ...$specNeedles];
         }
 
         return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns);
@@ -190,7 +190,7 @@ final readonly class PatternFunctionRegistry
     }
 
     /**
-     * @return array{0: string, 1: bool, 2: PatternFunction, 3: string}|null
+     * @return array{0: string, 1: bool, 2: PatternFunction, 3: array<int, string>}|null
      */
     private static function parseSpec(string $spec): ?array
     {
@@ -238,13 +238,20 @@ final readonly class PatternFunctionRegistry
             $separator = strrpos($class, '\\');
             $shortClass = false === $separator ? $class : substr($class, $separator + 1);
 
-            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), strtolower($shortClass).'::'];
+            // An aliased import hides the short class name; the namespace
+            // still shows in the file.
+            $needles = [strtolower($shortClass).'::'];
+            if (false !== $separator) {
+                $needles[] = strtolower(substr($class, 0, $separator + 1));
+            }
+
+            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), $needles];
         }
 
         $separator = strrpos($name, '\\');
         $shortName = false === $separator ? $name : substr($name, $separator + 1);
 
-        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns), strtolower($shortName)];
+        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns), [strtolower($shortName)]];
     }
 
     /**
