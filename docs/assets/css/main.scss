@@ -55,6 +55,9 @@
  * 15.23, amber/paper 5.82, ink-soft/paper 7.86, line/paper 4.41. The ambers
  * never cross themes: ember on light paper is 2.76, rust on navy is 3.00 —
  * both below every threshold we honor, so each theme keeps its own.
+ * --amber-tint and --amber-deep extend the same accent into the two states
+ * a filled button needs: a wash behind text that already holds its own
+ * contrast, and a hover step of 6.77 (light) / 6.91 (dark) against paper.
    ========================================================================== */
 
 @mixin tokens-light {
@@ -67,6 +70,8 @@
   --code-bg: #EFEDE4;
   --code-ink: #22344E;
   --link-line: #AD6430;
+  --amber-tint: rgba(168, 74, 8, 0.06);
+  --amber-deep: #8F3F06;
   --scrim: rgba(24, 43, 69, 0.55);
 }
 
@@ -80,6 +85,8 @@
   --code-bg: #0B1524;
   --code-ink: #E4EAF2;
   --link-line: #B8763A;
+  --amber-tint: rgba(233, 118, 37, 0.10);
+  --amber-deep: #F08A3C;
   --scrim: rgba(2, 6, 12, 0.62);
 }
 
@@ -264,6 +271,9 @@ main h6 {
 
 main p {
   margin: 0 0 1.1em;
+  /* Rag quality where the engine knows the word; unsupported engines drop
+     the declaration and keep their default breaking. */
+  text-wrap: pretty;
 }
 
 main ul,
@@ -276,6 +286,12 @@ main li {
   margin-block: .25em;
 }
 
+/* The accent belongs to the marker, not to the text: an amber disc or
+   numeral against ink prose, at 5.37:1 on light paper. */
+main li::marker {
+  color: var(--amber);
+}
+
 main li > ul,
 main li > ol {
   margin-block: .25em;
@@ -286,6 +302,7 @@ main a {
   text-decoration: underline;
   text-decoration-color: var(--link-line);
   text-decoration-thickness: 1px;
+  text-decoration-skip-ink: auto;
   text-underline-offset: .2em;
 }
 
@@ -464,6 +481,145 @@ main pre code,
 
 .highlight .o, .highlight .p {
   color: var(--tk-punct);
+}
+
+/* ---- Language labels ----------------------------------------------------
+ * Kramdown puts the fence language on the wrapper
+ * (div.language-php.highlighter-rouge), so the label is read straight off
+ * that class. It is drawn in the strip of margin under the block: a caption
+ * rather than a chrome bar, which costs no height, never covers a line of
+ * code, and stays clear of the collapsed margin of whatever follows. Only
+ * the block form is targeted - inline code carries the same class on a
+ * <code> element, and a caption there would have nowhere to sit.
+ *
+ * The courtesy is the copy button's: the label stays quiet until the block
+ * is hovered or focused from within, and is always legible where there is
+ * no hover to wait for. The label table below is deliberately a lookup -
+ * CSS cannot read text out of a class, so each fence language names its own
+ * label. A fence with no entry here simply stays unlabelled.
+   -------------------------------------------------------------------------- */
+
+main div.highlighter-rouge::after {
+  position: absolute;
+  right: 0;
+  bottom: -1.4rem;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  opacity: 0;
+  transition: opacity .15s ease;
+  pointer-events: none;
+}
+
+main div.highlighter-rouge:hover::after,
+main div.highlighter-rouge:focus-within::after {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  main div.highlighter-rouge::after {
+    opacity: 1;
+  }
+}
+
+/* Inside a terminal panel the wrapper carries no margin, so a caption would
+   land on the next line. display wins over any content above it. */
+.terminal div.highlighter-rouge::after {
+  display: none;
+}
+
+@mixin code-language($name, $label) {
+  main div.highlighter-rouge.language-#{$name}::after {
+    content: '#{$label}';
+  }
+}
+
+@include code-language(php, php);
+@include code-language(bash, shell);
+@include code-language(sh, shell);
+@include code-language(shell, shell);
+@include code-language(zsh, shell);
+@include code-language(console, console);
+@include code-language(json, json);
+@include code-language(yaml, yaml);
+@include code-language(yml, yaml);
+@include code-language(xml, xml);
+@include code-language(html, html);
+@include code-language(js, javascript);
+@include code-language(javascript, javascript);
+@include code-language(jsx, jsx);
+@include code-language(ts, typescript);
+@include code-language(typescript, typescript);
+@include code-language(tsx, tsx);
+@include code-language(diff, diff);
+@include code-language(ini, ini);
+@include code-language(sql, sql);
+@include code-language(python, python);
+@include code-language(ruby, ruby);
+@include code-language(neon, neon);
+@include code-language(toml, toml);
+@include code-language(lua, lua);
+@include code-language(vim, vim);
+@include code-language(elisp, elisp);
+
+/* ---- Scrollbars inside the wide boxes -----------------------------------
+ * Long lines and wide tables scroll; the platform scrollbar is a bright
+ * foreign object inside a panel of paper. A thin, square thumb in --line on
+ * the panel's own background, the same language as the 1px borders. The
+ * ::-webkit- rules need no @supports: engines that do not know the
+ * pseudo-element drop the block whole.
+   -------------------------------------------------------------------------- */
+
+main pre,
+main table,
+.toc,
+.site-sidebar,
+.terminal-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+main pre::-webkit-scrollbar,
+main table::-webkit-scrollbar,
+.toc::-webkit-scrollbar,
+.site-sidebar::-webkit-scrollbar,
+.terminal-body::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+/* Code panels keep the panel's own background; the rails sit on the paper. */
+main pre::-webkit-scrollbar-track,
+.terminal-body::-webkit-scrollbar-track {
+  background: var(--code-bg);
+}
+
+main pre::-webkit-scrollbar-thumb,
+.terminal-body::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border: 3px solid var(--code-bg);
+}
+
+.toc::-webkit-scrollbar-track,
+.site-sidebar::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+
+.toc::-webkit-scrollbar-thumb,
+.site-sidebar::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border: 3px solid var(--paper);
+}
+
+/* Tables live on the paper too. */
+main table::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+
+main table::-webkit-scrollbar-thumb {
+  border-color: var(--paper);
 }
 
 /* Copy buttons injected into code blocks (and .install blocks). The
@@ -646,11 +802,14 @@ main pre code,
   padding-inline: .75rem;
   color: var(--ink-soft);
   text-decoration: none;
+  /* A rule that is always there, so hovering costs no reflow. */
+  border-bottom: 1px solid transparent;
 }
 
 .site-header nav a:hover,
 .site-header nav a:focus-visible {
   color: var(--ink);
+  border-bottom-color: var(--amber);
 }
 
 .site-header button {
@@ -959,6 +1118,12 @@ main pre code,
   text-decoration: none;
 }
 
+.pager-prev:hover,
+.pager-next:hover {
+  border-color: var(--ink);
+  background: var(--amber-tint);
+}
+
 .pager-next {
   margin-left: auto;
   text-align: right;
@@ -984,6 +1149,21 @@ main pre code,
   max-height: calc(100vh - var(--header-h) - 2rem);
   overflow-y: auto;
   font-size: .9rem;
+}
+
+/* The rail earns a title: a bare list next to the page reads as a second
+   navigation, not as an index of this page. */
+.toc::before {
+  content: 'On this page';
+  display: block;
+  margin: 0 0 .35rem;
+  padding: 0 .5rem .6rem .75rem;
+  border-bottom: 1px solid var(--line);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 /* The list is built at run time; "no headings on this page" hides the
@@ -1192,16 +1372,24 @@ main pre code,
   background: var(--code-bg);
 }
 
+/* Amber is the action color: one filled button per view carries the accent,
+   the outline button stays the quiet alternative. Hover deepens the amber
+   (lightens it on navy) instead of shifting hue. */
 .button-primary,
-.button--primary {
-  background: var(--ink);
+.button--primary,
+.hero-ctas > a.button,
+main > section:not([class]) p > a.button {
+  background: var(--amber);
   color: var(--paper);
-  border-color: var(--ink);
+  border-color: var(--amber);
 }
 
 .button-primary:hover,
-.button--primary:hover {
-  background: var(--ink);
+.button--primary:hover,
+.hero-ctas > a.button:hover,
+main > section:not([class]) p > a.button:hover {
+  background: var(--amber-deep);
+  border-color: var(--amber-deep);
   color: var(--paper);
   text-decoration: underline;
   text-underline-offset: .25em;
@@ -1351,6 +1539,8 @@ main pre code,
   font-weight: 700;
   font-size: 1.4rem;
   line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 
@@ -1383,7 +1573,10 @@ main > section:not([class]) {
 }
 
 /* Pipeline: three steps, the mark is a bordered square holding the
-   amber circle (drawn with a gradient so no radius token exists). */
+   amber circle (drawn with a gradient so no radius token exists). The step
+   number is counted out of the <ol> itself, so the markup stays plain:
+   it sits top-right of each step in mono, the way an editorial spread
+   numbers its figures. */
 .pipeline-steps {
   list-style: none;
   margin-block: 0;
@@ -1391,6 +1584,30 @@ main > section:not([class]) {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
+  counter-reset: step;
+}
+
+.step {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  grid-template-areas:
+    'mark number'
+    'mark title'
+    'text text';
+  column-gap: 1rem;
+  row-gap: .5rem;
+}
+
+.step::before {
+  content: counter(step, decimal-leading-zero);
+  grid-area: number;
+  align-self: end;
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1;
+  color: var(--ink-soft);
 }
 
 @media (min-width: 1024px) {
@@ -1400,11 +1617,12 @@ main > section:not([class]) {
 }
 
 .step-mark {
+  grid-area: mark;
+  align-self: start;
   width: 2.5rem;
   height: 2.5rem;
   display: grid;
   place-items: center;
-  margin-bottom: 1rem;
   border: 1px solid var(--line);
 }
 
@@ -1416,10 +1634,13 @@ main > section:not([class]) {
 }
 
 .step h3 {
-  margin: .25rem 0 .5rem;
+  grid-area: title;
+  align-self: end;
+  margin: 0;
 }
 
 .step p {
+  grid-area: text;
   margin: 0;
   color: var(--ink-soft);
 }
@@ -1441,8 +1662,10 @@ main > section:not([class]) {
   text-decoration: none;
 }
 
+/* Hover is a wash plus the amber rule: flat, but the card answers. */
 .component:hover {
   border-color: var(--amber);
+  background: var(--amber-tint);
 }
 
 .component-name {
@@ -1484,6 +1707,11 @@ main > section:not([class]) {
 .proof-card {
   padding: 1.5rem;
   border: 1px solid var(--line);
+}
+
+/* The whole card is the target, so the whole card answers. */
+.proof-card:hover {
+  border-color: var(--ink);
 }
 
 .proof-card-title {
