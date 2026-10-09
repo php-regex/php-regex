@@ -77,7 +77,7 @@ Line 1: (?<=a+)b
 
 ```bash
 # CLI: Show AST diagram
-bin/regex diagram '/^(?<user>\w+)@(?<host>\w+)$/'
+vendor/bin/regex diagram '/^(?<user>\w+)@(?<host>\w+)$/'
 ```
 
 **Output:**
@@ -101,7 +101,7 @@ Regex
 
 ```bash
 # CLI: Colorized output
-bin/regex highlight '/^(?<user>\w+)@(?<host>\w+)$/'
+vendor/bin/regex highlight '/^(?<user>\w+)@(?<host>\w+)$/'
 ```
 
 ### 5. Generate Test Strings
@@ -340,8 +340,8 @@ for ($i = 0; $i < 3; $i++) {
 
 ## When You Get Stuck
 
-1. **Use the CLI** - `bin/regex explain <pattern>`
-2. **Try diagram** - `bin/regex diagram <pattern>`
+1. **Use the CLI** - `vendor/bin/regex explain <pattern>`
+2. **Try diagram** - `vendor/bin/regex diagram <pattern>`
 3. **Check documentation** - `docs/guides/regex-in-php.md`
 4. **Ask for help** - [GitHub Issues](https://github.com/php-regex/php-regex/issues)
 

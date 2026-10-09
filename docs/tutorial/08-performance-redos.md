@@ -169,7 +169,7 @@ if ($analysis->exceedsThreshold(RedosSeverity::High)) {
 
 ```bash
 # Analyze a pattern
-bin/regex debug '/(a+)+$/'
+vendor/bin/regex debug '/(a+)+$/'
 
 # Output (excerpt):
 #   Status:    Exponential backtracking (proven)

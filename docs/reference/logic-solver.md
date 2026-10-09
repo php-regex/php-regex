@@ -7,7 +7,7 @@ PHPRegex can transform a regex into a deterministic finite automaton (DFA). That
 Verified example (intersection):
 
 ```bash
-bin/regex compare '/edit/' '/[a-z]+/'
+vendor/bin/regex compare '/edit/' '/[a-z]+/'
 ```
 
 ```
@@ -23,7 +23,7 @@ Scenario: Route A is `/order/\d+` and Route B is `/order/[a-z0-9]+`. They look d
 Command:
 
 ```bash
-bin/regex compare '/order\/\d+/' '/order\/[a-z0-9]+/'
+vendor/bin/regex compare '/order\/\d+/' '/order\/[a-z0-9]+/'
 ```
 
 Result:
@@ -45,7 +45,7 @@ Scenario: A security policy allows `[a-zA-Z0-9]+`. A developer writes `\w+`, whi
 Command:
 
 ```bash
-bin/regex compare '/\w+/' '/[a-zA-Z0-9]+/' --method=subset
+vendor/bin/regex compare '/\w+/' '/[a-zA-Z0-9]+/' --method=subset
 ```
 
 Result:
@@ -67,7 +67,7 @@ Scenario: You want to simplify `[0-9]` to `\d` and prove it is safe.
 Command:
 
 ```bash
-bin/regex compare '/[0-9]+/' '/\d+/' --method=equivalence
+vendor/bin/regex compare '/[0-9]+/' '/\d+/' --method=equivalence
 ```
 
 Result:
@@ -158,7 +158,7 @@ The consequences:
 The same engine-relative question, asked at the CLI:
 
 ```bash
-bin/regex compare '/[[:alpha:]]/u' '/[a-zA-Z]/u'
+vendor/bin/regex compare '/[[:alpha:]]/u' '/[a-zA-Z]/u'
 ```
 
 ```
@@ -393,7 +393,7 @@ The indexed strategy typically runs faster at the cost of a slightly higher memo
 CLI:
 
 ```bash
-bin/regex compare '/foo/' '/bar/' --determinizer=subset-indexed
+vendor/bin/regex compare '/foo/' '/bar/' --determinizer=subset-indexed
 ```
 
 Symfony bundle:
@@ -433,7 +433,7 @@ patterns actually use, not the whole `U+0000`-`U+10FFFF` span.
 CLI:
 
 ```bash
-bin/regex compare '/foo/' '/bar/' --minimizer=moore
+vendor/bin/regex compare '/foo/' '/bar/' --minimizer=moore
 ```
 
 Symfony bundle:

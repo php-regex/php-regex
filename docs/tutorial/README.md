@@ -24,7 +24,7 @@ This tutorial takes you from your first pattern to PCRE features used in product
 ### CLI (Explains and Diagrams)
 
 ```bash
-bin/regex explain '/^cat.*dog$/'
+vendor/bin/regex explain '/^cat.*dog$/'
 ```
 
 ```
@@ -41,7 +41,7 @@ Regex matches
 ```
 
 ```bash
-bin/regex diagram '/^cat.*dog$/'
+vendor/bin/regex diagram '/^cat.*dog$/'
 ```
 
 ```
@@ -112,16 +112,16 @@ Throughout this tutorial, use the CLI to visualize patterns:
 
 ```bash
 # Explain a pattern in plain English
-bin/regex explain '/\w+@\w+\.\w+/'
+vendor/bin/regex explain '/\w+@\w+\.\w+/'
 
 # Show pattern structure as a tree
-bin/regex diagram '/\w+@\w+\.\w+/'
+vendor/bin/regex diagram '/\w+@\w+\.\w+/'
 
 # Highlight syntax
-bin/regex highlight '/\w+@\w+\.\w+/'
+vendor/bin/regex highlight '/\w+@\w+\.\w+/'
 
 # Check for security issues
-bin/regex analyze '/(a+)+$/'
+vendor/bin/regex analyze '/(a+)+$/'
 ```
 
 ### In Your PHP Code
@@ -149,7 +149,7 @@ $sample = $regex->generate('/your-pattern/');
 
 1. Read each chapter in order
 2. Try every example in a PHP REPL or script
-3. Use `bin/regex explain` to see what your pattern does
+3. Use `vendor/bin/regex explain` to see what your pattern does
 4. Work through the exercises at the end of each chapter
 
 ### For Those Who Know Regex
@@ -200,9 +200,9 @@ To match a literal dollar sign: `/\$/`
 
 ## If You Get Stuck
 
-1. **Use the explain command**: `bin/regex explain '/your-pattern/'`
-2. **Visualize it**: `bin/regex diagram '/your-pattern/'`
-3. **Check for errors**: `bin/regex validate '/your-pattern/'`
+1. **Use the explain command**: `vendor/bin/regex explain '/your-pattern/'`
+2. **Visualize it**: `vendor/bin/regex diagram '/your-pattern/'`
+3. **Check for errors**: `vendor/bin/regex validate '/your-pattern/'`
 4. **Read the FAQ**: [docs/reference/faq-glossary.md](../reference/faq-glossary.md)
 5. **Ask questions**: [GitHub Issues](https://github.com/php-regex/php-regex/issues)
 

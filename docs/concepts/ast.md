@@ -63,10 +63,10 @@ Use the CLI to see the AST structure:
 
 ```bash
 # Show AST diagram
-bin/regex diagram '/^hello\d+$/'
+vendor/bin/regex diagram '/^hello\d+$/'
 
 # Parse and recompile
-bin/regex parse '/^hello\d+$/'
+vendor/bin/regex parse '/^hello\d+$/'
 ```
 
 ## Real-world benefits

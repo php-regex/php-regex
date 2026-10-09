@@ -20,7 +20,7 @@ For first-time contributors, this is a good entry path:
 - Read `src/Parser/Lexer.php`, `src/Parser/Syntax/TokenParser.php`, and `src/Parser/Validation/Validator.php` for the core pipeline.
 - Use `tests/Fixtures/*` and `tests/Unit/*` to see real patterns and expected behavior.
 - Scan `tests/Fixtures/pcre_patterns.php` for real-world patterns to reuse in examples.
-- Run `bin/regex parse '/^hello$/'` and `bin/regex analyze '/(a+)+$/'` to connect CLI output with AST behavior.
+- Run `vendor/bin/regex parse '/^hello$/'` and `vendor/bin/regex analyze '/(a+)+$/'` to connect CLI output with AST behavior.
 
 ## The Integration Landscape
 

@@ -102,7 +102,7 @@ $regex = Regex::create([
 3. Check what the verdict is about:
 
 ```bash
-bin/regex analyze '/(a{1,20})+$/'
+vendor/bin/regex analyze '/(a{1,20})+$/'
 #   Status     : Exponential backtracking (proven)
 #   Model: {1,20} at offset 1 analysed as {1,}
 #   Attack: "a" x n . "!"
@@ -219,7 +219,7 @@ if ($openParens !== $closeParens) {
 1. Check for catastrophic backtracking:
 
 ```bash
-bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
+vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 
 # A "Replayed on PCRE2 …: preg_match fails from length N" line means the
 # attack printed on the "Attack:" line makes PCRE give up: a ReDoS issue
@@ -228,7 +228,7 @@ bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
 2. Check for unnecessary backtracking:
 
 ```bash
-bin/regex debug '/.*a.*b.*a.*/'
+vendor/bin/regex debug '/.*a.*b.*a.*/'
 
 # Heatmap will show where backtracking occurs
 ```
@@ -285,7 +285,7 @@ echo "Cache enabled: " . ($regex->getCacheStats()['hits']) . " hits\n";
 
 ```bash
 # CLI
-bin/regex clear-cache
+vendor/bin/regex clear-cache
 
 # Programatically
 $cache = $regex->getCache();
@@ -321,7 +321,7 @@ Command "regex:test" is not defined.
 1. Use `help` command to list available commands:
 
 ```bash
-bin/regex help
+vendor/bin/regex help
 ```
 
 2. Update to latest version:
@@ -335,7 +335,7 @@ composer require php-regex/regex-toolkit:^2.0
 3. Check if command is deprecated:
 
 ```bash
-bin/regex help | grep -i deprecated
+vendor/bin/regex help | grep -i deprecated
 
 # Use alternative command
 ```
@@ -513,5 +513,5 @@ https://stackoverflow.com/questions/tagged/regexparser
 3. Enable verbose mode for more details:
 
 ```bash
-bin/regex analyze '/pattern/' -v
+vendor/bin/regex analyze '/pattern/' -v
 ```
