@@ -1604,6 +1604,11 @@
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '0' and '1' explicitly instead of a range.
 
+  corpus/Respect/Validation/src-dev/Spdx/ContributorExtractor/HeaderContributorExtractor.php:41:24
+      → /^(.+)( <(.+)>)?$/
+     WARN  Capturing group "(.+)" never captures any text: it is empty or unset wherever the pattern matches.
+         ↳ Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.
+
   corpus/Respect/Validation/src/Validators/Consonant.php:42:27
       → /^(\s|[b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z])*$/
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4280,6 +4285,8 @@
 
   corpus/freescout-help-desk/freescout/app/Thread.php:379:28
       → /target=['"]?(.*?)['"]?/i
+     WARN  Capturing group "(.*?)" never captures any text: it is empty or unset wherever the pattern matches.
+         ↳ Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.
      WARN  Lazy quantifier "*?" is followed only by what may match nothing, so it always matches its minimum.
          ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
@@ -5840,6 +5847,11 @@
      TIP 
          - /\n{2,}}/m
          + /\n{2,}}/
+
+  corpus/magento/magento2/lib/internal/Magento/Framework/DB/Helper.php:198:36
+      → /(^|[^a-zA-Z_])^(SELECT)?(SUM|MIN|MAX|AVG|COUNT)\s*\(/i
+     WARN  Capturing group "(^|[^a-zA-Z_])" never captures any text: it is empty or unset wherever the pattern matches.
+         ↳ Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.
 
   corpus/magento/magento2/lib/internal/Magento/Framework/DB/Helper/InitStatementsCleanup.php:46:13
       → /\s*SET\s+NAMES\s+utf8(?!mb4)(?:\s*;|\s+COLLATE\s+[\w_]+\s*;?)\s*/i
@@ -11984,6 +11996,16 @@
      TIP 
          - /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/um
          + /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/u
+
+  corpus/shipmonk-rnd/dead-code-detector/src/Provider/NetteUsageProvider.php:182:13
+      → ~^  [ \t*]*  @property(|-read|-write|-deprecated)  [ \t]+  [^\s$]+  [ \t]+  \$  (\w+)  ()~mx
+     WARN  Alternation contains an empty alternative.
+         ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+
+  corpus/shipmonk-rnd/dead-code-detector/src/Provider/NetteUsageProvider.php:346:24
+      → /^\\?[A-Za-z_][A-Za-z0-9_]*(\\[A-Za-z_][A-Za-z0-9_]*)*$/
+     INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/shopware/shopware/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php:184:13
       → /{{\s*(?<property>[\w.\d]+)\s*}}/

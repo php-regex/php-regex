@@ -171,6 +171,7 @@
         "Seldaek/monolog": { "url": "https://github.com/seldaek/monolog", "branch": "main", "commit": "3bed304b1905fed5c30d172872f4d890cbb03c6a" },
         "Seldaek/phar-utils": { "url": "https://github.com/Seldaek/phar-utils.git", "branch": "main", "commit": "61bac7ad5214521bdaef948b95a87814957dbca6" },
         "serbanghita/Mobile-Detect": { "url": "https://github.com/serbanghita/Mobile-Detect.git", "branch": "4.x", "commit": "6ab7b0404df1da8da2aa2c56634362842d9c2a23" },
+        "shipmonk-rnd/dead-code-detector": { "url": "https://github.com/shipmonk-rnd/dead-code-detector", "branch": "master", "commit": "97d101f109d1f3cb059ca3e293c298b69390d92f" },
         "Shopify/shopify-api-php": { "url": "https://github.com/Shopify/shopify-api-php.git", "branch": "main", "commit": "3c6a324dfd351cdfc43a6c7b2ef7e330c8c23634" },
         "shopware/shopware": { "url": "https://github.com/shopware/shopware.git", "branch": "trunk", "commit": "c64d7402b4f6109446f350e29a3d376a5d94b9a7" },
         "silverstripe/silverstripe-framework": { "url": "https://github.com/silverstripe/silverstripe-framework.git", "branch": "6", "commit": "0efb8ae9d7470a8bfae5e182a5473c2a1d74bd32" },
