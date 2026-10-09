@@ -365,6 +365,11 @@ main samp {
   font-family: var(--font-mono);
 }
 
+/* Disclosure markers take the accent, exactly like list markers. */
+main details > summary::marker {
+  color: var(--amber);
+}
+
 main :not(pre) > code,
 main :not(pre) > samp {
   font-size: .95em;
@@ -1414,7 +1419,7 @@ main table::-webkit-scrollbar-thumb {
    (lightens it on navy) instead of shifting hue. */
 .button-primary,
 .button--primary,
-.hero-ctas > a.button,
+.hero-ctas > a.button:first-of-type,
 main > section:not([class]) p > a.button {
   background: var(--amber);
   color: var(--paper);
@@ -1423,7 +1428,7 @@ main > section:not([class]) p > a.button {
 
 .button-primary:hover,
 .button--primary:hover,
-.hero-ctas > a.button:hover,
+.hero-ctas > a.button:first-of-type:hover,
 main > section:not([class]) p > a.button:hover {
   background: var(--amber-deep);
   border-color: var(--amber-deep);
@@ -1469,7 +1474,10 @@ main > section:not([class]) p > a.button:hover {
 
   .hero-inner > .terminal {
     grid-column: 2;
-    grid-row: 1 / span 4;
+    /* Every row of the text stack, whatever the landing grows into: the
+       panel stays centered against the whole column, not against the four
+       rows it happened to be written for. */
+    grid-row: 1 / -1;
     align-self: center;
     min-width: 0;
   }
@@ -1611,9 +1619,9 @@ main > section:not([class]) {
 
 /* Lede: the paragraph that follows a section title is the section's own
    sentence, so it is set larger and softer than the body it introduces. */
-.pipeline > p,
-.constellation > p,
-.proof > p,
+.pipeline > p:not(:last-child),
+.constellation > p:not(:last-child),
+.proof > p:not(:last-child),
 main > section:not([class]) > p:not(:has(a.button)) {
   max-width: 60ch;
   margin: 0 0 2rem;
@@ -1779,6 +1787,15 @@ main > section:not([class]) > p:not(:has(a.button)) {
   text-underline-offset: .25em;
 }
 
+/* Cards that carry a command or a config block - the "wire it into your
+   stack" section - get the panel at the card's own scale: the article
+   block's padding would swallow a card that is mostly code. */
+.component pre {
+  padding: .65rem .8rem;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
 /* Proof cards. */
 .proof-grid {
   display: grid;
@@ -1856,7 +1873,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
 }
 
 .error-page h1 {
-  margin-bottom: .5em;
+  margin: .5rem 0 .75rem;
 }
 
 .error-page p {
@@ -1864,14 +1881,33 @@ main > section:not([class]) > p:not(:has(a.button)) {
   max-width: 50ch;
 }
 
+/* The pattern that matched nothing: the code itself, in display amber,
+   above the sentence written in the library's own voice. */
+.error-code {
+  margin: 1.5rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--amber);
+}
+
+/* The .error-page p rule above is one class and one element, so the sub
+   line needs its own weight to sit a measure narrower than the rest. */
+.error-page .error-sub {
+  max-width: 44ch;
+  color: var(--ink-soft);
+}
+
 .error-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: .75rem 1.5rem;
+  gap: .75rem;
   list-style: none;
+  margin: 1.5rem 0 0;
   padding: 0;
-  margin: 1rem 0 0;
 }
 
 .error-actions a {
@@ -2041,37 +2077,6 @@ body.drawer-open {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-}
-
-/* ---- 404: the pattern that matched nothing ---- */
-
-.error-code {
-  margin: 1.5rem 0 0;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(4rem, 12vw, 7rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--amber);
-}
-
-.error-page h1 {
-  margin: .5rem 0 .75rem;
-}
-
-.error-sub {
-  max-width: 44ch;
-  color: var(--ink-soft);
-}
-
-.error-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: .75rem;
-  list-style: none;
-  margin: 1.5rem 0 0;
-  padding: 0;
 }
 
 /* ---- Header on narrow screens: the search toggle keeps its icon ---- */
