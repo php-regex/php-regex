@@ -155,6 +155,7 @@ jobs:
         run: |
           composer install -d tools/phpunit --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
           composer install -d tools/phpstan --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpbench --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
 
       - name: Run PHPStan
         run: tools/phpstan/vendor/bin/phpstan analyse

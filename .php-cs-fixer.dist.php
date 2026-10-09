@@ -25,7 +25,6 @@ $finder = (new PhpCsFixer\Finder())
         __DIR__.'/bin',
         __DIR__.'/src',
         __DIR__.'/tests',
-        __DIR__.'/benchmarks',
     ])
     ->exclude('Fixtures')
     // Laravel bridge uses facades which must be called statically

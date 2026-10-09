@@ -10,7 +10,6 @@ tasks:
       - bin/**/*.php
       - src/**/*.php
       - tests/**/*.php
-      - benchmarks/**/*.php
     excludes:
       - tests/Fixtures/**/*
     generates:
@@ -27,7 +26,6 @@ tasks:
       - bin/**/*.php
       - src/**/*.php
       - tests/**/*.php
-      - benchmarks/**/*.php
     excludes:
       - tests/Fixtures/**/*
     generates:
@@ -45,7 +43,6 @@ tasks:
       - bin/**/*.php
       - src/**/*.php
       - tests/**/*.php
-      - benchmarks/**/*.php
     generates:
       - .cache/phpstan/*
       - .task/phpstan.success
@@ -118,7 +115,6 @@ tasks:
       - cmd: touch .task/phpbench.success
     sources:
       - phpbench.json
-      - phpbench.yml
       - src/**/*.php
       - tests/Benchmark/**/*.php
     generates:

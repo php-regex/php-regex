@@ -54,6 +54,7 @@ return static function (RectorConfig $rectorConfig): void {
         FinalizeTestCaseClassRector::class,
         AddInstanceofAssertForNullableInstanceRector::class,
         __DIR__.'/tests/Fixtures',
+        __DIR__.'/tests/Benchmark/Fixtures',
         // Psalm reads these as they are written
         __DIR__.'/tests/Integration/Bridge/Psalm/Fixtures',
         // Laravel bridge tests use facades which must be called statically

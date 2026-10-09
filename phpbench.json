@@ -1,5 +1,16 @@
 {
     "$schema": "https://phpbench.github.io/phpbench/schema.json",
     "runner.bootstrap": "vendor/autoload.php",
-    "runner.path": "tests/Benchmark"
+    "runner.path": "tests/Benchmark",
+    "runner.file_pattern": "*Bench.php",
+    "runner.php_config": {
+        "auto_prepend_file": "",
+        "opcache.enable_cli": 0,
+        "opcache.jit": "off",
+        "pcre.jit": 1,
+        "memory_limit": "-1",
+        "pcov.enabled": 0,
+        "xdebug.mode": "off"
+    },
+    "storage.xml_storage_path": "var/phpbench"
 }

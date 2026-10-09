@@ -281,10 +281,12 @@ PHPRegex integrates with common PHP tooling:
 
 ## Performance
 
-PHPRegex ships lightweight benchmark scripts in `benchmarks/` to track parser, compiler, and formatter throughput.
+PHPRegex measures its own time and memory with [PHPBench](https://github.com/phpbench/phpbench), one group per subsystem (`lexer`, `parser`, `validate`, `lint`, `redos`, `redos-corpus`, `automata`, `optimizer`, `capture-shape`, `formatter`).
 
-- Run formatter benchmarks: `php benchmarks/benchmark_formatters.php`
-- Run all benchmarks: `for file in benchmarks/benchmark_*.php; do echo "Running $file"; php "$file"; echo; done`
+- Run one group: `composer bench -- --group=automata`
+- Run the whole suite: `composer bench` (long; `redos-corpus`, one variant per corpus pattern, is the longest group)
+
+See the [maintainers guide](docs/MAINTAINERS_GUIDE.md#benchmarks) for the inputs and how to add a case.
 
 ## Documentation
 

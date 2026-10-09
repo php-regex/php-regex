@@ -29,14 +29,25 @@ use PHPRegex\Parser\RegexParser;
  * shape for the four flag sets, with no parse cache. One revolution reads a
  * whole corpus; the mean divided by the corpus size is the time per pattern.
  *
- * Run with: tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
+ * Each corpus keeps the patterns the PCRE engine compiles, and only those:
+ * the list, and so the work, is the same whatever parser is measured. The
+ * before-method reads every pattern once, untimed, with the parser under
+ * measurement and errors when it rejects one, so a parser that drops a
+ * pattern breaks the variant instead of timing a shorter list. That pass
+ * also loads the code; there is no AST cache, but the revolutions after the
+ * first find the library's process-wide caches filled, as the measured
+ * revolutions of a warmup did. It ends by resetting the peak memory, so
+ * mem_peak covers the measured revolutions only (phpbench's own warmup would
+ * run after that reset). benchNoop runs the same before-method on the same
+ * corpus, so its peak is the floor of that corpus.
+ *
+ * Run with: composer bench -- --group=capture-shape
  */
 #[Groups(['capture-shape'])]
 #[Iterations(5)]
 #[Revs(3)]
-#[Warmup(1)]
+#[Warmup(0)]
 #[OutputTimeUnit('milliseconds')]
-#[BeforeMethods('setUp')]
 final class CaptureShapeBench
 {
     private const PARITY_CORPUS = __DIR__.'/../Fixtures/CaptureShapeParity/cases.php';
@@ -49,15 +60,25 @@ final class CaptureShapeBench
 
     private CaptureShapeAnalyzer $analyzer;
 
-    public function setUp(): void
+    public function __construct()
     {
         $this->parser = RegexParser::create(['cache' => null]);
         $this->analyzer = new CaptureShapeAnalyzer();
     }
 
     /**
+     * The memory floor: the same corpus read once untimed, no work.
+     *
      * @param array{patterns: list<string>} $params
      */
+    #[BeforeMethods('setUpCorpus')]
+    #[ParamProviders('provideCorpora')]
+    public function benchNoop(array $params): void {}
+
+    /**
+     * @param array{patterns: list<string>} $params
+     */
+    #[BeforeMethods('setUpCorpus')]
     #[ParamProviders('provideCorpora')]
     public function benchMatchShape(array $params): void
     {
@@ -70,7 +91,38 @@ final class CaptureShapeBench
     }
 
     /**
-     * Each corpus keeps the patterns the parser reads; the key says how many.
+     * @param array{patterns: list<string>} $params
+     *
+     * @throws \UnexpectedValueException when the parser rejects a pattern PCRE compiles
+     */
+    public function setUpCorpus(array $params): void
+    {
+        $this->parser = RegexParser::create(['cache' => null]);
+        $this->analyzer = new CaptureShapeAnalyzer();
+
+        $rejected = [];
+        foreach ($params['patterns'] as $pattern) {
+            try {
+                $shape = $this->analyzer->analyze($this->parser->parse($pattern));
+                foreach (self::FLAG_SETS as $flags) {
+                    $shape->matchShape($flags);
+                }
+            } catch (ExceptionInterface $e) {
+                $rejected[] = $pattern.' ('.$e->getMessage().')';
+            }
+        }
+
+        if ([] !== $rejected) {
+            throw new \UnexpectedValueException(\sprintf('The parser rejects %d of %d patterns PCRE compiles: %s', \count($rejected), \count($params['patterns']), implode('; ', \array_slice($rejected, 0, 5))));
+        }
+
+        memory_reset_peak_usage();
+    }
+
+    /**
+     * The parity and the lint corpus, each named for itself: the count of
+     * patterns stays out of the name, so both sides of a comparison pair the
+     * same variant.
      *
      * @return \Generator<string, array{patterns: list<string>}>
      */
@@ -78,8 +130,7 @@ final class CaptureShapeBench
     {
         /** @var list<array{pattern: string}> $parity */
         $parity = require self::PARITY_CORPUS;
-        $patterns = self::readable(array_column($parity, 'pattern'));
-        yield \sprintf('parity corpus (%d patterns)', \count($patterns)) => ['patterns' => $patterns];
+        yield 'parity' => ['patterns' => self::compiled(array_column($parity, 'pattern'))];
 
         $lint = json_decode((string) file_get_contents(self::LINT_CORPUS), true, 512, \JSON_THROW_ON_ERROR);
         $lintPatterns = [];
@@ -88,33 +139,25 @@ final class CaptureShapeBench
                 $lintPatterns[] = $entry['pattern'];
             }
         }
-        $patterns = self::readable($lintPatterns);
-        yield \sprintf('lint corpus (%d patterns)', \count($patterns)) => ['patterns' => $patterns];
+        yield 'lint' => ['patterns' => self::compiled($lintPatterns)];
     }
 
     /**
+     * The patterns the PCRE engine compiles: the one filter both sides share.
+     *
      * @param list<mixed> $patterns
      *
      * @return list<string>
      */
-    private static function readable(array $patterns): array
+    private static function compiled(array $patterns): array
     {
-        $parser = RegexParser::create(['cache' => null]);
-        $analyzer = new CaptureShapeAnalyzer();
-        $readable = [];
+        $compiled = [];
         foreach ($patterns as $pattern) {
-            if (!\is_string($pattern)) {
-                continue;
+            if (\is_string($pattern) && false !== @preg_match($pattern, '')) {
+                $compiled[] = $pattern;
             }
-
-            try {
-                $analyzer->analyze($parser->parse($pattern))->matchShape();
-            } catch (ExceptionInterface) {
-                continue;
-            }
-            $readable[] = $pattern;
         }
 
-        return $readable;
+        return $compiled;
     }
 }

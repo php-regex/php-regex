@@ -4,7 +4,6 @@ path:
     - bin/regex
     - src/
     - tests/
-    - benchmarks/
 
 exclude:
     - Fixtures/

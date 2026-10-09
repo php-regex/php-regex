@@ -39,7 +39,6 @@
 /bin/release            export-ignore
 /bin/status             export-ignore
 /bin/corpus             export-ignore
-/phpbench.yml           export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore
 /deptrac.yaml           export-ignore
@@ -58,7 +57,6 @@
 
 # Directories not needed in distribution
 /art                    export-ignore
-/benchmarks             export-ignore
 /corpus                 export-ignore
 /corpus.json            export-ignore
 /var                    export-ignore

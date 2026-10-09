@@ -522,6 +522,66 @@ corpus:
 tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
 ```
 
+## Benchmarks
+
+`tests/Benchmark/` measures time and memory with PHPBench, one group per
+subsystem:
+
+| group | measures |
+|---|---|
+| `lexer`, `parser`, `validate` | tokenizing, parsing and validating |
+| `lint` | the lint run over a fixed set of files, one process |
+| `redos` | the theoretical ReDoS analysis |
+| `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group) |
+| `automata` | NFA construction, determinization, minimization and the language solver |
+| `optimizer` | the optimizer, with its default options and with every rewrite verified by automata (the PHPStan extension's options) |
+| `capture-shape`, `formatter` | reading a capture shape, writing lint reports |
+
+```bash
+composer bench -- --group=automata
+```
+
+Three kinds of input:
+
+- **The lint corpus** (`tests/Fixtures/Corpus/lint-expectations.json`): one
+  subject runs every pattern of it, so the number is the cost of real code.
+- **One case per file** under `tests/Benchmark/data/<group>/<slug>.php`, each
+  returning its `pattern`, its `origin` (`synthetic`, `issue #N` or
+  `corpus:<where>`) and a `note`. A case of `redos` or `automata` also
+  declares the outcome it measures in `expect`: `proven`, `heuristic` or
+  `budget_exceeded` for `redos`, `complete` or `guard` for `automata`; no
+  other group takes it. A change that moves the case to another outcome
+  fails the check below, as the timing would no longer measure the same
+  work. A pattern PCRE refuses, kept to time the error path, says so with
+  `'invalid' => true`. A pattern that was slow, or that someone reported as
+  slow, gets a file here in the same commit as its fix, and the file stays:
+  the case is measured from then on. The slug is the case's name in every
+  comparison: choose it once.
+- **Growth series** (`automata`, `redos`): the same pattern family at growing
+  sizes (`a{80}`, `a{160}`, `a{320}`, `a{640}`). How the time grows from one
+  size to the next shows the complexity class; every point stays under the
+  default resource limits, so a series measures work, not a limit tripping.
+
+Most subjects are cold: the caches are emptied before each measurement,
+which is what a linter pays when it sees a pattern once. Subjects ending in
+`Warm` keep the caches, as a long-running process does; a subject run over
+several revolutions finds the process-wide caches filled after its first
+one, and its docblock says so. `benchNoop` in each
+class gives the memory floor of the process; subtract it to read a subject's
+own memory, and read that figure as coarse.
+
+`phpbench.json` pins the settings that matter (PCRE JIT, OPcache, memory
+limit, and Xdebug and PCOV off, which would otherwise skew every number) for
+every benchmark process. Where the local `php.ini` loads extensions that
+make each PHP process slow to start, `--php-disable-ini` runs the processes
+without it, provided `php -n -m` still lists `mbstring`. Compare numbers from
+the same machine only.
+
+`tests/Unit/Benchmark/BenchmarkDataTest.php` checks every case file: the real
+PCRE engine compiles each pattern (or refuses it, for a case marked
+`'invalid' => true`), the library parses it, and every growth series stays
+under the limits.
+
 ## Pattern Info Next to pcre2test
 
 The exact facts of `PatternInfo` (capture count, names, max back reference,
