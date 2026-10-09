@@ -515,8 +515,10 @@ Or mark the parameter at the source, with the attribute
 `#[Language('RegExp')]` (`jetbrains/phpstorm-attributes`) if the code already
 carries it: every linted file is first read for the functions and static
 methods that declare one, and their calls are then read as if they were
-configured. An instance call (`$str->matches(...)`) names no class the linter
-can know, and is not read.
+configured. A call written unqualified in the function's own namespace,
+`grep()` in `namespace App`, is read, as PHP calls `App\grep()` first. An
+instance call (`$str->matches(...)`) names no class the linter can know, and
+is not read.
 
 ```php
 use PHPRegex\Parser\Attribute\RegexPattern;

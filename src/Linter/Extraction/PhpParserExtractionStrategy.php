@@ -205,7 +205,11 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface
             return [];
         }
 
-        $patternFunction = $this->registry->lookupFunction($funcCall->name->toString());
+        // An unqualified name in a namespace: PHP calls the namespace's
+        // function first, the global one when there is none.
+        $namespaced = $funcCall->name->getAttribute('namespacedName');
+        $patternFunction = ($namespaced instanceof Name ? $this->registry->lookupFunction($namespaced->toString()) : null)
+            ?? $this->registry->lookupFunction($funcCall->name->toString());
         if (null === $patternFunction) {
             return [];
         }

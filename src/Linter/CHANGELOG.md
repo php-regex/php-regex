@@ -51,6 +51,8 @@ CHANGELOG
    `PHPRegex\Parser\Attribute\RegexPattern`, or PhpStorm's
    `#[Language('RegExp')]`, is a pattern function, as if
    configured: the files are read for such declarations before extraction.
+   A call written unqualified in a namespace, `grep()` in `namespace App`, is
+   matched first as that namespace's function, `App\grep()`, as PHP calls it.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the
    project's range parses into another meaning, `/a{,3}/` from PHP 8.4, at
    severity `warning`, on by default.

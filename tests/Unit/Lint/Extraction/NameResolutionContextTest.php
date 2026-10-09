@@ -74,6 +74,23 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('preg_match', $context->resolveFunction('preg_match'));
     }
 
+    public function test_an_unqualified_function_is_first_looked_up_in_the_namespace(): void
+    {
+        $context = new NameResolutionContext();
+        $context->enterNamespace('App\\Service');
+        $context->importFunction('imported', 'Lib\\imported');
+
+        $this->assertSame('App\\Service\\grep', $context->namespacedFunction('grep'));
+        $this->assertNull($context->namespacedFunction('imported'), 'An imported function is the one called.');
+        $this->assertNull($context->namespacedFunction('\\grep'));
+        $this->assertNull($context->namespacedFunction('Sub\\grep'));
+    }
+
+    public function test_an_unqualified_function_of_the_global_namespace_has_no_namespaced_name(): void
+    {
+        $this->assertNull((new NameResolutionContext())->namespacedFunction('grep'));
+    }
+
     public function test_an_imported_function_resolves_to_its_target(): void
     {
         $context = new NameResolutionContext();

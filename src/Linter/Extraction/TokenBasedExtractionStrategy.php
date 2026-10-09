@@ -372,7 +372,11 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             return null;
         }
 
-        $patternFunction = $this->registry->lookupFunction($context->resolveFunction($name));
+        // PHP calls the current namespace's function first, the global one
+        // when there is none.
+        $namespaced = $context->namespacedFunction($name);
+        $patternFunction = (null === $namespaced ? null : $this->registry->lookupFunction($namespaced))
+            ?? $this->registry->lookupFunction($context->resolveFunction($name));
         if (null === $patternFunction) {
             return null;
         }

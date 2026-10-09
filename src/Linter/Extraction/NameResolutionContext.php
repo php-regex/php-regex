@@ -87,9 +87,8 @@ final class NameResolutionContext
     /**
      * Fully qualify a function name as written at the call site.
      *
-     * An unqualified name is reported as-is: PHP looks it up in the current
-     * namespace and falls back to the global function, which is the one the
-     * registry knows about.
+     * An unqualified name is reported as-is, the global function PHP falls
+     * back to; namespacedFunction() gives the one it looks up first.
      */
     public function resolveFunction(string $written): string
     {
@@ -102,6 +101,20 @@ final class NameResolutionContext
         }
 
         return $this->resolveClass($written);
+    }
+
+    /**
+     * The function PHP calls first for an unqualified name: the current
+     * namespace's, before the global one. Null when the name is qualified or
+     * imported, or the code is in the global namespace.
+     */
+    public function namespacedFunction(string $written): ?string
+    {
+        if ('' === $this->namespace || str_contains($written, '\\') || isset($this->functionAliases[strtolower($written)])) {
+            return null;
+        }
+
+        return $this->namespace.'\\'.$written;
     }
 
     private function qualify(string $name): string

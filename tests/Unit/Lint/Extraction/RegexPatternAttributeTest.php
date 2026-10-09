@@ -143,6 +143,39 @@ final class RegexPatternAttributeTest extends TestCase
         $this->assertNotContains('/text/', $patterns);
     }
 
+    /**
+     * PHP calls App\grep() for grep() written in namespace App, when that
+     * function exists: the declaring file's own calls are read.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_an_unqualified_call_in_the_declaring_namespace_is_read(\Closure $strategy): void
+    {
+        $file = $this->write(<<<'CODE'
+            <?php
+
+            namespace App;
+
+            use PHPRegex\Parser\Attribute\RegexPattern;
+
+            function grep(#[RegexPattern] string $regex, array $lines): array
+            {
+                return [];
+            }
+
+            grep('/same/', []);
+            CODE);
+
+        $found = [];
+        foreach ($strategy()->extract([$file]) as $occurrence) {
+            $found[$occurrence->pattern] = $occurrence->line;
+        }
+
+        $this->assertSame(['/same/' => 12], $found);
+    }
+
     #[Test]
     public function test_the_scan_reads_declarations_as_php_writes_them(): void
     {
