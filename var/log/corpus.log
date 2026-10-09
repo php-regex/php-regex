@@ -1224,11 +1224,11 @@
          - /(.*-----BEGIN CERTIFICATE-----.*-----END CERTIFICATE-----){50}$/Uims
          + /(.*-{5}BEGIN CERTIFICATE-{5}.*-{5}END CERTIFICATE-{5}){50}$/Uims
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:372:28
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:373:28
       → /[<>{}]/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:550:24
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:551:24
       → /<[\s]*script/ims
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -1236,14 +1236,14 @@
          - /<[\s]*script/ims
          + /<[\s]*script/i
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:550:162
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:551:162
       → /.*script\:/ims
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
      TIP 
          - /.*script\:/ims
          + /.*script\:/is
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:554:42
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:555:42
       → /<[\s]*(i?frame|form|input|embed|object)/ims
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -1251,60 +1251,60 @@
          - /<[\s]*(i?frame|form|input|embed|object)/ims
          + /<[\s]*(i?frame|form|input|embed|object)/i
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:677:34
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:678:34
       → /^([0-9]{4})-((0?[0-9])|(1[0-2]))-((0?[0-9])|([1-2][0-9])|(3[01]))( [0-9]{2}:[0-9]{2}:[0-9]{2})?$/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '1' and '2' explicitly instead of a range.
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:689:25
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:690:25
       → /^([0-9]{4})-((?:0?[0-9])|(?:1[0-2]))-((?:0?[0-9])|(?:[1-2][0-9])|(?:3[01]))( [0-9]{2}:[0-9]{2}:[0-9]{2})?$/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '1' and '2' explicitly instead of a range.
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:901:27
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:902:27
       → /^both|catalog|search|none$/i
      WARN  An anchor holds for its own alternative only: "catalog" matches anywhere in the subject.
          ↳ If the anchors are meant for every alternative, group them: "^(?:both|catalog|search|none)$".
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1006:27
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1007:27
       → /^[~:#,$%&_=\(\)\.\? \+\-@\/a-zA-Z0-9\pL\pS-]+$/u
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: '-' (duplicate)
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1118:27
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1131:27
       → /^([^<>{}]|<br \/>)*$/i
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1262:45
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1275:45
       → /^\-?[0-9]{1,8}\.[0-9]{1,8}$/s
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /^\-?[0-9]{1,8}\.[0-9]{1,8}$/s
          + /^\-?[0-9]{1,8}\.[0-9]{1,8}$/
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1274:34
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1287:34
       → /^[a-zA-Z]{2,3}$/s
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /^[a-zA-Z]{2,3}$/s
          + /^[a-zA-Z]{2,3}$/
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1286:34
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1299:34
       → /^[a-zA-Z]{2,3}\.(?:gzip|tar\.gz)$/s
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
          - /^[a-zA-Z]{2,3}\.(?:gzip|tar\.gz)$/s
          + /^[a-zA-Z]{2,3}\.(?:gzip|tar\.gz)$/
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1366:27
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1379:27
       → /^[0-1]\.[0-9]{1,2}(\.[0-9]{1,2}){0,2}$/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '0' and '1' explicitly instead of a range.
      INFO  Quantified capturing group "(...)" with "{0,2}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/PrestaShop/PrestaShop/classes/Validate.php:1408:31
+  corpus/PrestaShop/PrestaShop/classes/Validate.php:1421:31
       → ~^((?!oProxyCommand).)*$~i
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -2452,7 +2452,7 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/WordPress/wordpress-develop/src/wp-includes/kses.php:4064:20
+  corpus/WordPress/wordpress-develop/src/wp-includes/kses.php:4069:20
       → /(?:repeating-)?(?:linear|radial|conic)-gradient\((?:[^()]|\([^()]*\))*\)/
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -3190,7 +3190,7 @@
      INFO  Quantified capturing group "(...)" with "{2,}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/composer/composer/src/Composer/Command/PackageDiscoveryTrait.php:225:43
+  corpus/composer/composer/src/Composer/Command/PackageDiscoveryTrait.php:224:43
       → {^\s*(?P<name>[\S/]+)(?:\s+(?P<version>\S+))?\s*$}
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
@@ -3213,7 +3213,7 @@
          - {(-----BEGIN PUBLIC KEY-----.+?-----END PUBLIC KEY-----)}s
          + {(-{5}BEGIN PUBLIC KEY-{5}.+?-{5}END PUBLIC KEY-{5})}s
 
-  corpus/composer/composer/src/Composer/Command/ShowCommand.php:1537:49
+  corpus/composer/composer/src/Composer/Command/ShowCommand.php:1619:49
       → {(\.0)+$}D
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -3276,7 +3276,7 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-  corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:313:36
+  corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:328:36
       → {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
      TIP 
          - {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
@@ -3633,7 +3633,7 @@
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/craftcms/cms/src/helpers/FileHelper.php:255:34
+  corpus/craftcms/cms/src/helpers/FileHelper.php:259:34
       → /\x{00a0}/iu
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -9396,6 +9396,11 @@
      WARN  "+" is a literal character inside a character class, not a quantifier.
          ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
+  corpus/nette/tracy/src/Tracy/Helpers.php:608:4
+      → ( (?: (^|[-+\([{}=,:;!%^&*|?~]|/(?![/*])|return|throw) (?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* (/(?![/*])(?:\\[^\n]|[^[\n/\\]|\[(?:\\[^\n]|[^]])++)+/) |(^ |'(?:\\.|[^\n'\\])*' |"(?:\\.|[^\n"\\])*" |([0-9A-Za-z_$]+) |([-+]+) |. ) )(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* ())sx
+     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
   corpus/nette/tracy/src/Tracy/Logger/Logger.php:164:17
       → #\s*\r?\n\s*#
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -9678,19 +9683,19 @@
          - #([kmgtp]?b?)$#si
          + #([kmgtp]?b?)$#i
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:256:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:254:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
          + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-\w+)?\n\n/
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:279:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:277:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
          + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-.+)?\n\n/
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:304:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:302:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
@@ -10230,7 +10235,7 @@
          - ~^\s*AUTO_INCREMENT\s*~is
          + ~^\s*AUTO_INCREMENT\s*~i
 
-  corpus/phpmyadmin/sql-parser/src/Context.php:675:27
+  corpus/phpmyadmin/sql-parser/src/Context.php:676:27
       → /^[$]|^\d+$|[^0-9a-zA-Z$_\x80-\xffff]/
      WARN  Redundant elements detected in character class.
          ↳ Redundant elements: 'f' (covered by range 'a'-'z'), 'f' (duplicate)
@@ -10685,6 +10690,11 @@
      TIP 
          - /\(([^\)]+)\)|\[(\d+)\]: (.*)/
          + /\(([^)]+)\)|\[(\d+)\]: (.*)/
+
+  corpus/rectorphp/rector-src/scoper.php:122:17
+      → #(public function getRuleDefinition\(\): RuleDefinition\s+\{\R)(.*?)(\R[^\r\n]*[\]\)]{2,};\R\s*\})#s
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the second quantifier to its minimum.
 
   corpus/rectorphp/rector-src/scripts/check-before-after-same-fixtures.php:56:62
       → #^\s*-----\s*$#m
@@ -14143,7 +14153,7 @@
       → /^(\d+)\.(\d+).*/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/wikimedia/mediawiki/includes/JobQueue/JobRunner.php:600:21
+  corpus/wikimedia/mediawiki/includes/JobQueue/JobRunner.php:603:21
       → !^(\d+)(k|m|g|)$!i
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -15312,12 +15322,12 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/yiisoft/yii2/framework/db/QueryBuilder.php:1266:32
+  corpus/yiisoft/yii2/framework/db/QueryBuilder.php:1267:32
       → /^(.*?)(?i:\s+as\s+|\s+)([\w\-_\.]+)$/
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
-  corpus/yiisoft/yii2/framework/db/QueryBuilder.php:1787:24
+  corpus/yiisoft/yii2/framework/db/QueryBuilder.php:1788:24
       → /^(.*?)(?i:\s+as|)\s+([^ ]+)$/
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
