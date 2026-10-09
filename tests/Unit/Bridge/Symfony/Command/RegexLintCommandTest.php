@@ -23,12 +23,14 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class RegexLintCommandTest extends TestCase
 {
+    #[Test]
     public function test_command_succeeds_by_default_with_no_patterns(): void
     {
         $command = $this->createCommand();
@@ -40,6 +42,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
     }
 
+    #[Test]
     public function test_command_has_correct_name(): void
     {
         $command = $this->createCommand();
@@ -47,6 +50,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame('regex:lint', $command->getName());
     }
 
+    #[Test]
     public function test_command_has_all_expected_options(): void
     {
         $command = $this->createCommand();
@@ -65,6 +69,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertFalse($definition->hasOption('optimize'));
     }
 
+    #[Test]
     public function test_json_format_outputs_raw_json(): void
     {
         $command = $this->createCommand();
@@ -87,6 +92,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame([], $data['results']);
     }
 
+    #[Test]
     public function test_invalid_format_returns_error(): void
     {
         $command = $this->createCommand();
@@ -102,6 +108,7 @@ final class RegexLintCommandTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_normalize_string_list_filters_invalid_values(): void
     {
         $command = $this->createCommand();
@@ -115,6 +122,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame(['a', 'b'], $method->invoke($command, ['a', '', 'b', null, 123]));
     }
 
+    #[Test]
     public function test_sort_results_by_file_and_line(): void
     {
         $command = $this->createCommand();
@@ -139,6 +147,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame(10, $sorted[2]['line']);
     }
 
+    #[Test]
     public function test_show_banner_outputs_correct_format(): void
     {
         $command = $this->createCommand();
@@ -154,6 +163,7 @@ final class RegexLintCommandTest extends TestCase
         $method->invoke($command, $io, 1, ProjectTarget::fromSources([], [], null, []));
     }
 
+    #[Test]
     public function test_show_footer_outputs_correct_format(): void
     {
         $command = $this->createCommand();
@@ -169,6 +179,7 @@ final class RegexLintCommandTest extends TestCase
         $method->invoke($command, $io);
     }
 
+    #[Test]
     public function test_constructor_uses_defaults_when_paths_are_empty(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -191,6 +202,7 @@ final class RegexLintCommandTest extends TestCase
      * and in the project's vendor/, whatever paths the run lints; with no
      * project directory, the working directory is the project.
      */
+    #[Test]
     public function test_execute_reads_declarations_in_the_configured_paths_and_vendor(): void
     {
         $source = new class implements PatternSourceInterface {
@@ -234,6 +246,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame([['/app/vendor'], [getcwd().'/vendor']], $source->vendorPaths);
     }
 
+    #[Test]
     public function test_execute_rejects_invalid_jobs_value(): void
     {
         $command = $this->createCommand();
@@ -245,6 +258,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('positive integer', (string) $tester->getDisplay());
     }
 
+    #[Test]
     public function test_execute_progress_callback_handles_empty_totals(): void
     {
         $progressSource = new class implements PatternSourceInterface {
@@ -280,6 +294,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
     }
 
+    #[Test]
     public function test_execute_renders_collection_failure(): void
     {
         $failingSource = new class implements PatternSourceInterface {
@@ -308,6 +323,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('boom', (string) $tester->getDisplay());
     }
 
+    #[Test]
     public function test_execute_renders_collection_failure_for_json(): void
     {
         $failingSource = new class implements PatternSourceInterface {
@@ -336,6 +352,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('Failed to collect patterns', (string) $tester->getDisplay());
     }
 
+    #[Test]
     public function test_execute_analyzes_patterns_with_progress(): void
     {
         $source = new class implements PatternSourceInterface {
@@ -370,6 +387,7 @@ final class RegexLintCommandTest extends TestCase
      * A file read with the tokenizer because the PHP parser could not is no
      * pattern of its own: counted in the stats, never in the patterns found.
      */
+    #[Test]
     public function test_execute_leaves_a_parser_fallback_out_of_the_patterns_found(): void
     {
         $source = new class implements PatternSourceInterface {
@@ -407,6 +425,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame(1, $data['stats']['parser_fallbacks'] ?? null);
     }
 
+    #[Test]
     public function test_execute_analyzes_patterns_without_progress_in_json(): void
     {
         $source = new class implements PatternSourceInterface {
@@ -442,6 +461,7 @@ final class RegexLintCommandTest extends TestCase
      * A lint rule at Error fails the command: without /u, [é] matches the
      * byte \xC3 on its own.
      */
+    #[Test]
     public function test_execute_fails_on_a_lint_rule_at_error(): void
     {
         $this->assertSame(1, preg_match('/^[é]$/', "\xC3"));
@@ -455,6 +475,7 @@ final class RegexLintCommandTest extends TestCase
         $this->assertSame('regex.lint.unicode.multibyteInClassWithoutU', $issue['issue_id'] ?? null);
     }
 
+    #[Test]
     public function test_execute_passes_on_a_lint_rule_at_info(): void
     {
         $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/(a)+/')]));

@@ -22,6 +22,7 @@ use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -198,6 +199,7 @@ final class ExtractionStrategyParityTest extends TestCase
      * @param array<int, string> $presets
      * @param array<int, string> $expected
      */
+    #[Test]
     #[DataProvider('provideFixtures')]
     public function test_both_strategies_extract_the_same_patterns(string $fixture, array $presets, array $expected): void
     {
@@ -230,6 +232,7 @@ final class ExtractionStrategyParityTest extends TestCase
     /**
      * @param array<int, string> $expected
      */
+    #[Test]
     #[DataProvider('provideAliasedImports')]
     public function test_an_aliased_wrapper_import_opens_the_file(string $fixture, array $expected): void
     {
@@ -244,6 +247,7 @@ final class ExtractionStrategyParityTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_fqcn_resolution_rejects_another_class_of_a_wrapper_namespace(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/interop_aliased_unrelated_class.php';
@@ -272,6 +276,7 @@ final class ExtractionStrategyParityTest extends TestCase
         yield 'concatenated with a flag' => ['literal' => "<<<'RE'\n    /a/\n    RE . 'i'"];
     }
 
+    #[Test]
     #[DataProvider('provideHeredocLiterals')]
     public function test_both_strategies_decode_a_heredoc_as_php_does(string $literal): void
     {
@@ -301,6 +306,7 @@ final class ExtractionStrategyParityTest extends TestCase
     /**
      * @param array<int, string> $expected
      */
+    #[Test]
     #[DataProvider('provideAliasedDeclaredClasses')]
     public function test_an_aliased_import_of_a_declared_class_opens_the_file(string $fixture, string $spec, array $expected): void
     {
@@ -324,6 +330,7 @@ final class ExtractionStrategyParityTest extends TestCase
         yield 'tabs and spaces mixed in the closing marker' => ['literal' => "<<<RE\n \t/a/\n \tRE"];
     }
 
+    #[Test]
     #[DataProvider('provideHeredocsPhpRefuses')]
     public function test_both_strategies_skip_a_heredoc_php_refuses(string $literal): void
     {
@@ -345,6 +352,7 @@ final class ExtractionStrategyParityTest extends TestCase
      * strategy reads its pattern, a placeholder for any argument, passed by
      * position or by name; the file's other calls are read.
      */
+    #[Test]
     public function test_both_strategies_skip_a_partial_application(): void
     {
         $file = $this->write("<?php\npreg_match('/ok1/', \$s);\n"
@@ -378,6 +386,7 @@ final class ExtractionStrategyParityTest extends TestCase
     /**
      * @param array<int, string> $presets
      */
+    #[Test]
     #[DataProvider('providePositionFixtures')]
     #[RequiresMethod(ParserFactory::class, 'createForHostVersion')]
     public function test_both_strategies_place_occurrences_the_same_way(string $fixture, array $presets): void
@@ -394,6 +403,7 @@ final class ExtractionStrategyParityTest extends TestCase
      * PHP 8.4 reads a member of a new object without parentheses: the
      * replacement is then that member, no callable.
      */
+    #[Test]
     public function test_a_member_of_a_new_object_is_no_callable_replacement(): void
     {
         $file = $this->write(<<<'PHP'
@@ -418,6 +428,7 @@ final class ExtractionStrategyParityTest extends TestCase
      * A wrapper call nested in the subject of another is read once per call,
      * not once per enclosing call.
      */
+    #[Test]
     public function test_deeply_nested_calls_are_read_in_linear_time(): void
     {
         $depth = 3000;
@@ -439,6 +450,7 @@ final class ExtractionStrategyParityTest extends TestCase
      * The replacement of each call holds the next one: telling whether it is
      * a callable must not read it again for each call around it.
      */
+    #[Test]
     public function test_nested_replace_calls_with_callable_replacements_are_read_in_linear_time(): void
     {
         $depth = 3000;
@@ -456,6 +468,7 @@ final class ExtractionStrategyParityTest extends TestCase
         $this->assertLessThan(20.0, $seconds, \sprintf('%d nested calls took %.1f s.', $depth, $seconds));
     }
 
+    #[Test]
     public function test_both_strategies_label_occurrences_the_same_way(): void
     {
         if (!class_exists(ParserFactory::class)) {

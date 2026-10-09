@@ -41,11 +41,13 @@ final class RegexLintServiceTest extends TestCase
         $this->sources = new PatternSourceCollection([]);
     }
 
+    #[Test]
     public function test_construct(): void
     {
         $this->assertInstanceOf(LintService::class, new LintService($this->analysis, $this->sources));
     }
 
+    #[Test]
     public function test_collect_patterns(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -56,6 +58,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_analyze_with_empty_patterns(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -72,6 +75,7 @@ final class RegexLintServiceTest extends TestCase
      * A file read again with the tokenizer is counted, never reported: no
      * result, no error, one fallback in the stats.
      */
+    #[Test]
     public function test_analyze_counts_a_parser_fallback_without_reporting_it(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -87,6 +91,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'parserFallbacks' => 1], $result->stats);
     }
 
+    #[Test]
     public function test_analyze_with_invalid_pattern(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -104,6 +109,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 0], $result->stats);
     }
 
+    #[Test]
     public function test_analyze_reports_invalid_delimiter_patterns(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -126,6 +132,7 @@ final class RegexLintServiceTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_analyze_filters_validation_issues_when_disabled(): void
     {
         $request = new LintRequest(['.'], [], 0, [], true, false, true); // checkValidation = false
@@ -143,6 +150,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertArrayHasKey('validation', $result->results[0]['issues'][0]);
     }
 
+    #[Test]
     public function test_analyze_with_pattern_warnings(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -169,6 +177,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('verify', (string) ($nestedWarnings[0]['hint'] ?? ''));
     }
 
+    #[Test]
     public function test_analyze_nested_quantifier_warning_carries_no_rewrite_under_pattern_limits(): void
     {
         $analysis = new AnalysisService(RegexParser::create(['max_pattern_length' => 10]));
@@ -189,6 +198,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertArrayNotHasKey('suggestedPattern', $nestedWarnings[0]);
     }
 
+    #[Test]
     public function test_analyze_dotstar_warning_carries_no_automatic_rewrite(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -209,6 +219,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('verify', (string) ($dotstarWarnings[0]['hint'] ?? ''));
     }
 
+    #[Test]
     public function test_analyze_deduplicates_issues(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -224,6 +235,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertCount(1, $result->results); // Should be deduplicated to one result
     }
 
+    #[Test]
     public function test_analyze_does_not_deduplicate_patterns_with_different_offsets(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -256,6 +268,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame([10, 40], $offsets);
     }
 
+    #[Test]
     public function test_analyze_with_optimizations(): void
     {
         $request = new LintRequest(['.'], [], 0, [], true, true, true); // checkOptimizations = true
@@ -273,6 +286,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertArrayHasKey('optimizations', $result->results[0]);
     }
 
+    #[Test]
     public function test_analyze_ignores_issues_with_ignore_comment(): void
     {
         $file = __DIR__.'/../../Fixtures/Extractor/regex_lint_ignore.php';
@@ -289,6 +303,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertCount(0, $result->results);
     }
 
+    #[Test]
     public function test_analyze_filters_complexity_issues(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -309,6 +324,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertCount(0, $complexityIssues);
     }
 
+    #[Test]
     public function test_analyze_with_route_pattern_filters_route_issues(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -329,6 +345,7 @@ final class RegexLintServiceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_analyze_filters_redos_issues_when_disabled(): void
     {
         $request = new LintRequest(['.'], [], 0, [], true, false, true); // checkRedos = false
@@ -352,6 +369,7 @@ final class RegexLintServiceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_analyze_with_progress_callback(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -370,6 +388,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $progressCalls); // Progress may be called during analysis
     }
 
+    #[Test]
     public function test_analyze_creates_redos_problems(): void
     {
         $request = new LintRequest(['.'], [], 0, [], true, true); // checkRedos = true explicitly
@@ -392,6 +411,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertNotEmpty($redosProblems, 'Should create security problems for ReDoS issues');
     }
 
+    #[Test]
     public function test_analyze_processes_issues_for_nonexistent_file(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -430,6 +450,7 @@ final class RegexLintServiceTest extends TestCase
         yield 'overlap, ReDoS off' => ['pattern' => '/(?:[a-m]|[a-z])+/', 'heuristic' => 'regex.lint.overlap.charset', 'redos' => false, 'proof' => null, 'kept' => true];
     }
 
+    #[Test]
     #[DataProvider('provideHeuristicIssuesAgainstTheVerdict')]
     public function test_analysis_drops_a_heuristic_issue_only_when_proven_linear(string $pattern, string $heuristic, bool $redos, ?RedosProof $proof, bool $kept): void
     {
@@ -448,6 +469,7 @@ final class RegexLintServiceTest extends TestCase
             : $this->assertNotContains($heuristic, $ids, $pattern);
     }
 
+    #[Test]
     public function test_analysis_keeps_the_redos_issue_next_to_the_heuristic_on_a_proven_blow_up(): void
     {
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
@@ -480,6 +502,7 @@ final class RegexLintServiceTest extends TestCase
         yield 'no inline group under ur' => ['pattern' => '/(?:k+\x{212A})+$/ur', 'heuristic' => 'regex.lint.quantifier.nested', 'unit' => "k\u{212A}", 'suffix' => 'x', 'exponential' => false];
     }
 
+    #[Test]
     #[DataProvider('provideInlineOptionPatternsAgainstTheEngine')]
     public function test_analysis_drops_the_heuristic_on_an_inline_option_pattern_only_when_the_engine_is_linear(string $pattern, string $heuristic, string $unit, string $suffix, bool $exponential): void
     {
@@ -520,6 +543,7 @@ final class RegexLintServiceTest extends TestCase
      * 385 -> 98 305 steps on "\n"{8} -> "\n"{16}; the heuristic stays next
      * to the ReDoS issue.
      */
+    #[Test]
     public function test_analysis_reports_an_s_carried_from_an_earlier_alternative(): void
     {
         $pattern = '/x(?s)|(?:.*\n.*\n)+x/';
@@ -567,6 +591,7 @@ final class RegexLintServiceTest extends TestCase
         yield 'nested quantifiers' => ['pattern' => '/x(?s)|(?:.{1,9}\n)+x/', 'unit' => "a\n", 'heuristic' => 'regex.lint.quantifier.nested'];
     }
 
+    #[Test]
     #[DataProvider('provideLoopsUnderAnSSetInAnEarlierAlternative')]
     public function test_analysis_reports_a_loop_under_an_s_set_in_an_earlier_alternative(string $pattern, string $unit, string $heuristic): void
     {
@@ -591,6 +616,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertContains($heuristic, $ids, $pattern);
     }
 
+    #[Test]
     public function test_analysis_drops_charset_overlap_on_an_ignored_pattern(): void
     {
         $analysis = new AnalysisService(RegexParser::create(), ignoredPatterns: ['(?:[a-m]|[a-z])+', '(a+)+']);
@@ -625,6 +651,7 @@ final class RegexLintServiceTest extends TestCase
         $this->assertSame([], $redosIds(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosIgnoredPatterns: ['/(a+)+$/'], redosEnabled: true)));
     }
 
+    #[Test]
     public function test_analyze_with_route_pattern_filters_charset_overlap(): void
     {
         $service = new LintService($this->analysis, $this->sources);

@@ -25,6 +25,7 @@ use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandEdgeCasesTest extends TestCase
@@ -48,6 +49,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_lint_command_reports_argument_parse_error(): void
     {
         $command = $this->makeLintCommand();
@@ -61,6 +63,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Usage: regex lint', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_defaults_paths_when_empty(): void
     {
         $command = $this->makeLintCommand();
@@ -73,6 +76,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Unknown format', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_returns_error_for_invalid_regex_options(): void
     {
         $command = $this->makeLintCommand();
@@ -85,6 +89,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Invalid option', $buffer);
     }
 
+    #[Test]
     #[DataProvider('verbosityFlagProvider')]
     public function test_lint_command_builds_output_config_for_verbosity(string $flag): void
     {
@@ -107,6 +112,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         yield ['--debug'];
     }
 
+    #[Test]
     public function test_lint_command_outputs_empty_json_report_when_no_patterns(): void
     {
         $dir = $this->makeTempDir();
@@ -127,6 +133,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('"stats"', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_progress_handles_empty_collection(): void
     {
         $dir = $this->makeTempDir();
@@ -147,6 +154,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('No regex patterns found', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_reports_collection_and_analysis_times(): void
     {
         $dir = $this->makeTempDir();
@@ -179,6 +187,7 @@ final class LintCommandEdgeCasesTest extends TestCase
      * A file the PHP parser cannot read is linted through the tokenizer and
      * counted, never reported as an issue.
      */
+    #[Test]
     public function test_json_stats_count_parser_fallbacks(): void
     {
         $dir = $this->makeTempDir();
@@ -210,6 +219,7 @@ final class LintCommandEdgeCasesTest extends TestCase
     /**
      * --verbose names each file read with the tokenizer, and why.
      */
+    #[Test]
     public function test_the_verbose_console_names_each_parser_fallback(): void
     {
         $dir = $this->makeTempDir();
@@ -236,6 +246,7 @@ final class LintCommandEdgeCasesTest extends TestCase
      * A file given twice, by its path and inside its directory, is one
      * file read with the tokenizer: counted once, named once.
      */
+    #[Test]
     public function test_a_parser_fallback_given_twice_is_counted_once(): void
     {
         $dir = $this->makeTempDir();
@@ -263,6 +274,7 @@ final class LintCommandEdgeCasesTest extends TestCase
      * --verbose names the file as the results do: relative to the working
      * directory when it lies under it.
      */
+    #[Test]
     public function test_the_verbose_line_names_the_file_relative_to_the_working_directory(): void
     {
         $dir = $this->makeTempDir();
@@ -282,6 +294,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('  Parsed with the tokenizer: broken.php (Syntax error', $buffer);
     }
 
+    #[Test]
     public function test_the_normal_console_keeps_the_parser_fallbacks_quiet(): void
     {
         $dir = $this->makeTempDir();
@@ -303,6 +316,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $this->assertStringContainsString('found 1 patterns', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_reports_collection_failure(): void
     {
         $dir = $this->makeTempDir();
