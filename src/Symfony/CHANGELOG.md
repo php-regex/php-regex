@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` leaves the files the PHP parser could not read, read with the
+   tokenizer instead, out of the number of patterns found; its JSON report
+   counts them in `stats.parser_fallbacks`.
  * A route requirement is linted as the route compiler matches it,
    `{^...$}sD` plus `u` under the `utf8` option; a security `path` as
    `{...}s` and a `host` as `{...}i`, without anchors. A requirement or a

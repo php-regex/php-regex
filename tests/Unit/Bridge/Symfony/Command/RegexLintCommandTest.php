@@ -318,6 +318,47 @@ final class RegexLintCommandTest extends TestCase
         $this->assertStringContainsString('Analyzing patterns', (string) $tester->getDisplay());
     }
 
+    /**
+     * A file read with the tokenizer because the PHP parser could not is no
+     * pattern of its own: counted in the stats, never in the patterns found.
+     */
+    public function test_execute_leaves_a_parser_fallback_out_of_the_patterns_found(): void
+    {
+        $source = new class implements PatternSourceInterface {
+            public function getName(): string
+            {
+                return 'custom';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                return [
+                    new PatternOccurrence('/foo/', 'test.php', 2, 'php:preg_match()'),
+                    PatternOccurrence::parserFallback('test.php', 'Syntax error, unexpected EOF on line 3'),
+                ];
+            }
+        };
+
+        $tester = new CommandTester($this->createCommandWithSources([$source]));
+        $status = $tester->execute(['paths' => ['.']]);
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString('found 1 patterns.', (string) $tester->getDisplay());
+
+        $tester = new CommandTester($this->createCommandWithSources([$source]));
+        $tester->execute(['paths' => ['.'], '--format' => 'json']);
+
+        $data = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($data);
+        $this->assertIsArray($data['stats']);
+        $this->assertSame(1, $data['stats']['parser_fallbacks'] ?? null);
+    }
+
     public function test_execute_analyzes_patterns_without_progress_in_json(): void
     {
         $source = new class implements PatternSourceInterface {

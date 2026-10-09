@@ -22,6 +22,7 @@ use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -274,7 +275,9 @@ final class LintCommand extends Command
             return $this->renderFailure($format, $output, $io, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, Command::FAILURE);
         }
 
-        $patternCount = \count($patterns);
+        // A file read with the tokenizer holds no pattern of its own: it is
+        // counted in the stats only.
+        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
         if ($showProgress) {
             $io->newLine();
             $io->writeln('  <fg=gray>Scanned '.$fileCount.' files, found '.$patternCount.' patterns.</>');
