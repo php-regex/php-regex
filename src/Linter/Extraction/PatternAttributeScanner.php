@@ -35,6 +35,8 @@ final class PatternAttributeScanner
 
     private const IGNORED = [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT];
 
+    private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
+
     /**
      * @param array<string> $files
      *
@@ -44,15 +46,12 @@ final class PatternAttributeScanner
     {
         $specs = [];
         foreach ($files as $file) {
-            // An attribute is reached through its namespace, imported or
-            // written in full: a file naming neither declares none.
-            // A file that cannot be read, or that would exhaust the memory
-            // left to tokenize it, declares nothing here, and is not even
-            // read: the extraction reports a linted one as unread, and
-            // vendor/ is not linted.
-            $size = is_file($file) && is_readable($file) ? filesize($file) : false;
-            $content = false !== $size && MemoryBudget::allowsSize($size, MemoryBudget::TOKENIZE_FACTOR) ? file_get_contents($file) : false;
-            if (\is_string($content) && (false !== stripos($content, 'PHPRegex\Parser\Attribute') || false !== stripos($content, 'JetBrains\PhpStorm\Language'))) {
+            // The attribute is named RegexPattern, and PhpStorm's names its
+            // language "RegExp": a file holding neither word, whatever its
+            // imports (a group, a parent namespace), declares none. One
+            // search covers both.
+            $content = self::read($file);
+            if (null !== $content && false !== stripos($content, 'regexp')) {
                 array_push($specs, ...self::scan($content));
             }
         }
@@ -61,9 +60,67 @@ final class PatternAttributeScanner
     }
 
     /**
+     * The namespaced functions the files declare under one of the given
+     * short names, marked or not ("App\grep"): an unqualified call in their
+     * namespace reaches them before a global function of that name.
+     *
+     * @param array<string> $files
+     * @param array<string> $names short function names
+     *
+     * @return list<string>
+     */
+    public static function namespacedFunctions(array $files, array $names): array
+    {
+        $wanted = array_fill_keys(array_map(strtolower(...), $names), true);
+        // A file is tokenized only when it declares a function of one of the
+        // names, which a search tells far more cheaply.
+        $declares = '/\\bfunction\\s+&?\\s*(?:'.implode('|', array_map(static fn (string $name): string => preg_quote($name, '/'), array_keys($wanted))).')\\s*\\(/i';
+        $functions = [];
+        foreach ($files as $file) {
+            $content = self::read($file);
+            if (null === $content || false === stripos($content, 'namespace') || 1 !== preg_match($declares, $content)) {
+                continue;
+            }
+
+            foreach (self::declarations($content)[1] as $function) {
+                if (isset($wanted[strtolower(substr($function, (int) strrpos($function, '\\') + 1))])) {
+                    $functions[] = $function;
+                }
+            }
+        }
+
+        return array_values(array_unique($functions));
+    }
+
+    /**
      * @return list<string>
      */
     public static function scan(string $content): array
+    {
+        return self::declarations($content)[0];
+    }
+
+    /**
+     * The file's text, or null when it cannot be read or would exhaust the
+     * memory left to tokenize it: then it is not even read. The extraction
+     * reports a linted file as unread; vendor/ is not linted.
+     */
+    private static function read(string $file): ?string
+    {
+        // One stat for the size; a file that cannot be opened reads as none.
+        $size = @filesize($file);
+        $content = false !== $size && MemoryBudget::allowsSize($size, MemoryBudget::TOKENIZE_FACTOR) ? @file_get_contents($file) : false;
+
+        return \is_string($content) ? $content : null;
+    }
+
+    /**
+     * The pattern function specs the content declares, and every function
+     * it declares in a namespace (not a method), marked or not.
+     *
+     * @return array{list<string>, list<string>}
+     */
+    private static function declarations(string $content): array
     {
         $tokens = array_values(array_filter(
             \PhpToken::tokenize($content),
@@ -71,6 +128,7 @@ final class PatternAttributeScanner
         ));
 
         $specs = [];
+        $functions = [];
         $namespace = '';
         $uses = [];
         $depth = 0;
@@ -105,8 +163,15 @@ final class PatternAttributeScanner
                 if (isset($tokens[$next]) && '&' === $tokens[$next]->text) {
                     $next++;
                 }
-                if (!isset($tokens[$next]) || !$tokens[$next]->is(\T_STRING)) {
+                // A method may be named with a reserved word: match, list.
+                if (!isset($tokens[$next]) || 1 !== preg_match(self::IDENTIFIER, $tokens[$next]->text)) {
                     continue; // a closure
+                }
+
+                $class = [] !== $classes ? $classes[\count($classes) - 1] : null;
+                $isMethod = null !== $class && $class[1] === $depth;
+                if (!$isMethod && '' !== $namespace) {
+                    $functions[] = $namespace.'\\'.$tokens[$next]->text;
                 }
 
                 $index = self::markedParameter($tokens, $next + 1, $namespace, $uses);
@@ -114,8 +179,7 @@ final class PatternAttributeScanner
                     continue;
                 }
 
-                $class = [] !== $classes ? $classes[\count($classes) - 1] : null;
-                if (null !== $class && $class[1] === $depth) {
+                if ($isMethod) {
                     if (null !== $class[0]) {
                         $specs[] = $class[0].'::'.$tokens[$next]->text.'#'.$index;
                     }
@@ -125,7 +189,7 @@ final class PatternAttributeScanner
             }
         }
 
-        return $specs;
+        return [$specs, $functions];
     }
 
     /**

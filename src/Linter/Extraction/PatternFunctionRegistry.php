@@ -45,12 +45,16 @@ final readonly class PatternFunctionRegistry
      * @param array<string, PatternFunction> $methods   keyed by lowercase "fqcn::method"
      * @param array<int, string>             $needles   lowercase substrings gating file reads
      * @param array<string, true>            $dropIns   functions a namespaced copy may stand in for
+     * @param array<string, true>            $plain     namespaced functions declared without a pattern
+     *                                                  parameter, keyed by lowercase name: an unqualified
+     *                                                  call in their namespace calls them, not a global one
      */
     private function __construct(
         private array $functions,
         private array $methods,
         private array $needles,
         private array $dropIns = [],
+        private array $plain = [],
     ) {}
 
     /**
@@ -108,7 +112,7 @@ final readonly class PatternFunctionRegistry
             $needles = [...$needles, ...InteropPresets::needles($preset)];
         }
 
-        return new self($this->functions, $methods, self::pruneNeedles($needles), $this->dropIns);
+        return new self($this->functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain);
     }
 
     /**
@@ -145,7 +149,78 @@ final readonly class PatternFunctionRegistry
             $needles = [...$needles, ...$specNeedles];
         }
 
-        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain);
+    }
+
+    /**
+     * Add the pattern functions the project's code declares (#[RegexPattern],
+     * #[Language('RegExp')]), as "name#<index>" specs.
+     *
+     * A function the registry already knows keeps its entry: a configured
+     * spec (--pattern-function, extraction.functions), a preset or a native
+     * function always wins over a scanned declaration. Several declarations
+     * of one function read the union of the parameters they mark, whatever
+     * their order. $plain names the namespaced functions declared without a
+     * pattern parameter, which an unqualified call reaches before a global
+     * function of the same name.
+     *
+     * @param array<string> $specs
+     * @param array<string> $plain
+     */
+    public function withDeclaredFunctions(array $specs, array $plain = []): self
+    {
+        /** @var array<string, array{bool, PatternFunction, string, list<int>}> $declared */
+        $declared = [];
+        foreach ($specs as $spec) {
+            $parsed = self::parseSpec($spec);
+            if (null === $parsed || isset($this->functions[$parsed[0]]) || isset($this->methods[$parsed[0]])) {
+                continue;
+            }
+
+            [$key, $isMethod, $function, $needle] = $parsed;
+            $declared[$key] ??= [$isMethod, $function, $needle, []];
+            $declared[$key][3][] = $function->argumentIndex;
+        }
+
+        $functions = $this->functions;
+        $methods = $this->methods;
+        $needles = $this->needles;
+        foreach ($declared as $key => [$isMethod, $function, $needle, $indexes]) {
+            $indexes = array_values(array_unique($indexes));
+            sort($indexes);
+            $union = new PatternFunction($function->label, $indexes[0], moreArgumentIndexes: \array_slice($indexes, 1));
+            if ($isMethod) {
+                $methods[$key] = $union;
+            } else {
+                $functions[$key] = $union;
+            }
+            $needles[] = $needle;
+        }
+
+        $plainFunctions = $this->plain;
+        foreach ($plain as $name) {
+            $plainFunctions[strtolower(ltrim($name, '\\'))] = true;
+        }
+
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions);
+    }
+
+    /**
+     * The pattern function a call to a function reaches. $namespaced is
+     * the name an unqualified call has in its namespace, which PHP calls
+     * first when it is declared, marked or not; $name the global one PHP
+     * falls back to.
+     */
+    public function lookupCall(?string $namespaced, string $name): ?PatternFunction
+    {
+        if (null !== $namespaced) {
+            $function = $this->lookupFunction($namespaced);
+            if (null !== $function || isset($this->plain[strtolower(ltrim($namespaced, '\\'))])) {
+                return $function;
+            }
+        }
+
+        return $this->lookupFunction($name);
     }
 
     public function lookupFunction(string $name): ?PatternFunction

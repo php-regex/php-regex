@@ -199,6 +199,11 @@ final class RegexLintCommandTest extends TestCase
              */
             public array $declarationPaths = [];
 
+            /**
+             * @var list<array<string>>
+             */
+            public array $vendorPaths = [];
+
             public function getName(): string
             {
                 return 'recording';
@@ -212,6 +217,7 @@ final class RegexLintCommandTest extends TestCase
             public function extract(PatternSourceContext $context): array
             {
                 $this->declarationPaths[] = $context->declarationPaths;
+                $this->vendorPaths[] = $context->vendorPaths;
 
                 return [];
             }
@@ -224,7 +230,8 @@ final class RegexLintCommandTest extends TestCase
             (new CommandTester($command))->execute(['paths' => ['src/Controller/One.php'], '--format' => 'json']);
         }
 
-        $this->assertSame([['src', 'lib', '/app/vendor'], ['src', 'lib', getcwd().'/vendor']], $source->declarationPaths);
+        $this->assertSame([['src', 'lib'], ['src', 'lib']], $source->declarationPaths);
+        $this->assertSame([['/app/vendor'], [getcwd().'/vendor']], $source->vendorPaths);
     }
 
     public function test_execute_rejects_invalid_jobs_value(): void

@@ -54,9 +54,9 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
     }
 
-    public function withPatternFunctions(array $specs): static
+    public function withPatternFunctions(array $specs, array $plain = []): static
     {
-        return new self([], $this->registry->withCustomFunctions(array_values($specs)), false);
+        return new self([], $this->registry->withDeclaredFunctions($specs, $plain), false);
     }
 
     public function extract(array $files): array
@@ -64,7 +64,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         // Used on its own, the functions the files mark with #[RegexPattern]
         // join the registry for this run.
         $specs = $this->scansDeclarations ? PatternAttributeScanner::specs($files) : [];
-        $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
 
         return $strategy->extractFiles($files);
     }
@@ -151,17 +151,19 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
 
             [$patternFunction, $openParenIndex] = $match;
 
-            $this->appendOccurrences($occurrences, $this->extractFromCall(
-                $tokens,
-                $openParenIndex + 1,
-                $totalTokens,
-                $patternFunction,
-                $file,
-                $tokenOffsets,
-                $content,
-                $closers,
-                $context,
-            ));
+            foreach ($patternFunction->eachArgument() as $function) {
+                $this->appendOccurrences($occurrences, $this->extractFromCall(
+                    $tokens,
+                    $openParenIndex + 1,
+                    $totalTokens,
+                    $function,
+                    $file,
+                    $tokenOffsets,
+                    $content,
+                    $closers,
+                    $context,
+                ));
+            }
         }
 
         return $occurrences;
@@ -392,8 +394,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         // PHP calls the current namespace's function first, the global one
         // when there is none.
         $namespaced = $context->namespacedFunction($name);
-        $patternFunction = (null === $namespaced ? null : $this->registry->lookupFunction($namespaced))
-            ?? $this->registry->lookupFunction($context->resolveFunction($name));
+        $patternFunction = $this->registry->lookupCall($namespaced, $context->resolveFunction($name));
         if (null === $patternFunction) {
             return null;
         }

@@ -226,7 +226,9 @@ final class LintCommand extends Command
                 checkRedos: true === config('php-regex.redos.enabled'),
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
-                declarationPaths: [...array_values($defaultPaths), base_path('vendor')],
+                // A setting that is no list (null, one path) is read as one.
+                declarationPaths: array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...))),
+                vendorPaths: [base_path('vendor')],
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

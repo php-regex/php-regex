@@ -521,11 +521,23 @@ configured, the linted paths and `vendor/` are read, never the whole working
 directory. `exclude` and `--exclude` keep files out of the lint, not out of
 this reading: a helper declared under an excluded directory, or in a library,
 is still known. With `paths` configured, `regex lint $(git diff --name-only)`
-still knows a helper declared in a project file it does not lint. A
-declaration file that cannot be read, or is too large for `memory_limit`, is
-skipped silently. A call written
-unqualified in the function's own namespace, `grep()` in `namespace App`, is
-read, as PHP calls `App\grep()` first. An instance call (`$str->matches(...)`)
+still knows a helper declared in a project file it does not lint. The
+`vendor/` and the `regex.json` used are those of the directory the lint runs
+from. A declaration file or directory that cannot be read, or a file too
+large for `memory_limit`, is skipped silently; a package Composer links into
+`vendor/` from a path repository is read through its symlink.
+
+When several declarations name one function, a configured spec
+(`--pattern-function`, `extraction.functions`) always wins over a declaration
+the lint finds; a project declaration (in the linted or configured paths)
+wins over a copy in `vendor/`; two project declarations marking different
+parameters are both read, whatever the order of the paths or the number of
+jobs.
+
+A call written unqualified in the function's own namespace, `grep()` in
+`namespace App`, is read, as PHP calls `App\grep()` first; and when the
+namespace declares its own `grep()`, marked or not, a global `grep()` marked
+in a library does not capture the call. An instance call (`$str->matches(...)`)
 names no class the linter can know, and is not read; the PHPStan extension,
 which knows the type of `$str`, reads it (see
 [the PHPStan guide](phpstan.md#pattern-parameters)).

@@ -271,7 +271,8 @@ final class LintCommand extends Command
                 checkRedos: $this->checkRedos,
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
-                declarationPaths: [...$this->defaultPaths, ($this->projectDir ?? $workingDir ?? '.').'/vendor'],
+                declarationPaths: $this->defaultPaths,
+                vendorPaths: [($this->projectDir ?? $workingDir ?? '.').'/vendor'],
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

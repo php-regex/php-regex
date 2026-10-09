@@ -28,9 +28,15 @@ interface PatternFunctionAwareInterface
 {
     /**
      * A copy that reads the given pattern functions ("App\grep#0",
-     * "App\Str::matches#1") in place of scanning its files for them.
+     * "App\Str::matches#1") in place of scanning its files for them. The
+     * functions it already knows (configured, presets, native) keep their
+     * entry; several specs of one function read the union of their
+     * arguments. $plain names the namespaced functions declared without a
+     * pattern parameter, which an unqualified call in their namespace
+     * reaches before a global pattern function of the same name.
      *
      * @param array<string> $specs
+     * @param array<string> $plain
      */
-    public function withPatternFunctions(array $specs): static;
+    public function withPatternFunctions(array $specs, array $plain = []): static;
 }

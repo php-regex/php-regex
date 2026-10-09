@@ -136,6 +136,28 @@ final class LintCommandDeclarationPathsTest extends TestCase
     }
 
     /**
+     * A function configured in regex.json keeps its configuration, ":keys"
+     * included, though a library declares it with the attribute.
+     */
+    #[Test]
+    public function test_lint_keeps_a_configured_function_a_library_also_declares(): void
+    {
+        $this->enterProject([
+            'regex.json' => '{"extraction": {"functions": ["Acme\\\\route#0:keys"]}}',
+            'lib/caller.php' => "<?php\n\\Acme\\route(['/(k/' => '/v(/']);\n",
+            'vendor/acme/route.php' => "<?php\nnamespace Acme;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction route(#[RegexPattern] array \$map) {}\n",
+        ]);
+
+        [, $document] = $this->lintJson(['lib', '--no-redos', '--format=json', '--jobs=1']);
+
+        $patterns = [];
+        foreach (JsonContract::asArray($document['results'] ?? null) as $result) {
+            $patterns[] = JsonContract::asArray($result)['pattern'] ?? null;
+        }
+        $this->assertSame(['/(k/'], $patterns);
+    }
+
+    /**
      * @param list<string> $args
      *
      * @return array{int, array<mixed>}

@@ -282,6 +282,45 @@ final class RegexPatternAttributeTest extends TestCase
     }
 
     /**
+     * A file reaching the attribute through a group import, or through an
+     * import of one of its parent namespaces, is read: it names neither
+     * namespace in full.
+     */
+    #[Test]
+    public function test_a_group_imported_attribute_is_read_from_a_file(): void
+    {
+        $phpstorm = $this->write("<?php\nnamespace Acme;\nuse JetBrains\\PhpStorm\\{Language, Pure};\nclass Str { public static function find(#[Language('RegExp')] string \$p) {} }\n");
+        $partial = $this->write("<?php\nnamespace Acme;\nuse PHPRegex\\Parser;\nclass Str2 { public static function find(#[Parser\\Attribute\\RegexPattern] string \$p) {} }\n");
+
+        $this->assertSame(['Acme\Str::find#0', 'Acme\Str2::find#0'], PatternAttributeScanner::specs([$phpstorm, $partial]));
+    }
+
+    /**
+     * A method may be named with a word PHP reserves elsewhere: match,
+     * list, print.
+     */
+    #[Test]
+    public function test_a_method_named_match_is_read(): void
+    {
+        $specs = PatternAttributeScanner::scan(<<<'CODE'
+            <?php
+
+            namespace App;
+
+            use PHPRegex\Parser\Attribute\RegexPattern;
+
+            final class Str
+            {
+                public static function match(#[RegexPattern] string $regex) {}
+                public static function list(string $subject, #[RegexPattern] string $regex) {}
+                public function &print(#[RegexPattern] string $regex) {}
+            }
+            CODE);
+
+        $this->assertSame(['App\Str::match#0', 'App\Str::list#1', 'App\Str::print#0'], $specs);
+    }
+
+    /**
      * A file too large to tokenize in the memory left is not even read: a
      * huge file of vendor/ cannot exhaust memory_limit while its size alone
      * says so. A stream wrapper stands for a file of 1 GB.

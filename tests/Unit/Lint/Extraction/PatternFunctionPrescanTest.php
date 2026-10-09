@@ -52,6 +52,12 @@ final class PatternFunctionPrescanTest extends TestCase
 
     private const CALLER = "<?php\n\n\\App\\grep('/b02(/', 'x');\n";
 
+    private const TWO_PARAMETERS_FIRST = "<?php\nnamespace App;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction pair(#[RegexPattern] string \$a, string \$b) {}\n";
+
+    private const TWO_PARAMETERS_SECOND = "<?php\nnamespace App;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction pair(string \$a, #[RegexPattern] string \$b) {}\n";
+
+    private const TWO_PATTERNS_CALL = "<?php\n\\App\\pair('/a(/', '/b(/');\n";
+
     private string $memoryLimit = '-1';
 
     protected function setUp(): void
@@ -212,7 +218,7 @@ final class PatternFunctionPrescanTest extends TestCase
              */
             public function __construct(private readonly \ArrayObject $calls) {}
 
-            public function withPatternFunctions(array $specs): static
+            public function withPatternFunctions(array $specs, array $plain = []): static
             {
                 $this->callsWhenGiven = $this->calls->getArrayCopy();
 
@@ -481,6 +487,235 @@ final class PatternFunctionPrescanTest extends TestCase
         $this->assertSame([], self::patterns($standalone->extract([$project.'/caller.php'])));
         $this->assertSame([], self::patterns($standalone->withPatternFunctions([])->extract([$project.'/both.php'])));
         $this->assertSame(['/both(/'], self::patterns($standalone->extract([$project.'/both.php'])));
+    }
+
+    /**
+     * Below a linted path, what the run excludes is still read for
+     * declarations, though the declaration path is not walked twice.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_an_excluded_directory_is_read_below_a_linted_path(\Closure $strategy): void
+    {
+        $project = $this->makeProject(['lib/caller.php' => self::CALLER, 'lib/Fixtures/helper.php' => self::HELPER]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project], ['Fixtures'], declarationPaths: [$project.'/lib']);
+
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * A project declaration wins over a copy of the same function in
+     * vendor/, whatever parameter the copy marks.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_project_declaration_wins_over_a_vendor_copy(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'lib/helper.php' => self::TWO_PARAMETERS_FIRST,
+            'lib/caller.php' => self::TWO_PATTERNS_CALL,
+            'vendor/acme/copy/helper.php' => self::TWO_PARAMETERS_SECOND,
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], ['vendor'], vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/a(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * vendor/ below a linted path is excluded from the lint and read as
+     * vendor/: its copy still loses to the project's declaration.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_vendor_copy_below_a_linted_path_stays_a_vendor_copy(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'lib/helper.php' => self::TWO_PARAMETERS_FIRST,
+            'lib/caller.php' => self::TWO_PATTERNS_CALL,
+            'vendor/acme/copy/helper.php' => self::TWO_PARAMETERS_SECOND,
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project], ['vendor'], declarationPaths: [$project], vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/a(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * A call that leaves out one of the arguments the declarations mark is
+     * read at the others.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_call_leaving_out_a_marked_argument_is_read_at_the_others(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'one/helper.php' => self::TWO_PARAMETERS_FIRST,
+            'two/helper.php' => self::TWO_PARAMETERS_SECOND,
+            'lib/caller.php' => "<?php\n\\App\\pair('/a(/');\n",
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], declarationPaths: [$project.'/one', $project.'/two']);
+
+        $this->assertSame(['/a(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * Two project declarations of one function marking two parameters: both
+     * are read, whatever the order of the paths or the number of jobs.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideOrdersAndJobs')]
+    public function test_conflicting_declarations_do_not_depend_on_path_order(\Closure $strategy, bool $reversed, int $workers): void
+    {
+        $project = $this->makeProject([
+            'one/helper.php' => self::TWO_PARAMETERS_FIRST,
+            'two/helper.php' => self::TWO_PARAMETERS_SECOND,
+            'lib/caller.php' => self::TWO_PATTERNS_CALL,
+            'lib/other.php' => "<?php\n",
+        ]);
+        $paths = [$project.'/one', $project.'/two'];
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], null, $workers, $reversed ? array_reverse($paths) : $paths);
+
+        $patterns = self::patterns($occurrences);
+        sort($patterns);
+        $this->assertSame(['/a(/', '/b(/'], $patterns);
+    }
+
+    /**
+     * @return iterable<string, array{strategy: \Closure(): (ExtractorInterface&PatternFunctionAwareInterface), reversed: bool, workers: int}>
+     */
+    public static function provideOrdersAndJobs(): iterable
+    {
+        foreach (self::provideStrategies() as $name => $row) {
+            foreach ([false, true] as $reversed) {
+                foreach ([1, 4] as $workers) {
+                    yield $name.($reversed ? ', reversed' : '').', '.$workers.' jobs' => ['strategy' => $row['strategy'], 'reversed' => $reversed, 'workers' => $workers];
+                }
+            }
+        }
+    }
+
+    /**
+     * A configured spec is kept as configured: a declaration found by the
+     * scan does not replace it, ":keys" included.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideConfiguredStrategies')]
+    public function test_a_configured_spec_is_not_replaced_by_a_scanned_declaration(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'lib/caller.php' => "<?php\n\\Acme\\route(['/(k/' => 'v']);\n",
+            'vendor/acme/h.php' => "<?php\nnamespace Acme;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction route(#[RegexPattern] array \$map) {}\n",
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], ['vendor'], vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/(k/'], self::patterns($occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{strategy: \Closure(): (ExtractorInterface&PatternFunctionAwareInterface)}>
+     */
+    public static function provideConfiguredStrategies(): iterable
+    {
+        yield 'tokens' => ['strategy' => static fn (): TokenBasedExtractionStrategy => new TokenBasedExtractionStrategy(['Acme\route#0:keys'])];
+        yield 'php-parser' => ['strategy' => static fn (): PhpParserExtractionStrategy => new PhpParserExtractionStrategy(['Acme\route#0:keys'])];
+    }
+
+    /**
+     * A directory of a declaration path that cannot be read is passed over;
+     * the run goes on.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_an_unreadable_directory_under_a_declaration_path_is_skipped(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'lib/caller.php' => self::CALLER,
+            'packages/helper.php' => self::HELPER,
+            'packages/locked/inner.php' => "<?php\n",
+        ]);
+        chmod($project.'/packages/locked', 0o000);
+        $readable = is_readable($project.'/packages/locked');
+
+        try {
+            $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], declarationPaths: [$project.'/packages']);
+        } finally {
+            chmod($project.'/packages/locked', 0o700);
+        }
+
+        if ($readable) {
+            // Running as root, which reads a directory whatever its mode.
+            $this->assertTrue(\function_exists('posix_geteuid') && 0 === posix_geteuid());
+
+            return;
+        }
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * A package Composer links into vendor/ from a path repository is read
+     * through its symlink; a symlink loop ends the walk instead of running
+     * forever.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_declaration_in_a_symlinked_vendor_package_is_read(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'app/caller.php' => self::CALLER,
+            'packages/lib/Helpers.php' => self::HELPER,
+            'vendor/acme/.keep' => '',
+        ]);
+        $this->assertTrue(symlink('../../packages/lib', $project.'/vendor/acme/lib'));
+        $this->assertTrue(symlink('..', $project.'/vendor/acme/up'));
+        $this->assertTrue(symlink('self', $project.'/vendor/self'));
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * An unqualified call in a namespace calls that namespace's function
+     * when it is declared, marked or not: a global function a library marks
+     * does not capture it. Where the namespace declares none, the global one
+     * is called and read.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_vendor_global_declaration_does_not_capture_a_namespaced_project_function(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'app/own.php' => "<?php\nnamespace App;\nfunction grep(string \$haystack) {}\ngrep('a(b');\n",
+            'app/Other/elsewhere.php' => "<?php\nnamespace App\\Other;\ngrep('/c(/');\n",
+            'vendor/fix/global.php' => "<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction grep(#[RegexPattern] string \$p) {}\n",
+        ]);
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/c(/'], self::patterns($occurrences));
     }
 
     /**

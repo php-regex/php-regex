@@ -64,16 +64,19 @@ final readonly class PatternExtractor
      * @param array<string>|null            $excludePaths     Optional paths to exclude (falls back to ['vendor'])
      * @param callable(int, int): void|null $progress         Reports collection progress as (current, total)
      * @param int                           $workers          Number of worker processes to use when supported
-     * @param array<string>                 $declarationPaths Paths read, besides the linted files, for the functions a
-     *                                                        parameter marked #[RegexPattern] makes pattern functions (the
-     *                                                        project's paths, its vendor/); what they hold is not linted
+     * @param array<string>                 $declarationPaths Project paths read, besides the linted files, for the
+     *                                                        functions a parameter marked #[RegexPattern] makes pattern
+     *                                                        functions; what they hold is not linted
+     * @param array<string>                 $vendorPaths      Library paths (vendor/) read the same way; a project
+     *                                                        declaration wins over a copy found there
      *
      * @return array<PatternOccurrence>
      */
-    public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1, array $declarationPaths = []): array
+    public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
     {
         $excludePaths ??= ['vendor'];
-        $phpFiles = $this->collectPhpFiles($paths, $excludePaths);
+        $excludedFiles = [];
+        $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $excludedFiles);
 
         $total = \count($phpFiles);
         if (0 === $total) {
@@ -97,8 +100,8 @@ final readonly class PatternExtractor
         // declaration in a file the run does not lint.
         $extractor = $this->extractor;
         if ($extractor instanceof PatternFunctionAwareInterface) {
-            $declarationFiles = $this->collectDeclarationFiles($phpFiles, $declarationPaths);
-            $extractor = $extractor->withPatternFunctions($this->declaredPatternFunctions($declarationFiles, $parallel ? $workers : 1));
+            $projectFiles = $this->collectDeclarationFiles($paths, $phpFiles, $excludedFiles, $declarationPaths, $vendorPaths);
+            $extractor = $this->withDeclarations($extractor, $projectFiles, $this->walkDeclarationPaths($vendorPaths), $parallel ? $workers : 1);
         }
 
         if ($parallel && $total > 1) {
@@ -175,33 +178,82 @@ final readonly class PatternExtractor
     }
 
     /**
-     * The pattern function specs the files declare, read on the workers
-     * when there are several.
+     * The extractor, handed the pattern functions the files declare.
      *
-     * @param array<string> $files
+     * Precedence, when several declarations name one function: a configured
+     * spec (--pattern-function, extraction.functions) always wins over a
+     * scanned declaration, the registry keeping it as configured; a project
+     * declaration (the linted files and the declaration paths) wins over a
+     * copy in vendor/; conflicting project declarations read the union of
+     * the parameters they mark. Neither the order of the paths nor the
+     * number of workers changes the result.
+     *
+     * @param array<string> $projectFiles
+     * @param array<string> $vendorFiles
+     */
+    private function withDeclarations(ExtractorInterface&PatternFunctionAwareInterface $extractor, array $projectFiles, array $vendorFiles, int $workers): ExtractorInterface
+    {
+        $scan = static fn (array $chunk): array => PatternAttributeScanner::specs($chunk);
+        $specs = $this->scanInWorkers($projectFiles, $workers, $scan);
+        $declared = array_fill_keys(array_map(self::specName(...), $specs), true);
+        foreach ($this->scanInWorkers($vendorFiles, $workers, $scan) as $spec) {
+            if (!isset($declared[self::specName($spec)])) {
+                $specs[] = $spec;
+            }
+        }
+        sort($specs);
+
+        // An unqualified call in a namespace reaches that namespace's own
+        // function, marked or not, before a global one: the namespaced
+        // functions named as a declared global one are read too.
+        $globals = array_values(array_filter(array_map(self::specName(...), $specs), static fn (string $name): bool => !str_contains($name, '\\') && !str_contains($name, ':')));
+        $plain = [] === $globals ? [] : $this->scanInWorkers(
+            [...$projectFiles, ...$vendorFiles],
+            $workers,
+            static fn (array $chunk): array => PatternAttributeScanner::namespacedFunctions($chunk, $globals),
+        );
+        sort($plain);
+
+        return $extractor->withPatternFunctions($specs, $plain);
+    }
+
+    /**
+     * The lowercase function or method a spec names, without its argument.
+     */
+    private static function specName(string $spec): string
+    {
+        $hash = strrpos($spec, '#');
+
+        return strtolower(false === $hash ? $spec : substr($spec, 0, $hash));
+    }
+
+    /**
+     * What the scan gives for the files, run on the workers when there are
+     * several.
+     *
+     * @param array<string>                         $files
+     * @param \Closure(array<string>): list<string> $scan
      *
      * @return list<string>
      */
-    private function declaredPatternFunctions(array $files, int $workers): array
+    private function scanInWorkers(array $files, int $workers, \Closure $scan): array
     {
-        $resultsByIndex = $workers > 1 && \count($files) > 1
-            ? $this->runInWorkers($files, $workers, static fn (array $chunk): array => PatternAttributeScanner::specs($chunk))
-            : null;
+        $resultsByIndex = $workers > 1 && \count($files) > 1 ? $this->runInWorkers($files, $workers, $scan) : null;
 
         if (null === $resultsByIndex) {
-            return PatternAttributeScanner::specs($files);
+            return array_values(array_unique($scan($files)));
         }
 
-        $specs = [];
-        foreach ($resultsByIndex as $chunkSpecs) {
-            foreach (\is_array($chunkSpecs) ? $chunkSpecs : [] as $spec) {
-                if (\is_string($spec)) {
-                    $specs[] = $spec;
+        $found = [];
+        foreach ($resultsByIndex as $chunkResults) {
+            foreach (\is_array($chunkResults) ? $chunkResults : [] as $item) {
+                if (\is_string($item)) {
+                    $found[] = $item;
                 }
             }
         }
 
-        return array_values(array_unique($specs));
+        return array_values(array_unique($found));
     }
 
     /**
@@ -293,32 +345,140 @@ final readonly class PatternExtractor
     }
 
     /**
-     * The files read for declarations: the linted files, and the PHP files
-     * under each declaration path, whatever the run excludes: an excluded
-     * directory is kept out of the lint, not out of the declarations.
+     * The project files read for declarations: the linted files, and the PHP
+     * files under each declaration path, whatever the run excludes: an
+     * excluded directory is kept out of the lint, not out of the
+     * declarations. A declaration path below a linted one is not walked
+     * again: the lint's own walk listed its files, the excluded ones apart.
+     * vendor/ is left to its own walk.
      *
-     * @param array<string> $phpFiles
+     * @param array<string> $paths            the linted paths
+     * @param array<string> $phpFiles         the linted files
+     * @param array<string> $excludedFiles    the PHP files the lint's walk excluded
      * @param array<string> $declarationPaths
+     * @param array<string> $vendorPaths
      *
      * @return list<string>
      */
-    private function collectDeclarationFiles(array $phpFiles, array $declarationPaths): array
+    private function collectDeclarationFiles(array $paths, array $phpFiles, array $excludedFiles, array $declarationPaths, array $vendorPaths): array
     {
-        $files = [];
-        foreach ([...$phpFiles, ...$this->collectPhpFiles($declarationPaths, [])] as $file) {
-            $files[realpath($file) ?: $file] ??= $file;
+        $linted = [];
+        foreach ($paths as $path) {
+            $real = '' !== $path && is_dir($path) ? realpath($path) : false;
+            if (false !== $real) {
+                $linted[$real] = rtrim($path, '/\\');
+            }
         }
 
-        return array_values($files);
+        $vendorPrefixes = [];
+        foreach ($vendorPaths as $vendorPath) {
+            $spelled = self::spelledBelow($vendorPath, $linted);
+            if (null !== $spelled) {
+                $vendorPrefixes[] = $spelled.\DIRECTORY_SEPARATOR;
+            }
+        }
+
+        $files = $phpFiles;
+        $walk = [];
+        foreach ($declarationPaths as $root) {
+            $spelled = self::spelledBelow($root, $linted);
+            if (null === $spelled) {
+                $walk[] = $root;
+
+                continue;
+            }
+
+            foreach ($excludedFiles as $file) {
+                if (str_starts_with($file, $spelled.\DIRECTORY_SEPARATOR) && [] === array_filter($vendorPrefixes, static fn (string $prefix): bool => str_starts_with($file, $prefix))) {
+                    $files[] = $file;
+                }
+            }
+        }
+
+        // Keys dedupe in one pass, without a call to the filesystem per file.
+        return array_keys(array_flip([...$files, ...$this->walkDeclarationPaths($walk)]));
+    }
+
+    /**
+     * How the lint's walk spells a directory below (or at) a linted path,
+     * null when it is below none.
+     *
+     * @param array<string, string> $linted the real path of each linted directory => as it was given
+     */
+    private static function spelledBelow(string $directory, array $linted): ?string
+    {
+        $real = is_dir($directory) ? realpath($directory) : false;
+        if (false === $real) {
+            return null;
+        }
+
+        foreach ($linted as $lintedReal => $spelled) {
+            if ($real === $lintedReal || str_starts_with($real, $lintedReal.\DIRECTORY_SEPARATOR)) {
+                return $spelled.substr($real, \strlen($lintedReal));
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The PHP files under the paths, read for declarations only: a directory
+     * that cannot be read is passed over, and a symlinked directory (a
+     * package Composer links from a path repository) is followed, each real
+     * directory once, so a symlink loop ends.
+     *
+     * @param array<string> $roots
+     *
+     * @return list<string>
+     */
+    private function walkDeclarationPaths(array $roots): array
+    {
+        $files = [];
+        $visited = [];
+        foreach ($roots as $root) {
+            if (!is_dir($root)) {
+                array_push($files, ...$this->collectPhpFiles([$root], []));
+
+                continue;
+            }
+
+            $pending = [rtrim($root, '/\\')];
+            while ([] !== $pending) {
+                $directory = array_pop($pending);
+                $real = realpath($directory);
+                $entries = false === $real || isset($visited[$real]) ? false : @scandir($directory);
+                if (false === $entries) {
+                    continue;
+                }
+
+                $visited[(string) $real] = true;
+                foreach ($entries as $entry) {
+                    $path = $directory.\DIRECTORY_SEPARATOR.$entry;
+                    if ('.' === $entry || '..' === $entry) {
+                        continue;
+                    }
+                    if (is_dir($path)) {
+                        $pending[] = $path;
+                    } elseif (str_ends_with($entry, '.php') && !$this->isTemplateFile($entry) && is_file($path)) {
+                        $files[] = $path;
+                    }
+                }
+            }
+        }
+
+        return $files;
     }
 
     /**
      * @param array<string> $paths
      * @param array<string> $excludePaths
+     * @param list<string>  $excludedFiles filled with the PHP files an excluded directory holds
+     *
+     * @param-out list<string> $excludedFiles
      *
      * @return array<string>
      */
-    private function collectPhpFiles(array $paths, array $excludePaths): array
+    private function collectPhpFiles(array $paths, array $excludePaths, array &$excludedFiles = []): array
     {
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
@@ -373,6 +533,8 @@ final readonly class PatternExtractor
 
                 if (!$excluded) {
                     $files[] = $filePath;
+                } else {
+                    $excludedFiles[] = $filePath;
                 }
             }
         }

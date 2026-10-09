@@ -74,6 +74,7 @@ final readonly class LintService
             $progress,
             $request->analysisWorkers,
             $request->declarationPaths,
+            $request->vendorPaths,
         );
 
         return $this->sources->collect($context);

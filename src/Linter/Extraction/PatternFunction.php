@@ -43,22 +43,25 @@ final readonly class PatternFunction
     ];
 
     /**
-     * @param string   $label            name used in reports, e.g. "preg_match" or "Preg::match"
-     * @param int      $argumentIndex    zero-based position of the pattern argument
-     * @param bool     $keysArePatterns  when the argument is an array literal, whether its keys
-     *                                   hold the patterns (preg_replace_callback_array) rather
-     *                                   than its values (preg_replace)
-     * @param int|null $replacementIndex with $keysArePatterns, the position of a replacement that
-     *                                   decides between keys and values, as nette/utils'
-     *                                   Strings::replace() does: the keys hold the patterns only
-     *                                   when the array's first key is a string and the
-     *                                   replacement is no callable; the values otherwise
+     * @param string    $label               name used in reports, e.g. "preg_match" or "Preg::match"
+     * @param int       $argumentIndex       zero-based position of the pattern argument
+     * @param bool      $keysArePatterns     when the argument is an array literal, whether its keys
+     *                                       hold the patterns (preg_replace_callback_array) rather
+     *                                       than its values (preg_replace)
+     * @param int|null  $replacementIndex    with $keysArePatterns, the position of a replacement that
+     *                                       decides between keys and values, as nette/utils'
+     *                                       Strings::replace() does: the keys hold the patterns only
+     *                                       when the array's first key is a string and the
+     *                                       replacement is no callable; the values otherwise
+     * @param list<int> $moreArgumentIndexes the other arguments that carry a pattern, when the
+     *                                       declarations of one function mark several
      */
     public function __construct(
         public string $label,
         public int $argumentIndex = 0,
         public bool $keysArePatterns = false,
         public ?int $replacementIndex = null,
+        public array $moreArgumentIndexes = [],
     ) {}
 
     /**
@@ -78,5 +81,21 @@ final readonly class PatternFunction
     public function readingValues(): self
     {
         return new self($this->label, $this->argumentIndex);
+    }
+
+    /**
+     * One function per argument that carries a pattern, the first one
+     * itself.
+     *
+     * @return non-empty-list<self>
+     */
+    public function eachArgument(): array
+    {
+        $functions = [$this];
+        foreach ($this->moreArgumentIndexes as $index) {
+            $functions[] = new self($this->label, $index, $this->keysArePatterns, $this->replacementIndex);
+        }
+
+        return $functions;
     }
 }

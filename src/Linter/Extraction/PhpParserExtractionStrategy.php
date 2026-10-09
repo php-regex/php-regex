@@ -84,9 +84,9 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
     }
 
-    public function withPatternFunctions(array $specs): static
+    public function withPatternFunctions(array $specs, array $plain = []): static
     {
-        return new self([], $this->registry->withCustomFunctions(array_values($specs)), false);
+        return new self([], $this->registry->withDeclaredFunctions($specs, $plain), false);
     }
 
     public function extract(array $files): array
@@ -98,7 +98,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         // Used on its own, the functions the files mark with #[RegexPattern]
         // join the registry for this run.
         $specs = $this->scansDeclarations ? PatternAttributeScanner::specs($files) : [];
-        $strategy = [] === $specs ? $this : new self([], $this->registry->withCustomFunctions($specs));
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
 
         return $strategy->analyzeFilesWithPhpStan($files);
     }
@@ -233,8 +233,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         // An unqualified name in a namespace: PHP calls the namespace's
         // function first, the global one when there is none.
         $namespaced = $funcCall->name->getAttribute('namespacedName');
-        $patternFunction = ($namespaced instanceof Name ? $this->registry->lookupFunction($namespaced->toString()) : null)
-            ?? $this->registry->lookupFunction($funcCall->name->toString());
+        $patternFunction = $this->registry->lookupCall($namespaced instanceof Name ? $namespaced->toString() : null, $funcCall->name->toString());
         if (null === $patternFunction) {
             return [];
         }
@@ -288,21 +287,30 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
      */
     private function extractFromArgs(array $args, PatternFunction $patternFunction, string $file, string $content): array
     {
-        $arg = $this->findPatternArg($args, $patternFunction->argumentIndex);
-        if (null === $arg) {
-            return [];
-        }
-
-        // Nette's Strings::replace() reads the values of the array when the
-        // replacement is a callable.
-        if (null !== $patternFunction->replacementIndex) {
-            $replacement = $this->findPatternArg($args, $patternFunction->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES);
-            if (null !== $replacement && $this->isCallableExpr($replacement->value)) {
-                $patternFunction = $patternFunction->readingValues();
+        $occurrences = [];
+        $read = [];
+        foreach ($patternFunction->eachArgument() as $function) {
+            $arg = $this->findPatternArg($args, $function->argumentIndex);
+            // A named argument stands for every position it may fill: read once.
+            if (null === $arg || \in_array($arg, $read, true)) {
+                continue;
             }
+
+            $read[] = $arg;
+
+            // Nette's Strings::replace() reads the values of the array when the
+            // replacement is a callable.
+            if (null !== $function->replacementIndex) {
+                $replacement = $this->findPatternArg($args, $function->replacementIndex, PatternFunction::REPLACEMENT_PARAMETER_NAMES);
+                if (null !== $replacement && $this->isCallableExpr($replacement->value)) {
+                    $function = $function->readingValues();
+                }
+            }
+
+            array_push($occurrences, ...$this->extractPatternFromArg($arg, $function, $file, $content));
         }
 
-        return $this->extractPatternFromArg($arg, $patternFunction, $file, $content);
+        return $occurrences;
     }
 
     /**

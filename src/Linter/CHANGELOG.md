@@ -59,7 +59,9 @@ CHANGELOG
    `#[Language('RegExp')]`, is a pattern function, as if
    configured: the linted paths, the configured paths and `vendor/` are read
    once for such declarations, whatever `exclude` says, before the files are
-   shared out between the workers.
+   shared out between the workers. A configured spec wins over a declaration
+   found that way, a project declaration over a copy in `vendor/`, and
+   project declarations marking different parameters are all read.
    A call written unqualified in a namespace, `grep()` in `namespace App`, is
    matched first as that namespace's function, `App\grep()`, as PHP calls it.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the

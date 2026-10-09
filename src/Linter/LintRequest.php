@@ -30,7 +30,9 @@ final readonly class LintRequest
      *                                              rewrite with the automata unless told otherwise
      * @param array<string, bool> $lintRules
      * @param array<string>       $declarationPaths where the functions marked #[RegexPattern] are read, besides
-     *                                              the paths linted: the project's paths, its vendor/
+     *                                              the paths linted: the project's paths
+     * @param array<string>       $vendorPaths      the libraries read the same way, vendor/: a project
+     *                                              declaration wins over a copy found there
      */
     public function __construct(
         public array $paths,
@@ -45,6 +47,7 @@ final readonly class LintRequest
         public OptimizerOptions $optimizations = new OptimizerOptions(verifyWithAutomata: true),
         public array $lintRules = [],
         public array $declarationPaths = [],
+        public array $vendorPaths = [],
     ) {}
 
     /**
