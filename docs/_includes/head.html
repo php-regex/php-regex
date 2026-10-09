@@ -18,11 +18,12 @@
   <meta name="theme-color" content="#0F1B2E" media="(prefers-color-scheme: dark)">
   <script>
     (function () {
-      var theme = 'system';
-      try { theme = localStorage.getItem('theme') || 'system'; } catch (e) {}
-      var dark = theme === 'dark' ||
-        (theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      var theme;
+      try { theme = localStorage.getItem('theme'); } catch (e) {}
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.dataset.theme = theme;
     })();
   </script>
   <link rel="stylesheet" href="/assets/css/main.css?v={{ site.time | date: '%s' }}">
