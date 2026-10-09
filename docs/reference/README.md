@@ -16,6 +16,7 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - [Pattern Info and Compatibility](pattern-info.md)
 - [Prefilters](prefilters.md)
 - [PCRE2 Conformance](pcre2-conformance.md)
+- [Logic Solver](logic-solver.md)
 - [FAQ and Glossary](faq-glossary.md)
 
 ## AST and Visitors
@@ -39,3 +40,4 @@ This section contains the reference material for PHPRegex. Use it when you need 
 - Build a custom visitor: [../nodes/README.md](../nodes/README.md) and [../visitors/README.md](../visitors/README.md)
 - Learn regex patterns: [../tutorial/README.md](../tutorial/README.md)
 - Check ReDoS safety: [ReDoS guide](../guides/redos.md)
+- Compare two patterns (equivalence, intersection, subset) or get an example string: [logic-solver.md](logic-solver.md)

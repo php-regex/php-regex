@@ -52,6 +52,7 @@ Start here:
 - [JSON Output](reference/json-output.md) - Every key the `regex` command prints in JSON.
 - [Feature Support Matrix](reference/feature-support-matrix.md) - PCRE construct coverage by component.
 - [Correctness Contracts](reference/correctness-contracts.md) - Soundness/completeness guarantees by feature.
+- [Logic Solver](reference/logic-solver.md) - Pattern equivalence, intersection and subset via automata.
 - [Backward Compatibility Promise](reference/backward-compatibility.md) - What each release may change.
 - [FAQ and Glossary](reference/faq-glossary.md) - Common terms and questions.
 - [Maintainers Guide](maintainers.md) - Project maintenance notes.
