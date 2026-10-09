@@ -102,3 +102,24 @@ Vulnerability Reporting configured.
 that same build: no CI-built artifact, no signing, no attestation. A compiled
 354 KB `regex.phar` also sits tracked in git history (export-ignored at
 `.gitattributes:75`) — decide whether it stays.
+
+## Mutation-test the extraction work
+
+Infection's initial test run crashes before any mutant runs: `Parse error:
+Unterminated comment starting line 85` in
+`tools/phpunit/vendor/phpstan/phpstan/phpstan.phar/vendor/hoa/event/Bucket.php`.
+Neither `-d auto_prepend_file=` on the child runs nor
+`--exclude-filter=PHPStan` avoids it, so some other test loads the phar under
+Infection's include interceptor. Find that test, then mutate the extraction
+lines (`--git-diff-lines --git-diff-base=368a87e1`, up to 9b98938a).
+
+## Extraction gaps left on purpose
+
+- `f(...$args, pattern: '/x/')`: PHP uses `/x/`, both extractors read nothing.
+- An alias written with a tab, a newline or a comment before `as` does not open
+  the file for a wrapper preset.
+- Laravel `regex:lint` with `php-regex.paths` null and no path argument passes
+  null as the linted paths (TypeError, older than the extraction work).
+- The language server reads `#[RegexPattern]` under `paths` minus `exclude` and
+  never in `vendor/`, while the lint reads `vendor/` and configured paths
+  whatever `exclude` says; group imports of the attribute are missed there.
