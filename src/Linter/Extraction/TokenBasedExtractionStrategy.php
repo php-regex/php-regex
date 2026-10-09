@@ -42,28 +42,23 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     private PatternFunctionRegistry $registry;
 
     /**
-     * @param array<int, string> $customFunctions   Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
-     * @param bool               $scansDeclarations whether extract() reads the #[RegexPattern] declarations of
-     *                                              its files; not once the pattern functions are given
+     * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
      */
-    public function __construct(
-        array $customFunctions = [],
-        ?PatternFunctionRegistry $registry = null,
-        private bool $scansDeclarations = true
-    ) {
+    public function __construct(array $customFunctions = [], ?PatternFunctionRegistry $registry = null)
+    {
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
     }
 
     public function withPatternFunctions(array $specs, array $plain = []): static
     {
-        return new self([], $this->registry->withDeclaredFunctions($specs, $plain), false);
+        return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead());
     }
 
     public function extract(array $files): array
     {
         // Used on its own, the functions the files mark with #[RegexPattern]
         // join the registry for this run.
-        $specs = $this->scansDeclarations ? PatternAttributeScanner::specs($files) : [];
+        $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
         $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
 
         return $strategy->extractFiles($files);

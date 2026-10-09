@@ -41,13 +41,16 @@ final readonly class PatternFunctionRegistry
     ];
 
     /**
-     * @param array<string, PatternFunction> $functions keyed by lowercase function name
-     * @param array<string, PatternFunction> $methods   keyed by lowercase "fqcn::method"
-     * @param array<int, string>             $needles   lowercase substrings gating file reads
-     * @param array<string, true>            $dropIns   functions a namespaced copy may stand in for
-     * @param array<string, true>            $plain     namespaced functions declared without a pattern
-     *                                                  parameter, keyed by lowercase name: an unqualified
-     *                                                  call in their namespace calls them, not a global one
+     * @param array<string, PatternFunction> $functions        keyed by lowercase function name
+     * @param array<string, PatternFunction> $methods          keyed by lowercase "fqcn::method"
+     * @param array<int, string>             $needles          lowercase substrings gating file reads
+     * @param array<string, true>            $dropIns          functions a namespaced copy may stand in for
+     * @param array<string, true>            $plain            namespaced functions declared without a pattern
+     *                                                         parameter, keyed by lowercase name: an unqualified
+     *                                                         call in their namespace calls them, not a global one
+     * @param bool                           $declarationsRead whether the project's declarations were read before
+     *                                                         the files were shared out: an extractor then does not
+     *                                                         read those of its own files again
      */
     private function __construct(
         private array $functions,
@@ -55,6 +58,7 @@ final readonly class PatternFunctionRegistry
         private array $needles,
         private array $dropIns = [],
         private array $plain = [],
+        private bool $declarationsRead = false,
     ) {}
 
     /**
@@ -112,7 +116,7 @@ final readonly class PatternFunctionRegistry
             $needles = [...$needles, ...InteropPresets::needles($preset)];
         }
 
-        return new self($this->functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain);
+        return new self($this->functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead);
     }
 
     /**
@@ -149,7 +153,7 @@ final readonly class PatternFunctionRegistry
             $needles = [...$needles, ...$specNeedles];
         }
 
-        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead);
     }
 
     /**
@@ -169,7 +173,7 @@ final readonly class PatternFunctionRegistry
      */
     public function withDeclaredFunctions(array $specs, array $plain = []): self
     {
-        /** @var array<string, array{bool, PatternFunction, string, list<int>}> $declared */
+        /** @var array<string, array{bool, PatternFunction, list<string>, list<int>}> $declared */
         $declared = [];
         foreach ($specs as $spec) {
             $parsed = self::parseSpec($spec);
@@ -177,15 +181,15 @@ final readonly class PatternFunctionRegistry
                 continue;
             }
 
-            [$key, $isMethod, $function, $needle] = $parsed;
-            $declared[$key] ??= [$isMethod, $function, $needle, []];
+            [$key, $isMethod, $function, $specNeedles] = $parsed;
+            $declared[$key] ??= [$isMethod, $function, $specNeedles, []];
             $declared[$key][3][] = $function->argumentIndex;
         }
 
         $functions = $this->functions;
         $methods = $this->methods;
         $needles = $this->needles;
-        foreach ($declared as $key => [$isMethod, $function, $needle, $indexes]) {
+        foreach ($declared as $key => [$isMethod, $function, $specNeedles, $indexes]) {
             $indexes = array_values(array_unique($indexes));
             sort($indexes);
             $union = new PatternFunction($function->label, $indexes[0], moreArgumentIndexes: \array_slice($indexes, 1));
@@ -194,7 +198,7 @@ final readonly class PatternFunctionRegistry
             } else {
                 $functions[$key] = $union;
             }
-            $needles[] = $needle;
+            $needles = [...$needles, ...$specNeedles];
         }
 
         $plainFunctions = $this->plain;
@@ -202,7 +206,25 @@ final readonly class PatternFunctionRegistry
             $plainFunctions[strtolower(ltrim($name, '\\'))] = true;
         }
 
-        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions, $this->declarationsRead);
+    }
+
+    /**
+     * The same registry, saying the project's declarations were read
+     * before the files were shared out.
+     */
+    public function withDeclarationsRead(): self
+    {
+        return new self($this->functions, $this->methods, $this->needles, $this->dropIns, $this->plain, true);
+    }
+
+    /**
+     * Whether the project's declarations were read before the files were
+     * shared out: an extractor then does not read those of its own files.
+     */
+    public function declarationsRead(): bool
+    {
+        return $this->declarationsRead;
     }
 
     /**

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PhpParser\ParserFactory;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
@@ -716,6 +717,41 @@ final class PatternFunctionPrescanTest extends TestCase
         $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], vendorPaths: [$project.'/vendor']);
 
         $this->assertSame(['/c(/'], self::patterns($occurrences));
+    }
+
+    /**
+     * A file the PHP parser refuses is read with the tokenizer, which knows
+     * the functions declared in the other files, and the plain namespaced
+     * ones that keep a global declaration from capturing a call.
+     */
+    #[Test]
+    #[DataProvider('provideWorkers')]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_a_file_the_parser_refuses_reads_calls_to_functions_declared_elsewhere(int $workers): void
+    {
+        $project = $this->makeProject([
+            'lib/a_helper.php' => self::HELPER,
+            'lib/b_broken.php' => "<?php\nnamespace Own;\n\\App\\grep('/b02(/', 'x');\ngrep('/own(/');\nfunction (\n",
+            'lib/c_own.php' => "<?php\nnamespace Own;\nfunction grep(string \$haystack) {}\n",
+            'vendor/fix/global.php' => "<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction grep(#[RegexPattern] string \$p) {}\n",
+        ]);
+        $this->assertTrue(class_exists(ParserFactory::class));
+
+        $occurrences = (new PatternExtractor(new PhpParserExtractionStrategy()))->extract([$project.'/lib'], ['vendor'], null, $workers, vendorPaths: [$project.'/vendor']);
+
+        $fallbacks = array_values(array_filter($occurrences, static fn (PatternOccurrence $occurrence): bool => null !== $occurrence->parserFallback));
+        $this->assertCount(1, $fallbacks);
+        $this->assertSame($project.'/lib/b_broken.php', $fallbacks[0]->file);
+        $this->assertSame(['/b02(/'], self::patterns(array_filter($occurrences, static fn (PatternOccurrence $occurrence): bool => null === $occurrence->parserFallback)));
+    }
+
+    /**
+     * @return iterable<string, array{workers: int}>
+     */
+    public static function provideWorkers(): iterable
+    {
+        yield 'serial' => ['workers' => 1];
+        yield 'four jobs' => ['workers' => 4];
     }
 
     /**
