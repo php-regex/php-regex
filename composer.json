@@ -59,11 +59,10 @@
         },
         "exclude-from-classmap": [
             "tests/Fixtures/",
+            "tests/Integration/Bridge/PHPStan/Fixtures/",
+            "tests/Integration/Bridge/Psalm/Fixtures/",
             "tests/Integration/Bridge/Rector/**/Fixture/",
-            "tests/Integration/Bridge/Rector/**/FixturePhp74/",
-            "tests/Integration/Bridge/Rector/**/FixturePhp80/",
-            "tests/Integration/Bridge/Rector/**/FixturePhp81/",
-            "tests/Integration/Bridge/Rector/**/FixturePhp82/"
+            "tests/Integration/Bridge/Rector/**/Fixture*/"
         ]
     },
     "bin": [
