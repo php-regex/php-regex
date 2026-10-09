@@ -63,7 +63,7 @@ In short, the public surface is:
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `TranspileException` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
-| `regex-phpstan` | `RegexPatternRule` |
+| `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle` |

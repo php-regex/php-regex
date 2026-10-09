@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
-use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\PHPStan\PatternChecker;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -88,7 +88,7 @@ final class RegexPatternRuleDocLinksTest extends TestCase
      */
     private static function lintDocLinks(): array
     {
-        $links = (new \ReflectionClass(RegexPatternRule::class))->getConstant('LINT_DOC_LINKS');
+        $links = (new \ReflectionClass(PatternChecker::class))->getConstant('LINT_DOC_LINKS');
         self::assertIsArray($links);
 
         $typed = [];

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\PHPStan\PatternChecker;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,8 +37,8 @@ final class RegexParserRuleThresholdTypeTest extends TestCase
     #[Test]
     public function test_rule_reads_an_unset_threshold_as_critical(): void
     {
-        $rule = new RegexPatternRule(['checks' => ['redos' => ['enabled' => true]]]);
+        $checker = new PatternChecker(['checks' => ['redos' => ['enabled' => true]]]);
 
-        $this->assertSame('critical', (new \ReflectionProperty($rule, 'redosThreshold'))->getValue($rule));
+        $this->assertSame('critical', (new \ReflectionProperty($checker, 'redosThreshold'))->getValue($checker));
     }
 }

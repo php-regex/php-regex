@@ -21,7 +21,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\PHPStan\PatternChecker;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -96,9 +96,9 @@ final class OptimizerOptionsWiringTest extends TestCase
      */
     private function phpstanOptions(array $options): OptimizerOptions
     {
-        $rule = new RegexPatternRule(['checks' => ['optimizations' => ['enabled' => true, 'options' => $options]]]);
+        $checker = new PatternChecker(['checks' => ['optimizations' => ['enabled' => true, 'options' => $options]]]);
 
-        $resolved = (new \ReflectionProperty($rule, 'optimizationOptions'))->getValue($rule);
+        $resolved = (new \ReflectionProperty($checker, 'optimizationOptions'))->getValue($checker);
         $this->assertInstanceOf(OptimizerOptions::class, $resolved);
 
         return $resolved;

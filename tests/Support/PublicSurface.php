@@ -64,7 +64,7 @@ final class PublicSurface
             'Exception/InvalidRegexOptionException', 'Exception/CacheException',
             'Node/*',
         ],
-        'PHPStan' => ['RegexPatternRule'],
+        'PHPStan' => ['RegexPatternRule', 'RegexPatternArgumentRule'],
         'Psalm' => ['Plugin'],
         'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'Set/RegexSetList'],
         'Redos' => [

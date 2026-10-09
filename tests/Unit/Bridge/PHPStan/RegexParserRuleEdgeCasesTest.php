@@ -22,6 +22,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
+use PHPRegex\PHPStan\PatternChecker;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\DependencyTracker;
@@ -469,20 +470,16 @@ final class RegexParserRuleEdgeCasesTest extends TestCase
 
     public function test_display_pattern_cuts_at_the_length_limit(): void
     {
-        $rule = new RegexPatternRule();
-        $ref = new \ReflectionClass($rule);
-        $refMethod = $ref->getMethod('displayPattern');
-
         // Test exactly at length limit
-        $result = $refMethod->invokeArgs($rule, [str_repeat('a', 50), 50]);
+        $result = PatternChecker::displayPattern(str_repeat('a', 50), 50);
         $this->assertSame(str_repeat('a', 50), $result);
 
         // Test over length limit
-        $result = $refMethod->invokeArgs($rule, [str_repeat('a', 51), 50]);
+        $result = PatternChecker::displayPattern(str_repeat('a', 51), 50);
         $this->assertSame(str_repeat('a', 50).'...', $result);
 
         // Test default length parameter
-        $result = $refMethod->invokeArgs($rule, [str_repeat('a', 55)]);
+        $result = PatternChecker::displayPattern(str_repeat('a', 55));
         $this->assertSame(str_repeat('a', 50).'...', $result);
     }
 

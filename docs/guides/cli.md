@@ -518,7 +518,8 @@ methods that declare one, and their calls are then read as if they were
 configured. A call written unqualified in the function's own namespace,
 `grep()` in `namespace App`, is read, as PHP calls `App\grep()` first. An
 instance call (`$str->matches(...)`) names no class the linter can know, and
-is not read.
+is not read; the PHPStan extension, which knows the type of `$str`, reads it
+(see [the PHPStan guide](phpstan.md#pattern-parameters)).
 
 ```php
 use PHPRegex\Parser\Attribute\RegexPattern;

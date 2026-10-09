@@ -1,6 +1,7 @@
 # PHPStan
 
-The PHPStan extension reads the regex patterns passed to `preg_*` functions
+The PHPStan extension reads the regex patterns passed to `preg_*` functions,
+and to your own functions and methods that mark a parameter as a pattern,
 and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.
@@ -46,6 +47,44 @@ Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lo
 ```
 
 A `phpRegex.phpVersion` naming one version judges that version alone.
+
+## Pattern parameters
+
+A function, a method or a constructor of your own that takes a pattern says
+so with the attribute `PHPRegex\Parser\Attribute\RegexPattern`, or with
+PhpStorm's `#[Language('RegExp')]`:
+
+```php
+use PHPRegex\Parser\Attribute\RegexPattern;
+
+final class Str
+{
+    public function matches(string $subject, #[RegexPattern] string $regex): bool
+    {
+        return 1 === preg_match($regex, $subject);
+    }
+}
+
+$str->matches($input, '/(foo/');
+```
+
+The constant pattern passed to that parameter, by position or by name, is
+checked as a `preg_*()` pattern is, in calls to functions, static and
+instance methods (PHPStan knows the type of `$str`) and constructors. PHPStan
+core reads only `preg_*()` calls, so a pattern the running PHP refuses is
+reported here, in PHPStan's words and under its identifier:
+
+```text
+Regex pattern is invalid: missing closing parenthesis at offset 4.
+🪪 regexp.pattern
+```
+
+A pattern the target refuses is `regex.invalidForTarget`, and `rules.neon`
+lints it and checks it for ReDoS as it does in a `preg_*()` call. A variadic
+parameter has each of its arguments read. PHPStan reads the arguments of an
+attribute only when it knows its class: `#[Language('RegExp')]` is read when
+`jetbrains/phpstorm-attributes` is installed, and `#[RegexPattern]`, which
+takes none, always.
 
 ## Lint rules and ReDoS analysis
 
@@ -251,6 +290,7 @@ custom wiring, reads them in any case.
 | identifier | reported for |
 |---|---|
 | `regex.invalidForTarget` | a pattern the target refuses and the running PHP compiles |
+| `regexp.pattern` | a pattern passed to a parameter marked `#[RegexPattern]` or `#[Language('RegExp')]` that the running PHP refuses; PHPStan core's identifier, which it gives such a pattern in a `preg_*()` call |
 | `regex.replacement.undefinedGroup` | a constant replacement of `preg_replace()` or `preg_filter()` that refers to a group the pattern does not have, or names one (`${name}`, which PHP never substitutes); when the pattern and the replacement both vary, only a reference no possible pattern defines; always on |
 | `regex.redos` | a pattern at or above the ReDoS threshold; the severity is in the tip |
 | `regex.redos.search` | a pattern whose one attempt is proven linear and whose unanchored search is quadratic in PCRE2's interpreter, at the ReDoS threshold `medium` or below |

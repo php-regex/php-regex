@@ -72,3 +72,12 @@ services:
             phpVersionRange: %phpVersion%
         tags:
             - phpstan.rules.rule
+    -
+        # The patterns passed to a parameter marked #[RegexPattern] or
+        # #[Language('RegExp')], checked alike.
+        class: PHPRegex\PHPStan\RegexPatternArgumentRule
+        arguments:
+            config: %phpRegex%
+            phpVersionRange: %phpVersion%
+        tags:
+            - phpstan.rules.rule
