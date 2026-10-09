@@ -85,3 +85,7 @@ CHANGELOG
    configuration or with `#[RegexPattern]`, only through an aliased import
    (`use Composer\Pcre\Preg as P;`, `use Composer\{Pcre\Preg as P}`) is
    read instead of skipped.
+ * Without `nikic/php-parser`, the lint reads a nowdoc or a heredoc without
+   interpolation, a pattern passed by name, and the string form of a call
+   whose array form holds patterns in its keys (`Strings::replace($s, '/a/',
+   'b')`), as the AST extractor does.

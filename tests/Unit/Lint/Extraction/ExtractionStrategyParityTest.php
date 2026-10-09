@@ -33,6 +33,22 @@ use PHPUnit\Framework\TestCase;
 final class ExtractionStrategyParityTest extends TestCase
 {
     /**
+     * @var list<string>
+     */
+    private array $files = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+
+        $this->files = [];
+    }
+
+    /**
      * @return iterable<string, array{string, array<int, string>, array<int, string>}>
      */
     public static function provideFixtures(): iterable
@@ -71,6 +87,60 @@ final class ExtractionStrategyParityTest extends TestCase
             'multiple_preg_functions.php',
             [],
             ['/test/', '/old/', '/\\s+/'],
+        ];
+
+        // The expected values are the same literals as the fixtures, so PHP
+        // decodes them, not the test.
+        yield 'nowdoc' => [
+            'parity_nowdoc.php',
+            [],
+            [<<<'RE'
+                /nowdoc
+                  (\d+) \. \\x \' $x " {$y} \u{41}
+
+                /x
+                RE, '/nowdoc-in-array/', '/after-nowdoc/'],
+        ];
+
+        yield 'heredoc_plain' => [
+            'parity_heredoc_plain.php',
+            [],
+            [<<<RE
+                /heredoc
+                  (\d+) \. \\x \" \$ \x41 \101 \u{42} \t {x} $) a$
+
+                /x
+                RE],
+        ];
+
+        yield 'heredoc_interpolated' => [
+            'parity_heredoc_interpolated.php',
+            [],
+            [],
+        ];
+
+        yield 'named_pattern_first' => [
+            'parity_named_pattern_first.php',
+            [],
+            ['/named-first/i'],
+        ];
+
+        yield 'named_pattern_second' => [
+            'parity_named_pattern_second.php',
+            [],
+            ['/named-second/', '/named-wrapper/', '/named-trailing-comma/'],
+        ];
+
+        yield 'nette_replace_string_form' => [
+            'parity_nette_replace_string_form.php',
+            ['nette-utils'],
+            ['/nette-string/'],
+        ];
+
+        yield 'spread_before_pattern' => [
+            'parity_spread_before_pattern.php',
+            ['nette-utils'],
+            ['/before-spread/'],
         ];
     }
 
@@ -137,6 +207,39 @@ final class ExtractionStrategyParityTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{literal: string}>
+     */
+    public static function provideHeredocLiterals(): iterable
+    {
+        yield 'indented closing marker' => ['literal' => "<<<RE\n    /a/\n      b\n    RE"];
+        yield 'whitespace-only line shorter than the indentation' => ['literal' => "<<<RE\n    /a/\n  \n\n    b\n    RE"];
+        yield 'tab indentation' => ['literal' => "<<<RE\n\t\t/a/\n\t\t\tb\n\t\tRE"];
+        yield 'escape decoded after the indentation is removed' => ['literal' => "<<<RE\n    /a\\n  b\\\\/\n    RE"];
+        yield 'quote escape kept in a heredoc' => ['literal' => "<<<RE\n    /a\\\"b/\n    RE"];
+        yield 'quoted heredoc label' => ['literal' => "<<<\"RE\"\n    /a\\x41/\n    RE"];
+        yield 'nowdoc keeps every backslash' => ['literal' => "<<<'RE'\n    /a\\n\\\\\\'\$b/\n    RE"];
+        yield 'CRLF line endings' => ['literal' => "<<<RE\r\n    /a/\r\n    b\r\n    RE"];
+        yield 'concatenated with a flag' => ['literal' => "<<<'RE'\n    /a/\n    RE . 'i'"];
+    }
+
+    #[DataProvider('provideHeredocLiterals')]
+    public function test_both_strategies_decode_a_heredoc_as_php_does(string $literal): void
+    {
+        $value = $this->write("<?php\nreturn ".$literal.";\n");
+        $expected = include $value;
+        $this->assertIsString($expected);
+
+        $file = $this->write("<?php\npreg_match(".$literal.", \$subject);\n");
+
+        // PHP itself is the reference, so the tokenizer is checked even
+        // without nikic/php-parser.
+        $this->assertSame([$expected], $this->patterns(new TokenBasedExtractionStrategy(), $file));
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame([$expected], $this->patterns(new PhpParserExtractionStrategy(), $file));
+        }
+    }
+
+    /**
      * @return iterable<string, array{fixture: string, spec: string, expected: array<int, string>}>
      */
     public static function provideAliasedDeclaredClasses(): iterable
@@ -161,6 +264,27 @@ final class ExtractionStrategyParityTest extends TestCase
         }
     }
 
+    /**
+     * @return iterable<string, array{literal: string}>
+     */
+    public static function provideHeredocsPhpRefuses(): iterable
+    {
+        yield 'line indented less than the closing marker' => ['literal' => "<<<RE\n    /a/\n  b\n    RE"];
+        yield 'tabs and spaces mixed in the body' => ['literal' => "<<<RE\n    /a/\n  \t\n    RE"];
+        yield 'tabs and spaces mixed in the closing marker' => ['literal' => "<<<RE\n \t/a/\n \tRE"];
+    }
+
+    #[DataProvider('provideHeredocsPhpRefuses')]
+    public function test_both_strategies_skip_a_heredoc_php_refuses(string $literal): void
+    {
+        $file = $this->write("<?php\npreg_match(".$literal.", \$subject);\n");
+
+        $this->assertSame([], $this->patterns(new TokenBasedExtractionStrategy(), $file));
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame([], $this->patterns(new PhpParserExtractionStrategy(), $file));
+        }
+    }
+
     public function test_both_strategies_label_occurrences_the_same_way(): void
     {
         if (!class_exists(ParserFactory::class)) {
@@ -181,6 +305,18 @@ final class ExtractionStrategyParityTest extends TestCase
             'Preg::replaceCallbackArray()',
         ], $fromAst);
         $this->assertSame($fromAst, $fromTokens);
+    }
+
+    private function write(string $content): string
+    {
+        $base = tempnam(sys_get_temp_dir(), 'regex-parity-');
+        $this->assertIsString($base);
+        unlink($base);
+        $file = $base.'.php';
+        file_put_contents($file, $content);
+        $this->files[] = $file;
+
+        return $file;
     }
 
     /**

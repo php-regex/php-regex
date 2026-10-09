@@ -40,6 +40,16 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
      */
     private const IDENTIFIER_PATTERN = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
+    /**
+     * Parameter names accepted when a call passes the pattern by name, the
+     * same as PhpParserExtractionStrategy's.
+     */
+    private const PATTERN_PARAMETER_NAMES = [
+        'pattern',
+        'patterns',
+        'regex',
+    ];
+
     private PatternFunctionRegistry $registry;
 
     /**
@@ -442,117 +452,127 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         array $tokenOffsets,
         string $content,
     ): array {
-        $targetArgIndex = $patternFunction->argumentIndex;
-        $argIndex = 0;
-        $parenDepth = 0;
-        $bracketDepth = 0;
-        $braceDepth = 0;
+        $argument = $this->findPatternArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex);
+        if (null === $argument) {
+            return [];
+        }
+
+        return $this->extractFromArgumentTokens($argument[0], $argument[1], $tokenOffsets, $content, $file, $patternFunction);
+    }
+
+    /**
+     * Locate the pattern argument of a call, passed positionally or by name.
+     *
+     * A positional argument at the pattern's position wins; otherwise the
+     * first argument named like a pattern parameter. A spread before that
+     * position makes it unknowable.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{0: array<int, array{int, string, int}|string>, 1: array<int, int>}|null the argument's value tokens and their indexes
+     */
+    private function findPatternArgument(array $tokens, int $startIndex, int $totalTokens, int $targetArgIndex): ?array
+    {
+        $position = 0;
+        $named = null;
+        $depth = 0;
         $argTokens = [];
         $argTokenIndexes = [];
-        $collecting = $argIndex === $targetArgIndex;
 
-        for ($i = $startIndex; $i < $totalTokens; $i++) {
-            $token = $tokens[$i];
+        for ($i = $startIndex; $i <= $totalTokens; $i++) {
+            // Running out of tokens closes the call: the source is cut short.
+            $token = $tokens[$i] ?? ')';
+            $closesCall = $i === $totalTokens || (0 === $depth && ')' === $token);
 
-            if ('(' === $token) {
-                $parenDepth++;
-                if ($collecting) {
-                    $argTokens[] = $token;
-                    $argTokenIndexes[] = $i;
-                }
-
-                continue;
-            }
-
-            if (')' === $token) {
-                if (0 === $parenDepth && 0 === $bracketDepth && 0 === $braceDepth) {
-                    if ($collecting) {
-                        return $this->extractFromArgumentTokens($argTokens, $argTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
+            if ($closesCall || (0 === $depth && ',' === $token)) {
+                // Null for the empty slot a trailing comma leaves.
+                $argument = $this->readArgument($argTokens, $argTokenIndexes);
+                if (null !== $argument && null === $argument['name']) {
+                    if ($argument['spread']) {
+                        return null;
                     }
 
-                    return [];
+                    if ($position === $targetArgIndex) {
+                        return [$argument['tokens'], $argument['indexes']];
+                    }
+
+                    $position++;
+                } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), self::PATTERN_PARAMETER_NAMES, true)) {
+                    $named = [$argument['tokens'], $argument['indexes']];
                 }
 
-                if ($parenDepth > 0) {
-                    $parenDepth--;
+                if ($closesCall) {
+                    break;
                 }
 
-                if ($collecting) {
-                    $argTokens[] = $token;
-                    $argTokenIndexes[] = $i;
-                }
-
-                continue;
-            }
-
-            if ('[' === $token) {
-                $bracketDepth++;
-                if ($collecting) {
-                    $argTokens[] = $token;
-                    $argTokenIndexes[] = $i;
-                }
-
-                continue;
-            }
-
-            if (']' === $token) {
-                if ($bracketDepth > 0) {
-                    $bracketDepth--;
-                }
-
-                if ($collecting) {
-                    $argTokens[] = $token;
-                    $argTokenIndexes[] = $i;
-                }
-
-                continue;
-            }
-
-            if ('{' === $token) {
-                $braceDepth++;
-                if ($collecting) {
-                    $argTokens[] = $token;
-                }
-
-                continue;
-            }
-
-            if ('}' === $token) {
-                if ($braceDepth > 0) {
-                    $braceDepth--;
-                }
-
-                if ($collecting) {
-                    $argTokens[] = $token;
-                }
-
-                continue;
-            }
-
-            if (',' === $token && 0 === $parenDepth && 0 === $bracketDepth && 0 === $braceDepth) {
-                if ($collecting) {
-                    return $this->extractFromArgumentTokens($argTokens, $argTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
-                }
-
-                $argIndex++;
-                $collecting = $argIndex === $targetArgIndex;
                 $argTokens = [];
                 $argTokenIndexes = [];
 
                 continue;
             }
 
-            if ($collecting) {
-                $argTokens[] = $token;
-                $argTokenIndexes[] = $i;
+            if ($this->opensNesting($token)) {
+                $depth++;
+            } elseif (')' === $token || ']' === $token || '}' === $token) {
+                $depth = max(0, $depth - 1);
             }
+
+            $argTokens[] = $token;
+            $argTokenIndexes[] = $i;
         }
 
-        if ($collecting) {
-            return $this->extractFromArgumentTokens($argTokens, $argTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
+        return $named;
+    }
+
+    /**
+     * Split one argument into its name, if passed by name, and its value.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $tokenIndexes
+     *
+     * @return array{name: string|null, spread: bool, tokens: array<int, array{int, string, int}|string>, indexes: array<int, int>}|null null for an empty slot
+     */
+    private function readArgument(array $tokens, array $tokenIndexes): ?array
+    {
+        $count = \count($tokens);
+        $first = $this->nextSignificantTokenIndex($tokens, 0, $count);
+        if (null === $first) {
+            return null;
         }
 
-        return [];
+        $token = $tokens[$first];
+        if (\is_array($token) && \T_ELLIPSIS === $token[0]) {
+            return ['name' => null, 'spread' => true, 'tokens' => $tokens, 'indexes' => $tokenIndexes];
+        }
+
+        // "pattern: '/re/'": an identifier, any reserved word included,
+        // followed by a single colon.
+        $name = $this->readIdentifierToken($token);
+        $colon = $this->nextSignificantTokenIndex($tokens, $first + 1, $count);
+        if (null !== $name && null !== $colon && ':' === $tokens[$colon]) {
+            return [
+                'name' => $name,
+                'spread' => false,
+                'tokens' => \array_slice($tokens, $colon + 1),
+                'indexes' => \array_slice($tokenIndexes, $colon + 1),
+            ];
+        }
+
+        return ['name' => null, 'spread' => false, 'tokens' => $tokens, 'indexes' => $tokenIndexes];
+    }
+
+    /**
+     * @param array{0:int, 1:string, 2?:int}|string $token
+     */
+    private function opensNesting(array|string $token): bool
+    {
+        if (!\is_array($token)) {
+            return '(' === $token || '[' === $token || '{' === $token;
+        }
+
+        // "{$x}" and "${x}" inside a string, and "#[" of an attribute, are
+        // closed by a plain "}" or "]".
+        return \in_array($token[0], [\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES, \T_ATTRIBUTE], true);
     }
 
     /**
@@ -578,11 +598,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             return $this->extractFromArrayLiteral($stripped, $strippedIndexes, $tokenOffsets, $content, $file, $patternFunction);
         }
 
-        // Outside an array literal there are no keys to read from.
-        if ($patternFunction->keysArePatterns) {
-            return [];
-        }
-
+        // Outside an array literal a keys-function still gets one pattern:
+        // Nette's Strings::replace($s, '/re/', 'x') takes a plain string.
         $patternInfo = $this->parseRegexExpression($tokens, $tokenIndexes, $tokenOffsets, $content)
             ?? $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
 
@@ -823,8 +840,34 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         $firstTokenOffset = null;
         $firstTokenColumn = null;
         $expectString = true;
+        // The opening token and raw body of the heredoc being read, if any.
+        $heredoc = null;
 
         foreach ($tokens as $index => $token) {
+            if (null !== $heredoc) {
+                if (\is_array($token) && \T_ENCAPSED_AND_WHITESPACE === $token[0]) {
+                    $heredoc[1] .= $token[1];
+
+                    continue;
+                }
+
+                // Anything else between the markers is interpolation.
+                if (!\is_array($token) || \T_END_HEREDOC !== $token[0]) {
+                    return null;
+                }
+
+                $decoded = $this->decodeHeredoc($heredoc[0], $heredoc[1], $token[1]);
+                if (null === $decoded) {
+                    return null;
+                }
+
+                $parts[] = $decoded;
+                $heredoc = null;
+                $expectString = false;
+
+                continue;
+            }
+
             if ($this->isIgnorableToken($token)) {
                 continue;
             }
@@ -834,22 +877,31 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
             }
 
             if ($expectString) {
-                if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0]) {
-                    $parts[] = $this->decodeStringToken($token[1]);
-                    $firstLine ??= $token[2];
-                    if (null === $firstTokenOffset) {
-                        $tokenIndex = $tokenIndexes[$index] ?? null;
-                        if (\is_int($tokenIndex) && isset($tokenOffsets[$tokenIndex])) {
-                            $firstTokenOffset = $tokenOffsets[$tokenIndex];
-                            $firstTokenColumn = $this->columnFromOffset($content, $firstTokenOffset);
-                        }
+                $isString = \is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0];
+                $opensHeredoc = \is_array($token) && \T_START_HEREDOC === $token[0];
+                if (!$isString && !$opensHeredoc) {
+                    return null;
+                }
+
+                $firstLine ??= $token[2];
+                if (null === $firstTokenOffset) {
+                    $tokenIndex = $tokenIndexes[$index] ?? null;
+                    if (\is_int($tokenIndex) && isset($tokenOffsets[$tokenIndex])) {
+                        $firstTokenOffset = $tokenOffsets[$tokenIndex];
+                        $firstTokenColumn = $this->columnFromOffset($content, $firstTokenOffset);
                     }
-                    $expectString = false;
+                }
+
+                if ($opensHeredoc) {
+                    $heredoc = [$token[1], ''];
 
                     continue;
                 }
 
-                return null;
+                $parts[] = $this->decodeStringToken($token[1]);
+                $expectString = false;
+
+                continue;
             }
 
             if ('.' === $token) {
@@ -943,7 +995,91 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
         return $body;
     }
 
-    private function decodeDoubleQuotedString(string $body): string
+    /**
+     * Decode a heredoc or nowdoc body as PHP does: drop the newline before
+     * the closing marker, remove the marker's indentation from every line,
+     * then, for a heredoc, apply the double-quoted escapes but \".
+     *
+     * Null when PHP refuses the body (a line indented less than the marker,
+     * tabs and spaces mixed).
+     */
+    private function decodeHeredoc(string $start, string $body, string $end): ?string
+    {
+        $indentation = \strlen($end) - \strlen(ltrim($end, " \t"));
+        $indent = substr($end, 0, $indentation);
+        if (str_contains($indent, ' ') && str_contains($indent, "\t")) {
+            return null;
+        }
+
+        if (str_ends_with($body, "\r\n")) {
+            $body = substr($body, 0, -2);
+        } elseif (str_ends_with($body, "\n") || str_ends_with($body, "\r")) {
+            $body = substr($body, 0, -1);
+        }
+
+        if ($indentation > 0) {
+            $body = $this->removeHeredocIndentation($body, $indentation, $indent[0]);
+            if (null === $body) {
+                return null;
+            }
+        }
+
+        // The quote sits around the label of a nowdoc only: <<<'RE'.
+        if (str_contains($start, "'")) {
+            return $body;
+        }
+
+        return $this->decodeDoubleQuotedString($body, '');
+    }
+
+    /**
+     * @param string $char the indentation character, a space or a tab
+     */
+    private function removeHeredocIndentation(string $body, int $indentation, string $char): ?string
+    {
+        $result = '';
+        $length = \strlen($body);
+        $i = 0;
+
+        while ($i <= $length) {
+            // A line ends at \n, \r or \r\n; the last one at the end of the body.
+            $lineEnd = $i;
+            while ($lineEnd < $length && "\n" !== $body[$lineEnd] && "\r" !== $body[$lineEnd]) {
+                $lineEnd++;
+            }
+
+            $newline = 0;
+            if ($lineEnd < $length) {
+                $newline = "\r" === $body[$lineEnd] && "\n" === ($body[$lineEnd + 1] ?? '') ? 2 : 1;
+            }
+
+            for ($skip = 0; $skip < $indentation && $i < $lineEnd; $skip++, $i++) {
+                // A whitespace-only line may be indented less; any other may not.
+                if (' ' !== $body[$i] && "\t" !== $body[$i]) {
+                    return null;
+                }
+
+                if ($char !== $body[$i]) {
+                    return null;
+                }
+            }
+
+            $result .= substr($body, $i, $lineEnd - $i + $newline);
+            if (0 === $newline) {
+                break;
+            }
+
+            $i = $lineEnd + $newline;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $quote the delimiter its backslash escapes: '"' in a
+     *                      double-quoted string, none in a heredoc
+     */
+    private function decodeDoubleQuotedString(string $body, string $quote = '"'): string
     {
         $result = '';
         $length = \strlen($body);
@@ -1009,8 +1145,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface
                     $i += 2;
 
                     break;
-                case '"':
-                    $result .= '"';
+                case $quote:
+                    $result .= $quote;
                     $i += 2;
 
                     break;
