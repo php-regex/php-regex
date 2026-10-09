@@ -75,5 +75,6 @@ CHANGELOG
    anything but one character (`(?:\Qab\E)+`, `(?:^)+`); `(?:a)+` is still
    reported.
  * A file that calls a regex wrapper, or a static method declared in
-   configuration on a namespaced class, only through an aliased import
-   (`use Composer\Pcre\Preg as P;`) is read instead of skipped.
+   configuration or with `#[RegexPattern]`, only through an aliased import
+   (`use Composer\Pcre\Preg as P;`, `use Composer\{Pcre\Preg as P}`) is
+   read instead of skipped.

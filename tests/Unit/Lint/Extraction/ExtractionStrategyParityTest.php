@@ -103,8 +103,8 @@ final class ExtractionStrategyParityTest extends TestCase
         yield 'composer/pcre' => ['fixture' => 'interop_aliased_composer_pcre.php', 'expected' => ['/aliased-composer/']];
         yield 'nette/utils' => ['fixture' => 'interop_aliased_nette_utils.php', 'expected' => ['/aliased-nette/']];
         yield 'spatie/regex' => ['fixture' => 'interop_aliased_spatie_regex.php', 'expected' => ['/aliased-spatie/']];
-        yield 'laravel Str' => ['fixture' => 'interop_aliased_laravel_str.php', 'expected' => ['/aliased-laravel/']];
-        yield 'another class of a wrapper namespace' => ['fixture' => 'interop_aliased_unrelated_class.php', 'expected' => []];
+        yield 'illuminate/support' => ['fixture' => 'interop_aliased_laravel_str.php', 'expected' => ['/aliased-laravel/']];
+        yield 'group use split inside the namespace' => ['fixture' => 'interop_aliased_split_group_use.php', 'expected' => ['/split-composer/', '/split-laravel/']];
     }
 
     /**
@@ -124,15 +124,40 @@ final class ExtractionStrategyParityTest extends TestCase
         }
     }
 
-    public function test_an_aliased_import_of_a_declared_namespaced_class_opens_the_file(): void
+    public function test_fqcn_resolution_rejects_another_class_of_a_wrapper_namespace(): void
     {
-        $file = __DIR__.'/../../../Fixtures/Extractor/custom_aliased_namespaced_class.php';
-        $registry = PatternFunctionRegistry::native()->withCustomFunctions(['App\\Support\\Re::m']);
+        $file = __DIR__.'/../../../Fixtures/Extractor/interop_aliased_unrelated_class.php';
+        $registry = PatternFunctionRegistry::create(InteropPresets::names());
 
-        $this->assertSame(['/aliased-custom/'], $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
+        $this->assertSame([], $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
 
         if (class_exists(ParserFactory::class)) {
-            $this->assertSame(['/aliased-custom/'], $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
+            $this->assertSame([], $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{fixture: string, spec: string, expected: array<int, string>}>
+     */
+    public static function provideAliasedDeclaredClasses(): iterable
+    {
+        yield 'namespaced class' => ['fixture' => 'custom_aliased_namespaced_class.php', 'spec' => 'App\\Support\\Re::m', 'expected' => ['/aliased-custom/']];
+        yield 'global class' => ['fixture' => 'custom_aliased_global_class.php', 'spec' => 'Text::m', 'expected' => ['/aliased-global/']];
+    }
+
+    /**
+     * @param array<int, string> $expected
+     */
+    #[DataProvider('provideAliasedDeclaredClasses')]
+    public function test_an_aliased_import_of_a_declared_class_opens_the_file(string $fixture, string $spec, array $expected): void
+    {
+        $file = __DIR__.'/../../../Fixtures/Extractor/'.$fixture;
+        $registry = PatternFunctionRegistry::native()->withCustomFunctions([$spec]);
+
+        $this->assertSame($expected, $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
+
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
         }
     }
 

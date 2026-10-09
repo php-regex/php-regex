@@ -3,15 +3,18 @@
 namespace App\Interop;
 
 use Illuminate\Support\Collection as C;
+use Illuminate\Support\Str as S;
 
 /**
- * Same namespace as a wrapper, but not a wrapper: the file is read, and the
- * call is left alone.
+ * The Str import opens the file; the call goes to another class of the same
+ * namespace and is left alone.
  */
 final class AliasedUnrelatedClass
 {
-    public function run(string $subject): void
+    public function run(string $subject): string
     {
         C::match('/not-a-pattern/', $subject);
+
+        return S::upper($subject);
     }
 }

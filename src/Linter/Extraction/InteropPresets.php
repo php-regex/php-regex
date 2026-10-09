@@ -110,20 +110,22 @@ final class InteropPresets
     /**
      * Lowercase substrings that must appear in a file for the preset to match.
      *
-     * Extractors use them to skip files without tokenizing them. The
-     * namespace of the classes is one of them: an aliased import such as
-     * `use Composer\Pcre\Preg as P;` hides the short class name, while the
-     * call is still resolved on the full class name once the file is read.
+     * Extractors use them to skip files without tokenizing them. An aliased
+     * import, `use Composer\Pcre\Preg as P;` or `use Composer\{Pcre\Preg as P}`,
+     * hides `Preg::` but always spells the short class name before ` as`;
+     * the call is still resolved on the full class name once the file is
+     * read. An alias with anything but one space before `as` (a tab, a
+     * newline, a comment) does not open the file.
      *
      * @return array<int, string>
      */
     public static function needles(string $name): array
     {
         return match ($name) {
-            self::COMPOSER_PCRE => ['preg::', 'regex::', 'composer\\pcre\\'],
-            self::NETTE_UTILS => ['strings::', 'nette\\utils\\'],
-            self::SPATIE_REGEX => ['regex::', 'spatie\\regex\\'],
-            self::LARAVEL_STR => ['str::', 'illuminate\\support\\'],
+            self::COMPOSER_PCRE => ['preg::', 'regex::', 'preg as', 'regex as'],
+            self::NETTE_UTILS => ['strings::', 'strings as'],
+            self::SPATIE_REGEX => ['regex::', 'regex as'],
+            self::LARAVEL_STR => ['str::', 'str as'],
             default => [],
         };
     }

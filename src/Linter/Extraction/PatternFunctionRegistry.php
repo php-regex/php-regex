@@ -238,14 +238,12 @@ final readonly class PatternFunctionRegistry
             $separator = strrpos($class, '\\');
             $shortClass = false === $separator ? $class : substr($class, $separator + 1);
 
-            // An aliased import hides the short class name; the namespace
-            // still shows in the file.
-            $needles = [strtolower($shortClass).'::'];
-            if (false !== $separator) {
-                $needles[] = strtolower(substr($class, 0, $separator + 1));
-            }
+            // An aliased import hides `Re::` but spells `Re as`, the class
+            // global or namespaced, in a group use or not. One space only:
+            // `Re\tas` or `Re /* */ as` does not open the file.
+            $needle = strtolower($shortClass);
 
-            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), $needles];
+            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), [$needle.'::', $needle.' as']];
         }
 
         $separator = strrpos($name, '\\');
