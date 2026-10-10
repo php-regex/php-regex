@@ -54,6 +54,8 @@ final class EscapeLiteralBraceRector extends AbstractRector
 
     /**
      * @param FuncCall $node
+     *
+     * @return FuncCall|null the same call, its pattern literal rewritten
      */
     public function refactor(Node $node): ?Node
     {
