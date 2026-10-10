@@ -465,7 +465,7 @@ main table {
    is "Option" holds names like runtime_pcre_validation - twenty-three
    monospace characters that will not break on their own. Table layout takes
    its minimum column width from the longest unbreakable run, so one long
-   identifier squeezes every neighbour: a five-column table in the 70ch
+   identifier squeezes every neighbour: a five-column table in the 75ch
    measure ends up with a two-word description column and a sideways scroll.
    anywhere (not break-word) is the one value that also shrinks the minimum,
    which is what the layout needs. */
@@ -478,7 +478,7 @@ main th {
   text-align: left;
   font-weight: 600;
   /* Horizontal padding is counted once per column, so on a five-column
-     table in the 70ch measure it was a quarter of the table's width. The
+     table in the 75ch measure it was a quarter of the table's width. The
      vertical padding keeps the air; the horizontal one stops spending the
      measure on the gutters. */
   padding: .6em .7em;
@@ -642,6 +642,8 @@ main pre code,
  * label. A fence with no entry here simply stays unlabelled.
    -------------------------------------------------------------------------- */
 
+/* The label stays legible without hover: a caption the reader only finds
+   by hovering is a caption most readers never find. */
 main div.highlighter-rouge::after {
   position: absolute;
   right: 0;
@@ -651,7 +653,7 @@ main div.highlighter-rouge::after {
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  opacity: 0;
+  opacity: 1;
   transition: opacity .15s ease;
   pointer-events: none;
 }
@@ -808,8 +810,9 @@ main table::-webkit-scrollbar-thumb {
    for a brief amber flash if the confirmation ever carries a state
    attribute. The one transition is opacity, so reduced-motion users get
    an instant, complete state. */
-/* The copy button stays out of sight until the block is hovered or
-   focused from within - the code is the hero, not the chrome. */
+/* The copy button stays visible: a control the reader only finds by
+   hovering is a control most readers never find. Muted until hovered,
+   but always present. */
 .copy-btn {
   position: absolute;
   top: .5rem;
@@ -825,7 +828,7 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
   border: 1px solid var(--line);
   cursor: pointer;
-  opacity: 0;
+  opacity: 1;
   transition: opacity .15s ease;
 }
 
@@ -833,6 +836,8 @@ main table::-webkit-scrollbar-thumb {
 .has-copy:focus-within .copy-btn,
 .copy-btn:focus-visible {
   opacity: 1;
+  color: var(--ink);
+  border-color: var(--ink);
 }
 
 /* The chip is 2rem tall, the target is not: a quiet transparent skirt brings
@@ -1116,11 +1121,15 @@ main table::-webkit-scrollbar-thumb {
 }
 
 /* Between 640 and 900px the nav is back beside the wordmark, and a
-   wordmark, three nav links, a labelled search, the theme toggle and the
-   menu toggle need about 670px. The shortcut chip goes - the word stays,
-   because the chip is the widest of the two and the least necessary. */
+   wordmark, four nav links, a labelled search, the theme toggle and the
+   menu toggle need about 750px. The GitHub link goes - the docs areas
+   stay, because the footer keeps the GitHub destination one click away. */
 @media (max-width: 899px) {
   .search-toggle kbd {
+    display: none;
+  }
+
+  .site-header nav a[href^='https://'] {
     display: none;
   }
 }
@@ -1157,7 +1166,7 @@ main table::-webkit-scrollbar-thumb {
 
 /* Documentation column: generous but bounded line length. */
 .page-main > main {
-  max-width: 70ch;
+  max-width: 75ch;
 }
 
 /* Markdown pages open with a note telling folder readers where the served
@@ -1890,7 +1899,7 @@ main > section:not([class]) p > a.button:focus-visible {
 
 .wordmark {
   display: block;
-  width: min(560px, 100%);
+  width: min(380px, 100%);
   height: auto;
   color: var(--ink);
 }
@@ -1929,15 +1938,29 @@ main > section:not([class]) p > a.button:focus-visible {
   margin-bottom: 0;
 }
 
-/* The install line shares the CTA row; inside it, the <pre> is chromeless
-   (the .install box is the whole panel). */
-.hero-ctas .install {
-  /* Sized by its own line, never squeezed: when the buttons leave no
-     room, the command wraps under them whole instead of clipping
-     mid-token. Under ~30rem the pre keeps its scroll fallback. */
-  flex: 0 0 auto;
+/* The install line sits under the CTA row, full width; inside it, the
+   <pre> is chromeless (the .install box is the whole panel). */
+.hero-head .install {
+  /* Sized by its own line, never squeezed: the command keeps its own row
+     instead of clipping mid-token beside the buttons. Under ~30rem the
+     pre keeps its scroll fallback. */
   width: max-content;
   max-width: 100%;
+}
+
+/* The secondary hero action: a plain accent link beside the one filled
+   button, not a second button competing with it. */
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--amber);
+  font-weight: 600;
+  text-underline-offset: .25em;
+}
+
+.hero-link:hover {
+  color: var(--amber-deep);
 }
 
 .install {
@@ -2184,6 +2207,30 @@ main > section:not([class]) > p:not(:has(a.button)) {
   grid-area: text;
   margin: 0;
   color: var(--ink-soft);
+}
+
+/* Pipeline figure: a generated diagram under the three steps, framed like
+   a code panel so the proof it carries reads as output, not decoration. */
+.pipeline-figure {
+  margin: 2.5rem 0 0;
+  border: 1px solid var(--line);
+}
+
+.pipeline-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pipeline-figure figcaption {
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--line);
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+
+.pipeline-figure figcaption a {
+  color: var(--amber);
 }
 
 /* Constellation of components. */
