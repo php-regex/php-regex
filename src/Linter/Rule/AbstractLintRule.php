@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Node\NodeInterface;
+
 /**
  * Base class for lint rules that only need node-enter checks.
+ *
+ * @implements LintRuleInterface<NodeInterface>
  *
  * @internal
  */

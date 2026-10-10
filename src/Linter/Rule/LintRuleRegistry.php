@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Node\NodeInterface;
+
 /**
  * Ordered registry of lint rules.
  *
@@ -25,7 +27,7 @@ namespace PHPRegex\Linter\Rule;
 final class LintRuleRegistry
 {
     /**
-     * @var list<LintRuleInterface>
+     * @var list<LintRuleInterface<NodeInterface>>
      */
     private array $rules = [];
 
@@ -81,13 +83,16 @@ final class LintRuleRegistry
         $this->register(new AlwaysEmptyCaptureRule());
     }
 
+    /**
+     * @param LintRuleInterface<NodeInterface> $rule
+     */
     public function register(LintRuleInterface $rule): void
     {
         $this->rules[] = $rule;
     }
 
     /**
-     * @return list<LintRuleInterface>
+     * @return list<LintRuleInterface<NodeInterface>>
      */
     public function all(): array
     {

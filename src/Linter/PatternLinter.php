@@ -146,12 +146,12 @@ final class PatternLinter extends AbstractNodeVisitor
     private LintContext $context;
 
     /**
-     * @var list<LintRuleInterface>
+     * @var list<LintRuleInterface<NodeInterface>>
      */
     private readonly array $rules;
 
     /**
-     * @var array<class-string<NodeInterface>, list<LintRuleInterface>>
+     * @var array<class-string<NodeInterface>, list<LintRuleInterface<NodeInterface>>>
      */
     private array $dispatchMap = [];
 

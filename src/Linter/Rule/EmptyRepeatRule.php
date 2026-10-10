@@ -47,7 +47,7 @@ final class EmptyRepeatRule extends AbstractLintRule
     private const ID = 'regex.lint.quantifier.emptyRepeat';
 
     /**
-     * @var list<LintRuleInterface> the rules that report the same repeat their own way
+     * @var list<LintRuleInterface<NodeInterface>> the rules that report the same repeat their own way
      */
     private readonly array $owners;
 

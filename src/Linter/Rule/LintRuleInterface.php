@@ -24,6 +24,13 @@ use PHPRegex\Parser\Node\NodeInterface;
  * Rules return their issues; enablement filtering and ordering are handled by
  * the engine.
  *
+ * @template TNode of NodeInterface = NodeInterface
+ *
+ * The template pins the node contract the analyser sees in check(); bind
+ * NodeInterface (the default): it sits both where the rule gives nodes and
+ * where it takes them, so the registry and the dispatcher accept only
+ * LintRuleInterface<NodeInterface>.
+ *
  * @internal
  */
 interface LintRuleInterface
@@ -38,7 +45,7 @@ interface LintRuleInterface
     /**
      * Node classes this rule wants to inspect on node-enter.
      *
-     * @return non-empty-list<class-string<NodeInterface>>
+     * @return non-empty-list<class-string<TNode>>
      */
     public function getNodeTypes(): array;
 
@@ -49,6 +56,8 @@ interface LintRuleInterface
 
     /**
      * Inspect a node the rule subscribed to.
+     *
+     * @param TNode $node
      *
      * @return list<RuleViolation>
      */
