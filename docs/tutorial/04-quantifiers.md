@@ -369,7 +369,12 @@ echo $m[0];  // "123 4" (the trailing \d+? stops after one digit)
 '/(?>a+)+$/'
 ```
 
-An upper bound like `{1,100}` is still useful — it limits what a match may consume, a sane length policy — but it is **not** a security fix. The risk comes from the nesting, and only removing the nesting or locking the inner quantifier removes it. PHPRegex confirms the verdicts above: the first two patterns are critical, the last three safe.
+An upper bound like `{1,100}` is still useful — it limits what a match may consume, a sane length policy — but it is **not** a security fix. The risk comes from the nesting, and only removing the nesting or locking the inner quantifier removes it. PHPRegex confirms the verdicts above — run each through the analyzer to see for yourself:
+
+```bash
+vendor/bin/regex analyze '/(a+)+$/'
+vendor/bin/regex analyze '/(a+){1,100}$/'
+```
 
 ---
 

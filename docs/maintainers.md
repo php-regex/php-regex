@@ -111,13 +111,16 @@ $regex = Regex::create([
 // FIX: Use null to disable cache, or ensure path exists
 $regex = Regex::create(['cache' => null]);  // or a directory of the project: ['cache' => __DIR__.'/var/cache/regex']
 
-// PITFALL 2: max_lookbehind too high
-// ERROR: Unbounded lookbehinds are invalid in PCRE
+// PITFALL 2: max_lookbehind_length caps the span of a variable-length
+// lookbehind — raising it lifts the cap, it does not validate unbounded ones
+// (a 1,000,000 ceiling is accepted silently; (?<=a+) stays invalid anyway)
 $regex = Regex::create([
-    'max_lookbehind_length' => 1000000,  // Way too high
+    'max_lookbehind_length' => 1000000,
 ]);
 
-// FIX: Use the default 255, or lower for stricter validation
+// By default the cap is 255: '/(?<=a{1,300})x/' is refused with
+// "Lookbehind exceeds the maximum length of 255 (max=300)"; lower the
+// option for stricter validation, raise it to accept wider spans
 $regex = Regex::create([
     'max_lookbehind_length' => 100,  // Stricter
 ]);

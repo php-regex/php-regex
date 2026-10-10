@@ -66,7 +66,13 @@ sitemap: false
       {% endif %}
     {% endif %}
     {% if emitted %},{% endif %}{% assign emitted = true %}
-    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+    {% assign body = p.content %}
+    {% if p.content contains '<div class="github-only">' %}
+      {% assign parts = p.content | split: '</div>' %}
+      {% assign body = parts[1] | default: p.content %}
+    {% endif %}
+    {% assign excerpt = p.description | default: body %}
+    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ excerpt | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
   {% endunless %}
 {% endfor %}
 ]

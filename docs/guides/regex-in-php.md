@@ -47,9 +47,13 @@ preg_replace('/\s+/', '-', 'hello world');  // "hello-world"
 // Split
 preg_split('/,\s*/', 'a, b, c');  // Array ( [0] => "a", [1] => "b", [2] => "c" )
 
-// Filter
+// Filter — careful: '|' binds looser than '^', so this is (^admin) OR
+// (moderator anywhere), not "admin or moderator at the start"
 $users = ['admin', 'user1', 'guest', 'moderator'];
 preg_grep('/^admin|moderator/', $users);  // Array ( [0] => "admin", [3] => "moderator" )
+
+// What you usually mean: group the alternation, anchor both ends
+preg_grep('/^(admin|moderator)$/', $users);  // Array ( [0] => "admin", [3] => "moderator" )
 ```
 
 ---

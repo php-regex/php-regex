@@ -25,7 +25,7 @@ These pages are written for tool authors — the people behind PHPStan extension
 - **New to regex?** Start with the main [Tutorial](../tutorial/README.md) first
 - **Confused about a term?** Check the [FAQ & Glossary](../reference/faq-glossary.md)
 - **Need deeper understanding?** Read the relevant concept guide
-- **Building tools?** Study the [Architecture](../architecture.md) and [Extending Guide](../extending.md)
+- **Building tools?** Study the [Architecture](../architecture.md) and [Extending Guide](../extending.md), then the [nodes](../nodes/README.md), [visitors](../visitors/README.md) and [AST traversal](../design/ast-traversal.md) references
 
 ## Related resources
 

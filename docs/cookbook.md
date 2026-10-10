@@ -465,11 +465,15 @@ Phone number validation is complex due to varying international formats. The pat
 
 ## Credit Card
 
-### Generic Card Number (Luhn-Compatible)
+### Generic Card Number (length only)
 
 ```
 /^[0-9]{13,19}$/
 ```
+
+This checks the length range, nothing else — a Luhn checksum is arithmetic a
+pattern cannot carry; run the sum in PHP once the length has filtered the
+input.
 
 ### Specific Card Types
 

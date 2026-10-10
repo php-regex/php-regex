@@ -8,31 +8,31 @@ This section contains the reference material for PHPRegex. Use it when you need 
 
 ## Core Reference
 
-- [Lint Rule Reference](rules.md)
-- [SonarPHP Regex Rules](sonar.md)
-- [API Reference](api.md)
-- [Diagnostics](diagnostics.md)
-- [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md)
-- [JSON Output](json-output.md)
-- [Feature Support Matrix](feature-support-matrix.md)
-- [Correctness Contracts](correctness-contracts.md)
-- [Backward Compatibility Promise](backward-compatibility.md)
-- [Capture Shapes](capture-shapes.md)
-- [Pattern Info and Compatibility](pattern-info.md)
-- [Prefilters](prefilters.md)
-- [PCRE2 Conformance](pcre2-conformance.md)
-- [Logic Solver](logic-solver.md)
-- [FAQ and Glossary](faq-glossary.md)
+- [Lint Rule Reference](rules.md) - every diagnostic, rule and optimization
+- [SonarPHP Regex Rules](sonar.md) - where each SonarPHP regex rule maps to a PHPRegex identifier
+- [API Reference](api.md) - entry points, return objects, exceptions
+- [Diagnostics](diagnostics.md) - error types and messages
+- [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md) - quick error reference
+- [JSON Output](json-output.md) - every key the `regex` command prints in JSON
+- [Feature Support Matrix](feature-support-matrix.md) - PCRE construct coverage by component
+- [Correctness Contracts](correctness-contracts.md) - soundness and completeness guarantees by feature
+- [Backward Compatibility Promise](backward-compatibility.md) - what each release may change
+- [Capture Shapes](capture-shapes.md) - what `preg_match()` writes into `$matches`
+- [Pattern Info and Compatibility](pattern-info.md) - the facts PCRE2 computes on every compiled pattern
+- [Prefilters](prefilters.md) - when a cheap string function can answer before `preg_match()`
+- [PCRE2 Conformance](pcre2-conformance.md) - validate() verdicts measured against PHP's engine
+- [Logic Solver](logic-solver.md) - pattern equivalence, intersection and subset via automata
+- [FAQ and Glossary](faq-glossary.md) - common terms and questions
 
 ## AST and Visitors
 
-- [AST Nodes](../nodes/README.md)
-- [AST Visitors](../visitors/README.md)
-- [AST Traversal Design](../design/ast-traversal.md)
+- [AST Nodes](../nodes/README.md) - every node type and its fields
+- [AST Visitors](../visitors/README.md) - built-in visitors and custom visitors
+- [AST Traversal Design](../design/ast-traversal.md) - how the tree is processed
 
 ## External Resources
 
-- [External resources](resources.md)
+- [Regex resources on the web](resources.md) - engines, tools and papers behind the diagnostics
 
 ## Quick Access by Task
 
