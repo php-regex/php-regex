@@ -111,7 +111,17 @@ $result = Regex::transpile('/^[a-z]+(?=\d)$/i', 'javascript');
 $result->constructor; // 'new RegExp("^[a-z]+(?=\\d)$", "i")'
 ```
 
-The facade also exposes `parse`, `parseTolerant`, `analyze`, `optimize`, `highlight`, `literals`, `generate` and `parsePattern`.
+The facade mirrors the whole service: `create`, `parse`, `parseTolerant`, `parsePattern`, `parser`, `validate`,
+`analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`, `literals`, `captureShape`, `info`,
+`compatibility`, `generate`, `tokenize`, `target`, `getCache`, `getCacheStats` and `clearCaches`.
+
+Two of those calls bypass the configured singleton. `Regex::create()` returns a fresh instance, so the cache
+store and the ReDoS ignore-list from `config/php-regex.php` do not apply to it, and `Regex::tokenize()` never
+sees instance options either: it lexes the pattern you give it, for the target you give it.
+
+`optimize()` and `transpile()` can throw the parse and lexer exception families — on a pattern that does not
+parse or does not tokenize, on an option `optimize()` does not know (`InvalidRegexOptionException`), or on an
+unknown target or a construct the target cannot express (`TranspileException`).
 
 Artisan commands
 ----------------

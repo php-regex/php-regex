@@ -13,18 +13,21 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\Facades\Regex;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Toolkit\AnalysisReport;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Toolkit\AnalysisReport;
+use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Transpiler\TranspileResult;
-use PHPRegex\Parser\Analysis\LiteralExtractionResult;
-use PHPRegex\Laravel\PHPRegexServiceProvider;
-use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for the Laravel Regex Facade.
@@ -115,6 +118,17 @@ final class FacadeTest extends TestCase
         $this->assertStringContainsString('\\d', $result->optimized);
     }
 
+    #[Test]
+    public function test_optimize_accepts_an_optimizer_options_object(): void
+    {
+        $result = Regex::optimize('/[0-9]+/', new OptimizerOptions(digits: true, word: false));
+
+        $this->assertInstanceOf(OptimizationResult::class, $result);
+        $this->assertSame('/[0-9]+/', $result->original);
+        $this->assertSame('/\\d+/', $result->optimized);
+        $this->assertSame(['Optimized pattern.'], $result->changes);
+    }
+
     public function test_transpile_returns_transpile_result(): void
     {
         $result = Regex::transpile('/^[a-z]+$/', 'javascript');
@@ -139,6 +153,15 @@ final class FacadeTest extends TestCase
         $this->assertNotEmpty($explanation);
     }
 
+    #[Test]
+    public function test_explain_accepts_the_output_format_enum(): void
+    {
+        $explanation = Regex::explain('/^[a-z]+$/', OutputFormat::Html);
+
+        $this->assertIsString($explanation);
+        $this->assertStringContainsString('<div class="regex-explain">', $explanation);
+    }
+
     public function test_highlight_returns_string(): void
     {
         $highlighted = Regex::highlight('/^[a-z]+$/');
@@ -153,6 +176,15 @@ final class FacadeTest extends TestCase
 
         $this->assertIsString($highlighted);
         $this->assertStringContainsString('<', $highlighted);
+    }
+
+    #[Test]
+    public function test_highlight_accepts_the_output_format_enum(): void
+    {
+        $highlighted = Regex::highlight('/^[a-z]+$/', OutputFormat::Html);
+
+        $this->assertIsString($highlighted);
+        $this->assertStringContainsString('<span class="regex-token', $highlighted);
     }
 
     public function test_literals_returns_literal_extraction_result(): void

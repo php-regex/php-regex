@@ -119,8 +119,12 @@ $analysis->headline();                // 'Exponential backtracking (proven)'
 $analysis->witness->render();         // '"a" x n . "!"', the input that triggers it
 ```
 
-The facade also exposes `parse`, `parseTolerant`, `analyze`, `optimize`,
-`highlight`, `literals`, `generate` and `parsePattern`; [the API reference](../reference/api.md) documents each. Type-hinting
+The facade mirrors the whole service — `create`, `parse`, `parseTolerant`, `parsePattern`,
+`parser`, `validate`, `analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`,
+`literals`, `captureShape`, `info`, `compatibility`, `generate`, `tokenize`, `target`,
+`getCache`, `getCacheStats` and `clearCaches`; [the API reference](../reference/api.md) documents each.
+Two of those bypass the configured singleton: `Regex::create()` returns a fresh instance,
+and `Regex::tokenize()` never sees instance options. Type-hinting
 `PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
 ## The service and the lint judge for different targets
