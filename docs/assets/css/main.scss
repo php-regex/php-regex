@@ -245,6 +245,20 @@ main h1 {
   margin: 0 0 1em;
 }
 
+/* The paragraph that opens a page is its premise: one step larger than
+   the body it introduces, still full ink. A page that opens on a quote or
+   a list keeps its own opening, so the rule only fires on a paragraph. */
+main h1 + p {
+  font-size: 1.075rem;
+  line-height: 1.6;
+}
+
+/* A page that goes straight from title to section does not need the
+   section's full flight of top margin to also separate it from the h1. */
+main h1 + h2 {
+  margin-top: 1.5em;
+}
+
 main h2 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -353,6 +367,14 @@ main .anchor:focus-visible {
   opacity: 1;
 }
 
+/* Jumping to an anchor should show where it landed: the heading takes the
+   accent wash for as long as it is the target of the address. */
+main h2:target,
+main h3:target,
+main h4:target {
+  background: var(--amber-tint);
+}
+
 /* The heading a fragment lands on answers once it is the target: its rule
    takes the accent and its anchor glyph shows, so the end of the jump is
    visible without a flash. The state stays only while the hash points
@@ -400,13 +422,15 @@ main kbd {
   border: 1px solid var(--line);
 }
 
-/* Tables — horizontal rules only, wide ones scroll inside the cell box. */
+/* Tables — horizontal rules only, wide ones scroll inside the cell box.
+   Figures are tabular so a column of numbers lines up down the rows. */
 main table {
   display: block;
   width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
   margin: 2em 0;
+  font-variant-numeric: tabular-nums;
 }
 
 main th {
@@ -1078,6 +1102,9 @@ main table::-webkit-scrollbar-thumb {
   background: var(--paper);
   border-right: 1px solid var(--line);
   overflow-y: auto;
+  /* The drawer's list must not drag the page with it once it reaches its
+     own end: contain stops the scroll from chaining out of the rail. */
+  overscroll-behavior: contain;
   transform: translateX(-100%);
   transition: transform .25s ease;
 }
@@ -1308,6 +1335,7 @@ main table::-webkit-scrollbar-thumb {
   top: calc(var(--header-h) + 1rem);
   @include rail-height;
   overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: .9rem;
 }
 
