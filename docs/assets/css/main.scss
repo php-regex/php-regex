@@ -404,6 +404,26 @@ main samp {
   font-family: var(--font-mono);
 }
 
+/* Task lists carry their own marker, so the list must not also draw one:
+   kramdown gives the checkbox and the usual amber disc would sit beside
+   it. The accent color tints the native control instead of replacing it,
+   which keeps it working, focusable and readable by every engine. */
+main .task-list {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+main .task-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: .6rem;
+}
+
+main .task-list-item-checkbox {
+  flex: none;
+  accent-color: var(--amber);
+}
+
 /* Disclosure markers take the accent, exactly like list markers. */
 main details > summary::marker {
   color: var(--amber);
@@ -2097,6 +2117,12 @@ main > section:not([class]) > p:not(:has(a.button)) {
 .error-page p {
   color: var(--ink-soft);
   max-width: 50ch;
+}
+
+/* The quiet line above the actions: smaller than the sentence above it,
+   and it is the one that carries the keyboard affordance. */
+.error-hint {
+  font-size: .95rem;
 }
 
 /* The pattern that matched nothing: the code itself, in display amber,
