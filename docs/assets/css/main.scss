@@ -950,6 +950,37 @@ main table::-webkit-scrollbar-thumb {
   color: var(--tk-str);
 }
 
+/* ---- Hero terminal on narrow screens --------------------------------------
+ * Stacked below the copy, the full captured output would bury the sections
+ * under it. The panel keeps its headline rows and dissolves toward the
+ * Quick Start link that carries the full output — the same dissolve the
+ * cut edge paints on wide tables. Screen only: print keeps the whole panel.
+ * -------------------------------------------------------------------------- */
+
+.terminal-more {
+  display: none;
+  margin: .75rem 0 0;
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+
+.terminal-more a {
+  color: var(--amber);
+}
+
+@media screen and (max-width: 1023px) {
+  .hero-inner > .terminal .terminal-body {
+    max-height: 22rem;
+    overflow-y: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) calc(100% - 3rem), rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) calc(100% - 3rem), rgba(0, 0, 0, 0) 100%);
+  }
+
+  .terminal-more {
+    display: block;
+  }
+}
+
 /* ==========================================================================
    Header
    ========================================================================== */

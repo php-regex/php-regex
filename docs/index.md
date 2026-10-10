@@ -65,6 +65,7 @@ Regex matches
   Anchor: the end of a line
 </pre>
     </div>
+    <p class="terminal-more">See the full walkthrough in the <a href="/quick-start/">Quick Start</a>.</p>
   </div>
 </div>
 
