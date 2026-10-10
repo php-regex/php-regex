@@ -75,8 +75,7 @@ final class DiagramCommand extends AbstractCommand
         try {
             $ast = $regex->parse($pattern);
             if ('svg' === $format) {
-                /** @var string $diagram */
-                $diagram = $ast->accept(new RailroadSvgRenderer());
+                $diagram = (new RailroadSvgRenderer())->visitRegex($ast);
                 if (null !== $outputPath) {
                     if (false === @file_put_contents($outputPath, $diagram)) {
                         $output->write($output->error("Error: Unable to write SVG to '{$outputPath}'.\n"));
