@@ -45,6 +45,6 @@ your wishes to the <a href="https://github.com/php-regex/php-regex/discussions">
 
 ## Documentation
 
-- [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — install and parse your first pattern in two minutes.
-- [Tutorial](https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/README.md) — a guided walk through regex syntax, concept by concept.
-- [PCRE2 conformance](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/pcre2-conformance.md) — how closely the parser follows the real engine, case by case.
+- [Quick start](https://php-regex.com/quick-start/) — install and parse your first pattern in two minutes.
+- [Tutorial](https://php-regex.com/tutorial/) — a guided walk through regex syntax, concept by concept.
+- [PCRE2 conformance](https://php-regex.com/reference/pcre2-conformance/) — how closely the parser follows the real engine, case by case.
