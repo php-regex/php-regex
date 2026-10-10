@@ -83,12 +83,16 @@ echo $sequence->children[2]->value;  // 'o'
 **Common Errors:**
 ```php
 // WRONG: Modifying children array directly
-$sequence->children[] = new LiteralNode('x');
+$sequence->children[] = new LiteralNode('x', 3, 4);
 
 // RIGHT: Create a new SequenceNode
-$newChildren = array_merge($sequence->children, [new LiteralNode('x')]);
-$newSequence = new SequenceNode($newChildren, $sequence->startPosition, $sequence->endPosition);
+$literal = new LiteralNode('x', $sequence->endPosition, $sequence->endPosition + 1);
+$newChildren = array_merge($sequence->children, [$literal]);
+$newSequence = new SequenceNode($newChildren, $sequence->startPosition, $sequence->endPosition + 1);
 ```
+
+Every node carries the positions it spans: a `LiteralNode` takes its value
+plus the start and end offsets of that value in the source pattern.
 
 ---
 

@@ -423,9 +423,36 @@ class YourLinterRule extends AbstractNodeVisitor
 
 ### Pattern 2: Pattern Transformation
 
+A transformer rebuilds the tree itself — `AbstractNodeVisitor` returns `null`
+for the nodes it does not override, so override the containers too, or the
+rewritten literal never reaches the new tree:
+
 ```php
 class YourTransformer extends AbstractNodeVisitor
 {
+    public function visitRegex(RegexNode $node): RegexNode
+    {
+        return new RegexNode(
+            $node->pattern->accept($this),
+            $node->flags,
+            $node->delimiter,
+            $node->startPosition,
+            $node->endPosition,
+        );
+    }
+
+    public function visitSequence(SequenceNode $node): SequenceNode
+    {
+        return new SequenceNode(
+            array_map(
+                fn (NodeInterface $child): NodeInterface => $child->accept($this),
+                $node->children,
+            ),
+            $node->startPosition,
+            $node->endPosition,
+        );
+    }
+
     public function visitLiteral(LiteralNode $node): NodeInterface
     {
         // Transform: lowercase to uppercase
@@ -437,6 +464,10 @@ class YourTransformer extends AbstractNodeVisitor
     }
 }
 ```
+
+The [visitors reference](visitors/README.md#pattern-3-transforming-visitor)
+shows the same transformer with its imports and the `PatternPrinter` round
+trip; `Rewriter` and `Modernizer` are full working examples in the source.
 
 ### Pattern 3: Custom Analysis
 

@@ -705,14 +705,48 @@ print_r($visitor->getGroupNames());
 
 ### Pattern 3: Transforming Visitor
 
+`AbstractNodeVisitor` returns `null` for every node it does not override: a
+transformer rebuilds the tree itself. Override the node types you rewrite, and
+the containers that hold them — `visitRegex` and `visitSequence` at minimum,
+since every pattern is a `RegexNode` around a `SequenceNode`:
+
 ```php
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Toolkit\Regex;
 
 class UppercaserVisitor extends AbstractNodeVisitor
 {
-    public function visitLiteral(Node\LiteralNode $node): Node\LiteralNode
+    public function visitRegex(RegexNode $node): RegexNode
     {
-        return new Node\LiteralNode(
+        return new RegexNode(
+            $node->pattern->accept($this),
+            $node->flags,
+            $node->delimiter,
+            $node->startPosition,
+            $node->endPosition,
+        );
+    }
+
+    public function visitSequence(SequenceNode $node): SequenceNode
+    {
+        return new SequenceNode(
+            array_map(
+                fn (NodeInterface $child): NodeInterface => $child->accept($this),
+                $node->children,
+            ),
+            $node->startPosition,
+            $node->endPosition,
+        );
+    }
+
+    public function visitLiteral(LiteralNode $node): LiteralNode
+    {
+        return new LiteralNode(
             strtoupper($node->value),
             $node->startPosition,
             $node->endPosition
@@ -722,11 +756,14 @@ class UppercaserVisitor extends AbstractNodeVisitor
 
 // Usage: Transform /hello/ to /HELLO/
 $ast = Regex::create()->parse('/hello/');
-$visitor = new UppercaserVisitor();
-$newAst = $ast->accept($visitor);
+$newAst = $ast->accept(new UppercaserVisitor());
 
 echo $newAst->accept(new PatternPrinter());  // '/HELLO/'
 ```
+
+For a transformation that spans the whole tree, every container node
+(`GroupNode`, `QuantifierNode`, `AlternationNode`…) needs the same rebuild —
+`Rewriter` and `Modernizer` are full working examples of the pattern.
 
 ---
 
