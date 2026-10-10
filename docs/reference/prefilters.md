@@ -9,8 +9,9 @@ string function can answer before, or instead of, `preg_match()`.
 
 The two live in separate packages: `RequiredLiteralAnalyzer` in `php-regex/regex-parser`,
 `TrivialMatchClassifier` in `php-regex/regex-automata` — which requires `regex-parser`
-itself, so `composer require php-regex/regex-automata` (PHP 8.2+, `ext-mbstring`) brings
-both.
+itself, so requiring `regex-automata` (PHP 8.2+, `ext-mbstring`) brings both. Until
+the 2.0.0 tag publishes the split packages, install through the monorepo — see the
+[Quick Start](../quick-start.md).
 
 ## Required literals
 

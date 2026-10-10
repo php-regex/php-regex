@@ -5,7 +5,13 @@ description: "One card per PHPRegex integration — PHPStan, Psalm, Rector, Lara
 
 # Guides
 
-PHPRegex plugs into the tools you already run. Every integration installs one package, registers itself, and starts reporting — the commands below are the target form; until the 2.0.0 tag, the monorepo install covers them all, see the [Quick Start](/quick-start/).
+PHPRegex plugs into the tools you already run. Every integration installs one package, registers itself, and starts reporting. The commands below are the target form; until the 2.0.0 tag, one install covers them all:
+
+```bash
+composer require --dev php-regex/php-regex:2.x-dev
+```
+
+See the [Quick Start](/quick-start/) for what that install provides.
 
 ## Static analysis
 

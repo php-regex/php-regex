@@ -1184,8 +1184,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-      # php-regex/regex-cli is a dev dependency of composer.json
-      # (composer require --dev php-regex/regex-cli)
+      # The monorepo is a dev dependency of composer.json
+      # (see the install block at the top of this guide)
       - run: composer install --no-interaction --no-progress
       - run: vendor/bin/regex lint src/ --format=github
 ```

@@ -25,9 +25,10 @@ $info->anchoredStart;  // true
 $info->anchoredEnd;    // true
 ```
 
-A static analysis extension needs only `php-regex/regex-parser`
-(`composer require php-regex/regex-parser`, PHP 8.2+ with `ext-mbstring`): the analyzer
-and its result live there. It reads a tree the parser built:
+A static analysis extension needs only `php-regex/regex-parser` (PHP 8.2+ with
+`ext-mbstring`): the analyzer and its result live there. Until the 2.0.0 tag
+publishes the split packages, install through the monorepo — see the
+[Quick Start](../quick-start.md). It reads a tree the parser built:
 
 ```php
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
