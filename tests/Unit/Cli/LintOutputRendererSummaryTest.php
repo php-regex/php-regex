@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Cli;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  * The CLI renderer's FAIL line names each kind of error apart, as the
  * console report does: a pattern PCRE refuses is an invalid pattern, a
  * failing ReDoS verdict a ReDoS error, a lint rule at Error a lint error.
+ *
+ * @phpstan-import-type LintStats from LintReport
  */
 final class LintOutputRendererSummaryTest extends TestCase
 {
@@ -53,7 +56,7 @@ final class LintOutputRendererSummaryTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{stats: array<string, int>, line: string}>
+     * @return iterable<string, array{stats: LintStats, line: string}>
      */
     public static function provideStats(): iterable
     {
@@ -72,7 +75,7 @@ final class LintOutputRendererSummaryTest extends TestCase
     }
 
     /**
-     * @param array<string, int> $stats
+     * @param LintStats $stats
      */
     #[Test]
     #[DataProvider('provideStats')]
@@ -82,7 +85,7 @@ final class LintOutputRendererSummaryTest extends TestCase
     }
 
     /**
-     * @param array<string, int> $stats
+     * @param LintStats $stats
      */
     private static function failLine(array $stats): string
     {

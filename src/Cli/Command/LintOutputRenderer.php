@@ -17,16 +17,19 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Internal\LintSummary;
+use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
+ *
+ * @phpstan-import-type LintStats from LintReport
  */
 final readonly class LintOutputRenderer
 {
     /**
-     * @param array<string, int> $stats
+     * @param LintStats $stats
      */
     public function renderSummary(Output $output, array $stats, bool $isEmpty = false): void
     {
