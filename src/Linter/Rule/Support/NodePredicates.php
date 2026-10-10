@@ -276,6 +276,8 @@ final class NodePredicates
      * its flags inside itself only. The span alone tells them apart: "(?s)"
      * is its flags and three bytes, "(?s:)" one byte longer, and a scoped
      * group with a body longer still.
+     *
+     * @phpstan-assert-if-true GroupNode $node
      */
     public static function isStandaloneInlineFlagsGroup(NodeInterface $node): bool
     {
@@ -359,6 +361,9 @@ final class NodePredicates
         return $node;
     }
 
+    /**
+     * @phpstan-assert-if-true AnchorNode|AssertionNode $node
+     */
     public static function isStartAnchorNode(NodeInterface $node): bool
     {
         if ($node instanceof AnchorNode) {
@@ -392,6 +397,9 @@ final class NodePredicates
         return false;
     }
 
+    /**
+     * @phpstan-assert-if-true AnchorNode|AssertionNode $node
+     */
     public static function isEndAnchorNode(NodeInterface $node): bool
     {
         if ($node instanceof AnchorNode) {
@@ -435,9 +443,8 @@ final class NodePredicates
         }
 
         foreach ($nodes as $node) {
-            if ($node instanceof GroupNode
-                && null !== $node->flags
-                && self::isStandaloneInlineFlagsGroup($node)) {
+            if (self::isStandaloneInlineFlagsGroup($node)
+                && null !== $node->flags) {
                 $dotAll = str_contains(self::applyInlineFlags($dotAll ? 's' : '', $node->flags), 's');
 
                 continue;
@@ -515,9 +522,8 @@ final class NodePredicates
         }
 
         foreach ($nodes as $index => $node) {
-            if ($node instanceof GroupNode
-                && null !== $node->flags
-                && self::isStandaloneInlineFlagsGroup($node)) {
+            if (self::isStandaloneInlineFlagsGroup($node)
+                && null !== $node->flags) {
                 $dotAll = str_contains(self::applyInlineFlags($dotAll ? 's' : '', $node->flags), 's');
 
                 continue;

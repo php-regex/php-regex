@@ -151,7 +151,6 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         if ($this->canAlternationBeCharClass($optimizedAlts)) {
-            /* @var array<Node\LiteralNode> $optimizedAlts */
             $expression = new AlternationNode($optimizedAlts, $node->startPosition, $node->endPosition);
 
             return new CharClassNode($expression, false, $node->startPosition, $node->endPosition);
@@ -855,6 +854,8 @@ final class Rewriter extends AbstractNodeVisitor
 
     /**
      * @param array<NodeInterface> $alternatives
+     *
+     * @phpstan-assert-if-true array<Node\LiteralNode> $alternatives
      */
     private function canAlternationBeCharClass(array $alternatives): bool
     {

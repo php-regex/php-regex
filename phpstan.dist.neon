@@ -71,6 +71,14 @@ parameters:
             - regex.lint.unicode.shorthandWithoutU
             # PHPUnit assertions that PHPStan considers redundant
             - method.alreadyNarrowedType
+        # The bare (?flags) predicate does real work beyond the type it
+        # asserts (group type, flags, span), so an argument already narrowed
+        # to GroupNode does not make the call always true: visitGroup()
+        # receives every group kind, the wrapper loop of PossessiveImpossible
+        # Rule stops at the standalone (?flags) group, and the regression
+        # test feeds the predicate the scoped group it must answer no to.
+        - message: '#^Call to static method PHPRegex\\Linter\\Rule\\Support\\NodePredicates::isStandaloneInlineFlagsGroup\(\) with PHPRegex\\Parser\\Node\\GroupNode will always evaluate to true\.$#'
+          identifier: staticMethod.alreadyNarrowedType
         # These tests probe the running engine for syntax newer PCRE2 releases
         # added, as (?[...]) or (*scs:...), and only match with it when it
         # compiles: the analysis, run on an older PCRE2, cannot compile them.

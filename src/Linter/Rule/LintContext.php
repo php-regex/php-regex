@@ -475,7 +475,7 @@ final class LintContext
      */
     private static function flagsAfter(NodeInterface $node, string $flags): string
     {
-        if ($node instanceof GroupNode && NodePredicates::isStandaloneInlineFlagsGroup($node)) {
+        if (NodePredicates::isStandaloneInlineFlagsGroup($node)) {
             return NodePredicates::applyInlineFlags($flags, (string) $node->flags);
         }
 

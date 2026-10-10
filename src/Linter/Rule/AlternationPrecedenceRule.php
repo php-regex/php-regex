@@ -295,7 +295,7 @@ final class AlternationPrecedenceRule extends AbstractLintRule
             static fn (NodeInterface $item): bool => !$item instanceof CommentNode
                 && !$item instanceof PcreVerbNode
                 && !($item instanceof LiteralNode && '' === $item->value)
-                && !($item instanceof GroupNode && NodePredicates::isStandaloneInlineFlagsGroup($item)),
+                && !NodePredicates::isStandaloneInlineFlagsGroup($item),
         ));
     }
 

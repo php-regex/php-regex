@@ -23,7 +23,6 @@ use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
-use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -255,9 +254,8 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
         for ($j = 0; $j < $index; $j++) {
             $sibling = $children[$j];
-            if ($sibling instanceof GroupNode
-                && null !== $sibling->flags
-                && NodePredicates::isStandaloneInlineFlagsGroup($sibling)) {
+            if (NodePredicates::isStandaloneInlineFlagsGroup($sibling)
+                && null !== $sibling->flags) {
                 $flags = NodePredicates::applyInlineFlags($flags, $sibling->flags);
             }
         }
