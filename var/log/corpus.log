@@ -9674,19 +9674,19 @@
          - #([kmgtp]?b?)$#si
          + #([kmgtp]?b?)$#i
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:254:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:255:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
          + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-\w+)?\n\n/
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:277:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:278:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
          + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-.+)?\n\n/
 
-  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:302:32
+  corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:303:32
       → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
      TIP 
          - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
