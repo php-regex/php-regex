@@ -326,12 +326,12 @@ echo "Cache key: {$cacheKey}\n";
 **Problem:**
 
 ```
-Command "regex:test" is not defined.
+Unknown command: regex:test
 ```
 
 **Solutions:**
 
-1. Use `help` command to list available commands:
+1. Use `help` command to list available commands and their exact names:
 
 ```bash
 vendor/bin/regex help
@@ -340,15 +340,8 @@ vendor/bin/regex help
 2. Update to latest version:
 
 ```bash
-composer update
-# or
-composer require --dev php-regex/regex-cli:^2.0
+composer update php-regex/php-regex
 ```
-
-3. Check if command is deprecated:
-
-```bash
-vendor/bin/regex help | grep -i deprecated
 
 # Use alternative command
 ```
@@ -507,8 +500,9 @@ https://github.com/php-regex/php-regex/issues
 
 1. Check the [GitHub Issues](https://github.com/php-regex/php-regex/issues) for similar problems
 2. Search for your specific error message in the codebase
-3. Enable verbose mode for more details:
+3. Ask for the machine-readable report, or replay the ReDoS verdict on the real engine:
 
 ```bash
-vendor/bin/regex analyze '/pattern/' -v
+vendor/bin/regex analyze '/pattern/' --format=json
+vendor/bin/regex analyze '/pattern/' --redos-mode=confirmed
 ```

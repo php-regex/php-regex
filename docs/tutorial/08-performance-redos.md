@@ -196,8 +196,9 @@ if ($analysis->exceedsThreshold(RedosSeverity::High)) {
 ### Strategy 2: Use the CLI
 
 ```bash
-# Analyze a pattern
-vendor/bin/regex debug '/(a+)+$/'
+# Analyze a pattern; --redos-mode=confirmed replays the attack input
+# on the real engine, which is what prints the Confirmation section below
+vendor/bin/regex debug '/(a+)+$/' --redos-mode=confirmed
 ```
 
 ```

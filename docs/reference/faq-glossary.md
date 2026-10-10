@@ -12,7 +12,7 @@ Short answers to common questions plus quick definitions of core terms used thro
 
 #### Does PHPRegex execute regexes?
 
-**No.** PHPRegex parses and analyzes patterns **statically**. It never actually runs the regex against input. Runtime validation is optional and uses a safe compile check with `preg_match()`.
+**No — until you ask it to.** PHPRegex parses and analyzes patterns **statically**: the default verdicts never run the regex against input. The `confirmed` ReDoS mode is the exception by design — it replays the attack input through `preg_match()` under engine limits, to turn a theoretical verdict into a proven one.
 
 ```php
 use PHPRegex\Toolkit\Regex;

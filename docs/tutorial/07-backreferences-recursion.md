@@ -288,7 +288,10 @@ preg_match($pattern, 'c', $m);   // Match: yes
 '/\((?:[^()]|(?R))*\)/'  // [^()] is the base case
 ```
 
-A lazy quantifier does not add a base case: `/(?:a|(?R))+?/` fails exactly the same way.
+A lazy quantifier does not add a base case: `/(?:a|(?R))+?/` stops after one
+successful iteration — on `aaa` it matches the single `a` and returns, it does
+not recurse to death. It dies with the same "JIT stack limit exhausted" only
+on an input its non-recursive branch cannot match, `bbb` for this one.
 
 ### Error: Backreference Outside Group
 

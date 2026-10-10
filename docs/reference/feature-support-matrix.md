@@ -18,7 +18,7 @@ Legend:
 | Literals & escaped literals                   | Yes    | Yes              | Yes   | Yes             |
 | Character classes (`[...]`, negation)         | Yes    | Yes              | Yes   | Yes             |
 | Character class ranges (`a-z`)                | Yes    | Yes              | Yes   | Yes             |
-| Class ops (`&&`, `--`)                        | Yes    | Partial          | Partial | Yes           |
+| Extended class ops (`(?[ \w - [x] ])`)        | Yes    | Partial          | Partial | Yes           |
 | Dot (`.`)                                     | Yes    | Yes              | Yes   | Yes             |
 | Alternation (`\|`)                            | Yes    | Yes              | Yes   | Yes             |
 | Quantifiers (`* + ? {m,n}`)                   | Yes    | Yes              | Yes   | Yes             |
@@ -28,7 +28,7 @@ Legend:
 | Named groups                                  | Yes    | Yes              | Yes   | Yes             |
 | Inline flags (`(?i)`, `(?-i)`)                | Yes    | Partial          | Partial | Partial        |
 | Anchors (`^`, `$`)                            | Yes    | Yes              | Yes   | Yes             |
-| Assertions (`\b`, `\B`, `\A`, `\z`, `\Z`, `\G`) | Yes    | Partial          | Partial | Partial (`\G` only) |
+| Assertions (`\b`, `\B`, `\A`, `\z`, `\Z`, `\G`) | Yes    | Partial          | Partial | Partial (all but `\G`) |
 | Lookahead / lookbehind                        | Yes    | Partial          | Partial | Partial        |
 | Backreferences (`\1`, `\k<name>`)             | Yes    | Partial          | Partial | No             |
 | Subroutines (`(?&name)`, `(?R)`)              | Yes    | Partial          | Partial | No             |

@@ -25,7 +25,10 @@ Requires PHP 8.2 or later and the `mbstring` extension (PCRE ships with PHP).
 
 `regex-toolkit` is the parser and the PHP API. The monorepo install above also provides the `vendor/bin/regex` binary used throughout this guide; from the 2.0.0 release, the CLI is its own package (`composer require --dev php-regex/regex-cli`).
 
-No Composer? The CLI also ships as a self-contained PHAR:
+No Composer? The CLI ships as a self-contained PHAR — but the `latest` release
+channel still serves the 1.x CLI (`RegexParser 1.3.0`), which knows none of the
+commands this guide shows. Until the 2.0.0 tag publishes the 2.x PHAR, use the
+monorepo install above; the curl below will carry the 2.x CLI from that tag:
 
 ```bash
 curl -Ls https://github.com/php-regex/php-regex/releases/latest/download/regex.phar \
@@ -305,12 +308,18 @@ $pattern = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/';
 $result = $regex->validate($pattern);
 ```
 
+ReDoS verdict: `safe (proven)`.
+
 ### URL Matching
 
 ```php
 $pattern = '/^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/';
 $result = $regex->validate($pattern);
 ```
+
+ReDoS verdict: `Polynomial backtracking, degree 2 (proven)` — severity `medium`. Valid,
+but the two bounded character classes backtrack against each other; run it through
+`vendor/bin/regex analyze` yourself before trusting it on hot paths.
 
 ### Phone Number (US)
 
@@ -319,12 +328,18 @@ $pattern = '/^\+?1?\s*\(?([0-9]{3})\)?\s*-?\s*([0-9]{3})\s*-?\s*([0-9]{4})$/';
 $result = $regex->validate($pattern);
 ```
 
+ReDoS verdict: `Polynomial backtracking, degree 2 (proven)` — severity `medium`, for the
+same reason: the optional separators backtrack. The [cookbook](cookbook.md) shows the
+same shapes rewritten to `safe (proven)`.
+
 ### Date (YYYY-MM-DD)
 
 ```php
 $pattern = '/^(?<year>\d{4})-(?<month>0[1-9]|1[0-2])-(?<day>0[1-9]|[12][0-9]|3[01])$/';
 $result = $regex->validate($pattern);
 ```
+
+ReDoS verdict: `safe (proven)`.
 
 ## Error Handling
 

@@ -749,15 +749,19 @@ PHPRegex uses a focused exception hierarchy for precise error handling:
 Exception hierarchy (simplified):
 - `ExceptionInterface`
   - `InvalidRegexOptionException` (invalid configuration option)
-  - `LexerException` (tokenization failure)
-  - `ParserException`
-    - `SyntaxErrorException` (invalid syntax)
-    - `SemanticErrorException` (semantic validation failure)
-  - `RecursionLimitException` (max recursion depth)
-  - `ResourceLimitException` (resource limits)
   - `RegexException` (base exception with position and error code)
-  - `TranspileException` (unsupported target or feature during transpile)
-  - `SampleGenerationException` (no sample the pattern matches was found)
+    - `LexerException` (tokenization failure)
+    - `ParserException`
+      - `SyntaxErrorException` (invalid syntax)
+      - `RecursionLimitException` (max recursion depth)
+      - `ResourceLimitException` ( resource limits)
+    - `SemanticErrorException` (semantic validation failure)
+    - `TranspileException` (unsupported target or feature during transpile)
+    - `SampleGenerationException` (no sample the pattern matches was found)
+
+`SemanticErrorException` sits beside `ParserException`, not under it: a
+`catch (ParserException)` does not see it — catch `RegexException` to handle
+every parse-time failure.
 
 **Usage Examples:**
 
