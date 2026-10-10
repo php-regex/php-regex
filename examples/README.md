@@ -49,7 +49,7 @@ composer install
 
 ## Learning Resources
 
-- [Quick Start Guide](../docs/QUICK_START.md)
-- [API Reference](../docs/reference.md)
-- [ReDoS Guide](../docs/REDOS_GUIDE.md)
-- [Cookbook](../docs/COOKBOOK.md)
+- [Quick Start Guide](../docs/quick-start.md)
+- [API Reference](../docs/reference/README.md)
+- [ReDoS Guide](../docs/guides/redos.md)
+- [Cookbook](../docs/cookbook.md)

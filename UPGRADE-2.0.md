@@ -618,7 +618,7 @@ its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 
 The ReDoS analysis proves the complexity class of a pattern where its model
 covers it, and falls back to the 1.x heuristics elsewhere (see
-[the ReDoS guide](docs/REDOS_GUIDE.md)). Three things move on your side:
+[the ReDoS guide](docs/guides/redos.md)). Three things move on your side:
 
 - **PHPStan baselines.** The ReDoS message is now one of
   `Exponential backtracking (ReDoS): <pattern>`,
