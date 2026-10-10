@@ -23,9 +23,11 @@
       return;
     }
     // Trivial blocks do not earn a button: a one-liner under 80
-    // characters is faster to select than to click for.
+    // characters is faster to select than to click for. Install commands
+    // are the one exception — short, but the whole reason the reader is
+    // here. The class sits on the wrapping .install box, not on the pre.
     var text = code.innerText.trim();
-    if (!container.classList.contains('install') && text.indexOf('\n') === -1 && text.length < 80) {
+    if (!container.closest('.install') && text.indexOf('\n') === -1 && text.length < 80) {
       return;
     }
     var button = document.createElement('button');

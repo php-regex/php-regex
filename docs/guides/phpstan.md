@@ -23,6 +23,7 @@ it, include the extension in your `phpstan.neon`:
 includes:
     - vendor/php-regex/regex-phpstan/extension.neon
 ```
+{: data-file="phpstan.neon" }
 
 This guide writes the split-package paths — what
 `composer require --dev php-regex/regex-phpstan` installs from the 2.0.0
@@ -108,6 +109,7 @@ lacks them, no parameter is read as a pattern, and nothing is reported.
 includes:
     - vendor/php-regex/regex-phpstan/rules.neon
 ```
+{: data-file="phpstan.neon" }
 
 Without extension-installer, include both `extension.neon` and `rules.neon`.
 Each check can also be switched on its own (see below).
@@ -280,6 +282,7 @@ parameters:
     ignoreErrors:
         - identifier: regex.redos.search
 ```
+{: data-file="phpstan.neon" }
 
 ## Configuration
 
@@ -304,6 +307,7 @@ parameters:
                 enabled: false
                 minSavings: 1
 ```
+{: data-file="phpstan.neon" }
 
 A `phpVersion` or `pcreVersion` that names no release stops the analysis when
 it starts, not on the first file. So does a `threshold` that is not `low`,
@@ -337,6 +341,7 @@ parameters:
     ignoreErrors:
         - identifier: regex.lint.group.quantifiedCapture
 ```
+{: data-file="phpstan.neon" }
 
 A baseline written before 2.0 holds a 1.x ReDoS message, `Potential ReDoS
 risk (theoretical) (severity: …, confidence: …): …` or `Confirmed ReDoS risk

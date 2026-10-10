@@ -377,6 +377,7 @@ language-servers = ["intelephense", "php-regex"]
 [language-server.php-regex]
 command = "vendor/bin/regex-lsp"
 ```
+{: data-file="~/.config/helix/languages.toml" }
 
 ### Zed
 

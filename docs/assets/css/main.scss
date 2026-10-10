@@ -542,6 +542,44 @@ main div.highlighter-rouge:focus-within::after {
   display: none;
 }
 
+/* ---- File captions --------------------------------------------------------
+ * A block that shows a whole file's content says which file it is: the
+ * fence carries the path as a data-file attribute (kramdown attribute
+ * list), the caption reads it back in the margin strip above the block —
+ * the mirror of the language label below it. Unlike the language label it
+ * is content, not chrome: where a snippet lives is the question the reader
+ * is asking, so the caption stays visible without hover.
+ *
+ * Two shapes carry the attribute: the rouge wrapper div when the fence has
+ * a lexer, and the bare <pre> when it does not (neon has no lexer, so its
+ * blocks never get the wrapper). The bare form also carries no margin —
+ * the wrapper owns it in the highlighted case — so the pre earns its own
+ * strip for the caption to sit in.
+   -------------------------------------------------------------------------- */
+
+main div.highlighter-rouge[data-file]::before,
+main pre[data-file]::before {
+  content: attr(data-file);
+  position: absolute;
+  top: -1.3rem;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+main pre[data-file] {
+  margin-top: 1.75em;
+}
+
+/* In a terminal panel the wrapper carries no top margin either. */
+.terminal div.highlighter-rouge[data-file]::before,
+.terminal pre[data-file]::before {
+  display: none;
+}
+
 @mixin code-language($name, $label) {
   main div.highlighter-rouge.language-#{$name}::after {
     content: '#{$label}';
@@ -664,6 +702,17 @@ main table::-webkit-scrollbar-thumb {
 .has-copy:focus-within .copy-btn,
 .copy-btn:focus-visible {
   opacity: 1;
+}
+
+/* The chip is 2rem tall, the target is not: a quiet transparent skirt brings
+   the clickable area to 44px without letting the chip eat a line of code. */
+.copy-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -4px;
+  right: -4px;
 }
 
 @media (hover: none) {
@@ -896,10 +945,28 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
-/* On narrow screens the header nav steps aside: the drawer and the footer
-   carry the same destinations at comfortable sizes. */
+/* ---- Header on narrow screens ----
+ * The nav steps aside below 640px and the drawer plus the footer carry the
+ * same destinations at comfortable sizes. With the nav gone there is room
+ * for the search toggle's word; the button keeps its own aria-label either
+ * way, so nothing is lost. */
 @media (max-width: 639px) {
   .site-header nav {
+    display: none;
+  }
+
+  .search-toggle .search-label,
+  .search-toggle kbd {
+    display: none;
+  }
+}
+
+/* Between 640 and 900px the nav is back beside the wordmark, and a
+   wordmark, three nav links, a labelled search, the theme toggle and the
+   menu toggle need about 670px. The shortcut chip goes - the word stays,
+   because the chip is the widest of the two and the least necessary. */
+@media (max-width: 899px) {
+  .search-toggle kbd {
     display: none;
   }
 }
@@ -994,6 +1061,16 @@ main table::-webkit-scrollbar-thumb {
   background: var(--scrim);
 }
 
+@mixin rail-height {
+  /* The sticky rails are capped against the visible viewport, not the
+     layout one: on iOS the layout viewport keeps the height of the page
+     with the URL bar hidden, so a rail capped on 100vh runs past the
+     bottom of the screen. dvh is the visible part; where it is not known
+     the declaration is dropped and the vh cap above stands. */
+  max-height: calc(100vh - var(--header-h) - 2rem);
+  max-height: calc(100dvh - var(--header-h) - 2rem);
+}
+
 @media (min-width: 1024px) {
   .site-sidebar {
     position: sticky;
@@ -1001,7 +1078,7 @@ main table::-webkit-scrollbar-thumb {
     top: calc(var(--header-h) + 1rem);
     z-index: auto;
     width: auto;
-    max-height: calc(100vh - var(--header-h) - 2rem);
+    @include rail-height;
     padding: 0;
     background: transparent;
     border-right: 0;
@@ -1087,7 +1164,7 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .nav-list .nav-list a {
-  min-height: 40px;
+  min-height: 44px;
   font-size: .9rem;
 }
 
@@ -1176,7 +1253,7 @@ main table::-webkit-scrollbar-thumb {
   display: none;
   position: sticky;
   top: calc(var(--header-h) + 1rem);
-  max-height: calc(100vh - var(--header-h) - 2rem);
+  @include rail-height;
   overflow-y: auto;
   font-size: .9rem;
 }
@@ -1389,6 +1466,17 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
+/* The way out of a dead search is a link, not a wall: the docs map, one
+   underline away, kept in the row's own voice rather than the results'
+   two-line rows. */
+.search-dialog li.no-results a {
+  display: inline;
+  margin-inline-start: .35rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
 /* ==========================================================================
    Buttons
    ========================================================================== */
@@ -1435,6 +1523,15 @@ main > section:not([class]) p > a.button:hover {
   color: var(--paper);
   text-decoration: underline;
   text-underline-offset: .25em;
+}
+
+/* The default focus ring is amber, and amber on amber is invisible: filled
+   controls borrow the ink outline, which clears both the fill and the paper. */
+.button-primary:focus-visible,
+.button--primary:focus-visible,
+.hero-ctas > a.button:first-of-type:focus-visible,
+main > section:not([class]) p > a.button:focus-visible {
+  outline-color: var(--ink);
 }
 
 .button-secondary,
@@ -2013,13 +2110,21 @@ main > section:not([class]) > p:not(:has(a.button)) {
   }
 
   /* The code language caption earns its place on paper: there is no hover
-     to reveal it and no page to ask. */
+     to reveal it and no page to ask. The file caption moves above the
+     block, where it sat on screen. */
   main div.highlighter-rouge::after {
     position: static;
     display: block;
     margin-top: .35rem;
     text-align: right;
     opacity: 1;
+  }
+
+  main div.highlighter-rouge[data-file]::before,
+  main pre[data-file]::before {
+    position: static;
+    display: block;
+    margin: 0 0 .35rem;
   }
 
   .terminal {
@@ -2079,11 +2184,56 @@ body.drawer-open {
   gap: .35rem;
 }
 
-/* ---- Header on narrow screens: the search toggle keeps its icon ---- */
+/* ---- Small screens ------------------------------------------------------
+ * Two things the fluid type cannot fix: the pager, whose two columns are
+ * too narrow for a chapter title below the tablet width, and the header,
+ * whose four controls beside the wordmark need about 350px.
+   -------------------------------------------------------------------------- */
 
 @media (max-width: 639px) {
-  .search-toggle .search-label,
-  .search-toggle kbd {
-    display: none;
+  /* One full-width row per direction reads better than two truncated ones. */
+  .pager {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pager-next {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* At 320px the wordmark stops being drawn. The clip pattern keeps it the
+   brand link's accessible name - the mark beside it is aria-hidden, so the
+   words have to stay in the tree even when they are not on screen. */
+@media (max-width: 359px) {
+  .brand-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* ---- Forced colors ------------------------------------------------------
+ * The structure already rides on 1px borders, so only the panels that lean
+ * on a fill need an edge restated to survive a stripped palette.
+   -------------------------------------------------------------------------- */
+
+@media (forced-colors: active) {
+  main :not(pre) > code,
+  main :not(pre) > samp,
+  main kbd {
+    border: 1px solid CanvasText;
+  }
+
+  main blockquote {
+    border-left: 3px solid CanvasText;
   }
 }

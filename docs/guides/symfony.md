@@ -92,8 +92,7 @@ final class PatternSupport
 }
 ```
 
-`validate()` returns the object [the Laravel facade
-returns](laravel.md#using-the-service): `$result->isValid`, `$result->error`,
+`validate()` returns the object [the Laravel facade returns](laravel.md#using-the-service): `$result->isValid`, `$result->error`,
 `$result->caretSnippet`. [The API reference](../reference/api.md) lists every
 method of the service — `parse`, `explain`, `redos`, `optimize`, `transpile`
 and the rest.

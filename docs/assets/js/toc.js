@@ -231,6 +231,7 @@
   }
 
   var links = Array.prototype.slice.call(nav.querySelectorAll('a'));
+  var rail = nav.closest('.toc');
   var observer = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
       if (!entry.isIntersecting) {
@@ -243,7 +244,20 @@
       links.forEach(function (link) {
         link.removeAttribute('aria-current');
       });
-      links[index].setAttribute('aria-current', 'location');
+      var current = links[index];
+      current.setAttribute('aria-current', 'location');
+      // A long page overflows the rail: nudge the rail so the marked entry
+      // stays inside it. Offset arithmetic scrolls the rail only, never the
+      // page behind it, and moves the minimum distance that shows the entry.
+      if (rail) {
+        var railBox = rail.getBoundingClientRect();
+        var linkBox = current.getBoundingClientRect();
+        if (linkBox.top < railBox.top) {
+          rail.scrollTop += linkBox.top - railBox.top;
+        } else if (linkBox.bottom > railBox.bottom) {
+          rail.scrollTop += linkBox.bottom - railBox.bottom;
+        }
+      }
     });
   }, { rootMargin: '-80px 0px -70% 0px' });
 

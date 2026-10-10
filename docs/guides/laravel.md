@@ -120,8 +120,7 @@ $analysis->witness->render();         // '"a" x n . "!"', the input that trigger
 ```
 
 The facade also exposes `parse`, `parseTolerant`, `analyze`, `optimize`,
-`highlight`, `literals`, `generate` and `parsePattern`; [the API
-reference](../reference/api.md) documents each. Type-hinting
+`highlight`, `literals`, `generate` and `parsePattern`; [the API reference](../reference/api.md) documents each. Type-hinting
 `PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
 ## The service and the lint judge for different targets

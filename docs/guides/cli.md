@@ -1188,6 +1188,7 @@ jobs:
       - run: composer install --no-interaction --no-progress
       - run: vendor/bin/regex lint src/ --format=github
 ```
+{: data-file=".github/workflows/regex-lint.yml" }
 
 ### GitLab CI
 
@@ -1201,6 +1202,7 @@ regex-lint:
     reports:
       json: report.json
 ```
+{: data-file=".gitlab-ci.yml" }
 
 ### Jenkins
 

@@ -106,7 +106,11 @@
     if (term && hits.length === 0) {
       var empty = document.createElement('li');
       empty.className = 'no-results';
-      empty.textContent = 'No results.';
+      empty.textContent = 'No results for "' + term + '".';
+      var browse = document.createElement('a');
+      browse.href = '/docs/';
+      browse.textContent = 'Browse the documentation map';
+      empty.appendChild(browse);
       results.appendChild(empty);
     }
 
@@ -134,8 +138,38 @@
     input.setAttribute('aria-expanded', hits.length > 0 ? 'true' : 'false');
   }
 
+  // The query lives in the URL (?q=…), so a search is a shareable address:
+  // opening any page with the parameter opens the dialog pre-filled, and
+  // the address bar tracks the term while it is typed. The sync is
+  // debounced — replaceState is rate-limited and keystrokes are not — and
+  // closing the dialog clears the parameter so a reload does not reopen it.
+  var syncTimer = 0;
+
+  function syncUrl(term) {
+    window.clearTimeout(syncTimer);
+    syncTimer = window.setTimeout(function () {
+      var url = new URL(window.location.href);
+      if (term) {
+        url.searchParams.set('q', term);
+      } else {
+        url.searchParams.delete('q');
+      }
+      window.history.replaceState(window.history.state, '', url);
+    }, 400);
+  }
+
+  function clearUrl() {
+    window.clearTimeout(syncTimer);
+    var url = new URL(window.location.href);
+    if (url.searchParams.has('q')) {
+      url.searchParams.delete('q');
+      window.history.replaceState(window.history.state, '', url);
+    }
+  }
+
   function run() {
     var term = input.value.trim();
+    syncUrl(term);
     if (!engine) {
       render([], '');
       announce(failed ? 'Search is unavailable.' : 'Loading the search index…');
@@ -260,6 +294,7 @@
     if (!dialogOpen) {
       return;
     }
+    clearUrl();
     dialogOpen = false;
     dialog.hidden = true;
     dialog.classList.remove('open');
@@ -273,6 +308,13 @@
 
   toggle.addEventListener('click', openDialog);
 
+  // Other pages may carry their own way in (the 404 page has a search
+  // button); any control that opts in opens the same dialog, and gets its
+  // focus back when the dialog closes.
+  document.querySelectorAll('[data-search-open]').forEach(function (el) {
+    el.addEventListener('click', openDialog);
+  });
+
   document.addEventListener('keydown', function (event) {
     if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K')) {
       if (dialogOpen && dialog.contains(document.activeElement)) {
@@ -285,6 +327,26 @@
       }
       openDialog();
     }
+  });
+
+  // The other docs-standard way in: a bare "/" focuses the search. It is
+  // swallowed only where the character is content — an input, a textarea,
+  // anything editable — so typing it in the dialog itself is untouched.
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+    var el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) {
+      return;
+    }
+    event.preventDefault();
+    if (dialogOpen) {
+      input.focus();
+      input.select();
+      return;
+    }
+    openDialog();
   });
 
   dialog.addEventListener('keydown', function (event) {
@@ -301,4 +363,12 @@
       closeDialog();
     }
   });
+
+  // A shared search address (?q=…) opens the dialog with the term already
+  // run; openDialog reruns it once the engine has arrived.
+  var shared = new URLSearchParams(window.location.search).get('q');
+  if (shared) {
+    input.value = shared;
+    openDialog();
+  }
 })();

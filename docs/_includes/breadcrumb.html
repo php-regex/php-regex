@@ -39,4 +39,7 @@
       <li aria-current="page">{{ page.title }}</li>
     </ol>
   </nav>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":{{ '/docs/' | absolute_url | jsonify }}},{"@type":"ListItem","position":2,"name":{{ sec | jsonify }}},{"@type":"ListItem","position":3,"name":{{ page.title | strip_html | jsonify }}}]}
+  </script>
 {% endif %}
