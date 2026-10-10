@@ -23,16 +23,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSearchCostReferenceTest extends TestCase
 {
-    private const REFERENCE = __DIR__.'/../../docs/reference.md';
+    private const REFERENCE = __DIR__.'/../../docs/reference/rules.md';
 
-    private const GUIDE = __DIR__.'/../../docs/REDOS_GUIDE.md';
+    private const GUIDE = __DIR__.'/../../docs/guides/redos.md';
 
     #[Test]
     public function test_reference_id_table_has_a_row_for_the_search_cost(): void
     {
         $row = self::idTableRow('`regex.lint.redos.search`');
 
-        $this->assertNotNull($row, 'docs/reference.md has no id table row naming `regex.lint.redos.search`.');
+        $this->assertNotNull($row, 'docs/reference/rules.md has no id table row naming `regex.lint.redos.search`.');
         $this->assertCount(4, $row, 'An id table row has four cells: category, ids, severity, fix.');
         $this->assertStringContainsString('`regex.redos.search`', $row[1], 'The row names the PHPStan identifier.');
         $this->assertStringContainsString('warning', $row[2]);
@@ -49,7 +49,7 @@ final class RedosSearchCostReferenceTest extends TestCase
     }
 
     /**
-     * The cells of the first table row of docs/reference.md that holds
+     * The cells of the first table row of docs/reference/rules.md that holds
      * $needle, trimmed; null when none does.
      *
      * @return list<string>|null

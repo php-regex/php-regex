@@ -20,13 +20,13 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The rules taken from SonarPHP's regex checks are documented where a user
- * looks: the id table of docs/reference.md (with their severity and, for
- * the opt-in ones, "off by default"), the mapping page that names every
+ * looks: the id table of docs/reference/rules.md (with their severity and,
+ * for the opt-in ones, "off by default"), the mapping page that names every
  * Sonar regex rule on PHP once, and the CHANGELOG.
  */
 final class SonarParityReferenceTest extends TestCase
 {
-    private const REFERENCE = __DIR__.'/../../docs/reference.md';
+    private const REFERENCE = __DIR__.'/../../docs/reference/rules.md';
 
     private const MAPPING = __DIR__.'/../../docs/reference/sonar.md';
 
@@ -71,7 +71,7 @@ final class SonarParityReferenceTest extends TestCase
             }
         }
 
-        $this->assertSame([], $missing, 'docs/reference.md has no id table row for these rules.');
+        $this->assertSame([], $missing, 'docs/reference/rules.md has no id table row for these rules.');
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class SonarParityReferenceTest extends TestCase
     {
         $row = self::idTable()[$id] ?? null;
 
-        $this->assertNotNull($row, \sprintf('docs/reference.md has no id table row naming %s.', $id));
+        $this->assertNotNull($row, \sprintf('docs/reference/rules.md has no id table row naming %s.', $id));
         $this->assertSame($severity, $row[2], \sprintf('The severity cell of %s.', $id));
         if ($offByDefault) {
             $this->assertStringContainsString('off by default', $row[1], \sprintf('%s is off by default.', $id));
@@ -183,7 +183,7 @@ final class SonarParityReferenceTest extends TestCase
     }
 
     /**
-     * The id table of docs/reference.md: every "regex.lint.*" id a row names,
+     * The id table of docs/reference/rules.md: every "regex.lint.*" id a row names,
      * a short ".name" expanded against the id before it ("`regex.lint.flag.useless.s`, `.m`"),
      * with the row's cells, trimmed.
      *
