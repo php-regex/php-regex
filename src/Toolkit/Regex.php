@@ -27,6 +27,7 @@ use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
+use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -510,7 +511,7 @@ final readonly class Regex
     /**
      * Extract unique literals from a literal set.
      *
-     * @param mixed $literalSet The literal set from extraction
+     * @param LiteralSet $literalSet The literal set from extraction
      *
      * @return array<string> Unique literals
      */
@@ -530,6 +531,7 @@ final readonly class Regex
     }
 
     /**
+     * @param LiteralSet               $literalSet
      * @param callable(string): string $patternBuilder
      *
      * @return array<string>
@@ -556,7 +558,7 @@ final readonly class Regex
     /**
      * Build search patterns from prefixes and suffixes.
      *
-     * @param mixed $literalSet The literal set containing prefixes/suffixes
+     * @param LiteralSet $literalSet The literal set containing prefixes/suffixes
      *
      * @return array<string> Search patterns
      */
@@ -580,7 +582,7 @@ final readonly class Regex
     /**
      * Determine confidence level for literal extraction.
      *
-     * @param mixed $literalSet The literal set to evaluate
+     * @param LiteralSet $literalSet The literal set to evaluate
      *
      * @return string Confidence level ('high', 'medium', or 'low')
      */

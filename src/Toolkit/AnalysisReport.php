@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Toolkit;
 
+use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Redos\RedosAnalysis;
 
@@ -24,8 +25,8 @@ final readonly class AnalysisReport
     /**
      * @internal built by Regex::analyze()
      *
-     * @param array<string> $errors
-     * @param array<mixed>  $lintIssues
+     * @param list<string>        $errors     messages explaining why analysis failed or degraded
+     * @param list<RuleViolation> $lintIssues what the pattern linter reported
      */
     public function __construct(
         public bool $isValid,
@@ -38,7 +39,7 @@ final readonly class AnalysisReport
     ) {}
 
     /**
-     * @return array<string>
+     * @return list<string>
      */
     public function errors(): array
     {
@@ -46,7 +47,7 @@ final readonly class AnalysisReport
     }
 
     /**
-     * @return array<mixed>
+     * @return list<RuleViolation>
      */
     public function lintIssues(): array
     {

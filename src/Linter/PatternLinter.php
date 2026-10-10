@@ -71,7 +71,7 @@ final class PatternLinter extends AbstractNodeVisitor
     ];
 
     /**
-     * @var array<RuleViolation>
+     * @var list<RuleViolation>
      */
     private array $issues = [];
 
@@ -195,7 +195,7 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
-     * @return array<RuleViolation>
+     * @return list<RuleViolation>
      */
     public function getIssues(): array
     {
