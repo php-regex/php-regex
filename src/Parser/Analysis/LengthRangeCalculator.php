@@ -54,7 +54,9 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  * reported match, does not shorten it; "(*ACCEPT)", which ends the match,
  * does. Lengths count bytes, or UTF-8 characters in UTF mode.
  *
- * @extends AbstractNodeVisitor<array{0: int, 1: int|null}>
+ * @phpstan-type LengthRange array{0: int, 1: int|null}
+ *
+ * @extends AbstractNodeVisitor<LengthRange>
  */
 final class LengthRangeCalculator extends AbstractNodeVisitor
 {
@@ -140,7 +142,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     }
 
     /**
-     * @return array{0: int, 1: int|null}
+     * @return LengthRange
      */
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): array
@@ -361,7 +363,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     }
 
     /**
-     * @return array{0: int, 1: int|null}
+     * @return LengthRange
      */
     private function parseQuantifierRange(string $q): array
     {

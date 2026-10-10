@@ -45,6 +45,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * nothing is kept there.
  *
  * @internal
+ *
+ * @phpstan-import-type LengthRange from LengthRangeCalculator
  */
 final class LookbehindLength
 {
@@ -59,7 +61,7 @@ final class LookbehindLength
      * The length of each group measured, by node, with the groups its
      * measure called.
      *
-     * @var array<int, array{length: array{0: int, 1: int|null}, calls: array<int, true>}>
+     * @var array<int, array{length: LengthRange, calls: array<int, true>}>
      */
     private array $measuredGroups = [];
 
@@ -150,7 +152,7 @@ final class LookbehindLength
     /**
      * @param array<int, true> $expanding the groups being measured, by node
      *
-     * @return array{0: int, 1: int|null}
+     * @return LengthRange
      *
      * @phpstan-impure
      */
@@ -252,7 +254,7 @@ final class LookbehindLength
     /**
      * @param array<int, true> $expanding
      *
-     * @return array{0: int, 1: int|null}
+     * @return LengthRange
      */
     private function referencedGroupLength(SubroutineNode|BackrefNode $node, array $expanding): array
     {

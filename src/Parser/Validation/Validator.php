@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Validation;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
@@ -76,6 +77,8 @@ use PHPRegex\Parser\Token\TokenType;
  * @extends AbstractNodeVisitor<void>
  *
  * @internal
+ *
+ * @phpstan-import-type LengthRange from LengthRangeCalculator
  */
 final class Validator extends AbstractNodeVisitor
 {
@@ -2290,7 +2293,7 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @param array{0: int, 1: int|null} $lengthRange
+     * @param LengthRange $lengthRange
      */
     private function validateLookbehindBranchLength(GroupNode $node, array $lengthRange, bool $variable): void
     {

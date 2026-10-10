@@ -47,6 +47,10 @@ use PHPRegex\Parser\Node\SequenceNode;
  *
  * Every answer is sound: when the tree alone cannot tell, the values are
  * unknown and the facts are false.
+ *
+ * @phpstan-import-type LengthRange from LengthRangeCalculator
+ *
+ * @phpstan-type Facts array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}
  */
 final class CaptureFacts
 {
@@ -70,12 +74,12 @@ final class CaptureFacts
     private readonly LengthRangeCalculator $calculator;
 
     /**
-     * @var \WeakMap<NodeInterface, array{0: int, 1: int|null}>
+     * @var \WeakMap<NodeInterface, LengthRange>
      */
     private \WeakMap $lengths;
 
     /**
-     * @var \WeakMap<NodeInterface, array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}>
+     * @var \WeakMap<NodeInterface, Facts>
      */
     private \WeakMap $facts;
 
@@ -97,7 +101,7 @@ final class CaptureFacts
     /**
      * The length range of what the node reads.
      *
-     * @return array{0: int, 1: int|null}
+     * @return LengthRange
      */
     public function lengths(NodeInterface $node): array
     {
@@ -109,7 +113,7 @@ final class CaptureFacts
      * its values, whether every value is truthy (nonFalsy), and whether
      * every value is a non-empty run of ASCII digits (digitsOnly).
      *
-     * @return array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}
+     * @return Facts
      */
     public function of(NodeInterface $node): array
     {

@@ -48,7 +48,9 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 /**
  * Collects structural metrics about an AST (node counts and depth).
  *
- * @extends AbstractNodeVisitor<array{counts: array<string, int>, total: int, maxDepth: int}>
+ * @phpstan-type Metrics array{counts: array<string, int>, total: int, maxDepth: int}
+ *
+ * @extends AbstractNodeVisitor<Metrics>
  */
 final class MetricsCollector extends AbstractNodeVisitor
 {
@@ -268,7 +270,9 @@ final class MetricsCollector extends AbstractNodeVisitor
     }
 
     /**
-     * @return array{counts: array<string, int>, total: int, maxDepth: int}
+     * @param callable(): void|null $traverse
+     *
+     * @return Metrics
      */
     private function record(NodeInterface $node, ?callable $traverse = null): array
     {
@@ -319,7 +323,7 @@ final class MetricsCollector extends AbstractNodeVisitor
     }
 
     /**
-     * @return array{counts: array<string, int>, total: int, maxDepth: int}
+     * @return Metrics
      */
     private function snapshot(): array
     {
