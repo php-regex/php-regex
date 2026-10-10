@@ -15,12 +15,16 @@ namespace PHPRegex\Automata\Model;
 
 /**
  * Immutable DFA container.
+ *
+ * An alphabet range is a code point range, inclusive on both ends.
+ *
+ * @phpstan-type AlphabetRange array{0: int, 1: int}
  */
 final readonly class Dfa
 {
     /**
-     * @param array<int, DfaState>            $states
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, DfaState>      $states
+     * @param array<int, AlphabetRange> $alphabetRanges
      */
     public function __construct(
         public int $startState,

@@ -15,12 +15,17 @@ namespace PHPRegex\Automata\Model;
 
 /**
  * Immutable DFA state, as `Dfa` hands it out: read, never built by a caller.
+ *
+ * A range transition is its range start, range end (inclusive) and target
+ * state id.
+ *
+ * @phpstan-type RangeTransition array{0: int, 1: int, 2: int}
  */
 final readonly class DfaState
 {
     /**
-     * @param array<int, int>                        $transitions
-     * @param array<int, array{0:int, 1:int, 2:int}> $ranges
+     * @param array<int, int>             $transitions
+     * @param array<int, RangeTransition> $ranges
      */
     public function __construct(
         public int $id,

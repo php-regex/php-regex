@@ -21,12 +21,14 @@ use PHPRegex\Automata\Options\SolverOptions;
 /**
  * Defines an algorithm that determinizes an NFA into a DFA.
  *
+ * @phpstan-import-type AlphabetRange from Dfa
+ *
  * @internal
  */
 interface DeterminizationAlgorithmInterface
 {
     /**
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, AlphabetRange> $alphabetRanges
      *
      * @throws ComplexityException
      */

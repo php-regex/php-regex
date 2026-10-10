@@ -40,6 +40,9 @@ use PHPRegex\Parser\Hir\LookKind;
  * where the pattern accepts with no positive promise pending.
  *
  * @internal
+ *
+ * @phpstan-type PromisePair array{int, int}
+ * @phpstan-type ProductState array{int, list<PromisePair>, list<PromisePair>, list<int>}
  */
 final class LookaroundProduct
 {
@@ -161,11 +164,11 @@ final class LookaroundProduct
      * Follows a move that reads nothing: across a mark, the lookaround makes
      * its promise or asks its question; null when it fails at once.
      *
-     * @param list<array{int, int}> $kept
-     * @param list<array{int, int}> $avoided
-     * @param list<int>             $tracked
+     * @param list<PromisePair> $kept
+     * @param list<PromisePair> $avoided
+     * @param list<int>         $tracked
      *
-     * @return array{int, list<array{int, int}>, list<array{int, int}>, list<int>}|null
+     * @return ProductState|null
      */
     private function cross(int $state, int $target, array $kept, array $avoided, array $tracked): ?array
     {
@@ -189,11 +192,11 @@ final class LookaroundProduct
     /**
      * Reads one character: every pending promise and every run moves on it.
      *
-     * @param list<array{int, int}> $kept
-     * @param list<array{int, int}> $avoided
-     * @param list<int>             $tracked
+     * @param list<PromisePair> $kept
+     * @param list<PromisePair> $avoided
+     * @param list<int>         $tracked
      *
-     * @return array{int, list<array{int, int}>, list<array{int, int}>, list<int>}|null
+     * @return ProductState|null
      */
     private function read(int $target, int $symbol, array $kept, array $avoided, array $tracked): ?array
     {
@@ -215,11 +218,11 @@ final class LookaroundProduct
      * accepts and broken once it cannot; a negative one broken once its run
      * accepts and forgotten once it cannot.
      *
-     * @param list<array{int, int}> $kept
-     * @param list<array{int, int}> $avoided
-     * @param list<int>             $tracked
+     * @param list<PromisePair> $kept
+     * @param list<PromisePair> $avoided
+     * @param list<int>         $tracked
      *
-     * @return array{int, list<array{int, int}>, list<array{int, int}>, list<int>}|null
+     * @return ProductState|null
      */
     private function promise(int $target, int $index, int $run, array $kept, array $avoided, array $tracked): ?array
     {
@@ -350,7 +353,7 @@ final class LookaroundProduct
     }
 
     /**
-     * @param array{int, list<array{int, int}>, list<array{int, int}>, list<int>} $state
+     * @param ProductState $state
      */
     private static function key(array $state): string
     {

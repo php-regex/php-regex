@@ -29,6 +29,9 @@ use PHPRegex\Parser\Hir\CharSet;
  * many and the search ends.
  *
  * @internal
+ *
+ * @phpstan-type Thread array{0: int, 1: array<int, int>, 2: int|null}
+ * @phpstan-type Side array{t: list<Thread>, b: array<int, int>|null}
  */
 final class MatchExplorer
 {
@@ -69,7 +72,7 @@ final class MatchExplorer
             true,
         );
 
-        /** @var \SplQueue<array{0: array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}, 1: array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}, 2: bool, 3: string}> $queue */
+        /** @var \SplQueue<array{0: Side, 1: Side, 2: bool, 3: string}> $queue */
         $queue = new \SplQueue();
         $queue->enqueue([$left, $right, true, $key]);
         /** @var array<string, array{0: string, 1: int}|null> $previous */
@@ -117,8 +120,8 @@ final class MatchExplorer
      * read alike lead to the same next configuration, so one of them stands
      * for both. The newline counts apart wherever "$" waits.
      *
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $left
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $right
+     * @param Side $left
+     * @param Side $right
      *
      * @return list<int>
      */
@@ -154,8 +157,8 @@ final class MatchExplorer
     }
 
     /**
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $left
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $right
+     * @param Side $left
+     * @param Side $right
      */
     private function differ(array $left, array $right, bool $sameShape): bool
     {
@@ -182,7 +185,7 @@ final class MatchExplorer
     /**
      * The threads at the start of the subject.
      *
-     * @return array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}
+     * @return Side
      */
     private function start(PriorityNfa $nfa): array
     {
@@ -197,9 +200,9 @@ final class MatchExplorer
      * Reads one character: label 0 is the position before it, $fresh the
      * one after.
      *
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $side
+     * @param Side $side
      *
-     * @return array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}
+     * @return Side
      */
     private function step(PriorityNfa $nfa, array $side, int $symbol, int $fresh): array
     {
@@ -233,9 +236,9 @@ final class MatchExplorer
      * Follows what reads nothing from a state, in priority order, and lists
      * the threads that wait on the subject; the first path to a state wins.
      *
-     * @param list<array{0: int, 1: array<int, int>, 2: int|null}> $threads
-     * @param array<int|string, true>                              $visited
-     * @param array<int, int>                                      $registers
+     * @param list<Thread>            $threads
+     * @param array<int|string, true> $visited
+     * @param array<int, int>         $registers
      */
     private function add(PriorityNfa $nfa, array &$threads, array &$visited, int $state, array $registers, int $label, bool $atStart): void
     {
@@ -271,9 +274,9 @@ final class MatchExplorer
      * A thread that reached the end of the pattern is the match, for now;
      * the threads PCRE would have tried after it are gone.
      *
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $side
+     * @param Side $side
      *
-     * @return array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}
+     * @return Side
      */
     private function cut(PriorityNfa $nfa, array $side, int $label): array
     {
@@ -292,7 +295,7 @@ final class MatchExplorer
      * What preg_match() reports if the subject ends here: the first thread
      * an end anchor lets through, or the match found so far.
      *
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $side
+     * @param Side $side
      *
      * @return array<int, int>|null
      */
@@ -352,10 +355,10 @@ final class MatchExplorer
      * Renumbers the labels in order of appearance, the current position
      * first, so that two runs that differ only in where they are meet.
      *
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $left
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $right
+     * @param Side $left
+     * @param Side $right
      *
-     * @return array{0: array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}, 1: array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null}, 2: string}
+     * @return array{0: Side, 1: Side, 2: string}
      */
     private function canonical(array $left, array $right, bool $atStart, int $position = 0): array
     {
@@ -387,7 +390,7 @@ final class MatchExplorer
             }
             $key .= '#'.(null === $best ? '-' : json_encode($best)).'/';
 
-            /** @var array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $canonical */
+            /** @var Side $canonical */
             $canonical = ['t' => $threads, 'b' => $best];
             $sides[] = $canonical;
         }
@@ -396,8 +399,8 @@ final class MatchExplorer
     }
 
     /**
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $left
-     * @param array{t: list<array{0: int, 1: array<int, int>, 2: int|null}>, b: array<int, int>|null} $right
+     * @param Side $left
+     * @param Side $right
      */
     private static function labelCount(array $left, array $right): int
     {

@@ -23,6 +23,9 @@ use PHPRegex\Automata\Support\WorkBudget;
 /**
  * NFA determinization using classic subset (powerset) construction.
  *
+ * @phpstan-import-type AlphabetRange from Dfa
+ * @phpstan-import-type RangeTransition from DfaState
+ *
  * @internal
  */
 final class SubsetConstruction implements DeterminizationAlgorithmInterface, WorkBudgetAwareDeterminizationAlgorithmInterface
@@ -35,7 +38,7 @@ final class SubsetConstruction implements DeterminizationAlgorithmInterface, Wor
     }
 
     /**
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, AlphabetRange> $alphabetRanges
      *
      * @throws ComplexityException
      */
@@ -61,7 +64,7 @@ final class SubsetConstruction implements DeterminizationAlgorithmInterface, Wor
             $this->budget->updateStats(\count($stateMap), $nfaTransitions, $alphabetSize);
         }
 
-        /** @var array<int, array{transitions: array<int, int>, ranges: array<int, array{0:int, 1:int, 2:int}>}> $transitions */
+        /** @var array<int, array{transitions: array<int, int>, ranges: array<int, RangeTransition>}> $transitions */
         $transitions = [];
         /** @var array<int, bool> $accepting */
         $accepting = [];
@@ -74,7 +77,7 @@ final class SubsetConstruction implements DeterminizationAlgorithmInterface, Wor
 
             /** @var array<int, int> $stateTransitions */
             $stateTransitions = [];
-            /** @var array<int, array{0:int, 1:int, 2:int}> $stateRanges */
+            /** @var array<int, RangeTransition> $stateRanges */
             $stateRanges = [];
 
             foreach ($alphabetRanges as [$start, $end]) {

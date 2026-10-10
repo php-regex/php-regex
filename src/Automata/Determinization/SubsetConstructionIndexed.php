@@ -23,6 +23,9 @@ use PHPRegex\Automata\Support\WorkBudget;
 /**
  * Subset construction with indexed transition ranges for faster moves.
  *
+ * @phpstan-import-type AlphabetRange from Dfa
+ * @phpstan-import-type RangeTransition from DfaState
+ *
  * @internal
  */
 final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterface, WorkBudgetAwareDeterminizationAlgorithmInterface
@@ -35,7 +38,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     }
 
     /**
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, AlphabetRange> $alphabetRanges
      *
      * @throws ComplexityException
      */
@@ -64,7 +67,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             $this->budget->updateStats(\count($stateMap), $nfaTransitions, $alphabetSize);
         }
 
-        /** @var array<int, array{transitions: array<int, int>, ranges: array<int, array{0:int, 1:int, 2:int}>}> $transitions */
+        /** @var array<int, array{transitions: array<int, int>, ranges: array<int, RangeTransition>}> $transitions */
         $transitions = [];
         /** @var array<int, bool> $accepting */
         $accepting = [];
@@ -77,7 +80,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
 
             /** @var array<int, int> $stateTransitions */
             $stateTransitions = [];
-            /** @var array<int, array{0:int, 1:int, 2:int}> $stateRanges */
+            /** @var array<int, RangeTransition> $stateRanges */
             $stateRanges = [];
 
             /** @var array<int, array<int, true>> $targetsByRange */
@@ -206,7 +209,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     }
 
     /**
-     * @param array<int, array{0:int, 1:int}> $alphabetRanges
+     * @param array<int, AlphabetRange> $alphabetRanges
      *
      * @return array<int>
      */

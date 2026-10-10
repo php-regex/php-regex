@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata;
 
 use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Parser\Hir\CharSet;
 
 /**
@@ -25,6 +26,8 @@ use PHPRegex\Parser\Hir\CharSet;
  *     $language = (new LanguageSolver())->language('/^[A-Z]{2}\d{4}$/');
  *     $language->isFinite();   // true
  *     $language->size();       // "6760000"
+ *
+ * @phpstan-import-type RangeTransition from DfaState
  */
 final class Language
 {
@@ -36,7 +39,7 @@ final class Language
     private array $live = [];
 
     /**
-     * @var array<int, list<array{int, int, int}>> per state, its moves as [from, to, target], in order
+     * @var array<int, list<RangeTransition>> per state, its moves as [from, to, target], in order
      */
     private array $moves = [];
 
@@ -299,7 +302,7 @@ final class Language
      * The moves of a state as ordered ranges, over every character of the
      * alphabet.
      *
-     * @return list<array{int, int, int}>
+     * @return list<RangeTransition>
      */
     private function movesOf(int $state): array
     {

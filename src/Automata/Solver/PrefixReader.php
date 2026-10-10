@@ -20,6 +20,8 @@ use PHPRegex\Automata\Model\Dfa;
  * reached from where it stops: whether the input begins some string of the
  * language.
  *
+ * @phpstan-import-type AlphabetRange from Dfa
+ *
  * @internal
  */
 final class PrefixReader
@@ -85,7 +87,7 @@ final class PrefixReader
      * The code points whose UTF-8 encoding starts with the given bytes, as
      * ranges: one code point for a whole sequence, none for invalid bytes.
      *
-     * @return list<array{0: int, 1: int}>
+     * @return list<AlphabetRange>
      */
     private static function completions(string $bytes, int $size): array
     {
@@ -123,8 +125,8 @@ final class PrefixReader
     }
 
     /**
-     * @param list<array{0: int, 1: int}> $ranges
-     * @param array<int, true>            $live
+     * @param list<AlphabetRange> $ranges
+     * @param array<int, true>    $live
      */
     private static function anyLiveTarget(Dfa $dfa, int $state, array $ranges, array $live): bool
     {

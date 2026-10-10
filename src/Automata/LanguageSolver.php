@@ -40,6 +40,8 @@ use PHPRegex\Parser\RegexParser;
  * Each pattern is compiled to a DFA, so only the regular subset is supported:
  * backreferences, lookarounds, recursion and the like throw a
  * ComplexityException instead of an answer that would be wrong.
+ *
+ * @phpstan-import-type AlphabetRange from Dfa
  */
 final readonly class LanguageSolver
 {
@@ -399,7 +401,7 @@ final readonly class LanguageSolver
     }
 
     /**
-     * @return array<int, array{0:int, 1:int}>
+     * @return array<int, AlphabetRange>
      */
     private function mergeAlphabetRanges(Dfa $left, Dfa $right): array
     {

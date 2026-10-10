@@ -27,6 +27,8 @@ use PHPRegex\Automata\Support\WorkBudget;
 /**
  * Determinizes NFAs into DFAs using a configured strategy.
  *
+ * @phpstan-import-type AlphabetRange from Dfa
+ *
  * @internal
  */
 final readonly class DfaBuilder
@@ -83,7 +85,7 @@ final readonly class DfaBuilder
     }
 
     /**
-     * @return array<int, array{0:int, 1:int}>
+     * @return array<int, AlphabetRange>
      */
     private function buildAlphabetRanges(Nfa $nfa): array
     {
