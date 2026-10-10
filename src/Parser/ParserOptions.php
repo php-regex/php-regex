@@ -26,6 +26,17 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * Provides a simple, validated way to configure regex parsing behavior
  * including limits, caching, and ReDoS pattern exclusions.
+ *
+ * @phpstan-type OptionsArray array{
+ *     max_pattern_length?: positive-int,
+ *     max_lookbehind_length?: int<0, max>,
+ *     cache?: CacheInterface|string|null,
+ *     redos_ignored_patterns?: array<string>,
+ *     runtime_pcre_validation?: bool,
+ *     max_recursion_depth?: positive-int,
+ *     php_version?: positive-int|non-empty-string,
+ *     pcre_version?: non-empty-string,
+ * }
  */
 final readonly class ParserOptions
 {
@@ -86,7 +97,7 @@ final readonly class ParserOptions
     /**
      * Create configuration from array of options.
      *
-     * @param array<string, mixed> $options Configuration options
+     * @param OptionsArray|array<string, mixed> $options Configuration options
      *
      * @return self New configuration instance
      */

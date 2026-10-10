@@ -18,11 +18,13 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Finds the nodes of a tree that pass a test, in the order they stand in the
  * pattern.
+ *
+ * @phpstan-type NodeFilter \Closure(NodeInterface): bool
  */
 final class NodeFinder
 {
     /**
-     * @param \Closure(NodeInterface):bool $filter
+     * @param NodeFilter $filter
      *
      * @return list<NodeInterface>
      */
@@ -56,7 +58,7 @@ final class NodeFinder
     }
 
     /**
-     * @param \Closure(NodeInterface):bool $filter
+     * @param NodeFilter $filter
      */
     public static function findFirst(NodeInterface $root, \Closure $filter): ?NodeInterface
     {

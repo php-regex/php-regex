@@ -13,12 +13,17 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Cache;
 
+/**
+ * Hit and miss counters a cache keeps, as getStats() hands them out.
+ *
+ * @phpstan-type CacheStats array{hits: int, misses: int}
+ */
 interface RemovableCacheInterface extends CacheInterface
 {
     public function clear(?string $regex = null): void;
 
     /**
-     * @return array{hits: int, misses: int}
+     * @return CacheStats
      */
     public function getStats(): array;
 }

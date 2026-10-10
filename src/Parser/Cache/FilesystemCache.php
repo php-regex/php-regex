@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\RegexNode;
  * The directory is created for its owner only, and one that another user
  * owns or that others can write to is left alone: a tree planted there
  * would change what a pattern is judged to be.
+ *
+ * @phpstan-import-type CacheStats from RemovableCacheInterface
  */
 final class FilesystemCache implements RemovableCacheInterface
 {
@@ -107,7 +109,7 @@ final class FilesystemCache implements RemovableCacheInterface
     }
 
     /**
-     * @return array{hits: int, misses: int}
+     * @return CacheStats
      */
     #[\Override]
     public function getStats(): array
