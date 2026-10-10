@@ -2846,15 +2846,6 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/cakephp/cakephp/src/Database/IdentifierQuoter.php:85:24
-      → /^([\w-]+(\.[\w\s-]+|\(.*\))*)\s+AS\s*([\w-]+)$/ui
-     WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-         ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
-     INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-     WARN  Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
   corpus/cakephp/cakephp/src/Form/FormProtector.php:135:39
       → /(\.\d+)+$/
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4228,24 +4219,24 @@
          - /\s+/mu
          + /\s+/u
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:1909:41
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:1917:41
       → /<!--(.|\s)*?-->/
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
      WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
          ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2785:33
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2796:33
       → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2786:33
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2797:33
       → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2789:33
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2800:33
       → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
      WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
          ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
@@ -4256,23 +4247,23 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2792:33
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2803:33
       → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{2,4}\ [0-9]{2}\:[0-9]{2}\:[0-9]{2}\ [A-Z]{2}\ \-[0-9]{2}\:[0-9]{2}\ \([A-Z]{2,3}\ \-[0-9]{2}:[0-9]{2}\))+$/i
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2872:41
+  corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2883:41
       → /enable/m
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
      TIP 
          - /enable/m
          + /enable/
 
-  corpus/freescout-help-desk/freescout/app/Misc/Mail.php:1368:66
+  corpus/freescout-help-desk/freescout/app/Misc/Mail.php:1375:66
       → /[\r\n\t ]+[^=]/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-  corpus/freescout-help-desk/freescout/app/Misc/Mail.php:1484:44
+  corpus/freescout-help-desk/freescout/app/Misc/Mail.php:1491:44
       → #;(\s*;)+#
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -4390,7 +4381,7 @@
      WARN  Nested quantifiers can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-  corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php:262:32
+  corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php:287:32
       → %^\(*"((.|\\|\")*?)" *%
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -13331,7 +13322,7 @@
          - /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/s
          + /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/
 
-  corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:144:29
+  corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:156:29
       → /\n\s*/s
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
      TIP 
@@ -13925,7 +13916,7 @@
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-  corpus/voku/email-check/src/voku/helper/EmailCheck.php:202:26
+  corpus/voku/email-check/src/voku/helper/EmailCheck.php:207:26
       → /^(?<local>.*<?)(?:.*)@(?<domain>.*)(?:>?)$/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
@@ -14875,12 +14866,12 @@
          - /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
          + /^([0-9a-f]+)(?:;(?:[\w\-]*)(?:=(?:(?:[\w\-]*)*|"[^\r\n]*"))?)*\r\n/i
 
-  corpus/wp-cli/wp-cli/php/WP_CLI/Runner.php:1045:21
+  corpus/wp-cli/wp-cli/php/WP_CLI/Runner.php:1049:21
       → #^--ssh(?:-args)?(?:=|$)|--alias=#
      WARN  An anchor holds for its own alternative only: "--alias=" matches anywhere in the subject.
          ↳ If the anchors are meant for every alternative, group them: "^(?:--ssh(?:-args)?(?:=|$)|--alias=)".
 
-  corpus/wp-cli/wp-cli/php/WP_CLI/Runner.php:1433:43
+  corpus/wp-cli/wp-cli/php/WP_CLI/Runner.php:1437:43
       → /^\d+(\s+\d+)+$/
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
