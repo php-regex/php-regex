@@ -73,50 +73,17 @@ The result says which of the two decided: `proof` is `proven`, `heuristic`, `bud
 
 {% include install-prerelease.html package="php-regex/regex-cli" %}
 
-The commands below need the CLI package; the PHP API needs `php-regex/regex-toolkit`. The pre-release monorepo above installs both, binary included.
+The CLI commands live in the `regex` binary; the PHP API lives in `php-regex/regex-toolkit`. The pre-release monorepo above installs both, binary included.
 
 ## Using PHPRegex for ReDoS protection
 
-### CLI usage
-
-```bash
-# Check a single pattern
-vendor/bin/regex analyze '/(a+)+$/'
-
-# Replay the attack on the running PCRE
-vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed
-
-# Scan your entire codebase for ReDoS risk
-vendor/bin/regex lint src/ --redos --no-lint --no-optimize
-```
-
-### PHP API
-
-```php
-use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-$analysis = $regex->redos('/(a+)+b/');
-echo $analysis->severity->value, "\n";   // critical
-echo $analysis->complexity->value, "\n"; // exponential
-echo $analysis->proof->value, "\n";      // proven
-echo $analysis->witness->render(), "\n"; // "a" x n . "!b"
-
-// Check against a threshold
-if ($analysis->exceedsThreshold(RedosSeverity::High)) {
-    echo "Pattern is vulnerable\n";
-}
-
-// Proven safe, not just "nothing found"
-var_dump($regex->redos('/a+b/')->isProvenSafe()); // bool(true)
-
-// Recommendations from the structural analysis
-foreach ($analysis->recommendations as $recommendation) {
-    echo 'Suggestion: ', $recommendation, "\n";
-}
-```
+The commands and the API live in the guide, kept there once: the
+[ReDoS guide](../guides/redos.md#using-phpregex) shows the three calls that
+matter — `vendor/bin/regex analyze '/(a+)+$/'` for a verdict,
+`--redos-mode=confirmed` to replay the attack on the running PCRE, and
+`regex lint src/ --redos --no-lint --no-optimize` over a code base — plus the
+PHP side, `Regex::create()->redos()` with its severity, witness and
+`isProvenSafe()`.
 
 ## Fixing vulnerable patterns
 

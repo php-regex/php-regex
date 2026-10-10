@@ -35,7 +35,7 @@ The authoritative source for PCRE2 syntax and behavior.
 | [PCRE2 API](https://www.pcre.org/current/doc/html/pcre2api.html)                | Engine API details             |
 
 **Key topics covered:**
-- Pattern modifiers (`imsxuADJSUX`)
+- Pattern modifiers (`imsxuADJSUXn`)
 - Escape sequences
 - Assertions and zero-width matches
 - Atomic grouping and possessive quantifiers
@@ -131,9 +131,9 @@ Tools to test, debug, and visualize regex patterns.
 
 **regex101 tips:**
 1. Set flavor to "PCRE (PHP)"
-2. Use the structure panel to see groups
-3. Check the match information for backtracking
-4. Use the pattern generator for test cases
+2. Read the explanation panel: it walks every token of the pattern
+3. Check the match information panel for the captured groups
+4. Add sample inputs under Tests to see what matches and what does not
 
 ---
 
@@ -190,9 +190,9 @@ preg_match('/(a+)+b/', $input);
 
 | Category              | URL                                                     |
 |-----------------------|---------------------------------------------------------|
-| PCRE2 Quick Reference | https://www.pcre.org/current/doc/html/pcre2quick.html   |
-| PCRE2 Summary         | https://www.pcre.org/current/doc/html/pcre2summary.html |
-| PHP PCRE Summary      | https://www.php.net/manual/en/reference.pcre.php        |
+| PCRE2 Quick Reference | https://www.pcre.org/current/doc/html/pcre2syntax.html  |
+| PCRE2 Summary         | https://www.pcre.org/current/doc/html/pcre2pattern.html |
+| PHP PCRE Summary      | https://www.php.net/manual/en/book.pcre.php             |
 
 ---
 
