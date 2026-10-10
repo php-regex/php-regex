@@ -90,7 +90,7 @@ final class RegularSubsetValidator
         }
     }
 
-    private static function lineAnchor(NodeInterface $node): ?NodeInterface
+    private static function lineAnchor(NodeInterface $node): AnchorNode|AssertionNode|null
     {
         if (($node instanceof AnchorNode && '$' === $node->value) || ($node instanceof AssertionNode && 'Z' === $node->value)) {
             return $node;
