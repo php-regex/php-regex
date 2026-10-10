@@ -1,8 +1,11 @@
 'use strict';
 
-// Copy buttons for code blocks in the main content (and install blocks).
-// The outcome is announced through a page-level polite live region that is
-// dedicated to this feature.
+// Copy buttons for code blocks. They are opt-in: install blocks always
+// carry one (the command is the whole reason the reader is here), any
+// other block only when its fence is marked with a data-copy attribute
+// (kramdown IAL `{: data-copy="" }`, the same convention as data-file
+// captions). The outcome is announced through a page-level polite live
+// region that is dedicated to this feature.
 
 (function () {
   var blocks = document.querySelectorAll('main pre > code, .install code');
@@ -22,12 +25,9 @@
     if (!container || container.querySelector('.copy-btn')) {
       return;
     }
-    // Trivial blocks do not earn a button: a one-liner under 80
-    // characters is faster to select than to click for. Install commands
-    // are the one exception — short, but the whole reason the reader is
-    // here. The class sits on the wrapping .install box, not on the pre.
-    var text = code.innerText.trim();
-    if (!container.closest('.install') && text.indexOf('\n') === -1 && text.length < 80) {
+    // Only install blocks and explicitly marked fences earn a button;
+    // the attribute may sit on the highlighting wrapper or the pre.
+    if (!container.closest('.install') && !container.closest('[data-copy]')) {
       return;
     }
     var button = document.createElement('button');

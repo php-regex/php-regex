@@ -32,6 +32,7 @@ curl -Ls https://github.com/php-regex/php-regex/releases/latest/download/regex.p
   -o ~/.local/bin/regex
 chmod +x ~/.local/bin/regex
 ```
+{: data-copy="" }
 
 To explore what a pattern matches without installing anything, use <https://regex101.com> in PCRE2 mode — for the semantics. Proven verdicts, witnesses and equivalence stay PHPRegex's job: `vendor/bin/regex analyze '/(a+)+$/'`.
 

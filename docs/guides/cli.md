@@ -28,6 +28,7 @@ chmod +x ~/.local/bin/regex
 # Use it
 regex --help
 ```
+{: data-copy="" }
 
 > **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
 
@@ -1188,7 +1189,7 @@ jobs:
       - run: composer install --no-interaction --no-progress
       - run: vendor/bin/regex lint src/ --format=github
 ```
-{: data-file=".github/workflows/regex-lint.yml" }
+{: data-file=".github/workflows/regex-lint.yml" data-copy="" }
 
 ### GitLab CI
 
@@ -1202,7 +1203,7 @@ regex-lint:
     reports:
       json: report.json
 ```
-{: data-file=".gitlab-ci.yml" }
+{: data-file=".gitlab-ci.yml" data-copy="" }
 
 ### Jenkins
 
