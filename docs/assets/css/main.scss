@@ -1843,27 +1843,30 @@ main > section:not([class]) p > a.button:focus-visible {
   align-items: center;
 }
 
-/* The text stack keeps its own rhythm whatever .hero-inner becomes: the
-   grid gap above used to carry it, now the copy column carries it. On a
-   wide screen the column is as tall as the terminal panel beside it, so
-   the rows are sized to their content and stacked from the top; the
-   closing lines then take the leftover space for themselves. */
+/* The two halves of the copy column: the pitch and its closing lines. On a
+   wide screen the column is as tall as the terminal panel beside it, and
+   without this split the closing sentences would float in the dead space
+   above the next section. Two rows — the head at the top, the foot pinned
+   to the bottom — put them where the eye looks next. On a narrow screen
+   the column is its own height, the 1fr row is exactly the head's height,
+   and nothing moves. */
 .hero-copy {
+  display: grid;
+  gap: 2rem;
+  grid-template-rows: 1fr auto;
+}
+
+.hero-head {
   display: grid;
   gap: 2rem;
   align-content: start;
 }
 
-/* The two closing sentences of the hero — the tutorial pointer and the
-   version/licence line — are the secondary half of the pitch. They sit
-   against the bottom of the copy column, so the tall terminal panel does
-   not leave a dead column of paper between them and the next section.
-   With no leftover height (a narrow screen) the margin resolves to zero
-   and the stack stays as it was. */
+/* The two closing sentences are the secondary half of the pitch, so they
+   are set a step tighter than the 2rem the head breathes with. */
 .hero-foot {
   display: grid;
   gap: 1rem;
-  margin-top: auto;
 }
 
 /* Desktop: copy column in column one, terminal panel in column two.

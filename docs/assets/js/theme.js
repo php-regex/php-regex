@@ -48,5 +48,26 @@
     apply();
   });
 
+  // No saved choice means the system decides, and the system can change
+  // its mind while the page is open — a scheduled switch to dark mode, or
+  // the same setting toggled in System Settings. Follow it only until the
+  // reader picks a side of their own; after that their choice is the one
+  // that stands.
+  var system = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  if (system) {
+    var follow = function () {
+      if (read()) {
+        return;
+      }
+      state = system.matches ? 'dark' : 'light';
+      apply();
+    };
+    if (typeof system.addEventListener === 'function') {
+      system.addEventListener('change', follow);
+    } else if (typeof system.addListener === 'function') {
+      system.addListener(follow);
+    }
+  }
+
   apply();
 })();

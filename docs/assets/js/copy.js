@@ -21,7 +21,13 @@
 
 
   blocks.forEach(function (code) {
-    var container = code.closest('pre') || code.closest('.install');
+    // The chip is a child of the block, never of the scrolling pre. Inside
+    // an install panel that is the panel itself — the panel reserves four
+    // rem of padding for the chip, the pre inside it has none. And when
+    // kramdown wrapped the fence, the wrapper is the block: a mask on the
+    // pre (see the cut-edge rules in the stylesheet) would fade a chip
+    // that lived inside it.
+    var container = code.closest('.install') || code.closest('.highlighter-rouge') || code.closest('pre');
     if (!container || container.querySelector('.copy-btn')) {
       return;
     }

@@ -4,16 +4,19 @@
 // built from the content headings, and the per-heading anchor links.
 
 (function () {
+  // The documentation rail. A page that carries no rail (the landing and
+  // error layouts) has no drawer either; the script stands down whole.
   var toggle = document.getElementById('sidebar-toggle');
   var sidebar = document.getElementById('site-sidebar');
-  if (!toggle || !sidebar || !window.matchMedia) {
+  if (!sidebar) {
     return;
   }
 
   // 1024px matches the stylesheet breakpoint; a px breakpoint keeps the
   // drawer choice tied to the real viewport, whatever the user's font
-  // size preference is.
-  var desktop = window.matchMedia('(min-width: 1024px)');
+  // size preference is. Where matchMedia is missing the rail is simply
+  // always hidden and always expanded: there is no drawer to run.
+  var desktop = window.matchMedia ? window.matchMedia('(min-width: 1024px)') : null;
   var overlay = null;
 
   // Opening the drawer owns a history entry, so the Back button closes
@@ -141,13 +144,17 @@
     }
   });
 
-  toggle.addEventListener('click', function () {
-    if (isOpen()) {
-      closeDrawer(true);
-    } else {
-      openDrawer();
-    }
-  });
+  // The header's own toggle is the control the reader sees; a page that
+  // carries the rail without it (the error layout) has no drawer to open.
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      if (isOpen()) {
+        closeDrawer(true);
+      } else {
+        openDrawer();
+      }
+    });
+  }
 
   var closeButton = document.getElementById('sidebar-close');
   if (closeButton) {
@@ -170,13 +177,14 @@
     }
   }
 
-  if (typeof desktop.addEventListener === 'function') {
-    desktop.addEventListener('change', onBreakpoint);
-  } else if (typeof desktop.addListener === 'function') {
-    desktop.addListener(onBreakpoint);
+  if (desktop) {
+    if (typeof desktop.addEventListener === 'function') {
+      desktop.addEventListener('change', onBreakpoint);
+    } else if (typeof desktop.addListener === 'function') {
+      desktop.addListener(onBreakpoint);
+    }
+    setHidden(!desktop.matches);
   }
-
-  setHidden(!desktop.matches);
 })();
 
 (function () {

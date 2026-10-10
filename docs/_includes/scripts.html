@@ -1,0 +1,22 @@
+{% comment %}
+  The one script list. Every layout includes this file, so the set of
+  assets a page loads exists in exactly one place and no page can drift
+  from the others.
+
+  Cache busting is the build time: a new build asks for a new file. The
+  build time is also what the stylesheet link in head.html carries, so a
+  page's CSS and its scripts change together.
+
+  The landing page and the error page carry neither a sidebar drawer nor
+  an on-this-page rail, so the two scripts that drive them are left out
+  there — both bail out harmlessly when their element is missing, and two
+  fewer requests is the better reason to leave them.
+{% endcomment %}
+<script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
+<script defer src="/assets/js/reading.js?v={{ site.time | date: '%s' }}"></script>
+{% unless page.layout == 'landing' or page.layout == 'error' %}
+<script defer src="/assets/js/toc.js?v={{ site.time | date: '%s' }}"></script>
+<script defer src="/assets/js/sidebar.js?v={{ site.time | date: '%s' }}"></script>
+{% endunless %}
+<script defer src="/assets/js/copy.js?v={{ site.time | date: '%s' }}"></script>
+<script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>

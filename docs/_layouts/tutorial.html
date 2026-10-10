@@ -5,6 +5,8 @@
   The tutorial track: same chrome as the default layout, but the sidebar,
   the breadcrumb and the pager all read nav-tutorial.yml, so the ten
   chapters navigate within the track instead of the global reading order.
+  The track's banner is a component of the stylesheet (.tutorial-banner),
+  not of this file.
 {% endcomment %}
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -26,16 +28,6 @@
   </div>
   {% include footer.html %}
   {% include search-dialog.html %}
-  <style>
-    .tutorial-banner { margin-block: 0 2rem; padding: .75rem 1rem; border: 1px solid var(--line); background: var(--amber-tint); }
-    .tutorial-banner p { margin: 0; font-size: .92rem; line-height: 1.5; color: var(--ink-soft); }
-    .tutorial-banner a { color: var(--amber); }
-  </style>
-  <script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/reading.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/toc.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/sidebar.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/copy.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>
+  {% include scripts.html %}
 </body>
 </html>

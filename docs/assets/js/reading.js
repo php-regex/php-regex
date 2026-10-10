@@ -46,31 +46,33 @@
   window.addEventListener('resize', place);
   place();
 
-  // ---- Wide tables -------------------------------------------------------
-  // A table wider than its column scrolls, and a scroll box with no tell
-  // reads as a table that is broken. Each table decides for itself whether
-  // it overflows, and only the edge that is actually cut stays marked while
-  // it scrolls; the stylesheet paints the veil from the attribute.
-  var tables = document.querySelectorAll('main table');
+  // ---- Wide boxes --------------------------------------------------------
+  // A table wider than its column scrolls, and so does a code line longer
+  // than its panel; a scroll box with no tell reads as a box that is
+  // broken. Each box decides for itself whether it overflows, and only the
+  // edge that is actually cut stays marked while it scrolls; the tell
+  // itself is the cut-edge mask in the stylesheet, which dissolves
+  // whatever the box paints toward whatever is behind it.
+  var boxes = document.querySelectorAll('main table, main pre');
 
-  Array.prototype.forEach.call(tables, function (table) {
+  Array.prototype.forEach.call(boxes, function (box) {
     function mark() {
-      var room = table.scrollWidth - table.clientWidth;
+      var room = box.scrollWidth - box.clientWidth;
       if (room <= 1) {
-        table.removeAttribute('data-scroll');
+        box.removeAttribute('data-scroll');
         return;
       }
-      var left = table.scrollLeft;
+      var left = box.scrollLeft;
       if (left <= 1) {
-        table.setAttribute('data-scroll', 'right');
+        box.setAttribute('data-scroll', 'right');
       } else if (left >= room - 1) {
-        table.setAttribute('data-scroll', 'left');
+        box.setAttribute('data-scroll', 'left');
       } else {
-        table.setAttribute('data-scroll', 'both');
+        box.setAttribute('data-scroll', 'both');
       }
     }
 
-    table.addEventListener('scroll', mark, { passive: true });
+    box.addEventListener('scroll', mark, { passive: true });
     window.addEventListener('resize', mark);
     mark();
   });

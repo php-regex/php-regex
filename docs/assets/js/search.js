@@ -521,6 +521,18 @@
 
   dialog.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
+      // The native clear button is gone from a square search field, so
+      // Escape clears first: a first press empties the field and keeps the
+      // dialog open, a second press on an empty field closes it. Clearing
+      // updates the address like typing does, so the term is never stuck
+      // in a shareable state.
+      if (input.value !== '') {
+        event.preventDefault();
+        input.value = '';
+        run();
+        input.focus();
+        return;
+      }
       event.preventDefault();
       closeDialog();
     } else if (event.key === 'Tab') {

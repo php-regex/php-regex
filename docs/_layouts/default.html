@@ -17,11 +17,6 @@
   </div>
   {% include footer.html %}
   {% include search-dialog.html %}
-  <script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/reading.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/toc.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/sidebar.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/copy.js?v={{ site.time | date: '%s' }}"></script>
-  <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>
+  {% include scripts.html %}
 </body>
 </html>
