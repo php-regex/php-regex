@@ -14,7 +14,7 @@ use PHPRegex\Redos\RedosSeverity;
  * - Getting suggestions for route ordering
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 // Example routes from a Symfony application
 $routes = [

@@ -15,7 +15,7 @@ use PHPRegex\Redos\RedosSeverity;
  * - ReDoS risk checking
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $pattern = '/\d{4}-\d{2}-\d{2}/';
 

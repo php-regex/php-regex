@@ -14,7 +14,7 @@ use PHPRegex\Toolkit\Regex;
  * - AST traversal
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $pattern = '/^(?:(?<protocol>https?):\/\/)(?<domain>[a-zA-Z0-9.-]+)(?::(?<port>\d+))?$/';
 
