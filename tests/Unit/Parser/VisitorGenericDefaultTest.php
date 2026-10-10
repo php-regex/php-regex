@@ -179,15 +179,15 @@ final class VisitorGenericDefaultTest extends TestCase
     {
         return <<<'PHP_WRAP'
             <?php
-        
+
             declare(strict_types=1);
-        
+
             namespace RegexVisitorDefaultProbe;
-        
+
             use PHPRegex\Parser\AbstractNodeVisitor;
             use PHPRegex\Parser\Node\LiteralNode;
             use PHPRegex\Parser\Node\RegexNode;
-        
+
             final class CollectorVisitor extends AbstractNodeVisitor
             {
                 public function visitRegex(RegexNode $node)
@@ -195,7 +195,7 @@ final class VisitorGenericDefaultTest extends TestCase
                     return null;
                 }
             }
-        
+
             final class EmptyBodyVisitor extends AbstractNodeVisitor
             {
                 public function visitLiteral(LiteralNode $node)
