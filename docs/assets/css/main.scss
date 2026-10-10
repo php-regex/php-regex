@@ -458,16 +458,33 @@ main table {
   font-variant-numeric: tabular-nums;
 }
 
+/* A table cell is the narrowest box on the page, and a column whose header
+   is "Option" holds names like runtime_pcre_validation - twenty-three
+   monospace characters that will not break on their own. Table layout takes
+   its minimum column width from the longest unbreakable run, so one long
+   identifier squeezes every neighbour: a five-column table in the 70ch
+   measure ends up with a two-word description column and a sideways scroll.
+   anywhere (not break-word) is the one value that also shrinks the minimum,
+   which is what the layout needs. */
+main th,
+main td {
+  overflow-wrap: anywhere;
+}
+
 main th {
   text-align: left;
   font-weight: 600;
-  padding: .6em .9em;
+  /* Horizontal padding is counted once per column, so on a five-column
+     table in the 70ch measure it was a quarter of the table's width. The
+     vertical padding keeps the air; the horizontal one stops spending the
+     measure on the gutters. */
+  padding: .6em .7em;
   border-top: 1px solid var(--line);
   border-bottom: 2px solid var(--ink);
 }
 
 main td {
-  padding: .6em .9em;
+  padding: .6em .7em;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
