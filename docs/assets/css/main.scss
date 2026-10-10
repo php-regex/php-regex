@@ -1747,23 +1747,24 @@ main > section:not([class]) p > a.button:focus-visible {
   align-items: center;
 }
 
-/* Desktop: text stack in column one, terminal panel in column two. */
+/* The text stack keeps its own rhythm whatever .hero-inner becomes: the
+   grid gap above used to carry it, now the copy column carries it. */
+.hero-copy {
+  display: grid;
+  gap: 2rem;
+}
+
+/* Desktop: copy column in column one, terminal panel in column two. */
 @media (min-width: 1024px) {
   .hero-inner {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
   }
 
-  .hero-inner > :not(.terminal) {
-    grid-column: 1;
-  }
-
   .hero-inner > .terminal {
     grid-column: 2;
-    /* Every row of the text stack, whatever the landing grows into: the
-       panel stays centered against the whole column, not against the four
-       rows it happened to be written for. */
-    grid-row: 1 / -1;
+    /* The copy column sizes the shared row; the panel centers against it
+       when it is the shorter one and never stretches the row alone. */
     align-self: center;
     min-width: 0;
   }
@@ -1813,8 +1814,12 @@ main > section:not([class]) p > a.button:focus-visible {
 /* The install line shares the CTA row; inside it, the <pre> is chromeless
    (the .install box is the whole panel). */
 .hero-ctas .install {
-  flex: 1 1 20rem;
-  min-width: 0;
+  /* Sized by its own line, never squeezed: when the buttons leave no
+     room, the command wraps under them whole instead of clipping
+     mid-token. Under ~30rem the pre keeps its scroll fallback. */
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
 }
 
 .install {
