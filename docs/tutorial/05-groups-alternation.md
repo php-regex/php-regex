@@ -276,14 +276,18 @@ echo $m[0];  // "css/api"
 
 ```php
 // Slow: Many groups when you don't need them
-'/(\w+) (@) (\w+) (\.) (\w+)/'
+'/(\w+)@(\w+)(\.)(\w+)/'
 
 // Better: Non-capturing groups for structure
-'/\w+ @ \w+ \. \w+/'
+'/\w+@\w+\.\w+/'
 
 // Best: Only capture what you need
-'/\w+ (?<user>\w+) @ \w+ \. (?<tld>\w+)/'
+'/\w+@(?<domain>\w+)\.(?<tld>\w+)/'
 ```
+
+The three match the same addresses — run each through
+`vendor/bin/regex analyze` to see the capture count drop without the
+verdict changing.
 
 ---
 

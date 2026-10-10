@@ -91,7 +91,8 @@ if (preg_match($pattern, $text)) {
 }
 ```
 
-**But wait** - this won't match "Hello" (capital H)! Let's fix that.
+**But wait** — the match is case-sensitive: this finds the lower-case `hello`,
+not `Hello`. Let's make it match both.
 
 ---
 
@@ -165,7 +166,7 @@ but `+ - . = @ * ?` and others work just as well.
 - Delimiter cannot be alphanumeric
 - Delimiter cannot be a backslash `\`
 - Delimiter cannot be whitespace
-- Opening and closing delimiter must match
+- Opening and closing delimiters are the same character — unless the opening one is a bracket pair `()`, `[]`, `{}` or `<>`, where the closing one is its match: `(pattern)` works, `(pattern]` does not
 
 ```php
 // Wrong: spaces cannot delimit — this is not a pattern
@@ -344,6 +345,9 @@ Create patterns that match:
 1. The word "PHP" (case-insensitive)
 2. Any 3-digit number
 3. A dollar amount like "$99.99"
+
+The last two need the character classes and quantifiers of chapters 2 and 4 —
+meet them there and come back, or read the solutions as a preview.
 
 ```php
 // Solution 1

@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-description: "Ten production-ready PHP patterns — email, dates, phones, URLs, logs, tags, passwords — each explained, usage shown, and ReDoS-rated before you ship it."
+description: "Seven production-ready PHP patterns — email, dates, phones, URLs, logs, tags, passwords — each explained, usage shown, and ReDoS-rated before you ship it."
 ---
 
 # Chapter 10: Real-World Patterns in PHP

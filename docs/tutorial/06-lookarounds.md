@@ -106,7 +106,7 @@ echo $matches[0];  // "100"
 preg_match('/.+(?=\d)/', 'password1', $matches);
 echo $matches[0];  // "password" (digit not included)
 
-// Validate email format
+// Extract the local part of an address: what precedes the @
 preg_match('/^[a-z]+(?=@)/', 'user@example', $matches);
 echo $matches[0];  // "user" (checks for @ ahead)
 ```
@@ -230,8 +230,9 @@ $pattern1 = '/test(?=123)/';
 // Solution 2
 $pattern2 = '/(?<=the )end/';
 
-// Solution 3
-$pattern3 = '/\w+(?!\d)/';
+// Solution 3 — the \b boundaries matter: without them, the greedy \w+
+// backtracks into a shorter match and the lookahead never excludes anything
+$pattern3 = '/\b[a-z]+\b(?!\d)/i';
 ```
 
 ### Exercise 3: Validate Lookbehind
@@ -249,6 +250,10 @@ $pattern = '/(?<=\d+)\w/';      // Unbounded
 $result = $regex->validate($pattern);
 echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
 ```
+
+The bounded `(?<=\d{2,4})` is the variable-length lookbehind the chapter warned
+about: PCRE2 10.43, which PHP bundles from 8.4. On PHP 8.2 and 8.3 the validator
+reports it invalid; only the fixed length `(?<=\d{3})` works everywhere.
 
 ---
 

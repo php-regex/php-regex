@@ -45,7 +45,8 @@ Under the pre-release monorepo install, the `vendor/bin/regex` binary is availab
 
 ### The regex CLI
 
-Every chapter asks you to run the CLI to see what a pattern does:
+From chapter 8 on, every chapter asks you to run the CLI to see what a
+pattern does:
 
 ```bash
 vendor/bin/regex explain '/^cat.*dog$/'

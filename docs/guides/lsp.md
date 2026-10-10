@@ -49,14 +49,14 @@ The LSP server analyzes PHP files and reports regex issues as you type:
 |-----------------|-------------|
 | Parse Errors | Invalid regex syntax |
 | Validation Errors | PCRE compatibility issues |
-| Unicode Warnings | Missing `/u` flag for Unicode features |
-| Style Issues | Anti-patterns and best practice violations |
+| Unicode Errors | Missing `/u` flag: a property or an escape above U+FF fails as an error |
+| Style Issues | Anti-patterns and best practice violations, as ASCII-only shorthands without `/u` — information level, off by default |
 | Performance Hints | Lint warnings on shapes that backtrack, as nested quantifiers; the ReDoS verdict itself comes from `regex analyze`, `regex lint --redos` or PHPStan |
 
 **Example diagnostics:**
 
 ```
-Warning: Shorthand "\w" matches only ASCII without /u flag.
+Info: Shorthand "\w" matches only ASCII without /u flag.
 Error: Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
 Error: Unicode escape "\x{100}" requires /u flag for code points > U+FF.
 ```
