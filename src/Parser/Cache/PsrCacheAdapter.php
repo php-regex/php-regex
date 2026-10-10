@@ -22,6 +22,11 @@ use Psr\Cache\CacheItemPoolInterface;
  */
 final readonly class PsrCacheAdapter implements RemovableCacheInterface
 {
+    /**
+     * @param (\Closure(string): mixed)|null $keyFactory receives the regex as written and
+     *                                                   returns the key body: a string is prefixed as is,
+     *                                                   anything else is serialized and sha256-hashed
+     */
     public function __construct(
         private CacheItemPoolInterface $pool,
         private string $prefix = 'regex_',
