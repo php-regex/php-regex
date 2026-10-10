@@ -1,64 +1,5 @@
 # TODO
 
-## Release by hand
-
-1. **`SPLIT_TOKEN`** — give the fine-grained token *Workflows: read and
-   write* as well as *Contents*: GitHub refuses a push that creates or
-   changes a file under `.github/workflows/` without it, and every split
-   package carries `close-pull-request.yml`. The first push of
-   `regex-rector` and `regex-psalm` failed for that reason and was made over
-   SSH; a change to that workflow file would fail every split the same way.
-2. **The `v2.0.0` tag** — `yoeunes/regex-parser` and `php-regex/php-regex`
-   read the same repository, so a `v2.0.0` tag on the monorepo becomes a
-   stable 2.0.0 of both, and a bare `composer require yoeunes/regex-parser`
-   would install 2.x. Mark `yoeunes/regex-parser` abandoned in favour of
-   `php-regex/regex-toolkit`, or point it at a repository holding 1.x only,
-   before the tag.
-3. **Packagist** — check that every package receives its updates on each
-   push (the GitHub integration on the Packagist account, or a webhook per
-   repository): without them Packagist crawls a repository about once a
-   week.
-
-## Report the PCRE2 JIT crash upstream
-
-Not filed yet. No issue about it existed on
-[PCRE2Project/pcre2](https://github.com/PCRE2Project/pcre2/issues) when it was
-found (September 2026). Once filed, link the issue from
-[docs/concepts/pcre.md](docs/concepts/pcre.md#a-known-jit-crash) and from the
-CHANGELOG entry.
-
-Draft:
-
-> **JIT: segfault on a backreference to a group set in a non-atomic lookahead, under a repeated branch reset**
->
-> ```
-> /(?|(\*)(*napla:(.+))|()(?=\S_(\2?)))+_/
->     *a_
-> ```
->
-> `pcre2test -jit` crashes on this subject (SIGSEGV); without `-jit` the
-> answer is "No match". Found from testinput2 line 6281:
-> `^(?|(\*)(*napla:\S*_(\2?+.+))|(\w)(?=\S*_(\2?+\1)))+_\2$` with
-> `*a_cb2a1_a_1!_a_Z1a!_Z_Z`.
->
-> Reproduced with 10.40, 10.42, 10.45, 10.47, 10.49 and main (ef110b8), built
-> with the JIT, on arm64 (macOS) and x86_64 (Linux), and in PHP with
-> `pcre.jit=1` (8.2 and 8.5 with 10.42, 8.4 with 10.49, the official
-> `php:8.4-cli` image with 10.44).
->
-> Every part is needed: the repeated branch reset `(?|...)+`, the non-atomic
-> lookahead `(*napla:...)` that captures group 2 in the first branch, and the
-> lookahead that captures `(\2?)` as group 2 in the second. Under lldb the
-> fault is `EXC_BAD_ACCESS` in the JIT code, in the byte compare loop of the
-> `\2` backreference, which seems to read through a stale capture pointer.
-
-## Report upstream to Psalm
-
-- Psalm 6.19's type combiner turns `numeric-string|'a'` into `numeric-string`
-  (order-dependent); the Psalm plugin emits no `numeric-string` because of it.
-- Psalm's `preg_match_all` stub types `MARK` wrongly under
-  `PREG_OFFSET_CAPTURE`.
-
 ## Fix the example scripts
 
 Each script under `examples/` requires
@@ -68,13 +9,17 @@ directory that does not exist. The invocation documented in
 therefore fatals on the first try. One-line fix per script: point at the
 repo-root autoloader.
 
-## Align the feature support matrix with the solver
+## Align the LanguageSolver docblock with the solver
 
-`docs/reference/feature-support-matrix.md` (lines 28 and 41-42) and the
-`LanguageSolver` docblock still show lookarounds as refused; the solver has
+The feature matrix itself is fixed (86ad67a6: lookarounds listed as "Partial",
+notes at `docs/reference/feature-support-matrix.md:43-45`), and the solver has
 read plain lookarounds since f66a0669
 (`src/Automata/Transform/LookaroundProduct.php`, documented in
-`docs/reference/logic-solver.md`).
+`docs/reference/logic-solver.md`). What still lies is the `LanguageSolver`
+class docblock (`src/Automata/LanguageSolver.php:40-42`): it refuses
+lookarounds outright. Reword it to match the solver: plain lookarounds are
+read; nested lookarounds, an anchor or a boundary inside one, and
+`(*napla:...)` still throw.
 
 ## Type the literal path of the Toolkit facade
 
@@ -92,26 +37,18 @@ such rules for linting.
 
 ## Refresh SECURITY.md for 2.x
 
-The supported-versions table lists 1.x only, and no 1.x branch exists in this
-repository anymore; disclosure is email-only, with no GitHub Private
-Vulnerability Reporting configured.
+The supported-versions table lists 1.x only. The text says disclosure is
+email-only, but GitHub Private Vulnerability Reporting is already enabled on
+the repository — say so. A live `1.x` branch exists on the remote (frozen at
+v1.3.0): give it its status in the table and add the 2.x row.
 
 ## Give the phar a build provenance
 
-`bin/release` builds `bin/regex.phar` locally and derives the `.sha256` from
-that same build: no CI-built artifact, no signing, no attestation. A compiled
-354 KB `regex.phar` also sits tracked in git history (export-ignored at
-`.gitattributes:75`) — decide whether it stays.
-
-## Mutation-test the extraction work
-
-Infection's initial test run crashes before any mutant runs: `Parse error:
-Unterminated comment starting line 85` in
-`tools/phpunit/vendor/phpstan/phpstan/phpstan.phar/vendor/hoa/event/Bucket.php`.
-Neither `-d auto_prepend_file=` on the child runs nor
-`--exclude-filter=PHPStan` avoids it, so some other test loads the phar under
-Infection's include interceptor. Find that test, then mutate the extraction
-lines (`--git-diff-lines --git-diff-base=368a87e1`, up to 9b98938a).
+`bin/release` builds `bin/regex.phar` locally and attaches that same build to
+the GitHub release: no CI-built artifact, no signing, no attestation, and no
+checksum published at all today. A compiled 354 KB `regex.phar` also sits
+tracked in git (export-ignored at `.gitattributes:75`) — decide whether it
+stays.
 
 ## Extraction gaps left on purpose
 
@@ -126,22 +63,14 @@ lines (`--git-diff-lines --git-diff-base=368a87e1`, up to 9b98938a).
 
 ---
 
-## UX review — claims to verify before anything is implemented
+## UX review — verified claims
 
-Everything below came out of a single read-and-run pass over the repository:
-each claim names the command that shows it or the lines that carry it, and
-none of it has been checked on a second machine, another PHP version or
-another PCRE2 release.
-
-**None of these items is a task.** Each one is a claim to confirm first. Run
-the verification, read the cited lines, and only then decide whether it is
-worth a change; where the claim no longer holds, drop the item and say so
-instead of working around it. Items that overlap a section above are marked
-*see also* and are not repeated there.
-
-The runs quoted here used PHP 8.4.26 with PCRE2 10.49, from the repository
-root, with `php src/Cli/bin/regex` (the CLI) and `vendor/autoload.php` (the
-API).
+Everything below came out of a read-and-run pass over the repository. Each
+claim has since been verified against the code (2026-10-10, PHP 8.4.26 with
+PCRE2 10.49, from the repository root, via the CLI and `vendor/autoload.php`):
+every item below is confirmed and is a task, except where the item itself
+notes a part that no longer holds. Items that overlap a section above are
+marked *see also* and are not repeated there.
 
 ### A. The first contact
 
@@ -166,13 +95,15 @@ pages moved when the site was restructured. *Verify*: `ls docs/QUICK_START.md
 docs/reference.md docs/REDOS_GUIDE.md docs/COOKBOOK.md` — the first three are
 missing. *Fix*: repoint at the live pages. Effort: XS.
 
-**A4 — The install story is dev-only, for use cases that run in production.**
-Every installation snippet reads `composer require --dev
-php-regex/php-regex:2.x-dev`, while half the documented use cases (validating a
-pattern a user submitted, generating samples) run in production code.
-*Verify*: `grep -rn 'composer require --dev' docs/_includes/ docs/ README.md`.
+**A4 — The install story is still dev-only where it matters.** The hero and
+the footer already install without `--dev`, but five source spots still read
+`composer require --dev php-regex/php-regex:2.x-dev` for use cases that run
+in production: the shared install include (rendered on 17 pages, including
+`laravel.md` and `symfony.md`, which document runtime services),
+`README.md:50,62`, `llms.txt:5` and `guides/index.md:11`, plus the three
+`--dev` package rows at `guides/index.md:49,57,87`.
 *Fix*: state when the library is a runtime dependency and install it without
-`--dev`. Effort: XS.
+`--dev`. Effort: S.
 
 **A5 — The PHAR's `latest` channel still serves the 1.x CLI.**
 *Verify*: read `docs/quick-start.md` where it says so, and compare with the
@@ -180,27 +111,19 @@ version the PHAR prints. *Fix*: documentation now, the tag later. Effort: XS.
 
 ### B. The PHP API
 
-**B1 — `parse()` does not validate, and nothing says so.** A pattern PCRE
-refuses still produces an AST, and `parse()` is the first method anyone calls
-on a library called RegexParser. *Verify*:
-`php -r 'require "vendor/autoload.php"; use PHPRegex\Toolkit\Regex; $r = Regex::create(); foreach (["/a{2,1}/", "/\\p{Foo}/", "/(?1)/"] as $p) { $r->parse($p); var_dump($r->validate($p)->isValid); }'`
-— three trees, three `false`. Also `php src/Cli/bin/regex parse '/a{2,1}/'`
-prints `Parse : OK`.
-*Fix*: `Regex::parse($p, validate: true)`, or at least a documented note plus a
-dedicated entry point that validates. Effort: S (doc) / M (API).
-*Decision*: the last moment to change the behaviour is before the 2.0 tag.
-
 **B2 — A validation result has no human rendering.** The message, the offset,
 the caret snippet and the hint are separate fields; the caller stitches them
 together, and the CLI ships its own renderer marked `@internal`.
 *Verify*: `grep -n 'function render\|function format\|__toString'
 src/Parser/Validation/ValidationResult.php` — nothing.
 *Fix*: one `render()`/`__toString()`, reused by the CLI and the bridges, so the
-message stops being assembled in three places. Effort: S.
+message stops being assembled in the eight-plus call sites that stitch it
+today (three CLI commands, three bridge commands, the console formatter, the
+LSP diagnostic build). Effort: S.
 
 **B3 — Two conventions for result objects in the same surface.**
 `AnalysisReport` exposes `$report->errors` as a property *and* `$report->errors()`
-as a method; `ValidationResult` has eight public properties, five getters and
+as a method; `ValidationResult` has eight public properties, six getters and
 two deprecated methods. The documentation shows the properties.
 *Verify*: read `src/Toolkit/AnalysisReport.php:30-83` and
 `src/Parser/Validation/ValidationResult.php:22-100`.
@@ -270,10 +193,11 @@ output belongs. *Verify*:
 CLI guide documents stderr. *Fix*: route all of them through
 `Output::writeError`. Effort: S.
 
-**C3 — `--format` means five different things, and the help lies about one.**
-The values are `console|json` (analyze, lint, redos, transpile), `text|html`
-(explain), `text|svg` (diagram), `dot|mermaid` (graph) and `cli|html`
-(highlight); `--json` exists on six of the fourteen commands.
+**C3 — `--format` means six different vocabularies, and the help lies about
+one.** The values are `console|json` (analyze, redos, transpile),
+`console|json|github|checkstyle|junit` (lint), `text|html` (explain),
+`ascii|cli|text|svg` (diagram), `dot|mermaid` (graph) and `cli|html|auto`
+(highlight); `--json` exists on five of the sixteen commands.
 *Verify*: `php src/Cli/bin/regex help highlight | grep format` advertises
 `console`, while `php src/Cli/bin/regex highlight '/a/' --format=console`
 answers `Error: Invalid format: console` and the real values are `cli|html|auto`.
@@ -363,12 +287,13 @@ Symfony while it is the flagship command in Laravel; the short options `-j` and
 `src/Laravel/Command` for the same verb.
 *Fix*: a shared command and flag specification. Effort: M.
 
-**E4 — Linux parallelism is silently off in Laravel.** `detectCpuCount()` reads
-the `/usr/bin/nproc` binary and then `/proc/self/status` without parsing either,
-and always returns 1; only the `sysctl` branch works, so a Linux run analyses
-with one worker and says nothing.
-*Verify*: read `src/Laravel/Command/LintCommand.php:517-537`, next to the
-Symfony equivalent. Effort: S.
+**E4 — Dead CPU-detection tail in the Laravel lint command.** Linux gets a
+real worker count today: `/proc/cpuinfo` is parsed
+(`src/Laravel/Command/LintCommand.php:506-515`). What remains is the dead
+tail at `:517-537` — it reads the `/usr/bin/nproc` binary without executing
+it and trims `/proc/self/status` without parsing it, then returns 1 only when
+cpuinfo is unreadable. Remove the tail and align the fallback with the
+Symfony/CLI equivalents. Effort: XS.
 
 **E5 — The bridge reports are internal array shapes.** Symfony's report objects
 are readonly but marked `@internal` over phpstan-typed arrays, and Laravel
