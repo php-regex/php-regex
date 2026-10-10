@@ -1801,7 +1801,6 @@ main table::-webkit-scrollbar-thumb {
    (lightens it on navy) instead of shifting hue. */
 .button-primary,
 .button--primary,
-.hero-ctas > a.button:first-of-type,
 main > section:not([class]) p > a.button {
   background: var(--amber);
   color: var(--paper);
@@ -1810,7 +1809,6 @@ main > section:not([class]) p > a.button {
 
 .button-primary:hover,
 .button--primary:hover,
-.hero-ctas > a.button:first-of-type:hover,
 main > section:not([class]) p > a.button:hover {
   background: var(--amber-deep);
   border-color: var(--amber-deep);
@@ -1823,7 +1821,6 @@ main > section:not([class]) p > a.button:hover {
    controls borrow the ink outline, which clears both the fill and the paper. */
 .button-primary:focus-visible,
 .button--primary:focus-visible,
-.hero-ctas > a.button:first-of-type:focus-visible,
 main > section:not([class]) p > a.button:focus-visible {
   outline-color: var(--ink);
 }
@@ -2741,7 +2738,6 @@ body.search-open {
      stated, so the one action per view is still the loudest control. */
   .button-primary,
   .button--primary,
-  .hero-ctas > a.button:first-of-type,
   main > section:not([class]) p > a.button {
     border-color: CanvasText;
     border-width: 2px;
