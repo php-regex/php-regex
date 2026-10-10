@@ -9,8 +9,13 @@
         "refactoring",
         "automata"
     ],
-    "homepage": "https://github.com/php-regex/php-regex",
+    "homepage": "https://php-regex.com",
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/php-regex/php-regex/issues",
+        "source": "https://github.com/php-regex/php-regex",
+        "docs": "https://php-regex.com/guides/rector/"
+    },
     "authors": [
         {
             "name": "Younes ENNAJI",

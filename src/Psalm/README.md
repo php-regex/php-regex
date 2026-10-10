@@ -1,3 +1,13 @@
+<p align="center">
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
+    <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-psalm"><img src="https://img.shields.io/packagist/dt/php-regex/regex-psalm.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-psalm"><img src="https://img.shields.io/packagist/php-v/php-regex/regex-psalm.svg" alt="Supported PHP Version Badge"></a>
+</p>
+
 PHPRegex Psalm
 ==============
 
@@ -6,6 +16,8 @@ pattern of `preg_match()` and `preg_match_all()`, and reports the patterns the
 PHP version you target refuses.
 
 Requires PHP 8.2+ to run and Psalm 6.19+. MIT licensed.
+
+Documentation: [php-regex.com](https://php-regex.com) — the [Psalm guide](https://php-regex.com/guides/psalm/) is the place to start.
 
 Features
 --------
@@ -266,10 +278,16 @@ The `Plugin` class, the `InvalidRegexPattern` issue name and the
 `<phpVersion>` and `<pcreVersion>` options stay for all of 2.x. See
 [the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
+Documentation
+-------------
+
+* [Psalm guide](https://php-regex.com/guides/psalm/) — the shape of `$matches`, the invalid patterns, the PHP version judged, adopting the plugin
+* [Diagnostics](https://php-regex.com/reference/diagnostics/) — how findings are reported and how to read them
+
 Resources
 ---------
 
-* [Psalm guide](https://php-regex.com/guides/psalm/)
+* [Documentation](https://php-regex.com/docs/)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and
   [send pull requests](https://github.com/php-regex/php-regex/pulls) in the
   [main repository](https://github.com/php-regex/php-regex)

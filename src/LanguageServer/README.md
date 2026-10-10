@@ -6,12 +6,24 @@
     </picture>
 </p>
 
+<p align="center">
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
+    <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-language-server"><img src="https://img.shields.io/packagist/dt/php-regex/regex-language-server.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-language-server"><img src="https://img.shields.io/packagist/php-v/php-regex/regex-language-server.svg" alt="Supported PHP Version Badge"></a>
+</p>
+
 PHPRegex Language Server
 ========================
 
 A language server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.
 
 The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls, of wrapper calls such as `Preg::match()`, and of the calls to functions whose parameter is marked `#[RegexPattern]` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
+
+Documentation: [php-regex.com](https://php-regex.com) — the [LSP guide](https://php-regex.com/guides/lsp/) gets diagnostics into your editor.
 
 Features
 --------

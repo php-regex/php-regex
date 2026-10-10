@@ -8,6 +8,7 @@
 
 <p align="center">
     <a href="https://github.com/php-regex/php-regex/actions/workflows/ci.yml"><img src="https://github.com/php-regex/php-regex/actions/workflows/ci.yml/badge.svg?branch=2.x" alt="CI Status Badge"></a>
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
     <a href="https://phpstan.org/"><img src="https://img.shields.io/badge/PHPStan-level%20max-brightgreen.svg" alt="PHPStan Level Badge"></a>
     <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
     <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
@@ -29,6 +30,10 @@ This architecture allows for advanced static analysis:
 - **Logic:** Compare patterns via NFA/DFA (Intersection, Equivalence, Subset) for the regular subset it supports.
 
 Built for robust regex tooling in PHP projects.
+
+The documentation lives at [php-regex.com](https://php-regex.com): a
+[regex tutorial](https://php-regex.com/tutorial/), a guide for every
+integration, and the reference pages behind each verdict the library prints.
 
 > ⚠️ **How to read the verdicts.** ReDoS analysis proves safety for the
 > subset of PCRE it models, one match attempt at a time; outside that subset,
@@ -296,11 +301,19 @@ Start here:
 - [Docs Home](https://php-regex.com/docs/)
 - [Quick Start](https://php-regex.com/quick-start/)
 - [Tutorial](https://php-regex.com/tutorial/)
+- [Cookbook](https://php-regex.com/cookbook/)
+
+Guides:
+- [Symfony](https://php-regex.com/guides/symfony/), [Laravel](https://php-regex.com/guides/laravel/), [CLI](https://php-regex.com/guides/cli/), [language server](https://php-regex.com/guides/lsp/)
+- [PHPStan](https://php-regex.com/guides/phpstan/), [Psalm](https://php-regex.com/guides/psalm/), [Rector](https://php-regex.com/guides/rector/), [ReDoS](https://php-regex.com/guides/redos/)
 
 Key references:
 - [Architecture](https://php-regex.com/architecture/)
+- [Concepts](https://php-regex.com/concepts/): [AST](https://php-regex.com/concepts/ast/), [PCRE versions](https://php-regex.com/concepts/pcre/), [ReDoS](https://php-regex.com/concepts/redos/), [visitors](https://php-regex.com/concepts/visitors/)
 - [API Reference](https://php-regex.com/reference/api/)
 - [Diagnostics](https://php-regex.com/reference/diagnostics/)
+- [Feature Support Matrix](https://php-regex.com/reference/feature-support-matrix/)
+- [PCRE2 Conformance](https://php-regex.com/reference/pcre2-conformance/)
 - [FAQ & Glossary](https://php-regex.com/reference/faq-glossary/)
 - [Backward Compatibility Promise](https://php-regex.com/reference/backward-compatibility/)
 

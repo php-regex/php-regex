@@ -2,13 +2,13 @@
     "name": "php-regex/php-regex",
     "description": "A PCRE regex parser with lexer, AST builder, validation, ReDoS analysis, and syntax highlighting. Zero runtime dependencies.",
     "keywords": ["regex", "parser", "pcre", "lexer", "ast", "validation", "redos", "security", "syntax-highlighting", "php", "cli"],
-    "homepage": "https://github.com/php-regex/php-regex",
+    "homepage": "https://php-regex.com",
     "type": "library",
     "license": "MIT",
     "support": {
         "issues": "https://github.com/php-regex/php-regex/issues",
         "source": "https://github.com/php-regex/php-regex",
-        "docs": "https://github.com/php-regex/php-regex#readme"
+        "docs": "https://php-regex.com/docs/"
     },
     "funding": [
         {

@@ -6,12 +6,24 @@
     </picture>
 </p>
 
+<p align="center">
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
+    <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-redos"><img src="https://img.shields.io/packagist/dt/php-regex/regex-redos.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-redos"><img src="https://img.shields.io/packagist/php-v/php-regex/regex-redos.svg" alt="Supported PHP Version Badge"></a>
+</p>
+
 PHPRegex Redos
 ==============
 
 Proves a pattern safe from catastrophic backtracking (ReDoS), or hands you the input that triggers it — and can replay that input on the engine.
 
 Requires PHP 8.2+. MIT licensed.
+
+Documentation: [php-regex.com](https://php-regex.com) — the [ReDoS guide](https://php-regex.com/guides/redos/) walks from risky shape to mitigation.
 
 Features
 --------

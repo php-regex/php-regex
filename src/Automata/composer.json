@@ -9,8 +9,13 @@
         "nfa",
         "equivalence"
     ],
-    "homepage": "https://github.com/php-regex/php-regex",
+    "homepage": "https://php-regex.com",
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/php-regex/php-regex/issues",
+        "source": "https://github.com/php-regex/php-regex",
+        "docs": "https://php-regex.com/reference/logic-solver/"
+    },
     "authors": [
         {
             "name": "Younes ENNAJI",

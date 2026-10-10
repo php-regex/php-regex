@@ -6,10 +6,22 @@
     </picture>
 </p>
 
+<p align="center">
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
+    <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-symfony"><img src="https://img.shields.io/packagist/dt/php-regex/regex-symfony.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-symfony"><img src="https://img.shields.io/packagist/php-v/php-regex/regex-symfony.svg" alt="Supported PHP Version Badge"></a>
+</p>
+
 PHPRegex Symfony
 ================
 
 Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare and regex:transpile commands.
+
+Documentation: [php-regex.com](https://php-regex.com) — the [Symfony guide](https://php-regex.com/guides/symfony/) walks the bundle end to end.
 
 Features
 --------

@@ -6,12 +6,24 @@
     </picture>
 </p>
 
+<p align="center">
+    <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
+    <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
+    <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-explain"><img src="https://img.shields.io/packagist/dt/php-regex/regex-explain.svg" alt="Packagist Downloads Badge"></a>
+    <a href="https://github.com/php-regex/php-regex"><img src="https://img.shields.io/github/stars/php-regex/php-regex.svg" alt="GitHub Stars Badge"></a>
+    <a href="https://packagist.org/packages/php-regex/regex-explain"><img src="https://img.shields.io/packagist/php-v/php-regex/regex-explain.svg" alt="Supported PHP Version Badge"></a>
+</p>
+
 PHPRegex Explain
 ================
 
 Explains, highlights and draws regex ASTs: plain text and HTML explanations, console and HTML highlighting, ASCII trees, Mermaid and railroad diagrams.
 
 Every class here is a node visitor: parse once with regex-parser, then walk the AST with `accept()`. There is nothing to configure.
+
+Documentation: [php-regex.com](https://php-regex.com) — the [visitor reference](https://php-regex.com/visitors/) is the class-by-class tour.
 
 Features
 --------
