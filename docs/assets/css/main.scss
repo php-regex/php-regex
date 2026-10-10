@@ -658,17 +658,6 @@ main div.highlighter-rouge::after {
   pointer-events: none;
 }
 
-main div.highlighter-rouge:hover::after,
-main div.highlighter-rouge:focus-within::after {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  main div.highlighter-rouge::after {
-    opacity: 1;
-  }
-}
-
 /* Inside a terminal panel the wrapper carries no margin, so a caption would
    land on the next line. display wins over any content above it. */
 .terminal div.highlighter-rouge::after {
@@ -849,12 +838,6 @@ main table::-webkit-scrollbar-thumb {
   bottom: -6px;
   left: -4px;
   right: -4px;
-}
-
-@media (hover: none) {
-  .copy-btn {
-    opacity: 1;
-  }
 }
 
 .copy-btn:hover {
