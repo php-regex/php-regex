@@ -64,6 +64,9 @@ final readonly class SecurityAccessSuggestionBuilder
         return array_keys($suggestions);
     }
 
+    /**
+     * @param (callable(string, int): string)|null $formatter
+     */
     private function formatLocation(?callable $formatter, string $file, int $line): string
     {
         if (null !== $formatter) {

@@ -25,6 +25,9 @@ use PHPRegex\Toolkit\Regex;
 /**
  * Handles textDocument/codeAction requests.
  *
+ * @phpstan-import-type Position from RegexOccurrence
+ * @phpstan-import-type Range from RegexOccurrence
+ *
  * @internal
  */
 final readonly class CodeActionHandler
@@ -51,7 +54,7 @@ final readonly class CodeActionHandler
         /** @var array<string, mixed> $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
-        /** @var array{start: array{line: int, character: int}, end: array{line: int, character: int}}|null $range */
+        /** @var Range|null $range */
         $range = isset($params['range']) && \is_array($params['range']) ? $params['range'] : null;
         /** @var array<string, mixed> $context */
         $context = isset($params['context']) && \is_array($params['context']) ? $params['context'] : [];
@@ -87,7 +90,7 @@ final readonly class CodeActionHandler
     /**
      * Find occurrences that overlap with the given range.
      *
-     * @param array{start: array{line: int, character: int}, end: array{line: int, character: int}} $range
+     * @param Range $range
      *
      * @return array<RegexOccurrence>
      */
@@ -107,10 +110,10 @@ final readonly class CodeActionHandler
     /**
      * Check if two ranges overlap.
      *
-     * @param array{line: int, character: int} $start1
-     * @param array{line: int, character: int} $end1
-     * @param array{line: int, character: int} $start2
-     * @param array{line: int, character: int} $end2
+     * @param Position $start1
+     * @param Position $end1
+     * @param Position $start2
+     * @param Position $end2
      */
     private function rangesOverlap(array $start1, array $end1, array $start2, array $end2): bool
     {

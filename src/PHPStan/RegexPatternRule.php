@@ -40,6 +40,8 @@ use PHPStan\Type\Type;
  * while the engine running PHPStan compiles them (PHPStan core reports what
  * the running engine refuses); lint, ReDoS risks and optimizations on demand.
  *
+ * @phpstan-import-type GroupReference from ReplacementReferences
+ *
  * @implements Rule<FuncCall>
  */
 final class RegexPatternRule implements Rule
@@ -296,7 +298,7 @@ final class RegexPatternRule implements Rule
      * The message and tip for a reference to a group the pattern does not
      * have, null for a reference to one of its groups.
      *
-     * @param array{raw: string, group: int|null, name: string|null} $reference
+     * @param GroupReference $reference
      *
      * @return array{string, string|null}|null
      */

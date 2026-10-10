@@ -13,12 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Converter;
 
+use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
 
 /**
  * Converts PHPRegex diagnostics to LSP diagnostic format.
+ *
+ * @phpstan-import-type Position from RegexOccurrence
  *
  * @internal
  */
@@ -32,7 +35,7 @@ final class DiagnosticConverter
     /**
      * Convert a LintIssue to LSP diagnostic format.
      *
-     * @param array{line: int, character: int} $start Position where the pattern starts in the file
+     * @param Position $start Position where the pattern starts in the file
      *
      * @return array<string, mixed>
      */
@@ -70,7 +73,7 @@ final class DiagnosticConverter
     /**
      * Create a diagnostic for a parse error.
      *
-     * @param array{line: int, character: int} $start
+     * @param Position $start
      *
      * @return array<string, mixed>
      */
@@ -99,7 +102,7 @@ final class DiagnosticConverter
     /**
      * Create a diagnostic for a validation error.
      *
-     * @param array{line: int, character: int} $start
+     * @param Position $start
      *
      * @return array<string, mixed>
      */

@@ -26,6 +26,8 @@ use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
  * @internal
+ *
+ * @phpstan-type CompareArguments array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string}
  */
 final class CompareCommand extends AbstractCommand
 {
@@ -102,7 +104,7 @@ final class CompareCommand extends AbstractCommand
     }
 
     /**
-     * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
+     * @param CompareArguments $parsed
      */
     private function handleIntersection(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
@@ -122,7 +124,7 @@ final class CompareCommand extends AbstractCommand
     }
 
     /**
-     * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
+     * @param CompareArguments $parsed
      */
     private function handleSubset(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
@@ -142,7 +144,7 @@ final class CompareCommand extends AbstractCommand
     }
 
     /**
-     * @param array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string} $parsed
+     * @param CompareArguments $parsed
      */
     private function handleEquivalence(LanguageSolver $solver, SolverOptions $options, array $parsed, Output $output): int
     {
@@ -184,7 +186,7 @@ final class CompareCommand extends AbstractCommand
     /**
      * @param array<int, string> $args
      *
-     * @return array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: ?string}
+     * @return CompareArguments
      */
     private function parseArguments(array $args): array
     {
@@ -292,7 +294,7 @@ final class CompareCommand extends AbstractCommand
     }
 
     /**
-     * @return array{pattern1: string, pattern2: string, method: string, minimizer: string, determinizer: string, error: string}
+     * @return CompareArguments
      */
     private function errorResult(string $error): array
     {

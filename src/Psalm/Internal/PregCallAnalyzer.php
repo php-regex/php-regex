@@ -72,6 +72,9 @@ use Psalm\Type\Union;
  * instanceof check: should it move, the calls are left to the stubs.
  *
  * @internal
+ *
+ * @phpstan-type PatternVerdict array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool}
+ * @phpstan-type CachedType array{type: Union, keys: int}
  */
 final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 {
@@ -127,12 +130,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     /**
      * What the library says of a pattern, read once per process.
      *
-     * @var array<string, array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool}> by target and pattern
+     * @var array<string, PatternVerdict> by target and pattern
      */
     private static array $verdicts = [];
 
     /**
-     * @var array<string, array{type: Union, keys: int}> by target, pattern, function, flags and Psalm's literal length
+     * @var array<string, CachedType> by target, pattern, function, flags and Psalm's literal length
      */
     private static array $types = [];
 
@@ -427,7 +430,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * @return array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool}
+     * @return PatternVerdict
      */
     private static function verdict(RegexParser $parser, string $pattern): array
     {
@@ -435,7 +438,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * @return array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool}
+     * @return PatternVerdict
      */
     private static function judge(RegexParser $parser, string $pattern): array
     {
@@ -499,7 +502,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * @return array{type: Union, keys: int}
+     * @return CachedType
      */
     private static function type(RegexParser $parser, string $pattern, CaptureShape $shape, int $flags, bool $matchAll, Codebase $codebase): array
     {

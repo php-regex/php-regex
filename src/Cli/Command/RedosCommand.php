@@ -32,6 +32,8 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
+ *
+ * @phpstan-type BenchResult array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, err_msg: string, err_code: int, iterations: int}
  */
 final class RedosCommand extends AbstractCommand implements JsonCommandInterface
 {
@@ -735,18 +737,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @return array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * }
+     * @return BenchResult
      */
     private function bench(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
     {
@@ -762,18 +753,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @return array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * }
+     * @return BenchResult
      */
     private function measure(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
     {
@@ -831,30 +811,8 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @param array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * } $vuln
-     * @param array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * } $safe
+     * @param BenchResult $vuln
+     * @param BenchResult $safe
      *
      * @return array{result_parity: string, speedup: ?float, delta_ms: ?float}
      */
@@ -875,18 +833,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @param array<string, array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * }> $rows
+     * @param array<string, BenchResult> $rows
      */
     private function renderBenchmarkTable(Output $output, array $rows): void
     {
@@ -934,30 +881,8 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @param array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * } $vuln
-     * @param array{
-     *     label: string,
-     *     result: string,
-     *     wall_ms: float,
-     *     avg_ms: float,
-     *     cpu_ms: ?float,
-     *     mem_bytes: int,
-     *     peak_bytes: int,
-     *     err_msg: string,
-     *     err_code: int,
-     *     iterations: int
-     * } $safe
+     * @param BenchResult $vuln
+     * @param BenchResult $safe
      */
     private function renderSummary(Output $output, array $vuln, array $safe): void
     {

@@ -22,6 +22,8 @@ use PHPRegex\Parser\Internal\PatternParser;
 
 /**
  * @internal
+ *
+ * @phpstan-type CommandHelp array{description: string, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}
  */
 final readonly class HelpCommand implements CommandInterface
 {
@@ -292,11 +294,11 @@ final readonly class HelpCommand implements CommandInterface
     }
 
     /**
-     * @return array{description: string, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}|null
+     * @return CommandHelp|null
      */
     private function getCommandData(string $command): ?array
     {
-        /** @var array{description: string, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}|null $data */
+        /** @var CommandHelp|null $data */
         // @phpstan-ignore varTag.nativeType (PHPStan generalizes this large constant array; each match arm follows the documented shape.)
         $data = match ($command) {
             'parse' => [

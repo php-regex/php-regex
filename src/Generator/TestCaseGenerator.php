@@ -50,7 +50,9 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 /**
  * Generates test cases (matching and non-matching strings) for a regex pattern.
  *
- * @extends AbstractNodeVisitor<array{matching: array<string>, non_matching: array<string>}>
+ * @phpstan-type TestCases array{matching: array<string>, non_matching: array<string>}
+ *
+ * @extends AbstractNodeVisitor<TestCases>
  */
 final class TestCaseGenerator extends AbstractNodeVisitor
 {
@@ -69,7 +71,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param RegexNode $node the `RegexNode` representing the entire regular expression
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitRegex(RegexNode $node): array
@@ -118,7 +120,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param AlternationNode $node the `AlternationNode` representing a choice between patterns
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitAlternation(AlternationNode $node): array
@@ -144,7 +146,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param SequenceNode $node the `SequenceNode` representing a series of regex components
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitSequence(SequenceNode $node): array
@@ -184,7 +186,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param GroupNode $node the `GroupNode` representing a grouping construct
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitGroup(GroupNode $node): array
@@ -197,7 +199,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param QuantifierNode $node the `QuantifierNode` representing a repetition operator
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): array
@@ -234,7 +236,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param LiteralNode $node the `LiteralNode` representing a literal character
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitLiteral(LiteralNode $node): array
@@ -264,7 +266,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param CharTypeNode $node the `CharTypeNode` representing a character type
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitCharType(CharTypeNode $node): array
@@ -284,7 +286,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param DotNode $node the `DotNode` representing the wildcard dot
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitDot(DotNode $node): array
@@ -300,7 +302,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param AnchorNode $node the `AnchorNode` representing a positional anchor
      *
-     * @return array{matching: array<string>, non_matching: array<string>} empty test cases
+     * @return TestCases empty test cases
      */
     #[\Override]
     public function visitAnchor(AnchorNode $node): array
@@ -316,7 +318,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param AssertionNode $node the `AssertionNode` representing a zero-width assertion
      *
-     * @return array{matching: array<string>, non_matching: array<string>} empty test cases
+     * @return TestCases empty test cases
      */
     #[\Override]
     public function visitAssertion(AssertionNode $node): array
@@ -332,7 +334,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param CharClassNode $node the `CharClassNode` representing a character class
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitCharClass(CharClassNode $node): array
@@ -360,7 +362,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      *
      * @param RangeNode $node the `RangeNode` representing a character range
      *
-     * @return array{matching: array<string>, non_matching: array<string>} test cases
+     * @return TestCases test cases
      */
     #[\Override]
     public function visitRange(RangeNode $node): array

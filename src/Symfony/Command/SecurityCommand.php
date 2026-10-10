@@ -17,6 +17,7 @@ use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
@@ -40,6 +41,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
  * @phpstan-import-type AccessSkip from SecurityAccessControlReport
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
  * @phpstan-import-type FirewallSkip from SecurityFirewallReport
+ * @phpstan-import-type SkippedFile from SecurityAnalyzer
  *
  * @internal
  */
@@ -245,7 +247,7 @@ final class SecurityCommand extends Command
     }
 
     /**
-     * @param array<int, array{file: string, reason: string}> $skippedFiles
+     * @param array<int, SkippedFile> $skippedFiles
      */
     private function renderFileWarnings(SymfonyStyle $io, OutputInterface $output, array $skippedFiles): void
     {

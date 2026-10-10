@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Converter;
 
+use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -23,6 +24,8 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  * every diagnostic after that point lands on the wrong characters. Lines
  * that are not valid UTF-8 fall back to bytes, which is the best that can
  * be said about them.
+ *
+ * @phpstan-import-type Position from RegexOccurrence
  *
  * @internal
  */
@@ -41,7 +44,7 @@ final class PositionConverter
     /**
      * Convert a byte offset to LSP position (0-indexed line and character).
      *
-     * @return array{line: int, character: int}
+     * @return Position
      */
     public function offsetToPosition(int $offset): array
     {
@@ -78,8 +81,8 @@ final class PositionConverter
     /**
      * Check if an offset falls within a range.
      *
-     * @param array{line: int, character: int} $start
-     * @param array{line: int, character: int} $end
+     * @param Position $start
+     * @param Position $end
      */
     public function isOffsetInRange(int $offset, array $start, array $end): bool
     {

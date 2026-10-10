@@ -22,12 +22,14 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  * ("\\$1" is a backslash then group 1, "\$1" the text "$1"). "${name}" is
  * no reference, PHP leaves it in the result as written: listed with its name.
  *
+ * @phpstan-type GroupReference array{raw: string, group: int|null, name: string|null}
+ *
  * @internal
  */
 final class ReplacementReferences
 {
     /**
-     * @return list<array{raw: string, group: int|null, name: string|null}> in the order they are written
+     * @return list<GroupReference> in the order they are written
      */
     public static function of(string $replacement): array
     {

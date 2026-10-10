@@ -33,6 +33,8 @@ use PHPRegex\Redos\RedosSeverity;
 
 /**
  * @internal
+ *
+ * @phpstan-type AnalyzeArguments array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
  */
 final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterface
 {
@@ -121,7 +123,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
     /**
      * @param array<int, string> $args
      *
-     * @return array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
+     * @return AnalyzeArguments
      */
     private function parseArguments(array $args): array
     {
@@ -250,7 +252,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
     }
 
     /**
-     * @return array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: string}
+     * @return AnalyzeArguments
      */
     private function errorResult(string $format, RedosMode $redosMode, ?RedosSeverity $redosThreshold, string $error): array
     {

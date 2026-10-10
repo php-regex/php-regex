@@ -28,6 +28,8 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
  * @phpstan-import-type AccessConflict from SecurityAccessControlReport
  * @phpstan-import-type AccessRule from SecurityAccessControlReport
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
+ *
+ * @phpstan-type SkippedFile array{file: string, reason: string}
  */
 final readonly class SecurityAnalyzer implements AnalyzerInterface
 {
@@ -115,7 +117,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @param array<int, array{file: string, reason: string}> $skippedFiles
+     * @param array<int, SkippedFile> $skippedFiles
      */
     private function buildAccessSection(
         SecurityAccessControlReport $report,
@@ -172,7 +174,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @param array<int, array{file: string, reason: string}> $skippedFiles
+     * @param array<int, SkippedFile> $skippedFiles
      *
      * @return array<int, AnalysisNotice>
      */

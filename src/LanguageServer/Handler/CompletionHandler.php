@@ -22,6 +22,9 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 /**
  * Handles textDocument/completion requests for regex patterns.
  *
+ * @phpstan-type CompletionContext array{type: string, prefix: string}
+ * @phpstan-type CompletionItem array{label: string, kind: int, detail: string, documentation: array{kind: string, value: string}, insertText?: string, insertTextFormat?: int}
+ *
  * @internal
  */
 final readonly class CompletionHandler
@@ -204,7 +207,7 @@ final readonly class CompletionHandler
     /**
      * Get the completion context based on cursor position.
      *
-     * @return array{type: string, prefix: string}
+     * @return CompletionContext
      */
     private function getCompletionContext(RegexOccurrence $occurrence, int $character): array
     {
@@ -255,9 +258,9 @@ final readonly class CompletionHandler
     /**
      * Get completion items based on context.
      *
-     * @param array{type: string, prefix: string} $context
+     * @param CompletionContext $context
      *
-     * @return array<array<string, mixed>>
+     * @return list<CompletionItem>
      */
     private function getCompletionItems(array $context): array
     {
@@ -276,7 +279,7 @@ final readonly class CompletionHandler
      *
      * @param array<array{label: string, detail: string, doc: string, insertText?: string}> $items
      *
-     * @return array<array<string, mixed>>
+     * @return list<CompletionItem>
      */
     private function buildItems(array $items, int $kind): array
     {
@@ -307,7 +310,7 @@ final readonly class CompletionHandler
     /**
      * Build flag completion items, excluding already used flags.
      *
-     * @return array<array<string, mixed>>
+     * @return list<CompletionItem>
      */
     private function buildFlagItems(string $usedFlags): array
     {
@@ -333,7 +336,7 @@ final readonly class CompletionHandler
     /**
      * Build all completion items for general context.
      *
-     * @return array<array<string, mixed>>
+     * @return list<CompletionItem>
      */
     private function buildAllItems(): array
     {

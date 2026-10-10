@@ -16,13 +16,16 @@ namespace PHPRegex\LanguageServer\Document;
 /**
  * Represents a regex pattern occurrence in a document.
  *
+ * @phpstan-type Position array{line: int, character: int}
+ * @phpstan-type Range array{start: Position, end: Position}
+ *
  * @internal
  */
 final readonly class RegexOccurrence
 {
     /**
-     * @param array{line: int, character: int} $start
-     * @param array{line: int, character: int} $end
+     * @param Position $start
+     * @param Position $end
      */
     public function __construct(
         public string $pattern,
