@@ -211,6 +211,11 @@ add one to yet.
 
 ## What stays for all of 2.x
 
+- The **names of the exported type aliases** (`CacheStats`, `LengthRange`,
+  `Metrics`, `OptionsArray`, `WitnessArray`, …): a `@phpstan-import-type` line
+  in your code resolves for all of 2.x. An alias has no deprecation mechanism —
+  a rename would break importing code with no warning — so names are frozen
+  outright. The [API reference](api.md#importable-type-aliases) lists them.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, `regex.redos.search`, …), with the **lint issue ids**

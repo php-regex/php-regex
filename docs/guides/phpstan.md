@@ -361,3 +361,32 @@ lint messages were reworded (the useless `m` and `s` flags, a lazy quantifier
 under `U`, redundant class ranges), false positives were removed, and with
 `redos` on, the nested-quantifier, dot-star and overlapping-set issues are no
 longer reported for a pattern the analysis proves linear.
+
+## Types and IDE support
+
+The library's own PHPDoc is written for your analyser, not just for reading:
+visitors carry their return type as a generic (`$ast->accept(new PatternPrinter())`
+is a `string` to PHPStan and Psalm, with no `@var`), and the array shapes the
+results hand you are named type aliases you can import instead of restating:
+
+```php
+/**
+ * @phpstan-import-type WitnessArray from PHPRegex\Redos\RedosWitness
+ */
+final class AttackReporter
+{
+    /**
+     * @param WitnessArray $witness {prefix, pump, suffix}: the strings of the attack
+     */
+    public function describe(array $witness): string
+    {
+        return $witness['pump'].' repeated, framed by '.$witness['prefix'];
+    }
+}
+```
+
+[The API reference](../reference/api.md#importable-type-aliases) lists the
+aliases you are most likely to import, with their shapes; more exist on
+internal classes, and every name is frozen for all of 2.x. Psalm
+resolves the same aliases; the Laravel facade documents every method of the
+service, so completion and argument types survive the `Regex::` indirection.

@@ -16,8 +16,10 @@ namespace PHPRegex\Tests\Unit\Cache;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
+use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\TestUtils\InMemoryCachePool;
@@ -97,6 +99,32 @@ final class CacheContractTest extends TestCase
             $this->assertEquals($first, $store->load($key), $pattern);
             $this->assertEquals($first, $regex->parse($pattern), $pattern);
         }
+    }
+
+    /**
+     * @param \Closure():RemovableCacheInterface $make
+     */
+    #[DataProvider('provideStats')]
+    #[Test]
+    public function test_get_stats_returns_the_documented_shape(callable $make): void
+    {
+        $cache = $make();
+
+        $stats = $cache->getStats();
+
+        $this->assertSame(['hits', 'misses'], array_keys($stats));
+        $this->assertIsInt($stats['hits']);
+        $this->assertIsInt($stats['misses']);
+    }
+
+    /**
+     * @return iterable<string, array{callable(): RemovableCacheInterface}>
+     */
+    public static function provideStats(): iterable
+    {
+        yield 'null' => [static fn (): RemovableCacheInterface => new NullCache()];
+        yield 'PSR-6' => [static fn (): RemovableCacheInterface => new PsrCacheAdapter(new InMemoryCachePool())];
+        yield 'PSR-16' => [static fn (): RemovableCacheInterface => new PsrSimpleCacheAdapter(new InMemorySimpleCache())];
     }
 
     /**

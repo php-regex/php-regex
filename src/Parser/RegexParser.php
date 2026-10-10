@@ -49,6 +49,9 @@ use PHPRegex\Parser\Validation\Validator;
  * Every other layer reads patterns through it — ReDoS analysis, automata,
  * the linter, the transpiler, the bridges — and the Regex facade hands its
  * own to them.
+ *
+ * @phpstan-import-type CacheStats from RemovableCacheInterface
+ * @phpstan-import-type OptionsArray from ParserOptions
  */
 final readonly class RegexParser
 {
@@ -65,7 +68,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-808b27c5ba0e01ddcbdb844c69e1ebe4';
+    public const CACHE_VERSION = 'ast-66e0a0752f19651f55a311fcb6db385c';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -112,7 +115,7 @@ final readonly class RegexParser
     ) {}
 
     /**
-     * @param array<string, mixed> $options The options Regex::create() takes
+     * @param OptionsArray|array<string, mixed> $options The options Regex::create() takes
      */
     public static function create(array $options = []): self
     {
@@ -237,7 +240,7 @@ final readonly class RegexParser
     /**
      * Get cache statistics.
      *
-     * @return array{hits: int, misses: int} Cache hits and misses (zeroed if unsupported)
+     * @return CacheStats Cache hits and misses (zeroed if unsupported)
      */
     public function getCacheStats(): array
     {

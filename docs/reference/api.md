@@ -818,3 +818,42 @@ try {
 | `parser()`              | RegexParser             | The parser the facade uses |
 | `target()`              | PcreTarget              | The PHP and PCRE2 judged for |
 | `clearCaches()`         | void                    | Empty every process-wide cache |
+
+## Importable Type Aliases
+
+The classes above export named PHPStan type aliases for the array shapes they
+hand you. Import one instead of restating the shape:
+
+```php
+/**
+ * @phpstan-import-type CacheStats from PHPRegex\Parser\Cache\RemovableCacheInterface
+ */
+final class MyCacheMonitor
+{
+    public function report(CacheStats $stats): string // {hits: int, misses: int}
+    {
+        return $stats['hits'].' hits, '.$stats['misses'].' misses';
+    }
+}
+```
+
+The table lists the aliases a consumer is most likely to import; internal
+classes export their own beside these. The aliases are part of the surface [the compatibility promise](backward-compatibility.md)
+freezes for all of 2.x: a name will not be renamed or removed within 2.x.
+
+| Alias | Exported by | The shape |
+|---|---|---|
+| `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
+| `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
+| `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
+| `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |
+| `Metrics` | `Parser\Analysis\MetricsCollector` | `{counts: array<string, int>, total: int, maxDepth: int}` |
+| `WitnessArray` | `Redos\RedosWitness` | `{prefix, pump, suffix}` strings of the attack |
+| `SearchCostArray` | `Redos\RedosSearchCost` | degree, witness and replay of a search |
+| `AlphabetRange` | `Automata\Model\Dfa` | `{0: int, 1: int}` — code point range, both ends in |
+| `RangeTransition` | `Automata\Model\DfaState` | `{0: int, 1: int, 2: int}` — range start, end, target state |
+| `LintIssue`, `LintResult`, `LintStats`, `OptimizationEntry`, `FlattenedProblem` | `Linter\LintReport` | one lint result, its issue and optimization entries, a flattened problem |
+| `SvgPoint` … `SvgLayout` | `Explain\RailroadSvgRenderer` | the railroad diagram geometry |
+| `TargetDescription` | `Linter\Config\ProjectTarget` | `{php: string, pcre: string}` |
+| `TestCases` | `Generator\TestCaseGenerator` | `{matching: array<string>, non_matching: array<string>}` |
+| `AccessRule`, `AccessConflict`, `AccessSkip` | `Symfony\Security\SecurityAccessControlReport` | one security analysis report entry |
