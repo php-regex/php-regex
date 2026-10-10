@@ -16,6 +16,11 @@
   var desktop = window.matchMedia('(min-width: 1024px)');
   var overlay = null;
 
+  // Opening the drawer owns a history entry, so the Back button closes
+  // what was opened instead of leaving the page. The entry carries a
+  // marker: landing back on it (Back then Forward) reopens the drawer.
+  var ownsEntry = false;
+
   function isOpen() {
     return sidebar.classList.contains('open');
   }
@@ -36,9 +41,15 @@
     }
   }
 
-  function openDrawer() {
+  function openDrawer(push) {
     if (isOpen()) {
       return;
+    }
+    if (push !== false) {
+      try {
+        window.history.pushState({ overlay: 'drawer' }, '');
+        ownsEntry = true;
+      } catch (e) {}
     }
     setHidden(false);
     sidebar.classList.add('open');
@@ -104,7 +115,31 @@
     if (returnFocus) {
       toggle.focus();
     }
+    if (ownsEntry) {
+      ownsEntry = false;
+      window.history.back();
+    }
   }
+
+  window.addEventListener('popstate', function (event) {
+    var state = event.state;
+    if (state && state.overlay) {
+      // Landing on an overlay entry (the drawer's own, or the search
+      // dialog's stacked above it) never closes the drawer: its entry is
+      // still in the chain. Restore only when the entry is the drawer's.
+      if (state.overlay === 'drawer') {
+        ownsEntry = true;
+        if (!isOpen() && !desktop.matches) {
+          openDrawer(false);
+        }
+      }
+      return;
+    }
+    if (isOpen()) {
+      ownsEntry = false;
+      closeDrawer(false);
+    }
+  });
 
   toggle.addEventListener('click', function () {
     if (isOpen()) {
@@ -225,6 +260,26 @@
     anchor.textContent = '#';
     heading.appendChild(anchor);
   });
+
+  // A fragment jump should also move the keyboard with it: the element the
+  // reader lands on takes focus, so Tab continues from the place on screen
+  // instead of from the link that was followed. The scripted focus draws
+  // no ring for pointer users; keyboard users keep theirs.
+  function focusTarget() {
+    var id = window.location.hash.slice(1);
+    if (!id) {
+      return;
+    }
+    var el = document.getElementById(id);
+    if (!el || !main.contains(el)) {
+      return;
+    }
+    el.setAttribute('tabindex', '-1');
+    el.focus({ preventScroll: true });
+  }
+
+  window.addEventListener('hashchange', focusTarget);
+  focusTarget();
 
   if (!('IntersectionObserver' in window)) {
     return;

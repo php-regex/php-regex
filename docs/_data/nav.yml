@@ -1,4 +1,5 @@
 - title: Learn
+  url: /docs/#learn
   pages:
     - title: Documentation
       url: /docs/
@@ -9,6 +10,7 @@
     - title: Regex in PHP
       url: /guides/regex-in-php/
 - title: Integrations
+  url: /guides/
   pages:
     - title: PHPStan
       url: /guides/phpstan/
@@ -31,6 +33,7 @@
     - title: Troubleshooting
       url: /troubleshooting/
 - title: Concepts
+  url: /concepts/
   pages:
     - title: Key concepts
       url: /concepts/
@@ -43,6 +46,7 @@
     - title: PCRE
       url: /concepts/pcre/
 - title: Reference
+  url: /reference/
   pages:
     - title: Reference index
       url: /reference/
@@ -79,6 +83,7 @@
     - title: External References
       url: /reference/resources/
 - title: Internals
+  url: /docs/#internals
   pages:
     - title: Architecture
       url: /architecture/

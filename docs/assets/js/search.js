@@ -318,11 +318,22 @@
     }
   }
 
-  function openDialog() {
+  // Opening the dialog owns a history entry, so the Back button closes
+  // what was opened instead of leaving the page. The entry carries a
+  // marker: landing back on it (Back then Forward) restores the dialog.
+  var ownsEntry = false;
+
+  function openDialog(push) {
     if (dialogOpen) {
       return;
     }
     dialogOpen = true;
+    if (push !== false) {
+      try {
+        window.history.pushState({ overlay: 'search' }, '');
+        ownsEntry = true;
+      } catch (e) {}
+    }
     lastFocused = document.activeElement && document.activeElement !== document.body
       ? document.activeElement
       : toggle;
@@ -369,7 +380,26 @@
     } else {
       toggle.focus();
     }
+    if (ownsEntry) {
+      ownsEntry = false;
+      window.history.back();
+    }
   }
+
+  window.addEventListener('popstate', function (event) {
+    var state = event.state;
+    if (state && state.overlay === 'search') {
+      ownsEntry = true;
+      if (!dialogOpen) {
+        openDialog(false);
+      }
+      return;
+    }
+    if (dialogOpen) {
+      ownsEntry = false;
+      closeDialog();
+    }
+  });
 
   toggle.addEventListener('click', openDialog);
 

@@ -285,7 +285,7 @@ preg_match('/(a++)+b/', $input);
 **Fix:** Refactor to be deterministic, or use atomic groups/possessive quantifiers — but verify the rewrite still matches everything you need: when the inner part is ambiguous (`(?:ab|a)+b`), an atomic inner group removes the backtracking between iterations and can change the language.
 
 **Read more:**
-- [OWASP: ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
+- [OWASP: ReDoS](https://community.owasp.org/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 
 ---
 
@@ -1322,7 +1322,7 @@ preg_match('/(a++)+$/', $input);  // SAFE
 **Fix:** Make the ambiguous part atomic or possessive, or refactor.
 
 **Read more:**
-- [OWASP: Regular Expression Denial of Service](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
+- [OWASP: Regular Expression Denial of Service](https://community.owasp.org/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 
 ---
 

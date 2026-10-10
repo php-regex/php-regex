@@ -353,6 +353,20 @@ main .anchor:focus-visible {
   opacity: 1;
 }
 
+/* The heading a fragment lands on answers once it is the target: its rule
+   takes the accent and its anchor glyph shows, so the end of the jump is
+   visible without a flash. The state stays only while the hash points
+   there — a mark, not an animation. */
+main h2:target {
+  border-bottom-color: var(--amber);
+}
+
+main h2:target .anchor,
+main h3:target .anchor {
+  opacity: 1;
+  color: var(--amber);
+}
+
 main img {
   max-width: 100%;
   height: auto;

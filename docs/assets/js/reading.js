@@ -33,6 +33,13 @@
   button.addEventListener('click', function () {
     var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+    // The button hides itself at the top, so the keyboard must travel with
+    // the page: focus moves to the content, and Tab continues from the top
+    // instead of from wherever the reader was when they scrolled down.
+    var main = document.getElementById('main');
+    if (main) {
+      main.focus({ preventScroll: true });
+    }
   });
 
   window.addEventListener('scroll', place, { passive: true });

@@ -50,7 +50,7 @@ PHP's implementation of PCRE and language-specific features.
 | Resource                                                                                | Description                       |
 |-----------------------------------------------------------------------------------------|-----------------------------------|
 | [PHP PCRE Manual](https://www.php.net/manual/en/book.pcre.php)                          | PCRE extension reference |
-| [Pattern Syntax Reference](https://www.php.net/manual/en/regexp.reference.php)          | PHP pattern syntax                |
+| [Pattern Syntax Reference](https://www.php.net/manual/en/regexp.introduction.php)       | PHP pattern syntax                |
 | [Pattern Modifiers](https://www.php.net/manual/en/reference.pcre.pattern.modifiers.php) | Modifier documentation            |
 | [preg_last_error()](https://www.php.net/manual/en/function.preg-last-error.php)         | Error detection function          |
 | [preg_last_error_msg()](https://www.php.net/manual/en/function.preg-last-error-msg.php) | Error message function            |
@@ -69,9 +69,9 @@ Understanding and preventing Regular Expression Denial of Service attacks.
 
 | Resource                                                                                                                                     | Description                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|
-| [OWASP ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)                                          | Comprehensive ReDoS overview       |
+| [OWASP ReDoS](https://community.owasp.org/attacks/Regular_expression_Denial_of_Service_-_ReDoS)                                              | Comprehensive ReDoS overview       |
 | [Catastrophic Backtracking](https://www.regular-expressions.info/catastrophic.html)                                                          | Detailed explanation with examples |
-| [ReDoS Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Regular_Expression_Denial_of_Service_-_ReDoS_Prevention_Cheat_Sheet.html) | Prevention strategies              |
+| [OWASP Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)                        | Prevention strategies              |
 
 **Key concepts:**
 - Exponential vs polynomial backtracking
@@ -205,7 +205,7 @@ When referencing these sources in documentation or code comments:
 // https://www.pcre.org/current/doc/html/pcre2pattern.html
 
 // Based on: OWASP ReDoS Prevention
-// https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
+// https://community.owasp.org/attacks/Regular_expression_Denial_of_Service_-_ReDoS
 ```
 
 ---

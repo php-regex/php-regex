@@ -311,7 +311,7 @@ $safe2 = '/a+$/';
 $safe2b = '/(a|aa)++$/';
 ```
 
-Reordering is not a solution here — see [What Does NOT Fix It](#what-does-not-fix-it-reordering-alternatives) above: `/(aa|a)+$/` stays critical.
+Reordering is not a solution here — see [What Does NOT Fix It](#3-what-does-not-fix-it-reordering-alternatives) above: `/(aa|a)+$/` stays critical.
 
 ### Exercise 3: Test with PHPRegex
 
