@@ -14,6 +14,14 @@ sitemap: false
   text for those pages, and is idempotent for the rare page that was already
   converted earlier in the render order.
 
+  Sections: each entry also carries the sidebar section the page lives in,
+  resolved against the navigation data (a group title from nav.yml or
+  nav-tutorial.yml, matched by URL — the group's own URL counts too, so
+  /guides/ belongs to Integrations). The first path segment, capitalized,
+  is the fallback for a page the navigation does not list yet. Consumers
+  use it as a result breadcrumb; a client that does not know the field
+  simply ignores it.
+
   Not indexed:
     - the landing page (url "/"), the 404 page, and this file itself;
     - anything that is not an HTML page (the stylesheet, sitemap.xml,
@@ -30,8 +38,35 @@ sitemap: false
     {% assign html_page = true %}
   {% endif %}
   {% unless html_page == false or p.layout == 'redirect' or u == '/' or u contains '404' or u contains 'search-index' %}
+    {% assign section = '' %}
+    {% for group in site.data.nav %}
+      {% if group.url == u %}
+        {% assign section = group.title %}
+      {% endif %}
+      {% for item in group.pages %}
+        {% if item.url == u %}
+          {% assign section = group.title %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {% for group in site.data['nav-tutorial'] %}
+      {% if group.url == u %}
+        {% assign section = group.title %}
+      {% endif %}
+      {% for item in group.pages %}
+        {% if item.url == u %}
+          {% assign section = group.title %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {% if section == '' %}
+      {% assign head = u | remove_first: '/' | split: '/' | first %}
+      {% if head %}
+        {% assign section = head | capitalize %}
+      {% endif %}
+    {% endif %}
     {% if emitted %},{% endif %}{% assign emitted = true %}
-    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.content | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
   {% endunless %}
 {% endfor %}
 ]

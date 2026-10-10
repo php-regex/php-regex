@@ -1584,6 +1584,35 @@ main table::-webkit-scrollbar-thumb {
   overflow-wrap: anywhere;
 }
 
+/* The section the page lives in (Learn, Reference…), carried before the
+   title like the breadcrumb it is: quiet, soft, one size down. */
+.search-dialog li a .result-section {
+  font-size: .78rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+/* A measure of the page under the title — enough to tell two same-titled
+   pages apart, clamped to two lines so twelve results stay scannable. */
+.search-dialog li a .result-excerpt {
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Where the query landed: a wash of the accent over unchanged text —
+   padding at the hairline scale, square corners, both themes. */
+.search-dialog mark {
+  padding: 0 .05em;
+  color: inherit;
+  background: var(--amber-tint);
+}
+
 /* The panel carries everything that is not a result: the entry points
    offered before the first keystroke, and the way out when a term matches
    nothing. It sits where the results list sits, so opening the dialog
@@ -2175,6 +2204,38 @@ main > section:not([class]) > p:not(:has(a.button)) {
 
 .error-actions a {
   color: var(--ink);
+}
+
+/* The closest pages to the address that failed, proposed from the search
+   index when it can be fetched; without it the block stays hidden and the
+   page stands complete. */
+.error-suggest {
+  margin: 1.75rem 0 0;
+}
+
+.error-suggest-title {
+  margin: 0 0 .5rem;
+  font-size: .95rem;
+  color: var(--ink-soft);
+}
+
+.error-suggest ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .35rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.error-suggest a {
+  color: var(--ink);
+}
+
+.error-suggest-section {
+  font-size: .82rem;
+  color: var(--ink-soft);
 }
 
 /* ==========================================================================

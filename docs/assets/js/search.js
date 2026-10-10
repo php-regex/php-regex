@@ -73,11 +73,15 @@
             doc.title = decoder.value;
             decoder.innerHTML = doc.excerpt;
             doc.excerpt = decoder.value;
+            if (doc.section) {
+              decoder.innerHTML = doc.section;
+              doc.section = decoder.value;
+            }
           });
           var instance = new MiniSearchCtor({
             idField: 'url',
             fields: ['title', 'excerpt'],
-            storeFields: ['url', 'title'],
+            storeFields: ['url', 'title', 'excerpt', 'section'],
             boost: { title: 3 }
           });
           instance.addAll(documents);
@@ -146,6 +150,63 @@
     panel.textContent = '';
   }
 
+  // The words of the query, lowercased and deduplicated: what a result is
+  // marked with. The matching is literal and case-insensitive, so a term
+  // typed with regex syntax ("/^d+$/") simply marks nothing instead of
+  // breaking the list.
+  function queryTokens(term) {
+    var seen = Object.create(null);
+    var tokens = [];
+    term.toLowerCase().split(/\s+/).forEach(function (piece) {
+      if (piece && !seen[piece]) {
+        seen[piece] = true;
+        tokens.push(piece);
+      }
+    });
+    return tokens;
+  }
+
+  // Appends text to a node with every occurrence of a query token wrapped
+  // in <mark>. Everything is built from text nodes: the text reaches here
+  // already decoded, and no string is ever parsed as HTML on the way in.
+  // Longest token wins on overlapping matches; the earliest wins the rest.
+  function appendHighlighted(node, text, tokens) {
+    var lower = text.toLowerCase();
+    var live = tokens.filter(function (token) {
+      return lower.indexOf(token) !== -1;
+    });
+    if (live.length === 0) {
+      node.appendChild(document.createTextNode(text));
+      return;
+    }
+    var i = 0;
+    while (i < text.length) {
+      var at = -1;
+      var len = 0;
+      live.forEach(function (token) {
+        var found = lower.indexOf(token, i);
+        if (found === -1) {
+          return;
+        }
+        if (at === -1 || found < at || (found === at && token.length > len)) {
+          at = found;
+          len = token.length;
+        }
+      });
+      if (at === -1) {
+        node.appendChild(document.createTextNode(text.slice(i)));
+        break;
+      }
+      if (at > i) {
+        node.appendChild(document.createTextNode(text.slice(i, at)));
+      }
+      var marked = document.createElement('mark');
+      marked.textContent = text.slice(at, at + len);
+      node.appendChild(marked);
+      i = at + len;
+    }
+  }
+
   function render(hits, term) {
     results.textContent = '';
     active = -1;
@@ -168,6 +229,8 @@
       return;
     }
 
+    var tokens = queryTokens(term);
+
     hits.forEach(function (hit) {
       var item = document.createElement('li');
       item.setAttribute('role', 'option');
@@ -177,13 +240,25 @@
       var link = document.createElement('a');
       link.href = hit.url;
       var title = document.createElement('strong');
-      title.textContent = hit.title;
+      if (hit.section) {
+        var crumb = document.createElement('span');
+        crumb.className = 'result-section';
+        crumb.textContent = hit.section + ' ›';
+        title.appendChild(crumb);
+      }
+      appendHighlighted(title, hit.title, tokens);
+      link.appendChild(title);
+      if (hit.excerpt) {
+        var excerpt = document.createElement('span');
+        excerpt.className = 'result-excerpt';
+        appendHighlighted(excerpt, hit.excerpt, tokens);
+        link.appendChild(excerpt);
+      }
       var path = document.createElement('small');
       path.className = 'result-url';
       // Show the site path, not the absolute URL with whatever host
       // served the index (dev serve and production differ).
       path.textContent = hit.url.replace(/^https?:\/\/[^/]+/, '');
-      link.appendChild(title);
       link.appendChild(path);
       item.appendChild(link);
       results.appendChild(item);

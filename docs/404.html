@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Page not found
-description: "This PHPRegex address matched no page — search the documentation or start from the docs map or the guides index."
+title: No match
+description: "This PHPRegex address matched no page — the closest pages, the documentation search and the landmarks are one click away."
 permalink: /404.html
 sitemap: false
 ---
@@ -21,8 +21,12 @@ sitemap: false
     </g>
   </svg>
   <p class="error-code">404</p>
-  <h1>This address matched no page</h1>
-  <p class="error-sub">Like a pattern against the wrong subject, the URL found nothing to hold on to.</p>
+  <h1>No match.</h1>
+  <p class="error-sub">Like a pattern against the wrong subject, this address matched nothing — the URL may be mistyped, or the page may have moved.</p>
+  <div class="error-suggest" id="error-suggest" hidden>
+    <p class="error-suggest-title">You were probably looking for:</p>
+    <ul id="error-suggest-list"></ul>
+  </div>
   <p class="error-hint">Search for the page you meant — <kbd>Ctrl/⌘K</kbd> or the button — or start from a landmark:</p>
   <ul class="error-actions">
     <li><button type="button" class="button button-primary" data-search-open>Search the documentation</button></li>
@@ -32,3 +36,4 @@ sitemap: false
     <li><a class="button" href="/">Home</a></li>
   </ul>
 </div>
+<script defer src="/assets/js/suggest.js?v={{ site.time | date: '%s' }}"></script>
