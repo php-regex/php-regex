@@ -619,6 +619,68 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 ---
 
+### 8. Graph (Automaton)
+
+Print the automaton a pattern compiles to — Dot by default, Mermaid with `--format=mermaid`:
+
+```bash
+vendor/bin/regex graph '/ab?c/'
+```
+
+**Output:**
+```
+digraph NFA {
+  rankdir=LR;
+  node [shape=circle, fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=10];
+  start [shape=point, width=0];
+  start -> 0;
+  ...
+```
+
+The Mermaid form pastes straight into GitHub issues and pull requests:
+
+```bash
+vendor/bin/regex graph '/\d{3}-\d{4}/' --format=mermaid
+```
+
+---
+
+### 9. Redos (Measure the Cost)
+
+`analyze` proves the risk; `redos` measures it. It builds the attack input, runs the
+pattern on it, and reports the wall time and the failure mode — here, the backtrack
+limit giving out:
+
+```bash
+vendor/bin/regex redos '/(a+)+$/'
+```
+
+**Output:**
+```
+  [1/3] Patterns
+  Vulnerable
+      → /(a+)+$/
+
+  [2/3] Input
+  Source       : auto
+  Base length  : 51
+  Final length : 51
+  Iterations   : 1 (warmup 0)
+  Preview      : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
+
+  [3/3] Benchmark
+case     | result |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
+--------------------------------------------------------------------------------------------
+vuln     | error  |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
+```
+
+`--safe '<pattern>'` measures a fixed variant alongside, `--input` pins the subject,
+`--jit 0` forces the interpreter. See the [ReDoS guide](redos.md#confirmed-mode) for
+what a replay does and does not prove.
+
+---
+
 ## Symfony and Laravel Commands
 
 The Symfony bundle and the Laravel package expose the same engine as console

@@ -84,8 +84,8 @@ echo count($result->errors);  // 1
 **Yes.** PHPRegex is designed for CI/CD integration.
 
 ```bash
-# CLI linting
-vendor/bin/regex lint src/ --format=json > regex-issues.json
+# CLI linting; --redos adds the ReDoS findings the lint does not run by default
+vendor/bin/regex lint src/ --redos --format=json > regex-issues.json
 
 # Fail on any error-severity issue
 if [ "$(jq '[.results[] | .issues[] | select(.severity == "error")] | length' regex-issues.json)" -eq 0 ]; then
@@ -96,10 +96,14 @@ else
 fi
 ```
 
+A ReDoS finding is a `warning` in the default theoretical mode; it turns into the
+`error` the gate above fails on when `--redos-mode=confirmed` replays the attack
+on the engine and reproduces a `high`-or-above verdict.
+
 ```yaml
 # GitHub Actions example
 - name: Run PHPRegex
-  run: vendor/bin/regex lint src/ --format=github
+  run: vendor/bin/regex lint src/ --redos --format=github
 ```
 
 The exit code fails the job: `0` clean, `1` errors found, `2` unusable configuration or command line. See

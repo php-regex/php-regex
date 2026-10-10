@@ -184,7 +184,8 @@ cannot be used (see [the CLI guide](cli.md#exit-codes)).
 linted paths when `paths` names none, and in the application's `vendor/`,
 whatever `exclude` says; a project declaration wins over a copy in
 `vendor/`. A call to one is linted as a `preg_*()` call (see
-[the CLI guide](cli.md#patterns-behind-a-wrapper)).
+[the CLI guide](cli.md#patterns-behind-a-wrapper)); every rule it can report
+is catalogued in [Lint rules](../reference/rules.md).
 
 ## ReDoS findings
 

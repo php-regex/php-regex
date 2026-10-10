@@ -34,8 +34,13 @@ under `vendor/php-regex/php-regex/src/PHPStan/`.
 
 PHPStan already reports every pattern the PHP running it cannot compile
 (identifier `regexp.pattern`). The extension does not report those again. It
-reports a pattern the running PHP compiles but the target refuses, as a
-pattern using syntax a newer PCRE2 added:
+reports a pattern the running PHP compiles but the target refuses, as this
+code under `phpVersion: 80200` — `(?aD)` is an option PCRE2 added in 10.43,
+which PHP bundles from 8.4:
+
+```php
+preg_match('/(?aD)x/', 'x');
+```
 
 ```
 Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid group modifier syntax at position 2.
@@ -112,7 +117,9 @@ includes:
 {: data-file="phpstan.neon" }
 
 Without extension-installer, include both `extension.neon` and `rules.neon`.
-Each check can also be switched on its own (see below).
+Each check can also be switched on its own (see below). Every rule — when each
+fires, its message, its severity and its fix — is catalogued in
+[Lint rules](../reference/rules.md).
 
 ReDoS analysis in PHPStan is theoretical: it reads the pattern and never runs
 it inside PHPStan.
