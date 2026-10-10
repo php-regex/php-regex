@@ -205,6 +205,29 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('::warning', $lines[1]);
     }
 
+    #[Test]
+    public function test_format_leaves_the_column_property_out_when_the_key_is_absent(): void
+    {
+        $problem = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Invalid regex pattern', 'regex.syntax.error', 5, 'some snippet', 'Fix the pattern');
+
+        // As the JUnit build writes it: no column key at all.
+        $result = [
+            'file' => '/path/to/file.php',
+            'line' => 10,
+            'pattern' => '/test/',
+            'issues' => [],
+            'optimizations' => [],
+            'problems' => [$problem],
+        ];
+
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+
+        $output = $this->formatter->format($report);
+
+        $this->assertStringContainsString('file=/path/to/file.php,line=10,', $output);
+        $this->assertStringNotContainsString('col=', $output);
+    }
+
     public function test_format_with_empty_file(): void
     {
         $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);

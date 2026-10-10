@@ -18,6 +18,7 @@ use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CheckstyleFormatterTest extends TestCase
@@ -323,5 +324,38 @@ final class CheckstyleFormatterTest extends TestCase
 
         $this->assertStringContainsString('source="php-regex"', $output);
         $this->assertStringContainsString('Simple message', $output);
+    }
+
+    #[Test]
+    public function test_format_leaves_the_column_out_when_the_key_is_absent(): void
+    {
+        $problem = new Diagnostic(
+            DiagnosticType::Syntax,
+            LintSeverity::Error,
+            'Invalid regex pattern',
+            'regex.syntax.error',
+            5,
+            'some > snippet',
+            'Fix the pattern',
+        );
+
+        // As the JUnit build writes it: no column key at all.
+        $result = [
+            'file' => '/path/to/file.php',
+            'line' => 10,
+            'source' => 'preg_match',
+            'pattern' => '/test/',
+            'location' => 'in function call',
+            'issues' => [],
+            'optimizations' => [],
+            'problems' => [$problem],
+        ];
+
+        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
+
+        $output = $this->formatter->format($report);
+
+        $this->assertStringContainsString('line="10"', $output);
+        $this->assertStringNotContainsString('column=', $output);
     }
 }

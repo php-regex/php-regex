@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
@@ -29,18 +30,11 @@ use PHPRegex\Redos\RedosSeverity;
  *
  * @internal
  *
- * @phpstan-type LintIssue array{type: string, message: string, file: string, line: int, column?: int|null, fileOffset?: int|null, position?: int|null, issueId?: string, hint?: string|null, tip?: string|null, source?: string, pattern?: string, regex?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}|null}
- * @phpstan-type OptimizationEntry array{
- *     file: string,
- *     line: int,
- *     column?: int|null,
- *     fileOffset?: int|null,
- *     optimization: OptimizationResult,
- *     savings: int,
- *     source?: string
- * }
- * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int}
+ * @phpstan-import-type TargetDescription from ProjectTarget
+ * @phpstan-import-type LintIssue from LintReport
+ * @phpstan-import-type OptimizationEntry from LintReport
+ * @phpstan-import-type LintResult from LintReport
+ * @phpstan-import-type LintStats from LintReport
  */
 final readonly class LintService
 {

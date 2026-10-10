@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -29,13 +30,14 @@ use PHPRegex\Parser\Internal\JsonEncodingFailure;
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type OptimizationEntry from LintReport
+ * @phpstan-import-type TargetDescription from ProjectTarget
  *
  * @internal
  */
 final class JsonFormatter extends AbstractOutputFormatter
 {
     /**
-     * @param array{php: string, pcre: string, source: string, range?: list<array{php: string, pcre: string}>}|null $target the PHP and PCRE2 the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
+     * @param array{php: string, pcre: string, source: string, range?: list<TargetDescription>}|null $target the PHP and PCRE2 the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
      */
     public function __construct(OutputConfiguration $config = new OutputConfiguration(), private readonly ?array $target = null)
     {

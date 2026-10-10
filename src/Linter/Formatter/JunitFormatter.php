@@ -20,16 +20,8 @@ use PHPRegex\Linter\LintSeverity;
 /**
  * JUnit XML output formatter.
  *
+ * @phpstan-import-type FlattenedProblem from LintReport
  * @phpstan-import-type LintResult from LintReport
- *
- * @phpstan-type FlattenedProblem array{
- *     file: string,
- *     line: int,
- *     source?: string|null,
- *     pattern?: string|null,
- *     location?: string|null,
- *     problem: Diagnostic
- * }
  *
  * @internal
  */

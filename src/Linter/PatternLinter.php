@@ -54,6 +54,8 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 /**
  * Lints regex patterns for semantic issues like useless flags.
  *
+ * @phpstan-import-type CapturingGroupInfo from GroupIndex
+ *
  * @extends AbstractNodeVisitor<Node\NodeInterface>
  */
 final class PatternLinter extends AbstractNodeVisitor
@@ -89,12 +91,12 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $definedNamedGroups = [];
 
     /**
-     * @var array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>
+     * @var array<int, CapturingGroupInfo>
      */
     private array $capturingGroups = [];
 
     /**
-     * @var array<string, array<int, array{node: GroupNode, start: int, end: int, alternation: array<string, int>, alwaysEmpty: bool}>>
+     * @var array<string, array<int, CapturingGroupInfo>>
      */
     private array $capturingGroupsByName = [];
 

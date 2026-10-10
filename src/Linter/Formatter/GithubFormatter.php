@@ -20,17 +20,8 @@ use PHPRegex\Linter\LintSeverity;
 /**
  * GitHub Actions output formatter.
  *
+ * @phpstan-import-type FlattenedProblem from LintReport
  * @phpstan-import-type LintResult from LintReport
- *
- * @phpstan-type FlattenedProblem array{
- *     file: string,
- *     line: int,
- *     column: int|null,
- *     source?: string|null,
- *     pattern?: string|null,
- *     location?: string|null,
- *     problem: Diagnostic
- * }
  *
  * @internal
  */
@@ -95,7 +86,7 @@ final class GithubFormatter extends AbstractOutputFormatter
         $line = $entry['line'];
         // The column of the pattern in the file, as the JSON report gives
         // it; a position inside the pattern is not one.
-        $column = $entry['column'];
+        $column = $entry['column'] ?? null;
         $title = $this->formatProblemTitle($problem);
         $message = $this->formatProblemMessage($problem, $entry);
 

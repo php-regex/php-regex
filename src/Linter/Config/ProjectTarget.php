@@ -42,6 +42,8 @@ use PHPRegex\Parser\RegexParser;
  * and the running PHP is used.
  *
  * @internal
+ *
+ * @phpstan-type TargetDescription array{php: string, pcre: string}
  */
 final readonly class ProjectTarget
 {
@@ -197,7 +199,7 @@ final readonly class ProjectTarget
      * A target as the JSON report names it: the PHP as major.minor, or
      * major.minor.patch when the patch is not 0, and the PCRE2 release.
      *
-     * @return array{php: string, pcre: string}
+     * @return TargetDescription
      */
     public static function describe(PcreTarget $target): array
     {
@@ -255,7 +257,7 @@ final readonly class ProjectTarget
     }
 
     /**
-     * @return array{php: string, pcre: string, source: string, range: list<array{php: string, pcre: string}>}
+     * @return array{php: string, pcre: string, source: string, range: list<TargetDescription>}
      */
     public function toArray(): array
     {

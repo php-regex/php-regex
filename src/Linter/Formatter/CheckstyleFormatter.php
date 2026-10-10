@@ -20,17 +20,8 @@ use PHPRegex\Linter\LintSeverity;
 /**
  * Checkstyle XML output formatter.
  *
+ * @phpstan-import-type FlattenedProblem from LintReport
  * @phpstan-import-type LintResult from LintReport
- *
- * @phpstan-type FlattenedProblem array{
- *     file: string,
- *     line: int,
- *     column: int|null,
- *     source?: string|null,
- *     pattern?: string|null,
- *     location?: string|null,
- *     problem: Diagnostic
- * }
  *
  * @internal
  */
@@ -57,7 +48,8 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                 $line = $this->normalizeLine((int) $entry['line']);
                 // The column of the pattern in the file, as the JSON report
                 // gives it; the attribute is optional, left out when unknown.
-                $column = null !== $entry['column'] ? \sprintf(' column="%d"', $entry['column']) : '';
+                $entryColumn = $entry['column'] ?? null;
+                $column = null !== $entryColumn ? \sprintf(' column="%d"', $entryColumn) : '';
                 $severity = $this->mapCheckstyleSeverity($problem->severity);
                 $message = $this->formatProblemMessage($problem, $entry);
                 $source = $this->formatCheckstyleSource($problem);

@@ -46,6 +46,9 @@ use PHPRegex\Redos\RedosSeverity;
  * Handles regex-related analysis and transformations.
  *
  * @internal
+ *
+ * @phpstan-import-type LintIssue from LintReport
+ * @phpstan-import-type OptimizationEntry from LintReport
  */
 final readonly class AnalysisService
 {
@@ -160,8 +163,9 @@ final readonly class AnalysisService
 
     /**
      * @param array<PatternOccurrence> $patterns
+     * @param callable(): void|null    $progress called once per analysed pattern, with no arguments
      *
-     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}}>
+     * @return array<LintIssue>
      */
     public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
     {
@@ -200,7 +204,7 @@ final readonly class AnalysisService
      * @param OptimizerOptions|null    $options  what an optimization may rewrite; by default, what lint
      *                                           allows, every rewrite checked with the automata
      *
-     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
+     * @return array<OptimizationEntry>
      */
     public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1): array
     {
@@ -234,7 +238,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{type: string, file: string, line: int, column: int|null, fileOffset?: int|null, position?: int|null, message: string, issueId?: string, hint?: string|null, tip?: string|null, source?: string, analysis?: RedosAnalysis, validation?: ValidationResult, target?: array{php: string, pcre: string}}>
+     * @phpstan-return array<LintIssue>
      */
     private function lintChunk(array $patterns, ?callable $progress = null): array
     {
@@ -570,7 +574,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}>
+     * @return array<OptimizationEntry>
      */
     private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options): array
     {
