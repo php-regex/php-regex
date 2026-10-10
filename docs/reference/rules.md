@@ -1428,7 +1428,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Quantifiers | `regex.lint.quantifier.emptyRepeat`, `.possessiveImpossible`                              | warning  | Fix the repeated item             |
 | Quantifiers | `regex.lint.quantifier.lazyToClass` (off by default)                                      | perf     | Use a negated class               |
 | Quantifiers | `regex.lint.quantifier.uselessLazy` (off by default)                                      | style    | Drop the `?`                      |
-| Lookarounds | `regex.lint.lookaround.edgeQuantifier` (off by default)                                   | perf     | Keep the minimum count            |
+| Quantifiers | `regex.lint.lookaround.edgeQuantifier` (off by default)                                   | perf     | Keep the minimum count            |
 | Groups      | `regex.lint.group.redundant`, `.empty`                                                    | warning  | Remove the group                  |
 | Groups      | `regex.lint.group.alwaysEmptyCapture`                                                     | warning  | Narrow what precedes the group    |
 | Lookarounds | `regex.lint.lookaround.impossible`                                                        | warning  | Fix the lookahead                 |

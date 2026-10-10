@@ -9,9 +9,17 @@
       url: /tutorial/
     - title: Regex in PHP
       url: /guides/regex-in-php/
+    - title: ReDoS guide
+      url: /guides/redos/
+    - title: Cookbook
+      url: /cookbook/
+    - title: Troubleshooting
+      url: /troubleshooting/
 - title: Integrations
   url: /guides/
   pages:
+    - title: All guides
+      url: /guides/
     - title: PHPStan
       url: /guides/phpstan/
     - title: Psalm
@@ -26,12 +34,6 @@
       url: /guides/lsp/
     - title: CLI
       url: /guides/cli/
-    - title: ReDoS guide
-      url: /guides/redos/
-    - title: Cookbook
-      url: /cookbook/
-    - title: Troubleshooting
-      url: /troubleshooting/
 - title: Concepts
   url: /concepts/
   pages:

@@ -34,6 +34,9 @@ It is written for the authors of PHP tools — static-analysis extensions, frame
 - [Quick Start](quick-start.md) - Install and a first analysis in a few runnable steps.
 - [Regex 101 tutorial](tutorial/README.md) - Ten chapters, from literals to real-world PHP.
 - [Regex in PHP](guides/regex-in-php.md) - How PCRE behaves inside `preg_*`.
+- [ReDoS guide](guides/redos.md) - Verdicts, guarantees, confirmed mode, fixes.
+- [Cookbook](cookbook.md) - Practical patterns and examples.
+- [Troubleshooting](troubleshooting.md) - Common errors and how to fix them.
 
 ### Integrations
 
@@ -46,9 +49,6 @@ The [guides index](guides/index.md) lists every integration on one page.
 - [Symfony](guides/symfony.md) - Bundle, service, and console commands.
 - [LSP](guides/lsp.md) - Diagnostics, hovers, completions and code actions in any editor.
 - [CLI](guides/cli.md) - Sixteen subcommands, configuration, output formats, CI recipes.
-- [ReDoS guide](guides/redos.md) - Verdicts, guarantees, confirmed mode, fixes.
-- [Cookbook](cookbook.md) - Practical patterns and examples.
-- [Troubleshooting](troubleshooting.md) - Common errors and how to fix them.
 
 ### Concepts
 
