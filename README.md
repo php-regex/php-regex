@@ -7,9 +7,7 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/php-regex/php-regex/actions/workflows/ci.yml"><img src="https://github.com/php-regex/php-regex/actions/workflows/ci.yml/badge.svg?branch=2.x" alt="CI Status Badge"></a>
     <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
-    <a href="https://phpstan.org/"><img src="https://img.shields.io/badge/PHPStan-level%20max-brightgreen.svg" alt="PHPStan Level Badge"></a>
     <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
     <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
     <a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="License Badge"></a>
