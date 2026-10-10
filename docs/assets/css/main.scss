@@ -159,6 +159,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* No grey iOS tap flash: the active states carry the feedback. */
+  -webkit-tap-highlight-color: transparent;
   /* Reserve the scrollbar lane on every page: long and short pages keep
      the same content width, nothing shifts when a scrollbar appears. */
   scrollbar-gutter: stable;

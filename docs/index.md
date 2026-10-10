@@ -19,6 +19,7 @@ description: "PHPRegex parses every PCRE pattern into an AST and answers what it
       <div class="install"><pre><code>composer require php-regex/php-regex:2.x-dev</code></pre></div>
     </div>
     <p class="hero-sub">New to regex? There is a <a href="/tutorial/">ten-chapter tutorial</a>.</p>
+    <p class="hero-sub">PHP 8.2+ · PCRE2 10.49 · MIT — parsed, linted and proven against a corpus of 170+ real-world codebases: Laravel, Symfony, WordPress, PHPUnit…</p>
     <div class="terminal">
       <div class="terminal-bar">regex analyze</div>
       <pre class="terminal-body"><span class="command">$ vendor/bin/regex analyze '/^(?:a+)+$/'</span>

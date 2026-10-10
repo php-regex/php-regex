@@ -1,0 +1,54 @@
+name: Docs links
+
+on:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  external-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: docs
+      - name: Build the docs site
+        working-directory: docs
+        run: bundle exec jekyll build
+      - name: Check every external link
+        run: |
+          python3 - <<'PY'
+          import glob, re, subprocess, sys
+
+          urls = set()
+          for page in glob.glob('docs/_site/**/*.html', recursive=True):
+              for match in re.finditer(r'(?:href|src)="(https?://[^"]+)"', open(page).read()):
+                  urls.add(match.group(1))
+
+          # Hosts that answer 403/429 to scripts but serve browsers fine.
+          tolerated = ('www.npmjs.com', 'docs.sonarsource.com', 'github.com')
+
+          dead = []
+          for url in sorted(urls):
+              status = ''
+              for extra_args in (['-I'], ['-L']):
+                  result = subprocess.run(
+                      ['curl', '--max-time', '20', '--retry', '2', '--retry-delay', '2',
+                       '-sS', '-o', '/dev/null', '-w', '%{http_code}',
+                       '-A', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'] + extra_args + [url],
+                      capture_output=True, text=True)
+                  status = result.stdout.strip()
+                  if status.startswith(('2', '3')):
+                      break
+              if status.startswith(('2', '3')):
+                  continue
+              if status in ('403', '429') and any(host in url for host in tolerated):
+                  continue
+              dead.append((status or 'no-answer', url))
+
+          for status, url in dead:
+              print(f'{status}  {url}')
+          print(f'{len(urls)} external links checked, {len(dead)} dead')
+          sys.exit(1 if dead else 0)
+          PY
