@@ -57,7 +57,10 @@
  * both below every threshold we honor, so each theme keeps its own.
  * --amber-tint and --amber-deep extend the same accent into the two states
  * a filled button needs: a wash behind text that already holds its own
- * contrast, and a hover step of 6.77 (light) / 6.91 (dark) against paper.
+ * contrast, and a hover step of 6.79 (light) / 6.91 (dark) against paper.
+ * --link-line is the underline only, never the text: 4.22 on light paper,
+ * 4.68 on dark — both above the 3:1 a non-text graphical object needs,
+ * while the words it sits under stay at full ink.
    ========================================================================== */
 
 @mixin tokens-light {
@@ -496,28 +499,45 @@ main tbody tr:hover {
 /* A wide table is a scroll box on a narrow screen, and a scroll box with no
    tell reads as a table that is broken. The page script marks the tables
    that really do overflow and keeps only the cut edge marked while it
-   scrolls. The veil is the paper itself: the background of a scrolling box
-   does not scroll with its content, so it holds still while the columns
-   move under it. */
-main table[data-scroll='right'] {
-  background-image: linear-gradient(to left, var(--paper), transparent);
-  background-position: right center;
-  background-repeat: no-repeat;
-  background-size: 2.5rem 100%;
+   scrolls; the mask lives in the cut-edge block below. */
+
+/* ---- The cut edge -------------------------------------------------------
+ * A wide table and a long code line both scroll, and a scroll box with no
+ * tell reads as a box that is broken. The stylesheet paints the tell from
+ * the attribute the page script sets, and only the edge that really is cut
+ * stays marked while the box scrolls.
+ *
+ * A gradient in the background cannot do it: a background paints *behind*
+ * the content, so a paper-coloured gradient over paper-coloured paper is
+ * invisible and hides nothing. The tell has to live in front of the
+ * content, which is what a mask is — it applies to the element's whole
+ * painted output, border included, so the cut edge dissolves toward
+ * whatever is behind the panel. The mask box is the element's own border
+ * box, so it stays put while the content moves under it.
+ *
+ * forced-colors strips masks whole; there the panel keeps its full edge
+ * and the scrollbar is the tell, exactly as before.
+   -------------------------------------------------------------------------- */
+
+main table[data-scroll='right'],
+main pre[data-scroll='right'],
+.terminal-body[data-scroll='right'] {
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
 }
 
-main table[data-scroll='left'] {
-  background-image: linear-gradient(to right, var(--paper), transparent);
-  background-position: left center;
-  background-repeat: no-repeat;
-  background-size: 2.5rem 100%;
+main table[data-scroll='left'],
+main pre[data-scroll='left'],
+.terminal-body[data-scroll='left'] {
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
 }
 
-main table[data-scroll='both'] {
-  background-image: linear-gradient(to right, var(--paper), transparent), linear-gradient(to left, var(--paper), transparent);
-  background-position: left center, right center;
-  background-repeat: no-repeat, no-repeat;
-  background-size: 2.5rem 100%, 2.5rem 100%;
+main table[data-scroll='both'],
+main pre[data-scroll='both'],
+.terminal-body[data-scroll='both'] {
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 2.5rem, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 2.5rem, rgba(0, 0, 0, 1) calc(100% - 2.5rem), rgba(0, 0, 0, 0) 100%);
 }
 
 main caption {
@@ -550,8 +570,12 @@ main pre,
   color: var(--code-ink);
 }
 
-/* Keep the first line clear of the copy chip. */
-main pre.has-copy {
+/* Keep the first line clear of the copy chip. The chip is a child of the
+   block, not of the scrolling pre: a mask on the pre (see the cut-edge
+   block) applies to everything the pre paints, and a chip that faded with
+   the text would stop looking like a control. */
+main pre.has-copy,
+.highlighter-rouge.has-copy pre {
   padding-right: 4.5rem;
 }
 
@@ -565,7 +589,7 @@ main pre code,
 }
 
 /* Rouge token roles. */
-.highlight .c, .highlight .cm, .highlight .c1, .highlight .cs,
+.highlight .c, .highlight .cm, .highlight .c1, .highlight .cs, .highlight .cd,
 .highlight .cp, .highlight .cpf {
   color: var(--tk-com);
   font-style: italic;
@@ -598,7 +622,7 @@ main pre code,
   font-weight: 600;
 }
 
-.highlight .o, .highlight .p {
+.highlight .o, .highlight .p, .highlight .err {
   color: var(--tk-punct);
 }
 
@@ -971,6 +995,22 @@ main table::-webkit-scrollbar-thumb {
   white-space: nowrap;
 }
 
+/* The version pill beside the brand name: reads as part of the wordmark,
+   stays a quiet outline so it never competes with the nav. Square corners
+   like every other chip in the sheet — the kbd chip is its closest
+   relative — because this file honours no border-radius anywhere. */
+.version-tag {
+  flex: none;
+  padding: .08rem .5rem;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font-size: .72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
 .site-header nav {
   display: flex;
   align-items: center;
@@ -1125,6 +1165,32 @@ main table::-webkit-scrollbar-thumb {
    destination and never needs to show it. */
 .github-only {
   display: none;
+}
+
+/* ---- Tutorial banner ----------------------------------------------------
+ * The tutorial track's one piece of page furniture: a reader who arrived
+ * from the documentation map and wants the reference instead is one click
+ * from where they are. It is a panel in the accent wash, not a callout in
+ * the article flow — the ink stays soft and the frame stays --line, so it
+ * reads as navigation rather than as something the chapter is asserting.
+   -------------------------------------------------------------------------- */
+
+.tutorial-banner {
+  margin-block: 0 2rem;
+  padding: .75rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--amber-tint);
+}
+
+.tutorial-banner p {
+  margin: 0;
+  font-size: .92rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tutorial-banner a {
+  color: var(--amber);
 }
 
 /* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */
@@ -1461,6 +1527,15 @@ main table::-webkit-scrollbar-thumb {
   gap: 2rem;
 }
 
+.footer-group {
+  /* A grid item's automatic minimum is its longest unbreakable run, so a
+     column holding the composer command could outgrow the 13rem track it
+     was given. The wrap rule on the code below already breaks the command
+     itself; this stops the column from being asked to hold more than its
+     share while it does. */
+  min-width: 0;
+}
+
 .footer-title {
   display: flex;
   align-items: center;
@@ -1538,6 +1613,20 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--line);
+  /* The platform search field brings its own rounded chrome and its own
+     clear button, neither of which belongs to a square-corner system;
+     the dialog handles clearing on Escape, and the panel below offers
+     the way out. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* The native clear control is a rounded foreign object inside a 1px
+   square panel; Escape clears instead, and the status line says so. */
+.search-dialog input[type='search']::-webkit-search-cancel-button,
+.search-dialog input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .search-dialog input[type='search']::placeholder {
@@ -1755,17 +1844,36 @@ main > section:not([class]) p > a.button:focus-visible {
 }
 
 /* The text stack keeps its own rhythm whatever .hero-inner becomes: the
-   grid gap above used to carry it, now the copy column carries it. */
+   grid gap above used to carry it, now the copy column carries it. On a
+   wide screen the column is as tall as the terminal panel beside it, so
+   the rows are sized to their content and stacked from the top; the
+   closing lines then take the leftover space for themselves. */
 .hero-copy {
   display: grid;
   gap: 2rem;
+  align-content: start;
 }
 
-/* Desktop: copy column in column one, terminal panel in column two. */
+/* The two closing sentences of the hero — the tutorial pointer and the
+   version/licence line — are the secondary half of the pitch. They sit
+   against the bottom of the copy column, so the tall terminal panel does
+   not leave a dead column of paper between them and the next section.
+   With no leftover height (a narrow screen) the margin resolves to zero
+   and the stack stays as it was. */
+.hero-foot {
+  display: grid;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+/* Desktop: copy column in column one, terminal panel in column two.
+   The two columns are stretched to the shared row: the copy column needs
+   the full height to have somewhere to put its closing lines, and the
+   terminal panel centers against that height instead of stretching it. */
 @media (min-width: 1024px) {
   .hero-inner {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
+    align-items: stretch;
   }
 
   .hero-inner > .terminal {
@@ -1857,8 +1965,51 @@ main > section:not([class]) p > a.button:focus-visible {
 }
 
 /* The install box already reserves room for the copy chip. */
-.install pre.has-copy {
+.install.has-copy pre {
   padding-right: 0;
+}
+
+/* ---- Installation block -------------------------------------------------
+ * The one block every how-to page opens with, and the command the reader
+ * came for. It is a label and a panel, not two sections: the title is the
+ * eyebrow language the sidebar and the footer already speak, and the
+ * command sits in the install box directly beneath it. A section title
+ * here drew a ruled heading and then a bordered panel for one idea — two
+ * boxes stacked, each claiming to be the heading of the other.
+   -------------------------------------------------------------------------- */
+
+.install-block {
+  margin: 2.5rem 0 2.5rem;
+}
+
+.install-block > h2 {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0 0 .75rem;
+  padding: 0;
+  border-bottom: 0;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* The same amber square the nav titles and the footer titles carry. */
+.install-block > h2::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  flex: none;
+  background: var(--amber);
+}
+
+/* The eyebrow has no rule of its own, so the target of a fragment answers
+   in the one place it can: the words. */
+.install-block > h2:target {
+  color: var(--amber);
 }
 
 /* Facts strip. */
@@ -2153,13 +2304,19 @@ main > section:not([class]) > p:not(:has(a.button)) {
    404
    ========================================================================== */
 
+/* The one page that carries no rails: full-bleed, the page gutter as its
+   only margin, so the mark, the code and the way out all read against the
+   same centered column the header already aligns to. The height fills the
+   screen below the header and the footer, so the page never looks like
+   content stranded at the top of a short box. */
 .error-page {
   padding: var(--pad-hero) var(--gutter);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 55vh;
+  min-height: calc(100vh - var(--header-h) - 18rem);
+  min-height: calc(100dvh - var(--header-h) - 18rem);
   text-align: center;
 }
 
@@ -2322,6 +2479,15 @@ main > section:not([class]) > p:not(:has(a.button)) {
   table {
     white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  /* Nothing overflows on paper, and a mask left over from the screen
+     would only dissolve the edge of a panel that now fits. */
+  main table[data-scroll],
+  main pre[data-scroll],
+  .terminal-body[data-scroll] {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   pre,
@@ -2518,5 +2684,16 @@ body.search-open {
 
   main blockquote {
     border-left: 3px solid CanvasText;
+  }
+
+  /* A filled button's fill collapses to Canvas in a stripped palette, and
+     the outline button next to it would look identical. The edge stays
+     stated, so the one action per view is still the loudest control. */
+  .button-primary,
+  .button--primary,
+  .hero-ctas > a.button:first-of-type,
+  main > section:not([class]) p > a.button {
+    border-color: CanvasText;
+    border-width: 2px;
   }
 }

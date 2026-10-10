@@ -13,6 +13,7 @@
       </g>
     </svg>
     <span class="brand-name">PHPRegex</span>
+    <span class="version-tag">2.x</span>
   </a>
   <nav aria-label="Main">
     {%- comment -%}
@@ -23,14 +24,14 @@
     {%- endcomment -%}
     {%- assign here = 'docs' -%}
     {%- if page.url contains '/guides/' %}{% assign here = 'guides' %}{% endif -%}
-    {%- if page.layout == 'landing' or page.url contains '404' %}{% assign here = '' %}{% endif -%}
+    {%- if page.layout == 'landing' or page.layout == 'error' %}{% assign here = '' %}{% endif -%}
     <a href="/docs/"{% if here == 'docs' %} aria-current="page"{% endif %}>Docs</a>
     <a href="/guides/"{% if here == 'guides' %} aria-current="page"{% endif %}>Guides</a>
     <a href="https://github.com/php-regex/php-regex">GitHub</a>
   </nav>
   <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
   <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>
-  {% unless page.layout == 'landing' %}
+  {% unless page.layout == 'landing' or page.layout == 'error' %}
   <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg>Menu</button>
   {% endunless %}
 </header>
