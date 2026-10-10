@@ -18,21 +18,28 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every "Read more" link of a lint issue lands on a heading of the
- * reference: an anchor GitHub does not generate opens the top of the page.
+ * Every "Read more" link of an issue lands on a page of the docs that
+ * exists, on a heading that page generates: an anchor GitHub does not
+ * generate opens the top of the page, a page the restructure removed
+ * opens a 404.
  */
 final class RegexPatternRuleDocLinksTest extends TestCase
 {
-    private const REFERENCE = __DIR__.'/../../../../docs/reference.md';
+    private const REPO_URL_PREFIX = 'https://github.com/php-regex/php-regex/blob/2.x/';
+
+    private const DOCS_ROOT = __DIR__.'/../../../../docs/';
 
     #[Test]
-    public function test_every_lint_doc_link_names_a_heading_of_the_reference(): void
+    public function test_every_doc_link_lands_on_an_existing_page_and_heading(): void
     {
-        $anchors = self::headingAnchors();
+        $anchorsByPage = [];
 
-        foreach (self::lintDocLinks() as $issueId => $url) {
+        foreach (self::allDocLinks() as $issueId => $url) {
+            $page = self::docsPage($issueId, $url);
+            $anchorsByPage[$page] ??= self::headingAnchors($page);
+
             $fragment = (string) parse_url($url, \PHP_URL_FRAGMENT);
-            $this->assertContains($fragment, $anchors, \sprintf('%s links to #%s, which no heading of docs/reference.md generates.', $issueId, $fragment));
+            $this->assertContains($fragment, $anchorsByPage[$page], \sprintf('%s links to %s#%s, which no heading of docs/%s generates.', $issueId, $page, $fragment, $page));
         }
     }
 
@@ -84,21 +91,77 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     }
 
     /**
+     * The concepts a fix suggests link to the pages that teach them since
+     * the reference stopped repeating the tutorial.
+     */
+    #[Test]
+    public function test_the_advanced_concepts_link_to_their_tutorial_chapters(): void
+    {
+        $links = self::constantMap('DOC_LINKS');
+
+        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance', $links['possessive quantifiers']);
+        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/08-performance-redos.md#1-atomic-groups-', $links['atomic groups']);
+        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/06-lookarounds.md#types-of-lookarounds', $links['lookahead']);
+        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/06-lookarounds.md#types-of-lookarounds', $links['lookbehind']);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function allDocLinks(): array
+    {
+        return array_merge(
+            self::constantMap('DOC_LINKS'),
+            self::lintDocLinks(),
+        );
+    }
+
+    /**
      * @return array<string, string>
      */
     private static function lintDocLinks(): array
     {
-        $links = (new \ReflectionClass(PatternChecker::class))->getConstant('LINT_DOC_LINKS');
-        self::assertIsArray($links);
+        return self::constantMap('LINT_DOC_LINKS');
+    }
 
+    /**
+     * A map constant of PatternChecker, asserted into a map of strings.
+     *
+     * @return array<string, string>
+     */
+    private static function constantMap(string $name): array
+    {
+        $map = (new \ReflectionClass(PatternChecker::class))->getConstant($name);
+        self::assertIsArray($map);
+
+        return self::typedStringMap($map);
+    }
+
+    /**
+     * @param array<mixed> $map
+     *
+     * @return array<string, string>
+     */
+    private static function typedStringMap(array $map): array
+    {
         $typed = [];
-        foreach ($links as $issueId => $url) {
-            self::assertIsString($issueId);
+        foreach ($map as $key => $url) {
+            self::assertIsString($key);
             self::assertIsString($url);
-            $typed[$issueId] = $url;
+            $typed[$key] = $url;
         }
 
         return $typed;
+    }
+
+    /**
+     * The docs page a URL addresses, relative to docs/.
+     */
+    private static function docsPage(string $issueId, string $url): string
+    {
+        self::assertStringStartsWith(self::REPO_URL_PREFIX.'docs/', $url, \sprintf('%s does not link into the docs tree.', $issueId));
+
+        return substr($url, \strlen(self::REPO_URL_PREFIX.'docs/'), (int) (strpos($url, '#') ?: \strlen($url)) - \strlen(self::REPO_URL_PREFIX.'docs/'));
     }
 
     /**
@@ -107,10 +170,12 @@ final class RegexPatternRuleDocLinksTest extends TestCase
      *
      * @return list<string>
      */
-    private static function headingAnchors(): array
+    private static function headingAnchors(string $page): array
     {
-        $markdown = file_get_contents(self::REFERENCE);
-        self::assertIsString($markdown);
+        $path = self::DOCS_ROOT.$page;
+        self::assertFileExists($path, \sprintf('The docs page %s does not exist.', $page));
+
+        $markdown = (string) file_get_contents($path);
         // Headings inside fenced code blocks are no headings.
         $markdown = (string) preg_replace('/^```.*?^```/ms', '', $markdown);
         preg_match_all('/^#{1,6}\s+(.+?)\s*#*$/m', $markdown, $matches);

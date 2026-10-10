@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexParserRuleRulesNeonTest extends RuleTestCase
 {
-    private const DOCS = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md';
+    private const DOCS = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md';
 
     public static function getAdditionalConfigFiles(): array
     {
@@ -63,8 +63,8 @@ final class RegexParserRuleRulesNeonTest extends RuleTestCase
                     "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
                     "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
                     "\n".
-                    'Read more about possessive quantifiers: '.self::DOCS."#possessive-quantifiers\n".
-                    'Read more about atomic groups: '.self::DOCS."#atomic-groups\n".
+                    "Read more about possessive quantifiers: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance\n".
+                    "Read more about atomic groups: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-\n".
                     'Read more about catastrophic backtracking: '.self::DOCS.'#catastrophic-backtracking',
                 ),
             ],

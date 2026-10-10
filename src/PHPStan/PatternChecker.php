@@ -50,7 +50,9 @@ final class PatternChecker
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
-    private const DOC_BASE_URL = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference.md';
+    private const DOC_BASE_URL = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md';
+
+    private const TUTORIAL_URL = 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/';
 
     private const DOC_LINKS = [
         // Flags - Use PHP.net where possible, or precise concept pages
@@ -63,13 +65,13 @@ final class PatternChecker
         // Security & Concepts - The authority on explaining regex mechanics
         'catastrophic backtracking' => self::DOC_BASE_URL.'#catastrophic-backtracking',
 
-        // Advanced Syntax - Internal documentation
-        'possessive quantifiers' => self::DOC_BASE_URL.'#possessive-quantifiers',
-        'atomic groups' => self::DOC_BASE_URL.'#atomic-groups',
+        // Advanced Syntax - the chapters that teach it
+        'possessive quantifiers' => self::TUTORIAL_URL.'04-quantifiers.md#possessive-quantifiers-performance',
+        'atomic groups' => self::TUTORIAL_URL.'08-performance-redos.md#1-atomic-groups-',
 
         // Assertions
-        'lookahead' => self::DOC_BASE_URL.'#assertions',
-        'lookbehind' => self::DOC_BASE_URL.'#assertions',
+        'lookahead' => self::TUTORIAL_URL.'06-lookarounds.md#types-of-lookarounds',
+        'lookbehind' => self::TUTORIAL_URL.'06-lookarounds.md#types-of-lookarounds',
     ];
 
     private const LINT_DOC_LINKS = [
