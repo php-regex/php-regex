@@ -345,6 +345,12 @@
         status.textContent = 'Search is unavailable.';
       }
     });
+    // The panel is built without the engine, so it is worth drawing the
+    // moment the dialog opens: it carries the entry points while the index
+    // is still arriving, and still carries them if it never arrives. The
+    // promise above re-runs it once a term shared in the address can be
+    // answered for real.
+    run();
     input.focus();
   }
 
