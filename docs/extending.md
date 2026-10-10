@@ -246,6 +246,8 @@ use PHPRegex\Parser\AbstractNodeVisitor;
 
 /**
  * Calculates pattern complexity score.
+ *
+ * @extends AbstractNodeVisitor<int|null>
  */
 final class ComplexityVisitor extends AbstractNodeVisitor
 {
@@ -338,6 +340,14 @@ $ast->accept($visitor);
 echo "Complexity: " . $visitor->getScore();  // Output: Complexity: 30
 // 10 for the alternation, 3 x 5 for the quantifiers, 5 for the character class
 ```
+
+A visitor that only collects needs no `@extends`: the visitor base types
+default their return to `null`, and an unbound subclass passes PHPStan as a
+collector (Psalm still wants the explicit binding). A visitor whose methods return a value binds that type — `null`
+included, since the methods it does not override return `null` — as the
+`@extends AbstractNodeVisitor<int|null>` above does; `$ast->accept($visitor)`
+then reads as `int|null` to PHPStan, and an overridden method whose body
+forgets its `return` is flagged.
 
 The library ships its own scorer for this job — [ComplexityScorer](visitors/README.md#complexityscorer),
 with bands calibrated for CI gates; the visitor above is a small cousin whose
