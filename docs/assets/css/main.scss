@@ -1120,6 +1120,13 @@ main table::-webkit-scrollbar-thumb {
   max-width: 70ch;
 }
 
+/* Markdown pages open with a note telling folder readers where the served
+   documentation lives. GitHub renders that note; the site is the note's
+   destination and never needs to show it. */
+.github-only {
+  display: none;
+}
+
 /* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */
 
 .icon {

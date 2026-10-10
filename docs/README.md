@@ -9,6 +9,12 @@ redirect_from:
 
 # PHPRegex Documentation
 
+<div class="github-only">
+<p>You are browsing the source folder. The served documentation lives at
+<a href="https://php-regex.com/docs/"><strong>php-regex.com</strong></a>
+— full-text search, a dark mode, and links that survive file renames.</p>
+</div>
+
 PHPRegex is a static analysis, linter & logic solver for PHP regular expressions. It parses every PCRE pattern into an AST and answers questions about it: validity ruled as PHP's own engine would rule it, ReDoS safety with a proof or a witness, lint findings with fixes, provably equivalent rewrites, and pattern-to-pattern logic through automata.
 
 It is written for the authors of PHP tools — static-analysis extensions, framework bundles, libraries that carry regexes. Start with your integration below. New to regex? The [tutorial](tutorial/README.md) teaches regular expressions from scratch, and assumes nothing.
