@@ -79,7 +79,7 @@ final class RegexFinder
     /**
      * Find all regex patterns in PHP content.
      *
-     * @return array<RegexOccurrence>
+     * @return list<RegexOccurrence>
      */
     public function find(string $content, ?PatternDeclarations $declarations = null): array
     {
@@ -102,7 +102,7 @@ final class RegexFinder
     /**
      * The patterns of the preg_* calls and of the wrapper methods.
      *
-     * @return array<RegexOccurrence>
+     * @return list<RegexOccurrence>
      */
     private function findKnownCalls(string $content): array
     {

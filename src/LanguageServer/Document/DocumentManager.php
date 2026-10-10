@@ -26,7 +26,7 @@ final class DocumentManager
     private array $documents = [];
 
     /**
-     * @var array<string, array<RegexOccurrence>> URI => occurrences
+     * @var array<string, list<RegexOccurrence>> URI => occurrences
      */
     private array $occurrences = [];
 
@@ -107,7 +107,7 @@ final class DocumentManager
     /**
      * Get all regex occurrences in a document.
      *
-     * @return array<RegexOccurrence>
+     * @return list<RegexOccurrence>
      */
     public function getOccurrences(string $uri): array
     {
