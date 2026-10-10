@@ -46,7 +46,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 /**
  * Base visitor that returns a default value for every node.
  *
- * @template-covariant TReturn
+ * @template-covariant TReturn = null
  *
  * @implements NodeVisitorInterface<TReturn>
  */

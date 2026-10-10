@@ -46,8 +46,9 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 /**
  * Defines the contract for a visitor that traverses the regex Abstract Syntax Tree (AST).
  *
- * @template-covariant TReturn The return type of the visitor's methods (e.g., `string`
- *                             for `PatternPrinter`, `void` for `Validator`).
+ * @template-covariant TReturn = null The return type of the visitor's methods (e.g., `string`
+ *                                    for `PatternPrinter`, `void` for `Validator`);
+ *                                    null for a visitor that only collects.
  */
 interface NodeVisitorInterface
 {

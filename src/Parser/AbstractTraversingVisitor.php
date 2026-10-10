@@ -53,7 +53,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  * subtree. A node type added in a minor release is walked through as well,
  * so the nodes below it still reach your overrides.
  *
- * @template-covariant TReturn
+ * @template-covariant TReturn = null
  *
  * @extends AbstractNodeVisitor<TReturn>
  */
