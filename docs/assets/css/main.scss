@@ -1247,8 +1247,13 @@ main table::-webkit-scrollbar-thumb {
   border-top: 1px solid var(--line);
 }
 
-.pager-prev,
-.pager-next {
+/* Only the links are boxes. When a page has no neighbour, the template
+   leaves an empty span in its place: styling that span would draw a
+   bordered rectangle with nothing in it. The link keeps its geometry, the
+   placeholder stays a zero-width item, and space-between still puts the
+   surviving link on its own side. */
+.pager a.pager-prev,
+.pager a.pager-next {
   display: flex;
   flex-direction: column;
   gap: .2rem;
@@ -1259,13 +1264,13 @@ main table::-webkit-scrollbar-thumb {
   text-decoration: none;
 }
 
-.pager-prev:hover,
-.pager-next:hover {
+.pager a.pager-prev:hover,
+.pager a.pager-next:hover {
   border-color: var(--ink);
   background: var(--amber-tint);
 }
 
-.pager-next {
+.pager a.pager-next {
   margin-left: auto;
   text-align: right;
 }
@@ -2312,7 +2317,7 @@ body.search-open {
     align-items: stretch;
   }
 
-  .pager-next {
+  .pager a.pager-next {
     margin-left: 0;
     text-align: left;
   }
