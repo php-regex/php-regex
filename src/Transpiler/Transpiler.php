@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler;
 
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 
@@ -23,6 +25,27 @@ final readonly class Transpiler
 {
     public function __construct(private RegexParser $regex, private TargetRegistry $targets = new TargetRegistry()) {}
 
+    /**
+     * Transpile a PCRE regex into the spelling of a target dialect.
+     *
+     * The target resolves through the registry before the pattern is parsed,
+     * so an unknown dialect name is refused before any syntax fault is read.
+     *
+     * @param string                $pattern The regex as written, delimiters and flags included ("/[a-z]+/i")
+     * @param string                $target  A registered target name or alias: "javascript" or "js",
+     *                                       "html-pattern" or "html", "python" or "py"; case and
+     *                                       surrounding space are forgiven
+     * @param TranspileOptions|null $options What the dialects may do; null reads the defaults
+     *
+     * @throws TranspileException when $target names no registered dialect, or the dialect refuses a
+     *                            construct or a flag it cannot carry without changing what matches
+     * @throws ParserException    when $pattern does not parse: a delimiter or flag fault, a syntax error,
+     *                            or a parser limit — the thrown subclasses are SyntaxErrorException,
+     *                            RecursionLimitException and ResourceLimitException
+     * @throws LexerException     when $pattern does not tokenize, e.g. a /u body that is not valid UTF-8
+     *
+     * @return TranspileResult The dialect's pattern, with its literal and constructor spellings
+     */
     public function transpile(string $pattern, string $target, ?TranspileOptions $options = null): TranspileResult
     {
         $options ??= new TranspileOptions();

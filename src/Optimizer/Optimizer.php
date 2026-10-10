@@ -20,6 +20,8 @@ use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\GroupNode;
@@ -66,6 +68,13 @@ final readonly class Optimizer
      *                                                          the array OptimizerOptions::fromArray() reads
      *
      * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
+     * @throws LexerException              when the pattern does not lex
+     * @throws ParserException             when the pattern does not parse: directly, on a delimiter or
+     *                                     modifier the reader refuses, or as one of its leaves
+     *                                     (SyntaxErrorException, RecursionLimitException or
+     *                                     ResourceLimitException) while the tree is built
+     * @throws RegexException              when the rewrite returns a tree that is not a pattern: a
+     *                                     safety net, and the parent of the two families above
      *
      * @return OptimizationResult Optimization results with changes applied
      */
