@@ -22,6 +22,8 @@ use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
  * every character outside printable ASCII escaped.
  *
  * @api
+ *
+ * @phpstan-type WitnessArray array{prefix: string, pump: string, suffix: string}
  */
 final readonly class RedosWitness
 {
@@ -65,7 +67,7 @@ final readonly class RedosWitness
     /**
      * Each part as the inside of a PHP double-quoted literal.
      *
-     * @return array{prefix: string, pump: string, suffix: string}
+     * @return WitnessArray
      */
     public function toArray(): array
     {

@@ -32,6 +32,8 @@ use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
  * literals, like RedosWitness.
  *
  * @api
+ *
+ * @phpstan-type SearchCostArray array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
  */
 final readonly class RedosSearchCost
 {
@@ -82,7 +84,7 @@ final readonly class RedosSearchCost
      * The degree, the witness parts as the inside of PHP double-quoted
      * literals, and what the replay found.
      *
-     * @return array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
+     * @return SearchCostArray
      */
     public function toArray(): array
     {

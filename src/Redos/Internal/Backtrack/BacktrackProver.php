@@ -44,6 +44,8 @@ use PHPRegex\Redos\RedosComplexity;
  * and nothing backtracks.
  *
  * @internal
+ *
+ * @phpstan-import-type Verdict from AmbiguityFinder
  */
 final class BacktrackProver
 {
@@ -223,7 +225,7 @@ final class BacktrackProver
      *
      * @throws ModelLimit
      *
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
+     * @return Verdict|null
      */
     private static function throughLookarounds(string $pattern, array $searches, int $index, ItemAutomaton $automaton, array $contexts, Budget $budget, array $literals): ?array
     {
@@ -301,8 +303,8 @@ final class BacktrackProver
      * Whether a verdict outranks another: a higher class or degree; at a tie,
      * a witnessed exact pump over an approximated or unwitnessed one.
      *
-     * @param array{complexity: RedosComplexity, degree: int|null, approximated: bool, unwitnessed: int|null, ...} $verdict
-     * @param array{complexity: RedosComplexity, degree: int|null, approximated: bool, unwitnessed: int|null, ...} $than
+     * @param Verdict $verdict
+     * @param Verdict $than
      */
     private static function better(array $verdict, array $than): bool
     {

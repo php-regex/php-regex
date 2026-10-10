@@ -19,6 +19,9 @@ use PHPRegex\Parser\Node\NodeInterface;
  * Encapsulates the results of a Regular Expression Denial of Service (ReDoS) analysis.
  *
  * @api
+ *
+ * @phpstan-import-type WitnessArray from RedosWitness
+ * @phpstan-import-type SearchCostArray from RedosSearchCost
  */
 final readonly class RedosAnalysis implements \JsonSerializable
 {
@@ -168,7 +171,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: array{prefix: string, pump: string, suffix: string}|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: SearchCostArray|null}
      */
     public function jsonSerialize(): array
     {

@@ -26,6 +26,9 @@ use PHPRegex\Redos\RedosComplexity;
  * reported as such: the verdict is then no proof.
  *
  * @internal
+ *
+ * @phpstan-type Witness array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool}
+ * @phpstan-type Verdict array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}
  */
 final class AmbiguityFinder
 {
@@ -207,7 +210,7 @@ final class AmbiguityFinder
      *
      * @throws ModelLimit
      *
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
+     * @return Verdict|null
      */
     public function find(array $literals = [], ?WitnessCheck $check = null, array $leads = [], array $ahead = []): ?array
     {
@@ -305,10 +308,10 @@ final class AmbiguityFinder
      * The worse of two polynomial verdicts, the second over every item: the
      * higher degree; at a tie, a witnessed exact one.
      *
-     * @param array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null $first
-     * @param array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null $second
+     * @param Verdict|null $first
+     * @param Verdict|null $second
      *
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
+     * @return Verdict|null
      */
     private static function worse(?array $first, ?array $second): ?array
     {
@@ -521,9 +524,9 @@ final class AmbiguityFinder
     }
 
     /**
-     * @param array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool} $witness
+     * @param Witness $witness
      *
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}
+     * @return Verdict
      */
     private function verdict(RedosComplexity $complexity, ?int $degree, array $witness, bool $crosses): array
     {
@@ -531,7 +534,7 @@ final class AmbiguityFinder
     }
 
     /**
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}
+     * @return Verdict
      */
     private function unwitnessed(RedosComplexity $complexity, ?int $degree, int $state): array
     {
@@ -768,7 +771,7 @@ final class AmbiguityFinder
     }
 
     /**
-     * @return array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}|null
+     * @return Verdict|null
      */
     private function polynomial(): ?array
     {
@@ -1103,7 +1106,7 @@ final class AmbiguityFinder
      *
      * @param list<list<int>> $pumps
      *
-     * @return array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool}|null
+     * @return Witness|null
      */
     private function witness(int $state, array $pumps): ?array
     {
