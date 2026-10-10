@@ -112,8 +112,10 @@ The bridges and tools carry more than their classes:
   may prove more calls than the one before, and its CHANGELOG says so.
 - `regex-symfony`: the `php_regex` configuration, and the commands' names and
   options.
-- `regex-laravel`: the `Regex` facade (`Facades\Regex`), the `php-regex`
-  configuration, and the commands' names and options.
+- `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
+  mirror every public method of `Regex`, so a signature that changes in the
+  code changes there in the same release — the `php-regex` configuration, and
+  the commands' names and options.
 - `regex-cli`: the `regex` command, with its commands, options, exit codes and
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
