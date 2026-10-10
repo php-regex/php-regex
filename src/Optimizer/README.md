@@ -126,17 +126,17 @@ echo $modernized->accept(new PatternPrinter());  // '/a-\d/'
 Documentation
 -------------
 
-- [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — `optimize()` in full: both option spellings and `OptimizationResult`
-- [Correctness contracts](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/correctness-contracts.md) — what the optimizer guarantees, and when it declines a rewrite
-- [Backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — the public surface of this package and what stays stable within 2.x
-- [Feature support matrix](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/feature-support-matrix.md) — which constructs each analyzer, the optimizer included, handles
+- [API reference](https://php-regex.com/reference/api/) — `optimize()` in full: both option spellings and `OptimizationResult`
+- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/) — what the optimizer guarantees, and when it declines a rewrite
+- [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — the public surface of this package and what stays stable within 2.x
+- [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/) — which constructs each analyzer, the optimizer included, handles
 
 Resources
 ---------
 
 * The batteries-included facade: [regex-toolkit](https://github.com/php-regex/php-regex/tree/2.x/src/Toolkit)
 * The equivalence engine: [regex-automata](https://github.com/php-regex/php-regex/tree/2.x/src/Automata)
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the
   [main PHPRegex repository](https://github.com/php-regex/php-regex)

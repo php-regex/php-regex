@@ -123,10 +123,10 @@ vendor/bin/regex transpile '/[a-z]+\d/' --target=js --no-visuals
 Documentation
 -------------
 
-- [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — from installation to a first analysis.
-- [CLI guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/cli.md) — every subcommand in depth, the lint configuration file, CI recipes.
-- [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — the risky shapes, the two analysis modes, mitigation.
-- [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — the promise that holds across 2.x.
+- [Quick start](https://php-regex.com/quick-start/) — from installation to a first analysis.
+- [CLI guide](https://php-regex.com/guides/cli/) — every subcommand in depth, the lint configuration file, CI recipes.
+- [ReDoS guide](https://php-regex.com/guides/redos/) — the risky shapes, the two analysis modes, mitigation.
+- [Backward compatibility](https://php-regex.com/reference/backward-compatibility/) — the promise that holds across 2.x.
 
 Resources
 ---------

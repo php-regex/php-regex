@@ -33,7 +33,7 @@ Built for robust regex tooling in PHP projects.
 > ⚠️ **How to read the verdicts.** ReDoS analysis proves safety for the
 > subset of PCRE it models, one match attempt at a time; outside that subset,
 > structural heuristics decide — and the verdict says so. The parser follows
-> PCRE closely (see the [conformance page](docs/reference/pcre2-conformance.md))
+> PCRE closely (see the [conformance page](https://php-regex.com/reference/pcre2-conformance/))
 > without covering every edge of the engine. Treat findings as leads to
 > investigate, not as a guarantee.
 
@@ -49,7 +49,7 @@ composer require php-regex/regex-toolkit:2.x-dev
 Try it, break it, and tell us what your project needs — feedback and wishes go
 to [the discussions](https://github.com/php-regex/php-regex/discussions).
 
-If you are new to regex, start with the [Regex Tutorial](docs/tutorial/README.md). If you want a short overview, see the [Quick Start Guide](docs/QUICK_START.md).
+If you are new to regex, start with the [Regex Tutorial](https://php-regex.com/tutorial/). If you want a short overview, see the [Quick Start Guide](https://php-regex.com/quick-start/).
 
 ## Getting started
 
@@ -90,7 +90,7 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 ## What PHPRegex provides
 
 - 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
-- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](docs/ARCHITECTURE.md) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
+- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](https://php-regex.com/architecture/) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
 - 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
 - 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
 - 📖 **Explanation:** Explain patterns in plain English.
@@ -101,8 +101,8 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 PHPRegex separates what it can guarantee from what is heuristic:
 
 - Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
-- Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](docs/reference/pcre2-conformance.md) publishes how closely, case by case.
-- Proven: a ReDoS verdict marked `(proven)` holds for one match attempt on a model of PCRE's backtracking; `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The [ReDoS guide](docs/REDOS_GUIDE.md#the-guarantee) lists its limits.
+- Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](https://php-regex.com/reference/pcre2-conformance/) publishes how closely, case by case.
+- Proven: a ReDoS verdict marked `(proven)` holds for one match attempt on a model of PCRE's backtracking; `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The [ReDoS guide](https://php-regex.com/guides/redos/#the-guarantee) lists its limits.
 - Heuristic: patterns outside that model (backreferences, conditionals, recursion, …) are judged by structural rules, marked `(heuristic)`; treat those as potential risk unless confirmed.
 - Context matters: PCRE version, JIT, and backtrack/recursion limits change practical impact.
 
@@ -121,7 +121,7 @@ PHP's native `preg_match()`:
   under PHP's compile options: the compile verdict agrees on more than 4,100
   of the roughly 4,400 extractable cases, and fewer than 100 patterns that PHP
   refuses to compile are accepted. The exact counts, the skipped cases and the
-  fix plan are on the [PCRE2 conformance page](docs/reference/pcre2-conformance.md).
+  fix plan are on the [PCRE2 conformance page](https://php-regex.com/reference/pcre2-conformance/).
 
 These tests compare against a limited set of subjects, so they catch clear
 regressions but are **not** a formal proof of full PCRE equivalence. There may
@@ -202,7 +202,7 @@ These techniques reduce backtracking but can change matching behavior. Always va
 - The parser builds an AST (`RegexNode`).
 - Visitors walk the AST to validate, explain, analyze, or transform.
 
-For the full architecture, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+For the full architecture, see [the architecture overview](https://php-regex.com/architecture/).
 
 ## CLI quick tour
 
@@ -262,21 +262,21 @@ echo $regex->explain('/\d{4}-\d{2}-\d{2}/');
 
 PHPRegex integrates with common PHP tooling:
 
-- **Symfony bundle**: [the Symfony guide](docs/guides/symfony.md)
-- **Laravel**: [the Laravel guide](docs/guides/laravel.md)
-- **Language server**: [the language server guide](docs/guides/lsp.md)
+- **Symfony bundle**: [the Symfony guide](https://php-regex.com/guides/symfony/)
+- **Laravel**: [the Laravel guide](https://php-regex.com/guides/laravel/)
+- **Language server**: [the language server guide](https://php-regex.com/guides/lsp/)
 - **PHPStan**: enabled by extension-installer, or through
   `vendor/php-regex/regex-phpstan/extension.neon`. It reports a pattern your
   target PHP refuses while the PHP running PHPStan compiles it; lint rules and
-  ReDoS analysis come with `rules.neon`. See [the PHPStan guide](docs/guides/phpstan.md)
+  ReDoS analysis come with `rules.neon`. See [the PHPStan guide](https://php-regex.com/guides/phpstan/)
 - **Psalm**: `vendor/bin/psalm-plugin enable php-regex/regex-psalm` types
   `$matches` from the pattern where `preg_match()` returned 1 and after
   `preg_match_all()`, and reports the patterns your target PHP refuses as
-  `InvalidRegexPattern`. See [the Psalm guide](docs/guides/psalm.md)
+  `InvalidRegexPattern`. See [the Psalm guide](https://php-regex.com/guides/psalm/)
 - **Rector**: `RegexSetList::STRING_FUNCTIONS` rewrites `preg_match('/^https:/', $url)`
   into `\str_starts_with($url, 'https:')`, `preg_replace()` into `str_replace()` and
   `preg_split()` into `explode()`, only where the automata prove them equal.
-  See [the Rector guide](docs/guides/rector.md)
+  See [the Rector guide](https://php-regex.com/guides/rector/)
 - **GitHub Actions**: `vendor/bin/regex lint` in your CI pipeline
 
 ## Performance
@@ -286,23 +286,23 @@ PHPRegex measures its own time and memory with [PHPBench](https://github.com/php
 - Run one group: `composer bench -- --group=automata`
 - Run the whole suite: `composer bench` (long; `redos-corpus`, one variant per corpus pattern, is the longest group)
 
-See the [maintainers guide](docs/MAINTAINERS_GUIDE.md#benchmarks) for the inputs and how to add a case.
+See the [maintainers guide](https://php-regex.com/maintainers/#benchmarks) for the inputs and how to add a case.
 
 ## Documentation
 
-Read the docs online at <https://php-regex.com/docs/>, or browse them in this repository.
+Read the docs online at <https://php-regex.com>.
 
 Start here:
-- [Docs Home](docs/README.md)
-- [Quick Start](docs/QUICK_START.md)
-- [Tutorial](docs/tutorial/README.md)
+- [Docs Home](https://php-regex.com/docs/)
+- [Quick Start](https://php-regex.com/quick-start/)
+- [Tutorial](https://php-regex.com/tutorial/)
 
 Key references:
-- [Architecture](docs/ARCHITECTURE.md)
-- [API Reference](docs/reference/api.md)
-- [Diagnostics](docs/reference/diagnostics.md)
-- [FAQ & Glossary](docs/reference/faq-glossary.md)
-- [Backward Compatibility Promise](docs/reference/backward-compatibility.md)
+- [Architecture](https://php-regex.com/architecture/)
+- [API Reference](https://php-regex.com/reference/api/)
+- [Diagnostics](https://php-regex.com/reference/diagnostics/)
+- [FAQ & Glossary](https://php-regex.com/reference/faq-glossary/)
+- [Backward Compatibility Promise](https://php-regex.com/reference/backward-compatibility/)
 
 ## Contributing
 

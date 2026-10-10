@@ -14,7 +14,7 @@ Lints the regex patterns of a PHP codebase: extraction from PHP sources, lint ru
 Features
 --------
 
-* 40 lint rules over the parsed AST: redundant and empty groups and character classes, useless flags and quantifiers, lazy quantifiers that end the pattern, repeats that can match the empty string, suspicious escapes and ranges, undefined backreferences, impossible anchors and word boundaries, anchors that bind to one alternative, possessive repeats and lookaheads that can never match (proven by the automata), multibyte text PCRE reads as bytes without `/u`; every SonarPHP regex rule is mapped to its id in the [SonarPHP Regex Rules](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/sonar.md) page.
+* 40 lint rules over the parsed AST: redundant and empty groups and character classes, useless flags and quantifiers, lazy quantifiers that end the pattern, repeats that can match the empty string, suspicious escapes and ranges, undefined backreferences, impossible anchors and word boundaries, anchors that bind to one alternative, possessive repeats and lookaheads that can never match (proven by the automata), multibyte text PCRE reads as bytes without `/u`; every SonarPHP regex rule is mapped to its id in the [SonarPHP Regex Rules](https://php-regex.com/reference/sonar/) page.
 * Patterns are validated before they are linted: parse and semantic errors arrive with a position and a tip, not a guess.
 * Extraction from PHP sources: native `preg_*` calls, the composer/pcre, nette/utils, spatie/regex and Laravel `Str` wrappers, and your own helper functions — with `@regex-ignore` comments to suppress a finding inline.
 * ReDoS detection through php-regex/regex-redos: proven verdicts with their attack input, theoretical or confirmed mode, four severity thresholds, and `regex.lint.redos.search` for an unanchored search that retries a linear attempt along a run, quadratic in PCRE2's interpreter.
@@ -116,17 +116,17 @@ vendor/bin/regex lint src/
 Documentation
 -------------
 
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — the lint command among the first five to know
-* [CLI guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/cli.md) — every `regex lint` option and the full `regex.json` reference
-* [Diagnostics](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/diagnostics.md) — how issues are reported and how to read them
-* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — risky shapes, detection modes and mitigations
+* [Quick start](https://php-regex.com/quick-start/) — the lint command among the first five to know
+* [CLI guide](https://php-regex.com/guides/cli/) — every `regex lint` option and the full `regex.json` reference
+* [Diagnostics](https://php-regex.com/reference/diagnostics/) — how issues are reported and how to read them
+* [ReDoS guide](https://php-regex.com/guides/redos/) — risky shapes, detection modes and mitigations
 
-This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number; read [the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
+This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number; read [the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The console that drives this linter: [regex-cli](https://github.com/php-regex/php-regex/tree/2.x/src/Cli)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)

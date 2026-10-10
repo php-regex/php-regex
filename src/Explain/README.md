@@ -123,10 +123,10 @@ file_put_contents('railroad.svg', $ast->accept(new RailroadSvgRenderer()));
 Documentation
 -------------
 
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — explain and highlight in the opening tour
-* [Visitor reference](https://github.com/php-regex/php-regex/blob/2.x/docs/visitors/README.md) — every Explain class, with examples
-* [CLI guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/cli.md) — the `regex explain`, `highlight` and `diagram` commands
-* [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+* [Quick start](https://php-regex.com/quick-start/) — explain and highlight in the opening tour
+* [Visitor reference](https://php-regex.com/visitors/) — every Explain class, with examples
+* [CLI guide](https://php-regex.com/guides/cli/) — the `regex explain`, `highlight` and `diagram` commands
+* [Backward compatibility](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources
 ---------

@@ -123,15 +123,15 @@ Exit codes: 0 when nothing is wrong, 1 when the judged patterns or files have a 
 Documentation
 -------------
 
-* [The Laravel guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/laravel.md) — configuration, lint targets, the commands, upgrading from 1.x
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — first steps with the `Regex` service
-* [The ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — how the risk analysis reaches its verdicts
-* [Backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+* [The Laravel guide](https://php-regex.com/guides/laravel/) — configuration, lint targets, the commands, upgrading from 1.x
+* [Quick start](https://php-regex.com/quick-start/) — first steps with the `Regex` service
+* [The ReDoS guide](https://php-regex.com/guides/redos/) — how the risk analysis reaches its verdicts
+* [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The runtime library behind the facade: [regex-toolkit](https://github.com/php-regex/php-regex/tree/2.x/src/Toolkit)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)

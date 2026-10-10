@@ -82,16 +82,16 @@ try {
 }
 ```
 
-The [Toolkit facade](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) checks each sample against the running engine and retries before settling.
+The [Toolkit facade](https://php-regex.com/reference/api/) checks each sample against the running engine and retries before settling.
 
 Documentation
 -------------
 
-- [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — parse, generate and analyze in one tour
-- [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — the `generate()` facade: retries, engine checks, error codes
-- [Visitors](https://github.com/php-regex/php-regex/blob/2.x/docs/concepts/visitors.md) — the visitor pattern both generators implement
-- [Testing and debugging](https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/09-testing-debugging.md) — generated samples in a test workflow
-- [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+- [Quick start](https://php-regex.com/quick-start/) — parse, generate and analyze in one tour
+- [API reference](https://php-regex.com/reference/api/) — the `generate()` facade: retries, engine checks, error codes
+- [Visitors](https://php-regex.com/concepts/visitors/) — the visitor pattern both generators implement
+- [Testing and debugging](https://php-regex.com/tutorial/09-testing-debugging/) — generated samples in a test workflow
+- [Backward compatibility](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources
 ---------

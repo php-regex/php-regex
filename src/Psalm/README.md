@@ -264,12 +264,12 @@ Backward compatibility
 
 The `Plugin` class, the `InvalidRegexPattern` issue name and the
 `<phpVersion>` and `<pcreVersion>` options stay for all of 2.x. See
-[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
+[the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
 Resources
 ---------
 
-* [Psalm guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/psalm.md)
+* [Psalm guide](https://php-regex.com/guides/psalm/)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and
   [send pull requests](https://github.com/php-regex/php-regex/pulls) in the
   [main repository](https://github.com/php-regex/php-regex)

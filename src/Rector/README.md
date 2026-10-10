@@ -269,17 +269,17 @@ Run it before raising the PHP version in `composer.json`.
 Documentation
 -------------
 
-* [Rector guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/rector.md) — what the rules prove and how
-* [Prefilters](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/prefilters.md) — `TrivialMatchClassifier`, the proof behind the rules
+* [Rector guide](https://php-regex.com/guides/rector/) — what the rules prove and how
+* [Prefilters](https://php-regex.com/reference/prefilters/) — `TrivialMatchClassifier`, the proof behind the rules
 
 This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released
 with its siblings under one version number. Read
-[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
+[the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The proof behind the rules: [regex-automata](https://github.com/php-regex/php-regex/tree/2.x/src/Automata)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and

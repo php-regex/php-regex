@@ -113,14 +113,14 @@ no equivalent there and is refused: add `u`, or write the character itself.
 Documentation
 -------------
 
-- [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — the `transpile()` entry point and the `TranspileResult` fields
-- [CLI guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/cli.md) — the `regex transpile` command, its `--target` option and its exit codes
-- [Backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+- [API reference](https://php-regex.com/reference/api/) — the `transpile()` entry point and the `TranspileResult` fields
+- [CLI guide](https://php-regex.com/guides/cli/) — the `regex transpile` command, its `--target` option and its exit codes
+- [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The parsing core it builds on: [regex-parser](https://github.com/php-regex/php-regex/tree/2.x/src/Parser)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)

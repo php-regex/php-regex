@@ -114,23 +114,23 @@ try {
 }
 ```
 
-Every reason has its own message — conditionals, nested lookarounds, atomic groups, zero-width conditions, unsafe possessives, unsupported flags — listed in the [logic solver reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/logic-solver.md#what-the-solver-refuses).
+Every reason has its own message — conditionals, nested lookarounds, atomic groups, zero-width conditions, unsafe possessives, unsupported flags — listed in the [logic solver reference](https://php-regex.com/reference/logic-solver/#what-the-solver-refuses).
 
 Documentation
 -------------
 
-- [Logic solver reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/logic-solver.md) — the concept, the route-conflict, security-audit and refactoring use cases, strategy tuning and safety limits
-- [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — the solver entry points among the library's public API
-- [Feature support matrix](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/feature-support-matrix.md) — which constructs every component supports, the solver column included
-- [Correctness contracts](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/correctness-contracts.md) — the semantics each solver answer rests on
-- [Backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+- [Logic solver reference](https://php-regex.com/reference/logic-solver/) — the concept, the route-conflict, security-audit and refactoring use cases, strategy tuning and safety limits
+- [API reference](https://php-regex.com/reference/api/) — the solver entry points among the library's public API
+- [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/) — which constructs every component supports, the solver column included
+- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/) — the semantics each solver answer rests on
+- [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number.
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The parsing core it builds on: [regex-parser](https://github.com/php-regex/php-regex/tree/2.x/src/Parser)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)

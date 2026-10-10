@@ -153,16 +153,16 @@ run, `$confirmation->wasSkipped()` is true and its evidence is
 Documentation
 -------------
 
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — where the ReDoS check sits in the opening tour
-* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — the verdict and its guarantee, the witness, confirmed mode and the mitigations
-* [ReDoS deep dive](https://github.com/php-regex/php-regex/blob/2.x/docs/concepts/redos.md) — how backtracking explodes, shape by shape, and how the model finds it
-* [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — the analyzer's options and the aggregate analysis report
-* [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases
+* [Quick start](https://php-regex.com/quick-start/) — where the ReDoS check sits in the opening tour
+* [ReDoS guide](https://php-regex.com/guides/redos/) — the verdict and its guarantee, the witness, confirmed mode and the mitigations
+* [ReDoS deep dive](https://php-regex.com/concepts/redos/) — how backtracking explodes, shape by shape, and how the model finds it
+* [API reference](https://php-regex.com/reference/api/) — the analyzer's options and the aggregate analysis report
+* [Backward compatibility](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * [All PHPRegex packages](https://github.com/php-regex/php-regex/blob/2.x/README.md) — one repo, one version number
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls)

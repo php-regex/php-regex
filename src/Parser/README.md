@@ -120,14 +120,14 @@ month starts at offset 15
 Documentation
 -------------
 
-This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number; deep material lives in [the docs](https://github.com/php-regex/php-regex/tree/2.x/docs), under [the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
+This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number; deep material lives in [the docs](https://php-regex.com/docs/), under [the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — parsing and validating patterns in PHP, among the first steps
-* [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — entry points, configuration options, return objects, the exception hierarchy
-* [AST node reference](https://github.com/php-regex/php-regex/blob/2.x/docs/nodes/README.md) — every node type and its properties
-* [AST visitor reference](https://github.com/php-regex/php-regex/blob/2.x/docs/visitors/README.md) — the built-in visitors and how to write custom ones
-* [Capture shapes](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/capture-shapes.md) — what `preg_match()` writes into `$matches`, read from the pattern
-* [PCRE2 conformance](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/pcre2-conformance.md) — how often validation matches PHP's own engine on PCRE2's test suite
+* [Quick start](https://php-regex.com/quick-start/) — parsing and validating patterns in PHP, among the first steps
+* [API reference](https://php-regex.com/reference/api/) — entry points, configuration options, return objects, the exception hierarchy
+* [AST node reference](https://php-regex.com/nodes/) — every node type and its properties
+* [AST visitor reference](https://php-regex.com/visitors/) — the built-in visitors and how to write custom ones
+* [Capture shapes](https://php-regex.com/reference/capture-shapes/) — what `preg_match()` writes into `$matches`, read from the pattern
+* [PCRE2 conformance](https://php-regex.com/reference/pcre2-conformance/) — how often validation matches PHP's own engine on PCRE2's test suite
 
 Resources
 ---------

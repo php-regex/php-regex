@@ -125,15 +125,15 @@ regex.lint.group.quantifiedCapture: Quantified capturing group "(...)" with "+":
 Documentation
 -------------
 
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — from installation to a first analysis, PHP API and CLI
-* [API reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/api.md) — every public class and method
-* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — risky shapes, detection modes and mitigations
-* [Backward compatibility](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — the promise every sibling ships under, one version number for all
+* [Quick start](https://php-regex.com/quick-start/) — from installation to a first analysis, PHP API and CLI
+* [API reference](https://php-regex.com/reference/api/) — every public class and method
+* [ReDoS guide](https://php-regex.com/guides/redos/) — risky shapes, detection modes and mitigations
+* [Backward compatibility](https://php-regex.com/reference/backward-compatibility/) — the promise every sibling ships under, one version number for all
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * [Changelog](CHANGELOG.md)
 * [Bridges and tools](https://github.com/php-regex/php-regex/blob/2.x/README.md#getting-started) — Laravel, Symfony, CLI, PHPStan and LSP
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)

@@ -137,19 +137,19 @@ Regex pattern can be optimized: "/[0-9]+/"
 Documentation
 -------------
 
-* [PHPStan guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/phpstan.md) — the target model, each check, every identifier
-* [Diagnostics](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/diagnostics.md) — how findings are reported and how to read them
-* [ReDoS guide](https://github.com/php-regex/php-regex/blob/2.x/docs/REDOS_GUIDE.md) — risky shapes, severities, mitigations
-* [Quick start](https://github.com/php-regex/php-regex/blob/2.x/docs/QUICK_START.md) — the PHPRegex packages in five commands
+* [PHPStan guide](https://php-regex.com/guides/phpstan/) — the target model, each check, every identifier
+* [Diagnostics](https://php-regex.com/reference/diagnostics/) — how findings are reported and how to read them
+* [ReDoS guide](https://php-regex.com/guides/redos/) — risky shapes, severities, mitigations
+* [Quick start](https://php-regex.com/quick-start/) — the PHPRegex packages in five commands
 
 This package is part of [PHPRegex](https://github.com/php-regex/php-regex), released
 with its siblings under one version number. Read
-[the backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md).
+[the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * The linter behind the opt-in checks: [regex-linter](https://github.com/php-regex/php-regex/tree/2.x/src/Linter)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and

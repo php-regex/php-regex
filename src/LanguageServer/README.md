@@ -119,19 +119,19 @@ end
 lspconfig.php_regex.setup({})
 ```
 
-Vim, Emacs, Sublime Text, Helix and Zed are wired the same way; the [LSP guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/lsp.md#ide-configuration) holds each snippet.
+Vim, Emacs, Sublime Text, Helix and Zed are wired the same way; the [LSP guide](https://php-regex.com/guides/lsp/#ide-configuration) holds each snippet.
 
 Documentation
 -------------
 
-- [LSP guide](https://github.com/php-regex/php-regex/blob/2.x/docs/guides/lsp.md) — editor configurations, supported methods, troubleshooting.
-- [Diagnostics reference](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/diagnostics.md) — the codes the server publishes and how to read them.
-- [Backward compatibility promise](https://github.com/php-regex/php-regex/blob/2.x/docs/reference/backward-compatibility.md) — what stays stable across releases.
+- [LSP guide](https://php-regex.com/guides/lsp/) — editor configurations, supported methods, troubleshooting.
+- [Diagnostics reference](https://php-regex.com/reference/diagnostics/) — the codes the server publishes and how to read them.
+- [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases.
 
 Resources
 ---------
 
-* [Documentation](https://github.com/php-regex/php-regex/tree/2.x/docs)
+* [Documentation](https://php-regex.com/docs/)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)
 * [Changelog](CHANGELOG.md)
 
