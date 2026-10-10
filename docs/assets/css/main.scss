@@ -413,6 +413,33 @@ main tbody tr:hover {
   background: var(--code-bg);
 }
 
+/* A wide table is a scroll box on a narrow screen, and a scroll box with no
+   tell reads as a table that is broken. The page script marks the tables
+   that really do overflow and keeps only the cut edge marked while it
+   scrolls. The veil is the paper itself: the background of a scrolling box
+   does not scroll with its content, so it holds still while the columns
+   move under it. */
+main table[data-scroll='right'] {
+  background-image: linear-gradient(to left, var(--paper), transparent);
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: 2.5rem 100%;
+}
+
+main table[data-scroll='left'] {
+  background-image: linear-gradient(to right, var(--paper), transparent);
+  background-position: left center;
+  background-repeat: no-repeat;
+  background-size: 2.5rem 100%;
+}
+
+main table[data-scroll='both'] {
+  background-image: linear-gradient(to right, var(--paper), transparent), linear-gradient(to left, var(--paper), transparent);
+  background-position: left center, right center;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 2.5rem 100%, 2.5rem 100%;
+}
+
 main caption {
   text-align: left;
   color: var(--ink-soft);
@@ -883,6 +910,13 @@ main table::-webkit-scrollbar-thumb {
 
 .site-header nav a:hover,
 .site-header nav a:focus-visible {
+  color: var(--ink);
+  border-bottom-color: var(--amber);
+}
+
+/* The destination the reader is already in keeps the hover rule, so the
+   nav reads as navigation rather than as a menu of choices. */
+.site-header nav a[aria-current='page'] {
   color: var(--ink);
   border-bottom-color: var(--amber);
 }
@@ -1461,20 +1495,57 @@ main table::-webkit-scrollbar-thumb {
   overflow-wrap: anywhere;
 }
 
-.search-dialog li.no-results {
-  padding: .75rem 1rem;
+/* The panel carries everything that is not a result: the entry points
+   offered before the first keystroke, and the way out when a term matches
+   nothing. It sits where the results list sits, so opening the dialog
+   always shows something worth reading. */
+.search-panel {
+  width: min(40rem, 100%);
+  margin: -1px 0 0;
+  padding: .25rem 0 .5rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.search-panel[hidden] {
+  display: none;
+}
+
+.search-panel-title {
+  margin: 0;
+  padding: .6rem 1rem .4rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   color: var(--ink-soft);
 }
 
-/* The way out of a dead search is a link, not a wall: the docs map, one
-   underline away, kept in the row's own voice rather than the results'
-   two-line rows. */
-.search-dialog li.no-results a {
-  display: inline;
-  margin-inline-start: .35rem;
+.search-panel a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .1rem 1.25rem;
+  min-height: 44px;
+  padding: .4rem 1rem;
   color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: .2em;
+  text-decoration: none;
+}
+
+.search-panel a:hover,
+.search-panel a:focus-visible {
+  background: var(--amber-tint);
+}
+
+.search-panel-name {
+  font-weight: 600;
+}
+
+.search-panel-hint {
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 /* ==========================================================================
@@ -2055,11 +2126,13 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .site-sidebar,
   .toc,
   .search-dialog,
+  .search-panel,
   .drawer-overlay,
   .skip-link,
   .pager,
   .copy-btn,
   .anchor,
+  .to-top,
   .site-footer {
     display: none !important;
   }
@@ -2132,9 +2205,11 @@ main > section:not([class]) > p:not(:has(a.button)) {
   }
 }
 
-/* Drawer-open scroll lock: set as a body class so no inline style exists
-   outside this stylesheet. */
-body.drawer-open {
+/* Scroll lock, set as a body class so no inline style exists outside this
+   stylesheet: the drawer and the search dialog both need the page behind
+   them to hold still. */
+body.drawer-open,
+body.search-open {
   overflow: hidden;
 }
 
@@ -2182,6 +2257,46 @@ body.drawer-open {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
+}
+
+/* ---- Back to top ---------------------------------------------------------
+ * The rails carry the long pages on wide screens; below 1280px neither
+ * exists, so a chapter that runs ten screens needs a way back. The control
+ * stays out of the way until the reader has scrolled past one viewport,
+ * and it borrows its geometry from the pager and the copy chip.
+   -------------------------------------------------------------------------- */
+
+.to-top {
+  display: none;
+  position: fixed;
+  right: max(1rem, var(--gutter));
+  bottom: 1rem;
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+@media (max-width: 1279px) {
+  .to-top {
+    display: flex;
+  }
+
+  .to-top[hidden] {
+    display: none;
+  }
+}
+
+.to-top:hover,
+.to-top:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
 }
 
 /* ---- Small screens ------------------------------------------------------

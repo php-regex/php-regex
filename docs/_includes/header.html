@@ -15,8 +15,17 @@
     <span class="brand-name">PHPRegex</span>
   </a>
   <nav aria-label="Main">
-    <a href="/docs/">Docs</a>
-    <a href="/guides/">Guides</a>
+    {%- comment -%}
+      Which of the two destinations the reader is already in. The guides
+      area has a link of its own; every other documentation page is the
+      docs area. The landing and the error page belong to neither, so
+      neither is marked there.
+    {%- endcomment -%}
+    {%- assign here = 'docs' -%}
+    {%- if page.url contains '/guides/' %}{% assign here = 'guides' %}{% endif -%}
+    {%- if page.layout == 'landing' or page.url contains '404' %}{% assign here = '' %}{% endif -%}
+    <a href="/docs/"{% if here == 'docs' %} aria-current="page"{% endif %}>Docs</a>
+    <a href="/guides/"{% if here == 'guides' %} aria-current="page"{% endif %}>Guides</a>
     <a href="https://github.com/php-regex/php-regex">GitHub</a>
   </nav>
   <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>

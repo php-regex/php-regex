@@ -98,20 +98,74 @@
     status.textContent = message;
   }
 
+  // Everything that is not a result lives in the panel below the input: the
+  // entry points offered before the first keystroke, and the way out when a
+  // term matches nothing. It is a sibling of the results list on purpose -
+  // a listbox may only hold options, and a sentence is not one.
+  var panel = document.createElement('div');
+  panel.className = 'search-panel';
+  panel.hidden = true;
+  results.parentNode.insertBefore(panel, results.nextSibling);
+
+  // Where readers go when they have no term in mind yet, and where they
+  // land when a term matches nothing.
+  var SUGGESTED = [
+    { href: '/quick-start/', name: 'Quick Start', hint: 'install and run the toolkit in five minutes' },
+    { href: '/tutorial/', name: 'Tutorial', hint: 'ten chapters, first literal to production' },
+    { href: '/guides/cli/', name: 'CLI reference', hint: 'sixteen subcommands, one by one' },
+    { href: '/guides/redos/', name: 'ReDoS guide', hint: 'find and fix catastrophic backtracking' },
+    { href: '/reference/api/', name: 'API reference', hint: 'every method of the toolkit' }
+  ];
+
+  function showPanel(title, rows) {
+    panel.textContent = '';
+    var head = document.createElement('p');
+    head.className = 'search-panel-title';
+    head.textContent = title;
+    panel.appendChild(head);
+    rows.forEach(function (row) {
+      var line = document.createElement('a');
+      line.href = row.href;
+      var name = document.createElement('span');
+      name.className = 'search-panel-name';
+      name.textContent = row.name;
+      line.appendChild(name);
+      if (row.hint) {
+        var hint = document.createElement('span');
+        hint.className = 'search-panel-hint';
+        hint.textContent = row.hint;
+        line.appendChild(hint);
+      }
+      panel.appendChild(line);
+    });
+    panel.hidden = false;
+  }
+
+  function hidePanel() {
+    panel.hidden = true;
+    panel.textContent = '';
+  }
+
   function render(hits, term) {
     results.textContent = '';
     active = -1;
     input.removeAttribute('aria-activedescendant');
+    hidePanel();
 
-    if (term && hits.length === 0) {
-      var empty = document.createElement('li');
-      empty.className = 'no-results';
-      empty.textContent = 'No results for "' + term + '".';
-      var browse = document.createElement('a');
-      browse.href = '/docs/';
-      browse.textContent = 'Browse the documentation map';
-      empty.appendChild(browse);
-      results.appendChild(empty);
+    // No term yet: the reader is looking for a place to start.
+    if (!term) {
+      showPanel('Start here', SUGGESTED);
+      input.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    // Nothing matched: say so, and hand back a way forward.
+    if (hits.length === 0) {
+      showPanel('No results for "' + term + '".', [
+        { href: '/docs/', name: 'Browse the documentation map', hint: 'every page, by section' }
+      ]);
+      input.setAttribute('aria-expanded', 'false');
+      return;
     }
 
     hits.forEach(function (hit) {
@@ -135,7 +189,7 @@
       results.appendChild(item);
     });
 
-    input.setAttribute('aria-expanded', hits.length > 0 ? 'true' : 'false');
+    input.setAttribute('aria-expanded', 'true');
   }
 
   // The query lives in the URL (?q=…), so a search is a shareable address:
@@ -273,6 +327,10 @@
       ? document.activeElement
       : toggle;
     dialog.hidden = false;
+    // The page behind must not scroll: on a touch screen a finger dragging
+    // the result list would otherwise drag the page with it. The class is
+    // the one the drawer already uses.
+    document.body.classList.add('search-open');
     dialog.classList.add('open');
     toggle.setAttribute('aria-expanded', 'true');
     failed = false;
@@ -296,6 +354,7 @@
     }
     clearUrl();
     dialogOpen = false;
+    document.body.classList.remove('search-open');
     dialog.hidden = true;
     dialog.classList.remove('open');
     toggle.setAttribute('aria-expanded', 'false');
